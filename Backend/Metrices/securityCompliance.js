@@ -870,6 +870,7 @@ export default async function securityCompliance(url,page) {
   const checkNotificationRequestScore = await checkNotificationRequest(page);
   const checkThirdPartyCookiesScore = await checkThirdPartyCookies(url,page);
   const checkDeprecatedAPIsScore = await checkDeprecatedAPIs(page);
+  page.close()
 
   // Total Score Calculation
 const Total = parseFloat((((checkHTTPSScore+checkSSLScore+checkSSLCertificateExpiryScore+checkHSTSScore+checkTLSVersionScore+checkXFrameOptionsScore+checkCSPScore+checkXContentTypeOptionsScore+checkCookiesSecureScore+checkCookiesHttpOnlyScore+cookieConsentScore+privacyPolicyScore+safeBrowsingScore+blacklistScore+malwareScanScore+xssVulnerabilityScore+sqliExposureScore+formsUseHTTPSScore+checkGDPRCCPAScore+checkDataCollectionScore+checkAdminPanelPublicScore+weakDefaultCredsScore+mfaEnabledScore) / 23) * 100).toFixed(0));

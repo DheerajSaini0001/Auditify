@@ -161,6 +161,8 @@ export default async function technicalMetrics(url,data,page) {
   robotsScore = 0; 
   }
   
+  page.close()
+
   const crawlabilityAndHygieneTotal = sitemapScore + robotsScore + structuredDataScore + brokenScore + redirectScore
   
   const crawlabilityAndHygiene = {

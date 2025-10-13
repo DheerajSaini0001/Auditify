@@ -21,20 +21,14 @@ export default async function accessibilityMetrics(url,page) {
     console.error("Axe analysis failed:", err.message);
     results = { violations: [] };
   } 
-
-function calculatePassRate(results, ruleIds) {
   
-  const relevant = results.violations.filter(v => ruleIds.includes(v.id));
-  if (relevant.length === 0) return 1; 
 
-  let failedNodes = 0;
-  relevant.forEach(rule => {
-    failedNodes += rule.nodes.length;
-  });
-  const totalNodes = relevant.reduce((acc, r) => acc + r.nodes.length, 0) || 1;
-  const passRate = 1 - failedNodes / totalNodes;
+function calculatePassRate(results, rules) {
+  if (!results || !results.violations) return 1;
 
-  return passRate ? 1 : 0;
+  const hasViolation = results.violations.some(v => rules.includes(v.id) && v.nodes.length > 0);
+
+  return hasViolation ? 0 : 1;
 }
 
   async function Landmarks(page) {
@@ -56,6 +50,7 @@ function calculatePassRate(results, ruleIds) {
   const imageAlt = calculatePassRate(results, ["image-alt"]);
   const skipLinks = await page.$('a[href^="#"]:not([hidden])') ? 0 : 1
   const landMarks = await Landmarks(page);
+  page.close()
 
   const Total = colorContrast+focusOrder+focusableContent+tabindex+interactiveElementAffordance+label+ariaAllowedAttr+ariaRoles+ariaHiddenFocus+imageAlt+skipLinks+landMarks
 

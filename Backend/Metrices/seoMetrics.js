@@ -463,6 +463,8 @@ const checkHTTPSScore = checkHTTPS(url);
 
 const paginationScore = checkPagination($);
 
+page.close()
+
 const structureAndUniquenessTotal = dupScore + slugScore + paginationScore
 
 const structureAndUniqueness = {

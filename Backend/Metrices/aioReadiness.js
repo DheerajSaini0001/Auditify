@@ -1,7 +1,7 @@
 // import puppeteer from "puppeteer";
 import puppeteer from "../Tools/puppeteers.js";
 
-export default async function aioReadiness(url, robotsText,page) {
+export default async function aioReadiness(url,page) {
   const report = {};
 
 
@@ -102,18 +102,20 @@ export default async function aioReadiness(url, robotsText,page) {
   const feedScore = hasFeed ? 1 : 0;
 
   // G4
-  let robotsScore = 1;
-  let robotsOk = true;
-    if (/Disallow:\s*\/\s*$/i.test(robotsText)) {
-      robotsScore = 0;
-      robotsOk = false;
-    }
+  // let robotsScore = 1;
+  // let robotsOk = true;
+  //   if (/Disallow:\s*\/\s*$/i.test(robotsText)) {
+  //     robotsScore = 0;
+  //     robotsOk = false;
+  //   }
+
+  page.close()
 
 
 
-  const totalGScore = ((orgFieldScore +napScore +policyScore +faqScore +tocScore +mediaScore +productScore +feedScore +robotsScore)/9)*100;
+  const totalGScore = ((orgFieldScore +napScore +policyScore +faqScore +tocScore +mediaScore +productScore +feedScore )/8)*100;
 
-  const aioCompatible = totalGScore >= 75 && orgValid && productValid && robotsOk ? "Yes" : "No";
+  const aioCompatible = totalGScore >= 75 && orgValid && productValid  ? "Yes" : "No";
 
   report.G = {
     jsonLdScripts:jsonLdScripts,
@@ -131,7 +133,7 @@ export default async function aioReadiness(url, robotsText,page) {
     feedAvailability: feedScore,
     totalG3: (productScore + feedScore),
 
-    crawlFriendliness: robotsScore,
+    // crawlFriendliness: robotsScore,
 
     totalGScore:parseFloat(totalGScore.toFixed(0)),
     aioCompatibleBadge: aioCompatible,

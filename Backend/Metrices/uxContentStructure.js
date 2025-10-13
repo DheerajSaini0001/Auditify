@@ -539,6 +539,7 @@ export default async function evaluateMobileUX(url,page) {
     
     const checkInternalLinkingQualityScore = checkInternalLinkingQuality($,domain);
     const checkUserJourneyContinuityScore = checkUserJourneyContinuity($);
+    page.close()
 
     const Total = parseFloat((((checkNavigationClarityScore+checkBreadcrumbsScore+checkClickableLogoScore+checkMobileResponsivenessScore+checkParagraphLengthAndSpacingScore+checkFontStyleAndSizeConsistencyScore+checkContrastAndColorHarmonyScore+checkWhitespaceUsageScore+checkContentRelevanceScore+checkCallToActionClarityScore+checkMultimediaBalanceScore+checkInternalLinkingQualityScore+checkUserJourneyContinuityScore+checkErrorEmptyStateScore+checkInteractiveFeedbackScore+checkStickyNavigationScore+checkScrollDepthLogicScore+checkLoadingIndicatorsScore)/18)*100).toFixed(0));
 

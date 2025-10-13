@@ -8,17 +8,39 @@ import aioReadiness from "../Metrices/aioReadiness.js";
 import puppeteers from "../Tools/puppeteers.js";
 
 
-export default async function MetricesCalculation(url,data,robotsText) {
+export default async function MetricesCalculation(url,data) {
 
 const {browser,page} = await puppeteers();
 
-const technicalReport = await technicalMetrics(url,data,page);
-const seoReport = await seoMetrics(url,page);
-const accessibilityReport = await accessibilityMetrics(url,page);
-const securityReport = await securityCompliance(url,page);
-const uxReport = await uxContentStructure(url, page);
-const conversionReport = await conversionLeadFlow(url,page);
-const aioReport = await aioReadiness(url, robotsText,page);
+const [
+    page1, page2, page3, page4, page5, page6, page7
+  ] = await Promise.all([
+    browser.newPage(),
+    browser.newPage(),
+    browser.newPage(),
+    browser.newPage(),
+    browser.newPage(),
+    browser.newPage(),
+    browser.newPage()
+  ]);
+
+  const [
+    technicalReport,
+    seoReport,
+    accessibilityReport,
+    securityReport,
+    uxReport,
+    conversionReport,
+    aioReport
+  ] = await Promise.all([
+    technicalMetrics(url, data, page1),
+    seoMetrics(url, page2),
+    accessibilityMetrics(url, page3),
+    securityCompliance(url, page4),
+    uxContentStructure(url, page5),
+    conversionLeadFlow(url, page6),
+    aioReadiness(url, page7)
+  ]);
 browser.close();
 
   // console.log("Technical Report:", technicalReport)

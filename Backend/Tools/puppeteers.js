@@ -4,10 +4,12 @@ export default async function puppeteers() {
 let browser;
   try {
       browser = await puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"]
+      headless: false,
+      defaultViewport: null,
+      args: ["--no-sandbox", "--disable-setuid-sandbox","--start-maximized"]
   });
 
+  
   const page = await browser.newPage();
 
   await page.setUserAgent(

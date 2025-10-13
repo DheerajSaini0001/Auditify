@@ -2,6 +2,7 @@ import React, { useContext } from "react";
 import { ThemeContext } from "../ThemeContext";
 import { Check, X, AlertTriangle } from "lucide-react";
 import CircularProgress from "../Component/CircularProgress";
+import AuditDropdown from "../Component/AuditDropdown";
 
 export default function Conversion_Lead_Flow({ data }) {
   const { darkMode } = useContext(ThemeContext);
@@ -30,13 +31,7 @@ export default function Conversion_Lead_Flow({ data }) {
   const textColor = darkMode ? "text-white" : "text-black";
 
   // Check if any Conversion metric failed
-  const hasError =
-    data.Conversion_and_Lead_Flow.Primary_CTAs.Score === 0 ||
-    data.Conversion_and_Lead_Flow.Forms.Score === 0 ||
-    data.Conversion_and_Lead_Flow.Thank_You_or_Success_State.Score === 0 ||
-    data.Conversion_and_Lead_Flow.Tracking_Of_Form_Submits_or_Events.Score === 0 ||
-    data.Conversion_and_Lead_Flow.Contact_Info.Score === 0 ||
-    data.Conversion_and_Lead_Flow.Load_On_CRM_or_Webhook.Score === 0;
+
 
   return (
     <div
@@ -46,101 +41,119 @@ export default function Conversion_Lead_Flow({ data }) {
       <h1 className={`responsive text-heading-25 flex sm:gap-10 justify-center items-center text-3xl font-extrabold mb-6 text-center ${textColor}`}>
         Conversion Lead Flow
         <CircularProgress
-          value={data.Conversion_and_Lead_Flow.Conversion_and_Lead_Flow_Score_Total}
+          value={data.Conversion_and_Lead_Flow.Percentage}
           size={70}
           stroke={5}
         />
       </h1>
 
       <div
-        className={`w-full max-w-4xl p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500 hover:scale-105 transition-transform duration-300 ${cardBg}`}
+        className={`w-full max-w-4xl p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500  ${cardBg}`}
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
           <div className="flex justify-between items-center">
             <span className={textColor}>Primary (Call-to-Actions) CTAs</span>
             <ScoreBadge
-              score={data.Conversion_and_Lead_Flow.Primary_CTAs.Score}
+              score={data.Conversion_and_Lead_Flow.CTA_and_Forms.CTA_Visibility.Score}
               textGood="CTAs implemented"
               textBad="CTAs missing"
             />
           </div>
           <div className="flex justify-between items-center">
-            <span className={textColor}>Forms</span>
+            <span className={textColor}>CTA_Clarity</span>
             <ScoreBadge
-              score={data.Conversion_and_Lead_Flow.Forms.Score}
-              textGood="Forms functional"
-              textBad="Forms missing or broken"
+              score={data.Conversion_and_Lead_Flow.CTA_and_Forms.CTA_Clarity.Score}
+              textGood="CTAs implemented"
+              textBad="CTAs missing"
             />
           </div>
           <div className="flex justify-between items-center">
-            <span className={textColor}>Thank-You/Success State</span>
+            <span className={textColor}>CTA_Contrast</span>
             <ScoreBadge
-              score={data.Conversion_and_Lead_Flow.Thank_You_or_Success_State.Score}
-              textGood="Success page implemented"
-              textBad="Success page missing"
+              score={data.Conversion_and_Lead_Flow.CTA_and_Forms.CTA_Contrast.Score}
+              textGood="CTAs implemented"
+              textBad="CTAs missing"
             />
           </div>
           <div className="flex justify-between items-center">
-            <span className={textColor}>Tracking of Form Submits/Events</span>
+            <span className={textColor}>CTA_Crowding</span>
             <ScoreBadge
-              score={data.Conversion_and_Lead_Flow.Tracking_Of_Form_Submits_or_Events.Score}
-              textGood="Tracking implemented"
-              textBad="Tracking missing"
+              score={data.Conversion_and_Lead_Flow.CTA_and_Forms.CTA_Crowding.Score}
+              textGood="CTAs implemented"
+              textBad="CTAs missing"
             />
           </div>
           <div className="flex justify-between items-center">
-            <span className={textColor}>Contact Info</span>
+            <span className={textColor}>CTA_Flow_Alignment</span>
             <ScoreBadge
-              score={data.Conversion_and_Lead_Flow.Contact_Info.Score ?? 0}
-              textGood="Contact info present"
-              textBad="Contact info missing"
+              score={data.Conversion_and_Lead_Flow.CTA_and_Forms.CTA_Flow_Alignment.Score}
+              textGood="CTAs implemented"
+              textBad="CTAs missing"
             />
           </div>
           <div className="flex justify-between items-center">
-            <span className={textColor}>Load on CRM/Webhook</span>
+            <span className={textColor}>Form_Presence</span>
             <ScoreBadge
-              score={data.Conversion_and_Lead_Flow.Load_On_CRM_or_Webhook.Score}
-              textGood="Data flows to CRM"
-              textBad="CRM/Webhook integration missing"
+              score={data.Conversion_and_Lead_Flow.CTA_and_Forms.Form_Presence.Score}
+              textGood="CTAs implemented"
+              textBad="CTAs missing"
             />
           </div>
-        </div>
-
-        {/* Conditionally show error messages */}
-        {hasError && <hr className="text-black mt-3" />}
-        <div className="flex flex-col p-1 mt-2 gap-2">
-          {data.Conversion_and_Lead_Flow.Primary_CTAs.Score === 0 && (
-            <h1 className={`warn flex gap-2 items-center ${textColor}`}>
-              <AlertTriangle className="text-red-600" size={20} /> No prominent CTA found above the fold
-            </h1>
-          )}
-          {data.Conversion_and_Lead_Flow.Forms.Score === 0 && (
-            <h1 className={`warn flex gap-2 items-center ${textColor}`}>
-              <AlertTriangle className="text-red-600" size={20} /> Some forms on this page do not contain any input, textarea, or select elements.
-            </h1>
-          )}
-          {data.Conversion_and_Lead_Flow.Thank_You_or_Success_State.Score === 0 && (
-            <h1 className={`warn flex gap-2 items-center ${textColor}`}>
-              <AlertTriangle className="text-red-600" size={20} /> No 'Thank You' or success page link found
-            </h1>
-          )}
-          {data.Conversion_and_Lead_Flow.Tracking_Of_Form_Submits_or_Events.Score === 0 && (
-            <h1 className={`warn flex gap-2 items-center ${textColor}`}>
-              <AlertTriangle className="text-red-600" size={20} /> No tracking/analytics scripts found
-            </h1>
-          )}
-          {data.Conversion_and_Lead_Flow.Contact_Info.Score === 0 && (
-            <h1 className={`warn flex gap-2 items-center ${textColor}`}>
-              <AlertTriangle className="text-red-600" size={20} />Some Contact info are missing
-            </h1>
-          )}
-          {data.Conversion_and_Lead_Flow.Load_On_CRM_or_Webhook.Score === 0 && (
-            <h1 className={`warn flex gap-2 items-center ${textColor}`}>
-              <AlertTriangle className="text-red-600" size={20} />  No CRM/contact forms found
-            </h1>
-          )}
-        </div>
+          <div className="flex justify-between items-center">
+            <span className={textColor}>Form_Length</span>
+            <ScoreBadge
+              score={data.Conversion_and_Lead_Flow.CTA_and_Forms.Form_Length.Score}
+              textGood="CTAs implemented"
+              textBad="CTAs missing"
+            />
+          </div>
+          <div className="flex justify-between items-center">
+            <span className={textColor}>Required_vs_Optional_Fields</span>
+            <ScoreBadge
+              score={data.Conversion_and_Lead_Flow.CTA_and_Forms.Required_vs_Optional_Fields.Score}
+              textGood="CTAs implemented"
+              textBad="CTAs missing"
+            />
+          </div>
+          <div className="flex justify-between items-center">
+            <span className={textColor}>Inline_Validation</span>
+            <ScoreBadge
+              score={data.Conversion_and_Lead_Flow.CTA_and_Forms.Inline_Validation.Score}
+              textGood="CTAs implemented"
+              textBad="CTAs missing"
+            />
+          </div>
+          <div className="flex justify-between items-center">
+            <span className={textColor}>Submit_Button_Clarity</span>
+            <ScoreBadge
+              score={data.Conversion_and_Lead_Flow.CTA_and_Forms.Submit_Button_Clarity.Score}
+              textGood="CTAs implemented"
+              textBad="CTAs missing"
+            />
+          </div>
+          <div className="flex justify-between items-center">
+            <span className={textColor}>AutoFocus_Field</span>
+            <ScoreBadge
+              score={data.Conversion_and_Lead_Flow.CTA_and_Forms.AutoFocus_Field.Score}
+              textGood="CTAs implemented"
+              textBad="CTAs missing"
+            />
+          </div>
+          <div className="flex justify-between items-center">
+            <span className={textColor}>MultiStep_Form_Progress</span>
+            <ScoreBadge
+              score={data.Conversion_and_Lead_Flow.CTA_and_Forms.MultiStep_Form_Progress.Score}
+              textGood="CTAs implemented"
+              textBad="CTAs missing"
+            />
+          </div>
+      
+        </div>   
       </div>
+      <AuditDropdown items={data.Conversion_and_Lead_Flow.Passed} title="Passed Audits" darkMode={darkMode} />
+      <AuditDropdown items={data.Conversion_and_Lead_Flow.Warning} title="Warning" darkMode={darkMode} />
+      <AuditDropdown items={data.Conversion_and_Lead_Flow.Improvements} title="Failed Audits" darkMode={darkMode} />
+     
     </div>
   );
 }

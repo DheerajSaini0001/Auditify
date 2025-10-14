@@ -552,7 +552,7 @@ export default async function aioReadiness(url,page) {
   const abTestingReady = checkABTestingReady($)
   const userFeedbackLoopsPresent = checkUserFeedbackLoops($)
 
-  const AIO_Compatibility_Score =(structuredData * 3 + metadataComplete * 2 + apiDataAccess * 2 + fastPageLoad * 1.5 + contentNLPFriendly * 1.5 + internalLinkingAIFriendly * 1) / 11; 
+  const AIO_Compatibility_Score =parseFloat(((structuredData * 3 + metadataComplete * 2 + apiDataAccess * 2 + fastPageLoad * 1.5 + contentNLPFriendly * 1.5 + internalLinkingAIFriendly * 1) / 11).toFixed(0));
   const AIO_Compatibility_Badge = AIO_Compatibility_Score >= 0.7 ? "Yes" : "No";
 
   const Total = parseFloat((((structuredData+contentNLPFriendly+fastPageLoad+apiDataAccess+keywordsEntitiesAnnotated+metadataComplete+contentUpdatedRegularly+dynamicContentAvailable+behaviorTrackingImplemented+segmentationProfilingReady+internalLinkingAIFriendly+duplicateContentDetectionReady+multilingualSupport+eventGoalTrackingIntegrated+abTestingReady+userFeedbackLoopsPresent)/16)*100).toFixed(0))
@@ -856,11 +856,11 @@ if (userFeedbackLoopsPresent === 0) {
 
   const actualPercentage = parseFloat((((structuredData+contentNLPFriendly+fastPageLoad+apiDataAccess+keywordsEntitiesAnnotated+metadataComplete+contentUpdatedRegularly+dynamicContentAvailable+behaviorTrackingImplemented+segmentationProfilingReady+internalLinkingAIFriendly+duplicateContentDetectionReady+multilingualSupport+eventGoalTrackingIntegrated+abTestingReady+userFeedbackLoopsPresent)/16)*100).toFixed(0))
 
-  console.log(actualPercentage);
-  console.log(warning);
-  console.log(passed);
-  console.log(Total);
-  console.log(improvements);
+  // console.log(actualPercentage);
+  // console.log(warning);
+  // console.log(passed);
+  // console.log(Total);
+  // console.log(improvements);
 
   return {
     AIO_Compatibility_Badge,

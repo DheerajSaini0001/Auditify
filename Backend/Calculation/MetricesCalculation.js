@@ -6,15 +6,22 @@ import uxContentStructure from "../Metrices/uxContentStructure.js";
 import conversionLeadFlow from "../Metrices/conversionLeadFlow.js";
 import aioReadiness from "../Metrices/aioReadiness.js";
 import puppeteers from "../Tools/puppeteers.js";
-
+let lastBrowserInstance = null;
 
 export default async function MetricesCalculation(url,data) {
+  
+    if (lastBrowserInstance) {
+    console.log("🛑 Closing previous browser instance...");
+      if(lastBrowserInstance.isConnected()) {
+        await lastBrowserInstance.close();
+      }
+    lastBrowserInstance = null;
+  }
 
 const {browser,page} = await puppeteers();
+lastBrowserInstance = browser;
 
-const [
-    page1, page2, page3, page4, page5, page6, page7
-  ] = await Promise.all([
+const [page1, page2, page3, page4, page5, page6, page7] = await Promise.all([
     browser.newPage(),
     browser.newPage(),
     browser.newPage(),

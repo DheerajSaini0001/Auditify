@@ -11,7 +11,6 @@ export default function Raw(url, MetricesCalculation_Data, Overall_Data,timeTake
     AIO_Compatibility_Badge: MetricesCalculation_Data.aioReport.AIO_Compatibility_Badge,
     Section_Score: Overall_Data.sectionScores,
     Technical_Performance: {
-      Core_Web_Vitals: {
         LCP:{
           Score: MetricesCalculation_Data.technicalReport.coreWebVitals.lcpScore,
           Value: MetricesCalculation_Data.technicalReport.coreWebVitals.lcpValue,
@@ -52,9 +51,6 @@ export default function Raw(url, MetricesCalculation_Data, Overall_Data,timeTake
           Value: MetricesCalculation_Data.technicalReport.coreWebVitals.inpValue,
           Parameter:'Set 1 if INP ≤ 0.2s, otherwise set 0'
         },
-        Core_Web_Vitals_Total_Score: MetricesCalculation_Data.technicalReport.coreWebVitals.coreWebVitalsTotal,
-      },
-      Delivery_and_Render: {
         Compression:{
           Score: MetricesCalculation_Data.technicalReport.deliveryAndRender.compressionScore,
           Parameter:'Set 1 if "gzip" or "brotli" compression is enabled, otherwise set 0 if it’s disabled or missing.'
@@ -76,9 +72,6 @@ export default function Raw(url, MetricesCalculation_Data, Overall_Data,timeTake
           Score: MetricesCalculation_Data.technicalReport.deliveryAndRender.httpsScore,
           Parameter:'Set 1 if HTTP/2 is enabled, otherwise set 0 if not enabled'
         },
-        Delivery_and_Render_Total_Score: MetricesCalculation_Data.technicalReport.deliveryAndRender.deliveryAndRenderTotal,
-      },
-      Crawlability_and_Hygiene: {
         Sitemap:{
           Score: MetricesCalculation_Data.technicalReport.crawlabilityAndHygiene.sitemapScore,
           Parameter:'Set 1 if /sitemap.xml exists, otherwise set 0'
@@ -101,12 +94,9 @@ export default function Raw(url, MetricesCalculation_Data, Overall_Data,timeTake
           Value: MetricesCalculation_Data.technicalReport.crawlabilityAndHygiene.hops,
           Parameter:'Set 1 if ≤ 1 hop, otherwise set 0'
         },
-        Crawlability_and_Hygiene_Total_Score: MetricesCalculation_Data.technicalReport.crawlabilityAndHygiene.crawlabilityAndHygieneTotal,
-      },
       Percentage: MetricesCalculation_Data.technicalReport.actualPercentage,
     },
     On_Page_SEO: {
-      Essentials: {
         Title: {
           Title: MetricesCalculation_Data.seoReport.essentials.title,
           Title_Exist : MetricesCalculation_Data.seoReport.essentials.titleExistanceScore,
@@ -131,9 +121,6 @@ export default function Raw(url, MetricesCalculation_Data, Overall_Data,timeTake
           Score: MetricesCalculation_Data.seoReport.essentials.canonicalScore,
           Parameter:'1 if canonical tag exists and matches page URL, else 0'
         },
-        Essentials_Total_Score: MetricesCalculation_Data.seoReport.essentials.essentialsTotal,
-      },
-      Media_and_Semantics: {
         H1: {
           H1_Count: MetricesCalculation_Data.seoReport.mediaAndSemantics.h1Count,
           H1_Count_Score: MetricesCalculation_Data.seoReport.mediaAndSemantics.h1CountScore,
@@ -181,9 +168,6 @@ export default function Raw(url, MetricesCalculation_Data, Overall_Data,timeTake
           Footer_Score: MetricesCalculation_Data.seoReport.mediaAndSemantics.footerScore,
           Parameter: "1 if tag exists, else 0"
         },
-        Media_and_Semantics_Total_Score: MetricesCalculation_Data.seoReport.mediaAndSemantics.mediaAndSemanticsTotal
-      },
-      Structure_and_Uniqueness: {
         Duplicate_Content:{
           Score: MetricesCalculation_Data.seoReport.structureAndUniqueness.dupScore,
           Parameter:'1 if duplication ≤ 75%, else 0'
@@ -202,8 +186,6 @@ export default function Raw(url, MetricesCalculation_Data, Overall_Data,timeTake
           Score: MetricesCalculation_Data.seoReport.structureAndUniqueness.paginationScore,
           Parameter:'1 if pagination links or rel=next/prev exist, else 0'
         },
-        Structure_and_Uniqueness_Total_Score: MetricesCalculation_Data.seoReport.structureAndUniqueness.structureAndUniquenessTotal,
-      },
       Percentage: MetricesCalculation_Data.seoReport.actualPercentage,
     },
     Accessibility: {
@@ -464,7 +446,6 @@ export default function Raw(url, MetricesCalculation_Data, Overall_Data,timeTake
       Percentage: MetricesCalculation_Data.uxReport.actualPercentage,
     },
     Conversion_and_Lead_Flow: {
-      CTA_and_Forms: {
         CTA_Visibility: {
           Score: MetricesCalculation_Data.conversionReport.checkCTAsScore,
           Parameter: "1 if at least one prominent CTA is present, else 0"
@@ -512,9 +493,7 @@ export default function Raw(url, MetricesCalculation_Data, Overall_Data,timeTake
         MultiStep_Form_Progress: {
           Score: MetricesCalculation_Data.conversionReport.checkMultiStepFormProgressScore,
           Parameter: "1 if progress indicators exist in multi-step forms, else 0"
-        }
-      },
-      Trust_and_SocialProof: {
+        },
         Testimonials: {
           Score: MetricesCalculation_Data.conversionReport.checkTestimonialsScore,
           Parameter: "1 if testimonials are visible, else 0"
@@ -534,9 +513,7 @@ export default function Raw(url, MetricesCalculation_Data, Overall_Data,timeTake
         Case_Studies_Accessibility: {
           Score: MetricesCalculation_Data.conversionReport.checkCaseStudiesAccessibilityScore,
           Parameter: "1 if case studies are accessible, else 0"
-        }
-      },
-      Lead_Funnel: {
+        },
         Exit_Intent_Triggers: {
           Score: MetricesCalculation_Data.conversionReport.checkExitIntentTriggersScore,
           Parameter: "1 if exit-intent triggers exist, else 0"
@@ -552,9 +529,7 @@ export default function Raw(url, MetricesCalculation_Data, Overall_Data,timeTake
         Chatbot_Presence: {
           Score: MetricesCalculation_Data.conversionReport.checkChatbotPresenceScore,
           Parameter: "1 if chatbot is present, else 0"
-        }
-      },
-      UX_and_Interaction: {
+        },
         Interactive_Elements: {
           Score: MetricesCalculation_Data.conversionReport.checkInteractiveElementsScore,
           Parameter: "1 if interactive elements are present, else 0"
@@ -594,12 +569,10 @@ export default function Raw(url, MetricesCalculation_Data, Overall_Data,timeTake
         MultiChannel_FollowUp: {
           Score: MetricesCalculation_Data.conversionReport.checkMultiChannelFollowUpScore,
           Parameter: "1 if multi-channel follow-up options exist, else 0"
-        }
-      },
+        },
       Percentage: MetricesCalculation_Data.conversionReport.actualPercentage,
     },
     AIO_Readiness: {
-      Technical_AI_Foundation: {
         Structured_Data: {
           Score: MetricesCalculation_Data.aioReport.structuredData,
           Parameter: "1 if valid structured data (schema.org/JSON-LD) is implemented, else 0"
@@ -623,9 +596,7 @@ export default function Raw(url, MetricesCalculation_Data, Overall_Data,timeTake
         Multilingual_Support: {
           Score: MetricesCalculation_Data.aioReport.multilingualSupport,
           Parameter: "1 if hreflang and multilingual versions exist, else 0"
-        }
-      },
-      Content_AI_Optimization: {
+        },
         Content_NLP_Friendly: {
           Score: MetricesCalculation_Data.aioReport.contentNLPFriendly,
           Parameter: "1 if content uses natural, entity-rich language and NLP-friendly structure, else 0"
@@ -645,9 +616,7 @@ export default function Raw(url, MetricesCalculation_Data, Overall_Data,timeTake
         Duplicate_Content_Detection_Ready: {
           Score: MetricesCalculation_Data.aioReport.duplicateContentDetectionReady,
           Parameter: "1 if duplicate content detection mechanisms are active, else 0"
-        }
-      },
-      Data_Intelligence_Integration: {
+        },
         Behavior_Tracking_Implemented: {
           Score: MetricesCalculation_Data.aioReport.behaviorTrackingImplemented,
           Parameter: "1 if user behavior tracking is implemented (e.g., analytics), else 0"
@@ -667,9 +636,7 @@ export default function Raw(url, MetricesCalculation_Data, Overall_Data,timeTake
         User_Feedback_Loops_Present: {
           Score: MetricesCalculation_Data.aioReport.userFeedbackLoopsPresent,
           Parameter: "1 if feedback collection systems (surveys, reviews) are active, else 0"
-        }
-      },
-      AI_Content_Delivery: {
+        },
         Dynamic_Personalization: {
           Score: MetricesCalculation_Data.aioReport.dynamicContentAvailable,
           Parameter: "1 if dynamic content adjusts based on user segments or behavior, else 0"
@@ -681,8 +648,7 @@ export default function Raw(url, MetricesCalculation_Data, Overall_Data,timeTake
         AI_Friendly_Structure: {
           Score: MetricesCalculation_Data.aioReport.internalLinkingAIFriendly,
           Parameter: "1 if website structure aids AI comprehension and crawling, else 0"
-        }
-      },
+        },
       Percentage: MetricesCalculation_Data.aioReport.actualPercentage,
     }
   }

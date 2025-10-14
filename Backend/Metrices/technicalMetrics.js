@@ -16,7 +16,7 @@ function actualCalculation(observed,good,poor,weight) {
   return parseFloat((score * weight).toFixed(0));
 }
 
-export default async function technicalMetrics(url,data,page) {
+export default async function technicalMetrics(url,data,page,response,browser) {
 
   // Technical Performance (Core Web Vitals)
   const lcpValue = parseFloat(((data?.lighthouseResult?.audits?.["largest-contentful-paint"]?.numericValue || 0)/1000).toFixed(1)); 
@@ -94,8 +94,6 @@ export default async function technicalMetrics(url,data,page) {
   }
 
   // Technical Performance (Crawlability & Hygiene)
-  const response = await page.goto(url, { waitUntil: "networkidle2",timeout: 240000 });
-
   const chain = response.request().redirectChain();
   const hops = chain.length; 
   const redirectScore = hops <= 1 ? 1 : 0;
@@ -153,6 +151,8 @@ export default async function technicalMetrics(url,data,page) {
   const sitemapUrl = new URL("/sitemap.xml", url).href;
   const sitemapPage = await browser.newPage();
   const response = await sitemapPage.goto(sitemapUrl);
+  sitemapPage.close();
+  // const response = await page.goto(sitemapUrl);
   sitemapScore = response.status() === 200 ? 1 : 0;
   }
   catch {
@@ -162,15 +162,15 @@ export default async function technicalMetrics(url,data,page) {
   let robotsScore = 0;
   try {
   const robotsUrl = new URL("/robots.txt", url).href;
-  const robotsPage = await browser.newPage();;
+  const robotsPage = await browser.newPage();
   const response = await robotsPage.goto(robotsUrl);
+  robotsPage.close();
+  // const response = await page.goto(robotsUrl);
   robotsScore = response.status() === 200 ? 1 : 0;
   }
   catch {
   robotsScore = 0; 
   }
-  
-  page.close()
 
   const crawlabilityAndHygieneTotal = sitemapScore + robotsScore + structuredDataScore + brokenScore + redirectScore
   

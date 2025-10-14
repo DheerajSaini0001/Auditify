@@ -1,6 +1,15 @@
 import AxePuppeteer from "@axe-core/puppeteer";
 
-export default async function accessibilityMetrics(url,page) {
+export default async function accessibilityMetrics(url,browser) {
+
+  const page = await browser.newPage();
+
+  await page.setUserAgent(
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
+    "(KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+  );
+
+  await page.setExtraHTTPHeaders({ "Accept-Language": "en-US,en;q=0.9" });
 
   await page.setRequestInterception(true);
   page.on("request", (request) => {
@@ -13,6 +22,7 @@ export default async function accessibilityMetrics(url,page) {
   });
 
   await page.goto(url, {waitUntil: "networkidle2", timeout: 400000});
+  await page.waitForSelector("body", { timeout: 240000 });
 
   let results;
   try {

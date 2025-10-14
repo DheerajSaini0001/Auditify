@@ -1,10 +1,11 @@
 import puppeteer from "puppeteer";
+import * as cheerio from "cheerio";
 
-export default async function puppeteers() {
+export default async function puppeteers(url) {
 let browser;
   try {
       browser = await puppeteer.launch({
-      headless: true,
+      headless: false,
       defaultViewport: null,
       args: ["--no-sandbox", "--disable-setuid-sandbox","--start-maximized"]
   });
@@ -19,7 +20,13 @@ let browser;
 
   await page.setExtraHTTPHeaders({ "Accept-Language": "en-US,en;q=0.9" });
 
-  return {browser,page}; 
+  const response = await page.goto(url, { waitUntil: "networkidle2",timeout: 240000 });
+  await page.waitForSelector("body", { timeout: 240000 });
+
+  const htmlData = await page.content();
+  const $ = cheerio.load(htmlData);
+
+  return {browser,page,response,$}; 
 
   } catch (error) {
     if (browser) await browser.close();

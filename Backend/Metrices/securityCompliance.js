@@ -818,9 +818,7 @@ async function checkDeprecatedAPIs(page) {
   return deprecatedAPIUsed ? 0 : 1;
 }
 
-export default async function securityCompliance(url,page) {
-
-  const response = await page.goto(url, { waitUntil: "networkidle2", timeout: 240000 });
+export default async function securityCompliance(url,page,response) {
 
   // Security/Compliance (HTTPS / SSL)
   const checkHTTPSScore = checkHTTPS(url);
@@ -870,7 +868,6 @@ export default async function securityCompliance(url,page) {
   const checkNotificationRequestScore = await checkNotificationRequest(page);
   const checkThirdPartyCookiesScore = await checkThirdPartyCookies(url,page);
   const checkDeprecatedAPIsScore = await checkDeprecatedAPIs(page);
-  page.close()
 
   // Total Score Calculation
 const Total = parseFloat((((checkHTTPSScore+checkSSLScore+checkSSLCertificateExpiryScore+checkHSTSScore+checkTLSVersionScore+checkXFrameOptionsScore+checkCSPScore+checkXContentTypeOptionsScore+checkCookiesSecureScore+checkCookiesHttpOnlyScore+cookieConsentScore+privacyPolicyScore+safeBrowsingScore+blacklistScore+malwareScanScore+xssVulnerabilityScore+sqliExposureScore+formsUseHTTPSScore+checkGDPRCCPAScore+checkDataCollectionScore+checkAdminPanelPublicScore+weakDefaultCredsScore+mfaEnabledScore) / 23) * 100).toFixed(0));

@@ -1,5 +1,3 @@
-import * as cheerio from "cheerio";
-
 // Artificial Intelligence Optimization Readiness (Technical Performance (AI-specific metrics))
 function checkStructuredData($) {
     const selector = 'script[type="application/ld+json"]';
@@ -518,12 +516,7 @@ function checkUserFeedbackLoops($) {
     return score;
 }
 
-export default async function aioReadiness(url,page) {
-
-  await page.goto(url, {waitUntil: "networkidle2",timeout: 240000});
-  await page.waitForSelector("body", { timeout: 240000 });
-  const htmlData = await page.content();
-  const $ = cheerio.load(htmlData);
+export default async function aioReadiness(url,$) {
   
   // Artificial Intelligence Optimization Readiness (Technical Performance (AI-specific metrics))
   const structuredData = checkStructuredData($)

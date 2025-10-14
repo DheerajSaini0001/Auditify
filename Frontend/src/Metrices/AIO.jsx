@@ -151,7 +151,7 @@ export default function AIO({ data }) {
           <div className="flex justify-between items-center">
             <span className={textColor}>Consistent NAP</span>
             <ScoreBadge
-              score={data.AIO_Readiness.Data_Intelligence_Integration.Behavior_Tracking_Segmentation_Profiling_ReadyImplemented.Score}
+              score={data.AIO_Readiness.Data_Intelligence_Integration.Segmentation_Profiling_Ready.Score}
               textGood="NAP consistent"
               textBad="NAP inconsistent"
             />
@@ -160,7 +160,7 @@ export default function AIO({ data }) {
           <div className="flex justify-between items-center">
             <span className={textColor}>Consistent NAP</span>
             <ScoreBadge
-              score={data.AIO_Readiness.Data_Intelligence_Integration.Behavior_Tracking_ImEvent_Goal_Tracking_Integratedplemented.Score}
+              score={data.AIO_Readiness.Data_Intelligence_Integration.Event_Goal_Tracking_Integrated.Score}
               textGood="NAP consistent"
               textBad="NAP inconsistent"
             />

@@ -28,7 +28,7 @@ export default function Dashboard2({ data }) {
     { name: "Security/Compliance", value: data.Security_or_Compliance.Percentage },
     { name: "UX & Content", value: data.UX_or_Content_Structure.Percentage },
     { name: "Conversion & Lead Flow", value: data.Conversion_and_Lead_Flow.Percentage },
-    { name: "AIO Readiness", value: data.AIO_Readiness.AIO_Readiness_Score_Total },
+    { name: "AIO Readiness", value: data.AIO_Readiness.Percentage },
   ];
 
   const sectionLabels = {

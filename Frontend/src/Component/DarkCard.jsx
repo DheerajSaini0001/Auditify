@@ -205,7 +205,7 @@ export default function DarkCard() {
               <section id="security" className="scroll-mt-20"><Security_Compilance data={result} /></section>
               <section id="ux" className="scroll-mt-20"><UX_Content_Structure data={result} /></section>
            <section id="conversion" className="scroll-mt-20"><Conversion_Lead_Flow data={result} /></section>
-            {/* <section id="aio" className="scroll-mt-20"><AIO data={result} /></section> */}
+            <section id="aio" className="scroll-mt-20"><AIO data={result} /></section>
               <section id="Rawdata" className="scroll-mt-20"><RawData data={result} /></section> 
             </div>
           </div>

@@ -212,11 +212,11 @@ export default function AIO({ data }) {
          
           
         </div>
+
+      </div>
 <Auditdropdown items={data.AIO_Readiness.Passed} darkMode={darkMode} title="Passed Audit" />
 <Auditdropdown items={data.AIO_Readiness.Warning} darkMode={darkMode} title="Warnings" />
 <Auditdropdown items={data.AIO_Readiness.Improvements} darkMode={darkMode} title="Failed Audits" />
-
-      </div>
     </div>
   );
 }

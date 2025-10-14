@@ -12,7 +12,7 @@ export default async function accessibilityMetrics(url,page) {
     }
   });
 
-  await page.goto(url, {waitUntil: "networkidle2", timeout: 300000});
+  await page.goto(url, {waitUntil: "networkidle2", timeout: 400000});
 
   let results;
   try {

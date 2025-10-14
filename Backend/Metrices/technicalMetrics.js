@@ -109,6 +109,15 @@ export default async function technicalMetrics(url,data,page) {
     return scripts.length > 0 ? 1 : 0;
   });
 
+  const structuredData = await page.evaluate(() => {
+    const scripts = Array.from(document.querySelectorAll('script[type="application/ld+json"]'))
+    .map(el => {
+        try { return JSON.parse(el.innerText); } catch { return null; }
+      })
+      .filter(Boolean)
+    return scripts
+  });
+
   const links = await page.$$eval("a[href]", (anchors) =>
     anchors
       .map((a) => a.href)
@@ -535,6 +544,7 @@ const actualPercentage = actuallcpScore + actualtbtScore + actualclsScore + actu
     coreWebVitals,
     deliveryAndRender,
     crawlabilityAndHygiene,
+    structuredData,
     actualPercentage,warning,
     passed,
     Total,improvements

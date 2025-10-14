@@ -2,13 +2,13 @@
 export default function Metrices(url, MetricesCalculation_Data, Overall_Data,timeTaken,device) {
 
   const metrices = {
-    Schema:MetricesCalculation_Data.aioReport.G.jsonLdScripts,
+    Schema:MetricesCalculation_Data.technicalReport.structuredData,
     Device:device,
     Time_Taken:timeTaken,
     Site: url,
     Score: Overall_Data.totalScore,
     Grade: Overall_Data.grade,
-    AIO_Compatibility_Badge: MetricesCalculation_Data.aioReport.G.aioCompatibleBadge,
+    AIO_Compatibility_Badge: MetricesCalculation_Data.aioReport.AIO_Compatibility_Badge,
     Section_Score: Overall_Data.sectionScores,
     // Top_Fixes: Overall_Data.topFixes,
     // recommendations: Overall_Data.recommendations,
@@ -624,57 +624,97 @@ export default function Metrices(url, MetricesCalculation_Data, Overall_Data,tim
       Improvements: MetricesCalculation_Data.conversionReport.improvements
     },
     AIO_Readiness: {
-      Entity_and_Organization_Clarity: {
-        Organization_JSON_LD_Score:{
-          Score: MetricesCalculation_Data.aioReport.G.orgFields,
-          Parameter:'Checks if an Organization JSON-LD exists with ≥75% of key fields ("name", "logo", "url", "contactPoint", "address", "sameAs")'
+      Technical_AI_Foundation: {
+        Structured_Data: {
+          Score: MetricesCalculation_Data.aioReport.structuredData,
+          Parameter: "1 if valid structured data (schema.org/JSON-LD) is implemented, else 0"
         },
-        Consistent_NAP:{
-          Score: MetricesCalculation_Data.aioReport.G.napConsistency,
-          Parameter:'Check ("phones", "emails", "addresses") present in ("header", "footer", "body")'
+        Metadata_Complete: {
+          Score: MetricesCalculation_Data.aioReport.metadataComplete,
+          Parameter: "1 if metadata (title, description, OG/Twitter tags) is complete, else 0"
         },
-        Humans_or_Policies:{
-          Score: MetricesCalculation_Data.aioReport.G.policies,
-          Parameter:'Checks for key policy pages ("About", "Contact", "Privacy", "Terms", "Returns and Shipping" if e-commerce)'
+        Fast_Page_Load: {
+          Score: MetricesCalculation_Data.aioReport.fastPageLoad,
+          Parameter: "1 if page load time is under 2s, else 0"
         },
-        Total_Score_G1: MetricesCalculation_Data.aioReport.G.totalG1,
+        API_Data_Access: {
+          Score: MetricesCalculation_Data.aioReport.apiDataAccess,
+          Parameter: "1 if secure and documented API endpoints exist, else 0"
+        },
+        Dynamic_Content_Available: {
+          Score: MetricesCalculation_Data.aioReport.dynamicContentAvailable,
+          Parameter: "1 if dynamic or interactive content is present, else 0"
+        },
+        Multilingual_Support: {
+          Score: MetricesCalculation_Data.aioReport.multilingualSupport,
+          Parameter: "1 if hreflang and multilingual versions exist, else 0"
+        }
       },
-      Content_Answerability_and_Structure: {
-        FAQ_or_How_To_JSON_LD:{
-          Score: MetricesCalculation_Data.aioReport.G.faqJsonLd,
-          Parameter:'Checks for FAQPage or HowTo JSON-LD schemas'
+      Content_AI_Optimization: {
+        Content_NLP_Friendly: {
+          Score: MetricesCalculation_Data.aioReport.contentNLPFriendly,
+          Parameter: "1 if content uses natural, entity-rich language and NLP-friendly structure, else 0"
         },
-        Section_Anchors_or_TOC:{
-          Score: MetricesCalculation_Data.aioReport.G.sectionAnchors,
-          Parameter:'Checks if any "H1–H2-H3" headings have IDs'
+        Keywords_Entities_Annotated: {
+          Score: MetricesCalculation_Data.aioReport.keywordsEntitiesAnnotated,
+          Parameter: "1 if entities and keywords are annotated with schema or metadata, else 0"
         },
-        Descriptive_Media_Captions_or_Figcaptions:{
-          Score: MetricesCalculation_Data.aioReport.G.mediaCaptions,
-          Parameter:'Counts images with <figcaption>'
+        Content_Updated_Regularly: {
+          Score: MetricesCalculation_Data.aioReport.contentUpdatedRegularly,
+          Parameter: "1 if website content is updated frequently, else 0"
         },
-        Total_Score_G2: MetricesCalculation_Data.aioReport.G.totalG2,
+        Internal_Linking_AI_Friendly: {
+          Score: MetricesCalculation_Data.aioReport.internalLinkingAIFriendly,
+          Parameter: "1 if internal links are structured and contextually relevant, else 0"
+        },
+        Duplicate_Content_Detection_Ready: {
+          Score: MetricesCalculation_Data.aioReport.duplicateContentDetectionReady,
+          Parameter: "1 if duplicate content detection mechanisms are active, else 0"
+        }
       },
-      Product_or_Inventory_Schema_and_Feeds: {
-        Correct_Schema_Types:{
-          Score: MetricesCalculation_Data.aioReport.G.productSchemas,
-          Parameter:'Checks for ("Product", "Vehicle", "Offer", "AggregateRating") JSON-LD schemas existence'
+      Data_Intelligence_Integration: {
+        Behavior_Tracking_Implemented: {
+          Score: MetricesCalculation_Data.aioReport.behaviorTrackingImplemented,
+          Parameter: "1 if user behavior tracking is implemented (e.g., analytics), else 0"
         },
-        Feed_Availability:{
-          Score: MetricesCalculation_Data.aioReport.G.feedAvailability,
-          Parameter:'Checks for RSS, Atom, or JSON feeds'
+        Segmentation_Profiling_Ready: {
+          Score: MetricesCalculation_Data.aioReport.segmentationProfilingReady,
+          Parameter: "1 if audience segmentation and profiling are in place, else 0"
         },
-        Total_Score_G3: MetricesCalculation_Data.aioReport.G.totalG3,
+        Event_Goal_Tracking_Integrated: {
+          Score: MetricesCalculation_Data.aioReport.eventGoalTrackingIntegrated,
+          Parameter: "1 if event or goal tracking is active, else 0"
+        },
+        AB_Testing_Ready: {
+          Score: MetricesCalculation_Data.aioReport.abTestingReady,
+          Parameter: "1 if A/B testing setup exists, else 0"
+        },
+        User_Feedback_Loops_Present: {
+          Score: MetricesCalculation_Data.aioReport.userFeedbackLoopsPresent,
+          Parameter: "1 if feedback collection systems (surveys, reviews) are active, else 0"
+        }
       },
-      Crawl_Friendliness_for_Knowledge_Agents: {
-        Robots_Allowlist:{
-          Score: MetricesCalculation_Data.aioReport.G.crawlFriendliness,
-          Parameter:'Checks if "robots.txt" blocks all crawling (Disallow: /)'
+      AI_Content_Delivery: {
+        Dynamic_Personalization: {
+          Score: MetricesCalculation_Data.aioReport.dynamicContentAvailable,
+          Parameter: "1 if dynamic content adjusts based on user segments or behavior, else 0"
         },
-        Total_Score_G4: MetricesCalculation_Data.aioReport.G.crawlFriendliness,
+        AI_Content_Distribution: {
+          Score: MetricesCalculation_Data.aioReport.apiDataAccess,
+          Parameter: "1 if content delivery through APIs or feeds is available, else 0"
+        },
+        AI_Friendly_Structure: {
+          Score: MetricesCalculation_Data.aioReport.internalLinkingAIFriendly,
+          Parameter: "1 if website structure aids AI comprehension and crawling, else 0"
+        }
       },
-      AIO_Readiness_Score_Total: MetricesCalculation_Data.aioReport.G.totalGScore,
+      Percentage: MetricesCalculation_Data.aioReport.actualPercentage,
+      Warning: MetricesCalculation_Data.aioReport.warning,
+      Passed: MetricesCalculation_Data.aioReport.passed,
+      Total: MetricesCalculation_Data.aioReport.Total,
+      Improvements: MetricesCalculation_Data.aioReport.improvements
     }
-  };
+  }
+return metrices;
 
-  return metrices;
-}
+};

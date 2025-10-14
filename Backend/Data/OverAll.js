@@ -7,7 +7,7 @@ export default function OverAll(MetricesCalculation_Data) {
   const totalD = MetricesCalculation_Data.securityReport.actualPercentage || 0;
   const totalE = MetricesCalculation_Data.uxReport.actualPercentage || 0;
   const totalF = MetricesCalculation_Data.conversionReport.actualPercentage || 0;
-  const totalG = MetricesCalculation_Data.aioReport.G.totalGScore || 0;
+  const totalG = MetricesCalculation_Data.aioReport.actualPercentage || 0;
 
   const scores = [
   { name: "Technical Performance", score: totalA },

@@ -2,6 +2,7 @@ import React, { useContext } from "react";
 import { ThemeContext } from "../ThemeContext";
 import { Check, X, AlertTriangle } from "lucide-react";
 import CircularProgress from "../Component/CircularProgress";
+import Auditdropdown from "../Component/Auditdropdown";
 
 export default function AIO({ data }) {
   const { darkMode } = useContext(ThemeContext);
@@ -31,24 +32,6 @@ export default function AIO({ data }) {
 
   const textColor = darkMode ? "text-white" : "text-black";
 
-  // Determine if any score failed
-  const hasError1 =
-    data.AIO_Readiness.Entity_and_Organization_Clarity.Organization_JSON_LD_Score.Score === 0 ||
-    data.AIO_Readiness.Entity_and_Organization_Clarity.Consistent_NAP.Score === 0 ||
-    data.AIO_Readiness.Entity_and_Organization_Clarity.Humans_or_Policies.Score === 0 ;
-    const hasError2 =
-    data.AIO_Readiness.Content_Answerability_and_Structure.FAQ_or_How_To_JSON_LD.Score === 0 ||
-    data.AIO_Readiness.Content_Answerability_and_Structure.Section_Anchors_or_TOC.Score === 0 ||
-    data.AIO_Readiness.Content_Answerability_and_Structure.Descriptive_Media_Captions_or_Figcaptions.Score === 0;
-
-    const hasError3=
-    data.AIO_Readiness.Product_or_Inventory_Schema_and_Feeds.Correct_Schema_Types.Score === 0 ||
-    data.AIO_Readiness.Product_or_Inventory_Schema_and_Feeds.Feed_Availability.Score === 0;
-
-    const hasError4=
-    data.AIO_Readiness.Crawl_Friendliness_for_Knowledge_Agents.Robots_Allowlist.Score === 0;
-    
-
   return (
     <div
       id="AIOReadiness"
@@ -57,7 +40,7 @@ export default function AIO({ data }) {
       <h1 className={`responsive text-heading-25 flex sm:gap-10 justify-center items-center text-3xl font-extrabold mb-6 text-center ${textColor}`}>
         AIO (AI-Optimization) Readiness
         <CircularProgress
-          value={data.AIO_Readiness.AIO_Readiness_Score_Total}
+          value={data.AIO_Readiness.Percentage}
           size={70}
           stroke={5}
         />
@@ -67,162 +50,172 @@ export default function AIO({ data }) {
       <div className={`w-full max-w-4xl p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500 hover:scale-105 transition-transform duration-300 ${cardBg}`}>
         <h2 className={`text-xl font-bold mb-4 ${textColor}`}>Entity & Organization Clarity</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="flex justify-between items-center">
-            <span className={textColor}>Organization JSON-LD</span>
-            <ScoreBadge
-              score={data.AIO_Readiness.Entity_and_Organization_Clarity.Organization_JSON_LD_Score.Score}
-              textGood="JSON-LD present"
-              textBad="JSON-LD missing"
-            />
-          </div>
+
           <div className="flex justify-between items-center">
             <span className={textColor}>Consistent NAP</span>
             <ScoreBadge
-              score={data.AIO_Readiness.Entity_and_Organization_Clarity.Consistent_NAP.Score}
+              score={data.AIO_Readiness.Technical_AI_Foundation.Structured_Data.Score}
               textGood="NAP consistent"
               textBad="NAP inconsistent"
             />
           </div>
           <div className="flex justify-between items-center">
-            <span className={textColor}>Humans/Policies</span>
+            <span className={textColor}>Consistent NAP</span>
             <ScoreBadge
-              score={data.AIO_Readiness.Entity_and_Organization_Clarity.Humans_or_Policies.Score}
-              textGood="Humans/policies defined"
-              textBad="Humans/policies missing"
-            />
-          </div>
-        </div>
-
-        {/* Conditionally show errors */}
-        {hasError1 && <hr className="text-black mt-3" />}
-        <div className="flex flex-col p-1 mt-2 gap-2">
-          {data.AIO_Readiness.Entity_and_Organization_Clarity.Organization_JSON_LD_Score.Score === 0 && (
-            <h1 className={`warn flex gap-2 items-center ${textColor}`}>
-              <AlertTriangle className="text-red-600" size={20} /> Organization schema is missing or incomplete — key fields like name, logo, URL, contact info, or social links are not fully defined.
-            </h1>
-          )}
-          {data.AIO_Readiness.Entity_and_Organization_Clarity.Consistent_NAP.Score === 0 && (
-            <h1 className={`warn flex gap-2 items-center ${textColor}`}>
-              <AlertTriangle className="text-red-600" size={20} /> Phone numbers, emails, or addresses are inconsistent across the page (header, footer, or body), which can confuse users and harm trust/SEO.
-            </h1>
-          )}
-          {data.AIO_Readiness.Entity_and_Organization_Clarity.Humans_or_Policies.Score === 0 && (
-            <h1 className={`warn flex gap-2 items-center ${textColor}`}>
-              <AlertTriangle className="text-red-600" size={20} /> Required site policies (About, Contact, Privacy, Terms, etc.) are missing or incomplete — not enough compliance information.
-            </h1>
-          )}
-        </div>
-      </div>
-
-      {/* Content Answerability & Structure */}
-      <div className={`w-full max-w-4xl p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500 hover:scale-105 transition-transform duration-300 ${cardBg}`}>
-        <h2 className={`text-xl font-bold mb-4 ${textColor}`}>Content Answerability & Structure</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="flex justify-between items-center">
-            <span className={textColor}>FAQ/How-To JSON-LD</span>
-            <ScoreBadge
-              score={data.AIO_Readiness.Content_Answerability_and_Structure.FAQ_or_How_To_JSON_LD.Score}
-              textGood="JSON-LD present"
-              textBad="JSON-LD missing"
+              score={data.AIO_Readiness.Technical_AI_Foundation.Metadata_Complete.Score}
+              textGood="NAP consistent"
+              textBad="NAP inconsistent"
             />
           </div>
           <div className="flex justify-between items-center">
-            <span className={textColor}>Section Anchors/TOC</span>
+            <span className={textColor}>Consistent NAP</span>
             <ScoreBadge
-              score={data.AIO_Readiness.Content_Answerability_and_Structure.Section_Anchors_or_TOC.Score}
-              textGood="Anchors/TOC present"
-              textBad="Anchors/TOC missing"
+              score={data.AIO_Readiness.Technical_AI_Foundation.Fast_Page_Load.Score}
+              textGood="NAP consistent"
+              textBad="NAP inconsistent"
+            />
+          </div>
+          <div className="flex justify-between items-center">
+            <span className={textColor}>Consistent NAP</span>
+            <ScoreBadge
+              score={data.AIO_Readiness.Technical_AI_Foundation.API_Data_Access.Score}
+              textGood="NAP consistent"
+              textBad="NAP inconsistent"
+            />
+          </div>
+          <div className="flex justify-between items-center">
+            <span className={textColor}>Consistent NAP</span>
+            <ScoreBadge
+              score={data.AIO_Readiness.Technical_AI_Foundation.Dynamic_Content_Available.Score}
+              textGood="NAP consistent"
+              textBad="NAP inconsistent"
+            />
+          </div>
+          <div className="flex justify-between items-center">
+            <span className={textColor}>Consistent NAP</span>
+            <ScoreBadge
+              score={data.AIO_Readiness.Technical_AI_Foundation.Multilingual_Support.Score}
+              textGood="NAP consistent"
+              textBad="NAP inconsistent"
+            />
+          </div>
+          <div className="flex justify-between items-center">
+            <span className={textColor}>Consistent NAP</span>
+            <ScoreBadge
+              score={data.AIO_Readiness.Content_AI_Optimization.Content_NLP_Friendly.Score}
+              textGood="NAP consistent"
+              textBad="NAP inconsistent"
+            />
+          </div>
+          <div className="flex justify-between items-center">
+            <span className={textColor}>Consistent NAP</span>
+            <ScoreBadge
+              score={data.AIO_Readiness.Content_AI_Optimization.Keywords_Entities_Annotated.Score}
+              textGood="NAP consistent"
+              textBad="NAP inconsistent"
+            />
+          </div>
+          <div className="flex justify-between items-center">
+            <span className={textColor}>Consistent NAP</span>
+            <ScoreBadge
+              score={data.AIO_Readiness.Content_AI_Optimization.Content_Updated_Regularly.Score}
+              textGood="NAP consistent"
+              textBad="NAP inconsistent"
+            />
+          </div>
+          <div className="flex justify-between items-center">
+            <span className={textColor}>Consistent NAP</span>
+            <ScoreBadge
+              score={data.AIO_Readiness.Content_AI_Optimization.Internal_Linking_AI_Friendly.Score}
+              textGood="NAP consistent"
+              textBad="NAP inconsistent"
+            />
+          </div>
+          <div className="flex justify-between items-center">
+            <span className={textColor}>Consistent NAP</span>
+            <ScoreBadge
+              score={data.AIO_Readiness.Content_AI_Optimization.Duplicate_Content_Detection_Ready.Score}
+              textGood="NAP consistent"
+              textBad="NAP inconsistent"
+            />
+          </div>
+          <div className="flex justify-between items-center">
+            <span className={textColor}>Consistent NAP</span>
+            <ScoreBadge
+              score={data.AIO_Readiness.Data_Intelligence_Integration.Behavior_Tracking_Implemented.Score}
+              textGood="NAP consistent"
+              textBad="NAP inconsistent"
             />
           </div>
           
           <div className="flex justify-between items-center">
-            <span className={textColor}>Descriptive Media Captions / Figcaptions</span>
+            <span className={textColor}>Consistent NAP</span>
             <ScoreBadge
-              score={data.AIO_Readiness.Content_Answerability_and_Structure.Descriptive_Media_Captions_or_Figcaptions.Score}
-              textGood="Captions present"
-              textBad="Captions missing"
+              score={data.AIO_Readiness.Data_Intelligence_Integration.Behavior_Tracking_Segmentation_Profiling_ReadyImplemented.Score}
+              textGood="NAP consistent"
+              textBad="NAP inconsistent"
             />
           </div>
-        </div>
-          {hasError2 && <hr className="text-black mt-3" />}
-          <div className="flex flex-col p-1 mt-2 gap-2">
-          { data.AIO_Readiness.Content_Answerability_and_Structure.FAQ_or_How_To_JSON_LD.Score === 0 && (
-            <h1 className={`warn flex gap-2 items-center ${textColor}`}>
-              <AlertTriangle className="text-red-600" size={20} /> No FAQ or HowTo structured data detected — page is missing schema markup for FAQs or instructional content.
-            </h1>
-          )}
-          {data.AIO_Readiness.Content_Answerability_and_Structure.Section_Anchors_or_TOC.Score === 0&& (
-            <h1 className={`warn flex gap-2 items-center ${textColor}`}>
-              <AlertTriangle className="text-red-600" size={20} /> No headings have IDs — page cannot support anchor links or an automatic table of contents.
-            </h1>
-          )}
-          {data.AIO_Readiness.Content_Answerability_and_Structure.Descriptive_Media_Captions_or_Figcaptions.Score === 0 && (
-            <h1 className={`warn flex gap-2 items-center ${textColor}`}>
-              <AlertTriangle className="text-red-600" size={20} /> Images on the page lack descriptive captions figcaption, which may reduce accessibility and content clarity.
-            </h1>
-          )}
-        </div>
-      </div>
-
-      {/* Product/Inventory Schema & Feeds */}
-      <div className={`w-full max-w-4xl p-6 rounded-2xl shadow-lg border-l-4 border-pink-500 hover:scale-105 transition-transform duration-300 ${cardBg}`}>
-        <h2 className={`text-xl font-bold mb-4 ${textColor}`}>Product/Inventory Schema & Feeds</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="flex justify-between items-center">
-            <span className={textColor}>Correct Schema Types</span>
-            <ScoreBadge
-              score={data.AIO_Readiness.Product_or_Inventory_Schema_and_Feeds.Correct_Schema_Types.Score}
-              textGood="Schema correct"
-              textBad="Schema missing/incorrect"
-            />
-          </div>
-          <div className="flex justify-between items-center">
-            <span className={textColor}>Feeds Availability</span>
-            <ScoreBadge
-              score={data.AIO_Readiness.Product_or_Inventory_Schema_and_Feeds.Feed_Availability.Score}
-              textGood="Feeds present"
-              textBad="Feeds missing"
-            />
-          </div>
-        </div>
-        {hasError3 && <hr className="text-black mt-3" />}
-        <div className="flex flex-col p-1 mt-2 gap-2">
-          {data.AIO_Readiness.Product_or_Inventory_Schema_and_Feeds.Correct_Schema_Types.Score === 0 && (
-            <h1 className={`warn flex gap-2 items-center ${textColor}`}>
-              <AlertTriangle className="text-red-600" size={20} /> The page is missing product-related structured data (JSON-LD) — search engines may not understand product info.
-            </h1>
-          )}
-          {data.AIO_Readiness.Product_or_Inventory_Schema_and_Feeds.Feed_Availability.Score === 0 && (
-            <h1 className={`warn flex gap-2 items-center ${textColor}`}>
-              <AlertTriangle className="text-red-600" size={20} /> The page does not provide an RSS, Atom, or JSON feed — users cannot subscribe to content updates.
-            </h1>
-          )}
           
-        </div>
-      </div>
-
-      {/* Crawl Friendliness */}
-      <div className={`w-full max-w-4xl p-6 rounded-2xl shadow-lg border-l-4 border-pink-500 hover:scale-105 transition-transform duration-300 ${cardBg}`}>
-        <h2 className={`text-xl font-bold mb-4 ${textColor}`}>Crawl Friendliness for Knowledge Agents</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="flex justify-between items-center">
-            <span className={textColor}>Robots Allowlist</span>
+            <span className={textColor}>Consistent NAP</span>
             <ScoreBadge
-              score={data.AIO_Readiness.Crawl_Friendliness_for_Knowledge_Agents.Robots_Allowlist.Score}
-              textGood="Robots allowlisted"
-              textBad="Robots disallowed/missing"
+              score={data.AIO_Readiness.Data_Intelligence_Integration.Behavior_Tracking_ImEvent_Goal_Tracking_Integratedplemented.Score}
+              textGood="NAP consistent"
+              textBad="NAP inconsistent"
             />
           </div>
-        </div>
-        {hasError4 && <hr className="text-black mt-3" />}
-        <div className="flex flex-col p-1 mt-2 gap-2">
-          {data.AIO_Readiness.Crawl_Friendliness_for_Knowledge_Agents.Robots_Allowlist.Score === 0 && (
-            <h1 className={`warn flex gap-2 items-center ${textColor}`}>
-              <AlertTriangle className="text-red-600" size={20} /> robots.txt contains Disallow:  — search engines are prevented from crawling the site.
-            </h1>
-          )}
+          
+          <div className="flex justify-between items-center">
+            <span className={textColor}>Consistent NAP</span>
+            <ScoreBadge
+              score={data.AIO_Readiness.Data_Intelligence_Integration.AB_Testing_Ready.Score}
+              textGood="NAP consistent"
+              textBad="NAP inconsistent"
+            />
+          </div>
+          
+          <div className="flex justify-between items-center">
+            <span className={textColor}>Consistent NAP</span>
+            <ScoreBadge
+              score={data.AIO_Readiness.Data_Intelligence_Integration.User_Feedback_Loops_Present.Score}
+              textGood="NAP consistent"
+              textBad="NAP inconsistent"
+            />
+          </div>
+          
+          <div className="flex justify-between items-center">
+            <span className={textColor}>Consistent NAP</span>
+            <ScoreBadge
+              score={data.AIO_Readiness.AI_Content_Delivery.Dynamic_Personalization.Score}
+              textGood="NAP consistent"
+              textBad="NAP inconsistent"
+            />
+          </div>
+          <div className="flex justify-between items-center">
+            <span className={textColor}>Consistent NAP</span>
+            <ScoreBadge
+              score={data.AIO_Readiness.AI_Content_Delivery.AI_Content_Distribution.Score}
+              textGood="NAP consistent"
+              textBad="NAP inconsistent"
+            />
+          </div>
+          <div className="flex justify-between items-center">
+            <span className={textColor}>Consistent NAP</span>
+            <ScoreBadge
+              score={data.AIO_Readiness.AI_Content_Delivery.AI_Friendly_Structure.Score}
+              textGood="NAP consistent"
+              textBad="NAP inconsistent"
+            />
+          </div>
+          
          
+          
         </div>
+<Auditdropdown items={data.AIO_Readiness.Passed} darkMode={darkMode} title="Passed Audit" />
+<Auditdropdown items={data.AIO_Readiness.Warning} darkMode={darkMode} title="Warnings" />
+<Auditdropdown items={data.AIO_Readiness.Improvements} darkMode={darkMode} title="Failed Audits" />
+
       </div>
     </div>
   );

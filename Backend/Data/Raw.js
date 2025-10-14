@@ -1,5 +1,5 @@
 
-export default function Raw_Data(url, MetricesCalculation_Data, Overall_Data,timeTaken,device) {
+export default function Raw(url, MetricesCalculation_Data, Overall_Data,timeTaken,device) {
 
   const metrices = {
     Schema:MetricesCalculation_Data.technicalReport.structuredData,

@@ -6,7 +6,7 @@ import puppeteers from "../Tools/puppeteers.js";
 import googleAPI from "../Tools/googleAPI.js";
 import robotsRes from "../Tools/robotsRes.js";
 import { performance } from "perf_hooks";
-import Raw_Data from "../Data/Raw_Data.js";
+import Raw from "../Data/Raw.js";
 
 export default async function main(message) {
 
@@ -31,7 +31,7 @@ export default async function main(message) {
     const Overall_Data =  OverAll(MetricesCalculation_Data)
     const timeTaken = ((end-start)/1000).toFixed(0);
     const Metrices_Data = Metrices(url,MetricesCalculation_Data,Overall_Data,timeTaken,device)
-    const Raw_Data = Raw_Data(url,MetricesCalculation_Data,Overall_Data,timeTaken,device)
+    const Raw_Data = Raw(url,MetricesCalculation_Data,Overall_Data,timeTaken,device)
 
     return  {Metrices_Data,Raw_Data}
 

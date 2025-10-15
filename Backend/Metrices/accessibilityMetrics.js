@@ -1,18 +1,6 @@
 import AxePuppeteer from "@axe-core/puppeteer";
 
-export default async function accessibilityMetrics(url,page) {
-
-  await page.setRequestInterception(true);
-  page.on("request", (request) => {
-    const blockedResources = ["image","font"];
-    if (blockedResources.includes(request.resourceType())) {
-      request.abort();
-    } else {
-      request.continue();
-    }
-  });
-
-  await page.goto(url, {waitUntil: "networkidle2", timeout: 400000});
+export default async function accessibilityMetrics(page) {
 
   let results;
   try {
@@ -50,7 +38,6 @@ function calculatePassRate(results, rules) {
   const imageAlt = calculatePassRate(results, ["image-alt"]);
   const skipLinks = await page.$('a[href^="#"]:not([hidden])') ? 0 : 1
   const landMarks = await Landmarks(page);
-  page.close()
 
   const Total = colorContrast+focusOrder+focusableContent+tabindex+interactiveElementAffordance+label+ariaAllowedAttr+ariaRoles+ariaHiddenFocus+imageAlt+skipLinks+landMarks
 

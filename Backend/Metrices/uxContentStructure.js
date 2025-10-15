@@ -1,5 +1,3 @@
-import * as cheerio from "cheerio";
-
 // UX & Content Structure (Navigation & Layout)
 function checkNavigationClarity($) {
     const nav = $('nav'); // select main nav
@@ -503,12 +501,7 @@ function checkUserJourneyContinuity($) {
     return validCTA >= 1 ? 1 : 0;
 }
 
-export default async function evaluateMobileUX(url,page) {
-
-    await page.goto(url, {waitUntil: "networkidle2",timeout: 240000});
-    await page.waitForSelector("body", { timeout: 240000 });
-    const htmlData = await page.content();
-    const $ = cheerio.load(htmlData);
+export default async function evaluateMobileUX(url,$) {
     
     // UX & Content Structure (Navigation & Layout)
     const checkNavigationClarityScore = checkNavigationClarity($);
@@ -539,7 +532,6 @@ export default async function evaluateMobileUX(url,page) {
     
     const checkInternalLinkingQualityScore = checkInternalLinkingQuality($,domain);
     const checkUserJourneyContinuityScore = checkUserJourneyContinuity($);
-    page.close()
 
     const Total = parseFloat((((checkNavigationClarityScore+checkBreadcrumbsScore+checkClickableLogoScore+checkMobileResponsivenessScore+checkParagraphLengthAndSpacingScore+checkFontStyleAndSizeConsistencyScore+checkContrastAndColorHarmonyScore+checkWhitespaceUsageScore+checkContentRelevanceScore+checkCallToActionClarityScore+checkMultimediaBalanceScore+checkInternalLinkingQualityScore+checkUserJourneyContinuityScore+checkErrorEmptyStateScore+checkInteractiveFeedbackScore+checkStickyNavigationScore+checkScrollDepthLogicScore+checkLoadingIndicatorsScore)/18)*100).toFixed(0));
 

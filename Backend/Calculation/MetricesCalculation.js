@@ -5,31 +5,13 @@ import securityCompliance from "../Metrices/securityCompliance.js";
 import uxContentStructure from "../Metrices/uxContentStructure.js";
 import conversionLeadFlow from "../Metrices/conversionLeadFlow.js";
 import aioReadiness from "../Metrices/aioReadiness.js";
-import puppeteers from "../Tools/puppeteers.js";
-let lastBrowserInstance = null;
+import Puppeteer_Cheerio from "../Tools/puppeteer_cheerio.js";
+import googleAPI from "../Tools/googleAPI.js";
 
-export default async function MetricesCalculation(url,data) {
+export default async function MetricesCalculation(url,device) {
   
-    if (lastBrowserInstance) {
-    console.log("🛑 Closing previous browser instance...");
-      if(lastBrowserInstance.isConnected()) {
-        await lastBrowserInstance.close();
-      }
-    lastBrowserInstance = null;
-  }
-
-const {browser,page} = await puppeteers();
-lastBrowserInstance = browser;
-
-const [page1, page2, page3, page4, page5, page6, page7] = await Promise.all([
-    browser.newPage(),
-    browser.newPage(),
-    browser.newPage(),
-    browser.newPage(),
-    browser.newPage(),
-    browser.newPage(),
-    browser.newPage()
-  ]);
+const data = await googleAPI(url,device);
+const {browser,page,response,$} = await Puppeteer_Cheerio(url,device);
 
   const [
     technicalReport,
@@ -40,15 +22,16 @@ const [page1, page2, page3, page4, page5, page6, page7] = await Promise.all([
     conversionReport,
     aioReport
   ] = await Promise.all([
-    technicalMetrics(url, data, page1),
-    seoMetrics(url, page2),
-    accessibilityMetrics(url, page3),
-    securityCompliance(url, page4),
-    uxContentStructure(url, page5),
-    conversionLeadFlow(url, page6),
-    aioReadiness(url, page7)
+    technicalMetrics(url, data, page, response, browser),
+    seoMetrics(url, $),
+    accessibilityMetrics(page),
+    securityCompliance(url, page, response, browser),
+    uxContentStructure(url, $),
+    conversionLeadFlow(page, $),
+    aioReadiness(url, $)
   ]);
-browser.close();
+
+  browser.close();
 
   // console.log("Technical Report:", technicalReport)
   // console.log("SEO Report (B1+B2+B3):", seoReport);

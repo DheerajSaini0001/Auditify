@@ -1,10 +1,6 @@
 import MetricesCalculation from "../Calculation/MetricesCalculation.js";
 import Metrices from "../Data/Metrices.js";
 import OverAll from "../Data/OverAll.js";
-import puppeteer_cheerio from "../Tools/puppeteer_cheerio.js";
-import puppeteers from "../Tools/puppeteers.js";
-import googleAPI from "../Tools/googleAPI.js";
-import robotsRes from "../Tools/robotsRes.js";
 import { performance } from "perf_hooks";
 import Raw from "../Data/Raw.js";
 
@@ -21,15 +17,10 @@ export default async function main(message) {
     let start, end;
 
     start = performance.now();
-    const googleApi_Data = await googleAPI(url,device);
-    // const puppeteer_cheerio_Data = await puppeteer_cheerio(url);
-    // const puppeteer_Data = await puppeteers(url);
-    // const robotsRes_Data = await robotsRes(url);
-
-    const MetricesCalculation_Data = await MetricesCalculation(url,googleApi_Data)
+    const MetricesCalculation_Data = await MetricesCalculation(url,device)
     end = performance.now();
-    const Overall_Data =  OverAll(MetricesCalculation_Data)
     const timeTaken = ((end-start)/1000).toFixed(0);
+    const Overall_Data =  OverAll(MetricesCalculation_Data)
     const Metrices_Data = Metrices(url,MetricesCalculation_Data,Overall_Data,timeTaken,device)
     const Raw_Data = Raw(url,MetricesCalculation_Data,Overall_Data,timeTaken,device)
 

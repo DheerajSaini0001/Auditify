@@ -1,5 +1,3 @@
-import * as cheerio from "cheerio";
-
 // Artificial Intelligence Optimization Readiness (Technical Performance (AI-specific metrics))
 function checkStructuredData($) {
     const selector = 'script[type="application/ld+json"]';
@@ -313,6 +311,12 @@ function checkSegmentationProfilingReady($) {
 }
 
 // Artificial Intelligence Optimization Readiness (SEO & AI-Driven Optimization Potential)
+function Domain(urlString) {
+  const u = new URL(urlString);
+  let host = u.hostname;
+  if (host.startsWith("www.")) host = host.slice(4);
+  return host;
+}
 function checkInternalLinkingAIFriendly($, domain) {
     if (!domain) {
         console.error('Domain parameter required for internal linking check');
@@ -518,12 +522,7 @@ function checkUserFeedbackLoops($) {
     return score;
 }
 
-export default async function aioReadiness(url,page) {
-
-  await page.goto(url, {waitUntil: "networkidle2",timeout: 240000});
-  await page.waitForSelector("body", { timeout: 240000 });
-  const htmlData = await page.content();
-  const $ = cheerio.load(htmlData);
+export default async function aioReadiness(url,$) {
   
   // Artificial Intelligence Optimization Readiness (Technical Performance (AI-specific metrics))
   const structuredData = checkStructuredData($)
@@ -542,7 +541,7 @@ export default async function aioReadiness(url,page) {
   const segmentationProfilingReady = checkSegmentationProfilingReady($)
   
   // Artificial Intelligence Optimization Readiness (SEO & AI-Driven Optimization Potential)
-  const domain =url; // Replace with your site's domain
+  const domain = Domain(url); 
   const internalLinkingAIFriendly = checkInternalLinkingAIFriendly($, domain)
   const duplicateContentDetectionReady = checkDuplicateContentDetectionReady($)
   const multilingualSupport = checkMultilingualSupport($)

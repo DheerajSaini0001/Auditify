@@ -1,6 +1,3 @@
-import * as cheerio from "cheerio";
-import puppeteer from "puppeteer";
-
 // Conversion & Lead Flow (Call-to-Action (CTA) Effectiveness)
 function checkCTAs($) {
     // Array of common CTA selectors
@@ -1015,12 +1012,7 @@ function checkMultiChannelFollowUp($) {
   }
 }
 
-export default async function conversionLeadFlow(url,page) {
-
-  await page.goto(url, {waitUntil: "networkidle2",timeout: 240000});
-  await page.waitForSelector("body", { timeout: 240000 });
-  const htmlData = await page.content();
-  const $ = cheerio.load(htmlData);
+export default async function conversionLeadFlow(page,$) {
 
   // Conversion & Lead Flow (Call-to-Action (CTA) Effectiveness)
   const checkCTAsScore=checkCTAs($)
@@ -1083,7 +1075,6 @@ export default async function conversionLeadFlow(url,page) {
   const checkSmoothScrollingScore=checkSmoothScrolling($);
   const checkMobileCTAAdaptationScore=checkMobileCTAAdaptation($);
   const checkMultiChannelFollowUpScore=checkMultiChannelFollowUp($);
-  page.close()
   
   const Total = parseFloat((((checkCTAsScore+checkCTAClarityScore+checkCTAContrastScore+checkCTACrowdingScore+checkCTAFlowAlignmentScore+checkFormPresenceScore+checkFormLengthOptimalScore+checkRequiredVsOptionalFieldsScore+checkInlineValidationScore+checkSubmitButtonClarityScore+checkAutoFocusFieldScore+checkMultiStepFormProgressScore+checkTestimonialsScore+checkReviewsVisibleScore+checkTrustBadgesScore+checkClientLogosScore+checkCaseStudiesAccessibilityScore+checkExitIntentTriggersScore+checkLeadMagnetsScore+checkContactInfoVisibilityScore+checkChatbotPresenceScore+checkInteractiveElementsScore+checkPersonalizationScore+checkProgressIndicatorsScore+checkFriendlyErrorHandlingScore+checkMicrocopyClarityScore+checkIncentivesDisplayedScore+checkScarcityUrgencyScore+checkSmoothScrollingScore+checkMobileCTAAdaptationScore+checkMultiChannelFollowUpScore)/31)*100).toFixed(0));
   

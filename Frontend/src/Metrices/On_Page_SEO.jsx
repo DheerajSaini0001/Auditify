@@ -17,11 +17,11 @@ export default function On_Page_SEO({ data }) {
     const badgeBg = darkMode
       ? "bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400 text-black"
       : "bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-white";
-
+const textColor = darkMode ? "text-white" : "text-black";
     return (
       <span className={`${
         darkMode
-          ? `px-2.5 flex py-1 mobilebutton rounded-full text-white font-semibold text-sm shadow-md transform transition-transform `
+          ? `px-2.5 flex py-1 mobilebutton rounded-full text-black font-semibold text-sm shadow-md transform transition-transform `
           : `px-2.5 flex py-1 mobilebutton rounded-full text-black  font-semibold text-sm shadow-md transform transition-transform `
       } ${cssscore}`}>
         {hasValue} {out} {des}

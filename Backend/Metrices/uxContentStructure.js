@@ -1,5 +1,3 @@
-import * as cheerio from "cheerio";
-
 // UX & Content Structure (Navigation & Layout)
 function checkNavigationClarity($) {
     const nav = $('nav'); // select main nav

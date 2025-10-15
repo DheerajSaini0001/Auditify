@@ -311,6 +311,12 @@ function checkSegmentationProfilingReady($) {
 }
 
 // Artificial Intelligence Optimization Readiness (SEO & AI-Driven Optimization Potential)
+function Domain(urlString) {
+  const u = new URL(urlString);
+  let host = u.hostname;
+  if (host.startsWith("www.")) host = host.slice(4);
+  return host;
+}
 function checkInternalLinkingAIFriendly($, domain) {
     if (!domain) {
         console.error('Domain parameter required for internal linking check');
@@ -535,7 +541,7 @@ export default async function aioReadiness(url,$) {
   const segmentationProfilingReady = checkSegmentationProfilingReady($)
   
   // Artificial Intelligence Optimization Readiness (SEO & AI-Driven Optimization Potential)
-  const domain =url; // Replace with your site's domain
+  const domain = Domain(url); 
   const internalLinkingAIFriendly = checkInternalLinkingAIFriendly($, domain)
   const duplicateContentDetectionReady = checkDuplicateContentDetectionReady($)
   const multilingualSupport = checkMultilingualSupport($)

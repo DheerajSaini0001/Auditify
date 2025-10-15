@@ -1,6 +1,3 @@
-import * as cheerio from "cheerio";
-import puppeteer from "puppeteer";
-
 // Conversion & Lead Flow (Call-to-Action (CTA) Effectiveness)
 function checkCTAs($) {
     // Array of common CTA selectors

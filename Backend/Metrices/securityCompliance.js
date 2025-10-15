@@ -1,11 +1,9 @@
 securityCompliance.mjs
 import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
-import https from "follow-redirects";
 import dotenv from "dotenv";
 import fetch from "node-fetch";
 import { URL } from "url";
-
 
 dotenv.config();
 puppeteer.use(StealthPlugin());
@@ -195,14 +193,16 @@ async function checkSQLiExposure(urlString, options = {}) {
   return 1;
 }
 
-async function checkXSS(url,page) {
+async function checkXSS(url,browser) {
   try {
     const payload = `<script>alert(1)</script>`;
     const testUrl = url.includes("?")
       ? `${url}&xss=${encodeURIComponent(payload)}`
       : `${url}?xss=${encodeURIComponent(payload)}`;
 
-    await page.goto(testUrl, { waitUntil: "networkidle2", timeout: 60000 });
+    const testURLPage = await browser.newPage()  
+    await testURLPage.goto(testUrl, { waitUntil: "networkidle2", timeout: 360000 });
+    testURLPage.close()
     const html = await page.content();
     return html.toLowerCase().includes(payload.toLowerCase()) ? 0 : 1;
   } catch {
@@ -818,7 +818,7 @@ async function checkDeprecatedAPIs(page) {
   return deprecatedAPIUsed ? 0 : 1;
 }
 
-export default async function securityCompliance(url,page,response) {
+export default async function securityCompliance(url,page,response,browser) {
 
   // Security/Compliance (HTTPS / SSL)
   const checkHTTPSScore = checkHTTPS(url);
@@ -856,7 +856,7 @@ export default async function securityCompliance(url,page,response) {
   const checkAdminPanelPublicScore = await checkAdminPanelPublic(url);
 
   // Security/Compliance (Vulnerability / Malware Check)
-  const xssVulnerabilityScore = await checkXSS(url,page);
+  const xssVulnerabilityScore = await checkXSS(url,browser);
 
   // Lighthouse
   const checkViewportMetaTagScore = await checkViewportMetaTag(page);

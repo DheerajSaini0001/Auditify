@@ -1,5 +1,3 @@
-// import puppeteer from "puppeteer";
-
 function coreWebVitalsScore(value, threshold) {
   return value <= threshold ? 1 : 0;
 }

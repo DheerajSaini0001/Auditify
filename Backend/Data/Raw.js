@@ -4,7 +4,7 @@ export default function Raw(url, MetricesCalculation_Data, Overall_Data,timeTake
   const metrices = {
     Schema:MetricesCalculation_Data.technicalReport.structuredData,
     Device:device,
-    Time_Taken:timeTaken,
+    Time_Taken:timeTaken + 's',
     Site: url,
     Score: Overall_Data.totalScore,
     Grade: Overall_Data.grade,

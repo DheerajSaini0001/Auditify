@@ -202,6 +202,7 @@ async function checkXSS(url,browser) {
 
     const testURLPage = await browser.newPage()  
     await testURLPage.goto(testUrl, { waitUntil: "networkidle2", timeout: 360000 });
+    await testURLPage.waitForSelector("body", { timeout: 360000 });
     testURLPage.close()
     const html = await page.content();
     return html.toLowerCase().includes(payload.toLowerCase()) ? 0 : 1;

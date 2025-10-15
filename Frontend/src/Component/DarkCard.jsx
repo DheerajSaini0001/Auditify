@@ -191,7 +191,7 @@ export default function DarkCard() {
             <div
               className={`${sidebarClass} ${sidebarOpen ? "translate-x-0 overflow-y-auto" : "-translate-x-full"} lg:translate-x-0 transition-transform duration-300 ease-in-out min-h-screen overflow-y-auto pb-4`}
             >
-              <Sidebar data={result} />
+              <Sidebar data={result.Raw} />
             </div>
 
             {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-30 lg:hidden" onClick={() => setSidebarOpen(false)} />}

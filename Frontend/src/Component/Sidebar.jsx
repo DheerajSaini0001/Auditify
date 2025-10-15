@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { ThemeContext } from "../ThemeContext"; // ✅ ThemeContext import
 
-export default function Sidebar({ children, data }) {
+export default function Sidebar({ data }) {
   const [isOpen, setIsOpen] = useState(true);
   const { darkMode } = useContext(ThemeContext); // ✅ ThemeContext
 

@@ -6,7 +6,7 @@ let browser;
 
   try {
       browser = await puppeteer.launch({
-      headless: true,
+      headless: false,
       defaultViewport: null,
       args: ["--no-sandbox", "--disable-setuid-sandbox","--start-maximized"]
   });

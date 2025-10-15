@@ -148,9 +148,9 @@ export default async function technicalMetrics(url,data,page,response,browser) {
   try {
   const sitemapUrl = new URL("/sitemap.xml", url).href;
   const sitemapPage = await browser.newPage();
-  const response = await sitemapPage.goto(sitemapUrl);
+  const response = await sitemapPage.goto(sitemapUrl, { waitUntil: "networkidle2",timeout: 360000 });
+  await sitemapPage.waitForSelector("body", { timeout: 360000 });
   sitemapPage.close();
-  // const response = await page.goto(sitemapUrl);
   sitemapScore = response.status() === 200 ? 1 : 0;
   }
   catch {
@@ -161,9 +161,9 @@ export default async function technicalMetrics(url,data,page,response,browser) {
   try {
   const robotsUrl = new URL("/robots.txt", url).href;
   const robotsPage = await browser.newPage();
-  const response = await robotsPage.goto(robotsUrl);
+  const response = await robotsPage.goto(robotsUrl, { waitUntil: "networkidle2",timeout: 360000 });
+  await robotsPage.waitForSelector("body", { timeout: 360000 });
   robotsPage.close();
-  // const response = await page.goto(robotsUrl);
   robotsScore = response.status() === 200 ? 1 : 0;
   }
   catch {

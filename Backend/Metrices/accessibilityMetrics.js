@@ -9,7 +9,6 @@ export default async function accessibilityMetrics(page) {
     console.error("Axe analysis failed:", err.message);
     results = { violations: [] };
   } 
-  
 
 function calculatePassRate(results, rules) {
   if (!results || !results.violations) return 1;

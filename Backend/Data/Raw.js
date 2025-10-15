@@ -53,7 +53,7 @@ export default function Raw(url, MetricesCalculation_Data, Overall_Data,timeTake
         },
         Compression:{
           Score: MetricesCalculation_Data.technicalReport.deliveryAndRender.compressionScore,
-          Parameter:'Set 1 if "gzip" or "brotli" compression is enabled, otherwise set 0 if it’s disabled or missing.'
+          Parameter:'Set 1 if gzip or brotli compression is enabled, otherwise set 0 if it’s disabled or missing.'
         },
         Caching:{
           Score: MetricesCalculation_Data.technicalReport.deliveryAndRender.cachingScore,
@@ -62,7 +62,7 @@ export default function Raw(url, MetricesCalculation_Data, Overall_Data,timeTake
         },
         Resource_Optimization:{
           Score: MetricesCalculation_Data.technicalReport.deliveryAndRender.resourceOptimizationScore,
-          Parameter:'Set 1 if images are optimized, CSS/JS minified, and offscreen images deferred; otherwise set 0.'
+          Parameter:'Set 1 if images are optimized, CSS/JS minified, and offscreen images deferred, otherwise set 0.'
         },
         Render_Blocking:{
           Score: MetricesCalculation_Data.technicalReport.deliveryAndRender.renderBlockingScore,
@@ -334,7 +334,7 @@ export default function Raw(url, MetricesCalculation_Data, Overall_Data,timeTake
       },
       Viewport_Meta_Tag: {
         Score: MetricesCalculation_Data.securityReport.checkViewportMetaTagScore,
-        Parameter: '1 if <meta name="viewport" content="width=device-width, initial-scale=1.0"> is present, else 0'
+        Parameter: "1 if <meta name='viewport' content='width=device-width, initial-scale=1.0'> is present, else 0"
       },
       HTML_Doctype: {
         Score: MetricesCalculation_Data.securityReport.checkHtmlDoctypeScore,

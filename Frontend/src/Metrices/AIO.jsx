@@ -47,7 +47,7 @@ export default function AIO({ data }) {
       </h1>
 
       {/* Important Metrics Only */}
-      <div className={`w-full max-w-4xl p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500 hover:scale-105 transition-transform duration-300 ${cardBg}`}>
+      <div className={`w-full max-w-4xl p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500  ${cardBg}`}>
         <h2 className={`text-xl font-bold mb-4 ${textColor}`}>Most Important Metrics</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Technical AI Foundation */}

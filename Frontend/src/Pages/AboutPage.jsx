@@ -3,9 +3,9 @@ import Assets from '../assets/Assets.js';
 import Footer from "../Component/Footer";
 import { ThemeContext } from "../ThemeContext"; // ThemeContext import
 
-export default function AboutPage() {
+export default function AboutPage({darkMode}) {
   const { theme } = useContext(ThemeContext); // ThemeContext se theme access
-  const { darkMode } = useContext(ThemeContext); 
+
   console.log();
 
   const bgClass =darkMode 

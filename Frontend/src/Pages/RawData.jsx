@@ -2,8 +2,8 @@ import { FileText } from "lucide-react";
 import React, { useState, useContext } from "react";
 import { ThemeContext } from "../ThemeContext";
 
-const RawData = ({ data }) => {
-  const { darkMode } = useContext(ThemeContext);
+const RawData = ({ data ,darkMode}) => {
+  
   const [openKeys, setOpenKeys] = useState({});
   const [saving, setSaving] = useState(false); // saving status
 

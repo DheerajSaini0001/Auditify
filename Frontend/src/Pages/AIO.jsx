@@ -4,8 +4,8 @@ import { Check, X } from "lucide-react";
 import CircularProgress from "../Component/CircularProgress";
 import Auditdropdown from "../Component/AuditDropdown";
 
-export default function AIO({ data }) {
-  const { darkMode } = useContext(ThemeContext);
+export default function AIO({ data,darkMode }) {
+  
 
   if (!data) return <div />;
 

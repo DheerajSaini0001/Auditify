@@ -1,12 +1,9 @@
-import React, { useContext } from "react";
-import { ThemeContext } from "../ThemeContext";
+import React from "react";
 
-export default function Footer() {
-  const { darkMode } = useContext(ThemeContext); // ✅ ThemeContext use
-
+export default function Footer({ darkMode }) {
   const footerClass = darkMode
-    ? "lg:pl-64 sm:pr-6 relative bottom-0 flex bg-gray-900 text-gray-200 py-6 pt-8"
-    : "lg:pl-64 sm:pr-6 relative bottom-0 flex bg-gray-200 text-gray-800 py-6 pt-8";
+    ? "mt-auto flex bg-gray-900 text-gray-200 py-6 pt-8"
+    : "mt-auto flex bg-gray-200 text-gray-800 py-6 pt-8";
 
   const linkHoverClass = darkMode
     ? "hover:text-blue-400 transition"

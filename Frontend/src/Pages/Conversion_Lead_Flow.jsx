@@ -4,8 +4,8 @@ import { Check, X } from "lucide-react";
 import CircularProgress from "../Component/CircularProgress";
 import AuditDropdown from "../Component/AuditDropdown";
 
-export default function Conversion_Lead_Flow({ data }) {
-  const { darkMode } = useContext(ThemeContext);
+export default function Conversion_Lead_Flow({ data ,darkMode}) {
+  
 
   if (!data) return <div />;
 

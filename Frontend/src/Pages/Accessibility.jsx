@@ -4,8 +4,8 @@ import { Check, X, AlertTriangle } from "lucide-react"; // Imported icons
 import CircularProgress from "../Component/CircularProgress"; // Imported CircularProgress
 import AuditDropdown from "../Component/AuditDropdown";
 
-export default function Accessibility({ data }) {
-  const { darkMode } = useContext(ThemeContext);
+export default function Accessibility({ data,darkMode }) {
+  
 
   if (!data) {
     return <div />;

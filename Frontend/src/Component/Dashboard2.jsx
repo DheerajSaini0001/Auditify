@@ -17,8 +17,8 @@ import {
 import CircularProgress from "./CircularProgress";
 import { ThemeContext } from "../ThemeContext"; // ✅ ThemeContext import
 
-export default function Dashboard2({ data }) {
-  const { darkMode } = useContext(ThemeContext); // ✅ useContext
+export default function Dashboard2({ data,darkMode }) {
+  
 
   if (!data) return <div />;
   const barData = [

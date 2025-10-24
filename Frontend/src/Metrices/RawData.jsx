@@ -5,6 +5,7 @@ import { ThemeContext } from "../ThemeContext";
 const RawData = ({ data }) => {
   const { darkMode } = useContext(ThemeContext);
   const [openKeys, setOpenKeys] = useState({});
+  const [saving, setSaving] = useState(false); // saving status
 
   const toggleKey = (key) => {
     setOpenKeys((prev) => ({
@@ -13,11 +14,9 @@ const RawData = ({ data }) => {
     }));
   };
 
-
   const renderData = (obj, parentKey = "") => {
     return Object.entries(obj).map(([key, value]) => {
       const uniqueKey = parentKey ? `${parentKey}.${key}` : key;
-
       const textColor = darkMode ? "text-white" : "text-black";
 
       if (value && typeof value === "object" && !Array.isArray(value)) {
@@ -57,79 +56,77 @@ const RawData = ({ data }) => {
     });
   };
 
-  function downloadObject(obj, fileName =  `${data.Site.split("/")[2].split('.')[0]}.txt`) {
-  // Object ko string me convert karo
-  const jsonStr = JSON.stringify(obj, null, 2);
+  // ✅ Function to download TXT
+  function downloadObject(obj, fileName = `${data.Site.split("/")[2].split('.')[0]}.txt`) {
+    const jsonStr = JSON.stringify(obj, null, 2);
+    const blob = new Blob([jsonStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
-  // Blob create karo
-  const blob = new Blob([jsonStr], { type: "application/json" });
+  // ✅ Function to save data to backend
+  const saveToBackend = async () => {
+    if (!data) return;
 
-  // Download link create karo
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = fileName;
-  a.click();
+    setSaving(true);
+    try {
+      const response = await fetch("http://localhost:2000/api/sitereports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
 
-  // Clean up
-  URL.revokeObjectURL(url);
-}
+      const result = await response.json();
+      if (result.success) {
+        alert("Data saved to database successfully!");
+      } else {
+        alert("Failed to save data: " + result.message);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error saving data: " + err.message);
+    }
+    setSaving(false);
+  };
 
   const containerBg = darkMode ? "bg-zinc-900 border-gray-700" : "bg-gray-100 border-gray-300";
   const cardBg = darkMode ? "bg-gradient-to-br from-blue-900 via-gray-900 to-black" : "bg-gradient-to-br from-blue-200 via-gray-200 to-white";
 
   return (
-    <div id="Rawdata" className={`min-h-fit pt-20 pb-16 rounded-2xl shadow-lg   m-4 flex flex-col items-center justify-start p-6 space-y-6 ${containerBg}`}>
-      <h1 className={`text-3xl font-extrabold mb-6 ${darkMode ? "text-white" : "text-black"}`}>
-        Raw Data 
-      </h1>
+    <div id="Rawdata" className={`min-h-fit pt-20 pb-16 rounded-2xl shadow-lg m-4 flex flex-col items-center justify-start p-6 space-y-6 ${containerBg}`}>
+      <h1 className={`text-3xl font-extrabold mb-6 ${darkMode ? "text-white" : "text-black"}`}>Raw Data</h1>
 
-<div
-  className={`w-full max-w-4xl p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500   ${cardBg}`}
->
-  {data && (
-    <pre
-      className={`whitespace-pre-wrap break-words text-sm ${
-        darkMode ? "text-white" : "text-black"
-      }`}
-    >
-      {JSON.stringify(data, null, 2)}
-    </pre>
-  )}
+      <div className={`w-full max-w-4xl p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500 ${cardBg}`}>
+        {data ? (
+          <pre className={`whitespace-pre-wrap break-words text-sm ${darkMode ? "text-white" : "text-black"}`}>
+            {JSON.stringify(data, null, 2)}
+          </pre>
+        ) : (
+          <p className={darkMode ? "text-white" : "text-black"}>Loading data...</p>
+        )}
+      </div>
 
-  {!data && (
-    <p className={darkMode ? "text-white" : "text-black"}>
-      Loading data...
-    </p>
-  )}
-</div>
+      <div className="flex gap-4">
+        <button
+          onClick={() => downloadObject(data)}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg shadow transition ${darkMode ? "bg-green-600 hover:bg-green-700 text-white hover:text-black" : "bg-green-400 hover:bg-green-500 text-black hover:text-white"}`}
+        >
+          <FileText className="w-5 h-5" />
+          Download TXT
+        </button>
 
-
-{/* <div
-  className={`w-full max-w-4xl p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500 hover:scale-105 transition-transform duration-300 ${cardBg}`}
->
-  {data?.Overall_Data?.scheme?.length > 0 ? (
-    <pre
-      className={`whitespace-pre-wrap break-words text-sm ${
-        darkMode ? "text-white" : "text-black"
-      }`}
-    >
-      {JSON.stringify(data.Overall_Data.scheme, null, 2)}
-    </pre>
-  ) : (
-    <p className={darkMode ? "text-white" : "text-black"}>
-      Loading data...
-    </p>
-  )}
-</div> */}
-
-      <button
-        onClick={() => downloadObject(data)}
-        className={`flex items-center gap-2 px-4 py-2 rounded-lg shadow transition ${darkMode ? "bg-green-600 hover:bg-green-700 text-white hover:text-black" : "bg-green-400 hover:bg-green-500 text-black hover:text-white"}`}
-      >
-        <FileText className="w-5 h-5" />
-        Download TXT
-      </button>
+        <button
+          onClick={saveToBackend}
+          disabled={saving}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg shadow transition ${darkMode ? "bg-blue-600 hover:bg-blue-700 text-white hover:text-black" : "bg-blue-400 hover:bg-blue-500 text-black hover:text-white"}`}
+        >
+          {saving ? "Saving..." : "Save to Database"}
+        </button>
+      </div>
     </div>
   );
 };

@@ -21,6 +21,7 @@ export default function DarkCard() {
   const [result, setResult] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [device, setDevice] = useState("Desktop");
+  const [report, setReport] = useState("All");
 
   const { darkMode, toggleTheme } = useContext(ThemeContext); // ✅ context use
   const handleClick = async (e) => {
@@ -46,7 +47,7 @@ export default function DarkCard() {
       const response = await fetch("http://localhost:2000/data", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify([inputValue,device]),
+        body: JSON.stringify([inputValue,device,report]),
       });
       if (!response.ok) throw new Error(`Server error: ${response.status}`);
       const result = await response.json();
@@ -164,6 +165,26 @@ export default function DarkCard() {
     <option value="Desktop">Desktop</option>
     <option value="Mobile">Mobile</option>
   </select>
+  <select
+    disabled={loading}
+    value={report}
+    onChange={(e) => setReport(e.target.value)}
+    className={`w-full sm:w-40 px-4 py-2 rounded-xl shadow-2xl ${
+      darkMode ? "bg-white text-black" : "bg-gray-300 text-black"
+    }`}
+  >
+  <option value="All">All</option>
+  <option value="technicalMetrics">Technical Performance</option>
+  <option value="seoMetrics">On-Page SEO</option>
+  <option value="accessibilityMetrics">Accessibility</option>
+  <option value="securityCompliance">Security Compliance</option>
+  <option value="uxContentStructure">UX Content Structure</option>
+  <option value="conversionLeadFlow">Conversion & Lead Flow</option>
+  <option value="aioReadiness">AIO</option>
+  </select>
+
+
+  
 </div>
 
          

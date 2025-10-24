@@ -1,7 +1,8 @@
 import express from "express";
 import cors from "cors";
 import main from "./Main/main.js";
-
+import siteReportRoutes from "./routes/siteReportRoutes.js";
+import connectDB from "./DB/db.js";
 import dotenv from "dotenv";
 dotenv.config();
 const PORT =process.env.PORT;
@@ -10,6 +11,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+connectDB();
 app.post('/data', async (req, res) => {
 
   const  message  = req.body;
@@ -25,6 +27,7 @@ app.post('/data', async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch PageSpeed data" });
   }
 });
+app.use("/api/sitereports", siteReportRoutes);
 
 app.listen(PORT, () => {
   console.log(`✅ Backend running on http://localhost:${PORT}`);

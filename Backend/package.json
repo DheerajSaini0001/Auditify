@@ -23,6 +23,7 @@
     "follow-redirects": "^1.15.11",
     "https": "^1.0.0",
     "jsdom": "^27.0.0",
+    "mongoose": "^8.19.2",
     "node-fetch": "^3.3.2",
     "nodemon": "^3.1.10",
     "p-limit": "^7.1.1",

@@ -54,6 +54,7 @@ export default async function MetricesCalculation(url, device, selectedMetric = 
       }
     end = performance.now();
     timeTaken = ((end-start)/1000).toFixed(0);
+    browser.close();
 
       return {
         url,
@@ -85,6 +86,7 @@ export default async function MetricesCalculation(url, device, selectedMetric = 
 
     end = performance.now();
     timeTaken = ((end-start)/1000).toFixed(0);
+    browser.close();
     
     return {
       url,

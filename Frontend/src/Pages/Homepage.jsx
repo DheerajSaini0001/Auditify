@@ -1,12 +1,9 @@
 import React from 'react'
-import DarkCard from '../Component/DarkCard'
-
-export default function Homepage() {
+import DarkCard from '../Component/DarkCard.jsx'
+export default function Homepage({ darkMode,setData }) {
   return (
-    <>
     <div className='min-h-screen w-full overflow-x-hidden '>
-        <DarkCard/>
+        <DarkCard darkMode={darkMode} setData={setData} />
     </div>
-    </>
   )
 }

@@ -1,21 +1,21 @@
 import React, { useState, useContext } from "react";
-import { Loader2, Menu, X, Search, Sun, Moon } from "lucide-react";
+import { Loader2, Menu, X, Search, Sun, Moon, Layout } from "lucide-react";
 import Sidebar from "./Sidebar";
 import Dashboard2 from "./Dashboard2";
-import Technical_Performance from "../Metrices/Technical_Performance";
-import On_Page_SEO from "../Metrices/On_Page_SEO";
-import Accessibility from "../Metrices/Accessibility";
-import Security_Compilance from "../Metrices/Security_Compilance";
-import UX_Content_Structure from "../Metrices/UX_Content_Structure";
-import Conversion_Lead_Flow from "../Metrices/Conversion_Lead_Flow";
-import AIO from "../Metrices/AIO";
+import Technical_Performance from "../Pages/Technical_Performance.jsx";
+import On_Page_SEO from "../Pages/On_Page_SEO.jsx";
+import Accessibility from "../Pages/Accessibility.jsx";
+import Security_Compilance from "../Pages/Security_Compilance.jsx";
+import UX_Content_Structure from "../Pages/UX_Content_Structure.jsx";
+import Conversion_Lead_Flow from "../Pages/Conversion_Lead_Flow.jsx";
+import AIO from "../Pages/AIO.jsx";
 import Footer from "./Footer";
-import RawData from "../Metrices/RawData";
+import RawData from "../Pages/RawData.jsx";
 import Assets from "../assets/Assets.js";
 
-import { ThemeContext } from "../ThemeContext.jsx"; // ✅ ThemeContext import
 
-export default function DarkCard() {
+
+export default function DarkCard({ darkMode,setData }) {
   const [loading, setLoading] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [result, setResult] = useState(null);
@@ -23,7 +23,7 @@ export default function DarkCard() {
   const [device, setDevice] = useState("Desktop");
   const [report, setReport] = useState("All");
 
-  const { darkMode, toggleTheme } = useContext(ThemeContext); // ✅ context use
+  
   const handleClick = async (e) => {
     e.preventDefault();
     console.log(device);
@@ -74,38 +74,16 @@ export default function DarkCard() {
     : "fixed top-0 left-0 w-full lg:h-16 sm:h-20 bg-gray-200 border-b border-gray-300 flex items-center justify-between px-4 z-50";
 
   const sidebarClass = darkMode
-    ? "fixed  left-0 z-40 w-64 h-[calc(100vh-4rem)] overflow-x-hidden bg-gray-900 border-r border-gray-700 transform"
-    : "fixed   left-0 z-40 w-64 h-[calc(100vh-4rem)] overflow-x-hidden bg-gray-100 border-r border-gray-300 transform";
+    ? "fixed  left-0  w-64 h-[calc(100vh-4rem)] overflow-x-hidden bg-gray-900 border-r border-gray-700 transform"
+    : "fixed   left-0  w-64 h-[calc(100vh-4rem)] overflow-x-hidden bg-gray-100 border-r border-gray-300 transform";
 
   return (
-    <div className={containerClass}>
+    <div 
+    className={containerClass}>
       {/* Navbar */}
-      <nav className={navbarClass}>
-        {result && (
-          <button
-            className={darkMode ? "lg:hidden p-2 rounded-lg mr-5 bg-gray-800" : "lg:hidden p-2 rounded-lg bg-gray-200 mr-5"}
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-          >
-            {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
-        )}
-        <div className={darkMode?"flex flex-col-rev justify-center items-center gap-4 font-serif text-4xl font-bold bg-gradient-to-r from-sky-200 via-rose-200 to-orange-200 bg-clip-text text-transparent":"flex flex-col-rev justify-center items-center gap-4 font-serif text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#000428] to-[#004e92]"}>
-          <div>
-           <img src={darkMode?Assets.Logo:Assets.DarkLogo} alt="" className="sm:h-1 h-12  lg:h-14" />
-          </div>
-          <div>Site Audits</div>
-        </div>
+      
 
-        {/* Theme Toggle Button */}
-        <button
-          onClick={toggleTheme}
-          className={darkMode ? "px-4 py-2  text-white rounded" : "px-4 py-2  text-black rounded"}
-        >
-          {darkMode ? <Sun color="#FFD700" strokeWidth={3} size={20}/> : <Moon color="#4B5563" strokeWidth={3} size={20}/>}
-        </button>
-      </nav>
-
-      <div className="h-10"></div> {/* spacer */}
+      {/* spacer */}
 
       <div className=" flex flex-col items-center  justify-center">
       {!result && (
@@ -205,39 +183,73 @@ export default function DarkCard() {
   </div>
 )}
 
+{setData(result)}
 
         {result && (
-          <div className={`${containerClass} relative w-full  flex flex-1`}>
-            {/* Sidebar */}
-            <div
-              className={`${sidebarClass} ${sidebarOpen ? "translate-x-0 overflow-y-auto" : "-translate-x-full"} lg:translate-x-0 transition-transform duration-300 ease-in-out min-h-screen overflow-y-auto pb-4`}
-            >
-              <Sidebar data={result.Raw} />
-            </div>
 
-            {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-30 lg:hidden" onClick={() => setSidebarOpen(false)} />}
+          
+          <div className={`${containerClass} relative flex w-full min-h-screen`}>
+  {/* Sidebar */}
+  <div
+    className={`responsive ${sidebarClass} ${
+      sidebarOpen ? "translate-x-0 overflow-y-hidden" : "-translate-x-full"
+    } lg:translate-x-0 transition-transform duration-300 ease-in-out fixed responsive:relative h-full z-40 bg-gray-800`}
+  >
+    <Sidebar data={result.Raw} darkMode={darkMode} />
+  </div>
 
-            {/* Dashboard */}
-            <div className="flex-1 lg:ml-64 pb-0 flex-col justify-center pr-4 pt-2 space-y-8">
+  {/* Overlay for mobile when sidebar is open */}
+  {sidebarOpen && (
+    <div
+      className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+      onClick={() => setSidebarOpen(false)}
+    />
+  )}
 
-              <section id="deshboard" className="scroll-mt-20"><Dashboard2 data={result.Metric} /></section>
-              <section id="technical-performance" className="scroll-mt-20"><Technical_Performance data={result.Metric} /></section>
-              <section id="on-page-seo" className="scroll-mt-20"><On_Page_SEO data={result.Metric} /></section>
-              <section id="accessibility"><Accessibility data={result.Metric} /></section>
-              <section id="security" className="scroll-mt-20"><Security_Compilance data={result.Metric} /></section>
-              <section id="ux" className="scroll-mt-20"><UX_Content_Structure data={result.Metric} /></section>
-           <section id="conversion" className="scroll-mt-20"><Conversion_Lead_Flow data={result.Metric} /></section>
-            <section id="aio" className="scroll-mt-20"><AIO data={result.Metric} /></section>
-              <section id="Rawdata" className="scroll-mt-20"><RawData data={result.Raw} /></section> 
+  {/* Main content */}
+  <div className="flex-1 lg:ml-64 flex flex-col pb-0 pr-4 pt-2 space-y-8">
+    <section id="deshboard" className="scroll-mt-20">
+      <Dashboard2 darkMode={darkMode} data={result.Metric} />
+    </section>
 
-            </div>
-          </div>
+    <section id="technical-performance" className="scroll-mt-20">
+      <Technical_Performance darkMode={darkMode} data={result.Metric} />
+    </section>
+
+    <section id="on-page-seo" className="scroll-mt-20">
+      <On_Page_SEO darkMode={darkMode} data={result.Metric} />
+    </section>
+
+    <section id="accessibility">
+      <Accessibility darkMode={darkMode} data={result.Metric} />
+    </section>
+
+    <section id="security" className="scroll-mt-20">
+      <Security_Compilance darkMode={darkMode} data={result.Metric} />
+    </section>
+
+    <section id="ux" className="scroll-mt-20">
+      <UX_Content_Structure darkMode={darkMode} data={result.Metric} />
+    </section>
+
+    <section id="conversion" className="scroll-mt-20">
+      <Conversion_Lead_Flow darkMode={darkMode} data={result.Metric} />
+    </section>
+
+    <section id="aio" className="scroll-mt-20">
+      <AIO darkMode={darkMode} data={result.Metric} />
+    </section>
+
+    <section id="Rawdata" className="scroll-mt-20">
+      <RawData darkMode={darkMode} data={result.Raw} />
+    </section>
+  </div>
+</div>
+
         )}
       </div>
 
-      <footer className={darkMode ? "mt-auto bg-gray-800 text-white text-center" : "mt-auto bg-gray-200 text-black text-center"}>
-        <Footer />
-      </footer>
+      
     </div>
   );
 }

@@ -4,8 +4,8 @@ import { Check, X, AlertTriangle } from "lucide-react";
 import CircularProgress from "../Component/CircularProgress";
 import AuditDropdown from "../Component/AuditDropdown";
 
-export default function Technical_Performance({ data }) {
-  const { darkMode } = useContext(ThemeContext);
+export default function Technical_Performance({ data,darkMode }) {
+  
 
   if (!data) return <div />;
 

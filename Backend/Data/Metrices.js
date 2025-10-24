@@ -1,17 +1,54 @@
+function OverAll(MetricesCalculation_Data) {
 
-export default function Metrices(url, MetricesCalculation_Data, Overall_Data,timeTaken,device) {
+  const totalA = MetricesCalculation_Data.technicalReport.actualPercentage || 0;
+  const totalB = MetricesCalculation_Data.seoReport.actualPercentage || 0;
+  const totalC = MetricesCalculation_Data.accessibilityReport.actualPercentage || 0;
+  const totalD = MetricesCalculation_Data.securityReport.actualPercentage || 0;
+  const totalE = MetricesCalculation_Data.uxReport.actualPercentage || 0;
+  const totalF = MetricesCalculation_Data.conversionReport.actualPercentage || 0;
+  const totalG = MetricesCalculation_Data.aioReport.actualPercentage || 0;
+
+  const scores = [
+  { name: "Technical Performance", score: totalA },
+  { name: "On-Page SEO", score: totalB },
+  { name: "Accessibility", score: totalC },
+  { name: "Security/Compliance", score: totalD },
+  { name: "UX & Content", score: totalE },
+  { name: "Conversion & Lead Flow", score: totalF },
+  { name: "AIO Readiness", score: totalG }
+];
+
+  const totalScore = (totalA + totalB + totalC + totalD + totalE + totalF + totalG)/7;
+
+  let grade = "F";
+  if (totalScore >= 90) grade = "A";
+  else if (totalScore >= 80) grade = "B";
+  else if (totalScore >= 70) grade = "C";
+  else if (totalScore >= 60) grade = "D";
+
+
+  return {
+    totalScore:parseFloat(totalScore.toFixed(1)),
+    grade,
+    sectionScores: scores,
+  };
+
+}
+
+export default function Metrices(MetricesCalculation_Data, timeTaken) {
+
+  const Overall_Data = OverAll(MetricesCalculation_Data);
 
   const metrices = {
     Schema:MetricesCalculation_Data.technicalReport.structuredData,
-    Device:device,
-    Time_Taken:timeTaken + 's',
-    Site: url,
+    Device:MetricesCalculation_Data.device,
+    Time_Taken:MetricesCalculation_Data.timeTaken + 's',
+    Site: MetricesCalculation_Data.url,
     Score: Overall_Data.totalScore,
     Grade: Overall_Data.grade,
+    Report:MetricesCalculation_Data.report,
     AIO_Compatibility_Badge: MetricesCalculation_Data.aioReport.AIO_Compatibility_Badge,
     Section_Score: Overall_Data.sectionScores,
-    // Top_Fixes: Overall_Data.topFixes,
-    // recommendations: Overall_Data.recommendations,
     Technical_Performance: {
       Core_Web_Vitals: {
         LCP:{

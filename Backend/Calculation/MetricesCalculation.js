@@ -5,49 +5,98 @@ import securityCompliance from "../Metrices/securityCompliance.js";
 import uxContentStructure from "../Metrices/uxContentStructure.js";
 import conversionLeadFlow from "../Metrices/conversionLeadFlow.js";
 import aioReadiness from "../Metrices/aioReadiness.js";
-import Puppeteer_Cheerio from "../Tools/puppeteer_cheerio.js";
+
+import Puppeteer_Cheerio from "../Tools/Puppeteer_Cheerio.js";
 import googleAPI from "../Tools/googleAPI.js";
+import { performance } from "perf_hooks";
 
-export default async function MetricesCalculation(url,device) {
-  
-const data = await googleAPI(url,device);
-const {browser,page,response,$} = await Puppeteer_Cheerio(url,device);
+export default async function MetricesCalculation(url, device, selectedMetric = "All") {
+  let start, end, timeTaken;
+  let data = null;
+  start = performance.now();
+  const { browser, page, response, $ } = await Puppeteer_Cheerio(url, device);
 
-  const [
-    technicalReport,
-    seoReport,
-    accessibilityReport,
-    securityReport,
-    uxReport,
-    conversionReport,
-    aioReport
-  ] = await Promise.all([
-    technicalMetrics(url, data, page, response, browser),
-    seoMetrics(url, $),
-    accessibilityMetrics(page),
-    securityCompliance(url, page, response, browser),
-    uxContentStructure(url, $),
-    conversionLeadFlow(page, $),
-    aioReadiness(url, $)
-  ]);
+    if (selectedMetric && selectedMetric !== "All") {
+      let result;
 
-  browser.close();
+      switch (selectedMetric) {
+        case "technicalMetrics":
+          data = await googleAPI(url, device);
+          result = await technicalMetrics(url, data, page, response, browser);
+          break;
 
-  // console.log("Technical Report:", technicalReport)
-  // console.log("SEO Report (B1+B2+B3):", seoReport);
-  // console.log("Accessibility C Section Report:", accessibilityReport);
-  // console.log("Security/Compliance D Section Report:", securityReport);
-  // console.log("UX & Content Structure E Section Report:", uxReport);
-  // console.log("Conversion & Lead Flow F Section Report:", conversionReport);
-  // console.log("AIO G Section Report:", aioReport);
+        case "seoMetrics":
+          result = await seoMetrics(url, $);
+          break;
 
-  return {
-    technicalReport,
-    seoReport,
-    accessibilityReport,
-    securityReport,
-    uxReport,
-    conversionReport,
-    aioReport
-  };
+        case "accessibilityMetrics":
+          result = await accessibilityMetrics(page);
+          break;
+
+        case "securityCompliance":
+          result = await securityCompliance(url, page, response, browser);
+          break;
+
+        case "uxContentStructure":
+          result = await uxContentStructure(url, $);
+          break;
+
+        case "conversionLeadFlow":
+          result = await conversionLeadFlow(page, $);
+          break;
+
+        case "aioReadiness":
+          result = await aioReadiness(url, $);
+          break;
+
+        default:
+          throw new Error("Invalid metric selected");
+      }
+    end = performance.now();
+    timeTaken = ((end-start)/1000).toFixed(0);
+
+      return {
+        url,
+        device,
+        metric: selectedMetric,
+        report: result,
+        timeTaken
+      };
+    }
+
+    data = await googleAPI(url, device);
+    const [
+      technicalReport,
+      seoReport,
+      accessibilityReport,
+      securityReport,
+      uxReport,
+      conversionReport,
+      aioReport,
+    ] = await Promise.all([
+      technicalMetrics(url, data, page, response, browser),
+      seoMetrics(url, $),
+      accessibilityMetrics(page),
+      securityCompliance(url, page, response, browser),
+      uxContentStructure(url, $),
+      conversionLeadFlow(page, $),
+      aioReadiness(url, $),
+    ]);
+
+    end = performance.now();
+    timeTaken = ((end-start)/1000).toFixed(0);
+    
+    return {
+      url,
+      device,
+      report:selectedMetric,
+      timeTaken,
+      technicalReport,
+      seoReport,
+      accessibilityReport,
+      securityReport,
+      uxReport,
+      conversionReport,
+      aioReport,
+    };
 }

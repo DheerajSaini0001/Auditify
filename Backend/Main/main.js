@@ -15,15 +15,9 @@ export default async function main(message) {
 
     console.log(`URL Received: ${url} and Device: ${device} and report: ${report}`);
 
-    let start, end;
-
-    start = performance.now();
-    const MetricesCalculation_Data = await MetricesCalculation(url,device)
-    end = performance.now();
-    const timeTaken = ((end-start)/1000).toFixed(0);
-    const Overall_Data =  OverAll(MetricesCalculation_Data)
-    const Metrices_Data = Metrices(url,MetricesCalculation_Data,Overall_Data,timeTaken,device)
-    const Raw_Data = Raw(url,MetricesCalculation_Data,Overall_Data,timeTaken,device)
+    const MetricesCalculation_Data = await MetricesCalculation(url,device,report)
+    const Metrices_Data = Metrices(MetricesCalculation_Data)
+    const Raw_Data = Raw(MetricesCalculation_Data,Metrices_Data)
 
     return  {Metrices_Data,Raw_Data}
 

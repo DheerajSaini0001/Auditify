@@ -151,14 +151,14 @@ export default function DarkCard({ darkMode,setData }) {
       darkMode ? "bg-white text-black" : "bg-gray-300 text-black"
     }`}
   >
-  <option value="Rawdata">All</option>
-    <option value="technical-performance">Technical Performance</option>
-  <option value="on-page-seo">On-Page SEO</option>
-  <option value="accessibility">Accessibility</option>
-  <option value="security">Security Compliance</option>
-  <option value="ux">UX Content Structure</option>
-  <option value="conversion">Conversion & Lead Flow</option>
-  <option value="aio">AIO</option>
+  <option value="All">All</option>
+  <option value="technicalMetrics">Technical Performance</option>
+  <option value="seoMetrics">On-Page SEO</option>
+  <option value="accessibilityMetrics">Accessibility</option>
+  <option value="securityCompliance">Security Compliance</option>
+  <option value="uxContentStructure">UX Content Structure</option>
+  <option value="conversionLeadFlow">Conversion & Lead Flow</option>
+  <option value="aioReadiness">AIO</option>
   </select>
 
 

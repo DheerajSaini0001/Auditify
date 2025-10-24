@@ -22,7 +22,7 @@ app.post("/data", async (req, res) => {
     
     // ✅ Save Raw_Data to MongoDB
     const rawData = data.Raw_Data;
-    const newData = new SiteReport(rawData);
+    const newData = new SiteReport(data.Metrices_Data);
     await newData.save();
 
     res.json({

@@ -58,8 +58,8 @@ export default async function MetricesCalculation(url, device, selectedMetric = 
       return {
         url,
         device,
-        metric: selectedMetric,
-        report: result,
+        report: selectedMetric,
+        metric: result,
         timeTaken
       };
     }

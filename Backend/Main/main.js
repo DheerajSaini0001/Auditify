@@ -1,7 +1,5 @@
 import MetricesCalculation from "../Calculation/MetricesCalculation.js";
 import Metrices from "../Data/Metrices.js";
-import OverAll from "../Data/OverAll.js";
-import { performance } from "perf_hooks";
 import Raw from "../Data/Raw.js";
 
 export default async function main(message) {
@@ -17,9 +15,9 @@ export default async function main(message) {
 
     const MetricesCalculation_Data = await MetricesCalculation(url,device,report)
     const Metrices_Data = Metrices(MetricesCalculation_Data)
+    console.log(Metrices_Data);
+    
     const Raw_Data = Raw(MetricesCalculation_Data,Metrices_Data)
 
     return  {Metrices_Data,Raw_Data}
-
-
 }

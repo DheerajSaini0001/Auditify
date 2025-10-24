@@ -208,41 +208,44 @@ export default function DarkCard({ darkMode,setData }) {
 
   {/* Main content */}
   <div className="flex-1 lg:ml-64 flex flex-col pb-0 pr-4 pt-2 space-y-8">
-    <section id="deshboard" className="scroll-mt-20">
+  {(result.Metric.Report=="All") &&( 
+   <section id="deshboard" className="scroll-mt-20">
       <Dashboard2 darkMode={darkMode} data={result.Metric} />
-    </section>
+    </section>)}
 
-    <section id="technical-performance" className="scroll-mt-20">
+{(result.Metric.Report=="technicalMetrics"||result.Metric.Report=="All") &&( <section id="technical-performance" className="scroll-mt-20">
       <Technical_Performance darkMode={darkMode} data={result.Metric} />
-    </section>
+    </section>)}
 
-    <section id="on-page-seo" className="scroll-mt-20">
+{(result.Metric.Report=="seoMetrics"||result.Metric.Report=="All") &&(  <section id="on-page-seo" className="scroll-mt-20">
       <On_Page_SEO darkMode={darkMode} data={result.Metric} />
-    </section>
-
-    <section id="accessibility">
+    </section>)}
+  
+  {(result.Metric.Report=="accessibilityMetrics"||result.Metric.Report=="All") &&(
+<section id="accessibility">
       <Accessibility darkMode={darkMode} data={result.Metric} />
-    </section>
+    </section>)}
 
-    <section id="security" className="scroll-mt-20">
+{(result.Metric.Report=="securityCompliance"||result.Metric.Report=="All") &&(<section id="security" className="scroll-mt-20">
       <Security_Compilance darkMode={darkMode} data={result.Metric} />
-    </section>
+    </section>)}
 
-    <section id="ux" className="scroll-mt-20">
+{(result.Metric.Report=="uxContentStructure"||result.Metric.Report=="All") &&(<section id="ux" className="scroll-mt-20">
       <UX_Content_Structure darkMode={darkMode} data={result.Metric} />
-    </section>
+    </section>)}
 
-    <section id="conversion" className="scroll-mt-20">
+{(result.Metric.Report=="conversionLeadFlow"||result.Metric.Report=="All") &&( <section id="conversion" className="scroll-mt-20">
       <Conversion_Lead_Flow darkMode={darkMode} data={result.Metric} />
-    </section>
+    </section>)}
 
-    <section id="aio" className="scroll-mt-20">
+{(result.Metric.Report=="aioReadiness"||result.Metric.Report=="All") &&( <section id="aio" className="scroll-mt-20">
       <AIO darkMode={darkMode} data={result.Metric} />
-    </section>
-
-    <section id="Rawdata" className="scroll-mt-20">
+    </section>)}
+   
+{result.Metric.Report=="All" &&( <section id="Rawdata" className="scroll-mt-20">
       <RawData darkMode={darkMode} data={result.Raw} />
-    </section>
+    </section>)}
+   
   </div>
 </div>
 

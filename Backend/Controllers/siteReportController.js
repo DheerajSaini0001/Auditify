@@ -1,17 +1,21 @@
-// controllers/siteReportController.js
+// Controllers/siteReportController.js
+import connectDB from "../DB/db.js";
 import SiteReport from "../Model/SiteReport.js";
 
-// POST /api/sitereports
-export const saveSiteReport = async (req, res) => {
+export const generateAndSaveReport = async (req, res) => {
   try {
-    const metricesData = req.body; // frontend se aayega JSON data
+    await connectDB();
+    
+    const newData = new SiteReport(req.body);
+    const saved = await newData.save();
 
-    const siteReport = new SiteReport(metricesData);
-    await siteReport.save();
-
-    res.status(201).json({ success: true, message: "Site report saved successfully", data: siteReport });
+    res.status(201).json({
+      success: true,
+      message: "✅ Report saved successfully!",
+      data: saved
+    });
   } catch (error) {
-    console.error("Error saving site report:", error);
-    res.status(500).json({ success: false, message: "Failed to save site report", error: error.message });
+    console.error("❌ Error saving report:", error);
+    res.status(500).json({ success: false, error: error.message });
   }
 };

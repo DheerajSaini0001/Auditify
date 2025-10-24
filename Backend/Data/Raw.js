@@ -1,15 +1,16 @@
 
-export default function Raw(url, MetricesCalculation_Data, Overall_Data,timeTaken,device) {
+export default function Raw(MetricesCalculation_Data, Metrices_Data) {
 
   const metrices = {
     Schema:MetricesCalculation_Data.technicalReport.structuredData,
-    Device:device,
-    Time_Taken:timeTaken + 's',
-    Site: url,
-    Score: Overall_Data.totalScore,
-    Grade: Overall_Data.grade,
+    Device:Metrices_Data.Device,
+    Time_Taken:Metrices_Data.Time_Taken,
+    Site: Metrices_Data.Site,
+    Score: Metrices_Data.Score,
+    Grade: Metrices_Data.Grade,
+    Report:Metrices_Data.Report,
     AIO_Compatibility_Badge: MetricesCalculation_Data.aioReport.AIO_Compatibility_Badge,
-    Section_Score: Overall_Data.sectionScores,
+    Section_Score: Metrices_Data.Section_Score,
     Technical_Performance: {
         LCP:{
           Score: MetricesCalculation_Data.technicalReport.coreWebVitals.lcpScore,

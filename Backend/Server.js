@@ -1,34 +1,45 @@
 import express from "express";
 import cors from "cors";
 import main from "./Main/main.js";
-import siteReportRoutes from "./routes/siteReportRoutes.js";
 import connectDB from "./DB/db.js";
 import dotenv from "dotenv";
+import SiteReport from "./Model/SiteReport.js"; 
+
 dotenv.config();
-const PORT =process.env.PORT;
+const PORT = process.env.PORT || 2000;
+connectDB();
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 
-connectDB();
-app.post('/data', async (req, res) => {
 
-  const  message  = req.body;
+app.post("/data", async (req, res) => {
+  const message = req.body;
+
   try {
-  const data = await main(message);
-  res.json({Metric:data.Metrices_Data, Raw:data.Raw_Data});
-  
-  console.log('Audit Completed');
-  // console.log(data.Metrices_Data);
-  // console.log(data.Raw_Data);
+    const data = await main(message);
+    
+    // ✅ Save Raw_Data to MongoDB
+    const rawData = data.Raw_Data;
+    const newData = new SiteReport(rawData);
+    await newData.save();
+
+    res.json({
+      success: true,
+      Metric: data.Metrices_Data,
+      Raw: data.Raw_Data,
+      saved: true,
+    });
+    
+    console.log("✅ Audit Completed & Data Saved to MongoDB");
   } catch (error) {
-    console.error("Error fetching PageSpeed data:", error);
-    res.status(500).json({ success: false, error: "Failed to fetch PageSpeed data" });
+    console.error("❌ Error fetching/saving PageSpeed data:", error);
+    res.status(500).json({ success: false, error: "Failed to fetch or save PageSpeed data" });
   }
 });
-app.use("/api/sitereports", siteReportRoutes);
 
+// Start server
 app.listen(PORT, () => {
   console.log(`✅ Backend running on http://localhost:${PORT}`);
 });

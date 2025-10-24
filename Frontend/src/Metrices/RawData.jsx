@@ -74,7 +74,7 @@ const RawData = ({ data }) => {
 
     setSaving(true);
     try {
-      const response = await fetch("http://localhost:2000/api/sitereports", {
+      const response = await fetch("http://localhost:2000/api/sitereports/saveReport", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),

@@ -8,83 +8,95 @@ import aioReadiness from "../Metrices/aioReadiness.js";
 
 import Puppeteer_Cheerio from "../Tools/Puppeteer_Cheerio.js";
 import googleAPI from "../Tools/googleAPI.js";
+import { performance } from "perf_hooks";
 
-export default async function MetricesCalculation(url, device, selectedMetric) {
+export default async function MetricesCalculation(url, device, selectedMetric = "All") {
+  let start, end, timeTaken;
   let data = null;
-
-
-  if (selectedMetric === "technicalMetrics" || selectedMetric === "All" || !selectedMetric) {
-    data = await googleAPI(url, device);
-  }
-
+  start = performance.now();
   const { browser, page, response, $ } = await Puppeteer_Cheerio(url, device);
 
-  let result = {};
+    if (selectedMetric && selectedMetric !== "All") {
+      let result;
 
-  switch (selectedMetric) {
-    case "technicalMetrics":
-      result.technicalReport = await technicalMetrics(url, data, page, response, browser);
-      break;
+      switch (selectedMetric) {
+        case "technicalMetrics":
+          data = await googleAPI(url, device);
+          result = await technicalMetrics(url, data, page, response, browser);
+          break;
 
-    case "seoMetrics":
-      result.seoReport = await seoMetrics(url, $);
-      break;
+        case "seoMetrics":
+          result = await seoMetrics(url, $);
+          break;
 
-    case "accessibilityMetrics":
-      result.accessibilityReport = await accessibilityMetrics(page);
-      break;
+        case "accessibilityMetrics":
+          result = await accessibilityMetrics(page);
+          break;
 
-    case "securityCompliance":
-      result.securityReport = await securityCompliance(url, page, response, browser);
-      break;
+        case "securityCompliance":
+          result = await securityCompliance(url, page, response, browser);
+          break;
 
-    case "uxContentStructure":
-      result.uxReport = await uxContentStructure(url, $);
-      break;
+        case "uxContentStructure":
+          result = await uxContentStructure(url, $);
+          break;
 
-    case "conversionLeadFlow":
-      result.conversionReport = await conversionLeadFlow(page, $);
-      break;
+        case "conversionLeadFlow":
+          result = await conversionLeadFlow(page, $);
+          break;
 
-    case "aioReadiness":
-      result.aioReport = await aioReadiness(url, $);
-      break;
+        case "aioReadiness":
+          result = await aioReadiness(url, $);
+          break;
 
-    default: {
-      const [
-        technicalReport,
-        seoReport,
-        accessibilityReport,
-        securityReport,
-        uxReport,
-        conversionReport,
-        aioReport
-      ] = await Promise.all([
-        technicalMetrics(url, data, page, response, browser),
-        seoMetrics(url, $),
-        accessibilityMetrics(page),
-        securityCompliance(url, page, response, browser),
-        uxContentStructure(url, $),
-        conversionLeadFlow(page, $),
-        aioReadiness(url, $)
-      ]);
+        default:
+          throw new Error("Invalid metric selected");
+      }
+    end = performance.now();
+    timeTaken = ((end-start)/1000).toFixed(0);
 
-      result = {
-        technicalReport,
-        seoReport,
-        accessibilityReport,
-        securityReport,
-        uxReport,
-        conversionReport,
-        aioReport
+      return {
+        url,
+        device,
+        metric: selectedMetric,
+        report: result,
+        timeTaken
       };
-      break;
     }
-  }
 
-  await browser.close();
+    data = await googleAPI(url, device);
+    const [
+      technicalReport,
+      seoReport,
+      accessibilityReport,
+      securityReport,
+      uxReport,
+      conversionReport,
+      aioReport,
+    ] = await Promise.all([
+      technicalMetrics(url, data, page, response, browser),
+      seoMetrics(url, $),
+      accessibilityMetrics(page),
+      securityCompliance(url, page, response, browser),
+      uxContentStructure(url, $),
+      conversionLeadFlow(page, $),
+      aioReadiness(url, $),
+    ]);
 
-  console.log(result);
-  
-  return result;
+    end = performance.now();
+    timeTaken = ((end-start)/1000).toFixed(0);
+    
+    return {
+      url,
+      device,
+      report:selectedMetric,
+      timeTaken,
+      technicalReport,
+      seoReport,
+      accessibilityReport,
+      securityReport,
+      uxReport,
+      conversionReport,
+      aioReport,
+    };
 }

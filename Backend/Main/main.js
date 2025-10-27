@@ -17,6 +17,7 @@ export default async function main(message) {
     // Check if already exists in DB
     const existingData = await SiteReport.findOne({ "Raw.Site": url,"Raw.Report":report,"Raw.Device": device});
     if(existingData){
+      console.log('Data is persent in DB')
       return existingData;
     }
 

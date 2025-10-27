@@ -3,7 +3,6 @@ import cors from "cors";
 import main from "./Main/main.js";
 import connectDB from "./DB/db.js";
 import dotenv from "dotenv";
-import SiteReport from "./Model/SiteReport.js"; 
 
 dotenv.config();
 const PORT = process.env.PORT || 2000;
@@ -19,15 +18,11 @@ app.post("/data", async (req, res) => {
 
   try {
     const data = await main(message);
-    
-    // ✅ Save Raw_Data to MongoDB
-    const newData = new SiteReport(data);
-    await newData.save();
 
     res.json({
       success: true,
-      Metric: data.Metrices_Data,
-      Raw: data.Raw_Data,
+      Metric: data.Metric,
+      Raw: data.Raw,
       saved: true,
     });
     

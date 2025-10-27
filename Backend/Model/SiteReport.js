@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const SiteReportSchema = new mongoose.Schema(
   {
-    createdAt: { type: Date, default: Date.now ,expires: 20 },
+    createdAt: { type: Date, default: Date.now ,expires: 60 * 60 * 3 },
   },
   { strict: false } // allows any extra fields
 );

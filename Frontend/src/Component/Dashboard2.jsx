@@ -12,6 +12,7 @@ import {
   YAxis,
   CartesianGrid,
 } from "recharts";
+import { NotebookPen } from "lucide-react";
 
 
 import CircularProgress from "./CircularProgress";
@@ -82,8 +83,8 @@ export default function Dashboard2({darkMode }) {
           URL - <a href={`${data.Site}`} target="_blank" className="text-blue-400 hover:underline">{data.Site}</a>
         </p>
         <a href="/">
-          <button className={`font-semibold px-2 py-2 sm:px-2 md:px-2 lg:px-4 lg:py-2   rounded-xl shadow-md transition ${btnBg}`}>
-            Check for Other
+          <button className={`font-semibold flex gap-2 justify-center items-center px-2 py-2 sm:px-2 md:px-2 lg:px-4 lg:py-2   rounded-xl shadow-md transition ${btnBg}`}>
+            <NotebookPen size={20} /> Check for Other
           </button>
         </a>
       </div>
@@ -98,7 +99,16 @@ export default function Dashboard2({darkMode }) {
           <p className="text-gray-200 text-sm sm:text-base mt-1">Website Health Index</p>
         </div>
         <div>
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">Grade - {data.Grade}</h1>
+         
+          <h1  className={`text-xl sm:text-2xl lg:text-3xl font-bold rounded-4xl 
+    ${["A", "B"].includes(data.Grade)
+      ? "bg-green-400"
+      : ["C", "D"].includes(data.Grade)
+      ? "bg-orange-400"
+      : ["E", "F"].includes(data.Grade)
+      ? "bg-red-400"
+      : "bg-gray-300" // default color
+    }`}>Grade - {data.Grade}</h1>
           <p className="text-lg sm:text-xl mt-1 font-semibold">AIO Compatibility - {data.AIO_Compatibility_Badge}</p>
           <p className="text-lg sm:text-xl mt-1 font-semibold">Device - {data.Device}</p>
         </div>

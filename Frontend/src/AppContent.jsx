@@ -12,6 +12,7 @@ import AIO from "./Pages/AIO";
 import Navbar from "./Component/Navbar.jsx";
 import Footer from "./Component/Footer.jsx";
 import { useData } from "./context/DataContext.jsx";
+import NotFound from "./Pages/NotFound.jsx";
 
 import ReportLayout from "./Pages/ReportLayout.jsx";
 
@@ -76,7 +77,9 @@ export default function AppContent() {
             element={<Conversion_Lead_Flow darkMode={darkMode}  />}
           />
           <Route path="/aio" element={<AIO darkMode={darkMode} />} />
+          <Route path="*" element={<NotFound  darkMode={darkMode}/> } />
           <Route path="/about" element={<AboutPage darkMode={darkMode} />} />
+
         </Routes>
       </main>
 

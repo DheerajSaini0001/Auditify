@@ -119,13 +119,7 @@ const RawData = ({ data ,darkMode}) => {
           Download TXT
         </button>
 
-        <button
-          onClick={saveToBackend}
-          disabled={saving}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg shadow transition ${darkMode ? "bg-blue-600 hover:bg-blue-700 text-white hover:text-black" : "bg-blue-400 hover:bg-blue-500 text-black hover:text-white"}`}
-        >
-          {saving ? "Saving..." : "Save to Database"}
-        </button>
+       
       </div>
     </div>
   );

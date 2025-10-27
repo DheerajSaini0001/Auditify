@@ -34,13 +34,14 @@ const Navbar = ({
         }
       >
         <div>
-          <img
+         <a href="/"> <img
             src={darkMode ? Assets.Logo : Assets.DarkLogo}
             alt="Site Audit Logo"
             className="sm:h-10 h-12 lg:h-14"
-          />
+          /></a>
         </div>
-        <div>Site Audits</div>
+        
+        <div><a href="/">Site Audits</a></div>
       </div>
 
       {/* Theme Toggle Button */}

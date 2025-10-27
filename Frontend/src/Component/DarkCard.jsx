@@ -29,8 +29,8 @@ export default function DarkCard({ darkMode, setData }) {
 
   // --- Theme-aware container classes ---
   const containerClass = darkMode
-    ? "scroll-smooth m-0 bg-gray-800 text-white flex flex-col min-h-screen"
-    : "scroll-smooth m-0 bg-gray-100 text-black flex flex-col min-h-screen";
+    ? "scroll-smooth m-0 bg-gray-800 text-white flex flex-col h-[82vh]"
+    : "scroll-smooth m-0 bg-gray-100 text-black flex flex-col h-[82vh]";
 
   const inputClass = darkMode
     ? "flex-1 w-full pl-10 pr-4 rounded-4xl py-2 bg-gray-800 border border-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none text-white"

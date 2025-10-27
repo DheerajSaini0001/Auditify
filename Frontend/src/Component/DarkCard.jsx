@@ -2,6 +2,7 @@ import React, { useState, useContext } from "react";
 import { Loader2, Menu, X, Search, Sun, Moon, Layout } from "lucide-react";
 import { useData } from "../context/DataContext.jsx";
 import { useNavigate } from "react-router-dom";
+import Assets from "../assets/Assets.js";
 
 
 
@@ -46,21 +47,24 @@ export default function DarkCard({ darkMode, setData }) {
   const mainContentPadding = " ";
 
   return (
-    <div className={containerClass}>
+    <div className={`${containerClass} bg-cover bg-center bg-no-repeat` }
+    style={{
+      backgroundImage: `url(${Assets.Bg})`,
+    }}>
      
 
       {/* Main Content Area */}
       {/* ✅ LAYOUT FIX: Padding top yahan add kiya */}
-      <div className={`flex flex-col items-center mt-0 flex-1 ${mainContentPadding}`}>
+      
         
         {/* --- STATE 1: NO RESULT (Show Form) --- */}
         
-          <div className="mx-6 mt-32 sm:mx-0 w-full">
+          <div className="mx-6 mt-32 sm:mx-0 w-full backdrop-blur-xl ">
             <div
               className={
                 darkMode
-                  ? "w-full  max-w-2xl bg-gray-900 rounded-2xl shadow-2xl p-6 space-y-6 border border-gray-700 mx-auto"
-                  : "w-full  max-w-2xl bg-white rounded-2xl shadow-2xl p-6 space-y-6 border border-gray-300 mx-auto"
+                  ? "w-full  max-w-2xl  rounded-2xl shadow-2xl p-6 space-y-6 border border-gray-700 mx-auto"
+                  : "w-full  max-w-2xl  rounded-2xl shadow-2xl p-6 space-y-6 border border-gray-300 mx-auto"
               }
             >
               <h2 className="text-2xl font-bold text-center">
@@ -135,7 +139,7 @@ export default function DarkCard({ darkMode, setData }) {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="flex gap-2 items-center justify-center bg-[#c2fbd7] text-green-700 rounded-full font-sans w-full px-16 py-2 text-base border-0 select-none transition duration-250  shadow hover:shadow-lg active:scale-[1.05] active:-rotate-1  sm:w-auto"
+                      className="flex border-black border-2 gap-2 items-center justify-center bg-[#c2fbd7] text-green-700 rounded-full font-sans w-full px-16 py-2 text-base shadow-2xl select-none transition duration-250  hover:shadow-lg active:scale-[1.05] active:-rotate-1  sm:w-auto"
                     >
                       {loading && <Loader2 className="animate-spin w-5 h-5" />}
                       {loading ? "Analyzing.." : "Analyze"}
@@ -152,7 +156,7 @@ export default function DarkCard({ darkMode, setData }) {
       
 
       </div>
-    </div>
+    
   );
 }
 

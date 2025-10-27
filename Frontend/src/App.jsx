@@ -12,12 +12,12 @@ import AIO from "./Pages/AIO";
 import { ThemeProvider } from "./ThemeContext";
 import Navbar from "./Component/Navbar.jsx";
 import Footer from "./Component/Footer.jsx";
-import { DataContext } from "./context/DataContext.js"; // ✅ import context
+import { DataContext } from "./context/DataContext.js";
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
-  const [result, setResult] = useState(true); 
+  const [result, setResult] = useState(true);
   const [data, setData] = useState(null); // ✅ data state
 
   const toggleTheme = () => setDarkMode((prev) => !prev);
@@ -28,11 +28,12 @@ function App() {
 
   return (
     <ThemeProvider>
-      <DataContext.Provider value={{ data, setData }}> {/* ✅ Context Provider */}
+      <DataContext.Provider value={{ data, setData }}>
+        {/* This container div creates the sticky footer layout */}
         <div
           className={
             darkMode
-              ? "bg-gray-900 text-white min-h-screen flex flex-col"
+              ? "bg-gray-900 text-white min-h-screen  flex flex-col"
               : "bg-gray-50 text-black min-h-screen flex flex-col"
           }
         >
@@ -44,11 +45,11 @@ function App() {
             setSidebarOpen={setSidebarOpen}
             navbarClass={navbarClass}
           />
-{/* <h1>data is</h1>{data} */}
+
+          {/* This main section grows to push the footer down */}
           <main className="flex-grow ">
             <Routes>
-              <Route path="/" element={<Homepage darkMode={darkMode} />} /> {/* ✅ setData is inside Homepage now */}
-              
+              <Route path="/" element={<Homepage darkMode={darkMode} />} />
               <Route
                 path="/technical-performance"
                 element={<Technical_Performance darkMode={darkMode} />}
@@ -73,15 +74,12 @@ function App() {
                 path="/conversion-lead-flow"
                 element={<Conversion_Lead_Flow darkMode={darkMode} />}
               />
-              <Route
-                path="/aio"
-                element={<AIO darkMode={darkMode} />}
-              />
-
+              <Route path="/aio" element={<AIO darkMode={darkMode} />} />
               <Route path="/about" element={<AboutPage darkMode={darkMode} />} />
             </Routes>
           </main>
 
+          {/* This Footer will be at the bottom */}
           <Footer darkMode={darkMode} />
         </div>
       </DataContext.Provider>

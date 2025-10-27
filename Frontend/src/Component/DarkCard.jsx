@@ -49,8 +49,12 @@ export default function DarkCard({ darkMode, setData }) {
   return (
     <div className={`${containerClass} bg-cover bg-center bg-no-repeat` }
     style={{
-      backgroundImage: `url(${Assets.Bg})`,
-    }}>
+      backgroundImage: `url(${darkMode ? Assets.DarkBg : Assets.Bg})`,
+    }}
+    
+      
+   >
+    
      
 
       {/* Main Content Area */}

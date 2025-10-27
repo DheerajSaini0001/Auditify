@@ -15,9 +15,12 @@ import {
 
 
 import CircularProgress from "./CircularProgress";
-import { ThemeContext } from "../ThemeContext"; // ✅ ThemeContext import
+import { useData } from "../context/DataContext";
 
-export default function Dashboard2({ data,darkMode }) {
+export default function Dashboard2({darkMode }) {
+  
+   var { data, loading } = useData(); 
+    data=data.Metric;
   
 
   if (!data) return <div />;

@@ -3,10 +3,12 @@ import { ThemeContext } from "../ThemeContext";
 import { Check, X } from "lucide-react";
 import CircularProgress from "../Component/CircularProgress";
 import AuditDropdown from "../Component/AuditDropdown";
+import { useData } from "../context/DataContext";
 
-export default function UX_Content_Structure({ data ,darkMode}) {
+export default function UX_Content_Structure({ darkMode}) {
 
-
+  var { data, loading } = useData(); 
+  data=data.Metric;
   if (!data) return <div />;
 
   // ScoreBadge component

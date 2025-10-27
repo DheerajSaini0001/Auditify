@@ -3,9 +3,12 @@ import { ThemeContext } from "../ThemeContext";
 import { Check, X } from "lucide-react";
 import CircularProgress from "../Component/CircularProgress";
 import Auditdropdown from "../Component/AuditDropdown";
+import { useData } from "../context/DataContext";
 
-export default function AIO({ data,darkMode }) {
+export default function AIO({darkMode }) {
   
+ var { data, loading } = useData(); 
+  data=data.Metric;
 
   if (!data) return <div />;
 

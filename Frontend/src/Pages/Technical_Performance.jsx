@@ -1,11 +1,16 @@
 import React, { useContext } from "react";
-import { DataContext } from "../context/DataContext"; // ✅ Context
+
 import { Check, X } from "lucide-react";
 import CircularProgress from "../Component/CircularProgress";
 import AuditDropdown from "../Component/AuditDropdown";
+import { useData } from "../context/DataContext";
 
-export default function Technical_Performance({ darkMode,data }) {
-  // const { data } = useContext(DataContext); // ✅ get data from context
+
+export default function Technical_Performance({ darkMode }) {
+
+  var { data, loading } = useData(); 
+  data=data.Metric;
+console.log(data);
 
   if (!data) return <div>No data available. Please submit input on Home page.</div>;
 

@@ -4,10 +4,12 @@ import { Check, TriangleAlert, X } from "lucide-react";
 import CircularProgress from "../Component/CircularProgress";
 import { AlertTriangle } from "lucide-react";
 import AuditDropdown from "../Component/AuditDropdown";
-export default function On_Page_SEO({ data,darkMode }) {
+import { useData } from "../context/DataContext";
+export default function On_Page_SEO({darkMode }) {
   
   
-
+  var { data, loading } = useData(); 
+  data=data.Metric;
   if (!data) return <div />;
 
   

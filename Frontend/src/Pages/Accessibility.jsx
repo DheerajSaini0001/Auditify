@@ -3,9 +3,12 @@ import { ThemeContext } from "../ThemeContext";
 import { Check, X, AlertTriangle } from "lucide-react"; // Imported icons
 import CircularProgress from "../Component/CircularProgress"; // Imported CircularProgress
 import AuditDropdown from "../Component/AuditDropdown";
+import { useData } from "../context/DataContext";
 
-export default function Accessibility({ data,darkMode }) {
+export default function Accessibility({ darkMode }) {
   
+ var { data, loading } = useData(); 
+  data=data.Metric;
 
   if (!data) {
     return <div />;

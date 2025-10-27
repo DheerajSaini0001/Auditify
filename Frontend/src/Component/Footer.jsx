@@ -2,7 +2,7 @@ import React from "react";
 
 export default function Footer({ darkMode }) {
   const footerClass = darkMode
-    ? "mt-auto flex bg-gray-900 text-gray-200 py-6 pt-8"
+    ? "mt-auto flex bg-gray-900 text-gray-200  py-6 pt-8"
     : "mt-auto flex bg-gray-200 text-gray-800 py-6 pt-8";
 
   const linkHoverClass = darkMode
@@ -11,7 +11,7 @@ export default function Footer({ darkMode }) {
 
   return (
     <footer className={footerClass}>
-      <div className="container w-full mx-auto px-4 flex flex-col md:flex-row justify-between items-center">
+      <div className="container ml-64 w-full mx-auto px-4 flex flex-col md:flex-row justify-between items-center">
         <p className="text-sm">
           <a className={linkHoverClass} href="https://www.sltechsoft.com">
             &copy; {new Date().getFullYear()} Success Leader Technologies.

@@ -52,34 +52,6 @@ const ReportLayout = ({ darkMode, sidebarOpen, setSidebarOpen }) => {
             <section id="dashboard" className="scroll-mt-20">
               <Dashboard2 darkMode={darkMode} />
             </section>
-            <section id="technical-performance" className="scroll-mt-20">
-                
-              <Technical_Performance darkMode={darkMode} />
-            </section>
-            <section id="on-page-seo" className="scroll-mt-20">
-            
-              <On_Page_SEO darkMode={darkMode} />
-            </section>
-            <section id="accessibility" className="scroll-mt-20">
-            
-              <Accessibility darkMode={darkMode} />
-            </section>
-            <section id="security" className="scroll-mt-20">
-            
-              <Security_Compilance darkMode={darkMode} />
-            </section>
-            <section id="ux" className="scroll-mt-20">
-            
-              <UX_Content_Structure darkMode={darkMode} />
-            </section>
-            <section id="conversion" className="scroll-mt-20">
-            
-              <Conversion_Lead_Flow darkMode={darkMode} />
-            </section>
-            <section id="aio" className="scroll-mt-20">
-            
-              <AIO darkMode={darkMode} />
-            </section>
             <section id="rawdata" className="scroll-mt-20">
               <RawData darkMode={darkMode} data={data.Raw} />
             </section>

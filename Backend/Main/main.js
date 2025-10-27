@@ -1,6 +1,7 @@
 import MetricesCalculation from "../Calculation/MetricesCalculation.js";
 import Metrices from "../Data/Metrices.js";
-import Raw from "../Data/Raw.js";
+import Raws from "../Data/Raw.js";
+import SiteReport from "../Model/SiteReport.js"; 
 
 export default async function main(message) {
 
@@ -13,9 +14,19 @@ export default async function main(message) {
 
     console.log(`URL Received: ${url} and Device: ${device} and report: ${report}`);
 
-    const MetricesCalculation_Data = await MetricesCalculation(url,device,report)
-    const Metrices_Data = Metrices(MetricesCalculation_Data)
-    const Raw_Data = Raw(Metrices_Data)
+    // Check if already exists in DB
+    const existingData = await SiteReport.findOne({ "Raw.Site": url,"Raw.Report":report,"Raw.Device": device});
+    if(existingData){
+      return existingData;
+    }
 
-    return  {Metrices_Data,Raw_Data}
+    const MetricesCalculation_Data = await MetricesCalculation(url,device,report)
+    const Metric = Metrices(MetricesCalculation_Data)
+    const Raw = Raws(Metric)
+
+    // ✅ Save Raw_Data to MongoDB
+    const newData = new SiteReport({Metric,Raw});
+    await newData.save();
+
+    return  {Metric,Raw}
 }

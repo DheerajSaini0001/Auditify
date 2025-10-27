@@ -36,7 +36,7 @@ const ReportLayout = ({ darkMode, sidebarOpen, setSidebarOpen }) => {
               sidebarOpen ? "translate-x-0" : "-translate-x-full"
             } lg:translate-x-0 transition-transform duration-300 ease-in-out z-40`}
           >
-            <Sidebar data={data.Raw} darkMode={darkMode} />
+            <Sidebar  darkMode={darkMode} />
           </div>
 
           {/* Overlay for mobile when sidebar is open */}
@@ -53,31 +53,31 @@ const ReportLayout = ({ darkMode, sidebarOpen, setSidebarOpen }) => {
               <Dashboard2 darkMode={darkMode} />
             </section>
             <section id="technical-performance" className="scroll-mt-20">
-                <UrlHeader/>
+                
               <Technical_Performance darkMode={darkMode} />
             </section>
             <section id="on-page-seo" className="scroll-mt-20">
-            <UrlHeader/>
+            
               <On_Page_SEO darkMode={darkMode} />
             </section>
             <section id="accessibility" className="scroll-mt-20">
-            <UrlHeader/>
+            
               <Accessibility darkMode={darkMode} />
             </section>
             <section id="security" className="scroll-mt-20">
-            <UrlHeader/>
+            
               <Security_Compilance darkMode={darkMode} />
             </section>
             <section id="ux" className="scroll-mt-20">
-            <UrlHeader/>
+            
               <UX_Content_Structure darkMode={darkMode} />
             </section>
             <section id="conversion" className="scroll-mt-20">
-            <UrlHeader/>
+            
               <Conversion_Lead_Flow darkMode={darkMode} />
             </section>
             <section id="aio" className="scroll-mt-20">
-            <UrlHeader/>
+            
               <AIO darkMode={darkMode} />
             </section>
             <section id="rawdata" className="scroll-mt-20">
@@ -91,7 +91,7 @@ const ReportLayout = ({ darkMode, sidebarOpen, setSidebarOpen }) => {
       {data.Metric.Report !== "All" && (
         <div className="relative flex w-full h-full justify-center px-4">
           <main className="flex-1 flex flex-col pb-0 space-y-8 max-w-7xl">
-            <UrlHeader darkMode={darkMode} data={data.Metric.Site} />
+            <UrlHeader darkMode={darkMode}  />
 
             {data.Metric.Report === "technicalMetrics" && (
               <Technical_Performance darkMode={darkMode} />

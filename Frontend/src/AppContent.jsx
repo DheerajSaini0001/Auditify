@@ -42,7 +42,7 @@ export default function AppContent() {
       }`}
     >
       <Navbar
-        darkMode={darkMode}
+        
         toggleTheme={toggleTheme}
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
@@ -51,44 +51,44 @@ export default function AppContent() {
 
       <main className="flex-grow">
         <Routes>
-          <Route path="/" element={<Homepage darkMode={darkMode} />} />
+          <Route path="/" element={<Homepage  />} />
           <Route
            path="/report" 
-           element={<ReportLayout darkMode={darkMode} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen}/>}
+           element={<ReportLayout  sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen}/>}
             
          />
           <Route
             path="/technical-performance"
-            element={<Technical_Performance darkMode={darkMode}  />}
+            element={<Technical_Performance   />}
           />
           <Route
             path="/on-page-seo"
-            element={<On_Page_SEO darkMode={darkMode}  />}
+            element={<On_Page_SEO   />}
           />
           <Route
             path="/accessibility"
-            element={<Accessibility darkMode={darkMode}  />}
+            element={<Accessibility   />}
           />
           <Route
             path="/ux-content-structure"
-            element={<UX_Content_Structure darkMode={darkMode}  />}
+            element={<UX_Content_Structure   />}
           />
           <Route
             path="/security-compliance"
-            element={<Security_Compilance darkMode={darkMode}  />}
+            element={<Security_Compilance   />}
           />
           <Route
             path="/conversion-lead-flow"
-            element={<Conversion_Lead_Flow darkMode={darkMode}  />}
+            element={<Conversion_Lead_Flow   />}
           />
-          <Route path="/aio" element={<AIO darkMode={darkMode} />} />
-          <Route path="*" element={<NotFound  darkMode={darkMode}/> } />
-          <Route path="/about" element={<AboutPage darkMode={darkMode} />} />
+          <Route path="/aio" element={<AIO  />} />
+          <Route path="*" element={<NotFound  /> } />
+          <Route path="/about" element={<AboutPage  />} />
 
         </Routes>
       </main>
 
-      <Footer darkMode={darkMode} />
+      <Footer  />
     </div>
     </ThemeProvider>
   );

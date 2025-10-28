@@ -13,6 +13,8 @@ import Navbar from "./Component/Navbar.jsx";
 import Footer from "./Component/Footer.jsx";
 import { useData } from "./context/DataContext.jsx";
 import NotFound from "./Pages/NotFound.jsx";
+import { ThemeProvider } from "./context/ThemeContext.jsx";
+
 
 import ReportLayout from "./Pages/ReportLayout.jsx";
 
@@ -31,6 +33,9 @@ export default function AppContent() {
   }`;
 
   return (
+    <ThemeProvider>
+
+    
     <div
       className={`min-h-screen flex flex-col ${
         darkMode ? "bg-gray-900 text-white" : "bg-gray-50 text-black"
@@ -85,5 +90,6 @@ export default function AppContent() {
 
       <Footer darkMode={darkMode} />
     </div>
+    </ThemeProvider>
   );
 }

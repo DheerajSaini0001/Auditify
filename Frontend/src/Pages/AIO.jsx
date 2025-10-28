@@ -5,14 +5,17 @@ import CircularProgress from "../Component/CircularProgress";
 import Auditdropdown from "../Component/AuditDropdown";
 import { useData } from "../context/DataContext";
 
-export default function AIO({darkMode }) {
-  
- var { data, loading } = useData(); 
-  data=data.Metric;
+export default function AIO() {
+  // ✅ Use ThemeContext instead of darkMode prop
+  const { theme } = useContext(ThemeContext);
+  const darkMode = theme === "dark";
 
-  if (!data) return <div />;
+  const { data, loading } = useData();
+  if (!data || !data.Metric) return <div />;
 
-  // ScoreBadge with descriptive text
+  const metricData = data.Metric;
+
+  // ✅ Badge Component
   const ScoreBadge = ({ score, textGood, textBad }) => {
     const cssscore = score ? "mobilebutton bg-green-300" : "mobilebutton bg-red-300";
     const hasValue = score ? <Check size={18} /> : <X size={18} />;
@@ -25,6 +28,7 @@ export default function AIO({darkMode }) {
     );
   };
 
+  // ✅ Theme-based dynamic colors
   const containerBg = darkMode
     ? "bg-zinc-900 border-gray-700 text-white"
     : "bg-gray-100 border-gray-300 text-black";
@@ -40,24 +44,26 @@ export default function AIO({darkMode }) {
       id="AIOReadiness"
       className={`min-h-fit pt-20 pb-16 rounded-2xl shadow-lg hover:shadow-2xl transform hover:-translate-y-2 transition-all duration-300 m-4 flex flex-col items-center justify-start p-6 space-y-6 ${containerBg}`}
     >
-      <h1 className={`responsive text-heading-25 flex sm:gap-10 justify-center items-center text-3xl font-extrabold mb-6 text-center ${textColor}`}>
+      <h1
+        className={`responsive text-heading-25 flex sm:gap-10 justify-center items-center text-3xl font-extrabold mb-6 text-center ${textColor}`}
+      >
         AIO (AI-Optimization) Readiness
         <CircularProgress
-          value={data.AIO_Readiness.Percentage}
+          value={metricData.AIO_Readiness.Percentage}
           size={70}
           stroke={5}
         />
       </h1>
 
-      {/* Important Metrics Only */}
-      <div className={`w-full max-w-4xl p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500  ${cardBg}`}>
+      {/* Important Metrics */}
+      <div className={`w-full max-w-4xl p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500 ${cardBg}`}>
         <h2 className={`text-xl font-bold mb-4 ${textColor}`}>Most Important Metrics</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Technical AI Foundation */}
           <div className="flex justify-between items-center">
             <span className={textColor}>Structured Data</span>
             <ScoreBadge
-              score={data.AIO_Readiness.Technical_AI_Foundation.Structured_Data.Score}
+              score={metricData.AIO_Readiness.Technical_AI_Foundation.Structured_Data.Score}
               textGood="Structured data is complete"
               textBad="Structured data is incomplete"
             />
@@ -66,7 +72,7 @@ export default function AIO({darkMode }) {
           <div className="flex justify-between items-center">
             <span className={textColor}>Metadata Completion</span>
             <ScoreBadge
-              score={data.AIO_Readiness.Technical_AI_Foundation.Metadata_Complete.Score}
+              score={metricData.AIO_Readiness.Technical_AI_Foundation.Metadata_Complete.Score}
               textGood="Metadata fully complete"
               textBad="Metadata incomplete"
             />
@@ -75,7 +81,7 @@ export default function AIO({darkMode }) {
           <div className="flex justify-between items-center">
             <span className={textColor}>Page Load Speed</span>
             <ScoreBadge
-              score={data.AIO_Readiness.Technical_AI_Foundation.Fast_Page_Load.Score}
+              score={metricData.AIO_Readiness.Technical_AI_Foundation.Fast_Page_Load.Score}
               textGood="Pages load quickly"
               textBad="Pages load slowly"
             />
@@ -85,7 +91,7 @@ export default function AIO({darkMode }) {
           <div className="flex justify-between items-center">
             <span className={textColor}>NLP-Friendly Content</span>
             <ScoreBadge
-              score={data.AIO_Readiness.Content_AI_Optimization.Content_NLP_Friendly.Score}
+              score={metricData.AIO_Readiness.Content_AI_Optimization.Content_NLP_Friendly.Score}
               textGood="Content is NLP-friendly"
               textBad="Content is not NLP-friendly"
             />
@@ -94,7 +100,7 @@ export default function AIO({darkMode }) {
           <div className="flex justify-between items-center">
             <span className={textColor}>Keyword & Entity Annotation</span>
             <ScoreBadge
-              score={data.AIO_Readiness.Content_AI_Optimization.Keywords_Entities_Annotated.Score}
+              score={metricData.AIO_Readiness.Content_AI_Optimization.Keywords_Entities_Annotated.Score}
               textGood="Keywords/entities annotated"
               textBad="Annotations missing"
             />
@@ -103,7 +109,7 @@ export default function AIO({darkMode }) {
           <div className="flex justify-between items-center">
             <span className={textColor}>Content Updates</span>
             <ScoreBadge
-              score={data.AIO_Readiness.Content_AI_Optimization.Content_Updated_Regularly.Score}
+              score={metricData.AIO_Readiness.Content_AI_Optimization.Content_Updated_Regularly.Score}
               textGood="Content updated regularly"
               textBad="Content rarely updated"
             />
@@ -113,7 +119,7 @@ export default function AIO({darkMode }) {
           <div className="flex justify-between items-center">
             <span className={textColor}>Behavior Tracking</span>
             <ScoreBadge
-              score={data.AIO_Readiness.Data_Intelligence_Integration.Behavior_Tracking_Implemented.Score}
+              score={metricData.AIO_Readiness.Data_Intelligence_Integration.Behavior_Tracking_Implemented.Score}
               textGood="Behavior tracking implemented"
               textBad="Behavior tracking missing"
             />
@@ -122,7 +128,7 @@ export default function AIO({darkMode }) {
           <div className="flex justify-between items-center">
             <span className={textColor}>Event & Goal Tracking</span>
             <ScoreBadge
-              score={data.AIO_Readiness.Data_Intelligence_Integration.Event_Goal_Tracking_Integrated.Score}
+              score={metricData.AIO_Readiness.Data_Intelligence_Integration.Event_Goal_Tracking_Integrated.Score}
               textGood="Event tracking integrated"
               textBad="Event tracking missing"
             />
@@ -132,7 +138,7 @@ export default function AIO({darkMode }) {
           <div className="flex justify-between items-center">
             <span className={textColor}>Dynamic Personalization</span>
             <ScoreBadge
-              score={data.AIO_Readiness.AI_Content_Delivery.Dynamic_Personalization.Score}
+              score={metricData.AIO_Readiness.AI_Content_Delivery.Dynamic_Personalization.Score}
               textGood="Dynamic personalization enabled"
               textBad="Dynamic personalization missing"
             />
@@ -140,10 +146,10 @@ export default function AIO({darkMode }) {
         </div>
       </div>
 
-      {/* Optional dropdowns for Passed/Warning/Improvements */}
-      <Auditdropdown items={data.AIO_Readiness.Passed} darkMode={darkMode} title="Passed Audit" />
-      <Auditdropdown items={data.AIO_Readiness.Warning} darkMode={darkMode} title="Warnings" />
-      <Auditdropdown items={data.AIO_Readiness.Improvements} darkMode={darkMode} title="Failed Audits" />
+      {/* Dropdowns */}
+      <Auditdropdown items={metricData.AIO_Readiness.Passed} darkMode={darkMode} title="Passed Audit" />
+      <Auditdropdown items={metricData.AIO_Readiness.Warning} darkMode={darkMode} title="Warnings" />
+      <Auditdropdown items={metricData.AIO_Readiness.Improvements} darkMode={darkMode} title="Failed Audits" />
     </div>
   );
 }

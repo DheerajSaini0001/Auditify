@@ -18,7 +18,7 @@ function App() {
   return (
     <ThemeProvider>
       <DataProvider>
-        <AppContent />  
+        <AppContent />  {/* 👈 Ye DataProvider ke andar hai */}
       </DataProvider>
     </ThemeProvider>
   );

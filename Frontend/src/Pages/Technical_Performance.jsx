@@ -69,8 +69,8 @@ const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray
 
           {/* Main content */}
           <main
-            className={`flex-1 h-[82vh] lg:ml-64 flex flex-col justify-center items-center pt-20 pb-0 pr-4 pl-4 lg:pl-0 space-y-8 ${
-              darkMode ? "bg-gray-950 text-gray-100" : "bg-gray-50 text-gray-800"
+            className={`flex-1  lg:ml-64 flex flex-col justify-center items-center pt-20 pb-0 pr-4 pl-4 lg:pl-0 space-y-8 ${
+              darkMode ? " text-gray-100" : " text-gray-800"
             }`}
           >
                     <h1

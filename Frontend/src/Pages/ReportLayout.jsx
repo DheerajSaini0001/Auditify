@@ -75,7 +75,7 @@ const ReportLayout = ({ sidebarOpen, setSidebarOpen }) => {
             darkMode ? "bg-gray-950 text-gray-100" : "bg-gray-50 text-gray-800"
           }`}
         >
-          <main className="flex-1 flex flex-col pb-0 space-y-8 max-w-7xl">
+          <main className="flex-1 justify-center items-center flex flex-col pb-0 space-y-8 max-w-7xl">
             <UrlHeader darkMode={darkMode} />
 
             {data.Report === "technicalMetrics" && (

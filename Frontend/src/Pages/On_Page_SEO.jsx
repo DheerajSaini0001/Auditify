@@ -1,176 +1,210 @@
 import React, { useContext } from "react";
-import { ThemeContext } from "../context/ThemeContext"; // ✅ Use ThemeContext
+import { ThemeContext } from "../context/ThemeContext";
 import { Check, X } from "lucide-react";
 import CircularProgress from "../Component/CircularProgress";
 import AuditDropdown from "../Component/AuditDropdown";
 import { useData } from "../context/DataContext";
+import Sidebar from "../Component/Sidebar"; // ✅ 1. Imported Sidebar
+
+// ✅ 2. Score Badge moved outside component for performance
+const ScoreBadge = ({ score, out, des }) => {
+  const cssscore = score ? "bg-green-300" : "bg-red-300";
+  const hasValue = score ? <Check size={18} /> : <X size={18} />;
+
+  return (
+    <span
+      className={`px-2.5 flex py-1 mobilebutton rounded-full text-black font-semibold text-sm shadow-md transform transition-transform ${cssscore}`}
+    >
+      {hasValue} {out} {des}
+    </span>
+  );
+};
 
 export default function On_Page_SEO() {
   const { data, loading } = useData();
-  const { theme } = useContext(ThemeContext); // ✅ Access theme
-  const darkMode = theme === "dark"; // ✅ Determine mode
+  const { theme } = useContext(ThemeContext);
+  const darkMode = theme === "dark";
 
-  if (!data) return <div />;
+  // ✅ 3. Added Loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen text-gray-400">
+        Loading data...
+      </div>
+    );
+  }
+
+  // ✅ 3. Added specific data check to prevent errors
+  if (!data || !data.On_Page_SEO) {
+    return (
+      <div className="flex items-center justify-center h-screen text-gray-500 dark:text-gray-400">
+        No data available. Please submit input on Home page.
+      </div>
+    );
+  }
 
   const seo = data.On_Page_SEO;
 
-  // ✅ Score Badge Component
-  const ScoreBadge = ({ score, out, des }) => {
-    const cssscore = score ? "bg-green-300" : "bg-red-300";
-    const hasValue = score ? <Check size={18} /> : <X size={18} />;
-
-    return (
-      <span
-        className={`px-2.5 flex py-1 mobilebutton rounded-full text-black font-semibold text-sm shadow-md transform transition-transform ${cssscore}`}
-      >
-        {hasValue} {out} {des}
-      </span>
-    );
-  };
-
   // ✅ Theme-based background/text colors
-  const containerBg = darkMode
-    ? "bg-zinc-900 border-gray-700 text-white"
-    : "bg-gray-100 border-gray-300 text-black";
-
   const cardBg = darkMode
     ? "bg-gradient-to-br from-blue-900 via-gray-900 to-black"
     : "bg-gradient-to-br from-blue-200 via-gray-200 to-white";
 
   const textColor = darkMode ? "text-white" : "text-black";
 
+  // ✅ 1. Added sidebarClass constant
+  const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray-900 shadow-lg`;
+
   return (
-    <div
-      id="OnPageSEO"
-      className={`min-h-fit pt-20 pb-16 rounded-2xl shadow-lg hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 m-4 flex flex-col items-center justify-start p-6 space-y-6 ${containerBg}`}
-    >
-      {/* --- Header --- */}
-      <h1
-        className={`responsive flex items-center justify-center sm:gap-10 text-3xl font-extrabold mb-6 ${textColor}`}
-      >
-        On-Page SEO
-        <CircularProgress value={seo.Percentage} size={70} stroke={5} />
-      </h1>
-
-      {/* --- Essentials Section --- */}
-      <div
-        className={`w-full max-w-4xl p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500 ${cardBg}`}
-      >
-        <h2 className="text-xl font-bold mb-4">Essentials</h2>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-          <div className="flex justify-between items-center">
-            <span>Title</span>
-            {seo.Essentials.Title.Title_Exist ? (
-              <ScoreBadge
-                score={seo.Essentials.Title.Score}
-                out={seo.Essentials.Title.Title_Length}
-                des={"characters"}
-              />
-            ) : (
-              "No Title Found"
-            )}
-          </div>
-
-          <div className="flex justify-between items-center">
-            <span>Meta Description</span>
-            <ScoreBadge
-              score={seo.Essentials.Meta_Description.Score}
-              out={seo.Essentials.Meta_Description.MetaDescription_Length}
-              des={"characters"}
-            />
-          </div>
-
-          <div className="flex justify-between items-center">
-            <span>URL Structure</span>
-            <ScoreBadge
-              score={seo.Essentials.URL_Structure.Score}
-              des={seo.Essentials.URL_Structure.Score ? "Good" : "Bad"}
-            />
-          </div>
-
-          <div className="flex justify-between items-center">
-            <span>Canonical Tag Existence</span>
-            <ScoreBadge
-              score={seo.Essentials.Canonical.Canonical_Exist}
-              des={seo.Essentials.Canonical.Canonical_Exist ? "Exist" : "Not Exist"}
-            />
-          </div>
-
-          <div className="flex justify-between items-center">
-            <span>Self Referencing</span>
-            <ScoreBadge
-              score={seo.Essentials.Canonical.Score}
-              des={seo.Essentials.Canonical.Score ? "Yes" : "No"}
-            />
-          </div>
-
-          <div className="flex justify-between items-center">
-            <span>Pagination</span>
-            <ScoreBadge
-              score={seo.Structure_and_Uniqueness.Pagination_Tags.Score}
-              des={
-                seo.Structure_and_Uniqueness.Pagination_Tags.Score
-                  ? "Good"
-                  : "Bad"
-              }
-            />
-          </div>
-
-          <div className="flex justify-between items-center">
-            <span>Descriptive Internal Links</span>
-            <ScoreBadge
-              score={seo.Media_and_Semantics.Internal_Links.Descriptive_Score}
-              des={
-                seo.Media_and_Semantics.Internal_Links.Descriptive_Score
-                  ? "Good"
-                  : "Bad"
-              }
-            />
-          </div>
-
-          <div className="flex justify-between items-center">
-            <span>ALT Text Relevance</span>
-            <ScoreBadge
-              score={seo.Media_and_Semantics.ALT_Text_Relevance.Score}
-              des={
-                seo.Media_and_Semantics.ALT_Text_Relevance.Score
-                  ? "Good ALT Text"
-                  : "Bad ALT Text"
-              }
-            />
-          </div>
-
-          <div className="flex justify-between items-center">
-            <span>HTTPS</span>
-            <ScoreBadge
-              score={seo.Structure_and_Uniqueness.HTTPS.Score}
-              des={
-                seo.Structure_and_Uniqueness.HTTPS.Score
-                  ? "Found https"
-                  : "No https"
-              }
-            />
-          </div>
+    // ✅ 1. Added Layout structure
+    <>
+      <div className="relative flex w-full h-full">
+        {/* Sidebar */}
+        <div
+          className={`${sidebarClass} lg:translate-x-0 transition-transform duration-300 ease-in-out z-40`}
+        >
+          <Sidebar darkMode={darkMode} />
         </div>
-      </div>
 
-      {/* --- Audit Results --- */}
-      <AuditDropdown
-        items={seo.Passed}
-        title="Passed Audits"
-        darkMode={darkMode}
-      />
-      <AuditDropdown
-        items={seo.Warning}
-        title="Warnings"
-        darkMode={darkMode}
-      />
-      <AuditDropdown
-        items={seo.Improvements}
-        title="Failed Audits"
-        darkMode={darkMode}
-      />
-    </div>
+        {/* Main content */}
+        <main
+          className={`flex-1  lg:ml-64 flex flex-col justify-center items-center pt-20 pb-0 pr-4 pl-4 lg:pl-0 space-y-8 ${
+            darkMode ? " text-gray-100" : " text-gray-800"
+          }`}
+        >
+          {/* --- Header --- */}
+          <h1
+            className={`responsive flex items-center justify-center sm:gap-10 text-3xl font-extrabold mb-6 ${textColor}`}
+          >
+            On-Page SEO
+            <CircularProgress value={seo.Percentage} size={70} stroke={5} />
+          </h1>
+
+          {/* --- Essentials Section --- */}
+          <div
+            className={`w-full max-w-4xl p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500 ${cardBg}`}
+          >
+            <h2 className="text-xl font-bold mb-4">Essentials</h2>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+              <div className="flex justify-between items-center">
+                <span>Title</span>
+                {seo.Essentials.Title.Title_Exist ? (
+                  <ScoreBadge
+                    score={seo.Essentials.Title.Score}
+                    out={seo.Essentials.Title.Title_Length}
+                    des={"characters"}
+                  />
+                ) : (
+                  "No Title Found"
+                )}
+              </div>
+
+              <div className="flex justify-between items-center">
+                <span>Meta Description</span>
+                <ScoreBadge
+                  score={seo.Essentials.Meta_Description.Score}
+                  out={seo.Essentials.Meta_Description.MetaDescription_Length}
+                  des={"characters"}
+                />
+              </div>
+
+              <div className="flex justify-between items-center">
+                <span>URL Structure</span>
+                <ScoreBadge
+                  score={seo.Essentials.URL_Structure.Score}
+                  des={seo.Essentials.URL_Structure.Score ? "Good" : "Bad"}
+                />
+              </div>
+
+              <div className="flex justify-between items-center">
+                <span>Canonical Tag Existence</span>
+                <ScoreBadge
+                  score={seo.Essentials.Canonical.Canonical_Exist}
+                  des={
+                    seo.Essentials.Canonical.Canonical_Exist
+                      ? "Exist"
+                      : "Not Exist"
+                  }
+                />
+              </div>
+
+              <div className="flex justify-between items-center">
+                <span>Self Referencing</span>
+                <ScoreBadge
+                  score={seo.Essentials.Canonical.Score}
+                  des={seo.Essentials.Canonical.Score ? "Yes" : "No"}
+                />
+              </div>
+
+              <div className="flex justify-between items-center">
+                <span>Pagination</span>
+                <ScoreBadge
+                  score={seo.Structure_and_Uniqueness.Pagination_Tags.Score}
+                  des={
+                    seo.Structure_and_Uniqueness.Pagination_Tags.Score
+                      ? "Good"
+                      : "Bad"
+                  }
+                />
+              </div>
+
+              <div className="flex justify-between items-center">
+                <span>Descriptive Internal Links</span>
+                <ScoreBadge
+                  score={seo.Media_and_Semantics.Internal_Links.Descriptive_Score}
+                  des={
+                    seo.Media_and_Semantics.Internal_Links.Descriptive_Score
+                      ? "Good"
+                      : "Bad"
+                  }
+                />
+              </div>
+
+              <div className="flex justify-between items-center">
+                <span>ALT Text Relevance</span>
+                <ScoreBadge
+                  score={seo.Media_and_Semantics.ALT_Text_Relevance.Score}
+                  des={
+                    seo.Media_and_Semantics.ALT_Text_Relevance.Score
+                      ? "Good ALT Text"
+                      : "Bad ALT Text"
+                  }
+                />
+              </div>
+
+              <div className="flex justify-between items-center">
+                <span>HTTPS</span>
+                <ScoreBadge
+                  score={seo.Structure_and_Uniqueness.HTTPS.Score}
+                  des={
+                    seo.Structure_and_Uniqueness.HTTPS.Score
+                      ? "Found https"
+                      : "No https"
+                  }
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* --- Audit Results --- */}
+          <AuditDropdown
+            items={seo.Passed}
+            title="Passed Audits"
+            darkMode={darkMode}
+          />
+          <AuditDropdown
+            items={seo.Warning}
+            title="Warnings"
+            darkMode={darkMode}
+          />
+          <AuditDropdown
+            items={seo.Improvements}
+            title="Failed Audits"
+            darkMode={darkMode}
+          />
+        </main>
+      </div>
+    </>
   );
 }

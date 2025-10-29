@@ -50,7 +50,7 @@ export default function Sidebar({ darkMode }) {
   return (
     <div className={`${sidebarBg} flex mb-0 pb-0 flex-col`}>
          <div className={`flex justify-center items-center text-2xl p-4 border-b ${sidebarBorder}`}>
-          <a href="#deshboard" className={darkMode ? "text-4xl font-bold text-green-100" : "text-4xl font-bold text-green-500"}>
+          <a href="/report" className={darkMode ? "text-4xl font-bold text-green-100" : "text-4xl font-bold text-green-500"}>
             Result
           </a>
         </div>

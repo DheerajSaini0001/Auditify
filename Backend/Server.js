@@ -19,14 +19,7 @@ app.post("/data", async (req, res) => {
   try {
     const data = await main(message);
 
-    res.json({
-      success: true,
-      Metric: data.Metric,
-      Raw: data.Raw,
-      saved: true,
-    });
-    
-    console.log("✅ Audit Completed & Data Saved to MongoDB");
+    res.json({Metric: data.Metric});
   } catch (error) {
     console.error("❌ Error fetching/saving PageSpeed data:", error);
     res.status(500).json({ success: false, error: "Failed to fetch or save PageSpeed data" });

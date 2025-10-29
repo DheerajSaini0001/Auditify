@@ -1,6 +1,5 @@
 import MetricesCalculation from "../Calculation/MetricesCalculation.js";
 import Metrices from "../Data/Metrices.js";
-import Raws from "../Data/Raw.js";
 import SiteReport from "../Model/SiteReport.js"; 
 
 export default async function main(message) {
@@ -23,11 +22,11 @@ export default async function main(message) {
 
     const MetricesCalculation_Data = await MetricesCalculation(url,device,report)
     const Metric = Metrices(MetricesCalculation_Data)
-    const Raw = Raws(Metric)
 
     // ✅ Save Raw_Data to MongoDB
-    const newData = new SiteReport({Metric,Raw});
+    const newData = new SiteReport(Metric);
     await newData.save();
+    console.log("✅ Audit Completed & Data Saved to MongoDB");
 
-    return  {Metric,Raw}
+    return  {Metric}
 }

@@ -13,9 +13,10 @@ import {
   CartesianGrid,
 } from "recharts";
 import { NotebookPen } from "lucide-react";
-import { Link } from "react-router-dom"; // ✅ ADD THIS IMPORT
+import { Link } from "react-router-dom";
 import CircularProgress from "./CircularProgress";
 import { useData } from "../context/DataContext";
+
 
 export default function Dashboard2({ darkMode }) {
   var { data, loading } = useData();
@@ -85,13 +86,13 @@ export default function Dashboard2({ darkMode }) {
             {data.Site}
           </a>
         </p>
-        <a href="/">
+        <Link to="/" replace>
           <button
             className={`font-semibold flex gap-2 justify-center items-center px-2 py-2 sm:px-2 md:px-2 lg:px-4 lg:py-2 rounded-xl shadow-md transition ${btnBg}`}
           >
             <NotebookPen size={20} /> Check for Other
           </button>
-        </a>
+        </Link>
       </div>
 
       {/* Overall Score */}

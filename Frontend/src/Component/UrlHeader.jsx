@@ -1,7 +1,7 @@
 import React from "react";
 import { useData } from "../context/DataContext";
 import { NotebookPen } from "lucide-react";
-
+import { Link } from "react-router-dom";
 
 const UrlHeader = ({darkMode }) => {
   
@@ -33,15 +33,16 @@ const UrlHeader = ({darkMode }) => {
         </a>
       </p>
 
-      <a href="/" className="w-full  sm:w-auto">
+      <Link to="/" replace className="w-full  sm:w-auto">
         <button
           className={`font-semibold flex gap-2 justify-center items-center w-full sm:w-auto px-3 py-2 lg:px-4 lg:py-2 rounded-xl shadow-md transition ${btnBg}`}
         >
           <NotebookPen size={20} /> Check for Other
         </button>
-      </a>
+      </Link>
     </div>
   );
 };
 
 export default UrlHeader;
+`;`

@@ -1,5 +1,5 @@
 import React, { useState, useContext } from "react";
-import { Loader2,  Search,MonitorCheck } from "lucide-react";
+import { Loader2,  Search } from "lucide-react";
 import { useData } from "../context/DataContext.jsx";
 import { useNavigate } from "react-router-dom";
 import { ThemeContext } from "../context/ThemeContext.jsx"; // 👈 import theme context
@@ -62,6 +62,7 @@ export default function DarkCard({ setData }) {
             }`}
           >
             Enter URL in the input below, select a device, and click Analyze.
+            
           </p>
 
           <div className="mx-auto w-full">
@@ -98,8 +99,8 @@ export default function DarkCard({ setData }) {
                       : "bg-gray-300 text-black"
                   }`}
                 >
-                  <option value="Desktop"> <MonitorCheck size={20} color="green"/> Desktop</option>
-                  <option value="Mobile">  Mobile</option>
+                  <option value="Desktop"> 🖥️ Desktop</option>
+                  <option value="Mobile"> 📱 Mobile</option>
                 </select>
 
                 {/* Report Select */}
@@ -113,14 +114,14 @@ export default function DarkCard({ setData }) {
                       : "bg-gray-300 text-black"
                   }`}
                 >
-                  <option value="All">All</option>
-                  <option value="technicalMetrics">Technical Performance</option>
-                  <option value="seoMetrics">On-Page SEO</option>
-                  <option value="accessibilityMetrics">Accessibility</option>
-                  <option value="securityCompliance">Security Compliance</option>
-                  <option value="uxContentStructure">UX Content Structure</option>
-                  <option value="conversionLeadFlow">Conversion & Lead Flow</option>
-                  <option value="aioReadiness">AIO</option>
+                  <option value="All">🌐 All</option>
+                  <option value="technicalMetrics">📊 Technical Performance</option>
+                  <option value="seoMetrics">📃 On-Page SEO</option>
+                  <option value="accessibilityMetrics">♿ Accessibility</option>
+                  <option value="securityCompliance">🔒 Security Compliance</option>
+                  <option value="uxContentStructure">🗂️ UX Content Structure</option>
+                  <option value="conversionLeadFlow">🔄 Conversion & Lead Flow</option>
+                  <option value="aioReadiness">🤖 AIO</option>
                 </select>
               </div>
 

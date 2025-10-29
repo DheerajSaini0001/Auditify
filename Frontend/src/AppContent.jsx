@@ -1,5 +1,5 @@
-import React, { useContext } from "react";
-import { Routes, Route } from "react-router-dom";
+import React, { useEffect, useContext } from "react";
+import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 
 import Homepage from "./Pages/Homepage";
 import AboutPage from "./Pages/AboutPage";
@@ -15,16 +15,38 @@ import Footer from "./Component/Footer.jsx";
 import { useData } from "./context/DataContext.jsx";
 import NotFound from "./Pages/NotFound.jsx";
 import ReportLayout from "./Pages/ReportLayout.jsx";
-
-// ✅ Import ThemeContext and ThemeProvider
 import { ThemeProvider, ThemeContext } from "./context/ThemeContext.jsx";
 
 function AppContentInner() {
-  const { theme, toggleTheme } = useContext(ThemeContext); // ✅ Access from context
+  const { theme, toggleTheme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
-
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
   const { data } = useData();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // ✅ Prevent back navigation when on home page
+  useEffect(() => {
+    if (location.pathname === "/") {
+      const handleBeforeUnload = (e) => {
+        e.preventDefault();
+        e.returnValue = ""; // shows browser's default "Leave site?" dialog
+      };
+
+      const handlePopState = (e) => {
+        // Prevent going back — stay on home
+        navigate("/", { replace: true });
+      };
+
+      window.addEventListener("beforeunload", handleBeforeUnload);
+      window.addEventListener("popstate", handlePopState);
+
+      return () => {
+        window.removeEventListener("beforeunload", handleBeforeUnload);
+        window.removeEventListener("popstate", handlePopState);
+      };
+    }
+  }, [location, navigate]);
 
   const navbarClass = `flex justify-between items-center px-4 py-3 shadow-md sticky top-0 z-50 ${
     darkMode ? "bg-gray-900 text-white" : "bg-white text-black"
@@ -36,7 +58,6 @@ function AppContentInner() {
         darkMode ? "bg-gray-900 text-white" : "bg-gray-50 text-black"
       }`}
     >
-      {/* ✅ Navbar with toggleTheme from context */}
       <Navbar
         toggleTheme={toggleTheme}
         sidebarOpen={sidebarOpen}
@@ -44,7 +65,6 @@ function AppContentInner() {
         navbarClass={navbarClass}
       />
 
-      {/* ✅ Routes */}
       <main className="flex-grow">
         <Routes>
           <Route path="/" element={<Homepage />} />
@@ -74,7 +94,6 @@ function AppContentInner() {
   );
 }
 
-// ✅ Wrap the whole app in ThemeProvider once
 export default function AppContent() {
   return (
     <ThemeProvider>

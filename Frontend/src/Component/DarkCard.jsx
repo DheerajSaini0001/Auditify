@@ -1,7 +1,7 @@
 import React, { useState, useContext } from "react";
 import { Loader2,  Search } from "lucide-react";
 import { useData } from "../context/DataContext.jsx";
-import { useNavigate } from "react-router-dom";
+import { replace, useNavigate } from "react-router-dom";
 import { ThemeContext } from "../context/ThemeContext.jsx"; // 👈 import theme context
 import Assets from "../assets/Assets.js";
 
@@ -24,7 +24,7 @@ export default function DarkCard({ setData }) {
   }
     await fetchData(inputValue, device, report); // context ke function se data fetch
     if (data) {
-      navigate("/report");
+      navigate("/report",replace); // ✅ navigate to report page
     }
     setInputValue("");
   };

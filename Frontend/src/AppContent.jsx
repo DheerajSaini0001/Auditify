@@ -19,8 +19,14 @@ import ReportLayout from "./Pages/ReportLayout.jsx";
 // ✅ Import ThemeContext and ThemeProvider
 import { ThemeProvider, ThemeContext } from "./context/ThemeContext.jsx";
 
+// ✅ Import the new hook
+import usePreventBackOnHome from "./hooks/usePreventBackOnHome.js";
+
 function AppContentInner() {
-  const { theme, toggleTheme } = useContext(ThemeContext); // ✅ Access from context
+  // ✅ Call the hook — sabse pehle
+  usePreventBackOnHome();
+
+  const { theme, toggleTheme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
 
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
@@ -36,7 +42,6 @@ function AppContentInner() {
         darkMode ? "bg-gray-900 text-white" : "bg-gray-50 text-black"
       }`}
     >
-      {/* ✅ Navbar with toggleTheme from context */}
       <Navbar
         toggleTheme={toggleTheme}
         sidebarOpen={sidebarOpen}
@@ -44,7 +49,6 @@ function AppContentInner() {
         navbarClass={navbarClass}
       />
 
-      {/* ✅ Routes */}
       <main className="flex-grow">
         <Routes>
           <Route path="/" element={<Homepage />} />

@@ -13,19 +13,31 @@ import {
   CartesianGrid,
 } from "recharts";
 import { NotebookPen } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom"; // ✅ Added for navigation
 import CircularProgress from "./CircularProgress";
 import { useData } from "../context/DataContext";
 
 
 export default function Dashboard2({ darkMode }) {
-  var { data, loading } = useData();
-  var { clearData } = useData();
-  data = data;
+  const { data, loading, clearData } = useData();
+  const navigate = useNavigate(); // ✅ initialize navigation
 
   if (!data) return <div />;
 
-  // ✅ Create barData dynamically
+  // ✅ Handle button click
+ const handleCheckOther = () => {
+  clearData();
+
+  // ✅ Replace AND reset full browser history
+  navigate("/", { replace: true });
+
+  // ✅ Optional: clear all forward history too
+  setTimeout(() => {
+    window.history.pushState(null, "", window.location.href);
+  }, 100);
+};
+
+  // ✅ Section mappings
   const sectionMappings = [
     { key: "Technical_Performance", name: "Technical Performance", link: "technical-performance" },
     { key: "On_Page_SEO", name: "On-Page SEO", link: "on-page-seo" },
@@ -36,6 +48,7 @@ export default function Dashboard2({ darkMode }) {
     { key: "AIO_Readiness", name: "AIO Readiness", link: "aio" },
   ];
 
+  // ✅ Create barData dynamically
   const barData = sectionMappings.map((section) => ({
     name: section.name,
     value: data?.[section.key]?.Percentage || 0,
@@ -67,7 +80,7 @@ export default function Dashboard2({ darkMode }) {
         darkMode ? "text-white bg-gray-800" : "text-black bg-gray-100"
       }`}
     >
-      {/* URL + Button */}
+      {/* ✅ URL + Button */}
       <div
         className={`flex justify-between items-center p-4 rounded-lg ${
           darkMode ? "bg-zinc-900" : "bg-gray-300"
@@ -87,17 +100,17 @@ export default function Dashboard2({ darkMode }) {
             {data.Site}
           </a>
         </p>
-        <Link to="/" replace>
-          <button
-           onClick={clearData}
-            className={`font-semibold flex gap-2 justify-center items-center px-2 py-2 sm:px-2 md:px-2 lg:px-4 lg:py-2 rounded-xl shadow-md transition ${btnBg}`}
-          >
-            <NotebookPen size={20} /> Check for Other
-          </button>
-        </Link>
+
+      <button
+  onClick={handleCheckOther}
+  className={`font-semibold flex gap-2 justify-center items-center px-2 py-2 sm:px-2 md:px-2 lg:px-4 lg:py-2 rounded-xl shadow-md transition ${btnBg}`}
+>
+  <NotebookPen size={20} /> Check for Other
+</button>
+
       </div>
 
-      {/* Overall Score */}
+      {/* ✅ Overall Score */}
       <div className="bg-gradient-to-r from-indigo-200 via-blue-400 to-indigo-200 rounded-2xl shadow-xl p-6 text-center flex flex-col sm:flex-row sm:justify-center sm:items-center sm:gap-20 lg:gap-30">
         <CircularProgress value={data.Score.toFixed(0)} size={120} stroke={10} />
         <div>
@@ -135,9 +148,9 @@ export default function Dashboard2({ darkMode }) {
       {/* ✅ Section Score Cards (linked correctly) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {barData.map((item, index) => (
-          <Link
+          <button
             key={item.name}
-            to={`/${item.Link}`}
+            onClick={() => navigate(`/${item.Link}`)}
             className={`rounded-xl p-4 shadow-lg border ${cardBorder} text-center ${cardBg} hover:opacity-80 transition`}
           >
             <h3 className={`text-xs sm:text-sm ${sectionText}`}>{item.name}</h3>
@@ -147,11 +160,11 @@ export default function Dashboard2({ darkMode }) {
             >
               {item.value}%
             </p>
-          </Link>
+          </button>
         ))}
       </div>
 
-      {/* Bar Chart */}
+      {/* ✅ Bar Chart */}
       <div
         className={`rounded-xl p-4 shadow-lg border ${cardBorder} ${cardBg}`}
       >

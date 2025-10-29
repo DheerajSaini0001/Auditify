@@ -10,6 +10,7 @@ import {
   Database,
   FileText,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { ThemeContext } from "../ThemeContext";
 import { useData } from "../context/DataContext";
 
@@ -50,9 +51,9 @@ export default function Sidebar({ darkMode }) {
   return (
     <div className={`${sidebarBg} flex mb-0 pb-0 flex-col`}>
          <div className={`flex justify-center items-center text-2xl p-4 border-b ${sidebarBorder}`}>
-          <a href="/report" className={darkMode ? "text-4xl font-bold text-green-100" : "text-4xl font-bold text-green-500"}>
+          <Link to="/report" replace className={darkMode ? "text-4xl font-bold text-green-100" : "text-4xl font-bold text-green-500"}>
             Result
-          </a>
+          </Link>
         </div>
       <aside
         className={`fixed top-16 left-0 h-[calc(100vh-4rem)] w-64 shadow-lg transform transition-transform duration-300
@@ -66,13 +67,14 @@ export default function Sidebar({ darkMode }) {
         {/* Menu */}
         <nav className="flex flex-col p-2 space-y-2">
           {menuItems.map((item, index) => (
-            <a
+            <Link
+            replace
               key={index}
-              href={item.link}
+              to={item.link}
               className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass}`}
             >
               {item.icon} <span>{item.name}</span>
-            </a>
+            </Link>
           ))}
 
           {/* Download Button */}

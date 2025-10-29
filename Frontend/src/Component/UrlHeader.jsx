@@ -7,7 +7,8 @@ const UrlHeader = ({darkMode }) => {
   
    var { data, loading } = useData(); 
      const site=data.Site;
-
+     const { clearData } = useData();
+  
   // Theme-based styles
   const cardBg = darkMode ? "bg-zinc-900 text-white" : "bg-white text-black";
   const cardBorder = darkMode ? "border-gray-700" : "border-gray-300";
@@ -34,7 +35,8 @@ const UrlHeader = ({darkMode }) => {
       </p>
 
       <Link to="/" replace className="w-full  sm:w-auto">
-        <button
+        <button 
+         onClick={clearData}
           className={`font-semibold flex gap-2 justify-center items-center w-full sm:w-auto px-3 py-2 lg:px-4 lg:py-2 rounded-xl shadow-md transition ${btnBg}`}
         >
           <NotebookPen size={20} /> Check for Other

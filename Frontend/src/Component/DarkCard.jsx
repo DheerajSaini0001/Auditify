@@ -18,6 +18,10 @@ export default function DarkCard({ setData }) {
   // ✅ Handle form submission
   const handleClick = async (e) => {
     e.preventDefault();
+     if (!inputValue || inputValue.trim() === "") {
+    alert("Please enter a URL before proceeding!");
+    return; // ❌ stops function here
+  }
     await fetchData(inputValue, device, report); // context ke function se data fetch
     if (data) {
       navigate("/report");
@@ -128,7 +132,8 @@ export default function DarkCard({ setData }) {
               {/* Analyze Button */}
               <div className="sm:w-48">
                 <button
-                  type="submit"
+                  type="button" // 👈 important: button type must NOT be "submit"
+                  onClick={handleClick}
                   disabled={loading}
                   className="flex border-black border-2 gap-2 items-center justify-center bg-[#c2fbd7] text-green-700 rounded-full font-sans w-full px-16 py-2 text-base shadow-2xl select-none transition duration-250 hover:shadow-lg active:scale-[1.05] active:-rotate-1 sm:w-auto"
                 >

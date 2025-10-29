@@ -20,6 +20,7 @@ import { useData } from "../context/DataContext";
 
 export default function Dashboard2({ darkMode }) {
   var { data, loading } = useData();
+  var { clearData } = useData();
   data = data;
 
   if (!data) return <div />;
@@ -88,6 +89,7 @@ export default function Dashboard2({ darkMode }) {
         </p>
         <Link to="/" replace>
           <button
+           onClick={clearData}
             className={`font-semibold flex gap-2 justify-center items-center px-2 py-2 sm:px-2 md:px-2 lg:px-4 lg:py-2 rounded-xl shadow-md transition ${btnBg}`}
           >
             <NotebookPen size={20} /> Check for Other

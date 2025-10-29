@@ -1,39 +1,43 @@
 import { createContext, useState, useContext, useEffect } from "react";
 
-
-
-// Context create
 const DataContext = createContext();
 
-// Custom hook for easy access
 export const useData = () => useContext(DataContext);
 
-// Provider component
 export const DataProvider = ({ children }) => {
-  // ✅ Pehle localStorage se data read karo
-  const [data, setData] = useState(() => {
+  // ✅ Safe initial load
+  const initialState = (() => {
     try {
       const saved = localStorage.getItem("appData");
-      return saved ? JSON.parse(saved) : null;
+      return saved ? JSON.parse(saved) : {}; // 👈 null → {} (empty object)
     } catch (err) {
       console.error("Error parsing localStorage data:", err);
-      return null;
+      return {};
     }
-  });
+  })();
 
+  const [data, setData] = useState(initialState);
   const [loading, setLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(false); // 👈 to prevent weird double fetches
 
-  // ✅ Jab bhi data badle, localStorage me save karo
+  // ✅ Sync with localStorage (and remove when empty)
   useEffect(() => {
-    if (data) {
+    if (Object.keys(data).length > 0) {
       localStorage.setItem("appData", JSON.stringify(data));
+    } else {
+      localStorage.removeItem("appData");
     }
   }, [data]);
 
-  // ✅ API call function (handleClick ka logic yahan shift)
+  // ✅ Fetch API data
   const fetchData = async (inputValue, device, report) => {
-    if (!inputValue) return alert("URL is empty");
+    if (!inputValue) {
+      alert("URL is empty");
+      return;
+    }
 
+    if (isFetching) return; // 👈 stop duplicate triggers
+    setIsFetching(true);
     setLoading(true);
 
     const checkURL = () => {
@@ -43,8 +47,10 @@ export const DataProvider = ({ children }) => {
       }
       return true;
     };
+
     if (!checkURL()) {
       setLoading(false);
+      setIsFetching(false);
       return;
     }
 
@@ -58,26 +64,30 @@ export const DataProvider = ({ children }) => {
       if (!response.ok) throw new Error(`Server error: ${response.status}`);
 
       const result = await response.json();
-      
-      setData(result); // 👈 Store in context + localStorage (auto via useEffect)
-      
+
+      // ✅ Set in both state and localStorage instantly (first call fix)
+      setData(result);
+      localStorage.setItem("appData", JSON.stringify(result)); // 👈 ADD THIS LINE
+
       return result;
-      
     } catch (error) {
       alert("Error: " + error.message);
     } finally {
       setLoading(false);
+      setIsFetching(false);
     }
   };
 
-  // ✅ Optional: clear karne ke liye function
+  // ✅ Clear all stored data
   const clearData = () => {
-    setData(null);
     localStorage.removeItem("appData");
+    setData({});
   };
 
   return (
-    <DataContext.Provider value={{ data, setData, loading, fetchData, clearData }}>
+    <DataContext.Provider
+      value={{ data, setData, loading, fetchData, clearData }}
+    >
       {children}
     </DataContext.Provider>
   );

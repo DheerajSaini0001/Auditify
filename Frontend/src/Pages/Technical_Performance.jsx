@@ -59,15 +59,17 @@ export default function Technical_Performance() {
 const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray-900 shadow-lg`;
 
   // ✅ Main Layout
-  return (<>
-     <div className="relative flex w-full h-full">
+  return (
+    <>
+   
+  {reportType === "All" ? (<div className="relative flex w-full h-full">
           {/* Sidebar */}
-          {reportType === "All" && (<div
+          <div
           className={`${sidebarClass} lg:translate-x-0 transition-transform duration-300 ease-in-out z-40`}
         >
           
           <Sidebar darkMode={darkMode} />
-        </div>)}
+        </div>
 
           {/* Main content */}
           <main
@@ -124,8 +126,66 @@ const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray
           darkMode={darkMode}
         />
           </main>
-        </div>
+        </div>):<main
+  className={`flex justify-center items-center${
+    darkMode ? " text-gray-100" : " text-gray-800"
+  }`}
+>
+  {/* This new div centers all the content below */}
+  <div className="flex w-full flex-col items-center justify-center space-y-8">
+    <h1
+      className={`responsive flex items-center justify-center sm:gap-10 text-3xl font-extrabold mb-6 ${textColor}`}
+    >
+      Technical Performance
+      <CircularProgress
+        value={metric.Technical_Performance.Percentage}
+        size={70}
+        stroke={5}
+      />
+    </h1>
+
+    {/* Core Web Vitals */}
+    <div
+      className={`w-full max-w-4xl p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500 ${cardBg}`}
+    >
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+        {Object.entries(metric.Technical_Performance.Core_Web_Vitals).map(
+          ([key, val]) => (
+            <div key={key} className="flex justify-between items-center">
+              <span className={textColor}>{key.replace(/_/g, " ")}</span>
+              <ScoreBadge
+                score={val.Score}
+                out={val.Value}
+                unit={key !== "CLS" ? "Sec" : ""}
+                des={val.Score ? "Good" : "Poor"}
+              />
+            </div>
+          )
+        )}
+      </div>
+    </div>
+
+    {/* Audit Results */}
+    <AuditDropdown
+      title="Passed Audits"
+      items={metric.Technical_Performance.Passed}
+      darkMode={darkMode}
+    />
+    <AuditDropdown
+      title="Warning"
+      items={metric.Technical_Performance.Warning}
+      darkMode={darkMode}
+    />
+    <AuditDropdown
+      title="Failed Audits"
+      items={metric.Technical_Performance.Improvements}
+      darkMode={darkMode}
+    />
+  </div>
+</main>}
+  
+      </>
     
-        </>
+        
   );
 }

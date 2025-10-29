@@ -127,7 +127,7 @@ const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray
         />
           </main>
         </div>):<main
-  className={`flex justify-center items-center${
+  className={`flex justify-center flex-col items-center min-h-auto${
     darkMode ? " text-gray-100" : " text-gray-800"
   }`}
 >

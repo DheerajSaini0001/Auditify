@@ -19,7 +19,7 @@ import { useData } from "../context/DataContext";
 
 export default function Dashboard2({ darkMode }) {
   var { data, loading } = useData();
-  data = data.Metric;
+  data = data;
 
   if (!data) return <div />;
 

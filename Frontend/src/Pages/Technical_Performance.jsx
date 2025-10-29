@@ -10,7 +10,7 @@ export default function Technical_Performance() {
   const { theme } = useContext(ThemeContext); // ✅ Access theme from context
   const darkMode = theme === "dark"; // ✅ Convert to boolean
 
-  if (!data || !data.Metric) {
+  if (!data ) {
     return (
       <div className="flex items-center justify-center h-screen text-gray-500 dark:text-gray-400">
         No data available. Please submit input on Home page.
@@ -18,7 +18,7 @@ export default function Technical_Performance() {
     );
   }
 
-  const metric = data.Metric;
+  const metric = data;
 
   // ✅ Local component: ScoreBadge
   const ScoreBadge = ({ score, out, unit, des }) => {

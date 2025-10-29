@@ -14,7 +14,7 @@ export default async function main(message) {
     console.log(`URL Received: ${url} and Device: ${device} and report: ${report}`);
 
     // Check if already exists in DB
-    const existingData = await SiteReport.findOne({ "Raw.Site": url,"Raw.Report":report,"Raw.Device": device});
+    const existingData = await SiteReport.findOne({ "Site": url,"Report":report,"Device": device});
     if(existingData){
       console.log('Data is persent in DB')
       return existingData;
@@ -28,5 +28,5 @@ export default async function main(message) {
     await newData.save();
     console.log("✅ Audit Completed & Data Saved to MongoDB");
 
-    return  {Metric}
+    return  Metric
 }

@@ -20,7 +20,7 @@ const ReportLayout = ({ sidebarOpen, setSidebarOpen }) => {
   // Convert theme into boolean for styling consistency
   const darkMode = theme === "dark";
 
-  if (!data || !data.Metric) {
+  if (!data) {
     return (
       <div className="flex items-center justify-center h-screen text-gray-500 dark:text-gray-400">
         <p>No data available. Please analyze a site first.</p>
@@ -33,7 +33,7 @@ const ReportLayout = ({ sidebarOpen, setSidebarOpen }) => {
   return (
     <>
       {/* --- STATE 1: "ALL REPORTS" --- */}
-      {data.Metric.Report === "All" && (
+      {data.Report === "All" && (
         <div className="relative flex w-full h-full">
           {/* Sidebar */}
           <div
@@ -69,7 +69,7 @@ const ReportLayout = ({ sidebarOpen, setSidebarOpen }) => {
       )}
 
       {/* --- STATE 2: SINGLE REPORT --- */}
-      {data.Metric.Report !== "All" && (
+      {data.Report !== "All" && (
         <div
           className={`relative flex w-full h-full justify-center px-4 ${
             darkMode ? "bg-gray-950 text-gray-100" : "bg-gray-50 text-gray-800"
@@ -78,25 +78,25 @@ const ReportLayout = ({ sidebarOpen, setSidebarOpen }) => {
           <main className="flex-1 flex flex-col pb-0 space-y-8 max-w-7xl">
             <UrlHeader darkMode={darkMode} />
 
-            {data.Metric.Report === "technicalMetrics" && (
+            {data.Report === "technicalMetrics" && (
               <Technical_Performance darkMode={darkMode} />
             )}
-            {data.Metric.Report === "seoMetrics" && (
+            {data.Report === "seoMetrics" && (
               <On_Page_SEO darkMode={darkMode} />
             )}
-            {data.Metric.Report === "accessibilityMetrics" && (
+            {data.Report === "accessibilityMetrics" && (
               <Accessibility darkMode={darkMode} />
             )}
-            {data.Metric.Report === "securityCompliance" && (
+            {data.Report === "securityCompliance" && (
               <Security_Compilance darkMode={darkMode} />
             )}
-            {data.Metric.Report === "uxContentStructure" && (
+            {data.Report === "uxContentStructure" && (
               <UX_Content_Structure darkMode={darkMode} />
             )}
-            {data.Metric.Report === "conversionLeadFlow" && (
+            {data.Report === "conversionLeadFlow" && (
               <Conversion_Lead_Flow darkMode={darkMode} />
             )}
-            {data.Metric.Report === "aioReadiness" && (
+            {data.Report === "aioReadiness" && (
               <AIO darkMode={darkMode} />
             )}
           </main>

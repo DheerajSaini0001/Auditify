@@ -10,7 +10,7 @@ export default function UX_Content_Structure() {
   const darkMode = theme === "dark"; // ✅ determine dark/light mode
 
   const { data: rawData, loading } = useData();
-  const data = rawData?.Metric;
+  const data = rawData;
 
   if (!data) return <div />;
 

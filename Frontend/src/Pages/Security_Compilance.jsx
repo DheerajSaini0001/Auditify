@@ -10,7 +10,7 @@ export default function Security_Compilance() {
   const darkMode = theme === "dark";
 
   const { data: rawData, loading } = useData();
-  const data = rawData?.Metric;
+  const data = rawData;
 
   if (!data || !data.Security_or_Compliance) return <div />;
 

@@ -68,31 +68,6 @@ const RawData = ({ data ,darkMode}) => {
     URL.revokeObjectURL(url);
   }
 
-  // ✅ Function to save data to backend
-  const saveToBackend = async () => {
-    if (!data) return;
-
-    setSaving(true);
-    try {
-      const response = await fetch("http://localhost:2000/api/sitereports/saveReport", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-
-      const result = await response.json();
-      if (result.success) {
-        alert("Data saved to database successfully!");
-      } else {
-        alert("Failed to save data: " + result.message);
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Error saving data: " + err.message);
-    }
-    setSaving(false);
-  };
-
   const containerBg = darkMode ? "bg-zinc-900 border-gray-700" : "bg-gray-100 border-gray-300";
   const cardBg = darkMode ? "bg-gradient-to-br from-blue-900 via-gray-900 to-black" : "bg-gradient-to-br from-blue-200 via-gray-200 to-white";
 
@@ -118,8 +93,6 @@ const RawData = ({ data ,darkMode}) => {
           <FileText className="w-5 h-5" />
           Download TXT
         </button>
-
-       
       </div>
     </div>
   );

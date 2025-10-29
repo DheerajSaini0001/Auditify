@@ -19,7 +19,7 @@ app.post("/data", async (req, res) => {
   try {
     const data = await main(message);
 
-    res.json({Metric: data.Metric});
+    res.json(data);
   } catch (error) {
     console.error("❌ Error fetching/saving PageSpeed data:", error);
     res.status(500).json({ success: false, error: "Failed to fetch or save PageSpeed data" });

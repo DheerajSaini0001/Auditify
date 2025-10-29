@@ -58,6 +58,7 @@ export const DataProvider = ({ children }) => {
       if (!response.ok) throw new Error(`Server error: ${response.status}`);
 
       const result = await response.json();
+      
       setData(result); // 👈 Store in context + localStorage (auto via useEffect)
       
       return result;

@@ -17,7 +17,7 @@ const UrlHeader = ({darkMode }) => {
     : "bg-green-400 hover:bg-green-500 text-black";
   return (
     <div
-      className={`ml-64 flex flex-col gap-72 sm:flex-row m-6 justify-between items-center p-4 rounded-lg border ${cardBg} ${cardBorder}`}
+      className={`flex flex-col sm:flex-row m-6 justify-between items-center p-4 rounded-lg border ${cardBg} ${cardBorder}`}
     >
       <p
         className={`${sectionText} sm:text-xl lg:text-3xl mb-3 sm:mb-0 text-center sm:text-left`}

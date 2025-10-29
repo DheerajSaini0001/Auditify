@@ -44,6 +44,7 @@ export default function On_Page_SEO() {
   }
 
   const seo = data.On_Page_SEO;
+  const reportType = data?.Report;
 
   // ✅ Theme-based background/text colors
   const cardBg = darkMode
@@ -60,11 +61,12 @@ export default function On_Page_SEO() {
     <>
       <div className="relative flex w-full h-full">
         {/* Sidebar */}
-        <div
+      {reportType === "All" && (<div
           className={`${sidebarClass} lg:translate-x-0 transition-transform duration-300 ease-in-out z-40`}
         >
+          
           <Sidebar darkMode={darkMode} />
-        </div>
+        </div>)}
 
         {/* Main content */}
         <main

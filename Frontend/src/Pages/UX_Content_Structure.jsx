@@ -25,6 +25,7 @@ export default function UX_Content_Structure() {
 
   const { data: rawData, loading } = useData();
   const data = rawData;
+  const reportType = data?.Report;
 
   // ✅ 3. Added Loading state
   if (loading) {
@@ -59,17 +60,18 @@ export default function UX_Content_Structure() {
   return (
     // ✅ 1. Added Layout structure
     <>
-      <div className="relative flex w-full h-full">
+     {reportType === "All"? (<div className="relative  flex w-full h-full">
         {/* Sidebar */}
-        <div
+       <div
           className={`${sidebarClass} lg:translate-x-0 transition-transform duration-300 ease-in-out z-40`}
         >
+          
           <Sidebar darkMode={darkMode} />
         </div>
 
         {/* Main content */}
         <main
-          className={`flex-1  lg:ml-64 flex flex-col justify-center items-center pt-20 pb-0 pr-4 pl-4 lg:pl-0 space-y-8 ${
+          className={`flex-1  lg:ml-64 flex flex-col justify-center  items-center pt-20 pb-0 pr-4 pl-4 lg:pl-0 space-y-8 ${
             darkMode ? " text-gray-100" : " text-gray-800"
           }`}
         >
@@ -165,7 +167,107 @@ export default function UX_Content_Structure() {
             darkMode={darkMode}
           />
         </main>
+      </div>):<main
+  className={`flex justify-center items-center min-h-auto ${
+    darkMode ? " text-gray-100" : " text-gray-800"
+  }`}
+>
+  {/* This new div now centers all your content */}
+  <div className="flex w-full flex-col items-center justify-center space-y-8">
+    {/* ✅ 4. Original Content pasted inside main */}
+
+    {/* Header */}
+    <h1 className="responsive text-heading-25 flex sm:gap-10 justify-center items-center text-3xl font-extrabold mb-6">
+      UX Content Structure
+      <CircularProgress value={metric.Percentage} size={70} stroke={5} />
+    </h1>
+
+    {/* Main Card */}
+    <div
+      className={`w-full max-w-4xl p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500 ${cardBg}`}
+    >
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+        <div className="flex justify-between items-center">
+          <span className={textColor}>Navigation Clarity</span>
+          <ScoreBadge
+            score={metric.Navigation_Clarity.Score}
+            out={
+              metric.Navigation_Clarity.Score
+                ? "Easy to navigate"
+                : "Hard to navigate"
+            }
+          />
+        </div>
+
+        <div className="flex justify-between items-center">
+          <span className={textColor}>Mobile Responsiveness</span>
+          <ScoreBadge
+            score={metric.Mobile_Responsiveness.Score}
+            out={
+              metric.Mobile_Responsiveness.Score
+                ? "Mobile-friendly"
+                : "Not mobile-friendly"
+            }
+          />
+        </div>
+
+        <div className="flex justify-between items-center">
+          <span className={textColor}>Content Relevance</span>
+          <ScoreBadge
+            score={metric.Content_Relevance.Score}
+            out={
+              metric.Content_Relevance.Score
+                ? "Relevant content"
+                : "Irrelevant content"
+            }
+          />
+        </div>
+
+        <div className="flex justify-between items-center">
+          <span className={textColor}>Call to Action Clarity</span>
+          <ScoreBadge
+            score={metric.Call_to_Action_Clarity.Score}
+            out={
+              metric.Call_to_Action_Clarity.Score
+                ? "Clear CTA"
+                : "Unclear CTA"
+            }
+          />
+        </div>
+
+        <div className="flex justify-between items-center">
+          <span className={textColor}>Interactive Feedback</span>
+          <ScoreBadge
+            score={metric.Interactive_Feedback.Score}
+            out={
+              metric.Interactive_Feedback.Score
+                ? "Effective feedback"
+                : "Ineffective feedback"
+            }
+          />
+        </div>
       </div>
+    </div>
+
+    {/* ✅ Audit Dropdowns with theme support */}
+    <AuditDropdown
+      items={metric.Passed}
+      title="Passed Audits"
+      darkMode={darkMode}
+    />
+    <AuditDropdown
+      items={metric.Warning}
+      title="Warning"
+      darkMode={darkMode}
+    />
+    <AuditDropdown
+      items={metric.Improvements}
+      title="Failed Audits"
+      darkMode={darkMode}
+    />
+  </div>
+</main>}
+      
     </>
   );
 }

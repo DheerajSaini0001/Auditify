@@ -27,6 +27,7 @@ export default function Conversion_Lead_Flow() {
   // ✅ Fetch data
   const { data: rawData, loading } = useData();
   const data = rawData;
+  const reportType = data?.Report;
 
   // ✅ 3. Added Loading state
   if (loading) {
@@ -63,11 +64,12 @@ export default function Conversion_Lead_Flow() {
     <>
       <div className="relative flex w-full h-full">
         {/* Sidebar */}
-        <div
+       {reportType === "All" && (<div
           className={`${sidebarClass} lg:translate-x-0 transition-transform duration-300 ease-in-out z-40`}
         >
+          
           <Sidebar darkMode={darkMode} />
-        </div>
+        </div>)}
 
         {/* Main content */}
         <main

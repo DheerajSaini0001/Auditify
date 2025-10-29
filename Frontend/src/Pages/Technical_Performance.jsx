@@ -31,6 +31,7 @@ export default function Technical_Performance() {
   }
 
   const metric = data;
+  const reportType = data?.Report;
 
   // ✅ Local component: ScoreBadge
   const ScoreBadge = ({ score, out, unit, des }) => {
@@ -61,11 +62,12 @@ const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray
   return (<>
      <div className="relative flex w-full h-full">
           {/* Sidebar */}
-          <div
-            className={`${sidebarClass} lg:translate-x-0 transition-transform duration-300 ease-in-out z-40`}
-          >
-            <Sidebar darkMode={darkMode} />
-          </div>
+          {reportType === "All" && (<div
+          className={`${sidebarClass} lg:translate-x-0 transition-transform duration-300 ease-in-out z-40`}
+        >
+          
+          <Sidebar darkMode={darkMode} />
+        </div>)}
 
           {/* Main content */}
           <main

@@ -55,7 +55,7 @@ const ReportLayout = ({ sidebarOpen, setSidebarOpen }) => {
           {/* Main content */}
           <main
             className={`flex-1 lg:ml-64 flex flex-col pb-0 pr-4 pl-4 lg:pl-0 space-y-8 ${
-              darkMode ? "bg-gray-950 text-gray-100" : "bg-gray-50 text-gray-800"
+              darkMode ? " text-gray-100" : " text-gray-800"
             }`}
           >
             <section id="dashboard" className="scroll-mt-20">
@@ -72,10 +72,10 @@ const ReportLayout = ({ sidebarOpen, setSidebarOpen }) => {
       {data.Report !== "All" && (
         <div
           className={`relative flex w-full h-full justify-center px-4 ${
-            darkMode ? "bg-gray-950 text-gray-100" : "bg-gray-50 text-gray-800"
+            darkMode ? " text-gray-100" : " text-gray-800"
           }`}
         >
-          <main className="flex-1 justify-center items-center flex flex-col pb-0 space-y-8 max-w-7xl">
+          <main className="flex-1  flex flex-col pb-0 space-y-8 max-w-7xl">
             <UrlHeader darkMode={darkMode} />
 
             {data.Report === "technicalMetrics" && (

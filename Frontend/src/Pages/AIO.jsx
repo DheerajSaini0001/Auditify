@@ -26,6 +26,7 @@ export default function AIO() {
 
   const { data: rawData, loading } = useData();
   const data = rawData;
+  const reportType = data?.report;
 
   // ✅ 3. Added Loading state
   if (loading) {
@@ -62,11 +63,12 @@ export default function AIO() {
     <>
       <div className="relative flex w-full h-full">
         {/* Sidebar */}
-        <div
-          className={`${sidebarClass} lg:translate-x-0 transition-transform duration-300 ease-in-out z-40`}
-        >
-          <Sidebar darkMode={darkMode} />
-        </div>
+        {reportType === "All" && (<div
+                  className={`${sidebarClass} lg:translate-x-0 transition-transform duration-300 ease-in-out z-40`}
+                >
+                  
+                  <Sidebar darkMode={darkMode} />
+                </div>)}
 
         {/* Main content */}
         <main

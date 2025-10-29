@@ -25,7 +25,7 @@ export default function Accessibility() {
 
   const { data: rawData, loading } = useData();
   const data = rawData;
-  const reportType=data?.report;
+  const reportType = data?.report;
 
   // ✅ Loading state
   if (loading) {
@@ -63,11 +63,13 @@ export default function Accessibility() {
     <>
       <div className="relative flex w-full h-full">
         {/* Sidebar */}
-        <div
+        {reportType === "All" && (<div
           className={`${sidebarClass} lg:translate-x-0 transition-transform duration-300 ease-in-out z-40`}
         >
+          
           <Sidebar darkMode={darkMode} />
-        </div>
+        </div>)}
+        
 
         {/* Main content */}
         <main

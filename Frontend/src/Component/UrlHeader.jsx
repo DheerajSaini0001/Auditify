@@ -1,6 +1,13 @@
 import React from "react";
+import { useData } from "../context/DataContext";
+import { NotebookPen } from "lucide-react";
 
-const UrlHeader = ({ data, darkMode }) => {
+
+const UrlHeader = ({darkMode }) => {
+  
+   var { data, loading } = useData(); 
+     const site=data.Metric.Site;
+
   // Theme-based styles
   const cardBg = darkMode ? "bg-zinc-900 text-white" : "bg-white text-black";
   const cardBorder = darkMode ? "border-gray-700" : "border-gray-300";
@@ -8,9 +15,6 @@ const UrlHeader = ({ data, darkMode }) => {
   const btnBg = darkMode
     ? "bg-green-500 hover:bg-green-600 text-white"
     : "bg-green-400 hover:bg-green-500 text-black";
-
-    // console.log(data);
-    
   return (
     <div
       className={`flex flex-col sm:flex-row m-6 justify-between items-center p-4 rounded-lg border ${cardBg} ${cardBorder}`}
@@ -25,15 +29,15 @@ const UrlHeader = ({ data, darkMode }) => {
           rel="noopener noreferrer"
           className="text-blue-400 hover:underline"
         >
-          {data || "No Site Provided"}
+          {site|| "No Site Provided"}
         </a>
       </p>
 
-      <a href="/" className="w-full sm:w-auto">
+      <a href="/" className="w-full  sm:w-auto">
         <button
-          className={`font-semibold w-full sm:w-auto px-3 py-2 lg:px-4 lg:py-2 rounded-xl shadow-md transition ${btnBg}`}
+          className={`font-semibold flex gap-2 justify-center items-center w-full sm:w-auto px-3 py-2 lg:px-4 lg:py-2 rounded-xl shadow-md transition ${btnBg}`}
         >
-          Check for Other
+          <NotebookPen size={20} /> Check for Other
         </button>
       </a>
     </div>

@@ -1,21 +1,16 @@
-// Import all images
-import Dheeraj from "./Dheeraj.jpeg";
 import Logo from "./Logo.png";
-import Mayank from "./Mayank.JPG";
-import Piyush from "./Piyush.jpeg";
 import ReactLogo from "./react.svg";
-import Aditya from "./Aditya.jpeg";
-import DarkLogo from "./DarkLogo.png";
+import DarkLogo from "./DarkLogo.png"; 
+import Bg from "./bg.jpg"; 
+import DarkBg from "./darkbg.png"; 
 
 // Export them together as "Assets"
 const Assets = {
-  Dheeraj,
   Logo,
-  Mayank,
-  Piyush,
   ReactLogo,
-  Aditya,
-  DarkLogo
+  DarkLogo,
+  Bg,
+  DarkBg
 };
 
 export default Assets;

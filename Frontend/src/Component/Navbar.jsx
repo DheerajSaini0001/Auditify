@@ -1,61 +1,65 @@
-import React from "react";
+import React, { useContext } from "react";
+import { ThemeContext } from "../context/ThemeContext.jsx";
 import { Menu, X, Sun, Moon } from "lucide-react";
-import Assets from "../assets/Assets.js"; // 🖼️ adjust this import based on your folder structure
+import Assets from "../assets/Assets.js";
 
-const Navbar = ({
-  result,
-  darkMode,
-  toggleTheme,
-  sidebarOpen,
-  setSidebarOpen,
-  navbarClass,
-}) => {
+const Navbar = ({ result, sidebarOpen, setSidebarOpen }) => {
+  const { theme, toggleTheme } = useContext(ThemeContext);
+  const darkMode = theme === "dark";
+
+  // ✅ Dynamic navbar background class
+  const navbarClass = darkMode
+    ? "bg-gray-900 text-white border-b border-gray-700"
+    : "bg-white text-black border-b border-gray-200";
+
   return (
-    <nav className={navbarClass}>
+    <nav
+      className={`flex items-center justify-between px-4 py-3 sticky top-0 z-50 shadow-sm transition-colors duration-300 ${navbarClass}`}
+    >
+      {/* Sidebar Toggle */}
       {result && (
         <button
-          className={
-            darkMode
-              ? "lg:hidden p-2 rounded-lg mr-5 bg-gray-800"
-              : "lg:hidden p-2 rounded-lg bg-gray-200 mr-5"
-          }
           onClick={() => setSidebarOpen(!sidebarOpen)}
+          className={`lg:hidden p-2 rounded-lg transition ${
+            darkMode ? "bg-gray-800 hover:bg-gray-700" : "bg-gray-200 hover:bg-gray-300"
+          }`}
         >
           {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </button>
       )}
 
-      {/* LOGO + TITLE */}
-      <div
-        className={
-          darkMode
-            ? "flex flex-col-rev justify-center items-center gap-4 font-serif text-4xl font-bold bg-gradient-to-r from-sky-200 via-rose-200 to-orange-200 bg-clip-text text-transparent"
-            : "flex flex-col-rev justify-center items-center gap-4 font-serif text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#000428] to-[#004e92]"
-        }
-      >
-        <div>
+      {/* Logo + Title */}
+      <div className="flex items-center gap-3 font-serif text-2xl font-bold">
+        <a href="/">
           <img
             src={darkMode ? Assets.Logo : Assets.DarkLogo}
             alt="Site Audit Logo"
-            className="sm:h-10 h-12 lg:h-14"
+            className="sm:h-10 h-12 lg:h-14 transition-transform hover:scale-105"
           />
-        </div>
-        <div>Site Audits</div>
+        </a>
+        <a
+          href="/"
+          className={`bg-clip-text text-transparent ${
+            darkMode
+              ? "bg-gradient-to-r from-sky-200 via-rose-200 to-orange-200"
+              : "bg-gradient-to-r from-[#000428] to-[#004e92]"
+          }`}
+        >
+          Site Audits
+        </a>
       </div>
 
       {/* Theme Toggle Button */}
       <button
         onClick={toggleTheme}
-        className={
-          darkMode
-            ? "px-4 py-2 text-white rounded"
-            : "px-4 py-2 text-black rounded"
-        }
+        className={`p-2 rounded-lg transition ${
+          darkMode ? "hover:bg-gray-800" : "hover:bg-gray-200"
+        }`}
       >
         {darkMode ? (
-          <Sun color="#FFD700" strokeWidth={3} size={20} />
+          <Sun color="#FFD700" strokeWidth={3} size={22} />
         ) : (
-          <Moon color="#4B5563" strokeWidth={3} size={20} />
+          <Moon color="#4B5563" strokeWidth={3} size={22} />
         )}
       </button>
     </nav>

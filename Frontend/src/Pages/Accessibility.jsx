@@ -10,7 +10,7 @@ export default function Accessibility() {
   const darkMode = theme === "dark";
 
   const { data: rawData, loading } = useData();
-  const data = rawData?.Metric;
+  const data = rawData;
 
   if (!data) {
     return <div />;

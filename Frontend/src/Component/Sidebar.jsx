@@ -11,10 +11,13 @@ import {
   FileText,
 } from "lucide-react";
 import { ThemeContext } from "../ThemeContext";
+import { useData } from "../context/DataContext";
 
 export default function Sidebar({ darkMode }) {
   
   const [isOpen, setIsOpen] = useState(true);
+  const { data: rawData, loading } = useData();
+  const data = rawData;
 
   const menuItems = [
     { name: "Technical Performance", link: "/technical-performance", icon: <Gauge size={20} /> },
@@ -74,7 +77,7 @@ export default function Sidebar({ darkMode }) {
 
           {/* Download Button */}
           <button
-            onClick={() => downloadObject(data)}
+            onClick={() => downloadObject(data.Raw)}
             className={`flex items-center space-x-3 p-3 w-full rounded-md transition ${hoverClass}`}
           >
             <FileText className="w-5 h-5" />

@@ -6,7 +6,7 @@ import { NotebookPen } from "lucide-react";
 const UrlHeader = ({darkMode }) => {
   
    var { data, loading } = useData(); 
-     const site=data.Metric.Site;
+     const site=data.Site;
 
   // Theme-based styles
   const cardBg = darkMode ? "bg-zinc-900 text-white" : "bg-white text-black";

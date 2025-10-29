@@ -12,7 +12,7 @@ export default function Conversion_Lead_Flow() {
 
   // ✅ Fetch data
   const { data: rawData, loading } = useData();
-  const data = rawData?.Metric;
+  const data = rawData;
 
   if (!data) return <div />;
 

@@ -10,9 +10,9 @@ export default function On_Page_SEO() {
   const { theme } = useContext(ThemeContext); // ✅ Access theme
   const darkMode = theme === "dark"; // ✅ Determine mode
 
-  if (!data || !data.Metric) return <div />;
+  if (!data) return <div />;
 
-  const seo = data.Metric.On_Page_SEO;
+  const seo = data.On_Page_SEO;
 
   // ✅ Score Badge Component
   const ScoreBadge = ({ score, out, des }) => {

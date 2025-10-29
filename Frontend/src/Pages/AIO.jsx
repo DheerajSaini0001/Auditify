@@ -26,7 +26,7 @@ export default function AIO() {
 
   const { data: rawData, loading } = useData();
   const data = rawData;
-  const reportType = data?.report;
+  const reportType = data?.Report;
 
   // ✅ 3. Added Loading state
   if (loading) {

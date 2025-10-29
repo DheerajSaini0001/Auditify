@@ -1,5 +1,5 @@
 import React, { useState, useContext } from "react";
-import { Loader2, Menu, X, Search } from "lucide-react";
+import { Loader2,  Search,MonitorCheck } from "lucide-react";
 import { useData } from "../context/DataContext.jsx";
 import { useNavigate } from "react-router-dom";
 import { ThemeContext } from "../context/ThemeContext.jsx"; // 👈 import theme context
@@ -98,8 +98,8 @@ export default function DarkCard({ setData }) {
                       : "bg-gray-300 text-black"
                   }`}
                 >
-                  <option value="Desktop">Desktop</option>
-                  <option value="Mobile">Mobile</option>
+                  <option value="Desktop"> <MonitorCheck size={20} color="green"/> Desktop</option>
+                  <option value="Mobile">  Mobile</option>
                 </select>
 
                 {/* Report Select */}

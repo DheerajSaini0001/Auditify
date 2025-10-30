@@ -12,10 +12,12 @@ import {
   YAxis,
   CartesianGrid,
 } from "recharts";
-import { Loader2, NotebookPen } from "lucide-react";
-import { useNavigate } from "react-router-dom"; // ✅ Added for navigation
+
+import { NotebookPen ,Loader2} from "lucide-react";
+import { Link } from "react-router-dom"; // ✅ ADD THIS IMPORT
 import CircularProgress from "./CircularProgress";
-import { useData } from "../context/DataContext";
+import { useData } from "../context/DataContext"; 
+import { useNavigate } from "react-router-dom";
 
 
 export default function Dashboard2({ darkMode }) {
@@ -116,7 +118,7 @@ export default function Dashboard2({ darkMode }) {
         <div>
           <h2 className="text-xl sm:text-2xl font-bold">Overall Score</h2>
           <p className="text-4xl sm:text-5xl font-extrabold mt-2">
-            {data.Score}/100
+            {data?.Score ?? '-'}/100
           </p>
           <p className="text-gray-200 text-sm sm:text-base mt-1">
             Website Health Index
@@ -127,9 +129,11 @@ export default function Dashboard2({ darkMode }) {
             className={`text-xl sm:text-2xl lg:text-3xl font-bold rounded-4xl ${
               ["A", "B"].includes(data?.Grade ?? '-')
                 ? "bg-green-400"
-                : ["C", "D"].includes(data?.Grade ?? '-')
+
+                : ["C", "D"].includes(data?.Grade  ?? '-')
                 ? "bg-orange-400"
-                : ["E", "F"].includes(data?.Grade ?? '-')
+                : ["E", "F"].includes(data?.Grade  ?? '-')
+
                 ? "bg-red-400"
                 : "bg-gray-300"
             }`}
@@ -163,11 +167,12 @@ export default function Dashboard2({ darkMode }) {
             </p>
           </button>
         ))}
-      </div> 
-      : <Loader2 size={20} className="animate-spin w-5 h-5" />}
 
-      {/* ✅ Bar Chart */}
-      {data?.Section_Score ? 
+      </div>
+          :     <Loader2 size={20} className="animate-spin w-5 h-5" />}
+      {/* Bar Chart */}
+      {data?.Section_Score ?
+
       <div
         className={`rounded-xl p-4 shadow-lg border ${cardBorder} ${cardBg}`}
       >
@@ -188,7 +193,9 @@ export default function Dashboard2({ darkMode }) {
           </ResponsiveContainer>
         </div>
       </div>
-      : <Loader2 size={20} className="animate-spin w-5 h-5" />}
+
+          :     <Loader2 size={20} className="animate-spin w-5 h-5" />}
+
     </div>
   );
 }

@@ -68,7 +68,6 @@ export default function Security_Compilance() {
           
           <Sidebar darkMode={darkMode} />
         </div>
-
         {/* Main content */}
         <main
           className={`flex-1  lg:ml-64 flex flex-col justify-center items-center pt-20 pb-0 pr-4 pl-4 lg:pl-0 space-y-8 ${

@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
-import main from "./Main/main.js";
+import audits from "./Router/audit.js";
+import liveData from "./Router/livedataRoute.js";
 import connectDB from "./DB/db.js";
 import dotenv from "dotenv";
 
@@ -12,19 +13,8 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-
-app.post("/data", async (req, res) => {
-  const message = req.body;
-
-  try {
-    const data = await main(message);
-
-    res.json(data);
-  } catch (error) {
-    console.error("❌ Error fetching/saving PageSpeed data:", error);
-    res.status(500).json({ success: false, error: "Failed to fetch or save PageSpeed data" });
-  }
-});
+app.use("/audit", audits);
+app.use("/live", liveData);
 
 // Start server
 app.listen(PORT, () => {

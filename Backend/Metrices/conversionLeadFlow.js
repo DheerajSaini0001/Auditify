@@ -1,3 +1,6 @@
+import { performance } from "perf_hooks";
+import SiteReport from "../Model/SiteReport.js";
+
 // Conversion & Lead Flow (Call-to-Action (CTA) Effectiveness)
 function checkCTAs($) {
     // Array of common CTA selectors
@@ -1012,7 +1015,10 @@ function checkMultiChannelFollowUp($) {
   }
 }
 
-export default async function conversionLeadFlow(page,$) {
+export default async function conversionLeadFlow(url,device,selectedMetric,page, $, auditId) {
+
+  let start, end, timeTaken;
+  start = performance.now();
 
   // Conversion & Lead Flow (Call-to-Action (CTA) Effectiveness)
   const checkCTAsScore=checkCTAs($)
@@ -1075,6 +1081,9 @@ export default async function conversionLeadFlow(page,$) {
   const checkSmoothScrollingScore=checkSmoothScrolling($);
   const checkMobileCTAAdaptationScore=checkMobileCTAAdaptation($);
   const checkMultiChannelFollowUpScore=checkMultiChannelFollowUp($);
+
+  end = performance.now();
+  timeTaken = ((end-start)/1000).toFixed(0);
   
   const Total = parseFloat((((checkCTAsScore+checkCTAClarityScore+checkCTAContrastScore+checkCTACrowdingScore+checkCTAFlowAlignmentScore+checkFormPresenceScore+checkFormLengthOptimalScore+checkRequiredVsOptionalFieldsScore+checkInlineValidationScore+checkSubmitButtonClarityScore+checkAutoFocusFieldScore+checkMultiStepFormProgressScore+checkTestimonialsScore+checkReviewsVisibleScore+checkTrustBadgesScore+checkClientLogosScore+checkCaseStudiesAccessibilityScore+checkExitIntentTriggersScore+checkLeadMagnetsScore+checkContactInfoVisibilityScore+checkChatbotPresenceScore+checkInteractiveElementsScore+checkPersonalizationScore+checkProgressIndicatorsScore+checkFriendlyErrorHandlingScore+checkMicrocopyClarityScore+checkIncentivesDisplayedScore+checkScarcityUrgencyScore+checkSmoothScrollingScore+checkMobileCTAAdaptationScore+checkMultiChannelFollowUpScore)/31)*100).toFixed(0));
   
@@ -1691,41 +1700,273 @@ if (checkMultiChannelFollowUpScore === 0) {
   // console.log(Total);
   // console.log(improvements);
 
-  return {
-  checkCTAsScore,
-  checkCTAClarityScore,
-  checkCTAContrastScore,
-  checkCTACrowdingTotal,
-  checkCTACrowdingScore,
-  checkCTAFlowAlignmentScore,
-  checkFormPresenceScore,
-  checkFormLengthOptimalScore,
-  checkRequiredVsOptionalFieldsScore,
-  checkInlineValidationScore,
-  checkSubmitButtonClarityScore,
-  checkAutoFocusFieldScore,
-  checkMultiStepFormProgressScore,
-  checkTestimonialsScore,
-  checkReviewsVisibleScore,
-  checkTrustBadgesScore,
-  checkClientLogosScore,
-  checkCaseStudiesAccessibilityScore,
-  checkExitIntentTriggersScore,
-  checkLeadMagnetsScore,
-  checkContactInfoVisibilityScore,
-  checkChatbotPresenceScore,
-  checkInteractiveElementsScore,
-  checkPersonalizationScore,
-  checkProgressIndicatorsScore,
-  checkFriendlyErrorHandlingScore,
-  checkMicrocopyClarityScore,
-  checkIncentivesDisplayedScore,
-  checkScarcityUrgencyScore,
-  checkSmoothScrollingScore,
-  checkMobileCTAAdaptationScore,
-  checkMultiChannelFollowUpScore,
-  actualPercentage,warning,
-  passed,
-  Total,improvements
-  }
+  await SiteReport.findByIdAndUpdate(auditId, {
+    Time_Taken:timeTaken + 's',
+    Conversion_and_Lead_Flow: {
+        CTA_Visibility: {
+          Score: checkCTAsScore,
+          Parameter: "1 if at least one prominent CTA is present, else 0"
+        },
+        CTA_Clarity: {
+          Score: checkCTAClarityScore,
+          Parameter: "1 if CTA buttons and links have clear, actionable text, else 0"
+        },
+        CTA_Contrast: {
+          Score: checkCTAContrastScore,
+          Parameter: "1 if CTA text has sufficient contrast (≥4.5:1), else 0"
+        },
+        CTA_Crowding: {
+          Score: checkCTACrowdingScore,
+          Parameter: "1 if number of CTAs is limited to prevent confusion, else 0"
+        },
+        CTA_Flow_Alignment: {
+          Score: checkCTAFlowAlignmentScore,
+          Parameter: "1 if CTAs are placed logically along user flow, else 0"
+        },
+        Form_Presence: {
+          Score: checkFormPresenceScore,
+          Parameter: "1 if at least one form is present, else 0"
+        },
+        Form_Length: {
+          Score: checkFormLengthOptimalScore,
+          Parameter: "1 if forms are concise, else 0"
+        },
+        Required_vs_Optional_Fields: {
+          Score: checkRequiredVsOptionalFieldsScore,
+          Parameter: "1 if required vs optional fields are clearly marked, else 0"
+        },
+        Inline_Validation: {
+          Score: checkInlineValidationScore,
+          Parameter: "1 if real-time feedback is provided for user input, else 0"
+        },
+        Submit_Button_Clarity: {
+          Score: checkSubmitButtonClarityScore,
+          Parameter: "1 if submit button text is clear and actionable, else 0"
+        },
+        AutoFocus_Field: {
+          Score: checkAutoFocusFieldScore,
+          Parameter: "1 if first input field is autofocused, else 0"
+        },
+        MultiStep_Form_Progress: {
+          Score: checkMultiStepFormProgressScore,
+          Parameter: "1 if progress indicators exist in multi-step forms, else 0"
+        },
+        Testimonials: {
+          Score: checkTestimonialsScore,
+          Parameter: "1 if testimonials are visible, else 0"
+        },
+        Reviews: {
+          Score: checkReviewsVisibleScore,
+          Parameter: "1 if reviews/ratings are visible, else 0"
+        },
+        Trust_Badges: {
+          Score: checkTrustBadgesScore,
+          Parameter: "1 if trust/security badges are visible, else 0"
+        },
+        Client_Logos: {
+          Score: checkClientLogosScore,
+          Parameter: "1 if client logos are visible, else 0"
+        },
+        Case_Studies_Accessibility: {
+          Score: checkCaseStudiesAccessibilityScore,
+          Parameter: "1 if case studies are accessible, else 0"
+        },
+        Exit_Intent_Triggers: {
+          Score: checkExitIntentTriggersScore,
+          Parameter: "1 if exit-intent triggers exist, else 0"
+        },
+        Lead_Magnets: {
+          Score: checkLeadMagnetsScore,
+          Parameter: "1 if lead magnets are offered, else 0"
+        },
+        Contact_Info_Visibility: {
+          Score: checkContactInfoVisibilityScore,
+          Parameter: "1 if contact info is visible, else 0"
+        },
+        Chatbot_Presence: {
+          Score: checkChatbotPresenceScore,
+          Parameter: "1 if chatbot is present, else 0"
+        },
+        Interactive_Elements: {
+          Score: checkInteractiveElementsScore,
+          Parameter: "1 if interactive elements are present, else 0"
+        },
+        Personalization: {
+          Score: checkPersonalizationScore,
+          Parameter: "1 if personalized content exists, else 0"
+        },
+        Progress_Indicators: {
+          Score: checkProgressIndicatorsScore,
+          Parameter: "1 if progress indicators are visible, else 0"
+        },
+        Friendly_Error_Handling: {
+          Score: checkFriendlyErrorHandlingScore,
+          Parameter: "1 if error messages are clear and helpful, else 0"
+        },
+        Microcopy_Clarity: {
+          Score: checkMicrocopyClarityScore,
+          Parameter: "1 if labels/placeholders are clear, else 0"
+        },
+        Incentives_Displayed: {
+          Score: checkIncentivesDisplayedScore,
+          Parameter: "1 if offers or incentives are visible, else 0"
+        },
+        Scarcity_Urgency: {
+          Score: checkScarcityUrgencyScore,
+          Parameter: "1 if scarcity or urgency cues are present, else 0"
+        },
+        Smooth_Scrolling: {
+          Score: checkSmoothScrollingScore,
+          Parameter: "1 if smooth scrolling is implemented, else 0"
+        },
+        Mobile_CTA_Adaptation: {
+          Score: checkMobileCTAAdaptationScore,
+          Parameter: "1 if CTAs are mobile-friendly, else 0"
+        },
+        MultiChannel_FollowUp: {
+          Score: checkMultiChannelFollowUpScore,
+          Parameter: "1 if multi-channel follow-up options exist, else 0"
+        },
+      Percentage: actualPercentage,
+      Warning: warning,
+      Passed: passed,
+      Total: Total,
+      Improvements: improvements
+    },
+    $set: {
+          'Raw.Site': url,
+          'Raw.Report': selectedMetric,
+          'Raw.Device': device,
+          'Raw.Time_Taken': timeTaken + 's',
+          'Raw.Conversion_and_Lead_Flow':{
+        CTA_Visibility: {
+          Score: checkCTAsScore,
+          Parameter: "1 if at least one prominent CTA is present, else 0"
+        },
+        CTA_Clarity: {
+          Score: checkCTAClarityScore,
+          Parameter: "1 if CTA buttons and links have clear, actionable text, else 0"
+        },
+        CTA_Contrast: {
+          Score: checkCTAContrastScore,
+          Parameter: "1 if CTA text has sufficient contrast (≥4.5:1), else 0"
+        },
+        CTA_Crowding: {
+          Score: checkCTACrowdingScore,
+          Parameter: "1 if number of CTAs is limited to prevent confusion, else 0"
+        },
+        CTA_Flow_Alignment: {
+          Score: checkCTAFlowAlignmentScore,
+          Parameter: "1 if CTAs are placed logically along user flow, else 0"
+        },
+        Form_Presence: {
+          Score: checkFormPresenceScore,
+          Parameter: "1 if at least one form is present, else 0"
+        },
+        Form_Length: {
+          Score: checkFormLengthOptimalScore,
+          Parameter: "1 if forms are concise, else 0"
+        },
+        Required_vs_Optional_Fields: {
+          Score: checkRequiredVsOptionalFieldsScore,
+          Parameter: "1 if required vs optional fields are clearly marked, else 0"
+        },
+        Inline_Validation: {
+          Score: checkInlineValidationScore,
+          Parameter: "1 if real-time feedback is provided for user input, else 0"
+        },
+        Submit_Button_Clarity: {
+          Score: checkSubmitButtonClarityScore,
+          Parameter: "1 if submit button text is clear and actionable, else 0"
+        },
+        AutoFocus_Field: {
+          Score: checkAutoFocusFieldScore,
+          Parameter: "1 if first input field is autofocused, else 0"
+        },
+        MultiStep_Form_Progress: {
+          Score: checkMultiStepFormProgressScore,
+          Parameter: "1 if progress indicators exist in multi-step forms, else 0"
+        },
+        Testimonials: {
+          Score: checkTestimonialsScore,
+          Parameter: "1 if testimonials are visible, else 0"
+        },
+        Reviews: {
+          Score: checkReviewsVisibleScore,
+          Parameter: "1 if reviews/ratings are visible, else 0"
+        },
+        Trust_Badges: {
+          Score: checkTrustBadgesScore,
+          Parameter: "1 if trust/security badges are visible, else 0"
+        },
+        Client_Logos: {
+          Score: checkClientLogosScore,
+          Parameter: "1 if client logos are visible, else 0"
+        },
+        Case_Studies_Accessibility: {
+          Score: checkCaseStudiesAccessibilityScore,
+          Parameter: "1 if case studies are accessible, else 0"
+        },
+        Exit_Intent_Triggers: {
+          Score: checkExitIntentTriggersScore,
+          Parameter: "1 if exit-intent triggers exist, else 0"
+        },
+        Lead_Magnets: {
+          Score: checkLeadMagnetsScore,
+          Parameter: "1 if lead magnets are offered, else 0"
+        },
+        Contact_Info_Visibility: {
+          Score: checkContactInfoVisibilityScore,
+          Parameter: "1 if contact info is visible, else 0"
+        },
+        Chatbot_Presence: {
+          Score: checkChatbotPresenceScore,
+          Parameter: "1 if chatbot is present, else 0"
+        },
+        Interactive_Elements: {
+          Score: checkInteractiveElementsScore,
+          Parameter: "1 if interactive elements are present, else 0"
+        },
+        Personalization: {
+          Score: checkPersonalizationScore,
+          Parameter: "1 if personalized content exists, else 0"
+        },
+        Progress_Indicators: {
+          Score: checkProgressIndicatorsScore,
+          Parameter: "1 if progress indicators are visible, else 0"
+        },
+        Friendly_Error_Handling: {
+          Score: checkFriendlyErrorHandlingScore,
+          Parameter: "1 if error messages are clear and helpful, else 0"
+        },
+        Microcopy_Clarity: {
+          Score: checkMicrocopyClarityScore,
+          Parameter: "1 if labels/placeholders are clear, else 0"
+        },
+        Incentives_Displayed: {
+          Score: checkIncentivesDisplayedScore,
+          Parameter: "1 if offers or incentives are visible, else 0"
+        },
+        Scarcity_Urgency: {
+          Score: checkScarcityUrgencyScore,
+          Parameter: "1 if scarcity or urgency cues are present, else 0"
+        },
+        Smooth_Scrolling: {
+          Score: checkSmoothScrollingScore,
+          Parameter: "1 if smooth scrolling is implemented, else 0"
+        },
+        Mobile_CTA_Adaptation: {
+          Score: checkMobileCTAAdaptationScore,
+          Parameter: "1 if CTAs are mobile-friendly, else 0"
+        },
+        MultiChannel_FollowUp: {
+          Score: checkMultiChannelFollowUpScore,
+          Parameter: "1 if multi-channel follow-up options exist, else 0"
+        },
+      Percentage: actualPercentage
+    }
+        }
+    });
+
+    return actualPercentage
 }

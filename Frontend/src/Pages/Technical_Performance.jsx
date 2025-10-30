@@ -70,7 +70,6 @@ const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray
           
           <Sidebar darkMode={darkMode} />
         </div>
-
           {/* Main content */}
           <main
             className={`flex-1  lg:ml-64 flex flex-col justify-center items-center pt-20 pb-0 pr-4 pl-4 lg:pl-0 space-y-8 ${
@@ -164,7 +163,6 @@ const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray
         )}
       </div>
     </div>
-
     {/* Audit Results */}
     <AuditDropdown
       title="Passed Audits"
@@ -185,7 +183,5 @@ const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray
 </main>}
   
       </>
-    
-        
   );
 }

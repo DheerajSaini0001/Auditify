@@ -1,3 +1,6 @@
+import { performance } from "perf_hooks";
+import SiteReport from "../Model/SiteReport.js";
+
 // UX & Content Structure (Navigation & Layout)
 function checkNavigationClarity($) {
     const nav = $('nav'); // select main nav
@@ -501,8 +504,11 @@ function checkUserJourneyContinuity($) {
     return validCTA >= 1 ? 1 : 0;
 }
 
-export default async function evaluateMobileUX(url,$) {
+export default async function evaluateMobileUX(url,device,selectedMetric, $, auditId) {
     
+    let start, end, timeTaken;
+    start = performance.now();
+
     // UX & Content Structure (Navigation & Layout)
     const checkNavigationClarityScore = checkNavigationClarity($);
     const checkBreadcrumbsScore = checkBreadcrumbs($);
@@ -532,6 +538,9 @@ export default async function evaluateMobileUX(url,$) {
     
     const checkInternalLinkingQualityScore = checkInternalLinkingQuality($,domain);
     const checkUserJourneyContinuityScore = checkUserJourneyContinuity($);
+
+    end = performance.now();
+    timeTaken = ((end-start)/1000).toFixed(0);
 
     const Total = parseFloat((((checkNavigationClarityScore+checkBreadcrumbsScore+checkClickableLogoScore+checkMobileResponsivenessScore+checkParagraphLengthAndSpacingScore+checkFontStyleAndSizeConsistencyScore+checkContrastAndColorHarmonyScore+checkWhitespaceUsageScore+checkContentRelevanceScore+checkCallToActionClarityScore+checkMultimediaBalanceScore+checkInternalLinkingQualityScore+checkUserJourneyContinuityScore+checkErrorEmptyStateScore+checkInteractiveFeedbackScore+checkStickyNavigationScore+checkScrollDepthLogicScore+checkLoadingIndicatorsScore)/18)*100).toFixed(0));
 
@@ -894,27 +903,169 @@ const actualPercentage = parseFloat((((checkMobileResponsivenessScore+checkClick
     // console.log(Total);
     // console.log(improvements);
 
-return {
-    checkNavigationClarityScore,
-    checkBreadcrumbsScore,
-    checkClickableLogoScore,
-    checkMobileResponsivenessScore,
-    checkFontStyleAndSizeConsistencyScore,
-    checkWhitespaceUsageScore,
-    checkParagraphLengthAndSpacingScore,
-    checkContrastAndColorHarmonyScore,
-    checkContentRelevanceScore,
-    checkCallToActionClarityScore,
-    checkMultimediaBalanceScore,
-    checkErrorEmptyStateScore,
-    checkInteractiveFeedbackScore,
-    checkStickyNavigationScore,
-    checkScrollDepthLogicScore,
-    checkLoadingIndicatorsScore,
-    checkInternalLinkingQualityScore,
-    checkUserJourneyContinuityScore,
-    actualPercentage,warning,
-    passed,
-    Total,improvements
-}
+    await SiteReport.findByIdAndUpdate(auditId, {
+        Time_Taken:timeTaken + 's',
+        UX_or_Content_Structure: {
+      Navigation_Clarity: {
+        Score: checkNavigationClarityScore,
+        Parameter: '1 if navigation menus are visible, labeled, and unique, else 0'
+      },
+      Breadcrumbs: {
+        Score: checkBreadcrumbsScore,
+        Parameter: '1 if breadcrumbs are present with at least one text item, else 0'
+      },
+      Clickable_Logo: {
+        Score: checkClickableLogoScore,
+        Parameter: '1 if logo links to homepage, else 0'
+      },
+      Mobile_Responsiveness: {
+        Score: checkMobileResponsivenessScore,
+        Parameter: '1 if viewport meta is set and responsive CSS exists, else 0'
+      },
+      Font_Style_and_Size_Consistency: {
+        Score: checkFontStyleAndSizeConsistencyScore,
+        Parameter: '1 if font-family and font-size are consistent, else 0'
+      },
+      Whitespace_Usage: {
+        Score: checkWhitespaceUsageScore,
+        Parameter: '1 if sufficient padding/margins exist in most blocks, else 0'
+      },
+      Paragraph_Length_and_Spacing: {
+        Score: checkParagraphLengthAndSpacingScore,
+        Parameter: '1 if paragraphs are 40–120 words and spacing is adequate, else 0'
+      },
+      Contrast_and_Color_Harmony: {
+        Score: checkContrastAndColorHarmonyScore,
+        Parameter: '1 if text-background contrast ratio ≥ 4.5, else 0'
+      },
+      Content_Relevance: {
+        Score: checkContentRelevanceScore,
+        Parameter: '1 if ≥50% of title keywords appear in content, else 0'
+      },
+      Call_to_Action_Clarity: {
+        Score: checkCallToActionClarityScore,
+        Parameter: '1 if at least 1 meaningful CTA exists, else 0'
+      },
+      Multimedia_Balance: {
+        Score: checkMultimediaBalanceScore,
+        Parameter: '1 if text and media are balanced (≥1 text per media element), else 0'
+      },
+      Error_and_Empty_State_Handling: {
+        Score: checkErrorEmptyStateScore,
+        Parameter: '1 if empty/error states provide guidance, else 0'
+      },
+      Interactive_Feedback: {
+        Score: checkInteractiveFeedbackScore,
+        Parameter: '1 if buttons/links/forms provide visual or textual feedback, else 0'
+      },
+      Sticky_Navigation: {
+        Score: checkStickyNavigationScore,
+        Parameter: '1 if navigation remains visible when scrolling, else 0'
+      },
+      Scroll_Depth_Logic: {
+        Score: checkScrollDepthLogicScore,
+        Parameter: '1 if TOC or back-to-top exists for long pages, else 0'
+      },
+      Loading_Indicators: {
+        Score: checkLoadingIndicatorsScore,
+        Parameter: '1 if visible loading indicators exist, else 0'
+      },
+      Internal_Linking_Quality: {
+        Score: checkInternalLinkingQualityScore,
+        Parameter: '1 if internal links exist and are relevant, else 0'
+      },
+      User_Journey_Continuity: {
+        Score: checkUserJourneyContinuityScore,
+        Parameter: '1 if at least one meaningful CTA exists for next steps, else 0'
+      },
+      Percentage: actualPercentage,
+      Warning: warning,
+      Passed:passed,
+      Total: Total,
+      Improvements: improvements
+        },
+        $set: {
+          'Raw.Site': url,
+          'Raw.Report': selectedMetric,
+          'Raw.Device': device,
+          'Raw.Time_Taken': timeTaken + 's',
+          'Raw.UX_or_Content_Structure':{
+      Navigation_Clarity: {
+        Score: checkNavigationClarityScore,
+        Parameter: '1 if navigation menus are visible, labeled, and unique, else 0'
+      },
+      Breadcrumbs: {
+        Score: checkBreadcrumbsScore,
+        Parameter: '1 if breadcrumbs are present with at least one text item, else 0'
+      },
+      Clickable_Logo: {
+        Score: checkClickableLogoScore,
+        Parameter: '1 if logo links to homepage, else 0'
+      },
+      Mobile_Responsiveness: {
+        Score: checkMobileResponsivenessScore,
+        Parameter: '1 if viewport meta is set and responsive CSS exists, else 0'
+      },
+      Font_Style_and_Size_Consistency: {
+        Score: checkFontStyleAndSizeConsistencyScore,
+        Parameter: '1 if font-family and font-size are consistent, else 0'
+      },
+      Whitespace_Usage: {
+        Score: checkWhitespaceUsageScore,
+        Parameter: '1 if sufficient padding/margins exist in most blocks, else 0'
+      },
+      Paragraph_Length_and_Spacing: {
+        Score: checkParagraphLengthAndSpacingScore,
+        Parameter: '1 if paragraphs are 40–120 words and spacing is adequate, else 0'
+      },
+      Contrast_and_Color_Harmony: {
+        Score: checkContrastAndColorHarmonyScore,
+        Parameter: '1 if text-background contrast ratio ≥ 4.5, else 0'
+      },
+      Content_Relevance: {
+        Score: checkContentRelevanceScore,
+        Parameter: '1 if ≥50% of title keywords appear in content, else 0'
+      },
+      Call_to_Action_Clarity: {
+        Score: checkCallToActionClarityScore,
+        Parameter: '1 if at least 1 meaningful CTA exists, else 0'
+      },
+      Multimedia_Balance: {
+        Score: checkMultimediaBalanceScore,
+        Parameter: '1 if text and media are balanced (≥1 text per media element), else 0'
+      },
+      Error_and_Empty_State_Handling: {
+        Score: checkErrorEmptyStateScore,
+        Parameter: '1 if empty/error states provide guidance, else 0'
+      },
+      Interactive_Feedback: {
+        Score: checkInteractiveFeedbackScore,
+        Parameter: '1 if buttons/links/forms provide visual or textual feedback, else 0'
+      },
+      Sticky_Navigation: {
+        Score: checkStickyNavigationScore,
+        Parameter: '1 if navigation remains visible when scrolling, else 0'
+      },
+      Scroll_Depth_Logic: {
+        Score: checkScrollDepthLogicScore,
+        Parameter: '1 if TOC or back-to-top exists for long pages, else 0'
+      },
+      Loading_Indicators: {
+        Score: checkLoadingIndicatorsScore,
+        Parameter: '1 if visible loading indicators exist, else 0'
+      },
+      Internal_Linking_Quality: {
+        Score: checkInternalLinkingQualityScore,
+        Parameter: '1 if internal links exist and are relevant, else 0'
+      },
+      User_Journey_Continuity: {
+        Score: checkUserJourneyContinuityScore,
+        Parameter: '1 if at least one meaningful CTA exists for next steps, else 0'
+      },
+      Percentage: actualPercentage
+    }
+        }
+        });
+
+        return actualPercentage
 }

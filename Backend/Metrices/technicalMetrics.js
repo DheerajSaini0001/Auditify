@@ -1,3 +1,7 @@
+import googleAPI from "../Tools/googleAPI.js";
+import SiteReport from "../Model/SiteReport.js";
+import { performance } from "perf_hooks";
+
 function coreWebVitalsScore(value, threshold) {
   return value <= threshold ? 1 : 0;
 }
@@ -14,7 +18,11 @@ function actualCalculation(observed,good,poor,weight) {
   return parseFloat((score * weight).toFixed(0));
 }
 
-export default async function technicalMetrics(url,data,page,response,browser) {
+export default async function technicalMetrics(url,device,selectedMetric, page, response, browser, auditId) {
+
+  let start, end, timeTaken;
+  start = performance.now();
+  const data = await googleAPI(url, device);
 
   // Technical Performance (Core Web Vitals)
   const lcpValue = parseFloat(((data?.lighthouseResult?.audits?.["largest-contentful-paint"]?.numericValue || 0)/1000).toFixed(1)); 
@@ -47,20 +55,6 @@ export default async function technicalMetrics(url,data,page,response,browser) {
   const inpValue = parseFloat(((data?.lighthouseResult?.audits?.["interactive"]?.numericValue || 0)/1000).toFixed(0)); 
   const inpScore = coreWebVitalsScore(inpValue,3.8);
   const actualinpScore = actualCalculation(inpValue,3.8,7.0,0.15);
-
-  const coreWebVitalsTotal = lcpScore + fidScore + clsScore + ttfbScore + tbtScore + siScore + fcpScore + inpScore
-  
-  const coreWebVitals ={
-    lcpValue,lcpScore,
-    fidValue,fidScore,
-    clsValue,clsScore,
-    fcpValue,fcpScore,
-    ttfbValue,ttfbScore,
-    tbtValue,tbtScore,
-    siValue,siScore,
-    inpValue,inpScore,
-    coreWebVitalsTotal
-  }
   
   // Technical Performance (Delivery & Render)
   const compressionValue = data?.lighthouseResult?.audits?.["uses-text-compression"]?.score || 0; 
@@ -79,17 +73,6 @@ export default async function technicalMetrics(url,data,page,response,browser) {
 
   const httpsValue = data?.lighthouseResult?.audits?.["uses-http2"]?.score || 0;
   const httpsScore = httpsValue === 1 ? 1 : 0;
-
-  const deliveryAndRenderTotal = compressionScore + cachingScore + httpsScore + renderBlockingScore + resourceOptimizationScore;
-
-  const deliveryAndRender = {
-    compressionValue,compressionScore,
-    cachingValue,cachingScore,
-    resourceOptimizationScore,
-    renderBlockingValue,renderBlockingScore,
-    httpsScore,httpsValue,
-    deliveryAndRenderTotal
-  }
 
   // Technical Performance (Crawlability & Hygiene)
   const chain = response.request().redirectChain();
@@ -170,18 +153,10 @@ export default async function technicalMetrics(url,data,page,response,browser) {
   robotsScore = 0; 
   }
 
-  const crawlabilityAndHygieneTotal = sitemapScore + robotsScore + structuredDataScore + brokenScore + redirectScore
+  end = performance.now();
+  timeTaken = ((end-start)/1000).toFixed(0);
   
-  const crawlabilityAndHygiene = {
-    sitemapScore,
-    robotsScore,
-    structuredDataScore,
-    brokenPercent,brokenScore,
-    hops,redirectScore,
-    crawlabilityAndHygieneTotal
-  }
-  
-  const Total = parseFloat((((coreWebVitalsTotal + deliveryAndRenderTotal + crawlabilityAndHygieneTotal)/18)*100).toFixed(0))
+  const Total = parseFloat((((lcpScore + fidScore + clsScore + fcpScore + ttfbScore+tbtScore+siScore+inpScore+compressionScore+cachingScore+resourceOptimizationScore+renderBlockingScore+httpsScore+sitemapScore+robotsScore+structuredDataScore+brokenScore+redirectScore)/18)*100).toFixed(0))
   
   // Passed
   const passed = [];
@@ -538,13 +513,195 @@ const actualPercentage = actuallcpScore + actualtbtScore + actualclsScore + actu
   // console.log(Total);
   // console.log(improvements);
   
-  return {
-    coreWebVitals,
-    deliveryAndRender,
-    crawlabilityAndHygiene,
-    structuredData,
-    actualPercentage,warning,
-    passed,
-    Total,improvements
-  };
+  await SiteReport.findByIdAndUpdate(auditId, {
+      Time_Taken:timeTaken + 's',
+      Schema:structuredData,
+      Technical_Performance: {
+        LCP:{
+          Score: lcpScore,
+          Value: lcpValue,
+          Parameter:'Set 1 if LCP ≤ 2500ms, otherwise set 0'
+        },
+        FID:{
+          Score: fidScore,
+          Value: fidValue,
+          Parameter:'Set 1 if FID ≤ 100ms, otherwise set 0'
+        },
+        CLS:{
+          Score: clsScore,
+          Value: clsValue,
+          Parameter:'Set 1 if CLS ≤ 0.1, otherwise set 0'
+        },
+        FCP:{
+          Score: fcpScore,
+          Value: fcpValue,
+          Parameter:'Set 1 if FCP ≤ 1800ms, otherwise set 0'
+        },
+        TTFB:{
+          Score: ttfbScore,
+          Value: ttfbValue,
+          Parameter:'Set 1 if TTFB ≤ 200ms, otherwise set 0'
+        },
+        TBT:{
+          Score: tbtScore,
+          Value: tbtValue,
+          Parameter:'Set 1 if TBT ≤ 300ms, otherwise set 0'
+        },
+        SI:{
+          Score: siScore,
+          Value: siValue,
+          Parameter:'Set 1 if SI ≤ 3000ms, otherwise set 0'
+        },
+        INP:{
+          Score: inpScore,
+          Value: inpValue,
+          Parameter:'Set 1 if INP ≤ 200ms, otherwise set 0'
+        },
+        Compression:{
+          Score: compressionScore,
+          Parameter:'Set 1 if "gzip" or "brotli" compression is enabled, otherwise set 0 if it’s disabled or missing.'
+        },
+        Caching:{
+          Score: cachingScore,
+          Value: cachingValue,
+          Parameter:'Set 1 if static resources have TTL ≥ 7 days, otherwise set 0 if TTL is less than 7 days or missing'
+        },
+        Resource_Optimization:{
+          Score: resourceOptimizationScore,
+          Parameter:'Set 1 if images are optimized, CSS/JS minified, and offscreen images deferred; otherwise set 0.'
+        },
+        Render_Blocking:{
+          Score: renderBlockingScore,
+          Parameter:'Set 1 if there are no render-blocking CSS/JS resources, otherwise set 0'
+        },
+        HTTP:{
+          Score: httpsScore,
+          Parameter:'Set 1 if HTTP/2 is enabled, otherwise set 0 if not enabled'
+        },
+        Sitemap:{
+          Score: sitemapScore,
+          Parameter:'Set 1 if /sitemap.xml exists, otherwise set 0'
+        },
+        Robots:{
+          Score: robotsScore,
+          Parameter:'Set 1 if robots.txt exists, otherwise set 0'
+        },
+        Structured_Data:{
+          Score: structuredDataScore,
+          Parameter:'Set 1 if JSON-LD structured data is present, otherwise set 0'
+        },
+        Broken_Links:{
+          Score: brokenScore,
+          Value: brokenPercent,
+          Parameter:'Set 1 if 0% broken links, otherwise set 0'
+        },
+        Redirect_Chains:{
+          Score: redirectScore,
+          Value: hops,
+          Parameter:'Set 1 if ≤ 1 hop, otherwise set 0'
+        },
+      Percentage: actualPercentage,
+      Warning: warning,
+      Passed: passed,
+      Total: Total,
+      Improvements: improvements,
+      },
+      $set: {
+          'Raw.Site': url,
+          'Raw.Report': selectedMetric,
+          'Raw.Device': device,
+          'Raw.Time_Taken': timeTaken + 's',
+          'Raw.Schema':structuredData,
+          'Raw.Technical_Performance':{
+      Schema:structuredData,
+        LCP:{
+          Score: lcpScore,
+          Value: lcpValue,
+          Parameter:'Set 1 if LCP ≤ 2500ms, otherwise set 0'
+        },
+        FID:{
+          Score: fidScore,
+          Value: fidValue,
+          Parameter:'Set 1 if FID ≤ 100ms, otherwise set 0'
+        },
+        CLS:{
+          Score: clsScore,
+          Value: clsValue,
+          Parameter:'Set 1 if CLS ≤ 0.1, otherwise set 0'
+        },
+        FCP:{
+          Score: fcpScore,
+          Value: fcpValue,
+          Parameter:'Set 1 if FCP ≤ 1800ms, otherwise set 0'
+        },
+        TTFB:{
+          Score: ttfbScore,
+          Value: ttfbValue,
+          Parameter:'Set 1 if TTFB ≤ 200ms, otherwise set 0'
+        },
+        TBT:{
+          Score: tbtScore,
+          Value: tbtValue,
+          Parameter:'Set 1 if TBT ≤ 300ms, otherwise set 0'
+        },
+        SI:{
+          Score: siScore,
+          Value: siValue,
+          Parameter:'Set 1 if SI ≤ 3000ms, otherwise set 0'
+        },
+        INP:{
+          Score: inpScore,
+          Value: inpValue,
+          Parameter:'Set 1 if INP ≤ 200ms, otherwise set 0'
+        },
+        Compression:{
+          Score: compressionScore,
+          Parameter:'Set 1 if "gzip" or "brotli" compression is enabled, otherwise set 0 if it’s disabled or missing.'
+        },
+        Caching:{
+          Score: cachingScore,
+          Value: cachingValue,
+          Parameter:'Set 1 if static resources have TTL ≥ 7 days, otherwise set 0 if TTL is less than 7 days or missing'
+        },
+        Resource_Optimization:{
+          Score: resourceOptimizationScore,
+          Parameter:'Set 1 if images are optimized, CSS/JS minified, and offscreen images deferred; otherwise set 0.'
+        },
+        Render_Blocking:{
+          Score: renderBlockingScore,
+          Parameter:'Set 1 if there are no render-blocking CSS/JS resources, otherwise set 0'
+        },
+        HTTP:{
+          Score: httpsScore,
+          Parameter:'Set 1 if HTTP/2 is enabled, otherwise set 0 if not enabled'
+        },
+        Sitemap:{
+          Score: sitemapScore,
+          Parameter:'Set 1 if /sitemap.xml exists, otherwise set 0'
+        },
+        Robots:{
+          Score: robotsScore,
+          Parameter:'Set 1 if robots.txt exists, otherwise set 0'
+        },
+        Structured_Data:{
+          Score: structuredDataScore,
+          Parameter:'Set 1 if JSON-LD structured data is present, otherwise set 0'
+        },
+        Broken_Links:{
+          Score: brokenScore,
+          Value: brokenPercent,
+          Parameter:'Set 1 if 0% broken links, otherwise set 0'
+        },
+        Redirect_Chains:{
+          Score: redirectScore,
+          Value: hops,
+          Parameter:'Set 1 if ≤ 1 hop, otherwise set 0'
+        },
+      Percentage: actualPercentage,
+        }
+        }
+    });
+
+    return actualPercentage
+  
 }

@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
 import { ThemeContext } from "../context/ThemeContext.jsx";
-import { Check, X } from "lucide-react";
+import { Check, X ,Loader2} from "lucide-react";
 import CircularProgress from "../Component/CircularProgress";
 import AuditDropdown from "../Component/AuditDropdown";
 import { useData } from "../context/DataContext";
@@ -43,6 +43,8 @@ export default function Conversion_Lead_Flow() {
   const textColor = darkMode ? "text-white" : "text-black";
 
   return (
+    <>
+ {metric ?  
     <div
       id="ConversionLeadFlow"
       className={`min-h-fit pt-20 pb-16 rounded-2xl shadow-lg hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 m-4 flex flex-col items-center justify-start p-6 space-y-6 ${containerBg}`}
@@ -66,7 +68,7 @@ export default function Conversion_Lead_Flow() {
           <div className="flex justify-between items-center">
             <span className={textColor}>Primary Call-to-Actions</span>
             <ScoreBadge
-              score={metric.CTA_and_Forms.CTA_Visibility.Score}
+              score={metric.CTA_Visibility.Score}
               textGood="CTAs visible"
               textBad="CTAs not visible"
             />
@@ -75,7 +77,7 @@ export default function Conversion_Lead_Flow() {
           <div className="flex justify-between items-center">
             <span className={textColor}>CTA Clarity</span>
             <ScoreBadge
-              score={metric.CTA_and_Forms.CTA_Clarity.Score}
+              score={metric.CTA_Clarity.Score}
               textGood="CTAs are clear"
               textBad="CTAs are unclear"
             />
@@ -84,7 +86,7 @@ export default function Conversion_Lead_Flow() {
           <div className="flex justify-between items-center">
             <span className={textColor}>Form Presence</span>
             <ScoreBadge
-              score={metric.CTA_and_Forms.Form_Presence.Score}
+              score={metric.Form_Presence.Score}
               textGood="Form is present"
               textBad="Form is missing"
             />
@@ -93,7 +95,7 @@ export default function Conversion_Lead_Flow() {
           <div className="flex justify-between items-center">
             <span className={textColor}>Form Length</span>
             <ScoreBadge
-              score={metric.CTA_and_Forms.Form_Length.Score}
+              score={metric.Form_Length.Score}
               textGood="Form length optimal"
               textBad="Form length not optimal"
             />
@@ -105,7 +107,7 @@ export default function Conversion_Lead_Flow() {
               <div key={item} className="flex justify-between items-center">
                 <span className={textColor}>{item.replace("_", " ")}</span>
                 <ScoreBadge
-                  score={metric.Trust_and_SocialProof[item].Score}
+                  score={metric.Score}
                   textGood={`${item.replace("_", " ")} visible`}
                   textBad={`${item.replace("_", " ")} missing`}
                 />
@@ -122,7 +124,7 @@ export default function Conversion_Lead_Flow() {
             <div key={item} className="flex justify-between items-center">
               <span className={textColor}>{item.replaceAll("_", " ")}</span>
               <ScoreBadge
-                score={metric.UX_and_Interaction[item].Score}
+                score={metric.Score}
                 textGood={`${item.replaceAll("_", " ")} is good`}
                 textBad={`${item.replaceAll("_", " ")} needs improvement`}
               />
@@ -133,7 +135,7 @@ export default function Conversion_Lead_Flow() {
           <div className="flex justify-between items-center">
             <span className={textColor}>Exit Intent Triggers</span>
             <ScoreBadge
-              score={metric.Lead_Funnel.Exit_Intent_Triggers.Score}
+              score={metric.Exit_Intent_Triggers.Score}
               textGood="Exit triggers active"
               textBad="Exit triggers missing"
             />
@@ -158,5 +160,7 @@ export default function Conversion_Lead_Flow() {
         darkMode={darkMode}
       />
     </div>
+         : <Loader2 size={20} className="animate-spin w-5 h-5" />}
+        </>
   );
 }

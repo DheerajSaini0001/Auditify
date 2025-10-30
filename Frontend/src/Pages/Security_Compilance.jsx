@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
 import { ThemeContext } from "../context/ThemeContext.jsx"; // ✅ consistent import path
-import { Check, X } from "lucide-react";
+import { Check, X ,Loader2} from "lucide-react";
 import CircularProgress from "../Component/CircularProgress";
 import AuditDropdown from "../Component/AuditDropdown";
 import { useData } from "../context/DataContext";
@@ -41,6 +41,8 @@ export default function Security_Compilance() {
   const textColor = darkMode ? "text-white" : "text-black";
 
   return (
+    <>
+     {metric ?  
     <div
       id="SecurityCompliance"
       className={`min-h-fit pt-20 pb-16 rounded-2xl shadow-lg hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 m-4 flex flex-col items-center justify-start p-6 space-y-6 ${containerBg}`}
@@ -197,5 +199,7 @@ export default function Security_Compilance() {
         darkMode={darkMode}
       />
     </div>
+         : <Loader2 size={20} className="animate-spin w-5 h-5" />}
+        </>
   );
 }

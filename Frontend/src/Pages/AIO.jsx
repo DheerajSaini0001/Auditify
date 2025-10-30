@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
 import { ThemeContext } from "../context/ThemeContext.jsx";
-import { Check, X } from "lucide-react";
+import { Check, X ,Loader2} from "lucide-react";
 import CircularProgress from "../Component/CircularProgress";
 import AuditDropdown from "../Component/AuditDropdown";
 import { useData } from "../context/DataContext";
@@ -42,6 +42,8 @@ export default function AIO() {
   const textColor = darkMode ? "text-white" : "text-black";
 
   return (
+    <>
+     {metricData ?  
     <div
       id="AIOReadiness"
       className={`min-h-fit pt-20 pb-16 rounded-2xl shadow-lg hover:shadow-2xl transform hover:-translate-y-2 transition-all duration-300 m-4 flex flex-col items-center justify-start p-6 space-y-6 ${containerBg}`}
@@ -65,9 +67,9 @@ export default function AIO() {
           <div className="flex justify-between items-center">
             <span className={textColor}>Structured Data</span>
             <ScoreBadge
-              score={metricData.Technical_AI_Foundation.Structured_Data.Score}
+              score={metricData.Structured_Data.Score}
               out={
-                metricData.Technical_AI_Foundation.Structured_Data.Score
+                metricData.Structured_Data.Score
                   ? "Structured data is complete"
                   : "Structured data is incomplete"
               }
@@ -77,9 +79,9 @@ export default function AIO() {
           <div className="flex justify-between items-center">
             <span className={textColor}>Metadata Completion</span>
             <ScoreBadge
-              score={metricData.Technical_AI_Foundation.Metadata_Complete.Score}
+              score={metricData.Metadata_Complete.Score}
               out={
-                metricData.Technical_AI_Foundation.Metadata_Complete.Score
+                metricData.Metadata_Complete.Score
                   ? "Metadata fully complete"
                   : "Metadata incomplete"
               }
@@ -89,9 +91,9 @@ export default function AIO() {
           <div className="flex justify-between items-center">
             <span className={textColor}>Page Load Speed</span>
             <ScoreBadge
-              score={metricData.Technical_AI_Foundation.Fast_Page_Load.Score}
+              score={metricData.Fast_Page_Load.Score}
               out={
-                metricData.Technical_AI_Foundation.Fast_Page_Load.Score
+                metricData.Fast_Page_Load.Score
                   ? "Pages load quickly"
                   : "Pages load slowly"
               }
@@ -103,10 +105,10 @@ export default function AIO() {
             <span className={textColor}>NLP-Friendly Content</span>
             <ScoreBadge
               score={
-                metricData.Content_AI_Optimization.Content_NLP_Friendly.Score
+                metricData.Content_NLP_Friendly.Score
               }
               out={
-                metricData.Content_AI_Optimization.Content_NLP_Friendly.Score
+                metricData.Content_NLP_Friendly.Score
                   ? "Content is NLP-friendly"
                   : "Content is not NLP-friendly"
               }
@@ -117,11 +119,11 @@ export default function AIO() {
             <span className={textColor}>Keyword & Entity Annotation</span>
             <ScoreBadge
               score={
-                metricData.Content_AI_Optimization.Keywords_Entities_Annotated
+                metricData
                   .Score
               }
               out={
-                metricData.Content_AI_Optimization.Keywords_Entities_Annotated
+                metricData
                   .Score
                   ? "Keywords/entities annotated"
                   : "Annotations missing"
@@ -133,11 +135,11 @@ export default function AIO() {
             <span className={textColor}>Content Updates</span>
             <ScoreBadge
               score={
-                metricData.Content_AI_Optimization.Content_Updated_Regularly
+                metricData
                   .Score
               }
               out={
-                metricData.Content_AI_Optimization.Content_Updated_Regularly
+                metricData
                   .Score
                   ? "Content updated regularly"
                   : "Content rarely updated"
@@ -150,11 +152,11 @@ export default function AIO() {
             <span className={textColor}>Behavior Tracking</span>
             <ScoreBadge
               score={
-                metricData.Data_Intelligence_Integration
+                metricData
                   .Behavior_Tracking_Implemented.Score
               }
               out={
-                metricData.Data_Intelligence_Integration
+                metricData
                   .Behavior_Tracking_Implemented.Score
                   ? "Behavior tracking implemented"
                   : "Behavior tracking missing"
@@ -166,11 +168,11 @@ export default function AIO() {
             <span className={textColor}>Event & Goal Tracking</span>
             <ScoreBadge
               score={
-                metricData.Data_Intelligence_Integration
+                metricData
                   .Event_Goal_Tracking_Integrated.Score
               }
               out={
-                metricData.Data_Intelligence_Integration
+                metricData
                   .Event_Goal_Tracking_Integrated.Score
                   ? "Event tracking integrated"
                   : "Event tracking missing"
@@ -183,10 +185,10 @@ export default function AIO() {
             <span className={textColor}>Dynamic Personalization</span>
             <ScoreBadge
               score={
-                metricData.AI_Content_Delivery.Dynamic_Personalization.Score
+                metricData.Dynamic_Personalization.Score
               }
               out={
-                metricData.AI_Content_Delivery.Dynamic_Personalization.Score
+                metricData.Dynamic_Personalization.Score
                   ? "Dynamic personalization enabled"
                   : "Dynamic personalization missing"
               }
@@ -212,5 +214,7 @@ export default function AIO() {
         darkMode={darkMode}
       />
     </div>
+         : <Loader2 size={20} className="animate-spin w-5 h-5" />}
+         </>
   );
 }

@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
 import { ThemeContext } from "../context/ThemeContext"; // ✅ Use ThemeContext
-import { Check, X } from "lucide-react";
+import { Check, X ,Loader2} from "lucide-react";
 import CircularProgress from "../Component/CircularProgress";
 import AuditDropdown from "../Component/AuditDropdown";
 import { useData } from "../context/DataContext";
@@ -40,6 +40,8 @@ export default function On_Page_SEO() {
   const textColor = darkMode ? "text-white" : "text-black";
 
   return (
+    <>
+ {seo ?  
     <div
       id="OnPageSEO"
       className={`min-h-fit pt-20 pb-16 rounded-2xl shadow-lg hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 m-4 flex flex-col items-center justify-start p-6 space-y-6 ${containerBg}`}
@@ -61,10 +63,10 @@ export default function On_Page_SEO() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
           <div className="flex justify-between items-center">
             <span>Title</span>
-            {seo.Essentials.Title.Title_Exist ? (
+            {seo.Title.Title_Exist ? (
               <ScoreBadge
-                score={seo.Essentials.Title.Score}
-                out={seo.Essentials.Title.Title_Length}
+                score={seo.Title.Score}
+                out={seo.Title.Title_Length}
                 des={"characters"}
               />
             ) : (
@@ -75,8 +77,8 @@ export default function On_Page_SEO() {
           <div className="flex justify-between items-center">
             <span>Meta Description</span>
             <ScoreBadge
-              score={seo.Essentials.Meta_Description.Score}
-              out={seo.Essentials.Meta_Description.MetaDescription_Length}
+              score={seo.Meta_Description.Score}
+              out={seo.Meta_Description.MetaDescription_Length}
               des={"characters"}
             />
           </div>
@@ -84,33 +86,33 @@ export default function On_Page_SEO() {
           <div className="flex justify-between items-center">
             <span>URL Structure</span>
             <ScoreBadge
-              score={seo.Essentials.URL_Structure.Score}
-              des={seo.Essentials.URL_Structure.Score ? "Good" : "Bad"}
+              score={seo.URL_Structure.Score}
+              des={seo.URL_Structure.Score ? "Good" : "Bad"}
             />
           </div>
 
           <div className="flex justify-between items-center">
             <span>Canonical Tag Existence</span>
             <ScoreBadge
-              score={seo.Essentials.Canonical.Canonical_Exist}
-              des={seo.Essentials.Canonical.Canonical_Exist ? "Exist" : "Not Exist"}
+              score={seo.Canonical.Canonical_Exist}
+              des={seo.Canonical.Canonical_Exist ? "Exist" : "Not Exist"}
             />
           </div>
 
           <div className="flex justify-between items-center">
             <span>Self Referencing</span>
             <ScoreBadge
-              score={seo.Essentials.Canonical.Score}
-              des={seo.Essentials.Canonical.Score ? "Yes" : "No"}
+              score={seo.Canonical.Score}
+              des={seo.Canonical.Score ? "Yes" : "No"}
             />
           </div>
 
           <div className="flex justify-between items-center">
             <span>Pagination</span>
             <ScoreBadge
-              score={seo.Structure_and_Uniqueness.Pagination_Tags.Score}
+              score={seo.Pagination_Tags.Score}
               des={
-                seo.Structure_and_Uniqueness.Pagination_Tags.Score
+                seo.Pagination_Tags.Score
                   ? "Good"
                   : "Bad"
               }
@@ -120,9 +122,9 @@ export default function On_Page_SEO() {
           <div className="flex justify-between items-center">
             <span>Descriptive Internal Links</span>
             <ScoreBadge
-              score={seo.Media_and_Semantics.Internal_Links.Descriptive_Score}
+              score={seo.Internal_Links.Descriptive_Score}
               des={
-                seo.Media_and_Semantics.Internal_Links.Descriptive_Score
+                seo.Internal_Links.Descriptive_Score
                   ? "Good"
                   : "Bad"
               }
@@ -132,9 +134,9 @@ export default function On_Page_SEO() {
           <div className="flex justify-between items-center">
             <span>ALT Text Relevance</span>
             <ScoreBadge
-              score={seo.Media_and_Semantics.ALT_Text_Relevance.Score}
+              score={seo.ALT_Text_Relevance.Score}
               des={
-                seo.Media_and_Semantics.ALT_Text_Relevance.Score
+                seo.ALT_Text_Relevance.Score
                   ? "Good ALT Text"
                   : "Bad ALT Text"
               }
@@ -144,9 +146,9 @@ export default function On_Page_SEO() {
           <div className="flex justify-between items-center">
             <span>HTTPS</span>
             <ScoreBadge
-              score={seo.Structure_and_Uniqueness.HTTPS.Score}
+              score={seo.HTTPS.Score}
               des={
-                seo.Structure_and_Uniqueness.HTTPS.Score
+                seo.HTTPS.Score
                   ? "Found https"
                   : "No https"
               }
@@ -172,5 +174,7 @@ export default function On_Page_SEO() {
         darkMode={darkMode}
       />
     </div>
+     : <Loader2 size={20} className="animate-spin w-5 h-5" />}
+        </>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useContext } from "react";
-import { Check, X } from "lucide-react";
+import { Check, X ,Loader2} from "lucide-react";
 import CircularProgress from "../Component/CircularProgress";
 import AuditDropdown from "../Component/AuditDropdown";
 import { useData } from "../context/DataContext";
@@ -18,7 +18,7 @@ export default function Technical_Performance() {
     );
   }
 
-  const metric = data;
+  const metric = data.Technical_Performance;
 
   // ✅ Local component: ScoreBadge
   const ScoreBadge = ({ score, out, unit, des }) => {
@@ -45,7 +45,9 @@ export default function Technical_Performance() {
   const textColor = darkMode ? "text-white" : "text-black";
 
   return (
-    <div
+    <>
+ {metric ?   
+   <div
       id="TechnicalPerformance"
       className={`min-h-fit pt-20 pb-16 rounded-2xl shadow-lg hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 m-4 flex flex-col items-center justify-start p-6 space-y-6 ${containerBg}`}
     >
@@ -55,7 +57,7 @@ export default function Technical_Performance() {
       >
         Technical Performance
         <CircularProgress
-          value={metric.Technical_Performance.Percentage}
+          value={metric.Percentage}
           size={70}
           stroke={5}
         />
@@ -66,7 +68,7 @@ export default function Technical_Performance() {
         className={`w-full max-w-4xl p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500 ${cardBg}`}
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-          {Object.entries(metric.Technical_Performance.Core_Web_Vitals).map(
+          {Object.entries(metric).map(
             ([key, val]) => (
               <div key={key} className="flex justify-between items-center">
                 <span className={textColor}>{key.replace(/_/g, " ")}</span>
@@ -85,19 +87,21 @@ export default function Technical_Performance() {
       {/* Audit Results */}
       <AuditDropdown
         title="Passed Audits"
-        items={metric.Technical_Performance.Passed}
+        items={metric.Passed}
         darkMode={darkMode}
       />
       <AuditDropdown
         title="Warning"
-        items={metric.Technical_Performance.Warning}
+        items={metric.Warning}
         darkMode={darkMode}
       />
       <AuditDropdown
         title="Failed Audits"
-        items={metric.Technical_Performance.Improvements}
+        items={metric.Improvements}
         darkMode={darkMode}
       />
     </div>
+     : <Loader2 size={20} className="animate-spin w-5 h-5" />}
+</>
   );
 }

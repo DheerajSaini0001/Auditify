@@ -9,6 +9,7 @@ import {
   Brain,
   Database,
   FileText,
+  Loader2
 } from "lucide-react";
 import { ThemeContext } from "../ThemeContext";
 import { useData } from "../context/DataContext";
@@ -19,16 +20,7 @@ export default function Sidebar({ darkMode }) {
   const { data: rawData, loading } = useData();
   const data = rawData;
 
-  const menuItems = [
-    { name: "Technical Performance", link: "/technical-performance", icon: <Gauge size={20} /> },
-    { name: "On Page SEO", link: "/on-page-seo", icon: <Image size={20} /> },
-    { name: "Accessibility", link: "/accessibility", icon: <Accessibility size={20} /> },
-    { name: "Security/Compliance", link: "/security-compliance", icon: <Shield size={20} /> },
-    { name: "UX & Content Structure", link: "/ux-content-structure", icon: <Layout size={20} /> },
-    { name: "Conversion & Lead Flow", link: "/conversion-lead-flow", icon: <TrendingUp size={20} /> },
-    { name: "AIO (AI-Optimization) Readiness", link: "/aio", icon: <Brain size={20} /> },
-    { name: "Raw Data", link: "#Rawdata", icon: <Database size={20} /> },
-  ];
+
 
   function downloadObject(obj) {
     if (!obj) return alert("No data to download");
@@ -65,24 +57,151 @@ export default function Sidebar({ darkMode }) {
 
         {/* Menu */}
         <nav className="flex flex-col p-2 space-y-2">
-          {menuItems.map((item, index) => (
-            <a
-              key={index}
-              href={item.link}
+          {data?.Technical_Performance ?
+           <a
+              href="/technical-performance"
               className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass}`}
             >
-              {item.icon} <span>{item.name}</span>
-            </a>
-          ))}
+              <Gauge size={20} /> <span>Technical Performance</span>
+            </a> 
+            :<a
+              href="/technical-performance"
+              className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass}`}
+            >
+             <div className="flex flex-row items-center justify-center gap-2"> <Gauge size={20} /> Technical Performance <Loader2 size={20} className="animate-spin w-5 h-5" /></div>
+            </a> }
+{data?.On_Page_SEO ? (
+  <a
+    href="/on-page-seo"
+    className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass}`}
+  >
+    <Image size={20} /> <span>On Page SEO</span>
+  </a>
+) : (
+  <a
+    href="/on-page-seo"
+    className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass}`}
+  >
+    <div className="flex flex-row items-center justify-center gap-2">
+      <Image size={20} /> On Page SEO{" "}
+      <Loader2 size={20} className="animate-spin w-5 h-5" />
+    </div>
+  </a>
+)}
 
+{data?.Accessibility ? (
+  <a
+    href="/accessibility"
+    className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass}`}
+  >
+    <Accessibility size={20} /> <span>Accessibility</span>
+  </a>
+) : (
+  <a
+    href="/accessibility"
+    className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass}`}
+  >
+    <div className="flex flex-row items-center justify-center gap-2">
+      <Accessibility size={20} /> Accessibility{" "}
+      <Loader2 size={20} className="animate-spin w-5 h-5" />
+    </div>
+  </a>
+)}
+
+{data?.Security_or_Compliance ? (
+  <a
+    href="/security-compliance"
+    className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass}`}
+  >
+    <Shield size={20} /> <span>Security/Compliance</span>
+  </a>
+) : (
+  <a
+    href="/security-compliance"
+    className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass}`}
+  >
+    <div className="flex flex-row items-center justify-center gap-2">
+      <Shield size={20} /> Security/Compliance{" "}
+      <Loader2 size={20} className="animate-spin w-5 h-5" />
+    </div>
+  </a>
+)}
+
+{data?.UX_or_Content_Structure ? (
+  <a
+    href="/ux-content-structure"
+    className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass}`}
+  >
+    <Layout size={20} /> <span>UX & Content Structure</span>
+  </a>
+) : (
+  <a
+    href="/ux-content-structure"
+    className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass}`}
+  >
+    <div className="flex flex-row items-center justify-center gap-2">
+      <Layout size={20} /> UX & Content Structure{" "}
+      <Loader2 size={20} className="animate-spin w-5 h-5" />
+    </div>
+  </a>
+)}
+
+{data?.Conversion_and_Lead_Flow ? (
+  <a
+    href="/conversion-lead-flow"
+    className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass}`}
+  >
+    <TrendingUp size={20} /> <span>Conversion & Lead Flow</span>
+  </a>
+) : (
+  <a
+    href="/conversion-lead-flow"
+    className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass}`}
+  >
+    <div className="flex flex-row items-center justify-center gap-2">
+      <TrendingUp size={20} /> Conversion & Lead Flow{" "}
+      <Loader2 size={20} className="animate-spin w-5 h-5" />
+    </div>
+  </a>
+)}
+
+{data?.AIO_Compatibility_Badge ? (
+  <a
+    href="/aio"
+    className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass}`}
+  >
+    <Brain size={20} /> <span>AIO (AI-Optimization) Readiness</span>
+  </a>
+) : (
+  <a
+    href="/aio"
+    className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass}`}
+  >
+    <div className="flex flex-row items-center justify-center gap-2">
+      <Brain size={20} /> AIO (AI-Optimization) Readiness{" "}
+      <Loader2 size={20} className="animate-spin w-5 h-5" />
+    </div>
+  </a>
+)}
+
+{data.Raw.Section_Score && (
+  <a
+    href="#Rawdata"
+    className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass}`}
+  >
+    <Database size={20} /> <span>Raw Data</span>
+  </a>
+) 
+}
           {/* Download Button */}
+          {data.Raw.Section_Score && 
           <button
             onClick={() => downloadObject(data.Raw)}
             className={`flex items-center space-x-3 p-3 w-full rounded-md transition ${hoverClass}`}
           >
             <FileText className="w-5 h-5" />
             <span>Download TXT</span>
-          </button>
+          </button>}
         </nav>
       </aside>
 

@@ -4,6 +4,8 @@ import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import dotenv from "dotenv";
 import fetch from "node-fetch";
 import { URL } from "url";
+import SiteReport from "../Model/SiteReport.js";
+import { performance } from "perf_hooks";
 
 dotenv.config();
 puppeteer.use(StealthPlugin());
@@ -819,7 +821,10 @@ async function checkDeprecatedAPIs(page) {
   return deprecatedAPIUsed ? 0 : 1;
 }
 
-export default async function securityCompliance(url,page,response,browser) {
+export default async function securityCompliance(url,device,selectedMetric, page, response, browser, auditId) {
+
+  let start, end, timeTaken;
+  start = performance.now();
 
   // Security/Compliance (HTTPS / SSL)
   const checkHTTPSScore = checkHTTPS(url);
@@ -869,6 +874,9 @@ export default async function securityCompliance(url,page,response,browser) {
   const checkNotificationRequestScore = await checkNotificationRequest(page);
   const checkThirdPartyCookiesScore = await checkThirdPartyCookies(url,page);
   const checkDeprecatedAPIsScore = await checkDeprecatedAPIs(page);
+
+  end = performance.now();
+  timeTaken = ((end-start)/1000).toFixed(0);
 
   // Total Score Calculation
 const Total = parseFloat((((checkHTTPSScore+checkSSLScore+checkSSLCertificateExpiryScore+checkHSTSScore+checkTLSVersionScore+checkXFrameOptionsScore+checkCSPScore+checkXContentTypeOptionsScore+checkCookiesSecureScore+checkCookiesHttpOnlyScore+cookieConsentScore+privacyPolicyScore+safeBrowsingScore+blacklistScore+malwareScanScore+xssVulnerabilityScore+sqliExposureScore+formsUseHTTPSScore+checkGDPRCCPAScore+checkDataCollectionScore+checkAdminPanelPublicScore+weakDefaultCredsScore+mfaEnabledScore) / 23) * 100).toFixed(0));
@@ -1508,41 +1516,281 @@ const actualPercentage =  parseFloat((((checkViewportMetaTagScore+checkHtmlDocty
   // console.log(Total);
   // console.log(improvements);
 
-return {
-    checkHTTPSScore,
-    checkSSLScore,
-    checkSSLCertificateExpiryScore,
-    checkHSTSScore,
-    checkTLSVersionScore,
-    checkXFrameOptionsScore,
-    checkCSPScore,
-    checkXContentTypeOptionsScore,
-    checkCookiesSecureScore,
-    checkCookiesHttpOnlyScore,
-    safeBrowsingScore,
-    blacklistScore,
-    malwareScanScore,
-    sqliExposureScore,
-    xssVulnerabilityScore,
-    cookieConsentScore,
-    privacyPolicyScore,
-    formsUseHTTPSScore,
-    checkGDPRCCPAScore,
-    checkDataCollectionScore,
-    checkAdminPanelPublicScore,
-    weakDefaultCredsScore,
-    mfaEnabledScore,
-    checkViewportMetaTagScore,
-    checkHtmlDoctypeScore,
-    checkCharsetDefinedScore,
-    checkBrowserErrorsScore,
-    checkGeolocationRequestScore,
-    checkInputPasteAllowedScore,
-    checkNotificationRequestScore,
-    checkThirdPartyCookiesScore,
-    checkDeprecatedAPIsScore,
-    actualPercentage,warning,
-    passed,
-    Total,improvements
-  };
+    await SiteReport.findByIdAndUpdate(auditId, {
+    Time_Taken:timeTaken + 's',
+    Security_or_Compliance: {
+      HTTPS: {
+        Score: checkHTTPSScore,
+        Parameter: '1 if HTTPS is implemented, else 0'
+      },
+      SSL: {
+        Score: checkSSLScore,
+        Parameter: '1 if SSL/TLS certificate is valid, else 0'
+      },
+      SSL_Expiry: {
+        Score: checkSSLCertificateExpiryScore,
+        Parameter: '1 if SSL certificate is not expired, else 0'
+      },
+      HSTS: {
+        Score: checkHSTSScore,
+        Parameter: '1 if HSTS header is present, else 0'
+      },
+      TLS_Version: {
+        Score: checkTLSVersionScore,
+        Parameter: '1 if secure TLS version is used, else 0'
+      },
+      X_Frame_Options: {
+        Score: checkXFrameOptionsScore,
+        Parameter: '1 if X-Frame-Options header is set, else 0'
+      },
+      CSP: {
+        Score: checkCSPScore,
+        Parameter: '1 if Content Security Policy (CSP) is set, else 0'
+      },
+      X_Content_Type_Options: {
+        Score: checkXContentTypeOptionsScore,
+        Parameter: '1 if X-Content-Type-Options header is set, else 0'
+      },
+      Cookies_Secure: {
+        Score: checkCookiesSecureScore,
+        Parameter: '1 if cookies are set with Secure flag, else 0'
+      },
+      Cookies_HttpOnly: {
+        Score: checkCookiesHttpOnlyScore,
+        Parameter: '1 if cookies are HttpOnly, else 0'
+      },
+      Google_Safe_Browsing: {
+        Score: safeBrowsingScore,
+        Parameter: '1 if site is safe according to Google Safe Browsing, else 0'
+      },
+      Blacklist: {
+        Score: blacklistScore,
+        Parameter: '1 if site is not blacklisted, else 0'
+      },
+      Malware_Scan: {
+        Score: malwareScanScore,
+        Parameter: '1 if no malware detected, else 0'
+      },
+      SQLi_Exposure: {
+        Score: sqliExposureScore,
+        Parameter: '1 if site is not vulnerable to SQL injection, else 0'
+      },
+      XSS: {
+        Score: xssVulnerabilityScore,
+        Parameter: '1 if site is not vulnerable to XSS, else 0'
+      },
+      Cookie_Consent: {
+        Score: cookieConsentScore,
+        Parameter: '1 if cookie consent banner is implemented, else 0'
+      },
+      Privacy_Policy: {
+        Score: privacyPolicyScore,
+        Parameter: '1 if privacy policy exists, else 0'
+      },
+      Forms_Use_HTTPS: {
+        Score: formsUseHTTPSScore,
+        Parameter: '1 if forms submit over HTTPS, else 0'
+      },
+      GDPR_CCPA: {
+        Score: checkGDPRCCPAScore,
+        Parameter: '1 if GDPR/CCPA compliance implemented, else 0'
+      },
+      Data_Collection: {
+        Score: checkDataCollectionScore,
+        Parameter: '1 if data collection practices are compliant, else 0'
+      },
+      Weak_Default_Credentials: {
+        Score: weakDefaultCredsScore,
+        Parameter: '1 if no weak default credentials exist, else 0'
+      },
+      MFA_Enabled: {
+        Score: mfaEnabledScore,
+        Parameter: '1 if multi-factor authentication is enabled, else 0'
+      },
+      Admin_Panel_Public: {
+        Score: checkAdminPanelPublicScore,
+        Parameter: '1 if admin panel is not publicly accessible, else 0'
+      },
+      Viewport_Meta_Tag: {
+        Score: checkViewportMetaTagScore,
+        Parameter: '1 if <meta name="viewport" content="width=device-width, initial-scale=1.0"> is present, else 0'
+      },
+      HTML_Doctype: {
+        Score: checkHtmlDoctypeScore,
+        Parameter: '1 if <!DOCTYPE html> is declared at document start, else 0'
+      },
+      Character_Encoding: {
+        Score: checkCharsetDefinedScore,
+        Parameter: '1 if charset is defined in <meta> or HTTP headers, else 0'
+      },
+      Browser_Console_Errors: {
+        Score: checkBrowserErrorsScore,
+        Parameter: '1 if no console or JS errors are detected, else 0'
+      },
+      Geolocation_Request: {
+        Score: checkGeolocationRequestScore,
+        Parameter: '1 if geolocation is not requested automatically, else 0'
+      },
+      Input_Paste_Allowed: {
+        Score: checkInputPasteAllowedScore,
+        Parameter: '1 if paste is allowed in input fields, else 0'
+      },
+      Notification_Request: {
+        Score: checkNotificationRequestScore,
+        Parameter: '1 if no unsolicited notification request is made, else 0'
+      },
+      Third_Party_Cookies: {
+        Score: checkThirdPartyCookiesScore,
+        Parameter: '1 if no third-party cookies are detected, else 0'
+      },
+      Deprecated_APIs: {
+        Score: checkDeprecatedAPIsScore,
+        Parameter: '1 if no deprecated APIs are used, else 0'
+      },
+      Percentage: actualPercentage,
+      Warning: warning,
+      Passed: passed,
+      Total: Total,
+      Improvements: improvements
+    },
+    $set: {
+          'Raw.Site': url,
+          'Raw.Report': selectedMetric,
+          'Raw.Device': device,
+          'Raw.Time_Taken': timeTaken + 's',
+          'Raw.Security_or_Compliance':{
+      HTTPS: {
+        Score: checkHTTPSScore,
+        Parameter: '1 if HTTPS is implemented, else 0'
+      },
+      SSL: {
+        Score: checkSSLScore,
+        Parameter: '1 if SSL/TLS certificate is valid, else 0'
+      },
+      SSL_Expiry: {
+        Score: checkSSLCertificateExpiryScore,
+        Parameter: '1 if SSL certificate is not expired, else 0'
+      },
+      HSTS: {
+        Score: checkHSTSScore,
+        Parameter: '1 if HSTS header is present, else 0'
+      },
+      TLS_Version: {
+        Score: checkTLSVersionScore,
+        Parameter: '1 if secure TLS version is used, else 0'
+      },
+      X_Frame_Options: {
+        Score: checkXFrameOptionsScore,
+        Parameter: '1 if X-Frame-Options header is set, else 0'
+      },
+      CSP: {
+        Score: checkCSPScore,
+        Parameter: '1 if Content Security Policy (CSP) is set, else 0'
+      },
+      X_Content_Type_Options: {
+        Score: checkXContentTypeOptionsScore,
+        Parameter: '1 if X-Content-Type-Options header is set, else 0'
+      },
+      Cookies_Secure: {
+        Score: checkCookiesSecureScore,
+        Parameter: '1 if cookies are set with Secure flag, else 0'
+      },
+      Cookies_HttpOnly: {
+        Score: checkCookiesHttpOnlyScore,
+        Parameter: '1 if cookies are HttpOnly, else 0'
+      },
+      Google_Safe_Browsing: {
+        Score: safeBrowsingScore,
+        Parameter: '1 if site is safe according to Google Safe Browsing, else 0'
+      },
+      Blacklist: {
+        Score: blacklistScore,
+        Parameter: '1 if site is not blacklisted, else 0'
+      },
+      Malware_Scan: {
+        Score: malwareScanScore,
+        Parameter: '1 if no malware detected, else 0'
+      },
+      SQLi_Exposure: {
+        Score: sqliExposureScore,
+        Parameter: '1 if site is not vulnerable to SQL injection, else 0'
+      },
+      XSS: {
+        Score: xssVulnerabilityScore,
+        Parameter: '1 if site is not vulnerable to XSS, else 0'
+      },
+      Cookie_Consent: {
+        Score: cookieConsentScore,
+        Parameter: '1 if cookie consent banner is implemented, else 0'
+      },
+      Privacy_Policy: {
+        Score: privacyPolicyScore,
+        Parameter: '1 if privacy policy exists, else 0'
+      },
+      Forms_Use_HTTPS: {
+        Score: formsUseHTTPSScore,
+        Parameter: '1 if forms submit over HTTPS, else 0'
+      },
+      GDPR_CCPA: {
+        Score: checkGDPRCCPAScore,
+        Parameter: '1 if GDPR/CCPA compliance implemented, else 0'
+      },
+      Data_Collection: {
+        Score: checkDataCollectionScore,
+        Parameter: '1 if data collection practices are compliant, else 0'
+      },
+      Weak_Default_Credentials: {
+        Score: weakDefaultCredsScore,
+        Parameter: '1 if no weak default credentials exist, else 0'
+      },
+      MFA_Enabled: {
+        Score: mfaEnabledScore,
+        Parameter: '1 if multi-factor authentication is enabled, else 0'
+      },
+      Admin_Panel_Public: {
+        Score: checkAdminPanelPublicScore,
+        Parameter: '1 if admin panel is not publicly accessible, else 0'
+      },
+      Viewport_Meta_Tag: {
+        Score: checkViewportMetaTagScore,
+        Parameter: '1 if <meta name="viewport" content="width=device-width, initial-scale=1.0"> is present, else 0'
+      },
+      HTML_Doctype: {
+        Score: checkHtmlDoctypeScore,
+        Parameter: '1 if <!DOCTYPE html> is declared at document start, else 0'
+      },
+      Character_Encoding: {
+        Score: checkCharsetDefinedScore,
+        Parameter: '1 if charset is defined in <meta> or HTTP headers, else 0'
+      },
+      Browser_Console_Errors: {
+        Score: checkBrowserErrorsScore,
+        Parameter: '1 if no console or JS errors are detected, else 0'
+      },
+      Geolocation_Request: {
+        Score: checkGeolocationRequestScore,
+        Parameter: '1 if geolocation is not requested automatically, else 0'
+      },
+      Input_Paste_Allowed: {
+        Score: checkInputPasteAllowedScore,
+        Parameter: '1 if paste is allowed in input fields, else 0'
+      },
+      Notification_Request: {
+        Score: checkNotificationRequestScore,
+        Parameter: '1 if no unsolicited notification request is made, else 0'
+      },
+      Third_Party_Cookies: {
+        Score: checkThirdPartyCookiesScore,
+        Parameter: '1 if no third-party cookies are detected, else 0'
+      },
+      Deprecated_APIs: {
+        Score: checkDeprecatedAPIsScore,
+        Parameter: '1 if no deprecated APIs are used, else 0'
+      },
+      Percentage: actualPercentage
+    }
+        }
+    });
+
+    return actualPercentage
 }

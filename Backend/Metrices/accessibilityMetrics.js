@@ -1,6 +1,11 @@
 import AxePuppeteer from "@axe-core/puppeteer";
+import { performance } from "perf_hooks";
+import SiteReport from "../Model/SiteReport.js";
 
-export default async function accessibilityMetrics(page) {
+export default async function accessibilityMetrics(url,device,selectedMetric,page, auditId) {
+
+  let start, end, timeTaken;
+  start = performance.now();
 
   let results;
   try {
@@ -37,6 +42,9 @@ function calculatePassRate(results, rules) {
   const imageAlt = calculatePassRate(results, ["image-alt"]);
   const skipLinks = await page.$('a[href^="#"]:not([hidden])') ? 0 : 1
   const landMarks = await Landmarks(page);
+
+  end = performance.now();
+  timeTaken = ((end-start)/1000).toFixed(0);
 
   const Total = colorContrast+focusOrder+focusableContent+tabindex+interactiveElementAffordance+label+ariaAllowedAttr+ariaRoles+ariaHiddenFocus+imageAlt+skipLinks+landMarks
 
@@ -269,22 +277,121 @@ if (landMarks === 0) {
   // console.log(passed);
   // console.log(Total);
 
-  return {
-    colorContrast,
-    focusOrder,
-    focusableContent,
-    tabindex,
-    interactiveElementAffordance,
-    label,
-    ariaAllowedAttr,
-    ariaRoles,
-    ariaHiddenFocus,
-    imageAlt,
-    skipLinks,
-    landMarks,
-    actualPercentage,warning,
-    passed,
-    Total
-  };
+  await SiteReport.findByIdAndUpdate(auditId, {
+    Time_Taken:timeTaken + 's',
+    Accessibility: {
+      Color_Contrast:{
+        Score:colorContrast,
+        Parameter:'1 if color contrast passes, else 0'
+      },
+      Focus_Order:{
+        Score:focusOrder,
+        Parameter:'1 if tab/focus order is correct, else 0'
+      },
+      Focusable_Content:{
+        Score:focusableContent,
+        Parameter:'1 if focusable elements are correctly used, else 0'
+      },
+      Tab_Index:{
+        Score:tabindex,
+        Parameter:'1 if tabindex attributes are valid, else 0'
+      },
+      Interactive_Element_Affordance:{
+        Score:interactiveElementAffordance,
+        Parameter:'1 if interactive elements have clear affordance, else 0'
+      },
+      Label:{
+        Score:label,
+        Parameter:'1 if form elements have labels, else 0'
+      },
+      Aria_Allowed_Attr:{
+        Score:ariaAllowedAttr,
+        Parameter:'1 if only allowed ARIA attributes are used, else 0'
+      },
+      Aria_Roles:{
+        Score:ariaRoles,
+        Parameter:'1 if ARIA roles are correctly applied, else 0'
+      },
+      Aria_Hidden_Focus:{
+        Score:ariaHiddenFocus,
+        Parameter:'1 if hidden elements do not receive focus, else 0'
+      },
+      Image_Alt:{
+        Score:imageAlt,
+        Parameter:'1 if images have descriptive alt text, else 0'
+      },
+      Skip_Links:{
+        Score:skipLinks,
+        Parameter:'1 if skip links exist, else 0',
+      },
+      Landmarks:{
+        Score:landMarks,
+        Parameter:'1 if landmark roles (banner, main, contentinfo, navigation, complementary) exist, else 0'
+      },
+      Percentage: actualPercentage,
+      Warning: warning,
+      Passed: passed,
+      Total: Total
+    },
+    $set: {
+          'Raw.Site': url,
+          'Raw.Report': selectedMetric,
+          'Raw.Device': device,
+          'Raw.Time_Taken': timeTaken + 's',
+          'Raw.Accessibility':{
+      Color_Contrast:{
+        Score:colorContrast,
+        Parameter:'1 if color contrast passes, else 0'
+      },
+      Focus_Order:{
+        Score:focusOrder,
+        Parameter:'1 if tab/focus order is correct, else 0'
+      },
+      Focusable_Content:{
+        Score:focusableContent,
+        Parameter:'1 if focusable elements are correctly used, else 0'
+      },
+      Tab_Index:{
+        Score:tabindex,
+        Parameter:'1 if tabindex attributes are valid, else 0'
+      },
+      Interactive_Element_Affordance:{
+        Score:interactiveElementAffordance,
+        Parameter:'1 if interactive elements have clear affordance, else 0'
+      },
+      Label:{
+        Score:label,
+        Parameter:'1 if form elements have labels, else 0'
+      },
+      Aria_Allowed_Attr:{
+        Score:ariaAllowedAttr,
+        Parameter:'1 if only allowed ARIA attributes are used, else 0'
+      },
+      Aria_Roles:{
+        Score:ariaRoles,
+        Parameter:'1 if ARIA roles are correctly applied, else 0'
+      },
+      Aria_Hidden_Focus:{
+        Score:ariaHiddenFocus,
+        Parameter:'1 if hidden elements do not receive focus, else 0'
+      },
+      Image_Alt:{
+        Score:imageAlt,
+        Parameter:'1 if images have descriptive alt text, else 0'
+      },
+      Skip_Links:{
+        Score:skipLinks,
+        Parameter:'1 if skip links exist, else 0',
+      },
+      Landmarks:{
+        Score:landMarks,
+        Parameter:'1 if landmark roles (banner, main, contentinfo, navigation, complementary) exist, else 0'
+      },
+      Percentage: actualPercentage
+    }
+        }
+    });
+
+    return actualPercentage
 }
 

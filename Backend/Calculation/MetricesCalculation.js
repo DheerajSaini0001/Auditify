@@ -7,13 +7,49 @@ import conversionLeadFlow from "../Metrices/conversionLeadFlow.js";
 import aioReadiness from "../Metrices/aioReadiness.js";
 
 import Puppeteer_Cheerio from "../Tools/Puppeteer_Cheerio.js";
-import googleAPI from "../Tools/googleAPI.js";
 import { performance } from "perf_hooks";
+import SiteReport from "../Model/SiteReport.js";
 
-export default async function MetricesCalculation(url, device, selectedMetric = "All") {
+function OverAll(technicalReport,seoReport,accessibilityReport,securityReport,uxReport,conversionReport,aioReport) {
+
+  const totalA = technicalReport || 0;
+  const totalB = seoReport || 0;
+  const totalC = accessibilityReport || 0;
+  const totalD = securityReport || 0;
+  const totalE = uxReport || 0;
+  const totalF = conversionReport || 0;
+  const totalG = aioReport || 0;
+
+  const scores = [
+  { name: "Technical Performance", score: totalA },
+  { name: "On-Page SEO", score: totalB },
+  { name: "Accessibility", score: totalC },
+  { name: "Security/Compliance", score: totalD },
+  { name: "UX & Content", score: totalE },
+  { name: "Conversion & Lead Flow", score: totalF },
+  { name: "AIO Readiness", score: totalG }
+];
+
+  const totalScore = (totalA + totalB + totalC + totalD + totalE + totalF + totalG)/7;
+
+  let grade = "F";
+  if (totalScore >= 90) grade = "A";
+  else if (totalScore >= 80) grade = "B";
+  else if (totalScore >= 70) grade = "C";
+  else if (totalScore >= 60) grade = "D";
+
+
+  return {
+    totalScore:parseFloat(totalScore.toFixed(1)),
+    grade,
+    sectionScores: scores,
+  };
+
+}
+
+export default async function MetricesCalculation(url, device, selectedMetric = "All", auditId) {
   let start, end, timeTaken;
   let data = null;
-  start = performance.now();
   const { browser, page, response, $ } = await Puppeteer_Cheerio(url, device);
 
     if (selectedMetric && selectedMetric !== "All") {
@@ -21,51 +57,62 @@ export default async function MetricesCalculation(url, device, selectedMetric = 
 
       switch (selectedMetric) {
         case "technicalMetrics":
-          data = await googleAPI(url, device);
-          result = await technicalMetrics(url, data, page, response, browser);
+          result = await technicalMetrics(url,device,selectedMetric, page, response, browser, auditId);
+          await SiteReport.findByIdAndUpdate(auditId, {
+        Status:'completed'
+        });
           break;
 
         case "seoMetrics":
-          result = await seoMetrics(url, $);
+          result = await seoMetrics(url,device,selectedMetric, $, auditId);
+          await SiteReport.findByIdAndUpdate(auditId, {
+        Status:'completed'
+        });
           break;
 
         case "accessibilityMetrics":
-          result = await accessibilityMetrics(page);
+          result = await accessibilityMetrics(url,device,selectedMetric,page, auditId);
+          await SiteReport.findByIdAndUpdate(auditId, {
+        Status:'completed'
+        });
           break;
 
         case "securityCompliance":
-          result = await securityCompliance(url, page, response, browser);
+          result = await securityCompliance(url,device,selectedMetric, page, response, browser, auditId);
+          await SiteReport.findByIdAndUpdate(auditId, {
+        Status:'completed'
+        });
           break;
 
         case "uxContentStructure":
-          result = await uxContentStructure(url, $);
+          result = await uxContentStructure(url,device,selectedMetric, $, auditId);
+          await SiteReport.findByIdAndUpdate(auditId, {
+        Status:'completed'
+        });
           break;
 
         case "conversionLeadFlow":
-          result = await conversionLeadFlow(page, $);
+          result = await conversionLeadFlow(url,device,selectedMetric,page, $, auditId);
+          await SiteReport.findByIdAndUpdate(auditId, {
+        Status:'completed'
+        });
           break;
 
         case "aioReadiness":
-          result = await aioReadiness(url, $);
+          result = await aioReadiness(url,device,selectedMetric, $, auditId);
+          await SiteReport.findByIdAndUpdate(auditId, {
+        Status:'completed'
+        });
           break;
 
         default:
           throw new Error("Invalid metric selected");
       }
-    end = performance.now();
-    timeTaken = ((end-start)/1000).toFixed(0);
     browser.close();
-
-      return {
-        url,
-        device,
-        report: selectedMetric,
-        metric: result,
-        timeTaken
-      };
     }
 
-    data = await googleAPI(url, device);
+    else{
+    start = performance.now();
     const [
       technicalReport,
       seoReport,
@@ -75,30 +122,35 @@ export default async function MetricesCalculation(url, device, selectedMetric = 
       conversionReport,
       aioReport,
     ] = await Promise.all([
-      technicalMetrics(url, data, page, response, browser),
-      seoMetrics(url, $),
-      accessibilityMetrics(page),
-      securityCompliance(url, page, response, browser),
-      uxContentStructure(url, $),
-      conversionLeadFlow(page, $),
-      aioReadiness(url, $),
+      technicalMetrics(url,device,selectedMetric, page, response, browser, auditId),
+      seoMetrics(url,device,selectedMetric, $, auditId),
+      accessibilityMetrics(url,device,selectedMetric,page, auditId),
+      securityCompliance(url,device,selectedMetric, page, response, browser, auditId),
+      uxContentStructure(url,device,selectedMetric, $, auditId),
+      conversionLeadFlow(url,device,selectedMetric,page, $, auditId),
+      aioReadiness(url,device,selectedMetric, $, auditId),
     ]);
 
     end = performance.now();
     timeTaken = ((end-start)/1000).toFixed(0);
+
+    const Overall_Data = OverAll(technicalReport,seoReport,accessibilityReport,securityReport,uxReport,conversionReport,aioReport);
+
+    await SiteReport.findByIdAndUpdate(auditId, {
+        Status:'completed',
+        Time_Taken:timeTaken + 's',
+        Score: Overall_Data.totalScore,
+        Grade: Overall_Data.grade,
+        Section_Score: Overall_Data.sectionScores,
+        $set: {
+          'Raw.Time_Taken': timeTaken + 's',
+          'Raw.Score': Overall_Data.totalScore,
+          'Raw.Grade': Overall_Data.grade,
+          'Raw.Section_Score': Overall_Data.sectionScores
+        }
+        });
+
     browser.close();
     
-    return {
-      url,
-      device,
-      report:selectedMetric,
-      timeTaken,
-      technicalReport,
-      seoReport,
-      accessibilityReport,
-      securityReport,
-      uxReport,
-      conversionReport,
-      aioReport,
-    };
+  }
 }

@@ -1,3 +1,6 @@
+import { performance } from "perf_hooks";
+import SiteReport from "../Model/SiteReport.js";
+
 // Artificial Intelligence Optimization Readiness (Technical Performance (AI-specific metrics))
 function checkStructuredData($) {
     const selector = 'script[type="application/ld+json"]';
@@ -522,8 +525,11 @@ function checkUserFeedbackLoops($) {
     return score;
 }
 
-export default async function aioReadiness(url,$) {
+export default async function aioReadiness(url,device,selectedMetric, $, auditId) {
   
+  let start, end, timeTaken;
+  start = performance.now();
+
   // Artificial Intelligence Optimization Readiness (Technical Performance (AI-specific metrics))
   const structuredData = checkStructuredData($)
   const contentNLPFriendly = checkContentNLPFriendly($)
@@ -553,6 +559,9 @@ export default async function aioReadiness(url,$) {
 
   const AIO_Compatibility_Score =parseFloat(((structuredData * 3 + metadataComplete * 2 + apiDataAccess * 2 + fastPageLoad * 1.5 + contentNLPFriendly * 1.5 + internalLinkingAIFriendly * 1) / 11).toFixed(0));
   const AIO_Compatibility_Badge = AIO_Compatibility_Score >= 0.7 ? "Yes" : "No";
+
+  end = performance.now();
+  timeTaken = ((end-start)/1000).toFixed(0);
 
   const Total = parseFloat((((structuredData+contentNLPFriendly+fastPageLoad+apiDataAccess+keywordsEntitiesAnnotated+metadataComplete+contentUpdatedRegularly+dynamicContentAvailable+behaviorTrackingImplemented+segmentationProfilingReady+internalLinkingAIFriendly+duplicateContentDetectionReady+multilingualSupport+eventGoalTrackingIntegrated+abTestingReady+userFeedbackLoopsPresent)/16)*100).toFixed(0))
 
@@ -861,26 +870,179 @@ if (userFeedbackLoopsPresent === 0) {
   // console.log(Total);
   // console.log(improvements);
 
-  return {
-    AIO_Compatibility_Badge,
-    structuredData,
-    contentNLPFriendly,
-    fastPageLoad,
-    apiDataAccess,
-    keywordsEntitiesAnnotated,
-    metadataComplete,
-    contentUpdatedRegularly,
-    dynamicContentAvailable,
-    behaviorTrackingImplemented,
-    segmentationProfilingReady,
-    internalLinkingAIFriendly,
-    duplicateContentDetectionReady,
-    multilingualSupport,
-    eventGoalTrackingIntegrated,
-    abTestingReady,
-    userFeedbackLoopsPresent,
-    actualPercentage,warning,
-    passed,
-    Total,improvements
-  }
+    await SiteReport.findByIdAndUpdate(auditId, {
+    Time_Taken:timeTaken + 's',
+    AIO_Compatibility_Badge: AIO_Compatibility_Badge,
+    AIO_Readiness: {
+        Structured_Data: {
+          Score: structuredData,
+          Parameter: "1 if valid structured data (schema.org/JSON-LD) is implemented, else 0"
+        },
+        Metadata_Complete: {
+          Score: metadataComplete,
+          Parameter: "1 if metadata (title, description, OG/Twitter tags) is complete, else 0"
+        },
+        Fast_Page_Load: {
+          Score: fastPageLoad,
+          Parameter: "1 if page load time is under 2s, else 0"
+        },
+        API_Data_Access: {
+          Score: apiDataAccess,
+          Parameter: "1 if secure and documented API endpoints exist, else 0"
+        },
+        Dynamic_Content_Available: {
+          Score: dynamicContentAvailable,
+          Parameter: "1 if dynamic or interactive content is present, else 0"
+        },
+        Multilingual_Support: {
+          Score: multilingualSupport,
+          Parameter: "1 if hreflang and multilingual versions exist, else 0"
+        },
+        Content_NLP_Friendly: {
+          Score: contentNLPFriendly,
+          Parameter: "1 if content uses natural, entity-rich language and NLP-friendly structure, else 0"
+        },
+        Keywords_Entities_Annotated: {
+          Score: keywordsEntitiesAnnotated,
+          Parameter: "1 if entities and keywords are annotated with schema or metadata, else 0"
+        },
+        Content_Updated_Regularly: {
+          Score: contentUpdatedRegularly,
+          Parameter: "1 if website content is updated frequently, else 0"
+        },
+        Internal_Linking_AI_Friendly: {
+          Score: internalLinkingAIFriendly,
+          Parameter: "1 if internal links are structured and contextually relevant, else 0"
+        },
+        Duplicate_Content_Detection_Ready: {
+          Score: duplicateContentDetectionReady,
+          Parameter: "1 if duplicate content detection mechanisms are active, else 0"
+        },
+        Behavior_Tracking_Implemented: {
+          Score: behaviorTrackingImplemented,
+          Parameter: "1 if user behavior tracking is implemented (e.g., analytics), else 0"
+        },
+        Segmentation_Profiling_Ready: {
+          Score: segmentationProfilingReady,
+          Parameter: "1 if audience segmentation and profiling are in place, else 0"
+        },
+        Event_Goal_Tracking_Integrated: {
+          Score: eventGoalTrackingIntegrated,
+          Parameter: "1 if event or goal tracking is active, else 0"
+        },
+        AB_Testing_Ready: {
+          Score: abTestingReady,
+          Parameter: "1 if A/B testing setup exists, else 0"
+        },
+        User_Feedback_Loops_Present: {
+          Score: userFeedbackLoopsPresent,
+          Parameter: "1 if feedback collection systems (surveys, reviews) are active, else 0"
+        },
+        Dynamic_Personalization: {
+          Score: dynamicContentAvailable,
+          Parameter: "1 if dynamic content adjusts based on user segments or behavior, else 0"
+        },
+        AI_Content_Distribution: {
+          Score: apiDataAccess,
+          Parameter: "1 if content delivery through APIs or feeds is available, else 0"
+        },
+        AI_Friendly_Structure: {
+          Score: internalLinkingAIFriendly,
+          Parameter: "1 if website structure aids AI comprehension and crawling, else 0"
+        },
+      Percentage: actualPercentage,
+      Warning: warning,
+      Passed: passed,
+      Total: Total,
+      Improvements: improvements
+    },
+    $set: {
+          'Raw.Site': url,
+          'Raw.Report': selectedMetric,
+          'Raw.Device': device,
+          'Raw.Time_Taken': timeTaken + 's',
+          'Raw.AIO_Compatibility_Badge':AIO_Compatibility_Badge,
+          'Raw.AIO_Readiness':{
+        Structured_Data: {
+          Score: structuredData,
+          Parameter: "1 if valid structured data (schema.org/JSON-LD) is implemented, else 0"
+        },
+        Metadata_Complete: {
+          Score: metadataComplete,
+          Parameter: "1 if metadata (title, description, OG/Twitter tags) is complete, else 0"
+        },
+        Fast_Page_Load: {
+          Score: fastPageLoad,
+          Parameter: "1 if page load time is under 2s, else 0"
+        },
+        API_Data_Access: {
+          Score: apiDataAccess,
+          Parameter: "1 if secure and documented API endpoints exist, else 0"
+        },
+        Dynamic_Content_Available: {
+          Score: dynamicContentAvailable,
+          Parameter: "1 if dynamic or interactive content is present, else 0"
+        },
+        Multilingual_Support: {
+          Score: multilingualSupport,
+          Parameter: "1 if hreflang and multilingual versions exist, else 0"
+        },
+        Content_NLP_Friendly: {
+          Score: contentNLPFriendly,
+          Parameter: "1 if content uses natural, entity-rich language and NLP-friendly structure, else 0"
+        },
+        Keywords_Entities_Annotated: {
+          Score: keywordsEntitiesAnnotated,
+          Parameter: "1 if entities and keywords are annotated with schema or metadata, else 0"
+        },
+        Content_Updated_Regularly: {
+          Score: contentUpdatedRegularly,
+          Parameter: "1 if website content is updated frequently, else 0"
+        },
+        Internal_Linking_AI_Friendly: {
+          Score: internalLinkingAIFriendly,
+          Parameter: "1 if internal links are structured and contextually relevant, else 0"
+        },
+        Duplicate_Content_Detection_Ready: {
+          Score: duplicateContentDetectionReady,
+          Parameter: "1 if duplicate content detection mechanisms are active, else 0"
+        },
+        Behavior_Tracking_Implemented: {
+          Score: behaviorTrackingImplemented,
+          Parameter: "1 if user behavior tracking is implemented (e.g., analytics), else 0"
+        },
+        Segmentation_Profiling_Ready: {
+          Score: segmentationProfilingReady,
+          Parameter: "1 if audience segmentation and profiling are in place, else 0"
+        },
+        Event_Goal_Tracking_Integrated: {
+          Score: eventGoalTrackingIntegrated,
+          Parameter: "1 if event or goal tracking is active, else 0"
+        },
+        AB_Testing_Ready: {
+          Score: abTestingReady,
+          Parameter: "1 if A/B testing setup exists, else 0"
+        },
+        User_Feedback_Loops_Present: {
+          Score: userFeedbackLoopsPresent,
+          Parameter: "1 if feedback collection systems (surveys, reviews) are active, else 0"
+        },
+        Dynamic_Personalization: {
+          Score: dynamicContentAvailable,
+          Parameter: "1 if dynamic content adjusts based on user segments or behavior, else 0"
+        },
+        AI_Content_Distribution: {
+          Score: apiDataAccess,
+          Parameter: "1 if content delivery through APIs or feeds is available, else 0"
+        },
+        AI_Friendly_Structure: {
+          Score: internalLinkingAIFriendly,
+          Parameter: "1 if website structure aids AI comprehension and crawling, else 0"
+        },
+      Percentage: actualPercentage
+         }
+        }
+    });
+
+    return actualPercentage
 }

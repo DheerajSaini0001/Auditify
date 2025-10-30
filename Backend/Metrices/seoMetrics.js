@@ -1,4 +1,6 @@
 import axios from "axios";
+import SiteReport from "../Model/SiteReport.js";
+import { performance } from "perf_hooks";
 
 // On-Page SEO (Essentials) 
 function checkURLStructure(url) {
@@ -314,7 +316,10 @@ function checkPagination($) {
   }
 }
 
-export default async function seoMetrics(url,$) {
+export default async function seoMetrics(url,device,selectedMetric, $, auditId) {
+
+let start, end, timeTaken;
+start = performance.now();
 
 // On-Page SEO (Essentials) 
 const title = $("title").text().trim() || "";
@@ -332,16 +337,6 @@ const URLStructureScore = checkURLStructure(url);
 const canonical = $('link[rel="canonical"]').attr("href") || "";
 const canonicalExistanceScore = $('link[rel="canonical"]') ? 1 : 0 ;
 const canonicalScore = isValidCanonical(canonical, url) ? 1 : 0; 
- 
-const essentialsTotal = titleScore + titleExistanceScore + metaDescScore + metaDescExistanceScore + URLStructureScore + canonicalScore + canonicalExistanceScore
-
-const essentials ={
-  title,titleExistanceScore,titleLength,titleScore,
-  metaDesc,metaDescExistanceScore,metaDescLength,metaDescScore,
-  URLStructureScore,
-  canonical,canonicalExistanceScore,canonicalScore,
-  essentialsTotal
-}
 
 // On-Page SEO (Media & Semantics) 
 const h1Count = $("h1").length;
@@ -426,19 +421,6 @@ const sectionScore = semanticTagScoreResolved.section;
 const headerScore = semanticTagScoreResolved.header;
 const footerScore = semanticTagScoreResolved.footer;
 
-const mediaAndSemanticsTotal = h1Score + altPresence + altMeaningfullPercentage + imageCompressionScore + embedding + lazyLoading + structuredMetadata + hierarchy + alttextScore + internalLinksDescriptiveScore
-
-const  mediaAndSemantics = {
-  h1Count,h2Count,h3Count,h4Count,h5Count,h6Count,h1CountScore,h1Score,
-  imagePresenceScore,altPresence,altMeaningfullPercentage,imageCompressionScore,
-  videoExistanceScore,embedding,lazyLoading,structuredMetadata,
-  headings,hierarchy,
-  alttextScore,
-  totalInternalLinks,internalLinksDescriptiveScore,
-  articleScore,sectionScore,headerScore,footerScore,
-  mediaAndSemanticsTotal
-}
-
 // On-Page SEO (Structure & Uniqueness) 
 const pageText = extractText($);
 const dupScore = simpleDuplicateCheck(pageText);
@@ -457,17 +439,10 @@ const checkHTTPSScore = checkHTTPS(url);
 
 const paginationScore = checkPagination($);
 
-const structureAndUniquenessTotal = dupScore + slugScore + paginationScore
+end = performance.now();
+timeTaken = ((end-start)/1000).toFixed(0);
 
-const structureAndUniqueness = {
-  dupScore,
-  slug,slugCheckScore,slugScore,
-  checkHTTPSScore,
-  paginationScore,
-  structureAndUniquenessTotal
-}
-
-const Total = parseFloat((((essentialsTotal + mediaAndSemanticsTotal + structureAndUniquenessTotal) / 20) * 100).toFixed(0));
+const Total = parseFloat((((titleScore + titleExistanceScore + metaDescScore + metaDescExistanceScore + URLStructureScore + canonicalScore + canonicalExistanceScore + h1Score + altPresence + altMeaningfullPercentage + imageCompressionScore + embedding + lazyLoading + structuredMetadata + hierarchy + alttextScore + internalLinksDescriptiveScore + dupScore + slugScore + paginationScore) / 20) * 100).toFixed(0));
 
 // Passed
 const passed = [];
@@ -835,12 +810,203 @@ const actualPercentage = parseFloat((((paginationScore+titleExistanceScore+metaD
 // console.log(Total);
 // console.log(improvements);
 
-return {
-  essentials,
-  mediaAndSemantics,
-  structureAndUniqueness,
-  actualPercentage,warning,
-  passed,
-  Total,improvements
-}
+  await SiteReport.findByIdAndUpdate(auditId, {
+    Time_Taken:timeTaken + 's',
+      On_Page_SEO: {
+        Title: {
+          Title: title,
+          Title_Exist : titleExistanceScore,
+          Title_Length: titleLength,
+          Score: titleScore,
+          Parameter:'1 if title exists and 30–60 characters, else 0'
+        },
+        Meta_Description: {
+          MetaDescription: metaDesc,
+          MetaDescription_Exist: metaDescExistanceScore,
+          MetaDescription_Length: metaDescLength,
+          Score: metaDescScore,
+          Parameter:'1 if meta description exists and ≤ 165 characters, else 0'
+        },
+        URL_Structure: {
+          Score: URLStructureScore,
+          Parameter:'1 if URL ≤ 5 segments, lowercase, hyphen-separated, else 0'
+        },
+        Canonical: {
+          Canonical: canonical,
+          Canonical_Exist: canonicalExistanceScore,
+          Score: canonicalScore,
+          Parameter:'1 if canonical tag exists and matches page URL, else 0'
+        },
+        H1: {
+          H1_Count: h1Count,
+          H1_Count_Score: h1CountScore,
+          Score: h1Score,
+          Parameter:'1 if exactly one H1, 2 if >1, 0 if none'
+        },
+        Image:{
+          Image_Exist: imagePresenceScore,
+          Image_Alt_Exist: altPresence,
+          Image_Alt_Meaningfull_Exist: altMeaningfullPercentage,
+          Image_Compression_Exist: imageCompressionScore,
+          Parameter:'Alt text ≥ 75% meaningful, images ≤ 200KB'
+        },
+        Video:{
+          Video_Exist: videoExistanceScore,
+          Video_Embedding_Exist: embedding,
+          Video_LazyLoading_Exist: lazyLoading,
+          Video_Structured_Metadata_Exist: structuredMetadata,
+          Parameter:'Proper embedding, lazy-loading, JSON-LD metadata'
+        },
+        Heading_Hierarchy:{
+          H1_Count: h1Count,
+          H2_Count: h2Count,
+          H3_Count: h3Count,
+          H4_Count: h4Count,
+          H5_Count: h5Count,
+          H6_Count: h6Count,
+          Heading: headings,
+          Score:hierarchy,
+          Parameter:'1 if headings follow proper H1→H2→H3 order, else 0',
+        },
+        ALT_Text_Relevance: {
+          Score: alttextScore,
+          Parameter: "1 if alt text contains keywords or is descriptive, else 0"
+        },
+        Internal_Links: {
+          Total: totalInternalLinks,
+          Descriptive_Score: internalLinksDescriptiveScore,
+          Parameter: "1 if ≥ 75% internal links are descriptive, else 0"
+        },
+        Semantic_Tags: {
+          Article_Score: articleScore,
+          Section_Score: sectionScore,
+          Header_Score: headerScore,
+          Footer_Score: footerScore,
+          Parameter: "1 if tag exists, else 0"
+        },
+        Duplicate_Content:{
+          Score: dupScore,
+          Parameter:'1 if duplication ≤ 75%, else 0'
+        },
+         URL_Slugs:{
+          Slug:slug,
+          Slug_Check_Score:slugCheckScore,
+          Score:slugScore,
+          Parameter:'1 if slug exists, ≤25 characters, lowercase hyphenated, else 0'
+        },
+        HTTPS: {
+          Score: checkHTTPSScore,
+          Parameter: "1 if HTTPS implemented, else 0"
+        },
+        Pagination_Tags:{
+          Score: paginationScore,
+          Parameter:'1 if pagination links or rel=next/prev exist, else 0'
+        },
+      Percentage: actualPercentage,
+      Warning: warning,
+      Passed: passed,
+      Total: Total,
+      Improvements: improvements
+    },
+    $set: {
+          'Raw.Site': url,
+          'Raw.Report': selectedMetric,
+          'Raw.Device': device,
+          'Raw.Time_Taken': timeTaken + 's',
+          'Raw.On_Page_SEO':{
+        Title: {
+          Title: title,
+          Title_Exist : titleExistanceScore,
+          Title_Length: titleLength,
+          Score: titleScore,
+          Parameter:'1 if title exists and 30–60 characters, else 0'
+        },
+        Meta_Description: {
+          MetaDescription: metaDesc,
+          MetaDescription_Exist: metaDescExistanceScore,
+          MetaDescription_Length: metaDescLength,
+          Score: metaDescScore,
+          Parameter:'1 if meta description exists and ≤ 165 characters, else 0'
+        },
+        URL_Structure: {
+          Score: URLStructureScore,
+          Parameter:'1 if URL ≤ 5 segments, lowercase, hyphen-separated, else 0'
+        },
+        Canonical: {
+          Canonical: canonical,
+          Canonical_Exist: canonicalExistanceScore,
+          Score: canonicalScore,
+          Parameter:'1 if canonical tag exists and matches page URL, else 0'
+        },
+        H1: {
+          H1_Count: h1Count,
+          H1_Count_Score: h1CountScore,
+          Score: h1Score,
+          Parameter:'1 if exactly one H1, 2 if >1, 0 if none'
+        },
+        Image:{
+          Image_Exist: imagePresenceScore,
+          Image_Alt_Exist: altPresence,
+          Image_Alt_Meaningfull_Exist: altMeaningfullPercentage,
+          Image_Compression_Exist: imageCompressionScore,
+          Parameter:'Alt text ≥ 75% meaningful, images ≤ 200KB'
+        },
+        Video:{
+          Video_Exist: videoExistanceScore,
+          Video_Embedding_Exist: embedding,
+          Video_LazyLoading_Exist: lazyLoading,
+          Video_Structured_Metadata_Exist: structuredMetadata,
+          Parameter:'Proper embedding, lazy-loading, JSON-LD metadata'
+        },
+        Heading_Hierarchy:{
+          H1_Count: h1Count,
+          H2_Count: h2Count,
+          H3_Count: h3Count,
+          H4_Count: h4Count,
+          H5_Count: h5Count,
+          H6_Count: h6Count,
+          Heading: headings,
+          Score:hierarchy,
+          Parameter:'1 if headings follow proper H1→H2→H3 order, else 0',
+        },
+        ALT_Text_Relevance: {
+          Score: alttextScore,
+          Parameter: "1 if alt text contains keywords or is descriptive, else 0"
+        },
+        Internal_Links: {
+          Total: totalInternalLinks,
+          Descriptive_Score: internalLinksDescriptiveScore,
+          Parameter: "1 if ≥ 75% internal links are descriptive, else 0"
+        },
+        Semantic_Tags: {
+          Article_Score: articleScore,
+          Section_Score: sectionScore,
+          Header_Score: headerScore,
+          Footer_Score: footerScore,
+          Parameter: "1 if tag exists, else 0"
+        },
+        Duplicate_Content:{
+          Score: dupScore,
+          Parameter:'1 if duplication ≤ 75%, else 0'
+        },
+         URL_Slugs:{
+          Slug:slug,
+          Slug_Check_Score:slugCheckScore,
+          Score:slugScore,
+          Parameter:'1 if slug exists, ≤25 characters, lowercase hyphenated, else 0'
+        },
+        HTTPS: {
+          Score: checkHTTPSScore,
+          Parameter: "1 if HTTPS implemented, else 0"
+        },
+        Pagination_Tags:{
+          Score: paginationScore,
+          Parameter:'1 if pagination links or rel=next/prev exist, else 0'
+        },
+      Percentage: actualPercentage
+          }
+        }
+    });
+
+    return actualPercentage
 }

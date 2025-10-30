@@ -1,5 +1,5 @@
 import React, { useContext } from "react";
-import { Check, X, Home, BarChart2, Settings, Moon, Sun } from "lucide-react";
+import { Check, X, Home, BarChart2, Settings, Moon, Sun, Loader2 } from "lucide-react";
 import CircularProgress from "../Component/CircularProgress";
 import AuditDropdown from "../Component/AuditDropdown";
 import { useData } from "../context/DataContext";
@@ -60,9 +60,9 @@ const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray
 
   // ✅ Main Layout
   return (
-    <>
+    <>{metric.Technical_Performance?(
    
-  {reportType === "All" ? (<div className="relative flex w-full h-full">
+  reportType === "All" ? (<div className="relative flex w-full h-full">
           {/* Sidebar */}
           <div
           className={`${sidebarClass} lg:translate-x-0 transition-transform duration-300 ease-in-out z-40`}
@@ -92,7 +92,7 @@ const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray
           className={`w-full max-w-4xl p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500 ${cardBg}`}
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-            {Object.entries(metric.Technical_Performance.Core_Web_Vitals).map(
+            {Object.entries(metric.Technical_Performance).map(
               ([key, val]) => (
                 <div key={key} className="flex justify-between items-center">
                   <span className={textColor}>{key.replace(/_/g, " ")}</span>
@@ -148,7 +148,7 @@ const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray
       className={`w-full max-w-4xl p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500 ${cardBg}`}
     >
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-        {Object.entries(metric.Technical_Performance.Core_Web_Vitals).map(
+        {Object.entries(metric.Technical_Performance).map(
           ([key, val]) => (
             <div key={key} className="flex justify-between items-center">
               <span className={textColor}>{key.replace(/_/g, " ")}</span>
@@ -180,8 +180,8 @@ const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray
       darkMode={darkMode}
     />
   </div>
-</main>}
-  
-      </>
+</main>
+
+    ):(<Loader2 size={20} className="animate-spin w-5 h-5" />)}</>
   );
 }

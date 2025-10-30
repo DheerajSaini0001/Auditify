@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
 import { ThemeContext } from "../context/ThemeContext.jsx";
-import { Check, X } from "lucide-react"; // Original imports kept
+import { Check, Loader2, X } from "lucide-react"; // Original imports kept
 import CircularProgress from "../Component/CircularProgress";
 import AuditDropdown from "../Component/AuditDropdown";
 import { useData } from "../context/DataContext";
@@ -56,7 +56,9 @@ export default function Accessibility() {
   // ✅ Main Layout structure adopted from the template
   return (
     <>
-      {reportType === "All" ? (
+    {data.Accessibility ?
+<div>
+        {reportType === "All" ? (
         <div className="relative flex w-full h-full">
           {/* Sidebar */}
           <div
@@ -423,6 +425,8 @@ export default function Accessibility() {
           </div>
         </main>
       )}
+</div>
+      : <Loader2 size={20} className="animate-spin w-5 h-5" />}
     </>
   );
 }

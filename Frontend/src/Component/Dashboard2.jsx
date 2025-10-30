@@ -12,7 +12,7 @@ import {
   YAxis,
   CartesianGrid,
 } from "recharts";
-import { NotebookPen } from "lucide-react";
+import { Loader2, NotebookPen } from "lucide-react";
 import { useNavigate } from "react-router-dom"; // ✅ Added for navigation
 import CircularProgress from "./CircularProgress";
 import { useData } from "../context/DataContext";
@@ -112,7 +112,7 @@ export default function Dashboard2({ darkMode }) {
 
       {/* ✅ Overall Score */}
       <div className="bg-gradient-to-r from-indigo-200 via-blue-400 to-indigo-200 rounded-2xl shadow-xl p-6 text-center flex flex-col sm:flex-row sm:justify-center sm:items-center sm:gap-20 lg:gap-30">
-        <CircularProgress value={data.Score.toFixed(0)} size={120} stroke={10} />
+        <CircularProgress value={data?.Score ? data.Score.toFixed(0) : '-'} size={120} stroke={10} />
         <div>
           <h2 className="text-xl sm:text-2xl font-bold">Overall Score</h2>
           <p className="text-4xl sm:text-5xl font-extrabold mt-2">
@@ -125,19 +125,19 @@ export default function Dashboard2({ darkMode }) {
         <div>
           <h1
             className={`text-xl sm:text-2xl lg:text-3xl font-bold rounded-4xl ${
-              ["A", "B"].includes(data.Grade)
+              ["A", "B"].includes(data?.Grade ?? '-')
                 ? "bg-green-400"
-                : ["C", "D"].includes(data.Grade)
+                : ["C", "D"].includes(data?.Grade ?? '-')
                 ? "bg-orange-400"
-                : ["E", "F"].includes(data.Grade)
+                : ["E", "F"].includes(data?.Grade ?? '-')
                 ? "bg-red-400"
                 : "bg-gray-300"
             }`}
           >
-            Grade - {data.Grade}
+            Grade - {data?.Grade ?? '-'}
           </h1>
           <p className="text-lg sm:text-xl mt-1 font-semibold">
-            AIO Compatibility - {data.AIO_Compatibility_Badge}
+            AIO Compatibility - {data?.AIO_Compatibility_Badge ?? '-'}
           </p>
           <p className="text-lg sm:text-xl mt-1 font-semibold">
             Device - {data.Device}
@@ -146,6 +146,7 @@ export default function Dashboard2({ darkMode }) {
       </div>
 
       {/* ✅ Section Score Cards (linked correctly) */}
+      {data?.Section_Score ?
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {barData.map((item, index) => (
           <button
@@ -162,9 +163,11 @@ export default function Dashboard2({ darkMode }) {
             </p>
           </button>
         ))}
-      </div>
+      </div> 
+      : <Loader2 size={20} className="animate-spin w-5 h-5" />}
 
       {/* ✅ Bar Chart */}
+      {data?.Section_Score ? 
       <div
         className={`rounded-xl p-4 shadow-lg border ${cardBorder} ${cardBg}`}
       >
@@ -185,6 +188,7 @@ export default function Dashboard2({ darkMode }) {
           </ResponsiveContainer>
         </div>
       </div>
+      : <Loader2 size={20} className="animate-spin w-5 h-5" />}
     </div>
   );
 }

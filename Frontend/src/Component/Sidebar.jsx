@@ -21,14 +21,14 @@ export default function Sidebar({ darkMode }) {
   const data = rawData;
 
   const menuItems = [
-    { name: "Technical Performance", link: "/technical-performance", icon: <Gauge size={20} /> },
-    { name: "On Page SEO", link: "/on-page-seo", icon: <Image size={20} /> },
-    { name: "Accessibility", link: "/accessibility", icon: <Accessibility size={20} /> },
-    { name: "Security/Compliance", link: "/security-compliance", icon: <Shield size={20} /> },
-    { name: "UX & Content Structure", link: "/ux-content-structure", icon: <Layout size={20} /> },
-    { name: "Conversion & Lead Flow", link: "/conversion-lead-flow", icon: <TrendingUp size={20} /> },
-    { name: "AIO (AI-Optimization) Readiness", link: "/aio", icon: <Brain size={20} /> },
-    { name: "Raw Data", link: "#Rawdata", icon: <Database size={20} /> },
+    { name: "Technical Performance", link: "/report/technical-performance", icon: <Gauge size={20} /> },
+    { name: "On Page SEO", link: "/report/on-page-seo", icon: <Image size={20} /> },
+    { name: "Accessibility", link: "/report/accessibility", icon: <Accessibility size={20} /> },
+    { name: "Security/Compliance", link: "/report/security-compliance", icon: <Shield size={20} /> },
+    { name: "UX & Content Structure", link: "/report/ux-content-structure", icon: <Layout size={20} /> },
+    { name: "Conversion & Lead Flow", link: "/report/conversion-lead-flow", icon: <TrendingUp size={20} /> },
+    { name: "AIO (AI-Optimization) Readiness", link: "/report/aio", icon: <Brain size={20} /> },
+    
   ];
 
   function downloadObject(obj) {

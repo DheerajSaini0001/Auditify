@@ -1,6 +1,5 @@
 import googleAPI from "../Tools/googleAPI.js";
 import SiteReport from "../Model/SiteReport.js";
-import { performance } from "perf_hooks";
 
 function coreWebVitalsScore(value, threshold) {
   return value <= threshold ? 1 : 0;
@@ -20,8 +19,6 @@ function actualCalculation(observed,good,poor,weight) {
 
 export default async function technicalMetrics(url,device,selectedMetric, page, response, browser, auditId) {
 
-  let start, end, timeTaken;
-  start = performance.now();
   const data = await googleAPI(url, device);
 
   // Technical Performance (Core Web Vitals)
@@ -152,9 +149,6 @@ export default async function technicalMetrics(url,device,selectedMetric, page, 
   catch {
   robotsScore = 0; 
   }
-
-  end = performance.now();
-  timeTaken = ((end-start)/1000).toFixed(0);
   
   const Total = parseFloat((((lcpScore + fidScore + clsScore + fcpScore + ttfbScore+tbtScore+siScore+inpScore+compressionScore+cachingScore+resourceOptimizationScore+renderBlockingScore+httpsScore+sitemapScore+robotsScore+structuredDataScore+brokenScore+redirectScore)/18)*100).toFixed(0))
   
@@ -514,7 +508,6 @@ const actualPercentage = actuallcpScore + actualtbtScore + actualclsScore + actu
   // console.log(improvements);
   
   await SiteReport.findByIdAndUpdate(auditId, {
-      Time_Taken:timeTaken + 's',
       Schema:structuredData,
       Technical_Performance: {
         LCP:{
@@ -610,7 +603,6 @@ const actualPercentage = actuallcpScore + actualtbtScore + actualclsScore + actu
           'Raw.Site': url,
           'Raw.Report': selectedMetric,
           'Raw.Device': device,
-          'Raw.Time_Taken': timeTaken + 's',
           'Raw.Schema':structuredData,
           'Raw.Technical_Performance':{
       Schema:structuredData,

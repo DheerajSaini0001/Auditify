@@ -1,4 +1,3 @@
-import { performance } from "perf_hooks";
 import SiteReport from "../Model/SiteReport.js";
 
 // Artificial Intelligence Optimization Readiness (Technical Performance (AI-specific metrics))
@@ -526,9 +525,6 @@ function checkUserFeedbackLoops($) {
 }
 
 export default async function aioReadiness(url,device,selectedMetric, $, auditId) {
-  
-  let start, end, timeTaken;
-  start = performance.now();
 
   // Artificial Intelligence Optimization Readiness (Technical Performance (AI-specific metrics))
   const structuredData = checkStructuredData($)
@@ -559,9 +555,6 @@ export default async function aioReadiness(url,device,selectedMetric, $, auditId
 
   const AIO_Compatibility_Score =parseFloat(((structuredData * 3 + metadataComplete * 2 + apiDataAccess * 2 + fastPageLoad * 1.5 + contentNLPFriendly * 1.5 + internalLinkingAIFriendly * 1) / 11).toFixed(0));
   const AIO_Compatibility_Badge = AIO_Compatibility_Score >= 0.7 ? "Yes" : "No";
-
-  end = performance.now();
-  timeTaken = ((end-start)/1000).toFixed(0);
 
   const Total = parseFloat((((structuredData+contentNLPFriendly+fastPageLoad+apiDataAccess+keywordsEntitiesAnnotated+metadataComplete+contentUpdatedRegularly+dynamicContentAvailable+behaviorTrackingImplemented+segmentationProfilingReady+internalLinkingAIFriendly+duplicateContentDetectionReady+multilingualSupport+eventGoalTrackingIntegrated+abTestingReady+userFeedbackLoopsPresent)/16)*100).toFixed(0))
 
@@ -871,7 +864,6 @@ if (userFeedbackLoopsPresent === 0) {
   // console.log(improvements);
 
     await SiteReport.findByIdAndUpdate(auditId, {
-    Time_Taken:timeTaken + 's',
     AIO_Compatibility_Badge: AIO_Compatibility_Badge,
     AIO_Readiness: {
         Structured_Data: {
@@ -960,7 +952,6 @@ if (userFeedbackLoopsPresent === 0) {
           'Raw.Site': url,
           'Raw.Report': selectedMetric,
           'Raw.Device': device,
-          'Raw.Time_Taken': timeTaken + 's',
           'Raw.AIO_Compatibility_Badge':AIO_Compatibility_Badge,
           'Raw.AIO_Readiness':{
         Structured_Data: {

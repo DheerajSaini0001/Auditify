@@ -49,7 +49,8 @@ function OverAll(technicalReport,seoReport,accessibilityReport,securityReport,ux
 
 export default async function MetricesCalculation(url, device, selectedMetric = "All", auditId) {
   let start, end, timeTaken;
-  let data = null;
+  start = performance.now();
+
   const { browser, page, response, $ } = await Puppeteer_Cheerio(url, device);
 
     if (selectedMetric && selectedMetric !== "All") {
@@ -58,61 +59,108 @@ export default async function MetricesCalculation(url, device, selectedMetric = 
       switch (selectedMetric) {
         case "technicalMetrics":
           result = await technicalMetrics(url,device,selectedMetric, page, response, browser, auditId);
+          end = performance.now();
+          timeTaken = ((end-start)/1000).toFixed(0);
+          browser.close();
           await SiteReport.findByIdAndUpdate(auditId, {
-        Status:'completed'
-        });
+            Status:'completed',
+            Time_Taken:timeTaken + 's',
+            $set: {
+              'Raw.Time_Taken': timeTaken + 's'
+            }
+          });
           break;
 
         case "seoMetrics":
           result = await seoMetrics(url,device,selectedMetric, $, auditId);
+          end = performance.now();
+          timeTaken = ((end-start)/1000).toFixed(0);
+          browser.close();
           await SiteReport.findByIdAndUpdate(auditId, {
-        Status:'completed'
-        });
+            Status:'completed',
+            Time_Taken:timeTaken + 's',
+            $set: {
+              'Raw.Time_Taken': timeTaken + 's'
+            }
+          });
           break;
 
         case "accessibilityMetrics":
           result = await accessibilityMetrics(url,device,selectedMetric,page, auditId);
+          end = performance.now();
+          timeTaken = ((end-start)/1000).toFixed(0);
+          browser.close();
           await SiteReport.findByIdAndUpdate(auditId, {
-        Status:'completed'
-        });
+            Status:'completed',
+            Time_Taken:timeTaken + 's',
+            $set: {
+              'Raw.Time_Taken': timeTaken + 's'
+            }
+          });
           break;
 
         case "securityCompliance":
           result = await securityCompliance(url,device,selectedMetric, page, response, browser, auditId);
+          end = performance.now();
+          timeTaken = ((end-start)/1000).toFixed(0);
+          browser.close();
           await SiteReport.findByIdAndUpdate(auditId, {
-        Status:'completed'
-        });
+            Status:'completed',
+            Time_Taken:timeTaken + 's',
+            $set: {
+              'Raw.Time_Taken': timeTaken + 's'
+            }
+          });
           break;
 
         case "uxContentStructure":
           result = await uxContentStructure(url,device,selectedMetric, $, auditId);
+          end = performance.now();
+          timeTaken = ((end-start)/1000).toFixed(0);
+          browser.close();
           await SiteReport.findByIdAndUpdate(auditId, {
-        Status:'completed'
-        });
+            Status:'completed',
+            Time_Taken:timeTaken + 's',
+            $set: {
+              'Raw.Time_Taken': timeTaken + 's'
+            }
+          });
           break;
 
         case "conversionLeadFlow":
           result = await conversionLeadFlow(url,device,selectedMetric,page, $, auditId);
+          end = performance.now();
+          timeTaken = ((end-start)/1000).toFixed(0);
+          browser.close();
           await SiteReport.findByIdAndUpdate(auditId, {
-        Status:'completed'
-        });
+            Status:'completed',
+            Time_Taken:timeTaken + 's',
+            $set: {
+              'Raw.Time_Taken': timeTaken + 's'
+            }
+          });
           break;
 
         case "aioReadiness":
           result = await aioReadiness(url,device,selectedMetric, $, auditId);
+          end = performance.now();
+          timeTaken = ((end-start)/1000).toFixed(0);
+          browser.close();
           await SiteReport.findByIdAndUpdate(auditId, {
-        Status:'completed'
-        });
+            Status:'completed',
+            Time_Taken:timeTaken + 's',
+            $set: {
+              'Raw.Time_Taken': timeTaken + 's'
+            }
+          });
           break;
 
         default:
           throw new Error("Invalid metric selected");
       }
-    browser.close();
     }
 
     else{
-    start = performance.now();
     const [
       technicalReport,
       seoReport,
@@ -136,6 +184,8 @@ export default async function MetricesCalculation(url, device, selectedMetric = 
 
     const Overall_Data = OverAll(technicalReport,seoReport,accessibilityReport,securityReport,uxReport,conversionReport,aioReport);
 
+    browser.close();
+    
     await SiteReport.findByIdAndUpdate(auditId, {
         Status:'completed',
         Time_Taken:timeTaken + 's',
@@ -150,7 +200,7 @@ export default async function MetricesCalculation(url, device, selectedMetric = 
         }
         });
 
-    browser.close();
+
     
   }
 }

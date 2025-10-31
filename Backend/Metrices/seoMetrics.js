@@ -1,6 +1,5 @@
 import axios from "axios";
 import SiteReport from "../Model/SiteReport.js";
-import { performance } from "perf_hooks";
 
 // On-Page SEO (Essentials) 
 function checkURLStructure(url) {
@@ -318,9 +317,6 @@ function checkPagination($) {
 
 export default async function seoMetrics(url,device,selectedMetric, $, auditId) {
 
-let start, end, timeTaken;
-start = performance.now();
-
 // On-Page SEO (Essentials) 
 const title = $("title").text().trim() || "";
 const titleExistanceScore = $("title") ? 1 : 0;
@@ -438,9 +434,6 @@ else{
 const checkHTTPSScore = checkHTTPS(url);
 
 const paginationScore = checkPagination($);
-
-end = performance.now();
-timeTaken = ((end-start)/1000).toFixed(0);
 
 const Total = parseFloat((((titleScore + titleExistanceScore + metaDescScore + metaDescExistanceScore + URLStructureScore + canonicalScore + canonicalExistanceScore + h1Score + altPresence + altMeaningfullPercentage + imageCompressionScore + embedding + lazyLoading + structuredMetadata + hierarchy + alttextScore + internalLinksDescriptiveScore + dupScore + slugScore + paginationScore) / 20) * 100).toFixed(0));
 
@@ -811,7 +804,6 @@ const actualPercentage = parseFloat((((paginationScore+titleExistanceScore+metaD
 // console.log(improvements);
 
   await SiteReport.findByIdAndUpdate(auditId, {
-    Time_Taken:timeTaken + 's',
       On_Page_SEO: {
         Title: {
           Title: title,
@@ -912,7 +904,6 @@ const actualPercentage = parseFloat((((paginationScore+titleExistanceScore+metaD
           'Raw.Site': url,
           'Raw.Report': selectedMetric,
           'Raw.Device': device,
-          'Raw.Time_Taken': timeTaken + 's',
           'Raw.On_Page_SEO':{
         Title: {
           Title: title,

@@ -1,4 +1,3 @@
-import { performance } from "perf_hooks";
 import SiteReport from "../Model/SiteReport.js";
 
 // UX & Content Structure (Navigation & Layout)
@@ -505,9 +504,6 @@ function checkUserJourneyContinuity($) {
 }
 
 export default async function evaluateMobileUX(url,device,selectedMetric, $, auditId) {
-    
-    let start, end, timeTaken;
-    start = performance.now();
 
     // UX & Content Structure (Navigation & Layout)
     const checkNavigationClarityScore = checkNavigationClarity($);
@@ -538,9 +534,6 @@ export default async function evaluateMobileUX(url,device,selectedMetric, $, aud
     
     const checkInternalLinkingQualityScore = checkInternalLinkingQuality($,domain);
     const checkUserJourneyContinuityScore = checkUserJourneyContinuity($);
-
-    end = performance.now();
-    timeTaken = ((end-start)/1000).toFixed(0);
 
     const Total = parseFloat((((checkNavigationClarityScore+checkBreadcrumbsScore+checkClickableLogoScore+checkMobileResponsivenessScore+checkParagraphLengthAndSpacingScore+checkFontStyleAndSizeConsistencyScore+checkContrastAndColorHarmonyScore+checkWhitespaceUsageScore+checkContentRelevanceScore+checkCallToActionClarityScore+checkMultimediaBalanceScore+checkInternalLinkingQualityScore+checkUserJourneyContinuityScore+checkErrorEmptyStateScore+checkInteractiveFeedbackScore+checkStickyNavigationScore+checkScrollDepthLogicScore+checkLoadingIndicatorsScore)/18)*100).toFixed(0));
 
@@ -904,7 +897,6 @@ const actualPercentage = parseFloat((((checkMobileResponsivenessScore+checkClick
     // console.log(improvements);
 
     await SiteReport.findByIdAndUpdate(auditId, {
-        Time_Taken:timeTaken + 's',
         UX_or_Content_Structure: {
       Navigation_Clarity: {
         Score: checkNavigationClarityScore,
@@ -988,7 +980,6 @@ const actualPercentage = parseFloat((((checkMobileResponsivenessScore+checkClick
           'Raw.Site': url,
           'Raw.Report': selectedMetric,
           'Raw.Device': device,
-          'Raw.Time_Taken': timeTaken + 's',
           'Raw.UX_or_Content_Structure':{
       Navigation_Clarity: {
         Score: checkNavigationClarityScore,

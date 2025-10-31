@@ -1,4 +1,3 @@
-import { performance } from "perf_hooks";
 import SiteReport from "../Model/SiteReport.js";
 
 // Conversion & Lead Flow (Call-to-Action (CTA) Effectiveness)
@@ -1017,9 +1016,6 @@ function checkMultiChannelFollowUp($) {
 
 export default async function conversionLeadFlow(url,device,selectedMetric,page, $, auditId) {
 
-  let start, end, timeTaken;
-  start = performance.now();
-
   // Conversion & Lead Flow (Call-to-Action (CTA) Effectiveness)
   const checkCTAsScore=checkCTAs($)
   const checkCTAClarityScore=checkCTAClarity($);
@@ -1081,9 +1077,6 @@ export default async function conversionLeadFlow(url,device,selectedMetric,page,
   const checkSmoothScrollingScore=checkSmoothScrolling($);
   const checkMobileCTAAdaptationScore=checkMobileCTAAdaptation($);
   const checkMultiChannelFollowUpScore=checkMultiChannelFollowUp($);
-
-  end = performance.now();
-  timeTaken = ((end-start)/1000).toFixed(0);
   
   const Total = parseFloat((((checkCTAsScore+checkCTAClarityScore+checkCTAContrastScore+checkCTACrowdingScore+checkCTAFlowAlignmentScore+checkFormPresenceScore+checkFormLengthOptimalScore+checkRequiredVsOptionalFieldsScore+checkInlineValidationScore+checkSubmitButtonClarityScore+checkAutoFocusFieldScore+checkMultiStepFormProgressScore+checkTestimonialsScore+checkReviewsVisibleScore+checkTrustBadgesScore+checkClientLogosScore+checkCaseStudiesAccessibilityScore+checkExitIntentTriggersScore+checkLeadMagnetsScore+checkContactInfoVisibilityScore+checkChatbotPresenceScore+checkInteractiveElementsScore+checkPersonalizationScore+checkProgressIndicatorsScore+checkFriendlyErrorHandlingScore+checkMicrocopyClarityScore+checkIncentivesDisplayedScore+checkScarcityUrgencyScore+checkSmoothScrollingScore+checkMobileCTAAdaptationScore+checkMultiChannelFollowUpScore)/31)*100).toFixed(0));
   
@@ -1701,7 +1694,6 @@ if (checkMultiChannelFollowUpScore === 0) {
   // console.log(improvements);
 
   await SiteReport.findByIdAndUpdate(auditId, {
-    Time_Taken:timeTaken + 's',
     Conversion_and_Lead_Flow: {
         CTA_Visibility: {
           Score: checkCTAsScore,
@@ -1837,7 +1829,6 @@ if (checkMultiChannelFollowUpScore === 0) {
           'Raw.Site': url,
           'Raw.Report': selectedMetric,
           'Raw.Device': device,
-          'Raw.Time_Taken': timeTaken + 's',
           'Raw.Conversion_and_Lead_Flow':{
         CTA_Visibility: {
           Score: checkCTAsScore,

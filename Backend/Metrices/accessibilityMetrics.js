@@ -1,11 +1,7 @@
 import AxePuppeteer from "@axe-core/puppeteer";
-import { performance } from "perf_hooks";
 import SiteReport from "../Model/SiteReport.js";
 
 export default async function accessibilityMetrics(url,device,selectedMetric,page, auditId) {
-
-  let start, end, timeTaken;
-  start = performance.now();
 
   let results;
   try {
@@ -42,9 +38,6 @@ function calculatePassRate(results, rules) {
   const imageAlt = calculatePassRate(results, ["image-alt"]);
   const skipLinks = await page.$('a[href^="#"]:not([hidden])') ? 0 : 1
   const landMarks = await Landmarks(page);
-
-  end = performance.now();
-  timeTaken = ((end-start)/1000).toFixed(0);
 
   const Total = colorContrast+focusOrder+focusableContent+tabindex+interactiveElementAffordance+label+ariaAllowedAttr+ariaRoles+ariaHiddenFocus+imageAlt+skipLinks+landMarks
 
@@ -278,7 +271,6 @@ if (landMarks === 0) {
   // console.log(Total);
 
   await SiteReport.findByIdAndUpdate(auditId, {
-    Time_Taken:timeTaken + 's',
     Accessibility: {
       Color_Contrast:{
         Score:colorContrast,
@@ -337,7 +329,6 @@ if (landMarks === 0) {
           'Raw.Site': url,
           'Raw.Report': selectedMetric,
           'Raw.Device': device,
-          'Raw.Time_Taken': timeTaken + 's',
           'Raw.Accessibility':{
       Color_Contrast:{
         Score:colorContrast,

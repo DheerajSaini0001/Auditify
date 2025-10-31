@@ -5,7 +5,6 @@ import dotenv from "dotenv";
 import fetch from "node-fetch";
 import { URL } from "url";
 import SiteReport from "../Model/SiteReport.js";
-import { performance } from "perf_hooks";
 
 dotenv.config();
 puppeteer.use(StealthPlugin());
@@ -823,9 +822,6 @@ async function checkDeprecatedAPIs(page) {
 
 export default async function securityCompliance(url,device,selectedMetric, page, response, browser, auditId) {
 
-  let start, end, timeTaken;
-  start = performance.now();
-
   // Security/Compliance (HTTPS / SSL)
   const checkHTTPSScore = checkHTTPS(url);
   const checkSSLDetail = checkSSLDetails(response);
@@ -874,9 +870,6 @@ export default async function securityCompliance(url,device,selectedMetric, page
   const checkNotificationRequestScore = await checkNotificationRequest(page);
   const checkThirdPartyCookiesScore = await checkThirdPartyCookies(url,page);
   const checkDeprecatedAPIsScore = await checkDeprecatedAPIs(page);
-
-  end = performance.now();
-  timeTaken = ((end-start)/1000).toFixed(0);
 
   // Total Score Calculation
 const Total = parseFloat((((checkHTTPSScore+checkSSLScore+checkSSLCertificateExpiryScore+checkHSTSScore+checkTLSVersionScore+checkXFrameOptionsScore+checkCSPScore+checkXContentTypeOptionsScore+checkCookiesSecureScore+checkCookiesHttpOnlyScore+cookieConsentScore+privacyPolicyScore+safeBrowsingScore+blacklistScore+malwareScanScore+xssVulnerabilityScore+sqliExposureScore+formsUseHTTPSScore+checkGDPRCCPAScore+checkDataCollectionScore+checkAdminPanelPublicScore+weakDefaultCredsScore+mfaEnabledScore) / 23) * 100).toFixed(0));
@@ -1517,7 +1510,6 @@ const actualPercentage =  parseFloat((((checkViewportMetaTagScore+checkHtmlDocty
   // console.log(improvements);
 
     await SiteReport.findByIdAndUpdate(auditId, {
-    Time_Taken:timeTaken + 's',
     Security_or_Compliance: {
       HTTPS: {
         Score: checkHTTPSScore,
@@ -1657,7 +1649,6 @@ const actualPercentage =  parseFloat((((checkViewportMetaTagScore+checkHtmlDocty
           'Raw.Site': url,
           'Raw.Report': selectedMetric,
           'Raw.Device': device,
-          'Raw.Time_Taken': timeTaken + 's',
           'Raw.Security_or_Compliance':{
       HTTPS: {
         Score: checkHTTPSScore,

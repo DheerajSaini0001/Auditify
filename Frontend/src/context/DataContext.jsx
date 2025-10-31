@@ -78,7 +78,7 @@ const fetchData = async (inputValue, device, report) => {
 
 
 
-  // ✅ Function to fetch live updates every 1 seconds
+  // ✅ Function to fetch live updates every 3 seconds
   const startLiveFetch = (id) => {
     // Agar already koi interval chal raha hai, use stop karo
     if (intervalId) clearInterval(intervalId);
@@ -101,7 +101,7 @@ const fetchData = async (inputValue, device, report) => {
   } catch (err) {
     console.error("Error getting live updates:", err);
   }
-}, 1000);
+}, 3000);
 
 
     setIntervalId(newInterval);

@@ -20,7 +20,7 @@ export default function Sidebar({ darkMode }) {
   const [isOpen, setIsOpen] = useState(true);
   const { data: rawData, loading } = useData();
   const data = rawData;
-  
+
   function downloadObject(obj) {
     if (!obj) return alert("No data to download");
     const fileName = obj.Site ? `${obj.Site.split("/")[2].split(".")[0]}.txt` : "report.txt";
@@ -186,15 +186,7 @@ export default function Sidebar({ darkMode }) {
   </Link>
 )}
 
-{data.Raw.Section_Score && (
-  <Link
-    replace to="#Rawdata"
-    className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass}`}
-  >
-    <Database size={20} /> <span>Raw Data</span>
-  </Link>
-) 
-}
+
           {/* Download Button */}
           {data.Raw.Section_Score && 
           <button

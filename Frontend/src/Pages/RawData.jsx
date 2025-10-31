@@ -1,11 +1,26 @@
-import { FileText ,Loader2} from "lucide-react";
-import React, { useState, useContext } from "react";
-import { ThemeContext } from "../ThemeContext";
+import { FileText, Loader2 } from "lucide-react";
+import React, { useState } from "react";
 
-const RawData = ({ data ,darkMode}) => {
-  
+// ✅ Shimmer block for skeletons
+const ShimmerBlock = ({ className = "" }) => (
+  <div
+    className={`bg-gradient-to-r from-gray-300 via-gray-200 to-gray-300 animate-shimmer bg-[length:400%_100%] rounded-md ${className}`}
+  ></div>
+);
+
+// ✅ Shimmer keyframes (inline CSS)
+const shimmerStyle = `
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.animate-shimmer {
+  animation: shimmer 1.6s infinite linear;
+}
+`;
+
+const RawData = ({ data, darkMode }) => {
   const [openKeys, setOpenKeys] = useState({});
-  const [saving, setSaving] = useState(false); // saving status
 
   const toggleKey = (key) => {
     setOpenKeys((prev) => ({
@@ -14,16 +29,23 @@ const RawData = ({ data ,darkMode}) => {
     }));
   };
 
-  const renderData = (obj, parentKey = "") => {
-    return Object.entries(obj).map(([key, value]) => {
+  const renderData = (obj, parentKey = "") =>
+    Object.entries(obj).map(([key, value]) => {
       const uniqueKey = parentKey ? `${parentKey}.${key}` : key;
       const textColor = darkMode ? "text-white" : "text-black";
 
       if (value && typeof value === "object" && !Array.isArray(value)) {
         return (
-          <div key={uniqueKey} className={`pl-4 mb-2 border-l ${darkMode ? "border-gray-700" : "border-gray-400"}`}>
+          <div
+            key={uniqueKey}
+            className={`pl-4 mb-2 border-l ${
+              darkMode ? "border-gray-700" : "border-gray-400"
+            }`}
+          >
             <h4
-              className={`cursor-pointer font-semibold hover:${darkMode ? "text-blue-400" : "text-blue-600"} ${textColor}`}
+              className={`cursor-pointer font-semibold hover:${
+                darkMode ? "text-blue-400" : "text-blue-600"
+              } ${textColor}`}
               onClick={() => toggleKey(uniqueKey)}
             >
               {key} {openKeys[uniqueKey] ? "▼" : "▶"}
@@ -40,7 +62,9 @@ const RawData = ({ data ,darkMode}) => {
                 typeof item === "object" ? (
                   <li key={idx}>{renderData(item, `${uniqueKey}[${idx}]`)}</li>
                 ) : (
-                  <li key={idx} className={textColor}>{item}</li>
+                  <li key={idx} className={textColor}>
+                    {item}
+                  </li>
                 )
               )}
             </ul>
@@ -54,10 +78,12 @@ const RawData = ({ data ,darkMode}) => {
         );
       }
     });
-  };
 
-  // ✅ Function to download TXT
-  function downloadObject(obj, fileName = `${data.Site.split("/")[2].split('.')[0]}.txt`) {
+  // ✅ Download TXT
+  function downloadObject(
+    obj,
+    fileName = `${data.Site?.split("/")[2]?.split(".")[0] || "website"}.txt`
+  ) {
     const jsonStr = JSON.stringify(obj, null, 2);
     const blob = new Blob([jsonStr], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -68,35 +94,89 @@ const RawData = ({ data ,darkMode}) => {
     URL.revokeObjectURL(url);
   }
 
-  const containerBg = darkMode ? " border-gray-700" : "bg-gray-100 border-gray-300";
-  const cardBg = darkMode ? "bg-gradient-to-br from-blue-900 via-gray-900 to-black" : "bg-gradient-to-br from-blue-200 via-gray-200 to-white";
+  const containerBg = darkMode
+    ? "bg-gray-900 border-gray-700"
+    : "bg-gray-100 border-gray-300";
+  const cardBg = darkMode
+    ? "bg-gradient-to-br from-blue-900 via-gray-900 to-black"
+    : "bg-gradient-to-br from-blue-200 via-gray-200 to-white";
 
+  // ✅ If data is still loading (no Section_Score) → show shimmer
+  if (!data?.Section_Score) {
+    return (
+      <div
+        className={`min-h-fit pt-20 pb-16 rounded-2xl shadow-lg m-4 flex flex-col items-center justify-start p-6 space-y-6 ${containerBg}`}
+      >
+        <style>{shimmerStyle}</style>
+
+        {/* 🔹 Title shimmer */}
+        <ShimmerBlock className="h-8 w-40 mb-6 rounded-md" />
+
+        {/* 🔹 Content shimmer */}
+        <div
+          className={`w-full max-w-4xl p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500 ${cardBg}`}
+        >
+          <div className="space-y-3">
+            {[...Array(10)].map((_, i) => (
+              <ShimmerBlock key={i} className="h-4 w-full rounded-md" />
+            ))}
+          </div>
+        </div>
+
+        {/* 🔹 Button shimmer */}
+        <div className="flex gap-4">
+          <ShimmerBlock className="h-10 w-40 rounded-lg" />
+        </div>
+      </div>
+    );
+  }
+
+  // ✅ Once data is loaded
   return (
-    <>
-    {data.Section_Score ?     <div id="Rawdata" className={`min-h-fit pt-20 pb-16 rounded-2xl shadow-lg m-4 flex flex-col items-center justify-start p-6 space-y-6 ${containerBg}`}>
-      <h1 className={`text-3xl font-extrabold mb-6 ${darkMode ? "text-white" : "text-black"}`}>Raw Data</h1>
+    <div
+      id="Rawdata"
+      className={`min-h-fit pt-20 pb-16 rounded-2xl shadow-lg m-4 flex flex-col items-center justify-start p-6 space-y-6 ${containerBg}`}
+    >
+      <h1
+        className={`text-3xl font-extrabold mb-6 ${
+          darkMode ? "text-white" : "text-black"
+        }`}
+      >
+        Raw Data
+      </h1>
 
-      <div className={`w-full max-w-4xl p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500 ${cardBg}`}>
+      <div
+        className={`w-full max-w-4xl p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500 ${cardBg}`}
+      >
         {data ? (
-          <pre className={`whitespace-pre-wrap break-words text-sm ${darkMode ? "text-white" : "text-black"}`}>
+          <pre
+            className={`whitespace-pre-wrap break-words text-sm ${
+              darkMode ? "text-white" : "text-black"
+            }`}
+          >
             {JSON.stringify(data, null, 2)}
           </pre>
         ) : (
-          <p className={darkMode ? "text-white" : "text-black"}>Loading data...</p>
+          <p className={darkMode ? "text-white" : "text-black"}>
+            Loading data...
+          </p>
         )}
       </div>
 
       <div className="flex gap-4">
         <button
           onClick={() => downloadObject(data)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg shadow transition ${darkMode ? "bg-green-600 hover:bg-green-700 text-white hover:text-black" : "bg-green-400 hover:bg-green-500 text-black hover:text-white"}`}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg shadow transition ${
+            darkMode
+              ? "bg-green-600 hover:bg-green-700 text-white hover:text-black"
+              : "bg-green-400 hover:bg-green-500 text-black hover:text-white"
+          }`}
         >
           <FileText className="w-5 h-5" />
           Download TXT
         </button>
       </div>
-    </div> : (<Loader2 size={20} className="animate-spin w-5 h-5" />)}
-</>
+    </div>
   );
 };
 

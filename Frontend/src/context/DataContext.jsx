@@ -30,47 +30,53 @@ export const DataProvider = ({ children }) => {
   }, [data]);
 
   // ✅ API call function (start or continue audit)
-  const fetchData = async (inputValue, device, report) => {
-    if (!inputValue) return alert("URL is empty");
+const fetchData = async (inputValue, device, report) => {
+  if (!inputValue) return alert("URL is empty");
 
-    const checkURL = () => {
-      if (inputValue.includes(" ") || !inputValue.includes(".")) {
-        alert("Invalid URL");
-        return false;
-      }
-      return true;
-    };
-    if (!checkURL()) return;
-
-    setLoading(true);
-
-    try {
-      // 1️⃣ Start or resume audit
-      const res = await fetch("http://localhost:2000/audit/site", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          Site: inputValue,
-          Device: device,
-          Report: report,
-        }),
-      });
-
-      if (!res.ok) throw new Error("Failed to start audit");
-      const json = await res.json();
-      const auditData = json;
-
-      setData(auditData); // save in state + localStorage
-
-      // 2️⃣ Start live polling
-      startLiveFetch(auditData._id);
-    } catch (err) {
-      console.error("Error fetching data:", err);
-      alert("Something went wrong!");
-    } finally {
-      setLoading(false);
+  const checkURL = () => {
+    if (inputValue.includes(" ") || !inputValue.includes(".")) {
+      alert("Invalid URL");
+      return false;
     }
+    return true;
   };
+  if (!checkURL()) return;
+
+  setLoading(true);
+
+  try {
+    // 1️⃣ Start or resume audit
+    const res = await fetch("http://localhost:2000/audit/site", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        Site: inputValue,
+        Device: device,
+        Report: report,
+      }),
+    });
+
+    if (!res.ok) throw new Error("Failed to start audit");
+
+    const auditData = await res.json();
+    setData(auditData); // save in state + localStorage
+
+    // 2️⃣ ✅ Check if already completed
+    if (auditData.Status === "completed") {
+      // console.log("✅ Audit already completed — skipping live polling.");
+    } else {
+      // console.log("⏳ Starting live updates...");
+      startLiveFetch(auditData._id);
+    }
+  } catch (err) {
+    console.error("Error fetching data:", err);
+    alert("Something went wrong!");
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
   // ✅ Function to fetch live updates every 1 seconds
   const startLiveFetch = (id) => {

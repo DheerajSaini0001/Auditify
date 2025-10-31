@@ -24,14 +24,15 @@ const UrlHeader = ({darkMode }) => {
         className={`${sectionText} sm:text-xl lg:text-3xl mb-3 sm:mb-0 text-center sm:text-left`}
       >
         URL -{" "}
-        <a
-          href={data || "#"}
+        <Link
+          replace
+          to={data || "#"}
           target="_blank"
           rel="noopener noreferrer"
           className="text-blue-400 hover:underline"
         >
           {site|| "No Site Provided"}
-        </a>
+        </Link>
       </p>
 
       <Link to="/" replace className="w-full  sm:w-auto">

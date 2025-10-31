@@ -2,6 +2,7 @@ import React, { useContext } from "react";
 import { ThemeContext } from "../context/ThemeContext.jsx";
 import { Menu, X, Sun, Moon } from "lucide-react";
 import Assets from "../assets/Assets.js";
+import { Link } from "react-router-dom";
 
 const Navbar = ({ result, sidebarOpen, setSidebarOpen }) => {
   const { theme, toggleTheme } = useContext(ThemeContext);
@@ -30,15 +31,17 @@ const Navbar = ({ result, sidebarOpen, setSidebarOpen }) => {
 
       {/* Logo + Title */}
       <div className="flex items-center gap-3 font-serif text-2xl font-bold">
-        <a href="/">
+        <Link replace to="/">
           <img
             src={darkMode ? Assets.Logo : Assets.DarkLogo}
             alt="Site Audit Logo"
             className="sm:h-10 h-12 lg:h-14 transition-transform hover:scale-105"
           />
-        </a>
-        <a
-          href="/"
+        </Link>
+        
+        <Link
+        replace 
+          to="/"
           className={`bg-clip-text text-transparent ${
             darkMode
               ? "bg-gradient-to-r from-sky-200 via-rose-200 to-orange-200"
@@ -46,7 +49,7 @@ const Navbar = ({ result, sidebarOpen, setSidebarOpen }) => {
           }`}
         >
           Site Audits
-        </a>
+        </Link>
       </div>
 
       {/* Theme Toggle Button */}

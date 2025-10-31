@@ -24,7 +24,7 @@ export default function Dashboard2({ darkMode }) {
   const { data, loading, clearData } = useData();
   const navigate = useNavigate(); // ✅ initialize navigation
 
-  if (!data) return <div />;
+  // if (!data) return <div />;
 
   // ✅ Handle button click
  const handleCheckOther = () => {
@@ -114,7 +114,9 @@ export default function Dashboard2({ darkMode }) {
 
       {/* ✅ Overall Score */}
       <div className="bg-gradient-to-r from-indigo-200 via-blue-400 to-indigo-200 rounded-2xl shadow-xl p-6 text-center flex flex-col sm:flex-row sm:justify-center sm:items-center sm:gap-20 lg:gap-30">
-        <CircularProgress value={data?.Score ? data.Score.toFixed(0) : '-'} size={120} stroke={10} />
+        {data?.Score ?
+        <CircularProgress value={data.Score.toFixed(0)} size={120} stroke={10} />
+        : ''}
         <div>
           <h2 className="text-xl sm:text-2xl font-bold">Overall Score</h2>
           <p className="text-4xl sm:text-5xl font-extrabold mt-2">

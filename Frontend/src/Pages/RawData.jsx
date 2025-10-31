@@ -1,4 +1,4 @@
-import { FileText } from "lucide-react";
+import { FileText ,Loader2} from "lucide-react";
 import React, { useState, useContext } from "react";
 import { ThemeContext } from "../ThemeContext";
 
@@ -72,7 +72,8 @@ const RawData = ({ data ,darkMode}) => {
   const cardBg = darkMode ? "bg-gradient-to-br from-blue-900 via-gray-900 to-black" : "bg-gradient-to-br from-blue-200 via-gray-200 to-white";
 
   return (
-    <div id="Rawdata" className={`min-h-fit pt-20 pb-16 rounded-2xl shadow-lg m-4 flex flex-col items-center justify-start p-6 space-y-6 ${containerBg}`}>
+    <>
+    {data.Section_Score ?     <div id="Rawdata" className={`min-h-fit pt-20 pb-16 rounded-2xl shadow-lg m-4 flex flex-col items-center justify-start p-6 space-y-6 ${containerBg}`}>
       <h1 className={`text-3xl font-extrabold mb-6 ${darkMode ? "text-white" : "text-black"}`}>Raw Data</h1>
 
       <div className={`w-full max-w-4xl p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500 ${cardBg}`}>
@@ -94,7 +95,8 @@ const RawData = ({ data ,darkMode}) => {
           Download TXT
         </button>
       </div>
-    </div>
+    </div> : (<Loader2 size={20} className="animate-spin w-5 h-5" />)}
+</>
   );
 };
 

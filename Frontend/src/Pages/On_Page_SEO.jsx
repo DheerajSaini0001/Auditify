@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
 import { ThemeContext } from "../context/ThemeContext";
-import { Check, X } from "lucide-react";
+import { Check, X ,Loader2} from "lucide-react";
 import CircularProgress from "../Component/CircularProgress";
 import AuditDropdown from "../Component/AuditDropdown";
 import { useData } from "../context/DataContext";
@@ -25,24 +25,6 @@ export default function On_Page_SEO() {
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
 
-  // ✅ 3. Added Loading state
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen text-gray-400">
-        Loading data...
-      </div>
-    );
-  }
-
-  // ✅ 3. Added specific data check to prevent errors
-  if (!data || !data.On_Page_SEO) {
-    return (
-      <div className="flex items-center justify-center h-screen text-gray-500 dark:text-gray-400">
-        No data available. Please submit input on Home page.
-      </div>
-    );
-  }
-
   const seo = data.On_Page_SEO;
   const reportType = data?.Report;
 
@@ -59,7 +41,7 @@ export default function On_Page_SEO() {
   return (
     // ✅ 1. Added Layout structure
     <>
-    {reportType === "All" ? ( <div className="relative flex w-full h-full">
+    {seo ?(    reportType === "All" ? ( <div className="relative flex w-full h-full">
         {/* Sidebar */}
       <div
           className={`${sidebarClass} lg:translate-x-0 transition-transform duration-300 ease-in-out z-40`}
@@ -341,7 +323,8 @@ export default function On_Page_SEO() {
             title="Failed Audits"
             darkMode={darkMode}
           />
-        </main>)}
+        </main>)):(<Loader2 size={20} className="animate-spin w-5 h-5" />)}
+
      
     </>
   );

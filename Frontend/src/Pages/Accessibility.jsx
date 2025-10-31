@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
 import { ThemeContext } from "../context/ThemeContext.jsx";
-import { Check, X } from "lucide-react"; // Original imports kept
+import { Check, X ,Loader2} from "lucide-react"; // Original imports kept
 import CircularProgress from "../Component/CircularProgress";
 import AuditDropdown from "../Component/AuditDropdown";
 import { useData } from "../context/DataContext";
@@ -27,24 +27,6 @@ export default function Accessibility() {
     );
   };
 
-  // ✅ Loading state
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen text-gray-400">
-        Loading data...
-      </div>
-    );
-  }
-
-  // ✅ Kept the more specific data check from the original Accessibility file
-  if (!data || !data.Accessibility) {
-    return (
-      <div className="flex items-center justify-center h-screen text-gray-500 dark:text-gray-400">
-        No data available. Please submit input on Home page.
-      </div>
-    );
-  }
-
   // ✅ Theme styles from the template file
   const cardBg = darkMode
     ? "bg-gradient-to-br from-blue-900 via-gray-900 to-black"
@@ -56,7 +38,7 @@ export default function Accessibility() {
   // ✅ Main Layout structure adopted from the template
   return (
     <>
-      {reportType === "All" ? (
+    {data.Accessibility?      (reportType === "All" ? (
         <div className="relative flex w-full h-full">
           {/* Sidebar */}
           <div
@@ -422,7 +404,8 @@ export default function Accessibility() {
             {/* --- End of repeated content --- */}
           </div>
         </main>
-      )}
+      )): (<Loader2 size={20} className="animate-spin w-5 h-5" />)}
+
     </>
   );
 }

@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
 import { ThemeContext } from "../context/ThemeContext.jsx";
-import { Check, X } from "lucide-react";
+import { Check, X ,Loader2} from "lucide-react";
 import CircularProgress from "../Component/CircularProgress";
 import AuditDropdown from "../Component/AuditDropdown";
 import { useData } from "../context/DataContext";
@@ -27,24 +27,6 @@ export default function UX_Content_Structure() {
   const data = rawData;
   const reportType = data?.Report;
 
-  // ✅ 3. Added Loading state
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen text-gray-400">
-        Loading data...
-      </div>
-    );
-  }
-
-  // ✅ 3. Added specific data check to prevent errors
-  if (!data || !data.UX_or_Content_Structure) {
-    return (
-      <div className="flex items-center justify-center h-screen text-gray-500 dark:text-gray-400">
-        No data available. Please submit input on Home page.
-      </div>
-    );
-  }
-
   const metric = data.UX_or_Content_Structure;
 
   // ✅ Theme-based styles
@@ -60,7 +42,7 @@ export default function UX_Content_Structure() {
   return (
     // ✅ 1. Added Layout structure
     <>
-     {reportType === "All"? (<div className="relative  flex w-full h-full">
+    {metric ? (     reportType === "All"? (<div className="relative  flex w-full h-full">
         {/* Sidebar */}
        <div
           className={`${sidebarClass} lg:translate-x-0 transition-transform duration-300 ease-in-out z-40`}
@@ -266,7 +248,8 @@ export default function UX_Content_Structure() {
       darkMode={darkMode}
     />
   </div>
-</main>}
+</main>): (<Loader2 size={20} className="animate-spin w-5 h-5" />)}
+
       
     </>
   );

@@ -72,23 +72,31 @@ export const DataProvider = ({ children }) => {
     }
   };
 
-  // ✅ Function to fetch live updates every 3 seconds
+  // ✅ Function to fetch live updates every 1 seconds
   const startLiveFetch = (id) => {
     // Agar already koi interval chal raha hai, use stop karo
     if (intervalId) clearInterval(intervalId);
 
     const newInterval = setInterval(async () => {
-      try {
-        const res = await fetch(`http://localhost:2000/live/${id}`);
-        if (!res.ok) return;
-        const updated = await res.json();
-        console.log(updated);
-        
-        setData(updated);
-      } catch (err) {
-        console.error("Error getting live updates:", err);
-      }
-    }, 3000);
+  try {
+    const res = await fetch(`http://localhost:2000/live/${id}`);
+    if (!res.ok) return;
+    const updated = await res.json();
+
+    // console.log("Live Update:", updated);
+
+    // ✅ Stop live updates when audit is completed
+    if (updated.Status === "completed") {
+      clearInterval(newInterval);
+      setIntervalId(null);
+    }
+
+    setData(updated);
+  } catch (err) {
+    console.error("Error getting live updates:", err);
+  }
+}, 1000);
+
 
     setIntervalId(newInterval);
   };

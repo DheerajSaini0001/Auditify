@@ -14,22 +14,6 @@ export default function Technical_Performance() {
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen text-gray-400">
-        Loading data...
-      </div>
-    );
-  }
-
-  if (!data ) {
-    return (
-      <div className="flex items-center justify-center h-screen text-gray-500 dark:text-gray-400">
-        No data available. Please submit input on Home page.
-      </div>
-    );
-  }
-
   const metric = data;
   const reportType = data?.Report;
 

@@ -28,24 +28,6 @@ export default function AIO() {
   const data = rawData;
   const reportType = data?.Report;
 
-  // ✅ 3. Added Loading state
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen text-gray-400">
-        Loading data...
-      </div>
-    );
-  }
-
-  // ✅ 3. Added specific data check to prevent errors
-  if (!data || !data.AIO_Readiness) {
-    return (
-      <div className="flex items-center justify-center h-screen text-gray-500 dark:text-gray-400">
-        No data available. Please submit input on Home page.
-      </div>
-    );
-  }
-
   const metricData = data.AIO_Readiness;
 
   // ✅ Theme-based dynamic styles
@@ -61,7 +43,7 @@ export default function AIO() {
   return (
     // ✅ 1. Added Layout structure
     <>
-    {reportType === "All" ? ( <div className="relative flex w-full h-full">
+    {metricData ? (    reportType === "All" ? ( <div className="relative flex w-full h-full">
         {/* Sidebar */}
         <div
                   className={`${sidebarClass} lg:translate-x-0 transition-transform duration-300 ease-in-out z-40`}
@@ -97,9 +79,9 @@ export default function AIO() {
               <div className="flex justify-between items-center">
                 <span className={textColor}>Structured Data</span>
                 <ScoreBadge
-                  score={metricData.Technical_AI_Foundation.Structured_Data.Score}
+                  score={metricData.Structured_Data.Score}
                   out={
-                    metricData.Technical_AI_Foundation.Structured_Data.Score
+                    metricData.Structured_Data.Score
                       ? "Structured data is complete"
                       : "Structured data is incomplete"
                   }
@@ -110,10 +92,10 @@ export default function AIO() {
                 <span className={textColor}>Metadata Completion</span>
                 <ScoreBadge
                   score={
-                    metricData.Technical_AI_Foundation.Metadata_Complete.Score
+                    metricData.Metadata_Complete.Score
                   }
                   out={
-                    metricData.Technical_AI_Foundation.Metadata_Complete.Score
+                    metricData.Metadata_Complete.Score
                       ? "Metadata fully complete"
                       : "Metadata incomplete"
                   }
@@ -123,9 +105,9 @@ export default function AIO() {
               <div className="flex justify-between items-center">
                 <span className={textColor}>Page Load Speed</span>
                 <ScoreBadge
-                  score={metricData.Technical_AI_Foundation.Fast_Page_Load.Score}
+                  score={metricData.Fast_Page_Load.Score}
                   out={
-                    metricData.Technical_AI_Foundation.Fast_Page_Load.Score
+                    metricData.Fast_Page_Load.Score
                       ? "Pages load quickly"
                       : "Pages load slowly"
                   }
@@ -137,10 +119,10 @@ export default function AIO() {
                 <span className={textColor}>NLP-Friendly Content</span>
                 <ScoreBadge
                   score={
-                    metricData.Content_AI_Optimization.Content_NLP_Friendly.Score
+                    metricData.Content_NLP_Friendly.Score
                   }
                   out={
-                    metricData.Content_AI_Optimization.Content_NLP_Friendly.Score
+                    metricData.Content_NLP_Friendly.Score
                       ? "Content is NLP-friendly"
                       : "Content is not NLP-friendly"
                   }
@@ -151,11 +133,11 @@ export default function AIO() {
                 <span className={textColor}>Keyword & Entity Annotation</span>
                 <ScoreBadge
                   score={
-                    metricData.Content_AI_Optimization
+                    metricData
                       .Keywords_Entities_Annotated.Score
                   }
                   out={
-                    metricData.Content_AI_Optimization
+                    metricData
                       .Keywords_Entities_Annotated.Score
                       ? "Keywords/entities annotated"
                       : "Annotations missing"
@@ -167,11 +149,11 @@ export default function AIO() {
                 <span className={textColor}>Content Updates</span>
                 <ScoreBadge
                   score={
-                    metricData.Content_AI_Optimization.Content_Updated_Regularly
+                    metricData.Content_Updated_Regularly
                       .Score
                   }
                   out={
-                    metricData.Content_AI_Optimization.Content_Updated_Regularly
+                    metricData.Content_Updated_Regularly
                       .Score
                       ? "Content updated regularly"
                       : "Content rarely updated"
@@ -184,11 +166,11 @@ export default function AIO() {
                 <span className={textColor}>Behavior Tracking</span>
                 <ScoreBadge
                   score={
-                    metricData.Data_Intelligence_Integration
+                    metricData
                       .Behavior_Tracking_Implemented.Score
                   }
                   out={
-                    metricData.Data_Intelligence_Integration
+                    metricData
                       .Behavior_Tracking_Implemented.Score
                       ? "Behavior tracking implemented"
                       : "Behavior tracking missing"
@@ -200,11 +182,11 @@ export default function AIO() {
                 <span className={textColor}>Event & Goal Tracking</span>
                 <ScoreBadge
                   score={
-                    metricData.Data_Intelligence_Integration
+                    metricData
                       .Event_Goal_Tracking_Integrated.Score
                   }
                   out={
-                    metricData.Data_Intelligence_Integration
+                    metricData
                       .Event_Goal_Tracking_Integrated.Score
                       ? "Event tracking integrated"
                       : "Event tracking missing"
@@ -217,10 +199,10 @@ export default function AIO() {
                 <span className={textColor}>Dynamic Personalization</span>
                 <ScoreBadge
                   score={
-                    metricData.AI_Content_Delivery.Dynamic_Personalization.Score
+                    metricData.Dynamic_Personalization.Score
                   }
                   out={
-                    metricData.AI_Content_Delivery.Dynamic_Personalization.Score
+                    metricData.Dynamic_Personalization.Score
                       ? "Dynamic personalization enabled"
                       : "Dynamic personalization missing"
                   }
@@ -272,9 +254,9 @@ export default function AIO() {
               <div className="flex justify-between items-center">
                 <span className={textColor}>Structured Data</span>
                 <ScoreBadge
-                  score={metricData.Technical_AI_Foundation.Structured_Data.Score}
+                  score={metricData.Structured_Data.Score}
                   out={
-                    metricData.Technical_AI_Foundation.Structured_Data.Score
+                    metricData.Structured_Data.Score
                       ? "Structured data is complete"
                       : "Structured data is incomplete"
                   }
@@ -285,10 +267,10 @@ export default function AIO() {
                 <span className={textColor}>Metadata Completion</span>
                 <ScoreBadge
                   score={
-                    metricData.Technical_AI_Foundation.Metadata_Complete.Score
+                    metricData.Metadata_Complete.Score
                   }
                   out={
-                    metricData.Technical_AI_Foundation.Metadata_Complete.Score
+                    metricData.Metadata_Complete.Score
                       ? "Metadata fully complete"
                       : "Metadata incomplete"
                   }
@@ -298,9 +280,9 @@ export default function AIO() {
               <div className="flex justify-between items-center">
                 <span className={textColor}>Page Load Speed</span>
                 <ScoreBadge
-                  score={metricData.Technical_AI_Foundation.Fast_Page_Load.Score}
+                  score={metricData.Fast_Page_Load.Score}
                   out={
-                    metricData.Technical_AI_Foundation.Fast_Page_Load.Score
+                    metricData.Fast_Page_Load.Score
                       ? "Pages load quickly"
                       : "Pages load slowly"
                   }
@@ -312,10 +294,10 @@ export default function AIO() {
                 <span className={textColor}>NLP-Friendly Content</span>
                 <ScoreBadge
                   score={
-                    metricData.Content_AI_Optimization.Content_NLP_Friendly.Score
+                    metricData.Content_NLP_Friendly.Score
                   }
                   out={
-                    metricData.Content_AI_Optimization.Content_NLP_Friendly.Score
+                    metricData.Content_NLP_Friendly.Score
                       ? "Content is NLP-friendly"
                       : "Content is not NLP-friendly"
                   }
@@ -326,11 +308,11 @@ export default function AIO() {
                 <span className={textColor}>Keyword & Entity Annotation</span>
                 <ScoreBadge
                   score={
-                    metricData.Content_AI_Optimization
+                    metricData
                       .Keywords_Entities_Annotated.Score
                   }
                   out={
-                    metricData.Content_AI_Optimization
+                    metricData
                       .Keywords_Entities_Annotated.Score
                       ? "Keywords/entities annotated"
                       : "Annotations missing"
@@ -342,11 +324,11 @@ export default function AIO() {
                 <span className={textColor}>Content Updates</span>
                 <ScoreBadge
                   score={
-                    metricData.Content_AI_Optimization.Content_Updated_Regularly
+                    metricData.Content_Updated_Regularly
                       .Score
                   }
                   out={
-                    metricData.Content_AI_Optimization.Content_Updated_Regularly
+                    metricData.Content_Updated_Regularly
                       .Score
                       ? "Content updated regularly"
                       : "Content rarely updated"
@@ -359,11 +341,11 @@ export default function AIO() {
                 <span className={textColor}>Behavior Tracking</span>
                 <ScoreBadge
                   score={
-                    metricData.Data_Intelligence_Integration
+                    metricData
                       .Behavior_Tracking_Implemented.Score
                   }
                   out={
-                    metricData.Data_Intelligence_Integration
+                    metricData
                       .Behavior_Tracking_Implemented.Score
                       ? "Behavior tracking implemented"
                       : "Behavior tracking missing"
@@ -375,11 +357,11 @@ export default function AIO() {
                 <span className={textColor}>Event & Goal Tracking</span>
                 <ScoreBadge
                   score={
-                    metricData.Data_Intelligence_Integration
+                    metricData
                       .Event_Goal_Tracking_Integrated.Score
                   }
                   out={
-                    metricData.Data_Intelligence_Integration
+                    metricData
                       .Event_Goal_Tracking_Integrated.Score
                       ? "Event tracking integrated"
                       : "Event tracking missing"
@@ -392,10 +374,10 @@ export default function AIO() {
                 <span className={textColor}>Dynamic Personalization</span>
                 <ScoreBadge
                   score={
-                    metricData.AI_Content_Delivery.Dynamic_Personalization.Score
+                    metricData.Dynamic_Personalization.Score
                   }
                   out={
-                    metricData.AI_Content_Delivery.Dynamic_Personalization.Score
+                    metricData.Dynamic_Personalization.Score
                       ? "Dynamic personalization enabled"
                       : "Dynamic personalization missing"
                   }
@@ -420,7 +402,8 @@ export default function AIO() {
             title="Failed Audits"
             darkMode={darkMode}
           />
-        </main>)}
+        </main>)):(<Loader2 size={20} className="animate-spin w-5 h-5" />)}
+
      
     </>
   );

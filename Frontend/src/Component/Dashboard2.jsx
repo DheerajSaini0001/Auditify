@@ -93,14 +93,16 @@ export default function Dashboard2({ darkMode }) {
             darkMode ? "text-white" : "text-black"
           } sm:text-xl lg:text-3xl`}
         >
+          
           URL -{" "}
-          <a
-            href={`${data.Site}`}
+          <Link
+          replace
+            to={`${data.Site}`}
             target="_blank"
             className="text-blue-400 hover:underline"
           >
             {data.Site}
-          </a>
+          </Link>
         </p>
 
       <button

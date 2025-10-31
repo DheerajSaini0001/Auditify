@@ -1,33 +1,44 @@
-import React, { useState, useContext } from "react";
-import { Loader2,  Search } from "lucide-react";
+import React, { useState, useContext, useEffect } from "react"; // 👈 useEffect import karein
+import { Loader2, Search } from "lucide-react";
 import { useData } from "../context/DataContext.jsx";
-import { replace, useNavigate } from "react-router-dom";
-import { ThemeContext } from "../context/ThemeContext.jsx"; // 👈 import theme context
+import { useNavigate } from "react-router-dom"; // 👈 'replace' yahan zaroori nahi hai
+import { ThemeContext } from "../context/ThemeContext.jsx";
 import Assets from "../assets/Assets.js";
 
-export default function DarkCard({ setData }) {
-  const { fetchData, data, loading } = useData(); // ✅ context se data aur function aa raha hai
-  const { theme } = useContext(ThemeContext); // 👈 get theme from context
-  const darkMode = theme === "dark"; // 👈 easy boolean
+export default function DarkCard({ setData }) { // 'setData' prop yahan hai par istemaal nahi ho raha, shayad ise hata sakte hain
+  const { fetchData, data, loading } = useData();
+  const { theme } = useContext(ThemeContext);
+  const darkMode = theme === "dark";
   const [inputValue, setInputValue] = useState("");
   const navigate = useNavigate();
-  const [device, setDevice] = useState("Desktop");
+  const [device, setDevice] = useState("Desktop"); // ✅ YAHAN FIX KIYA HAI
   const [report, setReport] = useState("All");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [error, setError] = useState(null); // 👈 alert() ki jagah error message ke liye state
 
   // ✅ Handle form submission
   const handleClick = async (e) => {
     e.preventDefault();
-     if (!inputValue || inputValue.trim() === "") {
-    alert("Please enter a URL before proceeding!");
-    return; // ❌ stops function here
-  }
-    await fetchData(inputValue, device, report); // context ke function se data fetch
-    if (data) {
-      navigate("/report",replace); // ✅ navigate to report page
+    setError(null); // Har click par purana error hata dein
+
+    if (!inputValue || inputValue.trim() === "") {
+      setError("Please enter a URL before proceeding!"); // 👈 alert() ko isse replace kiya
+      return;
     }
-    setInputValue("");
+    
+    // Sirf data fetch karein. Navigation yahan nahi hoga.
+    await fetchData(inputValue, device, report);
   };
+
+  // ✅ YEH HAI FIX:
+  // Yeh effect tab chalega jab bhi 'data', 'loading', ya 'navigate' badlenge
+  useEffect(() => {
+    // Check karein ki loading poori ho gayi hai (false) aur data aa gaya hai (null nahi hai)
+    if (!loading && data) {
+      navigate("/report", { replace: true }); // ✅ Ab navigate karein
+      setInputValue(""); // Input ko successful navigation ke baad clear karein
+    }
+  }, [data, loading, navigate]); // 👈 Dependency array
 
   // --- Theme-aware classes ---
   const containerClass = darkMode
@@ -38,6 +49,7 @@ export default function DarkCard({ setData }) {
     ? "flex-1 w-full pl-10 pr-4 rounded-4xl py-2 bg-gray-800 border border-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none text-white"
     : "flex-1 w-full pl-10 pr-4 rounded-4xl py-2 bg-gray-200 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:outline-none text-black";
 
+  // ... (baaki sidebarClass etc. same rahega)
   const sidebarClass = darkMode
     ? "fixed left-0 w-64 h-[calc(100vh-4rem)] overflow-x-hidden overflow-y-hidden bg-gray-900 border-r border-gray-700 transform"
     : "fixed left-0 w-64 h-[calc(100vh-4rem)] overflow-x-hidden overflow-y-hidden bg-gray-100 border-r border-gray-300 transform";
@@ -66,13 +78,12 @@ export default function DarkCard({ setData }) {
             }`}
           >
             Enter URL in the input below, select a device, and click Analyze.
-            
           </p>
 
           <div className="mx-auto w-full">
             <form
               className="flex flex-col sm:flex-col gap-4 items-center w-full"
-              onSubmit={handleClick}
+              onSubmit={handleClick} // 👈 onSubmit bhi handleClick ko call kar sakta hai
             >
               {/* Input and dropdowns */}
               <div className="flex flex-col sm:flex-row gap-3 w-full">
@@ -89,6 +100,8 @@ export default function DarkCard({ setData }) {
                     onChange={(e) => setInputValue(e.target.value)}
                     placeholder="Enter URL here..."
                     className={inputClass}
+                  Multi-line license agreement
+                    with a blank line
                   />
                 </div>
 
@@ -119,12 +132,20 @@ export default function DarkCard({ setData }) {
                   }`}
                 >
                   <option value="All">🌐 All</option>
-                  <option value="technicalMetrics">📊 Technical Performance</option>
+                  <option value="technicalMetrics">
+                    📊 Technical Performance
+                  </option>
                   <option value="seoMetrics">📃 On-Page SEO</option>
                   <option value="accessibilityMetrics">♿ Accessibility</option>
-                  <option value="securityCompliance">🔒 Security Compliance</option>
-                  <option value="uxContentStructure">🗂️ UX Content Structure</option>
-                  <option value="conversionLeadFlow">🔄 Conversion & Lead Flow</option>
+                  <option value="securityCompliance">
+                    🔒 Security Compliance
+                  </option>
+                  <option value="uxContentStructure">
+                    🗂️ UX Content Structure
+                  </option>
+                  <option value="conversionLeadFlow">
+                    🔄 Conversion & Lead Flow
+                  </option>
                   <option value="aioReadiness">🤖 AIO</option>
                 </select>
               </div>
@@ -132,8 +153,8 @@ export default function DarkCard({ setData }) {
               {/* Analyze Button */}
               <div className="sm:w-48">
                 <button
-                  type="button" // 👈 important: button type must NOT be "submit"
-                  onClick={handleClick}
+                  type="button" // Type "button" rakhein taaki form submit na ho
+                  onClick={handleClick} // 👈 Click event yahan hai
                   disabled={loading}
                   className="flex border-black border-2 gap-2 items-center justify-center bg-[#c2fbd7] text-green-700 rounded-full font-sans w-full px-16 py-2 text-base shadow-2xl select-none transition duration-250 hover:shadow-lg active:scale-[1.05] active:-rotate-1 sm:w-auto"
                 >
@@ -142,9 +163,16 @@ export default function DarkCard({ setData }) {
                 </button>
               </div>
             </form>
+            
+            {/* ✅ Error message yahan dikhayein */}
+            {error && (
+              <p className="text-red-500 text-center mt-4">{error}</p>
+            )}
+
           </div>
         </div>
       </div>
     </div>
   );
 }
+

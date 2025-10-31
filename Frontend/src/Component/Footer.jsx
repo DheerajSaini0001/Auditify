@@ -1,5 +1,6 @@
 import React, { useContext } from "react";
 import { ThemeContext } from "../context/ThemeContext.jsx";
+import { Link } from "react-router-dom";
 
 export default function Footer() {
   const { theme } = useContext(ThemeContext);
@@ -17,22 +18,23 @@ export default function Footer() {
     <footer className={footerClass}>
       <div className="container ml-64 w-full mx-auto px-4 flex flex-col md:flex-row justify-between items-center">
         <p className="text-sm">
-          <a className={linkHoverClass} href="https://www.sltechsoft.com" target="_blank" rel="noopener noreferrer">
+          <Link replace className={linkHoverClass} to="https://www.sltechsoft.com" target="_blank" rel="noopener noreferrer">
             &copy; {new Date().getFullYear()} Success Leader Technologies.
-          </a>{" "}
+          </Link>{" "}
           All rights reserved.
         </p>
 
         <div className="flex space-x-6 mt-4 md:mt-0">
-          <a href="/about" className={linkHoverClass}>
+          <Link replace to="/about" className={linkHoverClass}>
             About
-          </a>
-          <a href="https://sltechsoft.com/service" className={linkHoverClass}>
+          </Link>
+          <Link replace to="https://sltechsoft.com/service" className={linkHoverClass}>
             Services
-          </a>
-          <a href="https://sltechsoft.com/" className={linkHoverClass}>
+          </Link>
+          <Link replace to="https://sltechsoft.com/" className={linkHoverClass}>
             Contact
-          </a>
+          </Link>
+        
         </div>
       </div>
     </footer>

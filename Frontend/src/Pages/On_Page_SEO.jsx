@@ -88,7 +88,6 @@ function OnPageSeoSkeleton({ darkMode, reportType }) {
       {/* Audit Dropdowns Skeleton (x3) */}
       <SkeletonDropdown />
       <SkeletonDropdown />
-      <SkeletonDropdown />
     </>
   );
 

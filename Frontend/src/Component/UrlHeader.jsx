@@ -20,8 +20,12 @@ const UrlHeader = ({ darkMode }) => {
     : "bg-green-400 hover:bg-green-500 text-black";
     
   return (
+    <>
+    <div className={`flex flex-col justify-center items-center ${cardBorder}`}>
+
+    
     <div
-      className={`flex flex-col sm:flex-row m-6 justify-between items-center p-4 rounded-lg border ${cardBg} ${cardBorder}`}
+      className={`flex flex-col sm:flex-row m-6 gap-14 justify-between items-center p-4 rounded-lg border `}
     >
       {/* Left Section: URL and new details */}
       <div className="flex flex-col gap-3 mb-4 sm:mb-0 text-center sm:text-left w-full sm:w-auto">
@@ -43,7 +47,23 @@ const UrlHeader = ({ darkMode }) => {
         </p>
 
         {/* --- NEW: Additional Info Section --- */}
-        <div className="flex flex-col sm:flex-row sm:gap-6 justify-center sm:justify-start">
+       
+        {/* --- End of New Section --- */}
+
+      </div>
+
+      {/* Right Section: Button (existing) */}
+      <Link to="/" replace className="w-full sm:w-auto sm:ml-4 flex-shrink-0">
+        <button
+          onClick={clearData}
+          className={`font-semibold flex gap-2 justify-center items-center w-full sm:w-auto px-3 py-2 lg:px-4 lg:py-2 rounded-xl shadow-md transition ${btnBg}`}
+        >
+          <NotebookPen size={20} /> Check for Other
+        </button>
+      </Link>
+      
+    </div>
+     <div className="flex flex-col items-center  sm:flex-row sm:gap-6 justify-center sm:justify-start">
           
           {/* Report Type */}
           <div className="flex items-center gap-2 justify-center sm:justify-start">
@@ -65,20 +85,8 @@ const UrlHeader = ({ darkMode }) => {
             </span>
           </div>
         </div>
-        {/* --- End of New Section --- */}
-
-      </div>
-
-      {/* Right Section: Button (existing) */}
-      <Link to="/" replace className="w-full sm:w-auto sm:ml-4 flex-shrink-0">
-        <button
-          onClick={clearData}
-          className={`font-semibold flex gap-2 justify-center items-center w-full sm:w-auto px-3 py-2 lg:px-4 lg:py-2 rounded-xl shadow-md transition ${btnBg}`}
-        >
-          <NotebookPen size={20} /> Check for Other
-        </button>
-      </Link>
-    </div>
+        </div>
+        </>
   );
 };
 

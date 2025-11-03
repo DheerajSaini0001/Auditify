@@ -1,6 +1,7 @@
 import React, { useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import { useData } from "../context/DataContext";
-import { ThemeContext } from "../context/ThemeContext"; // ✅ import ThemeContext
+import { ThemeContext } from "../context/ThemeContext";
 import Sidebar from "../Component/Sidebar";
 import Dashboard2 from "../Component/Dashboard2";
 import Technical_Performance from "./Technical_Performance";
@@ -12,27 +13,61 @@ import Conversion_Lead_Flow from "./Conversion_Lead_Flow";
 import AIO from "./AIO";
 import RawData from "./RawData";
 import UrlHeader from "../Component/UrlHeader";
+import { Loader2 } from "lucide-react";
 
 const ReportLayout = ({ sidebarOpen, setSidebarOpen }) => {
-  const { data } = useData();
-  const { theme } = useContext(ThemeContext); // ✅ access theme from context
-
-  // Convert theme into boolean for styling consistency
+  const { data, clearData } = useData();
+  const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
+  const navigate = useNavigate();
 
+  const handleCheckOther = () => {
+    clearData();
+    navigate("/", { replace: true });
+    setTimeout(() => {
+      window.history.pushState(null, "", window.location.href);
+    }, 100);
+  };
+
+  // --- 1️⃣ If no data available ---
   if (!data) {
     return (
-      <div className="flex items-center justify-center h-screen text-gray-500 dark:text-gray-400">
+      <div className="flex flex-col items-center justify-center h-screen text-gray-500 dark:text-gray-400">
         <p>No data available. Please analyze a site first.</p>
       </div>
     );
   }
 
+  // --- 2️⃣ If audit failed ---
+  if (data.Status === "failed") {
+    return (
+      <div
+        className={`flex flex-col items-center justify-center h-screen text-center space-y-6 ${
+          darkMode ? "text-gray-100" : "text-gray-800"
+        }`}
+      >
+        <p className="text-2xl font-bold text-red-500">⚠️ Data Fetching Failed</p>
+        <p className="max-w-md text-gray-500 dark:text-gray-400">
+          The audit could not complete for this URL. This may be due to a network
+          issue, invalid URL, or the target site being unreachable.  
+          Please check your connection or try another website.
+        </p>
+        <button
+          onClick={handleCheckOther}
+          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200"
+        >
+          🔄 Check Another Website
+        </button>
+      </div>
+    );
+  }
+
+  // --- 3️⃣ Default: Show report data (any non-failed status) ---
   const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray-900 shadow-lg`;
 
   return (
     <>
-      {/* --- STATE 1: "ALL REPORTS" --- */}
+      {/* --- STATE 1: ALL REPORTS --- */}
       {data.Report === "All" && (
         <div className="relative flex w-full h-full">
           {/* Sidebar */}
@@ -44,7 +79,7 @@ const ReportLayout = ({ sidebarOpen, setSidebarOpen }) => {
             <Sidebar darkMode={darkMode} />
           </div>
 
-          {/* Overlay for mobile when sidebar is open */}
+          {/* Overlay for mobile */}
           {sidebarOpen && (
             <div
               className="fixed inset-0 bg-black/50 z-30 lg:hidden"
@@ -55,12 +90,13 @@ const ReportLayout = ({ sidebarOpen, setSidebarOpen }) => {
           {/* Main content */}
           <main
             className={`flex-1 lg:ml-64 flex flex-col pb-0 pr-4 pl-4 lg:pl-0 space-y-8 ${
-              darkMode ? " text-gray-100" : " text-gray-800"
+              darkMode ? "text-gray-100" : "text-gray-800"
             }`}
           >
             <section id="dashboard" className="scroll-mt-20">
               <Dashboard2 darkMode={darkMode} />
             </section>
+
             <section id="rawdata" className="scroll-mt-20">
               <RawData darkMode={darkMode} data={data.Raw} />
             </section>
@@ -72,18 +108,16 @@ const ReportLayout = ({ sidebarOpen, setSidebarOpen }) => {
       {data.Report !== "All" && (
         <div
           className={`relative flex w-full h-full justify-center px-4 ${
-            darkMode ? " text-gray-100" : " text-gray-800"
+            darkMode ? "text-gray-100" : "text-gray-800"
           }`}
         >
-          <main className="flex-1  flex flex-col pb-0 space-y-8 max-w-7xl">
+          <main className="flex-1 flex flex-col pb-0 space-y-8 max-w-7xl">
             <UrlHeader darkMode={darkMode} />
 
             {data.Report === "technicalMetrics" && (
               <Technical_Performance darkMode={darkMode} />
             )}
-            {data.Report === "seoMetrics" && (
-              <On_Page_SEO darkMode={darkMode} />
-            )}
+            {data.Report === "seoMetrics" && <On_Page_SEO darkMode={darkMode} />}
             {data.Report === "accessibilityMetrics" && (
               <Accessibility darkMode={darkMode} />
             )}
@@ -96,9 +130,7 @@ const ReportLayout = ({ sidebarOpen, setSidebarOpen }) => {
             {data.Report === "conversionLeadFlow" && (
               <Conversion_Lead_Flow darkMode={darkMode} />
             )}
-            {data.Report === "aioReadiness" && (
-              <AIO darkMode={darkMode} />
-            )}
+            {data.Report === "aioReadiness" && <AIO darkMode={darkMode} />}
           </main>
         </div>
       )}

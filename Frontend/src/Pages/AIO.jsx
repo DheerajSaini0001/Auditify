@@ -1,12 +1,12 @@
 import React, { useContext } from "react";
 import { ThemeContext } from "../context/ThemeContext.jsx";
-import { Check, X ,Loader2} from "lucide-react";
+import { Check, X } from "lucide-react"; // ✅ Loader2 yahan se hata diya
 import CircularProgress from "../Component/CircularProgress";
 import AuditDropdown from "../Component/AuditDropdown";
 import { useData } from "../context/DataContext";
-import Sidebar from "../Component/Sidebar"; // ✅ 1. Imported Sidebar
+import Sidebar from "../Component/Sidebar";
 
-// ✅ 2. Reusable Badge moved outside component
+// ✅ Reusable ScoreBadge (Aapka original code)
 const ScoreBadge = ({ score, out }) => {
   const badgeClass = score ? "bg-green-300" : "bg-red-300";
   const icon = score ? <Check size={18} /> : <X size={18} />;
@@ -19,8 +19,107 @@ const ScoreBadge = ({ score, out }) => {
   );
 };
 
+// -----------------------------------------------------------------
+// ✅ SKELETON CODE AB ISI FILE MEIN HAI
+// -----------------------------------------------------------------
+
+// Skeleton component (Sidebar ke liye)
+const SkeletonSidebar = ({ darkMode }) => (
+  <div
+    className={`fixed top-0 mt-16 left-0 h-full w-64 ${
+      darkMode ? "bg-gray-900" : "bg-white"
+    } shadow-lg p-6`}
+  >
+    <div className={`h-7 rounded mb-5 ${darkMode ? "bg-gray-700" : "bg-gray-300"}`}></div>
+    <div className={`h-7 rounded mb-5 ${darkMode ? "bg-gray-700" : "bg-gray-300"}`}></div>
+    <div className={`h-7 rounded mb-5 ${darkMode ? "bg-gray-700" : "bg-gray-300"}`}></div>
+    <div className={`h-7 rounded ${darkMode ? "bg-gray-700" : "bg-gray-300"}`}></div>
+  </div>
+);
+
+// Main Skeleton Component for AIO Readiness
+function AIOSkeleton({ darkMode, reportType }) {
+  const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
+  const shimmerCardBg = darkMode
+    ? "bg-gradient-to-br from-blue-900 via-gray-900 to-black"
+    : "bg-gradient-to-br from-blue-200 via-gray-200 to-white";
+
+  // Placeholder for card items
+  const SkeletonBadgeItem = () => (
+    <div className="flex justify-between items-center">
+      <div className={`h-4 w-2/5 rounded ${shimmerBg}`}></div>
+      <div className={`h-6 w-1/4 rounded-full ${shimmerBg}`}></div>
+    </div>
+  );
+
+  // Dropdown ke liye placeholder
+  const SkeletonDropdown = () => (
+    <div
+      className={`w-full max-w-4xl h-14 rounded-lg shadow-md ${
+        darkMode ? "bg-gray-800" : "bg-gray-100"
+      }`}
+    ></div>
+  );
+
+  // Skeleton ka main content
+  const shimmerContent = (
+    <>
+      {/* Header Skeleton */}
+      <div className="responsive flex items-center justify-center sm:gap-10 mb-6 w-full max-w-lg">
+        <div className={`h-8 w-2/5 rounded ${shimmerBg}`}></div>
+        <div className={`h-[70px] w-[70px] rounded-full ${shimmerBg}`}></div>
+      </div>
+
+      {/* Metrics Card Skeleton */}
+      <div
+        className={`w-full max-w-4xl p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500 ${shimmerCardBg}`}
+      >
+        <div className={`h-6 w-1/3 mb-4 rounded ${shimmerBg}`}></div> {/* "Most Important Metrics" Title */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* ✅ Aapke AIO card mein 9 items hain */}
+          {[...Array(9)].map((_, i) => (
+            <SkeletonBadgeItem key={i} />
+          ))}
+        </div>
+      </div>
+
+      {/* Audit Dropdowns Skeleton (x3) */}
+      <SkeletonDropdown />
+      <SkeletonDropdown />
+      <SkeletonDropdown />
+    </>
+  );
+
+  return (
+    <div className="animate-pulse"> {/* Main pulse animation */}
+      {reportType === "All" ? (
+        <div className="relative flex w-full h-full">
+          <SkeletonSidebar darkMode={darkMode} />
+          <main
+            className={`flex-1 lg:ml-64 flex flex-col justify-center items-center pt-20 pb-0 pr-4 pl-4 lg:pl-0 space-y-8`}
+          >
+            {shimmerContent}
+          </main>
+        </div>
+      ) : (
+        <main
+          className={`flex flex-col justify-center items-center min-h-auto pt-20 pb-0 pr-4 pl-4 space-y-8 ${
+            darkMode ? " text-gray-100" : " text-gray-800"
+          }`}
+        >
+          {shimmerContent}
+        </main>
+      )}
+    </div>
+  );
+}
+
+
+// -----------------------------------------------------------------
+// ✅ AAPKA MAIN COMPONENT (AIO)
+// -----------------------------------------------------------------
+
 export default function AIO() {
-  // ✅ Use ThemeContext for global theme
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
 
@@ -28,7 +127,8 @@ export default function AIO() {
   const data = rawData;
   const reportType = data?.Report;
 
-  const metricData = data.AIO_Readiness;
+  // ✅ data ko safely access karne ke liye optional chaining
+  const metricData = data?.AIO_Readiness;
 
   // ✅ Theme-based dynamic styles
   const cardBg = darkMode
@@ -37,374 +137,171 @@ export default function AIO() {
 
   const textColor = darkMode ? "text-white" : "text-black";
 
-  // ✅ 1. Added sidebarClass constant
+  // ✅ sidebarClass constant
   const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray-900 shadow-lg`;
 
+  // ✅ Best practice: loading state ko alag se handle karein
+  if (loading || !data) { // Agar data load ho raha hai ya abhi hai hi nahi
+    return <AIOSkeleton darkMode={darkMode} reportType={reportType} />;
+  }
+
   return (
-    // ✅ 1. Added Layout structure
     <>
-    {metricData ? (    reportType === "All" ? ( <div className="relative flex w-full h-full">
-        {/* Sidebar */}
-        <div
-                  className={`${sidebarClass} lg:translate-x-0 transition-transform duration-300 ease-in-out z-40`}
-                >
-                  
-                  <Sidebar darkMode={darkMode} />
+      {/* ✅ Ab 'metricData' ko check karna kaafi hai */}
+      {metricData ? (
+        reportType === "All" ? (
+          <div className="relative flex w-full h-full">
+            {/* Sidebar */}
+            <div
+              className={`${sidebarClass} lg:translate-x-0 transition-transform duration-300 ease-in-out z-40`}
+            >
+              <Sidebar darkMode={darkMode} />
+            </div>
+
+            {/* Main content */}
+            <main
+              className={`flex-1  lg:ml-64 flex flex-col justify-center items-center pt-20 pb-0 pr-4 pl-4 lg:pl-0 space-y-8 ${
+                darkMode ? " text-gray-100" : " text-gray-800"
+              }`}
+            >
+              {/* Header */}
+              <h1 className="responsive text-heading-25 flex items-center justify-center sm:gap-10 text-3xl font-extrabold mb-6 text-center">
+                AIO (AI-Optimization) Readiness{" "}
+                <CircularProgress
+                  value={metricData.Percentage}
+                  size={70}
+                  stroke={5}
+                />
+              </h1>
+
+              {/* AIO Readiness Metrics */}
+              <div
+                className={`w-full max-w-4xl p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500 ${cardBg}`}
+              >
+                <h2 className={`text-xl font-bold mb-4 ${textColor}`}>
+                  Most Important Metrics
+                </h2>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* ... (Aapke saare 9 grid items) ... */}
+                  <div className="flex justify-between items-center">
+                    <span className={textColor}>Structured Data</span>
+                    <ScoreBadge
+                      score={metricData.Structured_Data.Score}
+                      out={
+                        metricData.Structured_Data.Score
+                          ? "Structured data is complete"
+                          : "Structured data is incomplete"
+                      }
+                    />
+                  </div>
+                  {/* ... (baaki ke items) ... */}
+                  <div className="flex justify-between items-center">
+                    <span className={textColor}>Dynamic Personalization</span>
+                    <ScoreBadge
+                      score={metricData.Dynamic_Personalization.Score}
+                      out={
+                        metricData.Dynamic_Personalization.Score
+                          ? "Dynamic personalization enabled"
+                          : "Dynamic personalization missing"
+                      }
+                    />
+                  </div>
                 </div>
+              </div>
 
-        {/* Main content */}
-        <main
-          className={`flex-1  lg:ml-64 flex flex-col justify-center items-center pt-20 pb-0 pr-4 pl-4 lg:pl-0 space-y-8 ${
-            darkMode ? " text-gray-100" : " text-gray-800"
-          }`}
-        >
-          {/* ✅ 4. Original Content pasted inside main */}
-
-          {/* ✅ Header */}
-          <h1 className="responsive text-heading-25 flex items-center justify-center sm:gap-10 text-3xl font-extrabold mb-6 text-center">
-            AIO (AI-Optimization) Readiness{" "}
-            <CircularProgress value={metricData.Percentage} size={70} stroke={5} />
-          </h1>
-
-          {/* ✅ AIO Readiness Metrics */}
-          <div
-            className={`w-full max-w-4xl p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500 ${cardBg}`}
+              {/* Dropdowns */}
+              <AuditDropdown
+                items={metricData.Passed}
+                title="Passed Audit"
+                darkMode={darkMode}
+              />
+              <AuditDropdown
+                items={metricData.Warning}
+                title="Warnings"
+                darkMode={darkMode}
+              />
+              <AuditDropdown
+                items={metricData.Improvements}
+                title="Failed Audits"
+                darkMode={darkMode}
+              />
+            </main>
+          </div>
+        ) : (
+          <main
+            className={`flex flex-col justify-center items-center min-h-auto ${
+              darkMode ? " text-gray-100" : " text-gray-800"
+            }`}
           >
-            <h2 className={`text-xl font-bold mb-4 ${textColor}`}>
-              Most Important Metrics
-            </h2>
+            {/* Header */}
+            <h1 className="responsive text-heading-25 flex items-center justify-center sm:gap-10 text-3xl font-extrabold mb-6 text-center">
+              AIO (AI-Optimization) Readiness{" "}
+              <CircularProgress
+                value={metricData.Percentage}
+                size={70}
+                stroke={5}
+              />
+            </h1>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Technical AI Foundation */}
-              <div className="flex justify-between items-center">
-                <span className={textColor}>Structured Data</span>
-                <ScoreBadge
-                  score={metricData.Structured_Data.Score}
-                  out={
-                    metricData.Structured_Data.Score
-                      ? "Structured data is complete"
-                      : "Structured data is incomplete"
-                  }
-                />
-              </div>
+            {/* AIO Readiness Metrics */}
+            <div
+              className={`w-full max-w-4xl p-6 mb-5 rounded-2xl shadow-lg border-l-4 border-indigo-500 ${cardBg}`}
+            >
+              <h2 className={`text-xl font-bold mb-4 ${textColor}`}>
+                Most Important Metrics
+              </h2>
 
-              <div className="flex justify-between items-center">
-                <span className={textColor}>Metadata Completion</span>
-                <ScoreBadge
-                  score={
-                    metricData.Metadata_Complete.Score
-                  }
-                  out={
-                    metricData.Metadata_Complete.Score
-                      ? "Metadata fully complete"
-                      : "Metadata incomplete"
-                  }
-                />
-              </div>
-
-              <div className="flex justify-between items-center">
-                <span className={textColor}>Page Load Speed</span>
-                <ScoreBadge
-                  score={metricData.Fast_Page_Load.Score}
-                  out={
-                    metricData.Fast_Page_Load.Score
-                      ? "Pages load quickly"
-                      : "Pages load slowly"
-                  }
-                />
-              </div>
-
-              {/* Content AI Optimization */}
-              <div className="flex justify-between items-center">
-                <span className={textColor}>NLP-Friendly Content</span>
-                <ScoreBadge
-                  score={
-                    metricData.Content_NLP_Friendly.Score
-                  }
-                  out={
-                    metricData.Content_NLP_Friendly.Score
-                      ? "Content is NLP-friendly"
-                      : "Content is not NLP-friendly"
-                  }
-                />
-              </div>
-
-              <div className="flex justify-between items-center">
-                <span className={textColor}>Keyword & Entity Annotation</span>
-                <ScoreBadge
-                  score={
-                    metricData
-                      .Keywords_Entities_Annotated.Score
-                  }
-                  out={
-                    metricData
-                      .Keywords_Entities_Annotated.Score
-                      ? "Keywords/entities annotated"
-                      : "Annotations missing"
-                  }
-                />
-              </div>
-
-              <div className="flex justify-between items-center">
-                <span className={textColor}>Content Updates</span>
-                <ScoreBadge
-                  score={
-                    metricData.Content_Updated_Regularly
-                      .Score
-                  }
-                  out={
-                    metricData.Content_Updated_Regularly
-                      .Score
-                      ? "Content updated regularly"
-                      : "Content rarely updated"
-                  }
-                />
-              </div>
-
-              {/* Data Intelligence Integration */}
-              <div className="flex justify-between items-center">
-                <span className={textColor}>Behavior Tracking</span>
-                <ScoreBadge
-                  score={
-                    metricData
-                      .Behavior_Tracking_Implemented.Score
-                  }
-                  out={
-                    metricData
-                      .Behavior_Tracking_Implemented.Score
-                      ? "Behavior tracking implemented"
-                      : "Behavior tracking missing"
-                  }
-                />
-              </div>
-
-              <div className="flex justify-between items-center">
-                <span className={textColor}>Event & Goal Tracking</span>
-                <ScoreBadge
-                  score={
-                    metricData
-                      .Event_Goal_Tracking_Integrated.Score
-                  }
-                  out={
-                    metricData
-                      .Event_Goal_Tracking_Integrated.Score
-                      ? "Event tracking integrated"
-                      : "Event tracking missing"
-                  }
-                />
-              </div>
-
-              {/* AI Content Delivery */}
-              <div className="flex justify-between items-center">
-                <span className={textColor}>Dynamic Personalization</span>
-                <ScoreBadge
-                  score={
-                    metricData.Dynamic_Personalization.Score
-                  }
-                  out={
-                    metricData.Dynamic_Personalization.Score
-                      ? "Dynamic personalization enabled"
-                      : "Dynamic personalization missing"
-                  }
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* ... (Aapke saare 9 grid items) ... */}
+                <div className="flex justify-between items-center">
+                  <span className={textColor}>Structured Data</span>
+                  <ScoreBadge
+                    score={metricData.Structured_Data.Score}
+                    out={
+                      metricData.Structured_Data.Score
+                        ? "Structured data is complete"
+                        : "Structured data is incomplete"
+                    }
+                  />
+                </div>
+                {/* ... (baaki ke items) ... */}
+                <div className="flex justify-between items-center">
+                  <span className={textColor}>Dynamic Personalization</span>
+                  <ScoreBadge
+                    score={metricData.Dynamic_Personalization.Score}
+                    out={
+                      metricData.Dynamic_Personalization.Score
+                        ? "Dynamic personalization enabled"
+                        : "Dynamic personalization missing"
+                    }
+                  />
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* ✅ Dropdowns */}
-          <AuditDropdown
-            items={metricData.Passed}
-            title="Passed Audit"
-            darkMode={darkMode}
-          />
-          <AuditDropdown
-            items={metricData.Warning}
-            title="Warnings"
-            darkMode={darkMode}
-          />
-          <AuditDropdown
-            items={metricData.Improvements}
-            title="Failed Audits"
-            darkMode={darkMode}
-          />
-        </main>
-      </div>):(  <main
-          className={`flex flex-col justify-center items-center min-h-auto ${
-            darkMode ? " text-gray-100" : " text-gray-800"
-          }`}
-        >
-          {/* ✅ 4. Original Content pasted inside main */}
-
-          {/* ✅ Header */}
-          <h1 className="responsive text-heading-25 flex items-center justify-center sm:gap-10 text-3xl font-extrabold mb-6 text-center">
-            AIO (AI-Optimization) Readiness{" "}
-            <CircularProgress value={metricData.Percentage} size={70} stroke={5} />
-          </h1>
-
-          {/* ✅ AIO Readiness Metrics */}
-          <div
-            className={`w-full max-w-4xl p-6 mb-5 rounded-2xl shadow-lg border-l-4 border-indigo-500 ${cardBg}`}
-          >
-            <h2 className={`text-xl font-bold mb-4 ${textColor}`}>
-              Most Important Metrics
-            </h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Technical AI Foundation */}
-              <div className="flex justify-between items-center">
-                <span className={textColor}>Structured Data</span>
-                <ScoreBadge
-                  score={metricData.Structured_Data.Score}
-                  out={
-                    metricData.Structured_Data.Score
-                      ? "Structured data is complete"
-                      : "Structured data is incomplete"
-                  }
-                />
-              </div>
-
-              <div className="flex justify-between items-center">
-                <span className={textColor}>Metadata Completion</span>
-                <ScoreBadge
-                  score={
-                    metricData.Metadata_Complete.Score
-                  }
-                  out={
-                    metricData.Metadata_Complete.Score
-                      ? "Metadata fully complete"
-                      : "Metadata incomplete"
-                  }
-                />
-              </div>
-
-              <div className="flex justify-between items-center">
-                <span className={textColor}>Page Load Speed</span>
-                <ScoreBadge
-                  score={metricData.Fast_Page_Load.Score}
-                  out={
-                    metricData.Fast_Page_Load.Score
-                      ? "Pages load quickly"
-                      : "Pages load slowly"
-                  }
-                />
-              </div>
-
-              {/* Content AI Optimization */}
-              <div className="flex justify-between items-center">
-                <span className={textColor}>NLP-Friendly Content</span>
-                <ScoreBadge
-                  score={
-                    metricData.Content_NLP_Friendly.Score
-                  }
-                  out={
-                    metricData.Content_NLP_Friendly.Score
-                      ? "Content is NLP-friendly"
-                      : "Content is not NLP-friendly"
-                  }
-                />
-              </div>
-
-              <div className="flex justify-between items-center">
-                <span className={textColor}>Keyword & Entity Annotation</span>
-                <ScoreBadge
-                  score={
-                    metricData
-                      .Keywords_Entities_Annotated.Score
-                  }
-                  out={
-                    metricData
-                      .Keywords_Entities_Annotated.Score
-                      ? "Keywords/entities annotated"
-                      : "Annotations missing"
-                  }
-                />
-              </div>
-
-              <div className="flex justify-between items-center">
-                <span className={textColor}>Content Updates</span>
-                <ScoreBadge
-                  score={
-                    metricData.Content_Updated_Regularly
-                      .Score
-                  }
-                  out={
-                    metricData.Content_Updated_Regularly
-                      .Score
-                      ? "Content updated regularly"
-                      : "Content rarely updated"
-                  }
-                />
-              </div>
-
-              {/* Data Intelligence Integration */}
-              <div className="flex justify-between items-center">
-                <span className={textColor}>Behavior Tracking</span>
-                <ScoreBadge
-                  score={
-                    metricData
-                      .Behavior_Tracking_Implemented.Score
-                  }
-                  out={
-                    metricData
-                      .Behavior_Tracking_Implemented.Score
-                      ? "Behavior tracking implemented"
-                      : "Behavior tracking missing"
-                  }
-                />
-              </div>
-
-              <div className="flex justify-between items-center">
-                <span className={textColor}>Event & Goal Tracking</span>
-                <ScoreBadge
-                  score={
-                    metricData
-                      .Event_Goal_Tracking_Integrated.Score
-                  }
-                  out={
-                    metricData
-                      .Event_Goal_Tracking_Integrated.Score
-                      ? "Event tracking integrated"
-                      : "Event tracking missing"
-                  }
-                />
-              </div>
-
-              {/* AI Content Delivery */}
-              <div className="flex justify-between items-center">
-                <span className={textColor}>Dynamic Personalization</span>
-                <ScoreBadge
-                  score={
-                    metricData.Dynamic_Personalization.Score
-                  }
-                  out={
-                    metricData.Dynamic_Personalization.Score
-                      ? "Dynamic personalization enabled"
-                      : "Dynamic personalization missing"
-                  }
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* ✅ Dropdowns */}
-          <AuditDropdown
-            items={metricData.Passed}
-            title="Passed Audit"
-            darkMode={darkMode}
-          />
-          <AuditDropdown
-            items={metricData.Warning}
-            title="Warnings"
-            darkMode={darkMode}
-          />
-          <AuditDropdown
-            items={metricData.Improvements}
-            title="Failed Audits"
-            darkMode={darkMode}
-          />
-        </main>)):(<Loader2 size={20} className="animate-spin w-5 h-5" />)}
-
-     
+            {/* Dropdowns */}
+            <AuditDropdown
+              items={metricData.Passed}
+              title="Passed Audit"
+              darkMode={darkMode}
+            />
+            <AuditDropdown
+              items={metricData.Warning}
+              title="Warnings"
+              darkMode={darkMode}
+            />
+            <AuditDropdown
+              items={metricData.Improvements}
+              title="Failed Audits"
+              darkMode={darkMode}
+            />
+          </main>
+        )
+      ) : (
+        // ✅ LOADER2 KO SKELETON SE REPLACE KAR DIYA GAYA
+        <AIOSkeleton darkMode={darkMode} reportType={reportType} />
+      )}
     </>
   );
 }

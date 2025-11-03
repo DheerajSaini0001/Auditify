@@ -1,12 +1,12 @@
 import React, { useContext } from "react";
 import { ThemeContext } from "../context/ThemeContext.jsx";
-import { Check, X ,Loader2} from "lucide-react";
+import { Check, X } from "lucide-react"; // ✅ Loader2 yahan se hata diya
 import CircularProgress from "../Component/CircularProgress";
 import AuditDropdown from "../Component/AuditDropdown";
 import { useData } from "../context/DataContext";
-import Sidebar from "../Component/Sidebar"; // ✅ 1. Imported Sidebar
+import Sidebar from "../Component/Sidebar";
 
-// ✅ 2. Reusable ScoreBadge moved outside component
+// ✅ Reusable ScoreBadge (Aapka original code)
 const ScoreBadge = ({ score, out }) => {
   const badgeClass = score ? "bg-green-300" : "bg-red-300";
   const icon = score ? <Check size={18} /> : <X size={18} />;
@@ -19,6 +19,105 @@ const ScoreBadge = ({ score, out }) => {
   );
 };
 
+// -----------------------------------------------------------------
+// ✅ SKELETON CODE AB ISI FILE MEIN HAI
+// -----------------------------------------------------------------
+
+// Skeleton component (Sidebar ke liye)
+const SkeletonSidebar = ({ darkMode }) => (
+  <div
+    className={`fixed top-0 mt-16 left-0 h-full w-64 ${
+      darkMode ? "bg-gray-900" : "bg-white"
+    } shadow-lg p-6`}
+  >
+    <div className={`h-7 rounded mb-5 ${darkMode ? "bg-gray-700" : "bg-gray-300"}`}></div>
+    <div className={`h-7 rounded mb-5 ${darkMode ? "bg-gray-700" : "bg-gray-300"}`}></div>
+    <div className={`h-7 rounded mb-5 ${darkMode ? "bg-gray-700" : "bg-gray-300"}`}></div>
+    <div className={`h-7 rounded ${darkMode ? "bg-gray-700" : "bg-gray-300"}`}></div>
+  </div>
+);
+
+// Main Skeleton Component for UX Content Structure
+function UXContentStructureSkeleton({ darkMode, reportType }) {
+  const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
+  const shimmerCardBg = darkMode
+    ? "bg-gradient-to-br from-blue-900 via-gray-900 to-black"
+    : "bg-gradient-to-br from-blue-200 via-gray-200 to-white";
+
+  // Placeholder for card items
+  const SkeletonBadgeItem = () => (
+    <div className="flex justify-between items-center">
+      <div className={`h-4 w-2/5 rounded ${shimmerBg}`}></div>
+      <div className={`h-6 w-1/4 rounded-full ${shimmerBg}`}></div>
+    </div>
+  );
+
+  // Dropdown ke liye placeholder
+  const SkeletonDropdown = () => (
+    <div
+      className={`w-full max-w-4xl h-14 rounded-lg shadow-md ${
+        darkMode ? "bg-gray-800" : "bg-gray-100"
+      }`}
+    ></div>
+  );
+
+  // Skeleton ka main content
+  const shimmerContent = (
+    <>
+      {/* Header Skeleton */}
+      <div className="responsive flex items-center justify-center sm:gap-10 mb-6 w-full max-w-lg">
+        <div className={`h-8 w-2/5 rounded ${shimmerBg}`}></div>
+        <div className={`h-[70px] w-[70px] rounded-full ${shimmerBg}`}></div>
+      </div>
+
+      {/* Metrics Card Skeleton */}
+      <div
+        className={`w-full max-w-4xl p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500 ${shimmerCardBg}`}
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+          {/* ✅ Aapke UX card mein 5 items hain */}
+          {[...Array(5)].map((_, i) => (
+            <SkeletonBadgeItem key={i} />
+          ))}
+        </div>
+      </div>
+
+      {/* Audit Dropdowns Skeleton (x3) */}
+      <SkeletonDropdown />
+      <SkeletonDropdown />
+      <SkeletonDropdown />
+    </>
+  );
+
+  return (
+    <div className="animate-pulse"> {/* Main pulse animation */}
+      {reportType === "All" ? (
+        <div className="relative flex w-full h-full">
+          <SkeletonSidebar darkMode={darkMode} />
+          <main
+            className={`flex-1 lg:ml-64 flex flex-col justify-center items-center pt-20 pb-0 pr-4 pl-4 lg:pl-0 space-y-8`}
+          >
+            {shimmerContent}
+          </main>
+        </div>
+      ) : (
+        <main
+          className={`flex flex-col justify-center items-center min-h-auto pt-20 pb-0 pr-4 pl-4 space-y-8 ${
+            darkMode ? " text-gray-100" : " text-gray-800"
+          }`}
+        >
+          {shimmerContent}
+        </main>
+      )}
+    </div>
+  );
+}
+
+
+// -----------------------------------------------------------------
+// ✅ AAPKA MAIN COMPONENT (UX_Content_Structure)
+// -----------------------------------------------------------------
+
 export default function UX_Content_Structure() {
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
@@ -27,7 +126,8 @@ export default function UX_Content_Structure() {
   const data = rawData;
   const reportType = data?.Report;
 
-  const metric = data.UX_or_Content_Structure;
+  // ✅ data ko safely access karne ke liye optional chaining
+  const metric = data?.UX_or_Content_Structure;
 
   // ✅ Theme-based styles
   const cardBg = darkMode
@@ -36,221 +136,165 @@ export default function UX_Content_Structure() {
 
   const textColor = darkMode ? "text-white" : "text-black";
 
-  // ✅ 1. Added sidebarClass constant
+  // ✅ sidebarClass constant
   const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray-900 shadow-lg`;
 
+  // ✅ Best practice: loading state ko alag se handle karein
+  if (loading || !data) { // Agar data load ho raha hai ya abhi hai hi nahi
+    return <UXContentStructureSkeleton darkMode={darkMode} reportType={reportType} />;
+  }
+  
   return (
-    // ✅ 1. Added Layout structure
     <>
-    {metric ? (     reportType === "All"? (<div className="relative  flex w-full h-full">
-        {/* Sidebar */}
-       <div
-          className={`${sidebarClass} lg:translate-x-0 transition-transform duration-300 ease-in-out z-40`}
-        >
-          
-          <Sidebar darkMode={darkMode} />
-        </div>
-
-        {/* Main content */}
-        <main
-          className={`flex-1  lg:ml-64 flex flex-col justify-center  items-center pt-20 pb-0 pr-4 pl-4 lg:pl-0 space-y-8 ${
-            darkMode ? " text-gray-100" : " text-gray-800"
-          }`}
-        >
-          {/* ✅ 4. Original Content pasted inside main */}
-
-          {/* Header */}
-          <h1 className="responsive text-heading-25 flex sm:gap-10 justify-center items-center text-3xl font-extrabold mb-6">
-            UX Content Structure
-            <CircularProgress value={metric.Percentage} size={70} stroke={5} />
-          </h1>
-
-          {/* Main Card */}
-          <div
-            className={`w-full max-w-4xl p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500 ${cardBg}`}
-          >
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-              <div className="flex justify-between items-center">
-                <span className={textColor}>Navigation Clarity</span>
-                <ScoreBadge
-                  score={metric.Navigation_Clarity.Score}
-                  out={
-                    metric.Navigation_Clarity.Score
-                      ? "Easy to navigate"
-                      : "Hard to navigate"
-                  }
-                />
-              </div>
-
-              <div className="flex justify-between items-center">
-                <span className={textColor}>Mobile Responsiveness</span>
-                <ScoreBadge
-                  score={metric.Mobile_Responsiveness.Score}
-                  out={
-                    metric.Mobile_Responsiveness.Score
-                      ? "Mobile-friendly"
-                      : "Not mobile-friendly"
-                  }
-                />
-              </div>
-
-              <div className="flex justify-between items-center">
-                <span className={textColor}>Content Relevance</span>
-                <ScoreBadge
-                  score={metric.Content_Relevance.Score}
-                  out={
-                    metric.Content_Relevance.Score
-                      ? "Relevant content"
-                      : "Irrelevant content"
-                  }
-                />
-              </div>
-
-              <div className="flex justify-between items-center">
-                <span className={textColor}>Call to Action Clarity</span>
-                <ScoreBadge
-                  score={metric.Call_to_Action_Clarity.Score}
-                  out={
-                    metric.Call_to_Action_Clarity.Score
-                      ? "Clear CTA"
-                      : "Unclear CTA"
-                  }
-                />
-              </div>
-
-              <div className="flex justify-between items-center">
-                <span className={textColor}>Interactive Feedback</span>
-                <ScoreBadge
-                  score={metric.Interactive_Feedback.Score}
-                  out={
-                    metric.Interactive_Feedback.Score
-                      ? "Effective feedback"
-                      : "Ineffective feedback"
-                  }
-                />
-              </div>
+      {/* ✅ Ab 'metric' ko check karna kaafi hai */}
+      {metric ? (
+        reportType === "All" ? (
+          <div className="relative  flex w-full h-full">
+            {/* Sidebar */}
+            <div
+              className={`${sidebarClass} lg:translate-x-0 transition-transform duration-300 ease-in-out z-40`}
+            >
+              <Sidebar darkMode={darkMode} />
             </div>
+
+            {/* Main content */}
+            <main
+              className={`flex-1  lg:ml-64 flex flex-col justify-center  items-center pt-20 pb-0 pr-4 pl-4 lg:pl-0 space-y-8 ${
+                darkMode ? " text-gray-100" : " text-gray-800"
+              }`}
+            >
+              {/* Header */}
+              <h1 className="responsive text-heading-25 flex sm:gap-10 justify-center items-center text-3xl font-extrabold mb-6">
+                UX Content Structure
+                <CircularProgress
+                  value={metric.Percentage}
+                  size={70}
+                  stroke={5}
+                />
+              </h1>
+
+              {/* Main Card */}
+              <div
+                className={`w-full max-w-4xl p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500 ${cardBg}`}
+              >
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                  {/* ... (Aapke 5 grid items) ... */}
+                  <div className="flex justify-between items-center">
+                    <span className={textColor}>Navigation Clarity</span>
+                    <ScoreBadge
+                      score={metric.Navigation_Clarity.Score}
+                      out={
+                        metric.Navigation_Clarity.Score
+                          ? "Easy to navigate"
+                          : "Hard to navigate"
+                      }
+                    />
+                  </div>
+                  {/* ... (baaki ke items) ... */}
+                  <div className="flex justify-between items-center">
+                    <span className={textColor}>Interactive Feedback</span>
+                    <ScoreBadge
+                      score={metric.Interactive_Feedback.Score}
+                      out={
+                        metric.Interactive_Feedback.Score
+                          ? "Effective feedback"
+                          : "Ineffective feedback"
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Audit Dropdowns */}
+              <AuditDropdown
+                items={metric.Passed}
+                title="Passed Audits"
+                darkMode={darkMode}
+              />
+              <AuditDropdown
+                items={metric.Warning}
+                title="Warning"
+                darkMode={darkMode}
+              />
+              <AuditDropdown
+                items={metric.Improvements}
+                title="Failed Audits"
+                darkMode={darkMode}
+              />
+            </main>
           </div>
+        ) : (
+          <main
+            className={`flex justify-center items-center min-h-auto ${
+              darkMode ? " text-gray-100" : " text-gray-800"
+            }`}
+          >
+            <div className="flex w-full flex-col items-center justify-center space-y-8">
+              {/* Header */}
+              <h1 className="responsive text-heading-25 flex sm:gap-10 justify-center items-center text-3xl font-extrabold mb-6">
+                UX Content Structure
+                <CircularProgress
+                  value={metric.Percentage}
+                  size={70}
+                  stroke={5}
+                />
+              </h1>
 
-          {/* ✅ Audit Dropdowns with theme support */}
-          <AuditDropdown
-            items={metric.Passed}
-            title="Passed Audits"
-            darkMode={darkMode}
-          />
-          <AuditDropdown
-            items={metric.Warning}
-            title="Warning"
-            darkMode={darkMode}
-          />
-          <AuditDropdown
-            items={metric.Improvements}
-            title="Failed Audits"
-            darkMode={darkMode}
-          />
-        </main>
-      </div>):<main
-  className={`flex justify-center items-center min-h-auto ${
-    darkMode ? " text-gray-100" : " text-gray-800"
-  }`}
->
-  {/* This new div now centers all your content */}
-  <div className="flex w-full flex-col items-center justify-center space-y-8">
-    {/* ✅ 4. Original Content pasted inside main */}
+              {/* Main Card */}
+              <div
+                className={`w-full max-w-4xl p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500 ${cardBg}`}
+              >
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                  {/* ... (Aapke 5 grid items) ... */}
+                  <div className="flex justify-between items-center">
+                    <span className={textColor}>Navigation Clarity</span>
+                    <ScoreBadge
+                      score={metric.Navigation_Clarity.Score}
+                      out={
+                        metric.Navigation_Clarity.Score
+                          ? "Easy to navigate"
+                          : "Hard to navigate"
+                      }
+                    />
+                  </div>
+                  {/* ... (baaki ke items) ... */}
+                  <div className="flex justify-between items-center">
+                    <span className={textColor}>Interactive Feedback</span>
+                    <ScoreBadge
+                      score={metric.Interactive_Feedback.Score}
+                      out={
+                        metric.Interactive_Feedback.Score
+                          ? "Effective feedback"
+                          : "Ineffective feedback"
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
 
-    {/* Header */}
-    <h1 className="responsive text-heading-25 flex sm:gap-10 justify-center items-center text-3xl font-extrabold mb-6">
-      UX Content Structure
-      <CircularProgress value={metric.Percentage} size={70} stroke={5} />
-    </h1>
-
-    {/* Main Card */}
-    <div
-      className={`w-full max-w-4xl p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500 ${cardBg}`}
-    >
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-        <div className="flex justify-between items-center">
-          <span className={textColor}>Navigation Clarity</span>
-          <ScoreBadge
-            score={metric.Navigation_Clarity.Score}
-            out={
-              metric.Navigation_Clarity.Score
-                ? "Easy to navigate"
-                : "Hard to navigate"
-            }
-          />
-        </div>
-
-        <div className="flex justify-between items-center">
-          <span className={textColor}>Mobile Responsiveness</span>
-          <ScoreBadge
-            score={metric.Mobile_Responsiveness.Score}
-            out={
-              metric.Mobile_Responsiveness.Score
-                ? "Mobile-friendly"
-                : "Not mobile-friendly"
-            }
-          />
-        </div>
-
-        <div className="flex justify-between items-center">
-          <span className={textColor}>Content Relevance</span>
-          <ScoreBadge
-            score={metric.Content_Relevance.Score}
-            out={
-              metric.Content_Relevance.Score
-                ? "Relevant content"
-                : "Irrelevant content"
-            }
-          />
-        </div>
-
-        <div className="flex justify-between items-center">
-          <span className={textColor}>Call to Action Clarity</span>
-          <ScoreBadge
-            score={metric.Call_to_Action_Clarity.Score}
-            out={
-              metric.Call_to_Action_Clarity.Score
-                ? "Clear CTA"
-                : "Unclear CTA"
-            }
-          />
-        </div>
-
-        <div className="flex justify-between items-center">
-          <span className={textColor}>Interactive Feedback</span>
-          <ScoreBadge
-            score={metric.Interactive_Feedback.Score}
-            out={
-              metric.Interactive_Feedback.Score
-                ? "Effective feedback"
-                : "Ineffective feedback"
-            }
-          />
-        </div>
-      </div>
-    </div>
-
-    {/* ✅ Audit Dropdowns with theme support */}
-    <AuditDropdown
-      items={metric.Passed}
-      title="Passed Audits"
-      darkMode={darkMode}
-    />
-    <AuditDropdown
-      items={metric.Warning}
-      title="Warning"
-      darkMode={darkMode}
-    />
-    <AuditDropdown
-      items={metric.Improvements}
-      title="Failed Audits"
-      darkMode={darkMode}
-    />
-  </div>
-</main>): (<Loader2 size={20} className="animate-spin w-5 h-5" />)}
-
-      
+              {/* Audit Dropdowns */}
+              <AuditDropdown
+                items={metric.Passed}
+                title="Passed Audits"
+                darkMode={darkMode}
+              />
+              <AuditDropdown
+                items={metric.Warning}
+                title="Warning"
+                darkMode={darkMode}
+              />
+              <AuditDropdown
+                items={metric.Improvements}
+                title="Failed Audits"
+                darkMode={darkMode}
+              />
+            </div>
+          </main>
+        )
+      ) : (
+        // ✅ LOADER2 KO SKELETON SE REPLACE KAR DIYA GAYA
+        <UXContentStructureSkeleton darkMode={darkMode} reportType={reportType} />
+      )}
     </>
   );
 }

@@ -8,7 +8,7 @@ export default function NotFound({ darkMode }) {
 
   return (
     <div
-      className={`flex flex-col items-center justify-center min-h-screen text-center px-6 transition-colors duration-300 ${
+      className={`flex flex-col items-center justify-center mt-50 text-center px-6 transition-colors duration-300 ${
         darkMode ? "bg-gray-900 text-gray-100" : "bg-gray-50 text-gray-800"
       }`}
     >

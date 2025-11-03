@@ -42,7 +42,7 @@ const ReportLayout = ({ sidebarOpen, setSidebarOpen }) => {
   if (data.Status === "failed") {
     return (
       <div
-        className={`flex flex-col items-center justify-center h-screen text-center space-y-6 ${
+        className={`flex flex-col items-center justify-center mt-50 text-center space-y-6 ${
           darkMode ? "text-gray-100" : "text-gray-800"
         }`}
       >

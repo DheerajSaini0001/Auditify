@@ -17,7 +17,7 @@ const AuditDropdown = ({ title, items, darkMode = false }) => {
 
   return (
     <div
-      className={`pl-4 rounded-2xl  w-full max-w-4xl mx-auto font-sans border-b py-2 mb-5 transition-colors duration-300 ${
+      className={`pl-4 rounded-2xl  w-full max-w-6xl mx-auto font-sans border-b py-2 mb-5 transition-colors duration-300 ${
         darkMode
           ? 'bg-gray-800 border-gray-700 text-gray-200'
           : 'bg-white border-gray-200 text-gray-800'

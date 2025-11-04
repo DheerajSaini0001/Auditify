@@ -27,7 +27,7 @@ export default async function technicalMetrics(url,device,selectedMetric, page, 
   const actuallcpScore = actualCalculation(lcpValue,2.5,4.0,0.25);
   
   const fidValue = parseFloat(((data?.lighthouseResult?.audits?.['max-potential-fid']?.numericValue || 0)/1000).toFixed(1)); 
-  const fidScore = coreWebVitalsScore(fidValue,0.1);
+  const fidScore = coreWebVitalsScore(fidValue,100);
   
   const clsValue = parseFloat((data?.lighthouseResult?.audits?.["cumulative-layout-shift"]?.numericValue || 0).toFixed(1)); 
   const clsScore = coreWebVitalsScore(clsValue,0.1);
@@ -42,7 +42,7 @@ export default async function technicalMetrics(url,device,selectedMetric, page, 
   const actualttfbScore = actualCalculation(ttfbValue,0.2,0.6,0.10);
 
   const tbtValue = parseFloat(((data?.lighthouseResult?.audits?.["total-blocking-time"]?.numericValue || 0)/1000).toFixed(1));
-  const tbtScore = coreWebVitalsScore(tbtValue,0.3);
+  const tbtScore = coreWebVitalsScore(tbtValue,300);
   const actualtbtScore = actualCalculation(tbtValue,0.3,0.6,0.25);
   
   const siValue = parseFloat(((data?.lighthouseResult?.audits?.["speed-index"]?.numericValue || 0)/1000).toFixed(1));
@@ -50,7 +50,7 @@ export default async function technicalMetrics(url,device,selectedMetric, page, 
   const actualsiScore = actualCalculation(siValue,3.0,5.0,0.10);
 
   const inpValue = parseFloat(((data?.lighthouseResult?.audits?.["interactive"]?.numericValue || 0)/1000).toFixed(0)); 
-  const inpScore = coreWebVitalsScore(inpValue,3.8);
+  const inpScore = coreWebVitalsScore(inpValue,3800);
   const actualinpScore = actualCalculation(inpValue,3.8,7.0,0.15);
   
   // Technical Performance (Delivery & Render)
@@ -162,16 +162,16 @@ export default async function technicalMetrics(url,device,selectedMetric, page, 
 if (fidScore === 0) {
   improvements.push({
     metric: "First Input Delay (FID)",
-    current: fidValue + "s",
-    recommended: "< 0.1s",
+    current: fidValue + "ms",
+    recommended: "< 100ms",
     severity: "High 🟠",
     suggestion: "Reduce JavaScript execution time and break up long tasks to improve interactivity."
   });
 } else {
   passed.push({
     metric: "First Input Delay (FID)",
-    current: fidValue + "s",
-    recommended: "< 0.1s",
+    current: fidValue + "ms",
+    recommended: "< 100ms",
     severity: "✅ Passed",
     suggestion: "FID is within optimal range."
   });
@@ -384,16 +384,16 @@ if (lcpScore === 0) {
 if (tbtScore === 0) {
   warning.push({
     metric: "Total Blocking Time (TBT)",
-    current: tbtValue + "s",
-    recommended: "< 0.3s",
+    current: tbtValue + "ms",
+    recommended: "< 300ms",
     severity: "High 🟠",
     suggestion: "Split heavy JS tasks, defer non-essential scripts to unblock main thread."
   });
 } else {
   passed.push({
     metric: "Total Blocking Time (TBT)",
-    current: tbtValue + "s",
-    recommended: "< 0.3s",
+    current: tbtValue + "ms",
+    recommended: "< 300ms",
     severity: "✅ Passed",
     suggestion: "TBT is within optimal range."
   });
@@ -474,16 +474,16 @@ if (ttfbScore === 0) {
 if (inpScore === 0) {
   warning.push({
     metric: "Time to Interactive (TTI)",
-    current: inpValue + "s",
-    recommended: "< 3.8s",
+    current: inpValue + "ms",
+    recommended: "< 3800ms",
     severity: "High 🟠",
     suggestion: "Reduce main-thread work and optimize JS execution for faster interactivity."
   });
 } else {
   passed.push({
     metric: "Time to Interactive (TTI)",
-    current: inpValue + "s",
-    recommended: "< 3.8s",
+    current: inpValue + "ms",
+    recommended: "< 3800ms",
     severity: "✅ Passed",
     suggestion: "TTI is within optimal range."
   });

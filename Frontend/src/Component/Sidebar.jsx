@@ -68,7 +68,7 @@ export default function Sidebar({ darkMode }) {
             </Link> 
             :<Link
               replace to="/technical-performance"
-              className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass}`}
+              className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass} pointer-events-none opacity-60 cursor-not-allowed `}
             >
              <div className="flex flex-row items-center justify-center gap-2"> <Gauge size={20} /> Technical Performance <Loader2 size={20} className="animate-spin w-5 h-5" /></div>
             </Link> }
@@ -82,7 +82,7 @@ export default function Sidebar({ darkMode }) {
 ) : (
   <Link
     replace to="/on-page-seo"
-    className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass}`}
+    className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass} pointer-events-none opacity-60 cursor-not-allowed  `}
   >
     <div className="flex flex-row items-center justify-center gap-2">
       <Image size={20} /> On Page SEO{" "}
@@ -101,7 +101,7 @@ export default function Sidebar({ darkMode }) {
 ) : (
   <Link
     replace to="/accessibility"
-    className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass}`}
+    className={`flex items-center space-x-3 p-3 rounded-md transition pointer-events-none opacity-60 cursor-not-allowed  ${hoverClass}`}
   >
     <div className="flex flex-row items-center justify-center gap-2">
       <Accessibility size={20} /> Accessibility{" "}
@@ -120,7 +120,7 @@ export default function Sidebar({ darkMode }) {
 ) : (
   <Link
     replace to="/security-compliance"
-    className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass}`}
+    className={`flex items-center space-x-3 p-3 rounded-md transition pointer-events-none opacity-60 cursor-not-allowed  ${hoverClass}`}
   >
     <div className="flex flex-row items-center justify-center gap-2">
       <Shield size={20} /> Security/Compliance{" "}
@@ -139,7 +139,9 @@ export default function Sidebar({ darkMode }) {
 ) : (
   <Link
     replace to="/ux-content-structure"
-    className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass}`}
+    disabled
+    className={`flex items-center space-x-3 p-3 rounded-md transition pointer-events-none opacity-60 cursor-not-allowed  ${hoverClass}
+   pointer-events-none opacity-60 cursor-not-allowed `}
   >
     <div className="flex flex-row items-center justify-center gap-2">
       <Layout size={20} /> UX & Content Structure{" "}
@@ -177,7 +179,7 @@ export default function Sidebar({ darkMode }) {
 ) : (
   <Link
     replace to="/aio"
-    className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass}`}
+    className={`flex items-center space-x-3 p-3 rounded-md transition pointer-events-none opacity-60 cursor-not-allowed  ${hoverClass}`}
   >
     <div className="flex flex-row items-center justify-center gap-2">
       <Brain size={20} /> AIO (AI-Optimization) Readiness{" "}

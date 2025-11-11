@@ -71,7 +71,7 @@ const UrlHeader = ({ darkMode }) => {
             <span className={`${sectionText} text-sm`}>Report:</span>
             <span className={`font-semibold ${valueText} text-base`}>
               {/* NOTE: Assuming 'data.reportType' exists in your context */}
-              {data?.Report.toUpperCase() || "N/A"}
+              {data?.Report || "N/A"}
             </span>
           </div>
 
@@ -81,7 +81,7 @@ const UrlHeader = ({ darkMode }) => {
             <span className={`${sectionText} text-sm`}>Device:</span>
             <span className={`font-semibold ${valueText} text-base`}>
               {/* NOTE: Assuming 'data.device' exists in your context */}
-              {data?.Device.toUpperCase() || "N/A"}
+              {data?.Device || "N/A"}
             </span>
           </div>
         </div>

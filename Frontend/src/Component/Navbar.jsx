@@ -3,11 +3,17 @@ import { ThemeContext } from "../context/ThemeContext.jsx";
 import { Menu, X, Sun, Moon } from "lucide-react";
 import Assets from "../assets/Assets.js";
 import { Link } from "react-router-dom";
+import { useData } from "../context/DataContext.jsx";
 
 const Navbar = ({ result, sidebarOpen, setSidebarOpen }) => {
   const { theme, toggleTheme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
+  const { clearData } = useData();
 
+  const handleGoHome = () => {
+  clearData(); // Pehle data clear karein
+  navigate('/'); // Phir home bhej do
+}
   // ✅ Dynamic navbar background class
   const navbarClass = darkMode
     ? "bg-gray-900 text-white border-b border-gray-700"
@@ -31,7 +37,8 @@ const Navbar = ({ result, sidebarOpen, setSidebarOpen }) => {
 
       {/* Logo + Title */}
       <div className="flex items-center gap-3 font-serif text-2xl font-bold">
-        <Link replace to="/">
+        <Link replace to="/"
+        onClick={handleGoHome}>
           <img
             src={darkMode ? Assets.Logo : Assets.DarkLogo}
             alt="Site Audit Logo"
@@ -42,6 +49,7 @@ const Navbar = ({ result, sidebarOpen, setSidebarOpen }) => {
         <Link
         replace 
           to="/"
+          onClick={handleGoHome}
           className={`bg-clip-text text-transparent ${
             darkMode
               ? "bg-gradient-to-r from-sky-200 via-rose-200 to-orange-200"

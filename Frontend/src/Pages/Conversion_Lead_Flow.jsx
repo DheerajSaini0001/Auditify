@@ -1,317 +1,347 @@
 import React, { useContext } from "react";
-import { ThemeContext } from "../context/ThemeContext.jsx";
-import { Check, X } from "lucide-react"; // ✅ Loader2 yahan se hata diya
 import CircularProgress from "../Component/CircularProgress";
 import AuditDropdown from "../Component/AuditDropdown";
-import { useData } from "../context/DataContext";
 import Sidebar from "../Component/Sidebar";
+import { useData } from "../context/DataContext";
+import { ThemeContext } from "../context/ThemeContext";
 
-// ✅ Reusable ScoreBadge (Aapka original code)
-const ScoreBadge = ({ score, textGood, textBad }) => {
-  const badgeColor = score ? "bg-green-300" : "bg-red-300";
-  const icon = score ? <Check size={18} /> : <X size={18} />;
-  return (
-    <span
-      className={`px-2.5 flex items-center gap-1.5 py-1 rounded-full text-black font-semibold text-sm shadow-md transform transition-transform mobilebutton ${badgeColor}`}
-    >
-      {icon} {score ? textGood : textBad}
-    </span>
-  );
-};
-
-// -----------------------------------------------------------------
-// ✅ SKELETON CODE AB ISI FILE MEIN HAI
-// -----------------------------------------------------------------
-
-// Skeleton component (Sidebar ke liye)
+// ------------------------------------------------------
+// ✅ Skeleton Loader (for loading state)
+// ------------------------------------------------------
 const SkeletonSidebar = ({ darkMode }) => (
   <div
     className={`fixed top-0 mt-16 left-0 h-full w-64 ${
       darkMode ? "bg-gray-900" : "bg-white"
     } shadow-lg p-6`}
   >
-    <div className={`h-7 rounded mb-5 ${darkMode ? "bg-gray-700" : "bg-gray-300"}`}></div>
-    <div className={`h-7 rounded mb-5 ${darkMode ? "bg-gray-700" : "bg-gray-300"}`}></div>
-    <div className={`h-7 rounded mb-5 ${darkMode ? "bg-gray-700" : "bg-gray-300"}`}></div>
-    <div className={`h-7 rounded ${darkMode ? "bg-gray-700" : "bg-gray-300"}`}></div>
+    {[...Array(4)].map((_, i) => (
+      <div
+        key={i}
+        className={`h-7 rounded mb-5 animate-pulse ${
+          darkMode ? "bg-gray-700" : "bg-gray-300"
+        }`}
+      ></div>
+    ))}
   </div>
 );
 
-// Main Skeleton Component for Conversion/Lead Flow
-function ConversionLeadFlowSkeleton({ darkMode, reportType }) {
+function ConversionShimmer({ darkMode }) {
   const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
-  const shimmerCardBg = darkMode
-    ? "bg-gradient-to-br from-blue-900 via-gray-900 to-black"
-    : "bg-gradient-to-br from-blue-200 via-gray-200 to-white";
+  const shimmerCardBg = darkMode ? "bg-gray-800" : "bg-gray-200";
 
-  // Placeholder for card items
-  const SkeletonBadgeItem = () => (
-    <div className="flex justify-between items-center">
-      <div className={`h-4 w-2/5 rounded ${shimmerBg}`}></div>
-      <div className={`h-6 w-1/4 rounded-full ${shimmerBg}`}></div>
-    </div>
-  );
-
-  // Dropdown ke liye placeholder
-  const SkeletonDropdown = () => (
-    <div
-      className={`w-full max-w-4xl h-14 rounded-lg shadow-md ${
-        darkMode ? "bg-gray-800" : "bg-gray-100"
-      }`}
-    ></div>
-  );
-
-  // Common header skeleton
-  const skeletonHeader = (
-    <div className="responsive flex items-center justify-center sm:gap-10 mb-6 w-full max-w-lg">
-      <div className={`h-8 w-2/5 rounded ${shimmerBg}`}></div>
-      <div className={`h-[70px] w-[70px] rounded-full ${shimmerBg}`}></div>
-    </div>
-  );
-
-  // Common dropdowns skeleton
-  const skeletonDropdowns = (
-    <>
-      <SkeletonDropdown />
-      <SkeletonDropdown />
-      <SkeletonDropdown />
-    </>
-  );
-
-  // Card skeleton (content will be conditional)
-  const SkeletonMetricsCard = ({ itemCount }) => (
-    <div
-      className={`w-full max-w-4xl p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500 ${shimmerCardBg} ${reportType !== 'All' ? 'mb-5' : ''}`}
-    >
-      <div className={`h-6 w-1/3 mb-4 rounded ${shimmerBg}`}></div> {/* "Conversion & UX Metrics" Title */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-        {[...Array(itemCount)].map((_, i) => (
-          <SkeletonBadgeItem key={i} />
-        ))}
+  const SkeletonMetricCard = () => (
+    <div className={`p-5 rounded-lg shadow-lg ${shimmerCardBg}`}>
+      <div className="flex justify-between items-center mb-2">
+        <div className={`h-5 w-1/3 rounded ${shimmerBg}`}></div>
+        <div className={`h-4 w-1/4 rounded-full ${shimmerBg}`}></div>
       </div>
+      <div className={`h-10 w-1/2 rounded ${shimmerBg} mb-3`}></div>
+      <div className={`h-4 w-full rounded ${shimmerBg} mt-4`}></div>
     </div>
   );
 
   return (
     <div className="animate-pulse">
-      {reportType === "All" ? (
-        // Skeleton for 'All' view (with Sidebar)
-        <div className="relative flex w-full h-full">
-          <SkeletonSidebar darkMode={darkMode} />
-          <main
-            className={`flex-1 lg:ml-64 flex flex-col justify-center items-center pt-20 pb-0 pr-4 pl-4 lg:pl-0 space-y-8`}
-          >
-            {skeletonHeader}
-            <SkeletonMetricsCard itemCount={5} /> {/* ✅ 5 items for 'All' view */}
-            {skeletonDropdowns}
-          </main>
-        </div>
-      ) : (
-        // Skeleton for 'non-All' view (no Sidebar)
-        <main
-          className={`flex flex-col justify-center items-center min-h-auto pt-20 pb-0 pr-4 pl-4 space-y-8 ${
-            darkMode ? " text-gray-100" : " text-gray-800"
-          }`}
-        >
-          {skeletonHeader}
-          <SkeletonMetricsCard itemCount={12} /> {/* ✅ 12 items for 'non-All' view */}
-          {skeletonDropdowns}
+      <div className="relative flex w-full h-full">
+        <SkeletonSidebar darkMode={darkMode} />
+        <main className="flex-1 lg:ml-64 flex flex-col justify-center items-center pt-20 pb-8 px-4 space-y-8">
+          <SkeletonMetricCard />
+          <SkeletonMetricCard />
         </main>
-      )}
+      </div>
     </div>
   );
 }
 
+// ------------------------------------------------------
+// ✅ Metric Card (Reusable UI Component)
+// ------------------------------------------------------
+const MetricCard = ({ title, description, score, darkMode, icon }) => {
+  const [showDescription, setShowDescription] = React.useState(false);
+  const [isHovered, setIsHovered] = React.useState(false);
+  const isPassed = Boolean(score);
 
-// -----------------------------------------------------------------
-// ✅ AAPKA MAIN COMPONENT (Conversion_Lead_Flow)
-// -----------------------------------------------------------------
-
-export default function Conversion_Lead_Flow() {
-  const { theme } = useContext(ThemeContext);
-  const darkMode = theme === "dark";
-
-  const { data: rawData, loading } = useData();
-  const data = rawData;
-  const reportType = data?.Report;
-
-  // ✅ 3. Loading state ko skeleton se replace kar diya gaya
-  if (loading) {
-    return <ConversionLeadFlowSkeleton darkMode={darkMode} reportType={reportType} />;
-  }
-
-  // ✅ 3. Added specific data check (Aapka original code)
-  if (!data || !data.Conversion_and_Lead_Flow) {
-    return (
-   <ConversionLeadFlowSkeleton darkMode={darkMode} reportType={reportType} />
-    );
-  }
-
-  const metric = data.Conversion_and_Lead_Flow;
-
-  // ✅ Theme-based styles
+  const titleColor = darkMode ? "text-white" : "text-gray-900";
+  const descriptionColor = darkMode ? "text-gray-300" : "text-gray-600";
+  const valueColor = isPassed
+    ? "text-green-500 dark:text-green-400"
+    : "text-red-500 dark:text-red-400";
   const cardBg = darkMode
-    ? "bg-gradient-to-br from-blue-900 via-gray-900 to-black"
-    : "bg-gradient-to-br from-blue-200 via-gray-200 to-white";
+    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900"
+    : "bg-gradient-to-br from-white via-gray-50 to-white";
 
-  const textColor = darkMode ? "text-white" : "text-black";
-
-  // ✅ sidebarClass constant
-  const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray-900 shadow-lg`;
+  const statusText = isPassed ? "Optimized" : "Needs Fix";
+  const statusColor = isPassed
+    ? "bg-gradient-to-r from-green-400 to-emerald-500 text-white"
+    : "bg-gradient-to-r from-red-500 to-rose-600 text-white";
 
   return (
-    <>
-      {reportType === "All" ? (
-        <div className="relative flex w-full h-full">
-          {/* Sidebar */}
-          <div
-            className={`${sidebarClass} lg:translate-x-0 transition-transform duration-300 ease-in-out z-40`}
-          >
-            <Sidebar darkMode={darkMode} />
+    <div
+      className={`group relative p-6 rounded-xl shadow-lg ${cardBg}
+      border ${darkMode ? "border-gray-700" : "border-gray-200"}
+      transition-all duration-300 hover:shadow-2xl hover:-translate-y-1
+      ${isHovered ? "scale-[1.02]" : ""}`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div
+        className={`absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
+          isPassed
+            ? "bg-gradient-to-br from-green-500/10 to-emerald-500/10"
+            : "bg-gradient-to-br from-red-500/10 to-rose-500/10"
+        }`}
+      ></div>
+
+      <div className="relative z-10">
+        <div className="flex justify-between items-start mb-4">
+          <div className="flex items-center gap-3">
+            {icon && <span className="text-2xl">{icon}</span>}
+            <h3 className={`text-lg font-bold ${titleColor}`}>{title}</h3>
           </div>
-
-          {/* Main content */}
-          <main
-            className={`flex-1  lg:ml-64 flex flex-col justify-center items-center pt-20 pb-0 pr-4 pl-4 lg:pl-0 space-y-8 ${
-              darkMode ? " text-gray-100" : " text-gray-800"
-            }`}
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-bold shadow-md ${statusColor}`}
           >
-            {/* Title with Circular Progress */}
-            <h1 className="responsive text-heading-25 flex items-center justify-center sm:gap-10 text-3xl font-extrabold mb-6">
-              Conversion Lead Flow{" "}
-              <CircularProgress value={metric.Percentage} size={70} stroke={5} />
-            </h1>
-
-            {/* Conversion & UX Metrics Card */}
-            <div
-              className={`w-full max-w-4xl p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500 ${cardBg}`}
-            >
-              <h2 className={`text-xl font-bold mb-4 ${textColor}`}>
-                Conversion & UX Metrics
-              </h2>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                {/* ... (Aapke 5 items yahan) ... */}
-                <div className="flex justify-between items-center">
-                  <span className={textColor}>Primary Call-to-Actions</span>
-                  <ScoreBadge
-                    score={metric.CTA_Visibility.Score}
-                    textGood="CTAs visible"
-                    textBad="CTAs not visible"
-                  />
-                </div>
-                {/* ... */}
-                <div className="flex justify-between items-center">
-                  <span className={textColor}>Form Length</span>
-                  <ScoreBadge
-                    score={metric.Form_Length.Score}
-                    textGood="Form length optimal"
-                    textBad="Form length not optimal"
-                  />
-                </div>
-                {/* ... */}
-                <div className="flex justify-between items-center">
-                  <span className={textColor}>Exit Intent Triggers</span>
-                  <ScoreBadge
-                    score={metric.Score}
-                    textGood="Exit triggers active"
-                    textBad="Exit triggers missing"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Audit Dropdowns */}
-            <AuditDropdown
-              items={metric.Passed}
-              title="Passed Audits"
-              darkMode={darkMode}
-            />
-            <AuditDropdown
-              items={metric.Warning}
-              title="Warning"
-              darkMode={darkMode}
-            />
-            <AuditDropdown
-              items={metric.Improvements}
-              title="Failed Audits"
-              darkMode={darkMode}
-            />
-          </main>
+            {statusText}
+          </span>
         </div>
-      ) : (
-        <main
-          className={`flex flex-col justify-center items-center min-h-auto ${
-            darkMode ? " text-gray-100" : " text-gray-800"
+
+        <div className={`text-2xl font-bold mb-4 ${valueColor}`}>
+          {isPassed ? "✓ Good" : "⚠️ Check"}
+        </div>
+
+        <button
+          onClick={() => setShowDescription(!showDescription)}
+          className={`w-full mt-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-300 ${
+            darkMode
+              ? "bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white"
+              : "bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white"
           }`}
         >
-          {/* Title with Circular Progress */}
-          <h1 className="responsive text-heading-25 flex items-center justify-center sm:gap-10 text-3xl font-extrabold mb-6">
-            Conversion Lead Flow{" "}
-            <CircularProgress value={metric.Percentage} size={70} stroke={5} />
-          </h1>
+          {showDescription ? "Hide Details" : "Show Details"}
+        </button>
 
-          {/* Conversion & UX Metrics Card */}
-          <div
-            className={`w-full max-w-4xl p-6 mb-5 rounded-2xl shadow-lg border-l-4 border-indigo-500 ${cardBg}`}
+        <div
+          className={`overflow-hidden transition-all duration-300 ${
+            showDescription ? "max-h-96 mt-4" : "max-h-0"
+          }`}
+        >
+          <p
+            className={`text-sm ${descriptionColor} border-t ${
+              darkMode ? "border-gray-700" : "border-gray-200"
+            } pt-4`}
           >
-            <h2 className={`text-xl font-bold mb-4 ${textColor}`}>
-              Conversion & UX Metrics
-            </h2>
+            {description}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-              {/* ... (Aapke poore 12 items yahan) ... */}
-              <div className="flex justify-between items-center">
-                <span className={textColor}>Primary Call-to-Actions</span>
-                <ScoreBadge
-                  score={metric.CTA_Visibility.Score}
-                  textGood="CTAs visible"
-                  textBad="CTAs not visible"
-                />
-              </div>
-              {/* ... (baaki items) ... */}
-              {["Testimonials", "Reviews", "Trust_Badges", "Client_Logos"].map(
-                (item) => (
-                  <div key={item} className="flex justify-between items-center">
-                    <span className={textColor}>{item.replace("_", " ")}</span>
-                    <ScoreBadge
-                      score={metric.Score}
-                      textGood={`${item.replace("_", " ")} visible`}
-                      textBad={`${item.replace("_", " ")} missing`}
-                    />
-                  </div>
-                )
-              )}
-              {/* ... (baaki items) ... */}
-              <div className="flex justify-between items-center">
-                <span className={textColor}>Exit Intent Triggers</span>
-                <ScoreBadge
-                  score={metric.Score}
-                  textGood="Exit triggers active"
-                  textBad="Exit triggers missing"
-                />
-              </div>
-            </div>
-          </div>
+// ------------------------------------------------------
+// ✅ Section Component
+// ------------------------------------------------------
+function Section({ title, icon, color, children, textColor }) {
+  return (
+    <div
+      className={`w-full max-w-4xl p-8 rounded-2xl shadow-2xl border-l-8 border-${color}-500`}
+    >
+      <div className="flex items-center gap-3 mb-6">
+        <span className="text-3xl">{icon}</span>
+        <h2 className={`text-2xl font-bold ${textColor}`}>{title}</h2>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">{children}</div>
+    </div>
+  );
+}
 
-          {/* Audit Dropdowns */}
-          <AuditDropdown
-            items={metric.Passed}
-            title="Passed Audits"
-            darkMode={darkMode}
-          />
-          <AuditDropdown
-            items={metric.Warning}
-            title="Warning"
-            darkMode={darkMode}
-          />
-          <AuditDropdown
-            items={metric.Improvements}
-            title="Failed Audits"
-            darkMode={darkMode}
-          />
-        </main>
+// ------------------------------------------------------
+// ✅ MAIN COMPONENT
+// ------------------------------------------------------
+export default function Conversion_Lead_Flow() {
+  const { theme } = useContext(ThemeContext);
+  const { data, loading } = useData();
+  const darkMode = theme === "dark";
+  const flow = data?.Conversion_and_Lead_Flow || {};
+
+  if (loading || data.Status === "inprogress") {
+    return <ConversionShimmer darkMode={darkMode} />;
+  }
+
+  const textColor = darkMode ? "text-white" : "text-gray-900";
+  const mainCardBg = darkMode
+    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900"
+    : "bg-gradient-to-br from-white via-blue-50/30 to-white";
+
+  const desc = {
+    CTA_Visibility: "Checks if primary CTAs are visible and above the fold.",
+    CTA_Clarity: "Evaluates if CTAs clearly communicate the intended action.",
+    CTA_Contrast: "Assesses color contrast and visual distinction of CTAs.",
+    CTA_Crowding: "Ensures CTAs are well-spaced and not cluttered.",
+    CTA_Flow_Alignment: "Checks if CTAs are placed in a natural reading flow.",
+    Form_Presence: "Verifies that forms exist on key conversion pages.",
+    Form_Length: "Measures form complexity; shorter forms convert better.",
+    Required_vs_Optional_Fields: "Ensures clarity between mandatory and optional fields.",
+    Inline_Validation: "Checks for real-time field validation to reduce form errors.",
+    Submit_Button_Clarity: "Analyzes visibility and clarity of the submit button.",
+    AutoFocus_Field: "Ensures the cursor auto-focuses on the first field.",
+    MultiStep_Form_Progress: "Checks multi-step form usability and progress visibility.",
+    Testimonials: "Validates presence of customer testimonials for trust.",
+    Reviews: "Checks for product/service reviews to build credibility.",
+    Trust_Badges: "Detects security/trust badges improving confidence.",
+    Client_Logos: "Verifies display of notable client logos.",
+    Case_Studies_Accessibility: "Checks accessibility of case studies or portfolios.",
+    Exit_Intent_Triggers: "Detects exit intent popups or re-engagement triggers.",
+    Lead_Magnets: "Checks for offers like free downloads, demos, or resources.",
+    Contact_Info_Visibility: "Ensures phone/email info is clearly visible.",
+    Chatbot_Presence: "Verifies chatbot or instant support availability.",
+    Interactive_Elements: "Checks interactive engagement tools like quizzes/sliders.",
+    Personalization: "Assesses AI-based or dynamic personalization presence.",
+    Progress_Indicators: "Validates progress bars or indicators during steps.",
+    Friendly_Error_Handling: "Ensures clear error messages and input feedback.",
+    Microcopy_Clarity: "Checks clarity of helper text and microcopy messages.",
+    Incentives_Displayed: "Verifies incentive display like discounts or offers.",
+    Scarcity_Urgency: "Checks use of urgency triggers (limited time/stock).",
+    Smooth_Scrolling: "Ensures smooth scrolling enhances UX flow.",
+    Mobile_CTA_Adaptation: "Checks if CTAs are optimized for mobile users.",
+    MultiChannel_FollowUp: "Verifies multi-channel follow-up strategies post-lead.",
+  };
+
+  return (
+    <div className="relative flex w-full h-full min-h-screen">
+      {data?.Report === "All" && (
+        <div
+          className={`fixed top-0 mt-16 left-0 h-full w-64 ${
+            darkMode ? "bg-gray-900" : "bg-white"
+          } shadow-lg z-40`}
+        >
+          <Sidebar darkMode={darkMode} />
+        </div>
       )}
-    </>
+
+      <main
+        className={`flex-1 lg:ml-64 flex flex-col items-center pt-20 pb-12 px-4 space-y-8 ${
+          darkMode
+            ? "bg-gray-900"
+            : "bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50"
+        }`}
+      >
+        {/* Header */}
+        <div
+          className={`w-full max-w-4xl p-8 rounded-2xl shadow-2xl border-l-8 border-indigo-500 ${mainCardBg}`}
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2
+                className={`text-5xl font-black ${textColor} mb-2 bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent`}
+              >
+                Conversion & Lead Flow
+              </h2>
+              <p
+                className={`text-sm ${
+                  darkMode ? "text-gray-400" : "text-gray-600"
+                }`}
+              >
+                Analyze conversion optimization, UX flow, and lead capture readiness.
+              </p>
+            </div>
+            <CircularProgress value={flow?.Percentage || 0} size={80} stroke={6} />
+          </div>
+          <div
+            className={`inline-flex items-center gap-2 text-sm font-semibold px-5 py-2.5 rounded-full shadow-md
+              ${darkMode
+                ? "bg-gradient-to-r from-gray-700 to-gray-800 text-blue-400 border border-blue-700/40"
+                : "bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border border-blue-200"
+              }`}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Time Taken — {data.Time_Taken}
+          </div>
+        </div>
+
+        {/* 🔵 Section 1: CTA & Forms */}
+        <Section title="Call-to-Actions & Forms" icon="🧭" color="blue" textColor={textColor}>
+          {Object.entries({
+            CTA_Visibility: "🚀",
+            CTA_Clarity: "🗣️",
+            CTA_Contrast: "🎨",
+            CTA_Crowding: "📏",
+            CTA_Flow_Alignment: "🔄",
+            Form_Presence: "🧾",
+            Form_Length: "✏️",
+            Required_vs_Optional_Fields: "⚖️",
+            Inline_Validation: "✅",
+            Submit_Button_Clarity: "📍",
+            AutoFocus_Field: "🎯",
+            MultiStep_Form_Progress: "📊",
+          }).map(([key, icon]) => (
+            <MetricCard
+              key={key}
+              title={key.replaceAll("_", " ")}
+              description={desc[key]}
+              score={flow[key]?.Score}
+              darkMode={darkMode}
+              icon={icon}
+            />
+          ))}
+        </Section>
+
+        {/* 🟢 Section 2: Trust & Engagement */}
+        <Section title="Trust & Engagement Signals" icon="🤝" color="green" textColor={textColor}>
+          {[
+            "Testimonials",
+            "Reviews",
+            "Trust_Badges",
+            "Client_Logos",
+            "Case_Studies_Accessibility",
+            "Lead_Magnets",
+            "Exit_Intent_Triggers",
+            "Chatbot_Presence",
+            "Contact_Info_Visibility",
+          ].map((key) => (
+            <MetricCard
+              key={key}
+              title={key.replaceAll("_", " ")}
+              description={desc[key]}
+              score={flow[key]?.Score}
+              darkMode={darkMode}
+              icon="💬"
+            />
+          ))}
+        </Section>
+
+        {/* 🟣 Section 3: UX & Interaction */}
+        <Section title="UX Flow & Interaction" icon="💡" color="purple" textColor={textColor}>
+          {[
+            "Interactive_Elements",
+            "Personalization",
+            "Progress_Indicators",
+            "Friendly_Error_Handling",
+            "Microcopy_Clarity",
+            "Incentives_Displayed",
+            "Scarcity_Urgency",
+            "Smooth_Scrolling",
+            "Mobile_CTA_Adaptation",
+            "MultiChannel_FollowUp",
+          ].map((key) => (
+            <MetricCard
+              key={key}
+              title={key.replaceAll("_", " ")}
+              description={desc[key]}
+              score={flow[key]?.Score}
+              darkMode={darkMode}
+              icon="⚙️"
+            />
+          ))}
+        </Section>
+
+        {/* Dropdowns */}
+        <AuditDropdown items={flow?.Passed} title="✅ Passed Audits" darkMode={darkMode} />
+        <AuditDropdown items={flow?.Warning} title="⚠️ Warnings" darkMode={darkMode} />
+        <AuditDropdown items={flow?.Improvements} title="🚫 Improvements Needed" darkMode={darkMode} />
+      </main>
+    </div>
   );
 }

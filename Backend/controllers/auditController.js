@@ -10,12 +10,10 @@ export const startAudit = async (req, res) => {
   try {
     let { Site, Device, Report } = req.body;
 
-    // 1️⃣ Validate required fields
     if (!Site || !Device || !Report) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    // 2️⃣ Normalize URL
     Site = Site.trim();
     if (!/^https?:\/\//i.test(Site)) {
       Site = "https://" + Site;
@@ -23,14 +21,12 @@ export const startAudit = async (req, res) => {
 
     console.log(`URL Received: ${Site}, Device: ${Device}, Report: ${Report}`);
 
-    // 3️⃣ Check if existing report exists in DB
     const existing = await SiteReport.findOne({ Site, Device, Report });
     if (existing && existing.Status === "completed") {
-      console.log("✅ Existing completed report found — returning cached version");
+      console.log("✅ Already in DB");
       return res.status(200).json(existing);
     }
 
-    // 4️⃣ Create new "inprogress" report
     const newReport = new SiteReport({
       Site,
       Device,
@@ -39,9 +35,6 @@ export const startAudit = async (req, res) => {
     });
     await newReport.save();
 
-    console.log(`🆕 Created new report in DB (Status: inprogress): ${newReport._id}`);
-
-    // 5️⃣ Send immediate response to frontend
     res.status(201).json({
       message: "Audit started successfully",
       auditId: newReport._id,
@@ -62,9 +55,6 @@ export const startAudit = async (req, res) => {
     const workerPath = join(__dirname, "../workers/auditWorker.js");
     const worker = new Worker(workerPath, { workerData });
 
-    console.log(`🧩 Worker launched for auditId: ${newReport._id}`);
-
-    // 7️⃣ Worker event listeners
     worker.on("message", async (msg) => {
       if (msg.error) {
         console.error(`❌ Worker failed: ${msg.error}`);

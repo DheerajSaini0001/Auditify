@@ -13,7 +13,6 @@ import aioReadiness from "../metricServices/aioReadiness.js";
 import Puppeteer_Cheerio from "../utils/Puppeteer_Cheerio.js";
 import { performance } from "perf_hooks";
 
-// Worker data from controller
 const { Site, Device, Report, auditId } = workerData;
 
 console.log(`🚀 [WORKER ${auditId}]: Starting → Site: ${Site}, Device: ${Device}, Report: ${Report}`);
@@ -60,7 +59,6 @@ const OverAll = (technicalReport, seoReport, accessibilityReport, securityReport
     const { browser: b, page, response, $ } = await Puppeteer_Cheerio(Site, Device);
     browser = b;
 
-    // If single metric selected
     if (Report !== "All") {
       let result;
       switch (Report) {
@@ -105,7 +103,6 @@ const OverAll = (technicalReport, seoReport, accessibilityReport, securityReport
       process.exit(0);
     }
 
-    // If "All" reports selected
     const [
       technicalReport,
       seoReport,

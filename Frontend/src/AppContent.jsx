@@ -19,12 +19,8 @@ import ReportLayout from "./Pages/ReportLayout.jsx";
 // ✅ Import ThemeContext and ThemeProvider
 import { ThemeProvider, ThemeContext } from "./context/ThemeContext.jsx";
 
-// ✅ Import the new hook
-import usePreventBackOnHome from "./hooks/usePreventBackOnHome.js";
-
 function AppContentInner() {
-  // ✅ Call the hook — sabse pehle
-  usePreventBackOnHome();
+  
 
   const { theme, toggleTheme } = useContext(ThemeContext);
   const darkMode = theme === "dark";

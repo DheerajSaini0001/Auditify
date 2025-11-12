@@ -1,5 +1,4 @@
-import React, { useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useContext, useEffect } from "react";
 import { useData } from "../context/DataContext";
 import { ThemeContext } from "../context/ThemeContext";
 import Sidebar from "../Component/Sidebar";
@@ -13,23 +12,47 @@ import Conversion_Lead_Flow from "./Conversion_Lead_Flow";
 import AIO from "./AIO";
 import RawData from "./RawData";
 import UrlHeader from "../Component/UrlHeader";
-import { Loader2 } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const ReportLayout = ({ sidebarOpen, setSidebarOpen }) => {
   const { data, clearData } = useData();
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
   const navigate = useNavigate();
+const location = useLocation();
 
+  // ✅ 1️⃣ Auto redirect to "/" if user opens /report directly without data
+  useEffect(() => {
+    if (!data) {
+      navigate("/", { replace: true });
+    }
+  }, [data, navigate]);
+
+  // ✅ 2️⃣ Handle browser back button — always go to "/"
+useEffect(() => {
+  if (location.pathname === "/report") {
+    // 👇 Fake history entry — so first back press triggers handler instead of reload
+    window.history.pushState(null, "", window.location.href);
+
+    const handleBack = (e) => {
+      e.preventDefault();
+      clearData(); // 🧹 clear localStorage + interval
+      navigate("/", { replace: true }); // 🏠 redirect to home instantly
+    };
+
+    window.addEventListener("popstate", handleBack);
+
+    return () => window.removeEventListener("popstate", handleBack);
+  }
+}, [location, navigate]);
+
+  // ✅ 3️⃣ Button click to go back to home (and clear old data)
   const handleCheckOther = () => {
     clearData();
     navigate("/", { replace: true });
-    setTimeout(() => {
-      window.history.pushState(null, "", window.location.href);
-    }, 100);
   };
 
-  // --- 1️⃣ If no data available ---
+  // --- If no data available ---
   if (!data) {
     return (
       <div className="flex flex-col items-center justify-center h-screen text-gray-500 dark:text-gray-400">
@@ -38,7 +61,7 @@ const ReportLayout = ({ sidebarOpen, setSidebarOpen }) => {
     );
   }
 
-  // --- 2️⃣ If audit failed ---
+  // --- If audit failed ---
   if (data.Status === "failed") {
     return (
       <div
@@ -62,7 +85,7 @@ const ReportLayout = ({ sidebarOpen, setSidebarOpen }) => {
     );
   }
 
-  // --- 3️⃣ Default: Show report data (any non-failed status) ---
+  // --- Default: Show report data (non-failed status) ---
   const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray-900 shadow-lg`;
 
   return (

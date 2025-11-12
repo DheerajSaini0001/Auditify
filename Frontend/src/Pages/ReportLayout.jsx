@@ -19,29 +19,37 @@ const ReportLayout = ({ sidebarOpen, setSidebarOpen }) => {
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
   const navigate = useNavigate();
-  const location = useLocation();
+const location = useLocation();
 
-  // ✅ 1️⃣ Redirect user to "/" if they open /report directly without data
+  // ✅ 1️⃣ Auto redirect to "/" if user opens /report directly without data
   useEffect(() => {
     if (!data) {
       navigate("/", { replace: true });
     }
   }, [data, navigate]);
 
-  // ✅ 2️⃣ Optional: clear data when user presses browser back button
-  useEffect(() => {
-    const handlePop = () => {
-      clearData(); // 🧹 clear state and localStorage (if used)
+  // ✅ 2️⃣ Handle browser back button — always go to "/"
+useEffect(() => {
+  if (location.pathname === "/report") {
+    // 👇 Fake history entry — so first back press triggers handler instead of reload
+    window.history.pushState(null, "", window.location.href);
+
+    const handleBack = (e) => {
+      e.preventDefault();
+      clearData(); // 🧹 clear localStorage + interval
+      navigate("/", { replace: true }); // 🏠 redirect to home instantly
     };
 
-    window.addEventListener("popstate", handlePop);
-    return () => window.removeEventListener("popstate", handlePop);
-  }, [clearData]);
+    window.addEventListener("popstate", handleBack);
 
-  // ✅ 3️⃣ Manual “Back to Home” button click handler
+    return () => window.removeEventListener("popstate", handleBack);
+  }
+}, [location, navigate]);
+
+  // ✅ 3️⃣ Button click to go back to home (and clear old data)
   const handleCheckOther = () => {
     clearData();
-    navigate("/");
+    navigate("/", { replace: true });
   };
 
   // --- If no data available ---
@@ -64,7 +72,7 @@ const ReportLayout = ({ sidebarOpen, setSidebarOpen }) => {
         <p className="text-2xl font-bold text-red-500">⚠️ Data Fetching Failed</p>
         <p className="max-w-md text-gray-500 dark:text-gray-400">
           The audit could not complete for this URL. This may be due to a network
-          issue, invalid URL, or the target site being unreachable.
+          issue, invalid URL, or the target site being unreachable.  
           Please check your connection or try another website.
         </p>
         <button

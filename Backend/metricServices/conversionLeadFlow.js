@@ -1,4 +1,4 @@
-import SiteReport from "../Model/SiteReport.js";
+import SiteReport from "../models/SiteReport.js";
 
 // Conversion & Lead Flow (Call-to-Action (CTA) Effectiveness)
 function checkCTAs($) {

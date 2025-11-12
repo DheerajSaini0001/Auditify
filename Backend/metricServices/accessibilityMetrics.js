@@ -1,5 +1,5 @@
 import AxePuppeteer from "@axe-core/puppeteer";
-import SiteReport from "../Model/SiteReport.js";
+import SiteReport from "../models/SiteReport.js";
 
 export default async function accessibilityMetrics(url,device,selectedMetric,page, auditId) {
 

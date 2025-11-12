@@ -1,4 +1,4 @@
-import SiteReport from "../Model/SiteReport.js";
+import SiteReport from "../models/SiteReport.js";
 
 // Artificial Intelligence Optimization Readiness (Technical Performance (AI-specific metrics))
 function checkStructuredData($) {

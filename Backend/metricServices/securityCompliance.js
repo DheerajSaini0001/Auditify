@@ -4,7 +4,7 @@ import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import dotenv from "dotenv";
 import fetch from "node-fetch";
 import { URL } from "url";
-import SiteReport from "../Model/SiteReport.js";
+import SiteReport from "../models/SiteReport.js";
 
 dotenv.config();
 puppeteer.use(StealthPlugin());

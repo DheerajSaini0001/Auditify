@@ -1,4 +1,4 @@
-import SiteReport from "../Model/SiteReport.js";
+import SiteReport from "../models/SiteReport.js";
 
 // UX & Content Structure (Navigation & Layout)
 function checkNavigationClarity($) {

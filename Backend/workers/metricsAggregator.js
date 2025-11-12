@@ -1,14 +1,14 @@
-import technicalMetrics from "../Metrices/technicalMetrics.js";
-import seoMetrics from "../Metrices/seoMetrics.js";
-import accessibilityMetrics from "../Metrices/accessibilityMetrics.js";
-import securityCompliance from "../Metrices/securityCompliance.js";
-import uxContentStructure from "../Metrices/uxContentStructure.js";
-import conversionLeadFlow from "../Metrices/conversionLeadFlow.js";
-import aioReadiness from "../Metrices/aioReadiness.js";
+import technicalMetrics from "../metricServices/technicalMetrics.js";
+import seoMetrics from "../metricServices/seoMetrics.js";
+import accessibilityMetrics from "../metricServices/accessibilityMetrics.js";
+import securityCompliance from "../metricServices/securityCompliance.js";
+import uxContentStructure from "../metricServices/uxContentStructure.js";
+import conversionLeadFlow from "../metricServices/conversionLeadFlow.js";
+import aioReadiness from "../metricServices/aioReadiness.js";
 
-import Puppeteer_Cheerio from "../Tools/Puppeteer_Cheerio.js";
+import Puppeteer_Cheerio from "../utils/Puppeteer_Cheerio.js";
 import { performance } from "perf_hooks";
-import SiteReport from "../Model/SiteReport.js";
+import SiteReport from "../models/SiteReport.js";
 
 function OverAll(technicalReport, seoReport, accessibilityReport, securityReport, uxReport, conversionReport, aioReport) {
   const totalA = technicalReport || 0;

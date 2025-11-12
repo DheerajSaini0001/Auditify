@@ -1,5 +1,5 @@
 import axios from "axios";
-import SiteReport from "../Model/SiteReport.js";
+import SiteReport from "../models/SiteReport.js";
 
 // On-Page SEO (Essentials) 
 function checkURLStructure(url) {

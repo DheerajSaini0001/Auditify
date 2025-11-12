@@ -1,8 +1,8 @@
 import express from "express";
 import cors from "cors";
-import audits from "./Router/audit.js";
-import liveData from "./Router/livedataRoute.js";
-import connectDB from "./DB/db.js";
+import auditRoutes from "./routes/auditRoutes.js";
+import reportRoutes from "./routes/reportRoutes.js";
+import connectDB from "./config/db.js";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -13,8 +13,8 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-app.use("/audit", audits);
-app.use("/live", liveData);
+app.use("/audit", auditRoutes);
+app.use("/report", reportRoutes);
 
 // Start server
 app.listen(PORT, () => {

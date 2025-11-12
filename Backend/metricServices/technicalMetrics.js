@@ -1,5 +1,5 @@
-import googleAPI from "../Tools/googleAPI.js";
-import SiteReport from "../Model/SiteReport.js";
+import googleAPI from "../utils/googleAPI.js";
+import SiteReport from "../models/SiteReport.js";
 
 function coreWebVitalsScore(value, threshold) {
   return value <= threshold ? 1 : 0;

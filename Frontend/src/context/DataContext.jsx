@@ -85,7 +85,7 @@ const fetchData = async (inputValue, device, report) => {
 
     const newInterval = setInterval(async () => {
   try {
-    const res = await fetch(`http://localhost:2000/live/${id}`);
+    const res = await fetch(`http://localhost:2000/report/${id}`);
     if (!res.ok) return;
     const updated = await res.json();
 

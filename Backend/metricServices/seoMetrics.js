@@ -315,7 +315,17 @@ function checkPagination($) {
   }
 }
 
-export default async function seoMetrics(url,device,selectedMetric, $, auditId) {
+export default async function seoMetrics(url,device,selectedMetric, $, auditId, page) {
+
+// Scheme  
+const structuredData = await page.evaluate(() => {
+    const scripts = Array.from(document.querySelectorAll('script[type="application/ld+json"]'))
+    .map(el => {
+        try { return JSON.parse(el.innerText); } catch { return null; }
+      })
+      .filter(Boolean)
+    return scripts
+  });  
 
 // On-Page SEO (Essentials) 
 const title = $("title").text().trim() || "";
@@ -804,6 +814,7 @@ const actualPercentage = parseFloat((((paginationScore+titleExistanceScore+metaD
 // console.log(improvements);
 
   await SiteReport.findByIdAndUpdate(auditId, {
+      Schema:structuredData,
       On_Page_SEO: {
         Title: {
           Title: title,
@@ -904,6 +915,7 @@ const actualPercentage = parseFloat((((paginationScore+titleExistanceScore+metaD
           'Raw.Site': url,
           'Raw.Report': selectedMetric,
           'Raw.Device': device,
+          'Raw.Schema':structuredData,
           'Raw.On_Page_SEO':{
         Title: {
           Title: title,

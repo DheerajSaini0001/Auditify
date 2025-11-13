@@ -85,15 +85,6 @@ export default async function technicalMetrics(url,device,selectedMetric, page, 
     return scripts.length > 0 ? 1 : 0;
   });
 
-  const structuredData = await page.evaluate(() => {
-    const scripts = Array.from(document.querySelectorAll('script[type="application/ld+json"]'))
-    .map(el => {
-        try { return JSON.parse(el.innerText); } catch { return null; }
-      })
-      .filter(Boolean)
-    return scripts
-  });
-
   const links = await page.$$eval("a[href]", (anchors) =>
     anchors
       .map((a) => a.href)
@@ -508,7 +499,6 @@ const actualPercentage = actuallcpScore + actualtbtScore + actualclsScore + actu
   // console.log(improvements);
   
   await SiteReport.findByIdAndUpdate(auditId, {
-      Schema:structuredData,
       Technical_Performance: {
         LCP:{
           Score: lcpScore,
@@ -603,9 +593,7 @@ const actualPercentage = actuallcpScore + actualtbtScore + actualclsScore + actu
           'Raw.Site': url,
           'Raw.Report': selectedMetric,
           'Raw.Device': device,
-          'Raw.Schema':structuredData,
           'Raw.Technical_Performance':{
-      Schema:structuredData,
         LCP:{
           Score: lcpScore,
           Value: lcpValue,

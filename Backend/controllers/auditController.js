@@ -20,7 +20,8 @@ export const startAudit = async (req, res) => {
 
     const existing = await SiteReport.findOne({ Site, Device, Report }).sort({ createdAt: -1 });
 
-    if (existing && existing.Status === "completed") {
+    // if (existing && existing.Status === "completed") {
+    if (existing) {
       const diff = (Date.now() - new Date(existing.createdAt)) / (1000 * 60);
 
       if (diff < 60) {                          // Set 60 Minutes

@@ -5,7 +5,7 @@ const SiteReportSchema = new mongoose.Schema(
     Site: { type: String, required: true },              
     Report: { type: String, required: true },
     Device: { type: String, required: true }, 
-    Status: {type: String, default: 'pending'},            
+    Status: {type: String, default: 'inprogress'},            
     Schema: { type: Array, default: null },
     Time_Taken: { type: String, default: null },         
     Score: { type: Number, default: null },             
@@ -40,7 +40,7 @@ const SiteReportSchema = new mongoose.Schema(
         AIO_Readiness: null,
       },
     },        
-    createdAt: { type: Date, default: Date.now ,expires: 10800 }, // 3 hour expiry
+    createdAt: { type: Date, default: Date.now ,expires: 60 * 60 * 1 }, // 1 hour expiry
   }
 );
 

@@ -98,14 +98,23 @@ const ReportLayout = ({ sidebarOpen, setSidebarOpen }) => {
         <div className={`relative flex w-full h-full justify-center px-4 ${darkMode ? "text-gray-100" : "text-gray-800"}`}>
           <main className="flex-1 flex flex-col pb-0 space-y-8 max-w-7xl">
             <UrlHeader darkMode={darkMode} />
-
-            {data.Report === "technicalMetrics" && <Technical_Performance darkMode={darkMode} />}
-            {data.Report === "seoMetrics" && <On_Page_SEO darkMode={darkMode} />}
-            {data.Report === "accessibilityMetrics" && <Accessibility darkMode={darkMode} />}
-            {data.Report === "securityCompliance" && <Security_Compilance darkMode={darkMode} />}
-            {data.Report === "uxContentStructure" && <UX_Content_Structure darkMode={darkMode} />}
-            {data.Report === "conversionLeadFlow" && <Conversion_Lead_Flow darkMode={darkMode} />}
-            {data.Report === "aioReadiness" && <AIO darkMode={darkMode} />}
+            {data.Report === "Technical Performance" && (
+              <Technical_Performance darkMode={darkMode} />
+            )}
+            {data.Report === "On Page SEO" && <On_Page_SEO darkMode={darkMode} />}
+            {data.Report === "Accessibility" && (
+              <Accessibility darkMode={darkMode} />
+            )}
+            {data.Report === "Security/Compliance" && (
+              <Security_Compilance darkMode={darkMode} />
+            )}
+            {data.Report === "UX & Content Structure" && (
+              <UX_Content_Structure darkMode={darkMode} />
+            )}
+            {data.Report === "Conversion & Lead Flow" && (
+              <Conversion_Lead_Flow darkMode={darkMode} />
+            )}
+            {data.Report === "AIO (AI-Optimization) Readiness" && <AIO darkMode={darkMode} />}
           </main>
         </div>
       )}

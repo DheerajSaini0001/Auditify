@@ -123,15 +123,21 @@ export default function DarkCard() {
                   }`}
                 >
                   <option value="All">🌐 All</option>
-                  <option value="technicalMetrics">📊 Technical Performance</option>
-                  <option value="seoMetrics">📃 On-Page SEO</option>
-                  <option value="accessibilityMetrics">♿ Accessibility</option>
-                  <option value="securityCompliance">🔒 Security Compliance</option>
-                  <option value="uxContentStructure">🗂️ UX Content Structure</option>
-                  <option value="conversionLeadFlow">
+                  <option value="Technical Performance">
+                    📊 Technical Performance
+                  </option>
+                  <option value="On Page SEO">📃 On-Page SEO</option>
+                  <option value="Accessibility">♿ Accessibility</option>
+                  <option value="Security/Compliance">
+                    🔒 Security/Compliance
+                  </option>
+                  <option value="UX & Content Structure">
+                    🗂️ UX & Content Structure
+                  </option>
+                  <option value="Conversion & Lead Flow">
                     🔄 Conversion & Lead Flow
                   </option>
-                  <option value="aioReadiness">🤖 AIO</option>
+                  <option value="AIO (AI-Optimization) Readiness">🤖 AIO (AI-Optimization) Readiness</option>
                 </select>
               </div>
 

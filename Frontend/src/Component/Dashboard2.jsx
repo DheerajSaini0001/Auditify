@@ -211,6 +211,9 @@ export default function Dashboard2({ darkMode }) {
           <p className="text-lg sm:text-xl mt-1 font-semibold">
             Device - {data.Device}
           </p>
+          <p className="text-lg sm:text-xl mt-1 font-semibold">
+            Time Taken - {data.Time_Taken}
+          </p>
         </div>
       </div>
 

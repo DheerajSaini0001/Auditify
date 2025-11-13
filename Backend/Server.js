@@ -16,7 +16,6 @@ app.use(cors());
 app.use("/audit", auditRoutes);
 app.use("/report", reportRoutes);
 
-// Start server
 app.listen(PORT, () => {
   console.log(`✅ Backend running on http://localhost:${PORT}`);
 });

@@ -15,154 +15,123 @@ import { performance } from "perf_hooks";
 
 const { Site, Device, Report, auditId } = workerData;
 
-console.log(`🚀 [WORKER ${auditId}]: Starting → Site: ${Site}, Device: ${Device}, Report: ${Report}`);
+const OverAll = (A, B, C, D, E, F, G) => {
+  A ||= 0; B ||= 0; C ||= 0; D ||= 0; E ||= 0; F ||= 0; G ||= 0;
+  const total = (A + B + C + D + E + F + G) / 7;
 
-const OverAll = (technicalReport, seoReport, accessibilityReport, securityReport, uxReport, conversionReport, aioReport) => {
-  const totalA = technicalReport || 0;
-  const totalB = seoReport || 0;
-  const totalC = accessibilityReport || 0;
-  const totalD = securityReport || 0;
-  const totalE = uxReport || 0;
-  const totalF = conversionReport || 0;
-  const totalG = aioReport || 0;
-
-  const totalScore = (totalA + totalB + totalC + totalD + totalE + totalF + totalG) / 7;
-
-  let grade = "F";
-  if (totalScore >= 90) grade = "A";
-  else if (totalScore >= 80) grade = "B";
-  else if (totalScore >= 70) grade = "C";
-  else if (totalScore >= 60) grade = "D";
-
-  const sectionScores = [
-    { name: "Technical Performance", score: totalA },
-    { name: "On-Page SEO", score: totalB },
-    { name: "Accessibility", score: totalC },
-    { name: "Security/Compliance", score: totalD },
-    { name: "UX & Content", score: totalE },
-    { name: "Conversion & Lead Flow", score: totalF },
-    { name: "AIO Readiness", score: totalG },
-  ];
-
-  return { totalScore: parseFloat(totalScore.toFixed(1)), grade, sectionScores };
+  return {
+    totalScore: Number(total.toFixed(1)),
+    grade:
+      total >= 90 ? "A" :
+      total >= 80 ? "B" :
+      total >= 70 ? "C" :
+      total >= 60 ? "D" : "F",
+    sectionScores: [
+      { name: "Technical Performance", score: A },
+      { name: "On-Page SEO", score: B },
+      { name: "Accessibility", score: C },
+      { name: "Security/Compliance", score: D },
+      { name: "UX & Content Structure", score: E },
+      { name: "Conversion & Lead Flow", score: F },
+      { name: "AIO Readiness", score: G },
+    ],
+  };
 };
 
-// 🧠 Run audit
 (async () => {
   let browser;
   const start = performance.now();
 
   try {
-    await dbConnect();
-    console.log(`📡 [WORKER ${auditId}]: Connected to DB`);
+    if (mongoose.connection.readyState !== 1) {
+      await dbConnect();
+    }
 
     const { browser: b, page, response, $ } = await Puppeteer_Cheerio(Site, Device);
     browser = b;
 
     if (Report !== "All") {
       let result;
+
       switch (Report) {
-        case "technicalMetrics":
+        case "Technical Performance":
           result = await technicalMetrics(Site, Device, Report, page, response, browser, auditId);
           break;
-        case "seoMetrics":
-          result = await seoMetrics(Site, Device, Report, $, auditId);
+        case "On Page SEO":
+          result = await seoMetrics(Site, Device, Report, $, auditId, page);
           break;
-        case "accessibilityMetrics":
+        case "Accessibility":
           result = await accessibilityMetrics(Site, Device, Report, page, auditId);
           break;
-        case "securityCompliance":
+        case "Security/Compliance":
           result = await securityCompliance(Site, Device, Report, page, response, browser, auditId);
           break;
-        case "uxContentStructure":
+        case "UX & Content Structure":
           result = await uxContentStructure(Site, Device, Report, $, auditId);
           break;
-        case "conversionLeadFlow":
+        case "Conversion & Lead Flow":
           result = await conversionLeadFlow(Site, Device, Report, page, $, auditId);
           break;
-        case "aioReadiness":
+        case "AIO (AI-Optimization) Readiness":
           result = await aioReadiness(Site, Device, Report, $, auditId);
           break;
-        default:
-          throw new Error("Invalid metric type");
       }
 
-      const end = performance.now();
-      const timeTaken = ((end - start) / 1000).toFixed(0);
+      const timeTaken = ((performance.now() - start) / 1000).toFixed(0);
 
       await SiteReport.findByIdAndUpdate(auditId, {
         Status: "completed",
         Time_Taken: `${timeTaken}s`,
-        $set: { "Raw.Time_Taken": `${timeTaken}s` },
+        $set: { "Raw.Time_Taken": `${timeTaken}s` }
       });
 
-      console.log(`✅ [WORKER ${auditId}]: ${Report} calculation completed (${timeTaken}s)`);
+      console.log(`🧠 Worker Completed → ID: ${auditId}`);
 
-      if (parentPort) parentPort.postMessage({ success: true });
-      await browser.close();
-      process.exit(0);
+      parentPort.postMessage({ success: true });
+      return;
     }
 
-    const [
-      technicalReport,
-      seoReport,
-      accessibilityReport,
-      securityReport,
-      uxReport,
-      conversionReport,
-      aioReport,
-    ] = await Promise.all([
-      technicalMetrics(Site, Device, Report, page, response, browser, auditId),
-      seoMetrics(Site, Device, Report, $, auditId),
-      accessibilityMetrics(Site, Device, Report, page, auditId),
-      securityCompliance(Site, Device, Report, page, response, browser, auditId),
-      uxContentStructure(Site, Device, Report, $, auditId),
-      conversionLeadFlow(Site, Device, Report, page, $, auditId),
-      aioReadiness(Site, Device, Report, $, auditId),
-    ]);
+    const A = await technicalMetrics(Site, Device, Report, page, response, browser, auditId);
+    const B = await seoMetrics(Site, Device, Report, $, auditId, page);
+    const C = await accessibilityMetrics(Site, Device, Report, page, auditId);
+    const D = await securityCompliance(Site, Device, Report, page, response, browser, auditId);
+    const E = await uxContentStructure(Site, Device, Report, $, auditId);
+    const F = await conversionLeadFlow(Site, Device, Report, page, $, auditId);
+    const G = await aioReadiness(Site, Device, Report, $, auditId);
 
-    const end = performance.now();
-    const timeTaken = ((end - start) / 1000).toFixed(0);
+    const overall = OverAll(A, B, C, D, E, F, G);
 
-    const Overall = OverAll(technicalReport, seoReport, accessibilityReport, securityReport, uxReport, conversionReport, aioReport);
+    const timeTaken = ((performance.now() - start) / 1000).toFixed(0);
 
-    await SiteReport.findByIdAndUpdate(auditId, {
+     await SiteReport.findByIdAndUpdate(auditId, {
       Status: "completed",
       Time_Taken: `${timeTaken}s`,
-      Score: Overall.totalScore,
-      Grade: Overall.grade,
-      Section_Score: Overall.sectionScores,
+      Score: overall.totalScore,
+      Grade: overall.grade,
+      Section_Score: overall.sectionScores,
       $set: {
         "Raw.Time_Taken": `${timeTaken}s`,
-        "Raw.Score": Overall.totalScore,
-        "Raw.Grade": Overall.grade,
-        "Raw.Section_Score": Overall.sectionScores,
-      },
+        "Raw.Score": overall.totalScore,
+        "Raw.Grade": overall.grade,
+        "Raw.Section_Score": overall.sectionScores
+      }
     });
 
-    console.log(`🎯 [WORKER ${auditId}]: All metrics completed successfully (${timeTaken}s)`);
+    console.log(`🧠 Worker Completed → ID: ${auditId}`);
 
-    if (parentPort) parentPort.postMessage({ success: true });
-    await browser.close();
-    process.exit(0);
+    parentPort.postMessage({ success: true });
 
   } catch (err) {
-    console.error(`❌ [WORKER ${auditId}]: Failed → ${err.message}`);
+    await SiteReport.findByIdAndUpdate(auditId, {
+      Status: "failed",
+      Error_Message: err.message,
+    });
 
-    try {
-      if (mongoose.connection.readyState !== 1) await dbConnect();
+    parentPort.postMessage({ error: err.message });
 
-      await SiteReport.findByIdAndUpdate(auditId, {
-        Status: "failed",
-        Error_Message: err.message || "Audit failed",
-        $set: { "Raw.Error_Message": err.message || "Unknown Error" },
-      });
-    } catch (dbErr) {
-      console.error(`💥 [WORKER ${auditId}]: DB update failed: ${dbErr.message}`);
+  } finally {
+    if (browser) {
+      try { await browser.close(); } catch {}
     }
-
-    if (parentPort) parentPort.postMessage({ error: err.message });
-    if (browser) try { await browser.close(); } catch {}
-    process.exit(1);
   }
 })();

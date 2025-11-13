@@ -3,9 +3,6 @@ import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import SiteReport from "../models/SiteReport.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
 export const startAudit = async (req, res) => {
   try {
     let { Site, Device, Report } = req.body;
@@ -14,26 +11,30 @@ export const startAudit = async (req, res) => {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    Site = Site.trim();
+    Site = Site.trim().toLowerCase();
     if (!/^https?:\/\//i.test(Site)) {
       Site = "https://" + Site;
     }
 
-    console.log(`URL Received: ${Site}, Device: ${Device}, Report: ${Report}`);
+    console.log(`➡️ New Audit Request → ${Site} | ${Device} | ${Report}`);
 
-    const existing = await SiteReport.findOne({ Site, Device, Report });
+    const existing = await SiteReport.findOne({ Site, Device, Report }).sort({ createdAt: -1 });
+
     if (existing && existing.Status === "completed") {
-      console.log("✅ Already in DB");
-      return res.status(200).json(existing);
+      const diff = (Date.now() - new Date(existing.createdAt)) / (1000 * 60);
+
+      if (diff < 10) {                          // Set 10 Minutes
+        console.log("✅ Already in DB");
+        return res.status(200).json(existing);
+      }
     }
 
-    const newReport = new SiteReport({
+    const newReport = await SiteReport.create({
       Site,
       Device,
       Report,
       Status: "inprogress",
     });
-    await newReport.save();
 
     res.status(201).json({
       message: "Audit started successfully",
@@ -44,43 +45,29 @@ export const startAudit = async (req, res) => {
       Status: "inprogress",
     });
 
-    // 6️⃣ Launch worker thread
-    const workerData = {
-      Site,
-      Device,
-      Report,
-      auditId: newReport._id.toString(),
-    };
+    const workerPath = join(process.cwd(), "workers", "auditWorker.js");
 
-    const workerPath = join(__dirname, "../workers/auditWorker.js");
-    const worker = new Worker(workerPath, { workerData });
-
-    worker.on("message", async (msg) => {
-      if (msg.error) {
-        console.error(`❌ Worker failed: ${msg.error}`);
-        await SiteReport.findByIdAndUpdate(newReport._id, { Status: "failed" });
-      } else {
-        console.log(`✅ Worker completed for auditId: ${newReport._id}`);
-        await SiteReport.findByIdAndUpdate(newReport._id, { Status: "completed" });
-      }
+    const worker = new Worker(workerPath, {
+      workerData: {
+        Site,
+        Device,
+        Report,
+        auditId: newReport._id.toString(),
+      },
     });
 
-    worker.on("error", async (error) => {
-      console.error(`❌ Worker crashed for [${newReport._id}]:`, error);
+    worker.on("message", () => {
+      console.log("✅ Audit Completed");
+    });
+
+    worker.on("error", async () => {
       await SiteReport.findByIdAndUpdate(newReport._id, { Status: "failed" });
+      console.log("❌ Audit Failed");
     });
 
-    worker.on("exit", (code) => {
-      if (code !== 0) {
-        console.warn(`⚠️ Worker exited with code ${code} for [${newReport._id}]`);
-      } else {
-        console.log(`🧠 Worker finished cleanly for [${newReport._id}]`);
-      }
-    });
   } catch (error) {
-    console.error("❌ Error in startAudit:", error);
     if (!res.headersSent) {
-      res.status(500).json({ error: "Internal Server Error", details: error.message });
+      res.status(500).json({ error: "Internal Server Error" });
     }
   }
 };

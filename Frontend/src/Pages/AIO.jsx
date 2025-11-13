@@ -200,14 +200,11 @@ export default function AIO() {
     AI_Friendly_Structure: "Final evaluation of overall AI-readiness and code structure.",
   };
 
+  const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray-900 shadow-lg`;
   return (
     <div className="relative flex w-full h-full min-h-screen">
       {data?.Report === "All" && (
-        <div
-          className={`fixed top-0 mt-16 left-0 h-full w-64 ${
-            darkMode ? "bg-gray-900" : "bg-white"
-          } shadow-lg z-40`}
-        >
+      <div className={`${sidebarClass} lg:translate-x-0 transition-transform duration-300 ease-in-out z-40`}>
           <Sidebar darkMode={darkMode} />
         </div>
       )}

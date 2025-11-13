@@ -78,7 +78,7 @@ const MetricCard = ({ title, description, score, darkMode, icon }) => {
     <div
       className={`group relative p-6 rounded-xl shadow-lg ${cardBg}
       border ${darkMode ? "border-gray-700" : "border-gray-200"}
-      transition-all duration-300 hover:shadow-2xl hover:-translate-y-1`}
+      transition-all duration-300  `}
     >
       <div className="relative z-10">
         <div className="flex justify-between items-start mb-4">

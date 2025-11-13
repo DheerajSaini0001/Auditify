@@ -20,46 +20,36 @@ const ReportLayout = ({ sidebarOpen, setSidebarOpen }) => {
   const darkMode = theme === "dark";
   const navigate = useNavigate();
 
-  // If user opens /report directly → go home
+  // Redirect to home if data is missing
   useEffect(() => {
-    if (!data && document.referrer === "") {
-      // ⭐ FIX 1: Use replace: true to prevent back-button loops
+    if (!data) {
       navigate("/", { replace: true });
     }
   }, [data, navigate]);
 
+  // Prevent component rendering while redirecting
+  if (!data) {
+    return null;
+  }
+
   const handleCheckOther = () => {
     clearData();
-    // ⭐ FIX 2: Use replace: true to prevent going back to a failed report
     navigate("/", { replace: true });
   };
 
-  // if (!data) {
-  //   // ⭐ UX Bonus: Added a button here in case the redirect fails
-  //   return (
-  //     <div className={`flex flex-col items-center justify-center h-screen text-center space-y-6 ${darkMode ? "text-gray-100" : "text-gray-800"}`}>
-  //       <p className="text-xl font-semibold text-gray-500 dark:text-gray-400">
-  //         No data available. Please analyze a site first.
-  //       </p>
-  //       <button
-  //         onClick={handleCheckOther} // Using the same function
-  //         className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200"
-  //       >
-  //         🏠 Go to Home
-  //       </button>
-  //     </div>
-  //   );
-  // }
-
   if (data.Status === "failed") {
     return (
-      <div className={`flex flex-col items-center justify-center mt-50 text-center space-y-6 ${darkMode ? "text-gray-100" : "text-gray-800"}`}>
+      <div
+        className={`flex flex-col items-center justify-center mt-50 text-center space-y-6 ${
+          darkMode ? "text-gray-100" : "text-gray-800"
+        }`}
+      >
         <p className="text-2xl font-bold text-red-500">⚠️ Data Fetching Failed</p>
         <p className="max-w-md text-gray-500 dark:text-gray-400">
           Please try another website.
         </p>
         <button
-          onClick={handleCheckOther} // This now uses replace: true
+          onClick={handleCheckOther}
           className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200"
         >
           🔄 Check Another Website
@@ -72,17 +62,28 @@ const ReportLayout = ({ sidebarOpen, setSidebarOpen }) => {
 
   return (
     <>
-      {data.Report === "All" && (
+      {data && data.Report === "All" && (
         <div className="relative flex w-full h-full">
-          <div className={`${sidebarClass} ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 transition-transform duration-300 ease-in-out z-40`}>
+          <div
+            className={`${sidebarClass} ${
+              sidebarOpen ? "translate-x-0" : "-translate-x-full"
+            } lg:translate-x-0 transition-transform duration-300 ease-in-out z-40`}
+          >
             <Sidebar darkMode={darkMode} />
           </div>
 
           {sidebarOpen && (
-            <div className="fixed inset-0 bg-black/50 z-30 lg:hidden" onClick={() => setSidebarOpen(false)} />
+            <div
+              className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+              onClick={() => setSidebarOpen(false)}
+            />
           )}
 
-          <main className={`flex-1 lg:ml-64 flex flex-col pb-0 pr-4 pl-4 lg:pl-0 space-y-8 ${darkMode ? "text-gray-100" : "text-gray-800"}`}>
+          <main
+            className={`flex-1 lg:ml-64 flex flex-col pb-0 pr-4 pl-4 lg:pl-0 space-y-8 ${
+              darkMode ? "text-gray-100" : "text-gray-800"
+            }`}
+          >
             <section id="dashboard" className="scroll-mt-20">
               <Dashboard2 darkMode={darkMode} />
             </section>
@@ -94,17 +95,20 @@ const ReportLayout = ({ sidebarOpen, setSidebarOpen }) => {
         </div>
       )}
 
-      {data.Report !== "All" && (
-        <div className={`relative flex w-full h-full justify-center px-4 ${darkMode ? "text-gray-100" : "text-gray-800"}`}>
+      {data && data.Report !== "All" && (
+        <div
+          className={`relative flex w-full h-full justify-center px-4 ${
+            darkMode ? "text-gray-100" : "text-gray-800"
+          }`}
+        >
           <main className="flex-1 flex flex-col pb-0 space-y-8 max-w-7xl">
             <UrlHeader darkMode={darkMode} />
+
             {data.Report === "Technical Performance" && (
               <Technical_Performance darkMode={darkMode} />
             )}
             {data.Report === "On Page SEO" && <On_Page_SEO darkMode={darkMode} />}
-            {data.Report === "Accessibility" && (
-              <Accessibility darkMode={darkMode} />
-            )}
+            {data.Report === "Accessibility" && <Accessibility darkMode={darkMode} />}
             {data.Report === "Security/Compliance" && (
               <Security_Compilance darkMode={darkMode} />
             )}
@@ -114,7 +118,9 @@ const ReportLayout = ({ sidebarOpen, setSidebarOpen }) => {
             {data.Report === "Conversion & Lead Flow" && (
               <Conversion_Lead_Flow darkMode={darkMode} />
             )}
-            {data.Report === "AIO (AI-Optimization) Readiness" && <AIO darkMode={darkMode} />}
+            {data.Report === "AIO (AI-Optimization) Readiness" && (
+              <AIO darkMode={darkMode} />
+            )}
           </main>
         </div>
       )}

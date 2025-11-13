@@ -160,7 +160,7 @@ export default function Sidebar({ darkMode }) {
 ) : (
   <Link
     replace to="/conversion-lead-flow"
-    className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass}`}
+    className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass} pointer-events-none opacity-60 cursor-not-allowed`}
   >
     <div className="flex flex-row items-center justify-center gap-2">
       <TrendingUp size={20} /> Conversion & Lead Flow{" "}

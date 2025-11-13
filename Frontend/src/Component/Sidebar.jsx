@@ -196,7 +196,7 @@ export default function Sidebar({ darkMode }) {
             className={`flex items-center space-x-3 p-3 w-full rounded-md transition ${hoverClass}`}
           >
             <FileText className="w-5 h-5" />
-            <span>Download TXT</span>
+            <span>Download Report</span>
           </button>}
         </nav>
       </aside>

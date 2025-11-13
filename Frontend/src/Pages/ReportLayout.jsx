@@ -34,22 +34,22 @@ const ReportLayout = ({ sidebarOpen, setSidebarOpen }) => {
     navigate("/", { replace: true });
   };
 
-  if (!data) {
-    // ⭐ UX Bonus: Added a button here in case the redirect fails
-    return (
-      <div className={`flex flex-col items-center justify-center h-screen text-center space-y-6 ${darkMode ? "text-gray-100" : "text-gray-800"}`}>
-        <p className="text-xl font-semibold text-gray-500 dark:text-gray-400">
-          No data available. Please analyze a site first.
-        </p>
-        <button
-          onClick={handleCheckOther} // Using the same function
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200"
-        >
-          🏠 Go to Home
-        </button>
-      </div>
-    );
-  }
+  // if (!data) {
+  //   // ⭐ UX Bonus: Added a button here in case the redirect fails
+  //   return (
+  //     <div className={`flex flex-col items-center justify-center h-screen text-center space-y-6 ${darkMode ? "text-gray-100" : "text-gray-800"}`}>
+  //       <p className="text-xl font-semibold text-gray-500 dark:text-gray-400">
+  //         No data available. Please analyze a site first.
+  //       </p>
+  //       <button
+  //         onClick={handleCheckOther} // Using the same function
+  //         className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200"
+  //       >
+  //         🏠 Go to Home
+  //       </button>
+  //     </div>
+  //   );
+  // }
 
   if (data.Status === "failed") {
     return (

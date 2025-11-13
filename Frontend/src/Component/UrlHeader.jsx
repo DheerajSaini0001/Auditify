@@ -64,7 +64,16 @@ const UrlHeader = ({ darkMode }) => {
       
     </div>
      <div className="flex flex-col items-center  sm:flex-row sm:gap-6 justify-center sm:justify-start">
-
+          
+          {/* Report Type */}
+          <div className="flex items-center gap-2 justify-center sm:justify-start">
+            <FileText size={18} className="text-blue-400" />
+            <span className={`${sectionText} text-sm`}>Report:</span>
+            <span className={`font-semibold ${valueText} text-base`}>
+              {/* NOTE: Assuming 'data.reportType' exists in your context */}
+              {data?.Report || "N/A"}
+            </span>
+          </div>
 
           {/* Device */}
           <div className="flex items-center gap-2 justify-center sm:justify-start mt-2 sm:mt-0">

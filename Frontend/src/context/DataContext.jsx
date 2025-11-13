@@ -62,7 +62,6 @@ export const DataProvider = ({ children }) => {
       if (!res.ok) throw new Error("Failed to start audit");
 
       const auditData = await res.json();
-      console.log(auditData);
       
       setData(auditData); // save in state + localStorage
 
@@ -88,8 +87,6 @@ export const DataProvider = ({ children }) => {
     const res = await fetch(`http://localhost:2000/report/${id}`);
     if (!res.ok) return;
     const updated = await res.json();
-    console.log(updated);
-    
 
         // ✅ Stop live updates when audit is completed
         if (updated.Status === "completed") {

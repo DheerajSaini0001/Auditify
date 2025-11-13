@@ -137,23 +137,23 @@ useEffect(() => {
           <main className="flex-1 flex flex-col pb-0 space-y-8 max-w-7xl">
             <UrlHeader darkMode={darkMode} />
 
-            {data.Report === "technicalMetrics" && (
+            {data.Report === "Technical Performance" && (
               <Technical_Performance darkMode={darkMode} />
             )}
-            {data.Report === "seoMetrics" && <On_Page_SEO darkMode={darkMode} />}
-            {data.Report === "accessibilityMetrics" && (
+            {data.Report === "On Page SEO" && <On_Page_SEO darkMode={darkMode} />}
+            {data.Report === "Accessibility" && (
               <Accessibility darkMode={darkMode} />
             )}
-            {data.Report === "securityCompliance" && (
+            {data.Report === "Security/Compliance" && (
               <Security_Compilance darkMode={darkMode} />
             )}
-            {data.Report === "uxContentStructure" && (
+            {data.Report === "UX & Content Structure" && (
               <UX_Content_Structure darkMode={darkMode} />
             )}
-            {data.Report === "conversionLeadFlow" && (
+            {data.Report === "Conversion & Lead Flow" && (
               <Conversion_Lead_Flow darkMode={darkMode} />
             )}
-            {data.Report === "aioReadiness" && <AIO darkMode={darkMode} />}
+            {data.Report === "AIO (AI-Optimization) Readiness" && <AIO darkMode={darkMode} />}
           </main>
         </div>
       )}

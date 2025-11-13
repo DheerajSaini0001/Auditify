@@ -261,7 +261,9 @@ const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray
           <MetricCard title="Duplicate Content" description={desc.duplicate} score={seo.Duplicate_Content?.Score} value={seo.Duplicate_Content?.Score ? "Unique" : "Duplicate"} darkMode={darkMode} icon="🧬" />
           <MetricCard title="URL Slugs" description={desc.slug} score={seo.URL_Slugs?.Slug_Check_Score} value={seo.URL_Slugs?.Slug_Check_Score ? "Valid" : "Invalid"} darkMode={darkMode} icon="🧾" />
         </Section>
-
+<div className="p-6">
+      <SchemaCard schema={data.Schema} />
+    </div>
         {/* Dropdowns */}
         <AuditDropdown items={seo?.Passed} title="✅ Passed Audits" darkMode={darkMode} />
         <AuditDropdown items={seo?.Improvements} title="⚠️ Improvements Needed" darkMode={darkMode} />
@@ -273,6 +275,20 @@ const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray
 // ------------------------------------------------------
 // ✅ Helper Component for Section Layouts
 // ------------------------------------------------------
+function SchemaCard({ schema }) {
+  return (
+    <div className="bg-white dark:bg-gray-900 shadow-md p-6 rounded-2xl border border-gray-200 dark:border-gray-700 w-full max-w-3xl">
+      <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
+        Schema Data
+      </h2>
+
+      <pre className="bg-gray-100 dark:bg-gray-800 p-4 rounded-xl text-sm overflow-x-auto text-gray-700 dark:text-gray-200 whitespace-pre-wrap">
+        {JSON.stringify(schema, null, 2)}
+      </pre>
+    </div>
+  );
+}
+
 function Section({ title, icon, color, children, textColor }) {
   return (
     <div

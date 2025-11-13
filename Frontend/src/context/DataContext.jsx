@@ -1,26 +1,31 @@
 import { createContext, useState, useContext, useEffect } from "react";
-import { Navigate } from "react-router-dom";
-import { useNavigate } from "react-router-dom"; 
 
 const DataContext = createContext();
 export const useData = () => useContext(DataContext);
 
 export const DataProvider = ({ children }) => {
-  // ⭐ FIXED — do NOT auto-load from localStorage
-  const [data, setData] = useState(null); // <— FINAL FIX
+
+  // ⭐ PERSISTENT DATA LOAD (SAFE)
+  const [data, setData] = useState(() => {
+    try {
+      const saved = localStorage.getItem("appData");
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
 
   const [loading, setLoading] = useState(false);
   const [intervalId, setIntervalId] = useState(null);
 
-  const navigate = useNavigate();
-
-  // Save data to localStorage when updated
+  // ⭐ SAVE to localStorage only when data changes
   useEffect(() => {
     if (data) {
       localStorage.setItem("appData", JSON.stringify(data));
     }
   }, [data]);
 
+  // 🚀 FETCH DATA (same)
   const fetchData = async (inputValue, device, report) => {
     if (!inputValue) return alert("URL is empty");
 
@@ -35,14 +40,8 @@ export const DataProvider = ({ children }) => {
       const res = await fetch("http://localhost:2000/audit/site", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          Site: inputValue,
-          Device: device,
-          Report: report,
-        }),
+        body: JSON.stringify({ Site: inputValue, Device: device, Report: report }),
       });
-
-      if (!res.ok) throw new Error("Failed to start audit");
 
       const auditData = await res.json();
       setData(auditData);
@@ -50,20 +49,21 @@ export const DataProvider = ({ children }) => {
       if (auditData.Status !== "completed") {
         startLiveFetch(auditData.auditId);
       }
-    } catch (err) {
+
+    } catch {
       alert("Something went wrong!");
     } finally {
       setLoading(false);
     }
   };
 
+  // 🔄 LIVE UPDATES
   const startLiveFetch = (id) => {
     if (intervalId) clearInterval(intervalId);
 
     const newInterval = setInterval(async () => {
       try {
         const res = await fetch(`http://localhost:2000/report/${id}`);
-        if (!res.ok) return;
         const updated = await res.json();
 
         if (updated.Status === "completed") {
@@ -78,8 +78,8 @@ export const DataProvider = ({ children }) => {
     setIntervalId(newInterval);
   };
 
+  // 🧹 CLEAR
   const clearData = () => {
-    navigate("/");
     setData(null);
     localStorage.removeItem("appData");
     if (intervalId) clearInterval(intervalId);
@@ -93,13 +93,7 @@ export const DataProvider = ({ children }) => {
 
   return (
     <DataContext.Provider
-      value={{
-        data,
-        setData,
-        loading,
-        fetchData,
-        clearData,
-      }}
+      value={{ data, setData, loading, fetchData, clearData }}
     >
       {children}
     </DataContext.Provider>

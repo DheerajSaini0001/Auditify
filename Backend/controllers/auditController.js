@@ -57,9 +57,20 @@ export const startAudit = async (req, res) => {
       },
     });
 
-    worker.on("message", () => {
-      console.log("✅ Audit Completed");
+    worker.on("message", async (msg) => {
+  if (msg?.error) {
+    console.log("❌ Audit Failed");
+
+    await SiteReport.findByIdAndUpdate(newReport._id, {
+      Status: "failed",
+      Error_Message: msg.error,
     });
+
+    return;
+  }
+
+  console.log("✅ Audit Completed Successfully");
+})
 
     worker.on("error", async () => {
       await SiteReport.findByIdAndUpdate(newReport._id, { Status: "failed" });

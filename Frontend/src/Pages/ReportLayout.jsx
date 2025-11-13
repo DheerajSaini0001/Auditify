@@ -12,71 +12,54 @@ import Conversion_Lead_Flow from "./Conversion_Lead_Flow";
 import AIO from "./AIO";
 import RawData from "./RawData";
 import UrlHeader from "../Component/UrlHeader";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const ReportLayout = ({ sidebarOpen, setSidebarOpen }) => {
   const { data, clearData } = useData();
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
   const navigate = useNavigate();
-const location = useLocation();
 
-  // ✅ 1️⃣ Auto redirect to "/" if user opens /report directly without data
+  // If user opens /report directly → go home
   useEffect(() => {
-    if (!data) {
+    if (!data && document.referrer === "") {
+      // ⭐ FIX 1: Use replace: true to prevent back-button loops
       navigate("/", { replace: true });
     }
   }, [data, navigate]);
 
-  // ✅ 2️⃣ Handle browser back button — always go to "/"
-useEffect(() => {
-  if (location.pathname === "/report") {
-    // 👇 Fake history entry — so first back press triggers handler instead of reload
-    window.history.pushState(null, "", window.location.href);
-
-    const handleBack = (e) => {
-      e.preventDefault();
-      clearData(); // 🧹 clear localStorage + interval
-      navigate("/", { replace: true }); // 🏠 redirect to home instantly
-    };
-
-    window.addEventListener("popstate", handleBack);
-
-    return () => window.removeEventListener("popstate", handleBack);
-  }
-}, [location, navigate]);
-
-  // ✅ 3️⃣ Button click to go back to home (and clear old data)
   const handleCheckOther = () => {
     clearData();
+    // ⭐ FIX 2: Use replace: true to prevent going back to a failed report
     navigate("/", { replace: true });
   };
 
-  // --- If no data available ---
   if (!data) {
+    // ⭐ UX Bonus: Added a button here in case the redirect fails
     return (
-      <div className="flex flex-col items-center justify-center h-screen text-gray-500 dark:text-gray-400">
-        <p>No data available. Please analyze a site first.</p>
+      <div className={`flex flex-col items-center justify-center h-screen text-center space-y-6 ${darkMode ? "text-gray-100" : "text-gray-800"}`}>
+        <p className="text-xl font-semibold text-gray-500 dark:text-gray-400">
+          No data available. Please analyze a site first.
+        </p>
+        <button
+          onClick={handleCheckOther} // Using the same function
+          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200"
+        >
+          🏠 Go to Home
+        </button>
       </div>
     );
   }
 
-  // --- If audit failed ---
   if (data.Status === "failed") {
     return (
-      <div
-        className={`flex flex-col items-center justify-center mt-50 text-center space-y-6 ${
-          darkMode ? "text-gray-100" : "text-gray-800"
-        }`}
-      >
+      <div className={`flex flex-col items-center justify-center mt-50 text-center space-y-6 ${darkMode ? "text-gray-100" : "text-gray-800"}`}>
         <p className="text-2xl font-bold text-red-500">⚠️ Data Fetching Failed</p>
         <p className="max-w-md text-gray-500 dark:text-gray-400">
-          The audit could not complete for this URL. This may be due to a network
-          issue, invalid URL, or the target site being unreachable.  
-          Please check your connection or try another website.
+          Please try another website.
         </p>
         <button
-          onClick={handleCheckOther}
+          onClick={handleCheckOther} // This now uses replace: true
           className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200"
         >
           🔄 Check Another Website
@@ -85,37 +68,21 @@ useEffect(() => {
     );
   }
 
-  // --- Default: Show report data (non-failed status) ---
   const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray-900 shadow-lg`;
 
   return (
     <>
-      {/* --- STATE 1: ALL REPORTS --- */}
       {data.Report === "All" && (
         <div className="relative flex w-full h-full">
-          {/* Sidebar */}
-          <div
-            className={`${sidebarClass} ${
-              sidebarOpen ? "translate-x-0" : "-translate-x-full"
-            } lg:translate-x-0 transition-transform duration-300 ease-in-out z-40`}
-          >
+          <div className={`${sidebarClass} ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 transition-transform duration-300 ease-in-out z-40`}>
             <Sidebar darkMode={darkMode} />
           </div>
 
-          {/* Overlay for mobile */}
           {sidebarOpen && (
-            <div
-              className="fixed inset-0 bg-black/50 z-30 lg:hidden"
-              onClick={() => setSidebarOpen(false)}
-            />
+            <div className="fixed inset-0 bg-black/50 z-30 lg:hidden" onClick={() => setSidebarOpen(false)} />
           )}
 
-          {/* Main content */}
-          <main
-            className={`flex-1 lg:ml-64 flex flex-col pb-0 pr-4 pl-4 lg:pl-0 space-y-8 ${
-              darkMode ? "text-gray-100" : "text-gray-800"
-            }`}
-          >
+          <main className={`flex-1 lg:ml-64 flex flex-col pb-0 pr-4 pl-4 lg:pl-0 space-y-8 ${darkMode ? "text-gray-100" : "text-gray-800"}`}>
             <section id="dashboard" className="scroll-mt-20">
               <Dashboard2 darkMode={darkMode} />
             </section>
@@ -127,16 +94,10 @@ useEffect(() => {
         </div>
       )}
 
-      {/* --- STATE 2: SINGLE REPORT --- */}
       {data.Report !== "All" && (
-        <div
-          className={`relative flex w-full h-full justify-center px-4 ${
-            darkMode ? "text-gray-100" : "text-gray-800"
-          }`}
-        >
+        <div className={`relative flex w-full h-full justify-center px-4 ${darkMode ? "text-gray-100" : "text-gray-800"}`}>
           <main className="flex-1 flex flex-col pb-0 space-y-8 max-w-7xl">
             <UrlHeader darkMode={darkMode} />
-
             {data.Report === "Technical Performance" && (
               <Technical_Performance darkMode={darkMode} />
             )}

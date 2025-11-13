@@ -79,13 +79,13 @@ const MetricCard = ({ title, description, score, value, darkMode, icon }) => {
     <div
       className={`group relative p-6 rounded-xl shadow-lg ${cardBg}
       border ${darkMode ? "border-gray-700" : "border-gray-200"}
-      transition-all duration-300 hover:shadow-2xl hover:-translate-y-1
-      ${isHovered ? "scale-[1.02]" : ""}`}
+      transition-all duration-300 
+      ${isHovered ? " transition-all duration-300 scale-110" : ""}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       <div
-        className={`absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
+        className={`absolute inset-0 rounded-xl opacity-0  ${
           isPassed
             ? "bg-gradient-to-br from-green-500/10 to-emerald-500/10"
             : "bg-gradient-to-br from-red-500/10 to-rose-500/10"

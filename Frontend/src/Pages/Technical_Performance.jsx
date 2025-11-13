@@ -76,13 +76,13 @@ const MetricCard = ({ title, description, score, value, unit, darkMode, icon }) 
     <div 
       className={`group relative p-6 rounded-xl shadow-lg ${cardBg} 
         border ${darkMode ? "border-gray-700" : "border-gray-200"}
-        transition-all duration-300 hover:shadow-2xl hover:-translate-y-1
-        ${isHovered ? 'scale-[1.02]' : ''}`}
+        transition-all duration-300  
+        `}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Glow effect on hover */}
-      <div className={`absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 
+      <div className={`absolute inset-0 rounded-xl opacity-0   
         ${isPassed 
           ? 'bg-gradient-to-br from-green-500/10 to-emerald-500/10' 
           : 'bg-gradient-to-br from-red-500/10 to-rose-500/10'}`}
@@ -96,14 +96,14 @@ const MetricCard = ({ title, description, score, value, unit, darkMode, icon }) 
             <h3 className={`text-lg font-bold ${titleColor} leading-tight`}>{title}</h3>
           </div>
           <span className={`px-3 py-1 rounded-full text-xs font-bold shadow-md ${statusColor}
-            transform transition-transform duration-300 hover:scale-110`}>
+            `}>
             {statusText}
           </span>
         </div>
 
         {/* Value with animation */}
         <div className={`text-3xl font-extrabold mb-4 ${valueColor} 
-          transition-all duration-300 ${isHovered ? 'scale-110' : ''}`}>
+          transition-all duration-300 `}>
           {value !== null && value !== undefined ? `${value}${unit || ""}` : "--"}
         </div>
 

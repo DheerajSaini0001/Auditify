@@ -79,13 +79,13 @@ const MetricCard = ({ title, description, score, value, unit, darkMode, icon }) 
     <div
       className={`group relative p-6 rounded-xl shadow-lg ${cardBg} 
         border ${darkMode ? "border-gray-700" : "border-gray-200"}
-        transition-all duration-300 hover:shadow-2xl hover:-translate-y-1
-        ${isHovered ? "scale-[1.02]" : ""}`}
+        transition-all duration-300  
+       `}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       <div
-        className={`absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 
+        className={`absolute inset-0 rounded-xl opacity-0   
         ${
           isPassed
             ? "bg-gradient-to-br from-green-500/10 to-emerald-500/10"
@@ -111,9 +111,7 @@ const MetricCard = ({ title, description, score, value, unit, darkMode, icon }) 
 
         {/* Value */}
         <div
-          className={`text-3xl font-extrabold mb-4 ${valueColor} transition-all duration-300 ${
-            isHovered ? "scale-110" : ""
-          }`}
+          className={`text-3xl font-extrabold mb-4 ${valueColor} transition-all duration-300`}
         >
           {value !== null && value !== undefined ? `${value}${unit || ""}` : "--"}
         </div>
@@ -236,13 +234,13 @@ const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray
           <MetricCard title="Meta Description" description={desc.meta} score={seo.Meta_Description?.Score} value={seo.Meta_Description?.MetaDescription_Length + " chars"} darkMode={darkMode} icon="📝" />
           <MetricCard title="URL Structure" description={desc.url} score={seo.URL_Structure?.Score} value={seo.URL_Structure?.Score ? "Clean" : "Poor"} darkMode={darkMode} icon="🔗" />
           <MetricCard title="Canonical Tag" description={desc.canonical} score={seo.Canonical?.Score} value={seo.Canonical?.Score ? "Valid" : "Missing"} darkMode={darkMode} icon="📜" />
-          <MetricCard title="H1 Tag" description={desc.h1} score={seo.H1?.Score} value={seo.H1?.H1_Count || 0} darkMode={darkMode} icon="🔠" />
+          <MetricCard title="H1 Tag" description={desc.h1} score={seo.H1?.Score} value={"H1 Count-"+seo.H1?.H1_Count || 0} darkMode={darkMode} icon="🔠" />
         </Section>
 
         {/* 🖼️ Section 2: Media & Accessibility */}
         <Section title="Media & Accessibility" icon="🖼️" color="purple" textColor={textColor}>
-          <MetricCard title="Image Optimization" description={desc.image} score={seo.Image?.Image_Alt_Meaningfull_Exist} value={seo.Image?.Image_Alt_Meaningfull_Exist ? "Optimized" : "Missing Alt"} darkMode={darkMode} icon="🖼️" />
-          <MetricCard title="Video Implementation" description={desc.video} score={seo.Video?.Video_Exist} value={seo.Video?.Video_Exist ? "Present" : "Missing"} darkMode={darkMode} icon="🎥" />
+      {seo.Image?.Image_Exist!=0 && <MetricCard title="Image Optimization" description={desc.image} score={seo.Image?.Image_Alt_Meaningfull_Exist} value={seo.Image?.Image_Alt_Meaningfull_Exist ? "Optimized" : "Missing Alt"} darkMode={darkMode} icon="🖼️" />}    
+         {seo.Video?.Video_Exist!=0 && <MetricCard title="Video Implementation" description={desc.video} score={seo.Video?.Video_Exist} value={seo.Video?.Video_Exist ? "Present" : "Missing"} darkMode={darkMode} icon="🎥" />} 
           <MetricCard title="ALT Text Relevance" description={desc.alt} score={seo.ALT_Text_Relevance?.Score} value={seo.ALT_Text_Relevance?.Score ? "Relevant" : "Irrelevant"} darkMode={darkMode} icon="🪶" />
         </Section>
 

@@ -9,18 +9,20 @@ export default function DarkCard() {
   const { fetchData, data, loading } = useData();
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
+
   const [inputValue, setInputValue] = useState("");
   const [device, setDevice] = useState("Desktop");
   const [report, setReport] = useState("All");
   const [error, setError] = useState(null);
+
   const navigate = useNavigate();
 
-  // ✅ Handle form submission
+  // Handle submit
   const handleClick = async (e) => {
     e.preventDefault();
     setError(null);
 
-    if (!inputValue || inputValue.trim() === "") {
+    if (!inputValue.trim()) {
       setError("Please enter a URL before proceeding!");
       return;
     }
@@ -28,15 +30,20 @@ export default function DarkCard() {
     await fetchData(inputValue, device, report);
   };
 
-  // ✅ Jab data load ho jaaye to navigate karo
+  // Navigate to /report after data arrives
+  // YEH WALA CODE BILKUL SAHI HAI
   useEffect(() => {
-    if (!loading && data) {
-      navigate("/report", {
-        state: { from: "/", data }, 
-      });
+    if (inputValue&&data?.Site && !loading) {
+      // ⭐ FINAL FIX → CLEAN NAVIGATION
+      navigate("/report"); // Yeh line perfect hai aur back button ko kaam karne degi
+
       setInputValue("");
     }
+    else {
+    navigate("/");
+  }
   }, [data, loading, navigate]);
+  
 
   const containerClass = darkMode
     ? "scroll-smooth m-0 bg-gray-800 text-white flex flex-col h-[82vh]"
@@ -77,7 +84,7 @@ export default function DarkCard() {
               onSubmit={handleClick}
             >
               <div className="flex flex-col sm:flex-row gap-3 w-full">
-                {/* Input field */}
+                {/* Input */}
                 <div className="relative w-full">
                   <Search
                     className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
@@ -93,7 +100,7 @@ export default function DarkCard() {
                   />
                 </div>
 
-                {/* Device Select */}
+                {/* Device */}
                 <select
                   disabled={loading}
                   value={device}
@@ -102,11 +109,11 @@ export default function DarkCard() {
                     darkMode ? "bg-white text-black" : "bg-gray-300 text-black"
                   }`}
                 >
-                  <option value="Desktop"> 🖥️ Desktop</option>
-                  <option value="Mobile"> 📱 Mobile</option>
+                  <option value="Desktop">🖥️ Desktop</option>
+                  <option value="Mobile">📱 Mobile</option>
                 </select>
 
-                {/* Report Select */}
+                {/* Report */}
                 <select
                   disabled={loading}
                   value={report}
@@ -116,17 +123,11 @@ export default function DarkCard() {
                   }`}
                 >
                   <option value="All">🌐 All</option>
-                  <option value="technicalMetrics">
-                    📊 Technical Performance
-                  </option>
+                  <option value="technicalMetrics">📊 Technical Performance</option>
                   <option value="seoMetrics">📃 On-Page SEO</option>
                   <option value="accessibilityMetrics">♿ Accessibility</option>
-                  <option value="securityCompliance">
-                    🔒 Security Compliance
-                  </option>
-                  <option value="uxContentStructure">
-                    🗂️ UX Content Structure
-                  </option>
+                  <option value="securityCompliance">🔒 Security Compliance</option>
+                  <option value="uxContentStructure">🗂️ UX Content Structure</option>
                   <option value="conversionLeadFlow">
                     🔄 Conversion & Lead Flow
                   </option>
@@ -134,13 +135,13 @@ export default function DarkCard() {
                 </select>
               </div>
 
-              {/* Analyze Button */}
+              {/* Button */}
               <div className="sm:w-48">
                 <button
                   type="button"
                   onClick={handleClick}
                   disabled={loading}
-                  className="flex border-black border-2 gap-2 items-center justify-center bg-[#c2fbd7] text-green-700 rounded-full font-sans w-full px-16 py-2 text-base shadow-2xl select-none transition duration-250 hover:shadow-lg active:scale-[1.05] active:-rotate-1 sm:w-auto"
+                  className="flex border-black border-2 gap-2 items-center justify-center bg-[#c2fbd7] text-green-700 rounded-full w-full px-16 py-2 text-base shadow-2xl hover:shadow-lg active:scale-[1.05] active:-rotate-1 sm:w-auto"
                 >
                   {loading && <Loader2 className="animate-spin w-5 h-5" />}
                   {loading ? "Analyzing.." : "Analyze"}

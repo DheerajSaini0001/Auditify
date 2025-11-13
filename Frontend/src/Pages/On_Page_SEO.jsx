@@ -56,7 +56,7 @@ function OnPageSeoShimmer({ darkMode }) {
 // ------------------------------------------------------
 // ✅ MetricCard Component
 // ------------------------------------------------------
-const MetricCard = ({ title, description, score, value, unit, darkMode, icon }) => {
+const MetricCard = ({ title, description, score, value, unit, darkMode, icon, heading }) => {
   const [showDescription, setShowDescription] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const isPassed = Boolean(score);
@@ -141,6 +141,7 @@ const MetricCard = ({ title, description, score, value, unit, darkMode, icon }) 
           >
             {description}
           </p>
+          {heading && <div className="mt-4"><HeadingHierarchyCard data={heading} /></div>}
         </div>
       </div>
     </div>
@@ -246,7 +247,17 @@ const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray
 
         {/* 🏗️ Section 3: Structure & Semantics */}
         <Section title="Structure & Semantics" icon="🏗️" color="green" textColor={textColor}>
-          <MetricCard title="Heading Hierarchy" description={desc.heading} score={seo.Heading_Hierarchy?.Score} value={seo.Heading_Hierarchy?.Score ? "Proper" : "Needs Fix"} darkMode={darkMode} icon="📚" />
+          <MetricCard
+  title="Heading Hierarchy"
+  description={desc.heading
+  }
+  heading={seo.Heading_Hierarchy?.Heading}
+  score={seo.Heading_Hierarchy?.Score}
+  value={seo.Heading_Hierarchy?.Score ? "Proper" : "Needs Fix"}
+  darkMode={darkMode}
+  icon="📚"
+/>
+
           <MetricCard title="Semantic HTML Tags" description={desc.semantic} score={seo.Semantic_Tags?.Article_Score} value={seo.Semantic_Tags?.Article_Score ? "Present" : "Missing"} darkMode={darkMode} icon="📄" />
           <MetricCard title="Structured Data" description={desc.structured} score={seo.Structured_Data?.Score} value={seo.Structured_Data?.Score ? "Added" : "Missing"} darkMode={darkMode} icon="🧩" />
         </Section>
@@ -300,3 +311,60 @@ function Section({ title, icon, color, children, textColor }) {
     </div>
   );
 }
+
+
+function HeadingHierarchyCard({ data }) {
+
+  const { theme } = useContext(ThemeContext);
+  const darkMode = theme === "dark";
+
+  const getIndent = (tag) => {
+    switch (tag) {
+      case "h1": return "ml-0";
+      case "h2": return "ml-4";
+      case "h3": return "ml-8";
+      case "h4": return "ml-12";
+      default: return "ml-0";
+    }
+  };
+
+  const getFont = (tag) => {
+    switch (tag) {
+      case "h1": return "text-3xl font-bold";
+      case "h2": return "text-2xl font-semibold";
+      case "h3": return "text-xl font-medium";
+      case "h4": return "text-lg";
+      default: return "text-base";
+    }
+  };
+
+  return (
+    <div className={`w-full max-w-3xl mx-auto shadow-lg rounded-2xl pb-64 space-y-4 
+        ${darkMode ? "bg-gray-900 text-gray-100" : "bg-white text-gray-900"}`}>
+
+      <h2 className="text-2xl font-bold mb-4 text-blue-600">Headings Structure</h2>
+
+      {/* Scrollable container */}
+      <div className={`space-y-3 max-h-60 overflow-y-auto pr-2 
+          scrollbar-thin 
+          ${darkMode ? "scrollbar-thumb-gray-600" : "scrollbar-thumb-gray-400"}`}>
+
+        {data?.map((item, index) => (
+          <div
+            key={index}
+            className={`${getIndent(item.tag)} border-l-2 pl-3 
+              ${darkMode ? "border-gray-700" : "border-gray-300"}`}
+          >
+            <p className={`${getFont(item.tag)} uppercase leading-tight`}>
+              {item.tag}
+            </p>
+          </div>
+        ))}
+
+      </div>
+
+    </div>
+  );
+}
+
+

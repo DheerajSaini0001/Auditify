@@ -23,7 +23,7 @@ export const startAudit = async (req, res) => {
     if (existing && existing.Status === "completed") {
       const diff = (Date.now() - new Date(existing.createdAt)) / (1000 * 60);
 
-      if (diff < 10) {                          // Set 10 Minutes
+      if (diff < 60) {                          // Set 60 Minutes
         console.log("✅ Already in DB");
         return res.status(200).json(existing);
       }

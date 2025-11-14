@@ -257,26 +257,44 @@ export default function Technical_Performance() {
   const mainCardBg = darkMode
     ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900"
     : "bg-gradient-to-br from-white via-blue-50/30 to-white";
-  const desc = {
-    LCP: `Largest Contentful Paint (Good if < 2.5s). Measures how long it takes for the largest visible element to load.`,
-    FID: `First Input Delay (Good if < 100ms). Measures input responsiveness.`,
-    CLS: `Cumulative Layout Shift (Good if < 0.1). Indicates layout stability.`,
-    FCP: `First Contentful Paint (Good if < 1.8s). Measures how quickly page content is visible.`,
-    TTFB: `Time To First Byte (Good if < 0.2s). Server response time.`,
-    TBT: `Total Blocking Time (Good if < 300ms). Measures main thread blockage.`,
-    SI: `Speed Index (Good if < 3.4s). Measures visual loading speed.`,
-    INP: `Interaction to Next Paint (Good if < 200ms). Overall responsiveness.`,
-    Compression: `Text-based resources like HTML, CSS, and JavaScript should be served with compression (e.g., GZIP or Brotli). This reduces file transfer sizes, improves loading times, and enhances overall performance.`,
-    Caching: `Caching is considered effective when static resources (e.g., images, CSS, JS) have a cache lifetime (TTL) greater than 7 days). Proper caching minimizes server load, speeds up repeat visits, and improves user experience.`,
-    Resource_Optimization: `Unoptimized assets (such as large images, unused CSS, or unminified JavaScript) increase load time. Optimize all resources by compressing images, removing unused code, and minimizing files for better performance.`,
-    Render_Blocking: `Render-blocking resources delay the first paint of your webpage. To improve performance, defer or async non-critical JavaScript and inline critical CSS to allow faster rendering of above-the-fold content.`,
-    HTTP: `Using HTTPS encrypts data between the browser and the server, ensuring security, privacy, and user trust. It also improves SEO rankings and is a must for modern web applications.`,
-    Sitemap: `A sitemap.xml helps search engines efficiently discover and index all important pages of your website. Ensure it is up-to-date, correctly formatted, and accessible via robots.txt.`,
-    Robots: `The robots.txt file instructs search engine crawlers which pages or sections of your site can or cannot be accessed. Ensure it exists, is correctly configured, and does not block important pages.`,
-    Structured_Data: `Structured Data (Schema.org markup) helps search engines understand your content better, enhancing visibility in search results with rich snippets and improved click-through rates.`,
-    Broken_Links: `Broken or dead links negatively affect user experience and SEO performance. Regularly check and fix 404 or redirecting links to maintain a healthy site structure.`,
-    Redirect_Chains: `Redirect chains (multiple consecutive redirects) slow down page load times and waste crawl budget. Limit redirects to a single step to improve performance and SEO efficiency.`,
-  };
+const desc = {
+  LCP: `Largest Contentful Paint (LCP): This measures how long it takes for the most important part of your page (like the main banner image or title) to appear. It's the "wow, the page is loaded" moment for a user. A fast LCP (under 2.5 seconds) makes your site feel fast and professional. If it's slow, users get impatient and might leave. This is a key factor in Google's ranking and user satisfaction.`,
+
+  FID: `First Input Delay (FID): This measures your site's responsiveness. When a user clicks a button or a link, how long does it take for the site to actually start doing something? A good score (under 100 milliseconds) makes the site feel instant and responsive. A slow score feels 'laggy' or 'stuck,' which is very frustrating for users. This is often caused by heavy background tasks that we can optimize.`,
+
+  CLS: `Cumulative Layout Shift (CLS): This measures how much your page's content 'jumps around' while it's loading. It’s that annyoing experience where you try to tap a button, but an image or ad loads above it at the last second, pushing the button down and making you tap the wrong thing. A good, stable layout (a low score) is key for a professional feel and prevents user frustration. We can fix this by properly reserving space for all content.`,
+
+  FCP: `First Contentful Paint (FCP): This measures how long it takes for the *very first* piece of content (like the site header or the first line of text) to appear on the screen. It's the "Okay, it's working" signal for the user. A fast FCP (under 1.8 seconds) reassures the user that the page is loading and not stuck. A slow FCP makes them wonder if they should just hit the 'back' button. This is the first impression of your site's speed.`,
+
+  TTFB: `Time To First Byte (TTFB): This measures how long it takes for your website's server to "wake up" and send back the very first piece of data after a user requests the page. Think of it as how long it takes for a restaurant's kitchen to start preparing your order. A slow TTFB (over 0.2 seconds is not ideal) means your server itself is slow, and this delay will make *everything* else on the page load slower. This is often fixed with better web hosting.`,
+
+  TBT: `Total Blocking Time (TBT): This measures the total time your page was 'frozen' and couldn't respond to a user's click or tap. While the page is loading, it has to run a lot of code. If a piece of code takes too long, it 'blocks' the page, making it feel unresponsive. A low TBT means the page becomes interactive quickly. We can improve this by breaking up heavy code into smaller, faster pieces so the user never feels a lag.`,
+
+  SI: `Speed Index (SI): This metric measures how quickly the content on the visible part of your screen (what you see without scrolling) loads. It's not just one single moment; it's a score of the *entire* loading experience. Think of it like a video playback of your page loading—a fast Speed Index means the user sees the important content fill in smoothly and quickly, rather than staring at a white screen for a long time.`,
+
+  INP: `Interaction to Next Paint (INP): This is a new Core Web Vital that measures your site's *overall* responsiveness. While FID just checks the *first* click, INP checks *all* interactions (clicks, taps, typing) a user makes. It measures the full time from when you click to when you see the result on screen (like a menu opening). A low INP (under 200ms) means your site feels fluid and responsive all the time, not just at the beginning.`,
+
+  Compression: `Text Compression: This checks if your website is 'zipping' its text files (like HTML, CSS, and JavaScript) before sending them to the user. Just like zipping a folder on your computer, this makes the files much smaller and faster to download. The user's browser automatically 'unzips' them. This is a simple server setting that dramatically speeds up your site's loading time and uses less data, which is especially important for users on mobile phones.`,
+
+  Caching: `Caching: This checks if your site tells a user's browser to "remember" parts of your website. When a user visits your site, their browser can save files like your logo, images, and style files. The *next* time they visit, they don't have to re-download everything. The page loads almost instantly. Effective caching is the main reason why sites feel so much faster for repeat visitors. It also reduces the load on your web server.`,
+
+  Resource_Optimization: `Resource Optimization: This checks if all your site's files (images, code, etc.) are as small as possible. This includes three main things: 1) **Compressing images** so they load fast without losing quality. 2) **Minifying code**, which means removing all the unnecessary spaces and comments that developers use. 3) **Removing unused code** that might be left over from old features. A well-optimized site is lean, fast, and provides a much better user experience.`,
+
+  Render_Blocking: `Render-Blocking Resources: This checks for files that 'block' your page from loading. Imagine your browser is trying to build your webpage, but it hits a big code file at the top and has to stop everything to read it. This creates a "bottleneck" and leaves the user staring at a white screen. We fix this by telling the browser to load non-important files later and load the most critical styles first, so the page *starts* to appear right away.`,
+
+  HTTP: `HTTPS & Modern Protocols: This checks two things. First, **HTTPS** (the 'S' stands for Secure) ensures your site is secure by encrypting all data between the user and your server. This is what gives you the 'padlock' icon in the browser and is essential for user trust and Google rankings. Second, using HTTPS allows your site to use modern, faster protocols like **HTTP/2**. Think of HTTP/2 as a multi-lane highway, allowing the browser to download many files at once instead of one-by-one.`,
+
+  Sitemap: `Sitemap: A sitemap is literally a 'map' of all the important pages on your website, created specifically for search engines like Google. Instead of making Google 'crawl' your site by clicking link-by-link to find everything, a sitemap hands Google a complete list. This ensures Google can easily find and index all your pages, especially new ones or ones that are hard to find. It's a fundamental part of good SEO (Search Engine Optimization).`,
+
+  Robots: `Robots.txt: The 'robots.txt' file is a simple set of instructions for search engines, telling them which parts of your website they *should not* look at. You can use it to block them from private areas (like your admin login page) or from temporary pages you don't want showing up in search results. It's like putting a "Staff Only" or "Do Not Enter" sign on certain doors of your website to guide the search engine crawlers.`,
+
+  Structured_Data: `Structured Data: This is a special 'label' you add to your site's code to clearly explain your content to search engines. Instead of making Google *guess* what your page is about, you can tell it: "This is a recipe, and the rating is 5 stars" or "This is a product, and the price is $50." When Google understands this, it can show your page with "rich snippets" in the search results—like star ratings, prices, or event dates right under your link. This makes your site stand out and gets you more clicks.`,
+
+  Broken_Links: `Broken Links: This checks for 'dead ends' on your website. These are links that point to a '404 Not Found' error page, either on your own site or on an external site. Broken links are very frustrating for users and make your site look unprofessional and out-of-date. They also hurt your Google ranking because search engines see them as a sign of a low-quality, poorly maintained website. We need to find and fix these links regularly.`,
+
+  Redirect_Chains: `Redirect Chains: This checks for "wild goose chases" on your site. A redirect chain is when a user tries to go to Page A, but your site sends them to Page B... which then sends them to Page C. Each of these 'hops' is a separate step that wastes time and slows down the page load. It's also inefficient for Google's crawlers. We fix this by updating all old links to point directly to the final destination (Page C), which is much faster.`,
+};
+
   const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray-900 shadow-lg`;
   return (<>
   {metric.Report=="All" ?

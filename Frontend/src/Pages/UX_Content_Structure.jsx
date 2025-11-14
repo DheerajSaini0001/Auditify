@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react"; // Added useState
 import CircularProgress from "../Component/CircularProgress";
 import AuditDropdown from "../Component/AuditDropdown";
 import Sidebar from "../Component/Sidebar";
@@ -6,7 +6,7 @@ import { useData } from "../context/DataContext";
 import { ThemeContext } from "../context/ThemeContext";
 
 // ------------------------------------------------------
-// ✅ Skeleton Loader
+// ✅ NEW: High-Fidelity Skeleton Components
 // ------------------------------------------------------
 const SkeletonSidebar = ({ darkMode }) => (
   <div
@@ -25,39 +25,127 @@ const SkeletonSidebar = ({ darkMode }) => (
   </div>
 );
 
-function UxShimmer({ darkMode }) {
+const SkeletonMetricCard = ({ darkMode }) => {
   const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
-  const shimmerCardBg = darkMode ? "bg-gray-800" : "bg-gray-200";
-
-  const SkeletonMetricCard = () => (
-    <div className={`p-5 rounded-lg shadow-lg ${shimmerCardBg}`}>
-      <div className="flex justify-between items-center mb-2">
-        <div className={`h-5 w-1/3 rounded ${shimmerBg}`}></div>
-        <div className={`h-4 w-1/4 rounded-full ${shimmerBg}`}></div>
-      </div>
-      <div className={`h-10 w-1/2 rounded ${shimmerBg} mb-3`}></div>
-      <div className={`h-4 w-full rounded ${shimmerBg} mt-4`}></div>
-    </div>
-  );
+  const shimmerCardBg = darkMode 
+    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900" 
+    : "bg-gradient-to-br from-white via-gray-50 to-white";
+  const border = darkMode ? "border-gray-700" : "border-gray-200";
 
   return (
-    <div className="animate-pulse">
-      <div className="relative flex w-full h-full">
-        <SkeletonSidebar darkMode={darkMode} />
-        <main className="flex-1 lg:ml-64 flex flex-col justify-center items-center pt-20 pb-8 px-4 space-y-8">
-          <SkeletonMetricCard />
-          <SkeletonMetricCard />
-        </main>
+    <div className={`p-6 rounded-xl shadow-lg ${shimmerCardBg} border ${border}`}>
+      <div className="flex justify-between items-start mb-4">
+        <div className={`h-5 w-1/3 rounded ${shimmerBg}`}></div>
+        <div className={`h-6 w-16 rounded-full ${shimmerBg}`}></div>
       </div>
+      <div className={`h-10 w-1/2 rounded ${shimmerBg} mb-4`}></div>
+      <div className={`h-10 w-full rounded-lg ${shimmerBg} mt-2`}></div>
+    </div>
+  );
+};
+
+const SkeletonHeaderCard = ({ darkMode }) => {
+  const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
+  const { data } = useData(); 
+  const shimmerCardBg = darkMode 
+    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900" 
+    : "bg-gradient-to-br from-white via-blue-50/30 to-white";
+  const border = darkMode ? "border-gray-700" : "border-gray-200";
+  return (
+    <div className={`w-full ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"}  p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <div className={`h-12 w-80 rounded ${shimmerBg} mb-3`}></div>
+          <div className={`h-4 w-64 rounded ${shimmerBg}`}></div>
+        </div>
+        <div className={`h-20 w-20 rounded-full ${shimmerBg}`}></div>
+      </div>
+      <div className={`h-8 w-1/3 rounded-full ${shimmerBg}`}></div>
+    </div>
+  );
+};
+
+const SkeletonSectionCard = ({ metricCount, darkMode }) => {
+  const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
+  const { data } = useData();
+  const shimmerCardBg = darkMode 
+    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900" 
+    : "bg-gradient-to-br from-white via-blue-50/30 to-white";
+  const border = darkMode ? "border-gray-700" : "border-gray-200";
+  
+  return (
+    <div className={`w-full ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"} p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
+      <div className="flex items-center gap-3 mb-6">
+        <div className={`h-8 w-8 rounded ${shimmerBg}`}></div>
+        <div className={`h-7 w-1/2 rounded ${shimmerBg}`}></div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {Array.from({ length: metricCount }).map((_, index) => (
+          <SkeletonMetricCard key={index} darkMode={darkMode} />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const SkeletonAuditDropdown = ({ darkMode }) => {
+  const shimmerCardBg = darkMode 
+    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900" 
+    : "bg-gradient-to-br from-white via-blue-50/30 to-white";
+  const { data } = useData();
+  const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
+  const border = darkMode ? "border-gray-700" : "border-gray-200";
+  return (
+    <div className={`w-full ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"} p-5 rounded-lg shadow-xl ${shimmerCardBg} border ${border}`}>
+      <div className={`h-6 w-1/3 rounded ${shimmerBg}`}></div>
+    </div>
+  );
+};
+
+/**
+ * ✅ REPLACED: This is the new, high-fidelity shimmer component
+ * that mimics your final page layout perfectly.
+ */
+function UxShimmer({ darkMode }) {
+  const { data } = useData(); // Get data for conditional layout
+  const mainBg = darkMode 
+    ? "bg-gray-900" 
+    : "bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50";
+
+  return (
+    <div className={`relative flex w-full h-full min-h-screen ${mainBg} animate-pulse`}>
+      {/* Conditional Sidebar */}
+      {data?.Report === "All" && <SkeletonSidebar darkMode={darkMode} />}
+      
+      {/* Main content area with conditional margin */}
+      <main className={`flex-1 ${data?.Report === "All" ? "lg:ml-64" : ""} flex flex-col items-center pt-20 pb-12 px-4 space-y-8`}>
+        
+        {/* 1. Header Card */}
+        <SkeletonHeaderCard darkMode={darkMode} />
+        
+        {/* 2. Section 1 (5 metrics) */}
+        <SkeletonSectionCard metricCount={5} darkMode={darkMode} />
+        
+        {/* 3. Section 2 (5 metrics) */}
+        <SkeletonSectionCard metricCount={5} darkMode={darkMode} />
+        
+        {/* 4. Section 3 (8 metrics) */}
+        <SkeletonSectionCard metricCount={8} darkMode={darkMode} />
+        
+        {/* 5. Dropdowns (3 of them) */}
+        <SkeletonAuditDropdown darkMode={darkMode} />
+        <SkeletonAuditDropdown darkMode={darkMode} />
+        <SkeletonAuditDropdown darkMode={darkMode} />
+      </main>
     </div>
   );
 }
 
 // ------------------------------------------------------
-// ✅ MetricCard (Expandable Animated Card)
+// ✅ MetricCard (FIXED)
 // ------------------------------------------------------
 const MetricCard = ({ title, description, score, darkMode, icon }) => {
-  const [showDescription, setShowDescription] = React.useState(false);
+  const [showDescription, setShowDescription] = useState(false); // Use useState from import
   const isPassed = Boolean(score);
 
   const titleColor = darkMode ? "text-white" : "text-gray-900";
@@ -108,27 +196,55 @@ const MetricCard = ({ title, description, score, darkMode, icon }) => {
           {showDescription ? "Hide Details" : "Show Details"}
         </button>
 
-        {showDescription && (
+        {/* --- ✅ FIX 6: Added slide-down animation --- */}
+        <div
+          className={`overflow-hidden transition-all duration-300 ${
+            showDescription ? "max-h-96 mt-4" : "max-h-0"
+          }`}
+        >
           <p
-            className={`mt-4 text-sm ${descriptionColor} border-t ${
+            className={`text-sm ${descriptionColor} border-t ${
               darkMode ? "border-gray-700" : "border-gray-200"
             } pt-4`}
           >
             {description}
           </p>
-        )}
+        </div>
       </div>
     </div>
   );
 };
 
 // ------------------------------------------------------
-// ✅ Section Wrapper Component
+// ✅ Section Wrapper Component (FIXED)
 // ------------------------------------------------------
 function Section({ title, icon, color, children, textColor }) {
+  const { theme } = useContext(ThemeContext);
+  const darkMode = theme === "dark";
+  
+  // --- ✅ FIX 1: Destructure 'data' ---
+  const { data } = useData(); 
+  
+  const mainCardBg = darkMode
+    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900"
+    : "bg-gradient-to-br from-white via-blue-50/30 to-white";
+
+  // --- ✅ FIX 2: Tailwind Production Build Fix (Color Map) ---
+  const borderColorMap = {
+    indigo: "border-indigo-500",
+    purple: "border-purple-500",
+    green: "border-green-500",
+    blue: "border-blue-500",
+  };
+
   return (
     <div
-      className={`w-full max-w-4xl p-8 rounded-2xl shadow-2xl border-l-8 border-${color}-500`}
+      className={`w-full p-8 rounded-2xl shadow-2xl border-l-8 ${mainCardBg}
+        ${/* --- FIX 3: Use optional chaining 'data?.Report' --- */''}
+        ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"}
+        ${/* --- FIX 2 (Applied): Use color map --- */''}
+        ${borderColorMap[color] || "border-gray-500"}
+      `}
     >
       <div className="flex items-center gap-3 mb-6">
         <span className="text-3xl">{icon}</span>
@@ -140,17 +256,20 @@ function Section({ title, icon, color, children, textColor }) {
 }
 
 // ------------------------------------------------------
-// ✅ MAIN COMPONENT — UX & Content Structure
+// ✅ MAIN COMPONENT — UX & Content Structure (FIXED)
 // ------------------------------------------------------
 export default function UX_Content_Structure() {
   const { theme } = useContext(ThemeContext);
   const { data, loading } = useData();
   const darkMode = theme === "dark";
-  const metric = data?.UX_or_Content_Structure || {};
-
-  if (loading || data.Status === "inprogress") {
+  
+  // --- ✅ FIX 1: Add '!data' check to prevent crash ---
+  if (loading || !data || data.Status === "inprogress") {
     return <UxShimmer darkMode={darkMode} />;
   }
+  
+  // Now it's safe to access data
+  const metric = data?.UX_or_Content_Structure || {};
 
   const textColor = darkMode ? "text-white" : "text-gray-900";
   const mainCardBg = darkMode
@@ -189,7 +308,8 @@ export default function UX_Content_Structure() {
       )}
 
       <main
-        className={`flex-1 lg:ml-64 flex flex-col items-center pt-20 pb-12 px-4 space-y-8 ${
+        // --- ✅ FIX 2: Add conditional margin ---
+        className={`flex-1 ${data?.Report === "All" ? "lg:ml-64" : ""} flex flex-col items-center pt-20 pb-12 px-4 space-y-8 ${
           darkMode
             ? "bg-gray-900"
             : "bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50"
@@ -197,7 +317,8 @@ export default function UX_Content_Structure() {
       >
         {/* Header */}
         <div
-          className={`w-full max-w-4xl p-8 rounded-2xl shadow-2xl border-l-8 border-indigo-500 ${mainCardBg}`}
+          // --- ✅ FIX 3: Add conditional max-width ---
+          className={`w-full ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"} p-8 rounded-2xl shadow-2xl border-l-8 border-indigo-500 ${mainCardBg}`}
         >
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -230,10 +351,12 @@ export default function UX_Content_Structure() {
           </div>
         </div>
 
+        {/* Sections will now correctly size themselves thanks to the fix in 'Section' component */}
+
         {/* 🧭 Section 1: Navigation & Layout */}
         <Section title="Navigation & Layout" icon="🧭" color="blue" textColor={textColor}>
           {["Navigation_Clarity", "Breadcrumbs", "Clickable_Logo", "Sticky_Navigation", "Scroll_Depth_Logic"].map((key) => (
-            <MetricCard key={key} title={key.replaceAll("_", " ")} description={desc[key]} score={metric[key]?.Score} darkMode={darkMode} icon="📂" />
+            metric[key] && <MetricCard key={key} title={key.replaceAll("_", " ")} description={desc[key]} score={metric[key]?.Score} darkMode={darkMode} icon="📂" />
           ))}
         </Section>
 
@@ -246,7 +369,7 @@ export default function UX_Content_Structure() {
             "Paragraph_Length_and_Spacing",
             "Contrast_and_Color_Harmony",
           ].map((key) => (
-            <MetricCard key={key} title={key.replaceAll("_", " ")} description={desc[key]} score={metric[key]?.Score} darkMode={darkMode} icon="📝" />
+            metric[key] && <MetricCard key={key} title={key.replaceAll("_", " ")} description={desc[key]} score={metric[key]?.Score} darkMode={darkMode} icon="📝" />
           ))}
         </Section>
 
@@ -262,14 +385,20 @@ export default function UX_Content_Structure() {
             "Internal_Linking_Quality",
             "User_Journey_Continuity",
           ].map((key) => (
-            <MetricCard key={key} title={key.replaceAll("_", " ")} description={desc[key]} score={metric[key]?.Score} darkMode={darkMode} icon="💡" />
+            metric[key] && <MetricCard key={key} title={key.replaceAll("_", " ")} description={desc[key]} score={metric[key]?.Score} darkMode={darkMode} icon="💡" />
           ))}
         </Section>
 
-        {/* Dropdowns */}
-        <AuditDropdown items={metric?.Passed} title="✅ Passed Audits" darkMode={darkMode} />
-        <AuditDropdown items={metric?.Warning} title="⚠️ Warnings" darkMode={darkMode} />
-        <AuditDropdown items={metric?.Improvements} title="🚫 Improvements Needed" darkMode={darkMode} />
+        {/* --- ✅ FIX 4: Wrap dropdowns in sizing div --- */}
+        <div className={`w-full ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"}`}>
+          <AuditDropdown items={metric?.Passed} title="✅ Passed Audits" darkMode={darkMode} />
+        </div>
+        <div className={`w-full ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"}`}>
+          <AuditDropdown items={metric?.Warning} title="⚠️ Warnings" darkMode={darkMode} />
+        </div>
+        <div className={`w-full ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"}`}>
+          <AuditDropdown items={metric?.Improvements} title="🚫 Improvements Needed" darkMode={darkMode} />
+        </div>
       </main>
     </div>
   );

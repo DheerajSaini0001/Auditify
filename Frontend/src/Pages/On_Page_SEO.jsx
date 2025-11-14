@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { use, useContext, useState } from "react";
 import CircularProgress from "../Component/CircularProgress";
 import AuditDropdown from "../Component/AuditDropdown";
 import { useData } from "../context/DataContext";
@@ -6,7 +6,7 @@ import { ThemeContext } from "../context/ThemeContext";
 import Sidebar from "../Component/Sidebar";
 
 // ------------------------------------------------------
-// ✅ Skeleton for Loading
+// ✅ NEW: High-Fidelity Skeleton Components
 // ------------------------------------------------------
 const SkeletonSidebar = ({ darkMode }) => (
   <div
@@ -25,36 +25,148 @@ const SkeletonSidebar = ({ darkMode }) => (
   </div>
 );
 
-function OnPageSeoShimmer({ darkMode }) {
+const SkeletonMetricCard = ({ darkMode }) => {
   const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
-  const shimmerCardBg = darkMode ? "bg-gray-800" : "bg-gray-200";
-
-  const SkeletonMetricCard = () => (
-    <div className={`p-5 rounded-lg shadow-lg ${shimmerCardBg}`}>
-      <div className="flex justify-between items-center mb-2">
-        <div className={`h-5 w-1/3 rounded ${shimmerBg}`}></div>
-        <div className={`h-4 w-1/4 rounded-full ${shimmerBg}`}></div>
-      </div>
-      <div className={`h-10 w-1/2 rounded ${shimmerBg} mb-3`}></div>
-      <div className={`h-4 w-full rounded ${shimmerBg} mt-4`}></div>
-    </div>
-  );
+  const shimmerCardBg = darkMode 
+    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900" 
+    : "bg-gradient-to-br from-white via-gray-50 to-white";
+  const border = darkMode ? "border-gray-700" : "border-gray-200";
 
   return (
-    <div className="animate-pulse">
-      <div className="relative flex w-full h-full">
-        <SkeletonSidebar darkMode={darkMode} />
-        <main className="flex-1 lg:ml-64 flex flex-col justify-center items-center pt-20 pb-8 px-4 space-y-8">
-          <SkeletonMetricCard />
-          <SkeletonMetricCard />
-        </main>
+    <div className={`p-6 rounded-xl shadow-lg ${shimmerCardBg} border ${border}`}>
+      <div className="flex justify-between items-start mb-4">
+        <div className={`h-5 w-1/3 rounded ${shimmerBg}`}></div>
+        <div className={`h-6 w-16 rounded-full ${shimmerBg}`}></div>
       </div>
+      <div className={`h-10 w-1/2 rounded ${shimmerBg} mb-4`}></div>
+      <div className={`h-10 w-full rounded-lg ${shimmerBg} mt-2`}></div>
+    </div>
+  );
+};
+
+const SkeletonHeaderCard = ({ darkMode }) => {
+  const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
+  const shimmerCardBg = darkMode 
+    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900" 
+    : "bg-gradient-to-br from-white via-blue-50/30 to-white";
+    const data=useData();
+  const border = darkMode ? "border-gray-700" : "border-gray-200";
+
+  return (
+    <div className={`w-full ${data.Report=="All" ? "max-w-4xl" : "max-w-6xl"} p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <div className={`h-12 w-80 rounded ${shimmerBg} mb-3`}></div>
+          <div className={`h-4 w-64 rounded ${shimmerBg}`}></div>
+        </div>
+        <div className={`h-20 w-20 rounded-full ${shimmerBg}`}></div>
+      </div>
+      <div className={`h-8 w-1/3 rounded-full ${shimmerBg}`}></div>
+    </div>
+  );
+};
+
+const SkeletonSectionCard = ({ metricCount, darkMode }) => {
+  const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
+  const data=useData();
+  const shimmerCardBg = darkMode 
+    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900" 
+    : "bg-gradient-to-br from-white via-blue-50/30 to-white";
+  const border = darkMode ? "border-gray-700" : "border-gray-200";
+  
+  return (
+    <div className={`w-full ${data.Report=="All" ? "max-w-4xl" : "max-w-6xl"} p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
+      <div className="flex items-center gap-3 mb-6">
+        <div className={`h-8 w-8 rounded ${shimmerBg}`}></div>
+        <div className={`h-7 w-1/2 rounded ${shimmerBg}`}></div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {Array.from({ length: metricCount }).map((_, index) => (
+          <SkeletonMetricCard key={index} darkMode={darkMode} />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const SkeletonSchemaCard = ({ darkMode }) => {
+  const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
+  const shimmerCardBg = darkMode
+    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900"
+    : "bg-gradient-to-br from-white via-blue-50/30 to-white";
+    const data=useData();
+  const preBg = darkMode ? "bg-gray-800" : "bg-gray-100";
+  const border = darkMode ? "border-gray-700" : "border-gray-200";
+
+  return (
+    <div className={`w-full ${data.Report=="All" ? "max-w-4xl" : "max-w-6xl"} p-6 rounded-2xl shadow-lg ${shimmerCardBg} border ${border}`}>
+      <div className={`h-6 w-1/3 rounded ${shimmerBg} mb-4`}></div>
+      <div className={`h-40 w-full rounded-xl ${preBg}`}></div>
+    </div>
+  );
+};
+
+const SkeletonAuditDropdown = ({ darkMode }) => {
+  const shimmerCardBg = darkMode 
+    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900" 
+    : "bg-gradient-to-br from-white via-blue-50/30 to-white";
+    const data=useData();
+  const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
+  const border = darkMode ? "border-gray-700" : "border-gray-200";
+
+  return (
+    <div className={`w-full ${data.Report=="All" ? "max-w-4xl" : "max-w-6xl"} p-5 rounded-lg shadow-xl ${shimmerCardBg} border ${border}`}>
+      <div className={`h-6 w-1/3 rounded ${shimmerBg}`}></div>
+    </div>
+  );
+};
+
+/**
+ * ✅ REPLACED: This is the new, high-fidelity shimmer component
+ * that mimics your final page layout perfectly.
+ */
+function OnPageSeoShimmer({ darkMode }) {
+  const data=useData();
+  const mainBg = darkMode 
+    ? "bg-gray-900" 
+    : "bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50";
+
+  // We assume the sidebar will be present to prevent layout shift
+  // This is the most common case (All Report)
+  return (
+    <div className={`relative flex w-full h-full min-h-screen ${mainBg} animate-pulse`}>
+      {data.Report=="All" && <SkeletonSidebar darkMode={darkMode} />}
+      
+      <main className={`flex-1 ${data.Report=="All" ? "lg:ml-64" : ""} flex flex-col items-center pt-20 pb-12 px-4 space-y-8`}>
+        {/* 1. Header Card */}
+      <SkeletonHeaderCard darkMode={darkMode} />
+        
+        {/* 2. Section 1 ("Content Essentials") - 5 metrics */}
+        <SkeletonSectionCard metricCount={5} darkMode={darkMode} />
+        
+        {/* 3. Section 2 ("Media & Accessibility") - 2 metrics */}
+        <SkeletonSectionCard metricCount={2} darkMode={darkMode} />
+        
+        {/* 4. Section 3 ("Structure & Semantics") - 3 metrics */}
+        <SkeletonSectionCard metricCount={3} darkMode={darkMode} />
+        
+        {/* 5. Section 4 ("Technical SEO") - 5 metrics */}
+        <SkeletonSectionCard metricCount={5} darkMode={darkMode} />
+
+        {/* 6. Schema Card */}
+        <SkeletonSchemaCard darkMode={darkMode} />
+        
+        {/* 7. Dropdowns - 2 of them */}
+        <SkeletonAuditDropdown darkMode={darkMode} />
+        <SkeletonAuditDropdown darkMode={darkMode} />
+      </main>
     </div>
   );
 }
 
+
 // ------------------------------------------------------
-// ✅ MetricCard Component
+// ✅ MetricCard Component (Unchanged)
 // ------------------------------------------------------
 const MetricCard = ({ title, description, score, value, unit, darkMode, icon, heading }) => {
   const [showDescription, setShowDescription] = useState(false);
@@ -149,17 +261,21 @@ const MetricCard = ({ title, description, score, value, unit, darkMode, icon, he
 };
 
 // ------------------------------------------------------
-// ✅ MAIN COMPONENT
+// ✅ MAIN COMPONENT (with fixes)
 // ------------------------------------------------------
 export default function On_Page_SEO() {
   const { data, loading } = useData();
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
-  const seo = data?.On_Page_SEO || {};
 
-  if (loading || data.Status === "inprogress") {
+  // ⭐ BUG FIX #1: Added "!data" check to prevent crash on initial load
+  // when `data` is null and `loading` is true.
+  if (loading || !data || data.Status === "inprogress") {
     return <OnPageSeoShimmer darkMode={darkMode} />;
   }
+  
+  // Now it's safe to access data
+  const seo = data?.On_Page_SEO || {};
 
   const textColor = darkMode ? "text-white" : "text-gray-900";
   const mainCardBg = darkMode
@@ -194,7 +310,10 @@ const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray
       )}
 
       <main
-        className={`flex-1 lg:ml-64 flex flex-col items-center pt-20 pb-12 px-4 space-y-8 ${
+        className={`flex-1 ${
+            // ⭐ BUG FIX #2: Conditionally apply margin ONLY if sidebar is present
+            data?.Report === "All" ? "lg:ml-64" : ""
+          } flex flex-col items-center pt-20 pb-12 px-4 space-y-8 ${
           darkMode ? "bg-gray-900" : "bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50"
         }`}
       >
@@ -235,7 +354,7 @@ const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray
           <MetricCard title="Meta Description" description={desc.meta} score={seo.Meta_Description?.Score} value={seo.Meta_Description?.MetaDescription_Length + " chars"} darkMode={darkMode} icon="📝" />
           <MetricCard title="URL Structure" description={desc.url} score={seo.URL_Structure?.Score} value={seo.URL_Structure?.Score ? "Clean" : "Poor"} darkMode={darkMode} icon="🔗" />
           <MetricCard title="Canonical Tag" description={desc.canonical} score={seo.Canonical?.Score} value={seo.Canonical?.Score ? "Valid" : "Missing"} darkMode={darkMode} icon="📜" />
-          <MetricCard title="H1 Tag" description={desc.h1} score={seo.H1?.Score} value={"H1 Count-"+seo.H1?.H1_Count || 0} darkMode={darkMode} icon="🔠" />
+          <MetricCard title="H1 Tag" description={desc.h1} score={seo.H1?.Score} value={"H1 Count-"+(seo.H1?.H1_Count || 0)} darkMode={darkMode} icon="🔠" />
         </Section>
 
         {/* 🖼️ Section 2: Media & Accessibility */}
@@ -270,7 +389,7 @@ const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray
           <MetricCard title="Duplicate Content" description={desc.duplicate} score={seo.Duplicate_Content?.Score} value={seo.Duplicate_Content?.Score ? "Unique" : "Duplicate"} darkMode={darkMode} icon="🧬" />
           <MetricCard title="URL Slugs" description={desc.slug} score={seo.URL_Slugs?.Slug_Check_Score} value={seo.URL_Slugs?.Slug_Check_Score ? "Valid" : "Invalid"} darkMode={darkMode} icon="🧾" />
         </Section>
-<div className="p-6">
+<div className="p-6 w-full max-w-4xl">
       <SchemaCard schema={data.Schema} />
     </div>
         {/* Dropdowns */}
@@ -282,16 +401,19 @@ const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray
 }
 
 // ------------------------------------------------------
-// ✅ Helper Component for Section Layouts
+// ✅ Helper Component for Section Layouts (Unchanged)
 // ------------------------------------------------------
 function SchemaCard({ schema }) {
+  const { theme } = useContext(ThemeContext);
+  const darkMode = theme === "dark";
+
   return (
-    <div className="bg-white dark:bg-gray-900 shadow-md p-6 rounded-2xl border border-gray-200 dark:border-gray-700 w-full max-w-3xl">
-      <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
+    <div className={`shadow-md p-6 rounded-2xl border w-full max-w-3xl mx-auto ${darkMode ? "bg-gray-900 border-gray-700" : "bg-white border-gray-200"}`}>
+      <h2 className={`text-xl font-semibold mb-4 ${darkMode ? "text-gray-100" : "text-gray-900"}`}>
         Schema Data
       </h2>
 
-      <pre className="bg-gray-100 dark:bg-gray-800 p-4 rounded-xl text-sm overflow-x-auto text-gray-700 dark:text-gray-200 whitespace-pre-wrap">
+      <pre className={`p-4 rounded-xl text-sm overflow-x-auto whitespace-pre-wrap ${darkMode ? "bg-gray-800 text-gray-200" : "bg-gray-100 text-gray-700"}`}>
         {JSON.stringify(schema, null, 2)}
       </pre>
     </div>
@@ -299,9 +421,15 @@ function SchemaCard({ schema }) {
 }
 
 function Section({ title, icon, color, children, textColor }) {
+  const { theme } = useContext(ThemeContext);
+  const darkMode = theme === "dark";
+  const mainCardBg = darkMode
+    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900"
+    : "bg-gradient-to-br from-white via-blue-50/30 to-white";
+  
   return (
     <div
-      className={`w-full max-w-4xl p-8 rounded-2xl shadow-2xl border-l-8 border-${color}-500`}
+      className={`w-full max-w-4xl p-8 rounded-2xl shadow-2xl border-l-8 border-${color}-500 ${mainCardBg}`}
     >
       <div className="flex items-center gap-3 mb-6">
         <span className="text-3xl">{icon}</span>
@@ -341,11 +469,11 @@ function HeadingHierarchyCard({ data }) {
 
   return (
     <div
-      className={`w-full max-w-3xl mx-auto shadow-lg rounded-2xl pb-64 space-y-4 
-      ${darkMode ? "bg-gray-900 text-gray-100" : "bg-white text-gray-900"}`}
+      className={`w-full max-w-3xl mx-auto shadow-lg rounded-2xl p-4 space-y-4 
+      ${darkMode ? "bg-gray-900 text-gray-100" : "bg-gray-50 text-gray-900"}`}
     >
 
-      <h2 className="text-xl font-bold mb-4 text-blue-600">Headings Structure</h2>
+      <h2 className="text-lg font-bold mb-4 text-blue-600 dark:text-blue-400">Headings Structure</h2>
 
       <div
         className={`space-y-3 max-h-60 overflow-y-auto pr-2 scrollbar-thin 
@@ -363,14 +491,14 @@ function HeadingHierarchyCard({ data }) {
               <div className="flex items-center space-x-2">
 
                 {/* tag like <h1> */}
-                <span className="text-blue-500 font-mono text-sm">
+                <span className={`font-mono text-sm ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
                   &lt;{item.tag}&gt;
                 </span>
 
                 {/* actual smaller heading */}
                 {React.createElement(
                   Tag,
-                  { className: `${getFont(item.tag)} uppercase leading-tight inline-block` },
+                  { className: `${getFont(item.tag)} leading-tight inline-block ${darkMode ? "text-gray-200" : "text-gray-800"}` },
                   item.text
                 )}
 

@@ -1,11 +1,13 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react"; // Added useState
 import CircularProgress from "../Component/CircularProgress";
 import AuditDropdown from "../Component/AuditDropdown";
 import Sidebar from "../Component/Sidebar";
 import { useData } from "../context/DataContext";
 import { ThemeContext } from "../context/ThemeContext";
 
-// ✅ Skeleton UI (same shimmer style as SEO)
+// -----------------------------------------------------------------
+// ✅ NEW: High-Fidelity Skeleton Components
+// -----------------------------------------------------------------
 const SkeletonSidebar = ({ darkMode }) => (
   <div
     className={`fixed top-0 mt-16 left-0 h-full w-64 ${
@@ -23,38 +25,127 @@ const SkeletonSidebar = ({ darkMode }) => (
   </div>
 );
 
-function AccessibilityShimmer({ darkMode }) {
+const SkeletonMetricCard = ({ darkMode }) => {
   const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
-  const shimmerCardBg = darkMode ? "bg-gray-800" : "bg-gray-200";
-
-  const SkeletonMetricCard = () => (
-    <div className={`p-5 rounded-lg shadow-lg ${shimmerCardBg}`}>
-      <div className="flex justify-between items-center mb-2">
-        <div className={`h-5 w-1/3 rounded ${shimmerBg}`}></div>
-        <div className={`h-4 w-1/4 rounded-full ${shimmerBg}`}></div>
-      </div>
-      <div className={`h-10 w-1/2 rounded ${shimmerBg} mb-3`}></div>
-      <div className={`h-4 w-full rounded ${shimmerBg} mt-4`}></div>
-    </div>
-  );
+  const shimmerCardBg = darkMode 
+    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900" 
+    : "bg-gradient-to-br from-white via-gray-50 to-white";
+  const border = darkMode ? "border-gray-700" : "border-gray-200";
 
   return (
-    <div className="animate-pulse">
-      <div className="relative flex w-full h-full">
-        <SkeletonSidebar darkMode={darkMode} />
-        <main className="flex-1 lg:ml-64 flex flex-col justify-center items-center pt-20 pb-8 px-4 space-y-8">
-          <SkeletonMetricCard />
-          <SkeletonMetricCard />
-        </main>
+    <div className={`p-6 rounded-xl shadow-lg ${shimmerCardBg} border ${border}`}>
+      <div className="flex justify-between items-start mb-4">
+        <div className={`h-5 w-1/3 rounded ${shimmerBg}`}></div>
+        <div className={`h-6 w-16 rounded-full ${shimmerBg}`}></div>
       </div>
+      <div className={`h-10 w-1/2 rounded ${shimmerBg} mb-4`}></div>
+      <div className={`h-10 w-full rounded-lg ${shimmerBg} mt-2`}></div>
+    </div>
+  );
+};
+
+const SkeletonHeaderCard = ({ darkMode }) => {
+  const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
+  const { data } = useData(); 
+  const shimmerCardBg = darkMode 
+    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900" 
+    : "bg-gradient-to-br from-white via-blue-50/30 to-white";
+  const border = darkMode ? "border-gray-700" : "border-gray-200";
+  return (
+    <div className={`w-full ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"}  p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <div className={`h-12 w-80 rounded ${shimmerBg} mb-3`}></div>
+          <div className={`h-4 w-64 rounded ${shimmerBg}`}></div>
+        </div>
+        <div className={`h-20 w-20 rounded-full ${shimmerBg}`}></div>
+      </div>
+      <div className={`h-8 w-1/3 rounded-full ${shimmerBg}`}></div>
+    </div>
+  );
+};
+
+const SkeletonSectionCard = ({ metricCount, darkMode }) => {
+  const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
+  const { data } = useData();
+  const shimmerCardBg = darkMode 
+    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900" 
+    : "bg-gradient-to-br from-white via-blue-50/30 to-white";
+  const border = darkMode ? "border-gray-700" : "border-gray-200";
+  
+  return (
+    <div className={`w-full ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"} p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
+      <div className="flex items-center gap-3 mb-6">
+        <div className={`h-8 w-8 rounded ${shimmerBg}`}></div>
+        <div className={`h-7 w-1/2 rounded ${shimmerBg}`}></div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {Array.from({ length: metricCount }).map((_, index) => (
+          <SkeletonMetricCard key={index} darkMode={darkMode} />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const SkeletonAuditDropdown = ({ darkMode }) => {
+  const shimmerCardBg = darkMode 
+    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900" 
+    : "bg-gradient-to-br from-white via-blue-50/30 to-white";
+  const { data } = useData();
+  const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
+  const border = darkMode ? "border-gray-700" : "border-gray-200";
+  return (
+    <div className={`w-full ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"} p-5 rounded-lg shadow-xl ${shimmerCardBg} border ${border}`}>
+      <div className={`h-6 w-1/3 rounded ${shimmerBg}`}></div>
+    </div>
+  );
+};
+
+/**
+ * ✅ REPLACED: This is the new, high-fidelity shimmer component
+ * that mimics your final page layout perfectly.
+ */
+function AccessibilityShimmer({ darkMode }) {
+  const { data } = useData(); // Get data for conditional layout
+  const mainBg = darkMode 
+    ? "bg-gray-900" 
+    : "bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50";
+
+  return (
+    <div className={`relative flex w-full h-full min-h-screen ${mainBg} animate-pulse`}>
+      {/* Conditional Sidebar */}
+      {data?.Report === "All" && <SkeletonSidebar darkMode={darkMode} />}
+      
+      {/* Main content area with conditional margin */}
+      <main className={`flex-1 ${data?.Report === "All" ? "lg:ml-64" : ""} flex flex-col items-center pt-20 pb-12 px-4 space-y-8`}>
+        
+        {/* 1. Header Card */}
+        <SkeletonHeaderCard darkMode={darkMode} />
+        
+        {/* 2. Section 1 (2 metrics) */}
+        <SkeletonSectionCard metricCount={2} darkMode={darkMode} />
+        
+        {/* 3. Section 2 (4 metrics) */}
+        <SkeletonSectionCard metricCount={4} darkMode={darkMode} />
+        
+        {/* 4. Section 3 (6 metrics) */}
+        <SkeletonSectionCard metricCount={6} darkMode={darkMode} />
+        
+        {/* 5. Dropdowns (2 of them) */}
+        <SkeletonAuditDropdown darkMode={darkMode} />
+        <SkeletonAuditDropdown darkMode={darkMode} />
+      </main>
     </div>
   );
 }
 
+
 // ✅ Reusable Metric Card (SEO-style)
 const MetricCard = ({ title, description, score, value, darkMode, icon }) => {
-  const [showDescription, setShowDescription] = React.useState(false);
-  const [isHovered, setIsHovered] = React.useState(false);
+  // Use 'useState' from React import
+  const [showDescription, setShowDescription] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const isPassed = Boolean(score);
 
   const titleColor = darkMode ? "text-white" : "text-gray-900";
@@ -136,11 +227,36 @@ const MetricCard = ({ title, description, score, value, darkMode, icon }) => {
   );
 };
 
-// ✅ Helper Section Wrapper (SEO style)
+// -----------------------------------------------------------------
+// ✅ Helper Section Wrapper (FIXED)
+// -----------------------------------------------------------------
 function Section({ title, icon, color, children, textColor }) {
+  const { theme } = useContext(ThemeContext);
+  const darkMode = theme === "dark";
+  
+  // --- ✅ FIX 1: Destructure 'data' ---
+  const { data } = useData(); 
+  
+  const mainCardBg = darkMode
+    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900"
+    : "bg-gradient-to-br from-white via-blue-50/30 to-white";
+
+  // --- ✅ FIX 2: Tailwind Production Build Fix (Color Map) ---
+  const borderColorMap = {
+    indigo: "border-indigo-500",
+    purple: "border-purple-500",
+    green: "border-green-500",
+    blue: "border-blue-500",
+  };
+
   return (
     <div
-      className={`w-full max-w-4xl p-8 rounded-2xl shadow-2xl border-l-8 border-${color}-500`}
+      className={`w-full p-8 rounded-2xl shadow-2xl border-l-8 ${mainCardBg}
+        ${/* --- FIX 3: Use optional chaining 'data?.Report' --- */''}
+        ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"}
+        ${/* --- FIX 2 (Applied): Use color map --- */''}
+        ${borderColorMap[color] || "border-gray-500"}
+      `}
     >
       <div className="flex items-center gap-3 mb-6">
         <span className="text-3xl">{icon}</span>
@@ -152,17 +268,20 @@ function Section({ title, icon, color, children, textColor }) {
 }
 
 // ---------------------------------------------------------------------------
-// ✅ MAIN ACCESSIBILITY COMPONENT (SEO UI STYLE)
+// ✅ MAIN ACCESSIBILITY COMPONENT (FIXED)
 // ---------------------------------------------------------------------------
 export default function Accessibility() {
   const { theme } = useContext(ThemeContext);
   const { data, loading } = useData();
   const darkMode = theme === "dark";
-  const accessibility = data?.Accessibility || {};
-
-  if (loading || data.Status === "inprogress") {
+  
+  // --- ✅ FIX 1: Add '!data' check to prevent crash ---
+  if (loading || !data || data.Status === "inprogress") {
     return <AccessibilityShimmer darkMode={darkMode} />;
   }
+
+  // Now it's safe to access data
+  const accessibility = data?.Accessibility || {};
 
   const textColor = darkMode ? "text-white" : "text-gray-900";
   const mainCardBg = darkMode
@@ -185,6 +304,7 @@ export default function Accessibility() {
   };
 
   const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray-900 shadow-lg`;
+  
   return (
     <div className="relative flex w-full h-full min-h-screen">
       {data?.Report === "All" && (
@@ -194,7 +314,10 @@ export default function Accessibility() {
       )}
 
       <main
-        className={`flex-1 lg:ml-64 flex flex-col items-center pt-20 pb-12 px-4 space-y-8 ${
+        className={`flex-1 ${
+            // --- ✅ FIX 2: Add conditional margin ---
+            data?.Report === "All" ? "lg:ml-64" : ""
+          } flex flex-col items-center pt-20 pb-12 px-4 space-y-8 ${
           darkMode
             ? "bg-gray-900"
             : "bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50"
@@ -202,7 +325,8 @@ export default function Accessibility() {
       >
         {/* Header */}
         <div
-          className={`w-full max-w-4xl p-8 rounded-2xl shadow-2xl border-l-8 border-indigo-500 ${mainCardBg}`}
+          // --- ✅ FIX 3: Add conditional max-width ---
+          className={`w-full ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"} p-8 rounded-2xl shadow-2xl border-l-8 border-indigo-500 ${mainCardBg}`}
         >
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -239,6 +363,8 @@ export default function Accessibility() {
           </div>
         </div>
 
+        {/* Sections will now correctly size themselves thanks to the fix in 'Section' component */}
+        
         {/* Section 1: Visual Accessibility */}
         <Section title="Visual Accessibility" icon="🎨" color="purple" textColor={textColor}>
           <MetricCard title="Color Contrast" description={desc.color} score={accessibility.Color_Contrast?.Score} value={accessibility.Color_Contrast?.Score ? "Good" : "Poor"} darkMode={darkMode} icon="🎨" />
@@ -264,8 +390,13 @@ export default function Accessibility() {
         </Section>
 
         {/* Dropdowns */}
-        <AuditDropdown items={accessibility?.Passed} title="✅ Passed Audits" darkMode={darkMode} />
-        <AuditDropdown items={accessibility?.Warning} title="⚠️ Warnings" darkMode={darkMode} />
+        {/* --- ✅ FIX 4: Wrap dropdowns in sizing div to match shimmer --- */}
+        <div className={`w-full ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"}`}>
+          <AuditDropdown items={accessibility?.Passed} title="✅ Passed Audits" darkMode={darkMode} />
+        </div>
+        <div className={`w-full ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"}`}>
+          <AuditDropdown items={accessibility?.Warning} title="⚠️ Warnings" darkMode={darkMode} />
+        </div>
       </main>
     </div>
   );

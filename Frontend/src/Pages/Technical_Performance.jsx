@@ -4,10 +4,10 @@ import AuditDropdown from "../Component/AuditDropdown";
 import { useData } from "../context/DataContext";
 import { ThemeContext } from "../context/ThemeContext";
 import Sidebar from "../Component/Sidebar";
-import UrlHeader from "../Component/UrlHeader";
+import UrlHeader from "../Component/UrlHeader"; // This import wasn't used, but I kept it
 
 // -----------------------------------------------------------------
-// ✅ SKELETON COMPONENTS
+// ✅ NEW & IMPROVED SKELETON LOADING COMPONENTS
 // -----------------------------------------------------------------
 const SkeletonSidebar = ({ darkMode }) => (
   <div
@@ -22,30 +22,115 @@ const SkeletonSidebar = ({ darkMode }) => (
   </div>
 );
 
-function TechnicalPerformanceShimmer({ darkMode }) {
+const SkeletonMetricCard = ({ darkMode }) => {
   const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
-  const shimmerCardBg = darkMode ? "bg-gray-800" : "bg-gray-200";
-
-  const SkeletonMetricCard = () => (
-    <div className={`p-5 rounded-lg shadow-lg ${shimmerCardBg}`}>
-      <div className="flex justify-between items-center mb-2">
-        <div className={`h-5 w-1/3 rounded ${shimmerBg}`}></div>
-        <div className={`h-4 w-1/4 rounded-full ${shimmerBg}`}></div>
-      </div>
-      <div className={`h-10 w-1/2 rounded ${shimmerBg} mb-3`}></div>
-      <div className={`h-4 w-full rounded ${shimmerBg} mt-4`}></div>
-    </div>
-  );
+  const shimmerCardBg = darkMode 
+    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900" 
+    : "bg-gradient-to-br from-white via-gray-50 to-white";
+  const border = darkMode ? "border-gray-700" : "border-gray-200";
 
   return (
-    <div className="animate-pulse">
-      <div className="relative flex w-full h-full">
-        <SkeletonSidebar darkMode={darkMode} />
-        <main className="flex-1 lg:ml-64 flex flex-col justify-center items-center pt-20 pb-8 pr-4 pl-4 space-y-8">
-          <SkeletonMetricCard />
-          <SkeletonMetricCard />
-        </main>
+    <div className={`p-6 rounded-xl shadow-lg ${shimmerCardBg} border ${border}`}>
+      <div className="flex justify-between items-start mb-4">
+        <div className={`h-5 w-1/3 rounded ${shimmerBg}`}></div>
+        <div className={`h-6 w-16 rounded-full ${shimmerBg}`}></div>
       </div>
+      <div className={`h-10 w-1/2 rounded ${shimmerBg} mb-4`}></div>
+      <div className={`h-10 w-full rounded-lg ${shimmerBg} mt-2`}></div>
+    </div>
+  );
+};
+
+const SkeletonHeaderCard = ({ darkMode }) => {
+  const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
+  const shimmerCardBg = darkMode 
+    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900" 
+    : "bg-gradient-to-br from-white via-blue-50/30 to-white";
+  const border = darkMode ? "border-gray-700" : "border-gray-200";
+
+  return (
+    <div className={`w-full max-w-4xl p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <div className={`h-12 w-80 rounded ${shimmerBg} mb-3`}></div>
+          <div className={`h-4 w-64 rounded ${shimmerBg}`}></div>
+        </div>
+        <div className={`h-20 w-20 rounded-full ${shimmerBg}`}></div>
+      </div>
+      <div className={`h-8 w-1/3 rounded-full ${shimmerBg}`}></div>
+    </div>
+  );
+};
+
+const SkeletonSectionCard = ({ metricCount, darkMode }) => {
+  const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
+  const shimmerCardBg = darkMode 
+    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900" 
+    : "bg-gradient-to-br from-white via-blue-50/30 to-white";
+  const border = darkMode ? "border-gray-700" : "border-gray-200";
+  
+  return (
+    <div className={`w-full max-w-4xl p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
+      <div className="flex items-center gap-3 mb-6">
+        <div className={`h-8 w-8 rounded ${shimmerBg}`}></div>
+        <div className={`h-7 w-1/2 rounded ${shimmerBg}`}></div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {Array.from({ length: metricCount }).map((_, index) => (
+          <SkeletonMetricCard key={index} darkMode={darkMode} />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const SkeletonAuditDropdown = ({ darkMode }) => {
+  const shimmerCardBg = darkMode 
+    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900" 
+    : "bg-gradient-to-br from-white via-blue-50/30 to-white";
+  const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
+  const border = darkMode ? "border-gray-700" : "border-gray-200";
+
+  return (
+    <div className={`w-full max-w-4xl p-5 rounded-lg shadow-xl ${shimmerCardBg} border ${border}`}>
+      <div className={`h-6 w-1/3 rounded ${shimmerBg}`}></div>
+    </div>
+  );
+};
+
+/**
+ * ✅ This is the main shimmer component that mimics the final page layout.
+ */
+function TechnicalPerformanceShimmer({ darkMode }) {
+  const mainBg = darkMode 
+  const data=useData()
+    ? "bg-gray-900" 
+    : "bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50";
+
+  return (
+    <div className={`relative flex w-full h-full min-h-screen ${mainBg} animate-pulse`}>
+     {data.Report=="All" && <SkeletonSidebar darkMode={darkMode} />}
+      <main className={`flex-1 ${data.Report=="All" ? "lg:ml-64" : ""} flex flex-col items-center pt-20 pb-12 px-4 space-y-8`}>
+        {/* Skeleton for Header Card */}
+        <SkeletonHeaderCard darkMode={darkMode} />
+        
+        {/* Skeleton for "Core & Interaction Vitals" */}
+        <SkeletonSectionCard metricCount={4} darkMode={darkMode} />
+        
+        {/* Skeleton for "Performance Metrics" */}
+        <SkeletonSectionCard metricCount={4} darkMode={darkMode} />
+        
+        {/* Skeleton for "Asset & Server" */}
+        <SkeletonSectionCard metricCount={5} darkMode={darkMode} />
+        
+        {/* Skeleton for "Crawlability & Indexing" */}
+        <SkeletonSectionCard metricCount={5} darkMode={darkMode} />
+        
+        {/* Skeleton for Dropdowns */}
+        <SkeletonAuditDropdown darkMode={darkMode} />
+        <SkeletonAuditDropdown darkMode={darkMode} />
+        <SkeletonAuditDropdown darkMode={darkMode} />
+      </main>
     </div>
   );
 }
@@ -141,13 +226,22 @@ const MetricCard = ({ title, description, score, value, unit, darkMode, icon }) 
   );
 };
 
+// -----------------------------------------------------------------
+// ✅ MAIN COMPONENT
+// -----------------------------------------------------------------
 export default function Technical_Performance() {
   const { data, loading } = useData();
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
   const metric = data;
 
-  if (loading || metric.Status === "inprogress") {
+  // -----------------------------------------------------------------
+  // ⭐ BUG FIX: Added "!metric" check.
+  // This prevents a crash on the first load when `loading` is true
+  // but `metric` is still `null` from the context's initial state.
+  // Your code `metric.Status` would crash.
+  // -----------------------------------------------------------------
+  if (loading || !metric || metric.Status === "inprogress") {
     return <TechnicalPerformanceShimmer darkMode={darkMode} />;
   }
 
@@ -179,19 +273,19 @@ export default function Technical_Performance() {
 
   const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray-900 shadow-lg`;
 
-  return (
-    <div className="relative flex w-full h-full min-h-screen">
-      {metric.Report === "All" && (
+  return (<>
+  {metric.Report=="All" ?
+      <div className="relative flex w-full h-full min-h-screen">
+    
         <div className={`${sidebarClass} lg:translate-x-0 transition-transform duration-300 ease-in-out z-40`}>
           <Sidebar darkMode={darkMode} />
         </div>
-      )}
-
+      
       <main
         className={`flex-1 lg:ml-64 flex flex-col items-center pt-20 pb-12 px-4 space-y-8 
           ${darkMode ? "bg-gray-900" : "bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50"}`}
       >
-        {/* Header Card with enhanced styling */}
+        
         <div
           className={`w-full max-w-4xl p-8 rounded-2xl shadow-2xl 
             border-l-8 border-indigo-500 ${mainCardBg}
@@ -230,7 +324,7 @@ export default function Technical_Performance() {
           </div>
         </div>
 
-        {/* Section 1: Core & Interaction Vitals */}
+        
         <div
           className={`w-full max-w-4xl p-8 rounded-2xl shadow-2xl 
             border-l-8 border-purple-500 ${mainCardBg}
@@ -329,7 +423,7 @@ export default function Technical_Performance() {
           </div>
         </div>
 
-        {/* Section 3: Asset & Server */}
+        
         <div
           className={`w-full max-w-4xl p-8 rounded-2xl shadow-2xl 
             border-l-8 border-green-500 ${mainCardBg}
@@ -387,7 +481,7 @@ export default function Technical_Performance() {
           </div>
         </div>
 
-        {/* Section 4: Crawlability & Indexing */}
+        
         <div
           className={`w-full max-w-4xl p-8 rounded-2xl shadow-2xl 
             border-l-8 border-yellow-500 ${mainCardBg}
@@ -441,7 +535,7 @@ export default function Technical_Performance() {
           </div>
         </div>
 
-        {/* Audit Dropdowns */}
+        
         <AuditDropdown
           title="Passed Audits"
           items={metric.Technical_Performance.Passed}
@@ -458,6 +552,281 @@ export default function Technical_Performance() {
           darkMode={darkMode}
         />
       </main>
-    </div>
-  );
+    </div>: <div className="relative flex w-full h-full min-h-screen">
+    
+       
+      
+      <main
+        className={`flex-1  flex flex-col items-center pt-20 pb-12 px-4 space-y-8 
+          ${darkMode ? "bg-gray-900" : "bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50"}`}
+      >
+        
+        <div
+          className={`w-full max-w-6xl p-8 rounded-2xl shadow-2xl 
+            border-l-8 border-indigo-500 ${mainCardBg}
+            transform transition-all duration-300 hover:shadow-indigo-500/20`}
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className={`text-5xl font-black ${textColor} mb-2 
+                bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent`}>
+                Technical Performance
+              </h2>
+              <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                Comprehensive analysis of your website's technical metrics
+              </p>
+            </div>
+            <div className="transform transition-transform duration-300 hover:scale-110">
+              <CircularProgress
+                value={metric?.Technical_Performance?.Percentage || "0"}
+                size={80}
+                stroke={6}
+              />
+            </div>
+          </div>
+
+          <div
+            className={`inline-flex items-center gap-2 text-sm font-semibold px-5 py-2.5 rounded-full shadow-md
+              ${darkMode
+                ? "bg-gradient-to-r from-gray-700 to-gray-800 text-blue-400 border border-blue-700/40"
+                : "bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border border-blue-200"
+              }`}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Time Taken — {metric.Time_Taken}
+          </div>
+        </div>
+
+        
+        <div
+          className={`w-full max-w-6xl p-8 rounded-2xl shadow-2xl 
+            border-l-8 border-purple-500 ${mainCardBg}
+            transform transition-all duration-300`}
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <span className="text-3xl">⚡</span>
+            <h2 className={`text-2xl font-bold ${textColor}`}>Core & Interaction Vitals</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <MetricCard
+              title="Largest Contentful Paint"
+              description={desc.LCP}
+              score={metric.Technical_Performance.LCP.Score}
+              value={metric.Technical_Performance.LCP.Value}
+              unit="s"
+              darkMode={darkMode}
+              icon="🎯"
+            />
+            <MetricCard
+              title="First Input Delay"
+              description={desc.FID}
+              score={metric.Technical_Performance.FID.Score}
+              value={metric.Technical_Performance.FID.Value}
+              unit="ms"
+              darkMode={darkMode}
+              icon="⚡"
+            />
+            <MetricCard
+              title="Cumulative Layout Shift"
+              description={desc.CLS}
+              score={metric.Technical_Performance.CLS.Score}
+              value={metric.Technical_Performance.CLS.Value}
+              darkMode={darkMode}
+              icon="📐"
+            />
+            <MetricCard
+              title="Interaction to Next Paint"
+              description={desc.INP}
+              score={metric.Technical_Performance.INP.Score}
+              value={metric.Technical_Performance.INP.Value}
+              unit="ms"
+              darkMode={darkMode}
+              icon="🖱️"
+            />
+          </div>
+        </div>
+
+        {/* Section 2: Performance Metrics */}
+        <div
+          className={`w-full max-w-6xl p-8 rounded-2xl shadow-2xl 
+            border-l-8 border-blue-500 ${mainCardBg}
+            transform transition-all duration-300`}
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <span className="text-3xl">🚀</span>
+            <h2 className={`text-2xl font-bold ${textColor}`}>Performance Metrics</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <MetricCard
+              title="First Contentful Paint"
+              description={desc.FCP}
+              score={metric.Technical_Performance.FCP.Score}
+              value={metric.Technical_Performance.FCP.Value}
+              unit="s"
+              darkMode={darkMode}
+              icon="🎨"
+            />
+            <MetricCard
+              title="Time To First Byte"
+              description={desc.TTFB}
+              score={metric.Technical_Performance.TTFB.Score}
+              value={metric.Technical_Performance.TTFB.Value}
+              unit="s"
+              darkMode={darkMode}
+              icon="⏱️"
+            />
+            <MetricCard
+              title="Total Blocking Time"
+              description={desc.TBT}
+              score={metric.Technical_Performance.TBT.Score}
+              value={metric.Technical_Performance.TBT.Value}
+              unit="ms"
+              darkMode={darkMode}
+              icon="🚦"
+            />
+            <MetricCard
+              title="Speed Index"
+              description={desc.SI}
+              score={metric.Technical_Performance.SI.Score}
+              value={metric.Technical_Performance.SI.Value}
+              unit="s"
+              darkMode={darkMode}
+              icon="📊"
+            />
+          </div>
+        </div>
+
+        
+        <div
+          className={`w-full max-w-6xl p-8 rounded-2xl shadow-2xl 
+            border-l-8 border-green-500 ${mainCardBg}
+            transform transition-all duration-300`}
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <span className="text-3xl">🛠️</span>
+            <h2 className={`text-2xl font-bold ${textColor}`}>Asset & Server</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <MetricCard
+              title="Compression"
+              description={desc.Compression}
+              score={metric.Technical_Performance.Compression.Score}
+              value={metric.Technical_Performance.Compression.Score ? "Enabled" : "Disabled"}
+              darkMode={darkMode}
+              icon="📦"
+            />
+            <MetricCard
+              title="Caching"
+              description={desc.Caching}
+              score={metric.Technical_Performance.Caching.Score}
+              value={metric.Technical_Performance.Caching.Score ? "Effective" : "Missing"}
+              darkMode={darkMode}
+              icon="💾"
+            />
+            <MetricCard
+              title="Resource Optimization"
+              description={desc.Resource_Optimization}
+              score={metric.Technical_Performance.Resource_Optimization.Score}
+              value={
+                metric.Technical_Performance.Resource_Optimization.Score
+                  ? "Optimized"
+                  : "Needs Improvement"
+              }
+              darkMode={darkMode}
+              icon="✨"
+            />
+            <MetricCard
+              title="Render Blocking Resources"
+              description={desc.Render_Blocking}
+              score={!metric.Technical_Performance.Render_Blocking.Score}
+              value={metric.Technical_Performance.Render_Blocking.Score ? "Found" : "None"}
+              darkMode={darkMode}
+              icon="🚧"
+            />
+            <MetricCard
+              title="HTTPS Protocol"
+              description={desc.HTTP}
+              score={metric.Technical_Performance.HTTP.Score}
+              value={metric.Technical_Performance.HTTP.Score ? "Secure" : "Insecure"}
+              darkMode={darkMode}
+              icon="🔒"
+            />
+          </div>
+        </div>
+
+        
+        <div
+          className={`w-full max-w-6xl p-8 rounded-2xl shadow-2xl 
+            border-l-8 border-yellow-500 ${mainCardBg}
+            transform transition-all duration-300`}
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <span className="text-3xl">🔍</span>
+            <h2 className={`text-2xl font-bold ${textColor}`}>Crawlability & Indexing</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <MetricCard
+              title="Sitemap"
+              description={desc.Sitemap}
+              score={metric.Technical_Performance.Sitemap.Score}
+              value={metric.Technical_Performance.Sitemap.Score ? "Yes" : "No"}
+              darkMode={darkMode}
+              icon="🗺️"
+            />
+            <MetricCard
+              title="Robots.txt"
+              description={desc.Robots}
+              score={metric.Technical_Performance.Robots.Score}
+              value={metric.Technical_Performance.Robots.Score ? "Valid" : "Missing"}
+              darkMode={darkMode}
+              icon="🤖"
+            />
+            <MetricCard
+              title="Structured Data"
+              description={desc.Structured_Data}
+              score={metric.Technical_Performance.Structured_Data.Score}
+              value={metric.Technical_Performance.Structured_Data.Score ? "Yes" : "No"}
+              darkMode={darkMode}
+              icon="📋"
+            />
+            <MetricCard
+              title="Broken Links"
+              description={desc.Broken_Links}
+              score={!metric.Technical_Performance.Broken_Links.Score}
+              value={metric.Technical_Performance.Broken_Links.Score ? "Yes" : "No"}
+              darkMode={darkMode}
+              icon="🔗"
+            />
+            <MetricCard
+              title="Redirect Chains"
+              description={desc.Redirect_Chains}
+              score={!metric.Technical_Performance.Redirect_Chains.Score}
+              value={metric.Technical_Performance.Redirect_Chains.Score ? "Yes" : "No"}
+              darkMode={darkMode}
+              icon="↪️"
+            />
+          </div>
+        </div>
+
+        
+        <AuditDropdown
+          title="Passed Audits"
+          items={metric.Technical_Performance.Passed}
+          darkMode={darkMode}
+        />
+        <AuditDropdown
+          title="Warning"
+          items={metric.Technical_Performance.Warning}
+          darkMode={darkMode}
+        />
+        <AuditDropdown
+          title="Failed Audits"
+          items={metric.Technical_Performance.Improvements}
+          darkMode={darkMode}
+        />
+      </main>
+    </div>}
+ </> );
 }

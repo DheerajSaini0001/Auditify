@@ -328,43 +328,58 @@ function HeadingHierarchyCard({ data }) {
     }
   };
 
+  // Reduced font sizes
   const getFont = (tag) => {
     switch (tag) {
-      case "h1": return "text-3xl font-bold";
-      case "h2": return "text-2xl font-semibold";
-      case "h3": return "text-xl font-medium";
-      case "h4": return "text-lg";
-      default: return "text-base";
+      case "h1": return "text-xl font-bold";     // smaller than before
+      case "h2": return "text-lg font-semibold";
+      case "h3": return "text-base font-medium";
+      case "h4": return "text-sm";
+      default: return "text-sm";
     }
   };
 
   return (
-    <div className={`w-full max-w-3xl mx-auto shadow-lg rounded-2xl pb-64 space-y-4 
-        ${darkMode ? "bg-gray-900 text-gray-100" : "bg-white text-gray-900"}`}>
+    <div
+      className={`w-full max-w-3xl mx-auto shadow-lg rounded-2xl pb-64 space-y-4 
+      ${darkMode ? "bg-gray-900 text-gray-100" : "bg-white text-gray-900"}`}
+    >
 
-      <h2 className="text-2xl font-bold mb-4 text-blue-600">Headings Structure</h2>
+      <h2 className="text-xl font-bold mb-4 text-blue-600">Headings Structure</h2>
 
-      {/* Scrollable container */}
-      <div className={`space-y-3 max-h-60 overflow-y-auto pr-2 
-          scrollbar-thin 
-          ${darkMode ? "scrollbar-thumb-gray-600" : "scrollbar-thumb-gray-400"}`}>
-
-        {data?.map((item, index) => (
-          <div
-            key={index}
-            className={`${getIndent(item.tag)} border-l-2 pl-3 
+      <div
+        className={`space-y-3 max-h-60 overflow-y-auto pr-2 scrollbar-thin 
+        ${darkMode ? "scrollbar-thumb-gray-600" : "scrollbar-thumb-gray-400"}`}
+      >
+        {data?.map((item, index) => {
+          const Tag = item.tag;
+          return (
+            <div
+              key={index}
+              className={`${getIndent(item.tag)} border-l-2 pl-3 
               ${darkMode ? "border-gray-700" : "border-gray-300"}`}
-          >
-            <p className={`${getFont(item.tag)} uppercase leading-tight`}>
-              {item.tag}
-            </p>
-          </div>
-        ))}
+            >
 
+              <div className="flex items-center space-x-2">
+
+                {/* tag like <h1> */}
+                <span className="text-blue-500 font-mono text-sm">
+                  &lt;{item.tag}&gt;
+                </span>
+
+                {/* actual smaller heading */}
+                {React.createElement(
+                  Tag,
+                  { className: `${getFont(item.tag)} uppercase leading-tight inline-block` },
+                  item.text
+                )}
+
+              </div>
+            </div>
+          );
+        })}
       </div>
 
     </div>
   );
 }
-
-

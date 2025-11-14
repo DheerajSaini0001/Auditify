@@ -298,24 +298,39 @@ export default function On_Page_SEO() {
     ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900"
     : "bg-gradient-to-br from-white via-blue-50/30 to-white";
 
-  const desc = {
-    title: "The HTML <title> defines the page’s main topic and appears on search results. Ideal length: 30–60 characters.",
-    meta: "Meta description summarizes the page content. Ideal length: 50–160 characters, concise and keyword-optimized.",
-    url: "Short, keyword-focused, hyphen-separated URLs are easier to read and rank better.",
-    canonical: "Canonical tags prevent duplicate content issues by pointing to the original page version.",
-    h1: "Each page should have exactly one H1 that clearly represents the main topic.",
-    image: "Images should include meaningful alt text and be optimized for faster loading.",
-    video: "Embedded videos improve engagement but should use lazy-loading and metadata.",
-    heading: "Proper heading hierarchy (H1 → H2 → H3) improves readability and SEO structure.",
-    alt: "Alt text should describe image purpose and include relevant keywords.",
-    semantic: "Semantic tags (article, header, footer, section) improve content structure and accessibility.",
-    structured: "Schema markup helps search engines understand content for rich snippets.",
-    https: "HTTPS ensures secure communication and improves trust and SEO ranking.",
-    pagination: "Pagination tags (rel=next/prev) help crawlers understand multi-page content.",
-    links: "Internal links should use descriptive anchor text and connect related pages.",
-    duplicate: "Unique content is critical. Avoid duplicating text across multiple pages.",
-    slug: "SEO-friendly slugs are lowercase, hyphenated, and concise.",
-  };
+ const desc = {
+  title: `The page title is the main headline that appears as the blue clickable link in Google search results. It's critical because it tells both users and Google what your page is about in one glance. A good title should be unique for every page and ideally between 30 and 60 characters. If it's too long, Google will cut it off, which looks unprofessional and hides important keywords.`,
+
+  meta: `This is the small paragraph of text under the blue link in Google search results. It's your "ad copy" to convince people to click on your link instead of someone else's. It doesn't directly help you rank higher, but a good one gets many more clicks. It should be a clear summary of the page, between 50 and 165 characters, and encourage the user to visit.`,
+
+  url: `This is the address of your webpage (like yoursite.com/about-us). A good URL should be short, easy to read, and describe the page content. Using hyphens (-) to separate words is the best practice. Avoid long, ugly URLs with numbers and symbols (like .../p?id=123). Clean URLs are easier for both users and Google to understand and can help your page rank better for those keywords.`,
+
+  canonical: `Sometimes, the same page can be reached by different URLs (e.g., a "print" version or one with tracking codes). This can confuse Google, making it think you have duplicate content, which hurts your SEO. A canonical tag is a simple piece of code that tells Google, "Hey, of all these similar pages, *this* one is the original." It cleans up any confusion and makes sure the correct page gets the credit.`,
+
+  h1: `The H1 is the main headline or title *on the page itself* (different from the search result title). Think of it as the title of a chapter in a book. For both users and Google, it confirms the page's main topic. You must have *exactly one* H1 on every page. Having zero H1s or multiple H1s confuses search engines and weakens your page's focus, which can hurt your ranking.`,
+
+  image: `Images make your page engaging, but they can also slow it down if they are too large. All images must be "optimized"—meaning compressed to a smaller file size without losing quality—so they load quickly. Also, every image needs "alt text," which is a short description of what the image is. This is crucial for visually impaired users (screen readers) and also helps Google understand what your images are about.`,
+
+  video: `Videos are fantastic for keeping users on your page longer, which Google loves. However, they can seriously slow down your page's initial load time. To fix this, videos should use "lazy-loading," meaning they only start to load when the user scrolls down to them. We also add "metadata" (structured data) to help Google understand what the video is about, which can help it appear in video search results.`,
+
+  heading: `Headings (like H1, H2, H3) create the structure of your page, like an outline for a document. The H1 is the main title. H2s are main sub-topics, and H3s are sub-points under an H2. You should never skip levels (like jumping from an H1 straight to an H3). This clear, logical structure makes the content much easier for users to read and helps Google understand the relationship between different parts of your text.`,
+
+  alt: `"Alt text" (or alternative text) is a short, written description of an image on your page. It's hidden from most users, but it's essential. First, it allows screen readers to describe the image to visually impaired users, making your site accessible. Second, it tells Google exactly what the image shows. This helps Google index your images and understand your page's topic better, especially if you include relevant keywords in the description.`,
+
+  semantic: `Semantic HTML tags are special code tags that describe the *meaning* of the content inside them. For example, instead of using a generic <div> tag for everything, we use <header> for your site's header, <footer> for the footer, and <article> for a blog post. This gives your page a much clearer, more logical structure. It's very important for accessibility (screen readers) and helps search engines instantly understand the layout of your page.`,
+
+  structured: `Structured data (or "Schema") is a special code vocabulary we add to your site to "spoon-feed" information to Google. Instead of just letting Google *guess* what your content is, we can explicitly tell it: "This is a product, the price is $49, and the rating is 5 stars." This is how you get those fancy "rich snippets" (like star ratings or review scores) to show up in search results, making your listing stand out.`,
+
+  https: `HTTPS is the secure version of HTTP. It's what gives your site the "padlock" icon in the browser's address bar. This means all communication between the user and your website is encrypted and safe from hackers. It's absolutely essential for building user trust (especially for e-commerce). Google also considers HTTPS a ranking signal, meaning secure sites are preferred over non-secure ones. All modern sites must use HTTPS.`,
+
+  pagination: `If you have a blog, a category, or a product list that spans multiple pages (Page 1, Page 2, Page 3, etc.), this is called "pagination." We need to add special tags (like rel="next" and rel="prev") to this page series. These tags tell Google that these pages are all part of one connected sequence, which helps it understand the relationship between them and index them correctly, rather than seeing them as separate, disconnected pages.`,
+
+  links: `Internal links are links that go from one page on your site to another page on your site. They are crucial for two reasons. First, they help users navigate your site. Second, they help Google find your other pages and understand what they are about. The clickable text (called "anchor text") should be descriptive (e.g., "learn about our web design services" instead of just "click here"). This helps Google understand what the linked page is about.`,
+
+  duplicate: `Duplicate content is when a large block of text on your site is identical (or very similar) to content on another page—either on your own site or someone else's. This is very bad for SEO. It confuses Google, which doesn't know which page to rank. As a result, Google may penalize both pages. Every important page on your site must have original, unique, and valuable content to perform well in search results.`,
+
+  slug: `The "slug" is the very last part of your URL that identifies the specific page. For example, in 'yoursite.com/services/web-design', the slug is "web-design". A good, SEO-friendly slug should be short, all lowercase, and use hyphens (-) to separate words. It should clearly describe the page content. This makes the URL easy for users to read and helps Google understand the page's topic, which can improve its ranking.`
+};
 const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray-900 shadow-lg`;
   return (
     <div className="relative flex w-full h-full min-h-screen">

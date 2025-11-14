@@ -319,7 +319,7 @@ const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray
       >
         {/* Header */}
         <div
-          className={`w-full max-w-4xl p-8 rounded-2xl shadow-2xl border-l-8 border-indigo-500 ${mainCardBg}`}
+          className={`w-full ${data.Report=="All" ? "max-w-4xl" : "max-w-6xl"} p-8 rounded-2xl shadow-2xl border-l-8 border-indigo-500 ${mainCardBg}`}
         >
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -389,7 +389,7 @@ const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray
           <MetricCard title="Duplicate Content" description={desc.duplicate} score={seo.Duplicate_Content?.Score} value={seo.Duplicate_Content?.Score ? "Unique" : "Duplicate"} darkMode={darkMode} icon="🧬" />
           <MetricCard title="URL Slugs" description={desc.slug} score={seo.URL_Slugs?.Slug_Check_Score} value={seo.URL_Slugs?.Slug_Check_Score ? "Valid" : "Invalid"} darkMode={darkMode} icon="🧾" />
         </Section>
-<div className="p-6 w-full max-w-4xl">
+<div className={`w-full ${data.Report=="All" ? "max-w-4xl" : "max-w-6xl"} p-6 rounded-2xl shadow-lg ${mainCardBg} border ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
       <SchemaCard schema={data.Schema} />
     </div>
         {/* Dropdowns */}
@@ -423,13 +423,14 @@ function SchemaCard({ schema }) {
 function Section({ title, icon, color, children, textColor }) {
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
+  const data=useData();
   const mainCardBg = darkMode
     ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900"
     : "bg-gradient-to-br from-white via-blue-50/30 to-white";
   
   return (
     <div
-      className={`w-full max-w-4xl p-8 rounded-2xl shadow-2xl border-l-8 border-${color}-500 ${mainCardBg}`}
+      className={`w-full ${data.Report=="All" ? "max-w-4xl" : "max-w-6xl"} p-8 rounded-2xl shadow-2xl border-l-8 border-${color}-500 ${mainCardBg}`}
     >
       <div className="flex items-center gap-3 mb-6">
         <span className="text-3xl">{icon}</span>

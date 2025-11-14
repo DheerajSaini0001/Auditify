@@ -7,7 +7,7 @@ import Sidebar from "../Component/Sidebar";
 import UrlHeader from "../Component/UrlHeader"; // This import wasn't used, but I kept it
 
 // -----------------------------------------------------------------
-// ✅ NEW & IMPROVED SKELETON LOADING COMPONENTS
+// ✅ SKELETON COMPONENTS (FIXED)
 // -----------------------------------------------------------------
 const SkeletonSidebar = ({ darkMode }) => (
   <div
@@ -28,7 +28,6 @@ const SkeletonMetricCard = ({ darkMode }) => {
     ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900" 
     : "bg-gradient-to-br from-white via-gray-50 to-white";
   const border = darkMode ? "border-gray-700" : "border-gray-200";
-
   return (
     <div className={`p-6 rounded-xl shadow-lg ${shimmerCardBg} border ${border}`}>
       <div className="flex justify-between items-start mb-4">
@@ -43,14 +42,17 @@ const SkeletonMetricCard = ({ darkMode }) => {
 
 const SkeletonHeaderCard = ({ darkMode }) => {
   const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
-  const data=useData()
+  
+  // --- ✅ FIX: Destructure 'data' from useData() ---
+  const { data } = useData(); 
+
   const shimmerCardBg = darkMode 
     ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900" 
     : "bg-gradient-to-br from-white via-blue-50/30 to-white";
   const border = darkMode ? "border-gray-700" : "border-gray-200";
-
   return (
-    <div className={`w-full ${data.Report=="All" ? "max-w-4xl" : "max-w-6xl"}  p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
+    // --- ✅ FIX: Added optional chaining (data?.Report) ---
+    <div className={`w-full ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"}  p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
       <div className="flex items-center justify-between mb-6">
         <div>
           <div className={`h-12 w-80 rounded ${shimmerBg} mb-3`}></div>
@@ -65,14 +67,18 @@ const SkeletonHeaderCard = ({ darkMode }) => {
 
 const SkeletonSectionCard = ({ metricCount, darkMode }) => {
   const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
-  const data=useData()
+  
+  // --- ✅ FIX: Destructure 'data' from useData() ---
+  const { data } = useData();
+
   const shimmerCardBg = darkMode 
     ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900" 
     : "bg-gradient-to-br from-white via-blue-50/30 to-white";
   const border = darkMode ? "border-gray-700" : "border-gray-200";
   
   return (
-    <div className={`w-full ${data.Report=="All" ? "max-w-4xl" : "max-w-6xl"} p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
+    // --- ✅ FIX: Added optional chaining (data?.Report) ---
+    <div className={`w-full ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"} p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
       <div className="flex items-center gap-3 mb-6">
         <div className={`h-8 w-8 rounded ${shimmerBg}`}></div>
         <div className={`h-7 w-1/2 rounded ${shimmerBg}`}></div>
@@ -90,12 +96,15 @@ const SkeletonAuditDropdown = ({ darkMode }) => {
   const shimmerCardBg = darkMode 
     ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900" 
     : "bg-gradient-to-br from-white via-blue-50/30 to-white";
-  const data=useData()
+  
+  // --- ✅ FIX: Destructure 'data' from useData() ---
+  const { data } = useData();
+
   const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
   const border = darkMode ? "border-gray-700" : "border-gray-200";
-
   return (
-    <div className={`w-full ${data.Report=="All" ? "max-w-4xl" : "max-w-6xl"} p-5 rounded-lg shadow-xl ${shimmerCardBg} border ${border}`}>
+    // --- ✅ FIX: Added optional chaining (data?.Report) ---
+    <div className={`w-full ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"} p-5 rounded-lg shadow-xl ${shimmerCardBg} border ${border}`}>
       <div className={`h-6 w-1/3 rounded ${shimmerBg}`}></div>
     </div>
   );
@@ -105,15 +114,20 @@ const SkeletonAuditDropdown = ({ darkMode }) => {
  * ✅ This is the main shimmer component that mimics the final page layout.
  */
 function TechnicalPerformanceShimmer({ darkMode }) {
+  
+  // --- ✅ FIX: Destructure 'data' from useData() ---
+  const { data } = useData();
+
   const mainBg = darkMode 
-  const data=useData()
     ? "bg-gray-900" 
     : "bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50";
 
   return (
     <div className={`relative flex w-full h-full min-h-screen ${mainBg} animate-pulse`}>
-     {data.Report=="All" && <SkeletonSidebar darkMode={darkMode} />}
-      <main className={`flex-1 ${data.Report=="All" ? "lg:ml-64" : ""} flex flex-col items-center pt-20 pb-12 px-4 space-y-8`}>
+      {/* --- ✅ FIX: Added optional chaining (data?.Report) --- */}
+      {data?.Report === "All" && <SkeletonSidebar darkMode={darkMode} />}
+
+      <main className={`flex-1 ${data?.Report === "All" ? "lg:ml-64" : ""} flex flex-col items-center pt-20 pb-12 px-4 space-y-8`}>
         {/* Skeleton for Header Card */}
         <SkeletonHeaderCard darkMode={darkMode} />
         
@@ -145,7 +159,6 @@ const MetricCard = ({ title, description, score, value, unit, darkMode, icon }) 
   const [showDescription, setShowDescription] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const isPassed = Boolean(score);
-
   const titleColor = darkMode ? "text-white" : "text-gray-900";
   const descriptionColor = darkMode ? "text-gray-300" : "text-gray-600";
   const valueColor = isPassed
@@ -154,12 +167,10 @@ const MetricCard = ({ title, description, score, value, unit, darkMode, icon }) 
   const cardBg = darkMode 
     ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900" 
     : "bg-gradient-to-br from-white via-gray-50 to-white";
-
   const statusText = isPassed ? "Good" : "Needs Work";
   const statusColor = isPassed
     ? "bg-gradient-to-r from-green-400 to-emerald-500 text-white"
     : "bg-gradient-to-r from-red-500 to-rose-600 text-white";
-
   return (
     <div 
       className={`group relative p-6 rounded-xl shadow-lg ${cardBg} 
@@ -188,13 +199,11 @@ const MetricCard = ({ title, description, score, value, unit, darkMode, icon }) 
             {statusText}
           </span>
         </div>
-
         {/* Value with animation */}
         <div className={`text-3xl font-extrabold mb-4 ${valueColor} 
           transition-all duration-300 `}>
           {value !== null && value !== undefined ? `${value}${unit || ""}` : "--"}
         </div>
-
         {/* Description toggle button */}
         <button
           onClick={() => setShowDescription(!showDescription)}
@@ -217,7 +226,6 @@ const MetricCard = ({ title, description, score, value, unit, darkMode, icon }) 
             </svg>
           </span>
         </button>
-
         {/* Description with slide animation */}
         <div className={`overflow-hidden transition-all duration-300 ${showDescription ? 'max-h-96 mt-4' : 'max-h-0'}`}>
           <p className={`text-sm ${descriptionColor} border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'} pt-4`}>
@@ -228,7 +236,6 @@ const MetricCard = ({ title, description, score, value, unit, darkMode, icon }) 
     </div>
   );
 };
-
 // -----------------------------------------------------------------
 // ✅ MAIN COMPONENT
 // -----------------------------------------------------------------
@@ -237,7 +244,6 @@ export default function Technical_Performance() {
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
   const metric = data;
-
   // -----------------------------------------------------------------
   // ⭐ BUG FIX: Added "!metric" check.
   // This prevents a crash on the first load when `loading` is true
@@ -247,12 +253,10 @@ export default function Technical_Performance() {
   if (loading || !metric || metric.Status === "inprogress") {
     return <TechnicalPerformanceShimmer darkMode={darkMode} />;
   }
-
   const textColor = darkMode ? "text-white" : "text-gray-900";
   const mainCardBg = darkMode
     ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900"
     : "bg-gradient-to-br from-white via-blue-50/30 to-white";
-
   const desc = {
     LCP: `Largest Contentful Paint (Good if < 2.5s). Measures how long it takes for the largest visible element to load.`,
     FID: `First Input Delay (Good if < 100ms). Measures input responsiveness.`,
@@ -263,7 +267,7 @@ export default function Technical_Performance() {
     SI: `Speed Index (Good if < 3.4s). Measures visual loading speed.`,
     INP: `Interaction to Next Paint (Good if < 200ms). Overall responsiveness.`,
     Compression: `Text-based resources like HTML, CSS, and JavaScript should be served with compression (e.g., GZIP or Brotli). This reduces file transfer sizes, improves loading times, and enhances overall performance.`,
-    Caching: `Caching is considered effective when static resources (e.g., images, CSS, JS) have a cache lifetime (TTL) greater than 7 days. Proper caching minimizes server load, speeds up repeat visits, and improves user experience.`,
+    Caching: `Caching is considered effective when static resources (e.g., images, CSS, JS) have a cache lifetime (TTL) greater than 7 days). Proper caching minimizes server load, speeds up repeat visits, and improves user experience.`,
     Resource_Optimization: `Unoptimized assets (such as large images, unused CSS, or unminified JavaScript) increase load time. Optimize all resources by compressing images, removing unused code, and minimizing files for better performance.`,
     Render_Blocking: `Render-blocking resources delay the first paint of your webpage. To improve performance, defer or async non-critical JavaScript and inline critical CSS to allow faster rendering of above-the-fold content.`,
     HTTP: `Using HTTPS encrypts data between the browser and the server, ensuring security, privacy, and user trust. It also improves SEO rankings and is a must for modern web applications.`,
@@ -273,9 +277,7 @@ export default function Technical_Performance() {
     Broken_Links: `Broken or dead links negatively affect user experience and SEO performance. Regularly check and fix 404 or redirecting links to maintain a healthy site structure.`,
     Redirect_Chains: `Redirect chains (multiple consecutive redirects) slow down page load times and waste crawl budget. Limit redirects to a single step to improve performance and SEO efficiency.`,
   };
-
   const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray-900 shadow-lg`;
-
   return (<>
   {metric.Report=="All" ?
       <div className="relative flex w-full h-full min-h-screen">
@@ -312,7 +314,6 @@ export default function Technical_Performance() {
               />
             </div>
           </div>
-
           <div
             className={`inline-flex items-center gap-2 text-sm font-semibold px-5 py-2.5 rounded-full shadow-md
               ${darkMode
@@ -326,7 +327,6 @@ export default function Technical_Performance() {
             Time Taken — {metric.Time_Taken}
           </div>
         </div>
-
         
         <div
           className={`w-full max-w-4xl p-8 rounded-2xl shadow-2xl 
@@ -375,7 +375,6 @@ export default function Technical_Performance() {
             />
           </div>
         </div>
-
         {/* Section 2: Performance Metrics */}
         <div
           className={`w-full max-w-4xl p-8 rounded-2xl shadow-2xl 
@@ -425,7 +424,6 @@ export default function Technical_Performance() {
             />
           </div>
         </div>
-
         
         <div
           className={`w-full max-w-4xl p-8 rounded-2xl shadow-2xl 
@@ -483,7 +481,6 @@ export default function Technical_Performance() {
             />
           </div>
         </div>
-
         
         <div
           className={`w-full max-w-4xl p-8 rounded-2xl shadow-2xl 
@@ -537,7 +534,6 @@ export default function Technical_Performance() {
             />
           </div>
         </div>
-
         
         <AuditDropdown
           title="Passed Audits"
@@ -587,7 +583,6 @@ export default function Technical_Performance() {
               />
             </div>
           </div>
-
           <div
             className={`inline-flex items-center gap-2 text-sm font-semibold px-5 py-2.5 rounded-full shadow-md
               ${darkMode
@@ -601,7 +596,6 @@ export default function Technical_Performance() {
             Time Taken — {metric.Time_Taken}
           </div>
         </div>
-
         
         <div
           className={`w-full max-w-6xl p-8 rounded-2xl shadow-2xl 
@@ -650,7 +644,6 @@ export default function Technical_Performance() {
             />
           </div>
         </div>
-
         {/* Section 2: Performance Metrics */}
         <div
           className={`w-full max-w-6xl p-8 rounded-2xl shadow-2xl 
@@ -700,7 +693,6 @@ export default function Technical_Performance() {
             />
           </div>
         </div>
-
         
         <div
           className={`w-full max-w-6xl p-8 rounded-2xl shadow-2xl 
@@ -758,7 +750,6 @@ export default function Technical_Performance() {
             />
           </div>
         </div>
-
         
         <div
           className={`w-full max-w-6xl p-8 rounded-2xl shadow-2xl 
@@ -812,7 +803,6 @@ export default function Technical_Performance() {
             />
           </div>
         </div>
-
         
         <AuditDropdown
           title="Passed Audits"

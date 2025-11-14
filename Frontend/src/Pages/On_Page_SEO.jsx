@@ -49,11 +49,14 @@ const SkeletonHeaderCard = ({ darkMode }) => {
   const shimmerCardBg = darkMode 
     ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900" 
     : "bg-gradient-to-br from-white via-blue-50/30 to-white";
-    const data=useData();
+  
+  // --- ✅ FIX 1: Destructure 'data' ---
+  const { data } = useData();
   const border = darkMode ? "border-gray-700" : "border-gray-200";
 
   return (
-    <div className={`w-full ${data.Report=="All" ? "max-w-4xl" : "max-w-6xl"} p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
+    // --- ✅ FIX 2: Use optional chaining 'data?.Report' ---
+    <div className={`w-full ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"} p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
       <div className="flex items-center justify-between mb-6">
         <div>
           <div className={`h-12 w-80 rounded ${shimmerBg} mb-3`}></div>
@@ -68,14 +71,18 @@ const SkeletonHeaderCard = ({ darkMode }) => {
 
 const SkeletonSectionCard = ({ metricCount, darkMode }) => {
   const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
-  const data=useData();
+  
+  // --- ✅ FIX 1: Destructure 'data' ---
+  const { data } = useData();
+  
   const shimmerCardBg = darkMode 
     ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900" 
     : "bg-gradient-to-br from-white via-blue-50/30 to-white";
   const border = darkMode ? "border-gray-700" : "border-gray-200";
   
   return (
-    <div className={`w-full ${data.Report=="All" ? "max-w-4xl" : "max-w-6xl"} p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
+    // --- ✅ FIX 2: Use optional chaining 'data?.Report' ---
+    <div className={`w-full ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"} p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
       <div className="flex items-center gap-3 mb-6">
         <div className={`h-8 w-8 rounded ${shimmerBg}`}></div>
         <div className={`h-7 w-1/2 rounded ${shimmerBg}`}></div>
@@ -94,12 +101,16 @@ const SkeletonSchemaCard = ({ darkMode }) => {
   const shimmerCardBg = darkMode
     ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900"
     : "bg-gradient-to-br from-white via-blue-50/30 to-white";
-    const data=useData();
+
+  // --- ✅ FIX 1: Destructure 'data' ---
+  const { data } = useData();
+  
   const preBg = darkMode ? "bg-gray-800" : "bg-gray-100";
   const border = darkMode ? "border-gray-700" : "border-gray-200";
 
   return (
-    <div className={`w-full ${data.Report=="All" ? "max-w-4xl" : "max-w-6xl"} p-6 rounded-2xl shadow-lg ${shimmerCardBg} border ${border}`}>
+    // --- ✅ FIX 2: Use optional chaining 'data?.Report' ---
+    <div className={`w-full ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"} p-6 rounded-2xl shadow-lg ${shimmerCardBg} border ${border}`}>
       <div className={`h-6 w-1/3 rounded ${shimmerBg} mb-4`}></div>
       <div className={`h-40 w-full rounded-xl ${preBg}`}></div>
     </div>
@@ -110,12 +121,16 @@ const SkeletonAuditDropdown = ({ darkMode }) => {
   const shimmerCardBg = darkMode 
     ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900" 
     : "bg-gradient-to-br from-white via-blue-50/30 to-white";
-    const data=useData();
+
+  // --- ✅ FIX 1: Destructure 'data' ---
+  const { data } = useData();
+  
   const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
   const border = darkMode ? "border-gray-700" : "border-gray-200";
 
   return (
-    <div className={`w-full ${data.Report=="All" ? "max-w-4xl" : "max-w-6xl"} p-5 rounded-lg shadow-xl ${shimmerCardBg} border ${border}`}>
+    // --- ✅ FIX 2: Use optional chaining 'data?.Report' ---
+    <div className={`w-full ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"} p-5 rounded-lg shadow-xl ${shimmerCardBg} border ${border}`}>
       <div className={`h-6 w-1/3 rounded ${shimmerBg}`}></div>
     </div>
   );
@@ -126,20 +141,21 @@ const SkeletonAuditDropdown = ({ darkMode }) => {
  * that mimics your final page layout perfectly.
  */
 function OnPageSeoShimmer({ darkMode }) {
-  const data=useData();
+  // --- ✅ FIX 1: Destructure 'data' ---
+  const { data } = useData();
+  
   const mainBg = darkMode 
     ? "bg-gray-900" 
     : "bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50";
 
-  // We assume the sidebar will be present to prevent layout shift
-  // This is the most common case (All Report)
   return (
     <div className={`relative flex w-full h-full min-h-screen ${mainBg} animate-pulse`}>
-      {data.Report=="All" && <SkeletonSidebar darkMode={darkMode} />}
+      {/* --- ✅ FIX 2: Use optional chaining 'data?.Report' --- */}
+      {data?.Report === "All" && <SkeletonSidebar darkMode={darkMode} />}
       
-      <main className={`flex-1 ${data.Report=="All" ? "lg:ml-64" : ""} flex flex-col items-center pt-20 pb-12 px-4 space-y-8`}>
+      <main className={`flex-1 ${data?.Report === "All" ? "lg:ml-64" : ""} flex flex-col items-center pt-20 pb-12 px-4 space-y-8`}>
         {/* 1. Header Card */}
-      <SkeletonHeaderCard darkMode={darkMode} />
+        <SkeletonHeaderCard darkMode={darkMode} />
         
         {/* 2. Section 1 ("Content Essentials") - 5 metrics */}
         <SkeletonSectionCard metricCount={5} darkMode={darkMode} />
@@ -401,14 +417,15 @@ const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray
 }
 
 // ------------------------------------------------------
-// ✅ Helper Component for Section Layouts (Unchanged)
+// ✅ Helper Component for SchemaCard
 // ------------------------------------------------------
 function SchemaCard({ schema }) {
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
 
   return (
-    <div className={`shadow-md p-6 rounded-2xl border w-full max-w-3xl mx-auto ${darkMode ? "bg-gray-900 border-gray-700" : "bg-white border-gray-200"}`}>
+    // Note: Removed redundant container styles, as parent div now handles width/bg
+    <>
       <h2 className={`text-xl font-semibold mb-4 ${darkMode ? "text-gray-100" : "text-gray-900"}`}>
         Schema Data
       </h2>
@@ -416,21 +433,40 @@ function SchemaCard({ schema }) {
       <pre className={`p-4 rounded-xl text-sm overflow-x-auto whitespace-pre-wrap ${darkMode ? "bg-gray-800 text-gray-200" : "bg-gray-100 text-gray-700"}`}>
         {JSON.stringify(schema, null, 2)}
       </pre>
-    </div>
+    </>
   );
 }
 
+// ------------------------------------------------------
+// ✅ Helper Component for Section Layouts (FIXED)
+// ------------------------------------------------------
 function Section({ title, icon, color, children, textColor }) {
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
-  const data=useData();
+  
+  // --- ✅ FIX 1: Destructure 'data' ---
+  const { data } = useData();
+  
   const mainCardBg = darkMode
     ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900"
     : "bg-gradient-to-br from-white via-blue-50/30 to-white";
   
+  // --- ✅ FIX 2: Tailwind Production Build Fix (Color Map) ---
+  const borderColorMap = {
+    indigo: "border-indigo-500",
+    purple: "border-purple-500",
+    green: "border-green-500",
+    blue: "border-blue-500",
+  };
+
   return (
     <div
-      className={`w-full ${data.Report=="All" ? "max-w-4xl" : "max-w-6xl"} p-8 rounded-2xl shadow-2xl border-l-8 border-${color}-500 ${mainCardBg}`}
+      className={`w-full p-8 rounded-2xl shadow-2xl border-l-8 ${mainCardBg}
+        ${/* --- FIX 3: Use optional chaining 'data?.Report' --- */''}
+        ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"}
+        ${/* --- FIX 2 (Applied): Use color map --- */''}
+        ${borderColorMap[color] || "border-gray-500"}
+      `}
     >
       <div className="flex items-center gap-3 mb-6">
         <span className="text-3xl">{icon}</span>
@@ -481,6 +517,9 @@ function HeadingHierarchyCard({ data }) {
         ${darkMode ? "scrollbar-thumb-gray-600" : "scrollbar-thumb-gray-400"}`}
       >
         {data?.map((item, index) => {
+          // Handle cases where item or item.tag might be null/undefined
+          if (!item || !item.tag) return null;
+          
           const Tag = item.tag;
           return (
             <div

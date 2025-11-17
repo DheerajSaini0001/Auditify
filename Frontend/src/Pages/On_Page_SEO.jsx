@@ -136,6 +136,107 @@ const SkeletonAuditDropdown = ({ darkMode }) => {
   );
 };
 
+
+function LinksDisplay({ linksData }) {
+  const safeArray = (val) => {
+    if (Array.isArray(val)) return val;
+    if (val && typeof val === "object") return Object.values(val);
+    return [];
+  };
+
+  const internal = safeArray(linksData.Internal_Links);
+  const external = safeArray(linksData.External_Links);
+
+  const [showInternalAll, setShowInternalAll] = useState(false);
+  const [showExternalAll, setShowExternalAll] = useState(false);
+
+  const INTERNAL_LIMIT = 2;
+  const EXTERNAL_LIMIT = 2;
+
+  return (
+    <div className="p-6 space-y-6">
+
+      {/* TOP CARDS */}
+      <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
+        <StatCard title="Total Links" value={linksData.Total} />
+        <StatCard title="Internal Links" value={internal.length} />
+        <StatCard title="External Links" value={external.length} />
+        <StatCard title="Unique Links" value={linksData.Total_Unique} />
+      </div>
+
+      {/* INTERNAL */}
+      <div className="p-4 bg-white rounded-xl shadow">
+        <h2 className="font-bold text-xl mb-4">Internal Links ({internal.length})</h2>
+
+        {/* Only show limited items initially */}
+        {(showInternalAll ? internal : internal.slice(0, INTERNAL_LIMIT))
+          .map((link, index) => (
+            <LinkCard key={index} link={link} />
+        ))}
+
+        {/* Show More / Show Less Button */}
+        {internal.length > INTERNAL_LIMIT && (
+          <button
+            onClick={() => setShowInternalAll(!showInternalAll)}
+            className="mt-3 text-blue-600 font-semibold hover:underline"
+          >
+            {showInternalAll ? "Show Less" : `Show More (${internal.length - INTERNAL_LIMIT} more)`}
+          </button>
+        )}
+      </div>
+
+      {/* EXTERNAL */}
+      <div className="p-4 bg-white rounded-xl shadow">
+        <h2 className="font-bold text-xl mb-4">External Links ({external.length})</h2>
+
+        {(showExternalAll ? external : external.slice(0, EXTERNAL_LIMIT))
+          .map((link, index) => (
+            <LinkCard key={index} link={link} />
+        ))}
+
+        {external.length > EXTERNAL_LIMIT && (
+          <button
+            onClick={() => setShowExternalAll(!showExternalAll)}
+            className="mt-3 text-blue-600 font-semibold hover:underline"
+          >
+            {showExternalAll ? "Show Less" : `Show More (${external.length - EXTERNAL_LIMIT} more)`}
+          </button>
+        )}
+      </div>
+
+    </div>
+  );
+}
+
+
+
+/* TOP STATS CARD */
+function StatCard({ title, value }) {
+  return (
+    <div className="p-4 bg-white shadow rounded-xl text-center">
+      <p className="text-sm text-gray-500">{title}</p>
+      <h3 className="text-2xl font-semibold">{value}</h3>
+    </div>
+  );
+}
+
+/* LINK CARD (for internal + external both) */
+function LinkCard({ link }) {
+  const url = link.href || link.url || link.link || "";
+  const anchor = link.anchor || link.text || link.label || "/";
+
+  return (
+    <div className="py-2 border-b">
+      <p className="text-gray-900 font-medium break-all">{url}</p>
+      <p className="text-gray-600 text-sm">
+        <span className="font-semibold">Anchor:</span> {anchor}
+      </p>
+    </div>
+  );
+}
+
+
+
 /**
  * ✅ REPLACED: This is the new, high-fidelity shimmer component
  * that mimics your final page layout perfectly.
@@ -184,7 +285,7 @@ function OnPageSeoShimmer({ darkMode }) {
 // ------------------------------------------------------
 // ✅ MetricCard Component (Unchanged)
 // ------------------------------------------------------
-const MetricCard = ({ title, description, score, value, unit, darkMode, icon, heading }) => {
+const MetricCard = ({ title, description, score, value, unit, darkMode, icon,Title, metaDiscription,heading,links,canonical }) => {
   const [showDescription, setShowDescription] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const isPassed = Boolean(score);
@@ -259,7 +360,7 @@ const MetricCard = ({ title, description, score, value, unit, darkMode, icon, he
 
         <div
           className={`overflow-hidden transition-all duration-300 ${
-            showDescription ? "max-h-96 mt-4" : "max-h-0"
+            showDescription ? "max-h-auto mt-4" : "max-h-0"
           }`}
         >
           <p
@@ -269,6 +370,26 @@ const MetricCard = ({ title, description, score, value, unit, darkMode, icon, he
           >
             {description}
           </p>
+          {links &&
+ links.Internal_Links &&
+ links.Internal_Links.length > 0 && (
+  <div className="mt-4">
+    <LinksDisplay linksData={links} />
+  </div>
+)}
+{Title && (
+  <div className={`my-2 ${Title.Score ? "text-green-700" : "text-red-500"}`}>
+    Title — {Title.Title}
+  </div>
+)}
+    
+{canonical&& <div className={`my-2 ${canonical?"text-green-700":"text-red-500"}`}>Self Referential-{canonical}</div>}         
+{metaDiscription && (
+  <div className={`my-2 ${metaDiscription.Score ? "text-green-700" : "text-red-500"}`}>
+    Meta Description — {metaDiscription.MetaDescription}
+  </div>
+)}
+
           {heading && <div className="mt-4"><HeadingHierarchyCard data={heading} /></div>}
         </div>
       </div>
@@ -284,6 +405,8 @@ export default function On_Page_SEO() {
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
 
+  
+  
   // ⭐ BUG FIX #1: Added "!data" check to prevent crash on initial load
   // when `data` is null and `loading` is true.
   if (loading || !data || data.Status === "inprogress") {
@@ -292,6 +415,14 @@ export default function On_Page_SEO() {
   
   // Now it's safe to access data
   const seo = data?.On_Page_SEO || {};
+  const linksData = {
+    Total: seo.Links.Total,
+    Total_Internal: seo.Links.Total_Internal,
+    Total_External: seo.Links.Total_External,
+    Total_Unique: seo.Links.Total_Unique,
+    Internal_Links:seo.Links.Internal_Links , // 116 objects
+    External_Links: seo.Links.External_Links // 2 objects
+  };
 
   const textColor = darkMode ? "text-white" : "text-gray-900";
   const mainCardBg = darkMode
@@ -305,7 +436,7 @@ export default function On_Page_SEO() {
 
   url: `This is the address of your webpage (like yoursite.com/about-us). A good URL should be short, easy to read, and describe the page content. Using hyphens (-) to separate words is the best practice. Avoid long, ugly URLs with numbers and symbols (like .../p?id=123). Clean URLs are easier for both users and Google to understand and can help your page rank better for those keywords.`,
 
-  canonical: `Sometimes, the same page can be reached by different URLs (e.g., a "print" version or one with tracking codes). This can confuse Google, making it think you have duplicate content, which hurts your SEO. A canonical tag is a simple piece of code that tells Google, "Hey, of all these similar pages, *this* one is the original." It cleans up any confusion and makes sure the correct page gets the credit.`,
+  canonical: `Canonical tags prevent duplicate URLs from confusing Google by marking the original page.`,
 
   h1: `The H1 is the main headline or title *on the page itself* (different from the search result title). Think of it as the title of a chapter in a book. For both users and Google, it confirms the page's main topic. You must have *exactly one* H1 on every page. Having zero H1s or multiple H1s confuses search engines and weakens your page's focus, which can hurt your ranking.`,
 
@@ -325,7 +456,7 @@ export default function On_Page_SEO() {
 
   pagination: `If you have a blog, a category, or a product list that spans multiple pages (Page 1, Page 2, Page 3, etc.), this is called "pagination." We need to add special tags (like rel="next" and rel="prev") to this page series. These tags tell Google that these pages are all part of one connected sequence, which helps it understand the relationship between them and index them correctly, rather than seeing them as separate, disconnected pages.`,
 
-  links: `Internal links are links that go from one page on your site to another page on your site. They are crucial for two reasons. First, they help users navigate your site. Second, they help Google find your other pages and understand what they are about. The clickable text (called "anchor text") should be descriptive (e.g., "learn about our web design services" instead of just "click here"). This helps Google understand what the linked page is about.`,
+  links: `Links connect pages and help Google understand your site. Use clear anchor text so users know where the link leads.`,
 
   duplicate: `Duplicate content is when a large block of text on your site is identical (or very similar) to content on another page—either on your own site or someone else's. This is very bad for SEO. It confuses Google, which doesn't know which page to rank. As a result, Google may penalize both pages. Every important page on your site must have original, unique, and valuable content to perform well in search results.`,
 
@@ -381,10 +512,10 @@ const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray
 
         {/* 🧠 Section 1: Content Essentials */}
         <Section title="Content Essentials" icon="🧠" color="indigo" textColor={textColor}>
-          <MetricCard title="Title Tag" description={desc.title} score={seo.Title?.Score} value={seo.Title?.Title_Length + " chars"} darkMode={darkMode} icon="🏷️" />
-          <MetricCard title="Meta Description" description={desc.meta} score={seo.Meta_Description?.Score} value={seo.Meta_Description?.MetaDescription_Length + " chars"} darkMode={darkMode} icon="📝" />
+          <MetricCard title="Title Tag" description={desc.title} score={seo.Title?.Score} Title={seo?.Title} value={seo.Title?.Title_Length + " chars"} darkMode={darkMode} icon="🏷️" />
+          <MetricCard title="Meta Description" description={desc.meta} score={seo.Meta_Description?.Score} metaDiscription={seo.Meta_Description} value={seo.Meta_Description?.MetaDescription_Length + " chars"} darkMode={darkMode} icon="📝" />
           <MetricCard title="URL Structure" description={desc.url} score={seo.URL_Structure?.Score} value={seo.URL_Structure?.Score ? "Clean" : "Poor"} darkMode={darkMode} icon="🔗" />
-          <MetricCard title="Canonical Tag" description={desc.canonical} score={seo.Canonical?.Score} value={seo.Canonical?.Score ? "Valid" : "Missing"} darkMode={darkMode} icon="📜" />
+          <MetricCard title="Canonical Tag" description={desc.canonical} canonical={seo.Canonical?.Canonical} score={seo.Canonical?.Score} value={seo.Canonical?.Score ? "Self Referential" : "Not Self Referential"} darkMode={darkMode} icon="📜" />
           <MetricCard title="H1 Tag" description={desc.h1} score={seo.H1?.Score} value={"H1 Count-"+(seo.H1?.H1_Count || 0)} darkMode={darkMode} icon="🔠" />
         </Section>
 
@@ -397,7 +528,7 @@ const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray
 
         {/* 🏗️ Section 3: Structure & Semantics */}
         <Section title="Structure & Semantics" icon="🏗️" color="green" textColor={textColor}>
-          <MetricCard
+       { (seo.Heading_Hierarchy.H1_Count!=0&&seo.Heading_Hierarchy.H2_Count!=0&&seo.Heading_Hierarchy.H3_Count!=0&&seo.Heading_Hierarchy.H4_Count!=0&&seo.Heading_Hierarchy.H5_Count!=0  &&seo.Heading_Hierarchy.H6_Count!=0)&&<MetricCard
   title="Heading Hierarchy"
   description={desc.heading
   }
@@ -406,7 +537,7 @@ const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray
   value={seo.Heading_Hierarchy?.Score ? "Proper" : "Needs Fix"}
   darkMode={darkMode}
   icon="📚"
-/>
+/>}
 
           <MetricCard title="Semantic HTML Tags" description={desc.semantic} score={seo.Semantic_Tags?.Article_Score} value={seo.Semantic_Tags?.Article_Score ? "Present" : "Missing"} darkMode={darkMode} icon="📄" />
           <MetricCard title="Structured Data" description={desc.structured} score={seo.Structured_Data?.Score} value={seo.Structured_Data?.Score ? "Added" : "Missing"} darkMode={darkMode} icon="🧩" />
@@ -416,12 +547,12 @@ const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray
         <Section title="Technical SEO" icon="⚙️" color="blue" textColor={textColor}>
           <MetricCard title="HTTPS" description={desc.https} score={seo.HTTPS?.Score} value={seo.HTTPS?.Score ? "Secure" : "Insecure"} darkMode={darkMode} icon="🔒" />
           <MetricCard title="Pagination Tags" description={desc.pagination} score={seo.Pagination_Tags?.Score} value={seo.Pagination_Tags?.Score ? "Present" : "Missing"} darkMode={darkMode} icon="📑" />
-          <MetricCard title="Internal Links" description={desc.links} score={seo.Internal_Links?.Descriptive_Score} value={seo.Internal_Links?.Total || 0} darkMode={darkMode} icon="🧭" />
+          <MetricCard title="Links" description={desc.links} links={linksData} score={seo.Links.Score} value={seo.Links.Score || 0} darkMode={darkMode} icon="🧭" />
           <MetricCard title="Duplicate Content" description={desc.duplicate} score={seo.Duplicate_Content?.Score} value={seo.Duplicate_Content?.Score ? "Unique" : "Duplicate"} darkMode={darkMode} icon="🧬" />
        {seo.URL_Slugs?.Slug_Check_Score==1&&<MetricCard title="URL Slugs" description={desc.slug} score={seo.URL_Slugs?.Slug_Check_Score} value={seo.URL_Slugs?.Slug_Check_Score ? "Valid" : "Invalid"} darkMode={darkMode} icon="🧾" />}
         </Section>
 <div className={`w-full ${data.Report=="All" ? "max-w-4xl" : "max-w-6xl"} p-6 rounded-2xl shadow-lg ${mainCardBg} border ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
-      <SchemaCard schema={data.Schema} />
+     {data.Schema.length>0?<SchemaCard schema={data.Schema} />:<p>Schema Unavalible</p>} 
     </div>
         {/* Dropdowns */}
         <AuditDropdown items={seo?.Passed} title="✅ Passed Audits" darkMode={darkMode} />
@@ -566,3 +697,4 @@ function HeadingHierarchyCard({ data }) {
     </div>
   );
 }
+

@@ -18,6 +18,7 @@ import ReportLayout from "./Pages/ReportLayout.jsx";
 
 // ✅ Import ThemeContext and ThemeProvider
 import { ThemeProvider, ThemeContext } from "./context/ThemeContext.jsx";
+import ScrollToTop from "./Component/ScrollToTop.jsx";
 
 function AppContentInner() {
   
@@ -46,6 +47,7 @@ function AppContentInner() {
       />
 
       <main className="flex-grow">
+        <ScrollToTop/>
         <Routes>
           <Route path="/" element={<Homepage />} />
           <Route

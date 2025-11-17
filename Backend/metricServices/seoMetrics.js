@@ -185,38 +185,96 @@ const altTextSEOScore =  ($, keywords = []) => {
   }
 };
 
-const checkInternalLinks = async ($, url, links) => {
+const getAllLinks = ($, url, links) => {
   try {
     const domain = new URL(url).hostname;
 
-    // Filter internal links
-    const internalLinks = links.filter(link => {
+    const internalLinks = [];
+    const externalLinks = [];
+    const uniqueSet = new Set();
+
+    const genericAnchors = [
+      "click here",
+      "read more",
+      "learn more",
+      "more",
+      "details",
+      "go",
+      "link",
+      "this",
+      "open",
+      "visit"
+    ];
+
+    let descriptiveCount = 0;   // now counts ALL descriptive links
+
+    links.forEach(link => {
       const href = $(link).attr("href");
-      if (!href) return false; // Skip links without href
+      if (!href) return;
+
+      let resolved;
       try {
-        const linkUrl = new URL(href, url); // Resolve relative URLs
-        return linkUrl.hostname === domain;
+        resolved = new URL(href, url);
       } catch {
-        return false;
+        return;
+      }
+
+      const path = resolved.pathname || "/";
+      const anchorRaw = $(link).text().trim();
+      const anchor = anchorRaw || "/";
+
+      const obj = { link: path, anchor, full: resolved.href };
+
+      uniqueSet.add(path);
+
+      // 📌 Descriptive check (for ALL links)
+      const lower = anchorRaw.toLowerCase();
+      if (lower && !genericAnchors.includes(lower)) {
+        descriptiveCount++;
+      }
+
+      // Internal vs External
+      if (resolved.hostname === domain) {
+        internalLinks.push(obj);
+      } else {
+        externalLinks.push(obj);
       }
     });
 
-    if (internalLinks.length === 0) return { totalInternal: 0, descriptiveScore: 0 };
+    const totalInternal = internalLinks.length;
+    const totalExternal = externalLinks.length;
+    const totalLinks = totalInternal + totalExternal;
 
-    // Check descriptive anchor text
-    const genericAnchors = ["click here", "read more", "learn more", "details", "link", "more", "go", "this"];
-    const descriptiveLinks = internalLinks.filter(link => {
-      const text = $(link).text().trim().toLowerCase();
-      return text.length > 0 && !genericAnchors.includes(text);
-    });
+    // ⭐ SCORE FOR ALL LINKS
+    const score =
+      totalLinks > 0 &&
+      (descriptiveCount / totalLinks) * 100 >= 75
+        ? 1
+        : 0;
 
-    // Score: 1 if >75% internal links have descriptive text
-    const descriptiveScore = (descriptiveLinks.length / internalLinks.length) * 100 > 75 ? 1 : 0;
+    return {
+      totalLinks,
+      totalInternal,
+      totalExternal,
+      totalUnique: uniqueSet.size,
 
-    return { totalInternal: internalLinks.length, descriptiveScore };
+      internalLinks,
+      externalLinks,
+
+      score // ⭐ score based on ALL links
+    };
+
   } catch (err) {
-    console.error("Error checking internal links:", err);
-    return { totalInternal: 0, descriptiveScore: 0 };
+    console.error("Error:", err);
+    return {
+      totalLinks: 0,
+      totalInternal: 0,
+      totalExternal: 0,
+      totalUnique: 0,
+      internalLinks: [],
+      externalLinks: [],
+      score: 0
+    };
   }
 };
 
@@ -417,9 +475,14 @@ const keywords=["Canonical","Result","Audits"];
 const alttextScore = altTextSEOScore($,keywords)?1:0;
 
 const links = $("a").toArray();
-const internal_and_discripitive_Link = await checkInternalLinks($,url,links);
-const totalInternalLinks = internal_and_discripitive_Link.totalInternal;
-const internalLinksDescriptiveScore = internal_and_discripitive_Link.descriptiveScore;
+const getAllLink = getAllLinks($,url,links);
+const totalLinks = getAllLink.totalLinks;
+const totalInternalLinks = getAllLink.totalInternal;
+const totalExternalLinks = getAllLink.totalExternal;
+const totalUniqueLinks = getAllLink.totalUnique;
+const internalLinks = getAllLink.internalLinks;
+const externalLinks = getAllLink.externalLinks;
+const linkScore = getAllLink.score;
 
 const semanticTagScoreResolved = await checkSemanticTags($);
 const articleScore = semanticTagScoreResolved.article;
@@ -445,7 +508,7 @@ const checkHTTPSScore = checkHTTPS(url);
 
 const paginationScore = checkPagination($);
 
-const Total = parseFloat((((titleScore + titleExistanceScore + metaDescScore + metaDescExistanceScore + URLStructureScore + canonicalScore + canonicalExistanceScore + h1Score + altPresence + altMeaningfullPercentage + imageCompressionScore + embedding + lazyLoading + structuredMetadata + hierarchy + alttextScore + internalLinksDescriptiveScore + dupScore + slugScore + paginationScore) / 20) * 100).toFixed(0));
+const Total = parseFloat((((titleScore + titleExistanceScore + metaDescScore + metaDescExistanceScore + URLStructureScore + canonicalScore + canonicalExistanceScore + h1Score + altPresence + altMeaningfullPercentage + imageCompressionScore + embedding + lazyLoading + structuredMetadata + hierarchy + alttextScore + linkScore + dupScore + slugScore + paginationScore) / 20) * 100).toFixed(0));
 
 // Passed
 const passed = [];
@@ -747,21 +810,21 @@ if (checkHTTPSScore === 0) {
   });
 }
 
-if (internalLinksDescriptiveScore === 0) {
+if (linkScore === 0) {
   warning.push({
-    metric: "Internal Links",
-    current: `${internalLinksDescriptiveScore} descriptive`,
+    metric: "Links",
+    current: "Not descriptive",
     recommended: "≥ 75% descriptive anchors",
     severity: "Medium 🟡",
     suggestion: "Use keyword-rich descriptive anchors for internal links."
   });
 } else {
   passed.push({
-    metric: "Internal Links",
+    metric: "Links",
     current: "≥ 75% descriptive",
     recommended: "≥ 75% descriptive anchors",
     severity: "✅ Passed",
-    suggestion: "Internal links are descriptive."
+    suggestion: "Links are descriptive."
   });
 }
 
@@ -802,7 +865,7 @@ if (paginationScore === 0) {
   });
 }
 
-const actualPercentage = parseFloat((((paginationScore+titleExistanceScore+metaDescExistanceScore+internalLinksDescriptiveScore+canonicalExistanceScore+canonicalScore+alttextScore+checkHTTPSScore)/8)*100).toFixed(0))
+const actualPercentage = parseFloat((((paginationScore+titleExistanceScore+metaDescExistanceScore+linkScore+canonicalExistanceScore+canonicalScore+alttextScore+checkHTTPSScore)/8)*100).toFixed(0))
 
 // console.log(essentials);
 // console.log(mediaAndSemantics);
@@ -875,10 +938,15 @@ const actualPercentage = parseFloat((((paginationScore+titleExistanceScore+metaD
           Score: alttextScore,
           Parameter: "1 if alt text contains keywords or is descriptive, else 0"
         },
-        Internal_Links: {
-          Total: totalInternalLinks,
-          Descriptive_Score: internalLinksDescriptiveScore,
-          Parameter: "1 if ≥ 75% internal links are descriptive, else 0"
+        Links: {
+          Total: totalLinks,
+          Total_Internal: totalInternalLinks,
+          Total_External : totalExternalLinks,
+          Total_Unique : totalUniqueLinks,
+          Internal_Links : internalLinks,
+          External_Links : externalLinks,
+          Score: linkScore,
+          Parameter: "1 if ≥ 75% links are descriptive, else 0"
         },
         Semantic_Tags: {
           Article_Score: articleScore,
@@ -976,10 +1044,15 @@ const actualPercentage = parseFloat((((paginationScore+titleExistanceScore+metaD
           Score: alttextScore,
           Parameter: "1 if alt text contains keywords or is descriptive, else 0"
         },
-        Internal_Links: {
-          Total: totalInternalLinks,
-          Descriptive_Score: internalLinksDescriptiveScore,
-          Parameter: "1 if ≥ 75% internal links are descriptive, else 0"
+        Links: {
+          Total: totalLinks,
+          Total_Internal: totalInternalLinks,
+          Total_External : totalExternalLinks,
+          Total_Unique : totalUniqueLinks,
+          Internal_Links : internalLinks,
+          External_Links : externalLinks,
+          Descriptive_Score: linkScore,
+          Parameter: "1 if ≥ 75% links are descriptive, else 0"
         },
         Semantic_Tags: {
           Article_Score: articleScore,

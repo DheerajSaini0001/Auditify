@@ -34,7 +34,7 @@ export default function NotFound({ darkMode }) {
         </h2>
 
         <p
-          className={`max-w-md mt-2 ${
+          className={` mt-2 ${
             darkMode ? "text-gray-400" : "text-gray-500"
           }`}
         >

@@ -52,7 +52,7 @@ const SkeletonHeaderCard = ({ darkMode }) => {
     : "bg-gradient-to-br from-white via-blue-50/30 to-white";
   const border = darkMode ? "border-gray-700" : "border-gray-200";
   return (
-    <div className={`w-full ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"}  p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
+    <div className={`w-full ${data?.Report === "All" ? "  " : " "}  p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
       <div className="flex items-center justify-between mb-6">
         <div>
           <div className={`h-12 w-80 rounded ${shimmerBg} mb-3`}></div>
@@ -74,7 +74,7 @@ const SkeletonSectionCard = ({ metricCount, darkMode }) => {
   const border = darkMode ? "border-gray-700" : "border-gray-200";
   
   return (
-    <div className={`w-full ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"} p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
+    <div className={`w-full ${data?.Report === "All" ? "  " : " "} p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
       <div className="flex items-center gap-3 mb-6">
         <div className={`h-8 w-8 rounded ${shimmerBg}`}></div>
         <div className={`h-7 w-1/2 rounded ${shimmerBg}`}></div>
@@ -96,7 +96,7 @@ const SkeletonAuditDropdown = ({ darkMode }) => {
   const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
   const border = darkMode ? "border-gray-700" : "border-gray-200";
   return (
-    <div className={`w-full ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"} p-5 rounded-lg shadow-xl ${shimmerCardBg} border ${border}`}>
+    <div className={`w-full ${data?.Report === "All" ? "  " : " "} p-5 rounded-lg shadow-xl ${shimmerCardBg} border ${border}`}>
       <div className={`h-6 w-1/3 rounded ${shimmerBg}`}></div>
     </div>
   );
@@ -241,7 +241,7 @@ function Section({ title, icon, color, children, textColor }) {
     <div
       className={`w-full p-8 rounded-2xl shadow-2xl border-l-8 ${mainCardBg}
         ${/* --- FIX 3: Use optional chaining 'data?.Report' --- */''}
-        ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"}
+        ${data?.Report === "All" ? "  " : " "}
         ${/* --- FIX 2 (Applied): Use color map --- */''}
         ${borderColorMap[color] || "border-gray-500"}
       `}
@@ -318,7 +318,7 @@ export default function UX_Content_Structure() {
         {/* Header */}
         <div
           // --- ✅ FIX 3: Add conditional max-width ---
-          className={`w-full ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"} p-8 rounded-2xl shadow-2xl border-l-8 border-indigo-500 ${mainCardBg}`}
+          className={`w-full ${data?.Report === "All" ? "  " : " "} p-8 rounded-2xl shadow-2xl border-l-8 border-indigo-500 ${mainCardBg}`}
         >
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -390,13 +390,13 @@ export default function UX_Content_Structure() {
         </Section>
 
         {/* --- ✅ FIX 4: Wrap dropdowns in sizing div --- */}
-        <div className={`w-full ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"}`}>
+        <div className={`w-full ${data?.Report === "All" ? "  " : " "}`}>
           <AuditDropdown items={metric?.Passed} title="✅ Passed Audits" darkMode={darkMode} />
         </div>
-        <div className={`w-full ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"}`}>
+        <div className={`w-full ${data?.Report === "All" ? "  " : " "}`}>
           <AuditDropdown items={metric?.Warning} title="⚠️ Warnings" darkMode={darkMode} />
         </div>
-        <div className={`w-full ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"}`}>
+        <div className={`w-full ${data?.Report === "All" ? "  " : " "}`}>
           <AuditDropdown items={metric?.Improvements} title="🚫 Improvements Needed" darkMode={darkMode} />
         </div>
       </main>

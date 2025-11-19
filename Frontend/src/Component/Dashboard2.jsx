@@ -81,7 +81,7 @@ export default function Dashboard2({ darkMode }) {
   if (loading || !data?.Section_Score) {
     return (
       <div
-        className={`min-h-screen w-full p-4 sm:p-6 flex flex-col gap-6 ${
+        className={`min-h-screen w-full p-4 sm:p-6 flex flex-col gap-6 overflow-x-hidden ${
           darkMode ? "bg-gray-800 text-white" : "bg-gray-100 text-black"
         }`}
       >
@@ -89,35 +89,37 @@ export default function Dashboard2({ darkMode }) {
 
         {/* 🔹 URL & Button */}
         <div
-          className={`flex justify-between items-center p-4 rounded-lg ${
+          className={`flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 rounded-lg ${
             darkMode ? "bg-zinc-900" : "bg-gray-300"
           }`}
         >
-          <p className={`sm:text-xl lg:text-3xl ${darkMode ? "text-white" : "text-black"}`}>
-            URL - <span className="text-blue-400">{data?.Site || "Loading..."}</span>
-          </p>
+          <div className="w-full sm:flex-1 min-w-0">
+            <p className={`sm:text-xl lg:text-3xl truncate ${darkMode ? "text-white" : "text-black"}`}>
+              URL - <span className="text-blue-400">{data?.Site || "Loading..."}</span>
+            </p>
+          </div>
 
           {/* ✅ Clickable even in shimmer */}
           <button
             onClick={handleCheckOther}
-            className={`font-semibold flex gap-2 justify-center items-center px-2 py-2 sm:px-3 lg:px-4 lg:py-2 rounded-xl shadow-md transition ${btnBg}`}
+            className={`font-semibold shrink-0 flex gap-2 justify-center items-center px-4 py-2 rounded-xl shadow-md transition w-full sm:w-auto ${btnBg}`}
           >
             <NotebookPen size={20} /> Check for Other
           </button>
         </div>
 
         {/* 🔹 Overall score shimmer */}
-        <div className="rounded-2xl shadow-xl p-6 flex flex-col sm:flex-row sm:items-center sm:gap-16 bg-gradient-to-r from-gray-200 to-gray-300">
-          <ShimmerBlock className="h-28 w-28 rounded-full" />
-          <div className="flex flex-col gap-3 mt-4 sm:mt-0">
-            <ShimmerBlock className="h-5 w-40" />
-            <ShimmerBlock className="h-8 w-24" />
-            <ShimmerBlock className="h-4 w-32" />
+        <div className="rounded-2xl shadow-xl p-6 flex flex-col lg:flex-row items-center gap-6 lg:gap-16 bg-gradient-to-r from-gray-200 to-gray-300">
+          <ShimmerBlock className="h-28 w-28 rounded-full shrink-0" />
+          <div className="flex flex-col gap-3 w-full max-w-xs">
+            <ShimmerBlock className="h-5 w-full" />
+            <ShimmerBlock className="h-8 w-2/3" />
+            <ShimmerBlock className="h-4 w-full" />
           </div>
-          <div className="flex flex-col gap-3 mt-6 sm:mt-0">
-            <ShimmerBlock className="h-8 w-24 rounded-md" />
-            <ShimmerBlock className="h-5 w-44" />
-            <ShimmerBlock className="h-5 w-36" />
+          <div className="flex flex-col gap-3 w-full max-w-xs">
+            <ShimmerBlock className="h-8 w-2/3 rounded-md" />
+            <ShimmerBlock className="h-5 w-full" />
+            <ShimmerBlock className="h-5 w-3/4" />
           </div>
         </div>
 
@@ -147,42 +149,46 @@ export default function Dashboard2({ darkMode }) {
   return (
     <div
       id="dashboard"
-      className={`min-h-screen w-full p-4 sm:p-6 grid grid-cols-1 gap-6 ${
+      className={`min-h-screen w-full p-4 sm:p-6 flex flex-col gap-6 overflow-x-hidden ${
         darkMode ? "text-white bg-gray-800" : "text-black bg-gray-100"
       }`}
     >
       {/* ✅ URL + Button */}
       <div
-        className={`flex justify-between items-center p-4 rounded-lg ${
+        className={`flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 rounded-lg ${
           darkMode ? "bg-zinc-900" : "bg-gray-300"
         }`}
       >
-        <p className={`${darkMode ? "text-white" : "text-black"} sm:text-xl lg:text-3xl`}>
-          URL -{" "}
-          <Link
-            replace
-            to={`${data.Site}`}
-            target="_blank"
-            className="text-blue-400 hover:underline"
-          >
-            {data.Site}
-          </Link>
-        </p>
+        <div className="w-full sm:flex-1 min-w-0">
+          <p className={`${darkMode ? "text-white" : "text-black"} sm:text-xl lg:text-3xl break-all sm:break-words`}>
+            URL -{" "}
+            <Link
+              replace
+              to={`${data.Site}`}
+              target="_blank"
+              className="text-blue-400 hover:underline"
+            >
+              {data.Site}
+            </Link>
+          </p>
+        </div>
 
         <button
           onClick={handleCheckOther}
-          className={`font-semibold flex gap-2 justify-center items-center px-2 py-2 sm:px-3 lg:px-4 lg:py-2 rounded-xl shadow-md transition ${btnBg}`}
+          className={`font-semibold shrink-0 flex gap-2 justify-center items-center px-4 py-2 rounded-xl shadow-md transition w-full sm:w-auto ${btnBg}`}
         >
           <NotebookPen size={20} /> Check for Other
         </button>
       </div>
 
       {/* ✅ Overall Score */}
-      <div className="bg-gradient-to-r from-indigo-200 via-blue-400 to-indigo-200 rounded-2xl shadow-xl p-6 text-center flex flex-col sm:flex-row sm:justify-center sm:items-center sm:gap-20 lg:gap-30">
+      <div className="bg-gradient-to-r from-indigo-200 via-blue-400 to-indigo-200 rounded-2xl shadow-xl p-6 text-center flex flex-col lg:flex-row justify-center items-center gap-8 lg:gap-20">
         {data?.Score && (
-          <CircularProgress value={data.Score.toFixed(0)} size={120} stroke={10} />
+          <div className="shrink-0">
+            <CircularProgress value={data.Score.toFixed(0)} size={120} stroke={10} />
+          </div>
         )}
-        <div>
+        <div className="flex flex-col gap-1">
           <h2 className="text-xl sm:text-2xl font-bold">Overall Score</h2>
           <p className="text-4xl sm:text-5xl font-extrabold mt-2">
             {data?.Score ?? "-"} /100
@@ -191,9 +197,9 @@ export default function Dashboard2({ darkMode }) {
             Website Health Index
           </p>
         </div>
-        <div>
+        <div className="flex flex-col gap-1 w-full lg:w-auto">
           <h1
-            className={`text-xl sm:text-2xl lg:text-3xl font-bold rounded-4xl ${
+            className={`text-xl sm:text-2xl lg:text-3xl font-bold py-2 px-4 rounded-4xl ${
               ["A", "B"].includes(data?.Grade ?? "-")
                 ? "bg-green-400"
                 : ["C", "D"].includes(data?.Grade ?? "-")
@@ -205,7 +211,7 @@ export default function Dashboard2({ darkMode }) {
           >
             Grade - {data?.Grade ?? "-"}
           </h1>
-          <p className="text-lg sm:text-xl mt-1 font-semibold">
+          <p className="text-lg sm:text-xl mt-1 font-semibold break-words">
             AIO Compatibility - {data?.AIO_Compatibility_Badge ?? "-"}
           </p>
           <p className="text-lg sm:text-xl mt-1 font-semibold">
@@ -223,11 +229,11 @@ export default function Dashboard2({ darkMode }) {
           <button
             key={item.name}
             onClick={() => navigate(`/${item.Link}`)}
-            className={`rounded-xl p-4 shadow-lg border ${cardBorder} text-center ${cardBg} hover:opacity-80 transition`}
+            className={`rounded-xl p-4 shadow-lg border ${cardBorder} text-center ${cardBg} hover:opacity-80 transition flex flex-col justify-between min-h-[120px]`}
           >
-            <h3 className={`text-xs sm:text-sm ${sectionText}`}>{item.name}</h3>
+            <h3 className={`text-xs sm:text-sm font-medium ${sectionText} line-clamp-2`}>{item.name}</h3>
             <p
-              className="text-lg sm:text-xl lg:text-2xl font-bold"
+              className="text-lg sm:text-xl lg:text-2xl font-bold mt-2"
               style={{ color: COLORS[index % COLORS.length] }}
             >
               {item.value}%
@@ -237,17 +243,22 @@ export default function Dashboard2({ darkMode }) {
       </div>
 
       {/* ✅ Bar Chart */}
-      <div className={`rounded-xl p-4 shadow-lg border ${cardBorder} ${cardBg}`}>
+      <div className={`rounded-xl p-4 shadow-lg border ${cardBorder} ${cardBg} overflow-hidden`}>
         <h3 className="text-base sm:text-lg font-semibold mb-4">Bar Graph</h3>
-        <div className="w-full h-64 sm:h-72 lg:h-96">
+        <div className="w-full h-64 sm:h-72 lg:h-96 min-w-0">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={barData}
-              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+              margin={{ top: 20, right: 10, left: 0, bottom: 5 }}
             >
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
+              <XAxis 
+                dataKey="name" 
+                tick={{ fontSize: 10 }} 
+                interval={0}
+                // Logic intact, but hiding labels on tiny screens via CSS if needed handled by tick formatter or props
+              />
+              <YAxis width={30} tick={{ fontSize: 12 }} />
               <Tooltip />
               <Legend />
               <Bar dataKey="value" fill="#8884d8" radius={[10, 10, 0, 0]} />

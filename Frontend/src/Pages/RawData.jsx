@@ -333,7 +333,7 @@ const RawData = ({ data, darkMode }) => {
         <style>{shimmerStyle}</style>
         <ShimmerBlock className="h-8 w-40 mb-6 rounded-md" />
         <div
-          className={`w-full max-w-4xl p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500 ${cardBg}`}
+          className={`w-full    p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500 ${cardBg}`}
         >
           <div className="space-y-3">
             {[...Array(10)].map((_, i) => (
@@ -363,7 +363,7 @@ const RawData = ({ data, darkMode }) => {
       </h1>
 
       <div
-        className={`w-full max-w-4xl p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500 ${cardBg}`}
+        className={`w-full    p-6 rounded-2xl shadow-lg border-l-4 border-indigo-500 ${cardBg}`}
       >
         <pre
           className={`whitespace-pre-wrap break-words text-sm ${

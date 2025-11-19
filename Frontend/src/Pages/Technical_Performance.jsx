@@ -52,7 +52,7 @@ const SkeletonHeaderCard = ({ darkMode }) => {
   const border = darkMode ? "border-gray-700" : "border-gray-200";
   return (
     // --- ✅ FIX: Added optional chaining (data?.Report) ---
-    <div className={`w-full ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"}  p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
+    <div className={`w-full ${data?.Report === "All" ? "  " : " "}  p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
       <div className="flex items-center justify-between mb-6">
         <div>
           <div className={`h-12 w-80 rounded ${shimmerBg} mb-3`}></div>
@@ -78,7 +78,7 @@ const SkeletonSectionCard = ({ metricCount, darkMode }) => {
   
   return (
     // --- ✅ FIX: Added optional chaining (data?.Report) ---
-    <div className={`w-full ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"} p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
+    <div className={`w-full ${data?.Report === "All" ? "  " : " "} p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
       <div className="flex items-center gap-3 mb-6">
         <div className={`h-8 w-8 rounded ${shimmerBg}`}></div>
         <div className={`h-7 w-1/2 rounded ${shimmerBg}`}></div>
@@ -104,7 +104,7 @@ const SkeletonAuditDropdown = ({ darkMode }) => {
   const border = darkMode ? "border-gray-700" : "border-gray-200";
   return (
     // --- ✅ FIX: Added optional chaining (data?.Report) ---
-    <div className={`w-full ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"} p-5 rounded-lg shadow-xl ${shimmerCardBg} border ${border}`}>
+    <div className={`w-full ${data?.Report === "All" ? "  " : " "} p-5 rounded-lg shadow-xl ${shimmerCardBg} border ${border}`}>
       <div className={`h-6 w-1/3 rounded ${shimmerBg}`}></div>
     </div>
   );
@@ -310,7 +310,7 @@ const desc = {
       >
         
         <div
-          className={`w-full max-w-4xl p-8 rounded-2xl shadow-2xl 
+          className={`w-full    p-8 rounded-2xl shadow-2xl 
             border-l-8 border-indigo-500 ${mainCardBg}
             transform transition-all duration-300 hover:shadow-indigo-500/20`}
         >
@@ -347,7 +347,7 @@ const desc = {
         </div>
         
         <div
-          className={`w-full max-w-4xl p-8 rounded-2xl shadow-2xl 
+          className={`w-full    p-8 rounded-2xl shadow-2xl 
             border-l-8 border-purple-500 ${mainCardBg}
             transform transition-all duration-300`}
         >
@@ -395,7 +395,7 @@ const desc = {
         </div>
         {/* Section 2: Performance Metrics */}
         <div
-          className={`w-full max-w-4xl p-8 rounded-2xl shadow-2xl 
+          className={`w-full    p-8 rounded-2xl shadow-2xl 
             border-l-8 border-blue-500 ${mainCardBg}
             transform transition-all duration-300`}
         >
@@ -444,7 +444,7 @@ const desc = {
         </div>
         
         <div
-          className={`w-full max-w-4xl p-8 rounded-2xl shadow-2xl 
+          className={`w-full    p-8 rounded-2xl shadow-2xl 
             border-l-8 border-green-500 ${mainCardBg}
             transform transition-all duration-300`}
         >
@@ -501,7 +501,7 @@ const desc = {
         </div>
         
         <div
-          className={`w-full max-w-4xl p-8 rounded-2xl shadow-2xl 
+          className={`w-full    p-8 rounded-2xl shadow-2xl 
             border-l-8 border-yellow-500 ${mainCardBg}
             transform transition-all duration-300`}
         >
@@ -579,7 +579,7 @@ const desc = {
       >
         
         <div
-          className={`w-full max-w-6xl p-8 rounded-2xl shadow-2xl 
+          className={`w-full   p-8 rounded-2xl shadow-2xl 
             border-l-8 border-indigo-500 ${mainCardBg}
             transform transition-all duration-300 hover:shadow-indigo-500/20`}
         >
@@ -616,7 +616,7 @@ const desc = {
         </div>
         
         <div
-          className={`w-full max-w-6xl p-8 rounded-2xl shadow-2xl 
+          className={`w-full   p-8 rounded-2xl shadow-2xl 
             border-l-8 border-purple-500 ${mainCardBg}
             transform transition-all duration-300`}
         >
@@ -664,7 +664,7 @@ const desc = {
         </div>
         {/* Section 2: Performance Metrics */}
         <div
-          className={`w-full max-w-6xl p-8 rounded-2xl shadow-2xl 
+          className={`w-full   p-8 rounded-2xl shadow-2xl 
             border-l-8 border-blue-500 ${mainCardBg}
             transform transition-all duration-300`}
         >
@@ -713,7 +713,7 @@ const desc = {
         </div>
         
         <div
-          className={`w-full max-w-6xl p-8 rounded-2xl shadow-2xl 
+          className={`w-full   p-8 rounded-2xl shadow-2xl 
             border-l-8 border-green-500 ${mainCardBg}
             transform transition-all duration-300`}
         >
@@ -770,7 +770,7 @@ const desc = {
         </div>
         
         <div
-          className={`w-full max-w-6xl p-8 rounded-2xl shadow-2xl 
+          className={`w-full   p-8 rounded-2xl shadow-2xl 
             border-l-8 border-yellow-500 ${mainCardBg}
             transform transition-all duration-300`}
         >

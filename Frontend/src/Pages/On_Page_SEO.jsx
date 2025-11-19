@@ -56,7 +56,7 @@ const SkeletonHeaderCard = ({ darkMode }) => {
 
   return (
     // --- ✅ FIX 2: Use optional chaining 'data?.Report' ---
-    <div className={`w-full ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"} p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
+    <div className={`w-full ${data?.Report === "All" ? "  " : " "} p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
       <div className="flex items-center justify-between mb-6">
         <div>
           <div className={`h-12 w-80 rounded ${shimmerBg} mb-3`}></div>
@@ -82,7 +82,7 @@ const SkeletonSectionCard = ({ metricCount, darkMode }) => {
   
   return (
     // --- ✅ FIX 2: Use optional chaining 'data?.Report' ---
-    <div className={`w-full ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"} p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
+    <div className={`w-full ${data?.Report === "All" ? "  " : " "} p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
       <div className="flex items-center gap-3 mb-6">
         <div className={`h-8 w-8 rounded ${shimmerBg}`}></div>
         <div className={`h-7 w-1/2 rounded ${shimmerBg}`}></div>
@@ -110,7 +110,7 @@ const SkeletonSchemaCard = ({ darkMode }) => {
 
   return (
     // --- ✅ FIX 2: Use optional chaining 'data?.Report' ---
-    <div className={`w-full ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"} p-6 rounded-2xl shadow-lg ${shimmerCardBg} border ${border}`}>
+    <div className={`w-full ${data?.Report === "All" ? "  " : " "} p-6 rounded-2xl shadow-lg ${shimmerCardBg} border ${border}`}>
       <div className={`h-6 w-1/3 rounded ${shimmerBg} mb-4`}></div>
       <div className={`h-40 w-full rounded-xl ${preBg}`}></div>
     </div>
@@ -130,7 +130,7 @@ const SkeletonAuditDropdown = ({ darkMode }) => {
 
   return (
     // --- ✅ FIX 2: Use optional chaining 'data?.Report' ---
-    <div className={`w-full ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"} p-5 rounded-lg shadow-xl ${shimmerCardBg} border ${border}`}>
+    <div className={`w-full ${data?.Report === "All" ? "  " : " "} p-5 rounded-lg shadow-xl ${shimmerCardBg} border ${border}`}>
       <div className={`h-6 w-1/3 rounded ${shimmerBg}`}></div>
     </div>
   );
@@ -481,7 +481,7 @@ const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray
       >
         {/* Header */}
         <div
-          className={`w-full ${data.Report=="All" ? "max-w-4xl" : "max-w-6xl"} p-8 rounded-2xl shadow-2xl border-l-8 border-indigo-500 ${mainCardBg}`}
+          className={`w-full ${data.Report=="All" ? "  " : " "} p-8 rounded-2xl shadow-2xl border-l-8 border-indigo-500 ${mainCardBg}`}
         >
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -551,7 +551,7 @@ const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray
           <MetricCard title="Duplicate Content" description={desc.duplicate} score={seo.Duplicate_Content?.Score} value={seo.Duplicate_Content?.Score ? "Unique" : "Duplicate"} darkMode={darkMode} icon="🧬" />
        {seo.URL_Slugs?.Slug_Check_Score==1&&<MetricCard title="URL Slugs" description={desc.slug} score={seo.URL_Slugs?.Slug_Check_Score} value={seo.URL_Slugs?.Slug_Check_Score ? "Valid" : "Invalid"} darkMode={darkMode} icon="🧾" />}
         </Section>
-<div className={`w-full ${data.Report=="All" ? "max-w-4xl" : "max-w-6xl"} p-6 rounded-2xl shadow-lg ${mainCardBg} border ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
+<div className={`w-full ${data.Report=="All" ? "  " : " "} p-6 rounded-2xl shadow-lg ${mainCardBg} border ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
      {data.Schema.length>0?<SchemaCard schema={data.Schema} />:<p>Schema Unavalible</p>} 
     </div>
         {/* Dropdowns */}
@@ -609,7 +609,7 @@ function Section({ title, icon, color, children, textColor }) {
     <div
       className={`w-full p-8 rounded-2xl shadow-2xl border-l-8 ${mainCardBg}
         ${/* --- FIX 3: Use optional chaining 'data?.Report' --- */''}
-        ${data?.Report === "All" ? "max-w-4xl" : "max-w-6xl"}
+        ${data?.Report === "All" ? "  " : " "}
         ${/* --- FIX 2 (Applied): Use color map --- */''}
         ${borderColorMap[color] || "border-gray-500"}
       `}
@@ -652,7 +652,7 @@ function HeadingHierarchyCard({ data }) {
 
   return (
     <div
-      className={`w-full max-w-3xl mx-auto shadow-lg rounded-2xl p-4 space-y-4 
+      className={`w-full   shadow-lg rounded-2xl p-4 space-y-4 
       ${darkMode ? "bg-gray-900 text-gray-100" : "bg-gray-50 text-gray-900"}`}
     >
 

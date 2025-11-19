@@ -16,7 +16,7 @@ export default function Footer() {
 
   return (
     <footer className={footerClass}>
-      <div className="container ml-64 w-full mx-auto px-4 flex flex-col md:flex-row justify-between items-center">
+      <div className="container  w-full mx-auto px-4 flex flex-col md:flex-row justify-between items-center">
         <p className="text-sm">
           <Link replace className={linkHoverClass} to="https://www.sltechsoft.com" target="_blank" rel="noopener noreferrer">
             &copy; {new Date().getFullYear()} Success Leader Technologies.

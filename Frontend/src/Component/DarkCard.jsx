@@ -55,14 +55,14 @@ export default function DarkCard() {
 
   return (
     <div
-      className={`${containerClass} bg-cover bg-center bg-no-repeat`}
+      className={`${containerClass} p-3 bg-cover bg-center bg-no-repeat`}
       style={{
         backgroundImage: `url(${darkMode ? Assets.DarkBg : Assets.Bg})`,
       }}
     >
-      <div className="mx-6 mt-32 sm:mx-0 w-full backdrop-blur-xl ">
+      <div className=" mt-32 sm:mx-0 w-full backdrop-blur-xl ">
         <div
-          className={`w-full max-w-2xl rounded-2xl shadow-2xl p-6 space-y-6 border mx-auto ${
+          className={`w-full  rounded-2xl shadow-2xl p-6 space-y-6 border ${
             darkMode ? "border-gray-700" : "border-gray-300"
           }`}
         >
@@ -78,7 +78,7 @@ export default function DarkCard() {
             Enter URL in the input below, select a device, and click Analyze.
           </p>
 
-          <div className="mx-auto w-full">
+          <div className="mx-4 w-full">
             <form
               className="flex flex-col sm:flex-col gap-4 items-center w-full"
               onSubmit={handleClick}

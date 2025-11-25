@@ -29,7 +29,7 @@ export default function AboutPage({ darkMode }) {
         }`}
         style={bgStyle}
       >
-        <div className="max-w-6xl mx-auto text-center space-y-12">
+        <div className="   text-center space-y-12">
           {/* Heading */}
           <div>
             <h1
@@ -38,7 +38,7 @@ export default function AboutPage({ darkMode }) {
               About Our Site Audit Tool
             </h1>
             <p
-              className={`text-lg max-w-3xl mx-auto leading-relaxed ${subTextClass}`}
+              className={`text-lg   leading-relaxed ${subTextClass}`}
             >
               Our Site Audit Tool helps developers, marketers, and businesses
               improve website performance, SEO, and accessibility — making it

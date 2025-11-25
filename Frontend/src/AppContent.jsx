@@ -14,24 +14,21 @@ import Navbar from "./Component/Navbar.jsx";
 import Footer from "./Component/Footer.jsx";
 import { useData } from "./context/DataContext.jsx";
 import NotFound from "./Pages/NotFound.jsx";
-import ReportLayout from "./Pages/ReportLayout.jsx";
+import ReportLayout from "./Pages/ReportLayout.jsx"; // ✅ Check your path (Pages vs Component)
 
 // ✅ Import ThemeContext and ThemeProvider
 import { ThemeProvider, ThemeContext } from "./context/ThemeContext.jsx";
 import ScrollToTop from "./Component/ScrollToTop.jsx";
 
 function AppContentInner() {
-  
-
-  const { theme, toggleTheme } = useContext(ThemeContext);
+  // ✅ We only need theme for the background class now
+  const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
 
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
-  const { data } = useData();
-
-  const navbarClass = `flex justify-between items-center px-4 py-3 shadow-md sticky top-0 z-50 ${
-    darkMode ? "bg-gray-900 text-white" : "bg-white text-black"
-  }`;
+  
+  // Note: We no longer need to manually create 'navbarClass' here, 
+  // as the Navbar component handles its own styling based on the context.
 
   return (
     <div
@@ -39,17 +36,22 @@ function AppContentInner() {
         darkMode ? "bg-gray-900 text-white" : "bg-gray-50 text-black"
       }`}
     >
+      {/* ✅ Navbar Implementation Updated:
+          - Removed 'toggleTheme' (Navbar uses Context)
+          - Removed 'navbarClass' (Navbar uses Context)
+          - Kept sidebar props for mobile menu toggling
+      */}
       <Navbar
-        toggleTheme={toggleTheme}
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
-        navbarClass={navbarClass}
       />
 
       <main className="flex-grow">
         <ScrollToTop/>
         <Routes>
           <Route path="/" element={<Homepage />} />
+          
+          {/* Report Layout handles the dashboard view */}
           <Route
             path="/report"
             element={
@@ -59,6 +61,8 @@ function AppContentInner() {
               />
             }
           />
+          
+          {/* Individual Report Pages */}
           <Route path="/technical-performance" element={<Technical_Performance />} />
           <Route path="/on-page-seo" element={<On_Page_SEO />} />
           <Route path="/accessibility" element={<Accessibility />} />
@@ -76,7 +80,7 @@ function AppContentInner() {
   );
 }
 
-// ✅ Wrap the whole app in ThemeProvider once
+// ✅ Wrap the whole app in ThemeProvider
 export default function AppContent() {
   return (
     <ThemeProvider>

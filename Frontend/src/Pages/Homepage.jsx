@@ -1,5 +1,5 @@
 import React from 'react';
-import DarkCard from '../Component/DarkCard.jsx';
+import DarkCard from '../Component/InputForm.jsx';
 import { useContext } from 'react';
 
 

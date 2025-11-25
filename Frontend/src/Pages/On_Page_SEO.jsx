@@ -620,7 +620,7 @@ export default function On_Page_SEO() {
   image: `Images make your page engaging, but they can also slow it down if they are too large.`,
   video: `Videos are fantastic for keeping users on your page longer, which Google loves.`,
   heading: `Headings (like H1, H2, H3) create the structure of your page.`,
-  alt: `"Alt text" (or alternative text) is a short, written description of an image on your page.`,
+  imagecompression: `Image compression reduces the file size of images to improve page load speed without significantly affecting quality.`,
   semantic: `Semantic HTML tags are special code tags that describe the *meaning* of the content inside them.`,
   structured: `Structured data (or "Schema") is a special code vocabulary we add to your site to "spoon-feed" information to Google.`,
   https: `HTTPS is the secure version of HTTP. It's what gives your site the "padlock" icon.`,
@@ -703,9 +703,10 @@ const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray
           {seo.Video?.Video_Exist!=0 && <MetricCard title="Video Implementation" description={desc.video} score={seo.Video?.Video_Exist} value={seo.Video?.Video_Exist ? "Present" : "Missing"} darkMode={darkMode} icon="🎥" />} 
           
           <MetricCard 
-            title="ALT Text Relevance" 
-            description={desc.alt} 
-            score={seo.ALT_Text_Relevance?.Score} 
+            title="Image Compression" 
+            description={desc.imagecompression}
+            
+            score={seo.image?.Image_Compression_Exist} 
             value={seo.ALT_Text_Relevance?.Score ? "Relevant" : "Irrelevant"} 
             darkMode={darkMode} 
             icon="🪶" 

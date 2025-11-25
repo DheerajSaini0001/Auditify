@@ -574,7 +574,7 @@ const MetricCard = ({ title, description, score, value, unit, darkMode, icon, Ti
             <>
                 <ImageStatsDisplay imageData={imageData} />
                 <DetailedImageAnalysis imgData={imageData} />
-                <DetailedImageAnalysis imgData={imageData} />
+                
             </>
           )}
 

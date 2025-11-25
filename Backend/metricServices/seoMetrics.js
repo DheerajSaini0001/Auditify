@@ -968,8 +968,8 @@ const actualPercentage = parseFloat((((paginationScore+titleExistanceScore+metaD
           Image_Alt_Meaningfull_Exist: altMeaningfullPercentage,
           Image_Compression_Exist: imageCompressionScore,
           Total_Image:getImageStat.total,
-          Without_Alt_Iamge:getImageStat.withoutAlt,
-          Without_Title_Iamge:getImageStat.withoutTitle,
+          Without_Alt_Image:getImageStat.withoutAlt,
+          Without_Title_Image:getImageStat.withoutTitle,
           Incomplete_Status:getIncompleteImage,
           Complete_Status:getCompleteImage,
           Parameter:'Alt text ≥ 75% meaningful, images ≤ 200KB'
@@ -1079,8 +1079,8 @@ const actualPercentage = parseFloat((((paginationScore+titleExistanceScore+metaD
           Image_Alt_Meaningfull_Exist: altMeaningfullPercentage,
           Image_Compression_Exist: imageCompressionScore,
           Total_Image:getImageStat.total,
-          Without_Alt_Iamge:getImageStat.withoutAlt,
-          Without_Title_Iamge:getImageStat.withoutTitle,
+          Without_Alt_Image:getImageStat.withoutAlt,
+          Without_Title_Image:getImageStat.withoutTitle,
           Incomplete_Status:getIncompleteImage,
           Complete_Status:getCompleteImage,
           Parameter:'Alt text ≥ 75% meaningful, images ≤ 200KB'

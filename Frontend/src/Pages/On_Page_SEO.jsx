@@ -50,12 +50,10 @@ const SkeletonHeaderCard = ({ darkMode }) => {
     ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900" 
     : "bg-gradient-to-br from-white via-blue-50/30 to-white";
   
-  // --- ✅ FIX 1: Destructure 'data' ---
   const { data } = useData();
   const border = darkMode ? "border-gray-700" : "border-gray-200";
 
   return (
-    // --- ✅ FIX 2: Use optional chaining 'data?.Report' ---
     <div className={`w-full ${data?.Report === "All" ? "  " : " "} p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -71,17 +69,13 @@ const SkeletonHeaderCard = ({ darkMode }) => {
 
 const SkeletonSectionCard = ({ metricCount, darkMode }) => {
   const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
-  
-  // --- ✅ FIX 1: Destructure 'data' ---
   const { data } = useData();
-  
   const shimmerCardBg = darkMode 
     ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900" 
     : "bg-gradient-to-br from-white via-blue-50/30 to-white";
   const border = darkMode ? "border-gray-700" : "border-gray-200";
   
   return (
-    // --- ✅ FIX 2: Use optional chaining 'data?.Report' ---
     <div className={`w-full ${data?.Report === "All" ? "  " : " "} p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
       <div className="flex items-center gap-3 mb-6">
         <div className={`h-8 w-8 rounded ${shimmerBg}`}></div>
@@ -102,14 +96,11 @@ const SkeletonSchemaCard = ({ darkMode }) => {
     ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900"
     : "bg-gradient-to-br from-white via-blue-50/30 to-white";
 
-  // --- ✅ FIX 1: Destructure 'data' ---
   const { data } = useData();
-  
   const preBg = darkMode ? "bg-gray-800" : "bg-gray-100";
   const border = darkMode ? "border-gray-700" : "border-gray-200";
 
   return (
-    // --- ✅ FIX 2: Use optional chaining 'data?.Report' ---
     <div className={`w-full ${data?.Report === "All" ? "  " : " "} p-6 rounded-2xl shadow-lg ${shimmerCardBg} border ${border}`}>
       <div className={`h-6 w-1/3 rounded ${shimmerBg} mb-4`}></div>
       <div className={`h-40 w-full rounded-xl ${preBg}`}></div>
@@ -122,14 +113,11 @@ const SkeletonAuditDropdown = ({ darkMode }) => {
     ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900" 
     : "bg-gradient-to-br from-white via-blue-50/30 to-white";
 
-  // --- ✅ FIX 1: Destructure 'data' ---
   const { data } = useData();
-  
   const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
   const border = darkMode ? "border-gray-700" : "border-gray-200";
 
   return (
-    // --- ✅ FIX 2: Use optional chaining 'data?.Report' ---
     <div className={`w-full ${data?.Report === "All" ? "  " : " "} p-5 rounded-lg shadow-xl ${shimmerCardBg} border ${border}`}>
       <div className={`h-6 w-1/3 rounded ${shimmerBg}`}></div>
     </div>
@@ -155,8 +143,6 @@ function LinksDisplay({ linksData }) {
 
   return (
     <div className="p-6 space-y-6">
-
-      {/* TOP CARDS */}
       <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
         <StatCard title="Total Links" value={linksData.Total} />
         <StatCard title="Internal Links" value={internal.length} />
@@ -164,17 +150,12 @@ function LinksDisplay({ linksData }) {
         <StatCard title="Unique Links" value={linksData.Total_Unique} />
       </div>
 
-      {/* INTERNAL */}
       <div className="p-4 bg-white rounded-xl shadow">
         <h2 className="font-bold text-xl mb-4">Internal Links ({internal.length})</h2>
-
-        {/* Only show limited items initially */}
         {(showInternalAll ? internal : internal.slice(0, INTERNAL_LIMIT))
           .map((link, index) => (
             <LinkCard key={index} link={link} />
         ))}
-
-        {/* Show More / Show Less Button */}
         {internal.length > INTERNAL_LIMIT && (
           <button
             onClick={() => setShowInternalAll(!showInternalAll)}
@@ -185,15 +166,12 @@ function LinksDisplay({ linksData }) {
         )}
       </div>
 
-      {/* EXTERNAL */}
       <div className="p-4 bg-white rounded-xl shadow">
         <h2 className="font-bold text-xl mb-4">External Links ({external.length})</h2>
-
         {(showExternalAll ? external : external.slice(0, EXTERNAL_LIMIT))
           .map((link, index) => (
             <LinkCard key={index} link={link} />
         ))}
-
         {external.length > EXTERNAL_LIMIT && (
           <button
             onClick={() => setShowExternalAll(!showExternalAll)}
@@ -203,14 +181,228 @@ function LinksDisplay({ linksData }) {
           </button>
         )}
       </div>
+    </div>
+  );
+}
 
+// ---------------------------------------------------------
+// ✅ IMAGE STATS & DETAILS COMPONENTS
+// ---------------------------------------------------------
+
+// 1. Overview Stats (Counts)
+function ImageStatsDisplay({ imageData }) {
+  return (
+    <div className="mt-4 mb-6">
+        <h4 className="font-bold text-gray-800 dark:text-gray-200 mb-4 px-1">Image Analysis Overview</h4>
+        <div className="grid grid-cols-2 gap-4">
+            <StatCard title="Total Images" value={imageData.Total_Image || 0} />
+            <StatCard title="Missing Alt" value={imageData.Without_Alt_Iamge || 0} />
+            <StatCard title="Missing Title" value={imageData.Without_Title_Iamge || 0} />
+            <StatCard 
+              title="Compression" 
+              value={imageData.Image_Compression_Exist ? "Active" : "Inactive"} 
+            />
+        </div>
+    </div>
+  );
+}
+
+// 2. Detailed List Logic (Incomplete vs Complete)
+function DetailedImageAnalysis({ imgData }) {
+  const safeArray = (val) => (Array.isArray(val) ? val : []);
+  
+  // Mapping API specific keys
+  const incomplete = safeArray(imgData.Incomplete_Status);
+  const complete = safeArray(imgData.Complete_Status);
+
+  const [showAllIncomplete, setShowAllIncomplete] = useState(false);
+  const [showAllComplete, setShowAllComplete] = useState(false);
+  const LIMIT = 3;
+
+  return (
+    <div className="mt-4 space-y-6">
+      
+      {/* 🔴 Incomplete Status (Missing Alt or Title) */}
+      {incomplete.length > 0 && (
+        <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800">
+          <h4 className="font-bold text-red-600 dark:text-red-400 mb-3 flex items-center gap-2">
+            ⚠️ Issues Found ({incomplete.length})
+          </h4>
+          <div className="space-y-3">
+            {(showAllIncomplete ? incomplete : incomplete.slice(0, LIMIT)).map((img, i) => {
+               // ✅ LOGIC FIX: Explicitly check for empty strings
+               const isMissingAlt = !img.alt || img.alt === "";
+               const isMissingTitle = !img.title || img.title === "";
+
+               return (
+                <div key={i} className="p-3 bg-white dark:bg-gray-800 rounded shadow-sm text-sm break-all">
+                  {/* Image Details */}
+                  <div className="grid grid-cols-1 gap-1">
+                    <div className="text-gray-500 dark:text-gray-400 text-xs truncate">
+                      <span className="font-bold">Src: </span>{img.src || "Unknown Source"}
+                    </div>
+                    
+                    {/* Status Badges */}
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {isMissingAlt && (
+                          <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs rounded font-bold border border-red-200">
+                            Missing Alt
+                          </span>
+                      )}
+                      {isMissingTitle && (
+                          <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs rounded font-bold border border-orange-200">
+                            Missing Title
+                          </span>
+                      )}
+                    </div>
+
+                    {/* Show what IS present just for context */}
+                    {!isMissingAlt && (
+                       <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                          <span className="font-semibold">Alt:</span> "{img.alt}"
+                       </div>
+                    )}
+                  </div>
+                </div>
+               );
+            })}
+          </div>
+          {incomplete.length > LIMIT && (
+            <button
+              onClick={() => setShowAllIncomplete(!showAllIncomplete)}
+              className="mt-3 text-sm font-semibold text-red-600 dark:text-red-400 hover:underline"
+            >
+              {showAllIncomplete ? "Show Less" : `Show ${incomplete.length - LIMIT} More`}
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* 🟢 Complete Status (Optimized Images) */}
+      {complete.length > 0 && (
+        <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
+          <h4 className="font-bold text-green-600 dark:text-green-400 mb-3 flex items-center gap-2">
+            ✅ Optimized Images ({complete.length})
+          </h4>
+          <div className="space-y-3">
+            {(showAllComplete ? complete : complete.slice(0, LIMIT)).map((img, i) => (
+              <div key={i} className="p-3 bg-white dark:bg-gray-800 rounded shadow-sm text-sm break-all">
+                <div className="mb-1">
+                   <span className="font-semibold text-gray-700 dark:text-gray-300">Alt:</span> 
+                   <span className="text-gray-900 dark:text-gray-100 font-medium ml-2">"{img.alt || "N/A"}"</span>
+                </div>
+                {img.title && (
+                    <div className="mb-1">
+                        <span className="font-semibold text-gray-700 dark:text-gray-300">Title:</span> 
+                        <span className="text-gray-900 dark:text-gray-100 font-medium ml-2">"{img.title}"</span>
+                    </div>
+                )}
+                <div className="text-xs text-gray-400 mt-1 truncate">
+                    {img.src || "Unknown Source"}
+                </div>
+              </div>
+            ))}
+          </div>
+          {complete.length > LIMIT && (
+            <button
+              onClick={() => setShowAllComplete(!showAllComplete)}
+              className="mt-3 text-sm font-semibold text-green-600 dark:text-green-400 hover:underline"
+            >
+              {showAllComplete ? "Show Less" : `Show ${complete.length - LIMIT} More`}
+            </button>
+          )}
+        </div>
+      )}
+
+      {incomplete.length === 0 && complete.length === 0 && (
+        <p className="text-sm text-gray-500 dark:text-gray-400 italic">No image data available to display details.</p>
+      )}
     </div>
   );
 }
 
 
+// ---------------------------------------------------------
+// ✅ Helper Components (Continued)
+// ---------------------------------------------------------
 
-/* TOP STATS CARD */
+function AltImagesDisplay({ imgData }) {
+  const safeArray = (val) => (Array.isArray(val) ? val : []);
+  
+  const withAlt = safeArray(imgData.With_Alt || imgData.Images_With_Alt);
+  const withoutAlt = safeArray(imgData.Without_Alt || imgData.Images_Without_Alt || imgData.Missing_Alt);
+
+  const [showAllWith, setShowAllWith] = useState(false);
+  const [showAllWithout, setShowAllWithout] = useState(false);
+  const LIMIT = 3;
+
+  return (
+    <div className="mt-4 space-y-6">
+      
+      {/* 🔴 Images Without Alt */}
+      {withoutAlt.length > 0 && (
+        <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800">
+          <h4 className="font-bold text-red-600 dark:text-red-400 mb-3 flex items-center gap-2">
+            ⚠️ Images Without Alt Text ({withoutAlt.length})
+          </h4>
+          <div className="space-y-3">
+            {(showAllWithout ? withoutAlt : withoutAlt.slice(0, LIMIT)).map((img, i) => (
+              <div key={i} className="p-2 bg-white dark:bg-gray-800 rounded shadow-sm text-sm break-all">
+                <span className="font-semibold text-gray-700 dark:text-gray-300">Src:</span> 
+                <span className="text-gray-500 dark:text-gray-400 ml-2">{img.src || img}</span>
+              </div>
+            ))}
+          </div>
+          {withoutAlt.length > LIMIT && (
+            <button
+              onClick={() => setShowAllWithout(!showAllWithout)}
+              className="mt-3 text-sm font-semibold text-red-600 dark:text-red-400 hover:underline"
+            >
+              {showAllWithout ? "Show Less" : `Show ${withoutAlt.length - LIMIT} More`}
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* 🟢 Images With Alt */}
+      {withAlt.length > 0 && (
+        <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
+          <h4 className="font-bold text-green-600 dark:text-green-400 mb-3 flex items-center gap-2">
+            ✅ Images With Alt Text ({withAlt.length})
+          </h4>
+          <div className="space-y-3">
+            {(showAllWith ? withAlt : withAlt.slice(0, LIMIT)).map((img, i) => (
+              <div key={i} className="p-2 bg-white dark:bg-gray-800 rounded shadow-sm text-sm break-all">
+                <div className="mb-1">
+                  <span className="font-semibold text-gray-700 dark:text-gray-300">Alt:</span> 
+                  <span className="text-gray-900 dark:text-gray-100 font-medium ml-2">"{img.alt || "No description"}"</span>
+                </div>
+                <div>
+                  <span className="font-semibold text-gray-500 dark:text-gray-400 text-xs">Src:</span> 
+                  <span className="text-gray-400 dark:text-gray-500 text-xs ml-2">{img.src || "Unknown"}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          {withAlt.length > LIMIT && (
+            <button
+              onClick={() => setShowAllWith(!showAllWith)}
+              className="mt-3 text-sm font-semibold text-green-600 dark:text-green-400 hover:underline"
+            >
+              {showAllWith ? "Show Less" : `Show ${withAlt.length - LIMIT} More`}
+            </button>
+          )}
+        </div>
+      )}
+
+      {withAlt.length === 0 && withoutAlt.length === 0 && (
+        <p className="text-sm text-gray-500 dark:text-gray-400 italic">No image data available to display details.</p>
+      )}
+    </div>
+  );
+}
+
+
 function StatCard({ title, value }) {
   return (
     <div className="p-4 bg-white shadow rounded-xl text-center">
@@ -220,7 +412,6 @@ function StatCard({ title, value }) {
   );
 }
 
-/* LINK CARD (for internal + external both) */
 function LinkCard({ link }) {
   const url = link.href || link.url || link.link || "";
   const anchor = link.anchor || link.text || link.label || "/";
@@ -235,45 +426,22 @@ function LinkCard({ link }) {
   );
 }
 
-
-
-/**
- * ✅ REPLACED: This is the new, high-fidelity shimmer component
- * that mimics your final page layout perfectly.
- */
 function OnPageSeoShimmer({ darkMode }) {
-  // --- ✅ FIX 1: Destructure 'data' ---
   const { data } = useData();
-  
   const mainBg = darkMode 
     ? "bg-gray-900" 
     : "bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50";
 
   return (
     <div className={`relative flex w-full h-full min-h-screen ${mainBg} animate-pulse`}>
-      {/* --- ✅ FIX 2: Use optional chaining 'data?.Report' --- */}
       {data?.Report === "All" && <SkeletonSidebar darkMode={darkMode} />}
-      
       <main className={`flex-1 ${data?.Report === "All" ? "lg:ml-64" : ""} flex flex-col items-center pt-20 pb-12 px-4 space-y-8`}>
-        {/* 1. Header Card */}
         <SkeletonHeaderCard darkMode={darkMode} />
-        
-        {/* 2. Section 1 ("Content Essentials") - 5 metrics */}
         <SkeletonSectionCard metricCount={5} darkMode={darkMode} />
-        
-        {/* 3. Section 2 ("Media & Accessibility") - 2 metrics */}
         <SkeletonSectionCard metricCount={2} darkMode={darkMode} />
-        
-        {/* 4. Section 3 ("Structure & Semantics") - 3 metrics */}
         <SkeletonSectionCard metricCount={3} darkMode={darkMode} />
-        
-        {/* 5. Section 4 ("Technical SEO") - 5 metrics */}
         <SkeletonSectionCard metricCount={5} darkMode={darkMode} />
-
-        {/* 6. Schema Card */}
         <SkeletonSchemaCard darkMode={darkMode} />
-        
-        {/* 7. Dropdowns - 2 of them */}
         <SkeletonAuditDropdown darkMode={darkMode} />
         <SkeletonAuditDropdown darkMode={darkMode} />
       </main>
@@ -283,9 +451,9 @@ function OnPageSeoShimmer({ darkMode }) {
 
 
 // ------------------------------------------------------
-// ✅ MetricCard Component (Unchanged)
+// ✅ MetricCard Component (UPDATED with imageData & detailed lists)
 // ------------------------------------------------------
-const MetricCard = ({ title, description, score, value, unit, darkMode, icon,Title, metaDiscription,heading,links,canonical }) => {
+const MetricCard = ({ title, description, score, value, unit, darkMode, icon, Title, metaDiscription, heading, links, canonical, altData, imageData }) => {
   const [showDescription, setShowDescription] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const isPassed = Boolean(score);
@@ -352,7 +520,7 @@ const MetricCard = ({ title, description, score, value, unit, darkMode, icon,Tit
             ${
               darkMode
                 ? "bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white"
-                : "bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white"
+                : "bg-gradient-to-r from-blue-50 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white"
             }`}
         >
           {showDescription ? "Hide Details" : "Show Details"}
@@ -370,27 +538,44 @@ const MetricCard = ({ title, description, score, value, unit, darkMode, icon,Tit
           >
             {description}
           </p>
-          {links &&
- links.Internal_Links &&
- links.Internal_Links.length > 0 && (
-  <div className="mt-4">
-    <LinksDisplay linksData={links} />
-  </div>
-)}
-{Title && (
-  <div className={`my-2 ${Title.Score ? "text-green-700" : "text-red-500"}`}>
-    Title — {Title.Title}
-  </div>
-)}
-    
-{canonical&& <div className={`my-2 ${canonical?"text-green-700":"text-red-500"}`}>Self Referential-{canonical}</div>}         
-{metaDiscription && (
-  <div className={`my-2 ${metaDiscription.Score ? "text-green-700" : "text-red-500"}`}>
-    Meta Description — {metaDiscription.MetaDescription}
-  </div>
-)}
+          
+          {links && links.Internal_Links && links.Internal_Links.length > 0 && (
+            <div className="mt-4">
+              <LinksDisplay linksData={links} />
+            </div>
+          )}
+          
+          {Title && (
+            <div className={`my-2 ${Title.Score ? "text-green-700" : "text-red-500"}`}>
+              Title — {Title.Title}
+            </div>
+          )}
+              
+          {canonical && (
+            <div className={`my-2 ${canonical?"text-green-700":"text-red-500"}`}>
+              Self Referential-{canonical}
+            </div>
+          )}         
+          
+          {metaDiscription && (
+            <div className={`my-2 ${metaDiscription.Score ? "text-green-700" : "text-red-500"}`}>
+              Meta Description — {metaDiscription.MetaDescription}
+            </div>
+          )}
 
           {heading && <div className="mt-4"><HeadingHierarchyCard data={heading} /></div>}
+
+          {/* Render Alt Images Display (Legacy - used by Alt Relevance Card) */}
+          {altData && <div className="mt-4"><AltImagesDisplay imgData={altData} /></div>}
+
+          {/* ✅ Renders Image Stats AND Detailed Lists (Complete/Incomplete) */}
+          {imageData && (
+            <>
+                <ImageStatsDisplay imageData={imageData} />
+                <DetailedImageAnalysis imgData={imageData} />
+            </>
+          )}
+
         </div>
       </div>
     </div>
@@ -398,30 +583,25 @@ const MetricCard = ({ title, description, score, value, unit, darkMode, icon,Tit
 };
 
 // ------------------------------------------------------
-// ✅ MAIN COMPONENT (with fixes)
+// ✅ MAIN COMPONENT
 // ------------------------------------------------------
 export default function On_Page_SEO() {
   const { data, loading } = useData();
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
 
-  
-  
-  // ⭐ BUG FIX #1: Added "!data" check to prevent crash on initial load
-  // when `data` is null and `loading` is true.
   if (loading || !data || data.Status === "inprogress") {
     return <OnPageSeoShimmer darkMode={darkMode} />;
   }
   
-  // Now it's safe to access data
   const seo = data?.On_Page_SEO || {};
   const linksData = {
     Total: seo.Links.Total,
     Total_Internal: seo.Links.Total_Internal,
     Total_External: seo.Links.Total_External,
     Total_Unique: seo.Links.Total_Unique,
-    Internal_Links:seo.Links.Internal_Links , // 116 objects
-    External_Links: seo.Links.External_Links // 2 objects
+    Internal_Links:seo.Links.Internal_Links ,
+    External_Links: seo.Links.External_Links
   };
 
   const textColor = darkMode ? "text-white" : "text-gray-900";
@@ -430,39 +610,25 @@ export default function On_Page_SEO() {
     : "bg-gradient-to-br from-white via-blue-50/30 to-white";
 
  const desc = {
-  title: `The page title is the main headline that appears as the blue clickable link in Google search results. It's critical because it tells both users and Google what your page is about in one glance. A good title should be unique for every page and ideally between 30 and 60 characters. If it's too long, Google will cut it off, which looks unprofessional and hides important keywords.`,
-
-  meta: `This is the small paragraph of text under the blue link in Google search results. It's your "ad copy" to convince people to click on your link instead of someone else's. It doesn't directly help you rank higher, but a good one gets many more clicks. It should be a clear summary of the page, between 50 and 165 characters, and encourage the user to visit.`,
-
-  url: `This is the address of your webpage (like yoursite.com/about-us). A good URL should be short, easy to read, and describe the page content. Using hyphens (-) to separate words is the best practice. Avoid long, ugly URLs with numbers and symbols (like .../p?id=123). Clean URLs are easier for both users and Google to understand and can help your page rank better for those keywords.`,
-
+  title: `The page title is the main headline that appears as the blue clickable link in Google search results.`,
+  meta: `This is the small paragraph of text under the blue link in Google search results.`,
+  url: `This is the address of your webpage (like yoursite.com/about-us).`,
   canonical: `Canonical tags prevent duplicate URLs from confusing Google by marking the original page.`,
-
-  h1: `The H1 is the main headline or title *on the page itself* (different from the search result title). Think of it as the title of a chapter in a book. For both users and Google, it confirms the page's main topic. You must have *exactly one* H1 on every page. Having zero H1s or multiple H1s confuses search engines and weakens your page's focus, which can hurt your ranking.`,
-
-  image: `Images make your page engaging, but they can also slow it down if they are too large. All images must be "optimized"—meaning compressed to a smaller file size without losing quality—so they load quickly. Also, every image needs "alt text," which is a short description of what the image is. This is crucial for visually impaired users (screen readers) and also helps Google understand what your images are about.`,
-
-  video: `Videos are fantastic for keeping users on your page longer, which Google loves. However, they can seriously slow down your page's initial load time. To fix this, videos should use "lazy-loading," meaning they only start to load when the user scrolls down to them. We also add "metadata" (structured data) to help Google understand what the video is about, which can help it appear in video search results.`,
-
-  heading: `Headings (like H1, H2, H3) create the structure of your page, like an outline for a document. The H1 is the main title. H2s are main sub-topics, and H3s are sub-points under an H2. You should never skip levels (like jumping from an H1 straight to an H3). This clear, logical structure makes the content much easier for users to read and helps Google understand the relationship between different parts of your text.`,
-
-  alt: `"Alt text" (or alternative text) is a short, written description of an image on your page. It's hidden from most users, but it's essential. First, it allows screen readers to describe the image to visually impaired users, making your site accessible. Second, it tells Google exactly what the image shows. This helps Google index your images and understand your page's topic better, especially if you include relevant keywords in the description.`,
-
-  semantic: `Semantic HTML tags are special code tags that describe the *meaning* of the content inside them. For example, instead of using a generic <div> tag for everything, we use <header> for your site's header, <footer> for the footer, and <article> for a blog post. This gives your page a much clearer, more logical structure. It's very important for accessibility (screen readers) and helps search engines instantly understand the layout of your page.`,
-
-  structured: `Structured data (or "Schema") is a special code vocabulary we add to your site to "spoon-feed" information to Google. Instead of just letting Google *guess* what your content is, we can explicitly tell it: "This is a product, the price is $49, and the rating is 5 stars." This is how you get those fancy "rich snippets" (like star ratings or review scores) to show up in search results, making your listing stand out.`,
-
-  https: `HTTPS is the secure version of HTTP. It's what gives your site the "padlock" icon in the browser's address bar. This means all communication between the user and your website is encrypted and safe from hackers. It's absolutely essential for building user trust (especially for e-commerce). Google also considers HTTPS a ranking signal, meaning secure sites are preferred over non-secure ones. All modern sites must use HTTPS.`,
-
-  pagination: `If you have a blog, a category, or a product list that spans multiple pages (Page 1, Page 2, Page 3, etc.), this is called "pagination." We need to add special tags (like rel="next" and rel="prev") to this page series. These tags tell Google that these pages are all part of one connected sequence, which helps it understand the relationship between them and index them correctly, rather than seeing them as separate, disconnected pages.`,
-
-  links: `Links connect pages and help Google understand your site. Use clear anchor text so users know where the link leads.`,
-
-  duplicate: `Duplicate content is when a large block of text on your site is identical (or very similar) to content on another page—either on your own site or someone else's. This is very bad for SEO. It confuses Google, which doesn't know which page to rank. As a result, Google may penalize both pages. Every important page on your site must have original, unique, and valuable content to perform well in search results.`,
-
-  slug: `The "slug" is the very last part of your URL that identifies the specific page. For example, in 'yoursite.com/services/web-design', the slug is "web-design". A good, SEO-friendly slug should be short, all lowercase, and use hyphens (-) to separate words. It should clearly describe the page content. This makes the URL easy for users to read and helps Google understand the page's topic, which can improve its ranking.`
+  h1: `The H1 is the main headline or title *on the page itself* (different from the search result title).`,
+  image: `Images make your page engaging, but they can also slow it down if they are too large.`,
+  video: `Videos are fantastic for keeping users on your page longer, which Google loves.`,
+  heading: `Headings (like H1, H2, H3) create the structure of your page.`,
+  alt: `"Alt text" (or alternative text) is a short, written description of an image on your page.`,
+  semantic: `Semantic HTML tags are special code tags that describe the *meaning* of the content inside them.`,
+  structured: `Structured data (or "Schema") is a special code vocabulary we add to your site to "spoon-feed" information to Google.`,
+  https: `HTTPS is the secure version of HTTP. It's what gives your site the "padlock" icon.`,
+  pagination: `If you have a blog, a category, or a product list that spans multiple pages, this is called "pagination."`,
+  links: `Links connect pages and help Google understand your site.`,
+  duplicate: `Duplicate content is when a large block of text on your site is identical to content on another page.`,
+  slug: `The "slug" is the very last part of your URL that identifies the specific page.`
 };
 const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray-900 shadow-lg`;
+
   return (
     <div className="relative flex w-full h-full min-h-screen">
       {data?.Report === "All" && (
@@ -473,7 +639,6 @@ const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray
 
       <main
         className={`flex-1 ${
-            // ⭐ BUG FIX #2: Conditionally apply margin ONLY if sidebar is present
             data?.Report === "All" ? "lg:ml-64" : ""
           } flex flex-col items-center pt-20 pb-12 px-4 space-y-8 ${
           darkMode ? "bg-gray-900" : "bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50"
@@ -521,17 +686,36 @@ const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray
 
         {/* 🖼️ Section 2: Media & Accessibility */}
         <Section title="Media & Accessibility" icon="🖼️" color="purple" textColor={textColor}>
-      {seo.Image?.Image_Exist!=0 && <MetricCard title="Image Optimization" description={desc.image} score={seo.Image?.Image_Alt_Meaningfull_Exist} value={seo.Image?.Image_Alt_Meaningfull_Exist ? "Optimized" : "Missing Alt"} darkMode={darkMode} icon="🖼️" />}    
-         {seo.Video?.Video_Exist!=0 && <MetricCard title="Video Implementation" description={desc.video} score={seo.Video?.Video_Exist} value={seo.Video?.Video_Exist ? "Present" : "Missing"} darkMode={darkMode} icon="🎥" />} 
-          <MetricCard title="ALT Text Relevance" description={desc.alt} score={seo.ALT_Text_Relevance?.Score} value={seo.ALT_Text_Relevance?.Score ? "Relevant" : "Irrelevant"} darkMode={darkMode} icon="🪶" />
+          {seo.Image?.Image_Exist!=0 && (
+             // ✅ UPDATED: Passing imageData to Image Optimization card
+             <MetricCard 
+                title="Image Optimization" 
+                description={desc.image} 
+                score={seo.Image?.Image_Alt_Meaningfull_Exist} 
+                value={seo.Image?.Image_Alt_Meaningfull_Exist ? "Optimized" : "Needs Work"} 
+                darkMode={darkMode} 
+                icon="🖼️" 
+                imageData={seo.Image} 
+             />
+          )}    
+          {seo.Video?.Video_Exist!=0 && <MetricCard title="Video Implementation" description={desc.video} score={seo.Video?.Video_Exist} value={seo.Video?.Video_Exist ? "Present" : "Missing"} darkMode={darkMode} icon="🎥" />} 
+          
+          <MetricCard 
+            title="ALT Text Relevance" 
+            description={desc.alt} 
+            score={seo.ALT_Text_Relevance?.Score} 
+            value={seo.ALT_Text_Relevance?.Score ? "Relevant" : "Irrelevant"} 
+            darkMode={darkMode} 
+            icon="🪶" 
+            altData={seo.Image} 
+          />
         </Section>
 
         {/* 🏗️ Section 3: Structure & Semantics */}
         <Section title="Structure & Semantics" icon="🏗️" color="green" textColor={textColor}>
        { (seo.Heading_Hierarchy.H1_Count!=0&&seo.Heading_Hierarchy.H2_Count!=0&&seo.Heading_Hierarchy.H3_Count!=0&&seo.Heading_Hierarchy.H4_Count!=0&&seo.Heading_Hierarchy.H5_Count!=0  &&seo.Heading_Hierarchy.H6_Count!=0)&&<MetricCard
   title="Heading Hierarchy"
-  description={desc.heading
-  }
+  description={desc.heading}
   heading={seo.Heading_Hierarchy?.Heading}
   score={seo.Heading_Hierarchy?.Score}
   value={seo.Heading_Hierarchy?.Score ? "Proper" : "Needs Fix"}
@@ -551,9 +735,11 @@ const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray
           <MetricCard title="Duplicate Content" description={desc.duplicate} score={seo.Duplicate_Content?.Score} value={seo.Duplicate_Content?.Score ? "Unique" : "Duplicate"} darkMode={darkMode} icon="🧬" />
        {seo.URL_Slugs?.Slug_Check_Score==1&&<MetricCard title="URL Slugs" description={desc.slug} score={seo.URL_Slugs?.Slug_Check_Score} value={seo.URL_Slugs?.Slug_Check_Score ? "Valid" : "Invalid"} darkMode={darkMode} icon="🧾" />}
         </Section>
-<div className={`w-full ${data.Report=="All" ? "  " : " "} p-6 rounded-2xl shadow-lg ${mainCardBg} border ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
-     {data.Schema.length>0?<SchemaCard schema={data.Schema} />:<p>Schema Unavalible</p>} 
-    </div>
+        
+        <div className={`w-full ${data.Report=="All" ? "  " : " "} p-6 rounded-2xl shadow-lg ${mainCardBg} border ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
+            {data.Schema.length>0?<SchemaCard schema={data.Schema} />:<p>Schema Unavalible</p>} 
+        </div>
+        
         {/* Dropdowns */}
         <AuditDropdown items={seo?.Passed} title="✅ Passed Audits" darkMode={darkMode} />
         <AuditDropdown items={seo?.Improvements} title="⚠️ Improvements Needed" darkMode={darkMode} />
@@ -570,7 +756,6 @@ function SchemaCard({ schema }) {
   const darkMode = theme === "dark";
 
   return (
-    // Note: Removed redundant container styles, as parent div now handles width/bg
     <>
       <h2 className={`text-xl font-semibold mb-4 ${darkMode ? "text-gray-100" : "text-gray-900"}`}>
         Schema Data
@@ -584,20 +769,17 @@ function SchemaCard({ schema }) {
 }
 
 // ------------------------------------------------------
-// ✅ Helper Component for Section Layouts (FIXED)
+// ✅ Helper Component for Section Layouts
 // ------------------------------------------------------
 function Section({ title, icon, color, children, textColor }) {
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
-  
-  // --- ✅ FIX 1: Destructure 'data' ---
   const { data } = useData();
   
   const mainCardBg = darkMode
     ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900"
     : "bg-gradient-to-br from-white via-blue-50/30 to-white";
   
-  // --- ✅ FIX 2: Tailwind Production Build Fix (Color Map) ---
   const borderColorMap = {
     indigo: "border-indigo-500",
     purple: "border-purple-500",
@@ -608,9 +790,7 @@ function Section({ title, icon, color, children, textColor }) {
   return (
     <div
       className={`w-full p-8 rounded-2xl shadow-2xl border-l-8 ${mainCardBg}
-        ${/* --- FIX 3: Use optional chaining 'data?.Report' --- */''}
         ${data?.Report === "All" ? "  " : " "}
-        ${/* --- FIX 2 (Applied): Use color map --- */''}
         ${borderColorMap[color] || "border-gray-500"}
       `}
     >
@@ -623,9 +803,7 @@ function Section({ title, icon, color, children, textColor }) {
   );
 }
 
-
 function HeadingHierarchyCard({ data }) {
-
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
 
@@ -639,10 +817,9 @@ function HeadingHierarchyCard({ data }) {
     }
   };
 
-  // Reduced font sizes
   const getFont = (tag) => {
     switch (tag) {
-      case "h1": return "text-xl font-bold";     // smaller than before
+      case "h1": return "text-xl font-bold";
       case "h2": return "text-lg font-semibold";
       case "h3": return "text-base font-medium";
       case "h4": return "text-sm";
@@ -655,15 +832,12 @@ function HeadingHierarchyCard({ data }) {
       className={`w-full   shadow-lg rounded-2xl p-4 space-y-4 
       ${darkMode ? "bg-gray-900 text-gray-100" : "bg-gray-50 text-gray-900"}`}
     >
-
       <h2 className="text-lg font-bold mb-4 text-blue-600 dark:text-blue-400">Headings Structure</h2>
-
       <div
         className={`space-y-3 max-h-60 overflow-y-auto pr-2 scrollbar-thin 
         ${darkMode ? "scrollbar-thumb-gray-600" : "scrollbar-thumb-gray-400"}`}
       >
         {data?.map((item, index) => {
-          // Handle cases where item or item.tag might be null/undefined
           if (!item || !item.tag) return null;
           
           const Tag = item.tag;
@@ -673,28 +847,20 @@ function HeadingHierarchyCard({ data }) {
               className={`${getIndent(item.tag)} border-l-2 pl-3 
               ${darkMode ? "border-gray-700" : "border-gray-300"}`}
             >
-
               <div className="flex items-center space-x-2">
-
-                {/* tag like <h1> */}
                 <span className={`font-mono text-sm ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
                   &lt;{item.tag}&gt;
                 </span>
-
-                {/* actual smaller heading */}
                 {React.createElement(
                   Tag,
                   { className: `${getFont(item.tag)} leading-tight inline-block ${darkMode ? "text-gray-200" : "text-gray-800"}` },
                   item.text
                 )}
-
               </div>
             </div>
           );
         })}
       </div>
-
     </div>
   );
 }
-

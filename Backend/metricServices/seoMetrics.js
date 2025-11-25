@@ -46,60 +46,33 @@ function isValidCanonical(canonical, pageUrl) {
 }
 
 // On-Page SEO (Media & Semantics) 
-
-function imagePresence($){
+async function imageCheck($){
   const images = $("img").toArray();
-  return images.length > 0 ? 1 : 0 ;
-}
 
-const imageAltScore = ($) => {
-  const images = $("img").toArray();
+  const imagePresence = images.length > 0 ? 1 : 0 ;
+
   const imagesWithAlt = images.filter((img) => {
     const alt = $(img).attr("alt");
     return alt !== undefined && alt.trim() !== "";
   });
-  
-  const percentage = (imagesWithAlt.length / images.length) * 100;
-  return percentage > 75 ? 1 : 0;
-};
+  const imagesWithAltScore = ((imagesWithAlt.length / images.length) * 100)>75 ?1:0;
 
-const meaningfulAltScore = ($) => {
-  const images = $("img").toArray();
-  if (images.length === 0) return 0;
-  
   const meaningfulAlts = images.filter((img) => {
     const alt = $(img).attr("alt")?.trim().toLowerCase() || "";
     const meaningless = ["", "image", "logo", "icon", "pic", "picture", "photo", " ", "12345", "-", "graphics"];
     return !meaningless.includes(alt);
   });
-  
-  const percentage = (meaningfulAlts.length / images.length) * 100;
-  return percentage > 75 ? 1 : 0;
-};
+  const meaningfulAltsScore = ((meaningfulAlts.length / images.length) * 100)>75?1:0;
 
-function getImageStats($) {
-  const images = $("img").toArray();
-
-  const total = images.length;
+  const total = images.length; 
   const withoutAlt = images.filter(img => {
     const alt = $(img).attr("alt");
     return !alt || alt.trim() === "";
   }).length;
-
   const withoutTitle = images.filter(img => {
     const title = $(img).attr("title");
     return !title || title.trim() === "";
   }).length;
-
-  return {
-    total,
-    withoutAlt,
-    withoutTitle
-  };
-}
-
-function getIncompleteImages($) {
-  const images = $("img").toArray();
 
   const missingAlt = images
     .filter(img => {
@@ -111,7 +84,7 @@ function getIncompleteImages($) {
       alt: $(img).attr("alt") || "",
     }));
 
-  const missingTitle = images
+    const missingTitle = images
     .filter(img => {
       const title = $(img).attr("title");
       return !title || title.trim() === "";
@@ -121,12 +94,7 @@ function getIncompleteImages($) {
       title: $(img).attr("title") || "",
     }));
 
-  return { missingAlt, missingTitle };
-}
-
-function getCompleteImages($) {
-  return $("img")
-    .toArray()
+    const completeImage =  images
     .filter((img) => {
       const alt = $(img).attr("alt")?.trim();
       const title = $(img).attr("title")?.trim();
@@ -137,37 +105,50 @@ function getCompleteImages($) {
       alt: $(img).attr("alt") || "",
       title: $(img).attr("title") || ""
     }));
-}
 
-const checkImagesSize = async ($) => {
-  const images = $("img").toArray();
+    const imagesSize = [];
+    let totalScore = 0;
 
-  if (images.length === 0) return 0; // No images
+    for (const img of images) {
+      const src = $(img).attr("src");
+      if (!src) continue;
 
-  let totalScore = 0;
+      try {
+        const res = await axios.get(src, { responseType: "arraybuffer" });
+        const sizeKB = (res.data.byteLength / 1024).toFixed(2);
+        totalScore += sizeKB < 200 ? 1 : 0;
 
-  for (const img of images) {
-    const src = $(img).attr("src");
-    if (!src) continue;
+        imagesSize.push({
+          src,
+          sizeKB,
+          status: sizeKB < 200 ? "OK" : "Large",
+        });
 
-    try {
-      // Fetch the image as arraybuffer to get size
-      const res = await axios.get(src, { responseType: "arraybuffer" });
-      const sizeInKB = res.data.byteLength / 1024;
-
-      // Score 1 if < 200KB else 0
-      totalScore += sizeInKB < 200 ? 1 : 0;
-    } catch (err) {
-      // If image fails to load, consider score 0
-      totalScore += 0;
+      } catch (err) {
+        totalScore += 0;
+        imagesSize.push({
+          src,
+          sizeKB: "Failed",
+          status: "Error",
+        });
+      }
     }
+    const sizeScore = parseFloat(((totalScore / images.length) * 100).toFixed(2));
+
+  return {
+    imagePresence,
+    imagesWithAltScore,
+    meaningfulAltsScore,
+    total,
+    withoutAlt,
+    withoutTitle,
+    missingAlt,
+    missingTitle,
+    completeImage,
+    imagesSize,
+    sizeScore
   }
-
-  // Average % of images under 200KB
-  const averageScore = (totalScore / images.length) * 100;
-
-  return averageScore.toFixed(2); // e.g., "75.00"
-};
+}
 
 const checkVideoExistance = ($) => {
   const videos = $("video, iframe[src*='youtube'], iframe[src*='vimeo']").toArray();
@@ -475,26 +456,22 @@ const h6Count = $("h6").length;
 const h1CountScore = h1Count === 0 ? 0 : h1Count=== 1 ? 1 : 0 ;
 const h1Score = h1Count === 0 ? 0 : h1Count=== 1 ? 1 : 2 ;
 
-const imagePresenceScore = imagePresence($);
-const getImageStat = getImageStats($)
-const getIncompleteImage = getIncompleteImages($)
-const getCompleteImage = getCompleteImages($)
+const image = await imageCheck($)
 
 let altPresence;
 let altMeaningfullPercentage;
 let imageCompressionScore ;
-let compressionScore = await checkImagesSize($);
 
-if(imagePresenceScore==0){
+if(image.imagePresence==0){
   altPresence=1
   altMeaningfullPercentage=1
   imageCompressionScore=1
   // console.log("image is absent",altPresence,altMeaningfullPercentage,imageCompressionScore);
 }
 else{
-  altPresence= imageAltScore($) < 75 ? 1 : 0;
-  altMeaningfullPercentage= meaningfulAltScore($) < 75 ? 1 : 0;
-  imageCompressionScore =compressionScore > 75 ? 1 : 0;
+  altPresence= image.imagesWithAltScore;
+  altMeaningfullPercentage= image.meaningfulAltsScore;
+  imageCompressionScore =image.sizeScore;
   // console.log("image present",altPresence,altMeaningfullPercentage,imageCompressionScore);
 }
 
@@ -628,7 +605,7 @@ if (h1Count === 0) {
   });
 }
 
-if (imagePresenceScore === 0) {
+if (image.imagePresence === 0) {
   improvements.push({
     metric: "Images",
     current: "No images found",
@@ -976,16 +953,17 @@ const actualPercentage = parseFloat((((paginationScore+titleExistanceScore+metaD
           Parameter:'1 if exactly one H1, 2 if >1, 0 if none'
         },
         Image:{
-          Image_Exist: imagePresenceScore,
+          Image_Exist: image.imagePresence,
           Image_Alt_Exist: altPresence,
           Image_Alt_Meaningfull_Exist: altMeaningfullPercentage,
           Image_Compression_Exist: imageCompressionScore,
-          Total_Image:getImageStat.total,
-          Without_Alt_Image:getImageStat.withoutAlt,
-          Without_Title_Image:getImageStat.withoutTitle,
-          Without_Alt_Incomplete_Status:getIncompleteImage.missingAlt,
-          Without_Title_Incomplete_Status:getIncompleteImage.missingTitle,
-          Complete_Status:getCompleteImage,
+          Total_Image:image.total,
+          Without_Alt_Image:image.withoutAlt,
+          Without_Title_Image:image.withoutTitle,
+          Without_Alt_Incomplete_Status:image.missingAlt,
+          Without_Title_Incomplete_Status:image.missingTitle,
+          Complete_Status:image.completeImage,
+          Image_Size:image.imagesSize,
           Parameter:'Alt text ≥ 75% meaningful, images ≤ 200KB'
         },
         Video:{
@@ -1088,16 +1066,17 @@ const actualPercentage = parseFloat((((paginationScore+titleExistanceScore+metaD
           Parameter:'1 if exactly one H1, 2 if >1, 0 if none'
         },
         Image:{
-          Image_Exist: imagePresenceScore,
+          Image_Exist: image.imagePresence,
           Image_Alt_Exist: altPresence,
           Image_Alt_Meaningfull_Exist: altMeaningfullPercentage,
           Image_Compression_Exist: imageCompressionScore,
-          Total_Image:getImageStat.total,
-          Without_Alt_Image:getImageStat.withoutAlt,
-          Without_Title_Image:getImageStat.withoutTitle,
-          Without_Alt_Incomplete_Status:getIncompleteImage.missingAlt,
-          Without_Title_Incomplete_Status:getIncompleteImage.missingTitle,
-          Complete_Status:getCompleteImage,
+          Total_Image:image.total,
+          Without_Alt_Image:image.withoutAlt,
+          Without_Title_Image:image.withoutTitle,
+          Without_Alt_Incomplete_Status:image.missingAlt,
+          Without_Title_Incomplete_Status:image.missingTitle,
+          Complete_Status:image.completeImage,
+          Image_Size:image.imagesSize,
           Parameter:'Alt text ≥ 75% meaningful, images ≤ 200KB'
         },
         Video:{

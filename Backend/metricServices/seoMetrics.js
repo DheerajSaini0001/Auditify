@@ -46,6 +46,7 @@ function isValidCanonical(canonical, pageUrl) {
 }
 
 // On-Page SEO (Media & Semantics) 
+
 function imagePresence($){
   const images = $("img").toArray();
   return images.length > 0 ? 1 : 0 ;
@@ -98,17 +99,29 @@ function getImageStats($) {
 }
 
 function getIncompleteImages($) {
-  return $("img").toArray()
+  const images = $("img").toArray();
+
+  const missingAlt = images
     .filter(img => {
       const alt = $(img).attr("alt");
-      const title = $(img).attr("title");
-      return !alt || alt.trim() === "" || !title || title.trim() === "";
+      return !alt || alt.trim() === "";
     })
     .map(img => ({
       src: $(img).attr("src") || "",
       alt: $(img).attr("alt") || "",
-      title: $(img).attr("title") || ""
     }));
+
+  const missingTitle = images
+    .filter(img => {
+      const title = $(img).attr("title");
+      return !title || title.trim() === "";
+    })
+    .map(img => ({
+      src: $(img).attr("src") || "",
+      title: $(img).attr("title") || "",
+    }));
+
+  return { missingAlt, missingTitle };
 }
 
 function getCompleteImages($) {
@@ -970,7 +983,8 @@ const actualPercentage = parseFloat((((paginationScore+titleExistanceScore+metaD
           Total_Image:getImageStat.total,
           Without_Alt_Image:getImageStat.withoutAlt,
           Without_Title_Image:getImageStat.withoutTitle,
-          Incomplete_Status:getIncompleteImage,
+          Without_Alt_Incomplete_Status:getIncompleteImage.missingAlt,
+          Without_Title_Incomplete_Status:getIncompleteImage.missingTitle,
           Complete_Status:getCompleteImage,
           Parameter:'Alt text ≥ 75% meaningful, images ≤ 200KB'
         },
@@ -1081,7 +1095,8 @@ const actualPercentage = parseFloat((((paginationScore+titleExistanceScore+metaD
           Total_Image:getImageStat.total,
           Without_Alt_Image:getImageStat.withoutAlt,
           Without_Title_Image:getImageStat.withoutTitle,
-          Incomplete_Status:getIncompleteImage,
+          Without_Alt_Incomplete_Status:getIncompleteImage.missingAlt,
+          Without_Title_Incomplete_Status:getIncompleteImage.missingTitle,
           Complete_Status:getCompleteImage,
           Parameter:'Alt text ≥ 75% meaningful, images ≤ 200KB'
         },

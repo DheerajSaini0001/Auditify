@@ -196,8 +196,8 @@ function ImageStatsDisplay({ imageData }) {
         <h4 className="font-bold text-gray-800 dark:text-gray-200 mb-4 px-1">Image Analysis Overview</h4>
         <div className="grid grid-cols-2 gap-4">
             <StatCard title="Total Images" value={imageData.Total_Image || 0} />
-            <StatCard title="Missing Alt" value={imageData.Without_Alt_Iamge || 0} />
-            <StatCard title="Missing Title" value={imageData.Without_Title_Iamge || 0} />
+            <StatCard title="Missing Alt" value={imageData.Without_Alt_Image || 0} />
+            <StatCard title="Missing Title" value={imageData.Without_Title_Image || 0} />
             <StatCard 
               title="Compression" 
               value={imageData.Image_Compression_Exist ? "Active" : "Inactive"} 
@@ -212,7 +212,8 @@ function DetailedImageAnalysis({ imgData }) {
   const safeArray = (val) => (Array.isArray(val) ? val : []);
   
   // Mapping API specific keys
-  const incomplete = safeArray(imgData.Incomplete_Status);
+  const incomplete = safeArray(imgData.Without_Title_Incomplete_Status
+);
   const complete = safeArray(imgData.Complete_Status);
 
   const [showAllIncomplete, setShowAllIncomplete] = useState(false);
@@ -572,6 +573,7 @@ const MetricCard = ({ title, description, score, value, unit, darkMode, icon, Ti
           {imageData && (
             <>
                 <ImageStatsDisplay imageData={imageData} />
+                <DetailedImageAnalysis imgData={imageData} />
                 <DetailedImageAnalysis imgData={imageData} />
             </>
           )}

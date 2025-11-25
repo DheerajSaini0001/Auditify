@@ -76,6 +76,56 @@ const meaningfulAltScore = ($) => {
   return percentage > 75 ? 1 : 0;
 };
 
+function getImageStats($) {
+  const images = $("img").toArray();
+
+  const total = images.length;
+  const withoutAlt = images.filter(img => {
+    const alt = $(img).attr("alt");
+    return !alt || alt.trim() === "";
+  }).length;
+
+  const withoutTitle = images.filter(img => {
+    const title = $(img).attr("title");
+    return !title || title.trim() === "";
+  }).length;
+
+  return {
+    total,
+    withoutAlt,
+    withoutTitle
+  };
+}
+
+function getIncompleteImages($) {
+  return $("img").toArray()
+    .filter(img => {
+      const alt = $(img).attr("alt");
+      const title = $(img).attr("title");
+      return !alt || alt.trim() === "" || !title || title.trim() === "";
+    })
+    .map(img => ({
+      src: $(img).attr("src") || "",
+      alt: $(img).attr("alt") || "",
+      title: $(img).attr("title") || ""
+    }));
+}
+
+function getCompleteImages($) {
+  return $("img")
+    .toArray()
+    .filter((img) => {
+      const alt = $(img).attr("alt")?.trim();
+      const title = $(img).attr("title")?.trim();
+      return alt && alt !== "" && title && title !== "";
+    })
+    .map((img) => ({
+      src: $(img).attr("src") || "",
+      alt: $(img).attr("alt") || "",
+      title: $(img).attr("title") || ""
+    }));
+}
+
 const checkImagesSize = async ($) => {
   const images = $("img").toArray();
 
@@ -413,6 +463,9 @@ const h1CountScore = h1Count === 0 ? 0 : h1Count=== 1 ? 1 : 0 ;
 const h1Score = h1Count === 0 ? 0 : h1Count=== 1 ? 1 : 2 ;
 
 const imagePresenceScore = imagePresence($);
+const getImageStat = getImageStats($)
+const getIncompleteImage = getIncompleteImages($)
+const getCompleteImage = getCompleteImages($)
 
 let altPresence;
 let altMeaningfullPercentage;
@@ -914,6 +967,11 @@ const actualPercentage = parseFloat((((paginationScore+titleExistanceScore+metaD
           Image_Alt_Exist: altPresence,
           Image_Alt_Meaningfull_Exist: altMeaningfullPercentage,
           Image_Compression_Exist: imageCompressionScore,
+          Total_Image:getImageStat.total,
+          Without_Alt_Iamge:getImageStat.withoutAlt,
+          Without_Title_Iamge:getImageStat.withoutTitle,
+          Incomplete_Status:getIncompleteImage,
+          Complete_Status:getCompleteImage,
           Parameter:'Alt text ≥ 75% meaningful, images ≤ 200KB'
         },
         Video:{
@@ -1020,6 +1078,11 @@ const actualPercentage = parseFloat((((paginationScore+titleExistanceScore+metaD
           Image_Alt_Exist: altPresence,
           Image_Alt_Meaningfull_Exist: altMeaningfullPercentage,
           Image_Compression_Exist: imageCompressionScore,
+          Total_Image:getImageStat.total,
+          Without_Alt_Iamge:getImageStat.withoutAlt,
+          Without_Title_Iamge:getImageStat.withoutTitle,
+          Incomplete_Status:getIncompleteImage,
+          Complete_Status:getCompleteImage,
           Parameter:'Alt text ≥ 75% meaningful, images ≤ 200KB'
         },
         Video:{

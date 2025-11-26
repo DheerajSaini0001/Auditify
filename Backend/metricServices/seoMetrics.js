@@ -471,7 +471,7 @@ if(image.imagePresence==0){
 else{
   altPresence= image.imagesWithAltScore;
   altMeaningfullPercentage= image.meaningfulAltsScore;
-  imageCompressionScore =image.sizeScore >95 ? 1 : 0;
+  imageCompressionScore =image.sizeScore == 100 ? 1 : 0;
   // console.log("image present",altPresence,altMeaningfullPercentage,imageCompressionScore);
 }
 

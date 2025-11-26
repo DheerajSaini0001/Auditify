@@ -779,8 +779,8 @@ export default function On_Page_SEO() {
           <MetricCard
             title="Image Compression"
             description={desc.imagecompression}
-            score={seo.Image?.Image_Compression_Exist}
-            value={seo.Image?.Image_Compression_Exist ? "Compressed" : "Check Sizes"}
+            score={!seo.Image?.Image_Compression_Exist}
+            value={!seo.Image?.Image_Compression_Exist ? "Compressed" : "Check Sizes"}
             darkMode={darkMode}
             icon="🗜️"
             imageSizeData={seo.Image?.Image_Size} // <--- Pass the new data

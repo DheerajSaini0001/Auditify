@@ -1,25 +1,24 @@
-import React, { use, useContext, useState } from "react";
+import React, { useContext, useState } from "react";
 import CircularProgress from "../Component/CircularProgress";
 import AuditDropdown from "../Component/AuditDropdown";
+
 import { useData } from "../context/DataContext";
 import { ThemeContext } from "../context/ThemeContext";
-import Sidebar from "../Component/Sidebar";
+
 
 // ------------------------------------------------------
-// ✅ NEW: High-Fidelity Skeleton Components
+// ✅ High-Fidelity Skeleton Components
 // ------------------------------------------------------
 const SkeletonSidebar = ({ darkMode }) => (
   <div
-    className={`fixed top-0 mt-16 left-0 h-full w-64 ${
-      darkMode ? "bg-gray-900" : "bg-white"
-    } shadow-lg p-6`}
+    className={`fixed top-0 mt-16 left-0 h-full w-64 ${darkMode ? "bg-gray-900" : "bg-white"
+      } shadow-lg p-6`}
   >
     {[...Array(4)].map((_, i) => (
       <div
         key={i}
-        className={`h-7 rounded mb-5 animate-pulse ${
-          darkMode ? "bg-gray-700" : "bg-gray-300"
-        }`}
+        className={`h-7 rounded mb-5 animate-pulse ${darkMode ? "bg-gray-700" : "bg-gray-300"
+          }`}
       ></div>
     ))}
   </div>
@@ -27,8 +26,8 @@ const SkeletonSidebar = ({ darkMode }) => (
 
 const SkeletonMetricCard = ({ darkMode }) => {
   const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
-  const shimmerCardBg = darkMode 
-    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900" 
+  const shimmerCardBg = darkMode
+    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900"
     : "bg-gradient-to-br from-white via-gray-50 to-white";
   const border = darkMode ? "border-gray-700" : "border-gray-200";
 
@@ -46,18 +45,18 @@ const SkeletonMetricCard = ({ darkMode }) => {
 
 const SkeletonHeaderCard = ({ darkMode }) => {
   const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
-  const shimmerCardBg = darkMode 
-    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900" 
+  const shimmerCardBg = darkMode
+    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900"
     : "bg-gradient-to-br from-white via-blue-50/30 to-white";
-  
+
   const { data } = useData();
   const border = darkMode ? "border-gray-700" : "border-gray-200";
 
   return (
-    <div className={`w-full ${data?.Report === "All" ? "  " : " "} p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
+    <div className={`w-full ${data?.Report === "All" ? "  " : " "} p-4 sm:p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <div className={`h-12 w-80 rounded ${shimmerBg} mb-3`}></div>
+          <div className={`h-12 w-full max-w-xs rounded ${shimmerBg} mb-3`}></div>
           <div className={`h-4 w-64 rounded ${shimmerBg}`}></div>
         </div>
         <div className={`h-20 w-20 rounded-full ${shimmerBg}`}></div>
@@ -70,13 +69,13 @@ const SkeletonHeaderCard = ({ darkMode }) => {
 const SkeletonSectionCard = ({ metricCount, darkMode }) => {
   const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
   const { data } = useData();
-  const shimmerCardBg = darkMode 
-    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900" 
+  const shimmerCardBg = darkMode
+    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900"
     : "bg-gradient-to-br from-white via-blue-50/30 to-white";
   const border = darkMode ? "border-gray-700" : "border-gray-200";
-  
+
   return (
-    <div className={`w-full ${data?.Report === "All" ? "  " : " "} p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
+    <div className={`w-full ${data?.Report === "All" ? "  " : " "} p-4 sm:p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
       <div className="flex items-center gap-3 mb-6">
         <div className={`h-8 w-8 rounded ${shimmerBg}`}></div>
         <div className={`h-7 w-1/2 rounded ${shimmerBg}`}></div>
@@ -109,8 +108,8 @@ const SkeletonSchemaCard = ({ darkMode }) => {
 };
 
 const SkeletonAuditDropdown = ({ darkMode }) => {
-  const shimmerCardBg = darkMode 
-    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900" 
+  const shimmerCardBg = darkMode
+    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900"
     : "bg-gradient-to-br from-white via-blue-50/30 to-white";
 
   const { data } = useData();
@@ -124,6 +123,10 @@ const SkeletonAuditDropdown = ({ darkMode }) => {
   );
 };
 
+
+// ---------------------------------------------------------
+// ✅ HELPER COMPONENTS
+// ---------------------------------------------------------
 
 function LinksDisplay({ linksData }) {
   const safeArray = (val) => {
@@ -142,8 +145,8 @@ function LinksDisplay({ linksData }) {
   const EXTERNAL_LIMIT = 2;
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
+    <div className="p-4 sm:p-6 space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <StatCard title="Total Links" value={linksData.Total} />
         <StatCard title="Internal Links" value={internal.length} />
         <StatCard title="External Links" value={external.length} />
@@ -155,7 +158,7 @@ function LinksDisplay({ linksData }) {
         {(showInternalAll ? internal : internal.slice(0, INTERNAL_LIMIT))
           .map((link, index) => (
             <LinkCard key={index} link={link} />
-        ))}
+          ))}
         {internal.length > INTERNAL_LIMIT && (
           <button
             onClick={() => setShowInternalAll(!showInternalAll)}
@@ -171,7 +174,7 @@ function LinksDisplay({ linksData }) {
         {(showExternalAll ? external : external.slice(0, EXTERNAL_LIMIT))
           .map((link, index) => (
             <LinkCard key={index} link={link} />
-        ))}
+          ))}
         {external.length > EXTERNAL_LIMIT && (
           <button
             onClick={() => setShowExternalAll(!showExternalAll)}
@@ -185,35 +188,27 @@ function LinksDisplay({ linksData }) {
   );
 }
 
-// ---------------------------------------------------------
-// ✅ IMAGE STATS & DETAILS COMPONENTS
-// ---------------------------------------------------------
-
-// 1. Overview Stats (Counts)
 function ImageStatsDisplay({ imageData }) {
   return (
     <div className="mt-4 mb-6">
-        <h4 className="font-bold text-gray-800 dark:text-gray-200 mb-4 px-1">Image Analysis Overview</h4>
-        <div className="grid grid-cols-2 gap-4">
-            <StatCard title="Total Images" value={imageData.Total_Image || 0} />
-            <StatCard title="Missing Alt" value={imageData.Without_Alt_Image || 0} />
-            <StatCard title="Missing Title" value={imageData.Without_Title_Image || 0} />
-            <StatCard 
-              title="Compression" 
-              value={imageData.Image_Compression_Exist ? "Active" : "Inactive"} 
-            />
-        </div>
+      <h4 className="font-bold text-gray-800 dark:text-gray-200 mb-4 px-1">Image Analysis Overview</h4>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <StatCard title="Total Images" value={imageData.Total_Image || 0} />
+        <StatCard title="Missing Alt" value={imageData.Without_Alt_Image || 0} />
+        <StatCard title="Missing Title" value={imageData.Without_Title_Image || 0} />
+        <StatCard
+          title="Compression"
+          value={imageData.Image_Compression_Exist ? "Active" : "Inactive"}
+        />
+      </div>
     </div>
   );
 }
 
-// 2. Detailed List Logic (Incomplete vs Complete)
 function DetailedImageAnalysis({ imgData }) {
   const safeArray = (val) => (Array.isArray(val) ? val : []);
-  
-  // Mapping API specific keys
-  const incomplete = safeArray(imgData.Without_Title_Incomplete_Status
-);
+
+  const incomplete = safeArray(imgData.Without_Title_Incomplete_Status);
   const complete = safeArray(imgData.Complete_Status);
 
   const [showAllIncomplete, setShowAllIncomplete] = useState(false);
@@ -222,8 +217,8 @@ function DetailedImageAnalysis({ imgData }) {
 
   return (
     <div className="mt-4 space-y-6">
-      
-      {/* 🔴 Incomplete Status (Missing Alt or Title) */}
+
+      {/* 🔴 Incomplete Status */}
       {incomplete.length > 0 && (
         <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800">
           <h4 className="font-bold text-red-600 dark:text-red-400 mb-3 flex items-center gap-2">
@@ -231,41 +226,31 @@ function DetailedImageAnalysis({ imgData }) {
           </h4>
           <div className="space-y-3">
             {(showAllIncomplete ? incomplete : incomplete.slice(0, LIMIT)).map((img, i) => {
-               // ✅ LOGIC FIX: Explicitly check for empty strings
-               const isMissingAlt = !img.alt || img.alt === "";
-               const isMissingTitle = !img.title || img.title === "";
+              const isMissingAlt = !img.alt || img.alt === "";
+              const isMissingTitle = !img.title || img.title === "";
 
-               return (
+              return (
                 <div key={i} className="p-3 bg-white dark:bg-gray-800 rounded shadow-sm text-sm break-all">
-                  {/* Image Details */}
                   <div className="grid grid-cols-1 gap-1">
                     <div className="text-gray-500 dark:text-gray-400 text-xs truncate">
                       <span className="font-bold">Src: </span>{img.src || "Unknown Source"}
                     </div>
-                    
-                    {/* Status Badges */}
+
                     <div className="flex flex-wrap gap-2 mt-2">
                       {isMissingAlt && (
-                          <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs rounded font-bold border border-red-200">
-                            Missing Alt
-                          </span>
+                        <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs rounded font-bold border border-red-200">
+                          Missing Alt
+                        </span>
                       )}
                       {isMissingTitle && (
-                          <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs rounded font-bold border border-orange-200">
-                            Missing Title
-                          </span>
+                        <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs rounded font-bold border border-orange-200">
+                          Missing Title
+                        </span>
                       )}
                     </div>
-
-                    {/* Show what IS present just for context */}
-                    {!isMissingAlt && (
-                       <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                          <span className="font-semibold">Alt:</span> "{img.alt}"
-                       </div>
-                    )}
                   </div>
                 </div>
-               );
+              );
             })}
           </div>
           {incomplete.length > LIMIT && (
@@ -279,7 +264,7 @@ function DetailedImageAnalysis({ imgData }) {
         </div>
       )}
 
-      {/* 🟢 Complete Status (Optimized Images) */}
+      {/* 🟢 Complete Status */}
       {complete.length > 0 && (
         <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
           <h4 className="font-bold text-green-600 dark:text-green-400 mb-3 flex items-center gap-2">
@@ -289,17 +274,17 @@ function DetailedImageAnalysis({ imgData }) {
             {(showAllComplete ? complete : complete.slice(0, LIMIT)).map((img, i) => (
               <div key={i} className="p-3 bg-white dark:bg-gray-800 rounded shadow-sm text-sm break-all">
                 <div className="mb-1">
-                   <span className="font-semibold text-gray-700 dark:text-gray-300">Alt:</span> 
-                   <span className="text-gray-900 dark:text-gray-100 font-medium ml-2">"{img.alt || "N/A"}"</span>
+                  <span className="font-semibold text-gray-700 dark:text-gray-300">Alt:</span>
+                  <span className="text-gray-900 dark:text-gray-100 font-medium ml-2">"{img.alt || "N/A"}"</span>
                 </div>
                 {img.title && (
-                    <div className="mb-1">
-                        <span className="font-semibold text-gray-700 dark:text-gray-300">Title:</span> 
-                        <span className="text-gray-900 dark:text-gray-100 font-medium ml-2">"{img.title}"</span>
-                    </div>
+                  <div className="mb-1">
+                    <span className="font-semibold text-gray-700 dark:text-gray-300">Title:</span>
+                    <span className="text-gray-900 dark:text-gray-100 font-medium ml-2">"{img.title}"</span>
+                  </div>
                 )}
                 <div className="text-xs text-gray-400 mt-1 truncate">
-                    {img.src || "Unknown Source"}
+                  {img.src || "Unknown Source"}
                 </div>
               </div>
             ))}
@@ -314,22 +299,109 @@ function DetailedImageAnalysis({ imgData }) {
           )}
         </div>
       )}
+    </div>
+  );
+}
 
-      {incomplete.length === 0 && complete.length === 0 && (
-        <p className="text-sm text-gray-500 dark:text-gray-400 italic">No image data available to display details.</p>
+// ---------------------------------------------------------
+// ✅ NEW: Image Size Analysis Component
+// ---------------------------------------------------------
+function ImageSizeDisplay({ sizeData }) {
+  const safeArray = (val) => (Array.isArray(val) ? val : []);
+  const images = safeArray(sizeData);
+
+  // Define a threshold for "Heavy" images (e.g., 100KB)
+  const HEAVY_THRESHOLD = 100;
+
+  // Filter Logic: Parse "2.51" (string) into Float for comparison
+  const heavyImages = images.filter(img => parseFloat(img.sizeKB) > HEAVY_THRESHOLD);
+  const optimizedImages = images.filter(img => parseFloat(img.sizeKB) <= HEAVY_THRESHOLD);
+
+  const [showAllHeavy, setShowAllHeavy] = useState(false);
+  const [showAllOptimized, setShowAllOptimized] = useState(false);
+  const LIMIT = 3;
+
+  return (
+    <div className="mt-4 space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+        <StatCard title="Total Images" value={images.length} />
+        <StatCard title="Heavy (>100KB)" value={heavyImages.length} />
+      </div>
+
+      {/* 🔴 Heavy Images Section */}
+      {heavyImages.length > 0 && (
+        <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800">
+          <h4 className="font-bold text-red-600 dark:text-red-400 mb-3 flex items-center gap-2">
+            ⚠️ Heavy Images ({heavyImages.length})
+          </h4>
+          <div className="space-y-3">
+            {(showAllHeavy ? heavyImages : heavyImages.slice(0, LIMIT)).map((img, i) => (
+              <div key={i} className="p-3 bg-white dark:bg-gray-800 rounded shadow-sm text-sm border-l-4 border-red-400">
+                <div className="flex justify-between items-start mb-1">
+                  <span className="font-bold text-red-600 dark:text-red-400">{img.sizeKB} KB</span>
+                  <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
+                    {img.status || "Check"}
+                  </span>
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 break-all truncate">
+                  {img.src || "Unknown Source"}
+                </div>
+              </div>
+            ))}
+          </div>
+          {heavyImages.length > LIMIT && (
+            <button
+              onClick={() => setShowAllHeavy(!showAllHeavy)}
+              className="mt-3 text-sm font-semibold text-red-600 dark:text-red-400 hover:underline"
+            >
+              {showAllHeavy ? "Show Less" : `Show ${heavyImages.length - LIMIT} More`}
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* 🟢 Optimized Images Section */}
+      {optimizedImages.length > 0 && (
+        <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
+          <h4 className="font-bold text-green-600 dark:text-green-400 mb-3 flex items-center gap-2">
+            ✅ Optimized Images ({optimizedImages.length})
+          </h4>
+          <div className="space-y-3">
+            {(showAllOptimized ? optimizedImages : optimizedImages.slice(0, LIMIT)).map((img, i) => (
+              <div key={i} className="p-3 bg-white dark:bg-gray-800 rounded shadow-sm text-sm flex justify-between items-center">
+                <div className="overflow-hidden w-3/4">
+                  <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                    {img.src || "Unknown Source"}
+                  </div>
+                </div>
+                <span className="font-bold text-green-600 dark:text-green-400 whitespace-nowrap ml-2">
+                  {img.sizeKB} KB
+                </span>
+              </div>
+            ))}
+          </div>
+          {optimizedImages.length > LIMIT && (
+            <button
+              onClick={() => setShowAllOptimized(!showAllOptimized)}
+              className="mt-3 text-sm font-semibold text-green-600 dark:text-green-400 hover:underline"
+            >
+              {showAllOptimized ? "Show Less" : `Show ${optimizedImages.length - LIMIT} More`}
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Fallback if list is empty */}
+      {images.length === 0 && (
+        <p className="text-sm text-gray-500 italic text-center py-2">No image size data available.</p>
       )}
     </div>
   );
 }
 
-
-// ---------------------------------------------------------
-// ✅ Helper Components (Continued)
-// ---------------------------------------------------------
-
 function AltImagesDisplay({ imgData }) {
   const safeArray = (val) => (Array.isArray(val) ? val : []);
-  
+
   const withAlt = safeArray(imgData.With_Alt || imgData.Images_With_Alt);
   const withoutAlt = safeArray(imgData.Without_Alt || imgData.Images_Without_Alt || imgData.Missing_Alt);
 
@@ -339,7 +411,7 @@ function AltImagesDisplay({ imgData }) {
 
   return (
     <div className="mt-4 space-y-6">
-      
+
       {/* 🔴 Images Without Alt */}
       {withoutAlt.length > 0 && (
         <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800">
@@ -349,7 +421,7 @@ function AltImagesDisplay({ imgData }) {
           <div className="space-y-3">
             {(showAllWithout ? withoutAlt : withoutAlt.slice(0, LIMIT)).map((img, i) => (
               <div key={i} className="p-2 bg-white dark:bg-gray-800 rounded shadow-sm text-sm break-all">
-                <span className="font-semibold text-gray-700 dark:text-gray-300">Src:</span> 
+                <span className="font-semibold text-gray-700 dark:text-gray-300">Src:</span>
                 <span className="text-gray-500 dark:text-gray-400 ml-2">{img.src || img}</span>
               </div>
             ))}
@@ -375,11 +447,11 @@ function AltImagesDisplay({ imgData }) {
             {(showAllWith ? withAlt : withAlt.slice(0, LIMIT)).map((img, i) => (
               <div key={i} className="p-2 bg-white dark:bg-gray-800 rounded shadow-sm text-sm break-all">
                 <div className="mb-1">
-                  <span className="font-semibold text-gray-700 dark:text-gray-300">Alt:</span> 
+                  <span className="font-semibold text-gray-700 dark:text-gray-300">Alt:</span>
                   <span className="text-gray-900 dark:text-gray-100 font-medium ml-2">"{img.alt || "No description"}"</span>
                 </div>
                 <div>
-                  <span className="font-semibold text-gray-500 dark:text-gray-400 text-xs">Src:</span> 
+                  <span className="font-semibold text-gray-500 dark:text-gray-400 text-xs">Src:</span>
                   <span className="text-gray-400 dark:text-gray-500 text-xs ml-2">{img.src || "Unknown"}</span>
                 </div>
               </div>
@@ -395,10 +467,6 @@ function AltImagesDisplay({ imgData }) {
           )}
         </div>
       )}
-
-      {withAlt.length === 0 && withoutAlt.length === 0 && (
-        <p className="text-sm text-gray-500 dark:text-gray-400 italic">No image data available to display details.</p>
-      )}
     </div>
   );
 }
@@ -406,9 +474,9 @@ function AltImagesDisplay({ imgData }) {
 
 function StatCard({ title, value }) {
   return (
-    <div className="p-4 bg-white shadow rounded-xl text-center">
-      <p className="text-sm text-gray-500">{title}</p>
-      <h3 className="text-2xl font-semibold">{value}</h3>
+    <div className="p-4 bg-white dark:bg-gray-800 shadow rounded-xl text-center">
+      <p className="text-sm text-gray-500 dark:text-gray-400">{title}</p>
+      <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">{value}</h3>
     </div>
   );
 }
@@ -429,14 +497,13 @@ function LinkCard({ link }) {
 
 function OnPageSeoShimmer({ darkMode }) {
   const { data } = useData();
-  const mainBg = darkMode 
-    ? "bg-gray-900" 
+  const mainBg = darkMode
+    ? "bg-gray-900"
     : "bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50";
 
   return (
     <div className={`relative flex w-full h-full min-h-screen ${mainBg} animate-pulse`}>
-      {data?.Report === "All" && <SkeletonSidebar darkMode={darkMode} />}
-      <main className={`flex-1 ${data?.Report === "All" ? "lg:ml-64" : ""} flex flex-col items-center pt-20 pb-12 px-4 space-y-8`}>
+      <main className={`flex-1 flex flex-col items-center pt-20 pb-12 px-4 space-y-8`}>
         <SkeletonHeaderCard darkMode={darkMode} />
         <SkeletonSectionCard metricCount={5} darkMode={darkMode} />
         <SkeletonSectionCard metricCount={2} darkMode={darkMode} />
@@ -452,9 +519,25 @@ function OnPageSeoShimmer({ darkMode }) {
 
 
 // ------------------------------------------------------
-// ✅ MetricCard Component (UPDATED with imageData & detailed lists)
+// ✅ MetricCard Component
 // ------------------------------------------------------
-const MetricCard = ({ title, description, score, value, unit, darkMode, icon, Title, metaDiscription, heading, links, canonical, altData, imageData }) => {
+const MetricCard = ({
+  title,
+  description,
+  score,
+  value,
+  unit,
+  darkMode,
+  icon,
+  Title,
+  metaDiscription,
+  heading,
+  links,
+  canonical,
+  altData,
+  imageData,
+  imageSizeData // <--- Prop for Image Size Array
+}) => {
   const [showDescription, setShowDescription] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const isPassed = Boolean(score);
@@ -475,7 +558,7 @@ const MetricCard = ({ title, description, score, value, unit, darkMode, icon, Ti
 
   return (
     <div
-      className={`group relative p-6 rounded-xl shadow-lg ${cardBg} 
+      className={`group relative p-4 sm:p-6 rounded-xl shadow-lg ${cardBg} 
         border ${darkMode ? "border-gray-700" : "border-gray-200"}
         transition-all duration-300  
        `}
@@ -484,11 +567,10 @@ const MetricCard = ({ title, description, score, value, unit, darkMode, icon, Ti
     >
       <div
         className={`absolute inset-0 rounded-xl opacity-0   
-        ${
-          isPassed
+        ${isPassed
             ? "bg-gradient-to-br from-green-500/10 to-emerald-500/10"
             : "bg-gradient-to-br from-red-500/10 to-rose-500/10"
-        }`}
+          }`}
       ></div>
 
       <div className="relative z-10">
@@ -518,46 +600,43 @@ const MetricCard = ({ title, description, score, value, unit, darkMode, icon, Ti
         <button
           onClick={() => setShowDescription(!showDescription)}
           className={`w-full mt-2 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-300
-            ${
-              darkMode
-                ? "bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white"
-                : "bg-gradient-to-r from-blue-50 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white"
+            ${darkMode
+              ? "bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white"
+              : "bg-gradient-to-r from-blue-50 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white"
             }`}
         >
           {showDescription ? "Hide Details" : "Show Details"}
         </button>
 
         <div
-          className={`overflow-hidden transition-all duration-300 ${
-            showDescription ? "max-h-auto mt-4" : "max-h-0"
-          }`}
+          className={`overflow-hidden transition-all duration-300 ${showDescription ? "max-h-auto mt-4" : "max-h-0"
+            }`}
         >
           <p
-            className={`text-sm ${descriptionColor} border-t ${
-              darkMode ? "border-gray-700" : "border-gray-200"
-            } pt-4`}
+            className={`text-sm ${descriptionColor} border-t ${darkMode ? "border-gray-700" : "border-gray-200"
+              } pt-4`}
           >
             {description}
           </p>
-          
+
           {links && links.Internal_Links && links.Internal_Links.length > 0 && (
             <div className="mt-4">
               <LinksDisplay linksData={links} />
             </div>
           )}
-          
+
           {Title && (
             <div className={`my-2 ${Title.Score ? "text-green-700" : "text-red-500"}`}>
               Title — {Title.Title}
             </div>
           )}
-              
+
           {canonical && (
-            <div className={`my-2 ${canonical?"text-green-700":"text-red-500"}`}>
+            <div className={`my-2 ${canonical ? "text-green-700" : "text-red-500"}`}>
               Self Referential-{canonical}
             </div>
-          )}         
-          
+          )}
+
           {metaDiscription && (
             <div className={`my-2 ${metaDiscription.Score ? "text-green-700" : "text-red-500"}`}>
               Meta Description — {metaDiscription.MetaDescription}
@@ -566,16 +645,22 @@ const MetricCard = ({ title, description, score, value, unit, darkMode, icon, Ti
 
           {heading && <div className="mt-4"><HeadingHierarchyCard data={heading} /></div>}
 
-          {/* Render Alt Images Display (Legacy - used by Alt Relevance Card) */}
+          {/* Render Alt Images Display */}
           {altData && <div className="mt-4"><AltImagesDisplay imgData={altData} /></div>}
 
-          {/* ✅ Renders Image Stats AND Detailed Lists (Complete/Incomplete) */}
+          {/* Render General Image Stats */}
           {imageData && (
             <>
-                <ImageStatsDisplay imageData={imageData} />
-                <DetailedImageAnalysis imgData={imageData} />
-                
+              <ImageStatsDisplay imageData={imageData} />
+              <DetailedImageAnalysis imgData={imageData} />
             </>
+          )}
+
+          {/* ✅ RENDER IMAGE SIZE COMPONENT HERE */}
+          {imageSizeData && (
+            <div className="mt-4">
+              <ImageSizeDisplay sizeData={imageSizeData} />
+            </div>
           )}
 
         </div>
@@ -595,14 +680,14 @@ export default function On_Page_SEO() {
   if (loading || !data || data.Status === "inprogress") {
     return <OnPageSeoShimmer darkMode={darkMode} />;
   }
-  
+
   const seo = data?.On_Page_SEO || {};
   const linksData = {
     Total: seo.Links.Total,
     Total_Internal: seo.Links.Total_Internal,
     Total_External: seo.Links.Total_External,
     Total_Unique: seo.Links.Total_Unique,
-    Internal_Links:seo.Links.Internal_Links ,
+    Internal_Links: seo.Links.Internal_Links,
     External_Links: seo.Links.External_Links
   };
 
@@ -611,49 +696,38 @@ export default function On_Page_SEO() {
     ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900"
     : "bg-gradient-to-br from-white via-blue-50/30 to-white";
 
- const desc = {
-  title: `The page title is the main headline that appears as the blue clickable link in Google search results.`,
-  meta: `This is the small paragraph of text under the blue link in Google search results.`,
-  url: `This is the address of your webpage (like yoursite.com/about-us).`,
-  canonical: `Canonical tags prevent duplicate URLs from confusing Google by marking the original page.`,
-  h1: `The H1 is the main headline or title *on the page itself* (different from the search result title).`,
-  image: `Images make your page engaging, but they can also slow it down if they are too large.`,
-  video: `Videos are fantastic for keeping users on your page longer, which Google loves.`,
-  heading: `Headings (like H1, H2, H3) create the structure of your page.`,
-  imagecompression: `Image compression reduces the file size of images to improve page load speed without significantly affecting quality.`,
-  semantic: `Semantic HTML tags are special code tags that describe the *meaning* of the content inside them.`,
-  structured: `Structured data (or "Schema") is a special code vocabulary we add to your site to "spoon-feed" information to Google.`,
-  https: `HTTPS is the secure version of HTTP. It's what gives your site the "padlock" icon.`,
-  pagination: `If you have a blog, a category, or a product list that spans multiple pages, this is called "pagination."`,
-  links: `Links connect pages and help Google understand your site.`,
-  duplicate: `Duplicate content is when a large block of text on your site is identical to content on another page.`,
-  slug: `The "slug" is the very last part of your URL that identifies the specific page.`
-};
-const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray-900 shadow-lg`;
-
+  const desc = {
+    title: `The page title is the main headline that appears as the blue clickable link in Google search results.`,
+    meta: `This is the small paragraph of text under the blue link in Google search results.`,
+    url: `This is the address of your webpage (like yoursite.com/about-us).`,
+    canonical: `Canonical tags prevent duplicate URLs from confusing Google by marking the original page.`,
+    h1: `The H1 is the main headline or title *on the page itself* (different from the search result title).`,
+    image: `Images make your page engaging, but they can also slow it down if they are too large.`,
+    video: `Videos are fantastic for keeping users on your page longer, which Google loves.`,
+    heading: `Headings (like H1, H2, H3) create the structure of your page.`,
+    imagecompression: `Image compression reduces the file size of images to improve page load speed without significantly affecting quality.`,
+    semantic: `Semantic HTML tags are special code tags that describe the *meaning* of the content inside them.`,
+    structured: `Structured data (or "Schema") is a special code vocabulary we add to your site to "spoon-feed" information to Google.`,
+    https: `HTTPS is the secure version of HTTP. It's what gives your site the "padlock" icon.`,
+    pagination: `If you have a blog, a category, or a product list that spans multiple pages, this is called "pagination."`,
+    links: `Links connect pages and help Google understand your site.`,
+    duplicate: `Duplicate content is when a large block of text on your site is identical to content on another page.`,
+    slug: `The "slug" is the very last part of your URL that identifies the specific page.`
+  };
   return (
     <div className="relative flex w-full h-full min-h-screen">
-      {data?.Report === "All" && (
-      <div className={`${sidebarClass} lg:translate-x-0 transition-transform duration-300 ease-in-out z-40`}>
-          <Sidebar darkMode={darkMode} />
-        </div>
-      )}
-
       <main
-        className={`flex-1 ${
-            data?.Report === "All" ? "lg:ml-64" : ""
-          } flex flex-col items-center pt-20 pb-12 px-4 space-y-8 ${
-          darkMode ? "bg-gray-900" : "bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50"
-        }`}
+        className={`flex-1 flex flex-col items-center pt-10 pb-12 px-4 space-y-8 ${darkMode ? "bg-gray-900" : "bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50"
+          }`}
       >
         {/* Header */}
         <div
-          className={`w-full ${data.Report=="All" ? "  " : " "} p-8 rounded-2xl shadow-2xl border-l-8 border-indigo-500 ${mainCardBg}`}
+          className={`w-full p-4 sm:p-8 rounded-2xl shadow-2xl border-l-8 border-indigo-500 ${mainCardBg}`}
         >
-          <div className="flex items-center justify-between mb-6">
-            <div>
+          <div className="flex flex-col sm:flex-row items-center justify-between mb-6 gap-6">
+            <div className="w-full sm:w-auto">
               <h2
-                className={`text-5xl font-black ${textColor} mb-2 bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent`}
+                className={`text-3xl sm:text-5xl font-black ${textColor} mb-2 bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent`}
               >
                 On-Page SEO
               </h2>
@@ -683,48 +757,47 @@ const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray
           <MetricCard title="Meta Description" description={desc.meta} score={seo.Meta_Description?.Score} metaDiscription={seo.Meta_Description} value={seo.Meta_Description?.MetaDescription_Length + " chars"} darkMode={darkMode} icon="📝" />
           <MetricCard title="URL Structure" description={desc.url} score={seo.URL_Structure?.Score} value={seo.URL_Structure?.Score ? "Clean" : "Poor"} darkMode={darkMode} icon="🔗" />
           <MetricCard title="Canonical Tag" description={desc.canonical} canonical={seo.Canonical?.Canonical} score={seo.Canonical?.Score} value={seo.Canonical?.Score ? "Self Referential" : "Not Self Referential"} darkMode={darkMode} icon="📜" />
-          <MetricCard title="H1 Tag" description={desc.h1} score={seo.H1?.Score} value={"H1 Count-"+(seo.H1?.H1_Count || 0)} darkMode={darkMode} icon="🔠" />
+          <MetricCard title="H1 Tag" description={desc.h1} score={seo.H1?.Score} value={"H1 Count-" + (seo.H1?.H1_Count || 0)} darkMode={darkMode} icon="🔠" />
         </Section>
 
         {/* 🖼️ Section 2: Media & Accessibility */}
         <Section title="Media & Accessibility" icon="🖼️" color="purple" textColor={textColor}>
-          {seo.Image?.Image_Exist!=0 && (
-             // ✅ UPDATED: Passing imageData to Image Optimization card
-             <MetricCard 
-                title="Image Optimization" 
-                description={desc.image} 
-                score={seo.Image?.Image_Alt_Meaningfull_Exist} 
-                value={seo.Image?.Image_Alt_Meaningfull_Exist ? "Optimized" : "Needs Work"} 
-                darkMode={darkMode} 
-                icon="🖼️" 
-                imageData={seo.Image} 
-             />
-          )}    
-          {seo.Video?.Video_Exist!=0 && <MetricCard title="Video Implementation" description={desc.video} score={seo.Video?.Video_Exist} value={seo.Video?.Video_Exist ? "Present" : "Missing"} darkMode={darkMode} icon="🎥" />} 
-          
-          <MetricCard 
-            title="Image Compression" 
+          {seo.Image?.Image_Exist != 0 && (
+            <MetricCard
+              title="Image Alt and Title"
+              description={desc.image}
+              score={seo.Image?.Image_Alt_Meaningfull_Exist}
+              value={seo.Image?.Image_Alt_Meaningfull_Exist ? "Optimized" : "Needs Work"}
+              darkMode={darkMode}
+              icon="🖼️"
+              imageData={seo.Image}
+            />
+          )}
+          {seo.Video?.Video_Exist != 0 && <MetricCard title="Video Implementation" description={desc.video} score={seo.Video?.Video_Exist} value={seo.Video?.Video_Exist ? "Present" : "Missing"} darkMode={darkMode} icon="🎥" />}
+
+          {/* ✅ UPDATED: Added imageSizeData prop here */}
+          <MetricCard
+            title="Image Compression"
             description={desc.imagecompression}
-            
-            score={seo.image?.Image_Compression_Exist} 
-            value={seo.ALT_Text_Relevance?.Score ? "Relevant" : "Irrelevant"} 
-            darkMode={darkMode} 
-            icon="🪶" 
-            altData={seo.Image} 
+            score={seo.Image?.Image_Compression_Exist}
+            value={seo.Image?.Image_Compression_Exist ? "Compressed" : "Check Sizes"}
+            darkMode={darkMode}
+            icon="🗜️"
+            imageSizeData={seo.Image?.Image_Size} // <--- Pass the new data
           />
         </Section>
 
-        {/* 🏗️ Section 3: Structure & Semantics */}
-        <Section title="Structure & Semantics" icon="🏗️" color="green" textColor={textColor}>
-       { (seo.Heading_Hierarchy.H1_Count!=0&&seo.Heading_Hierarchy.H2_Count!=0&&seo.Heading_Hierarchy.H3_Count!=0&&seo.Heading_Hierarchy.H4_Count!=0&&seo.Heading_Hierarchy.H5_Count!=0  &&seo.Heading_Hierarchy.H6_Count!=0)&&<MetricCard
-  title="Heading Hierarchy"
-  description={desc.heading}
-  heading={seo.Heading_Hierarchy?.Heading}
-  score={seo.Heading_Hierarchy?.Score}
-  value={seo.Heading_Hierarchy?.Score ? "Proper" : "Needs Fix"}
-  darkMode={darkMode}
-  icon="📚"
-/>}
+        {/* 🛠️ Section 3: Structure & Semantics */}
+        <Section title="Structure & Semantics" icon="🛠️" color="green" textColor={textColor}>
+          {(seo.Heading_Hierarchy.H1_Count != 0 && seo.Heading_Hierarchy.H2_Count != 0 && seo.Heading_Hierarchy.H3_Count != 0 && seo.Heading_Hierarchy.H4_Count != 0 && seo.Heading_Hierarchy.H5_Count != 0 && seo.Heading_Hierarchy.H6_Count != 0) && <MetricCard
+            title="Heading Hierarchy"
+            description={desc.heading}
+            heading={seo.Heading_Hierarchy?.Heading}
+            score={seo.Heading_Hierarchy?.Score}
+            value={seo.Heading_Hierarchy?.Score ? "Proper" : "Needs Fix"}
+            darkMode={darkMode}
+            icon="📚"
+          />}
 
           <MetricCard title="Semantic HTML Tags" description={desc.semantic} score={seo.Semantic_Tags?.Article_Score} value={seo.Semantic_Tags?.Article_Score ? "Present" : "Missing"} darkMode={darkMode} icon="📄" />
           <MetricCard title="Structured Data" description={desc.structured} score={seo.Structured_Data?.Score} value={seo.Structured_Data?.Score ? "Added" : "Missing"} darkMode={darkMode} icon="🧩" />
@@ -736,13 +809,13 @@ const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray
           <MetricCard title="Pagination Tags" description={desc.pagination} score={seo.Pagination_Tags?.Score} value={seo.Pagination_Tags?.Score ? "Present" : "Missing"} darkMode={darkMode} icon="📑" />
           <MetricCard title="Links" description={desc.links} links={linksData} score={seo.Links.Score} value={seo.Links.Score || 0} darkMode={darkMode} icon="🧭" />
           <MetricCard title="Duplicate Content" description={desc.duplicate} score={seo.Duplicate_Content?.Score} value={seo.Duplicate_Content?.Score ? "Unique" : "Duplicate"} darkMode={darkMode} icon="🧬" />
-       {seo.URL_Slugs?.Slug_Check_Score==1&&<MetricCard title="URL Slugs" description={desc.slug} score={seo.URL_Slugs?.Slug_Check_Score} value={seo.URL_Slugs?.Slug_Check_Score ? "Valid" : "Invalid"} darkMode={darkMode} icon="🧾" />}
+          {seo.URL_Slugs?.Slug_Check_Score == 1 && <MetricCard title="URL Slugs" description={desc.slug} score={seo.URL_Slugs?.Slug_Check_Score} value={seo.URL_Slugs?.Slug_Check_Score ? "Valid" : "Invalid"} darkMode={darkMode} icon="🧾" />}
         </Section>
-        
-        <div className={`w-full ${data.Report=="All" ? "  " : " "} p-6 rounded-2xl shadow-lg ${mainCardBg} border ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
-            {data.Schema.length>0?<SchemaCard schema={data.Schema} />:<p>Schema Unavalible</p>} 
+
+        <div className={`w-full p-6 rounded-2xl shadow-lg ${mainCardBg} border ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
+          {data.Schema.length > 0 ? <SchemaCard schema={data.Schema} /> : <p>Schema Unavalible</p>}
         </div>
-        
+
         {/* Dropdowns */}
         <AuditDropdown items={seo?.Passed} title="✅ Passed Audits" darkMode={darkMode} />
         <AuditDropdown items={seo?.Improvements} title="⚠️ Improvements Needed" darkMode={darkMode} />
@@ -778,11 +851,11 @@ function Section({ title, icon, color, children, textColor }) {
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
   const { data } = useData();
-  
+
   const mainCardBg = darkMode
     ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900"
     : "bg-gradient-to-br from-white via-blue-50/30 to-white";
-  
+
   const borderColorMap = {
     indigo: "border-indigo-500",
     purple: "border-purple-500",
@@ -792,7 +865,7 @@ function Section({ title, icon, color, children, textColor }) {
 
   return (
     <div
-      className={`w-full p-8 rounded-2xl shadow-2xl border-l-8 ${mainCardBg}
+      className={`w-full p-4 sm:p-8 rounded-2xl shadow-2xl border-l-8 ${mainCardBg}
         ${data?.Report === "All" ? "  " : " "}
         ${borderColorMap[color] || "border-gray-500"}
       `}
@@ -842,7 +915,7 @@ function HeadingHierarchyCard({ data }) {
       >
         {data?.map((item, index) => {
           if (!item || !item.tag) return null;
-          
+
           const Tag = item.tag;
           return (
             <div
@@ -850,13 +923,13 @@ function HeadingHierarchyCard({ data }) {
               className={`${getIndent(item.tag)} border-l-2 pl-3 
               ${darkMode ? "border-gray-700" : "border-gray-300"}`}
             >
-              <div className="flex items-center space-x-2">
-                <span className={`font-mono text-sm ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+              <div className="flex items-start space-x-2">
+                <span className={`font-mono text-sm ${darkMode ? "text-gray-500" : "text-gray-400"} flex-shrink-0 mt-0.5`}>
                   &lt;{item.tag}&gt;
                 </span>
                 {React.createElement(
                   Tag,
-                  { className: `${getFont(item.tag)} leading-tight inline-block ${darkMode ? "text-gray-200" : "text-gray-800"}` },
+                  { className: `${getFont(item.tag)} leading-tight inline-block ${darkMode ? "text-gray-200" : "text-gray-800"} break-words min-w-0` },
                   item.text
                 )}
               </div>

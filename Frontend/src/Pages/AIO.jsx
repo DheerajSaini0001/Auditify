@@ -1,7 +1,7 @@
 import React, { useContext, useState } from "react"; // Added useState
 import CircularProgress from "../Component/CircularProgress";
 import AuditDropdown from "../Component/AuditDropdown";
-import Sidebar from "../Component/Sidebar";
+
 import { useData } from "../context/DataContext";
 import { ThemeContext } from "../context/ThemeContext";
 
@@ -10,16 +10,14 @@ import { ThemeContext } from "../context/ThemeContext";
 // ------------------------------------------------------
 const SkeletonSidebar = ({ darkMode }) => (
   <div
-    className={`fixed top-0 mt-16 left-0 h-full w-64 ${
-      darkMode ? "bg-gray-900" : "bg-white"
-    } shadow-lg p-6`}
+    className={`fixed top-0 mt-16 left-0 h-full w-64 ${darkMode ? "bg-gray-900" : "bg-white"
+      } shadow-lg p-6`}
   >
     {[...Array(4)].map((_, i) => (
       <div
         key={i}
-        className={`h-7 rounded mb-5 animate-pulse ${
-          darkMode ? "bg-gray-700" : "bg-gray-300"
-        }`}
+        className={`h-7 rounded mb-5 animate-pulse ${darkMode ? "bg-gray-700" : "bg-gray-300"
+          }`}
       ></div>
     ))}
   </div>
@@ -27,8 +25,8 @@ const SkeletonSidebar = ({ darkMode }) => (
 
 const SkeletonMetricCard = ({ darkMode }) => {
   const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
-  const shimmerCardBg = darkMode 
-    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900" 
+  const shimmerCardBg = darkMode
+    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900"
     : "bg-gradient-to-br from-white via-gray-50 to-white";
   const border = darkMode ? "border-gray-700" : "border-gray-200";
 
@@ -46,16 +44,16 @@ const SkeletonMetricCard = ({ darkMode }) => {
 
 const SkeletonHeaderCard = ({ darkMode }) => {
   const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
-  const { data } = useData(); 
-  const shimmerCardBg = darkMode 
-    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900" 
+  const { data } = useData();
+  const shimmerCardBg = darkMode
+    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900"
     : "bg-gradient-to-br from-white via-blue-50/30 to-white";
   const border = darkMode ? "border-gray-700" : "border-gray-200";
   return (
     <div className={`w-full ${data?.Report === "All" ? "  " : " "}  p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <div className={`h-12 w-80 rounded ${shimmerBg} mb-3`}></div>
+          <div className={`h-12 w-full max-w-xs rounded ${shimmerBg} mb-3`}></div>
           <div className={`h-4 w-64 rounded ${shimmerBg}`}></div>
         </div>
         <div className={`h-20 w-20 rounded-full ${shimmerBg}`}></div>
@@ -68,11 +66,11 @@ const SkeletonHeaderCard = ({ darkMode }) => {
 const SkeletonSectionCard = ({ metricCount, darkMode }) => {
   const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
   const { data } = useData();
-  const shimmerCardBg = darkMode 
-    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900" 
+  const shimmerCardBg = darkMode
+    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900"
     : "bg-gradient-to-br from-white via-blue-50/30 to-white";
   const border = darkMode ? "border-gray-700" : "border-gray-200";
-  
+
   return (
     <div className={`w-full ${data?.Report === "All" ? "  " : " "} p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
       <div className="flex items-center gap-3 mb-6">
@@ -89,8 +87,8 @@ const SkeletonSectionCard = ({ metricCount, darkMode }) => {
 };
 
 const SkeletonAuditDropdown = ({ darkMode }) => {
-  const shimmerCardBg = darkMode 
-    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900" 
+  const shimmerCardBg = darkMode
+    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900"
     : "bg-gradient-to-br from-white via-blue-50/30 to-white";
   const { data } = useData();
   const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
@@ -108,33 +106,33 @@ const SkeletonAuditDropdown = ({ darkMode }) => {
  */
 function AIOShimmer({ darkMode }) {
   const { data } = useData(); // Get data for conditional layout
-  const mainBg = darkMode 
-    ? "bg-gray-900" 
+  const mainBg = darkMode
+    ? "bg-gray-900"
     : "bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50";
 
   return (
     <div className={`relative flex w-full h-full min-h-screen ${mainBg} animate-pulse`}>
       {/* Conditional Sidebar */}
       {data?.Report === "All" && <SkeletonSidebar darkMode={darkMode} />}
-      
+
       {/* Main content area with conditional margin */}
       <main className={`flex-1 ${data?.Report === "All" ? "lg:ml-64" : ""} flex flex-col items-center pt-20 pb-12 px-4 space-y-8`}>
-        
+
         {/* 1. Header Card */}
         <SkeletonHeaderCard darkMode={darkMode} />
-        
+
         {/* 2. Section 1 (5 metrics) */}
         <SkeletonSectionCard metricCount={5} darkMode={darkMode} />
-        
+
         {/* 3. Section 2 (5 metrics) */}
         <SkeletonSectionCard metricCount={5} darkMode={darkMode} />
-        
+
         {/* 4. Section 3 (5 metrics) */}
         <SkeletonSectionCard metricCount={5} darkMode={darkMode} />
 
         {/* 5. Section 4 (4 metrics) */}
         <SkeletonSectionCard metricCount={4} darkMode={darkMode} />
-        
+
         {/* 6. Dropdowns (3 of them) */}
         <SkeletonAuditDropdown darkMode={darkMode} />
         <SkeletonAuditDropdown darkMode={darkMode} />
@@ -176,11 +174,10 @@ const MetricCard = ({ title, description, score, value, darkMode, icon }) => {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div
-        className={`absolute inset-0 rounded-xl opacity-0  ${
-          isPassed
-            ? "bg-gradient-to-br from-green-500/10 to-emerald-500/10"
-            : "bg-gradient-to-br from-red-500/10 to-rose-500/10"
-        }`}
+        className={`absolute inset-0 rounded-xl opacity-0  ${isPassed
+          ? "bg-gradient-to-br from-green-500/10 to-emerald-500/10"
+          : "bg-gradient-to-br from-red-500/10 to-rose-500/10"
+          }`}
       ></div>
 
       <div className="relative z-10">
@@ -204,24 +201,21 @@ const MetricCard = ({ title, description, score, value, darkMode, icon }) => {
 
         <button
           onClick={() => setShowDescription(!showDescription)}
-          className={`w-full mt-2 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-300 ${
-            darkMode
-              ? "bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white"
-              : "bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white"
-          }`}
+          className={`w-full mt-2 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-300 ${darkMode
+            ? "bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white"
+            : "bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white"
+            }`}
         >
           {showDescription ? "Hide Details" : "Show Details"}
         </button>
 
         <div
-          className={`overflow-hidden transition-all duration-300 ${
-            showDescription ? "max-h-96 mt-4" : "max-h-0"
-          }`}
+          className={`overflow-hidden transition-all duration-300 ${showDescription ? "max-h-96 mt-4" : "max-h-0"
+            }`}
         >
           <p
-            className={`text-sm ${descriptionColor} border-t ${
-              darkMode ? "border-gray-700" : "border-gray-200"
-            } pt-4`}
+            className={`text-sm ${descriptionColor} border-t ${darkMode ? "border-gray-700" : "border-gray-200"
+              } pt-4`}
           >
             {description}
           </p>
@@ -237,10 +231,10 @@ const MetricCard = ({ title, description, score, value, darkMode, icon }) => {
 function Section({ title, icon, color, children, textColor }) {
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
-  
+
   // --- ✅ FIX 1: Destructure 'data' ---
-  const { data } = useData(); 
-  
+  const { data } = useData();
+
   // --- ✅ FIX 2: Add mainCardBg for consistent UI ---
   const mainCardBg = darkMode
     ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900"
@@ -280,12 +274,12 @@ export default function AIO() {
   const { theme } = useContext(ThemeContext);
   const { data, loading } = useData();
   const darkMode = theme === "dark";
-  
+
   // --- ✅ FIX 1: Add '!data' check to prevent crash ---
   if (loading || !data || data.Status === "inprogress") {
     return <AIOShimmer darkMode={darkMode} />;
   }
-  
+
   // Now it's safe to access data
   const aio = data?.AIO_Readiness || {};
 
@@ -317,22 +311,13 @@ export default function AIO() {
     AI_Friendly_Structure: "Final evaluation of overall AI-readiness and code structure.",
   };
 
-  const sidebarClass = `fixed top-0 mt-16 left-0 h-full w-64 bg-white dark:bg-gray-900 shadow-lg`;
   return (
     <div className="relative flex w-full h-full min-h-screen">
-      {data?.Report === "All" && (
-      <div className={`${sidebarClass} lg:translate-x-0 transition-transform duration-300 ease-in-out z-40`}>
-          <Sidebar darkMode={darkMode} />
-        </div>
-      )}
-
       <main
-        // --- ✅ FIX 2: Add conditional margin ---
-        className={`flex-1 ${data?.Report === "All" ? "lg:ml-64" : ""} flex flex-col items-center pt-20 pb-12 px-4 space-y-8 ${
-          darkMode
-            ? "bg-gray-900"
-            : "bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50"
-        }`}
+        className={`flex-1 flex flex-col items-center pt-20 pb-12 px-4 space-y-8 ${darkMode
+          ? "bg-gray-900"
+          : "bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50"
+          }`}
       >
         {/* Header */}
         <div
@@ -342,14 +327,13 @@ export default function AIO() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2
-                className={`text-5xl font-black ${textColor} mb-2 bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent`}
+                className={`text-3xl sm:text-5xl font-black ${textColor} mb-2 bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent`}
               >
                 AIO Readiness
               </h2>
               <p
-                className={`text-sm ${
-                  darkMode ? "text-gray-400" : "text-gray-600"
-                }`}
+                className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-600"
+                  }`}
               >
                 Evaluate your website’s AI optimization — structure, speed, automation, and readiness for AI-driven tools.
               </p>
@@ -371,7 +355,7 @@ export default function AIO() {
         </div>
 
         {/* Sections will now correctly size themselves thanks to the fix in 'Section' component */}
-        
+
         <Section title="AI Data & Structure" icon="🧠" color="blue" textColor={textColor}>
           <MetricCard title="Structured Data" description={desc.Structured_Data} score={aio.Structured_Data?.Score} value={aio.Structured_Data?.Score ? "Present" : "Missing"} darkMode={darkMode} icon="🧩" />
           <MetricCard title="Metadata Complete" description={desc.Metadata_Complete} score={aio.Metadata_Complete?.Score} value={aio.Metadata_Complete?.Score ? "Yes" : "No"} darkMode={darkMode} icon="🏷️" />

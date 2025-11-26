@@ -116,7 +116,7 @@ function ConversionShimmer({ darkMode }) {
       {data?.Report === "All" && <SkeletonSidebar darkMode={darkMode} />}
 
       {/* Main content area with conditional margin */}
-      <main className={`flex-1 ${data?.Report === "All" ? "lg:ml-64" : ""} flex flex-col items-center pt-20 pb-12 px-4 space-y-8`}>
+      <main className={`flex-1 ${data?.Report === "All" ? "lg:ml-64" : ""} flex flex-col items-center pt-12 pb-10 px-4 space-y-8`}>
 
         {/* 1. Header Card */}
         <SkeletonHeaderCard darkMode={darkMode} />
@@ -319,7 +319,7 @@ export default function Conversion_Lead_Flow() {
   return (
     <div className="relative flex w-full h-full min-h-screen">
       <main
-        className={`flex-1 flex flex-col items-center pt-20 pb-12 px-4 space-y-8 ${darkMode
+        className={`flex-1 flex flex-col items-center pt-10 pb-10 px-4 space-y-8 ${darkMode
           ? "bg-gray-900"
           : "bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50"
           }`}

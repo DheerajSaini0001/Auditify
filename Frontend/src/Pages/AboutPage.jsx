@@ -24,16 +24,15 @@ export default function AboutPage({ darkMode }) {
   return (
     <>
       <div
-        className={`min-h-screen py-16 px-6 flex flex-col items-center justify-center transition-colors duration-300 ${
-          darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"
-        }`}
+        className={`min-h-screen py-16 px-6 flex flex-col items-center justify-center transition-colors duration-300 ${darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"
+          }`}
         style={bgStyle}
       >
         <div className="   text-center space-y-12">
           {/* Heading */}
           <div>
             <h1
-              className={`text-5xl font-extrabold mb-6 drop-shadow-lg ${textClass}`}
+              className={`text-3xl sm:text-5xl font-extrabold mb-6 drop-shadow-lg ${textClass}`}
             >
               About Our Site Audit Tool
             </h1>

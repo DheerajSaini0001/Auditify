@@ -7,8 +7,8 @@ export default function Footer() {
   const darkMode = theme === "dark";
 
   const footerClass = darkMode
-    ? "mt-auto flex bg-gray-900 text-gray-200 py-6 pt-8 border-t border-gray-700 lg:pl-64"
-    : "mt-auto flex bg-gray-200 text-gray-800 py-6 pt-8 border-t border-gray-300 lg:pl-64";
+    ? "mt-auto flex bg-gray-900 text-gray-200 py-6 pt-8 border-t border-gray-700"
+    : "mt-auto flex bg-gray-200 text-gray-800 py-6 pt-8 border-t border-gray-300";
 
   const linkHoverClass = darkMode
     ? "hover:text-blue-400 transition"
@@ -34,7 +34,7 @@ export default function Footer() {
           <Link replace to="https://sltechsoft.com/" className={linkHoverClass}>
             Contact
           </Link>
-        
+
         </div>
       </div>
     </footer>

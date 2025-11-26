@@ -4,7 +4,7 @@ import { Menu, X, Sun, Moon } from "lucide-react";
 import Assets from "../assets/Assets.js";
 import { useNavigate } from "react-router-dom";
 import { useData } from "../context/DataContext.jsx";
-import Sidebar from "./Sidebar.jsx";
+
 
 const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
   const { theme, toggleTheme } = useContext(ThemeContext);
@@ -24,22 +24,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
 
   return (
     <>
-      {/* ---------------------- FIXED SIDEBAR ---------------------- */}
-      <div
-        className={`
-          fixed left-0 top-16
-          h-[calc(100vh-4rem)] w-64
-          z-40 shadow-xl
-          transition-transform duration-300
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-64"}
-        `}
-      >
-        <Sidebar
-          darkMode={darkMode}
-          sidebarOpen={sidebarOpen}
-          closeSidebar={() => setSidebarOpen(false)}
-        />
-      </div>
+
 
       {/* ---------------------- NAVBAR ---------------------- */}
       <nav
@@ -50,11 +35,10 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
           {data && (
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className={`lg:hidden p-2 mr-3 rounded-lg transition ${
-                darkMode
-                  ? "bg-gray-800 hover:bg-gray-700"
-                  : "bg-gray-200 hover:bg-gray-300"
-              }`}
+              className={`lg:hidden p-2 mr-3 rounded-lg transition ${darkMode
+                ? "bg-gray-800 hover:bg-gray-700"
+                : "bg-gray-200 hover:bg-gray-300"
+                }`}
               aria-label="Toggle Sidebar"
             >
               {sidebarOpen ? (
@@ -79,11 +63,10 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
             />
 
             <span
-              className={`hidden sm:block bg-clip-text text-transparent ${
-                darkMode
-                  ? "bg-gradient-to-r from-sky-200 via-rose-200 to-orange-200"
-                  : "bg-gradient-to-r from-[#000428] to-[#004e92]"
-              }`}
+              className={`block bg-clip-text text-transparent text-lg sm:text-2xl ${darkMode
+                ? "bg-gradient-to-r from-sky-200 via-rose-200 to-orange-200"
+                : "bg-gradient-to-r from-[#000428] to-[#004e92]"
+                }`}
             >
               Site Audits
             </span>
@@ -93,9 +76,8 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
         {/* Theme Toggle Button */}
         <button
           onClick={toggleTheme}
-          className={`p-2 rounded-lg transition ${
-            darkMode ? "hover:bg-gray-800" : "hover:bg-gray-200"
-          }`}
+          className={`p-2 rounded-lg transition ${darkMode ? "hover:bg-gray-800" : "hover:bg-gray-200"
+            }`}
           aria-label="Toggle Theme"
         >
           {darkMode ? (

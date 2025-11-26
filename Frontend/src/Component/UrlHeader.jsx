@@ -18,53 +18,53 @@ const UrlHeader = ({ darkMode }) => {
   const btnBg = darkMode
     ? "bg-green-500 hover:bg-green-600 text-white"
     : "bg-green-400 hover:bg-green-500 text-black";
-    
+
   return (
     <>
-    <div className={`flex flex-col justify-center items-center ${cardBorder}`}>
+      <div className={`flex flex-col justify-center items-center ${cardBorder}`}>
 
-    
-    <div
-      className={`flex flex-col sm:flex-row m-6 gap-14 justify-between items-center p-4 rounded-lg border `}
-    >
-      {/* Left Section: URL and new details */}
-      <div className="flex flex-col gap-3 mb-4 sm:mb-0 text-center sm:text-left w-full sm:w-auto">
-        
-        {/* URL (existing) */}
-        <p
-          className={`${sectionText} sm:text-xl lg:text-3xl break-words`}
+
+        <div
+          className={`flex flex-col sm:flex-row m-4 sm:m-6 gap-4 sm:gap-14 justify-between items-center p-4 rounded-lg border `}
         >
-          URL -{" "}
-          <Link
-            replace
-            to={data || "#"}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-400 hover:underline"
-          >
-            {site || "No Site Provided"}
+          {/* Left Section: URL and new details */}
+          <div className="flex flex-col gap-3 mb-4 sm:mb-0 text-center sm:text-left w-full sm:w-auto">
+
+            {/* URL (existing) */}
+            <p
+              className={`${sectionText} sm:text-xl lg:text-3xl break-words`}
+            >
+              URL -{" "}
+              <Link
+                replace
+                to={data || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-400 hover:underline"
+              >
+                {site || "No Site Provided"}
+              </Link>
+            </p>
+
+            {/* --- NEW: Additional Info Section --- */}
+
+            {/* --- End of New Section --- */}
+
+          </div>
+
+          {/* Right Section: Button (existing) */}
+          <Link to="/" replace className="w-full sm:w-auto sm:ml-4 flex-shrink-0">
+            <button
+              onClick={clearData}
+              className={`font-semibold flex gap-2 justify-center items-center w-full sm:w-auto px-3 py-2 lg:px-4 lg:py-2 rounded-xl shadow-md transition ${btnBg}`}
+            >
+              <NotebookPen size={20} /> Check for Other
+            </button>
           </Link>
-        </p>
 
-        {/* --- NEW: Additional Info Section --- */}
-       
-        {/* --- End of New Section --- */}
+        </div>
+        <div className="flex flex-col items-center  sm:flex-row sm:gap-6 justify-center sm:justify-start">
 
-      </div>
-
-      {/* Right Section: Button (existing) */}
-      <Link to="/" replace className="w-full sm:w-auto sm:ml-4 flex-shrink-0">
-        <button
-          onClick={clearData}
-          className={`font-semibold flex gap-2 justify-center items-center w-full sm:w-auto px-3 py-2 lg:px-4 lg:py-2 rounded-xl shadow-md transition ${btnBg}`}
-        >
-          <NotebookPen size={20} /> Check for Other
-        </button>
-      </Link>
-      
-    </div>
-     <div className="flex flex-col items-center  sm:flex-row sm:gap-6 justify-center sm:justify-start">
-          
           {/* Report Type */}
           <div className="flex items-center gap-2 justify-center sm:justify-start">
             <FileText size={18} className="text-blue-400" />
@@ -85,8 +85,8 @@ const UrlHeader = ({ darkMode }) => {
             </span>
           </div>
         </div>
-        </div>
-        </>
+      </div>
+    </>
   );
 };
 

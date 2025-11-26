@@ -314,7 +314,7 @@ export default function AIO() {
   return (
     <div className="relative flex w-full h-full min-h-screen">
       <main
-        className={`flex-1 flex flex-col items-center pt-20 pb-12 px-4 space-y-8 ${darkMode
+        className={`flex-1 flex flex-col items-center pt-10 pb-10 px-4 space-y-8 ${darkMode
           ? "bg-gray-900"
           : "bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50"
           }`}

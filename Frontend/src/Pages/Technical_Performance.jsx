@@ -250,6 +250,26 @@ export default function Technical_Performance() {
     return <TechnicalPerformanceShimmer darkMode={darkMode} />;
   }
 
+  if (metric.Status === "failed") {
+    return (
+      <div className={`flex items-center justify-center h-screen w-full ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}>
+        <div className="text-center p-8 rounded-xl shadow-xl bg-white dark:bg-gray-800 border border-red-200 dark:border-red-900">
+          <div className="text-red-500 text-5xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold text-red-600 dark:text-red-400 mb-4">Audit Failed</h2>
+          <p className="text-gray-700 dark:text-gray-300 max-w-md mx-auto">
+            {metric.Error_Message || "An unexpected error occurred while analyzing the website."}
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-6 px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const textColor = darkMode ? "text-white" : "text-gray-900";
   const mainCardBg = darkMode
     ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900"

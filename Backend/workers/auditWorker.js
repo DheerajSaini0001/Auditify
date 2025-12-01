@@ -23,9 +23,9 @@ const OverAll = (A, B, C, D, E, F, G) => {
     totalScore: Number(total.toFixed(1)),
     grade:
       total >= 90 ? "A" :
-      total >= 80 ? "B" :
-      total >= 70 ? "C" :
-      total >= 60 ? "D" : "F",
+        total >= 80 ? "B" :
+          total >= 70 ? "C" :
+            total >= 60 ? "D" : "F",
     sectionScores: [
       { name: "Technical Performance", score: A },
       { name: "On-Page SEO", score: B },
@@ -82,7 +82,6 @@ const OverAll = (A, B, C, D, E, F, G) => {
       await SiteReport.findByIdAndUpdate(auditId, {
         Status: "completed",
         Time_Taken: `${timeTaken}s`,
-        $set: { "Raw.Time_Taken": `${timeTaken}s` }
       });
 
       console.log(`🧠 Worker Completed → ID: ${auditId}`);
@@ -103,18 +102,12 @@ const OverAll = (A, B, C, D, E, F, G) => {
 
     const timeTaken = ((performance.now() - start) / 1000).toFixed(0);
 
-     await SiteReport.findByIdAndUpdate(auditId, {
+    await SiteReport.findByIdAndUpdate(auditId, {
       Status: "completed",
       Time_Taken: `${timeTaken}s`,
       Score: overall.totalScore,
       Grade: overall.grade,
       Section_Score: overall.sectionScores,
-      $set: {
-        "Raw.Time_Taken": `${timeTaken}s`,
-        "Raw.Score": overall.totalScore,
-        "Raw.Grade": overall.grade,
-        "Raw.Section_Score": overall.sectionScores
-      }
     });
 
     console.log(`🧠 Worker Completed → ID: ${auditId}`);
@@ -131,7 +124,7 @@ const OverAll = (A, B, C, D, E, F, G) => {
 
   } finally {
     if (browser) {
-      try { await browser.close(); } catch {}
+      try { await browser.close(); } catch { }
     }
   }
 })();

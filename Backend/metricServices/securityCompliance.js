@@ -22,25 +22,25 @@ function checkHTTPS(url) {
   }
 }
 
-function checkSSLDetails(response){
+function checkSSLDetails(response) {
 
   const securityDetails = response.securityDetails();
 
-      const expiryDate = new Date(securityDetails.validTo * 1000);
-      const certificateValid = expiryDate > new Date() ? 1 : 0;
-      const tls = securityDetails.protocol(); // e.g., "TLS 1.3"
-      const tlsVersion = tls.includes('1.2') || tls.includes('1.3') ? 1 : 0;
-    
+  const expiryDate = new Date(securityDetails.validTo * 1000);
+  const certificateValid = expiryDate > new Date() ? 1 : 0;
+  const tls = securityDetails.protocol(); // e.g., "TLS 1.3"
+  const tlsVersion = tls.includes('1.2') || tls.includes('1.3') ? 1 : 0;
 
-    const headers = response.headers();
-    const hstsEnabled = headers['strict-transport-security'] ? 1 : 0;
-    const xFrameOptions = headers['x-frame-options'] ? 1 : 0;
-    const contentSecurityPolicy = headers['content-security-policy'] ? 1 : 0;
-    const xContentTypeOptions = headers['x-content-type-options'] ? 1 : 0;
-    
-    return {
-      certificateValid,tlsVersion,hstsEnabled,xFrameOptions,contentSecurityPolicy,xContentTypeOptions
-    }
+
+  const headers = response.headers();
+  const hstsEnabled = headers['strict-transport-security'] ? 1 : 0;
+  const xFrameOptions = headers['x-frame-options'] ? 1 : 0;
+  const contentSecurityPolicy = headers['content-security-policy'] ? 1 : 0;
+  const xContentTypeOptions = headers['x-content-type-options'] ? 1 : 0;
+
+  return {
+    certificateValid, tlsVersion, hstsEnabled, xFrameOptions, contentSecurityPolicy, xContentTypeOptions
+  }
 }
 
 // Security/Compliance (Security Headers)
@@ -194,14 +194,14 @@ async function checkSQLiExposure(urlString, options = {}) {
   return 1;
 }
 
-async function checkXSS(url,browser) {
+async function checkXSS(url, browser) {
   try {
     const payload = `<script>alert(1)</script>`;
     const testUrl = url.includes("?")
       ? `${url}&xss=${encodeURIComponent(payload)}`
       : `${url}?xss=${encodeURIComponent(payload)}`;
 
-    const testURLPage = await browser.newPage()  
+    const testURLPage = await browser.newPage()
     await testURLPage.goto(testUrl, { waitUntil: "networkidle2", timeout: 360000 });
     await testURLPage.waitForSelector("body", { timeout: 360000 });
     testURLPage.close()
@@ -688,7 +688,7 @@ async function checkNoBrowserErrors(page) {
   return hasConsoleErrors ? 0 : 1;
 }
 
-async function checkGeolocationRequest(url,page) {
+async function checkGeolocationRequest(url, page) {
 
   let geolocationRequested = 0;
 
@@ -755,7 +755,7 @@ async function checkNotificationRequest(page) {
   // Override Notification.requestPermission to detect requests
   await page.evaluateOnNewDocument(() => {
     const original = Notification.requestPermission;
-    Notification.requestPermission = function(...args) {
+    Notification.requestPermission = function (...args) {
       window.__notificationRequested = true;
       return original.apply(this, args);
     };
@@ -770,7 +770,7 @@ async function checkNotificationRequest(page) {
   return notificationRequested ? 0 : 1;
 }
 
-async function checkThirdPartyCookies(url,page) {
+async function checkThirdPartyCookies(url, page) {
 
   let thirdPartyCookieFound = 0;
 
@@ -820,7 +820,7 @@ async function checkDeprecatedAPIs(page) {
   return deprecatedAPIUsed ? 0 : 1;
 }
 
-export default async function securityCompliance(url,device,selectedMetric, page, response, browser, auditId) {
+export default async function securityCompliance(url, device, selectedMetric, page, response, browser, auditId) {
 
   // Security/Compliance (HTTPS / SSL)
   const checkHTTPSScore = checkHTTPS(url);
@@ -837,7 +837,7 @@ export default async function securityCompliance(url,device,selectedMetric, page
   const cookieResult = await checkCookiesSecure(page);
   const checkCookiesSecureScore = cookieResult.hasSecure ? 1 : 0;
   const checkCookiesHttpOnlyScore = cookieResult.hasHttpOnly ? 1 : 0;
-  
+
   // Security/Compliance (Vulnerability / Malware Check)
   const domain = Domain(url);
   const safeBrowsingScore = (await checkGoogleSafeBrowsing(url)) ? 1 : 0;
@@ -858,618 +858,618 @@ export default async function securityCompliance(url,device,selectedMetric, page
   const checkAdminPanelPublicScore = await checkAdminPanelPublic(url);
 
   // Security/Compliance (Vulnerability / Malware Check)
-  const xssVulnerabilityScore = await checkXSS(url,browser);
+  const xssVulnerabilityScore = await checkXSS(url, browser);
 
   // Lighthouse
   const checkViewportMetaTagScore = await checkViewportMetaTag(page);
   const checkHtmlDoctypeScore = await checkHtmlDoctype(page);
   const checkCharsetDefinedScore = await checkCharsetDefined(page);
   const checkBrowserErrorsScore = await checkNoBrowserErrors(page);
-  const checkGeolocationRequestScore = await checkGeolocationRequest(url,page);
+  const checkGeolocationRequestScore = await checkGeolocationRequest(url, page);
   const checkInputPasteAllowedScore = await checkInputPasteAllowed(page);
   const checkNotificationRequestScore = await checkNotificationRequest(page);
-  const checkThirdPartyCookiesScore = await checkThirdPartyCookies(url,page);
+  const checkThirdPartyCookiesScore = await checkThirdPartyCookies(url, page);
   const checkDeprecatedAPIsScore = await checkDeprecatedAPIs(page);
 
   // Total Score Calculation
-const Total = parseFloat((((checkHTTPSScore+checkSSLScore+checkSSLCertificateExpiryScore+checkHSTSScore+checkTLSVersionScore+checkXFrameOptionsScore+checkCSPScore+checkXContentTypeOptionsScore+checkCookiesSecureScore+checkCookiesHttpOnlyScore+cookieConsentScore+privacyPolicyScore+safeBrowsingScore+blacklistScore+malwareScanScore+xssVulnerabilityScore+sqliExposureScore+formsUseHTTPSScore+checkGDPRCCPAScore+checkDataCollectionScore+checkAdminPanelPublicScore+weakDefaultCredsScore+mfaEnabledScore) / 23) * 100).toFixed(0));
+  const Total = parseFloat((((checkHTTPSScore + checkSSLScore + checkSSLCertificateExpiryScore + checkHSTSScore + checkTLSVersionScore + checkXFrameOptionsScore + checkCSPScore + checkXContentTypeOptionsScore + checkCookiesSecureScore + checkCookiesHttpOnlyScore + cookieConsentScore + privacyPolicyScore + safeBrowsingScore + blacklistScore + malwareScanScore + xssVulnerabilityScore + sqliExposureScore + formsUseHTTPSScore + checkGDPRCCPAScore + checkDataCollectionScore + checkAdminPanelPublicScore + weakDefaultCredsScore + mfaEnabledScore) / 23) * 100).toFixed(0));
 
-// Passed
-const passed = [];
+  // Passed
+  const passed = [];
 
-// Improvements
-const improvements = [];
+  // Improvements
+  const improvements = [];
 
-// Security/Compliance (HTTPS / SSL)
-if (checkSSLScore === 0) {
-  improvements.push({
-    metric: "SSL Reachable",
-    current: "SSL connection failed",
-    recommended: "Ensure SSL certificate is valid and reachable",
-    severity: "High 🔴",
-    suggestion: "Check server SSL configuration."
-  });
-} else {
-  passed.push({
-    metric: "SSL Reachable",
-    current: "SSL reachable",
-    recommended: "Ensure SSL certificate is valid and reachable",
-    severity: "Pass 🟢",
-    suggestion: "SSL connection is properly established."
-  });
-}
+  // Security/Compliance (HTTPS / SSL)
+  if (checkSSLScore === 0) {
+    improvements.push({
+      metric: "SSL Reachable",
+      current: "SSL connection failed",
+      recommended: "Ensure SSL certificate is valid and reachable",
+      severity: "High 🔴",
+      suggestion: "Check server SSL configuration."
+    });
+  } else {
+    passed.push({
+      metric: "SSL Reachable",
+      current: "SSL reachable",
+      recommended: "Ensure SSL certificate is valid and reachable",
+      severity: "Pass 🟢",
+      suggestion: "SSL connection is properly established."
+    });
+  }
 
-if (checkSSLCertificateExpiryScore === 0) {
-  improvements.push({
-    metric: "SSL Certificate",
-    current: "Expired or invalid",
-    recommended: "Valid SSL certificate",
-    severity: "High 🔴",
-    suggestion: "Renew or configure a valid SSL certificate."
-  });
-} else {
-  passed.push({
-    metric: "SSL Certificate",
-    current: "Valid",
-    recommended: "Valid SSL certificate",
-    severity: "Pass 🟢",
-    suggestion: "Certificate is valid."
-  });
-}
+  if (checkSSLCertificateExpiryScore === 0) {
+    improvements.push({
+      metric: "SSL Certificate",
+      current: "Expired or invalid",
+      recommended: "Valid SSL certificate",
+      severity: "High 🔴",
+      suggestion: "Renew or configure a valid SSL certificate."
+    });
+  } else {
+    passed.push({
+      metric: "SSL Certificate",
+      current: "Valid",
+      recommended: "Valid SSL certificate",
+      severity: "Pass 🟢",
+      suggestion: "Certificate is valid."
+    });
+  }
 
-if (checkHSTSScore === 0) {
-  improvements.push({
-    metric: "HSTS",
-    current: "Missing",
-    recommended: "Enable HSTS",
-    severity: "Medium 🟡",
-    suggestion: "Add 'Strict-Transport-Security' header."
-  });
-} else {
-  passed.push({
-    metric: "HSTS",
-    current: "Enabled",
-    recommended: "Enable HSTS",
-    severity: "Pass 🟢",
-    suggestion: "HSTS header is correctly set."
-  });
-}
+  if (checkHSTSScore === 0) {
+    improvements.push({
+      metric: "HSTS",
+      current: "Missing",
+      recommended: "Enable HSTS",
+      severity: "Medium 🟡",
+      suggestion: "Add 'Strict-Transport-Security' header."
+    });
+  } else {
+    passed.push({
+      metric: "HSTS",
+      current: "Enabled",
+      recommended: "Enable HSTS",
+      severity: "Pass 🟢",
+      suggestion: "HSTS header is correctly set."
+    });
+  }
 
-if (checkTLSVersionScore === 0) {
-  improvements.push({
-    metric: "TLS Version",
-    current: "Weak TLS",
-    recommended: "TLS 1.2 or higher",
-    severity: "High 🔴",
-    suggestion: "Update server to support TLS 1.2/1.3."
-  });
-} else {
-  passed.push({
-    metric: "TLS Version",
-    current: "Strong TLS",
-    recommended: "TLS 1.2 or higher",
-    severity: "Pass 🟢",
-    suggestion: "TLS version is up-to-date."
-  });
-}
+  if (checkTLSVersionScore === 0) {
+    improvements.push({
+      metric: "TLS Version",
+      current: "Weak TLS",
+      recommended: "TLS 1.2 or higher",
+      severity: "High 🔴",
+      suggestion: "Update server to support TLS 1.2/1.3."
+    });
+  } else {
+    passed.push({
+      metric: "TLS Version",
+      current: "Strong TLS",
+      recommended: "TLS 1.2 or higher",
+      severity: "Pass 🟢",
+      suggestion: "TLS version is up-to-date."
+    });
+  }
 
-// Security/Compliance (Security Headers)
-if (checkCookiesSecureScore === 0) {
-  improvements.push({
-    metric: "Cookies Secure Flag",
-    current: "Not set",
-    recommended: "Set 'Secure' flag",
-    severity: "Medium 🟡",
-    suggestion: "Ensure cookies are sent only over HTTPS."
-  });
-} else {
-  passed.push({
-    metric: "Cookies Secure Flag",
-    current: "Set",
-    recommended: "Set 'Secure' flag",
-    severity: "Pass 🟢",
-    suggestion: "Cookies are secure."
-  });
-}
+  // Security/Compliance (Security Headers)
+  if (checkCookiesSecureScore === 0) {
+    improvements.push({
+      metric: "Cookies Secure Flag",
+      current: "Not set",
+      recommended: "Set 'Secure' flag",
+      severity: "Medium 🟡",
+      suggestion: "Ensure cookies are sent only over HTTPS."
+    });
+  } else {
+    passed.push({
+      metric: "Cookies Secure Flag",
+      current: "Set",
+      recommended: "Set 'Secure' flag",
+      severity: "Pass 🟢",
+      suggestion: "Cookies are secure."
+    });
+  }
 
-if (checkCookiesHttpOnlyScore === 0) {
-  improvements.push({
-    metric: "Cookies HttpOnly Flag",
-    current: "Not set",
-    recommended: "Set 'HttpOnly' flag",
-    severity: "Medium 🟡",
-    suggestion: "Prevent client-side scripts from reading cookies."
-  });
-} else {
-  passed.push({
-    metric: "Cookies HttpOnly Flag",
-    current: "Set",
-    recommended: "Set 'HttpOnly' flag",
-    severity: "Pass 🟢",
-    suggestion: "Cookies HttpOnly flag is set."
-  });
-}
+  if (checkCookiesHttpOnlyScore === 0) {
+    improvements.push({
+      metric: "Cookies HttpOnly Flag",
+      current: "Not set",
+      recommended: "Set 'HttpOnly' flag",
+      severity: "Medium 🟡",
+      suggestion: "Prevent client-side scripts from reading cookies."
+    });
+  } else {
+    passed.push({
+      metric: "Cookies HttpOnly Flag",
+      current: "Set",
+      recommended: "Set 'HttpOnly' flag",
+      severity: "Pass 🟢",
+      suggestion: "Cookies HttpOnly flag is set."
+    });
+  }
 
-// Security/Compliance (Vulnerability / Malware Check)
-if (safeBrowsingScore === 0) {
-  improvements.push({
-    metric: "Google Safe Browsing",
-    current: "Unsafe URL detected",
-    recommended: "No malware or phishing",
-    severity: "High 🔴",
-    suggestion: "Clean site and request Google Safe Browsing review."
-  });
-} else {
-  passed.push({
-    metric: "Google Safe Browsing",
-    current: "Safe",
-    recommended: "No malware or phishing",
-    severity: "Pass 🟢",
-    suggestion: "No threats detected."
-  });
-}
+  // Security/Compliance (Vulnerability / Malware Check)
+  if (safeBrowsingScore === 0) {
+    improvements.push({
+      metric: "Google Safe Browsing",
+      current: "Unsafe URL detected",
+      recommended: "No malware or phishing",
+      severity: "High 🔴",
+      suggestion: "Clean site and request Google Safe Browsing review."
+    });
+  } else {
+    passed.push({
+      metric: "Google Safe Browsing",
+      current: "Safe",
+      recommended: "No malware or phishing",
+      severity: "Pass 🟢",
+      suggestion: "No threats detected."
+    });
+  }
 
-if (blacklistScore === 0 || malwareScanScore === 0) {
-  improvements.push({
-    metric: "Domain Blacklist / Malware Scan",
-    current: "Flagged or malicious",
-    recommended: "Clean domain",
-    severity: "High 🔴",
-    suggestion: "Remove malware or request delisting from blacklists."
-  });
-} else {
-  passed.push({
-    metric: "Domain Blacklist / Malware Scan",
-    current: "Safe",
-    recommended: "Clean domain",
-    severity: "Pass 🟢",
-    suggestion: "Domain is not blacklisted and clean."
-  });
-}
+  if (blacklistScore === 0 || malwareScanScore === 0) {
+    improvements.push({
+      metric: "Domain Blacklist / Malware Scan",
+      current: "Flagged or malicious",
+      recommended: "Clean domain",
+      severity: "High 🔴",
+      suggestion: "Remove malware or request delisting from blacklists."
+    });
+  } else {
+    passed.push({
+      metric: "Domain Blacklist / Malware Scan",
+      current: "Safe",
+      recommended: "Clean domain",
+      severity: "Pass 🟢",
+      suggestion: "Domain is not blacklisted and clean."
+    });
+  }
 
-if (sqliExposureScore === 0) {
-  improvements.push({
-    metric: "SQL Injection Exposure",
-    current: "Vulnerable",
-    recommended: "Use prepared statements",
-    severity: "High 🔴",
-    suggestion: "Sanitize inputs and use parameterized queries."
-  });
-} else {
-  passed.push({
-    metric: "SQL Injection Exposure",
-    current: "Safe",
-    recommended: "Use prepared statements",
-    severity: "Pass 🟢",
-    suggestion: "No SQL injection vulnerability detected."
-  });
-}
+  if (sqliExposureScore === 0) {
+    improvements.push({
+      metric: "SQL Injection Exposure",
+      current: "Vulnerable",
+      recommended: "Use prepared statements",
+      severity: "High 🔴",
+      suggestion: "Sanitize inputs and use parameterized queries."
+    });
+  } else {
+    passed.push({
+      metric: "SQL Injection Exposure",
+      current: "Safe",
+      recommended: "Use prepared statements",
+      severity: "Pass 🟢",
+      suggestion: "No SQL injection vulnerability detected."
+    });
+  }
 
-if (xssVulnerabilityScore === 0) {
-  improvements.push({
-    metric: "Cross-Site Scripting (XSS)",
-    current: "Vulnerable",
-    recommended: "Sanitize inputs & implement CSP",
-    severity: "High 🔴",
-    suggestion: "Use proper output encoding and CSP headers."
-  });
-} else {
-  passed.push({
-    metric: "Cross-Site Scripting (XSS)",
-    current: "Safe",
-    recommended: "Sanitize inputs & implement CSP",
-    severity: "Pass 🟢",
-    suggestion: "No XSS vulnerability detected."
-  });
-}
+  if (xssVulnerabilityScore === 0) {
+    improvements.push({
+      metric: "Cross-Site Scripting (XSS)",
+      current: "Vulnerable",
+      recommended: "Sanitize inputs & implement CSP",
+      severity: "High 🔴",
+      suggestion: "Use proper output encoding and CSP headers."
+    });
+  } else {
+    passed.push({
+      metric: "Cross-Site Scripting (XSS)",
+      current: "Safe",
+      recommended: "Sanitize inputs & implement CSP",
+      severity: "Pass 🟢",
+      suggestion: "No XSS vulnerability detected."
+    });
+  }
 
-if (xssVulnerabilityScore === 0) {
-  improvements.push({
-    metric: "XSS Vulnerability",
-    current: "Vulnerable",
-    recommended: "Sanitize all user inputs",
-    severity: "High 🔴",
-    suggestion: "Implement input validation and output encoding to prevent XSS attacks."
-  });
-} else {
-  passed.push({
-    metric: "XSS Vulnerability",
-    current: "Safe",
-    recommended: "Sanitize all user inputs",
-    severity: "Pass 🟢",
-    suggestion: "No XSS vulnerability detected."
-  });
-}
+  if (xssVulnerabilityScore === 0) {
+    improvements.push({
+      metric: "XSS Vulnerability",
+      current: "Vulnerable",
+      recommended: "Sanitize all user inputs",
+      severity: "High 🔴",
+      suggestion: "Implement input validation and output encoding to prevent XSS attacks."
+    });
+  } else {
+    passed.push({
+      metric: "XSS Vulnerability",
+      current: "Safe",
+      recommended: "Sanitize all user inputs",
+      severity: "Pass 🟢",
+      suggestion: "No XSS vulnerability detected."
+    });
+  }
 
-// Security/Compliance (Privacy & Compliance)
-if (cookieConsentScore === 0) {
-  improvements.push({
-    metric: "Cookie Consent",
-    current: "Not implemented",
-    recommended: "Add cookie consent banner",
-    severity: "Low 🟡",
-    suggestion: "Implement cookie consent to comply with privacy regulations."
-  });
-} else {
-  passed.push({
-    metric: "Cookie Consent",
-    current: "Implemented",
-    recommended: "Add cookie consent banner",
-    severity: "Pass 🟢",
-    suggestion: "Cookie consent is present."
-  });
-}
+  // Security/Compliance (Privacy & Compliance)
+  if (cookieConsentScore === 0) {
+    improvements.push({
+      metric: "Cookie Consent",
+      current: "Not implemented",
+      recommended: "Add cookie consent banner",
+      severity: "Low 🟡",
+      suggestion: "Implement cookie consent to comply with privacy regulations."
+    });
+  } else {
+    passed.push({
+      metric: "Cookie Consent",
+      current: "Implemented",
+      recommended: "Add cookie consent banner",
+      severity: "Pass 🟢",
+      suggestion: "Cookie consent is present."
+    });
+  }
 
-if (privacyPolicyScore === 0) {
-  improvements.push({
-    metric: "Privacy Policy",
-    current: "Not found",
-    recommended: "Provide privacy policy page",
-    severity: "Low 🟡",
-    suggestion: "Add a privacy policy accessible from site footer."
-  });
-} else {
-  passed.push({
-    metric: "Privacy Policy",
-    current: "Found",
-    recommended: "Provide privacy policy page",
-    severity: "Pass 🟢",
-    suggestion: "Privacy policy is present."
-  });
-}
+  if (privacyPolicyScore === 0) {
+    improvements.push({
+      metric: "Privacy Policy",
+      current: "Not found",
+      recommended: "Provide privacy policy page",
+      severity: "Low 🟡",
+      suggestion: "Add a privacy policy accessible from site footer."
+    });
+  } else {
+    passed.push({
+      metric: "Privacy Policy",
+      current: "Found",
+      recommended: "Provide privacy policy page",
+      severity: "Pass 🟢",
+      suggestion: "Privacy policy is present."
+    });
+  }
 
-if (formsUseHTTPSScore === 0) {
-  improvements.push({
-    metric: "Forms Using HTTPS",
-    current: "Form actions not secure",
-    recommended: "Submit all forms over HTTPS",
-    severity: "High 🔴",
-    suggestion: "Update form action URLs to use HTTPS to protect data in transit."
-  });
-} else {
-  passed.push({
-    metric: "Forms Using HTTPS",
-    current: "All forms use HTTPS",
-    recommended: "Submit all forms over HTTPS",
-    severity: "Pass 🟢",
-    suggestion: "Forms are correctly submitted over HTTPS."
-  });
-}
+  if (formsUseHTTPSScore === 0) {
+    improvements.push({
+      metric: "Forms Using HTTPS",
+      current: "Form actions not secure",
+      recommended: "Submit all forms over HTTPS",
+      severity: "High 🔴",
+      suggestion: "Update form action URLs to use HTTPS to protect data in transit."
+    });
+  } else {
+    passed.push({
+      metric: "Forms Using HTTPS",
+      current: "All forms use HTTPS",
+      recommended: "Submit all forms over HTTPS",
+      severity: "Pass 🟢",
+      suggestion: "Forms are correctly submitted over HTTPS."
+    });
+  }
 
-if (checkGDPRCCPAScore === 0) {
-  improvements.push({
-    metric: "GDPR/CCPA Notice",
-    current: "Not present",
-    recommended: "Display GDPR/CCPA consent notice",
-    severity: "Medium 🟡",
-    suggestion: "Add GDPR/CCPA consent banner for compliance."
-  });
-} else {
-  passed.push({
-    metric: "GDPR/CCPA Notice",
-    current: "Present",
-    recommended: "Display GDPR/CCPA consent notice",
-    severity: "Pass 🟢",
-    suggestion: "GDPR/CCPA notice is present."
-  });
-}
+  if (checkGDPRCCPAScore === 0) {
+    improvements.push({
+      metric: "GDPR/CCPA Notice",
+      current: "Not present",
+      recommended: "Display GDPR/CCPA consent notice",
+      severity: "Medium 🟡",
+      suggestion: "Add GDPR/CCPA consent banner for compliance."
+    });
+  } else {
+    passed.push({
+      metric: "GDPR/CCPA Notice",
+      current: "Present",
+      recommended: "Display GDPR/CCPA consent notice",
+      severity: "Pass 🟢",
+      suggestion: "GDPR/CCPA notice is present."
+    });
+  }
 
-if (checkDataCollectionScore === 0) {
-  improvements.push({
-    metric: "Data Collection Disclosure",
-    current: "Not found",
-    recommended: "Provide information on data collection",
-    severity: "Medium 🟡",
-    suggestion: "Add a page detailing what data is collected and how it is used."
-  });
-} else {
-  passed.push({
-    metric: "Data Collection Disclosure",
-    current: "Found",
-    recommended: "Provide information on data collection",
-    severity: "Pass 🟢",
-    suggestion: "Data collection information is present."
-  });
-}
+  if (checkDataCollectionScore === 0) {
+    improvements.push({
+      metric: "Data Collection Disclosure",
+      current: "Not found",
+      recommended: "Provide information on data collection",
+      severity: "Medium 🟡",
+      suggestion: "Add a page detailing what data is collected and how it is used."
+    });
+  } else {
+    passed.push({
+      metric: "Data Collection Disclosure",
+      current: "Found",
+      recommended: "Provide information on data collection",
+      severity: "Pass 🟢",
+      suggestion: "Data collection information is present."
+    });
+  }
 
-// Security/Compliance ( Authentication & Access Control)
-if (weakDefaultCredsScore === 0) {
-  improvements.push({
-    metric: "Weak/Default Credentials",
-    current: "Default or weak credentials detected",
-    recommended: "Use strong unique passwords",
-    severity: "High 🔴",
-    suggestion: "Change default passwords and enforce strong password policy."
-  });
-} else {
-  passed.push({
-    metric: "Weak/Default Credentials",
-    current: "No weak/default credentials detected",
-    recommended: "Use strong unique passwords",
-    severity: "Pass 🟢",
-    suggestion: "Credentials are safe."
-  });
-}
+  // Security/Compliance ( Authentication & Access Control)
+  if (weakDefaultCredsScore === 0) {
+    improvements.push({
+      metric: "Weak/Default Credentials",
+      current: "Default or weak credentials detected",
+      recommended: "Use strong unique passwords",
+      severity: "High 🔴",
+      suggestion: "Change default passwords and enforce strong password policy."
+    });
+  } else {
+    passed.push({
+      metric: "Weak/Default Credentials",
+      current: "No weak/default credentials detected",
+      recommended: "Use strong unique passwords",
+      severity: "Pass 🟢",
+      suggestion: "Credentials are safe."
+    });
+  }
 
-if (mfaEnabledScore === 0) {
-  improvements.push({
-    metric: "Multi-Factor Authentication (MFA)",
-    current: "Not detected",
-    recommended: "Enable MFA for all accounts",
-    severity: "Medium 🟡",
-    suggestion: "Implement MFA to strengthen authentication security."
-  });
-} else {
-  passed.push({
-    metric: "Multi-Factor Authentication (MFA)",
-    current: "Detected",
-    recommended: "Enable MFA for all accounts",
-    severity: "Pass 🟢",
-    suggestion: "MFA is enabled."
-  });
-}
+  if (mfaEnabledScore === 0) {
+    improvements.push({
+      metric: "Multi-Factor Authentication (MFA)",
+      current: "Not detected",
+      recommended: "Enable MFA for all accounts",
+      severity: "Medium 🟡",
+      suggestion: "Implement MFA to strengthen authentication security."
+    });
+  } else {
+    passed.push({
+      metric: "Multi-Factor Authentication (MFA)",
+      current: "Detected",
+      recommended: "Enable MFA for all accounts",
+      severity: "Pass 🟢",
+      suggestion: "MFA is enabled."
+    });
+  }
 
-if (checkAdminPanelPublicScore === 0) {
-  improvements.push({
-    metric: "Admin Panel Accessibility",
-    current: "Publicly reachable",
-    recommended: "Restrict access to admin panels",
-    severity: "High 🔴",
-    suggestion: "Protect admin pages with authentication and IP restrictions."
-  });
-} else {
-  passed.push({
-    metric: "Admin Panel Accessibility",
-    current: "Not publicly accessible",
-    recommended: "Restrict access to admin panels",
-    severity: "Pass 🟢",
-    suggestion: "Admin pages are not exposed to the public."
-  });
-}
+  if (checkAdminPanelPublicScore === 0) {
+    improvements.push({
+      metric: "Admin Panel Accessibility",
+      current: "Publicly reachable",
+      recommended: "Restrict access to admin panels",
+      severity: "High 🔴",
+      suggestion: "Protect admin pages with authentication and IP restrictions."
+    });
+  } else {
+    passed.push({
+      metric: "Admin Panel Accessibility",
+      current: "Not publicly accessible",
+      recommended: "Restrict access to admin panels",
+      severity: "Pass 🟢",
+      suggestion: "Admin pages are not exposed to the public."
+    });
+  }
 
-// Lighthouse
-if (checkViewportMetaTagScore === 0) {
-  improvements.push({
-    metric: "Viewport Meta Tag",
-    current: "Missing or invalid",
-    recommended: "Include a responsive viewport meta tag",
-    severity: "High 🔴",
-    suggestion: `Add <meta name="viewport" content="width=device-width, initial-scale=1.0"> in the <head> for better mobile compatibility.`
-  });
-} else {
-  passed.push({
-    metric: "Viewport Meta Tag",
-    current: "Present and valid",
-    recommended: "Maintain responsive configuration",
-    severity: "Pass 🟢",
-    suggestion: "Viewport tag correctly defines width and scale."
-  });
-}
+  // Lighthouse
+  if (checkViewportMetaTagScore === 0) {
+    improvements.push({
+      metric: "Viewport Meta Tag",
+      current: "Missing or invalid",
+      recommended: "Include a responsive viewport meta tag",
+      severity: "High 🔴",
+      suggestion: `Add <meta name="viewport" content="width=device-width, initial-scale=1.0"> in the <head> for better mobile compatibility.`
+    });
+  } else {
+    passed.push({
+      metric: "Viewport Meta Tag",
+      current: "Present and valid",
+      recommended: "Maintain responsive configuration",
+      severity: "Pass 🟢",
+      suggestion: "Viewport tag correctly defines width and scale."
+    });
+  }
 
-if (checkHtmlDoctypeScore === 0) {
-  improvements.push({
-    metric: "HTML Doctype",
-    current: "Not defined or incorrect",
-    recommended: "Use <!DOCTYPE html>",
-    severity: "Medium 🟠",
-    suggestion: "Ensure the page starts with <!DOCTYPE html> to trigger standards mode."
-  });
-} else {
-  passed.push({
-    metric: "HTML Doctype",
-    current: "Valid",
-    recommended: "Maintain correct doctype declaration",
-    severity: "Pass 🟢",
-    suggestion: "Doctype correctly set to HTML5."
-  });
-}
+  if (checkHtmlDoctypeScore === 0) {
+    improvements.push({
+      metric: "HTML Doctype",
+      current: "Not defined or incorrect",
+      recommended: "Use <!DOCTYPE html>",
+      severity: "Medium 🟠",
+      suggestion: "Ensure the page starts with <!DOCTYPE html> to trigger standards mode."
+    });
+  } else {
+    passed.push({
+      metric: "HTML Doctype",
+      current: "Valid",
+      recommended: "Maintain correct doctype declaration",
+      severity: "Pass 🟢",
+      suggestion: "Doctype correctly set to HTML5."
+    });
+  }
 
-if (checkCharsetDefinedScore === 0) {
-  improvements.push({
-    metric: "Character Encoding",
-    current: "Undefined",
-    recommended: "Define charset in header or meta",
-    severity: "Medium 🟠",
-    suggestion: "Add <meta charset='UTF-8'> or specify charset in HTTP headers."
-  });
-} else {
-  passed.push({
-    metric: "Character Encoding",
-    current: "Defined",
-    recommended: "Maintain charset definition",
-    severity: "Pass 🟢",
-    suggestion: "Character encoding properly defined."
-  });
-}
+  if (checkCharsetDefinedScore === 0) {
+    improvements.push({
+      metric: "Character Encoding",
+      current: "Undefined",
+      recommended: "Define charset in header or meta",
+      severity: "Medium 🟠",
+      suggestion: "Add <meta charset='UTF-8'> or specify charset in HTTP headers."
+    });
+  } else {
+    passed.push({
+      metric: "Character Encoding",
+      current: "Defined",
+      recommended: "Maintain charset definition",
+      severity: "Pass 🟢",
+      suggestion: "Character encoding properly defined."
+    });
+  }
 
-if (checkBrowserErrorsScore === 0) {
-  improvements.push({
-    metric: "Browser Console Errors",
-    current: "Errors detected",
-    recommended: "Fix runtime and console issues",
-    severity: "High 🔴",
-    suggestion: "Review console errors and JavaScript exceptions to improve stability."
-  });
-} else {
-  passed.push({
-    metric: "Browser Console Errors",
-    current: "No errors",
-    recommended: "Keep code error-free",
-    severity: "Pass 🟢",
-    suggestion: "No browser or console errors found."
-  });
-}
+  if (checkBrowserErrorsScore === 0) {
+    improvements.push({
+      metric: "Browser Console Errors",
+      current: "Errors detected",
+      recommended: "Fix runtime and console issues",
+      severity: "High 🔴",
+      suggestion: "Review console errors and JavaScript exceptions to improve stability."
+    });
+  } else {
+    passed.push({
+      metric: "Browser Console Errors",
+      current: "No errors",
+      recommended: "Keep code error-free",
+      severity: "Pass 🟢",
+      suggestion: "No browser or console errors found."
+    });
+  }
 
-if (checkGeolocationRequestScore === 0) {
-  improvements.push({
-    metric: "Geolocation Request",
-    current: "Requests user location",
-    recommended: "Avoid unnecessary geolocation prompts",
-    severity: "Medium 🟠",
-    suggestion: "Request geolocation only when required and explain the purpose clearly to users."
-  });
-} else {
-  passed.push({
-    metric: "Geolocation Request",
-    current: "No geolocation request",
-    recommended: "Maintain privacy standards",
-    severity: "Pass 🟢",
-    suggestion: "No unnecessary geolocation permissions requested."
-  });
-}
+  if (checkGeolocationRequestScore === 0) {
+    improvements.push({
+      metric: "Geolocation Request",
+      current: "Requests user location",
+      recommended: "Avoid unnecessary geolocation prompts",
+      severity: "Medium 🟠",
+      suggestion: "Request geolocation only when required and explain the purpose clearly to users."
+    });
+  } else {
+    passed.push({
+      metric: "Geolocation Request",
+      current: "No geolocation request",
+      recommended: "Maintain privacy standards",
+      severity: "Pass 🟢",
+      suggestion: "No unnecessary geolocation permissions requested."
+    });
+  }
 
-if (checkInputPasteAllowedScore === 0) {
-  improvements.push({
-    metric: "Input Paste Allowed",
-    current: "Paste restricted",
-    recommended: "Allow paste in input fields unless critical",
-    severity: "Low 🟡",
-    suggestion: "Avoid disabling paste for better user experience unless needed (e.g., OTP fields)."
-  });
-} else {
-  passed.push({
-    metric: "Input Paste Allowed",
-    current: "Allowed",
-    recommended: "Maintain input flexibility",
-    severity: "Pass 🟢",
-    suggestion: "Pasting is allowed in input fields."
-  });
-}
+  if (checkInputPasteAllowedScore === 0) {
+    improvements.push({
+      metric: "Input Paste Allowed",
+      current: "Paste restricted",
+      recommended: "Allow paste in input fields unless critical",
+      severity: "Low 🟡",
+      suggestion: "Avoid disabling paste for better user experience unless needed (e.g., OTP fields)."
+    });
+  } else {
+    passed.push({
+      metric: "Input Paste Allowed",
+      current: "Allowed",
+      recommended: "Maintain input flexibility",
+      severity: "Pass 🟢",
+      suggestion: "Pasting is allowed in input fields."
+    });
+  }
 
-if (checkNotificationRequestScore === 0) {
-  improvements.push({
-    metric: "Notification Request",
-    current: "Requests notifications",
-    recommended: "Request only when necessary",
-    severity: "Low 🟡",
-    suggestion: "Avoid automatic notification permission prompts on page load."
-  });
-} else {
-  passed.push({
-    metric: "Notification Request",
-    current: "No notification requests",
-    recommended: "Maintain minimal permission requests",
-    severity: "Pass 🟢",
-    suggestion: "No unsolicited notification requests detected."
-  });
-}
+  if (checkNotificationRequestScore === 0) {
+    improvements.push({
+      metric: "Notification Request",
+      current: "Requests notifications",
+      recommended: "Request only when necessary",
+      severity: "Low 🟡",
+      suggestion: "Avoid automatic notification permission prompts on page load."
+    });
+  } else {
+    passed.push({
+      metric: "Notification Request",
+      current: "No notification requests",
+      recommended: "Maintain minimal permission requests",
+      severity: "Pass 🟢",
+      suggestion: "No unsolicited notification requests detected."
+    });
+  }
 
-if (checkThirdPartyCookiesScore === 0) {
-  improvements.push({
-    metric: "Third-Party Cookies",
-    current: "Detected",
-    recommended: "Remove or minimize third-party cookies",
-    severity: "High 🔴",
-    suggestion: "Review dependencies and switch to first-party storage wherever possible."
-  });
-} else {
-  passed.push({
-    metric: "Third-Party Cookies",
-    current: "Not detected",
-    recommended: "Maintain cookie hygiene",
-    severity: "Pass 🟢",
-    suggestion: "No third-party cookies found."
-  });
-}
+  if (checkThirdPartyCookiesScore === 0) {
+    improvements.push({
+      metric: "Third-Party Cookies",
+      current: "Detected",
+      recommended: "Remove or minimize third-party cookies",
+      severity: "High 🔴",
+      suggestion: "Review dependencies and switch to first-party storage wherever possible."
+    });
+  } else {
+    passed.push({
+      metric: "Third-Party Cookies",
+      current: "Not detected",
+      recommended: "Maintain cookie hygiene",
+      severity: "Pass 🟢",
+      suggestion: "No third-party cookies found."
+    });
+  }
 
-if (checkDeprecatedAPIsScore === 0) {
-  improvements.push({
-    metric: "Deprecated API Usage",
-    current: "Deprecated APIs used",
-    recommended: "Update to modern API equivalents",
-    severity: "Medium 🟠",
-    suggestion: "Replace deprecated APIs to ensure long-term compatibility."
-  });
-} else {
-  passed.push({
-    metric: "Deprecated API Usage",
-    current: "No deprecated APIs used",
-    recommended: "Maintain updated standards",
-    severity: "Pass 🟢",
-    suggestion: "No deprecated API warnings detected."
-  });
-}
-
-
-// Warning
-const warning = [];
-
-// Security/Compliance (HTTPS / SSL)
-if (checkHTTPSScore === 0) {
-  warning.push({
-    metric: "HTTPS",
-    current: "Not served over HTTPS",
-    recommended: "Serve all pages over HTTPS",
-    severity: "High 🔴",
-    suggestion: "Configure an SSL certificate and redirect HTTP traffic to HTTPS."
-  });
-} else {
-  passed.push({
-    metric: "HTTPS",
-    current: "Served over HTTPS",
-    recommended: "Serve all pages over HTTPS",
-    severity: "Pass 🟢",
-    suggestion: "HTTPS is correctly configured."
-  });
-}
-
-// Security/Compliance (Security Headers)
-if (checkXContentTypeOptionsScore === 0) {
-  warning.push({
-    metric: "X-Content-Type-Options",
-    current: "Missing",
-    recommended: "Use 'nosniff'",
-    severity: "Medium 🟡",
-    suggestion: "Add X-Content-Type-Options header to prevent MIME sniffing."
-  });
-} else {
-  passed.push({
-    metric: "X-Content-Type-Options",
-    current: "Set",
-    recommended: "Use 'nosniff'",
-    severity: "Pass 🟢",
-    suggestion: "Header is correctly set."
-  });
-}
-
-if (checkCSPScore === 0) {
-  warning.push({
-    metric: "Content Security Policy (CSP)",
-    current: "Not set",
-    recommended: "Implement CSP header",
-    severity: "High 🔴",
-    suggestion: "Define a CSP to restrict scripts and resources."
-  });
-} else {
-  passed.push({
-    metric: "Content Security Policy (CSP)",
-    current: "Set",
-    recommended: "Implement CSP header",
-    severity: "Pass 🟢",
-    suggestion: "CSP header is correctly configured."
-  });
-}
-
-if (checkXFrameOptionsScore === 0) {
-  warning.push({
-    metric: "X-Frame-Options",
-    current: "Missing",
-    recommended: "Use 'DENY' or 'SAMEORIGIN'",
-    severity: "Medium 🟡",
-    suggestion: "Add X-Frame-Options header to prevent clickjacking."
-  });
-} else {
-  passed.push({
-    metric: "X-Frame-Options",
-    current: "Set",
-    recommended: "Use 'DENY' or 'SAMEORIGIN'",
-    severity: "Pass 🟢",
-    suggestion: "X-Frame-Options header is correctly set."
-  });
-}
+  if (checkDeprecatedAPIsScore === 0) {
+    improvements.push({
+      metric: "Deprecated API Usage",
+      current: "Deprecated APIs used",
+      recommended: "Update to modern API equivalents",
+      severity: "Medium 🟠",
+      suggestion: "Replace deprecated APIs to ensure long-term compatibility."
+    });
+  } else {
+    passed.push({
+      metric: "Deprecated API Usage",
+      current: "No deprecated APIs used",
+      recommended: "Maintain updated standards",
+      severity: "Pass 🟢",
+      suggestion: "No deprecated API warnings detected."
+    });
+  }
 
 
-const actualPercentage =  parseFloat((((checkViewportMetaTagScore+checkHtmlDoctypeScore+checkCharsetDefinedScore+checkBrowserErrorsScore+checkGeolocationRequestScore+checkInputPasteAllowedScore+checkNotificationRequestScore+checkThirdPartyCookiesScore+checkDeprecatedAPIsScore) / 9) * 100).toFixed(0));
+  // Warning
+  const warning = [];
+
+  // Security/Compliance (HTTPS / SSL)
+  if (checkHTTPSScore === 0) {
+    warning.push({
+      metric: "HTTPS",
+      current: "Not served over HTTPS",
+      recommended: "Serve all pages over HTTPS",
+      severity: "High 🔴",
+      suggestion: "Configure an SSL certificate and redirect HTTP traffic to HTTPS."
+    });
+  } else {
+    passed.push({
+      metric: "HTTPS",
+      current: "Served over HTTPS",
+      recommended: "Serve all pages over HTTPS",
+      severity: "Pass 🟢",
+      suggestion: "HTTPS is correctly configured."
+    });
+  }
+
+  // Security/Compliance (Security Headers)
+  if (checkXContentTypeOptionsScore === 0) {
+    warning.push({
+      metric: "X-Content-Type-Options",
+      current: "Missing",
+      recommended: "Use 'nosniff'",
+      severity: "Medium 🟡",
+      suggestion: "Add X-Content-Type-Options header to prevent MIME sniffing."
+    });
+  } else {
+    passed.push({
+      metric: "X-Content-Type-Options",
+      current: "Set",
+      recommended: "Use 'nosniff'",
+      severity: "Pass 🟢",
+      suggestion: "Header is correctly set."
+    });
+  }
+
+  if (checkCSPScore === 0) {
+    warning.push({
+      metric: "Content Security Policy (CSP)",
+      current: "Not set",
+      recommended: "Implement CSP header",
+      severity: "High 🔴",
+      suggestion: "Define a CSP to restrict scripts and resources."
+    });
+  } else {
+    passed.push({
+      metric: "Content Security Policy (CSP)",
+      current: "Set",
+      recommended: "Implement CSP header",
+      severity: "Pass 🟢",
+      suggestion: "CSP header is correctly configured."
+    });
+  }
+
+  if (checkXFrameOptionsScore === 0) {
+    warning.push({
+      metric: "X-Frame-Options",
+      current: "Missing",
+      recommended: "Use 'DENY' or 'SAMEORIGIN'",
+      severity: "Medium 🟡",
+      suggestion: "Add X-Frame-Options header to prevent clickjacking."
+    });
+  } else {
+    passed.push({
+      metric: "X-Frame-Options",
+      current: "Set",
+      recommended: "Use 'DENY' or 'SAMEORIGIN'",
+      severity: "Pass 🟢",
+      suggestion: "X-Frame-Options header is correctly set."
+    });
+  }
+
+
+  const actualPercentage = parseFloat((((checkViewportMetaTagScore + checkHtmlDoctypeScore + checkCharsetDefinedScore + checkBrowserErrorsScore + checkGeolocationRequestScore + checkInputPasteAllowedScore + checkNotificationRequestScore + checkThirdPartyCookiesScore + checkDeprecatedAPIsScore) / 9) * 100).toFixed(0));
 
   // console.log("HTTPS:", checkHTTPSScore);
   // console.log("SSL:", checkSSLScore);
@@ -1509,7 +1509,7 @@ const actualPercentage =  parseFloat((((checkViewportMetaTagScore+checkHtmlDocty
   // console.log(Total);
   // console.log(improvements);
 
-    await SiteReport.findByIdAndUpdate(auditId, {
+  await SiteReport.findByIdAndUpdate(auditId, {
     Security_or_Compliance: {
       HTTPS: {
         Score: checkHTTPSScore,
@@ -1645,143 +1645,8 @@ const actualPercentage =  parseFloat((((checkViewportMetaTagScore+checkHtmlDocty
       Total: Total,
       Improvements: improvements
     },
-    $set: {
-          'Raw.Site': url,
-          'Raw.Report': selectedMetric,
-          'Raw.Device': device,
-          'Raw.Security_or_Compliance':{
-      HTTPS: {
-        Score: checkHTTPSScore,
-        Parameter: '1 if HTTPS is implemented, else 0'
-      },
-      SSL: {
-        Score: checkSSLScore,
-        Parameter: '1 if SSL/TLS certificate is valid, else 0'
-      },
-      SSL_Expiry: {
-        Score: checkSSLCertificateExpiryScore,
-        Parameter: '1 if SSL certificate is not expired, else 0'
-      },
-      HSTS: {
-        Score: checkHSTSScore,
-        Parameter: '1 if HSTS header is present, else 0'
-      },
-      TLS_Version: {
-        Score: checkTLSVersionScore,
-        Parameter: '1 if secure TLS version is used, else 0'
-      },
-      X_Frame_Options: {
-        Score: checkXFrameOptionsScore,
-        Parameter: '1 if X-Frame-Options header is set, else 0'
-      },
-      CSP: {
-        Score: checkCSPScore,
-        Parameter: '1 if Content Security Policy (CSP) is set, else 0'
-      },
-      X_Content_Type_Options: {
-        Score: checkXContentTypeOptionsScore,
-        Parameter: '1 if X-Content-Type-Options header is set, else 0'
-      },
-      Cookies_Secure: {
-        Score: checkCookiesSecureScore,
-        Parameter: '1 if cookies are set with Secure flag, else 0'
-      },
-      Cookies_HttpOnly: {
-        Score: checkCookiesHttpOnlyScore,
-        Parameter: '1 if cookies are HttpOnly, else 0'
-      },
-      Google_Safe_Browsing: {
-        Score: safeBrowsingScore,
-        Parameter: '1 if site is safe according to Google Safe Browsing, else 0'
-      },
-      Blacklist: {
-        Score: blacklistScore,
-        Parameter: '1 if site is not blacklisted, else 0'
-      },
-      Malware_Scan: {
-        Score: malwareScanScore,
-        Parameter: '1 if no malware detected, else 0'
-      },
-      SQLi_Exposure: {
-        Score: sqliExposureScore,
-        Parameter: '1 if site is not vulnerable to SQL injection, else 0'
-      },
-      XSS: {
-        Score: xssVulnerabilityScore,
-        Parameter: '1 if site is not vulnerable to XSS, else 0'
-      },
-      Cookie_Consent: {
-        Score: cookieConsentScore,
-        Parameter: '1 if cookie consent banner is implemented, else 0'
-      },
-      Privacy_Policy: {
-        Score: privacyPolicyScore,
-        Parameter: '1 if privacy policy exists, else 0'
-      },
-      Forms_Use_HTTPS: {
-        Score: formsUseHTTPSScore,
-        Parameter: '1 if forms submit over HTTPS, else 0'
-      },
-      GDPR_CCPA: {
-        Score: checkGDPRCCPAScore,
-        Parameter: '1 if GDPR/CCPA compliance implemented, else 0'
-      },
-      Data_Collection: {
-        Score: checkDataCollectionScore,
-        Parameter: '1 if data collection practices are compliant, else 0'
-      },
-      Weak_Default_Credentials: {
-        Score: weakDefaultCredsScore,
-        Parameter: '1 if no weak default credentials exist, else 0'
-      },
-      MFA_Enabled: {
-        Score: mfaEnabledScore,
-        Parameter: '1 if multi-factor authentication is enabled, else 0'
-      },
-      Admin_Panel_Public: {
-        Score: checkAdminPanelPublicScore,
-        Parameter: '1 if admin panel is not publicly accessible, else 0'
-      },
-      Viewport_Meta_Tag: {
-        Score: checkViewportMetaTagScore,
-        Parameter: '1 if <meta name="viewport" content="width=device-width, initial-scale=1.0"> is present, else 0'
-      },
-      HTML_Doctype: {
-        Score: checkHtmlDoctypeScore,
-        Parameter: '1 if <!DOCTYPE html> is declared at document start, else 0'
-      },
-      Character_Encoding: {
-        Score: checkCharsetDefinedScore,
-        Parameter: '1 if charset is defined in <meta> or HTTP headers, else 0'
-      },
-      Browser_Console_Errors: {
-        Score: checkBrowserErrorsScore,
-        Parameter: '1 if no console or JS errors are detected, else 0'
-      },
-      Geolocation_Request: {
-        Score: checkGeolocationRequestScore,
-        Parameter: '1 if geolocation is not requested automatically, else 0'
-      },
-      Input_Paste_Allowed: {
-        Score: checkInputPasteAllowedScore,
-        Parameter: '1 if paste is allowed in input fields, else 0'
-      },
-      Notification_Request: {
-        Score: checkNotificationRequestScore,
-        Parameter: '1 if no unsolicited notification request is made, else 0'
-      },
-      Third_Party_Cookies: {
-        Score: checkThirdPartyCookiesScore,
-        Parameter: '1 if no third-party cookies are detected, else 0'
-      },
-      Deprecated_APIs: {
-        Score: checkDeprecatedAPIsScore,
-        Parameter: '1 if no deprecated APIs are used, else 0'
-      },
-      Percentage: actualPercentage
-    }
-        }
-    });
 
-    return actualPercentage
+  });
+
+  return actualPercentage
 }

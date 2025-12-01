@@ -71,7 +71,7 @@ const ReportLayout = () => {
           </section>
 
           <section id="rawdata" className="scroll-mt-24">
-            <RawData darkMode={darkMode} data={data.Raw} />
+            <RawData darkMode={darkMode} data={data} />
           </section>
         </div>
       )}

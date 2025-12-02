@@ -356,6 +356,75 @@ export default function Technical_Performance() {
           </div>
         </div>
 
+        {/* Section: Real User Experience (CrUX) */}
+        {metric.Technical_Performance.Real_User_Experience && (
+          <div
+            className={`w-full p-8 rounded-2xl shadow-2xl 
+              border-l-8 border-orange-500 ${mainCardBg}
+              transform transition-all duration-300`}
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <span className="text-3xl">🌍</span>
+              <h2 className={`text-2xl font-bold ${textColor}`}>Real User Experience (CrUX)</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <MetricCard
+                title="Largest Contentful Paint"
+                description={desc.LCP}
+                score={metric.Technical_Performance.Real_User_Experience.LCP?.category === "FAST"}
+                value={metric.Technical_Performance.Real_User_Experience.LCP?.value}
+                unit="ms"
+                darkMode={darkMode}
+                icon="🎯"
+              />
+              <MetricCard
+                title="First Input Delay"
+                description={desc.FID}
+                score={metric.Technical_Performance.Real_User_Experience.FID?.category === "FAST"}
+                value={metric.Technical_Performance.Real_User_Experience.FID?.value}
+                unit="ms"
+                darkMode={darkMode}
+                icon="⚡"
+              />
+              <MetricCard
+                title="Cumulative Layout Shift"
+                description={desc.CLS}
+                score={metric.Technical_Performance.Real_User_Experience.CLS?.category === "FAST"}
+                value={metric.Technical_Performance.Real_User_Experience.CLS?.value}
+                darkMode={darkMode}
+                icon="📐"
+              />
+              <MetricCard
+                title="Interaction to Next Paint"
+                description={desc.INP}
+                score={metric.Technical_Performance.Real_User_Experience.INP?.category === "FAST"}
+                value={metric.Technical_Performance.Real_User_Experience.INP?.value}
+                unit="ms"
+                darkMode={darkMode}
+                icon="🖱️"
+              />
+              <MetricCard
+                title="First Contentful Paint"
+                description={desc.FCP}
+                score={metric.Technical_Performance.Real_User_Experience.FCP?.category === "FAST"}
+                value={metric.Technical_Performance.Real_User_Experience.FCP?.value}
+                unit="ms"
+                darkMode={darkMode}
+                icon="🎨"
+              />
+              <MetricCard
+                title="Time To First Byte"
+                description={desc.TTFB}
+                score={metric.Technical_Performance.Real_User_Experience.TTFB?.category === "FAST"}
+                value={metric.Technical_Performance.Real_User_Experience.TTFB?.value}
+                unit="ms"
+                darkMode={darkMode}
+                icon="⏱️"
+              />
+            </div>
+          </div>
+        )}
+
         <div
           className={`w-full    p-8 rounded-2xl shadow-2xl 
             border-l-8 border-purple-500 ${mainCardBg}

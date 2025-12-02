@@ -21,6 +21,36 @@ export default async function technicalMetrics(url, device, selectedMetric, page
 
   const data = await googleAPI(url, device);
 
+  // Real User Experience (CrUX Data)
+  const cruxMetrics = data?.loadingExperience?.metrics || {};
+
+  const cruxData = {
+    LCP: {
+      value: cruxMetrics["LARGEST_CONTENTFUL_PAINT_MS"]?.percentile,
+      category: cruxMetrics["LARGEST_CONTENTFUL_PAINT_MS"]?.category
+    },
+    FID: {
+      value: cruxMetrics["FIRST_INPUT_DELAY_MS"]?.percentile,
+      category: cruxMetrics["FIRST_INPUT_DELAY_MS"]?.category
+    },
+    CLS: {
+      value: cruxMetrics["CUMULATIVE_LAYOUT_SHIFT_SCORE"]?.percentile,
+      category: cruxMetrics["CUMULATIVE_LAYOUT_SHIFT_SCORE"]?.category
+    },
+    INP: {
+      value: cruxMetrics["INTERACTION_TO_NEXT_PAINT"]?.percentile,
+      category: cruxMetrics["INTERACTION_TO_NEXT_PAINT"]?.category
+    },
+    FCP: {
+      value: cruxMetrics["FIRST_CONTENTFUL_PAINT_MS"]?.percentile,
+      category: cruxMetrics["FIRST_CONTENTFUL_PAINT_MS"]?.category
+    },
+    TTFB: {
+      value: cruxMetrics["EXPERIMENTAL_TIME_TO_FIRST_BYTE"]?.percentile,
+      category: cruxMetrics["EXPERIMENTAL_TIME_TO_FIRST_BYTE"]?.category
+    }
+  };
+
   // Technical Performance (Core Web Vitals)
   const lcpValue = parseFloat(((data?.lighthouseResult?.audits?.["largest-contentful-paint"]?.numericValue || 0) / 1000).toFixed(1));
   const lcpScore = coreWebVitalsScore(lcpValue, 2.5);
@@ -572,6 +602,7 @@ export default async function technicalMetrics(url, device, selectedMetric, page
       Passed: passed,
       Total: Total,
       Improvements: improvements,
+      Real_User_Experience: cruxData,
     },
   });
 

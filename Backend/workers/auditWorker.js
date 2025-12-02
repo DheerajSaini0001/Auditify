@@ -67,7 +67,7 @@ const OverAll = (A, B, C, D, E, F, G) => {
           result = await securityCompliance(Site, Device, Report, page, response, browser, auditId);
           break;
         case "UX & Content Structure":
-          result = await uxContentStructure(Site, Device, Report, $, auditId);
+          result = await uxContentStructure(Site, Device, Report, $, page, auditId);
           break;
         case "Conversion & Lead Flow":
           result = await conversionLeadFlow(Site, Device, Report, page, $, auditId);
@@ -94,7 +94,7 @@ const OverAll = (A, B, C, D, E, F, G) => {
     const B = await seoMetrics(Site, Device, Report, $, auditId, page);
     const C = await accessibilityMetrics(Site, Device, Report, page, auditId);
     const D = await securityCompliance(Site, Device, Report, page, response, browser, auditId);
-    const E = await uxContentStructure(Site, Device, Report, $, auditId);
+    const E = await uxContentStructure(Site, Device, Report, $, page, auditId);
     const F = await conversionLeadFlow(Site, Device, Report, page, $, auditId);
     const G = await aioReadiness(Site, Device, Report, $, auditId);
 

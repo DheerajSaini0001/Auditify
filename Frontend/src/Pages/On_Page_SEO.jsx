@@ -536,7 +536,8 @@ const MetricCard = ({
   canonical,
   altData,
   imageData,
-  imageSizeData // <--- Prop for Image Size Array
+  imageSizeData, // <--- Prop for Image Size Array
+  h1Data // <--- Prop for H1 Data
 }) => {
   const [showDescription, setShowDescription] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -663,6 +664,17 @@ const MetricCard = ({
             </div>
           )}
 
+          {h1Data && h1Data.H1_Content && h1Data.H1_Content.length > 0 && (
+            <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+              <h4 className="font-bold text-sm mb-2 text-gray-700 dark:text-gray-300">H1 Content:</h4>
+              <ul className="list-disc pl-5 text-sm space-y-1">
+                {h1Data.H1_Content.map((text, i) => (
+                  <li key={i} className="text-gray-800 dark:text-gray-200 font-medium">"{text}"</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
         </div>
       </div>
     </div>
@@ -757,7 +769,7 @@ export default function On_Page_SEO() {
           <MetricCard title="Meta Description" description={desc.meta} score={seo.Meta_Description?.Score} metaDiscription={seo.Meta_Description} value={seo.Meta_Description?.MetaDescription_Length + " chars"} darkMode={darkMode} icon="📝" />
           <MetricCard title="URL Structure" description={desc.url} score={seo.URL_Structure?.Score} value={seo.URL_Structure?.Score ? "Clean" : "Poor"} darkMode={darkMode} icon="🔗" />
           <MetricCard title="Canonical Tag" description={desc.canonical} canonical={seo.Canonical?.Canonical} score={seo.Canonical?.Score} value={seo.Canonical?.Score ? "Self Referential" : "Not Self Referential"} darkMode={darkMode} icon="📜" />
-          <MetricCard title="H1 Tag" description={desc.h1} score={seo.H1?.Score} value={"H1 Count-" + (seo.H1?.H1_Count || 0)} darkMode={darkMode} icon="🔠" />
+          <MetricCard title="H1 Tag" description={desc.h1} score={seo.H1?.Score} value={"H1 Count-" + (seo.H1?.H1_Count || 0)} darkMode={darkMode} icon="🔠" h1Data={seo.H1} />
         </Section>
 
         {/* 🖼️ Section 2: Media & Accessibility */}
@@ -789,10 +801,10 @@ export default function On_Page_SEO() {
 
         {/* 🛠️ Section 3: Structure & Semantics */}
         <Section title="Structure & Semantics" icon="🛠️" color="green" textColor={textColor}>
-          {(seo.Heading_Hierarchy.H1_Count != 0 && seo.Heading_Hierarchy.H2_Count != 0 && seo.Heading_Hierarchy.H3_Count != 0 && seo.Heading_Hierarchy.H4_Count != 0 && seo.Heading_Hierarchy.H5_Count != 0 && seo.Heading_Hierarchy.H6_Count != 0) && <MetricCard
+          {seo.Heading_Hierarchy && <MetricCard
             title="Heading Hierarchy"
             description={desc.heading}
-            heading={seo.Heading_Hierarchy?.Heading}
+            heading={seo.Heading_Hierarchy}
             score={seo.Heading_Hierarchy?.Score}
             value={seo.Heading_Hierarchy?.Score ? "Proper" : "Needs Fix"}
             darkMode={darkMode}
@@ -883,6 +895,10 @@ function HeadingHierarchyCard({ data }) {
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
 
+  // Handle both array (legacy) and object (new) formats
+  const headings = Array.isArray(data) ? data : data?.Heading || [];
+  const issues = !Array.isArray(data) ? data?.Heading_Issues || [] : [];
+
   const getIndent = (tag) => {
     switch (tag) {
       case "h1": return "ml-0";
@@ -905,38 +921,64 @@ function HeadingHierarchyCard({ data }) {
 
   return (
     <div
-      className={`w-full   shadow-lg rounded-2xl p-4 space-y-4 
+      className={`w-full shadow-lg rounded-2xl p-4 space-y-4 
       ${darkMode ? "bg-gray-900 text-gray-100" : "bg-gray-50 text-gray-900"}`}
     >
       <h2 className="text-lg font-bold mb-4 text-blue-600 dark:text-blue-400">Headings Structure</h2>
+
+      {/* Structure List */}
       <div
         className={`space-y-3 max-h-60 overflow-y-auto pr-2 scrollbar-thin 
         ${darkMode ? "scrollbar-thumb-gray-600" : "scrollbar-thumb-gray-400"}`}
       >
-        {data?.map((item, index) => {
-          if (!item || !item.tag) return null;
+        {headings.length === 0 ? (
+          <p className="text-sm text-gray-500 italic">No headings found.</p>
+        ) : (
+          headings.map((item, index) => {
+            if (!item || !item.tag) return null;
 
-          const Tag = item.tag;
-          return (
-            <div
-              key={index}
-              className={`${getIndent(item.tag)} border-l-2 pl-3 
-              ${darkMode ? "border-gray-700" : "border-gray-300"}`}
-            >
-              <div className="flex items-start space-x-2">
-                <span className={`font-mono text-sm ${darkMode ? "text-gray-500" : "text-gray-400"} flex-shrink-0 mt-0.5`}>
-                  &lt;{item.tag}&gt;
-                </span>
-                {React.createElement(
-                  Tag,
-                  { className: `${getFont(item.tag)} leading-tight inline-block ${darkMode ? "text-gray-200" : "text-gray-800"} break-words min-w-0` },
-                  item.text
-                )}
+            const Tag = item.tag;
+            return (
+              <div
+                key={index}
+                className={`${getIndent(item.tag)} border-l-2 pl-3 
+                ${darkMode ? "border-gray-700" : "border-gray-300"}`}
+              >
+                <div className="flex items-start space-x-2">
+                  <span className={`font-mono text-sm ${darkMode ? "text-gray-500" : "text-gray-400"} flex-shrink-0 mt-0.5`}>
+                    &lt;{item.tag}&gt;
+                  </span>
+                  {React.createElement(
+                    Tag,
+                    { className: `${getFont(item.tag)} leading-tight inline-block ${darkMode ? "text-gray-200" : "text-gray-800"} break-words min-w-0` },
+                    item.text
+                  )}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
+
+      {/* Issues Section */}
+      {issues.length > 0 && (
+        <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <h3 className="text-md font-bold text-red-600 dark:text-red-400 mb-3 flex items-center gap-2">
+            ⚠️ Heading Issues Found ({issues.length})
+          </h3>
+          <div className="space-y-3">
+            {issues.map((issue, i) => (
+              <div key={i} className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-100 dark:border-red-800/30">
+                <div className="flex justify-between items-start gap-2">
+                  <span className="font-semibold text-red-700 dark:text-red-300 text-sm">{issue.finding}</span>
+                  <span className="text-xs font-bold px-2 py-0.5 bg-red-200 dark:bg-red-800 text-red-800 dark:text-red-200 rounded whitespace-nowrap">{issue.priority}</span>
+                </div>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{issue.recommendation}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

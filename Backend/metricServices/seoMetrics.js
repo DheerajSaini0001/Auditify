@@ -197,6 +197,42 @@ const checkHierarchy = (headings) => {
   return 1; // hierarchy okay
 };
 
+const detailedHeadingAudit = ($) => {
+  const issues = [];
+
+  // 1. Check H1 Count
+  const h1Tags = $("h1");
+  if (h1Tags.length !== 1) {
+    issues.push({
+      parameter: "Heading Tag Structure",
+      finding: `Found ${h1Tags.length} H1 tags. Expected only 1.`,
+      recommendation: "Ensure only one H1 tag per page (main title). Convert extra H1s into H2.",
+      priority: "Critical"
+    });
+  }
+
+  // 2. Check Hierarchy
+  const headings = $("h1, h2, h3, h4, h5, h6");
+  let lastLevel = 1;
+
+  headings.each((i, el) => {
+    const tag = el.tagName.toLowerCase();
+    const currentLevel = parseInt(tag.replace("h", ""));
+
+    if (currentLevel > lastLevel + 1) {
+      issues.push({
+        parameter: "Heading Tag Structure",
+        finding: `Invalid heading jump: h${lastLevel} → ${tag}`,
+        recommendation: `Fix hierarchy. After h${lastLevel}, the next level should be h${lastLevel + 1}, not ${tag}.`,
+        priority: "High"
+      });
+    }
+    lastLevel = currentLevel;
+  });
+
+  return issues;
+};
+
 const altTextSEOScore = ($, keywords = []) => {
   try {
     const images = $("img").toArray();
@@ -513,6 +549,8 @@ export default async function seoMetrics(url, device, selectedMetric, $, auditId
     hierarchy = checkHierarchy(headings)
     // console.log("Heading Hierarchy Score:", hierarchy);
   }
+
+  const headingIssues = detailedHeadingAudit($);
 
   const keywords = ["Canonical", "Result", "Audits"];
   const alttextScore = altTextSEOScore($, keywords) ? 1 : 0;
@@ -948,6 +986,7 @@ export default async function seoMetrics(url, device, selectedMetric, $, auditId
       },
       H1: {
         H1_Count: h1Count,
+        H1_Content: $("h1").map((i, el) => $(el).text().trim()).get(),
         H1_Count_Score: h1CountScore,
         Score: h1Score,
         Parameter: '1 if exactly one H1, 2 if >1, 0 if none'
@@ -983,6 +1022,7 @@ export default async function seoMetrics(url, device, selectedMetric, $, auditId
         Heading: headings,
         Score: hierarchy,
         Parameter: '1 if headings follow proper H1→H2→H3 order, else 0',
+        Heading_Issues: headingIssues,
       },
       ALT_Text_Relevance: {
         Score: alttextScore,

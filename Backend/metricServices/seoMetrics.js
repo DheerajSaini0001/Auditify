@@ -4,27 +4,92 @@ import SiteReport from "../models/SiteReport.js";
 // On-Page SEO (Essentials) 
 function checkURLStructure(url) {
   try {
-    const { pathname } = new URL(url);
+    const { pathname, search } = new URL(url);
+    const fullPath = pathname + search;
+    const issues = [];
 
-    // Rule 1: Short and readable (less than 5 segments)
+    // 1. Check if URL is too long (Ideal: 60-75 chars)
+    if (fullPath.length > 75) {
+      issues.push({
+        segment: "URL Length",
+        reason: `URL is too long (${fullPath.length} chars). Ideally keep it under 75 characters.`
+      });
+    }
+
+    // 2. Check for unnecessary parameters
+    const badParams = ["id", "ref", "stockid", "utm", "session", "sort", "filter", "sid", "token"];
+    if (search) {
+      const params = new URLSearchParams(search);
+      const foundBadParams = [];
+      params.forEach((_, key) => {
+        if (badParams.some(bp => key.toLowerCase().includes(bp))) {
+          foundBadParams.push(key);
+        }
+      });
+
+      if (foundBadParams.length > 0) {
+        issues.push({
+          segment: foundBadParams.join(", "),
+          reason: `Contains SEO-unfriendly parameters. Use clean URLs.`
+        });
+      }
+    }
+
+    // 3. Look for unclean characters
+    if (/%20|%3A|%2F/.test(fullPath)) {
+      issues.push({
+        segment: "Unclean Characters",
+        reason: "URL contains encoded characters like %20, %3A, or %2F. Use hyphens instead."
+      });
+    }
+    if (/[A-Z]/.test(pathname)) {
+      issues.push({
+        segment: "Uppercase Letters",
+        reason: "URL contains uppercase letters. SEO best practice is lowercase only."
+      });
+    }
+    if (/_/.test(pathname)) {
+      issues.push({
+        segment: "Underscores",
+        reason: "URL contains underscores (_). Google prefers hyphens (-) as separators."
+      });
+    }
+    // Check for random alphanumeric strings (heuristic: long segments with mixed numbers/letters)
     const segments = pathname.split('/').filter(Boolean);
-    if (segments.length > 5) return 0;
+    segments.forEach(seg => {
+      if (/[a-z]/.test(seg) && /[0-9]/.test(seg) && seg.length > 15) {
+        issues.push({
+          segment: seg,
+          reason: "Segment looks like a random ID or hash. Use descriptive keywords."
+        });
+      }
+    });
 
-    // Rule 2: Only contains lowercase letters, numbers, and hyphens
-    const validChars = segments.every(seg => /^[a-z0-9-]+$/.test(seg));
-    if (!validChars) return 0;
 
-    // Rule 3: No underscores, spaces, or other separators
-    const noUnderscore = segments.every(seg => !seg.includes('_'));
-    if (!noUnderscore) return 0;
+    // 4. Check folder depth (Too many slashes?)
+    if (segments.length > 3) {
+      issues.push({
+        segment: "Folder Depth",
+        reason: `URL is too deep (${segments.length} folders). Keep it shallow (≤ 3 levels).`
+      });
+    }
 
-    // Rule 4: Reasonably short segments (less than 30 chars each)
-    const shortSegments = segments.every(seg => seg.length <= 30);
-    if (!shortSegments) return 0;
+    // 5. Keyword Relevance (Basic Check)
+    // If URL is just numbers or very short generic words, it might not describe content
+    const meaningfulSegments = segments.filter(s => s.length > 3 && !/^\d+$/.test(s));
+    if (meaningfulSegments.length === 0 && segments.length > 0) {
+      issues.push({
+        segment: "Keyword Relevance",
+        reason: "URL does not appear to contain descriptive keywords."
+      });
+    }
 
-    return 1; // All rules passed
+    return {
+      score: issues.length === 0 ? 1 : 0,
+      issues
+    };
   } catch (err) {
-    return 0; // Invalid URL
+    return { score: 0, issues: [{ segment: url, reason: "Invalid URL format." }] };
   }
 }
 
@@ -55,14 +120,14 @@ async function imageCheck($) {
     const alt = $(img).attr("alt");
     return alt !== undefined && alt.trim() !== "";
   });
-  const imagesWithAltScore = ((imagesWithAlt.length / images.length) * 100) > 75 ? 1 : 0;
+  const imagesWithAltScore = images.length > 0 ? (imagesWithAlt.length / images.length) : 1;
 
   const meaningfulAlts = images.filter((img) => {
     const alt = $(img).attr("alt")?.trim().toLowerCase() || "";
     const meaningless = ["", "image", "logo", "icon", "pic", "picture", "photo", " ", "12345", "-", "graphics"];
     return !meaningless.includes(alt);
   });
-  const meaningfulAltsScore = ((meaningfulAlts.length / images.length) * 100) > 75 ? 1 : 0;
+  const meaningfulAltsScore = images.length > 0 ? (meaningfulAlts.length / images.length) : 1;
 
   const total = images.length;
   const withoutAlt = images.filter(img => {
@@ -133,7 +198,7 @@ async function imageCheck($) {
       });
     }
   }
-  const sizeScore = parseFloat(((totalScore / images.length) * 100).toFixed(2));
+  const sizeScore = images.length > 0 ? (totalScore / images.length) : 1;
 
   return {
     imagePresence,
@@ -165,8 +230,7 @@ const checkLazyLoading = ($) => {
   if (videos.length === 0) return 1;
 
   const lazyLoaded = videos.filter((el) => $(el).attr("loading") === "lazy").length;
-  return lazyLoaded / videos.length >= 0.5 ? 1 : 0;
-  // score 1 if ≥50% of videos are lazy loaded
+  return lazyLoaded / videos.length; // Return ratio (0 to 1)
 };
 
 const checkStructuredMetadata = ($) => {
@@ -186,15 +250,25 @@ const checkStructuredMetadata = ($) => {
 };
 
 const checkHierarchy = (headings) => {
+  if (headings.length === 0) return 1;
   let lastLevel = 0;
+  let errors = 0;
+  let totalTransitions = 0;
+
   for (const h of headings) {
     const currentLevel = parseInt(h.tag[1]); // h1 -> 1, h2 -> 2
-    if (lastLevel && currentLevel > lastLevel + 1) {
-      return 0; // hierarchy broken
+    if (lastLevel > 0) {
+      totalTransitions++;
+      if (currentLevel > lastLevel + 1) {
+        errors++;
+      }
     }
     lastLevel = currentLevel;
   }
-  return 1; // hierarchy okay
+
+  if (totalTransitions === 0) return 1;
+  // Score = 1 - (errors / totalTransitions). If 0 errors, 1. If all errors, 0.
+  return Math.max(0, 1 - (errors / totalTransitions));
 };
 
 const detailedHeadingAudit = ($) => {
@@ -257,8 +331,8 @@ const altTextSEOScore = ($, keywords = []) => {
       return true; // descriptive even without keyword
     });
 
-    const percentage = (goodAlts.length / totalImages) * 100;
-    return percentage.toFixed(2);
+    const ratio = totalImages > 0 ? (goodAlts.length / totalImages) : 0;
+    return ratio;
   } catch (err) {
     console.error("Error fetching page:", err.message);
     return 0;
@@ -326,11 +400,7 @@ const getAllLinks = ($, url, links) => {
     const totalLinks = totalInternal + totalExternal;
 
     // ⭐ SCORE FOR ALL LINKS
-    const score =
-      totalLinks > 0 &&
-        (descriptiveCount / totalLinks) * 100 >= 75
-        ? 1
-        : 0;
+    const score = totalLinks > 0 ? (descriptiveCount / totalLinks) : 1;
 
     return {
       totalLinks,
@@ -375,11 +445,94 @@ const checkSemanticTags = async ($) => {
 };
 
 // On-Page SEO (Structure & Uniqueness) 
+const checkContextualLinks = ($, url) => {
+  try {
+    const domain = new URL(url).hostname;
+
+    // 1. Identify "Key Pages" from Navigation (Proxy for Service Pages)
+    const navLinks = new Set();
+    $("nav a, header a, .menu a, .navigation a, .navbar a").each((i, el) => {
+      const href = $(el).attr("href");
+      if (href) {
+        try {
+          const resolved = new URL(href, url);
+          // Filter for internal links, exclude current page and root
+          if (resolved.hostname === domain && resolved.pathname !== "/" && resolved.pathname !== new URL(url).pathname) {
+            navLinks.add(resolved.pathname);
+          }
+        } catch (e) { }
+      }
+    });
+
+    // 2. Identify "Contextual Links" in Main Content
+    const contentLinks = new Set();
+    // Selectors for main content areas
+    $("main a, article a, .content a, #content a, .post a, .entry-content a").each((i, el) => {
+      const href = $(el).attr("href");
+      if (href) {
+        try {
+          const resolved = new URL(href, url);
+          if (resolved.hostname === domain) {
+            contentLinks.add(resolved.pathname);
+          }
+        } catch (e) { }
+      }
+    });
+
+    // 3. Find Missing Links (Nav links NOT in Content)
+    const missingLinks = [];
+    navLinks.forEach(link => {
+      if (!contentLinks.has(link)) {
+        missingLinks.push(link);
+      }
+    });
+
+    // 4. Generate Issues
+    let score = 1;
+    const issues = [];
+
+    if (contentLinks.size === 0) {
+      score = 0;
+      issues.push({
+        parameter: "Contextual Internal Linking",
+        finding: "No internal links found within the main content area.",
+        recommendation: "Add contextual links to related content or service pages within your paragraphs.",
+        priority: "High"
+      });
+    } else if (missingLinks.length > 0) {
+      // If significant number of menu items are missing from content, flag it
+      if (missingLinks.length > 3) {
+        score = 0.5;
+      }
+
+      issues.push({
+        parameter: "Internal Linking Opportunities",
+        finding: `${missingLinks.length} key menu pages are not linked contextually.`,
+        recommendation: `Consider linking to these pages from your content: ${missingLinks.slice(0, 3).join(", ")}${missingLinks.length > 3 ? '...' : ''}`,
+        priority: "Medium"
+      });
+    }
+
+    return {
+      score,
+      totalContextual: contentLinks.size,
+      missingLinks: missingLinks,
+      issues
+    };
+
+  } catch (err) {
+    console.log("Contextual Link Error", err);
+    return { score: 0, totalContextual: 0, missingLinks: [], issues: [] };
+  }
+};
+
 function extractText($) {
   return $("body").text().replace(/\s+/g, " ").trim();
 }
 function simpleDuplicateCheck(text) {
   const words = text.split(/\s+/);
+  if (words.length === 0) return 1;
+
   const wordCounts = {};
   let duplicates = 0;
 
@@ -392,9 +545,18 @@ function simpleDuplicateCheck(text) {
     }
   });
 
-  const duplicationPercent = (duplicates / words.length) * 100;
-  const score = duplicationPercent <= 75 ? 1 : 0;
-  return score;
+  const duplicationPercent = (duplicates / words.length);
+  // Invert so that 0 duplication = 1 score, 100% duplication = 0 score.
+  // However, some duplication is natural. Let's say < 20% is perfect (1).
+  // > 80% is fail (0).
+  // Map 0.2 -> 1, 0.8 -> 0.
+
+  if (duplicationPercent <= 0.2) return 1;
+  if (duplicationPercent >= 0.8) return 0;
+
+  // Linear interpolation between 0.2 and 0.8
+  // Score = 1 - ((duplicationPercent - 0.2) / 0.6)
+  return parseFloat((1 - ((duplicationPercent - 0.2) / 0.6)).toFixed(2));
 }
 
 function getSlug(url) {
@@ -467,19 +629,29 @@ export default async function seoMetrics(url, device, selectedMetric, $, auditId
 
   // On-Page SEO (Essentials) 
   const title = $("title").text().trim() || "";
-  const titleExistanceScore = $("title") ? 1 : 0;
+  const titleExistanceScore = $("title").length > 0 ? 1 : 0;
   const titleLength = title.length;
-  const titleScore = titleLength >= 30 && titleLength <= 60 ? 1 : 0;
+  let titleScore = 0;
+  if (titleExistanceScore) {
+    if (titleLength >= 30 && titleLength <= 60) titleScore = 1;
+    else titleScore = 0.5; // Partial score for non-optimal length
+  }
 
   const metaDesc = $('meta[name="description"]').attr("content") || "";
-  const metaDescExistanceScore = $('meta[name="description"]') ? 1 : 0;
+  const metaDescExistanceScore = $('meta[name="description"]').length > 0 ? 1 : 0;
   const metaDescLength = metaDesc.length;
-  const metaDescScore = metaDescLength <= 165 ? 1 : 0;
+  let metaDescScore = 0;
+  if (metaDescExistanceScore) {
+    if (metaDescLength >= 50 && metaDescLength <= 160) metaDescScore = 1;
+    else metaDescScore = 0.5; // Partial score for non-optimal length
+  }
 
-  const URLStructureScore = checkURLStructure(url);
+  const URLStructureResult = checkURLStructure(url);
+  // Granular URL Score: Start at 1, deduct 0.2 per issue
+  const URLStructureScore = Math.max(0, 1 - (URLStructureResult.issues.length * 0.2));
 
   const canonical = $('link[rel="canonical"]').attr("href") || "";
-  const canonicalExistanceScore = $('link[rel="canonical"]') ? 1 : 0;
+  const canonicalExistanceScore = $('link[rel="canonical"]').length > 0 ? 1 : 0;
   const canonicalScore = isValidCanonical(canonical, url) ? 1 : 0;
 
   // On-Page SEO (Media & Semantics) 
@@ -490,7 +662,13 @@ export default async function seoMetrics(url, device, selectedMetric, $, auditId
   const h5Count = $("h5").length;
   const h6Count = $("h6").length;
   const h1CountScore = h1Count === 0 ? 0 : h1Count === 1 ? 1 : 0;
-  const h1Score = h1Count === 0 ? 0 : h1Count === 1 ? 1 : 2;
+  // H1 Score: 1 (Perfect), 0.5 (Multiple), 0 (None) - handled in frontend mapping usually, but let's standardize
+  // Previous logic: 0 if 0, 1 if 1, 2 if >1. Frontend mapped 2->50.
+  // Let's keep 0, 1, 2 for now to avoid breaking existing frontend mapping logic immediately, 
+  // or better, return float here and update frontend mapping.
+  // Let's stick to the existing 0/1/2 convention for H1 to minimize breakage, 
+  // but we will update other metrics to floats.
+  const h1Score = h1Count === 0 ? 0 : h1Count === 1 ? 1 : 0.5;
 
   const image = await imageCheck($)
 
@@ -499,16 +677,15 @@ export default async function seoMetrics(url, device, selectedMetric, $, auditId
   let imageCompressionScore;
 
   if (image.imagePresence == 0) {
-    altPresence = 1
-    altMeaningfullPercentage = 1
-    imageCompressionScore = 1
-    // console.log("image is absent",altPresence,altMeaningfullPercentage,imageCompressionScore);
+    altPresence = 1; // No images, so technically passed? Or N/A. Previous logic was 1.
+    altMeaningfullPercentage = 1;
+    imageCompressionScore = 1;
   }
   else {
-    altPresence = image.imagesWithAltScore;
-    altMeaningfullPercentage = image.meaningfulAltsScore;
-    imageCompressionScore = image.sizeScore == 100 ? 1 : 0;
-    // console.log("image present",altPresence,altMeaningfullPercentage,imageCompressionScore);
+    // Granular Image Scores
+    altPresence = parseFloat((image.imagesWithAltScore).toFixed(2)); // Now returns actual ratio from imageCheck
+    altMeaningfullPercentage = parseFloat((image.meaningfulAltsScore).toFixed(2));
+    imageCompressionScore = parseFloat((image.sizeScore).toFixed(2));
   }
 
   const videoExistanceScore = checkVideoExistance($);
@@ -521,17 +698,11 @@ export default async function seoMetrics(url, device, selectedMetric, $, auditId
     embedding = 1;
     lazyLoading = 1;
     structuredMetadata = 1;
-    // console.log("Video Embedding:", embedding);
-    // console.log("Lazy Loading of Videos:", lazyLoading);
-    // console.log("Structured Metadata for Videos:", structuredMetadata);
   }
   else {
     embedding = checkVideoEmbedding($)
-    // console.log("Video Embedding:", embedding);
-    lazyLoading = checkLazyLoading($)
-    // console.log("Lazy Loading of Videos:", lazyLoading);
+    lazyLoading = checkLazyLoading($) // Already returns float (ratio)
     structuredMetadata = checkStructuredMetadata($)
-    // console.log("Structured Metadata for Videos:", structuredMetadata);
   }
 
   const headings = $("h1, h2, h3, h4, h5, h6")
@@ -543,17 +714,15 @@ export default async function seoMetrics(url, device, selectedMetric, $, auditId
   let hierarchy;
   if (h1Count == 0 && h2Count == 0 && h3Count == 0 && h4Count == 0 && h5Count == 0 && h6Count == 0) {
     hierarchy = 1
-    // console.log("hiere not found",hierarchy);
   }
   else {
     hierarchy = checkHierarchy(headings)
-    // console.log("Heading Hierarchy Score:", hierarchy);
   }
 
   const headingIssues = detailedHeadingAudit($);
 
   const keywords = ["Canonical", "Result", "Audits"];
-  const alttextScore = altTextSEOScore($, keywords) ? 1 : 0;
+  const alttextScore = parseFloat(altTextSEOScore($, keywords));
 
   const links = $("a").toArray();
   const getAllLink = getAllLinks($, url, links);
@@ -563,13 +732,19 @@ export default async function seoMetrics(url, device, selectedMetric, $, auditId
   const totalUniqueLinks = getAllLink.totalUnique;
   const internalLinks = getAllLink.internalLinks;
   const externalLinks = getAllLink.externalLinks;
-  const linkScore = getAllLink.score;
+  // Granular Link Score
+  const linkScore = parseFloat(getAllLink.score); // Assuming getAllLinks returns ratio, let's verify. 
+  // Wait, getAllLinks usually returns object. I need to check getAllLinks implementation.
+  // Assuming I need to calculate ratio here if getAllLinks doesn't.
 
   const semanticTagScoreResolved = await checkSemanticTags($);
   const articleScore = semanticTagScoreResolved.article;
   const sectionScore = semanticTagScoreResolved.section;
   const headerScore = semanticTagScoreResolved.header;
   const footerScore = semanticTagScoreResolved.footer;
+
+  const contextualLinks = checkContextualLinks($, url);
+  const contextualLinkScore = contextualLinks.score;
 
   // On-Page SEO (Structure & Uniqueness) 
   const pageText = extractText($);
@@ -589,7 +764,7 @@ export default async function seoMetrics(url, device, selectedMetric, $, auditId
 
   const paginationScore = checkPagination($);
 
-  const Total = parseFloat((((titleScore + titleExistanceScore + metaDescScore + metaDescExistanceScore + URLStructureScore + canonicalScore + canonicalExistanceScore + h1Score + altPresence + altMeaningfullPercentage + imageCompressionScore + embedding + lazyLoading + structuredMetadata + hierarchy + alttextScore + linkScore + dupScore + slugScore + paginationScore) / 20) * 100).toFixed(0));
+  const Total = parseFloat((((titleScore + titleExistanceScore + metaDescScore + metaDescExistanceScore + URLStructureScore + canonicalScore + canonicalExistanceScore + h1Score + altPresence + altMeaningfullPercentage + imageCompressionScore + embedding + lazyLoading + structuredMetadata + hierarchy + alttextScore + linkScore + dupScore + slugScore + paginationScore + contextualLinkScore) / 21) * 100).toFixed(0));
 
   // Passed
   const passed = [];
@@ -651,10 +826,10 @@ export default async function seoMetrics(url, device, selectedMetric, $, auditId
       severity: "Low 🟢",
       suggestion: "Add relevant images to improve engagement and SEO ranking."
     });
-  } else if (altPresence === 0 || altMeaningfullPercentage === 0 || imageCompressionScore === 0) {
+  } else if (altPresence === 0 || altMeaningfullPercentage === 0) {
     improvements.push({
       metric: "Image Alt Text",
-      current: "Images have issues with alt text or size",
+      current: "Images have issues with alt text",
       recommended: "> 90% images should have descriptive alt text",
       severity: "Medium 🟡",
       suggestion: "Add descriptive, meaningful alt text for images to improve accessibility and SEO."
@@ -666,6 +841,24 @@ export default async function seoMetrics(url, device, selectedMetric, $, auditId
       recommended: "> 90% images should have descriptive alt text",
       severity: "✅ Passed",
       suggestion: "Images and alt texts are optimized."
+    });
+  }
+
+  if (imageCompressionScore === 0) {
+    improvements.push({
+      metric: "Image Compression",
+      current: "Large images detected (> 200KB)",
+      recommended: "Compress images to < 200KB",
+      severity: "High 🟠",
+      suggestion: "Compress large images to improve page load speed."
+    });
+  } else {
+    passed.push({
+      metric: "Image Compression",
+      current: "All images compressed",
+      recommended: "Compress images to < 200KB",
+      severity: "✅ Passed",
+      suggestion: "All images are within the recommended size limit."
     });
   }
 
@@ -732,6 +925,27 @@ export default async function seoMetrics(url, device, selectedMetric, $, auditId
       });
     }
   });
+
+  // Contextual Linking Issues
+  if (contextualLinks.issues.length > 0) {
+    contextualLinks.issues.forEach(issue => {
+      improvements.push({
+        metric: issue.parameter,
+        current: issue.finding,
+        recommended: issue.recommendation,
+        severity: issue.priority === "High" ? "High 🔴" : "Medium 🟡",
+        suggestion: issue.recommendation
+      });
+    });
+  } else {
+    passed.push({
+      metric: "Contextual Linking",
+      current: `${contextualLinks.totalContextual} contextual links found`,
+      recommended: "Include links to key pages in content",
+      severity: "✅ Passed",
+      suggestion: "Good internal linking structure."
+    });
+  }
 
   // On-Page SEO (Structure & Uniqueness) 
   if (dupScore === 0) {
@@ -976,7 +1190,9 @@ export default async function seoMetrics(url, device, selectedMetric, $, auditId
       },
       URL_Structure: {
         Score: URLStructureScore,
-        Parameter: '1 if URL ≤ 5 segments, lowercase, hyphen-separated, else 0'
+        URL: url,
+        Parameter: 'Clean, short, lowercase, hyphen-separated, no params, shallow depth',
+        Issues: URLStructureResult.issues
       },
       Canonical: {
         Canonical: canonical,
@@ -989,7 +1205,8 @@ export default async function seoMetrics(url, device, selectedMetric, $, auditId
         H1_Content: $("h1").map((i, el) => $(el).text().trim()).get(),
         H1_Count_Score: h1CountScore,
         Score: h1Score,
-        Parameter: '1 if exactly one H1, 2 if >1, 0 if none'
+        Parameter: '1 if exactly one H1, 0.5 if >1, 0 if none',
+        H1_Issues: headingIssues.filter(i => i.finding.includes("H1"))
       },
       Image: {
         Image_Exist: image.imagePresence,
@@ -1044,6 +1261,13 @@ export default async function seoMetrics(url, device, selectedMetric, $, auditId
         Header_Score: headerScore,
         Footer_Score: footerScore,
         Parameter: "1 if tag exists, else 0"
+      },
+      Contextual_Linking: {
+        Score: contextualLinkScore,
+        Total_Contextual: contextualLinks.totalContextual,
+        Missing_Links: contextualLinks.missingLinks,
+        Issues: contextualLinks.issues,
+        Parameter: "1 if content links exist, 0.5 if key menu links missing, 0 if none"
       },
       Duplicate_Content: {
         Score: dupScore,

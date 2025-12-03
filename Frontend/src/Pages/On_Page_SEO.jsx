@@ -78,7 +78,7 @@ function StatBadge({ label, value, color = "indigo" }) {
   );
 }
 
-function LinksDisplay({ linksData,darkMode }) {
+function LinksDisplay({ linksData, darkMode }) {
   const safeArray = (val) => (Array.isArray(val) ? val : []);
   const internal = safeArray(linksData.Internal_Links);
   const external = safeArray(linksData.External_Links);
@@ -93,7 +93,7 @@ function LinksDisplay({ linksData,darkMode }) {
       </div>
 
       {internal.length > 0 && (
-        <div className={`p-3  border  rounded-lg shadow-sm ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-white border-slate-200"}`}>
+        <div className={`p-3  border  rounded-lg shadow-sm ${darkMode ? "scrollbar-thumb-slate-600 bg-slate-800/50 border-slate-700  " : "scrollbar-thumb-slate-600 bg-slate-100 border-slate-200"} `}>
           <h4 className={`font-bold text-xs mb-2 uppercase tracking-wide ${darkMode ? "text-slate-200" : "text-slate-800"}`}>Internal Links ({internal.length})</h4>
           <ul className={`space-y-2 max-h-32 overflow-y-auto scrollbar-thin   ${darkMode ? "text-slate-200 scrollbar-thumb-slate-600" : "text-slate-800 scrollbar-thumb-slate-300"}`}>
             {internal.map((l, i) => (
@@ -107,7 +107,7 @@ function LinksDisplay({ linksData,darkMode }) {
       )}
 
       {external.length > 0 && (
-        <div className={`p-3  border  rounded-lg shadow-sm ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-white border-slate-200"}`}>
+        <div className={`p-3  border  rounded-lg shadow-sm ${darkMode ? "scrollbar-thumb-slate-600 bg-slate-800/50 border-slate-700  " : "scrollbar-thumb-slate-600 bg-slate-100 border-slate-200"} `}>
           <h4 className={`font-bold text-xs mb-2 uppercase tracking-wide ${darkMode ? "text-slate-200" : "text-slate-800"}`}>External Links ({external.length})</h4>
           <ul className={`space-y-2 max-h-32 overflow-y-auto scrollbar-thin ${darkMode ? "text-slate-200 scrollbar-thumb-slate-600" : "text-slate-800 scrollbar-thumb-slate-300"}`}>
             {external.map((l, i) => (
@@ -153,7 +153,7 @@ function ImageSizeDisplay({ sizeData, darkMode }) {
       )}
 
       {optimizedImages.length > 0 && (
-        <div className={`p-3  border  ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-white border-slate-200"} rounded-lg shadow-sm`}>
+        <div className={`p-3  border  ${darkMode ? "scrollbar-thumb-slate-600 bg-slate-800/50 border-slate-700  " : "scrollbar-thumb-slate-600 bg-slate-100 border-slate-200"}  rounded-lg shadow-sm`}>
           <p className={`text-xs font-bold ${darkMode ? "text-emerald-400" : "text-emerald-700"} mb-2 uppercase`}>Optimized Images ({optimizedImages.length})</p>
           <ul className={`space-y-1 max-h-32 overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-200 ${darkMode ? "scrollbar-thumb-emerald-800" : "scrollbar-thumb-emerald-200"}`}>
             {optimizedImages.map((img, i) => (
@@ -199,7 +199,7 @@ function AltImagesDisplay({ imgData, darkMode }) {
 
       {/* 🟠 Missing Title */}
       {withoutTitle.length > 0 && (
-        <div className={`p-3  ${darkMode ? "bg-amber-900/10 border-amber-800" : "bg-amber-50 border-amber-200"} rounded-lg border  `}>
+        <div className={`p-3  ${darkMode ? "scrollbar-thumb-slate-600 bg-slate-800/50 border-slate-700  " : "scrollbar-thumb-slate-600 bg-slate-100 border-slate-200"}  rounded-lg border  `}>
           <h4 className="font-bold text-xs text-amber-700 dark:text-amber-300 mb-2 uppercase">Missing Title Attribute ({withoutTitle.length})</h4>
           <ul className="space-y-1 max-h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-amber-200 dark:scrollbar-thumb-amber-800">
             {withoutTitle.map((img, i) => (
@@ -213,7 +213,7 @@ function AltImagesDisplay({ imgData, darkMode }) {
 
       {/* 🟢 Fully Optimized */}
       {complete.length > 0 && (
-        <div className={`p-3  border ${darkMode ? "border-emerald-800 bg-slate-800/50 border-slate-700 " : "border-slate-200 bg-white"} rounded-lg shadow-sm`}>
+        <div className={`p-3  border ${darkMode ? "scrollbar-thumb-slate-600 bg-slate-800/50 border-slate-700  " : "scrollbar-thumb-slate-600 bg-slate-100 border-slate-200"}  rounded-lg shadow-sm`}>
           <h4 className="font-bold text-xs text-emerald-700 dark:text-emerald-400 mb-2 uppercase">Fully Optimized ({complete.length})</h4>
           <ul className="space-y-2 max-h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600">
             {complete.map((img, i) => (
@@ -267,14 +267,14 @@ function HeadingHierarchyCard({ data, darkMode }) {
               style={{ paddingLeft: `${(parseInt(h.tag[1]) - 1) * 12}px` }}
             >
               <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded border  shrink-0 ${h.tag === 'h1'
-                  ? (darkMode ? 'bg-indigo-500/20 text-slate-300 border-indigo-500/30 font-bold' : 'bg-indigo-100 text-slate-700 border-indigo-200')
-                  : (darkMode ? 'bg-indigo-500/20 text-slate-300 border-indigo-500/30 font-bold' : 'bg-indigo-100 text-slate-700 border-indigo-200')
+                ? (darkMode ? 'bg-indigo-500/20 text-slate-300 border-indigo-500/30 font-bold' : 'bg-indigo-100 text-slate-700 border-indigo-200')
+                : (darkMode ? 'bg-indigo-500/20 text-slate-300 border-indigo-500/30 font-bold' : 'bg-indigo-100 text-slate-700 border-indigo-200')
                 }  uppercase`}>
                 {h.tag}
               </span>
               <p className={`text-xs ${darkMode ? "text-slate-300" : "text-slate-800"} truncate ${h.tag === 'h1'
-                  ? (darkMode ? ' text-indigo-300 border-indigo-500/30 font-bold' : ' text-slate-700 border-indigo-200')
-                  : (darkMode ? ' text-indigo-300 border-indigo-500/30 font-bold' : ' text-slate-700 border-indigo-200')
+                ? (darkMode ? ' text-indigo-300 border-indigo-500/30 font-bold' : ' text-slate-700 border-indigo-200')
+                : (darkMode ? ' text-indigo-300 border-indigo-500/30 font-bold' : ' text-slate-700 border-indigo-200')
                 }`}>
                 {h.text || <span className={`italic text-slate-400 ${darkMode ? "text-slate-300" : "text-slate-800"}`}>Empty Heading</span>}
               </p>
@@ -307,7 +307,8 @@ const ModernMetricCard = ({
   imageSizeData,
   h1Data,
   contextualData,
-  urlData
+  urlData,
+  className
 }) => {
   const displayScore = score !== undefined && score !== null ? (score > 1 ? 100 : Math.round(score * 100)) : 0;
 
@@ -326,7 +327,7 @@ const ModernMetricCard = ({
   const hasContent = Title || metaDiscription || urlData || h1Data || contextualData || links || heading || altData || imageSizeData || canonical;
 
   return (
-    <div className={`group relative rounded-2xl border ${darkMode ? "border-slate-800 bg-slate-900" : "border-slate-200 bg-white"} shadow-sm hover:shadow-lg transition-all duration-300 ease-out`}>
+    <div className={`group relative rounded-2xl border ${darkMode ? "border-slate-800 bg-slate-900" : "border-slate-200 bg-white"} shadow-sm hover:shadow-lg transition-all duration-300 ease-out ${className || ""}`}>
 
       {/* Top Bar */}
       <div className="flex justify-between items-start p-6 pb-4">
@@ -358,9 +359,9 @@ const ModernMetricCard = ({
 
           {/* Title Tag */}
           {Title && (
-            <div className="text-sm">
+            <div className={`text-sm `}>
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Content Preview</span>
-              <p className={`font-medium mt-1 italic p-3 rounded-lg border ${darkMode ? "bg-slate-800 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-800"}`}>
+              <p className={`font-medium mt-1 italic p-3 rounded-lg border ${darkMode ? "scrollbar-thumb-slate-600 bg-slate-800/50 border-slate-700  " : "scrollbar-thumb-slate-600 bg-slate-100 border-slate-200"} `}>
                 "{Title.Title}"
               </p>
             </div>
@@ -368,9 +369,9 @@ const ModernMetricCard = ({
 
           {/* Meta Description */}
           {metaDiscription && (
-            <div className="text-sm">
+            <div className={`text-sm `}>
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Content Preview</span>
-              <p className={`font-medium mt-1 italic p-3 rounded-lg border line-clamp-3 ${darkMode ? "bg-slate-800 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-800"}`}>
+              <p className={`font-medium mt-1 italic p-3 rounded-lg border ${darkMode ? "scrollbar-thumb-slate-600 bg-slate-800/50 border-slate-700  " : "scrollbar-thumb-slate-600 bg-slate-100 border-slate-200"} `}>
                 "{metaDiscription.MetaDescription}"
               </p>
             </div>
@@ -391,17 +392,29 @@ const ModernMetricCard = ({
             <div className="mt-2">
               {urlData.Issues && urlData.Issues.length > 0 ? (
                 <div className="p-3 bg-rose-50 dark:bg-rose-900/10 rounded-xl border border-rose-200 dark:border-rose-800">
+                  <p className="text-xs font-bold text-rose-700 dark:text-rose-400 mb-1">Analyzed URL:</p>
+                  <p className="text-xs font-mono break-all text-rose-600 dark:text-rose-300 mb-3 border-b border-rose-200 dark:border-rose-800 pb-2">
+                    {urlData.URL}
+                  </p>
                   <p className="text-xs font-bold text-rose-700 dark:text-rose-400 mb-2">Issues Found:</p>
                   <ul className="space-y-1">
                     {urlData.Issues.map((issue, i) => (
-                      <li key={i} className="text-xs text-rose-700 dark:text-rose-300 flex items-start gap-2 font-medium">
-                        <span>•</span> {issue.reason}
+                      <li key={i} className="text-xs text-rose-700 dark:text-rose-300 flex items-start gap-2 font-medium break-words">
+                        <span>•</span>
+                        <span>
+                          {issue.segment && (
+                            <span className="font-mono font-bold text-rose-800 dark:text-rose-200 bg-rose-100 dark:bg-rose-900/50 px-1.5 py-0.5 rounded mr-1.5 text-[10px] border border-rose-200 dark:border-rose-700">
+                              {issue.segment}
+                            </span>
+                          )}
+                          {issue.reason || issue.finding || (typeof issue === 'string' ? issue : JSON.stringify(issue))}
+                        </span>
                       </li>
                     ))}
                   </ul>
                 </div>
               ) : (
-                <div className="p-3 bg-emerald-50 dark:bg-emerald-900/10 rounded-xl border border-emerald-200 dark:border-emerald-800">
+                <div className={`p-3 rounded-xl border ${darkMode ? "border-emerald-800 scrollbar-thumb-slate-600 bg-slate-800/50 border-slate-700  " : " border-emerald-200  scrollbar-thumb-slate-600 bg-slate-100 border-slate-200"}`}>
                   <p className={`text-xs font-bold  mb-1 ${darkMode ? "text-slate-200" : "text-slate-800"}`}>Clean URL</p>
                   <p className={`text-xs font-mono  break-all ${darkMode ? "text-slate-200" : "text-slate-800"}`}>{urlData.URL}</p>
                 </div>
@@ -430,11 +443,11 @@ const ModernMetricCard = ({
           {contextualData && (
             <div className="mt-3 space-y-3">
               {contextualData.Missing_Links?.length > 0 ? (
-                <div className={`p-3   rounded-xl border ${darkMode ? "border-amber-200  bg-amber-900/10" : "border-slate-700 bg-amber-50"}`}>
+                <div className={`p-3   rounded-xl border ${darkMode ? "scrollbar-thumb-slate-600 bg-slate-800/50 border-slate-700  " : "scrollbar-thumb-slate-600 bg-slate-100 border-slate-200"} `}>
                   <p className={`text-xs font-bold  mb-2 ${darkMode ? "text-amber-400" : "text-amber-700"}`}>Missing Links from Menu ({contextualData.Missing_Links.length}):</p>
                   <div className={`flex flex-wrap gap-1.5 max-h-32 overflow-y-auto scrollbar-thin  ${darkMode ? "scrollbar-thumb-amber-800" : "scrollbar-thumb-amber-200"}`}>
                     {contextualData.Missing_Links.map((l, i) => (
-                      <span key={i} className={`text-[10px] px-2.5 py-1 ${darkMode ? "bg-amber-900/40 text-amber-200 border-amber-700":"bg-white text-amber-800 border-amber-200" } rounded-lg border  font-bold shadow-sm`}>
+                      <span key={i} className={`text-[10px] px-2.5 py-1 ${darkMode ? "bg-amber-900/40 text-amber-200 border-amber-700" : "bg-white text-amber-800 border-amber-200"} rounded-lg border  font-bold shadow-sm`}>
                         {l}
                       </span>
                     ))}
@@ -463,7 +476,7 @@ const ModernMetricCard = ({
 // ------------------------------------------------------
 // ✅ Section Component (Refined)
 // ------------------------------------------------------
-function Section({ title, icon, children, score }) {
+function Section({ title, icon, children, score, gridCols }) {
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
 
@@ -500,7 +513,7 @@ function Section({ title, icon, children, score }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className={`grid grid-cols-1 md:grid-cols-2 ${gridCols || "lg:grid-cols-3"} gap-8`}>
         {children}
       </div>
     </div>
@@ -641,7 +654,7 @@ export default function On_Page_SEO() {
           <ModernMetricCard title="H1 Tag" description={desc.h1} score={seo.H1?.Score} value={seo.H1?.H1_Count + " Found"} darkMode={darkMode} icon="🔠" h1Data={seo.H1} />
         </Section>
 
-        <Section title="Media & Accessibility" icon="🖼️" score={mediaScore}>
+        <Section title="Media & Accessibility" icon="🖼️" score={mediaScore} gridCols="lg:grid-cols-2">
           {seo.Image?.Image_Exist != 0 && (
             <ModernMetricCard
               title="Alt Text"
@@ -666,15 +679,7 @@ export default function On_Page_SEO() {
         </Section>
 
         <Section title="Structure & Semantics" icon="🛠️" score={structureScore}>
-          {seo.Heading_Hierarchy && <ModernMetricCard
-            title="Hierarchy"
-            description={desc.heading}
-            heading={seo.Heading_Hierarchy}
-            score={seo.Heading_Hierarchy?.Score}
-            value={seo.Heading_Hierarchy?.Score ? "Logical" : "Broken"}
-            darkMode={darkMode}
-            icon="📚"
-          />}
+
           <ModernMetricCard title="Semantic Tags" description={desc.semantic} score={seo.Semantic_Tags?.Article_Score} value={seo.Semantic_Tags?.Article_Score ? "Used" : "Unused"} darkMode={darkMode} icon="📄" />
           <ModernMetricCard title="Schema" description={desc.structured} score={seo.Structured_Data?.Score} value={seo.Structured_Data?.Score ? "Detected" : "None"} darkMode={darkMode} icon="🧩" />
           <ModernMetricCard
@@ -686,15 +691,37 @@ export default function On_Page_SEO() {
             icon="🔗"
             contextualData={seo.Contextual_Linking}
           />
+          {seo.Heading_Hierarchy && <ModernMetricCard
+            title="Hierarchy"
+            description={desc.heading}
+            heading={seo.Heading_Hierarchy}
+            score={seo.Heading_Hierarchy?.Score}
+            value={seo.Heading_Hierarchy?.Score ? "Logical" : "Broken"}
+            darkMode={darkMode}
+            icon="📚"
+            className="md:col-span-2 lg:col-span-3"
+          />}
         </Section>
 
         <Section title="Technical SEO" icon="⚙️" score={technicalScore}>
           <ModernMetricCard title="HTTPS" description={desc.https} score={seo.HTTPS?.Score} value={seo.HTTPS?.Score ? "Secure" : "Insecure"} darkMode={darkMode} icon="🔒" />
           <ModernMetricCard title="Pagination" description={desc.pagination} score={seo.Pagination_Tags?.Score} value={seo.Pagination_Tags?.Score ? "Valid" : "None"} darkMode={darkMode} icon="📑" />
-          <ModernMetricCard title="Link Profile" description={desc.links} links={linksData} score={seo.Links?.Score} value={seo.Links?.Total + " Total"} darkMode={darkMode} icon="🧭" />
           <ModernMetricCard title="Duplication" description={desc.duplicate} score={seo.Duplicate_Content?.Score} value={seo.Duplicate_Content?.Score ? "Unique" : "Duplicate"} darkMode={darkMode} icon="🧬" />
+          <ModernMetricCard title="Link Profile" description={desc.links} links={linksData} score={seo.Links?.Score} value={seo.Links?.Total + " Total"} darkMode={darkMode} icon="🧭" className="md:col-span-2 lg:col-span-3" />
           {seo.URL_Slugs?.Slug_Check_Score == 1 && <ModernMetricCard title="Slugs" description={desc.slug} score={seo.URL_Slugs?.Slug_Check_Score} value="Valid" darkMode={darkMode} icon="🧾" />}
         </Section>
+        {/* Schema Data - Made to look like a Code Block */}
+        <div className={`mt-12 p-8 rounded-3xl ${darkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"} shadow-lg border`}>
+          <div className="flex items-center gap-3 mb-6">
+            <span className="text-2xl">🧩</span>
+            <h3 className={`text-xl font-bold ${darkMode ? "text-white" : "text-slate-900"}`}>Detected Schema Markup</h3>
+          </div>
+          <div className={`p-6 rounded-2xl overflow-x-auto border ${darkMode ? "scrollbar-thumb-slate-600 bg-slate-800/50 border-slate-700  " : "scrollbar-thumb-slate-600 bg-slate-100 border-slate-200"}`}>
+            <pre className={`text-xs font-mono leading-relaxed ${darkMode ? "text-indigo-300" : "text-slate-700"}`}>
+              {JSON.stringify(data.Schema, null, 2)}
+            </pre>
+          </div>
+        </div>
 
         {/* Audit Dropdowns */}
         <div className="mt-16 space-y-6">
@@ -702,18 +729,7 @@ export default function On_Page_SEO() {
           <AuditDropdown items={seo?.Improvements} title="⚠️ Improvements Needed" darkMode={darkMode} />
         </div>
 
-        {/* Schema Data - Made to look like a Code Block */}
-        <div className={`mt-12 p-8 rounded-3xl ${darkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"} shadow-lg border`}>
-          <div className="flex items-center gap-3 mb-6">
-            <span className="text-2xl">🧩</span>
-            <h3 className={`text-xl font-bold ${darkMode ? "text-white" : "text-slate-900"}`}>Detected Schema Markup</h3>
-          </div>
-          <div className={`p-6 rounded-2xl overflow-x-auto border ${darkMode ? "bg-slate-950 border-slate-800" : "bg-slate-50 border-slate-200"}`}>
-            <pre className={`text-xs font-mono leading-relaxed ${darkMode ? "text-indigo-300" : "text-slate-700"}`}>
-              {JSON.stringify(data.Schema, null, 2)}
-            </pre>
-          </div>
-        </div>
+
 
       </div>
     </div>

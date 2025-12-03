@@ -1,25 +1,18 @@
 import googleAPI from "../utils/googleAPI.js";
 import SiteReport from "../models/SiteReport.js";
 
-// -----------------------------------------------------------------
-// ✅ HELPER FUNCTIONS
-// -----------------------------------------------------------------
-
 function calculateScore(observed, good, poor) {
   if (observed <= good) return 100;
   if (observed >= poor) return 0;
   return parseFloat((((poor - observed) / (poor - good)) * 100).toFixed(0));
 }
 
-// -----------------------------------------------------------------
-// ✅ METRIC EVALUATION FUNCTIONS
-// -----------------------------------------------------------------
+// METRIC EVALUATION FUNCTIONS
 
 const evaluateLCP = (data) => {
   const value = parseFloat((data?.lighthouseResult?.audits?.["largest-contentful-paint"]?.numericValue || 0).toFixed(0));
   const score = calculateScore(value, 2500, 4000);
   const status = score >= 90 ? "pass" : score >= 50 ? "warning" : "fail";
-  const element = data?.lighthouseResult?.audits?.['largest-contentful-paint-element']?.details?.items?.[0]?.node?.nodeLabel || "Unknown Element";
 
   return {
     score,
@@ -29,15 +22,14 @@ const evaluateLCP = (data) => {
     meta: {
       value,
       unit: "ms",
-      target: "≤ 2.5s",
-      element: element,
-      thresholds: { good: 2500, poor: 4000 }
+      target: "≤ 2500ms",
+      thresholds: { good: "0–2500 ms", poor: "4000+ ms" }
     }
   };
 };
 
 const evaluateFID = (data) => {
-  const value = parseFloat(((data?.lighthouseResult?.audits?.['max-potential-fid']?.numericValue || 0) / 1000).toFixed(1));
+  const value = parseFloat((data?.lighthouseResult?.audits?.['max-potential-fid']?.numericValue || 0).toFixed(0));
   const score = calculateScore(value, 100, 300);
   const status = score >= 90 ? "pass" : score >= 50 ? "warning" : "fail";
 
@@ -50,7 +42,7 @@ const evaluateFID = (data) => {
       value,
       unit: "ms",
       target: "≤ 100ms",
-      thresholds: { good: 100, poor: 300 }
+      thresholds: { good: "0–100 ms", poor: "300+ ms" }
     }
   };
 };
@@ -71,7 +63,7 @@ const evaluateCLS = (data) => {
       unit: "",
       target: "≤ 0.1",
       shiftEvents: shiftCount,
-      thresholds: { good: 0.1, poor: 0.25 }
+      thresholds: { good: "0–0.1", poor: "0.25+" }
     }
   };
 };
@@ -89,8 +81,8 @@ const evaluateFCP = (data) => {
     meta: {
       value,
       unit: "ms",
-      target: "≤ 1.8s",
-      thresholds: { good: 1800, poor: 3000 }
+      target: "≤ 1800ms",
+      thresholds: { good: "0–1800 ms", poor: "3000+ ms" }
     }
   };
 };
@@ -109,13 +101,13 @@ const evaluateTTFB = (data) => {
       value,
       unit: "ms",
       target: "≤ 800ms",
-      thresholds: { good: 800, poor: 1800 }
+      thresholds: { good: "0–800 ms", poor: "1800+ ms" }
     }
   };
 };
 
 const evaluateTBT = (data) => {
-  const value = parseFloat(((data?.lighthouseResult?.audits?.["total-blocking-time"]?.numericValue || 0) / 1000).toFixed(0));
+  const value = parseFloat((data?.lighthouseResult?.audits?.["total-blocking-time"]?.numericValue || 0).toFixed(0));
   const score = calculateScore(value, 200, 600);
   const status = score >= 90 ? "pass" : score >= 50 ? "warning" : "fail";
 
@@ -128,7 +120,7 @@ const evaluateTBT = (data) => {
       value,
       unit: "ms",
       target: "≤ 200ms",
-      thresholds: { good: 200, poor: 600 }
+      thresholds: { good: "0–200 ms", poor: "600+ ms" }
     }
   };
 };
@@ -146,8 +138,8 @@ const evaluateSI = (data) => {
     meta: {
       value,
       unit: "ms",
-      target: "≤ 3.4s",
-      thresholds: { good: 3400, poor: 5800 }
+      target: "≤ 3400ms",
+      thresholds: { good: "0–3400 ms", poor: "5800+ ms" }
     }
   };
 };
@@ -165,8 +157,8 @@ const evaluateINP = (data) => {
     meta: {
       value,
       unit: "ms",
-      target: "≤ 3.8s",
-      thresholds: { good: 3800, poor: 7300 }
+      target: "≤ 3800ms",
+      thresholds: { good: "0–3800 ms", poor: "7300+ ms" }
     }
   };
 };
@@ -182,29 +174,33 @@ const evaluateCompression = async (page) => {
       try {
         const res = await fetch(url, { method: 'HEAD' });
         const encoding = res.headers.get('content-encoding');
-        return encoding && (encoding.includes('gzip') || encoding.includes('br') || encoding.includes('deflate'));
+        const isCompressed = !!(encoding && (encoding.includes('gzip') || encoding.includes('br') || encoding.includes('deflate')));
+        return { url, isCompressed };
       } catch {
-        return true;
+        return { url, isCompressed: true };
       }
     }));
     return results;
   });
 
   const total = resources.length;
-  const compressed = resources.filter(Boolean).length;
-  const score = total === 0 ? 100 : parseFloat(((compressed / total) * 100).toFixed(0));
+  const compressedCount = resources.filter(r => r.isCompressed).length;
+  const uncompressedResources = resources.filter(r => !r.isCompressed).map(r => r.url);
+
+  const score = total === 0 ? 100 : parseFloat(((compressedCount / total) * 100).toFixed(0));
   const status = score === 100 ? "pass" : "warning";
 
   return {
     score,
     status,
-    details: `${compressed}/${total} text resources compressed`,
+    details: `${compressedCount}/${total} text resources compressed`,
     suggestion: "Enable Gzip or Brotli compression for all text-based resources.",
     meta: {
       value: score,
-      target: "Enabled",
-      thresholds: { good: 100, poor: 0 },
-      unit: "%"
+      target: "100%",
+      thresholds: { good: "100%", poor: "0%" },
+      unit: "%",
+      uncompressedResources
     }
   };
 };
@@ -220,32 +216,36 @@ const evaluateCaching = async (page) => {
       try {
         const res = await fetch(url, { method: 'HEAD' });
         const cacheControl = res.headers.get('cache-control');
-        if (!cacheControl) return false;
+        if (!cacheControl) return { url, isCached: false };
         const maxAgeMatch = cacheControl.match(/max-age=(\d+)/);
-        if (!maxAgeMatch) return false;
-        return parseInt(maxAgeMatch[1], 10) >= 604800; // 7 days
+        if (!maxAgeMatch) return { url, isCached: false };
+        const isCached = parseInt(maxAgeMatch[1], 10) >= 604800; // 7 days
+        return { url, isCached };
       } catch {
-        return true;
+        return { url, isCached: true };
       }
     }));
     return results;
   });
 
   const total = resources.length;
-  const cached = resources.filter(Boolean).length;
-  const score = total === 0 ? 100 : parseFloat(((cached / total) * 100).toFixed(0));
+  const cachedCount = resources.filter(r => r.isCached).length;
+  const uncachedResources = resources.filter(r => !r.isCached).map(r => r.url);
+
+  const score = total === 0 ? 100 : parseFloat(((cachedCount / total) * 100).toFixed(0));
   const status = score >= 90 ? "pass" : "warning";
 
   return {
     score,
     status,
-    details: `${cached}/${total} static resources cached > 7 days`,
+    details: `${cachedCount}/${total} static resources cached > 7 days`,
     suggestion: "Configure long cache TTL (max-age) for static assets.",
     meta: {
       value: score,
       target: "≥ 7 days",
       thresholds: { good: 100, poor: 50 },
-      unit: "%"
+      unit: "%",
+      uncachedResources
     }
   };
 };
@@ -254,20 +254,35 @@ const evaluateResourceOptimization = async (page) => {
   const result = await page.evaluate(() => {
     const images = Array.from(document.querySelectorAll('img'));
     const totalImages = images.length;
-    const optimizedImages = images.filter(img => {
-      if (img.naturalWidth === 0) return true;
-      return img.naturalWidth <= (img.clientWidth * 2) && img.naturalHeight <= (img.clientHeight * 2);
-    }).length;
+
+    const unoptimizedImagesList = images.filter(img => {
+      if (img.naturalWidth === 0) return false;
+      return !(img.naturalWidth <= (img.clientWidth * 2) && img.naturalHeight <= (img.clientHeight * 2));
+    }).map(img => img.src);
+
+    const optimizedImagesCount = totalImages - unoptimizedImagesList.length;
 
     const scripts = Array.from(document.querySelectorAll('script[src]'));
     const totalScripts = scripts.length;
-    const minifiedScripts = scripts.filter(s => s.src.includes('.min') || s.src.includes('cdn')).length;
 
-    return { totalImages, optimizedImages, totalScripts, minifiedScripts };
+    const unminifiedScriptsList = scripts.filter(s => {
+      return !(s.src.includes('.min') || s.src.includes('cdn'));
+    }).map(s => s.src);
+
+    const minifiedScriptsCount = totalScripts - unminifiedScriptsList.length;
+
+    return {
+      totalImages,
+      optimizedImagesCount,
+      unoptimizedImagesList,
+      totalScripts,
+      minifiedScriptsCount,
+      unminifiedScriptsList
+    };
   });
 
-  const imgScore = result.totalImages === 0 ? 100 : (result.optimizedImages / result.totalImages) * 100;
-  const scriptScore = result.totalScripts === 0 ? 100 : (result.minifiedScripts / result.totalScripts) * 100;
+  const imgScore = result.totalImages === 0 ? 100 : (result.optimizedImagesCount / result.totalImages) * 100;
+  const scriptScore = result.totalScripts === 0 ? 100 : (result.minifiedScriptsCount / result.totalScripts) * 100;
   const score = parseFloat(((imgScore + scriptScore) / 2).toFixed(0));
   const status = score >= 80 ? "pass" : "warning";
 
@@ -279,43 +294,47 @@ const evaluateResourceOptimization = async (page) => {
     meta: {
       value: score,
       target: "Optimized",
-      thresholds: { good: 80, poor: 50 },
-      imagesOptimized: `${result.optimizedImages}/${result.totalImages}`,
-      scriptsMinified: `${result.minifiedScripts}/${result.totalScripts}`
+      thresholds: { good: "80%", poor: "50%" },
+      imagesOptimized: `${result.optimizedImagesCount}/${result.totalImages}`,
+      scriptsMinified: `${result.minifiedScriptsCount}/${result.totalScripts}`,
+      unoptimizedImages: result.unoptimizedImagesList,
+      unminifiedScripts: result.unminifiedScriptsList
     }
   };
 };
 
 const evaluateRenderBlocking = async (page) => {
-  const blocking = await page.evaluate(() => {
+  const blockingResources = await page.evaluate(() => {
     const links = Array.from(document.querySelectorAll('head link[rel="stylesheet"]'));
     const scripts = Array.from(document.querySelectorAll('head script[src]'));
 
     const blockingLinks = links.filter(link => {
       const media = link.media;
       return !media || media === 'all' || media === 'screen';
-    }).length;
+    }).map(link => link.href);
 
     const blockingScripts = scripts.filter(script => {
       return !script.hasAttribute('async') && !script.hasAttribute('defer');
-    }).length;
+    }).map(script => script.src);
 
-    return blockingLinks + blockingScripts;
+    return [...blockingLinks, ...blockingScripts];
   });
 
-  const score = blocking === 0 ? 100 : Math.max(0, 100 - (blocking * 10));
+  const blockingCount = blockingResources.length;
+  const score = blockingCount === 0 ? 100 : Math.max(0, 100 - (blockingCount * 10));
   const status = score === 100 ? "pass" : "warning";
 
   return {
     score,
     status,
-    details: `${blocking} render-blocking resources found`,
+    details: `${blockingCount} render-blocking resources found`,
     suggestion: "Defer non-critical JS and use media attributes for CSS.",
     meta: {
-      value: blocking,
+      value: blockingCount,
       target: "0 items",
-      thresholds: { good: 0, poor: 5 },
-      unit: "items"
+      thresholds: { good: "0 items", poor: "5 items" },
+      unit: "items",
+      blockingResources
     }
   };
 };
@@ -336,7 +355,7 @@ const evaluateHTTPS = (response) => {
     meta: {
       value: score,
       target: "Enabled",
-      thresholds: { good: 100, poor: 0 },
+      thresholds: { good: "100%", poor: "0%" },
       protocol: protocol
     }
   };
@@ -357,7 +376,7 @@ const evaluateRedirectChains = (response) => {
       value: hops,
       unit: "hops",
       target: "≤ 1 hop",
-      thresholds: { good: 1, poor: 3 }
+      thresholds: { good: "1 hop", poor: "3 hops" }
     }
   };
 };
@@ -385,7 +404,7 @@ const evaluateStructuredData = async (page) => {
     meta: {
       hasStructuredData: result.hasData,
       target: "Present",
-      thresholds: { good: 1, poor: 0 },
+      thresholds: { good: "Present", poor: "None" },
       typesFound: result.types || "None"
     }
   };
@@ -439,7 +458,7 @@ const evaluateBrokenLinks = async (page) => {
       totalLinks,
       brokenPercent,
       target: "0 broken",
-      thresholds: { good: 0, poor: 1 },
+      thresholds: { good: "0 broken", poor: "1 broken" },
       brokenLinksList
     }
   };
@@ -465,7 +484,7 @@ const evaluateSitemap = async (url, browser) => {
     status,
     details: exists ? "Sitemap found" : "Sitemap missing",
     suggestion: "Add sitemap.xml and submit it to search engines for better indexing.",
-    meta: { exists, target: "Present", thresholds: { good: 1, poor: 0 } }
+    meta: { exists, target: "Present", thresholds: { good: "Present", poor: "Missing" } }
   };
 };
 
@@ -489,15 +508,11 @@ const evaluateRobots = async (url, browser) => {
     status,
     details: exists ? "Robots.txt found" : "Robots.txt missing",
     suggestion: "Ensure robots.txt exists and allows proper crawling.",
-    meta: { exists, target: "Present", thresholds: { good: 1, poor: 0 } }
+    meta: { exists, target: "Present", thresholds: { good: "Present", poor: "Missing" } }
   };
 };
 
-
-// -----------------------------------------------------------------
-// ✅ MAIN FUNCTION
-// -----------------------------------------------------------------
-
+// MAIN FUNCTION
 export default async function technicalMetrics(url, device, selectedMetric, page, response, browser, auditId) {
 
   const data = await googleAPI(url, device);

@@ -122,9 +122,14 @@ const MetricCard = ({ details, value, dynamicData, darkMode, icon: Icon }) => {
 
   // Filter Meta Data
   const meta = dynamicData?.meta || {};
-  const excludedKeys = ['value', 'unit', 'score', 'status', 'details', 'suggestion', 'exists', 'hasStructuredData', 'brokenLinksList', 'target'];
+  const excludedKeys = ['value', 'unit', 'score', 'status', 'details', 'suggestion', 'exists', 'hasStructuredData', 'brokenLinksList', 'target', 'uncompressedResources', 'uncachedResources', 'unoptimizedImages', 'unminifiedScripts', 'blockingResources'];
   const metaKeys = Object.keys(meta).filter(key => !excludedKeys.includes(key));
   const brokenLinks = meta.brokenLinksList || [];
+  const uncompressedResources = meta.uncompressedResources || [];
+  const uncachedResources = meta.uncachedResources || [];
+  const unoptimizedImages = meta.unoptimizedImages || [];
+  const unminifiedScripts = meta.unminifiedScripts || [];
+  const blockingResources = meta.blockingResources || [];
 
   const renderMetaValue = (val) => {
     if (typeof val === 'object' && val !== null) {
@@ -220,6 +225,86 @@ const MetricCard = ({ details, value, dynamicData, darkMode, icon: Icon }) => {
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Uncompressed Resources List */}
+          {uncompressedResources.length > 0 && (
+            <div className={`mt-3 rounded-lg border overflow-hidden ${darkMode ? "border-white/10 bg-white/5" : "border-gray-200 bg-gray-50"}`}>
+              <div className={`px-3 py-2 text-[10px] font-bold uppercase tracking-wider border-b ${darkMode ? "border-white/10 text-slate-400" : "border-gray-200 text-gray-500"}`}>
+                Uncompressed Resources ({uncompressedResources.length})
+              </div>
+              <div className="max-h-32 overflow-y-auto custom-scrollbar">
+                {uncompressedResources.map((url, i) => (
+                  <div key={i} className={`px-3 py-2 text-[10px] border-b last:border-0 flex justify-between gap-2 ${darkMode ? "border-white/5 text-amber-400" : "border-gray-100 text-amber-600"}`}>
+                    <span className="truncate flex-1" title={url}>{url}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Uncached Resources List */}
+          {uncachedResources.length > 0 && (
+            <div className={`mt-3 rounded-lg border overflow-hidden ${darkMode ? "border-white/10 bg-white/5" : "border-gray-200 bg-gray-50"}`}>
+              <div className={`px-3 py-2 text-[10px] font-bold uppercase tracking-wider border-b ${darkMode ? "border-white/10 text-slate-400" : "border-gray-200 text-gray-500"}`}>
+                Uncached Resources ({uncachedResources.length})
+              </div>
+              <div className="max-h-32 overflow-y-auto custom-scrollbar">
+                {uncachedResources.map((url, i) => (
+                  <div key={i} className={`px-3 py-2 text-[10px] border-b last:border-0 flex justify-between gap-2 ${darkMode ? "border-white/5 text-amber-400" : "border-gray-100 text-amber-600"}`}>
+                    <span className="truncate flex-1" title={url}>{url}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Unoptimized Images List */}
+          {unoptimizedImages.length > 0 && (
+            <div className={`mt-3 rounded-lg border overflow-hidden ${darkMode ? "border-white/10 bg-white/5" : "border-gray-200 bg-gray-50"}`}>
+              <div className={`px-3 py-2 text-[10px] font-bold uppercase tracking-wider border-b ${darkMode ? "border-white/10 text-slate-400" : "border-gray-200 text-gray-500"}`}>
+                Unoptimized Images ({unoptimizedImages.length})
+              </div>
+              <div className="max-h-32 overflow-y-auto custom-scrollbar">
+                {unoptimizedImages.map((url, i) => (
+                  <div key={i} className={`px-3 py-2 text-[10px] border-b last:border-0 flex justify-between gap-2 ${darkMode ? "border-white/5 text-amber-400" : "border-gray-100 text-amber-600"}`}>
+                    <span className="truncate flex-1" title={url}>{url}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Unminified Scripts List */}
+          {unminifiedScripts.length > 0 && (
+            <div className={`mt-3 rounded-lg border overflow-hidden ${darkMode ? "border-white/10 bg-white/5" : "border-gray-200 bg-gray-50"}`}>
+              <div className={`px-3 py-2 text-[10px] font-bold uppercase tracking-wider border-b ${darkMode ? "border-white/10 text-slate-400" : "border-gray-200 text-gray-500"}`}>
+                Unminified Scripts ({unminifiedScripts.length})
+              </div>
+              <div className="max-h-32 overflow-y-auto custom-scrollbar">
+                {unminifiedScripts.map((url, i) => (
+                  <div key={i} className={`px-3 py-2 text-[10px] border-b last:border-0 flex justify-between gap-2 ${darkMode ? "border-white/5 text-amber-400" : "border-gray-100 text-amber-600"}`}>
+                    <span className="truncate flex-1" title={url}>{url}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Blocking Resources List */}
+          {blockingResources.length > 0 && (
+            <div className={`mt-3 rounded-lg border overflow-hidden ${darkMode ? "border-white/10 bg-white/5" : "border-gray-200 bg-gray-50"}`}>
+              <div className={`px-3 py-2 text-[10px] font-bold uppercase tracking-wider border-b ${darkMode ? "border-white/10 text-slate-400" : "border-gray-200 text-gray-500"}`}>
+                Blocking Resources ({blockingResources.length})
+              </div>
+              <div className="max-h-32 overflow-y-auto custom-scrollbar">
+                {blockingResources.map((url, i) => (
+                  <div key={i} className={`px-3 py-2 text-[10px] border-b last:border-0 flex justify-between gap-2 ${darkMode ? "border-white/5 text-amber-400" : "border-gray-100 text-amber-600"}`}>
+                    <span className="truncate flex-1" title={url}>{url}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
@@ -426,10 +511,10 @@ export default function Technical_Performance() {
 
           <div className="flex items-center gap-3">
             <div className={`text-sm font-bold px-3 py-1 rounded-full border ${overallScore >= 90
-                ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-500"
-                : overallScore >= 50
-                  ? "border-amber-500/20 bg-amber-500/10 text-amber-500"
-                  : "border-rose-500/20 bg-rose-500/10 text-rose-500"
+              ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-500"
+              : overallScore >= 50
+                ? "border-amber-500/20 bg-amber-500/10 text-amber-500"
+                : "border-rose-500/20 bg-rose-500/10 text-rose-500"
               }`}>
               Score: {overallScore}
             </div>
@@ -542,16 +627,6 @@ export default function Technical_Performance() {
         })}
 
       </main>
-
-      {/* Footer */}
-      <footer className={`py-16 border-t ${darkMode ? "bg-[#050505] border-white/5" : "bg-white border-gray-200"}`}>
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <p className={`text-sm font-medium ${darkMode ? "text-slate-500" : "text-gray-400"}`}>
-            Generated by Page Speed SLT • {new Date().getFullYear()}
-          </p>
-        </div>
-      </footer>
-
     </div>
   );
 }

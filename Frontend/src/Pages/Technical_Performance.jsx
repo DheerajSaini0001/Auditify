@@ -139,26 +139,30 @@ const MetricCard = ({ details, value, dynamicData, darkMode, icon: Icon }) => {
     return val;
   };
 
+  const activeListsCount = [uncompressedResources, uncachedResources, unoptimizedImages, unminifiedScripts, blockingResources, brokenLinks].filter(l => l.length > 0).length;
+  const isWide = details.className?.includes('col-span-2');
+  const showSideBySide = isWide && activeListsCount > 0;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5 }}
-      className={`relative group rounded-2xl p-[1px]`}
+      className={`relative group rounded-2xl p-[1px] h-full ${details.className || ""}`}
     >
       {/* Animated Gradient Border */}
       <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${colors.gradient} opacity-40 blur-sm group-hover:opacity-100 transition-opacity duration-500`} />
 
       {/* Card Content */}
-      <div className={`relative h-full rounded-2xl overflow-hidden backdrop-blur-xl border-t border-l border-white/10 shadow-2xl
+      <div className={`relative rounded-2xl overflow-hidden backdrop-blur-xl border-t border-l border-white/10 shadow-2xl h-full flex flex-col
         ${darkMode ? "bg-[#0a0a0a]/90" : "bg-white/90"}
       `}>
 
         {/* Status Strip */}
         <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${colors.gradient}`} />
 
-        <div className="p-6 flex flex-col h-full relative z-10">
+        <div className="p-6 flex flex-col relative z-10 h-full">
 
           {/* Header */}
           <div className="flex justify-between items-start mb-6">
@@ -173,6 +177,12 @@ const MetricCard = ({ details, value, dynamicData, darkMode, icon: Icon }) => {
                 <div className={`flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest mt-1 ${colors.text}`}>
                   <StatusIcon size={12} />
                   {status === "pass" ? "Good" : status === "warning" ? "Needs Work" : "Poor"}
+                  {dynamicData?.score !== undefined && (
+                    <>
+                      <span className="mx-1 opacity-30">|</span>
+                      <span>Score: {dynamicData.score}</span>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -201,129 +211,137 @@ const MetricCard = ({ details, value, dynamicData, darkMode, icon: Icon }) => {
             </div>
           </div>
 
-          {/* Detailed Stats (Holographic Panel) */}
-          {(metaKeys.length > 0 || auditResult) && (
-            <div className={`mt-auto rounded-xl border overflow-hidden transition-all duration-300
-              ${darkMode ? "bg-black/40 border-white/10" : "bg-gray-50 border-gray-200"}
-            `}>
-              {auditResult && (
-                <div className={`px-4 py-2.5 text-[11px] font-semibold border-b ${darkMode ? "border-white/10 text-slate-400" : "border-gray-200 text-gray-500"}`}>
-                  {auditResult}
-                </div>
-              )}
-              {metaKeys.length > 0 && (
-                <div className="p-3 grid gap-2">
-                  {metaKeys.map((key) => (
-                    <div key={key} className="flex justify-between items-center text-xs group/item">
-                      <span className={`capitalize font-medium transition-colors ${darkMode ? "text-slate-500 group-hover/item:text-slate-300" : "text-gray-500 group-hover/item:text-gray-700"}`}>
-                        {key.replace(/([A-Z])/g, ' $1').trim()}
-                      </span>
-                      <span className={`font-mono font-bold ${darkMode ? "text-slate-300" : "text-gray-700"}`}>
-                        {renderMetaValue(meta[key])}
-                      </span>
+          <div className={showSideBySide ? "mt-auto grid grid-cols-1 md:grid-cols-2 gap-4" : "flex flex-col gap-3"}>
+            {/* Detailed Stats (Holographic Panel) */}
+            {(metaKeys.length > 0 || auditResult) && (
+              <div className={`rounded-xl border overflow-hidden transition-all duration-300
+                ${darkMode ? "bg-black/40 border-white/10" : "bg-gray-50 border-gray-200"}
+                ${showSideBySide ? "md:col-span-1 h-full" : ""}
+              `}>
+                {auditResult && (
+                  <div className={`px-4 py-2.5 text-[11px] font-semibold border-b ${darkMode ? "border-white/10 text-slate-400" : "border-gray-200 text-gray-500"}`}>
+                    {auditResult}
+                  </div>
+                )}
+                {metaKeys.length > 0 && (
+                  <div className={`p-3 grid gap-2 ${showSideBySide ? "grid-cols-2" : (isWide ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-4" : "grid-cols-1")}`}>
+                    {metaKeys.map((key) => (
+                      <div key={key} className={`flex ${showSideBySide ? "flex-col items-start gap-1" : "justify-between items-center"} text-xs group/item`}>
+                        <span className={`capitalize font-medium transition-colors ${darkMode ? "text-slate-500 group-hover/item:text-slate-300" : "text-gray-500 group-hover/item:text-gray-700"}`}>
+                          {key.replace(/([A-Z])/g, ' $1').trim()}
+                        </span>
+                        <span className={`font-mono font-bold ${darkMode ? "text-slate-300" : "text-gray-700"} ${showSideBySide ? "text-left" : "text-right"}`}>
+                          {renderMetaValue(meta[key])}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Lists Container */}
+            {activeListsCount > 0 && (
+              <div className={`${showSideBySide ? `md:col-span-1 grid grid-cols-1 ${activeListsCount > 1 ? "md:grid-cols-2" : "md:grid-cols-1"} gap-4` : "flex flex-col gap-3"}`}>
+                {/* Uncompressed Resources List */}
+                {uncompressedResources.length > 0 && (
+                  <div className={`rounded-lg border overflow-hidden ${darkMode ? "border-white/10 bg-white/5" : "border-gray-200 bg-gray-50"}`}>
+                    <div className={`px-3 py-2 text-[10px] font-bold uppercase tracking-wider border-b ${darkMode ? "border-white/10 text-slate-400" : "border-gray-200 text-gray-500"}`}>
+                      Uncompressed Resources ({uncompressedResources.length})
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Uncompressed Resources List */}
-          {uncompressedResources.length > 0 && (
-            <div className={`mt-3 rounded-lg border overflow-hidden ${darkMode ? "border-white/10 bg-white/5" : "border-gray-200 bg-gray-50"}`}>
-              <div className={`px-3 py-2 text-[10px] font-bold uppercase tracking-wider border-b ${darkMode ? "border-white/10 text-slate-400" : "border-gray-200 text-gray-500"}`}>
-                Uncompressed Resources ({uncompressedResources.length})
-              </div>
-              <div className="max-h-32 overflow-y-auto custom-scrollbar">
-                {uncompressedResources.map((url, i) => (
-                  <div key={i} className={`px-3 py-2 text-[10px] border-b last:border-0 flex justify-between gap-2 ${darkMode ? "border-white/5 text-amber-400" : "border-gray-100 text-amber-600"}`}>
-                    <span className="truncate flex-1" title={url}>{url}</span>
+                    <div className="max-h-32 overflow-y-auto custom-scrollbar">
+                      {uncompressedResources.map((url, i) => (
+                        <div key={i} className={`px-3 py-2 text-[10px] border-b last:border-0 flex justify-between gap-2 ${darkMode ? "border-white/5 text-amber-400" : "border-gray-100 text-amber-600"}`}>
+                          <span className="truncate flex-1" title={url}>{url}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
+                )}
 
-          {/* Uncached Resources List */}
-          {uncachedResources.length > 0 && (
-            <div className={`mt-3 rounded-lg border overflow-hidden ${darkMode ? "border-white/10 bg-white/5" : "border-gray-200 bg-gray-50"}`}>
-              <div className={`px-3 py-2 text-[10px] font-bold uppercase tracking-wider border-b ${darkMode ? "border-white/10 text-slate-400" : "border-gray-200 text-gray-500"}`}>
-                Uncached Resources ({uncachedResources.length})
-              </div>
-              <div className="max-h-32 overflow-y-auto custom-scrollbar">
-                {uncachedResources.map((url, i) => (
-                  <div key={i} className={`px-3 py-2 text-[10px] border-b last:border-0 flex justify-between gap-2 ${darkMode ? "border-white/5 text-amber-400" : "border-gray-100 text-amber-600"}`}>
-                    <span className="truncate flex-1" title={url}>{url}</span>
+                {/* Uncached Resources List */}
+                {uncachedResources.length > 0 && (
+                  <div className={`rounded-lg border overflow-hidden ${darkMode ? "border-white/10 bg-white/5" : "border-gray-200 bg-gray-50"}`}>
+                    <div className={`px-3 py-2 text-[10px] font-bold uppercase tracking-wider border-b ${darkMode ? "border-white/10 text-slate-400" : "border-gray-200 text-gray-500"}`}>
+                      Uncached Resources ({uncachedResources.length})
+                    </div>
+                    <div className="max-h-32 overflow-y-auto custom-scrollbar">
+                      {uncachedResources.map((url, i) => (
+                        <div key={i} className={`px-3 py-2 text-[10px] border-b last:border-0 flex justify-between gap-2 ${darkMode ? "border-white/5 text-amber-400" : "border-gray-100 text-amber-600"}`}>
+                          <span className="truncate flex-1" title={url}>{url}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
+                )}
 
-          {/* Unoptimized Images List */}
-          {unoptimizedImages.length > 0 && (
-            <div className={`mt-3 rounded-lg border overflow-hidden ${darkMode ? "border-white/10 bg-white/5" : "border-gray-200 bg-gray-50"}`}>
-              <div className={`px-3 py-2 text-[10px] font-bold uppercase tracking-wider border-b ${darkMode ? "border-white/10 text-slate-400" : "border-gray-200 text-gray-500"}`}>
-                Unoptimized Images ({unoptimizedImages.length})
-              </div>
-              <div className="max-h-32 overflow-y-auto custom-scrollbar">
-                {unoptimizedImages.map((url, i) => (
-                  <div key={i} className={`px-3 py-2 text-[10px] border-b last:border-0 flex justify-between gap-2 ${darkMode ? "border-white/5 text-amber-400" : "border-gray-100 text-amber-600"}`}>
-                    <span className="truncate flex-1" title={url}>{url}</span>
+                {/* Unoptimized Images List */}
+                {unoptimizedImages.length > 0 && (
+                  <div className={`rounded-lg border overflow-hidden ${darkMode ? "border-white/10 bg-white/5" : "border-gray-200 bg-gray-50"}`}>
+                    <div className={`px-3 py-2 text-[10px] font-bold uppercase tracking-wider border-b ${darkMode ? "border-white/10 text-slate-400" : "border-gray-200 text-gray-500"}`}>
+                      Unoptimized Images ({unoptimizedImages.length})
+                    </div>
+                    <div className="max-h-32 overflow-y-auto custom-scrollbar">
+                      {unoptimizedImages.map((url, i) => (
+                        <div key={i} className={`px-3 py-2 text-[10px] border-b last:border-0 flex justify-between gap-2 ${darkMode ? "border-white/5 text-amber-400" : "border-gray-100 text-amber-600"}`}>
+                          <span className="truncate flex-1" title={url}>{url}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
+                )}
 
-          {/* Unminified Scripts List */}
-          {unminifiedScripts.length > 0 && (
-            <div className={`mt-3 rounded-lg border overflow-hidden ${darkMode ? "border-white/10 bg-white/5" : "border-gray-200 bg-gray-50"}`}>
-              <div className={`px-3 py-2 text-[10px] font-bold uppercase tracking-wider border-b ${darkMode ? "border-white/10 text-slate-400" : "border-gray-200 text-gray-500"}`}>
-                Unminified Scripts ({unminifiedScripts.length})
-              </div>
-              <div className="max-h-32 overflow-y-auto custom-scrollbar">
-                {unminifiedScripts.map((url, i) => (
-                  <div key={i} className={`px-3 py-2 text-[10px] border-b last:border-0 flex justify-between gap-2 ${darkMode ? "border-white/5 text-amber-400" : "border-gray-100 text-amber-600"}`}>
-                    <span className="truncate flex-1" title={url}>{url}</span>
+                {/* Unminified Scripts List */}
+                {unminifiedScripts.length > 0 && (
+                  <div className={`rounded-lg border overflow-hidden ${darkMode ? "border-white/10 bg-white/5" : "border-gray-200 bg-gray-50"}`}>
+                    <div className={`px-3 py-2 text-[10px] font-bold uppercase tracking-wider border-b ${darkMode ? "border-white/10 text-slate-400" : "border-gray-200 text-gray-500"}`}>
+                      Unminified Scripts ({unminifiedScripts.length})
+                    </div>
+                    <div className="max-h-32 overflow-y-auto custom-scrollbar">
+                      {unminifiedScripts.map((url, i) => (
+                        <div key={i} className={`px-3 py-2 text-[10px] border-b last:border-0 flex justify-between gap-2 ${darkMode ? "border-white/5 text-amber-400" : "border-gray-100 text-amber-600"}`}>
+                          <span className="truncate flex-1" title={url}>{url}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
+                )}
 
-          {/* Blocking Resources List */}
-          {blockingResources.length > 0 && (
-            <div className={`mt-3 rounded-lg border overflow-hidden ${darkMode ? "border-white/10 bg-white/5" : "border-gray-200 bg-gray-50"}`}>
-              <div className={`px-3 py-2 text-[10px] font-bold uppercase tracking-wider border-b ${darkMode ? "border-white/10 text-slate-400" : "border-gray-200 text-gray-500"}`}>
-                Blocking Resources ({blockingResources.length})
-              </div>
-              <div className="max-h-32 overflow-y-auto custom-scrollbar">
-                {blockingResources.map((url, i) => (
-                  <div key={i} className={`px-3 py-2 text-[10px] border-b last:border-0 flex justify-between gap-2 ${darkMode ? "border-white/5 text-amber-400" : "border-gray-100 text-amber-600"}`}>
-                    <span className="truncate flex-1" title={url}>{url}</span>
+                {/* Blocking Resources List */}
+                {blockingResources.length > 0 && (
+                  <div className={`rounded-lg border overflow-hidden ${darkMode ? "border-white/10 bg-white/5" : "border-gray-200 bg-gray-50"}`}>
+                    <div className={`px-3 py-2 text-[10px] font-bold uppercase tracking-wider border-b ${darkMode ? "border-white/10 text-slate-400" : "border-gray-200 text-gray-500"}`}>
+                      Blocking Resources ({blockingResources.length})
+                    </div>
+                    <div className="max-h-32 overflow-y-auto custom-scrollbar">
+                      {blockingResources.map((url, i) => (
+                        <div key={i} className={`px-3 py-2 text-[10px] border-b last:border-0 flex justify-between gap-2 ${darkMode ? "border-white/5 text-amber-400" : "border-gray-100 text-amber-600"}`}>
+                          <span className="truncate flex-1" title={url}>{url}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
+                )}
 
-          {/* Broken Links List */}
-          {brokenLinks.length > 0 && (
-            <div className={`mt-3 rounded-lg border overflow-hidden ${darkMode ? "border-white/10 bg-white/5" : "border-gray-200 bg-gray-50"}`}>
-              <div className={`px-3 py-2 text-[10px] font-bold uppercase tracking-wider border-b ${darkMode ? "border-white/10 text-slate-400" : "border-gray-200 text-gray-500"}`}>
-                Broken URLs ({brokenLinks.length})
-              </div>
-              <div className="max-h-32 overflow-y-auto custom-scrollbar">
-                {brokenLinks.map((link, i) => (
-                  <div key={i} className={`px-3 py-2 text-[10px] border-b last:border-0 flex justify-between gap-2 ${darkMode ? "border-white/5 text-rose-400" : "border-gray-100 text-rose-600"}`}>
-                    <span className="truncate flex-1" title={link.url}>{link.url}</span>
-                    <span className="font-mono opacity-70">{link.status}</span>
+                {/* Broken Links List */}
+                {brokenLinks.length > 0 && (
+                  <div className={`rounded-lg border overflow-hidden ${darkMode ? "border-white/10 bg-white/5" : "border-gray-200 bg-gray-50"}`}>
+                    <div className={`px-3 py-2 text-[10px] font-bold uppercase tracking-wider border-b ${darkMode ? "border-white/10 text-slate-400" : "border-gray-200 text-gray-500"}`}>
+                      Broken URLs ({brokenLinks.length})
+                    </div>
+                    <div className="max-h-32 overflow-y-auto custom-scrollbar">
+                      {brokenLinks.map((link, i) => (
+                        <div key={i} className={`px-3 py-2 text-[10px] border-b last:border-0 flex justify-between gap-2 ${darkMode ? "border-white/5 text-rose-400" : "border-gray-100 text-rose-600"}`}>
+                          <span className="truncate flex-1" title={link.url}>{link.url}</span>
+                          <span className="font-mono opacity-70">{link.status}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))}
+                )}
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Recommendation */}
           <div className={`mt-4 pt-4 border-t ${darkMode ? "border-white/10" : "border-gray-100"}`}>
@@ -414,9 +432,8 @@ export default function Technical_Performance() {
       isCrux: true,
       metrics: [
         { key: 'LCP', title: "Largest Contentful Paint", analogy: "Time until main content is visible.", unit: "ms", icon: Layout },
-        { key: 'FID', title: "First Input Delay", analogy: "Time until page reacts to click.", unit: "ms", icon: MousePointer2 },
-        { key: 'CLS', title: "Cumulative Layout Shift", analogy: "Visual stability of the page.", unit: "", icon: Layout },
         { key: 'INP', title: "Interaction to Next Paint", analogy: "Overall responsiveness.", unit: "ms", icon: Activity },
+        { key: 'CLS', title: "Cumulative Layout Shift", analogy: "Visual stability of the page.", unit: "", icon: Layout },
         { key: 'FCP', title: "First Contentful Paint", analogy: "First visual response.", unit: "ms", icon: Zap },
         { key: 'TTFB', title: "Time To First Byte", analogy: "Server response speed.", unit: "ms", icon: Server }
       ]
@@ -429,8 +446,8 @@ export default function Technical_Performance() {
       metrics: [
         { key: 'LCP', title: "Largest Contentful Paint", analogy: "Main content load speed.", unit: "ms", icon: Layout },
         { key: 'FID', title: "First Input Delay", analogy: "Input responsiveness.", unit: "ms", icon: MousePointer2 },
+        { key: 'INP', title: "Interaction to Next Paint", analogy: "Interaction latency.", unit: "ms", icon: Activity },
         { key: 'CLS', title: "Cumulative Layout Shift", analogy: "Visual stability.", unit: "", icon: Layout },
-        { key: 'INP', title: "Interaction to Next Paint", analogy: "Interaction latency.", unit: "ms", icon: Activity }
       ]
     },
     {
@@ -453,9 +470,9 @@ export default function Technical_Performance() {
       metrics: [
         { key: 'Compression', title: "Text Compression", analogy: "Gzip/Brotli compression.", unit: "", icon: FileCode, getValue: (m) => m.meta.value === 100 ? "Enabled" : `${m.meta.value}%` },
         { key: 'Caching', title: "Caching Policy", analogy: "Browser caching settings.", unit: "%", icon: Database, getValue: (m) => `${m.meta.value}%` },
-        { key: 'Resource_Optimization', title: "Resource Optimization", analogy: "Image & code minification.", unit: "", icon: ImageIcon, getValue: (m) => m.score >= 80 ? "Optimized" : "Needs Work" },
         { key: 'Render_Blocking', title: "Render-Blocking", analogy: "Critical path blocking.", unit: "", icon: AlertTriangle, getValue: (m) => m.meta.value === 0 ? "None" : `${m.meta.value} items` },
-        { key: 'HTTP', title: "HTTPS / HTTP2", analogy: "Secure transport protocols.", unit: "", icon: Shield, getValue: (m) => m.score === 100 ? "Secure" : "Insecure" }
+        { key: 'HTTP', title: "HTTPS / HTTP2", analogy: "Secure transport protocols.", unit: "", icon: Shield, getValue: (m) => m.score === 100 ? "Secure" : "Insecure" },
+        { key: 'Resource_Optimization', title: "Resource Optimization", analogy: "Image & code minification.", unit: "", icon: ImageIcon, getValue: (m) => m.score >= 80 ? "Optimized" : "Needs Work", className: "md:col-span-2" },
       ]
     },
     {
@@ -467,7 +484,7 @@ export default function Technical_Performance() {
         { key: 'Sitemap', title: "Sitemap", analogy: "XML Sitemap presence.", unit: "", icon: Map, getValue: (m) => m.meta.exists ? "Found" : "Missing" },
         { key: 'Robots', title: "Robots.txt", analogy: "Crawling instructions.", unit: "", icon: FileText, getValue: (m) => m.meta.exists ? "Found" : "Missing" },
         { key: 'Structured_Data', title: "Structured Data", analogy: "Schema markup.", unit: "", icon: FileCode, getValue: (m) => m.meta.hasStructuredData ? "Found" : "Missing" },
-        { key: 'Broken_Links', title: "Broken Links", analogy: "Dead internal links.", unit: "%", icon: Link, getValue: (m) => m.meta.brokenPercent },
+        { key: 'Broken_Links', title: "Broken Links", analogy: "Dead internal links.", unit: "%", icon: Link, getValue: (m) => m.meta.brokenPercent, className: "md:col-span-2" },
         { key: 'Redirect_Chains', title: "Redirect Chains", analogy: "Multiple redirects.", unit: " hops", icon: ArrowRightLeft, getValue: (m) => m.meta.value }
       ]
     }

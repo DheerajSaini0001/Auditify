@@ -104,6 +104,9 @@ const TechShimmer = ({ darkMode }) => (
 // ------------------------------------------------------
 // 🧊 Metric Card (Static 3D Look)
 // ------------------------------------------------------
+// ------------------------------------------------------
+// 🧊 Metric Card (Unified Design)
+// ------------------------------------------------------
 const MetricCard = ({ details, value, dynamicData, darkMode, icon: Icon }) => {
   // Determine Status
   let status = "pass";
@@ -167,7 +170,7 @@ const MetricCard = ({ details, value, dynamicData, darkMode, icon: Icon }) => {
           {/* Header */}
           <div className="flex justify-between items-start mb-6">
             <div className="flex items-center gap-4">
-              <div className={`p-3 rounded-xl shadow-lg ${darkMode ? "bg-slate-900" : "bg-white"} ${colors.text} ring-1 ring-white/10`}>
+              <div className={`p-3 rounded-xl shadow-lg ${darkMode ? "bg-slate-900" : "bg-white"} ${colors.text} ring-1 ring-white/10 text-2xl`}>
                 <Icon size={24} strokeWidth={2} />
               </div>
               <div>

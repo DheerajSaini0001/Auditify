@@ -152,7 +152,7 @@ const MetricCard = ({ details, value, dynamicData, darkMode, icon: Icon }) => {
       className={`relative group rounded-2xl p-[1px] h-full ${details.className || ""}`}
     >
       {/* Animated Gradient Border */}
-      <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${colors.gradient} opacity-40 blur-sm group-hover:opacity-100 transition-opacity duration-500`} />
+      <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${colors.gradient} opacity-50 blur-sm`} />
 
       {/* Card Content */}
       <div className={`relative rounded-2xl overflow-hidden backdrop-blur-xl border-t border-l border-white/10 shadow-2xl h-full flex flex-col
@@ -227,7 +227,7 @@ const MetricCard = ({ details, value, dynamicData, darkMode, icon: Icon }) => {
                   <div className={`p-3 grid gap-2 ${showSideBySide ? "grid-cols-2" : (isWide ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-4" : "grid-cols-1")}`}>
                     {metaKeys.map((key) => (
                       <div key={key} className={`flex ${showSideBySide ? "flex-col items-start gap-1" : "justify-between items-center"} text-xs group/item`}>
-                        <span className={`capitalize font-medium transition-colors ${darkMode ? "text-slate-500 group-hover/item:text-slate-300" : "text-gray-500 group-hover/item:text-gray-700"}`}>
+                        <span className={`capitalize font-medium ${darkMode ? "text-slate-500" : "text-gray-500"}`}>
                           {key.replace(/([A-Z])/g, ' $1').trim()}
                         </span>
                         <span className={`font-mono font-bold ${darkMode ? "text-slate-300" : "text-gray-700"} ${showSideBySide ? "text-left" : "text-right"}`}>
@@ -469,7 +469,7 @@ export default function Technical_Performance() {
       icon: Server,
       metrics: [
         { key: 'Compression', title: "Text Compression", analogy: "Gzip/Brotli compression.", unit: "", icon: FileCode, getValue: (m) => m.meta.value === 100 ? "Enabled" : `${m.meta.value}%` },
-        { key: 'Caching', title: "Caching Policy", analogy: "Browser caching settings.", unit: "%", icon: Database, getValue: (m) => `${m.meta.value}%` },
+        { key: 'Caching', title: "Caching Policy", analogy: "Browser caching settings.", unit: "%", icon: Database, getValue: (m) => `${m.meta.value}` },
         { key: 'Render_Blocking', title: "Render-Blocking", analogy: "Critical path blocking.", unit: "", icon: AlertTriangle, getValue: (m) => m.meta.value === 0 ? "None" : `${m.meta.value} items` },
         { key: 'HTTP', title: "HTTPS / HTTP2", analogy: "Secure transport protocols.", unit: "", icon: Shield, getValue: (m) => m.score === 100 ? "Secure" : "Insecure" },
         { key: 'Resource_Optimization', title: "Resource Optimization", analogy: "Image & code minification.", unit: "", icon: ImageIcon, getValue: (m) => m.score >= 80 ? "Optimized" : "Needs Work", className: "md:col-span-2" },

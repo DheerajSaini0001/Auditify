@@ -519,11 +519,11 @@ export default async function technicalMetrics(url, device, selectedMetric, page
   // Real User Experience (CrUX Data)
   const cruxMetrics = data?.loadingExperience?.metrics || {};
   const cruxData = {
-    LCP: { value: cruxMetrics["LARGEST_CONTENTFUL_PAINT_MS"]?.percentile, category: cruxMetrics["LARGEST_CONTENTFUL_PAINT_MS"]?.category },
-    CLS: { value: cruxMetrics["CUMULATIVE_LAYOUT_SHIFT_SCORE"]?.percentile, category: cruxMetrics["CUMULATIVE_LAYOUT_SHIFT_SCORE"]?.category },
-    INP: { value: cruxMetrics["INTERACTION_TO_NEXT_PAINT"]?.percentile, category: cruxMetrics["INTERACTION_TO_NEXT_PAINT"]?.category },
-    FCP: { value: cruxMetrics["FIRST_CONTENTFUL_PAINT_MS"]?.percentile, category: cruxMetrics["FIRST_CONTENTFUL_PAINT_MS"]?.category },
-    TTFB: { value: cruxMetrics["EXPERIMENTAL_TIME_TO_FIRST_BYTE"]?.percentile, category: cruxMetrics["EXPERIMENTAL_TIME_TO_FIRST_BYTE"]?.category }
+    LCP: { value: cruxMetrics["LARGEST_CONTENTFUL_PAINT_MS"]?.percentile, category: cruxMetrics["LARGEST_CONTENTFUL_PAINT_MS"]?.category, suggestion: "Optimize hero images and defer non-critical CSS." },
+    CLS: { value: cruxMetrics["CUMULATIVE_LAYOUT_SHIFT_SCORE"]?.percentile, category: cruxMetrics["CUMULATIVE_LAYOUT_SHIFT_SCORE"]?.category, suggestion: "Set size attributes for images, videos, and ads to prevent layout shifts." },
+    INP: { value: cruxMetrics["INTERACTION_TO_NEXT_PAINT"]?.percentile, category: cruxMetrics["INTERACTION_TO_NEXT_PAINT"]?.category,suggestion: "Reduce main-thread work and optimize JS execution for faster interactivity." },
+    FCP: { value: cruxMetrics["FIRST_CONTENTFUL_PAINT_MS"]?.percentile, category: cruxMetrics["FIRST_CONTENTFUL_PAINT_MS"]?.category,suggestion: "Prioritize above-the-fold content and optimize critical rendering paths." },
+    TTFB: { value: cruxMetrics["EXPERIMENTAL_TIME_TO_FIRST_BYTE"]?.percentile, category: cruxMetrics["EXPERIMENTAL_TIME_TO_FIRST_BYTE"]?.category,suggestion: "Use a CDN, optimize server performance, or enable caching to reduce server response time." }
   };
 
   // Evaluate Metrics

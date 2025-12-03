@@ -497,42 +497,54 @@ export default function Technical_Performance() {
       <motion.div
         initial={{ y: -100 }}
         animate={{ y: 0 }}
-        className={`sticky top-0 z-50 border-b backdrop-blur-xl transition-all ${darkMode ? "bg-[#050505]/80 border-white/5" : "bg-white/80 border-gray-200"}`}
+        className={`sticky top-4 z-50 mx-4 md:mx-auto max-w-7xl rounded-2xl border backdrop-blur-xl transition-all shadow-sm ${darkMode ? "bg-[#0a0a0a]/80 border-white/10" : "bg-white/80 border-gray-200/50"}`}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className={`p-2 rounded-lg ${darkMode ? "bg-indigo-500/20" : "bg-indigo-50"}`}>
-              <Activity className="text-indigo-500" size={20} />
+        <div className="px-4 sm:px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className={`p-2 rounded-xl ${darkMode ? "bg-indigo-500/20 text-indigo-400" : "bg-indigo-50 text-indigo-600"}`}>
+              <Activity size={20} strokeWidth={2.5} />
             </div>
-            <span className="font-bold text-lg tracking-tight">TechAudit<span className="text-indigo-500">.</span></span>
+            <span className={`font-bold text-lg tracking-tight ${darkMode ? "text-white" : "text-gray-900"}`}>
+              TechAudit<span className="text-indigo-500">.</span>
+            </span>
           </div>
 
-          <nav className="hidden md:flex items-center gap-1 p-1 rounded-full border border-white/5 bg-white/5">
+          <nav className="hidden md:flex items-center gap-1">
             {sections.map(section => {
               if (section.isCrux && !metric.Technical_Performance.Real_User_Experience) return null;
+              const isActive = activeSection === section.id;
               return (
                 <button
                   key={section.id}
                   onClick={() => scrollToSection(section.id)}
-                  className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-300
-                    ${activeSection === section.id
-                      ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/25"
-                      : (darkMode ? "text-slate-400 hover:text-white" : "text-gray-500 hover:text-gray-900")}
+                  className={`relative px-4 py-2 rounded-full text-xs font-semibold transition-all duration-300
+                    ${isActive ? (darkMode ? "text-white" : "text-gray-900") : (darkMode ? "text-slate-400 hover:text-slate-200" : "text-gray-500 hover:text-gray-700")}
                   `}
                 >
-                  {section.title}
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeNav"
+                      className={`absolute inset-0 rounded-full ${darkMode ? "bg-white/10" : "bg-gray-100"}`}
+                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                    />
+                  )}
+                  <span className="relative z-10">{section.title}</span>
                 </button>
               );
             })}
           </nav>
 
           <div className="flex items-center gap-3">
-            <div className={`text-sm font-bold px-3 py-1 rounded-full border ${overallScore >= 90
+            <div className={`flex items-center gap-2 text-sm font-bold px-4 py-1.5 rounded-full border shadow-sm ${overallScore >= 90
               ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-500"
               : overallScore >= 50
                 ? "border-amber-500/20 bg-amber-500/10 text-amber-500"
                 : "border-rose-500/20 bg-rose-500/10 text-rose-500"
               }`}>
+              <span className="relative flex h-2 w-2">
+                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${overallScore >= 90 ? "bg-emerald-500" : overallScore >= 50 ? "bg-amber-500" : "bg-rose-500"}`}></span>
+                <span className={`relative inline-flex rounded-full h-2 w-2 ${overallScore >= 90 ? "bg-emerald-500" : overallScore >= 50 ? "bg-amber-500" : "bg-rose-500"}`}></span>
+              </span>
               Score: {overallScore}
             </div>
           </div>
@@ -540,56 +552,112 @@ export default function Technical_Performance() {
       </motion.div>
 
       {/* 🟢 Hero Section */}
-      <div className={`relative overflow-hidden border-b ${darkMode ? "bg-[#050505] border-white/5" : "bg-white border-gray-200"}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-24 relative z-10">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-16">
+      <div className="relative w-full overflow-hidden">
+        {/* Animated Background Elements */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none">
+          <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-indigo-500/20 rounded-full blur-[120px] mix-blend-screen animate-pulse" />
+          <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-500/20 rounded-full blur-[100px] mix-blend-screen animate-pulse" style={{ animationDelay: "2s" }} />
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-20 relative z-10">
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-16 lg:gap-24">
+
+            {/* Left Content */}
             <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
-              className="max-w-2xl"
+              className="flex-1 text-center lg:text-left"
             >
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider mb-8 border bg-indigo-500/10 border-indigo-500/20 text-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.3)]">
-                <Globe size={12} />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2 }}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-widest mb-8 border backdrop-blur-md bg-white/5 border-indigo-500/30 text-indigo-500 shadow-lg shadow-indigo-500/10"
+              >
+                <Globe size={12} className="animate-spin" />
                 {data.Device} Performance Report
-              </div>
-              <h1 className={`text-6xl md:text-7xl font-black tracking-tighter mb-8 leading-[1.1] ${darkMode ? "text-white" : "text-gray-900"}`}>
+              </motion.div>
+
+              <h1 className={`text-5xl lg:text-7xl font-black tracking-tight mb-8 leading-[1.1] ${darkMode ? "text-white" : "text-gray-900"}`}>
                 Technical <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 animate-gradient-x">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 animate-gradient-x">
                   Health Check
                 </span>
               </h1>
-              <p className={`text-xl leading-relaxed max-w-xl ${darkMode ? "text-slate-400" : "text-gray-600"}`}>
-                Comprehensive analysis of <span className={`font-semibold ${darkMode ? "text-slate-200" : "text-gray-900"}`}>{new URL(data.Site).hostname}</span>.
-                We've analyzed speed, stability, and SEO factors to provide actionable insights.
+
+              <p className={`text-lg lg:text-xl leading-relaxed max-w-2xl mx-auto lg:mx-0 ${darkMode ? "text-slate-400" : "text-gray-600"}`}>
+                A comprehensive deep-dive into <span className={`font-bold border-b-2 border-indigo-500/30 ${darkMode ? "text-slate-200" : "text-gray-900"}`}>{new URL(data.Site).hostname}</span>'s performance.
+                We've analyzed speed, stability, and SEO factors to provide actionable insights for optimization.
               </p>
+
+              <div className="mt-10 flex flex-wrap justify-center lg:justify-start gap-4">
+                <div className={`flex items-center gap-2 px-5 py-3 rounded-2xl border ${darkMode ? "bg-white/5 border-white/10" : "bg-white border-gray-100"} shadow-sm`}>
+                  <Zap size={18} className="text-amber-500" />
+                  <div className="text-xs font-bold">
+                    <div className={darkMode ? "text-slate-500" : "text-gray-400"}>Performance</div>
+                    <div className={darkMode ? "text-slate-200" : "text-gray-700"}>Analyzed</div>
+                  </div>
+                </div>
+                <div className={`flex items-center gap-2 px-5 py-3 rounded-2xl border ${darkMode ? "bg-white/5 border-white/10" : "bg-white border-gray-100"} shadow-sm`}>
+                  <Search size={18} className="text-blue-500" />
+                  <div className="text-xs font-bold">
+                    <div className={darkMode ? "text-slate-500" : "text-gray-400"}>SEO</div>
+                    <div className={darkMode ? "text-slate-200" : "text-gray-700"}>Checked</div>
+                  </div>
+                </div>
+                <div className={`flex items-center gap-2 px-5 py-3 rounded-2xl border ${darkMode ? "bg-white/5 border-white/10" : "bg-white border-gray-100"} shadow-sm`}>
+                  <Shield size={18} className="text-emerald-500" />
+                  <div className="text-xs font-bold">
+                    <div className={darkMode ? "text-slate-500" : "text-gray-400"}>Security</div>
+                    <div className={darkMode ? "text-slate-200" : "text-gray-700"}>Verified</div>
+                  </div>
+                </div>
+              </div>
             </motion.div>
 
-            {/* Score Card */}
+            {/* Right Content - Score Card */}
             <motion.div
               initial={{ opacity: 0, scale: 0.8, rotate: 5 }}
               animate={{ opacity: 1, scale: 1, rotate: 0 }}
-              transition={{ duration: 0.8, delay: 0.2, type: "spring" }}
-              className={`relative p-10 rounded-[2.5rem] border flex flex-col items-center justify-center gap-6 shadow-2xl backdrop-blur-xl
-                ${darkMode ? "bg-white/5 border-white/10 shadow-indigo-500/10" : "bg-white border-gray-100 shadow-xl"}
-              `}
+              transition={{ duration: 0.8, delay: 0.2, type: "spring", bounce: 0.4 }}
+              className="relative"
             >
-              <CircularProgress value={overallScore} size={160} stroke={12} />
-              <div className="text-center">
-                <div className={`text-4xl font-black ${overallScore >= 90 ? "text-emerald-500" : overallScore >= 50 ? "text-amber-500" : "text-rose-500"}`}>
-                  {overallScore}/100
+              <div className={`absolute inset-0 bg-gradient-to-br ${overallScore >= 90 ? "from-emerald-500 to-teal-500" : overallScore >= 50 ? "from-amber-500 to-orange-500" : "from-rose-500 to-red-500"} rounded-[3rem] blur-3xl opacity-20 animate-pulse`} />
+
+              <div className={`relative p-12 rounded-[3rem] border backdrop-blur-2xl flex flex-col items-center justify-center gap-8 shadow-2xl
+                ${darkMode ? "bg-black/40 border-white/10 shadow-black/50" : "bg-white/60 border-white/40 shadow-xl"}
+              `}>
+                <div className="relative">
+                  <CircularProgress value={overallScore} size={200} stroke={16} />
+                  <div className="absolute inset-0 flex items-center justify-center flex-col">
+                    <span className={`text-6xl font-black tracking-tighter ${overallScore >= 90 ? "text-emerald-500" : overallScore >= 50 ? "text-amber-500" : "text-rose-500"}`}>
+                      {overallScore}
+                    </span>
+                    <span className={`text-xs font-bold uppercase tracking-widest mt-1 ${darkMode ? "text-slate-500" : "text-gray-400"}`}>
+                      / 100
+                    </span>
+                  </div>
                 </div>
-                <div className={`text-xs font-bold uppercase tracking-widest mt-2 ${darkMode ? "text-slate-500" : "text-gray-400"}`}>
-                  Overall Score
+
+                <div className="text-center">
+                  <div className={`text-sm font-bold uppercase tracking-widest mb-2 ${darkMode ? "text-slate-400" : "text-gray-500"}`}>
+                    Overall Health
+                  </div>
+                  <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold border
+                    ${overallScore >= 90
+                      ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
+                      : overallScore >= 50
+                        ? "bg-amber-500/10 border-amber-500/20 text-amber-500"
+                        : "bg-rose-500/10 border-rose-500/20 text-rose-500"}
+                  `}>
+                    {overallScore >= 90 ? "Excellent" : overallScore >= 50 ? "Average" : "Critical"}
+                  </div>
                 </div>
               </div>
             </motion.div>
           </div>
         </div>
-
-        {/* Background Decoration */}
-        <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-[1000px] h-[1000px] bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none mix-blend-screen" />
-        <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-purple-600/10 rounded-full blur-[100px] pointer-events-none mix-blend-screen" />
       </div>
 
       {/* 🟢 Main Content */}

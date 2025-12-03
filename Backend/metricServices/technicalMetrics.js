@@ -8,7 +8,6 @@ function calculateScore(observed, good, poor) {
 }
 
 // METRIC EVALUATION FUNCTIONS
-
 const evaluateLCP = (data) => {
   const value = parseFloat((data?.lighthouseResult?.audits?.["largest-contentful-paint"]?.numericValue || 0).toFixed(0));
   const score = calculateScore(value, 2500, 4000);
@@ -563,6 +562,8 @@ export default async function technicalMetrics(url, device, selectedMetric, page
 
   await SiteReport.findByIdAndUpdate(auditId, {
     Technical_Performance: {
+      Percentage: actualPercentage,
+      Real_User_Experience: cruxData,
       LCP: lcp,
       FID: fid,
       CLS: cls,
@@ -581,8 +582,6 @@ export default async function technicalMetrics(url, device, selectedMetric, page
       Structured_Data: structuredData,
       Broken_Links: brokenLinks,
       Redirect_Chains: redirect,
-      Percentage: actualPercentage,
-      Real_User_Experience: cruxData,
     },
   });
 

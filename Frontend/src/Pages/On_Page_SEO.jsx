@@ -598,7 +598,7 @@ export default function On_Page_SEO() {
 
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-12 relative z-10">
           <div className="text-center md:text-left">
-            <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 dark:bg-indigo-900/30 dark:border-indigo-800 text-indigo-700 ${darkMode ? "text-indigo-100" : "text-black"} text-xs font-bold uppercase tracking-wider mb-6`}>
+            <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full  border    ${darkMode ? "text-indigo-100 border-indigo-800 bg-indigo-900/30" : " text-indigo-700  border-indigo-800 . bg-indigo-50"} text-xs font-bold uppercase tracking-wider mb-6`}>
               🚀 SEO Audit Report
             </div>
             <h1 className={`text-5xl md:text-7xl font-black mb-6 tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>

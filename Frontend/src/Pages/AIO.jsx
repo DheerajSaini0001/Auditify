@@ -2,7 +2,6 @@ import React, { useContext } from "react";
 import CircularProgress from "../Component/CircularProgress";
 import { useData } from "../context/DataContext";
 import { ThemeContext } from "../context/ThemeContext";
-import { motion } from "framer-motion";
 import {
   CheckCircle, XCircle, AlertTriangle, Info,
   Database, FileText, Zap, Server, RefreshCw, Globe,
@@ -56,112 +55,121 @@ const educationalContent = {
 };
 
 // ------------------------------------------------------
-// ✅ Simple Skeleton
+// ✅ Skeleton Loader
 // ------------------------------------------------------
 const AIOShimmer = ({ darkMode }) => (
   <div className={`min-h-screen ${darkMode ? "bg-gray-900" : "bg-gray-50"} p-8 space-y-8`}>
-    <div className={`h-64 rounded-xl ${darkMode ? "bg-gray-800" : "bg-white"} animate-pulse`} />
+    <div className={`h-64 rounded-3xl ${darkMode ? "bg-gray-800" : "bg-white"} animate-pulse`} />
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {[...Array(9)].map((_, i) => (
-        <div key={i} className={`h-40 rounded-xl ${darkMode ? "bg-gray-800" : "bg-white"} animate-pulse`} />
+        <div key={i} className={`h-64 rounded-xl ${darkMode ? "bg-gray-800" : "bg-white"} animate-pulse`} />
       ))}
     </div>
   </div>
 );
 
 // ------------------------------------------------------
-// ✅ Simple Metric Card
+// ✅ Metric Card (Security Style)
 // ------------------------------------------------------
 const MetricCard = ({ metricKey, data, darkMode }) => {
   const { score, details, meta } = data || {};
   const isPassed = score === 100;
-  const isWarning = score === 50;
 
   const Icon = iconMap[metricKey] || CheckCircle;
   const content = educationalContent[metricKey] || { desc: "Metric check.", why: "Important for AI." };
   const title = metricKey.replaceAll("_", " ");
 
-  // Simple Colors
   const cardBg = darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200";
   const textColor = darkMode ? "text-gray-100" : "text-gray-900";
   const subTextColor = darkMode ? "text-gray-400" : "text-gray-500";
 
-  let statusColor = "text-red-600 bg-red-50 border-red-100";
-  let statusText = "Failed";
-  let borderClass = "border-l-4 border-l-red-500";
-
-  if (darkMode) {
-    statusColor = "text-red-400 bg-red-900/20 border-red-800/30";
-  }
-
-  if (isPassed) {
-    statusColor = darkMode ? "text-green-400 bg-green-900/20 border-green-800/30" : "text-green-600 bg-green-50 border-green-100";
-    statusText = "Passed";
-    borderClass = "border-l-4 border-l-green-500";
-  } else if (isWarning) {
-    statusColor = darkMode ? "text-yellow-400 bg-yellow-900/20 border-yellow-800/30" : "text-yellow-600 bg-yellow-50 border-yellow-100";
-    statusText = "Warning";
-    borderClass = "border-l-4 border-l-yellow-500";
-  }
-
-  const hasMetaDetails = meta && Object.keys(meta).some(k => k !== 'count');
+  const statusColor = isPassed
+    ? "text-emerald-500 bg-emerald-500/10 border-emerald-500/20"
+    : "text-rose-500 bg-rose-500/10 border-rose-500/20";
 
   return (
-    <div className={`rounded-lg border shadow-sm p-5 ${cardBg} ${borderClass} flex flex-col h-full`}>
-      <div className="flex justify-between items-start mb-4">
-        <div className="flex items-center gap-3">
-          <div className={`p-2 rounded-md ${darkMode ? "bg-gray-700 text-gray-300" : "bg-gray-100 text-gray-600"}`}>
-            <Icon size={20} />
-          </div>
-          <h3 className={`font-bold text-base ${textColor}`}>{title}</h3>
-        </div>
-        <span className={`text-xs font-bold px-2 py-1 rounded border ${statusColor}`}>
-          {statusText}
-        </span>
-      </div>
-
-      <p className={`text-sm mb-3 ${isPassed ? "text-green-600 dark:text-green-400" : isWarning ? "text-yellow-600 dark:text-yellow-400" : "text-red-600 dark:text-red-400"}`}>
-        {details}
-      </p>
-
-      <div className={`mt-auto pt-3 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
-        <p className={`text-xs ${subTextColor} mb-1`}>{content.desc}</p>
-        <p className={`text-xs font-medium ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
-          Why: {content.why}
-        </p>
-      </div>
-
-      {/* Simple Diagnostics Panel */}
-      {!isPassed && hasMetaDetails && (
-        <div className={`mt-3 p-3 rounded text-xs font-mono ${darkMode ? "bg-gray-900 text-gray-300" : "bg-gray-50 text-gray-700"}`}>
-          <div className="font-bold mb-2 uppercase tracking-wider opacity-70">Diagnostics</div>
-          <div className="space-y-1">
-            {Object.entries(meta).map(([k, v]) => {
-              if (k === 'count') return null;
-              return (
-                <div key={k} className="break-all">
-                  <span className="font-semibold">{k.replace(/([A-Z])/g, ' $1').trim()}: </span>
-                  <span>{typeof v === 'object' ? JSON.stringify(v) : String(v)}</span>
-                </div>
-              );
-            })}
+    <div className={`relative overflow-hidden rounded-xl border ${cardBg} shadow-sm hover:shadow-md transition-shadow group`}>
+      <div className="p-5 space-y-4">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-4">
+            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
+              <Icon size={24} className={darkMode ? "text-indigo-400" : "text-indigo-600"} />
+            </div>
+            <div>
+              <h3 className={`font-bold text-lg ${textColor}`}>{title}</h3>
+              <p className={`text-xs font-medium mt-1 px-2 py-0.5 rounded-full w-fit border ${statusColor}`}>
+                {isPassed ? "Ready" : "Optimization Needed"}
+              </p>
+            </div>
           </div>
         </div>
-      )}
+
+        {/* Dynamic Details */}
+        <div>
+          <h4 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+            Status Detail
+          </h4>
+          <p className={`text-sm font-medium ${isPassed ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+            {details}
+          </p>
+          {meta?.count !== undefined && (
+            <div className="mt-2 text-xs">
+              <span className={`font-semibold ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Detected Count: </span>
+              <code className={`px-1.5 py-0.5 rounded ${darkMode ? "bg-gray-700 text-gray-200" : "bg-gray-100 text-gray-800"}`}>
+                {String(meta.count)}
+              </code>
+            </div>
+          )}
+        </div>
+
+        {/* Technical Data */}
+        {meta && Object.keys(meta).some(k => k !== 'count') && (
+          <div>
+            <h4 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+              Technical Data
+            </h4>
+            <div className={`p-2 rounded text-xs font-mono overflow-x-auto ${darkMode ? "bg-gray-900 text-gray-300" : "bg-gray-100 text-gray-700"}`}>
+              {Object.entries(meta).map(([key, value]) => {
+                if (key === 'count') return null;
+                return (
+                  <div key={key} className="flex flex-col sm:flex-row sm:gap-2 mb-1 last:mb-0">
+                    <span className="font-semibold opacity-70">{key.replace(/([A-Z])/g, ' $1').trim()}:</span>
+                    <span className="break-all">{typeof value === 'object' ? JSON.stringify(value) : String(value)}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Educational Content */}
+        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+          <p className={`text-sm ${subTextColor}`}>
+            {content.desc}
+          </p>
+          <p className={`text-xs mt-2 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+            <span className="font-semibold">Why:</span> {content.why}
+          </p>
+        </div>
+      </div>
     </div>
   );
 };
 
 // ------------------------------------------------------
-// ✅ Simple Section
+// ✅ Section Component
 // ------------------------------------------------------
 const Section = ({ title, icon: Icon, children, darkMode }) => (
-  <div className="space-y-6">
-    <div className="flex items-center gap-3 pb-2 border-b border-gray-200 dark:border-gray-700">
-      <Icon size={24} className={darkMode ? "text-indigo-400" : "text-indigo-600"} />
-      <h2 className={`text-xl font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>{title}</h2>
+  <div className="space-y-4">
+    <div className="flex items-center gap-3 px-2">
+      <div className={`p-2 rounded-lg ${darkMode ? "bg-indigo-500/20 text-indigo-400" : "bg-indigo-100 text-indigo-600"}`}>
+        <Icon size={20} />
+      </div>
+      <h2 className={`text-xl font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>
+        {title}
+      </h2>
     </div>
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {children}
     </div>
   </div>
@@ -183,35 +191,58 @@ export default function AIO() {
   const mainBg = darkMode ? "bg-gray-900" : "bg-gray-50";
   const textColor = darkMode ? "text-white" : "text-gray-900";
 
+  const allMetrics = Object.values(aio).filter(val => typeof val === 'object' && val !== null && 'score' in val);
+  const passedCount = allMetrics.filter(m => m.score === 100).length;
+  const failedCount = allMetrics.filter(m => m.score < 100).length;
+
   return (
     <div className={`min-h-screen w-full ${mainBg} transition-colors duration-300`}>
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
 
-        {/* Simple Header */}
-        <div className={`rounded-xl p-8 shadow-sm border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
-          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-            <div className="space-y-4 text-center md:text-left">
-              <h1 className={`text-3xl font-bold ${textColor}`}>AIO Readiness Report</h1>
-              <p className={`max-w-2xl ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
+        {/* Header Section */}
+        <div className={`relative overflow-hidden rounded-3xl p-8 sm:p-10 shadow-2xl ${darkMode ? "bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700" : "bg-white border border-gray-200"}`}>
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="text-center md:text-left space-y-4 max-w-2xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-sm font-medium border border-indigo-500/20">
+                <Brain size={14} />
+                <span>AI Readiness Report</span>
+              </div>
+              <h1 className={`text-4xl sm:text-5xl font-black tracking-tight ${textColor}`}>
+                AIO <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">Readiness</span>
+              </h1>
+              <p className={`text-lg ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
                 Evaluation of your website's readiness for Artificial Intelligence optimization and crawlers.
               </p>
-              <div className="flex gap-4 justify-center md:justify-start text-sm font-medium">
-                <span className={`px-3 py-1 rounded-full ${darkMode ? "bg-green-900/30 text-green-400" : "bg-green-100 text-green-700"}`}>
-                  {Object.values(aio).filter(m => m?.score === 100).length} Passed
-                </span>
-                <span className={`px-3 py-1 rounded-full ${darkMode ? "bg-red-900/30 text-red-400" : "bg-red-100 text-red-700"}`}>
-                  {Object.values(aio).filter(m => m?.score < 100).length} Issues
-                </span>
+
+              <div className="flex flex-wrap gap-4 justify-center md:justify-start pt-2">
+                <div className={`flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg ${darkMode ? "bg-gray-700 text-gray-300" : "bg-gray-100 text-gray-600"}`}>
+                  <CheckCircle size={16} className="text-emerald-500" />
+                  <span>{passedCount} Passed</span>
+                </div>
+                <div className={`flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg ${darkMode ? "bg-gray-700 text-gray-300" : "bg-gray-100 text-gray-600"}`}>
+                  <XCircle size={16} className="text-rose-500" />
+                  <span>{failedCount} Failed</span>
+                </div>
               </div>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="text-center">
-                <div className={`text-4xl font-black ${textColor}`}>{aio?.Percentage || 0}%</div>
-                <div className={`text-xs uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Score</div>
+
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative">
+                <CircularProgress value={aio?.Percentage || 0} size={140} stroke={12} />
+                <div className="absolute inset-0 flex items-center justify-center flex-col">
+                  <span className={`text-3xl font-bold ${textColor}`}>{aio?.Percentage || 0}%</span>
+                  <span className={`text-xs font-medium uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Score</span>
+                </div>
               </div>
-              <CircularProgress value={aio?.Percentage || 0} size={80} stroke={8} />
+              <div className={`text-sm font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                Time Taken: {data.Time_Taken}
+              </div>
             </div>
           </div>
+
+          {/* Decorative background elements */}
+          <div className="absolute top-0 right-0 -mt-20 -mr-20 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
         </div>
 
         <Section title="AI Data & Structure" icon={Database} darkMode={darkMode}>

@@ -2,7 +2,6 @@ import React, { useContext } from "react";
 import CircularProgress from "../Component/CircularProgress";
 import { useData } from "../context/DataContext";
 import { ThemeContext } from "../context/ThemeContext";
-import { motion } from "framer-motion";
 import {
   CheckCircle, XCircle, AlertTriangle, Info,
   MousePointerClick, FileText, ShieldCheck, LayoutTemplate,
@@ -50,453 +49,232 @@ const iconMap = {
 };
 
 // ------------------------------------------------------
-// ✅ Descriptions & Educational Content
+// ✅ Educational Content
 // ------------------------------------------------------
 const educationalContent = {
-  CTA_Visibility: {
-    desc: "Checks if primary CTAs are visible and above the fold.",
-    why: "Visible CTAs guide users to take action immediately, increasing conversion rates."
-  },
-  CTA_Clarity: {
-    desc: "Evaluates if CTAs clearly communicate the intended action.",
-    why: "Clear text like 'Buy Now' reduces cognitive load compared to vague text like 'Click Here'."
-  },
-  CTA_Contrast: {
-    desc: "Assesses color contrast and visual distinction of CTAs.",
-    why: "High contrast ensures buttons stand out and are accessible to all users."
-  },
-  CTA_Crowding: {
-    desc: "Ensures CTAs are well-spaced and not cluttered.",
-    why: "Too many competing CTAs can cause decision paralysis and lower conversions."
-  },
-  CTA_Flow_Alignment: {
-    desc: "Checks if CTAs are placed in a natural reading flow.",
-    why: "CTAs should appear when the user is ready to act, not too early or too late."
-  },
-  Form_Presence: {
-    desc: "Verifies that forms exist on key conversion pages.",
-    why: "Lead capture forms are essential for collecting user information."
-  },
-  Form_Length: {
-    desc: "Measures form complexity; shorter forms convert better.",
-    why: "Reducing fields increases completion rates by minimizing user effort."
-  },
-  Required_vs_Optional_Fields: {
-    desc: "Ensures clarity between mandatory and optional fields.",
-    why: "Users need to know exactly what is required to prevent frustration."
-  },
-  Inline_Validation: {
-    desc: "Checks for real-time field validation to reduce form errors.",
-    why: "Real-time feedback helps users correct errors instantly, improving experience."
-  },
-  Submit_Button_Clarity: {
-    desc: "Analyzes visibility and clarity of the submit button.",
-    why: "The submit button is the final step; it must be obvious and actionable."
-  },
-  AutoFocus_Field: {
-    desc: "Ensures the cursor auto-focuses on the first field.",
-    why: "Auto-focus reduces friction by saving the user a click."
-  },
-  MultiStep_Form_Progress: {
-    desc: "Checks multi-step form usability and progress visibility.",
-    why: "Progress indicators reduce abandonment by showing users how close they are to finishing."
-  },
-  Testimonials: {
-    desc: "Validates presence of customer testimonials for trust.",
-    why: "Social proof builds credibility and trust with potential customers."
-  },
-  Reviews: {
-    desc: "Checks for product/service reviews to build credibility.",
-    why: "Reviews provide unbiased feedback that influences purchasing decisions."
-  },
-  Trust_Badges: {
-    desc: "Detects security/trust badges improving confidence.",
-    why: "Badges (SSL, Payment) reassure users that their data is safe."
-  },
-  Client_Logos: {
-    desc: "Verifies display of notable client logos.",
-    why: "Showcasing recognizable clients establishes authority and reliability."
-  },
-  Case_Studies_Accessibility: {
-    desc: "Checks accessibility of case studies or portfolios.",
-    why: "Case studies prove your value proposition with real-world examples."
-  },
-  Exit_Intent_Triggers: {
-    desc: "Detects exit intent popups or re-engagement triggers.",
-    why: "Capturing users before they leave can recover lost leads."
-  },
-  Lead_Magnets: {
-    desc: "Checks for offers like free downloads, demos, or resources.",
-    why: "Free value (magnets) incentivizes users to share their contact info."
-  },
-  Contact_Info_Visibility: {
-    desc: "Ensures phone/email info is clearly visible.",
-    why: "Visible contact info builds trust and provides a safety net for users."
-  },
-  Chatbot_Presence: {
-    desc: "Verifies chatbot or instant support availability.",
-    why: "Immediate support answers questions that might otherwise block a sale."
-  },
-  Interactive_Elements: {
-    desc: "Checks interactive engagement tools like quizzes/sliders.",
-    why: "Interactivity keeps users engaged longer and can personalize the experience."
-  },
-  Personalization: {
-    desc: "Assesses AI-based or dynamic personalization presence.",
-    why: "Personalized experiences feel more relevant and increase conversion likelihood."
-  },
-  Progress_Indicators: {
-    desc: "Validates progress bars or indicators during steps.",
-    why: "Visual progress encourages users to complete long tasks."
-  },
-  Friendly_Error_Handling: {
-    desc: "Ensures clear error messages and input feedback.",
-    why: "Friendly errors help users recover quickly without frustration."
-  },
-  Microcopy_Clarity: {
-    desc: "Checks clarity of helper text and microcopy messages.",
-    why: "Clear microcopy resolves ambiguity and guides users smoothly."
-  },
-  Incentives_Displayed: {
-    desc: "Verifies incentive display like discounts or offers.",
-    why: "Incentives provide a compelling reason to act now."
-  },
-  Scarcity_Urgency: {
-    desc: "Checks use of urgency triggers (limited time/stock).",
-    why: "Urgency leverages FOMO to encourage immediate action."
-  },
-  Smooth_Scrolling: {
-    desc: "Ensures smooth scrolling enhances UX flow.",
-    why: "Smooth transitions make the site feel polished and modern."
-  },
-  Mobile_CTA_Adaptation: {
-    desc: "Checks if CTAs are optimized for mobile users.",
-    why: "Mobile users need larger, easily tappable targets."
-  },
-  MultiChannel_FollowUp: {
-    desc: "Verifies multi-channel follow-up strategies post-lead.",
-    why: "Engaging users across multiple channels increases retention."
-  },
+  CTA_Visibility: { desc: "Checks if primary CTAs are visible.", why: "Visible CTAs guide users." },
+  CTA_Clarity: { desc: "Evaluates CTA text clarity.", why: "Clear text reduces cognitive load." },
+  CTA_Contrast: { desc: "Assesses button contrast.", why: "High contrast ensures accessibility." },
+  CTA_Crowding: { desc: "Checks for cluttered CTAs.", why: "Crowding causes decision paralysis." },
+  CTA_Flow_Alignment: { desc: "Checks CTA placement flow.", why: "CTAs should match user intent." },
+  Form_Presence: { desc: "Verifies form existence.", why: "Forms capture lead data." },
+  Form_Length: { desc: "Measures form complexity.", why: "Short forms convert better." },
+  Required_vs_Optional_Fields: { desc: "Checks field markings.", why: "Clarity prevents frustration." },
+  Inline_Validation: { desc: "Checks for real-time validation.", why: "Instant feedback improves UX." },
+  Submit_Button_Clarity: { desc: "Analyzes submit button.", why: "Action must be obvious." },
+  AutoFocus_Field: { desc: "Checks auto-focus.", why: "Saves user clicks." },
+  MultiStep_Form_Progress: { desc: "Checks progress indicators.", why: "Encourages completion." },
+  Testimonials: { desc: "Validates testimonials.", why: "Social proof builds trust." },
+  Reviews: { desc: "Checks for reviews.", why: "Reviews influence decisions." },
+  Trust_Badges: { desc: "Detects trust badges.", why: "Badges reassure users." },
+  Client_Logos: { desc: "Verifies client logos.", why: "Logos establish authority." },
+  Case_Studies_Accessibility: { desc: "Checks case studies.", why: "Proof of value." },
+  Exit_Intent_Triggers: { desc: "Detects exit popups.", why: "Recovers lost leads." },
+  Lead_Magnets: { desc: "Checks for lead magnets.", why: "Incentivizes signups." },
+  Contact_Info_Visibility: { desc: "Ensures contact info visibility.", why: "Builds trust." },
+  Chatbot_Presence: { desc: "Verifies chatbot.", why: "Provides instant support." },
+  Interactive_Elements: { desc: "Checks interactive tools.", why: "Increases engagement." },
+  Personalization: { desc: "Assesses personalization.", why: "Relevance boosts conversion." },
+  Progress_Indicators: { desc: "Validates progress bars.", why: "Visualizes completion." },
+  Friendly_Error_Handling: { desc: "Ensures clear errors.", why: "Helps users recover." },
+  Microcopy_Clarity: { desc: "Checks helper text.", why: "Guides users smoothly." },
+  Incentives_Displayed: { desc: "Verifies incentives.", why: "Motivates action." },
+  Scarcity_Urgency: { desc: "Checks urgency triggers.", why: "Encourages immediate action." },
+  Smooth_Scrolling: { desc: "Ensures smooth scroll.", why: "Enhances feel." },
+  Mobile_CTA_Adaptation: { desc: "Checks mobile CTAs.", why: "Critical for mobile users." },
+  MultiChannel_FollowUp: { desc: "Verifies follow-up.", why: "Increases retention." },
 };
 
 // ------------------------------------------------------
-// ✅ Skeleton Components
+// ✅ Skeleton Loader
 // ------------------------------------------------------
-const SkeletonMetricCard = ({ darkMode }) => {
-  const shimmerBg = darkMode ? "bg-gray-800" : "bg-gray-200";
-  return (
-    <div className={`h-48 rounded-2xl ${shimmerBg} animate-pulse`} />
-  );
-};
+const ConversionShimmer = ({ darkMode }) => (
+  <div className={`min-h-screen ${darkMode ? "bg-gray-900" : "bg-gray-50"} p-8 space-y-8`}>
+    <div className={`h-64 rounded-3xl ${darkMode ? "bg-gray-800" : "bg-white"} animate-pulse`} />
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {[...Array(9)].map((_, i) => (
+        <div key={i} className={`h-64 rounded-xl ${darkMode ? "bg-gray-800" : "bg-white"} animate-pulse`} />
+      ))}
+    </div>
+  </div>
+);
 
-const ConversionShimmer = ({ darkMode }) => {
-  const mainBg = darkMode ? "bg-gray-950" : "bg-gray-50";
+// ------------------------------------------------------
+// ✅ Metric Card (Security Style)
+// ------------------------------------------------------
+const MetricCard = ({ metricKey, data, darkMode }) => {
+  const { score, details, meta } = data || {};
+  const isPassed = score === 100;
+
+  const Icon = iconMap[metricKey] || CheckCircle;
+  const content = educationalContent[metricKey] || { desc: "Conversion metric.", why: "Important for optimization." };
+  const title = metricKey.replaceAll("_", " ");
+
+  const cardBg = darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200";
+  const textColor = darkMode ? "text-gray-100" : "text-gray-900";
+  const subTextColor = darkMode ? "text-gray-400" : "text-gray-500";
+
+  const statusColor = isPassed
+    ? "text-emerald-500 bg-emerald-500/10 border-emerald-500/20"
+    : "text-rose-500 bg-rose-500/10 border-rose-500/20";
+
   return (
-    <div className={`min-h-screen ${mainBg} p-8 space-y-8`}>
-      <div className={`h-80 rounded-3xl ${darkMode ? "bg-gray-900" : "bg-white"} animate-pulse shadow-xl`} />
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {[...Array(9)].map((_, i) => (
-          <SkeletonMetricCard key={i} darkMode={darkMode} />
-        ))}
+    <div className={`relative overflow-hidden rounded-xl border ${cardBg} shadow-sm hover:shadow-md transition-shadow group`}>
+      <div className="p-5 space-y-4">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-4">
+            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
+              <Icon size={24} className={darkMode ? "text-blue-400" : "text-blue-600"} />
+            </div>
+            <div>
+              <h3 className={`font-bold text-lg ${textColor}`}>{title}</h3>
+              <p className={`text-xs font-medium mt-1 px-2 py-0.5 rounded-full w-fit border ${statusColor}`}>
+                {isPassed ? "Optimized" : "Needs Improvement"}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Dynamic Details */}
+        <div>
+          <h4 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+            Status Detail
+          </h4>
+          <p className={`text-sm font-medium ${isPassed ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+            {details}
+          </p>
+          {meta?.count !== undefined && (
+            <div className="mt-2 text-xs">
+              <span className={`font-semibold ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Detected Count: </span>
+              <code className={`px-1.5 py-0.5 rounded ${darkMode ? "bg-gray-700 text-gray-200" : "bg-gray-100 text-gray-800"}`}>
+                {String(meta.count)}
+              </code>
+            </div>
+          )}
+        </div>
+
+        {/* Technical Data */}
+        {meta && Object.keys(meta).some(k => k !== 'count') && (
+          <div>
+            <h4 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+              Technical Data
+            </h4>
+            <div className={`p-2 rounded text-xs font-mono overflow-x-auto ${darkMode ? "bg-gray-900 text-gray-300" : "bg-gray-100 text-gray-700"}`}>
+              {Object.entries(meta).map(([key, value]) => {
+                if (key === 'count') return null;
+                return (
+                  <div key={key} className="flex flex-col sm:flex-row sm:gap-2 mb-1 last:mb-0">
+                    <span className="font-semibold opacity-70">{key.replace(/([A-Z])/g, ' $1').trim()}:</span>
+                    <span className="break-all">{typeof value === 'object' ? JSON.stringify(value) : String(value)}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Educational Content */}
+        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+          <p className={`text-sm ${subTextColor}`}>
+            {content.desc}
+          </p>
+          <p className={`text-xs mt-2 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+            <span className="font-semibold">Why:</span> {content.why}
+          </p>
+        </div>
       </div>
     </div>
   );
 };
 
 // ------------------------------------------------------
-// ✅ MetricCard Component
-// ------------------------------------------------------
-const MetricCard = ({ metricKey, data, darkMode }) => {
-  const { score, details, meta } = data || {};
-  const isPassed = score === 100;
-  const isWarning = score === 50;
-
-  const Icon = iconMap[metricKey] || CheckCircle;
-  const content = educationalContent[metricKey] || { desc: "Conversion metric.", why: "Important for optimization." };
-  const title = metricKey.replaceAll("_", " ");
-
-  // Dynamic Styles based on status
-  const cardBg = darkMode
-    ? "bg-gray-900/80 backdrop-blur-md border-gray-800"
-    : "bg-white/90 backdrop-blur-md border-gray-100";
-
-  const textColor = darkMode ? "text-gray-100" : "text-gray-900";
-  const subTextColor = darkMode ? "text-gray-400" : "text-gray-500";
-
-  let statusColor = "text-rose-500 bg-rose-500/10 border-rose-500/20";
-  let statusText = "Needs Attention";
-  let StatusIcon = XCircle;
-  let accentGradient = "from-rose-500 to-red-600";
-  let iconStyle = darkMode ? "bg-rose-500/10 text-rose-400" : "bg-rose-50 text-rose-600";
-
-  if (isPassed) {
-    statusColor = "text-emerald-500 bg-emerald-500/10 border-emerald-500/20";
-    statusText = "Passed";
-    StatusIcon = CheckCircle;
-    accentGradient = "from-emerald-500 to-teal-500";
-    iconStyle = darkMode ? "bg-emerald-500/10 text-emerald-400" : "bg-emerald-50 text-emerald-600";
-  } else if (isWarning) {
-    statusColor = "text-amber-500 bg-amber-500/10 border-amber-500/20";
-    statusText = "Warning";
-    StatusIcon = AlertTriangle;
-    accentGradient = "from-amber-500 to-orange-500";
-    iconStyle = darkMode ? "bg-amber-500/10 text-amber-400" : "bg-amber-50 text-amber-600";
-  }
-
-  const hasMetaDetails = meta && Object.keys(meta).some(k => k !== 'count');
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-50px" }}
-      className={`relative overflow-hidden rounded-2xl border ${cardBg} shadow-sm flex flex-col h-full`}
-    >
-      {/* Top Accent Line */}
-      <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${accentGradient} opacity-80`} />
-
-      <div className="p-6 flex-1 flex flex-col gap-4">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className={`p-3.5 rounded-xl shadow-sm ${iconStyle}`}>
-              <Icon size={24} />
-            </div>
-            <div>
-              <h3 className={`font-bold text-lg leading-tight ${textColor}`}>{title}</h3>
-              <div className="flex items-center gap-2 mt-1.5">
-                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${statusColor} flex items-center gap-1.5`}>
-                  <StatusIcon size={12} />
-                  {statusText}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Status Detail */}
-        <div className="flex-1">
-          <p className={`text-sm font-medium leading-relaxed ${isPassed ? "text-emerald-600 dark:text-emerald-400" : isWarning ? "text-amber-600 dark:text-amber-400" : "text-rose-600 dark:text-rose-400"}`}>
-            {details || "No details available"}
-          </p>
-
-          {/* Detected Value */}
-          {meta?.count !== undefined && (
-            <div className="mt-3 inline-flex items-center gap-2 px-3 py-1 rounded-md bg-gray-100 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
-              <span className={`text-xs font-semibold ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Detected:</span>
-              <span className={`text-sm font-bold font-mono ${isPassed ? "text-emerald-500" : "text-rose-500"}`}>{String(meta.count)}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Educational Content Box */}
-        <div className={`mt-2 p-4 rounded-xl ${darkMode ? "bg-gray-800/50 border border-gray-700/50" : "bg-gray-50 border border-gray-100"}`}>
-          <p className={`text-sm ${subTextColor} leading-relaxed mb-2`}>
-            {content.desc}
-          </p>
-          <div className="flex gap-2 items-start">
-            <Info size={14} className={`mt-0.5 shrink-0 ${darkMode ? "text-blue-400" : "text-blue-500"}`} />
-            <p className={`text-xs font-medium ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              <span className="opacity-70">Why it matters:</span> {content.why}
-            </p>
-          </div>
-        </div>
-
-        {/* Failure Analysis (Only for Failures/Warnings) */}
-        {!isPassed && hasMetaDetails && (
-          <div className="mt-2 animate-in fade-in slide-in-from-top-2 duration-500">
-            <div className={`rounded-xl overflow-hidden border ${darkMode ? "bg-gray-950 border-gray-800" : "bg-slate-900 border-slate-800"} shadow-inner`}>
-              <div className="flex items-center justify-between px-4 py-2 bg-white/5 border-b border-white/10">
-                <div className="flex items-center gap-2 text-rose-400">
-                  <Activity size={14} />
-                  <span className="text-[10px] font-bold uppercase tracking-widest">Diagnostics</span>
-                </div>
-              </div>
-
-              <div className="p-4 space-y-4 max-h-60 overflow-y-auto custom-scrollbar text-xs font-mono text-slate-300">
-                {Object.entries(meta).map(([key, value]) => {
-                  if (key === 'count') return null;
-
-                  return (
-                    <div key={key} className="group/item">
-                      <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1 group-hover/item:text-blue-400 transition-colors">
-                        {key.replace(/([A-Z])/g, ' $1').trim()}
-                      </span>
-
-                      {Array.isArray(value) ? (
-                        <div className="pl-3 border-l-2 border-slate-700 space-y-2">
-                          {value.length > 0 ? value.map((item, idx) => (
-                            <div key={idx} className="break-all">
-                              {typeof item === 'object' ? (
-                                <div className="bg-slate-800/50 p-2 rounded border border-slate-700/50">
-                                  {Object.entries(item).map(([k, v]) => (
-                                    <div key={k} className="flex gap-3 justify-between border-b border-white/5 last:border-0 pb-1 last:pb-0 mb-1 last:mb-0">
-                                      <span className="opacity-50">{k}:</span>
-                                      <span className="text-emerald-400">{String(v)}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              ) : (
-                                <div className="flex items-start gap-2">
-                                  <span className="text-rose-500 mt-1">›</span>
-                                  <span>{String(item)}</span>
-                                </div>
-                              )}
-                            </div>
-                          )) : <span className="italic opacity-30">None</span>}
-                        </div>
-                      ) : (
-                        <div className="pl-3 border-l-2 border-slate-700 break-all text-emerald-400">
-                          {String(value)}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </motion.div>
-  );
-};
-
-// ------------------------------------------------------
 // ✅ Section Component
 // ------------------------------------------------------
-const Section = ({ title, icon: Icon, children, darkMode }) => {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      className="space-y-8"
-    >
-      <div className="flex items-center gap-4 pb-4 border-b border-gray-200 dark:border-gray-800">
-        <div className={`p-3 rounded-2xl ${darkMode ? "bg-indigo-500/10 text-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.1)]" : "bg-indigo-50 text-indigo-600 shadow-sm"}`}>
-          <Icon size={28} />
-        </div>
-        <h2 className={`text-3xl font-bold tracking-tight ${darkMode ? "text-white" : "text-gray-900"}`}>
-          {title}
-        </h2>
+const Section = ({ title, icon: Icon, children, darkMode }) => (
+  <div className="space-y-4">
+    <div className="flex items-center gap-3 px-2">
+      <div className={`p-2 rounded-lg ${darkMode ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-600"}`}>
+        <Icon size={20} />
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-        {children}
-      </div>
-    </motion.div>
-  );
-};
+      <h2 className={`text-xl font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>
+        {title}
+      </h2>
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {children}
+    </div>
+  </div>
+);
 
 // ------------------------------------------------------
-// ✅ MAIN COMPONENT
+// ✅ Main Component
 // ------------------------------------------------------
 export default function Conversion_Lead_Flow() {
   const { theme } = useContext(ThemeContext);
   const { data, loading } = useData();
   const darkMode = theme === "dark";
 
-  if (loading || !data || data.Status === "inprogress") {
+  if (!data?.Conversion_and_Lead_Flow) {
     return <ConversionShimmer darkMode={darkMode} />;
   }
 
   const flow = data?.Conversion_and_Lead_Flow || {};
-  const mainBg = darkMode ? "bg-[#0B0F19]" : "bg-gray-50"; // Darker, richer background for dark mode
+  const mainBg = darkMode ? "bg-gray-900" : "bg-gray-50";
   const textColor = darkMode ? "text-white" : "text-gray-900";
 
+  const allMetrics = Object.values(flow).filter(val => typeof val === 'object' && val !== null && 'score' in val);
+  const passedCount = allMetrics.filter(m => m.score === 100).length;
+  const failedCount = allMetrics.filter(m => m.score < 100).length;
+
   return (
-    <div className={`min-h-screen w-full ${mainBg} transition-colors duration-500`}>
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-20">
+    <div className={`min-h-screen w-full ${mainBg} transition-colors duration-300`}>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
 
         {/* Header Section */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className={`relative overflow-hidden rounded-[2.5rem] p-8 sm:p-16 shadow-2xl ${darkMode ? "bg-gradient-to-br from-gray-900 via-[#111827] to-black border border-gray-800" : "bg-white border border-gray-100"}`}
-        >
-          {/* Background Pattern */}
-          <div className="absolute inset-0 opacity-10 pointer-events-none"
-            style={{ backgroundImage: `radial-gradient(circle at 2px 2px, ${darkMode ? "white" : "black"} 1px, transparent 0)`, backgroundSize: "40px 40px" }}>
-          </div>
-
-          <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-12">
-            <div className="text-center lg:text-left space-y-8 max-w-2xl">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-xs font-bold uppercase tracking-widest border border-indigo-500/20 backdrop-blur-sm shadow-sm">
+        <div className={`relative overflow-hidden rounded-3xl p-8 sm:p-10 shadow-2xl ${darkMode ? "bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700" : "bg-white border border-gray-200"}`}>
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="text-center md:text-left space-y-4 max-w-2xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-sm font-medium border border-blue-500/20">
                 <Target size={14} />
-                <span>Conversion Audit Report</span>
+                <span>Conversion Audit</span>
               </div>
-
-              <h1 className={`text-5xl sm:text-7xl font-black tracking-tighter ${textColor} leading-[1.1]`}>
-                Conversion & <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 animate-gradient-x">
-                  Lead Flow
-                </span>
+              <h1 className={`text-4xl sm:text-5xl font-black tracking-tight ${textColor}`}>
+                Conversion & <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-blue-400 dark:to-cyan-400">Lead Flow</span>
               </h1>
-
-              <p className={`text-xl ${darkMode ? "text-gray-400" : "text-gray-600"} leading-relaxed font-light`}>
-                Comprehensive analysis of your conversion funnels, CTA effectiveness, and user journey optimization.
+              <p className={`text-lg ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
+                Analysis of your conversion funnels, CTA effectiveness, and user journey optimization.
               </p>
 
-              <div className="flex flex-wrap gap-4 justify-center lg:justify-start pt-4">
-                {(() => {
-                  const allMetrics = Object.values(flow).filter(val => typeof val === 'object' && val !== null && 'score' in val);
-                  const passedCount = allMetrics.filter(m => m.score === 100).length;
-                  const warningCount = allMetrics.filter(m => m.score === 50).length;
-                  const failedCount = allMetrics.filter(m => m.score === 0).length;
-
-                  return (
-                    <>
-                      <div className={`flex items-center gap-3 text-sm font-bold px-6 py-4 rounded-2xl shadow-sm hover:shadow-md transition-shadow ${darkMode ? "bg-gray-800/50 text-emerald-400 border border-emerald-500/20" : "bg-white text-emerald-600 border border-emerald-100"}`}>
-                        <div className="p-1.5 bg-emerald-500/10 rounded-full"><CheckCircle size={20} /></div>
-                        <div className="flex flex-col text-left">
-                          <span className="text-2xl font-black leading-none">{passedCount}</span>
-                          <span className="text-[10px] uppercase opacity-70">Passing</span>
-                        </div>
-                      </div>
-                      <div className={`flex items-center gap-3 text-sm font-bold px-6 py-4 rounded-2xl shadow-sm hover:shadow-md transition-shadow ${darkMode ? "bg-gray-800/50 text-amber-400 border border-amber-500/20" : "bg-white text-amber-600 border border-amber-100"}`}>
-                        <div className="p-1.5 bg-amber-500/10 rounded-full"><AlertTriangle size={20} /></div>
-                        <div className="flex flex-col text-left">
-                          <span className="text-2xl font-black leading-none">{warningCount}</span>
-                          <span className="text-[10px] uppercase opacity-70">Warnings</span>
-                        </div>
-                      </div>
-                      <div className={`flex items-center gap-3 text-sm font-bold px-6 py-4 rounded-2xl shadow-sm hover:shadow-md transition-shadow ${darkMode ? "bg-gray-800/50 text-rose-400 border border-rose-500/20" : "bg-white text-rose-600 border border-rose-100"}`}>
-                        <div className="p-1.5 bg-rose-500/10 rounded-full"><XCircle size={20} /></div>
-                        <div className="flex flex-col text-left">
-                          <span className="text-2xl font-black leading-none">{failedCount}</span>
-                          <span className="text-[10px] uppercase opacity-70">Critical</span>
-                        </div>
-                      </div>
-                    </>
-                  );
-                })()}
+              <div className="flex flex-wrap gap-4 justify-center md:justify-start pt-2">
+                <div className={`flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg ${darkMode ? "bg-gray-700 text-gray-300" : "bg-gray-100 text-gray-600"}`}>
+                  <CheckCircle size={16} className="text-emerald-500" />
+                  <span>{passedCount} Passed</span>
+                </div>
+                <div className={`flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg ${darkMode ? "bg-gray-700 text-gray-300" : "bg-gray-100 text-gray-600"}`}>
+                  <XCircle size={16} className="text-rose-500" />
+                  <span>{failedCount} Failed</span>
+                </div>
               </div>
             </div>
 
-            <div className="flex flex-col items-center gap-8 relative">
-              <div className="relative group cursor-default">
-                <div className={`absolute inset-0 rounded-full blur-3xl opacity-20 group-hover:opacity-40 transition-opacity duration-700 ${darkMode ? "bg-indigo-500" : "bg-indigo-600"}`}></div>
-                <CircularProgress value={flow?.Percentage || 0} size={220} stroke={20} />
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative">
+                <CircularProgress value={flow?.Percentage || 0} size={140} stroke={12} />
                 <div className="absolute inset-0 flex items-center justify-center flex-col">
-                  <span className={`text-6xl font-black ${textColor} tracking-tighter`}>{flow?.Percentage || 0}</span>
-                  <span className={`text-xs font-bold uppercase tracking-[0.2em] mt-2 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Score</span>
+                  <span className={`text-3xl font-bold ${textColor}`}>{flow?.Percentage || 0}%</span>
+                  <span className={`text-xs font-medium uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Score</span>
                 </div>
               </div>
-              <div className={`flex items-center gap-3 text-sm font-medium px-5 py-2.5 rounded-full shadow-lg ${darkMode ? "bg-gray-800 text-gray-300 border border-gray-700" : "bg-white text-gray-600 border border-gray-100"}`}>
-                <span className="relative flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-                </span>
-                Time Taken: <span className="font-mono font-bold">{data.Time_Taken}</span>
+              <div className={`text-sm font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                Time Taken: {data.Time_Taken}
               </div>
             </div>
           </div>
 
           {/* Decorative background elements */}
-          <div className="absolute top-0 right-0 -mt-32 -mr-32 w-96 h-96 bg-indigo-500/20 rounded-full blur-[100px] pointer-events-none mix-blend-screen" />
-          <div className="absolute bottom-0 left-0 -mb-32 -ml-32 w-96 h-96 bg-purple-500/20 rounded-full blur-[100px] pointer-events-none mix-blend-screen" />
-        </motion.div>
+          <div className="absolute top-0 right-0 -mt-20 -mr-20 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+        </div>
 
         {/* Section 1: CTA & Forms */}
         <Section title="Call-to-Actions & Forms" icon={MousePointerClick} darkMode={darkMode}>

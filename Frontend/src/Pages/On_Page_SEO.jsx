@@ -1,624 +1,146 @@
-import React, { useContext, useState } from "react";
-import { motion } from "framer-motion";
-import { CheckCircle2, AlertCircle, XCircle } from "lucide-react";
+import React, { useContext } from "react";
 import CircularProgress from "../Component/CircularProgress";
-import AuditDropdown from "../Component/AuditDropdown";
-
 import { useData } from "../context/DataContext";
 import { ThemeContext } from "../context/ThemeContext";
+import {
+  Search, FileText, Link, Image as ImageIcon, Video,
+  Layout, FileCode, Lock, Copy, List, Tag, Globe,
+  CheckCircle, AlertTriangle, XCircle, Info
+} from "lucide-react";
 
 // ------------------------------------------------------
-// ✅ High-Fidelity Skeleton Components
+// ✅ Simple Skeleton
 // ------------------------------------------------------
-const SkeletonMetricCard = ({ darkMode }) => {
-  // Increased contrast for skeletons
-  const shimmerBg = darkMode ? "bg-slate-700" : "bg-slate-300";
-  const shimmerCardBg = darkMode ? "bg-slate-800" : "bg-white";
-  const borderColor = darkMode ? "border-slate-700" : "border-slate-200";
-
-  return (
-    <div className={`p-6 rounded-2xl shadow-sm ${shimmerCardBg} border ${borderColor} animate-pulse`}>
-      <div className="flex justify-between items-start mb-4">
-        <div className={`h-10 w-10 rounded-xl ${shimmerBg}`}></div>
-        <div className={`h-6 w-16 rounded-full ${shimmerBg}`}></div>
-      </div>
-      <div className={`h-8 w-3/4 rounded ${shimmerBg} mb-3`}></div>
-      <div className={`h-4 w-full rounded ${shimmerBg} mb-2`}></div>
-      <div className={`h-4 w-2/3 rounded ${shimmerBg}`}></div>
+const OnPageSeoShimmer = ({ darkMode }) => (
+  <div className={`min-h-screen ${darkMode ? "bg-gray-900" : "bg-gray-50"} p-8 space-y-8`}>
+    <div className={`h-64 rounded-3xl ${darkMode ? "bg-gray-800" : "bg-white"} animate-pulse`} />
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {[...Array(9)].map((_, i) => (
+        <div key={i} className={`h-40 rounded-xl ${darkMode ? "bg-gray-800" : "bg-white"} animate-pulse`} />
+      ))}
     </div>
-  );
-};
+  </div>
+);
 
-const OnPageSeoShimmer = ({ darkMode }) => {
-  const mainBg = darkMode ? "bg-slate-950" : "bg-slate-50";
-  return (
-    <div className={`relative flex w-full h-full min-h-screen ${mainBg} p-8`}>
-      <div className="flex-1 space-y-8 max-w-7xl mx-auto">
-        <div className={`h-48 w-full rounded-3xl ${darkMode ? "bg-slate-800" : "bg-white"} shadow-sm border ${darkMode ? "border-slate-700" : "border-slate-200"} animate-pulse`}></div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => <SkeletonMetricCard key={i} darkMode={darkMode} />)}
-        </div>
-      </div>
-    </div>
-  );
-};
+// ------------------------------------------------------
+// ✅ Metric Card (Security Style)
+// ------------------------------------------------------
+const MetricCard = ({ title, description, score, value, unit, darkMode, icon: Icon, children, className }) => {
+  const displayScore = score !== undefined && score !== null ? (score > 1 ? 100 : Math.round(score * 100)) : 0;
+  const isPassed = displayScore >= 90;
+  const isWarning = displayScore >= 50 && displayScore < 90;
 
-// ---------------------------------------------------------
-// ✅ HELPER COMPONENTS (Refined for Visibility)
-// ---------------------------------------------------------
+  // Simple Colors
+  const cardBg = darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200";
+  const textColor = darkMode ? "text-gray-100" : "text-gray-900";
+  const subTextColor = darkMode ? "text-gray-400" : "text-gray-500";
 
-const getStatusColor = (score) => {
-  if (score >= 90) return {
-    text: "text-emerald-500",
-    bg: "bg-emerald-500/10",
-    border: "border-emerald-500/20",
-    shadow: "shadow-emerald-500/20",
-    gradient: "from-emerald-500 to-teal-400",
-    icon: CheckCircle2
-  };
-  if (score >= 50) return {
-    text: "text-amber-500",
-    bg: "bg-amber-500/10",
-    border: "border-amber-500/20",
-    shadow: "shadow-amber-500/20",
-    gradient: "from-amber-500 to-orange-400",
-    icon: AlertCircle
-  };
-  return {
-    text: "text-rose-500",
-    bg: "bg-rose-500/10",
-    border: "border-rose-500/20",
-    shadow: "shadow-rose-500/20",
-    gradient: "from-rose-500 to-red-600",
-    icon: XCircle
-  };
-};
+  let statusColor = "text-red-600 bg-red-50 border-red-100";
+  let statusText = "Failed";
 
-function StatBadge({ label, value, color = "indigo" }) {
-  const colors = {
-    indigo: {
-      light: "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800",
-      dark: "bg-indigo-900 text-indigo-200 border-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800",
-    },
-    green: {
-      light: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800",
-      dark: "bg-emerald-900 text-emerald-200 border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800",
-    },
-    red: {
-      light: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-800",
-      dark: "bg-rose-900 text-rose-200 border-rose-800 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-800",
-    },
-    amber: {
-      light: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800",
-      dark: "bg-amber-900 text-amber-200 border-amber-800 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800",
-    },
-    slate: {
-      light: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
-      dark: "bg-slate-900 text-slate-200 border-slate-800 dark:bg-slate-900/30 dark:text-slate-300 dark:border-slate-800",
-    },
-  };
+  if (darkMode) {
+    statusColor = "text-red-400 bg-red-900/20 border-red-800/30";
+  }
 
-  // Added border property for better definition in light mode
-  return (
-    <div className={`flex flex-col items-center p-2 rounded-lg border ${colors[color] || colors.slate}`}>
-      <span className="text-[10px] font-bold uppercase tracking-wider opacity-80">{label}</span>
-      <span className="text-lg font-black">{value}</span>
-    </div>
-  );
-}
-
-function LinksDisplay({ linksData, darkMode }) {
-  const safeArray = (val) => (Array.isArray(val) ? val : []);
-  const internal = safeArray(linksData.Internal_Links);
-  const external = safeArray(linksData.External_Links);
+  if (isPassed) {
+    statusColor = darkMode ? "text-green-400 bg-green-900/20 border-green-800/30" : "text-green-600 bg-green-50 border-green-100";
+    statusText = "Passed";
+  } else if (isWarning) {
+    statusColor = darkMode ? "text-yellow-400 bg-yellow-900/20 border-yellow-800/30" : "text-yellow-600 bg-yellow-50 border-yellow-100";
+    statusText = "Warning";
+  }
 
   return (
-    <div className="space-y-4 mt-4">
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        <StatBadge label="Total" value={linksData.Total} color="indigo" />
-        <StatBadge label="Internal" value={internal.length} color="green" />
-        <StatBadge label="External" value={external.length} color="slate" />
-        <StatBadge label="Unique" value={linksData.Total_Unique} color="indigo" />
-      </div>
-
-      {internal.length > 0 && (
-        <div className={`p-3  border  rounded-lg shadow-sm ${darkMode ? "scrollbar-thumb-slate-600 bg-slate-800/50 border-slate-700  " : "scrollbar-thumb-slate-600 bg-slate-100 border-slate-200"} `}>
-          <h4 className={`font-bold text-xs mb-2 uppercase tracking-wide ${darkMode ? "text-slate-200" : "text-slate-800"}`}>Internal Links ({internal.length})</h4>
-          <ul className={`space-y-2 max-h-32 overflow-y-auto scrollbar-thin   ${darkMode ? "text-slate-200 scrollbar-thumb-slate-600" : "text-slate-800 scrollbar-thumb-slate-300"}`}>
-            {internal.map((l, i) => (
-              <li key={i} className={`"text-xs  dark:ttruncate flex items-center gap-2 ${darkMode ? "text-slate-400 " : "text-slate-600"}`}>
-                <span className={`font-semibold ${darkMode ? "text-indigo-400" : "text-indigo-600"} shrink-0`}>[{l.anchor}]</span>
-                <span className="truncate">{l.link}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {external.length > 0 && (
-        <div className={`p-3  border  rounded-lg shadow-sm ${darkMode ? "scrollbar-thumb-slate-600 bg-slate-800/50 border-slate-700  " : "scrollbar-thumb-slate-600 bg-slate-100 border-slate-200"} `}>
-          <h4 className={`font-bold text-xs mb-2 uppercase tracking-wide ${darkMode ? "text-slate-200" : "text-slate-800"}`}>External Links ({external.length})</h4>
-          <ul className={`space-y-2 max-h-32 overflow-y-auto scrollbar-thin ${darkMode ? "text-slate-200 scrollbar-thumb-slate-600" : "text-slate-800 scrollbar-thumb-slate-300"}`}>
-            {external.map((l, i) => (
-              <li key={i} className={`text-xs  dark:ttruncate flex items-center gap-2 ${darkMode ? "text-slate-400 " : "text-slate-600"}`}>
-                <span className={`font-semibold ${darkMode ? "text-indigo-400" : "text-indigo-600"} shrink-0`}>[{l.anchor}]</span>
-                <span className="truncate">{l.link}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ImageSizeDisplay({ sizeData, darkMode }) {
-  const safeArray = (val) => (Array.isArray(val) ? val : []);
-  const images = safeArray(sizeData);
-  const heavyImages = images.filter(img => parseFloat(img.sizeKB) > 100);
-  const optimizedImages = images.filter(img => parseFloat(img.sizeKB) <= 100);
-
-  if (images.length === 0) return null;
-
-  return (
-    <div className="mt-4 space-y-3">
-      <div className="grid grid-cols-2 gap-2">
-        <StatBadge label="Total Images" value={images.length} color="indigo" />
-        <StatBadge label="Heavy (>100KB)" value={heavyImages.length} color={heavyImages.length > 0 ? "red" : "green"} />
-      </div>
-
-      {heavyImages.length > 0 && (
-        <div className={`p-3 ${darkMode?"bg-rose-900/10 border-rose-800":"bg-rose-50 border-rose-200"}  rounded-lg border `}>
-          <p className={`text-xs font-bold ${darkMode?"text-rose-300":"text-rose-700"
-          }   mb-2 uppercase`}>Needs Optimization:</p>
-          <ul className={`space-y-1 max-h-40 overflow-y-auto scrollbar-thin ${darkMode?"scrollbar-thumb-rose-800":"scrollbar-thumb-rose-200 "} `}>
-            {heavyImages.map((img, i) => (
-              <li key={i} className={`flex justify-between items-center text-xs border-b ${darkMode?"border-rose-800/30 last:border-0":"border-rose-100"}   py-2`}>
-                <span className={`truncate w-3/4 ${darkMode?"text-slate-300":"text-slate-700"}  font-medium`} title={img.src}>{img.src}</span>
-                <span className={`font-bold ${darkMode?"bg-rose-900/50 text-rose-100":"text-rose-600 bg-rose-100"}   px-2 py-0.5 rounded`}>{img.sizeKB} KB</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {optimizedImages.length > 0 && (
-        <div className={`p-3  border  ${darkMode ? "scrollbar-thumb-slate-600 bg-slate-800/50 border-slate-700  " : "scrollbar-thumb-slate-600 bg-slate-100 border-slate-200"}  rounded-lg shadow-sm`}>
-          <p className={`text-xs font-bold ${darkMode ? "text-emerald-400" : "text-emerald-700"} mb-2 uppercase`}>Optimized Images ({optimizedImages.length})</p>
-          <ul className={`space-y-1 max-h-32 overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-200 ${darkMode ? "scrollbar-thumb-emerald-800" : "scrollbar-thumb-emerald-200"}`}>
-            {optimizedImages.map((img, i) => (
-              <li key={i} className="flex justify-between text-xs py-1">
-                <span className={`truncate w-3/4 ${darkMode ? "text-emerald-400" : "text-emerald-700"}`}>{img.src}</span>
-                <span className="text-emerald-600 font-bold">{img.sizeKB} KB</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function AltImagesDisplay({ imgData, darkMode }) {
-  const safeArray = (val) => (Array.isArray(val) ? val : []);
-  const withoutAlt = safeArray(imgData.Without_Alt_Incomplete_Status || imgData.Without_Alt || imgData.Missing_Alt);
-  const withoutTitle = safeArray(imgData.Without_Title_Incomplete_Status || imgData.Missing_Title);
-  const complete = safeArray(imgData.Complete_Status);
-  const totalImages = Array.isArray(imgData.Image_Size) ? imgData.Image_Size.length : (withoutAlt.length + complete.length);
-
-  return (
-    <div className="mt-4 space-y-3">
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-        <StatBadge label="Total Images" value={totalImages} color="indigo" />
-        <StatBadge label="Missing Alt" value={withoutAlt.length} color={withoutAlt.length > 0 ? "red" : "green"} />
-        <StatBadge label="Missing Title" value={withoutTitle.length} color={withoutTitle.length > 0 ? "amber" : "green"} />
-      </div>
-      {/* 🔴 Missing Alt */}
-      {withoutAlt.length > 0 && (
-        <div className={`p-3 ${darkMode ? "bg-rose-900/10 border-rose-800":"bg-rose-50 border-rose-200"} rounded-lg border `}>
-          <h4 className={`font-bold text-xs ${darkMode ? "text-rose-300" : "text-rose-700"} mb-2 uppercase`}>Missing Alt Text ({withoutAlt.length})</h4>
-          <ul className={`space-y-1 max-h-40 overflow-y-auto ${darkMode ? "scrollbar-thumb-rose-800 scrollbar-track-rose-900/10 scrollbar-thin" : "scrollbar-thumb-slate-600 bg-slate-100 border-slate-200"}`}>
-            {withoutAlt.map((img, i) => (
-              <li key={i} className={`text-xs  ${darkMode?"text-slate-300 border-rose-800/30 last:border-0":"text-slate-700 border-rose-100 last:border-0"} truncate py-1 border-b`}>
-                {img.src || img}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* 🟠 Missing Title */}
-      {withoutTitle.length > 0 && (
-        <div className={`p-3  ${darkMode ? "scrollbar-thumb-slate-600 bg-slate-800/50 border-slate-700  " : "scrollbar-thumb-slate-600 bg-slate-100 border-slate-200"}  rounded-lg border  `}>
-          <h4 className="font-bold text-xs text-amber-700 dark:text-amber-300 mb-2 uppercase">Missing Title Attribute ({withoutTitle.length})</h4>
-          <ul className="space-y-1 max-h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-amber-200 dark:scrollbar-thumb-amber-800">
-            {withoutTitle.map((img, i) => (
-              <li key={i} className={`text-xs ${darkMode ? "text-amber-300 border-amber-800/30" : "text-slate-700 border-amber-100"} truncate py-1`}>
-                {img.src || "Unknown Source"}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* 🟢 Fully Optimized */}
-      {complete.length > 0 && (
-        <div className={`p-3  border ${darkMode ? "scrollbar-thumb-slate-600 bg-slate-800/50 border-slate-700  " : "scrollbar-thumb-slate-600 bg-slate-100 border-slate-200"}  rounded-lg shadow-sm`}>
-          <h4 className="font-bold text-xs text-emerald-700 dark:text-emerald-400 mb-2 uppercase">Fully Optimized ({complete.length})</h4>
-          <ul className="space-y-2 max-h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600">
-            {complete.map((img, i) => (
-              <li key={i} className={`text-xs ${darkMode ? "text-slate-300 border-slate-700/30" : "text-slate-700 border-slate-100"} truncate py-1 border-b border-slate-100 dark:border-slate-700 last:border-0 pb-2 mb-2 last:mb-0 last:pb-0`}>
-                <div className="flex flex-col gap-1 mb-1">
-                  <span className={`font-medium ${darkMode ? "text-slate-200" : "text-slate-800"}`}><span className={`text-emerald-600 font-bold ${darkMode ? "text-emerald-300" : "text-emerald-700"}`}>Alt:</span> "{img.alt}"</span>
-                  <span className={`font-medium ${darkMode ? "text-slate-200" : "text-slate-800"}`}><span className={`text-indigo-500 font-bold ${darkMode ? "text-indigo-300" : "text-indigo-600"}`}>Title:</span> "{img.title}"</span>
-                </div>
-                <p className={`text-slate-400 ${darkMode ? "text-slate-300" : "text-slate-900"} truncate text-[10px]`}>{img.src}</p>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function HeadingHierarchyCard({ data, darkMode }) {
-  const headings = Array.isArray(data) ? data : data?.Heading || [];
-  const issues = !Array.isArray(data) ? data?.Heading_Issues || [] : [];
-
-  return (
-    <div className="mt-4 space-y-3">
-      {issues.length > 0 ? (
-        <div className={`p-3 ${darkMode ? "bg-rose-900/10 border-rose-800" : "bg-rose-50 border-rose-200"} rounded-lg border  `}>
-          <h4 className={`font-bold text-xs   mb-2 uppercase ${darkMode ? "text-rose-300" : "text-rose-700"}`}>Hierarchy Issues ({issues.length})</h4>
-          <ul className="space-y-1">
-            {issues.map((issue, i) => (
-              <li key={i} className={`text-xs  py-1 font-medium ${darkMode ? "text-slate-300" : "text-slate-700"}`}>
-                • {issue.finding}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : (
-        <div className={`p-2  ${darkMode ? "bg-emerald-900/20 border-emerald-800" : "bg-emerald-50 border-emerald-200"}  rounded-lg text-center border `}>
-          <span className={`text-xs font-bold uppercase ${darkMode ? "text-emerald-300" : "text-emerald-700"}`}>✅ Perfect Heading Structure</span>
-        </div>
-      )}
-
-      {/* Full Heading List - Background fixed for light mode */}
-      <div className={`max-h-64 overflow-y-auto scrollbar-thin  ${darkMode ? "scrollbar-thumb-slate-600 bg-slate-800/50 border-slate-700  " : "scrollbar-thumb-slate-600 bg-slate-100 border-slate-200"} border  p-4 rounded-lg shadow-inner`}>
-        {headings.length === 0 ? (
-          <p className={`text-xs italic ${darkMode ? "text-slate-300" : "text-slate-700"}`}>No headings found.</p>
-        ) : (
-          headings.map((h, i) => (
-            <div
-              key={i}
-              className="flex items-center gap-2 mb-2 last:mb-0 group"
-              style={{ paddingLeft: `${(parseInt(h.tag[1]) - 1) * 12}px` }}
-            >
-              <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded border  shrink-0 ${h.tag === 'h1'
-                ? (darkMode ? 'bg-indigo-500/20 text-slate-300 border-indigo-500/30 font-bold' : 'bg-indigo-100 text-slate-700 border-indigo-200')
-                : (darkMode ? 'bg-indigo-500/20 text-slate-300 border-indigo-500/30 font-bold' : 'bg-indigo-100 text-slate-700 border-indigo-200')
-                }  uppercase`}>
-                {h.tag}
-              </span>
-              <p className={`text-xs ${darkMode ? "text-slate-300" : "text-slate-800"} truncate ${h.tag === 'h1'
-                ? (darkMode ? ' text-indigo-300 border-indigo-500/30 font-bold' : ' text-slate-700 border-indigo-200')
-                : (darkMode ? ' text-indigo-300 border-indigo-500/30 font-bold' : ' text-slate-700 border-indigo-200')
-                }`}>
-                {h.text || <span className={`italic text-slate-400 ${darkMode ? "text-slate-300" : "text-slate-800"}`}>Empty Heading</span>}
+    <div className={`relative overflow-hidden rounded-xl border ${cardBg} shadow-sm hover:shadow-md transition-shadow group ${className || ""}`}>
+      <div className="p-5 space-y-4">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-4">
+            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
+              <Icon size={24} className={darkMode ? "text-blue-400" : "text-blue-600"} />
+            </div>
+            <div>
+              <h3 className={`font-bold text-lg ${textColor}`}>{title}</h3>
+              <p className={`text-xs font-medium mt-1 px-2 py-0.5 rounded-full w-fit border ${statusColor}`}>
+                {statusText}
               </p>
             </div>
-          ))
+          </div>
+          <div className={`text-lg font-black ${isPassed ? "text-green-500" : isWarning ? "text-yellow-500" : "text-red-500"}`}>
+            {value || "--"} <span className="text-sm font-semibold text-gray-400">{unit}</span>
+          </div>
+        </div>
+
+        {/* Dynamic Details */}
+        <div>
+          <h4 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+            Status Detail
+          </h4>
+          <p className={`text-sm font-medium ${isPassed ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+            {description}
+          </p>
+        </div>
+
+        {/* Technical Data / Children */}
+        {children && (
+          <div>
+            <h4 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+              Technical Data
+            </h4>
+            <div className={`p-2 rounded text-xs font-mono overflow-x-auto ${darkMode ? "bg-gray-900 text-gray-300" : "bg-gray-100 text-gray-700"}`}>
+              {children}
+            </div>
+          </div>
         )}
       </div>
     </div>
   );
-}
-
-// ------------------------------------------------------
-// ✅ ModernMetricCard Component (Revamped & High Contrast)
-// ------------------------------------------------------
-const ModernMetricCard = ({
-  title,
-  description,
-  score,
-  value,
-  unit,
-  darkMode,
-  icon,
-  Title,
-  metaDiscription,
-  heading,
-  links,
-  canonical,
-  altData,
-  imageData,
-  imageSizeData,
-  h1Data,
-  contextualData,
-  urlData,
-  className
-}) => {
-  const displayScore = score !== undefined && score !== null ? (score > 1 ? 100 : Math.round(score * 100)) : 0;
-  const colors = getStatusColor(displayScore);
-  const StatusIcon = colors.icon;
-
-  const hasContent = Title || metaDiscription || urlData || h1Data || contextualData || links || heading || altData || imageSizeData || canonical;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5 }}
-      className={`relative group rounded-2xl p-[1px] h-full ${className || ""}`}
-    >
-      {/* Animated Gradient Border */}
-      <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${colors.gradient} opacity-50 blur-sm`} />
-
-      {/* Card Content */}
-      <div className={`relative rounded-2xl overflow-hidden backdrop-blur-xl border-t border-l border-white/10 shadow-2xl h-full flex flex-col
-        ${darkMode ? "bg-[#0a0a0a]/90" : "bg-white/90"}
-      `}>
-        {/* Status Strip */}
-        <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${colors.gradient}`} />
-
-        <div className="p-6 flex flex-col relative z-10 h-full">
-          {/* Header */}
-          <div className="flex justify-between items-start mb-6">
-            <div className="flex items-center gap-4">
-              <div className={`p-3 rounded-xl shadow-lg ${darkMode ? "bg-slate-900" : "bg-white"} ${colors.text} ring-1 ring-white/10 text-2xl`}>
-                {icon}
-              </div>
-              <div>
-                <h3 className={`font-bold text-base tracking-tight ${darkMode ? "text-slate-100" : "text-gray-800"}`}>
-                  {title}
-                </h3>
-                <div className={`flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest mt-1 ${colors.text}`}>
-                  <StatusIcon size={12} />
-                  <span>Score: {displayScore}</span>
-                </div>
-              </div>
-            </div>
-            {/* Value */}
-            <div className={`text-3xl font-black bg-clip-text text-transparent bg-gradient-to-br ${colors.gradient} drop-shadow-sm`}>
-              {value || "--"} <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">{unit}</span>
-            </div>
-          </div>
-
-          {/* Insight / Description */}
-          <div className={`mb-6 text-xs font-medium leading-relaxed p-3 rounded-lg border border-white/5
-            ${darkMode ? "bg-white/5 text-slate-300" : "bg-slate-50 text-gray-600"}
-          `}>
-            <span className="text-indigo-400 font-bold mr-1">Insight:</span>
-            {description}
-          </div>
-
-          {/* Content Area */}
-          {hasContent && (
-            <div className="mt-auto space-y-4">
-              <div className={`h-px w-full ${darkMode ? "bg-slate-800" : "bg-slate-100"}`}></div>
-
-              {/* Title Tag */}
-              {Title && (
-                <div className={`text-sm `}>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Content Preview</span>
-                  <p className={`font-medium mt-1 italic p-3 rounded-lg border ${darkMode ? "scrollbar-thumb-slate-600 bg-slate-800/50 border-slate-700  " : "scrollbar-thumb-slate-600 bg-slate-100 border-slate-200"} `}>
-                    "{Title.Title}"
-                  </p>
-                </div>
-              )}
-
-              {/* Meta Description */}
-              {metaDiscription && (
-                <div className={`text-sm `}>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Content Preview</span>
-                  <p className={`font-medium mt-1 italic p-3 rounded-lg border ${darkMode ? "scrollbar-thumb-slate-600 bg-slate-800/50 border-slate-700  " : "scrollbar-thumb-slate-600 bg-slate-100 border-slate-200"} `}>
-                    "{metaDiscription.MetaDescription}"
-                  </p>
-                </div>
-              )}
-
-              {/* Canonical */}
-              {canonical && (
-                <div className="text-sm">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Canonical URL</span>
-                  <p className={`font-mono text-xs mt-1 break-all p-2 rounded border ${darkMode ? "bg-slate-800 border-slate-700 text-indigo-300" : "bg-slate-50 border-slate-200 text-indigo-700"}`}>
-                    {canonical}
-                  </p>
-                </div>
-              )}
-
-              {/* URL Structure */}
-              {urlData && (
-                <div className="mt-2">
-                  {urlData.Issues && urlData.Issues.length > 0 ? (
-                    <div className={`p-3 ${darkMode?"bg-rose-900/10 border-rose-800":"bg-rose-50 border border-rose-200"}  rounded-xl `}>
-                      <p className={`text-xs font-bold ${darkMode?"text-rose-400":"text-rose-700"}  dark: mb-1`}>Analyzed URL:</p>
-                      <p className={`text-xs font-mono break-all ${darkMode?"text-rose-300 border-rose-800":"text-rose-600 border-rose-200"}   mb-3 border-b   pb-2`}>
-                        {urlData.URL}
-                      </p>
-                      <p className={`text-xs font-bold ${darkMode?"text-rose-400":"text-rose-700"}  dark: mb-2`}>Issues Found:</p>
-                      <ul className="space-y-1">
-                        {urlData.Issues.map((issue, i) => (
-                          <li key={i} className={`text-xs  flex items-start gap-2 font-medium break-words ${darkMode?"text-rose-300":"text-rose-700"}`}>
-                            <span>•</span>
-                            <span>
-                              {issue.segment && (
-                                <span className={`font-mono font-bold ${darkMode ? "text-rose-200 bg-rose-900/50 border-rose-700" : "text-rose-800 bg-rose-100 border-rose-200"}   px-1.5 py-0.5 rounded mr-1.5 text-[10px] border  `}>
-                                  {issue.segment}
-                                </span>
-                              )}
-                              {issue.reason || issue.finding || (typeof issue === 'string' ? issue : JSON.stringify(issue))}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ) : (
-                    <div className={`p-3 rounded-xl border ${darkMode ? "border-emerald-800 scrollbar-thumb-slate-600 bg-slate-800/50 border-slate-700  " : " border-emerald-200  scrollbar-thumb-slate-600 bg-slate-100 border-slate-200"}`}>
-                      <p className={`text-xs font-bold  mb-1 ${darkMode ? "text-slate-200" : "text-slate-800"}`}>Clean URL</p>
-                      <p className={`text-xs font-mono  break-all ${darkMode ? "text-slate-200" : "text-slate-800"}`}>{urlData.URL}</p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* H1 Details */}
-              {h1Data && (
-                <div className="mt-2">
-                  {h1Data.H1_Content?.map((h1, i) => (
-                    <div key={i} className={`text-sm font-bold p-3 rounded-xl border mb-2 ${darkMode ? "bg-slate-800 text-slate-200 border-slate-700" : "bg-slate-50 text-slate-800 border-slate-200"}`}>
-                      <span className="text-[10px] text-indigo-500 font-black uppercase block mb-1">H1 Tag</span>
-                      {h1}
-                    </div>
-                  ))}
-                  {h1Data.H1_Issues?.length > 0 && (
-                    <div className="p-3 bg-rose-50 dark:bg-rose-900/10 rounded-xl border border-rose-200 dark:border-rose-800 mt-2">
-                      <p className="text-xs text-rose-600 font-bold">⚠️ {h1Data.H1_Issues[0].finding}</p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Contextual Links */}
-              {contextualData && (
-                <div className="mt-3 space-y-3">
-                  {contextualData.Missing_Links?.length > 0 ? (
-                    <div className={`p-3   rounded-xl border ${darkMode ? "scrollbar-thumb-slate-600 bg-slate-800/50 border-slate-700  " : "scrollbar-thumb-slate-600 bg-slate-100 border-slate-200"} `}>
-                      <p className={`text-xs font-bold  mb-2 ${darkMode ? "text-amber-400" : "text-amber-700"}`}>Missing Links from Menu ({contextualData.Missing_Links.length}):</p>
-                      <div className={`flex flex-wrap gap-1.5 max-h-32 overflow-y-auto scrollbar-thin  ${darkMode ? "scrollbar-thumb-amber-800" : "scrollbar-thumb-amber-200"}`}>
-                        {contextualData.Missing_Links.map((l, i) => (
-                          <span key={i} className={`text-[10px] px-2.5 py-1 ${darkMode ? "bg-amber-900/40 text-amber-200 border-amber-700" : "bg-white text-amber-800 border-amber-200"} rounded-lg border  font-bold shadow-sm`}>
-                            {l}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="p-3 bg-emerald-50 dark:bg-emerald-900/10 rounded-xl text-center border border-emerald-200 dark:border-emerald-800">
-                      <span className="text-sm text-emerald-700 dark:text-emerald-400 font-bold">✅ All menu items linked</span>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Complex Components */}
-              {links && <LinksDisplay darkMode={darkMode} linksData={links} />}
-              {heading && <HeadingHierarchyCard darkMode={darkMode} data={heading} />}
-              {altData && <AltImagesDisplay darkMode={darkMode} imgData={altData} />}
-              {imageSizeData && <ImageSizeDisplay darkMode={darkMode} sizeData={imageSizeData} />}
-            </div>
-          )}
-        </div>
-      </div>
-    </motion.div>
-  );
 };
 
 // ------------------------------------------------------
-// ✅ Section Component (Refined)
+// ✅ Simple Section
 // ------------------------------------------------------
-function Section({ title, icon, children, score, gridCols }) {
-  const { theme } = useContext(ThemeContext);
-  const darkMode = theme === "dark";
-
-  // Gradient Score Bar
-  let scoreColor = "bg-rose-500";
-  let scoreText = "text-rose-600 dark:text-rose-400";
-  if (score >= 90) { scoreColor = "bg-emerald-500"; scoreText = "text-emerald-600 dark:text-emerald-400"; }
-  else if (score >= 50) { scoreColor = "bg-amber-500"; scoreText = "text-amber-600 dark:text-amber-400"; }
-
-  return (
-    <div className="mb-20">
-      <div className={`flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 p-6 rounded-2xl ${darkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"} border shadow-sm`}>
-        <div className="flex items-center gap-5">
-          {/* Enhanced Icon Box */}
-          <div className={`flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-500/20 text-3xl`}>
-            {icon}
-          </div>
-          <div>
-            <h2 className={`text-2xl md:text-3xl font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>{title}</h2>
-            <div className="flex items-center gap-3 mt-2">
-              <div className="h-2 w-32 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                <div className={`h-full ${scoreColor} transition-all duration-1000 ease-out`} style={{ width: `${score}%` }}></div>
-              </div>
-              <span className={`text-sm font-bold ${darkMode ? "text-slate-400" : "text-slate-500"}`}>{Math.round(score)}% Optimized</span>
-            </div>
-          </div>
-        </div>
-
-        <div className={`flex items-center justify-center px-8 py-3 rounded-2xl ${darkMode ? "bg-slate-800 border-slate-700" : "bg-slate-50 border-slate-200"} border`}>
-          <div className="text-center">
-            <span className={`block text-3xl font-black ${scoreText}`}>{Math.round(score)}</span>
-            <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Score</span>
-          </div>
-        </div>
+const Section = ({ title, icon: Icon, children, darkMode }) => (
+  <div className="space-y-4">
+    <div className="flex items-center gap-3 px-2">
+      <div className={`p-2 rounded-lg ${darkMode ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-600"}`}>
+        <Icon size={20} />
       </div>
-
-      <div className={`grid grid-cols-1 md:grid-cols-2 ${gridCols || "lg:grid-cols-3"} gap-8`}>
-        {children}
-      </div>
+      <h2 className={`text-xl font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>
+        {title}
+      </h2>
     </div>
-  );
-}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {children}
+    </div>
+  </div>
+);
 
 // ------------------------------------------------------
-// ✅ MAIN COMPONENT
+// ✅ Main Component
 // ------------------------------------------------------
 export default function On_Page_SEO() {
   const { data, loading } = useData();
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
 
-  if (loading || !data || data.Status === "inprogress") {
+  if (!data?.On_Page_SEO) {
     return <OnPageSeoShimmer darkMode={darkMode} />;
   }
 
-  const seo = data?.On_Page_SEO || {};
+  const seo = data.On_Page_SEO;
+  const overallScore = seo.Percentage || 0;
+  const mainBg = darkMode ? "bg-gray-900" : "bg-gray-50";
+  const textColor = darkMode ? "text-white" : "text-gray-900";
 
-  // Helper to normalize score to 0-100
-  const getScore = (val) => (val !== undefined && val !== null ? (val > 1 ? 100 : Math.round(val * 100)) : 0);
+  // Calculate Passed/Failed
+  const allMetrics = [
+    seo.Title, seo.Meta_Description, seo.URL_Structure, seo.Canonical, seo.H1,
+    seo.Image, seo.Video, seo.Heading_Hierarchy, seo.Semantic_Tags, seo.Structured_Data,
+    seo.Contextual_Linking, seo.HTTPS, seo.Pagination_Tags, seo.Links, seo.Duplicate_Content, seo.URL_Slugs
+  ].filter(Boolean);
 
-  // Calculate Section Scores
-  const contentScore = (
-    getScore(seo.Title?.Score) +
-    getScore(seo.Meta_Description?.Score) +
-    getScore(seo.URL_Structure?.Score) +
-    getScore(seo.Canonical?.Score) +
-    getScore(seo.H1?.Score)
-  ) / 5;
-
-  const mediaScore = (
-    getScore(seo.Image?.Image_Alt_Meaningfull_Exist) +
-    getScore(seo.Video?.Video_Exist) +
-    getScore(seo.Image?.Image_Compression_Exist)
-  ) / 3;
-
-  const structureScore = (
-    getScore(seo.Heading_Hierarchy?.Score) +
-    getScore(seo.Semantic_Tags?.Article_Score) +
-    getScore(seo.Structured_Data?.Score) +
-    getScore(seo.Contextual_Linking?.Score)
-  ) / 4;
-
-  const technicalScore = (
-    getScore(seo.HTTPS?.Score) +
-    getScore(seo.Pagination_Tags?.Score) +
-    getScore(seo.Links?.Score) +
-    getScore(seo.Duplicate_Content?.Score) +
-    getScore(seo.URL_Slugs?.Slug_Check_Score)
-  ) / 5;
-
-  const linksData = {
-    Total: seo.Links?.Total,
-    Total_Internal: seo.Links?.Total_Internal,
-    Total_External: seo.Links?.Total_External,
-    Total_Unique: seo.Links?.Total_Unique,
-    Internal_Links: seo.Links?.Internal_Links,
-    External_Links: seo.Links?.External_Links
-  };
+  const passedCount = allMetrics.filter(m => (m.Score !== undefined ? (m.Score > 1 ? 100 : m.Score * 100) : 0) >= 90).length;
+  const failedCount = allMetrics.filter(m => (m.Score !== undefined ? (m.Score > 1 ? 100 : m.Score * 100) : 0) < 90).length;
 
   const desc = {
     title: "Main headline in search results.",
@@ -641,141 +163,174 @@ export default function On_Page_SEO() {
   };
 
   return (
-    // Used Slate-50 for light mode background instead of gray-100 for a cleaner look
-    <div className={`min-h-screen w-full ${darkMode ? "bg-slate-950" : "bg-slate-50"}`}>
+    <div className={`min-h-screen w-full ${mainBg} transition-colors duration-300`}>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
 
-      {/* Hero Header */}
-      <div className={`relative w-full py-20 px-6 overflow-hidden ${darkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"} border-b`}>
-        <div className={`absolute inset-0 ${darkMode ? "bg-slate-900" : "bg-white"} -z-10`}></div>
-        {/* Abstract Background Shapes - Adjusted colors */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none">
-          <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] bg-indigo-500/10 rounded-full blur-[100px]"></div>
-          <div className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] bg-violet-500/10 rounded-full blur-[100px]"></div>
-        </div>
-
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-12 relative z-10">
-          <div className="text-center md:text-left">
-            <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full  border    ${darkMode ? "text-indigo-100 border-indigo-800 bg-indigo-900/30" : " text-indigo-700  border-indigo-800 . bg-indigo-50"} text-xs font-bold uppercase tracking-wider mb-6`}>
-              🚀 SEO Audit Report
-            </div>
-            <h1 className={`text-5xl md:text-7xl font-black mb-6 tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
-              On-Page <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">Optimization</span>
-            </h1>
-            <p className={`text-xl max-w-2xl ${darkMode ? "text-slate-400" : "text-slate-600"} leading-relaxed font-medium`}>
-              Deep dive into your content strategy, technical structure, and user experience signals.
-            </p>
-            <div className="mt-8 flex flex-wrap justify-center md:justify-start gap-4">
-              <div className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold ${darkMode ? "bg-slate-800 text-slate-200 border-slate-700" : "bg-white text-slate-700 shadow-sm border border-slate-200"}`}>
-                ⏱ Time Taken: {data.Time_Taken}
+        {/* Header Section */}
+        <div className={`relative overflow-hidden rounded-3xl p-8 sm:p-10 shadow-2xl ${darkMode ? "bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700" : "bg-white border border-gray-200"}`}>
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="text-center md:text-left space-y-4 max-w-2xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-sm font-medium border border-blue-500/20">
+                <Search size={14} />
+                <span>SEO Audit</span>
               </div>
-              <div className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold ${darkMode ? "bg-slate-800 text-slate-200 border-slate-700" : "bg-white text-slate-700 shadow-sm border border-slate-200"}`}>
-                📄 {seo.Links?.Total || 0} Links Analyzed
+              <h1 className={`text-4xl sm:text-5xl font-black tracking-tight ${textColor}`}>
+                On-Page <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-blue-400 dark:to-cyan-400">SEO</span>
+              </h1>
+              <p className={`text-lg ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
+                Deep dive into your content strategy, technical structure, and user experience signals.
+              </p>
+
+              <div className="flex flex-wrap gap-4 justify-center md:justify-start pt-2">
+                <div className={`flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg ${darkMode ? "bg-gray-700 text-gray-300" : "bg-gray-100 text-gray-600"}`}>
+                  <CheckCircle size={16} className="text-emerald-500" />
+                  <span>{passedCount} Passed</span>
+                </div>
+                <div className={`flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg ${darkMode ? "bg-gray-700 text-gray-300" : "bg-gray-100 text-gray-600"}`}>
+                  <XCircle size={16} className="text-rose-500" />
+                  <span>{failedCount} Failed</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative">
+                <CircularProgress value={overallScore} size={140} stroke={12} />
+                <div className="absolute inset-0 flex items-center justify-center flex-col">
+                  <span className={`text-3xl font-bold ${textColor}`}>{overallScore}</span>
+                  <span className={`text-xs font-medium uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Score</span>
+                </div>
+              </div>
+              <div className={`text-sm font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                Time Taken: {data.Time_Taken}
               </div>
             </div>
           </div>
 
-          <div className="relative group">
-            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-violet-600 rounded-full blur-3xl opacity-20 group-hover:opacity-30 transition-opacity duration-500"></div>
-            <div className={`relative rounded-full p-2 shadow-2xl ${darkMode ? "bg-slate-900" : "bg-white"}`}>
-              <CircularProgress value={seo?.Percentage || 0} size={160} stroke={12} />
-              <div className="absolute inset-0 flex items-center justify-center flex-col">
-                <span className={`text-4xl font-black ${darkMode ? "text-white" : "text-slate-900"}`}>{seo?.Percentage}</span>
-                <span className="text-xs text-slate-400 uppercase font-bold tracking-widest mt-1">Score</span>
-              </div>
-            </div>
-          </div>
+          {/* Decorative background elements */}
+          <div className="absolute top-0 right-0 -mt-20 -mr-20 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
         </div>
-      </div>
 
-      {/* Main Content Grid */}
-      <div className="max-w-7xl mx-auto px-6 py-12">
-
-        <Section title="Content Essentials" icon="🧠" score={contentScore}>
-          <ModernMetricCard title="Title Tag" description={desc.title} score={seo.Title?.Score} Title={seo?.Title} value={seo.Title?.Title_Length + " chars"} darkMode={darkMode} icon="🏷️" />
-          <ModernMetricCard title="Meta Description" description={desc.meta} score={seo.Meta_Description?.Score} metaDiscription={seo.Meta_Description} value={seo.Meta_Description?.MetaDescription_Length + " chars"} darkMode={darkMode} icon="📝" />
-          <ModernMetricCard title="Canonical Tag" description={desc.canonical} canonical={seo.Canonical?.Canonical} score={seo.Canonical?.Score} value={seo.Canonical?.Score ? "Valid" : "Invalid"} darkMode={darkMode} icon="📜" />
-             <ModernMetricCard title="URL Structure" description={desc.url} score={seo.URL_Structure?.Score} value={seo.URL_Structure?.Score ? "Clean" : "Poor"} darkMode={darkMode} icon="🔗" urlData={seo.URL_Structure} />
-          <ModernMetricCard title="H1 Tag" description={desc.h1} score={seo.H1?.Score} value={seo.H1?.H1_Count + " Found"} darkMode={darkMode} icon="🔠" h1Data={seo.H1} />
+        {/* Content Essentials */}
+        <Section title="Content Essentials" icon={FileText} darkMode={darkMode}>
+          <MetricCard title="Title Tag" description={desc.title} score={seo.Title?.Score} value={seo.Title?.Title_Length + " chars"} darkMode={darkMode} icon={Tag}>
+            {seo.Title?.Title && <div className="italic">"{seo.Title.Title}"</div>}
+          </MetricCard>
+          <MetricCard title="Meta Description" description={desc.meta} score={seo.Meta_Description?.Score} value={seo.Meta_Description?.MetaDescription_Length + " chars"} darkMode={darkMode} icon={FileText}>
+            {seo.Meta_Description?.MetaDescription && <div className="italic">"{seo.Meta_Description.MetaDescription}"</div>}
+          </MetricCard>
+          <MetricCard title="Canonical Tag" description={desc.canonical} score={seo.Canonical?.Score} value={seo.Canonical?.Score ? "Valid" : "Invalid"} darkMode={darkMode} icon={Copy}>
+            {seo.Canonical?.Canonical && <div className="break-all">{seo.Canonical.Canonical}</div>}
+          </MetricCard>
+          <MetricCard title="URL Structure" description={desc.url} score={seo.URL_Structure?.Score} value={seo.URL_Structure?.Score ? "Clean" : "Poor"} darkMode={darkMode} icon={Link}>
+            {seo.URL_Structure?.URL && <div className="break-all">{seo.URL_Structure.URL}</div>}
+          </MetricCard>
+          <MetricCard title="H1 Tag" description={desc.h1} score={seo.H1?.Score} value={seo.H1?.H1_Count + " Found"} darkMode={darkMode} icon={Layout}>
+            {seo.H1?.H1_Content?.map((h, i) => <div key={i} className="mb-1">• {h}</div>)}
+          </MetricCard>
         </Section>
 
-        <Section title="Media & Accessibility" icon="🖼️" score={mediaScore} gridCols="lg:grid-cols-2">
+        {/* Media & Accessibility */}
+        <Section title="Media & Accessibility" icon={ImageIcon} darkMode={darkMode}>
           {seo.Image?.Image_Exist != 0 && (
-            <ModernMetricCard
-              title="Alt Text"
-              description={desc.image}
-              score={seo.Image?.Image_Alt_Meaningfull_Exist}
-              value={seo.Image?.Image_Alt_Meaningfull_Exist ? "Optimized" : "Issues"}
-              darkMode={darkMode}
-              icon="🖼️"
-              altData={seo.Image}
-            />
+            <MetricCard title="Alt Text" description={desc.image} score={seo.Image?.Image_Alt_Meaningfull_Exist} value={seo.Image?.Image_Alt_Meaningfull_Exist ? "Optimized" : "Issues"} darkMode={darkMode} icon={ImageIcon}>
+              {seo.Image?.Without_Alt?.length > 0 && (
+                <div className="space-y-1">
+                  <div className="font-semibold text-red-500">Missing Alt Text ({seo.Image.Without_Alt.length}):</div>
+                  <div className="max-h-32 overflow-y-auto custom-scrollbar">
+                    {seo.Image.Without_Alt.map((img, i) => (
+                      <div key={i} className="truncate text-xs opacity-80 mb-0.5" title={img}>{img}</div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </MetricCard>
           )}
-          <ModernMetricCard
-            title="Compression"
-            description={desc.imagecompression}
-            score={seo.Image?.Image_Compression_Exist}
-            value={seo.Image?.Image_Compression_Exist ? "Good" : "Heavy"}
-            darkMode={darkMode}
-            icon="🗜️"
-            imageSizeData={seo.Image?.Image_Size}
-          />
-          {seo.Video?.Video_Exist != 0 && <ModernMetricCard title="Video" description={desc.video} score={seo.Video?.Video_Exist} value={seo.Video?.Video_Exist ? "Present" : "Missing"} darkMode={darkMode} icon="🎥" />}
+          <MetricCard title="Compression" description={desc.imagecompression} score={seo.Image?.Image_Compression_Exist} value={seo.Image?.Image_Compression_Exist ? "Good" : "Heavy"} darkMode={darkMode} icon={ImageIcon}>
+            {seo.Image?.Image_Size?.filter(i => parseFloat(i.sizeKB) > 100).length > 0 && (
+              <div className="space-y-1">
+                <div className="font-semibold text-red-500">Heavy Images ({seo.Image.Image_Size.filter(i => parseFloat(i.sizeKB) > 100).length}):</div>
+                <div className="max-h-32 overflow-y-auto custom-scrollbar space-y-1">
+                  {seo.Image.Image_Size.filter(i => parseFloat(i.sizeKB) > 100).map((img, i) => (
+                    <div key={i} className="flex justify-between items-center text-xs border-b border-gray-700/10 dark:border-gray-200/10 pb-1 last:border-0">
+                      <span className="truncate w-2/3" title={img.url}>{img.url.split('/').pop()}</span>
+                      <span className="font-mono font-bold text-red-500">{img.sizeKB} KB</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </MetricCard>
+          {seo.Video?.Video_Exist != 0 && <MetricCard title="Video" description={desc.video} score={seo.Video?.Video_Exist} value={seo.Video?.Video_Exist ? "Present" : "Missing"} darkMode={darkMode} icon={Video} />}
         </Section>
 
-        <Section title="Structure & Semantics" icon="🛠️" score={structureScore}>
-
-          <ModernMetricCard title="Semantic Tags" description={desc.semantic} score={seo.Semantic_Tags?.Article_Score} value={seo.Semantic_Tags?.Article_Score ? "Used" : "Unused"} darkMode={darkMode} icon="📄" />
-
-          <ModernMetricCard
-            title="Contextual Links"
-            description={desc.contextual}
-            score={seo.Contextual_Linking?.Score}
-            value={seo.Contextual_Linking?.Total_Contextual + " Links"}
-            darkMode={darkMode}
-            icon="🔗"
-            contextualData={seo.Contextual_Linking}
-          />
-          {seo.Heading_Hierarchy && <ModernMetricCard
-            title="Hierarchy"
-            description={desc.heading}
-            heading={seo.Heading_Hierarchy}
-            score={seo.Heading_Hierarchy?.Score}
-            value={seo.Heading_Hierarchy?.Score ? "Logical" : "Broken"}
-            darkMode={darkMode}
-            icon="📚"
-            className="md:col-span-2 lg:col-span-3"
-          />}
+        {/* Structure & Semantics */}
+        <Section title="Structure & Semantics" icon={Layout} darkMode={darkMode}>
+          <MetricCard title="Semantic Tags" description={desc.semantic} score={seo.Semantic_Tags?.Article_Score} value={seo.Semantic_Tags?.Article_Score ? "Used" : "Unused"} darkMode={darkMode} icon={FileCode} />
+          <MetricCard title="Contextual Links" description={desc.contextual} score={seo.Contextual_Linking?.Score} value={seo.Contextual_Linking?.Total_Contextual + " Links"} darkMode={darkMode} icon={Link}>
+            {seo.Contextual_Linking?.Missing_Links?.length > 0 && (
+              <div className="space-y-1">
+                <div className="font-semibold text-yellow-500">Missing from Menu:</div>
+                <div className="flex flex-wrap gap-1">
+                  {seo.Contextual_Linking.Missing_Links.map((link, i) => (
+                    <span key={i} className={`px-2 py-0.5 rounded text-xs ${darkMode ? "bg-gray-700" : "bg-gray-100"}`}>{link}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </MetricCard>
+          {seo.Heading_Hierarchy && (
+            <MetricCard title="Hierarchy" description={desc.heading} score={seo.Heading_Hierarchy?.Score} value={seo.Heading_Hierarchy?.Score ? "Logical" : "Broken"} darkMode={darkMode} icon={List} className="md:col-span-2 lg:col-span-3">
+              {seo.Heading_Hierarchy?.Heading_Issues?.length > 0 ? (
+                <div className="space-y-1">
+                  <div className="font-semibold text-red-500">Hierarchy Issues:</div>
+                  {seo.Heading_Hierarchy.Heading_Issues.map((issue, i) => (
+                    <div key={i} className="text-xs opacity-90">• {issue.finding}</div>
+                  ))}
+                </div>
+              ) : <div className="text-green-500 font-medium">No hierarchy issues found.</div>}
+            </MetricCard>
+          )}
         </Section>
 
-        <Section title="Technical SEO" icon="⚙️" score={technicalScore}>
-          <ModernMetricCard title="HTTPS" description={desc.https} score={seo.HTTPS?.Score} value={seo.HTTPS?.Score ? "Secure" : "Insecure"} darkMode={darkMode} icon="🔒" />
-          <ModernMetricCard title="Pagination" description={desc.pagination} score={seo.Pagination_Tags?.Score} value={seo.Pagination_Tags?.Score ? "Valid" : "None"} darkMode={darkMode} icon="📑" />
-          <ModernMetricCard title="Duplication" description={desc.duplicate} score={seo.Duplicate_Content?.Score} value={seo.Duplicate_Content?.Score ? "Unique" : "Duplicate"} darkMode={darkMode} icon="🧬" />
-          <ModernMetricCard title="Link Profile" description={desc.links} links={linksData} score={seo.Links?.Score} value={seo.Links?.Total + " Total"} darkMode={darkMode} icon="🧭" className="md:col-span-2 lg:col-span-3" />
-          {seo.URL_Slugs?.Slug_Check_Score == 1 && <ModernMetricCard title="Slugs" description={desc.slug} score={seo.URL_Slugs?.Slug_Check_Score} value="Valid" darkMode={darkMode} icon="🧾" />}
+        {/* Technical SEO */}
+        <Section title="Technical SEO" icon={Lock} darkMode={darkMode}>
+          <MetricCard title="HTTPS" description={desc.https} score={seo.HTTPS?.Score} value={seo.HTTPS?.Score ? "Secure" : "Insecure"} darkMode={darkMode} icon={Lock} />
+          <MetricCard title="Pagination" description={desc.pagination} score={seo.Pagination_Tags?.Score} value={seo.Pagination_Tags?.Score ? "Valid" : "None"} darkMode={darkMode} icon={List} />
+          <MetricCard title="Duplication" description={desc.duplicate} score={seo.Duplicate_Content?.Score} value={seo.Duplicate_Content?.Score ? "Unique" : "Duplicate"} darkMode={darkMode} icon={Copy} />
+          <MetricCard title="Link Profile" description={desc.links} score={seo.Links?.Score} value={seo.Links?.Total + " Total"} darkMode={darkMode} icon={Globe} className="md:col-span-2 lg:col-span-3">
+            <div className="grid grid-cols-2 gap-4 mb-2">
+              <div className={`p-2 rounded ${darkMode ? "bg-gray-700" : "bg-gray-100"}`}>
+                <div className="text-xs uppercase opacity-60">Internal</div>
+                <div className="font-bold text-lg">{seo.Links?.Total_Internal}</div>
+              </div>
+              <div className={`p-2 rounded ${darkMode ? "bg-gray-700" : "bg-gray-100"}`}>
+                <div className="text-xs uppercase opacity-60">External</div>
+                <div className="font-bold text-lg">{seo.Links?.Total_External}</div>
+              </div>
+            </div>
+            {/* If there are broken links, ideally we show them here. Assuming seo.Links might have them or we just show counts */}
+            {seo.Links?.Broken_Internal > 0 && <div className="text-red-500 font-bold">Broken Internal: {seo.Links.Broken_Internal}</div>}
+            {seo.Links?.Broken_External > 0 && <div className="text-red-500 font-bold">Broken External: {seo.Links.Broken_External}</div>}
+          </MetricCard>
+          {seo.URL_Slugs?.Slug_Check_Score == 1 && <MetricCard title="Slugs" description={desc.slug} score={seo.URL_Slugs?.Slug_Check_Score} value="Valid" darkMode={darkMode} icon={Link} />}
         </Section>
-        {/* Schema Data - Made to look like a Code Block */}
-        <div className={`mt-12 p-8 rounded-3xl ${darkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"} shadow-lg border`}>
-          <div className="flex items-center gap-3 mb-6">
-            <span className="text-2xl">🧩</span>
-            <h3 className={`text-xl font-bold ${darkMode ? "text-white" : "text-slate-900"}`}>Detected Schema Markup</h3>
+
+        {/* Schema Data */}
+        <div className={`rounded-xl p-8 shadow-sm border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+          <div className="flex items-center gap-3 mb-4">
+            <FileCode size={24} className={darkMode ? "text-indigo-400" : "text-indigo-600"} />
+            <h3 className={`text-xl font-bold ${textColor}`}>Detected Schema Markup</h3>
           </div>
-          <div className={`p-6 rounded-2xl overflow-x-auto border ${darkMode ? "scrollbar-thumb-slate-600 bg-slate-800/50 border-slate-700  " : "scrollbar-thumb-slate-600 bg-slate-100 border-slate-200"}`}>
-            <pre className={`text-xs font-mono leading-relaxed ${darkMode ? "text-indigo-300" : "text-slate-700"}`}>
+          <div className={`p-4 rounded-lg overflow-x-auto border ${darkMode ? "bg-gray-900 border-gray-700 text-gray-300" : "bg-gray-50 border-gray-200 text-gray-700"}`}>
+            <pre className="text-xs font-mono leading-relaxed">
               {JSON.stringify(data.Schema, null, 2)}
             </pre>
           </div>
         </div>
 
-        {/* Audit Dropdowns */}
-        <div className="mt-16 space-y-6">
-          <AuditDropdown items={seo?.Passed} title="✅ Passed Audits" darkMode={darkMode} />
-          <AuditDropdown items={seo?.Improvements} title="⚠️ Improvements Needed" darkMode={darkMode} />
-        </div>
-
-
-
-      </div>
+      </main>
     </div>
   );
 }

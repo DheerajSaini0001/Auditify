@@ -1,113 +1,32 @@
-import React, { useContext, useState, useEffect, useRef } from "react";
-import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import React, { useContext } from "react";
 import CircularProgress from "../Component/CircularProgress";
 import { useData } from "../context/DataContext";
 import { ThemeContext } from "../context/ThemeContext";
 import {
-  Activity,
-  Zap,
-  Layout,
-  MousePointer2,
-  Image as ImageIcon,
-  Server,
-  Database,
-  FileCode,
-  Globe,
-  Shield,
-  Link,
-  Map,
-  FileText,
-  Search,
-  ArrowRightLeft,
-  AlertTriangle,
-  Clock,
-  Gauge,
-  Lightbulb,
-  Info,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
-  ChevronDown,
-  ChevronUp
+  Activity, Zap, Layout, MousePointer2, Image as ImageIcon,
+  Server, Database, FileCode, Globe, Shield, Link, Map,
+  FileText, Search, ArrowRightLeft, Clock, Gauge, AlertTriangle,
+  CheckCircle, XCircle
 } from "lucide-react";
 
 // ------------------------------------------------------
-// 🎨 Utilities & Helpers
-// ------------------------------------------------------
-const getStatusColor = (score, status) => {
-  if (status === "pass") return {
-    text: "text-emerald-500",
-    bg: "bg-emerald-500/10",
-    border: "border-emerald-500/20",
-    shadow: "shadow-emerald-500/20",
-    gradient: "from-emerald-500 to-teal-400",
-    icon: CheckCircle2
-  };
-  if (status === "warning") return {
-    text: "text-amber-500",
-    bg: "bg-amber-500/10",
-    border: "border-amber-500/20",
-    shadow: "shadow-amber-500/20",
-    gradient: "from-amber-500 to-orange-400",
-    icon: AlertCircle
-  };
-  if (status === "fail") return {
-    text: "text-rose-500",
-    bg: "bg-rose-500/10",
-    border: "border-rose-500/20",
-    shadow: "shadow-rose-500/20",
-    gradient: "from-rose-500 to-red-600",
-    icon: XCircle
-  };
-
-  // Fallback
-  if (score >= 90) return {
-    text: "text-emerald-500",
-    bg: "bg-emerald-500/10",
-    border: "border-emerald-500/20",
-    shadow: "shadow-emerald-500/20",
-    gradient: "from-emerald-500 to-teal-400",
-    icon: CheckCircle2
-  };
-  if (score >= 50) return {
-    text: "text-amber-500",
-    bg: "bg-amber-500/10",
-    border: "border-amber-500/20",
-    shadow: "shadow-amber-500/20",
-    gradient: "from-amber-500 to-orange-400",
-    icon: AlertCircle
-  };
-  return {
-    text: "text-rose-500",
-    bg: "bg-rose-500/10",
-    border: "border-rose-500/20",
-    shadow: "shadow-rose-500/20",
-    gradient: "from-rose-500 to-red-600",
-    icon: XCircle
-  };
-};
-
-// ------------------------------------------------------
-// 🦴 Skeleton Loader
+// ✅ Simple Skeleton
 // ------------------------------------------------------
 const TechShimmer = ({ darkMode }) => (
-  <div className={`min-h-screen p-8 ${darkMode ? "bg-[#050505]" : "bg-gray-50"}`}>
-    <div className={`h-80 w-full rounded-3xl mb-12 ${darkMode ? "bg-slate-900/50" : "bg-white"} animate-pulse`}></div>
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+  <div className={`min-h-screen ${darkMode ? "bg-gray-900" : "bg-gray-50"} p-8 space-y-8`}>
+    <div className={`h-64 rounded-3xl ${darkMode ? "bg-gray-800" : "bg-white"} animate-pulse`} />
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {[...Array(9)].map((_, i) => (
-        <div key={i} className={`h-72 rounded-2xl ${darkMode ? "bg-slate-900/50" : "bg-white"} animate-pulse`}></div>
+        <div key={i} className={`h-40 rounded-xl ${darkMode ? "bg-gray-800" : "bg-white"} animate-pulse`} />
       ))}
     </div>
   </div>
 );
 
 // ------------------------------------------------------
-// 🧊 Metric Card (Static 3D Look)
+// ✅ Metric Card (Security Style)
 // ------------------------------------------------------
-// ------------------------------------------------------
-// 🧊 Metric Card (Unified Design)
-// ------------------------------------------------------
-const MetricCard = ({ details, value, dynamicData, darkMode, icon: Icon }) => {
+const MetricCard = ({ details, value, dynamicData, darkMode, icon: Icon, className }) => {
   // Determine Status
   let status = "pass";
   if (dynamicData?.status) {
@@ -118,15 +37,34 @@ const MetricCard = ({ details, value, dynamicData, darkMode, icon: Icon }) => {
     else status = "pass";
   }
 
-  const colors = getStatusColor(dynamicData?.score || 0, status);
-  const StatusIcon = colors.icon;
-  const suggestion = dynamicData?.suggestion || "No specific suggestion available.";
-  const auditResult = dynamicData?.details || "";
+  const isPassed = status === "pass";
+  const isWarning = status === "warning";
 
-  // Filter Meta Data
+  // Simple Colors
+  const cardBg = darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200";
+  const textColor = darkMode ? "text-gray-100" : "text-gray-900";
+  const subTextColor = darkMode ? "text-gray-400" : "text-gray-500";
+
+  let statusColor = "text-red-600 bg-red-50 border-red-100";
+  let statusText = "Failed";
+
+  if (darkMode) {
+    statusColor = "text-red-400 bg-red-900/20 border-red-800/30";
+  }
+
+  if (isPassed) {
+    statusColor = darkMode ? "text-green-400 bg-green-900/20 border-green-800/30" : "text-green-600 bg-green-50 border-green-100";
+    statusText = "Passed";
+  } else if (isWarning) {
+    statusColor = darkMode ? "text-yellow-400 bg-yellow-900/20 border-yellow-800/30" : "text-yellow-600 bg-yellow-50 border-yellow-100";
+    statusText = "Warning";
+  }
+
   const meta = dynamicData?.meta || {};
   const excludedKeys = ['value', 'unit', 'score', 'status', 'details', 'suggestion', 'exists', 'hasStructuredData', 'brokenLinksList', 'target', 'uncompressedResources', 'uncachedResources', 'unoptimizedImages', 'unminifiedScripts', 'blockingResources'];
   const metaKeys = Object.keys(meta).filter(key => !excludedKeys.includes(key));
+
+  // Lists
   const brokenLinks = meta.brokenLinksList || [];
   const uncompressedResources = meta.uncompressedResources || [];
   const uncachedResources = meta.uncachedResources || [];
@@ -134,298 +72,174 @@ const MetricCard = ({ details, value, dynamicData, darkMode, icon: Icon }) => {
   const unminifiedScripts = meta.unminifiedScripts || [];
   const blockingResources = meta.blockingResources || [];
 
-  const renderMetaValue = (val) => {
-    if (typeof val === 'object' && val !== null) {
-      return Object.entries(val).map(([k, v]) => `${k}: ${v}`).join(', ');
-    }
-    if (typeof val === 'boolean') return val ? 'Yes' : 'No';
-    return val;
-  };
-
-  const activeListsCount = [uncompressedResources, uncachedResources, unoptimizedImages, unminifiedScripts, blockingResources, brokenLinks].filter(l => l.length > 0).length;
-  const isWide = details.className?.includes('col-span-2');
-  const showSideBySide = isWide && activeListsCount > 0;
+  const activeLists = [
+    { title: "Uncompressed Resources", items: uncompressedResources },
+    { title: "Uncached Resources", items: uncachedResources },
+    { title: "Unoptimized Images", items: unoptimizedImages },
+    { title: "Unminified Scripts", items: unminifiedScripts },
+    { title: "Blocking Resources", items: blockingResources },
+    { title: "Broken Links", items: brokenLinks.map(l => l.url) }
+  ].filter(l => l.items.length > 0);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5 }}
-      className={`relative group rounded-2xl p-[1px] h-full ${details.className || ""}`}
-    >
-      {/* Animated Gradient Border */}
-      <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${colors.gradient} opacity-50 blur-sm`} />
-
-      {/* Card Content */}
-      <div className={`relative rounded-2xl overflow-hidden backdrop-blur-xl border-t border-l border-white/10 shadow-2xl h-full flex flex-col
-        ${darkMode ? "bg-[#0a0a0a]/90" : "bg-white/90"}
-      `}>
-
-        {/* Status Strip */}
-        <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${colors.gradient}`} />
-
-        <div className="p-6 flex flex-col relative z-10 h-full">
-
-          {/* Header */}
-          <div className="flex justify-between items-start mb-6">
-            <div className="flex items-center gap-4">
-              <div className={`p-3 rounded-xl shadow-lg ${darkMode ? "bg-slate-900" : "bg-white"} ${colors.text} ring-1 ring-white/10 text-2xl`}>
-                <Icon size={24} strokeWidth={2} />
-              </div>
-              <div>
-                <h3 className={`font-bold text-base tracking-tight ${darkMode ? "text-slate-100" : "text-gray-800"}`}>
-                  {details.title}
-                </h3>
-                <div className={`flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest mt-1 ${colors.text}`}>
-                  <StatusIcon size={12} />
-                  {status === "pass" ? "Good" : status === "warning" ? "Needs Work" : "Poor"}
-                  {dynamicData?.score !== undefined && (
-                    <>
-                      <span className="mx-1 opacity-30">|</span>
-                      <span>Score: {dynamicData.score}</span>
-                    </>
-                  )}
-                </div>
-              </div>
+    <div className={`relative overflow-hidden rounded-xl border ${cardBg} shadow-sm hover:shadow-md transition-shadow group ${className || ""}`}>
+      <div className="p-5 space-y-4 h-full flex flex-col">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-4">
+            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
+              <Icon size={24} className={darkMode ? "text-blue-400" : "text-blue-600"} />
             </div>
-
-            {/* Value */}
-            <div className={`text-3xl font-black bg-clip-text text-transparent bg-gradient-to-br ${colors.gradient} drop-shadow-sm`}>
-              {value !== null && value !== undefined ? `${value}${details.unit || ""}` : "--"}
+            <div>
+              <h3 className={`font-bold text-lg ${textColor}`}>{details.title}</h3>
+              <div className="flex items-center gap-2 mt-1">
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full w-fit border ${statusColor}`}>
+                  {statusText}
+                </span>
+                {details.isCrux && <span className="text-[10px] uppercase tracking-wider opacity-60 font-bold">CrUX</span>}
+              </div>
             </div>
           </div>
-
-          {/* Insight */}
-          <div className={`mb-6 text-xs font-medium leading-relaxed p-3 rounded-lg border border-white/5
-            ${darkMode ? "bg-white/5 text-slate-300" : "bg-slate-50 text-gray-600"}
-          `}>
-            <div className="flex flex-col gap-2">
-              <div>
-                <span className="text-indigo-400 font-bold mr-1">Insight:</span>
-                {details.analogy}
-              </div>
-              {meta.target && (
-                <div className={`pt-2 mt-1 border-t ${darkMode ? "border-white/10" : "border-gray-200"} flex items-center gap-2`}>
-                  <span className={`text-[10px] uppercase tracking-wider font-bold ${darkMode ? "text-slate-500" : "text-gray-400"}`}>Target:</span>
-                  <span className={`text-xs font-mono font-bold ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>{meta.target}</span>
-                </div>
-              )}
-            </div>
+          <div className={`text-lg font-black ${isPassed ? "text-green-500" : isWarning ? "text-yellow-500" : "text-red-500"}`}>
+            {value !== null && value !== undefined ? `${value}${details.unit || ""}` : "--"}
           </div>
+        </div>
 
-          <div className={showSideBySide ? "mt-auto grid grid-cols-1 md:grid-cols-2 gap-4" : "flex flex-col gap-3"}>
-            {/* Detailed Stats (Holographic Panel) */}
-            {(metaKeys.length > 0 || auditResult) && (
-              <div className={`rounded-xl border overflow-hidden transition-all duration-300
-                ${darkMode ? "bg-black/40 border-white/10" : "bg-gray-50 border-gray-200"}
-                ${showSideBySide ? "md:col-span-1 h-full" : ""}
-              `}>
-                {auditResult && (
-                  <div className={`px-4 py-2.5 text-[11px] font-semibold border-b ${darkMode ? "border-white/10 text-slate-400" : "border-gray-200 text-gray-500"}`}>
-                    {auditResult}
-                  </div>
-                )}
-                {metaKeys.length > 0 && (
-                  <div className={`p-3 grid gap-2 ${showSideBySide ? "grid-cols-2" : (isWide ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-4" : "grid-cols-1")}`}>
-                    {metaKeys.map((key) => (
-                      <div key={key} className={`flex ${showSideBySide ? "flex-col items-start gap-1" : "justify-between items-center"} text-xs group/item`}>
-                        <span className={`capitalize font-medium ${darkMode ? "text-slate-500" : "text-gray-500"}`}>
-                          {key.replace(/([A-Z])/g, ' $1').trim()}
-                        </span>
-                        <span className={`font-mono font-bold ${darkMode ? "text-slate-300" : "text-gray-700"} ${showSideBySide ? "text-left" : "text-right"}`}>
-                          {renderMetaValue(meta[key])}
+        {/* Dynamic Details - Hidden for CrUX */}
+        {!details.isCrux && (
+          <div>
+            <h4 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+              Status Detail
+            </h4>
+            <p className={`text-sm font-medium ${isPassed ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+              {dynamicData?.details || "No details available"}
+            </p>
+          </div>
+        )}
+
+        {/* Technical Data */}
+        {(metaKeys.length > 0 || activeLists.length > 0) && (
+          <div className="flex-grow">
+            <h4 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+              Technical Data
+            </h4>
+            <div className={`p-2 rounded text-xs font-mono overflow-x-auto ${darkMode ? "bg-gray-900 text-gray-300" : "bg-gray-100 text-gray-700"}`}>
+
+              {/* Layout for Broken Links: Split Meta Keys (left) and Lists (right) */}
+              {details.key === 'Broken_Links' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Left: Meta Keys (Counts) */}
+                  <div className="space-y-1">
+                    {metaKeys.map(k => (
+                      <div key={k} className="flex flex-col sm:flex-row sm:gap-2 mb-1 last:mb-0">
+                        <span className="font-semibold opacity-70">{k.replace(/([A-Z])/g, ' $1').trim()}:</span>
+                        <span className="break-all">
+                          {typeof meta[k] === 'object' ? JSON.stringify(meta[k]).replace(/"/g, '').replace(/{/g, '').replace(/}/g, '').replace(/,/g, ', ') : String(meta[k])}
                         </span>
                       </div>
                     ))}
                   </div>
-                )}
-              </div>
-            )}
 
-            {/* Lists Container */}
-            {activeListsCount > 0 && (
-              <div className={`${showSideBySide ? `md:col-span-1 grid grid-cols-1 ${activeListsCount > 1 ? "md:grid-cols-2" : "md:grid-cols-1"} gap-4` : "flex flex-col gap-3"}`}>
-                {/* Uncompressed Resources List */}
-                {uncompressedResources.length > 0 && (
-                  <div className={`rounded-lg border overflow-hidden ${darkMode ? "border-white/10 bg-white/5" : "border-gray-200 bg-gray-50"}`}>
-                    <div className={`px-3 py-2 text-[10px] font-bold uppercase tracking-wider border-b ${darkMode ? "border-white/10 text-slate-400" : "border-gray-200 text-gray-500"}`}>
-                      Uncompressed Resources ({uncompressedResources.length})
+                  {/* Right: Lists (Broken Links) */}
+                  <div className="space-y-2">
+                    {activeLists.map((list, idx) => (
+                      <div key={idx}>
+                        <div className="font-semibold opacity-80 mb-1">{list.title} ({list.items.length})</div>
+                        <div className="pl-2 border-l-2 border-gray-300 dark:border-gray-700 max-h-32 overflow-y-auto custom-scrollbar">
+                          {list.items.map((item, i) => (
+                            <div key={i} className="truncate mb-0.5" title={item}>{item}</div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                /* Default Layout */
+                <>
+                  {/* Meta Keys */}
+                  {metaKeys.map(k => (
+                    <div key={k} className="flex flex-col sm:flex-row sm:gap-2 mb-1 last:mb-0">
+                      <span className="font-semibold opacity-70">{k.replace(/([A-Z])/g, ' $1').trim()}:</span>
+                      <span className="break-all">
+                        {typeof meta[k] === 'object' ? JSON.stringify(meta[k]).replace(/"/g, '').replace(/{/g, '').replace(/}/g, '').replace(/,/g, ', ') : String(meta[k])}
+                      </span>
                     </div>
-                    <div className="max-h-32 overflow-y-auto custom-scrollbar">
-                      {uncompressedResources.map((url, i) => (
-                        <div key={i} className={`px-3 py-2 text-[10px] border-b last:border-0 flex justify-between gap-2 ${darkMode ? "border-white/5 text-amber-400" : "border-gray-100 text-amber-600"}`}>
-                          <span className="truncate flex-1" title={url}>{url}</span>
+                  ))}
+
+                  {/* Lists - Grid Layout for Resource Optimization */}
+                  {activeLists.length > 0 && (
+                    <div className={`mt-2 ${details.key === 'Resource_Optimization' ? 'grid grid-cols-1 md:grid-cols-2 gap-4' : 'space-y-2'}`}>
+                      {activeLists.map((list, idx) => (
+                        <div key={idx} className={details.key !== 'Resource_Optimization' ? "mt-2 first:mt-0" : ""}>
+                          <div className="font-semibold opacity-80 mb-1">{list.title} ({list.items.length})</div>
+                          <div className="pl-2 border-l-2 border-gray-300 dark:border-gray-700 max-h-24 overflow-y-auto custom-scrollbar">
+                            {list.items.map((item, i) => (
+                              <div key={i} className="truncate mb-0.5" title={item}>{item}</div>
+                            ))}
+                          </div>
                         </div>
                       ))}
                     </div>
-                  </div>
-                )}
-
-                {/* Uncached Resources List */}
-                {uncachedResources.length > 0 && (
-                  <div className={`rounded-lg border overflow-hidden ${darkMode ? "border-white/10 bg-white/5" : "border-gray-200 bg-gray-50"}`}>
-                    <div className={`px-3 py-2 text-[10px] font-bold uppercase tracking-wider border-b ${darkMode ? "border-white/10 text-slate-400" : "border-gray-200 text-gray-500"}`}>
-                      Uncached Resources ({uncachedResources.length})
-                    </div>
-                    <div className="max-h-32 overflow-y-auto custom-scrollbar">
-                      {uncachedResources.map((url, i) => (
-                        <div key={i} className={`px-3 py-2 text-[10px] border-b last:border-0 flex justify-between gap-2 ${darkMode ? "border-white/5 text-amber-400" : "border-gray-100 text-amber-600"}`}>
-                          <span className="truncate flex-1" title={url}>{url}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Unoptimized Images List */}
-                {unoptimizedImages.length > 0 && (
-                  <div className={`rounded-lg border overflow-hidden ${darkMode ? "border-white/10 bg-white/5" : "border-gray-200 bg-gray-50"}`}>
-                    <div className={`px-3 py-2 text-[10px] font-bold uppercase tracking-wider border-b ${darkMode ? "border-white/10 text-slate-400" : "border-gray-200 text-gray-500"}`}>
-                      Unoptimized Images ({unoptimizedImages.length})
-                    </div>
-                    <div className="max-h-32 overflow-y-auto custom-scrollbar">
-                      {unoptimizedImages.map((url, i) => (
-                        <div key={i} className={`px-3 py-2 text-[10px] border-b last:border-0 flex justify-between gap-2 ${darkMode ? "border-white/5 text-amber-400" : "border-gray-100 text-amber-600"}`}>
-                          <span className="truncate flex-1" title={url}>{url}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Unminified Scripts List */}
-                {unminifiedScripts.length > 0 && (
-                  <div className={`rounded-lg border overflow-hidden ${darkMode ? "border-white/10 bg-white/5" : "border-gray-200 bg-gray-50"}`}>
-                    <div className={`px-3 py-2 text-[10px] font-bold uppercase tracking-wider border-b ${darkMode ? "border-white/10 text-slate-400" : "border-gray-200 text-gray-500"}`}>
-                      Unminified Scripts ({unminifiedScripts.length})
-                    </div>
-                    <div className="max-h-32 overflow-y-auto custom-scrollbar">
-                      {unminifiedScripts.map((url, i) => (
-                        <div key={i} className={`px-3 py-2 text-[10px] border-b last:border-0 flex justify-between gap-2 ${darkMode ? "border-white/5 text-amber-400" : "border-gray-100 text-amber-600"}`}>
-                          <span className="truncate flex-1" title={url}>{url}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Blocking Resources List */}
-                {blockingResources.length > 0 && (
-                  <div className={`rounded-lg border overflow-hidden ${darkMode ? "border-white/10 bg-white/5" : "border-gray-200 bg-gray-50"}`}>
-                    <div className={`px-3 py-2 text-[10px] font-bold uppercase tracking-wider border-b ${darkMode ? "border-white/10 text-slate-400" : "border-gray-200 text-gray-500"}`}>
-                      Blocking Resources ({blockingResources.length})
-                    </div>
-                    <div className="max-h-32 overflow-y-auto custom-scrollbar">
-                      {blockingResources.map((url, i) => (
-                        <div key={i} className={`px-3 py-2 text-[10px] border-b last:border-0 flex justify-between gap-2 ${darkMode ? "border-white/5 text-amber-400" : "border-gray-100 text-amber-600"}`}>
-                          <span className="truncate flex-1" title={url}>{url}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Broken Links List */}
-                {brokenLinks.length > 0 && (
-                  <div className={`rounded-lg border overflow-hidden ${darkMode ? "border-white/10 bg-white/5" : "border-gray-200 bg-gray-50"}`}>
-                    <div className={`px-3 py-2 text-[10px] font-bold uppercase tracking-wider border-b ${darkMode ? "border-white/10 text-slate-400" : "border-gray-200 text-gray-500"}`}>
-                      Broken URLs ({brokenLinks.length})
-                    </div>
-                    <div className="max-h-32 overflow-y-auto custom-scrollbar">
-                      {brokenLinks.map((link, i) => (
-                        <div key={i} className={`px-3 py-2 text-[10px] border-b last:border-0 flex justify-between gap-2 ${darkMode ? "border-white/5 text-rose-400" : "border-gray-100 text-rose-600"}`}>
-                          <span className="truncate flex-1" title={link.url}>{link.url}</span>
-                          <span className="font-mono opacity-70">{link.status}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Recommendation */}
-          <div className={`mt-4 pt-4 border-t ${darkMode ? "border-white/10" : "border-gray-100"}`}>
-            <div className="flex gap-2.5 items-start">
-              <Info size={14} className={`mt-0.5 shrink-0 ${darkMode ? "text-slate-500" : "text-gray-400"}`} />
-              <p className={`text-[11px] leading-relaxed font-medium ${darkMode ? "text-slate-400" : "text-gray-500"}`}>
-                {suggestion}
-              </p>
+                  )}
+                </>
+              )}
             </div>
           </div>
+        )}
 
+        {/* Educational Content */}
+        <div className="pt-4 border-t border-gray-200 dark:border-gray-700 mt-auto">
+          <p className={`text-sm ${subTextColor}`}>
+            {details.analogy}
+          </p>
+          <p className={`text-xs mt-2 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+            <span className="font-semibold">Suggestion:</span> {dynamicData?.suggestion || "None"}
+          </p>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
 // ------------------------------------------------------
-// 🚀 Main Component
+// ✅ Section Component
+// ------------------------------------------------------
+const Section = ({ title, subtitle, icon: Icon, children, darkMode }) => (
+  <div className="space-y-4">
+    <div className="flex items-center gap-3 px-2">
+      <div className={`p-2 rounded-lg ${darkMode ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-600"}`}>
+        <Icon size={20} />
+      </div>
+      <div>
+        <h2 className={`text-xl font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>{title}</h2>
+        <p className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-500"}`}>{subtitle}</p>
+      </div>
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {children}
+    </div>
+  </div>
+);
+
+// ------------------------------------------------------
+// ✅ Main Component
 // ------------------------------------------------------
 export default function Technical_Performance() {
   const { theme } = useContext(ThemeContext);
   const { data, loading } = useData();
   const darkMode = theme === "dark";
-  const [activeSection, setActiveSection] = useState(null);
 
-  // Handle Scroll Spy
-  useEffect(() => {
-    const handleScroll = () => {
-      const sections = document.querySelectorAll('section[id]');
-      let current = '';
-      sections.forEach(section => {
-        const sectionTop = section.offsetTop;
-        if (window.scrollY >= sectionTop - 200) {
-          current = section.getAttribute('id');
-        }
-      });
-      setActiveSection(current);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const scrollToSection = (id) => {
-    const element = document.getElementById(id);
-    if (element) {
-      window.scrollTo({
-        top: element.offsetTop - 120,
-        behavior: 'smooth'
-      });
-    }
-  };
-
-  if (loading || !data || data.Status === "inprogress") {
+  if (!data?.Technical_Performance) {
     return <TechShimmer darkMode={darkMode} />;
   }
 
-  if (data.Status === "failed") {
-    return (
-      <div className={`flex items-center justify-center h-screen w-full ${darkMode ? "bg-[#050505]" : "bg-gray-50"}`}>
-        <div className={`text-center p-8 rounded-2xl shadow-2xl border ${darkMode ? "bg-slate-900 border-rose-900/30" : "bg-white border-rose-100"}`}>
-          <div className="text-rose-500 text-5xl mb-4 flex justify-center"><AlertTriangle size={48} /></div>
-          <h2 className={`text-2xl font-bold mb-4 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>Audit Failed</h2>
-          <p className={`max-w-md mx-auto mb-6 ${darkMode ? "text-slate-400" : "text-gray-600"}`}>
-            {data.Error_Message || "An unexpected error occurred while analyzing the website."}
-          </p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-6 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition-colors font-medium"
-          >
-            Try Again
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   const metric = data;
-  const overallScore = metric?.Technical_Performance?.Percentage || 0;
+  const tech = metric.Technical_Performance;
+  const overallScore = tech?.Percentage || 0;
+  const mainBg = darkMode ? "bg-gray-900" : "bg-gray-50";
+  const textColor = darkMode ? "text-white" : "text-gray-900";
 
-  // Metric Sections Config
+  // Sections Config
   const sections = [
     {
       id: "crux",
@@ -493,224 +307,99 @@ export default function Technical_Performance() {
     }
   ];
 
+  // Calculate Passed/Failed
+  const allMetrics = [];
+  sections.forEach(s => {
+    if (s.isCrux && !tech.Real_User_Experience) return;
+    const source = s.isCrux ? tech.Real_User_Experience : tech;
+    s.metrics.forEach(m => {
+      if (source[m.key]) allMetrics.push(source[m.key]);
+    });
+  });
+
+  const passedCount = allMetrics.filter(m => m.score >= 90).length;
+  const failedCount = allMetrics.filter(m => m.score < 90).length;
+
   return (
-    <div className={`min-h-screen w-full transition-colors duration-500 font-sans selection:bg-indigo-500/30 selection:text-indigo-200 ${darkMode ? "bg-[#050505] text-slate-100" : "bg-gray-50 text-gray-900"}`}>
+    <div className={`min-h-screen w-full ${mainBg} transition-colors duration-300`}>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
 
-      {/* 🟢 Sticky Header / Navigation */}
-      <motion.div
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        className={`sticky top-4 z-50 mx-4 md:mx-auto max-w-7xl rounded-2xl border backdrop-blur-xl transition-all shadow-sm ${darkMode ? "bg-[#0a0a0a]/80 border-white/10" : "bg-white/80 border-gray-200/50"}`}
-      >
-        <div className="px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className={`p-2 rounded-xl ${darkMode ? "bg-indigo-500/20 text-indigo-400" : "bg-indigo-50 text-indigo-600"}`}>
-              <Activity size={20} strokeWidth={2.5} />
-            </div>
-            <span className={`font-bold text-lg tracking-tight ${darkMode ? "text-white" : "text-gray-900"}`}>
-              TechAudit<span className="text-indigo-500">.</span>
-            </span>
-          </div>
-
-          <nav className="hidden md:flex items-center gap-1">
-            {sections.map(section => {
-              if (section.isCrux && !metric.Technical_Performance.Real_User_Experience) return null;
-              const isActive = activeSection === section.id;
-              return (
-                <button
-                  key={section.id}
-                  onClick={() => scrollToSection(section.id)}
-                  className={`relative px-4 py-2 rounded-full text-xs font-semibold transition-all duration-300
-                    ${isActive ? (darkMode ? "text-white" : "text-gray-900") : (darkMode ? "text-slate-400 hover:text-slate-200" : "text-gray-500 hover:text-gray-700")}
-                  `}
-                >
-                  {isActive && (
-                    <motion.div
-                      layoutId="activeNav"
-                      className={`absolute inset-0 rounded-full ${darkMode ? "bg-white/10" : "bg-gray-100"}`}
-                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                    />
-                  )}
-                  <span className="relative z-10">{section.title}</span>
-                </button>
-              );
-            })}
-          </nav>
-
-          <div className="flex items-center gap-3">
-            <div className={`flex items-center gap-2 text-sm font-bold px-4 py-1.5 rounded-full border shadow-sm ${overallScore >= 90
-              ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-500"
-              : overallScore >= 50
-                ? "border-amber-500/20 bg-amber-500/10 text-amber-500"
-                : "border-rose-500/20 bg-rose-500/10 text-rose-500"
-              }`}>
-              <span className="relative flex h-2 w-2">
-                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${overallScore >= 90 ? "bg-emerald-500" : overallScore >= 50 ? "bg-amber-500" : "bg-rose-500"}`}></span>
-                <span className={`relative inline-flex rounded-full h-2 w-2 ${overallScore >= 90 ? "bg-emerald-500" : overallScore >= 50 ? "bg-amber-500" : "bg-rose-500"}`}></span>
-              </span>
-              Score: {overallScore}
-            </div>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* 🟢 Hero Section */}
-      <div className="relative w-full overflow-hidden">
-        {/* Animated Background Elements */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none">
-          <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-indigo-500/20 rounded-full blur-[120px] mix-blend-screen animate-pulse" />
-          <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-500/20 rounded-full blur-[100px] mix-blend-screen animate-pulse" style={{ animationDelay: "2s" }} />
-        </div>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-20 relative z-10">
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-16 lg:gap-24">
-
-            {/* Left Content */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-              className="flex-1 text-center lg:text-left"
-            >
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.2 }}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-widest mb-8 border backdrop-blur-md bg-white/5 border-indigo-500/30 text-indigo-500 shadow-lg shadow-indigo-500/10"
-              >
-                <Globe size={12} className="animate-spin" />
-                {data.Device} Performance Report
-              </motion.div>
-
-              <h1 className={`text-5xl lg:text-7xl font-black tracking-tight mb-8 leading-[1.1] ${darkMode ? "text-white" : "text-gray-900"}`}>
-                Technical <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 animate-gradient-x">
-                  Health Check
-                </span>
+        {/* Header Section */}
+        <div className={`relative overflow-hidden rounded-3xl p-8 sm:p-10 shadow-2xl ${darkMode ? "bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700" : "bg-white border border-gray-200"}`}>
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="text-center md:text-left space-y-4 max-w-2xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-sm font-medium border border-blue-500/20">
+                <Zap size={14} />
+                <span>Performance Audit</span>
+              </div>
+              <h1 className={`text-4xl sm:text-5xl font-black tracking-tight ${textColor}`}>
+                Technical <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-blue-400 dark:to-cyan-400">Performance</span>
               </h1>
-
-              <p className={`text-lg lg:text-xl leading-relaxed max-w-2xl mx-auto lg:mx-0 ${darkMode ? "text-slate-400" : "text-gray-600"}`}>
-                A comprehensive deep-dive into <span className={`font-bold border-b-2 border-indigo-500/30 ${darkMode ? "text-slate-200" : "text-gray-900"}`}>{new URL(data.Site).hostname}</span>'s performance.
-                We've analyzed speed, stability, and SEO factors to provide actionable insights for optimization.
+              <p className={`text-lg ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
+                Comprehensive analysis of speed, stability, and server configurations.
               </p>
 
-              <div className="mt-10 flex flex-wrap justify-center lg:justify-start gap-4">
-                <div className={`flex items-center gap-2 px-5 py-3 rounded-2xl border ${darkMode ? "bg-white/5 border-white/10" : "bg-white border-gray-100"} shadow-sm`}>
-                  <Zap size={18} className="text-amber-500" />
-                  <div className="text-xs font-bold">
-                    <div className={darkMode ? "text-slate-500" : "text-gray-400"}>Performance</div>
-                    <div className={darkMode ? "text-slate-200" : "text-gray-700"}>Analyzed</div>
-                  </div>
+              <div className="flex flex-wrap gap-4 justify-center md:justify-start pt-2">
+                <div className={`flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg ${darkMode ? "bg-gray-700 text-gray-300" : "bg-gray-100 text-gray-600"}`}>
+                  <CheckCircle size={16} className="text-emerald-500" />
+                  <span>{passedCount} Passed</span>
                 </div>
-                <div className={`flex items-center gap-2 px-5 py-3 rounded-2xl border ${darkMode ? "bg-white/5 border-white/10" : "bg-white border-gray-100"} shadow-sm`}>
-                  <Search size={18} className="text-blue-500" />
-                  <div className="text-xs font-bold">
-                    <div className={darkMode ? "text-slate-500" : "text-gray-400"}>SEO</div>
-                    <div className={darkMode ? "text-slate-200" : "text-gray-700"}>Checked</div>
-                  </div>
-                </div>
-                <div className={`flex items-center gap-2 px-5 py-3 rounded-2xl border ${darkMode ? "bg-white/5 border-white/10" : "bg-white border-gray-100"} shadow-sm`}>
-                  <Shield size={18} className="text-emerald-500" />
-                  <div className="text-xs font-bold">
-                    <div className={darkMode ? "text-slate-500" : "text-gray-400"}>Security</div>
-                    <div className={darkMode ? "text-slate-200" : "text-gray-700"}>Verified</div>
-                  </div>
+                <div className={`flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg ${darkMode ? "bg-gray-700 text-gray-300" : "bg-gray-100 text-gray-600"}`}>
+                  <XCircle size={16} className="text-rose-500" />
+                  <span>{failedCount} Failed</span>
                 </div>
               </div>
-            </motion.div>
+            </div>
 
-            {/* Right Content - Score Card */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8, rotate: 5 }}
-              animate={{ opacity: 1, scale: 1, rotate: 0 }}
-              transition={{ duration: 0.8, delay: 0.2, type: "spring", bounce: 0.4 }}
-              className="relative"
-            >
-              <div className={`absolute inset-0 bg-gradient-to-br ${overallScore >= 90 ? "from-emerald-500 to-teal-500" : overallScore >= 50 ? "from-amber-500 to-orange-500" : "from-rose-500 to-red-500"} rounded-[3rem] blur-3xl opacity-20 animate-pulse`} />
-
-              <div className={`relative p-12 rounded-[3rem] border backdrop-blur-2xl flex flex-col items-center justify-center gap-8 shadow-2xl
-                ${darkMode ? "bg-black/40 border-white/10 shadow-black/50" : "bg-white/60 border-white/40 shadow-xl"}
-              `}>
-                <div className="relative">
-                  <CircularProgress value={overallScore} size={200} stroke={16} />
-                  <div className="absolute inset-0 flex items-center justify-center flex-col">
-                    <span className={`text-6xl font-black tracking-tighter ${overallScore >= 90 ? "text-emerald-500" : overallScore >= 50 ? "text-amber-500" : "text-rose-500"}`}>
-                      {overallScore}
-                    </span>
-                    <span className={`text-xs font-bold uppercase tracking-widest mt-1 ${darkMode ? "text-slate-500" : "text-gray-400"}`}>
-                      / 100
-                    </span>
-                  </div>
-                </div>
-
-                <div className="text-center">
-                  <div className={`text-sm font-bold uppercase tracking-widest mb-2 ${darkMode ? "text-slate-400" : "text-gray-500"}`}>
-                    Overall Health
-                  </div>
-                  <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold border
-                    ${overallScore >= 90
-                      ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
-                      : overallScore >= 50
-                        ? "bg-amber-500/10 border-amber-500/20 text-amber-500"
-                        : "bg-rose-500/10 border-rose-500/20 text-rose-500"}
-                  `}>
-                    {overallScore >= 90 ? "Excellent" : overallScore >= 50 ? "Average" : "Critical"}
-                  </div>
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative">
+                <CircularProgress value={overallScore} size={140} stroke={12} />
+                <div className="absolute inset-0 flex items-center justify-center flex-col">
+                  <span className={`text-3xl font-bold ${textColor}`}>{overallScore}</span>
+                  <span className={`text-xs font-medium uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Score</span>
                 </div>
               </div>
-            </motion.div>
+              <div className={`text-sm font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                Time Taken: {data.Time_Taken}
+              </div>
+            </div>
           </div>
+
+          {/* Decorative background elements */}
+          <div className="absolute top-0 right-0 -mt-20 -mr-20 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
         </div>
-      </div>
 
-      {/* 🟢 Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-24 flex flex-col gap-32">
-
+        {/* Sections */}
         {sections.map((section) => {
-          if (section.isCrux && !metric.Technical_Performance.Real_User_Experience) return null;
+          if (section.isCrux && !tech.Real_User_Experience) return null;
 
           return (
-            <section key={section.id} id={section.id} className="scroll-mt-32">
-              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12 pb-6 border-b border-dashed dark:border-white/10 border-gray-200">
-                <div className="flex items-center gap-5">
-                  <div className={`p-4 rounded-2xl shadow-lg ${darkMode ? "bg-gradient-to-br from-indigo-500/20 to-purple-500/20 text-indigo-400 ring-1 ring-white/10" : "bg-indigo-50 text-indigo-600"}`}>
-                    <section.icon size={32} />
-                  </div>
-                  <div>
-                    <h2 className={`text-4xl font-bold tracking-tight ${darkMode ? "text-white" : "text-gray-900"}`}>{section.title}</h2>
-                    <p className={`text-lg mt-1 ${darkMode ? "text-slate-400" : "text-gray-500"}`}>{section.subtitle}</p>
-                  </div>
-                </div>
-              </div>
+            <Section key={section.id} title={section.title} subtitle={section.subtitle} icon={section.icon} darkMode={darkMode}>
+              {section.metrics.map((m) => {
+                const dataSource = section.isCrux ? tech.Real_User_Experience : tech;
+                const dynamicData = dataSource[m.key];
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 perspective-1000">
-                {section.metrics.map((m) => {
-                  const dataSource = section.isCrux
-                    ? metric.Technical_Performance.Real_User_Experience
-                    : metric.Technical_Performance;
+                let displayValue = dynamicData?.meta?.value;
+                if (m.getValue) {
+                  displayValue = m.getValue(dynamicData);
+                } else if (section.isCrux) {
+                  displayValue = dynamicData?.value;
+                }
 
-                  const dynamicData = dataSource[m.key];
-
-                  let displayValue = dynamicData?.meta?.value;
-                  if (m.getValue) {
-                    displayValue = m.getValue(dynamicData);
-                  } else if (section.isCrux) {
-                    displayValue = dynamicData?.value;
-                  }
-
-                  return (
-                    <MetricCard
-                      key={m.key}
-                      details={{ ...m, isCrux: section.isCrux }}
-                      dynamicData={dynamicData}
-                      value={displayValue}
-                      darkMode={darkMode}
-                      icon={m.icon}
-                    />
-                  );
-                })}
-              </div>
-            </section>
+                return (
+                  <MetricCard
+                    key={m.key}
+                    details={{ ...m, isCrux: section.isCrux }}
+                    dynamicData={dynamicData}
+                    value={displayValue}
+                    darkMode={darkMode}
+                    icon={m.icon}
+                    className={m.className}
+                  />
+                );
+              })}
+            </Section>
           );
         })}
 

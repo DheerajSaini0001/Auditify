@@ -30,7 +30,7 @@ const RawData = ({ data, darkMode }) => {
     ? "bg-gradient-to-br from-blue-900 via-gray-900 to-black"
     : "bg-gradient-to-br from-blue-200 via-gray-200 to-white";
 
-  if (!data?.Site) {
+  if (data?.Status !== "completed") {
     return (
       <div
         className={`min-h-fit pt-20 pb-16 rounded-2xl shadow-lg m-4 flex flex-col items-center justify-start p-6 space-y-6 ${containerBg}`}

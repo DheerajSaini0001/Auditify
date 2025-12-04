@@ -146,7 +146,7 @@ export default function Sidebar({ darkMode }) {
             </Link>
           )}
 
-          {data?.AIO_Compatibility_Badge ? (
+          {data?.AIO_Readiness ? (
             <Link
               replace to="/aio"
               className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass}`}
@@ -156,7 +156,7 @@ export default function Sidebar({ darkMode }) {
           ) : (
             <Link
               replace to="/aio"
-              className={`flex items-center space-x-3 p-3 rounded-md transition pointer-events-none opacity-60 cursor-not-allowed  ${hoverClass}`}
+              className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass} pointer-events-none opacity-60 cursor-not-allowed`}
             >
               <div className="flex flex-row items-center justify-center gap-2">
                 <Brain size={20} /> AIO (AI-Optimization) Readiness{" "}

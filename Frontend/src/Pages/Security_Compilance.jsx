@@ -1,16 +1,12 @@
-import React, { useContext, useState } from "react";
+import React, { useContext } from "react";
 import CircularProgress from "../Component/CircularProgress";
-import AuditDropdown from "../Component/AuditDropdown";
 import { useData } from "../context/DataContext";
 import { ThemeContext } from "../context/ThemeContext";
-import { motion, AnimatePresence } from "framer-motion";
 import {
   Shield, Lock, Globe, AlertTriangle, CheckCircle, XCircle,
-  ChevronDown, ChevronUp, Info, Server, Eye, FileText,
-  AlertOctagon, Smartphone, Layout, Code, Terminal,
-  Wifi, Key, Globe2, Layers, ShieldAlert, ShieldCheck,
-  Search, Database, EyeOff, MousePointer, Bell, Share2,
-  CalendarClock, Bug, MapPin
+  Info, Server, Eye, FileText, AlertOctagon, Smartphone,
+  Layout, Code, Terminal, Bug, MapPin, Share2, CalendarClock,
+  Database, EyeOff, MousePointer, Bell, Key, Globe2, Layers, ShieldCheck, Search
 } from "lucide-react";
 
 // ------------------------------------------------------
@@ -52,181 +48,90 @@ const iconMap = {
 };
 
 // ------------------------------------------------------
-// ✅ Descriptions & Educational Content
+// ✅ Educational Content
 // ------------------------------------------------------
 const educationalContent = {
-  HTTPS: {
-    desc: "Ensures your site uses the secure HTTPS protocol.",
-    why: "HTTPS encrypts data between the user's browser and your server, preventing attackers from stealing sensitive information like passwords or credit card numbers."
-  },
-  SSL: {
-    desc: "Checks for a valid SSL certificate.",
-    why: "An SSL certificate authenticates your website's identity and enables an encrypted connection. Without it, browsers will warn users your site is unsafe."
-  },
-  SSL_Expiry: {
-    desc: "Verifies SSL certificate expiry date.",
-    why: "Expired certificates cause scary security warnings for users, driving them away immediately. It's crucial to renew them before they expire."
-  },
-  HSTS: {
-    desc: "HTTP Strict Transport Security (HSTS).",
-    why: "HSTS tells browsers to ONLY connect to your website via HTTPS, preventing downgrade attacks where hackers trick users into using an insecure connection."
-  },
-  TLS_Version: {
-    desc: "Validates the TLS encryption version.",
-    why: "Older versions of TLS (like 1.0 or 1.1) have known security holes. Using TLS 1.2 or 1.3 ensures modern, robust encryption."
-  },
-  X_Frame_Options: {
-    desc: "Protects against clickjacking.",
-    why: "Prevents your site from being embedded in an iframe on another site. This stops attackers from tricking users into clicking invisible buttons on your site."
-  },
-  CSP: {
-    desc: "Content Security Policy (CSP).",
-    why: "CSP is a powerful layer of security that helps detect and mitigate certain types of attacks, including Cross-Site Scripting (XSS) and data injection attacks."
-  },
-  X_Content_Type_Options: {
-    desc: "Prevents MIME sniffing.",
-    why: "Stops browsers from trying to 'guess' the file type, which can be exploited to execute malicious code disguised as images or other files."
-  },
-  Cookies_Secure: {
-    desc: "Ensures cookies are marked Secure.",
-    why: "The 'Secure' flag ensures cookies are only transmitted over encrypted HTTPS connections, preventing theft during transmission."
-  },
-  Cookies_HttpOnly: {
-    desc: "Prevents JavaScript access to cookies.",
-    why: "The 'HttpOnly' flag stops malicious scripts (XSS) from stealing your cookies, which often contain user session tokens."
-  },
-  Google_Safe_Browsing: {
-    desc: "Checks Google's unsafe site list.",
-    why: "Verifies that Google hasn't flagged your domain as hosting malware or phishing content, which would block users from visiting."
-  },
-  Blacklist: {
-    desc: "Domain/IP Blacklist check.",
-    why: "Checks if your domain is on major spam or malware blacklists, which can ruin your reputation and email deliverability."
-  },
-  Malware_Scan: {
-    desc: "Scans for malware.",
-    why: "Detects malicious code injected into your website that could harm your users or their devices."
-  },
-  SQLi_Exposure: {
-    desc: "SQL Injection check.",
-    why: "SQL injection allows attackers to interfere with database queries, potentially stealing or deleting your entire database."
-  },
-  XSS: {
-    desc: "Cross-Site Scripting (XSS) check.",
-    why: "XSS allows attackers to inject malicious scripts into pages viewed by other users, often to steal sessions or redirect users."
-  },
-  Cookie_Consent: {
-    desc: "GDPR Cookie Consent.",
-    why: "Legally required in many regions. Users must be informed about and consent to tracking cookies."
-  },
-  Privacy_Policy: {
-    desc: "Privacy Policy accessibility.",
-    why: "Builds trust and is legally required. Users need to know how you collect, use, and protect their data."
-  },
-  Forms_Use_HTTPS: {
-    desc: "Secure Form Submission.",
-    why: "Ensures that data entered into forms (login, contact, etc.) is sent securely. Insecure forms are a major privacy risk."
-  },
-  GDPR_CCPA: {
-    desc: "GDPR & CCPA Compliance.",
-    why: "Checks for indicators of compliance with major data protection regulations to avoid hefty fines and build user trust."
-  },
-  Data_Collection: {
-    desc: "Data Collection Disclosure.",
-    why: "Transparently disclosing what data you collect helps users make informed decisions and complies with privacy laws."
-  },
-  Weak_Default_Credentials: {
-    desc: "Weak/Default Credentials.",
-    why: "Using default passwords (like 'admin/admin') is the easiest way for hackers to take over your system."
-  },
-  MFA_Enabled: {
-    desc: "Multi-Factor Authentication.",
-    why: "Adds a second layer of security. Even if a password is stolen, the attacker cannot access the account without the second factor."
-  },
-  Admin_Panel_Public: {
-    desc: "Exposed Admin Panel.",
-    why: "Admin panels should be hidden or restricted. Exposing them to the public internet invites brute-force attacks."
-  },
-  Viewport_Meta_Tag: {
-    desc: "Mobile Responsiveness.",
-    why: "Ensures your site renders correctly on mobile devices. Essential for UX and SEO."
-  },
-  HTML_Doctype: {
-    desc: "HTML Doctype Declaration.",
-    why: "Tells the browser which version of HTML to use, ensuring the page renders consistently and correctly."
-  },
-  Character_Encoding: {
-    desc: "Character Encoding (UTF-8).",
-    why: "Ensures text displays correctly across all browsers and languages, preventing 'garbled' text issues."
-  },
-  Browser_Console_Errors: {
-    desc: "Console Errors.",
-    why: "Errors in the console often indicate broken functionality or security issues that need immediate attention."
-  },
-  Geolocation_Request: {
-    desc: "Geolocation Permissions.",
-    why: "Requesting location data without a clear need scares users and can be a privacy violation."
-  },
-  Input_Paste_Allowed: {
-    desc: "Input Paste Restrictions.",
-    why: "Blocking paste on password fields is bad UX and prevents the use of password managers, actually reducing security."
-  },
-  Notification_Request: {
-    desc: "Notification Permissions.",
-    why: "Aggressive notification prompts annoy users. They should only be requested when relevant."
-  },
-  Third_Party_Cookies: {
-    desc: "Third-Party Cookies.",
-    why: "Heavy reliance on third-party cookies is being phased out by browsers and can be a privacy concern for users."
-  },
-  Deprecated_APIs: {
-    desc: "Deprecated APIs.",
-    why: "Using old, unsupported web technologies can lead to security vulnerabilities and broken features in modern browsers."
-  },
+  HTTPS: { desc: "Ensures secure HTTPS protocol.", why: "Encrypts data in transit." },
+  SSL: { desc: "Checks for valid SSL certificate.", why: "Authenticates site identity." },
+  SSL_Expiry: { desc: "Verifies SSL expiry date.", why: "Expired certificates block users." },
+  HSTS: { desc: "Enforces HTTPS connections.", why: "Prevents downgrade attacks." },
+  TLS_Version: { desc: "Validates TLS version.", why: "Older versions are insecure." },
+  X_Frame_Options: { desc: "Protects against clickjacking.", why: "Prevents malicious embedding." },
+  CSP: { desc: "Content Security Policy.", why: "Mitigates XSS and injection attacks." },
+  X_Content_Type_Options: { desc: "Prevents MIME sniffing.", why: "Stops file type exploits." },
+  Cookies_Secure: { desc: "Ensures Secure flag on cookies.", why: "Protects cookies over network." },
+  Cookies_HttpOnly: { desc: "Prevents JS access to cookies.", why: "Mitigates XSS cookie theft." },
+  Google_Safe_Browsing: { desc: "Checks Google blacklist.", why: "Ensures site isn't flagged." },
+  Blacklist: { desc: "Domain blacklist check.", why: "Protects reputation." },
+  Malware_Scan: { desc: "Scans for malware.", why: "Detects malicious code." },
+  SQLi_Exposure: { desc: "SQL Injection check.", why: "Prevents database compromise." },
+  XSS: { desc: "Cross-Site Scripting check.", why: "Prevents script injection." },
+  Cookie_Consent: { desc: "GDPR Cookie Consent.", why: "Legal compliance." },
+  Privacy_Policy: { desc: "Privacy Policy check.", why: "Builds user trust." },
+  Forms_Use_HTTPS: { desc: "Secure form submission.", why: "Protects user input." },
+  GDPR_CCPA: { desc: "Data protection compliance.", why: "Avoids legal fines." },
+  Data_Collection: { desc: "Data collection disclosure.", why: "Transparency with users." },
+  Weak_Default_Credentials: { desc: "Checks default passwords.", why: "Prevents easy takeovers." },
+  MFA_Enabled: { desc: "Multi-Factor Authentication.", why: "Adds security layer." },
+  Admin_Panel_Public: { desc: "Exposed admin panel.", why: "Reduces attack surface." },
+  Viewport_Meta_Tag: { desc: "Mobile responsiveness.", why: "Essential for UX." },
+  HTML_Doctype: { desc: "HTML Doctype declaration.", why: "Ensures correct rendering." },
+  Character_Encoding: { desc: "UTF-8 encoding.", why: "Prevents text issues." },
+  Browser_Console_Errors: { desc: "Console errors.", why: "Indicates broken code." },
+  Geolocation_Request: { desc: "Geolocation permissions.", why: "Respects user privacy." },
+  Input_Paste_Allowed: { desc: "Paste restrictions.", why: "Bad UX and security." },
+  Notification_Request: { desc: "Notification permissions.", why: "Avoids user annoyance." },
+  Third_Party_Cookies: { desc: "Third-party cookies.", why: "Privacy concern." },
+  Deprecated_APIs: { desc: "Deprecated APIs.", why: "Avoids security holes." },
 };
 
 // ------------------------------------------------------
-// ✅ Skeleton Components
+// ✅ Simple Skeleton
 // ------------------------------------------------------
-const SkeletonMetricCard = ({ darkMode }) => {
-  const shimmerBg = darkMode ? "bg-gray-800" : "bg-gray-200";
-  return (
-    <div className={`h-32 rounded-xl ${shimmerBg} animate-pulse`} />
-  );
-};
-
-const SecurityShimmer = ({ darkMode }) => {
-  const mainBg = darkMode ? "bg-gray-900" : "bg-gray-50";
-  return (
-    <div className={`min-h-screen ${mainBg} p-8 space-y-8`}>
-      <div className={`h-48 rounded-2xl ${darkMode ? "bg-gray-800" : "bg-gray-200"} animate-pulse`} />
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[...Array(9)].map((_, i) => (
-          <SkeletonMetricCard key={i} darkMode={darkMode} />
-        ))}
-      </div>
+const SecurityShimmer = ({ darkMode }) => (
+  <div className={`min-h-screen ${darkMode ? "bg-gray-900" : "bg-gray-50"} p-8 space-y-8`}>
+    <div className={`h-64 rounded-xl ${darkMode ? "bg-gray-800" : "bg-white"} animate-pulse`} />
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {[...Array(9)].map((_, i) => (
+        <div key={i} className={`h-40 rounded-xl ${darkMode ? "bg-gray-800" : "bg-white"} animate-pulse`} />
+      ))}
     </div>
-  );
-};
+  </div>
+);
 
 // ------------------------------------------------------
-// ✅ MetricCard Component
+// ✅ Metric Card (Security Style)
 // ------------------------------------------------------
 const MetricCard = ({ metricKey, data, darkMode }) => {
   const { score, details, meta } = data || {};
   const isPassed = score === 100;
+  const isWarning = score === 50;
 
   const Icon = iconMap[metricKey] || Shield;
-  const content = educationalContent[metricKey] || { desc: "Security check.", why: "Important for site security." };
+  const content = educationalContent[metricKey] || { desc: "Security check.", why: "Important for security." };
   const title = metricKey.replaceAll("_", " ");
 
+  // Simple Colors
   const cardBg = darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200";
   const textColor = darkMode ? "text-gray-100" : "text-gray-900";
   const subTextColor = darkMode ? "text-gray-400" : "text-gray-500";
 
-  const statusColor = isPassed
-    ? "text-emerald-500 bg-emerald-500/10 border-emerald-500/20"
-    : "text-rose-500 bg-rose-500/10 border-rose-500/20";
+  let statusColor = "text-red-600 bg-red-50 border-red-100";
+  let statusText = "Failed";
+
+  if (darkMode) {
+    statusColor = "text-red-400 bg-red-900/20 border-red-800/30";
+  }
+
+  if (isPassed) {
+    statusColor = darkMode ? "text-green-400 bg-green-900/20 border-green-800/30" : "text-green-600 bg-green-50 border-green-100";
+    statusText = "Passed";
+  } else if (isWarning) {
+    statusColor = darkMode ? "text-yellow-400 bg-yellow-900/20 border-yellow-800/30" : "text-yellow-600 bg-yellow-50 border-yellow-100";
+    statusText = "Warning";
+  }
+
+  const hasMetaDetails = meta && Object.keys(meta).some(k => k !== 'count' && k !== 'value');
 
   return (
     <div className={`relative overflow-hidden rounded-xl border ${cardBg} shadow-sm hover:shadow-md transition-shadow group`}>
@@ -239,7 +144,7 @@ const MetricCard = ({ metricKey, data, darkMode }) => {
             <div>
               <h3 className={`font-bold text-lg ${textColor}`}>{title}</h3>
               <p className={`text-xs font-medium mt-1 px-2 py-0.5 rounded-full w-fit border ${statusColor}`}>
-                {isPassed ? "Secure" : "Attention Needed"}
+                {statusText}
               </p>
             </div>
           </div>
@@ -255,7 +160,7 @@ const MetricCard = ({ metricKey, data, darkMode }) => {
           </p>
           {meta?.value && (
             <div className="mt-2 text-xs">
-              <span className={`font-semibold ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Detected Value: </span>
+              <span className={`font-semibold ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Detected: </span>
               <code className={`px-1.5 py-0.5 rounded ${darkMode ? "bg-gray-700 text-gray-200" : "bg-gray-100 text-gray-800"}`}>
                 {String(meta.value)}
               </code>
@@ -263,19 +168,22 @@ const MetricCard = ({ metricKey, data, darkMode }) => {
           )}
         </div>
 
-        {/* Meta Data (Debugging Info) */}
-        {meta && Object.keys(meta).length > 0 && (
+        {/* Technical Data */}
+        {!isPassed && hasMetaDetails && (
           <div>
             <h4 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
               Technical Data
             </h4>
             <div className={`p-2 rounded text-xs font-mono overflow-x-auto ${darkMode ? "bg-gray-900 text-gray-300" : "bg-gray-100 text-gray-700"}`}>
-              {Object.entries(meta).map(([key, value]) => (
-                <div key={key} className="flex flex-col sm:flex-row sm:gap-2 mb-1 last:mb-0">
-                  <span className="font-semibold opacity-70">{key}:</span>
-                  <span className="break-all">{typeof value === 'object' ? JSON.stringify(value) : String(value)}</span>
-                </div>
-              ))}
+              {Object.entries(meta).map(([k, v]) => {
+                if (k === 'count' || k === 'value') return null;
+                return (
+                  <div key={k} className="flex flex-col sm:flex-row sm:gap-2 mb-1 last:mb-0">
+                    <span className="font-semibold opacity-70">{k.replace(/([A-Z])/g, ' $1').trim()}:</span>
+                    <span className="break-all">{typeof v === 'object' ? JSON.stringify(v) : String(v)}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
@@ -286,7 +194,7 @@ const MetricCard = ({ metricKey, data, darkMode }) => {
             {content.desc}
           </p>
           <p className={`text-xs mt-2 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
-            {content.why}
+            <span className="font-semibold">Why:</span> {content.why}
           </p>
         </div>
       </div>
@@ -295,41 +203,43 @@ const MetricCard = ({ metricKey, data, darkMode }) => {
 };
 
 // ------------------------------------------------------
-// ✅ Section Component
+// ✅ Simple Section
 // ------------------------------------------------------
-const Section = ({ title, icon: Icon, children, darkMode }) => {
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3 px-2">
-        <div className={`p-2 rounded-lg ${darkMode ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-600"}`}>
-          <Icon size={20} />
-        </div>
-        <h2 className={`text-xl font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>
-          {title}
-        </h2>
+const Section = ({ title, icon: Icon, children, darkMode }) => (
+  <div className="space-y-4">
+    <div className="flex items-center gap-3 px-2">
+      <div className={`p-2 rounded-lg ${darkMode ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-600"}`}>
+        <Icon size={20} />
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {children}
-      </div>
+      <h2 className={`text-xl font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>
+        {title}
+      </h2>
     </div>
-  );
-};
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {children}
+    </div>
+  </div>
+);
 
 // ------------------------------------------------------
-// ✅ MAIN COMPONENT
+// ✅ Main Component
 // ------------------------------------------------------
 export default function Security_Compilance() {
   const { theme } = useContext(ThemeContext);
   const { data, loading } = useData();
   const darkMode = theme === "dark";
 
-  if (loading || !data || data.Status === "inprogress") {
+  if (!data?.Security_or_Compliance) {
     return <SecurityShimmer darkMode={darkMode} />;
   }
 
   const metric = data?.Security_or_Compliance || {};
   const mainBg = darkMode ? "bg-gray-900" : "bg-gray-50";
   const textColor = darkMode ? "text-white" : "text-gray-900";
+
+  const allMetrics = Object.values(metric).filter(val => typeof val === 'object' && val !== null && 'score' in val);
+  const passedCount = allMetrics.filter(m => m.score === 100).length;
+  const failedCount = allMetrics.filter(m => m.score < 100).length;
 
   return (
     <div className={`min-h-screen w-full ${mainBg} transition-colors duration-300`}>
@@ -341,34 +251,24 @@ export default function Security_Compilance() {
             <div className="text-center md:text-left space-y-4 max-w-2xl">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-sm font-medium border border-blue-500/20">
                 <ShieldCheck size={14} />
-                <span>Security Audit Report</span>
+                <span>Security Audit</span>
               </div>
               <h1 className={`text-4xl sm:text-5xl font-black tracking-tight ${textColor}`}>
-                Security & <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">Compliance</span>
+                Security & <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-blue-400 dark:to-cyan-400">Compliance</span>
               </h1>
               <p className={`text-lg ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
-                Comprehensive analysis of your web application's security posture, including SSL, headers, privacy compliance, and vulnerability detection.
+                Comprehensive analysis of your web application's security posture.
               </p>
 
               <div className="flex flex-wrap gap-4 justify-center md:justify-start pt-2">
-                {(() => {
-                  const allMetrics = Object.values(metric).filter(val => typeof val === 'object' && val !== null && 'score' in val);
-                  const passedCount = allMetrics.filter(m => m.score === 100).length;
-                  const failedCount = allMetrics.filter(m => m.score < 100).length;
-
-                  return (
-                    <>
-                      <div className={`flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg ${darkMode ? "bg-gray-700 text-gray-300" : "bg-gray-100 text-gray-600"}`}>
-                        <CheckCircle size={16} className="text-emerald-500" />
-                        <span>{passedCount} Passed</span>
-                      </div>
-                      <div className={`flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg ${darkMode ? "bg-gray-700 text-gray-300" : "bg-gray-100 text-gray-600"}`}>
-                        <XCircle size={16} className="text-rose-500" />
-                        <span>{failedCount} Failed</span>
-                      </div>
-                    </>
-                  );
-                })()}
+                <div className={`flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg ${darkMode ? "bg-gray-700 text-gray-300" : "bg-gray-100 text-gray-600"}`}>
+                  <CheckCircle size={16} className="text-emerald-500" />
+                  <span>{passedCount} Passed</span>
+                </div>
+                <div className={`flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg ${darkMode ? "bg-gray-700 text-gray-300" : "bg-gray-100 text-gray-600"}`}>
+                  <XCircle size={16} className="text-rose-500" />
+                  <span>{failedCount} Failed</span>
+                </div>
               </div>
             </div>
 
@@ -388,7 +288,7 @@ export default function Security_Compilance() {
 
           {/* Decorative background elements */}
           <div className="absolute top-0 right-0 -mt-20 -mr-20 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
         </div>
 
         {/* Section 1: Network & Encryption */}
@@ -423,6 +323,7 @@ export default function Security_Compilance() {
             metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} />
           ))}
         </Section>
+
       </main>
     </div>
   );

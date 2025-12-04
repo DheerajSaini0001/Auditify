@@ -3,331 +3,145 @@ import SiteReport from "../models/SiteReport.js";
 
 export default async function accessibilityMetrics(url, device, selectedMetric, page, auditId) {
 
-  let results;
+  let axeResults;
   try {
-    results = await new AxePuppeteer(page).analyze();
+    axeResults = await new AxePuppeteer(page).analyze();
   } catch (err) {
     console.error("Axe analysis failed:", err.message);
-    results = { violations: [] };
+    axeResults = { violations: [] };
   }
 
-  function calculatePassRate(results, rules) {
-    if (!results || !results.violations) return 1;
+  // Helper to evaluate Axe rules and return standardized object
+  function evaluateRule(results, ruleId, metricName) {
+    if (!results || !results.violations) {
+      return { score: 100, status: "pass", details: `${metricName} check passed`, meta: {} };
+    }
 
-    const hasViolation = results.violations.some(v => rules.includes(v.id) && v.nodes.length > 0);
+    const violation = results.violations.find(v => v.id === ruleId);
 
-    return hasViolation ? 0 : 1;
+    if (violation && violation.nodes.length > 0) {
+      // Extract failing nodes for meta data
+      const failedNodes = violation.nodes.map(node => ({
+        html: node.html,
+        target: node.target.join(", "),
+        failureSummary: node.failureSummary
+      })).slice(0, 10); // Limit to 10 to avoid huge DB entries
+
+      return {
+        score: 0,
+        status: "fail",
+        details: `${violation.help} (${violation.nodes.length} occurrences)`,
+        meta: {
+          impact: violation.impact,
+          description: violation.description,
+          helpUrl: violation.helpUrl,
+          failedNodes: failedNodes,
+          count: violation.nodes.length
+        }
+      };
+    }
+
+    return { score: 100, status: "pass", details: `${metricName} check passed`, meta: {} };
   }
 
-  async function Landmarks(page) {
+  // Manual Checks
+  async function checkLandmarks(page) {
     const landmarks = await page.$$(
       '[role="banner"], [role="main"], [role="contentinfo"], [role="navigation"], [role="complementary"]'
     );
-    return landmarks.length > 0 ? 1 : 0;
+    const count = landmarks.length;
+    if (count > 0) {
+      return { score: 100, status: "pass", details: "Landmark roles are present", meta: { count, location: "DOM" } };
+    }
+    return { score: 0, status: "fail", details: "No landmark roles found", meta: { location: "DOM" } };
   }
 
-  const colorContrast = calculatePassRate(results, ["color-contrast"]);
-  const focusOrder = calculatePassRate(results, ["focus-order"]);
-  const focusableContent = calculatePassRate(results, ["focusable-content"]);
-  const tabindex = calculatePassRate(results, ["tabindex"]);
-  const interactiveElementAffordance = calculatePassRate(results, ["interactive-element-affordance"]);
-  const label = calculatePassRate(results, ["label"]);
-  const ariaAllowedAttr = calculatePassRate(results, ["aria-allowed-attr"]);
-  const ariaRoles = calculatePassRate(results, ["aria-roles"]);
-  const ariaHiddenFocus = calculatePassRate(results, ["aria-hidden-focus"]);
-  const imageAlt = calculatePassRate(results, ["image-alt"]);
-  const skipLinks = await page.$('a[href^="#"]:not([hidden])') ? 0 : 1
-  const landMarks = await Landmarks(page);
-
-  const Total = colorContrast + focusOrder + focusableContent + tabindex + interactiveElementAffordance + label + ariaAllowedAttr + ariaRoles + ariaHiddenFocus + imageAlt + skipLinks + landMarks
-
-  // Passed
-  const passed = [];
-
-  // Warning
-  const warning = [];
-
-  if (colorContrast === 0) {
-    warning.push({
-      metric: "Color Contrast",
-      current: "Insufficient contrast detected",
-      recommended: "Ensure sufficient contrast between text and background (WCAG AA standard)",
-      severity: "High 🔴",
-      suggestion: "Adjust text and background colors to improve readability for all users."
-    });
-  } else {
-    passed.push({
-      metric: "Color Contrast",
-      current: "Sufficient contrast",
-      recommended: "Ensure sufficient contrast between text and background (WCAG AA standard)",
-      severity: "✅ Passed",
-      suggestion: "Text and background contrast meet accessibility standards."
-    });
+  async function checkSkipLinks(page) {
+    const skipLink = await page.$('a[href^="#"]:not([hidden])');
+    if (skipLink) {
+      return { score: 100, status: "pass", details: "Skip link found", meta: { location: "DOM" } };
+    }
+    return { score: 0, status: "fail", details: "No visible skip link found", meta: { location: "DOM" } };
   }
 
-  if (focusOrder === 0) {
-    warning.push({
-      metric: "Focus Order",
-      current: "Incorrect tab/focus order",
-      recommended: "Logical focus sequence following the DOM order",
-      severity: "Medium 🟡",
-      suggestion: "Ensure that keyboard navigation follows a logical and intuitive order."
-    });
-  } else {
-    passed.push({
-      metric: "Focus Order",
-      current: "Logical focus order",
-      recommended: "Logical focus sequence following the DOM order",
-      severity: "✅ Passed",
-      suggestion: "Focus order is correct."
-    });
+  // Evaluate Metrics
+  const colorContrast = evaluateRule(axeResults, "color-contrast", "Color Contrast");
+  const focusOrder = evaluateRule(axeResults, "focus-order", "Focus Order");
+  const focusableContent = evaluateRule(axeResults, "focusable-content", "Focusable Content"); // Note: 'focusable-content' might not be exact axe rule, usually 'tabindex' covers this or 'interactive-element-affordance'
+  const tabindex = evaluateRule(axeResults, "tabindex", "Tabindex");
+  const interactiveElementAffordance = evaluateRule(axeResults, "interactive-element-affordance", "Interactive Element Affordance"); // Custom rule or mapped? Axe has 'link-name', 'button-name'. Assuming standard axe rules or custom mapping.
+  const label = evaluateRule(axeResults, "label", "Form Labels");
+  const ariaAllowedAttr = evaluateRule(axeResults, "aria-allowed-attr", "ARIA Allowed Attributes");
+  const ariaRoles = evaluateRule(axeResults, "aria-roles", "ARIA Roles");
+  const ariaHiddenFocus = evaluateRule(axeResults, "aria-hidden-focus", "ARIA Hidden Focus");
+  const imageAlt = evaluateRule(axeResults, "image-alt", "Image Alt Text");
+
+  const skipLinks = await checkSkipLinks(page);
+  const landMarks = await checkLandmarks(page);
+
+  // Calculate Weighted Score
+  const weights = {
+    Color_Contrast: 3, // High impact
+    Focus_Order: 3,
+    Focusable_Content: 3,
+    Tab_Index: 2,
+    Interactive_Element_Affordance: 1,
+    Label: 3,
+    Aria_Allowed_Attr: 2,
+    Aria_Roles: 2,
+    Aria_Hidden_Focus: 2,
+    Image_Alt: 3,
+    Skip_Links: 1,
+    Landmarks: 1
+  };
+
+  const metricsMap = {
+    Color_Contrast: colorContrast,
+    Focus_Order: focusOrder,
+    Focusable_Content: focusableContent,
+    Tab_Index: tabindex,
+    Interactive_Element_Affordance: interactiveElementAffordance,
+    Label: label,
+    Aria_Allowed_Attr: ariaAllowedAttr,
+    Aria_Roles: ariaRoles,
+    Aria_Hidden_Focus: ariaHiddenFocus,
+    Image_Alt: imageAlt,
+    Skip_Links: skipLinks,
+    Landmarks: landMarks
+  };
+
+  let totalWeight = 0;
+  let earnedScore = 0;
+
+  for (const [key, metric] of Object.entries(metricsMap)) {
+    const weight = weights[key] || 1;
+    totalWeight += weight;
+    if (metric.score === 100) {
+      earnedScore += weight;
+    }
   }
 
-  if (focusableContent === 0) {
-    warning.push({
-      metric: "Focusable Content",
-      current: "Focusable elements not accessible",
-      recommended: "All interactive elements must be focusable",
-      severity: "Medium 🟡",
-      suggestion: "Add proper focus handling to all interactive elements."
-    });
-  } else {
-    passed.push({
-      metric: "Focusable Content",
-      current: "All interactive elements focusable",
-      recommended: "All interactive elements must be focusable",
-      severity: "✅ Passed",
-      suggestion: "Interactive elements are properly focusable."
-    });
-  }
+  const actualPercentage = totalWeight > 0 ? parseFloat(((earnedScore / totalWeight) * 100).toFixed(0)) : 0;
 
-  if (tabindex === 0) {
-    warning.push({
-      metric: "Tabindex",
-      current: "Invalid tabindex usage",
-      recommended: "Use tabindex correctly (avoid >0 values unless necessary)",
-      severity: "Medium 🟡",
-      suggestion: "Correct tabindex attributes to maintain proper navigation order."
-    });
-  } else {
-    passed.push({
-      metric: "Tabindex",
-      current: "Tabindex used correctly",
-      recommended: "Use tabindex correctly (avoid >0 values unless necessary)",
-      severity: "✅ Passed",
-      suggestion: "Tabindex implementation is correct."
-    });
-  }
-
-  if (interactiveElementAffordance === 0) {
-    warning.push({
-      metric: "Interactive Element Affordance",
-      current: "Interactive elements lack visual cues",
-      recommended: "Provide clear affordance (buttons, links visually distinct)",
-      severity: "Medium 🟡",
-      suggestion: "Ensure clickable elements look interactive (e.g., hover, focus styles)."
-    });
-  } else {
-    passed.push({
-      metric: "Interactive Element Affordance",
-      current: "Interactive elements visually clear",
-      recommended: "Provide clear affordance (buttons, links visually distinct)",
-      severity: "✅ Passed",
-      suggestion: "Interactive elements provide clear visual cues."
-    });
-  }
-
-  if (label === 0) {
-    warning.push({
-      metric: "Form Labels",
-      current: "Form inputs missing labels",
-      recommended: "All form elements must have descriptive labels",
-      severity: "High 🔴",
-      suggestion: "Add <label> or aria-label attributes to improve accessibility."
-    });
-  } else {
-    passed.push({
-      metric: "Form Labels",
-      current: "All form inputs labeled",
-      recommended: "All form elements must have descriptive labels",
-      severity: "✅ Passed",
-      suggestion: "Form labels are implemented correctly."
-    });
-  }
-
-  if (ariaAllowedAttr === 0) {
-    warning.push({
-      metric: "ARIA Allowed Attributes",
-      current: "Invalid ARIA attributes used",
-      recommended: "Use only valid ARIA attributes",
-      severity: "Medium 🟡",
-      suggestion: "Remove or correct invalid ARIA attributes for compliance."
-    });
-  } else {
-    passed.push({
-      metric: "ARIA Allowed Attributes",
-      current: "Valid ARIA attributes",
-      recommended: "Use only valid ARIA attributes",
-      severity: "✅ Passed",
-      suggestion: "ARIA attributes are valid."
-    });
-  }
-
-  if (ariaRoles === 0) {
-    warning.push({
-      metric: "ARIA Roles",
-      current: "Incorrect ARIA roles",
-      recommended: "Use valid ARIA roles for elements",
-      severity: "Medium 🟡",
-      suggestion: "Assign correct ARIA roles according to element purpose."
-    });
-  } else {
-    passed.push({
-      metric: "ARIA Roles",
-      current: "Correct ARIA roles",
-      recommended: "Use valid ARIA roles for elements",
-      severity: "✅ Passed",
-      suggestion: "ARIA roles are implemented correctly."
-    });
-  }
-
-  if (ariaHiddenFocus === 0) {
-    warning.push({
-      metric: "Hidden Focusable Elements",
-      current: "Hidden elements receive focus",
-      recommended: "Hidden elements should not be focusable",
-      severity: "Medium 🟡",
-      suggestion: "Ensure elements with aria-hidden=true are removed from focus order."
-    });
-  } else {
-    passed.push({
-      metric: "Hidden Focusable Elements",
-      current: "Hidden elements not focusable",
-      recommended: "Hidden elements should not be focusable",
-      severity: "✅ Passed",
-      suggestion: "Hidden elements correctly excluded from focus."
-    });
-  }
-
-  if (imageAlt === 0) {
-    warning.push({
-      metric: "Image Alt Text",
-      current: "Images missing descriptive alt text",
-      recommended: "All images should have meaningful alt attributes",
-      severity: "High 🔴",
-      suggestion: "Add descriptive alt text to all meaningful images for accessibility and SEO."
-    });
-  } else {
-    passed.push({
-      metric: "Image Alt Text",
-      current: "All images have alt text",
-      recommended: "All images should have meaningful alt attributes",
-      severity: "✅ Passed",
-      suggestion: "Alt text is correctly implemented for all images."
-    });
-  }
-
-  if (skipLinks === 0) {
-    warning.push({
-      metric: "Skip Links",
-      current: "Skip links missing",
-      recommended: "Provide skip navigation links",
-      severity: "Low 🟢",
-      suggestion: "Add a skip-to-content link for keyboard users to improve navigation."
-    });
-  } else {
-    passed.push({
-      metric: "Skip Links",
-      current: "Skip links present",
-      recommended: "Provide skip navigation links",
-      severity: "✅ Passed",
-      suggestion: "Skip links implemented correctly."
-    });
-  }
-
-  if (landMarks === 0) {
-    warning.push({
-      metric: "Landmark Roles",
-      current: "No landmark roles present",
-      recommended: "Include banner, main, contentinfo, navigation, complementary roles",
-      severity: "Medium 🟡",
-      suggestion: "Add ARIA landmark roles to improve screen reader navigation."
-    });
-  } else {
-    passed.push({
-      metric: "Landmark Roles",
-      current: "Landmark roles present",
-      recommended: "Include banner, main, contentinfo, navigation, complementary roles",
-      severity: "✅ Passed",
-      suggestion: "Landmark roles are correctly implemented."
-    });
-  }
-
-  const actualPercentage = parseFloat((((Total) / 12) * 100).toFixed(0));
-
-  // console.log(actualPercentage);
-  // console.log(warning);
-  // console.log(passed);
-  // console.log(Total);
-
+  //  Database
   await SiteReport.findByIdAndUpdate(auditId, {
     Accessibility: {
-      Color_Contrast: {
-        Score: colorContrast,
-        Parameter: '1 if color contrast passes, else 0'
-      },
-      Focus_Order: {
-        Score: focusOrder,
-        Parameter: '1 if tab/focus order is correct, else 0'
-      },
-      Focusable_Content: {
-        Score: focusableContent,
-        Parameter: '1 if focusable elements are correctly used, else 0'
-      },
-      Tab_Index: {
-        Score: tabindex,
-        Parameter: '1 if tabindex attributes are valid, else 0'
-      },
-      Interactive_Element_Affordance: {
-        Score: interactiveElementAffordance,
-        Parameter: '1 if interactive elements have clear affordance, else 0'
-      },
-      Label: {
-        Score: label,
-        Parameter: '1 if form elements have labels, else 0'
-      },
-      Aria_Allowed_Attr: {
-        Score: ariaAllowedAttr,
-        Parameter: '1 if only allowed ARIA attributes are used, else 0'
-      },
-      Aria_Roles: {
-        Score: ariaRoles,
-        Parameter: '1 if ARIA roles are correctly applied, else 0'
-      },
-      Aria_Hidden_Focus: {
-        Score: ariaHiddenFocus,
-        Parameter: '1 if hidden elements do not receive focus, else 0'
-      },
-      Image_Alt: {
-        Score: imageAlt,
-        Parameter: '1 if images have descriptive alt text, else 0'
-      },
-      Skip_Links: {
-        Score: skipLinks,
-        Parameter: '1 if skip links exist, else 0',
-      },
-      Landmarks: {
-        Score: landMarks,
-        Parameter: '1 if landmark roles (banner, main, contentinfo, navigation, complementary) exist, else 0'
-      },
       Percentage: actualPercentage,
-      Warning: warning,
-      Passed: passed,
-      Total: Total
+      Color_Contrast: colorContrast,
+      Focus_Order: focusOrder,
+      Focusable_Content: focusableContent,
+      Tab_Index: tabindex,
+      Interactive_Element_Affordance: interactiveElementAffordance,
+      Label: label,
+      Aria_Allowed_Attr: ariaAllowedAttr,
+      Aria_Roles: ariaRoles,
+      Aria_Hidden_Focus: ariaHiddenFocus,
+      Image_Alt: imageAlt,
+      Skip_Links: skipLinks,
+      Landmarks: landMarks,
     },
-
   });
 
-  return actualPercentage
+  return actualPercentage;
 }
 

@@ -439,10 +439,14 @@ export default async function aioReadiness(url, device, selectedMetric, page, $,
 
   const actualPercentage = totalWeight > 0 ? parseFloat(((earnedScore / totalWeight) * 100).toFixed(0)) : 0;
 
+  let badge = actualPercentage >= 50 ? "Yes" : "No";
+
   // Update Database
   await SiteReport.findByIdAndUpdate(auditId, {
+    AIO_Compatibility_Badge: badge,
     AIO_Readiness: {
       Percentage: actualPercentage,
+      AIO_Compatibility_Badge: badge,
       ...metricsMap
     }
   });

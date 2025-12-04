@@ -1,4 +1,6 @@
 import React, { useContext, useState } from "react";
+import { motion } from "framer-motion";
+import { CheckCircle2, AlertCircle, XCircle } from "lucide-react";
 import CircularProgress from "../Component/CircularProgress";
 import AuditDropdown from "../Component/AuditDropdown";
 
@@ -44,6 +46,33 @@ const OnPageSeoShimmer = ({ darkMode }) => {
 // ---------------------------------------------------------
 // ✅ HELPER COMPONENTS (Refined for Visibility)
 // ---------------------------------------------------------
+
+const getStatusColor = (score) => {
+  if (score >= 90) return {
+    text: "text-emerald-500",
+    bg: "bg-emerald-500/10",
+    border: "border-emerald-500/20",
+    shadow: "shadow-emerald-500/20",
+    gradient: "from-emerald-500 to-teal-400",
+    icon: CheckCircle2
+  };
+  if (score >= 50) return {
+    text: "text-amber-500",
+    bg: "bg-amber-500/10",
+    border: "border-amber-500/20",
+    shadow: "shadow-amber-500/20",
+    gradient: "from-amber-500 to-orange-400",
+    icon: AlertCircle
+  };
+  return {
+    text: "text-rose-500",
+    bg: "bg-rose-500/10",
+    border: "border-rose-500/20",
+    shadow: "shadow-rose-500/20",
+    gradient: "from-rose-500 to-red-600",
+    icon: XCircle
+  };
+};
 
 function StatBadge({ label, value, color = "indigo" }) {
   const colors = {
@@ -139,13 +168,14 @@ function ImageSizeDisplay({ sizeData, darkMode }) {
       </div>
 
       {heavyImages.length > 0 && (
-        <div className="p-3 bg-rose-50 dark:bg-rose-900/10 rounded-lg border border-rose-200 dark:border-rose-800">
-          <p className="text-xs font-bold text-rose-700 dark:text-rose-300 mb-2 uppercase">Needs Optimization:</p>
-          <ul className="space-y-1 max-h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-rose-200 dark:scrollbar-thumb-rose-800">
+        <div className={`p-3 ${darkMode?"bg-rose-900/10 border-rose-800":"bg-rose-50 border-rose-200"}  rounded-lg border `}>
+          <p className={`text-xs font-bold ${darkMode?"text-rose-300":"text-rose-700"
+          }   mb-2 uppercase`}>Needs Optimization:</p>
+          <ul className={`space-y-1 max-h-40 overflow-y-auto scrollbar-thin ${darkMode?"scrollbar-thumb-rose-800":"scrollbar-thumb-rose-200 "} `}>
             {heavyImages.map((img, i) => (
-              <li key={i} className="flex justify-between items-center text-xs border-b border-rose-100 dark:border-rose-800/30 last:border-0 py-2">
-                <span className="truncate w-3/4 text-slate-700 dark:text-slate-300 font-medium" title={img.src}>{img.src}</span>
-                <span className="font-bold text-rose-600 bg-rose-100 dark:bg-rose-900/50 px-2 py-0.5 rounded">{img.sizeKB} KB</span>
+              <li key={i} className={`flex justify-between items-center text-xs border-b ${darkMode?"border-rose-800/30 last:border-0":"border-rose-100"}   py-2`}>
+                <span className={`truncate w-3/4 ${darkMode?"text-slate-300":"text-slate-700"}  font-medium`} title={img.src}>{img.src}</span>
+                <span className={`font-bold ${darkMode?"bg-rose-900/50 text-rose-100":"text-rose-600 bg-rose-100"}   px-2 py-0.5 rounded`}>{img.sizeKB} KB</span>
               </li>
             ))}
           </ul>
@@ -185,11 +215,11 @@ function AltImagesDisplay({ imgData, darkMode }) {
       </div>
       {/* 🔴 Missing Alt */}
       {withoutAlt.length > 0 && (
-        <div className="p-3 bg-rose-50 dark:bg-rose-900/10 rounded-lg border border-rose-200 dark:border-rose-800">
-          <h4 className="font-bold text-xs text-rose-700 dark:text-rose-300 mb-2 uppercase">Missing Alt Text ({withoutAlt.length})</h4>
-          <ul className="space-y-1 max-h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-rose-200 dark:scrollbar-thumb-rose-800">
+        <div className={`p-3 ${darkMode ? "bg-rose-900/10 border-rose-800":"bg-rose-50 border-rose-200"} rounded-lg border `}>
+          <h4 className={`font-bold text-xs ${darkMode ? "text-rose-300" : "text-rose-700"} mb-2 uppercase`}>Missing Alt Text ({withoutAlt.length})</h4>
+          <ul className={`space-y-1 max-h-40 overflow-y-auto ${darkMode ? "scrollbar-thumb-rose-800 scrollbar-track-rose-900/10 scrollbar-thin" : "scrollbar-thumb-slate-600 bg-slate-100 border-slate-200"}`}>
             {withoutAlt.map((img, i) => (
-              <li key={i} className="text-xs text-slate-700 dark:text-slate-300 truncate py-1 border-b border-rose-100 dark:border-rose-800/30 last:border-0">
+              <li key={i} className={`text-xs  ${darkMode?"text-slate-300 border-rose-800/30 last:border-0":"text-slate-700 border-rose-100 last:border-0"} truncate py-1 border-b`}>
                 {img.src || img}
               </li>
             ))}
@@ -311,165 +341,179 @@ const ModernMetricCard = ({
   className
 }) => {
   const displayScore = score !== undefined && score !== null ? (score > 1 ? 100 : Math.round(score * 100)) : 0;
-
-  // Optimized Color Logic for Light/Dark
-  let statusColor = "text-rose-600 dark:text-rose-400";
-  let iconBg = "bg-rose-50 text-rose-600 border-rose-100 dark:bg-rose-900/20 dark:text-rose-400 dark:border-rose-800";
-
-  if (displayScore >= 90) {
-    statusColor = "text-emerald-600 dark:text-emerald-400";
-    iconBg = "bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800";
-  } else if (displayScore >= 50) {
-    statusColor = "text-amber-600 dark:text-amber-400";
-    iconBg = "bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800";
-  }
+  const colors = getStatusColor(displayScore);
+  const StatusIcon = colors.icon;
 
   const hasContent = Title || metaDiscription || urlData || h1Data || contextualData || links || heading || altData || imageSizeData || canonical;
 
   return (
-    <div className={`group relative rounded-2xl border ${darkMode ? "border-slate-800 bg-slate-900" : "border-slate-200 bg-white"} shadow-sm hover:shadow-lg transition-all duration-300 ease-out ${className || ""}`}>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5 }}
+      className={`relative group rounded-2xl p-[1px] h-full ${className || ""}`}
+    >
+      {/* Animated Gradient Border */}
+      <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${colors.gradient} opacity-50 blur-sm`} />
 
-      {/* Top Bar */}
-      <div className="flex justify-between items-start p-6 pb-4">
-        <div className="flex items-center gap-4">
-          <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl border ${iconBg} transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 shadow-inner`}>
-            {icon}
+      {/* Card Content */}
+      <div className={`relative rounded-2xl overflow-hidden backdrop-blur-xl border-t border-l border-white/10 shadow-2xl h-full flex flex-col
+        ${darkMode ? "bg-[#0a0a0a]/90" : "bg-white/90"}
+      `}>
+        {/* Status Strip */}
+        <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${colors.gradient}`} />
+
+        <div className="p-6 flex flex-col relative z-10 h-full">
+          {/* Header */}
+          <div className="flex justify-between items-start mb-6">
+            <div className="flex items-center gap-4">
+              <div className={`p-3 rounded-xl shadow-lg ${darkMode ? "bg-slate-900" : "bg-white"} ${colors.text} ring-1 ring-white/10 text-2xl`}>
+                {icon}
+              </div>
+              <div>
+                <h3 className={`font-bold text-base tracking-tight ${darkMode ? "text-slate-100" : "text-gray-800"}`}>
+                  {title}
+                </h3>
+                <div className={`flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest mt-1 ${colors.text}`}>
+                  <StatusIcon size={12} />
+                  <span>Score: {displayScore}</span>
+                </div>
+              </div>
+            </div>
+            {/* Value */}
+            <div className={`text-3xl font-black bg-clip-text text-transparent bg-gradient-to-br ${colors.gradient} drop-shadow-sm`}>
+              {value || "--"} <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">{unit}</span>
+            </div>
           </div>
-          <div>
-            <h3 className={`font-bold text-lg leading-tight ${darkMode ? "text-slate-100" : "text-slate-900"}`}>{title}</h3>
-            <div className={`text-xs font-bold mt-1 ${statusColor}`}>Score: {displayScore}</div>
+
+          {/* Insight / Description */}
+          <div className={`mb-6 text-xs font-medium leading-relaxed p-3 rounded-lg border border-white/5
+            ${darkMode ? "bg-white/5 text-slate-300" : "bg-slate-50 text-gray-600"}
+          `}>
+            <span className="text-indigo-400 font-bold mr-1">Insight:</span>
+            {description}
           </div>
-        </div>
-      </div>
 
-      {/* Main Value */}
-      <div className="px-6 pb-4">
-        <div className={`text-3xl font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
-          {value || "--"} <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">{unit}</span>
-        </div>
-        <p className="text-sm text-slate-600 dark:text-slate-400 mt-2 leading-relaxed font-medium">
-          {description}
-        </p>
-      </div>
+          {/* Content Area */}
+          {hasContent && (
+            <div className="mt-auto space-y-4">
+              <div className={`h-px w-full ${darkMode ? "bg-slate-800" : "bg-slate-100"}`}></div>
 
-      {/* Content Area */}
-      {hasContent && (
-        <div className="px-6 pb-6 space-y-4">
-          <div className={`h-px w-full ${darkMode ? "bg-slate-800" : "bg-slate-100"}`}></div>
-
-          {/* Title Tag */}
-          {Title && (
-            <div className={`text-sm `}>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Content Preview</span>
-              <p className={`font-medium mt-1 italic p-3 rounded-lg border ${darkMode ? "scrollbar-thumb-slate-600 bg-slate-800/50 border-slate-700  " : "scrollbar-thumb-slate-600 bg-slate-100 border-slate-200"} `}>
-                "{Title.Title}"
-              </p>
-            </div>
-          )}
-
-          {/* Meta Description */}
-          {metaDiscription && (
-            <div className={`text-sm `}>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Content Preview</span>
-              <p className={`font-medium mt-1 italic p-3 rounded-lg border ${darkMode ? "scrollbar-thumb-slate-600 bg-slate-800/50 border-slate-700  " : "scrollbar-thumb-slate-600 bg-slate-100 border-slate-200"} `}>
-                "{metaDiscription.MetaDescription}"
-              </p>
-            </div>
-          )}
-
-          {/* Canonical */}
-          {canonical && (
-            <div className="text-sm">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Canonical URL</span>
-              <p className={`font-mono text-xs mt-1 break-all p-2 rounded border ${darkMode ? "bg-slate-800 border-slate-700 text-indigo-300" : "bg-slate-50 border-slate-200 text-indigo-700"}`}>
-                {canonical}
-              </p>
-            </div>
-          )}
-
-          {/* URL Structure */}
-          {urlData && (
-            <div className="mt-2">
-              {urlData.Issues && urlData.Issues.length > 0 ? (
-                <div className="p-3 bg-rose-50 dark:bg-rose-900/10 rounded-xl border border-rose-200 dark:border-rose-800">
-                  <p className="text-xs font-bold text-rose-700 dark:text-rose-400 mb-1">Analyzed URL:</p>
-                  <p className="text-xs font-mono break-all text-rose-600 dark:text-rose-300 mb-3 border-b border-rose-200 dark:border-rose-800 pb-2">
-                    {urlData.URL}
+              {/* Title Tag */}
+              {Title && (
+                <div className={`text-sm `}>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Content Preview</span>
+                  <p className={`font-medium mt-1 italic p-3 rounded-lg border ${darkMode ? "scrollbar-thumb-slate-600 bg-slate-800/50 border-slate-700  " : "scrollbar-thumb-slate-600 bg-slate-100 border-slate-200"} `}>
+                    "{Title.Title}"
                   </p>
-                  <p className="text-xs font-bold text-rose-700 dark:text-rose-400 mb-2">Issues Found:</p>
-                  <ul className="space-y-1">
-                    {urlData.Issues.map((issue, i) => (
-                      <li key={i} className="text-xs text-rose-700 dark:text-rose-300 flex items-start gap-2 font-medium break-words">
-                        <span>•</span>
-                        <span>
-                          {issue.segment && (
-                            <span className="font-mono font-bold text-rose-800 dark:text-rose-200 bg-rose-100 dark:bg-rose-900/50 px-1.5 py-0.5 rounded mr-1.5 text-[10px] border border-rose-200 dark:border-rose-700">
-                              {issue.segment}
+                </div>
+              )}
+
+              {/* Meta Description */}
+              {metaDiscription && (
+                <div className={`text-sm `}>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Content Preview</span>
+                  <p className={`font-medium mt-1 italic p-3 rounded-lg border ${darkMode ? "scrollbar-thumb-slate-600 bg-slate-800/50 border-slate-700  " : "scrollbar-thumb-slate-600 bg-slate-100 border-slate-200"} `}>
+                    "{metaDiscription.MetaDescription}"
+                  </p>
+                </div>
+              )}
+
+              {/* Canonical */}
+              {canonical && (
+                <div className="text-sm">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Canonical URL</span>
+                  <p className={`font-mono text-xs mt-1 break-all p-2 rounded border ${darkMode ? "bg-slate-800 border-slate-700 text-indigo-300" : "bg-slate-50 border-slate-200 text-indigo-700"}`}>
+                    {canonical}
+                  </p>
+                </div>
+              )}
+
+              {/* URL Structure */}
+              {urlData && (
+                <div className="mt-2">
+                  {urlData.Issues && urlData.Issues.length > 0 ? (
+                    <div className={`p-3 ${darkMode?"bg-rose-900/10 border-rose-800":"bg-rose-50 border border-rose-200"}  rounded-xl `}>
+                      <p className={`text-xs font-bold ${darkMode?"text-rose-400":"text-rose-700"}  dark: mb-1`}>Analyzed URL:</p>
+                      <p className={`text-xs font-mono break-all ${darkMode?"text-rose-300 border-rose-800":"text-rose-600 border-rose-200"}   mb-3 border-b   pb-2`}>
+                        {urlData.URL}
+                      </p>
+                      <p className={`text-xs font-bold ${darkMode?"text-rose-400":"text-rose-700"}  dark: mb-2`}>Issues Found:</p>
+                      <ul className="space-y-1">
+                        {urlData.Issues.map((issue, i) => (
+                          <li key={i} className={`text-xs  flex items-start gap-2 font-medium break-words ${darkMode?"text-rose-300":"text-rose-700"}`}>
+                            <span>•</span>
+                            <span>
+                              {issue.segment && (
+                                <span className={`font-mono font-bold ${darkMode ? "text-rose-200 bg-rose-900/50 border-rose-700" : "text-rose-800 bg-rose-100 border-rose-200"}   px-1.5 py-0.5 rounded mr-1.5 text-[10px] border  `}>
+                                  {issue.segment}
+                                </span>
+                              )}
+                              {issue.reason || issue.finding || (typeof issue === 'string' ? issue : JSON.stringify(issue))}
                             </span>
-                          )}
-                          {issue.reason || issue.finding || (typeof issue === 'string' ? issue : JSON.stringify(issue))}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : (
-                <div className={`p-3 rounded-xl border ${darkMode ? "border-emerald-800 scrollbar-thumb-slate-600 bg-slate-800/50 border-slate-700  " : " border-emerald-200  scrollbar-thumb-slate-600 bg-slate-100 border-slate-200"}`}>
-                  <p className={`text-xs font-bold  mb-1 ${darkMode ? "text-slate-200" : "text-slate-800"}`}>Clean URL</p>
-                  <p className={`text-xs font-mono  break-all ${darkMode ? "text-slate-200" : "text-slate-800"}`}>{urlData.URL}</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* H1 Details */}
-          {h1Data && (
-            <div className="mt-2">
-              {h1Data.H1_Content?.map((h1, i) => (
-                <div key={i} className={`text-sm font-bold p-3 rounded-xl border mb-2 ${darkMode ? "bg-slate-800 text-slate-200 border-slate-700" : "bg-slate-50 text-slate-800 border-slate-200"}`}>
-                  <span className="text-[10px] text-indigo-500 font-black uppercase block mb-1">H1 Tag</span>
-                  {h1}
-                </div>
-              ))}
-              {h1Data.H1_Issues?.length > 0 && (
-                <div className="p-3 bg-rose-50 dark:bg-rose-900/10 rounded-xl border border-rose-200 dark:border-rose-800 mt-2">
-                  <p className="text-xs text-rose-600 font-bold">⚠️ {h1Data.H1_Issues[0].finding}</p>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : (
+                    <div className={`p-3 rounded-xl border ${darkMode ? "border-emerald-800 scrollbar-thumb-slate-600 bg-slate-800/50 border-slate-700  " : " border-emerald-200  scrollbar-thumb-slate-600 bg-slate-100 border-slate-200"}`}>
+                      <p className={`text-xs font-bold  mb-1 ${darkMode ? "text-slate-200" : "text-slate-800"}`}>Clean URL</p>
+                      <p className={`text-xs font-mono  break-all ${darkMode ? "text-slate-200" : "text-slate-800"}`}>{urlData.URL}</p>
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
-          )}
 
-          {/* Contextual Links */}
-          {contextualData && (
-            <div className="mt-3 space-y-3">
-              {contextualData.Missing_Links?.length > 0 ? (
-                <div className={`p-3   rounded-xl border ${darkMode ? "scrollbar-thumb-slate-600 bg-slate-800/50 border-slate-700  " : "scrollbar-thumb-slate-600 bg-slate-100 border-slate-200"} `}>
-                  <p className={`text-xs font-bold  mb-2 ${darkMode ? "text-amber-400" : "text-amber-700"}`}>Missing Links from Menu ({contextualData.Missing_Links.length}):</p>
-                  <div className={`flex flex-wrap gap-1.5 max-h-32 overflow-y-auto scrollbar-thin  ${darkMode ? "scrollbar-thumb-amber-800" : "scrollbar-thumb-amber-200"}`}>
-                    {contextualData.Missing_Links.map((l, i) => (
-                      <span key={i} className={`text-[10px] px-2.5 py-1 ${darkMode ? "bg-amber-900/40 text-amber-200 border-amber-700" : "bg-white text-amber-800 border-amber-200"} rounded-lg border  font-bold shadow-sm`}>
-                        {l}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="p-3 bg-emerald-50 dark:bg-emerald-900/10 rounded-xl text-center border border-emerald-200 dark:border-emerald-800">
-                  <span className="text-sm text-emerald-700 dark:text-emerald-400 font-bold">✅ All menu items linked</span>
+              {/* H1 Details */}
+              {h1Data && (
+                <div className="mt-2">
+                  {h1Data.H1_Content?.map((h1, i) => (
+                    <div key={i} className={`text-sm font-bold p-3 rounded-xl border mb-2 ${darkMode ? "bg-slate-800 text-slate-200 border-slate-700" : "bg-slate-50 text-slate-800 border-slate-200"}`}>
+                      <span className="text-[10px] text-indigo-500 font-black uppercase block mb-1">H1 Tag</span>
+                      {h1}
+                    </div>
+                  ))}
+                  {h1Data.H1_Issues?.length > 0 && (
+                    <div className="p-3 bg-rose-50 dark:bg-rose-900/10 rounded-xl border border-rose-200 dark:border-rose-800 mt-2">
+                      <p className="text-xs text-rose-600 font-bold">⚠️ {h1Data.H1_Issues[0].finding}</p>
+                    </div>
+                  )}
                 </div>
               )}
+
+              {/* Contextual Links */}
+              {contextualData && (
+                <div className="mt-3 space-y-3">
+                  {contextualData.Missing_Links?.length > 0 ? (
+                    <div className={`p-3   rounded-xl border ${darkMode ? "scrollbar-thumb-slate-600 bg-slate-800/50 border-slate-700  " : "scrollbar-thumb-slate-600 bg-slate-100 border-slate-200"} `}>
+                      <p className={`text-xs font-bold  mb-2 ${darkMode ? "text-amber-400" : "text-amber-700"}`}>Missing Links from Menu ({contextualData.Missing_Links.length}):</p>
+                      <div className={`flex flex-wrap gap-1.5 max-h-32 overflow-y-auto scrollbar-thin  ${darkMode ? "scrollbar-thumb-amber-800" : "scrollbar-thumb-amber-200"}`}>
+                        {contextualData.Missing_Links.map((l, i) => (
+                          <span key={i} className={`text-[10px] px-2.5 py-1 ${darkMode ? "bg-amber-900/40 text-amber-200 border-amber-700" : "bg-white text-amber-800 border-amber-200"} rounded-lg border  font-bold shadow-sm`}>
+                            {l}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-3 bg-emerald-50 dark:bg-emerald-900/10 rounded-xl text-center border border-emerald-200 dark:border-emerald-800">
+                      <span className="text-sm text-emerald-700 dark:text-emerald-400 font-bold">✅ All menu items linked</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Complex Components */}
+              {links && <LinksDisplay darkMode={darkMode} linksData={links} />}
+              {heading && <HeadingHierarchyCard darkMode={darkMode} data={heading} />}
+              {altData && <AltImagesDisplay darkMode={darkMode} imgData={altData} />}
+              {imageSizeData && <ImageSizeDisplay darkMode={darkMode} sizeData={imageSizeData} />}
             </div>
           )}
-
-          {/* Complex Components - Passed props allow them to handle their own light/dark styling */}
-          {links && <LinksDisplay darkMode={darkMode} linksData={links} />}
-          {heading && <HeadingHierarchyCard darkMode={darkMode} data={heading} />}
-          {altData && <AltImagesDisplay darkMode={darkMode} imgData={altData} />}
-          {imageSizeData && <ImageSizeDisplay darkMode={darkMode} sizeData={imageSizeData} />}
-
         </div>
-      )}
-    </div>
+      </div>
+    </motion.div>
   );
 };
 
@@ -649,8 +693,8 @@ export default function On_Page_SEO() {
         <Section title="Content Essentials" icon="🧠" score={contentScore}>
           <ModernMetricCard title="Title Tag" description={desc.title} score={seo.Title?.Score} Title={seo?.Title} value={seo.Title?.Title_Length + " chars"} darkMode={darkMode} icon="🏷️" />
           <ModernMetricCard title="Meta Description" description={desc.meta} score={seo.Meta_Description?.Score} metaDiscription={seo.Meta_Description} value={seo.Meta_Description?.MetaDescription_Length + " chars"} darkMode={darkMode} icon="📝" />
-          <ModernMetricCard title="URL Structure" description={desc.url} score={seo.URL_Structure?.Score} value={seo.URL_Structure?.Score ? "Clean" : "Poor"} darkMode={darkMode} icon="🔗" urlData={seo.URL_Structure} />
           <ModernMetricCard title="Canonical Tag" description={desc.canonical} canonical={seo.Canonical?.Canonical} score={seo.Canonical?.Score} value={seo.Canonical?.Score ? "Valid" : "Invalid"} darkMode={darkMode} icon="📜" />
+             <ModernMetricCard title="URL Structure" description={desc.url} score={seo.URL_Structure?.Score} value={seo.URL_Structure?.Score ? "Clean" : "Poor"} darkMode={darkMode} icon="🔗" urlData={seo.URL_Structure} />
           <ModernMetricCard title="H1 Tag" description={desc.h1} score={seo.H1?.Score} value={seo.H1?.H1_Count + " Found"} darkMode={darkMode} icon="🔠" h1Data={seo.H1} />
         </Section>
 
@@ -681,7 +725,7 @@ export default function On_Page_SEO() {
         <Section title="Structure & Semantics" icon="🛠️" score={structureScore}>
 
           <ModernMetricCard title="Semantic Tags" description={desc.semantic} score={seo.Semantic_Tags?.Article_Score} value={seo.Semantic_Tags?.Article_Score ? "Used" : "Unused"} darkMode={darkMode} icon="📄" />
-          <ModernMetricCard title="Schema" description={desc.structured} score={seo.Structured_Data?.Score} value={seo.Structured_Data?.Score ? "Detected" : "None"} darkMode={darkMode} icon="🧩" />
+
           <ModernMetricCard
             title="Contextual Links"
             description={desc.contextual}

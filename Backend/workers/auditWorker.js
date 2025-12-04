@@ -73,7 +73,7 @@ const OverAll = (A, B, C, D, E, F, G) => {
           result = await conversionLeadFlow(Site, Device, Report, page, $, auditId);
           break;
         case "AIO (AI-Optimization) Readiness":
-          result = await aioReadiness(Site, Device, Report, $, auditId);
+          result = await aioReadiness(Site, Device, Report, page, $, auditId);
           break;
       }
 
@@ -96,7 +96,7 @@ const OverAll = (A, B, C, D, E, F, G) => {
     const D = await securityCompliance(Site, Device, Report, page, response, browser, auditId);
     const E = await uxContentStructure(Site, Device, Report, $, page, auditId);
     const F = await conversionLeadFlow(Site, Device, Report, page, $, auditId);
-    const G = await aioReadiness(Site, Device, Report, $, auditId);
+    const G = await aioReadiness(Site, Device, Report, page, $, auditId);
 
     const overall = OverAll(A, B, C, D, E, F, G);
 

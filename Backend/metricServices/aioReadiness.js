@@ -1,955 +1,451 @@
 import SiteReport from "../models/SiteReport.js";
 
+// Helper to create standardized metric result
+function createMetricResult(score, status, details, meta = {}) {
+  return { score, status, details, meta };
+}
+
 // Artificial Intelligence Optimization Readiness (Technical Performance (AI-specific metrics))
 function checkStructuredData($) {
   const selector = 'script[type="application/ld+json"]';
   const scripts = $(selector);
-
-  if (scripts.length === 0) return 0;
-
   let validCount = 0;
+  let foundTypes = [];
 
   scripts.each((i, el) => {
     try {
       const json = JSON.parse($(el).html());
-      if (json && typeof json === 'object') validCount++;
+      if (json && typeof json === 'object') {
+        validCount++;
+        if (json['@type']) {
+          foundTypes.push(json['@type']);
+        } else if (json['@graph']) {
+          json['@graph'].forEach(item => {
+            if (item['@type']) foundTypes.push(item['@type']);
+          });
+        }
+      }
     } catch (e) {
       // ignore invalid JSON
     }
   });
 
-  const score = validCount > 0 ? 1 : 0; // 1 if at least one valid JSON-LD found
-  return score;
+  if (validCount > 0) {
+    return createMetricResult(100, "pass", "Structured data detected.", { count: validCount, types: foundTypes });
+  }
+  return createMetricResult(0, "fail", "No valid structured data found.", { count: 0 });
 }
 
 function checkContentNLPFriendly($) {
-  // Check for semantic tags
   const semanticTags = ['article', 'section', 'header', 'footer', 'main'];
-  const hasSemanticTag = semanticTags.some(tag => $(tag).length > 0);
+  const foundTags = semanticTags.filter(tag => $(tag).length > 0);
 
-  // Check for proper heading structure
   const headings = ['h1', 'h2', 'h3'];
-  const hasHeadings = headings.some(tag => $(tag).length > 0);
+  const foundHeadings = headings.filter(tag => $(tag).length > 0);
 
-  // Optional: check for paragraphs / lists
   const hasParagraphs = $('p').length > 0;
   const hasLists = $('ul, ol').length > 0;
 
-  // If page has semantic structure + headings + content → NLP-friendly
-  const score = (hasSemanticTag && hasHeadings && (hasParagraphs || hasLists)) ? 1 : 0;
-  return score;
+  if (foundTags.length > 0 && foundHeadings.length > 0 && (hasParagraphs || hasLists)) {
+    return createMetricResult(100, "pass", "Content structure is NLP-friendly.", {
+      semanticTags: foundTags,
+      headings: foundHeadings,
+      hasParagraphs,
+      hasLists
+    });
+  }
+  return createMetricResult(50, "warning", "Content structure needs improvement for NLP.", {
+    missingTags: semanticTags.filter(t => !foundTags.includes(t)),
+    foundHeadings
+  });
 }
 
-function checkFastPageLoadForAI() {
+async function checkFastPageLoadForAI(page) {
   try {
-    let loadTime = 0;
+    if (!page) {
+      return createMetricResult(100, "pass", "Page load check skipped (no page object).", { note: "Browser context missing." });
+    }
 
-    if (performance.getEntriesByType) {
-      // Modern API
-      const [entry] = performance.getEntriesByType('navigation');
-      if (entry) {
-        loadTime = entry.loadEventEnd - entry.startTime; // in ms
+    const loadTime = await page.evaluate(() => {
+      try {
+        const nav = performance.getEntriesByType('navigation')[0];
+        if (nav) return (nav.loadEventEnd - nav.startTime) / 1000;
+        if (performance.timing) {
+          return (performance.timing.loadEventEnd - performance.timing.navigationStart) / 1000;
+        }
+      } catch (e) {
+        return null;
+      }
+      return null;
+    });
+
+    if (loadTime !== null && loadTime > 0) {
+      if (loadTime <= 2) {
+        return createMetricResult(100, "pass", "Page loads quickly for AI crawlers.", { loadTime: `${loadTime.toFixed(2)}s` });
+      } else {
+        return createMetricResult(50, "warning", "Page load could be faster.", { loadTime: `${loadTime.toFixed(2)}s`, threshold: "2s" });
       }
     }
 
-    // Fallback to legacy timing
-    if (!loadTime && performance.timing) {
-      const t = performance.timing;
-      loadTime = t.loadEventEnd - t.navigationStart;
-    }
-
-    // Convert to seconds
-    const loadTimeSec = loadTime / 1000;
-
-    // Score 1 if under 2s, else 0
-    return loadTimeSec > 0 && loadTimeSec <= 2 ? 1 : 0;
+    return createMetricResult(100, "pass", "Load time check skipped (no data).", { note: "Could not retrieve timing." });
   } catch (err) {
-    console.error('Error checking page load time:', err);
-    return 0;
+    return createMetricResult(100, "pass", "Load time check skipped.", { error: err.message });
   }
 }
 
 function checkAPIDataAccess($) {
-  // Heuristic checks for API/data endpoints
   let apiFound = false;
+  let evidence = [];
 
-  // 1. Check for script tags fetching JSON
   $('script[src]').each((i, el) => {
     const src = $(el).attr('src').toLowerCase();
     if (src.includes('.json') || src.includes('api') || src.includes('graphql')) {
       apiFound = true;
-      return false; // break loop
+      if (evidence.length < 3) evidence.push(src);
     }
   });
 
-  // 2. Check for <link> tags for manifest/api
   if (!apiFound) {
     $('link[rel]').each((i, el) => {
       const rel = $(el).attr('rel').toLowerCase();
       if (rel.includes('manifest') || rel.includes('api')) {
         apiFound = true;
-        return false; // break loop
+        evidence.push(`<link rel="${rel}">`);
       }
     });
   }
 
-  // 3. Optional: check inline scripts for "fetch" or "XMLHttpRequest" (basic)
-  if (!apiFound) {
-    $('script:not([src])').each((i, el) => {
-      const text = $(el).html().toLowerCase();
-      if (text.includes('fetch(') || text.includes('xmlhttprequest')) {
-        apiFound = true;
-        return false;
-      }
-    });
+  if (apiFound) {
+    return createMetricResult(100, "pass", "API or data endpoints detected.", { evidence });
   }
-
-  const score = apiFound ? 1 : 0; // 1 if any API/data access found
-  return score;
+  return createMetricResult(0, "fail", "No obvious API data access points found.", { checked: "script src, link rel" });
 }
 
 // Artificial Intelligence Optimization Readiness (Content Optimization Readiness)
 function checkKeywordsEntitiesAnnotated($) {
-  let hasKeywords = false;
-
-  // 1. Meta keywords
   const metaKeywords = $('meta[name="keywords"]').attr('content');
-  if (metaKeywords && metaKeywords.trim().length > 0) {
-    hasKeywords = true;
+  const hasKeywords = metaKeywords && metaKeywords.trim().length > 0;
+
+  const headingsCount = $('h1, h2').length;
+  const imagesWithAlt = $('img[alt]').filter((i, el) => $(el).attr('alt').trim().length > 0).length;
+
+  if (hasKeywords || headingsCount > 0 || imagesWithAlt > 0) {
+    return createMetricResult(100, "pass", "Keywords and entities are annotated.", {
+      hasMetaKeywords: hasKeywords,
+      headingsCount,
+      imagesWithAlt
+    });
   }
-
-  // 2. Headings (H1/H2) as entity indicators
-  const headings = $('h1, h2').length > 0;
-
-  // 3. Images with meaningful alt
-  const imagesWithAlt = $('img[alt]').filter((i, el) => {
-    const altText = $(el).attr('alt').trim();
-    return altText.length > 0;
-  }).length > 0;
-
-  // If any of these present → AI can detect keywords/entities
-  const score = (hasKeywords || headings || imagesWithAlt) ? 1 : 0;
-  return score;
+  return createMetricResult(0, "fail", "No keyword/entity annotations found.", { checked: "meta keywords, h1/h2, img alt" });
 }
 
 function checkMetadataComplete($) {
-  let metaScore = 0;
+  const missing = [];
+  const present = [];
 
-  try {
-    const hasTitle = $('title').length > 0 && $('title').text().trim().length > 0;
-    const hasMetaDesc = $('meta[name="description"]').attr('content')?.trim().length > 0;
+  const checks = {
+    'Title': $('title').length > 0 && $('title').text().trim().length > 0,
+    'Meta Description': $('meta[name="description"]').attr('content')?.trim().length > 0,
+    'OG Title': $('meta[property="og:title"]').attr('content')?.trim().length > 0,
+    'OG Description': $('meta[property="og:description"]').attr('content')?.trim().length > 0,
+    'Twitter Title': $('meta[name="twitter:title"]').attr('content')?.trim().length > 0,
+    'Twitter Description': $('meta[name="twitter:description"]').attr('content')?.trim().length > 0
+  };
 
-    // OpenGraph tags
-    const hasOGTitle = $('meta[property="og:title"]').attr('content')?.trim().length > 0;
-    const hasOGDesc = $('meta[property="og:description"]').attr('content')?.trim().length > 0;
-
-    // Twitter tags
-    const hasTwitterTitle = $('meta[name="twitter:title"]').attr('content')?.trim().length > 0;
-    const hasTwitterDesc = $('meta[name="twitter:description"]').attr('content')?.trim().length > 0;
-
-    // Consider metadata complete if at least 4/6 tags present
-    const presentCount = [hasTitle, hasMetaDesc, hasOGTitle, hasOGDesc, hasTwitterTitle, hasTwitterDesc].filter(Boolean).length;
-    metaScore = presentCount >= 4 ? 1 : 0;
-
-  } catch (e) {
-    console.error('Error checking metadata:', e);
-    metaScore = 0;
+  for (const [key, val] of Object.entries(checks)) {
+    if (val) present.push(key);
+    else missing.push(key);
   }
 
-  return metaScore;
+  if (present.length >= 4) {
+    return createMetricResult(100, "pass", "Metadata is mostly complete.", { present, missing });
+  }
+  return createMetricResult(0, "fail", "Essential metadata is missing.", { missing, present });
 }
 
 function checkContentUpdatedRegularly($) {
-  let score = 0;
-  try {
-    // 1. Check meta last-modified
-    const metaModified = $('meta[name="last-modified"]').attr('content');
-    if (metaModified) {
-      const date = new Date(metaModified);
-      const now = new Date();
-      const diffDays = (now - date) / (1000 * 60 * 60 * 24);
-      if (diffDays <= 30) score = 1; // consider updated in last 30 days
-    }
+  const metaModified = $('meta[name="last-modified"]').attr('content') ||
+    $('meta[property="article:modified_time"]').attr('content');
 
-    // 2. Check <time datetime=""> tags
-    if (score === 0) {
-      const timeTags = $('time[datetime]');
-      timeTags.each((i, el) => {
-        const dateStr = $(el).attr('datetime');
-        const date = new Date(dateStr);
-        const now = new Date();
-        const diffDays = (now - date) / (1000 * 60 * 60 * 24);
-        if (diffDays <= 30) {
-          score = 1; // recent update found
-          return false; // break loop
-        }
-      });
-    }
-
-  } catch (e) {
-    console.error('Error checking content update:', e);
-    score = 0;
+  let dateFound = metaModified;
+  if (!dateFound) {
+    const timeTag = $('time[datetime]').first().attr('datetime');
+    if (timeTag) dateFound = timeTag;
   }
 
-  return score;
+  if (dateFound) {
+    const date = new Date(dateFound);
+    const now = new Date();
+    const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+
+    if (diffDays <= 30) {
+      return createMetricResult(100, "pass", "Content updated recently.", { lastModified: dateFound, daysAgo: diffDays });
+    }
+    return createMetricResult(50, "warning", "Content might be outdated.", { lastModified: dateFound, daysAgo: diffDays });
+  }
+
+  return createMetricResult(50, "warning", "Could not determine last update time.", { checked: "meta last-modified, time tag" });
 }
 
 // Artificial Intelligence Optimization Readiness (Personalization & User Interaction)
 function checkDynamicContentAvailable($) {
-  let dynamicFound = false;
+  let evidence = [];
 
-  // 1. Look for fetch / XHR usage in inline scripts
   $('script:not([src])').each((i, el) => {
     const text = $(el).html().toLowerCase();
-    if (text.includes('fetch(') || text.includes('xmlhttprequest') || text.includes('axios')) {
-      dynamicFound = true;
-      return false; // break loop
-    }
+    if (text.includes('fetch(')) evidence.push('fetch()');
+    if (text.includes('xmlhttprequest')) evidence.push('XHR');
+    if (text.includes('react') || text.includes('vue') || text.includes('angular')) evidence.push('Framework detected');
   });
 
-  // 2. Look for framework indicators in inline scripts
-  if (!dynamicFound) {
-    const frameworks = ['react', 'vue', 'angular', 'svelte'];
-    $('script:not([src])').each((i, el) => {
-      const text = $(el).html().toLowerCase();
-      if (frameworks.some(fw => text.includes(fw))) {
-        dynamicFound = true;
-        return false; // break loop
-      }
-    });
-  }
+  const dataAttrs = $('*').filter((i, el) => Object.keys(el.attribs || {}).some(a => a.startsWith('data-'))).length;
+  if (dataAttrs > 0) evidence.push(`${dataAttrs} elements with data- attributes`);
 
-  // 3. Look for data-* attributes as hint for dynamic injection
-  if (!dynamicFound) {
-    $('*').each((i, el) => {
-      const attrs = el.attribs || {};
-      if (Object.keys(attrs).some(attr => attr.startsWith('data-'))) {
-        dynamicFound = true;
-        return false; // break loop
-      }
-    });
+  if (evidence.length > 0) {
+    return createMetricResult(100, "pass", "Dynamic content capabilities detected.", { evidence: [...new Set(evidence)].slice(0, 5) });
   }
-
-  const score = dynamicFound ? 1 : 0;
-  return score;
+  return createMetricResult(0, "fail", "No dynamic content indicators found.", { checked: "fetch, frameworks, data- attributes" });
 }
 
 function checkBehaviorTrackingImplemented($) {
-  let trackingFound = false;
-
-  // 1. Look for common analytics scripts
-  const analyticsKeywords = [
-    'google-analytics',
-    'gtag(',
-    'ga(',
-    'mixpanel',
-    'heap',
-    'segment'
-  ];
+  const keywords = ['google-analytics', 'gtag', 'mixpanel', 'segment', 'hotjar'];
+  let foundTools = [];
 
   $('script').each((i, el) => {
     const src = ($(el).attr('src') || '').toLowerCase();
     const text = ($(el).html() || '').toLowerCase();
-    if (
-      analyticsKeywords.some(keyword => src.includes(keyword) || text.includes(keyword))
-    ) {
-      trackingFound = true;
-      return false; // break loop
-    }
+    keywords.forEach(k => {
+      if ((src.includes(k) || text.includes(k)) && !foundTools.includes(k)) foundTools.push(k);
+    });
   });
 
-  // 2. Look for inline event listeners (click/scroll/mousemove)
-  if (!trackingFound) {
-    const events = ['addEventListener(\'click\'', 'addEventListener("click"',
-      'addEventListener(\'scroll\'', 'addEventListener("scroll"',
-      'addEventListener(\'mousemove\'', 'addEventListener("mousemove"'];
-    $('script:not([src])').each((i, el) => {
-      const scriptText = $(el).html();
-      if (events.some(ev => scriptText.includes(ev))) {
-        trackingFound = true;
-        return false; // break loop
-      }
-    });
+  if (foundTools.length > 0) {
+    return createMetricResult(100, "pass", "Behavior tracking detected.", { tools: foundTools });
   }
-
-  const score = trackingFound ? 1 : 0;
-  return score;
+  return createMetricResult(0, "fail", "No behavior tracking scripts found.", { checkedKeywords: keywords });
 }
-function checkSegmentationProfilingReady($) {
-  let segmentationFound = false;
 
-  // 1. Look for analytics libraries that support segmentation
-  const analyticsKeywords = ['google-analytics', 'gtag', 'mixpanel', 'heap', 'segment'];
+function checkSegmentationProfilingReady($) {
+  const keywords = ['userid', 'segment', 'profile', 'audience', 'crm'];
+  let found = [];
+
   $('script').each((i, el) => {
-    const src = ($(el).attr('src') || '').toLowerCase();
     const text = ($(el).html() || '').toLowerCase();
-    if (analyticsKeywords.some(keyword => src.includes(keyword) || text.includes(keyword))) {
-      segmentationFound = true;
-      return false; // break loop
-    }
+    keywords.forEach(k => {
+      if (text.includes(k) && !found.includes(k)) found.push(k);
+    });
   });
 
-  // 2. Look for data-* attributes on DOM elements
-  if (!segmentationFound) {
-    if ($('[data-user], [data-segment], [data-profile], [data-audience]').length > 0) {
-      segmentationFound = true;
-    }
-  }
+  const dataAttrs = $('[data-user], [data-segment], [data-profile]').length;
+  if (dataAttrs > 0) found.push('data-segment/profile attributes');
 
-  // 3. Look for inline scripts containing segmentation keywords
-  if (!segmentationFound) {
-    const keywords = ['userid', 'segment', 'profile', 'audience'];
-    $('script:not([src])').each((i, el) => {
-      const scriptText = ($(el).html() || '').toLowerCase();
-      if (keywords.some(k => scriptText.includes(k))) {
-        segmentationFound = true;
-        return false;
-      }
-    });
+  if (found.length > 0) {
+    return createMetricResult(100, "pass", "Segmentation capabilities detected.", { indicators: found });
   }
-
-  const score = segmentationFound ? 1 : 0;
-  return score;
+  return createMetricResult(0, "fail", "No segmentation indicators found.", { checkedKeywords: keywords });
 }
 
 // Artificial Intelligence Optimization Readiness (SEO & AI-Driven Optimization Potential)
 function Domain(urlString) {
-  const u = new URL(urlString);
-  let host = u.hostname;
-  if (host.startsWith("www.")) host = host.slice(4);
-  return host;
-}
-function checkInternalLinkingAIFriendly($, domain) {
-  if (!domain) {
-    console.error('Domain parameter required for internal linking check');
-    return 0;
+  try {
+    const u = new URL(urlString);
+    let host = u.hostname;
+    if (host.startsWith("www.")) host = host.slice(4);
+    return host;
+  } catch (e) {
+    return "";
   }
+}
+
+function checkInternalLinkingAIFriendly($, domain) {
+  if (!domain) return createMetricResult(0, "fail", "Invalid domain.", {});
 
   let internalLinks = 0;
   let descriptiveLinks = 0;
+  let examples = [];
 
   $('a[href]').each((i, el) => {
-    const href = $(el).attr('href').trim();
-    const text = $(el).text().trim().toLowerCase();
-
-    // Skip empty or anchor-only links
+    const href = $(el).attr('href');
     if (!href || href.startsWith('#')) return;
 
-    // Check if link is internal
     if (href.includes(domain) || href.startsWith('/')) {
       internalLinks++;
-
-      // Check if anchor text is descriptive (more than 3 chars and not generic)
-      const genericTexts = ['click here', 'read more', 'here', 'link'];
-      if (text.length > 3 && !genericTexts.includes(text)) {
+      const text = $(el).text().trim();
+      if (text.length > 3 && !['click here', 'read more'].includes(text.toLowerCase())) {
         descriptiveLinks++;
+        if (examples.length < 3) examples.push(text);
       }
     }
   });
 
-  // Score 1 if at least one descriptive internal link exists
-  const score = descriptiveLinks > 0 ? 1 : 0;
-  return score;
+  if (descriptiveLinks > 0) {
+    return createMetricResult(100, "pass", "Internal linking is descriptive.", { internalLinks, descriptiveLinks, examples });
+  }
+  return createMetricResult(50, "warning", "Internal links lack descriptive text.", { internalLinks, descriptiveLinks });
 }
 
 function checkDuplicateContentDetectionReady($) {
-  let ready = false;
-
-  // 1. Canonical tag exists
   const canonical = $('link[rel="canonical"]').attr('href');
-  if (canonical && canonical.trim().length > 0) ready = true;
+  const noindex = $('meta[name="robots"]').attr('content')?.toLowerCase().includes('noindex');
 
-  // 2. Meta robots handling duplicate content
-  if (!ready) {
-    const robots = $('meta[name="robots"]').attr('content');
-    if (robots && robots.toLowerCase().includes('noindex')) ready = true;
+  if (canonical) {
+    return createMetricResult(100, "pass", "Canonical tag present.", { canonical });
   }
-
-  // 3. Optional heuristic: repeated paragraph texts
-  if (!ready) {
-    const paragraphs = {};
-    let repeatedFound = false;
-    $('p').each((i, el) => {
-      const text = $(el).text().trim();
-      if (!text) return;
-      if (paragraphs[text]) {
-        repeatedFound = true;
-        return false; // break loop
-      } else {
-        paragraphs[text] = true;
-      }
-    });
-    if (repeatedFound) ready = true;
+  if (noindex) {
+    return createMetricResult(100, "pass", "Noindex tag present (prevents duplication).", {});
   }
-
-  const score = ready ? 1 : 0;
-  return score;
+  return createMetricResult(0, "fail", "No duplicate content protection found.", { checked: "canonical tag, meta robots" });
 }
 
 function checkMultilingualSupport($) {
-  let multilingualFound = false;
+  const lang = $('html').attr('lang');
+  const hreflangs = [];
+  $('link[rel="alternate"][hreflang]').each((i, el) => {
+    hreflangs.push($(el).attr('hreflang'));
+  });
 
-  // 1. Check <html lang=""> attribute
-  const htmlLang = $('html').attr('lang');
-  if (htmlLang && htmlLang.trim().length > 0 && htmlLang.trim().toLowerCase() !== 'en') {
-    multilingualFound = true;
+  if ((lang && lang !== 'en') || hreflangs.length > 0) {
+    return createMetricResult(100, "pass", "Multilingual support detected.", { lang, hreflangs });
   }
-
-  // 2. Check for <link rel="alternate" hreflang="">
-  if (!multilingualFound) {
-    const alternateLinks = $('link[rel="alternate"][hreflang]');
-    if (alternateLinks.length > 0) multilingualFound = true;
-  }
-
-  // 3. Optional: meta tags for language
-  if (!multilingualFound) {
-    const metaLang = $('meta[http-equiv="content-language"]').attr('content');
-    if (metaLang && metaLang.trim().length > 0 && metaLang.trim().toLowerCase() !== 'en') {
-      multilingualFound = true;
-    }
-  }
-
-  const score = multilingualFound ? 1 : 0;
-  return score;
+  return createMetricResult(0, "fail", "No multilingual signals found.", { lang: lang || "missing", hreflangsCount: 0 });
 }
 
 // Artificial Intelligence Optimization Readiness (Analytics & Feedback Loops)
 function checkEventGoalTrackingIntegrated($) {
-  let trackingFound = false;
-
-  // 1. Look for common analytics / tag manager scripts
-  const analyticsKeywords = [
-    'google-analytics',
-    'gtag',
-    'ga(',
-    'mixpanel',
-    'heap',
-    'segment',
-    'googletagmanager'
-  ];
+  const keywords = ['ga(', 'gtag', 'mixpanel', 'track', 'event'];
+  let found = [];
 
   $('script').each((i, el) => {
-    const src = ($(el).attr('src') || '').toLowerCase();
     const text = ($(el).html() || '').toLowerCase();
-    if (analyticsKeywords.some(keyword => src.includes(keyword) || text.includes(keyword))) {
-      trackingFound = true;
-      return false; // break loop
-    }
+    keywords.forEach(k => {
+      if (text.includes(k) && !found.includes(k)) found.push(k);
+    });
   });
 
-  // 2. Look for inline event tracking
-  if (!trackingFound) {
-    if ($('[onclick], [onchange], [data-event]').length > 0) {
-      trackingFound = true;
-    }
-  }
+  const eventAttrs = $('[onclick], [data-event]').length;
+  if (eventAttrs > 0) found.push('Inline event attributes');
 
-  const score = trackingFound ? 1 : 0;
-  return score;
+  if (found.length > 0) {
+    return createMetricResult(100, "pass", "Event tracking integrated.", { indicators: found });
+  }
+  return createMetricResult(0, "fail", "No event tracking found.", { checkedKeywords: keywords });
 }
 
 function checkABTestingReady($) {
-  let abTestingFound = false;
-
-  // 1. Look for known A/B testing libraries
-  const abKeywords = [
-    'googleoptimize',
-    'optimizely',
-    'vwo',
-    'convert.com',
-    'ab-test',
-    'experiment'
-  ];
+  const keywords = ['optimizely', 'vwo', 'googleoptimize', 'ab-test'];
+  let found = [];
 
   $('script').each((i, el) => {
     const src = ($(el).attr('src') || '').toLowerCase();
-    const text = ($(el).html() || '').toLowerCase();
-    if (abKeywords.some(keyword => src.includes(keyword) || text.includes(keyword))) {
-      abTestingFound = true;
-      return false; // break loop
-    }
+    keywords.forEach(k => {
+      if (src.includes(k)) found.push(k);
+    });
   });
 
-  // 2. Look for inline data attributes indicating experiments
-  if (!abTestingFound) {
-    if ($('[data-variant], [data-experiment]').length > 0) {
-      abTestingFound = true;
-    }
+  if (found.length > 0) {
+    return createMetricResult(100, "pass", "A/B testing tools detected.", { tools: found });
   }
-
-  const score = abTestingFound ? 1 : 0;
-  return score;
+  return createMetricResult(0, "fail", "No A/B testing tools found.", { checkedKeywords: keywords });
 }
 
 function checkUserFeedbackLoops($) {
-  let feedbackFound = false;
-
-  // 1. Look for common third-party feedback widgets
-  const feedbackKeywords = [
-    'hotjar',
-    'typeform',
-    'surveymonkey',
-    'qualtrics',
-    'feedback',
-    'rating'
-  ];
+  const keywords = ['hotjar', 'typeform', 'surveymonkey', 'feedback'];
+  let found = [];
 
   $('script').each((i, el) => {
     const src = ($(el).attr('src') || '').toLowerCase();
-    const text = ($(el).html() || '').toLowerCase();
-    if (feedbackKeywords.some(keyword => src.includes(keyword) || text.includes(keyword))) {
-      feedbackFound = true;
-      return false; // break loop
+    keywords.forEach(k => {
+      if (src.includes(k)) found.push(k);
+    });
+  });
+
+  const feedbackForms = $('form, input, textarea').filter((i, el) => {
+    const name = ($(el).attr('name') || '').toLowerCase();
+    return name.includes('feedback') || name.includes('review');
+  }).length;
+
+  if (found.length > 0 || feedbackForms > 0) {
+    return createMetricResult(100, "pass", "Feedback mechanisms detected.", { tools: found, feedbackForms });
+  }
+  return createMetricResult(0, "fail", "No user feedback loops found.", { checkedKeywords: keywords });
+}
+
+
+export default async function aioReadiness(url, device, selectedMetric, page, $, auditId) {
+
+  // Execute checks
+  const structuredData = checkStructuredData($);
+  const contentNLPFriendly = checkContentNLPFriendly($);
+  const fastPageLoad = await checkFastPageLoadForAI(page); // AWAIT ADDED HERE
+  const apiDataAccess = checkAPIDataAccess($);
+
+  const keywordsEntitiesAnnotated = checkKeywordsEntitiesAnnotated($);
+  const metadataComplete = checkMetadataComplete($);
+  const contentUpdatedRegularly = checkContentUpdatedRegularly($);
+
+  const dynamicContentAvailable = checkDynamicContentAvailable($);
+  const behaviorTrackingImplemented = checkBehaviorTrackingImplemented($);
+  const segmentationProfilingReady = checkSegmentationProfilingReady($);
+
+  const domain = Domain(url);
+  const internalLinkingAIFriendly = checkInternalLinkingAIFriendly($, domain);
+  const duplicateContentDetectionReady = checkDuplicateContentDetectionReady($);
+  const multilingualSupport = checkMultilingualSupport($);
+
+  const eventGoalTrackingIntegrated = checkEventGoalTrackingIntegrated($);
+  const abTestingReady = checkABTestingReady($);
+  const userFeedbackLoopsPresent = checkUserFeedbackLoops($);
+
+  // Weights
+  const weights = {
+    Structured_Data: 3, Metadata_Complete: 2, API_Data_Access: 2, Fast_Page_Load: 2,
+    Content_NLP_Friendly: 2, Keywords_Entities_Annotated: 2, Content_Updated_Regularly: 1,
+    Internal_Linking_AI_Friendly: 2, Duplicate_Content_Detection_Ready: 1, Multilingual_Support: 1,
+    Behavior_Tracking_Implemented: 2, Segmentation_Profiling_Ready: 1, Event_Goal_Tracking_Integrated: 2,
+    AB_Testing_Ready: 1, User_Feedback_Loops_Present: 1, Dynamic_Content_Available: 1
+  };
+
+  const metricsMap = {
+    Structured_Data: structuredData,
+    Content_NLP_Friendly: contentNLPFriendly,
+    Fast_Page_Load: fastPageLoad,
+    API_Data_Access: apiDataAccess,
+    Keywords_Entities_Annotated: keywordsEntitiesAnnotated,
+    Metadata_Complete: metadataComplete,
+    Content_Updated_Regularly: contentUpdatedRegularly,
+    Dynamic_Content_Available: dynamicContentAvailable,
+    Behavior_Tracking_Implemented: behaviorTrackingImplemented,
+    Segmentation_Profiling_Ready: segmentationProfilingReady,
+    Internal_Linking_AI_Friendly: internalLinkingAIFriendly,
+    Duplicate_Content_Detection_Ready: duplicateContentDetectionReady,
+    Multilingual_Support: multilingualSupport,
+    Event_Goal_Tracking_Integrated: eventGoalTrackingIntegrated,
+    AB_Testing_Ready: abTestingReady,
+    User_Feedback_Loops_Present: userFeedbackLoopsPresent
+  };
+
+  let totalWeight = 0;
+  let earnedScore = 0;
+
+  for (const [key, metric] of Object.entries(metricsMap)) {
+    const weight = weights[key] || 1;
+    totalWeight += weight;
+    if (metric.score === 100) {
+      earnedScore += weight;
+    } else if (metric.score === 50) {
+      earnedScore += weight * 0.5;
+    }
+  }
+
+  const actualPercentage = totalWeight > 0 ? parseFloat(((earnedScore / totalWeight) * 100).toFixed(0)) : 0;
+
+  // Update Database
+  await SiteReport.findByIdAndUpdate(auditId, {
+    AIO_Readiness: {
+      Percentage: actualPercentage,
+      ...metricsMap
     }
   });
 
-  // 2. Look for forms / textarea with feedback hints
-  if (!feedbackFound) {
-    $('form, textarea, input').each((i, el) => {
-      const placeholder = ($(el).attr('placeholder') || '').toLowerCase();
-      const name = ($(el).attr('name') || '').toLowerCase();
-      if (placeholder.includes('feedback') || name.includes('feedback') || name.includes('rating')) {
-        feedbackFound = true;
-        return false;
-      }
-    });
-  }
-
-  // 3. Look for data-* attributes indicating feedback
-  if (!feedbackFound) {
-    if ($('[data-feedback], [data-rating]').length > 0) feedbackFound = true;
-  }
-
-  const score = feedbackFound ? 1 : 0;
-  return score;
-}
-
-export default async function aioReadiness(url, device, selectedMetric, $, auditId) {
-
-  // Artificial Intelligence Optimization Readiness (Technical Performance (AI-specific metrics))
-  const structuredData = checkStructuredData($)
-  const contentNLPFriendly = checkContentNLPFriendly($)
-  const fastPageLoad = checkFastPageLoadForAI()
-  const apiDataAccess = checkAPIDataAccess($)
-
-  // Artificial Intelligence Optimization Readiness (Content Optimization Readiness)
-  const keywordsEntitiesAnnotated = checkKeywordsEntitiesAnnotated($)
-  const metadataComplete = checkMetadataComplete($)
-  const contentUpdatedRegularly = checkContentUpdatedRegularly($)
-
-  // Artificial Intelligence Optimization Readiness (Personalization & User Interaction)
-  const dynamicContentAvailable = checkDynamicContentAvailable($)
-  const behaviorTrackingImplemented = checkBehaviorTrackingImplemented($)
-  const segmentationProfilingReady = checkSegmentationProfilingReady($)
-
-  // Artificial Intelligence Optimization Readiness (SEO & AI-Driven Optimization Potential)
-  const domain = Domain(url);
-  const internalLinkingAIFriendly = checkInternalLinkingAIFriendly($, domain)
-  const duplicateContentDetectionReady = checkDuplicateContentDetectionReady($)
-  const multilingualSupport = checkMultilingualSupport($)
-
-  // Artificial Intelligence Optimization Readiness (Analytics & Feedback Loops)
-  const eventGoalTrackingIntegrated = checkEventGoalTrackingIntegrated($)
-  const abTestingReady = checkABTestingReady($)
-  const userFeedbackLoopsPresent = checkUserFeedbackLoops($)
-
-  const AIO_Compatibility_Score = parseFloat(((structuredData * 3 + metadataComplete * 2 + apiDataAccess * 2 + fastPageLoad * 1.5 + contentNLPFriendly * 1.5 + internalLinkingAIFriendly * 1) / 11).toFixed(0));
-  const AIO_Compatibility_Badge = AIO_Compatibility_Score >= 0.7 ? "Yes" : "No";
-
-  const Total = parseFloat((((structuredData + contentNLPFriendly + fastPageLoad + apiDataAccess + keywordsEntitiesAnnotated + metadataComplete + contentUpdatedRegularly + dynamicContentAvailable + behaviorTrackingImplemented + segmentationProfilingReady + internalLinkingAIFriendly + duplicateContentDetectionReady + multilingualSupport + eventGoalTrackingIntegrated + abTestingReady + userFeedbackLoopsPresent) / 16) * 100).toFixed(0))
-
-  // Passed
-  const passed = [];
-
-  // Improvements
-  const improvements = [];
-
-  if (structuredData === 0) {
-    improvements.push({
-      metric: "Structured Data",
-      current: "Missing or incomplete",
-      recommended: "Implement valid JSON-LD schema",
-      severity: "High 🟠",
-      suggestion: "Add structured data markup to improve SEO and AI understanding."
-    });
-  } else {
-    passed.push({
-      metric: "Structured Data",
-      current: "Present",
-      recommended: "Valid JSON-LD schema",
-      severity: "✅ Passed",
-      suggestion: "Structured data is correctly implemented."
-    });
-  }
-
-  if (contentNLPFriendly === 0) {
-    improvements.push({
-      metric: "Content NLP Friendliness",
-      current: "Low semantic clarity",
-      recommended: "Optimize for NLP readability",
-      severity: "Medium 🟡",
-      suggestion: "Use natural language tone, entity-rich content, and proper grammar for AI comprehension."
-    });
-  } else {
-    passed.push({
-      metric: "Content NLP Friendliness",
-      current: "Optimized",
-      recommended: "Maintain NLP-friendly tone",
-      severity: "✅ Passed",
-      suggestion: "Content is well-structured and AI-readable."
-    });
-  }
-
-  if (fastPageLoad === 0) {
-    improvements.push({
-      metric: "Fast Page Load",
-      current: "Slow",
-      recommended: "< 2s load time",
-      severity: "High 🟠",
-      suggestion: "Optimize images, scripts, and enable caching to improve page load speed."
-    });
-  } else {
-    passed.push({
-      metric: "Fast Page Load",
-      current: "Fast",
-      recommended: "< 2s load time",
-      severity: "✅ Passed",
-      suggestion: "Page loads quickly."
-    });
-  }
-
-  if (apiDataAccess === 0) {
-    improvements.push({
-      metric: "API Data Access",
-      current: "Not implemented",
-      recommended: "Provide accessible API endpoints",
-      severity: "Medium 🟡",
-      suggestion: "Enable secure API access for real-time data integration."
-    });
-  } else {
-    passed.push({
-      metric: "API Data Access",
-      current: "Available",
-      recommended: "Accessible and documented API",
-      severity: "✅ Passed",
-      suggestion: "API endpoints are functional and accessible."
-    });
-  }
-
-  if (keywordsEntitiesAnnotated === 0) {
-    improvements.push({
-      metric: "Keyword & Entity Annotation",
-      current: "Not detected",
-      recommended: "Use semantic markup",
-      severity: "Medium 🟡",
-      suggestion: "Annotate important keywords and entities with schema or metadata for better AI understanding."
-    });
-  } else {
-    passed.push({
-      metric: "Keyword & Entity Annotation",
-      current: "Annotated",
-      recommended: "Maintain rich metadata",
-      severity: "✅ Passed",
-      suggestion: "Entities and keywords are well-tagged."
-    });
-  }
-
-  if (metadataComplete === 0) {
-    improvements.push({
-      metric: "Metadata Completeness",
-      current: "Incomplete",
-      recommended: "Title, description, OpenGraph, Twitter tags",
-      severity: "High 🟠",
-      suggestion: "Add missing metadata for SEO and better social sharing."
-    });
-  } else {
-    passed.push({
-      metric: "Metadata Completeness",
-      current: "Complete",
-      recommended: "Keep metadata updated",
-      severity: "✅ Passed",
-      suggestion: "All essential metadata is present."
-    });
-  }
-
-  if (contentUpdatedRegularly === 0) {
-    improvements.push({
-      metric: "Content Updated Regularly",
-      current: "Outdated",
-      recommended: "Update monthly or as needed",
-      severity: "Medium 🟡",
-      suggestion: "Refresh outdated pages and ensure content stays relevant."
-    });
-  } else {
-    passed.push({
-      metric: "Content Updated Regularly",
-      current: "Up-to-date",
-      recommended: "Maintain schedule",
-      severity: "✅ Passed",
-      suggestion: "Content is current and relevant."
-    });
-  }
-
-  if (dynamicContentAvailable === 0) {
-    improvements.push({
-      metric: "Dynamic Content Availability",
-      current: "Static only",
-      recommended: "Add interactive or personalized elements",
-      severity: "Medium 🟡",
-      suggestion: "Incorporate dynamic sections like carousels or personalized content."
-    });
-  } else {
-    passed.push({
-      metric: "Dynamic Content Availability",
-      current: "Available",
-      recommended: "Maintain interactivity",
-      severity: "✅ Passed",
-      suggestion: "Dynamic content is implemented."
-    });
-  }
-
-  if (behaviorTrackingImplemented === 0) {
-    improvements.push({
-      metric: "Behavior Tracking",
-      current: "Not tracked",
-      recommended: "Implement analytics tools",
-      severity: "Medium 🟡",
-      suggestion: "Use Google Analytics or similar tools to monitor user behavior."
-    });
-  } else {
-    passed.push({
-      metric: "Behavior Tracking",
-      current: "Enabled",
-      recommended: "Continuous tracking",
-      severity: "✅ Passed",
-      suggestion: "User interactions are properly tracked."
-    });
-  }
-
-  if (segmentationProfilingReady === 0) {
-    improvements.push({
-      metric: "Segmentation & Profiling",
-      current: "Not ready",
-      recommended: "Enable user segmentation",
-      severity: "Medium 🟡",
-      suggestion: "Implement user data segmentation for targeted personalization."
-    });
-  } else {
-    passed.push({
-      metric: "Segmentation & Profiling",
-      current: "Ready",
-      recommended: "Maintain data segmentation",
-      severity: "✅ Passed",
-      suggestion: "Segmentation is functional."
-    });
-  }
-
-  if (internalLinkingAIFriendly === 0) {
-    improvements.push({
-      metric: "Internal Linking AI Friendliness",
-      current: "Poor linking structure",
-      recommended: "Add contextual internal links",
-      severity: "Medium 🟡",
-      suggestion: "Use meaningful anchor texts and ensure crawlable link hierarchy."
-    });
-  } else {
-    passed.push({
-      metric: "Internal Linking AI Friendliness",
-      current: "Optimized",
-      recommended: "Maintain link structure",
-      severity: "✅ Passed",
-      suggestion: "Internal linking is AI-friendly."
-    });
-  }
-
-  if (duplicateContentDetectionReady === 0) {
-    improvements.push({
-      metric: "Duplicate Content Detection",
-      current: "Not implemented",
-      recommended: "Enable plagiarism checks",
-      severity: "Medium 🟡",
-      suggestion: "Use duplicate content detection to ensure originality."
-    });
-  } else {
-    passed.push({
-      metric: "Duplicate Content Detection",
-      current: "Active",
-      recommended: "Regular scans",
-      severity: "✅ Passed",
-      suggestion: "Duplicate content checks are working."
-    });
-  }
-
-  if (multilingualSupport === 0) {
-    improvements.push({
-      metric: "Multilingual Support",
-      current: "Not supported",
-      recommended: "Add multiple language versions",
-      severity: "Medium 🟡",
-      suggestion: "Implement hreflang tags and translated content."
-    });
-  } else {
-    passed.push({
-      metric: "Multilingual Support",
-      current: "Available",
-      recommended: "Maintain language parity",
-      severity: "✅ Passed",
-      suggestion: "Multiple language support is active."
-    });
-  }
-
-  if (eventGoalTrackingIntegrated === 0) {
-    improvements.push({
-      metric: "Event & Goal Tracking",
-      current: "Not integrated",
-      recommended: "Set up conversion goals",
-      severity: "High 🟠",
-      suggestion: "Use Google Tag Manager or Analytics events for goal tracking."
-    });
-  } else {
-    passed.push({
-      metric: "Event & Goal Tracking",
-      current: "Integrated",
-      recommended: "Monitor goals regularly",
-      severity: "✅ Passed",
-      suggestion: "Goals and events are properly tracked."
-    });
-  }
-
-  if (abTestingReady === 0) {
-    improvements.push({
-      metric: "A/B Testing",
-      current: "Not ready",
-      recommended: "Implement testing framework",
-      severity: "Medium 🟡",
-      suggestion: "Set up A/B testing for optimizing user experience."
-    });
-  } else {
-    passed.push({
-      metric: "A/B Testing",
-      current: "Ready",
-      recommended: "Maintain testing cadence",
-      severity: "✅ Passed",
-      suggestion: "A/B testing framework is active."
-    });
-  }
-
-  if (userFeedbackLoopsPresent === 0) {
-    improvements.push({
-      metric: "User Feedback Loops",
-      current: "Missing",
-      recommended: "Add surveys or feedback widgets",
-      severity: "Medium 🟡",
-      suggestion: "Encourage users to provide feedback for improvement."
-    });
-  } else {
-    passed.push({
-      metric: "User Feedback Loops",
-      current: "Present",
-      recommended: "Keep collecting insights",
-      severity: "✅ Passed",
-      suggestion: "Feedback loops are active."
-    });
-  }
-
-  // Warning
-  const warning = [];
-
-  const actualPercentage = parseFloat((((structuredData + contentNLPFriendly + fastPageLoad + apiDataAccess + keywordsEntitiesAnnotated + metadataComplete + contentUpdatedRegularly + dynamicContentAvailable + behaviorTrackingImplemented + segmentationProfilingReady + internalLinkingAIFriendly + duplicateContentDetectionReady + multilingualSupport + eventGoalTrackingIntegrated + abTestingReady + userFeedbackLoopsPresent) / 16) * 100).toFixed(0))
-
-  // console.log(actualPercentage);
-  // console.log(warning);
-  // console.log(passed);
-  // console.log(Total);
-  // console.log(improvements);
-
-  await SiteReport.findByIdAndUpdate(auditId, {
-    AIO_Compatibility_Badge: AIO_Compatibility_Badge,
-    AIO_Readiness: {
-      Structured_Data: {
-        Score: structuredData,
-        Parameter: "1 if valid structured data (schema.org/JSON-LD) is implemented, else 0"
-      },
-      Metadata_Complete: {
-        Score: metadataComplete,
-        Parameter: "1 if metadata (title, description, OG/Twitter tags) is complete, else 0"
-      },
-      Fast_Page_Load: {
-        Score: fastPageLoad,
-        Parameter: "1 if page load time is under 2s, else 0"
-      },
-      API_Data_Access: {
-        Score: apiDataAccess,
-        Parameter: "1 if secure and documented API endpoints exist, else 0"
-      },
-      Dynamic_Content_Available: {
-        Score: dynamicContentAvailable,
-        Parameter: "1 if dynamic or interactive content is present, else 0"
-      },
-      Multilingual_Support: {
-        Score: multilingualSupport,
-        Parameter: "1 if hreflang and multilingual versions exist, else 0"
-      },
-      Content_NLP_Friendly: {
-        Score: contentNLPFriendly,
-        Parameter: "1 if content uses natural, entity-rich language and NLP-friendly structure, else 0"
-      },
-      Keywords_Entities_Annotated: {
-        Score: keywordsEntitiesAnnotated,
-        Parameter: "1 if entities and keywords are annotated with schema or metadata, else 0"
-      },
-      Content_Updated_Regularly: {
-        Score: contentUpdatedRegularly,
-        Parameter: "1 if website content is updated frequently, else 0"
-      },
-      Internal_Linking_AI_Friendly: {
-        Score: internalLinkingAIFriendly,
-        Parameter: "1 if internal links are structured and contextually relevant, else 0"
-      },
-      Duplicate_Content_Detection_Ready: {
-        Score: duplicateContentDetectionReady,
-        Parameter: "1 if duplicate content detection mechanisms are active, else 0"
-      },
-      Behavior_Tracking_Implemented: {
-        Score: behaviorTrackingImplemented,
-        Parameter: "1 if user behavior tracking is implemented (e.g., analytics), else 0"
-      },
-      Segmentation_Profiling_Ready: {
-        Score: segmentationProfilingReady,
-        Parameter: "1 if audience segmentation and profiling are in place, else 0"
-      },
-      Event_Goal_Tracking_Integrated: {
-        Score: eventGoalTrackingIntegrated,
-        Parameter: "1 if event or goal tracking is active, else 0"
-      },
-      AB_Testing_Ready: {
-        Score: abTestingReady,
-        Parameter: "1 if A/B testing setup exists, else 0"
-      },
-      User_Feedback_Loops_Present: {
-        Score: userFeedbackLoopsPresent,
-        Parameter: "1 if feedback collection systems (surveys, reviews) are active, else 0"
-      },
-      Dynamic_Personalization: {
-        Score: dynamicContentAvailable,
-        Parameter: "1 if dynamic content adjusts based on user segments or behavior, else 0"
-      },
-      AI_Content_Distribution: {
-        Score: apiDataAccess,
-        Parameter: "1 if content delivery through APIs or feeds is available, else 0"
-      },
-      AI_Friendly_Structure: {
-        Score: internalLinkingAIFriendly,
-        Parameter: "1 if website structure aids AI comprehension and crawling, else 0"
-      },
-      Percentage: actualPercentage,
-      Warning: warning,
-      Passed: passed,
-      Total: Total,
-      Improvements: improvements
-    },
-
-  });
-
-  return actualPercentage
+  return actualPercentage;
 }

@@ -506,8 +506,8 @@ export default async function conversionLeadFlow(url, device, selectedMetric, pa
   // Update Database
   await SiteReport.findByIdAndUpdate(auditId, {
     Conversion_and_Lead_Flow: {
-      ...metricsMap,
-      Percentage: actualPercentage
+      Percentage: actualPercentage,
+      ...metricsMap
     }
   });
 

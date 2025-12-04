@@ -1,210 +1,292 @@
-import React, { useContext, useState } from "react"; // Added useState
+import React, { useContext, useState } from "react";
 import CircularProgress from "../Component/CircularProgress";
 import AuditDropdown from "../Component/AuditDropdown";
-
-
 import { useData } from "../context/DataContext";
 import { ThemeContext } from "../context/ThemeContext";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Shield, Lock, Globe, AlertTriangle, CheckCircle, XCircle,
+  ChevronDown, ChevronUp, Info, Server, Eye, FileText,
+  AlertOctagon, Smartphone, Layout, Code, Terminal,
+  Wifi, Key, Globe2, Layers, ShieldAlert, ShieldCheck,
+  Search, Database, EyeOff, MousePointer, Bell, Share2,
+  CalendarClock, Bug, MapPin
+} from "lucide-react";
 
 // ------------------------------------------------------
-// ✅ NEW: High-Fidelity Skeleton Components
+// ✅ Icon Mapping
 // ------------------------------------------------------
-const SkeletonSidebar = ({ darkMode }) => (
-  <div
-    className={`fixed top-0 mt-16 left-0 h-full w-64 ${darkMode ? "bg-gray-900" : "bg-white"
-      } shadow-lg p-6`}
-  >
-    {[...Array(4)].map((_, i) => (
-      <div
-        key={i}
-        className={`h-7 rounded mb-5 animate-pulse ${darkMode ? "bg-gray-700" : "bg-gray-300"
-          }`}
-      ></div>
-    ))}
-  </div>
-);
+const iconMap = {
+  HTTPS: Lock,
+  SSL: ShieldCheck,
+  SSL_Expiry: CalendarClock,
+  HSTS: Server,
+  TLS_Version: Layers,
+  X_Frame_Options: Layout,
+  CSP: Code,
+  X_Content_Type_Options: FileText,
+  Cookies_Secure: Lock,
+  Cookies_HttpOnly: EyeOff,
+  Google_Safe_Browsing: Search,
+  Blacklist: AlertOctagon,
+  Malware_Scan: Bug,
+  SQLi_Exposure: Database,
+  XSS: Code,
+  Cookie_Consent: Info,
+  Privacy_Policy: FileText,
+  Forms_Use_HTTPS: Lock,
+  GDPR_CCPA: Globe2,
+  Data_Collection: Database,
+  Weak_Default_Credentials: Key,
+  MFA_Enabled: Smartphone,
+  Admin_Panel_Public: Eye,
+  Viewport_Meta_Tag: Smartphone,
+  HTML_Doctype: Code,
+  Character_Encoding: Globe,
+  Browser_Console_Errors: Terminal,
+  Geolocation_Request: MapPin,
+  Input_Paste_Allowed: MousePointer,
+  Notification_Request: Bell,
+  Third_Party_Cookies: Share2,
+  Deprecated_APIs: AlertTriangle,
+};
 
+// ------------------------------------------------------
+// ✅ Descriptions & Educational Content
+// ------------------------------------------------------
+const educationalContent = {
+  HTTPS: {
+    desc: "Ensures your site uses the secure HTTPS protocol.",
+    why: "HTTPS encrypts data between the user's browser and your server, preventing attackers from stealing sensitive information like passwords or credit card numbers."
+  },
+  SSL: {
+    desc: "Checks for a valid SSL certificate.",
+    why: "An SSL certificate authenticates your website's identity and enables an encrypted connection. Without it, browsers will warn users your site is unsafe."
+  },
+  SSL_Expiry: {
+    desc: "Verifies SSL certificate expiry date.",
+    why: "Expired certificates cause scary security warnings for users, driving them away immediately. It's crucial to renew them before they expire."
+  },
+  HSTS: {
+    desc: "HTTP Strict Transport Security (HSTS).",
+    why: "HSTS tells browsers to ONLY connect to your website via HTTPS, preventing downgrade attacks where hackers trick users into using an insecure connection."
+  },
+  TLS_Version: {
+    desc: "Validates the TLS encryption version.",
+    why: "Older versions of TLS (like 1.0 or 1.1) have known security holes. Using TLS 1.2 or 1.3 ensures modern, robust encryption."
+  },
+  X_Frame_Options: {
+    desc: "Protects against clickjacking.",
+    why: "Prevents your site from being embedded in an iframe on another site. This stops attackers from tricking users into clicking invisible buttons on your site."
+  },
+  CSP: {
+    desc: "Content Security Policy (CSP).",
+    why: "CSP is a powerful layer of security that helps detect and mitigate certain types of attacks, including Cross-Site Scripting (XSS) and data injection attacks."
+  },
+  X_Content_Type_Options: {
+    desc: "Prevents MIME sniffing.",
+    why: "Stops browsers from trying to 'guess' the file type, which can be exploited to execute malicious code disguised as images or other files."
+  },
+  Cookies_Secure: {
+    desc: "Ensures cookies are marked Secure.",
+    why: "The 'Secure' flag ensures cookies are only transmitted over encrypted HTTPS connections, preventing theft during transmission."
+  },
+  Cookies_HttpOnly: {
+    desc: "Prevents JavaScript access to cookies.",
+    why: "The 'HttpOnly' flag stops malicious scripts (XSS) from stealing your cookies, which often contain user session tokens."
+  },
+  Google_Safe_Browsing: {
+    desc: "Checks Google's unsafe site list.",
+    why: "Verifies that Google hasn't flagged your domain as hosting malware or phishing content, which would block users from visiting."
+  },
+  Blacklist: {
+    desc: "Domain/IP Blacklist check.",
+    why: "Checks if your domain is on major spam or malware blacklists, which can ruin your reputation and email deliverability."
+  },
+  Malware_Scan: {
+    desc: "Scans for malware.",
+    why: "Detects malicious code injected into your website that could harm your users or their devices."
+  },
+  SQLi_Exposure: {
+    desc: "SQL Injection check.",
+    why: "SQL injection allows attackers to interfere with database queries, potentially stealing or deleting your entire database."
+  },
+  XSS: {
+    desc: "Cross-Site Scripting (XSS) check.",
+    why: "XSS allows attackers to inject malicious scripts into pages viewed by other users, often to steal sessions or redirect users."
+  },
+  Cookie_Consent: {
+    desc: "GDPR Cookie Consent.",
+    why: "Legally required in many regions. Users must be informed about and consent to tracking cookies."
+  },
+  Privacy_Policy: {
+    desc: "Privacy Policy accessibility.",
+    why: "Builds trust and is legally required. Users need to know how you collect, use, and protect their data."
+  },
+  Forms_Use_HTTPS: {
+    desc: "Secure Form Submission.",
+    why: "Ensures that data entered into forms (login, contact, etc.) is sent securely. Insecure forms are a major privacy risk."
+  },
+  GDPR_CCPA: {
+    desc: "GDPR & CCPA Compliance.",
+    why: "Checks for indicators of compliance with major data protection regulations to avoid hefty fines and build user trust."
+  },
+  Data_Collection: {
+    desc: "Data Collection Disclosure.",
+    why: "Transparently disclosing what data you collect helps users make informed decisions and complies with privacy laws."
+  },
+  Weak_Default_Credentials: {
+    desc: "Weak/Default Credentials.",
+    why: "Using default passwords (like 'admin/admin') is the easiest way for hackers to take over your system."
+  },
+  MFA_Enabled: {
+    desc: "Multi-Factor Authentication.",
+    why: "Adds a second layer of security. Even if a password is stolen, the attacker cannot access the account without the second factor."
+  },
+  Admin_Panel_Public: {
+    desc: "Exposed Admin Panel.",
+    why: "Admin panels should be hidden or restricted. Exposing them to the public internet invites brute-force attacks."
+  },
+  Viewport_Meta_Tag: {
+    desc: "Mobile Responsiveness.",
+    why: "Ensures your site renders correctly on mobile devices. Essential for UX and SEO."
+  },
+  HTML_Doctype: {
+    desc: "HTML Doctype Declaration.",
+    why: "Tells the browser which version of HTML to use, ensuring the page renders consistently and correctly."
+  },
+  Character_Encoding: {
+    desc: "Character Encoding (UTF-8).",
+    why: "Ensures text displays correctly across all browsers and languages, preventing 'garbled' text issues."
+  },
+  Browser_Console_Errors: {
+    desc: "Console Errors.",
+    why: "Errors in the console often indicate broken functionality or security issues that need immediate attention."
+  },
+  Geolocation_Request: {
+    desc: "Geolocation Permissions.",
+    why: "Requesting location data without a clear need scares users and can be a privacy violation."
+  },
+  Input_Paste_Allowed: {
+    desc: "Input Paste Restrictions.",
+    why: "Blocking paste on password fields is bad UX and prevents the use of password managers, actually reducing security."
+  },
+  Notification_Request: {
+    desc: "Notification Permissions.",
+    why: "Aggressive notification prompts annoy users. They should only be requested when relevant."
+  },
+  Third_Party_Cookies: {
+    desc: "Third-Party Cookies.",
+    why: "Heavy reliance on third-party cookies is being phased out by browsers and can be a privacy concern for users."
+  },
+  Deprecated_APIs: {
+    desc: "Deprecated APIs.",
+    why: "Using old, unsupported web technologies can lead to security vulnerabilities and broken features in modern browsers."
+  },
+};
+
+// ------------------------------------------------------
+// ✅ Skeleton Components
+// ------------------------------------------------------
 const SkeletonMetricCard = ({ darkMode }) => {
-  const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
-  const shimmerCardBg = darkMode
-    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900"
-    : "bg-gradient-to-br from-white via-gray-50 to-white";
-  const border = darkMode ? "border-gray-700" : "border-gray-200";
-
+  const shimmerBg = darkMode ? "bg-gray-800" : "bg-gray-200";
   return (
-    <div className={`p-6 rounded-xl shadow-lg ${shimmerCardBg} border ${border}`}>
-      <div className="flex justify-between items-start mb-4">
-        <div className={`h-5 w-1/3 rounded ${shimmerBg}`}></div>
-        <div className={`h-6 w-16 rounded-full ${shimmerBg}`}></div>
-      </div>
-      <div className={`h-10 w-1/2 rounded ${shimmerBg} mb-4`}></div>
-      <div className={`h-10 w-full rounded-lg ${shimmerBg} mt-2`}></div>
-    </div>
+    <div className={`h-32 rounded-xl ${shimmerBg} animate-pulse`} />
   );
 };
 
-const SkeletonHeaderCard = ({ darkMode }) => {
-  const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
-  const { data } = useData();
-  const shimmerCardBg = darkMode
-    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900"
-    : "bg-gradient-to-br from-white via-blue-50/30 to-white";
-  const border = darkMode ? "border-gray-700" : "border-gray-200";
+const SecurityShimmer = ({ darkMode }) => {
+  const mainBg = darkMode ? "bg-gray-900" : "bg-gray-50";
   return (
-    <div className={`w-full ${data?.Report === "All" ? "  " : " "}  p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <div className={`h-12 w-full max-w-xs rounded ${shimmerBg} mb-3`}></div>
-          <div className={`h-4 w-64 rounded ${shimmerBg}`}></div>
-        </div>
-        <div className={`h-20 w-20 rounded-full ${shimmerBg}`}></div>
-      </div>
-      <div className={`h-8 w-1/3 rounded-full ${shimmerBg}`}></div>
-    </div>
-  );
-};
-
-const SkeletonSectionCard = ({ metricCount, darkMode }) => {
-  const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
-  const { data } = useData();
-  const shimmerCardBg = darkMode
-    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900"
-    : "bg-gradient-to-br from-white via-blue-50/30 to-white";
-  const border = darkMode ? "border-gray-700" : "border-gray-200";
-
-  return (
-    <div className={`w-full ${data?.Report === "All" ? "  " : " "} p-8 rounded-2xl shadow-2xl ${shimmerCardBg} border-l-8 ${border} border-l-gray-500`}>
-      <div className="flex items-center gap-3 mb-6">
-        <div className={`h-8 w-8 rounded ${shimmerBg}`}></div>
-        <div className={`h-7 w-1/2 rounded ${shimmerBg}`}></div>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {Array.from({ length: metricCount }).map((_, index) => (
-          <SkeletonMetricCard key={index} darkMode={darkMode} />
+    <div className={`min-h-screen ${mainBg} p-8 space-y-8`}>
+      <div className={`h-48 rounded-2xl ${darkMode ? "bg-gray-800" : "bg-gray-200"} animate-pulse`} />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[...Array(9)].map((_, i) => (
+          <SkeletonMetricCard key={i} darkMode={darkMode} />
         ))}
       </div>
     </div>
   );
 };
 
-const SkeletonAuditDropdown = ({ darkMode }) => {
-  const shimmerCardBg = darkMode
-    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900"
-    : "bg-gradient-to-br from-white via-blue-50/30 to-white";
-  const { data } = useData();
-  const shimmerBg = darkMode ? "bg-gray-700" : "bg-gray-300";
-  const border = darkMode ? "border-gray-700" : "border-gray-200";
-  return (
-    <div className={`w-full ${data?.Report === "All" ? "  " : " "} p-5 rounded-lg shadow-xl ${shimmerCardBg} border ${border}`}>
-      <div className={`h-6 w-1/3 rounded ${shimmerBg}`}></div>
-    </div>
-  );
-};
-
-/**
- * ✅ REPLACED: This is the new, high-fidelity shimmer component
- * that mimics your final page layout perfectly.
- */
-function SecurityShimmer({ darkMode }) {
-  const { data } = useData(); // Get data for conditional layout
-  const mainBg = darkMode
-    ? "bg-gray-900"
-    : "bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50";
-
-  return (
-    <div className={`relative flex w-full h-full min-h-screen ${mainBg} animate-pulse`}>
-      {/* Main content area */}
-      <main className={`flex-1 flex flex-col items-center pt-20 pb-12 px-4 space-y-8`}>
-
-        {/* 1. Header Card */}
-        <SkeletonHeaderCard darkMode={darkMode} />
-
-        {/* 2. Section 1 (5 metrics) */}
-        <SkeletonSectionCard metricCount={5} darkMode={darkMode} />
-
-        {/* 3. Section 2 (5 metrics) */}
-        <SkeletonSectionCard metricCount={5} darkMode={darkMode} />
-
-        {/* 4. Section 3 (5 metrics) */}
-        <SkeletonSectionCard metricCount={5} darkMode={darkMode} />
-
-        {/* 5. Section 4 (Big section, show ~8) */}
-        <SkeletonSectionCard metricCount={8} darkMode={darkMode} />
-
-        {/* 6. Dropdowns (3 of them) */}
-        <SkeletonAuditDropdown darkMode={darkMode} />
-        <SkeletonAuditDropdown darkMode={darkMode} />
-        <SkeletonAuditDropdown darkMode={darkMode} />
-      </main>
-    </div>
-  );
-}
-
 // ------------------------------------------------------
-// ✅ MetricCard Component (FIXED)
+// ✅ MetricCard Component
 // ------------------------------------------------------
-const MetricCard = ({ title, description, score, darkMode, icon }) => {
-  // Use 'useState' from React import
-  const [showDescription, setShowDescription] = useState(false);
-  const isPassed = Boolean(score);
+const MetricCard = ({ metricKey, data, darkMode }) => {
+  const { score, details, meta } = data || {};
+  const isPassed = score === 100;
 
-  const titleColor = darkMode ? "text-white" : "text-gray-900";
-  const descriptionColor = darkMode ? "text-gray-300" : "text-gray-600";
-  const valueColor = isPassed
-    ? "text-green-500 dark:text-green-400"
-    : "text-red-500 dark:text-red-400";
-  const cardBg = darkMode
-    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900"
-    : "bg-gradient-to-br from-white via-gray-50 to-white";
+  const Icon = iconMap[metricKey] || Shield;
+  const content = educationalContent[metricKey] || { desc: "Security check.", why: "Important for site security." };
+  const title = metricKey.replaceAll("_", " ");
 
-  const statusText = isPassed ? "Secure" : "Needs Fix";
+  const cardBg = darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200";
+  const textColor = darkMode ? "text-gray-100" : "text-gray-900";
+  const subTextColor = darkMode ? "text-gray-400" : "text-gray-500";
+
   const statusColor = isPassed
-    ? "bg-gradient-to-r from-green-400 to-emerald-500 text-white"
-    : "bg-gradient-to-r from-red-500 to-rose-600 text-white";
+    ? "text-emerald-500 bg-emerald-500/10 border-emerald-500/20"
+    : "text-rose-500 bg-rose-500/10 border-rose-500/20";
 
   return (
-    <div
-      className={`group relative p-6 rounded-xl shadow-lg ${cardBg}
-      border ${darkMode ? "border-gray-700" : "border-gray-200"}
-      transition-all duration-300  `}
-    >
-      <div className="relative z-10">
-        <div className="flex justify-between items-start mb-4">
-          <div className="flex items-center gap-3">
-            {icon && <span className="text-2xl">{icon}</span>}
-            <h3 className={`text-lg font-bold ${titleColor}`}>{title}</h3>
+    <div className={`relative overflow-hidden rounded-xl border ${cardBg} shadow-sm hover:shadow-md transition-shadow group`}>
+      <div className="p-5 space-y-4">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-4">
+            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
+              <Icon size={24} className={darkMode ? "text-blue-400" : "text-blue-600"} />
+            </div>
+            <div>
+              <h3 className={`font-bold text-lg ${textColor}`}>{title}</h3>
+              <p className={`text-xs font-medium mt-1 px-2 py-0.5 rounded-full w-fit border ${statusColor}`}>
+                {isPassed ? "Secure" : "Attention Needed"}
+              </p>
+            </div>
           </div>
-          <span
-            className={`px-3 py-1 rounded-full text-xs font-bold shadow-md ${statusColor}`}
-          >
-            {statusText}
-          </span>
         </div>
 
-        <div className={`text-2xl font-bold mb-4 ${valueColor}`}>
-          {isPassed ? "✅ Active" : "⚠️ Missing"}
+        {/* Dynamic Details */}
+        <div>
+          <h4 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+            Status Detail
+          </h4>
+          <p className={`text-sm font-medium ${isPassed ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+            {details || "No details available"}
+          </p>
+          {meta?.value && (
+            <div className="mt-2 text-xs">
+              <span className={`font-semibold ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Detected Value: </span>
+              <code className={`px-1.5 py-0.5 rounded ${darkMode ? "bg-gray-700 text-gray-200" : "bg-gray-100 text-gray-800"}`}>
+                {String(meta.value)}
+              </code>
+            </div>
+          )}
         </div>
 
-        <button
-          onClick={() => setShowDescription(!showDescription)}
-          className={`w-full mt-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-300 ${darkMode
-            ? "bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white"
-            : "bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white"
-            }`}
-        >
-          {showDescription ? "Hide Details" : "Show Details"}
-        </button>
+        {/* Meta Data (Debugging Info) */}
+        {meta && Object.keys(meta).length > 0 && (
+          <div>
+            <h4 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+              Technical Data
+            </h4>
+            <div className={`p-2 rounded text-xs font-mono overflow-x-auto ${darkMode ? "bg-gray-900 text-gray-300" : "bg-gray-100 text-gray-700"}`}>
+              {Object.entries(meta).map(([key, value]) => (
+                <div key={key} className="flex flex-col sm:flex-row sm:gap-2 mb-1 last:mb-0">
+                  <span className="font-semibold opacity-70">{key}:</span>
+                  <span className="break-all">{typeof value === 'object' ? JSON.stringify(value) : String(value)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
-        {/* --- ✅ FIX: Added slide-down animation --- */}
-        <div
-          className={`overflow-hidden transition-all duration-300 ${showDescription ? "max-h-96 mt-4" : "max-h-0"
-            }`}
-        >
-          <p
-            className={`text-sm ${descriptionColor} border-t ${darkMode ? "border-gray-700" : "border-gray-200"
-              } pt-4`}
-          >
-            {description}
+        {/* Educational Content */}
+        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+          <p className={`text-sm ${subTextColor}`}>
+            {content.desc}
+          </p>
+          <p className={`text-xs mt-2 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+            {content.why}
           </p>
         </div>
       </div>
@@ -213,203 +295,134 @@ const MetricCard = ({ title, description, score, darkMode, icon }) => {
 };
 
 // ------------------------------------------------------
-// ✅ Section Layout Wrapper (FIXED)
+// ✅ Section Component
 // ------------------------------------------------------
-function Section({ title, icon, color, children, textColor }) {
-  const { theme } = useContext(ThemeContext);
-  const darkMode = theme === "dark";
-
-  // --- ✅ FIX 1: Destructure 'data' ---
-  const { data } = useData();
-
-  const mainCardBg = darkMode
-    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900"
-    : "bg-gradient-to-br from-white via-blue-50/30 to-white";
-
-  // --- ✅ FIX 2: Tailwind Production Build Fix (Color Map) ---
-  const borderColorMap = {
-    indigo: "border-indigo-500",
-    purple: "border-purple-500",
-    green: "border-green-500",
-    blue: "border-blue-500",
-    red: "border-red-500", // Added red for this component
-  };
-
+const Section = ({ title, icon: Icon, children, darkMode }) => {
   return (
-    <div
-      className={`w-full p-8 rounded-2xl shadow-2xl border-l-8 ${mainCardBg}
-        ${/* --- FIX 3: Use optional chaining 'data?.Report' --- */''}
-        ${data?.Report === "All" ? "  " : " "}
-        ${/* --- FIX 2 (Applied): Use color map --- */''}
-        ${borderColorMap[color] || "border-gray-500"}
-      `}
-    >
-      <div className="flex items-center gap-3 mb-6">
-        <span className="text-3xl">{icon}</span>
-        <h2 className={`text-2xl font-bold ${textColor}`}>{title}</h2>
+    <div className="space-y-4">
+      <div className="flex items-center gap-3 px-2">
+        <div className={`p-2 rounded-lg ${darkMode ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-600"}`}>
+          <Icon size={20} />
+        </div>
+        <h2 className={`text-xl font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>
+          {title}
+        </h2>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">{children}</div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {children}
+      </div>
     </div>
   );
-}
+};
 
 // ------------------------------------------------------
-// ✅ MAIN COMPONENT — Security & Compliance Dashboard (FIXED)
+// ✅ MAIN COMPONENT
 // ------------------------------------------------------
 export default function Security_Compilance() {
   const { theme } = useContext(ThemeContext);
   const { data, loading } = useData();
   const darkMode = theme === "dark";
 
-  // --- ✅ FIX 1: Add '!data' check to prevent crash ---
   if (loading || !data || data.Status === "inprogress") {
     return <SecurityShimmer darkMode={darkMode} />;
   }
 
-  // Now it's safe to access data
   const metric = data?.Security_or_Compliance || {};
-
+  const mainBg = darkMode ? "bg-gray-900" : "bg-gray-50";
   const textColor = darkMode ? "text-white" : "text-gray-900";
-  const mainCardBg = darkMode
-    ? "bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900"
-    : "bg-gradient-to-br from-white via-blue-50/30 to-white";
-
-  // 🔐 Descriptions
-  const desc = {
-    HTTPS: "Ensures your site uses HTTPS protocol.",
-    SSL: "Checks for valid SSL certificate presence.",
-    SSL_Expiry: "Verifies SSL certificate expiry date and validity.",
-    HSTS: "Ensures HTTP Strict Transport Security is enabled.",
-    TLS_Version: "Validates the latest TLS version is used.",
-    X_Frame_Options: "Protects against clickjacking attacks.",
-    CSP: "Validates presence of Content Security Policy header.",
-    X_Content_Type_Options: "Prevents MIME sniffing vulnerabilities.",
-    Cookies_Secure: "Ensures cookies are marked as Secure.",
-    Cookies_HttpOnly: "Ensures cookies are protected from JavaScript access.",
-    Google_Safe_Browsing: "Checks if domain is flagged as unsafe by Google.",
-    Blacklist: "Detects if domain or IP is blacklisted.",
-    Malware_Scan: "Scans for any malware or malicious code on pages.",
-    SQLi_Exposure: "Detects possible SQL injection vulnerabilities.",
-    XSS: "Detects cross-site scripting vulnerabilities.",
-    Cookie_Consent: "Checks for GDPR cookie consent mechanism.",
-    Privacy_Policy: "Ensures privacy policy page is accessible.",
-    Forms_Use_HTTPS: "Checks if all forms use secure HTTPS.",
-    GDPR_CCPA: "Checks compliance with GDPR and CCPA regulations.",
-    Data_Collection: "Verifies transparent disclosure of data collection.",
-    Weak_Default_Credentials: "Detects weak or default admin credentials.",
-    MFA_Enabled: "Checks if multi-factor authentication is enabled.",
-    Admin_Panel_Public: "Detects exposed admin panels.",
-    Viewport_Meta_Tag: "Checks responsive meta tag presence.",
-    HTML_Doctype: "Ensures valid HTML Doctype declaration.",
-    Character_Encoding: "Ensures UTF-8 encoding for compatibility.",
-    Browser_Console_Errors: "Checks site for runtime console errors.",
-    Geolocation_Request: "Detects unnecessary geolocation permission prompts.",
-    Input_Paste_Allowed: "Verifies secure input restrictions (like passwords).",
-    Notification_Request: "Detects push notification permission prompts.",
-    Third_Party_Cookies: "Checks for cross-domain cookie usage.",
-    Deprecated_APIs: "Detects deprecated web APIs usage.",
-  };
 
   return (
-    <div className="relative flex w-full h-full min-h-screen">
-      <main
-        className={`flex-1 flex flex-col items-center pt-10 pb-12 px-4 space-y-8 ${darkMode
-          ? "bg-gray-900"
-          : "bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50"
-          }`}
-      >
-        {/* Header */}
-        <div
-          className={`w-full p-8 rounded-2xl shadow-2xl border-l-8 border-indigo-500 ${mainCardBg}`}
-        >
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2
-                className={`text-3xl sm:text-5xl font-black ${textColor} mb-2 bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent`}
-              >
-                Security & Compliance
-              </h2>
-              <p
-                className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-600"
-                  }`}
-              >
-                Advanced audit of HTTPS, headers, cookies, and compliance readiness.
+    <div className={`min-h-screen w-full ${mainBg} transition-colors duration-300`}>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
+
+        {/* Header Section */}
+        <div className={`relative overflow-hidden rounded-3xl p-8 sm:p-10 shadow-2xl ${darkMode ? "bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700" : "bg-white border border-gray-200"}`}>
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="text-center md:text-left space-y-4 max-w-2xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-sm font-medium border border-blue-500/20">
+                <ShieldCheck size={14} />
+                <span>Security Audit Report</span>
+              </div>
+              <h1 className={`text-4xl sm:text-5xl font-black tracking-tight ${textColor}`}>
+                Security & <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">Compliance</span>
+              </h1>
+              <p className={`text-lg ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
+                Comprehensive analysis of your web application's security posture, including SSL, headers, privacy compliance, and vulnerability detection.
               </p>
+
+              <div className="flex flex-wrap gap-4 justify-center md:justify-start pt-2">
+                {(() => {
+                  const allMetrics = Object.values(metric).filter(val => typeof val === 'object' && val !== null && 'score' in val);
+                  const passedCount = allMetrics.filter(m => m.score === 100).length;
+                  const failedCount = allMetrics.filter(m => m.score < 100).length;
+
+                  return (
+                    <>
+                      <div className={`flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg ${darkMode ? "bg-gray-700 text-gray-300" : "bg-gray-100 text-gray-600"}`}>
+                        <CheckCircle size={16} className="text-emerald-500" />
+                        <span>{passedCount} Passed</span>
+                      </div>
+                      <div className={`flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg ${darkMode ? "bg-gray-700 text-gray-300" : "bg-gray-100 text-gray-600"}`}>
+                        <XCircle size={16} className="text-rose-500" />
+                        <span>{failedCount} Failed</span>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
             </div>
-            <CircularProgress value={metric?.Percentage || 0} size={80} stroke={6} />
+
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative">
+                <CircularProgress value={metric?.Percentage || 0} size={140} stroke={12} />
+                <div className="absolute inset-0 flex items-center justify-center flex-col">
+                  <span className={`text-3xl font-bold ${textColor}`}>{metric?.Percentage || 0}%</span>
+                  <span className={`text-xs font-medium uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Score</span>
+                </div>
+              </div>
+              <div className={`text-sm font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                Time Taken: {data.Time_Taken}
+              </div>
+            </div>
           </div>
-          <div
-            className={`inline-flex items-center gap-2 text-sm font-semibold px-5 py-2.5 rounded-full shadow-md
-              ${darkMode
-                ? "bg-gradient-to-r from-gray-700 to-gray-800 text-blue-400 border-blue-700/40"
-                : "bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border border-blue-200"
-              }`}
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            Time Taken — {data.Time_Taken}
-          </div>
+
+          {/* Decorative background elements */}
+          <div className="absolute top-0 right-0 -mt-20 -mr-20 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
         </div>
 
-        {/* Sections will now correctly size themselves thanks to the fix in 'Section' component */}
-
         {/* Section 1: Network & Encryption */}
-        <Section title="Network & Encryption" icon="🔒" color="blue" textColor={textColor}>
+        <Section title="Network & Encryption" icon={Lock} darkMode={darkMode}>
           {["HTTPS", "SSL", "SSL_Expiry", "HSTS", "TLS_Version"].map((key) => (
-            metric[key] && <MetricCard key={key} title={key.replaceAll("_", " ")} description={desc[key]} score={metric[key]?.Score} darkMode={darkMode} icon="🌐" />
+            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} />
           ))}
         </Section>
 
         {/* Section 2: Security Headers */}
-        <Section title="Security Headers" icon="🧱" color="green" textColor={textColor}>
+        <Section title="Security Headers" icon={Shield} darkMode={darkMode}>
           {["X_Frame_Options", "CSP", "X_Content_Type_Options", "Cookies_Secure", "Cookies_HttpOnly"].map((key) => (
-            metric[key] && <MetricCard key={key} title={key.replaceAll("_", " ")} description={desc[key]} score={metric[key]?.Score} darkMode={darkMode} icon="🧩" />
+            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} />
           ))}
         </Section>
 
         {/* Section 3: Compliance & Privacy */}
-        <Section title="Compliance & Privacy" icon="📜" color="purple" textColor={textColor}>
+        <Section title="Compliance & Privacy" icon={FileText} darkMode={darkMode}>
           {["Cookie_Consent", "Privacy_Policy", "GDPR_CCPA", "Data_Collection", "Forms_Use_HTTPS"].map((key) => (
-            metric[key] && <MetricCard key={key} title={key.replaceAll("_", " ")} description={desc[key]} score={metric[key]?.Score} darkMode={darkMode} icon="🛡️" />
+            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} />
           ))}
         </Section>
 
         {/* Section 4: Vulnerability & Browser Checks */}
-        <Section title="Vulnerabilities & Browser Security" icon="⚙️" color="red" textColor={textColor}>
+        <Section title="Vulnerabilities & Browser Security" icon={AlertTriangle} darkMode={darkMode}>
           {[
-            "Google_Safe_Browsing",
-            "Blacklist",
-            "Malware_Scan",
-            "SQLi_Exposure",
-            "XSS",
-            "Weak_Default_Credentials",
-            "MFA_Enabled",
-            "Admin_Panel_Public",
-            "Viewport_Meta_Tag",
-            "HTML_Doctype",
-            "Character_Encoding",
-            "Browser_Console_Errors",
-            "Geolocation_Request",
-            "Input_Paste_Allowed",
-            "Notification_Request",
-            "Third_Party_Cookies",
-            "Deprecated_APIs",
+            "Google_Safe_Browsing", "Blacklist", "Malware_Scan", "SQLi_Exposure", "XSS",
+            "Weak_Default_Credentials", "MFA_Enabled", "Admin_Panel_Public", "Viewport_Meta_Tag",
+            "HTML_Doctype", "Character_Encoding", "Browser_Console_Errors", "Geolocation_Request",
+            "Input_Paste_Allowed", "Notification_Request", "Third_Party_Cookies", "Deprecated_APIs",
           ].map((key) => (
-            metric[key] && <MetricCard key={key} title={key.replaceAll("_", " ")} description={desc[key]} score={metric[key]?.Score} darkMode={darkMode} icon="💡" />
+            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} />
           ))}
         </Section>
-
-        {/* --- ✅ FIX 4: Wrap dropdowns in sizing div --- */}
-        <div className={`w-full`}>
-          <AuditDropdown items={metric?.Passed} title="✅ Passed Audits" darkMode={darkMode} />
-        </div>
-        <div className={`w-full`}>
-          <AuditDropdown items={metric?.Warning} title="⚠️ Warnings" darkMode={darkMode} />
-        </div>
-        <div className={`w-full`}>
-          <AuditDropdown items={metric?.Improvements} title="🚫 Improvements Needed" darkMode={darkMode} />
-        </div>
       </main>
     </div>
   );

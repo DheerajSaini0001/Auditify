@@ -2,24 +2,24 @@ import puppeteer from "puppeteer";
 import * as cheerio from "cheerio";
 
 export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
-let browser;
+  let browser;
 
   try {
-      browser = await puppeteer.launch({
+    browser = await puppeteer.launch({
       headless: true,
       defaultViewport: null,
-      args: ["--no-sandbox", "--disable-setuid-sandbox","--start-maximized"]
-  });
+      args: ["--no-sandbox", "--disable-setuid-sandbox", "--start-maximized"]
+    });
 
-  const page = await browser.newPage();
+    const page = await browser.newPage();
 
-  if (device === "Mobile") {
+    if (device === "Mobile") {
 
       await page.setViewport({
-        width: 414,    
-        height: 896,   
+        width: 414,
+        height: 896,
         isMobile: true,
-        deviceScaleFactor: 2.5, 
+        deviceScaleFactor: 2.5,
         hasTouch: true,
         isLandscape: false,
       });
@@ -36,20 +36,20 @@ let browser;
         "Chrome/140.0.0.0 Safari/537.36"
       );
     }
-     
-  await page.setExtraHTTPHeaders({ "Accept-Language": "en-US,en;q=0.9" });
-  const response = await page.goto(url, { waitUntil: "networkidle2",timeout: 360000 }); // 6 minutes
-  await page.waitForSelector("body", { timeout: 360000 }); // 6 minutes
 
-  const htmlData = await page.content();
-  const $ = cheerio.load(htmlData);
+    await page.setExtraHTTPHeaders({ "Accept-Language": "en-US,en;q=0.9" });
+    const response = await page.goto(url, { waitUntil: "networkidle2", timeout: 360000 }); // 6 minutes
+    await page.waitForSelector("body", { timeout: 360000 }); // 6 minutes
 
-  return {browser,page,response,$}; 
+    const htmlData = await page.content();
+    const $ = cheerio.load(htmlData);
+
+    return { browser, page, response, $ };
 
   } catch (error) {
     if (browser) await browser.close();
     console.error("Error fetching Puppeteer_Cheerio data:", error);
-    res.status(500).json({ success: false, error: "Failed to fetch Puppeteer_Cheerio API data" });
+    // res.status(500).json({ success: false, error: "Failed to fetch Puppeteer_Cheerio API data" });
     return null;
   }
 }

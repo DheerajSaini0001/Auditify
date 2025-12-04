@@ -1,88 +1,147 @@
-Page Speed SLT
-A comprehensive web performance and SEO audit tool designed to analyze websites for technical performance, accessibility, SEO, security, and AI readiness. This tool provides detailed insights and actionable recommendations to improve website quality and user experience.
+Site Audit Tool
+
+A comprehensive Web Performance & SEO Audit Tool designed to analyze websites for technical performance, accessibility, SEO, security, UX, conversion flow, and AI optimization readiness.
+
+This tool provides detailed insights, scoring, and actionable recommendations to improve overall website quality, user experience, and search engine visibility.
 
 🚀 Key Features
-Technical Performance Audit: Analyzes Core Web Vitals (LCP, CLS, INP), server response times, and resource optimization (images, scripts, caching).
-On-Page SEO Analysis: Checks for meta tags, heading structure, keyword usage, and internal linking to ensure search engine visibility.
-Accessibility Checks: Validates compliance with accessibility standards (WCAG) using axe-core, identifying issues like contrast ratios and missing ARIA labels.
-Security & Compliance: Evaluates SSL/TLS configuration, security headers (CSP, HSTS), and data privacy practices.
-UX & Content Structure: Assesses readability, navigation depth, tap targets, and content organization for optimal user experience.
-AIO (AI Optimization) Readiness: [New] Evaluates how well a site is optimized for AI crawlers and Large Language Models (LLMs), including structured data, NLP-friendly content, and API accessibility. Now features an AIO Compatibility Badge (Gold/Silver/Bronze).
-Conversion & Lead Flow: Analyzes forms, CTAs, and trust signals to improve conversion rates.
-PDF Reporting: Generates downloadable PDF reports of the audit results.
+
+⚡ Technical Performance Audit
+
+Evaluates Core Web Vitals (LCP, CLS, INP), server response time, caching, resource size, compression, and loading strategies.
+
+📈 On-Page SEO Analysis
+
+Checks meta tags, heading structure, internal linking, content hierarchy, robots rules, alt attributes, and keyword optimization.
+
+♿ Accessibility Audit
+
+Uses axe-core to validate WCAG compliance, contrast issues, missing ARIA labels, keyboard navigation support, and semantic HTML.
+
+🔐 Security & Compliance
+
+Evaluates SSL/TLS status, security headers (CSP, HSTS, X-XSS-Protection), cookie security, and privacy policy availability.
+
+🎨 UX & Content Structure
+
+Assesses readability, content spacing, navigation depth, mobile tap targets, and content structure for improved usability.
+
+🤖 AIO (AI Optimization) Readiness
+
+Evaluates AI crawler-friendliness, structured data, NLP-ready content, JSON-LD, internal content relationships, and API discoverability.
+
+Includes AIO Compatibility Badge: Gold / Silver / Bronze
+
+🎯 Conversion & Lead Flow
+
+Analyzes CTA visibility, form UX, trust signals, social proof, and friction points in conversion flow.
+
+📄 PDF Reporting
+
+Generate downloadable audit reports using jsPDF.
+
 🛠️ Tech Stack
 Frontend
+
 React (Vite)
-Tailwind CSS (Styling)
-Lucide React (Icons)
-Recharts (Data Visualization)
-Framer Motion (Animations)
-jsPDF (Report Generation)
+
+Tailwind CSS
+
+Lucide React
+
+Recharts
+
+Framer Motion
+
+jsPDF
+
 Backend
+
 Node.js & Express
-MongoDB (Mongoose) - Data Storage
-Puppeteer - Headless browser for scraping and performance metrics
-Cheerio - HTML parsing and analysis
-Axe-core - Accessibility engine
-JSDOM - DOM manipulation
+
+MongoDB (Mongoose)
+
+Puppeteer
+
+Cheerio
+
+Axe-core
+
+JSDOM
+
 📦 Installation & Setup
 Prerequisites
-Node.js (v16+ recommended)
-MongoDB (Local or Atlas connection string)
+
+Node.js (v16+)
+
+MongoDB (Local or Atlas)
+
 1. Clone the Repository
-bash
 git clone https://github.com/DheerajSaini0001/Page_Speed_SLT.git
 cd Page_Speed_SLT
-2. Backend Setup
-Navigate to the backend directory and install dependencies:
 
-bash
+2. Backend Setup
 cd Backend
 npm install
-Create a .env file in the Backend directory (if required) and configure your MongoDB URI and port. Start the backend server:
 
-bash
+
+Create a .env file with:
+
+MONGO_URI=your_connection_string
+PORT=5000
+
+
+Start the backend:
+
 npm run dev
-The server typically runs on http://localhost:5000 (check console output).
+
+
+Backend runs at: http://localhost:5000
 
 3. Frontend Setup
-Open a new terminal, navigate to the frontend directory, and install dependencies:
-
-bash
-cd Frontend
+cd ../Frontend
 npm install
-Start the frontend development server:
-
-bash
 npm run dev
-The frontend will typically run on http://localhost:5173.
+
+
+Frontend runs at: http://localhost:5173
 
 🚦 Usage
-Open the frontend application in your browser.
-Enter the URL of the website you want to audit.
-Select the Device Type (Desktop/Mobile).
-Click "Analyze" to start the audit process.
-Wait for the analysis to complete. The tool will display a comprehensive dashboard with scores and detailed metrics for each category.
-Navigate through the tabs (Technical, SEO, AIO, etc.) to view specific insights.
-Download the full report as a PDF if needed.
+
+Open the frontend interface.
+
+Enter the website URL.
+
+Select Desktop or Mobile analysis.
+
+Click Analyze.
+
+View results in categorized dashboards.
+
+Export report as PDF if needed.
+
 📂 Project Structure
-Backend/: Contains the Node.js/Express server, API routes, and metric calculation services.
-metricServices/: Logic for individual audit categories (e.g., 
-aioReadiness.js
-, technicalMetrics.js).
-workers/: Worker threads for handling heavy audit tasks (auditWorker.js).
-models/: Mongoose schemas (
-SiteReport.js
-).
-Frontend/: Contains the React application.
-src/Pages/: Individual report pages (
-Technical_Performance.jsx
-, 
-AIO.jsx
-, etc.).
-src/Component/: Reusable UI components (
-MetricCard
-, CircularProgress).
-src/context/: State management (DataContext).
+Page_Speed_SLT/
+├── Backend/
+│   ├── metricServices/
+│   │   ├── aioReadiness.js
+│   │   ├── technicalMetrics.js
+│   ├── workers/
+│   │   └── auditWorker.js
+│   ├── models/
+│   │   └── SiteReport.js
+│   └── ...
+└── Frontend/
+    ├── src/Pages/
+    │   ├── Technical_Performance.jsx
+    │   ├── AIO.jsx
+    ├── src/Components/
+    │   ├── MetricCard.jsx
+    │   ├── CircularProgress.jsx
+    ├── src/context/
+    │   └── DataContext.js
+
 🤝 Contributing
-Contributions are welcome! Please feel free to submit a Pull Request.
+
+Contributions are welcome!
+Please fork this repository and submit a Pull Request if you’d like to help improve the project.

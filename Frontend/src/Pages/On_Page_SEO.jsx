@@ -234,13 +234,25 @@ export default function On_Page_SEO() {
         {/* Media & Accessibility */}
         <Section title="Media & Accessibility" icon={ImageIcon} darkMode={darkMode}>
           {seo.Image?.Image_Exist != 0 && (
-            <MetricCard title="Alt Text" description={desc.image} score={seo.Image?.Image_Alt_Meaningfull_Exist} value={seo.Image?.Image_Alt_Meaningfull_Exist ? "Optimized" : "Issues"} darkMode={darkMode} icon={ImageIcon}>
-              {seo.Image?.Without_Alt?.length > 0 && (
-                <div className="space-y-1">
-                  <div className="font-semibold text-red-500">Missing Alt Text ({seo.Image.Without_Alt.length}):</div>
+            <MetricCard title="Image Metadata" description="Alt text and Titles." score={seo.Image?.Image_Alt_Meaningfull_Exist} value={seo.Image?.Image_Alt_Meaningfull_Exist ? "Optimized" : "Issues"} darkMode={darkMode} icon={ImageIcon}>
+              {/* Missing Alt */}
+              {seo.Image?.Without_Alt_Incomplete_Status?.length > 0 && (
+                <div className="space-y-1 mb-2">
+                  <div className="font-semibold text-red-500">Missing Alt Text ({seo.Image.Without_Alt_Incomplete_Status.length}):</div>
                   <div className="max-h-32 overflow-y-auto custom-scrollbar">
-                    {seo.Image.Without_Alt.map((img, i) => (
-                      <div key={i} className="truncate text-xs opacity-80 mb-0.5" title={img}>{img}</div>
+                    {seo.Image.Without_Alt_Incomplete_Status.map((img, i) => (
+                      <div key={i} className="truncate text-xs opacity-80 mb-0.5" title={img.src}>{img.src.split('/').pop()}</div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {/* Missing Title */}
+              {seo.Image?.Without_Title_Incomplete_Status?.length > 0 && (
+                <div className="space-y-1">
+                  <div className="font-semibold text-red-500">Missing Title Text ({seo.Image.Without_Title_Incomplete_Status.length}):</div>
+                  <div className="max-h-32 overflow-y-auto custom-scrollbar">
+                    {seo.Image.Without_Title_Incomplete_Status.map((img, i) => (
+                      <div key={i} className="truncate text-xs opacity-80 mb-0.5" title={img.src}>{img.src.split('/').pop()}</div>
                     ))}
                   </div>
                 </div>
@@ -248,17 +260,37 @@ export default function On_Page_SEO() {
             </MetricCard>
           )}
           <MetricCard title="Compression" description={desc.imagecompression} score={seo.Image?.Image_Compression_Exist} value={seo.Image?.Image_Compression_Exist ? "Good" : "Heavy"} darkMode={darkMode} icon={ImageIcon}>
-            {seo.Image?.Image_Size?.filter(i => parseFloat(i.sizeKB) > 100).length > 0 && (
-              <div className="space-y-1">
-                <div className="font-semibold text-red-500">Heavy Images ({seo.Image.Image_Size.filter(i => parseFloat(i.sizeKB) > 100).length}):</div>
-                <div className="max-h-32 overflow-y-auto custom-scrollbar space-y-1">
-                  {seo.Image.Image_Size.filter(i => parseFloat(i.sizeKB) > 100).map((img, i) => (
-                    <div key={i} className="flex justify-between items-center text-xs border-b border-gray-700/10 dark:border-gray-200/10 pb-1 last:border-0">
-                      <span className="truncate w-2/3" title={img.url}>{img.url.split('/').pop()}</span>
-                      <span className="font-mono font-bold text-red-500">{img.sizeKB} KB</span>
+            {seo.Image?.Image_Size?.length > 0 && (
+              <div className="space-y-4">
+                {/* Heavy Images (> 100 KB) */}
+                {seo.Image.Image_Size.filter(i => parseFloat(i.sizeKB) > 100).length > 0 && (
+                  <div className="space-y-1">
+                    <div className="font-semibold text-red-500">Heavy Images &gt; 100 KB ({seo.Image.Image_Size.filter(i => parseFloat(i.sizeKB) > 100).length}):</div>
+                    <div className="max-h-32 overflow-y-auto custom-scrollbar space-y-1">
+                      {seo.Image.Image_Size.filter(i => parseFloat(i.sizeKB) > 100).map((img, i) => (
+                        <div key={i} className="flex justify-between items-center text-xs border-b border-gray-700/10 dark:border-gray-200/10 pb-1 last:border-0">
+                          <span className="truncate w-2/3" title={img.src}>{img.src.split('/').pop()}</span>
+                          <span className="font-mono font-bold text-red-500">{img.sizeKB} KB</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                )}
+
+                {/* Optimized Images (< 100 KB) */}
+                {seo.Image.Image_Size.filter(i => parseFloat(i.sizeKB) <= 100).length > 0 && (
+                  <div className="space-y-1">
+                    <div className="font-semibold text-green-500">Optimized Images &lt; 100 KB ({seo.Image.Image_Size.filter(i => parseFloat(i.sizeKB) <= 100).length}):</div>
+                    <div className="max-h-32 overflow-y-auto custom-scrollbar space-y-1">
+                      {seo.Image.Image_Size.filter(i => parseFloat(i.sizeKB) <= 100).map((img, i) => (
+                        <div key={i} className="flex justify-between items-center text-xs border-b border-gray-700/10 dark:border-gray-200/10 pb-1 last:border-0">
+                          <span className="truncate w-2/3" title={img.src}>{img.src.split('/').pop()}</span>
+                          <span className="font-mono font-bold text-green-500">{img.sizeKB} KB</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </MetricCard>
@@ -282,14 +314,69 @@ export default function On_Page_SEO() {
           </MetricCard>
           {seo.Heading_Hierarchy && (
             <MetricCard title="Hierarchy" description={desc.heading} score={seo.Heading_Hierarchy?.Score} value={seo.Heading_Hierarchy?.Score ? "Logical" : "Broken"} darkMode={darkMode} icon={List} className="md:col-span-2 lg:col-span-3">
-              {seo.Heading_Hierarchy?.Heading_Issues?.length > 0 ? (
-                <div className="space-y-1">
-                  <div className="font-semibold text-red-500">Hierarchy Issues:</div>
-                  {seo.Heading_Hierarchy.Heading_Issues.map((issue, i) => (
-                    <div key={i} className="text-xs opacity-90">• {issue.finding}</div>
+              <div className="space-y-4">
+                {/* Heading Counts */}
+                <div className="grid grid-cols-6 gap-2 text-center">
+                  {['H1', 'H2', 'H3', 'H4', 'H5', 'H6'].map((tag) => (
+                    <div key={tag} className={`p-2 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-50"}`}>
+                      <div className="text-xs font-bold opacity-60">{tag}</div>
+                      <div className={`font-bold text-lg ${seo.Heading_Hierarchy?.[`${tag}_Count`] > 0 ? (darkMode ? "text-blue-400" : "text-blue-600") : "text-gray-400"}`}>
+                        {seo.Heading_Hierarchy?.[`${tag}_Count`] || 0}
+                      </div>
+                    </div>
                   ))}
                 </div>
-              ) : <div className="text-green-500 font-medium">No hierarchy issues found.</div>}
+
+                {/* Heading List */}
+                {seo.Heading_Hierarchy?.Heading?.length > 0 && (
+                  <div className={`rounded-xl border ${darkMode ? "border-gray-700 bg-gray-900/50" : "border-gray-100 bg-gray-50"}`}>
+                    <div className={`px-4 py-2 border-b text-xs font-bold uppercase tracking-wider ${darkMode ? "border-gray-700 text-gray-400" : "border-gray-200 text-gray-500"}`}>
+                      Heading Structure
+                    </div>
+                    <div className="max-h-60 overflow-y-auto custom-scrollbar p-2 space-y-1">
+                      {seo.Heading_Hierarchy.Heading.map((h, i) => {
+                        const indent = {
+                          h1: '',
+                          h2: 'ml-4',
+                          h3: 'ml-8',
+                          h4: 'ml-12',
+                          h5: 'ml-16',
+                          h6: 'ml-20'
+                        };
+                        return (
+                          <div key={i} className={`flex items-start gap-3 p-2 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors ${indent[h.tag] || ''}`}>
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase flex-shrink-0 ${h.tag === 'h1' ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" :
+                              h.tag === 'h2' ? "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300" :
+                                "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+                              }`}>
+                              {h.tag}
+                            </span>
+                            <span className={`text-sm truncate ${h.tag === 'h1' ? "font-bold" :
+                              h.tag === 'h2' ? "font-semibold opacity-90" :
+                                "opacity-80"
+                              } ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
+                              {h.text}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Issues (if any) */}
+                {seo.Heading_Hierarchy?.Heading_Issues?.length > 0 && (
+                  <div className="space-y-2 pt-2 border-t border-dashed border-gray-200 dark:border-gray-700">
+                    <div className="font-semibold text-red-500 text-sm">Hierarchy Issues:</div>
+                    {seo.Heading_Hierarchy.Heading_Issues.map((issue, i) => (
+                      <div key={i} className="text-xs opacity-90 flex items-start gap-2">
+                        <AlertTriangle size={12} className="mt-0.5 flex-shrink-0 text-red-500" />
+                        <span>{issue.finding}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </MetricCard>
           )}
         </Section>

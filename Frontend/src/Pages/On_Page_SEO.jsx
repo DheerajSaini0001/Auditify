@@ -395,7 +395,20 @@ export default function On_Page_SEO() {
 
         {/* Technical SEO */}
         <Section title="Technical SEO" icon={Lock} darkMode={darkMode}>
-          <MetricCard title="HTTPS" description={desc.https} score={seo.HTTPS?.Score} value={seo.HTTPS?.Score ? "Secure" : "Insecure"} darkMode={darkMode} icon={Lock} />
+          <MetricCard title="HTTPS" description={seo.URL_Structure?.URL?.startsWith("https") ? "Secure connection." : "Insecure connection."} score={seo.HTTPS?.Score} value={seo.URL_Structure?.URL?.startsWith("https") ? "Secure Connection" : "Insecure Connection"} darkMode={darkMode} icon={Lock}>
+            {seo.URL_Structure?.URL && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className={`px-2 py-1 rounded text-xs font-bold ${seo.URL_Structure.URL.startsWith('https') ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300" : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"}`}>
+                    {seo.URL_Structure.URL.startsWith('https') ? "HTTPS" : "HTTP"}
+                  </div>
+                  <div className={`text-xs font-mono break-all ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
+                    {seo.URL_Structure.URL}
+                  </div>
+                </div>
+              </div>
+            )}
+          </MetricCard>
           <MetricCard title="Pagination" description={desc.pagination} score={seo.Pagination_Tags?.Score} value={seo.Pagination_Tags?.Score ? "Valid" : "None"} darkMode={darkMode} icon={List} />
           <MetricCard title="Duplication" description={desc.duplicate} score={seo.Duplicate_Content?.Score} value={seo.Duplicate_Content?.Score ? "Unique" : "Duplicate"} darkMode={darkMode} icon={Copy} />
           <MetricCard title="Link Profile" description={desc.links} score={seo.Links?.Score} value={seo.Links?.Total + " Total"} darkMode={darkMode} icon={Globe} className="md:col-span-2 lg:col-span-3">

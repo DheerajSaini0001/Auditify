@@ -399,19 +399,76 @@ export default function On_Page_SEO() {
           <MetricCard title="Pagination" description={desc.pagination} score={seo.Pagination_Tags?.Score} value={seo.Pagination_Tags?.Score ? "Valid" : "None"} darkMode={darkMode} icon={List} />
           <MetricCard title="Duplication" description={desc.duplicate} score={seo.Duplicate_Content?.Score} value={seo.Duplicate_Content?.Score ? "Unique" : "Duplicate"} darkMode={darkMode} icon={Copy} />
           <MetricCard title="Link Profile" description={desc.links} score={seo.Links?.Score} value={seo.Links?.Total + " Total"} darkMode={darkMode} icon={Globe} className="md:col-span-2 lg:col-span-3">
-            <div className="grid grid-cols-2 gap-4 mb-2">
-              <div className={`p-2 rounded ${darkMode ? "bg-gray-700" : "bg-gray-100"}`}>
-                <div className="text-xs uppercase opacity-60">Internal</div>
-                <div className="font-bold text-lg">{seo.Links?.Total_Internal}</div>
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className={`p-3 rounded-lg text-center ${darkMode ? "bg-gray-700/50" : "bg-gray-100/50"}`}>
+                <div className="text-xs font-bold uppercase tracking-wider opacity-60 mb-1">Internal</div>
+                <div className={`text-2xl font-black ${darkMode ? "text-blue-400" : "text-blue-600"}`}>{seo.Links?.Total_Internal}</div>
               </div>
-              <div className={`p-2 rounded ${darkMode ? "bg-gray-700" : "bg-gray-100"}`}>
-                <div className="text-xs uppercase opacity-60">External</div>
-                <div className="font-bold text-lg">{seo.Links?.Total_External}</div>
+              <div className={`p-3 rounded-lg text-center ${darkMode ? "bg-gray-700/50" : "bg-gray-100/50"}`}>
+                <div className="text-xs font-bold uppercase tracking-wider opacity-60 mb-1">External</div>
+                <div className={`text-2xl font-black ${darkMode ? "text-purple-400" : "text-purple-600"}`}>{seo.Links?.Total_External}</div>
               </div>
             </div>
-            {/* If there are broken links, ideally we show them here. Assuming seo.Links might have them or we just show counts */}
-            {seo.Links?.Broken_Internal > 0 && <div className="text-red-500 font-bold">Broken Internal: {seo.Links.Broken_Internal}</div>}
-            {seo.Links?.Broken_External > 0 && <div className="text-red-500 font-bold">Broken External: {seo.Links.Broken_External}</div>}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Internal Links List */}
+              {seo.Links?.Internal_Links?.length > 0 && (
+                <div className={`rounded-xl border ${darkMode ? "border-gray-700 bg-gray-900/30" : "border-gray-200 bg-gray-50/50"}`}>
+                  <div className={`px-4 py-2 border-b text-xs font-bold uppercase tracking-wider ${darkMode ? "border-gray-700 text-gray-400" : "border-gray-200 text-gray-500"}`}>
+                    Internal Links
+                  </div>
+                  <div className="max-h-60 overflow-y-auto custom-scrollbar p-2 space-y-1">
+                    {seo.Links.Internal_Links.map((link, i) => (
+                      <div key={i} className="group p-2 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className={`w-1.5 h-1.5 rounded-full ${darkMode ? "bg-blue-500" : "bg-blue-600"}`}></div>
+                          <span className={`text-xs font-bold ${darkMode ? "text-gray-300" : "text-gray-700"} truncate`}>
+                            {link.anchor || "No Anchor Text"}
+                          </span>
+                        </div>
+                        <div className={`text-[10px] pl-3.5 font-mono truncate ${darkMode ? "text-blue-400/80" : "text-blue-600/80"}`} title={link.full}>
+                          {link.link}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* External Links List */}
+              {seo.Links?.External_Links?.length > 0 && (
+                <div className={`rounded-xl border ${darkMode ? "border-gray-700 bg-gray-900/30" : "border-gray-200 bg-gray-50/50"}`}>
+                  <div className={`px-4 py-2 border-b text-xs font-bold uppercase tracking-wider ${darkMode ? "border-gray-700 text-gray-400" : "border-gray-200 text-gray-500"}`}>
+                    External Links
+                  </div>
+                  <div className="max-h-60 overflow-y-auto custom-scrollbar p-2 space-y-1">
+                    {seo.Links.External_Links.map((link, i) => (
+                      <div key={i} className="group p-2 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className={`w-1.5 h-1.5 rounded-full ${darkMode ? "bg-purple-500" : "bg-purple-600"}`}></div>
+                          <span className={`text-xs font-bold ${darkMode ? "text-gray-300" : "text-gray-700"} truncate`}>
+                            {link.anchor || "No Anchor Text"}
+                          </span>
+                          {/* External Icon */}
+                          <Globe size={10} className="opacity-40" />
+                        </div>
+                        <div className={`text-[10px] pl-3.5 font-mono truncate ${darkMode ? "text-purple-400/80" : "text-purple-600/80"}`} title={link.full}>
+                          {link.link}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Display Broken Link Counts if they exist */}
+            {(seo.Links?.Broken_Internal > 0 || seo.Links?.Broken_External > 0) && (
+              <div className="mt-4 flex gap-4 text-xs font-bold">
+                {seo.Links?.Broken_Internal > 0 && <span className="text-red-500">Broken Internal: {seo.Links.Broken_Internal}</span>}
+                {seo.Links?.Broken_External > 0 && <span className="text-red-500">Broken External: {seo.Links.Broken_External}</span>}
+              </div>
+            )}
           </MetricCard>
           {seo.URL_Slugs?.Slug_Check_Score == 1 && <MetricCard title="Slugs" description={desc.slug} score={seo.URL_Slugs?.Slug_Check_Score} value="Valid" darkMode={darkMode} icon={Link} />}
         </Section>

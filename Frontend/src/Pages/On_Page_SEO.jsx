@@ -301,16 +301,28 @@ export default function On_Page_SEO() {
         <Section title="Structure & Semantics" icon={Layout} darkMode={darkMode}>
           <MetricCard title="Semantic Tags" description={desc.semantic} score={seo.Semantic_Tags?.Article_Score} value={seo.Semantic_Tags?.Article_Score ? "Used" : "Unused"} darkMode={darkMode} icon={FileCode} />
           <MetricCard title="Contextual Links" description={desc.contextual} score={seo.Contextual_Linking?.Score} value={seo.Contextual_Linking?.Total_Contextual + " Links"} darkMode={darkMode} icon={Link}>
-            {seo.Contextual_Linking?.Missing_Links?.length > 0 && (
-              <div className="space-y-1">
-                <div className="font-semibold text-yellow-500">Missing from Menu:</div>
-                <div className="flex flex-wrap gap-1">
-                  {seo.Contextual_Linking.Missing_Links.map((link, i) => (
-                    <span key={i} className={`px-2 py-0.5 rounded text-xs ${darkMode ? "bg-gray-700" : "bg-gray-100"}`}>{link}</span>
-                  ))}
+            <div className="space-y-3">
+              {seo.Contextual_Linking?.Missing_Links?.length > 0 && (
+                <div className="space-y-1">
+                  <div className="font-semibold text-yellow-500">Missing from Menu:</div>
+                  <div className="flex flex-wrap gap-1">
+                    {seo.Contextual_Linking.Missing_Links.map((link, i) => (
+                      <span key={i} className={`px-2 py-0.5 rounded text-xs ${darkMode ? "bg-gray-700" : "bg-gray-100"}`}>{link}</span>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+              {seo.Contextual_Linking?.Issues?.length > 0 && (
+                <div className="space-y-1">
+                  <div className="font-semibold text-red-500">Issues Found:</div>
+                  <ul className="list-disc list-inside text-xs opacity-90 space-y-1">
+                    {seo.Contextual_Linking.Issues.map((issue, i) => (
+                      <li key={i}>{issue.finding || issue}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
           </MetricCard>
           {seo.Heading_Hierarchy && (
             <MetricCard title="Hierarchy" description={desc.heading} score={seo.Heading_Hierarchy?.Score} value={seo.Heading_Hierarchy?.Score ? "Logical" : "Broken"} darkMode={darkMode} icon={List} className="md:col-span-2 lg:col-span-3">

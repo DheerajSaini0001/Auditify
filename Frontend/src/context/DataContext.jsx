@@ -5,25 +5,11 @@ export const useData = () => useContext(DataContext);
 
 export const DataProvider = ({ children }) => {
 
-  // ⭐ PERSISTENT DATA LOAD (SAFE)
-  const [data, setData] = useState(() => {
-    try {
-      const saved = localStorage.getItem("appData");
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
-  });
+  // ⭐ DATA STATE (In-Memory Only)
+  const [data, setData] = useState(null);
 
   const [loading, setLoading] = useState(false);
   const [intervalId, setIntervalId] = useState(null);
-
-  // ⭐ SAVE to localStorage only when data changes
-  useEffect(() => {
-    if (data) {
-      localStorage.setItem("appData", JSON.stringify(data));
-    }
-  }, [data]);
 
   // 🚀 FETCH DATA (same)
   const fetchData = async (inputValue, device, report) => {
@@ -72,7 +58,7 @@ export const DataProvider = ({ children }) => {
         }
 
         setData(updated);
-      } catch {}
+      } catch { }
     }, 3000);
 
     setIntervalId(newInterval);
@@ -81,7 +67,7 @@ export const DataProvider = ({ children }) => {
   // 🧹 CLEAR
   const clearData = () => {
     setData(null);
-    localStorage.removeItem("appData");
+    // LocalStorage removal not needed as we don't store it anymore
     if (intervalId) clearInterval(intervalId);
   };
 

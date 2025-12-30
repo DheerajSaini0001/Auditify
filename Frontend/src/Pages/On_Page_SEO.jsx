@@ -136,7 +136,7 @@ export default function On_Page_SEO() {
   const allMetrics = [
     seo.Title, seo.Meta_Description, seo.URL_Structure, seo.Canonical, seo.H1,
     seo.Image, seo.Video, seo.Heading_Hierarchy, seo.Semantic_Tags, seo.Structured_Data,
-    seo.Contextual_Linking, seo.HTTPS, seo.Pagination_Tags, seo.Links, seo.Duplicate_Content, seo.URL_Slugs
+    seo.Contextual_Linking, seo.HTTPS, seo.Pagination_Tags, seo.Links, seo.Duplicate_Content, seo.URL_Slugs, seo.Hreflang
   ].filter(Boolean);
 
   const passedCount = allMetrics.filter(m => (m.Score !== undefined ? (m.Score > 1 ? 100 : m.Score * 100) : 0) >= 90).length;
@@ -159,7 +159,9 @@ export default function On_Page_SEO() {
     pagination: "Multi-page content.",
     links: "Internal and external navigation.",
     duplicate: "Content uniqueness.",
-    slug: "URL path readability."
+    duplicate: "Content uniqueness.",
+    slug: "URL path readability.",
+    hreflang: "Bidirectional language links."
   };
 
   return (
@@ -483,6 +485,46 @@ export default function On_Page_SEO() {
               </div>
             )}
           </MetricCard>
+          <MetricCard title="Hreflang" description={desc.hreflang} score={seo.Hreflang?.Score} value={seo.Hreflang?.Results ? seo.Hreflang.Results.length + " Tags" : "None"} darkMode={darkMode} icon={Globe}>
+            {seo.Hreflang?.Results?.length > 0 && (
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <div className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Link Validation</div>
+                  <div className="max-h-40 overflow-y-auto custom-scrollbar space-y-1">
+                    {seo.Hreflang.Results.map((res, i) => (
+                      <div key={i} className="flex justify-between items-center p-2 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors border border-transparent hover:border-gray-200 dark:hover:border-gray-700">
+                        <div className="flex flex-col min-w-0 pr-2">
+                          <div className="flex items-center gap-2">
+                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${darkMode ? "bg-gray-700 text-gray-300" : "bg-gray-200 text-gray-700"}`}>
+                              {res.hreflang}
+                            </span>
+                            <span className={`text-[10px] font-mono opacity-80 truncate max-w-[150px]`} title={res.target}>
+                              {res.target}
+                            </span>
+                          </div>
+                        </div>
+                        <div className={`text-xs font-bold whitespace-nowrap ${res.returnLink === "PASS" ? "text-green-500" : "text-red-500"}`}>
+                          {res.returnLink === "PASS" ? "Valid" : "Missing Return"}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {seo.Hreflang?.Issues?.length > 0 && (
+                  <div className="space-y-1 pt-2 border-t border-dashed border-gray-200 dark:border-gray-700">
+                    <div className="font-semibold text-red-500 text-xs">Validation Issues:</div>
+                    {seo.Hreflang.Issues.map((issue, i) => (
+                      <div key={i} className="text-xs opacity-90 flex items-start gap-2 text-red-400">
+                        <AlertTriangle size={12} className="mt-0.5 flex-shrink-0" />
+                        <span>{issue.finding}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </MetricCard>
           {seo.URL_Slugs?.Slug_Check_Score == 1 && <MetricCard title="Slugs" description={desc.slug} score={seo.URL_Slugs?.Slug_Check_Score} value="Valid" darkMode={darkMode} icon={Link} />}
         </Section>
 
@@ -500,6 +542,6 @@ export default function On_Page_SEO() {
         </div>
 
       </main>
-    </div>
+    </div >
   );
 }

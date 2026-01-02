@@ -133,35 +133,35 @@ export default function On_Page_SEO() {
   const textColor = darkMode ? "text-white" : "text-gray-900";
 
   // Calculate Passed/Failed
+  // Updated to support both old (Score) and new (score) formats temporarily or permanently
+  const getScore = (metric) => metric?.score !== undefined ? metric.score : metric?.Score;
+
   const allMetrics = [
     seo.Title, seo.Meta_Description, seo.URL_Structure, seo.Canonical, seo.H1,
     seo.Image, seo.Video, seo.Heading_Hierarchy, seo.Semantic_Tags, seo.Structured_Data,
-    seo.Contextual_Linking, seo.HTTPS, seo.Pagination_Tags, seo.Links, seo.Duplicate_Content, seo.URL_Slugs, seo.Hreflang
+    seo.Contextual_Linking, seo.HTTPS, seo.Links, seo.Duplicate_Content, seo.URL_Slugs, seo.Hreflang
   ].filter(Boolean);
 
-  const passedCount = allMetrics.filter(m => (m.Score !== undefined ? (m.Score > 1 ? 100 : m.Score * 100) : 0) >= 90).length;
-  const failedCount = allMetrics.filter(m => (m.Score !== undefined ? (m.Score > 1 ? 100 : m.Score * 100) : 0) < 90).length;
+  const passedCount = allMetrics.filter(m => (getScore(m) !== undefined ? (getScore(m) > 1 ? 100 : getScore(m) * 100) : 0) >= 90).length;
+  const failedCount = allMetrics.filter(m => (getScore(m) !== undefined ? (getScore(m) > 1 ? 100 : getScore(m) * 100) : 0) < 90).length;
 
   const desc = {
-    title: "Main headline in search results.",
-    meta: "Summary text in search results.",
-    url: "Address bar structure.",
-    canonical: "Prevents duplicate content.",
-    h1: "Main page heading.",
-    image: "Alt text for accessibility.",
-    video: "Embedded video content.",
+    title: seo.Title?.details || "Main headline in search results.",
+    meta: seo.Meta_Description?.details || "Summary text in search results.",
+    url: seo.URL_Structure?.details || "Address bar structure.",
+    canonical: seo.Canonical?.details || "Prevents duplicate content.",
+    h1: seo.H1?.details || "Main page heading.",
+    image: seo.Image?.details || "Alt text for accessibility.",
+    video: seo.Video?.details || "Embedded video content.",
     imagecompression: "File size optimization.",
-    heading: "Logical content structure.",
-    semantic: "HTML5 structural tags.",
+    heading: seo.Heading_Hierarchy?.details || "Logical content structure.",
+    semantic: seo.Semantic_Tags?.details || "HTML5 structural tags.",
     structured: "Schema.org metadata.",
-    contextual: "Internal links in content.",
-    https: "Secure connection.",
-    pagination: "Multi-page content.",
-    links: "Internal and external navigation.",
-    duplicate: "Content uniqueness.",
-    duplicate: "Content uniqueness.",
-    slug: "URL path readability.",
-    hreflang: "Bidirectional language links."
+    contextual: seo.Contextual_Linking?.details || "Internal links in content.",
+    https: seo.HTTPS?.details || "Secure connection.",
+    links: seo.Links?.details || "Internal and external navigation.",
+    duplicate: seo.Duplicate_Content?.details || "Content uniqueness.",
+    slug: seo.URL_Slugs?.details || "URL path readability.",
   };
 
   return (
@@ -216,110 +216,185 @@ export default function On_Page_SEO() {
 
         {/* Content Essentials */}
         <Section title="Content Essentials" icon={FileText} darkMode={darkMode}>
-          <MetricCard title="Title Tag" description={desc.title} score={seo.Title?.Score} value={seo.Title?.Title_Length + " chars"} darkMode={darkMode} icon={Tag}>
-            {seo.Title?.Title && <div className="italic">"{seo.Title.Title}"</div>}
+          <MetricCard title="Title Tag" description={desc.title} score={seo.Title?.score} value={seo.Title?.meta?.length + " chars"} darkMode={darkMode} icon={Tag}>
+            {seo.Title?.meta?.title && <div className="italic">"{seo.Title.meta.title}"</div>}
           </MetricCard>
-          <MetricCard title="Meta Description" description={desc.meta} score={seo.Meta_Description?.Score} value={seo.Meta_Description?.MetaDescription_Length + " chars"} darkMode={darkMode} icon={FileText}>
-            {seo.Meta_Description?.MetaDescription && <div className="italic">"{seo.Meta_Description.MetaDescription}"</div>}
+          <MetricCard title="Meta Description" description={desc.meta} score={seo.Meta_Description?.score} value={seo.Meta_Description?.meta?.length + " chars"} darkMode={darkMode} icon={FileText}>
+            {seo.Meta_Description?.meta?.description && <div className="italic">"{seo.Meta_Description.meta.description}"</div>}
           </MetricCard>
-          <MetricCard title="Canonical Tag" description={desc.canonical} score={seo.Canonical?.Score} value={seo.Canonical?.Score ? "Valid" : "Invalid"} darkMode={darkMode} icon={Copy}>
-            {seo.Canonical?.Canonical && <div className="break-all">{seo.Canonical.Canonical}</div>}
+          <MetricCard title="Canonical Tag" description={desc.canonical} score={seo.Canonical?.score} value={seo.Canonical?.meta?.isSelfReferencing ? "Self-Ref" : (seo.Canonical?.score === 1 ? "Valid" : "Invalid")} darkMode={darkMode} icon={Copy}>
+            <div className="space-y-1 text-xs">
+              {seo.Canonical?.details && <div className={seo.Canonical.score === 1 ? "text-green-500 font-medium" : "text-amber-500"}>{seo.Canonical.details}</div>}
+              {seo.Canonical?.meta?.canonical && (
+                <div className={`break-all p-1.5 rounded border ${darkMode ? "bg-gray-800 border-gray-700 font-mono text-gray-300" : "bg-gray-50 border-gray-200 font-mono text-gray-600"}`}>
+                  {seo.Canonical.meta.canonical}
+                </div>
+              )}
+            </div>
           </MetricCard>
-          <MetricCard title="URL Structure" description={desc.url} score={seo.URL_Structure?.Score} value={seo.URL_Structure?.Score ? "Clean" : "Poor"} darkMode={darkMode} icon={Link}>
-            {seo.URL_Structure?.URL && <div className="break-all">{seo.URL_Structure.URL}</div>}
+          <MetricCard title="URL Structure" description={desc.url} score={seo.URL_Structure?.score} value={seo.URL_Structure?.score === 1 ? "Clean" : "Issues"} darkMode={darkMode} icon={Link}>
+            <div className="space-y-2">
+              {seo.URL_Structure?.meta?.url && <div className="break-all p-1.5 rounded border font-mono text-xs dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 bg-gray-50 border-gray-200 text-gray-600">{seo.URL_Structure.meta.url}</div>}
+              {seo.URL_Structure?.meta?.issues?.length > 0 && (
+                <div className="space-y-1">
+                  <div className="font-semibold text-red-500 text-xs uppercase">Structure Issues:</div>
+                  {seo.URL_Structure.meta.issues.map((issue, i) => (
+                    <div key={i} className="text-xs opacity-90 flex items-start gap-2">
+                      <XCircle size={12} className="mt-0.5 flex-shrink-0 text-red-500" />
+                      <span>{issue}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </MetricCard>
-          <MetricCard title="H1 Tag" description={desc.h1} score={seo.H1?.Score} value={seo.H1?.H1_Count + " Found"} darkMode={darkMode} icon={Layout}>
-            {seo.H1?.H1_Content?.map((h, i) => <div key={i} className="mb-1">• {h}</div>)}
+          <MetricCard title="H1 Tag" description={desc.h1} score={seo.H1?.score} value={seo.H1?.meta?.count + " Found"} darkMode={darkMode} icon={Layout}>
+            {seo.H1?.meta?.content?.map((h, i) => <div key={i} className="mb-1">• {h}</div>)}
           </MetricCard>
         </Section>
 
         {/* Media & Accessibility */}
         <Section title="Media & Accessibility" icon={ImageIcon} darkMode={darkMode}>
-          {seo.Image?.Image_Exist != 0 && (
-            <MetricCard title="Image Metadata" description="Alt text and Titles." score={seo.Image?.Image_Alt_Meaningfull_Exist} value={seo.Image?.Image_Alt_Meaningfull_Exist ? "Optimized" : "Issues"} darkMode={darkMode} icon={ImageIcon}>
-              {/* Missing Alt */}
-              {seo.Image?.Without_Alt_Incomplete_Status?.length > 0 && (
-                <div className="space-y-1 mb-2">
-                  <div className="font-semibold text-red-500">Missing Alt Text ({seo.Image.Without_Alt_Incomplete_Status.length}):</div>
-                  <div className="max-h-32 overflow-y-auto custom-scrollbar">
-                    {seo.Image.Without_Alt_Incomplete_Status.map((img, i) => (
-                      <div key={i} className="truncate text-xs opacity-80 mb-0.5" title={img.src}>{img.src.split('/').pop()}</div>
-                    ))}
+          {(seo.Image?.meta?.total > 0 || seo.Image?.score !== undefined) && (
+            <MetricCard title="Image Metadata" description="Alt text check." score={seo.Image?.meta?.altScore} value={seo.Image?.meta?.withAlt + "/" + seo.Image?.meta?.total + " optimized"} darkMode={darkMode} icon={ImageIcon}>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className={`p-2 rounded ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+                    <div className="opacity-70">Total Images</div>
+                    <div className="text-lg font-bold">{seo.Image?.meta?.total || 0}</div>
+                  </div>
+                  <div className={`p-2 rounded ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+                    <div className="opacity-70">Alt Text</div>
+                    <div className="text-lg font-bold">{seo.Image?.meta?.withAlt || 0} <span className="text-[10px] opacity-60">({Math.round((seo.Image?.meta?.altScore || 0) * 100)}%)</span></div>
+                  </div>
+                  <div className={`p-2 rounded ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+                    <div className="opacity-70">Meaningful</div>
+                    <div className="text-lg font-bold">{seo.Image?.meta?.meaningfulAlt || 0}</div>
+                  </div>
+                  <div className={`p-2 rounded ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+                    <div className="opacity-70">Title Attr</div>
+                    <div className="text-lg font-bold">{seo.Image?.meta?.total - (seo.Image?.meta?.missingTitle?.length || 0)}</div>
                   </div>
                 </div>
-              )}
-              {/* Missing Title */}
-              {seo.Image?.Without_Title_Incomplete_Status?.length > 0 && (
-                <div className="space-y-1">
-                  <div className="font-semibold text-red-500">Missing Title Text ({seo.Image.Without_Title_Incomplete_Status.length}):</div>
-                  <div className="max-h-32 overflow-y-auto custom-scrollbar">
-                    {seo.Image.Without_Title_Incomplete_Status.map((img, i) => (
-                      <div key={i} className="truncate text-xs opacity-80 mb-0.5" title={img.src}>{img.src.split('/').pop()}</div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </MetricCard>
-          )}
-          <MetricCard title="Compression" description={desc.imagecompression} score={seo.Image?.Image_Compression_Exist} value={seo.Image?.Image_Compression_Exist ? "Good" : "Heavy"} darkMode={darkMode} icon={ImageIcon}>
-            {seo.Image?.Image_Size?.length > 0 && (
-              <div className="space-y-4">
-                {/* Heavy Images (> 100 KB) */}
-                {seo.Image.Image_Size.filter(i => parseFloat(i.sizeKB) > 100).length > 0 && (
+
+                {/* Missing Alt */}
+                {seo.Image?.meta?.missingAlt?.length > 0 && (
                   <div className="space-y-1">
-                    <div className="font-semibold text-red-500">Heavy Images &gt; 100 KB ({seo.Image.Image_Size.filter(i => parseFloat(i.sizeKB) > 100).length}):</div>
-                    <div className="max-h-32 overflow-y-auto custom-scrollbar space-y-1">
-                      {seo.Image.Image_Size.filter(i => parseFloat(i.sizeKB) > 100).map((img, i) => (
-                        <div key={i} className="flex justify-between items-center text-xs border-b border-gray-700/10 dark:border-gray-200/10 pb-1 last:border-0">
-                          <span className="truncate w-2/3" title={img.src}>{img.src.split('/').pop()}</span>
-                          <span className="font-mono font-bold text-red-500">{img.sizeKB} KB</span>
-                        </div>
+                    <div className="font-semibold text-red-500 text-xs uppercase flex items-center gap-1">
+                      <AlertTriangle size={10} />
+                      Missing Alt Text ({seo.Image.meta.missingAlt.length}):
+                    </div>
+                    <div className={`max-h-24 overflow-y-auto custom-scrollbar p-1.5 rounded border ${darkMode ? "bg-red-900/10 border-red-900/30" : "bg-red-50 border-red-100"}`}>
+                      {seo.Image.meta.missingAlt.map((img, i) => (
+                        <div key={i} className="truncate text-[10px] opacity-80 mb-0.5 font-mono" title={img.src}>• {img.src.split('/').pop() || "unknown"}</div>
                       ))}
                     </div>
                   </div>
                 )}
 
-                {/* Optimized Images (< 100 KB) */}
-                {seo.Image.Image_Size.filter(i => parseFloat(i.sizeKB) <= 100).length > 0 && (
+                {/* Missing Title */}
+                {seo.Image?.meta?.missingTitle?.length > 0 && (
                   <div className="space-y-1">
-                    <div className="font-semibold text-green-500">Optimized Images &lt; 100 KB ({seo.Image.Image_Size.filter(i => parseFloat(i.sizeKB) <= 100).length}):</div>
-                    <div className="max-h-32 overflow-y-auto custom-scrollbar space-y-1">
-                      {seo.Image.Image_Size.filter(i => parseFloat(i.sizeKB) <= 100).map((img, i) => (
-                        <div key={i} className="flex justify-between items-center text-xs border-b border-gray-700/10 dark:border-gray-200/10 pb-1 last:border-0">
-                          <span className="truncate w-2/3" title={img.src}>{img.src.split('/').pop()}</span>
-                          <span className="font-mono font-bold text-green-500">{img.sizeKB} KB</span>
-                        </div>
+                    <div className="font-semibold text-amber-500 text-xs uppercase flex items-center gap-1">
+                      <Info size={10} />
+                      Missing Title Attr ({seo.Image.meta.missingTitle.length}):
+                    </div>
+                    <div className={`max-h-24 overflow-y-auto custom-scrollbar p-1.5 rounded border ${darkMode ? "bg-amber-900/10 border-amber-900/30" : "bg-amber-50 border-amber-100"}`}>
+                      {seo.Image.meta.missingTitle.map((img, i) => (
+                        <div key={i} className="truncate text-[10px] opacity-80 mb-0.5 font-mono" title={img.src}>• {img.src.split('/').pop() || "unknown"}</div>
                       ))}
                     </div>
                   </div>
                 )}
               </div>
+            </MetricCard>
+          )}
+
+          <MetricCard title="Compression" description={desc.imagecompression} score={seo.Image?.meta?.sizeScore} value={seo.Image?.meta?.sizeScore === 1 ? "Good" : "Heavy Images"} darkMode={darkMode} icon={ImageIcon}>
+            {seo.Image?.meta?.largeImages?.length > 0 ? (
+              <div className="space-y-1">
+                <div className="font-semibold text-red-500 text-xs uppercase flex items-center gap-1">
+                  <AlertTriangle size={10} />
+                  Large Images ({">"}150KB):
+                </div>
+                <div className={`max-h-32 overflow-y-auto custom-scrollbar p-1.5 rounded border ${darkMode ? "bg-red-900/10 border-red-900/30" : "bg-red-50 border-red-100"}`}>
+                  {seo.Image.meta.largeImages.map((img, i) => (
+                    <div key={i} className="flex justify-between items-center text-[10px] mb-1 last:mb-0">
+                      <span className="truncate opacity-80 font-mono w-2/3" title={img.src}>{img.src.split('/').pop() || "unknown"}</span>
+                      <span className="font-bold text-red-500">{img.size} KB</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="text-sm opacity-80 flex items-center gap-2">
+                <CheckCircle size={14} className="text-green-500" />
+                <span>All checked images are under 150KB.</span>
+              </div>
             )}
           </MetricCard>
-          {seo.Video?.Video_Exist != 0 && <MetricCard title="Video" description={desc.video} score={seo.Video?.Video_Exist} value={seo.Video?.Video_Exist ? "Present" : "Missing"} darkMode={darkMode} icon={Video} />}
+
+          <MetricCard title="Internal Videos" description={desc.video} score={seo.Video?.score} value={seo.Video?.meta?.total > 0 ? seo.Video?.meta?.total + " Found" : "None"} darkMode={darkMode} icon={Video}>
+            {seo.Video?.meta?.total > 0 ? (
+              <div className="grid grid-cols-2 gap-2 text-xs mt-2">
+                <div className={`p-2 rounded ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+                  <div className="opacity-70">Total</div>
+                  <div className="text-lg font-bold">{seo.Video.meta.total}</div>
+                </div>
+                <div className={`p-2 rounded ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+                  <div className="opacity-70">Embedded</div>
+                  <div className="text-lg font-bold">{seo.Video.meta.embeddingCount ?? seo.Video.meta.embedding}</div>
+                </div>
+                <div className={`p-2 rounded ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+                  <div className="opacity-70">Lazy Load</div>
+                  <div className={`text-lg font-bold ${seo.Video.meta.lazyCount === seo.Video.meta.total ? "text-green-500" : "text-yellow-500"}`}>{seo.Video.meta.lazyCount || 0}</div>
+                </div>
+                <div className={`p-2 rounded ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+                  <div className="opacity-70">Metadata</div>
+                  <div className={`text-lg font-bold ${seo.Video.meta.metaCount > 0 ? "text-green-500" : "text-red-500"}`}>{seo.Video.meta.metaCount || 0}</div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-xs opacity-60 italic">No video content detected.</div>
+            )}
+          </MetricCard>
         </Section>
 
         {/* Structure & Semantics */}
         <Section title="Structure & Semantics" icon={Layout} darkMode={darkMode}>
-          <MetricCard title="Semantic Tags" description={desc.semantic} score={seo.Semantic_Tags?.Article_Score} value={seo.Semantic_Tags?.Article_Score ? "Used" : "Unused"} darkMode={darkMode} icon={FileCode} />
-          <MetricCard title="Contextual Links" description={desc.contextual} score={seo.Contextual_Linking?.Score} value={seo.Contextual_Linking?.Total_Contextual + " Links"} darkMode={darkMode} icon={Link}>
+          <MetricCard title="Semantic Tags" description={desc.semantic} score={seo.Semantic_Tags?.score} value={seo.Semantic_Tags?.score === 1 ? "Excellent" : "Partial"} darkMode={darkMode} icon={FileCode}>
+            <div className="grid grid-cols-3 gap-2 mt-2">
+              {['main', 'nav', 'header', 'footer', 'article', 'section'].map((tag) => {
+                const isPresent = seo.Semantic_Tags?.meta?.[tag] === 1;
+                return (
+                  <div key={tag} className={`px-2 py-1.5 rounded text-xs text-center border font-semibold capitalize ${isPresent
+                    ? (darkMode ? "bg-green-900/20 border-green-800/30 text-green-400" : "bg-green-50 border-green-100 text-green-700")
+                    : (darkMode ? "bg-gray-800 border-gray-700 text-gray-500" : "bg-gray-100 border-gray-200 text-gray-400")
+                    }`}>
+                    {tag}
+                  </div>
+                );
+              })}
+            </div>
+          </MetricCard>
+          <MetricCard title="Contextual Links" description={desc.contextual} score={seo.Contextual_Linking?.score} value={seo.Contextual_Linking?.meta?.totalContextual + " Links"} darkMode={darkMode} icon={Link}>
             <div className="space-y-3">
-              {seo.Contextual_Linking?.Missing_Links?.length > 0 && (
+              {seo.Contextual_Linking?.meta?.missingLinks?.length > 0 && (
                 <div className="space-y-1">
                   <div className="font-semibold text-yellow-500">Missing from Menu:</div>
                   <div className="flex flex-wrap gap-1">
-                    {seo.Contextual_Linking.Missing_Links.map((link, i) => (
+                    {seo.Contextual_Linking.meta.missingLinks.map((link, i) => (
                       <span key={i} className={`px-2 py-0.5 rounded text-xs ${darkMode ? "bg-gray-700" : "bg-gray-100"}`}>{link}</span>
                     ))}
                   </div>
                 </div>
               )}
-              {seo.Contextual_Linking?.Issues?.length > 0 && (
+              {seo.Contextual_Linking?.meta?.issues?.length > 0 && (
                 <div className="space-y-1">
                   <div className="font-semibold text-red-500">Issues Found:</div>
                   <ul className="list-disc list-inside text-xs opacity-90 space-y-1">
-                    {seo.Contextual_Linking.Issues.map((issue, i) => (
-                      <li key={i}>{issue.finding || issue}</li>
+                    {seo.Contextual_Linking.meta.issues.map((issue, i) => (
+                      <li key={i}>{typeof issue === 'string' ? issue : issue.finding}</li>
                     ))}
                   </ul>
                 </div>
@@ -327,28 +402,28 @@ export default function On_Page_SEO() {
             </div>
           </MetricCard>
           {seo.Heading_Hierarchy && (
-            <MetricCard title="Hierarchy" description={desc.heading} score={seo.Heading_Hierarchy?.Score} value={seo.Heading_Hierarchy?.Score ? "Logical" : "Broken"} darkMode={darkMode} icon={List} className="md:col-span-2 lg:col-span-3">
+            <MetricCard title="Hierarchy" description={desc.heading} score={seo.Heading_Hierarchy?.score} value={seo.Heading_Hierarchy?.score ? "Logical" : "Broken"} darkMode={darkMode} icon={List} className="md:col-span-2 lg:col-span-3">
               <div className="space-y-4">
                 {/* Heading Counts */}
                 <div className="grid grid-cols-6 gap-2 text-center">
-                  {['H1', 'H2', 'H3', 'H4', 'H5', 'H6'].map((tag) => (
+                  {['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].map((tag) => (
                     <div key={tag} className={`p-2 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-50"}`}>
-                      <div className="text-xs font-bold opacity-60">{tag}</div>
-                      <div className={`font-bold text-lg ${seo.Heading_Hierarchy?.[`${tag}_Count`] > 0 ? (darkMode ? "text-blue-400" : "text-blue-600") : "text-gray-400"}`}>
-                        {seo.Heading_Hierarchy?.[`${tag}_Count`] || 0}
+                      <div className="text-xs font-bold opacity-60 uppercase">{tag}</div>
+                      <div className={`font-bold text-lg ${seo.Heading_Hierarchy?.meta?.counts?.[tag] > 0 ? (darkMode ? "text-blue-400" : "text-blue-600") : "text-gray-400"}`}>
+                        {seo.Heading_Hierarchy?.meta?.counts?.[tag] || 0}
                       </div>
                     </div>
                   ))}
                 </div>
 
                 {/* Heading List */}
-                {seo.Heading_Hierarchy?.Heading?.length > 0 && (
+                {seo.Heading_Hierarchy?.meta?.headings?.length > 0 && (
                   <div className={`rounded-xl border ${darkMode ? "border-gray-700 bg-gray-900/50" : "border-gray-100 bg-gray-50"}`}>
                     <div className={`px-4 py-2 border-b text-xs font-bold uppercase tracking-wider ${darkMode ? "border-gray-700 text-gray-400" : "border-gray-200 text-gray-500"}`}>
                       Heading Structure
                     </div>
                     <div className="max-h-60 overflow-y-auto custom-scrollbar p-2 space-y-1">
-                      {seo.Heading_Hierarchy.Heading.map((h, i) => {
+                      {seo.Heading_Hierarchy.meta.headings.map((h, i) => {
                         const indent = {
                           h1: '',
                           h2: 'ml-4',
@@ -379,10 +454,10 @@ export default function On_Page_SEO() {
                 )}
 
                 {/* Issues (if any) */}
-                {seo.Heading_Hierarchy?.Heading_Issues?.length > 0 && (
+                {seo.Heading_Hierarchy?.meta?.issues?.length > 0 && (
                   <div className="space-y-2 pt-2 border-t border-dashed border-gray-200 dark:border-gray-700">
                     <div className="font-semibold text-red-500 text-sm">Hierarchy Issues:</div>
-                    {seo.Heading_Hierarchy.Heading_Issues.map((issue, i) => (
+                    {seo.Heading_Hierarchy.meta.issues.map((issue, i) => (
                       <div key={i} className="text-xs opacity-90 flex items-start gap-2">
                         <AlertTriangle size={12} className="mt-0.5 flex-shrink-0 text-red-500" />
                         <span>{issue.finding}</span>
@@ -397,52 +472,79 @@ export default function On_Page_SEO() {
 
         {/* Technical SEO */}
         <Section title="Technical SEO" icon={Lock} darkMode={darkMode}>
-          <MetricCard title="HTTPS" description={seo.URL_Structure?.URL?.startsWith("https") ? "Secure connection." : "Insecure connection."} score={seo.HTTPS?.Score} value={seo.URL_Structure?.URL?.startsWith("https") ? "Secure Connection" : "Insecure Connection"} darkMode={darkMode} icon={Lock}>
-            {seo.URL_Structure?.URL && (
+          <MetricCard title="HTTPS" description={seo.HTTPS?.details || "Secure connection."} score={seo.HTTPS?.score} value={seo.HTTPS?.score === 1 ? "Secure Connection" : "Insecure Connection"} darkMode={darkMode} icon={Lock}>
+            {seo.HTTPS?.meta?.url && (
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <div className={`px-2 py-1 rounded text-xs font-bold ${seo.URL_Structure.URL.startsWith('https') ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300" : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"}`}>
-                    {seo.URL_Structure.URL.startsWith('https') ? "HTTPS" : "HTTP"}
+                  <div className={`px-2 py-1 rounded text-xs font-bold ${seo.HTTPS.score === 1 ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300" : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"}`}>
+                    {seo.HTTPS.score === 1 ? "HTTPS" : "HTTP"}
                   </div>
                   <div className={`text-xs font-mono break-all ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
-                    {seo.URL_Structure.URL}
+                    {seo.HTTPS.meta.url}
                   </div>
                 </div>
               </div>
             )}
           </MetricCard>
-          <MetricCard title="Pagination" description={desc.pagination} score={seo.Pagination_Tags?.Score} value={seo.Pagination_Tags?.Score ? "Valid" : "None"} darkMode={darkMode} icon={List} />
-          <MetricCard title="Duplication" description={desc.duplicate} score={seo.Duplicate_Content?.Score} value={seo.Duplicate_Content?.Score ? "Unique" : "Duplicate"} darkMode={darkMode} icon={Copy} />
-          <MetricCard title="Link Profile" description={desc.links} score={seo.Links?.Score} value={seo.Links?.Total + " Total"} darkMode={darkMode} icon={Globe} className="md:col-span-2 lg:col-span-3">
+          <MetricCard
+            title="Content Quality"
+            description={desc.duplicate}
+            score={seo.Duplicate_Content?.score}
+            value={seo.Duplicate_Content?.score === 1 ? "Good" : seo.Duplicate_Content?.score === 0.5 ? "Repetitive" : "Thin"}
+            darkMode={darkMode}
+            icon={Copy}
+          >
+            <div className="space-y-3">
+              <div className="text-sm font-semibold">
+                Total Words: <span className={darkMode ? "text-blue-400" : "text-blue-600"}>{seo.Duplicate_Content?.meta?.wordCount || 0}</span>
+              </div>
+
+              {seo.Duplicate_Content?.meta?.repeatedSentences?.length > 0 && (
+                <div className="space-y-1">
+                  <div className="font-semibold text-red-500 text-xs uppercase tracking-wide">Repetitive Sentences:</div>
+                  <div className="max-h-40 overflow-y-auto custom-scrollbar space-y-1">
+                    {seo.Duplicate_Content.meta.repeatedSentences.map((item, i) => (
+                      <div key={i} className="flex justify-between items-start gap-2 p-2 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors border border-transparent hover:border-gray-200 dark:hover:border-gray-700">
+                        <span className="text-xs opacity-90 italic line-clamp-2" title={item.text}>
+                          "{item.text}"
+                        </span>
+                        <span className="text-xs font-bold text-red-500 whitespace-nowrap bg-red-100 dark:bg-red-900/30 px-1.5 py-0.5 rounded">
+                          x{item.count}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </MetricCard>
+          <MetricCard title="Link Profile" description={desc.links} score={seo.Links?.score} value={seo.Links?.meta?.total + " Total"} darkMode={darkMode} icon={Globe} className="md:col-span-2 lg:col-span-3">
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div className={`p-3 rounded-lg text-center ${darkMode ? "bg-gray-700/50" : "bg-gray-100/50"}`}>
                 <div className="text-xs font-bold uppercase tracking-wider opacity-60 mb-1">Internal</div>
-                <div className={`text-2xl font-black ${darkMode ? "text-blue-400" : "text-blue-600"}`}>{seo.Links?.Total_Internal}</div>
+                <div className={`text-2xl font-black ${darkMode ? "text-blue-400" : "text-blue-600"}`}>{seo.Links?.meta?.internal}</div>
               </div>
               <div className={`p-3 rounded-lg text-center ${darkMode ? "bg-gray-700/50" : "bg-gray-100/50"}`}>
                 <div className="text-xs font-bold uppercase tracking-wider opacity-60 mb-1">External</div>
-                <div className={`text-2xl font-black ${darkMode ? "text-purple-400" : "text-purple-600"}`}>{seo.Links?.Total_External}</div>
+                <div className={`text-2xl font-black ${darkMode ? "text-purple-400" : "text-purple-600"}`}>{seo.Links?.meta?.external}</div>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Internal Links List */}
-              {seo.Links?.Internal_Links?.length > 0 && (
+              {seo.Links?.meta?.internalLinks?.length > 0 && (
                 <div className={`rounded-xl border ${darkMode ? "border-gray-700 bg-gray-900/30" : "border-gray-200 bg-gray-50/50"}`}>
                   <div className={`px-4 py-2 border-b text-xs font-bold uppercase tracking-wider ${darkMode ? "border-gray-700 text-gray-400" : "border-gray-200 text-gray-500"}`}>
                     Internal Links
                   </div>
                   <div className="max-h-60 overflow-y-auto custom-scrollbar p-2 space-y-1">
-                    {seo.Links.Internal_Links.map((link, i) => (
+                    {seo.Links.meta.internalLinks.map((link, i) => (
                       <div key={i} className="group p-2 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
                         <div className="flex items-center gap-2 mb-1">
                           <div className={`w-1.5 h-1.5 rounded-full ${darkMode ? "bg-blue-500" : "bg-blue-600"}`}></div>
                           <span className={`text-xs font-bold ${darkMode ? "text-gray-300" : "text-gray-700"} truncate`}>
-                            {link.anchor || "No Anchor Text"}
+                            {link}
                           </span>
-                        </div>
-                        <div className={`text-[10px] pl-3.5 font-mono truncate ${darkMode ? "text-blue-400/80" : "text-blue-600/80"}`} title={link.full}>
-                          {link.link}
                         </div>
                       </div>
                     ))}
@@ -451,24 +553,21 @@ export default function On_Page_SEO() {
               )}
 
               {/* External Links List */}
-              {seo.Links?.External_Links?.length > 0 && (
+              {seo.Links?.meta?.externalLinks?.length > 0 && (
                 <div className={`rounded-xl border ${darkMode ? "border-gray-700 bg-gray-900/30" : "border-gray-200 bg-gray-50/50"}`}>
                   <div className={`px-4 py-2 border-b text-xs font-bold uppercase tracking-wider ${darkMode ? "border-gray-700 text-gray-400" : "border-gray-200 text-gray-500"}`}>
                     External Links
                   </div>
                   <div className="max-h-60 overflow-y-auto custom-scrollbar p-2 space-y-1">
-                    {seo.Links.External_Links.map((link, i) => (
+                    {seo.Links.meta.externalLinks.map((link, i) => (
                       <div key={i} className="group p-2 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
                         <div className="flex items-center gap-2 mb-1">
                           <div className={`w-1.5 h-1.5 rounded-full ${darkMode ? "bg-purple-500" : "bg-purple-600"}`}></div>
                           <span className={`text-xs font-bold ${darkMode ? "text-gray-300" : "text-gray-700"} truncate`}>
-                            {link.anchor || "No Anchor Text"}
+                            {link}
                           </span>
                           {/* External Icon */}
                           <Globe size={10} className="opacity-40" />
-                        </div>
-                        <div className={`text-[10px] pl-3.5 font-mono truncate ${darkMode ? "text-purple-400/80" : "text-purple-600/80"}`} title={link.full}>
-                          {link.link}
                         </div>
                       </div>
                     ))}
@@ -478,38 +577,42 @@ export default function On_Page_SEO() {
             </div>
 
             {/* Display Broken Link Counts if they exist */}
-            {(seo.Links?.Broken_Internal > 0 || seo.Links?.Broken_External > 0) && (
+            {(seo.Links?.meta?.brokenInternal > 0 || seo.Links?.meta?.brokenExternal > 0) && (
               <div className="mt-4 flex gap-4 text-xs font-bold">
-                {seo.Links?.Broken_Internal > 0 && <span className="text-red-500">Broken Internal: {seo.Links.Broken_Internal}</span>}
-                {seo.Links?.Broken_External > 0 && <span className="text-red-500">Broken External: {seo.Links.Broken_External}</span>}
+                {seo.Links?.meta?.brokenInternal > 0 && <span className="text-red-500">Broken Internal: {seo.Links.meta.brokenInternal}</span>}
+                {seo.Links?.meta?.brokenExternal > 0 && <span className="text-red-500">Broken External: {seo.Links.meta.brokenExternal}</span>}
               </div>
             )}
           </MetricCard>
-          <MetricCard title="Hreflang" description={desc.hreflang} score={seo.Hreflang?.Score} value={seo.Hreflang?.Results ? seo.Hreflang.Results.length + " Tags" : "None"} darkMode={darkMode} icon={Globe}>
-            {seo.Hreflang?.Results?.length > 0 && (
+
+          {/* Hreflang - Wrapped in Card */}
+          {(seo.Hreflang?.Results?.length > 0 || seo.Hreflang?.Issues?.length > 0) && (
+            <MetricCard title="Hreflang" description="International targeting." score={seo.Hreflang?.score} value={seo.Hreflang?.score === 1 ? "Valid" : "Issues"} darkMode={darkMode} icon={Globe}>
               <div className="space-y-3">
-                <div className="space-y-1">
-                  <div className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Link Validation</div>
-                  <div className="max-h-40 overflow-y-auto custom-scrollbar space-y-1">
-                    {seo.Hreflang.Results.map((res, i) => (
-                      <div key={i} className="flex justify-between items-center p-2 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors border border-transparent hover:border-gray-200 dark:hover:border-gray-700">
-                        <div className="flex flex-col min-w-0 pr-2">
-                          <div className="flex items-center gap-2">
-                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${darkMode ? "bg-gray-700 text-gray-300" : "bg-gray-200 text-gray-700"}`}>
-                              {res.hreflang}
-                            </span>
-                            <span className={`text-[10px] font-mono opacity-80 truncate max-w-[150px]`} title={res.target}>
-                              {res.target}
-                            </span>
+                {seo.Hreflang?.Results?.length > 0 && (
+                  <div className="space-y-1">
+                    <div className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Link Validation</div>
+                    <div className="max-h-32 overflow-y-auto custom-scrollbar space-y-1">
+                      {seo.Hreflang.Results.map((res, i) => (
+                        <div key={i} className="flex justify-between items-center p-2 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors border border-transparent hover:border-gray-200 dark:hover:border-gray-700">
+                          <div className="flex flex-col min-w-0 pr-2">
+                            <div className="flex items-center gap-2">
+                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${darkMode ? "bg-gray-700 text-gray-300" : "bg-gray-200 text-gray-700"}`}>
+                                {res.hreflang}
+                              </span>
+                              <span className={`text-[10px] font-mono opacity-80 truncate max-w-[150px]`} title={res.target}>
+                                {res.target}
+                              </span>
+                            </div>
+                          </div>
+                          <div className={`text-xs font-bold whitespace-nowrap ${res.returnLink === "PASS" ? "text-green-500" : "text-red-500"}`}>
+                            {res.returnLink === "PASS" ? "Valid" : "Missing"}
                           </div>
                         </div>
-                        <div className={`text-xs font-bold whitespace-nowrap ${res.returnLink === "PASS" ? "text-green-500" : "text-red-500"}`}>
-                          {res.returnLink === "PASS" ? "Valid" : "Missing Return"}
-                        </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {seo.Hreflang?.Issues?.length > 0 && (
                   <div className="space-y-1 pt-2 border-t border-dashed border-gray-200 dark:border-gray-700">
@@ -523,9 +626,35 @@ export default function On_Page_SEO() {
                   </div>
                 )}
               </div>
-            )}
+            </MetricCard>
+          )}
+
+          {/* Slugs - Always show */}
+          <MetricCard title="URL Slugs" description={desc.slug} score={seo.URL_Slugs?.score} value={seo.URL_Slugs?.score === 1 ? "Valid" : "Issues Found"} darkMode={darkMode} icon={Link}>
+            <div className="space-y-2">
+              {seo.URL_Slugs?.meta?.slug && (
+                <div className={`text-xs font-mono p-1.5 rounded break-all ${darkMode ? "bg-gray-700/50 text-gray-300" : "bg-gray-100 text-gray-600"}`}>
+                  /{seo.URL_Slugs.meta.slug}
+                </div>
+              )}
+              {seo.URL_Slugs?.meta?.issues?.length > 0 ? (
+                <div className="space-y-1">
+                  <div className="font-semibold text-red-500 text-xs uppercase">Slug Issues:</div>
+                  {seo.URL_Slugs.meta.issues.map((issue, i) => (
+                    <div key={i} className="text-xs opacity-90 flex items-start gap-2">
+                      <XCircle size={12} className="mt-0.5 flex-shrink-0 text-red-500" />
+                      <span>{issue}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-xs opacity-70 flex items-center gap-1 text-green-500">
+                  <CheckCircle size={12} />
+                  <span>Slug format matches SEO best practices.</span>
+                </div>
+              )}
+            </div>
           </MetricCard>
-          {seo.URL_Slugs?.Slug_Check_Score == 1 && <MetricCard title="Slugs" description={desc.slug} score={seo.URL_Slugs?.Slug_Check_Score} value="Valid" darkMode={darkMode} icon={Link} />}
         </Section>
 
         {/* Schema Data */}

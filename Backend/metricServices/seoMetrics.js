@@ -612,9 +612,59 @@ const checkHTTPS = (url) => {
   }
 };
 
+const checkSocial = ($) => {
+  // 1. Open Graph
+  const ogTags = {
+    "og:site_name": $('meta[property="og:site_name"]').attr("content"),
+    "og:type": $('meta[property="og:type"]').attr("content"),
+    "og:image": $('meta[property="og:image"]').attr("content"),
+    "og:title": $('meta[property="og:title"]').attr("content"),
+    "og:description": $('meta[property="og:description"]').attr("content"),
+    "og:url": $('meta[property="og:url"]').attr("content")
+  };
+  const ogRequired = ["og:title", "og:image", "og:url"];
+  const ogCount = ogRequired.reduce((acc, key) => acc + (ogTags[key] ? 1 : 0), 0);
+  let ogScore = ogCount === ogRequired.length ? 1 : (ogCount > 0 ? 0.5 : 0);
+  const ogMissing = ogRequired.filter(key => !ogTags[key]);
+  const ogDetails = ogScore === 1 ? "Open Graph tags are optimized" : ogScore === 0.5 ? `Missing key OG tags: ${ogMissing.join(", ")}` : "No Open Graph tags found";
+  const ogMetric = evaluateParameter(ogScore, ogDetails, { tags: ogTags, missing: ogMissing, parameter: "1 if og:title, og:image, og:url exist" });
 
+  // 2. Twitter Card
+  const twTags = {
+    "twitter:site": $('meta[name="twitter:site"]').attr("content"),
+    "twitter:card": $('meta[name="twitter:card"]').attr("content"),
+    "twitter:image": $('meta[name="twitter:image"]').attr("content"),
+    "twitter:title": $('meta[name="twitter:title"]').attr("content"),
+    "twitter:description": $('meta[name="twitter:description"]').attr("content")
+  };
+  const twRequired = ["twitter:card", "twitter:title"];
+  const twCount = twRequired.reduce((acc, key) => acc + (twTags[key] ? 1 : 0), 0);
+  let twScore = twCount === twRequired.length ? 1 : (twCount > 0 ? 0.5 : 0);
+  const twMissing = twRequired.filter(key => !twTags[key]);
+  const twDetails = twScore === 1 ? "Twitter Card tags are optimized" : twScore === 0.5 ? `Missing key Twitter tags: ${twMissing.join(", ")}` : "No Twitter Card tags found";
+  const twitterMetric = evaluateParameter(twScore, twDetails, { tags: twTags, missing: twMissing, parameter: "1 if twitter:card and twitter:title exist" });
 
-export default async function seoMetrics(url, device, selectedMetric, $, auditId, page) {
+  // 3. Social Links
+  const socialDomains = ["facebook.com", "twitter.com", "x.com", "linkedin.com", "instagram.com", "youtube.com", "pinterest.com", "tiktok.com", "reddit.com", "whatsapp.com", "snapchat.com", "medium.com"];
+  const foundLinks = [];
+  $("a").each((i, el) => {
+    const href = $(el).attr("href");
+    if (href) {
+      try {
+        const hostname = new URL(href, "https://example.com").hostname.toLowerCase();
+        if (socialDomains.some(domain => hostname.includes(domain))) foundLinks.push(href);
+      } catch (e) { }
+    }
+  });
+  const uniqueLinks = [...new Set(foundLinks)];
+  const linkScore = uniqueLinks.length > 0 ? 1 : 0;
+  const linkDetails = linkScore === 1 ? `${uniqueLinks.length} social profiles found` : "No social media links found";
+  const socialLinksMetric = evaluateParameter(linkScore, linkDetails, { links: uniqueLinks, count: uniqueLinks.length, parameter: "1 if at least one social profile link exists" });
+
+  return { ogMetric, twitterMetric, socialLinksMetric };
+};
+
+export default async function seoMetrics(url, device, selectedMetric, $, auditId, page, browser) {
 
   // Scrape Schema (keeping original logic)
   const structuredData = await page.evaluate(() => {
@@ -642,22 +692,25 @@ export default async function seoMetrics(url, device, selectedMetric, $, auditId
   const slugMetric = checkSlugs(url);
   const httpsMetric = checkHTTPS(url);
 
-  // 3. Scoring Weights
+  // Consoliated Social Check
+  const { ogMetric, twitterMetric, socialLinksMetric } = checkSocial($);
+
+  // 3. Scoring Weights (Sum = 100)
   const weights = {
-    Title: 10,
-    Meta_Description: 8,
+    Title: 12,
+    Meta_Description: 9,
     URL_Structure: 6,
     Canonical: 8,
-    H1: 10,
-    Image: 13,
+    H1: 9,
+    Image: 11,
     Video: 3,
-    Heading_Hierarchy: 5,
+    Heading_Hierarchy: 6,
     Semantic_Tags: 3,
-    Contextual_Linking: 10,
-    Links: 4,
-    Duplicate_Content: 8,
+    Contextual_Linking: 9,
+    Links: 5,
+    Duplicate_Content: 9,
     URL_Slugs: 4,
-    HTTPS: 8
+    HTTPS: 6
   };
 
   // 4. Calculate Weighted Score
@@ -676,6 +729,7 @@ export default async function seoMetrics(url, device, selectedMetric, $, auditId
     (contentQualityMetric.score * weights.Duplicate_Content) +
     (slugMetric.score * weights.URL_Slugs) +
     (httpsMetric.score * weights.HTTPS);
+  // Social metrics removed from score per user request, but kept for display
 
   const actualPercentage = parseFloat(weightedScore.toFixed(0));
 
@@ -697,6 +751,9 @@ export default async function seoMetrics(url, device, selectedMetric, $, auditId
       Duplicate_Content: contentQualityMetric,
       URL_Slugs: slugMetric,
       HTTPS: httpsMetric,
+      Open_Graph: ogMetric,
+      Twitter_Card: twitterMetric,
+      Social_Links: socialLinksMetric,
       Percentage: actualPercentage,
     }
   });

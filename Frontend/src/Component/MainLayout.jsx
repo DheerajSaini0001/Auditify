@@ -54,7 +54,7 @@ export default function MainLayout() {
                     className={`
             flex-1 w-full transition-all duration-300 
             ${showSidebar ? "lg:ml-64" : ""} 
-            p-4 sm:p-6 overflow-x-hidden flex flex-col
+      overflow-x-hidden flex flex-col
           `}
                 >
                     <ScrollToTop />

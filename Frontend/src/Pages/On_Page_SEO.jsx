@@ -670,6 +670,75 @@ export default function On_Page_SEO() {
           </div>
         </div>
 
+        {/* Social Media Optimization */}
+        <Section title="Social Media Optimization" icon={Globe} darkMode={darkMode}>
+          {/* Open Graph Card */}
+          <MetricCard title="Open Graph" description={seo.Open_Graph?.details || "Social sharing meta tags."} score={seo.Open_Graph?.score} value={seo.Open_Graph?.score === 1 ? "Optimized" : "Missing / Incomplete"} darkMode={darkMode} icon={Globe}>
+            <div className="space-y-3">
+              {seo.Open_Graph?.meta?.tags && (
+                <div className="grid grid-cols-1 gap-2">
+                  {Object.entries(seo.Open_Graph.meta.tags).map(([key, val], i) => (
+                    <div key={i} className={`p-2 rounded border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-gray-50 border-gray-100"}`}>
+                      <div className="text-[10px] font-bold uppercase opacity-60 mb-0.5">{key}</div>
+                      <div className={`text-xs font-mono break-all ${val ? (darkMode ? "text-blue-300" : "text-blue-600") : "text-red-500 italic"}`}>
+                        {val || "Missing"}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {seo.Open_Graph?.meta?.missing?.length > 0 && (
+                <div className="text-xs text-red-500 font-medium">
+                  Missing: {seo.Open_Graph.meta.missing.join(", ")}
+                </div>
+              )}
+            </div>
+          </MetricCard>
+
+          {/* Twitter Card */}
+          <MetricCard title="Twitter Card" description={seo.Twitter_Card?.details || "Twitter specific meta tags."} score={seo.Twitter_Card?.score} value={seo.Twitter_Card?.score === 1 ? "Optimized" : "Missing / Incomplete"} darkMode={darkMode} icon={Globe}>
+            <div className="space-y-3">
+              {seo.Twitter_Card?.meta?.tags && (
+                <div className="grid grid-cols-1 gap-2">
+                  {Object.entries(seo.Twitter_Card.meta.tags).map(([key, val], i) => (
+                    <div key={i} className={`p-2 rounded border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-gray-50 border-gray-100"}`}>
+                      <div className="text-[10px] font-bold uppercase opacity-60 mb-0.5">{key}</div>
+                      <div className={`text-xs font-mono break-all ${val ? (darkMode ? "text-cyan-300" : "text-cyan-600") : "text-red-500 italic"}`}>
+                        {val || "Missing"}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {seo.Twitter_Card?.meta?.missing?.length > 0 && (
+                <div className="text-xs text-red-500 font-medium">
+                  Missing: {seo.Twitter_Card.meta.missing.join(", ")}
+                </div>
+              )}
+            </div>
+          </MetricCard>
+
+          {/* Social Links Card */}
+          <MetricCard title="Social Profiles" description="Detected social media links." score={seo.Social_Links?.score} value={seo.Social_Links?.meta?.count + " Found"} darkMode={darkMode} icon={Globe}>
+            {seo.Social_Links?.meta?.links?.length > 0 ? (
+              <div className="grid grid-cols-2 gap-2">
+                {seo.Social_Links.meta.links.map((link, i) => {
+                  let domain = "Link";
+                  try { domain = new URL(link).hostname.replace("www.", ""); } catch { }
+                  return (
+                    <a key={i} href={link} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 p-2 rounded border transition-colors ${darkMode ? "bg-gray-800 border-gray-700 hover:bg-gray-700 text-blue-300" : "bg-gray-50 border-gray-100 hover:bg-gray-100 text-blue-600"}`}>
+                      <Link size={12} className="opacity-50" />
+                      <span className="text-xs font-medium truncate">{domain}</span>
+                    </a>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="text-xs opacity-60 italic">No social profile links detected on page.</div>
+            )}
+          </MetricCard>
+        </Section>
+
       </main>
     </div >
   );

@@ -665,7 +665,7 @@ export default function On_Page_SEO() {
           </div>
           <div className={`p-4 rounded-lg overflow-x-auto border ${darkMode ? "bg-gray-900 border-gray-700 text-gray-300" : "bg-gray-50 border-gray-200 text-gray-700"}`}>
             <pre className="text-xs font-mono leading-relaxed">
-              {JSON.stringify(data.Schema, null, 2)}
+              {data.Schema.length > 0 ? JSON.stringify(data.Schema, null, 2) : "No Schema Markup Found"}
             </pre>
           </div>
         </div>

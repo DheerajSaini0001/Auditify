@@ -1,147 +1,144 @@
-Site Audit Tool
+# 🚀 Site Audit Tool (Page Speed & SEO Analyzer)
 
-A comprehensive Web Performance & SEO Audit Tool designed to analyze websites for technical performance, accessibility, SEO, security, UX, conversion flow, and AI optimization readiness.
+A powerful, production-ready MERN Stack application designed to perform deep technical audits of websites. It evaluates **Technical Performance, SEO, Accessibility, Security, UX, AIO Readiness, and Conversion Flow** using advanced scraping and browser automation tools.
 
-This tool provides detailed insights, scoring, and actionable recommendations to improve overall website quality, user experience, and search engine visibility.
+![Project Status](https://img.shields.io/badge/Status-Active-success)
+![License](https://img.shields.io/badge/License-MIT-blue)
 
-🚀 Key Features
+---
 
-⚡ Technical Performance Audit
+## 🌟 Key Features
 
-Evaluates Core Web Vitals (LCP, CLS, INP), server response time, caching, resource size, compression, and loading strategies.
+### 🔍 Comprehensive Audits (7 Pillars)
+1.  **⚡ Technical Performance**: Core Web Vitals (LCP, CLS, INP), Server Response Time, Compression (Gzip/Brotli), Caching logic.
+2.  **📈 On-Page SEO**: Meta tags, Heading Hierarchy (H1-H6), Keyword Density, Schema Markup, Robot Rules, Alt Attributes.
+3.  **♿ Accessibility**: WCAG 2.1 compliance using `axe-core` (Contrast, ARIA, Keyboard Nav, Semantic HTML).
+4.  **🔐 Security & Compliance**: SSL/TLS verification, Security Headers (CSP, HSTS, XSS), Cookie Policies, Vulnerability Scanning.
+5.  **🎨 UX & Content Structure**: Readability scores, Tap Targets, Navigation Depth, Layout Stability, Mobile Responsiveness.
+6.  **🤖 AIO (AI Optimization) Readiness**: Structured Data for AI Crawlers, NLP Compatibility, Entity density, API availability.
+7.  **🎯 Conversion & Lead Flow**: Call-to-Action (CTA) analysis, Form UX, Trust Signals, Social Proof verification.
 
-📈 On-Page SEO Analysis
+### 🛡️ Security Features
+*   **Rate Limiting**: Protects against DoS attacks (Default: 5 scans per 15 mins per IP).
+*   **SSRF Protection**: Blocks internal/private network access.
+*   **Secure Headers**: Implemented using `Helmet` for robust HTTP security.
+*   **Input Validation**: Strict URL parsing and sanitization.
 
-Checks meta tags, heading structure, internal linking, content hierarchy, robots rules, alt attributes, and keyword optimization.
+### 💻 User Experience
+*   **Real-time Granular Loading**: Dynamic status updates during audits (e.g., "Verifying SSL...", "Measuring LCP...").
+*   **PDF Reporting**: One-click professional PDF report generation with scores and branding.
+*   **Responsive Design**: Fully optimized for Desktop and Mobile viewing.
 
-♿ Accessibility Audit
+---
 
-Uses axe-core to validate WCAG compliance, contrast issues, missing ARIA labels, keyboard navigation support, and semantic HTML.
+## 🛠️ Tech Stack
 
-🔐 Security & Compliance
+### Frontend
+*   **Framework**: React 19 (Vite)
+*   **Styling**: Tailwind CSS 4
+*   **Icons**: Lucide React
+*   **Animations**: Framer Motion
+*   **Charts**: Recharts
+*   **Report**: jsPDF & AutoTable
 
-Evaluates SSL/TLS status, security headers (CSP, HSTS, X-XSS-Protection), cookie security, and privacy policy availability.
+### Backend
+*   **Runtime**: Node.js & Express
+*   **Database**: MongoDB (Mongoose)
+*   **Automation**: Puppeteer (with Stealth Plugin)
+*   **Security**: Helmet, Express Rate Limit
+*   **Analysis**: Cheerio, JSDOM, Axe-Core, Mozilla Readability
 
-🎨 UX & Content Structure
+---
 
-Assesses readability, content spacing, navigation depth, mobile tap targets, and content structure for improved usability.
+## � Installation & Setup
 
-🤖 AIO (AI Optimization) Readiness
+### Prerequisites
+*   Node.js (v18+)
+*   MongoDB (Local or Atlas)
 
-Evaluates AI crawler-friendliness, structured data, NLP-ready content, JSON-LD, internal content relationships, and API discoverability.
-
-Includes AIO Compatibility Badge: Gold / Silver / Bronze
-
-🎯 Conversion & Lead Flow
-
-Analyzes CTA visibility, form UX, trust signals, social proof, and friction points in conversion flow.
-
-📄 PDF Reporting
-
-Generate downloadable audit reports using jsPDF.
-
-🛠️ Tech Stack
-Frontend
-
-React (Vite)
-
-Tailwind CSS
-
-Lucide React
-
-Recharts
-
-Framer Motion
-
-jsPDF
-
-Backend
-
-Node.js & Express
-
-MongoDB (Mongoose)
-
-Puppeteer
-
-Cheerio
-
-Axe-core
-
-JSDOM
-
-📦 Installation & Setup
-Prerequisites
-
-Node.js (v16+)
-
-MongoDB (Local or Atlas)
-
-1. Clone the Repository
+### 1. Clone the Repository
+```bash
 git clone https://github.com/DheerajSaini0001/Page_Speed_SLT.git
 cd Page_Speed_SLT
+```
 
-2. Backend Setup
+### 2. Backend Setup
+Navigate to the backend folder and install dependencies:
+```bash
 cd Backend
 npm install
+```
 
+**Configure Environment Variables:**
+Create a `.env` file in the `Backend` directory:
+```env
+MONGO_URI=your_mongodb_connection_string
+PORT=2000
+```
 
-Create a .env file with:
-
-MONGO_URI=your_connection_string
-PORT=5000
-
-
-Start the backend:
-
+Start the Backend:
+```bash
 npm run dev
+# Server runs on: http://localhost:2000
+```
 
-
-Backend runs at: http://localhost:5000
-
-3. Frontend Setup
+### 3. Frontend Setup
+Navigate to the frontend folder and install dependencies:
+```bash
 cd ../Frontend
 npm install
+```
+
+**Configure Environment Variables:**
+Create a `.env` file in the `Frontend` directory:
+```env
+VITE_API_URL=http://localhost:2000
+```
+
+Start the Frontend:
+```bash
 npm run dev
+# Client runs on: http://localhost:5173
+```
 
+---
 
-Frontend runs at: http://localhost:5173
+## 🚦 Usage Guide
 
-🚦 Usage
+1.  Open the application (`http://localhost:5173`).
+2.  Enter a valid website URL (e.g., `https://example.com`) and select **Desktop/Mobile**.
+3.  Click **Analyze**.
+4.  Observe real-time status updates on the dashboard.
+5.  Click on any metric card (e.g., *Technical Performance*) to view deep insights.
+6.  Click **Download PDF** to export the full report.
 
-Open the frontend interface.
+---
 
-Enter the website URL.
+## 📂 Project Structure
 
-Select Desktop or Mobile analysis.
-
-Click Analyze.
-
-View results in categorized dashboards.
-
-Export report as PDF if needed.
-
-📂 Project Structure
+```bash
 Page_Speed_SLT/
-├── Backend/
-│   ├── metricServices/
-│   │   ├── aioReadiness.js
-│   │   ├── technicalMetrics.js
-│   ├── workers/
-│   │   └── auditWorker.js
-│   ├── models/
-│   │   └── SiteReport.js
-│   └── ...
-└── Frontend/
-    ├── src/Pages/
-    │   ├── Technical_Performance.jsx
-    │   ├── AIO.jsx
-    ├── src/Components/
-    │   ├── MetricCard.jsx
-    │   ├── CircularProgress.jsx
-    ├── src/context/
-    │   └── DataContext.js
+├── Backend/                 # Express Server & Workers
+│   ├── controllers/         # Audit & Report Logic
+│   ├── models/              # MongoDB Schemas (SiteReport)
+│   ├── workers/             # Heavy Duty Scrapers (Puppeteer/Axe)
+│   ├── metricServices/      # Logic for 7 Audit Pillars
+│   └── Server.js            # Entry Point
+│
+└── Frontend/                # React Vite App
+    ├── src/
+    │   ├── Pages/           # Metric Detail Pages
+    │   ├── Component/       # UI Components (Sidebar, Charts)
+    │   ├── context/         # Global State (Context API)
+    │   └── utils/           # Helpers (PDF Generator)
+```
 
-🤝 Contributing
+---
 
-Contributions are welcome!
-Please fork this repository and submit a Pull Request if you’d like to help improve the project.
+## 🤝 Contributing
+Contributions are welcome! Please fork the repository and submit a Pull Request.
+
+---
+
+## 📜 License
+This project is licensed under the MIT License.

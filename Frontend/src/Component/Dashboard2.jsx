@@ -60,37 +60,7 @@ export default function Dashboard2({ darkMode }) {
     ? "bg-slate-900 border border-slate-800 shadow-sm"
     : "bg-white border border-slate-200 shadow-sm";
 
-  // LOADING STATE
-  if (loading || !data?.Section_Score) {
-    return (
-      <div className={`min-h-screen w-full p-6 lg:p-10 flex flex-col gap-8 ${bgClass}`}>
-        {/* Header Shimmer */}
-        <div className={`w-full p-6 rounded-2xl flex justify-between items-center ${cardClass}`}>
-          <div className="space-y-3 w-1/2">
-            <ShimmerBlock className="h-4 w-24" />
-            <ShimmerBlock className="h-8 w-96" />
-          </div>
-          <ShimmerBlock className="h-12 w-32 rounded-xl" />
-        </div>
-
-        {/* Score Card Shimmer */}
-        <div className={`p-8 rounded-2xl ${cardClass} flex flex-col lg:flex-row gap-10 items-center justify-center`}>
-          <ShimmerBlock className="h-32 w-32 rounded-full" />
-          <div className="space-y-4 w-64">
-            <ShimmerBlock className="h-8 w-full" />
-            <ShimmerBlock className="h-4 w-full" />
-          </div>
-        </div>
-
-        {/* Grid Shimmer */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {[...Array(8)].map((_, i) => (
-            <ShimmerBlock key={i} className={`h-32 w-full rounded-2xl ${darkMode ? 'bg-slate-900' : 'bg-white'} border border-transparent`} />
-          ))}
-        </div>
-      </div>
-    );
-  }
+  // Loading state handled inline to keep Header visible
 
   // Define grade colors
   const gradeColor = (grade) => {
@@ -109,8 +79,8 @@ export default function Dashboard2({ darkMode }) {
           <div className="space-y-1 w-full md:w-auto overflow-hidden">
             <h2 className="text-sm font-semibold uppercase tracking-wider opacity-60">Audit Report For</h2>
             <div className="flex items-center gap-2 group">
-              <a href={data.Site} target="_blank" rel="noopener noreferrer" className={`text-xl md:text-2xl font-bold truncate hover:underline ${darkMode ? "text-white" : "text-slate-900"}`}>
-                {data.Site}
+              <a href={data?.Site || "#"} target="_blank" rel="noopener noreferrer" className={`text-xl md:text-2xl font-bold truncate hover:underline ${darkMode ? "text-white" : "text-slate-900"}`}>
+                {data?.Site || "Analyzing..."}
               </a>
               <ExternalLink className="w-5 h-5 opacity-40 group-hover:opacity-100 transition-opacity" />
             </div>
@@ -128,150 +98,175 @@ export default function Dashboard2({ darkMode }) {
           </button>
         </div>
 
-        {/* ✅ Main Score / Hero Section */}
-        <div className="grid lg:grid-cols-3 gap-6">
 
-          {/* Overall Score */}
-          <div className={`lg:col-span-2 p-8 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden ${darkMode ? "bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700" : "bg-gradient-to-br from-white to-slate-50 border-slate-200"} border shadow-lg`}>
-
-            {/* Background Glow */}
-            <div className={`absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 blur-[100px] rounded-full pointer-events-none -translate-y-1/2 translate-x-1/2`}></div>
-
-            <div className="flex items-center gap-8 z-10">
-              <div className="relative">
-                <CircularProgress value={data.Score?.toFixed(0) || 0} size={140} stroke={12} />
-                <div className="absolute inset-0 flex items-center justify-center flex-col">
-                  <span className={`text-4xl font-extrabold ${darkMode ? "text-white" : "text-slate-900"}`}>{data.Score?.toFixed(0)}</span>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <h3 className={`text-2xl font-bold ${darkMode ? "text-white" : "text-slate-900"}`}>Overall Health Score</h3>
-                <p className="opacity-70 max-w-xs">Your website's pulse check based on performance, SEO, and UX factors.</p>
-                <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold border ${gradeColor(data.Grade)}`}>
-                  Grade {data.Grade || "-"}
-                </div>
+        {/* ✅ Loading Shimmer or Main Content */}
+        {(loading || !data?.Section_Score) ? (
+          <div className="flex flex-col gap-8">
+            {/* Score Card Shimmer */}
+            <div className={`p-8 rounded-2xl ${cardClass} flex flex-col lg:flex-row gap-10 items-center justify-center`}>
+              <ShimmerBlock className="h-32 w-32 rounded-full" />
+              <div className="space-y-4 w-64">
+                <ShimmerBlock className="h-8 w-full" />
+                <ShimmerBlock className="h-4 w-full" />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-col gap-4 w-full md:w-auto z-10">
-              <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-white border-slate-200"}`}>
-                <div className="flex items-center gap-2 text-xs font-bold uppercase opacity-50 mb-1">
-                  {data.Device === "Mobile" ? <Smartphone className="w-3 h-3" /> : <Monitor className="w-3 h-3" />}
-                  Device
-                </div>
-                <div className={`text-lg font-semibold ${darkMode ? "text-white" : "text-slate-900"}`}>{data.Device}</div>
-              </div>
-              <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-white border-slate-200"}`}>
-                <div className="flex items-center gap-2 text-xs font-bold uppercase opacity-50 mb-1">
-                  <Clock className="w-3 h-3" />
-                  Time
-                </div>
-                <div className={`text-lg font-semibold ${darkMode ? "text-white" : "text-slate-900"}`}>{data.Time_Taken}s</div>
-              </div>
+            {/* Grid Shimmer */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {[...Array(8)].map((_, i) => (
+                <ShimmerBlock key={i} className={`h-32 w-full rounded-2xl ${darkMode ? 'bg-slate-900' : 'bg-white'} border border-transparent`} />
+              ))}
             </div>
           </div>
+        ) : (
+          <div className="space-y-6 animate-in fade-in zoom-in duration-300">
+            {/* ✅ Main Score / Hero Section */}
+            <div className="grid lg:grid-cols-3 gap-6">
 
-          {/* Quick Actions / AIO Badge */}
-          <div className={`p-8 rounded-3xl flex flex-col justify-center gap-6 border ${cardClass}`}>
-            <div className="space-y-2">
-              <h3 className="text-lg font-bold opacity-80">AI Optimization Readiness</h3>
-              <div className={`text-3xl font-extrabold ${data.AIO_Compatibility_Badge === "High" ? "text-emerald-500" : "text-amber-500"}`}>
-                {data.AIO_Compatibility_Badge || "Analysis Pending"}
-              </div>
-              <p className="text-sm opacity-60 leading-relaxed">
-                How well your site is optimized for AI search engines like ChatGPT and Gemini.
-              </p>
-            </div>
-            <button
-              onClick={() => navigate('/aio')}
-              className={`mt-auto flex items-center justify-between px-4 py-3 rounded-xl font-semibold border transition-all ${darkMode ? "bg-slate-800 border-slate-700 hover:bg-slate-700" : "bg-slate-100 border-slate-200 hover:bg-slate-200"}`}
-            >
-              <span>View AIO Report</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+              {/* Overall Score */}
+              <div className={`lg:col-span-2 p-8 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden ${darkMode ? "bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700" : "bg-gradient-to-br from-white to-slate-50 border-slate-200"} border shadow-lg`}>
 
-        {/* ✅ Detailed Metrics Grid */}
-        <h3 className="text-xl font-bold px-1 mt-8">Category Breakdown</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {barData.map((item, index) => (
-            <button
-              key={item.name}
-              onClick={() => navigate(`/${item.Link}`)}
-              className={`group relative p-6 rounded-2xl border text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${cardClass}`}
-            >
-              <div className="flex justify-between items-start mb-4">
-                <div className="p-3 rounded-lg" style={{ backgroundColor: `${COLORS[index % COLORS.length]}20` }}>
-                  {/* Icon placeholder logic or generic bar icon */}
-                  <div className="w-4 h-4 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
+                {/* Background Glow */}
+                <div className={`absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 blur-[100px] rounded-full pointer-events-none -translate-y-1/2 translate-x-1/2`}></div>
+
+                <div className="flex items-center gap-8 z-10">
+                  <div className="relative">
+                    <CircularProgress value={data.Score?.toFixed(0) || 0} size={140} stroke={12} />
+                    <div className="absolute inset-0 flex items-center justify-center flex-col">
+                      <span className={`text-4xl font-extrabold ${darkMode ? "text-white" : "text-slate-900"}`}>{data.Score?.toFixed(0)}</span>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className={`text-2xl font-bold ${darkMode ? "text-white" : "text-slate-900"}`}>Overall Health Score</h3>
+                    <p className="opacity-70 max-w-xs">Your website's pulse check based on performance, SEO, and UX factors.</p>
+                    <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold border ${gradeColor(data.Grade)}`}>
+                      Grade {data.Grade || "-"}
+                    </div>
+                  </div>
                 </div>
-                <ArrowRight className="w-5 h-5 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-slate-400" />
-              </div>
 
-              <div className="space-y-1">
-                <div className="text-3xl font-bold" style={{ color: COLORS[index % COLORS.length] }}>
-                  {item.value}%
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-col gap-4 w-full md:w-auto z-10">
+                  <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-white border-slate-200"}`}>
+                    <div className="flex items-center gap-2 text-xs font-bold uppercase opacity-50 mb-1">
+                      {data.Device === "Mobile" ? <Smartphone className="w-3 h-3" /> : <Monitor className="w-3 h-3" />}
+                      Device
+                    </div>
+                    <div className={`text-lg font-semibold ${darkMode ? "text-white" : "text-slate-900"}`}>{data.Device}</div>
+                  </div>
+                  <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-white border-slate-200"}`}>
+                    <div className="flex items-center gap-2 text-xs font-bold uppercase opacity-50 mb-1">
+                      <Clock className="w-3 h-3" />
+                      Time
+                    </div>
+                    <div className={`text-lg font-semibold ${darkMode ? "text-white" : "text-slate-900"}`}>{data.Time_Taken}</div>
+                  </div>
                 </div>
-                <h4 className={`font-semibold ${darkMode ? "text-slate-200" : "text-slate-700"} group-hover:text-emerald-500 transition-colors`}>{item.name}</h4>
               </div>
 
-              {/* Progress Bar visual */}
-              <div className="absolute bottom-0 left-0 w-full h-1 bg-transparent group-hover:bg-slate-100 dark:group-hover:bg-slate-800 rounded-b-2xl overflow-hidden">
-                <div className="h-full transition-all duration-500" style={{ width: `${item.value}%`, backgroundColor: COLORS[index % COLORS.length] }}></div>
-              </div>
-            </button>
-          ))}
-        </div>
-
-        {/* ✅ Chart Section */}
-        <div className={`p-6 md:p-8 rounded-3xl border ${cardClass}`}>
-          <h3 className="text-xl font-bold mb-6">Performance Visualization</h3>
-          <div className="w-full h-[400px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={barData} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.1} vertical={false} />
-                <XAxis
-                  dataKey="name"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: darkMode ? "#94a3b8" : "#64748b", fontSize: 12 }}
-                  dy={10}
-                  interval={0}
-                  // Formatter to truncate long names on mobile
-                  tickFormatter={(value) => value.split(' ')[0]}
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: darkMode ? "#94a3b8" : "#64748b", fontSize: 12 }}
-                />
-                <Tooltip
-                  cursor={{ fill: darkMode ? '#ffffff10' : '#00000005', radius: 8 }}
-                  contentStyle={{
-                    backgroundColor: darkMode ? '#1e293b' : '#ffffff',
-                    border: 'none',
-                    borderRadius: '12px',
-                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
-                  }}
-                  itemStyle={{ color: darkMode ? '#e2e8f0' : '#1e293b', fontWeight: 600 }}
-                />
-                <Bar
-                  dataKey="value"
-                  radius={[8, 8, 8, 8]}
-                  barSize={40}
-                  background={{ fill: darkMode ? '#33415550' : '#f1f5f9', radius: 8 }}
+              {/* Quick Actions / AIO Badge */}
+              <div className={`p-8 rounded-3xl flex flex-col justify-center gap-6 border ${cardClass}`}>
+                <div className="space-y-2">
+                  <h3 className="text-lg font-bold opacity-80">AI Optimization Readiness</h3>
+                  <div className={`text-3xl font-extrabold ${data.AIO_Compatibility_Badge === "High" ? "text-emerald-500" : "text-amber-500"}`}>
+                    {data.AIO_Compatibility_Badge || "Analysis Pending"}
+                  </div>
+                  <p className="text-sm opacity-60 leading-relaxed">
+                    How well your site is optimized for AI search engines like ChatGPT and Gemini.
+                  </p>
+                </div>
+                <button
+                  onClick={() => navigate('/aio')}
+                  className={`mt-auto flex items-center justify-between px-4 py-3 rounded-xl font-semibold border transition-all ${darkMode ? "bg-slate-800 border-slate-700 hover:bg-slate-700" : "bg-slate-100 border-slate-200 hover:bg-slate-200"}`}
                 >
-                  {barData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+                  <span>View AIO Report</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* ✅ Detailed Metrics Grid */}
+            <h3 className="text-xl font-bold px-1 mt-8">Category Breakdown</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {barData.map((item, index) => (
+                <button
+                  key={item.name}
+                  onClick={() => navigate(`/${item.Link}`)}
+                  className={`group relative p-6 rounded-2xl border text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${cardClass}`}
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="p-3 rounded-lg" style={{ backgroundColor: `${COLORS[index % COLORS.length]}20` }}>
+                      {/* Icon placeholder logic or generic bar icon */}
+                      <div className="w-4 h-4 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
+                    </div>
+                    <ArrowRight className="w-5 h-5 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-slate-400" />
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="text-3xl font-bold" style={{ color: COLORS[index % COLORS.length] }}>
+                      {item.value}%
+                    </div>
+                    <h4 className={`font-semibold ${darkMode ? "text-slate-200" : "text-slate-700"} group-hover:text-emerald-500 transition-colors`}>{item.name}</h4>
+                  </div>
+
+                  {/* Progress Bar visual */}
+                  <div className="absolute bottom-0 left-0 w-full h-1 bg-transparent group-hover:bg-slate-100 dark:group-hover:bg-slate-800 rounded-b-2xl overflow-hidden">
+                    <div className="h-full transition-all duration-500" style={{ width: `${item.value}%`, backgroundColor: COLORS[index % COLORS.length] }}></div>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {/* ✅ Chart Section */}
+            <div className={`p-6 md:p-8 rounded-3xl border ${cardClass}`}>
+              <h3 className="text-xl font-bold mb-6">Performance Visualization</h3>
+              <div className="w-full h-[400px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={barData} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.1} vertical={false} />
+                    <XAxis
+                      dataKey="name"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: darkMode ? "#94a3b8" : "#64748b", fontSize: 12 }}
+                      dy={10}
+                      interval={0}
+                      // Formatter to truncate long names on mobile
+                      tickFormatter={(value) => value.split(' ')[0]}
+                    />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: darkMode ? "#94a3b8" : "#64748b", fontSize: 12 }}
+                    />
+                    <Tooltip
+                      cursor={{ fill: darkMode ? '#ffffff10' : '#00000005', radius: 8 }}
+                      contentStyle={{
+                        backgroundColor: darkMode ? '#1e293b' : '#ffffff',
+                        border: 'none',
+                        borderRadius: '12px',
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+                      }}
+                      itemStyle={{ color: darkMode ? '#e2e8f0' : '#1e293b', fontWeight: 600 }}
+                    />
+                    <Bar
+                      dataKey="value"
+                      radius={[8, 8, 8, 8]}
+                      barSize={40}
+                      background={{ fill: darkMode ? '#33415550' : '#f1f5f9', radius: 8 }}
+                    >
+                      {barData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
           </div>
-        </div>
+        )}
 
       </div>
-    </div>
+    </div >
   );
 }

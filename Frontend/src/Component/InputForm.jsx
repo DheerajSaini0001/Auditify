@@ -5,6 +5,69 @@ import { useNavigate } from "react-router-dom";
 import { ThemeContext } from "../context/ThemeContext.jsx";
 import Assets from "../assets/Assets.js";
 
+// Custom Dropdown Component
+const CustomDropdown = ({ value, onChange, options, icon, darkMode, disabled }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = React.useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedLabel = options.find((opt) => opt.value === value)?.label || value;
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <div
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors border ${darkMode
+          ? "hover:bg-slate-800 border-transparent hover:border-slate-700"
+          : "hover:bg-slate-50 border-transparent hover:border-slate-200"
+          } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+      >
+        {icon}
+        <span className={`text-sm font-medium ${darkMode ? "text-slate-300" : "text-slate-700"} truncate`}>
+          {selectedLabel}
+        </span>
+        <ChevronDown className={`w-3 h-3 transition-transform ${isOpen ? "rotate-180" : ""} ${darkMode ? "text-slate-500" : "text-slate-400"}`} />
+      </div>
+
+      {/* Dropdown Menu */}
+      {isOpen && (
+        <div className={`absolute top-full mt-2 left-0 w-max min-w-full z-50 rounded-xl shadow-xl border overflow-hidden animate-in fade-in zoom-in-95 duration-200 ${darkMode ? "bg-slate-900 border-slate-700 text-slate-300" : "bg-white border-slate-100 text-slate-700"
+          }`}>
+          <div className="max-h-60 overflow-y-auto custom-scrollbar">
+            {options.map((option) => (
+              <div
+                key={option.value}
+                onClick={() => {
+                  onChange(option.value);
+                  setIsOpen(false);
+                }}
+                className={`flex items-center gap-3 px-4 py-3 text-sm font-medium cursor-pointer transition-colors ${darkMode
+                  ? "hover:bg-slate-800 hover:text-white"
+                  : "hover:bg-slate-50 hover:text-black"
+                  } ${value === option.value ? (darkMode ? "bg-slate-800 text-white" : "bg-slate-50 text-black") : ""}`}
+              >
+                {/* Optional: Add check icon or dot for selected state */}
+                {value === option.value && <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>}
+                {option.label}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function InputForm() {
   const { fetchData, data, loading } = useData();
   const { theme } = useContext(ThemeContext);
@@ -52,8 +115,8 @@ export default function InputForm() {
 
   // Styles
   const containerClass = darkMode
-    ? "min-h-[70vh] flex flex-col items-center justify-center bg-[#0B1120] text-white relative overflow-hidden font-sans"
-    : "min-h-[70vh] flex flex-col items-center justify-center bg-slate-50 text-slate-900 relative overflow-hidden font-sans";
+    ? "min-h-[80vh] flex flex-col items-center justify-center bg-[#0B1120] text-white relative font-sans pb-32"
+    : "min-h-[80vh] flex flex-col items-center justify-center bg-slate-50 text-slate-900 relative font-sans pb-32";
 
   return (
     <div className={containerClass}>
@@ -109,43 +172,39 @@ export default function InputForm() {
             <div className="flex w-full lg:w-auto items-center gap-2 px-2">
 
               {/* Device Selector */}
-              <div className="relative group flex-1 lg:flex-none">
-                <div className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors ${darkMode ? "hover:bg-slate-800" : "hover:bg-slate-50"}`}>
-                  {device === "Desktop" ? <Monitor className="w-4 h-4 text-blue-500" /> : <Smartphone className="w-4 h-4 text-purple-500" />}
-                  <select
-                    value={device}
-                    onChange={(e) => setDevice(e.target.value)}
-                    disabled={loading}
-                    className={`appearance-none bg-transparent border-none outline-none text-sm font-medium cursor-pointer w-20 ${darkMode ? "text-slate-300" : "text-slate-700"}`}
-                  >
-                    <option value="Desktop">Desktop</option>
-                    <option value="Mobile">Mobile</option>
-                  </select>
-                  <ChevronDown className="w-3 h-3 opacity-50" />
-                </div>
+              <div className="relative group flex-1 lg:flex-none min-w-[120px] z-20">
+                <CustomDropdown
+                  value={device}
+                  onChange={setDevice}
+                  options={[
+                    { value: "Desktop", label: "Desktop" },
+                    { value: "Mobile", label: "Mobile" },
+                  ]}
+                  icon={device === "Desktop" ? <Monitor className="w-4 h-4 text-blue-500" /> : <Smartphone className="w-4 h-4 text-purple-500" />}
+                  darkMode={darkMode}
+                  disabled={loading}
+                />
               </div>
 
               {/* Report Selector */}
-              <div className="relative group flex-1 lg:flex-none">
-                <div className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors ${darkMode ? "hover:bg-slate-800" : "hover:bg-slate-50"}`}>
-                  <Settings className="w-4 h-4 text-emerald-500" />
-                  <select
-                    value={report}
-                    onChange={(e) => setReport(e.target.value)}
-                    disabled={loading}
-                    className={`appearance-none bg-transparent border-none outline-none text-sm font-medium cursor-pointer w-24 ${darkMode ? "text-slate-300" : "text-slate-700"}`}
-                  >
-                    <option value="All">Full Audit</option>
-                    <option value="Technical Performance">Performance</option>
-                    <option value="On Page SEO">SEO</option>
-                    <option value="Accessibility">Accessibility</option>
-                    <option value="Security/Compliance">Security</option>
-                    <option value="UX & Content Structure">UX / Structure</option>
-                    <option value="Conversion & Lead Flow">Conversion</option>
-                    <option value="AIO (AI-Optimization) Readiness">AI Readiness</option>
-                  </select>
-                  <ChevronDown className="w-3 h-3 opacity-50" />
-                </div>
+              <div className="relative group flex-1 lg:flex-none min-w-[200px] z-20">
+                <CustomDropdown
+                  value={report}
+                  onChange={setReport}
+                  options={[
+                    { value: "All", label: "Full Audit" },
+                    { value: "Technical Performance", label: "Technical Performance" },
+                    { value: "On Page SEO", label: "On Page SEO" },
+                    { value: "Accessibility", label: "Accessibility" },
+                    { value: "Security/Compliance", label: "Security & Compliance" },
+                    { value: "UX & Content Structure", label: "UX & Content" },
+                    { value: "Conversion & Lead Flow", label: "Conversion & Lead Flow" },
+                    { value: "AIO (AI-Optimization) Readiness", label: "AIO Readiness" },
+                  ]}
+                  icon={<Settings className="w-4 h-4 text-emerald-500" />}
+                  darkMode={darkMode}
+                  disabled={loading}
+                />
               </div>
 
               {/* Submit Button */}

@@ -10,7 +10,6 @@ import UX_Content_Structure from "./UX_Content_Structure";
 import Conversion_Lead_Flow from "./Conversion_Lead_Flow";
 import AIO from "./AIO";
 import RawData from "./RawData";
-import UrlHeader from "../Component/UrlHeader";
 import { useNavigate } from "react-router-dom";
 
 const ReportLayout = () => {
@@ -86,8 +85,6 @@ const ReportLayout = () => {
         >
           {/* ✅ Max width container for better readability on large screens */}
           <main className="flex-1 flex flex-col w-full max-w-7xl space-y-6 sm:space-y-8 mt-10">
-            <UrlHeader darkMode={darkMode} />
-
             {/* Report Components */}
             <div className="w-full">
               {data.Report === "Technical Performance" && (

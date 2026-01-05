@@ -1,4 +1,5 @@
 import React, { useContext } from "react";
+import UrlHeader from "../Component/UrlHeader";
 import CircularProgress from "../Component/CircularProgress";
 import { useData } from "../context/DataContext";
 import { ThemeContext } from "../context/ThemeContext";
@@ -86,15 +87,70 @@ const educationalContent = {
 };
 
 // ------------------------------------------------------
-// ✅ Simple Skeleton
+// ✅ Enhanced Shimmer
 // ------------------------------------------------------
+const ShimmerBlock = ({ className = "" }) => (
+  <div className={`relative overflow-hidden bg-gray-200 dark:bg-gray-800 rounded-lg ${className}`}>
+    <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/50 dark:via-white/10 to-transparent"></div>
+  </div>
+);
+
 const SecurityShimmer = ({ darkMode }) => (
-  <div className={`min-h-screen ${darkMode ? "bg-gray-900" : "bg-gray-50"} p-8 space-y-8`}>
-    <div className={`h-64 rounded-xl ${darkMode ? "bg-gray-800" : "bg-white"} animate-pulse`} />
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {[...Array(9)].map((_, i) => (
-        <div key={i} className={`h-40 rounded-xl ${darkMode ? "bg-gray-800" : "bg-white"} animate-pulse`} />
-      ))}
+  <div className="space-y-12 animate-in fade-in zoom-in duration-300">
+    {/* Header Shimmer */}
+    <div className={`relative overflow-hidden rounded-3xl p-8 sm:p-10 shadow-lg ${darkMode ? "bg-gray-900 border border-gray-800" : "bg-white border border-gray-200"}`}>
+      <div className="flex flex-col md:flex-row gap-8 items-center justify-between">
+        <div className="space-y-6 w-full max-w-2xl">
+          <ShimmerBlock className="h-8 w-32 rounded-full" />
+          <ShimmerBlock className="h-14 w-3/4" />
+          <ShimmerBlock className="h-6 w-1/2" />
+          <div className="flex gap-4 pt-2">
+            <ShimmerBlock className="h-10 w-32 rounded-lg" />
+            <ShimmerBlock className="h-10 w-32 rounded-lg" />
+          </div>
+        </div>
+        <div className="flex flex-col items-center gap-4">
+          <ShimmerBlock className="h-40 w-40 rounded-full" />
+          <ShimmerBlock className="h-5 w-24" />
+        </div>
+      </div>
+    </div>
+
+    {/* Metric Cards Shimmer */}
+    <div className="space-y-8">
+      {/* Section Header */}
+      <div className="flex items-center gap-4 px-2">
+        <ShimmerBlock className="h-12 w-12 rounded-lg" />
+        <div className="space-y-2">
+          <ShimmerBlock className="h-7 w-48" />
+          <ShimmerBlock className="h-4 w-32" />
+        </div>
+      </div>
+
+      {/* Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className={`h-56 rounded-xl border p-6 space-y-6 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+            <div className="flex justify-between items-start">
+              <div className="flex gap-4">
+                <ShimmerBlock className="h-12 w-12 rounded-lg" />
+                <div className="space-y-2">
+                  <ShimmerBlock className="h-5 w-32" />
+                  <ShimmerBlock className="h-5 w-20 rounded-full" />
+                </div>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <ShimmerBlock className="h-4 w-full" />
+              <ShimmerBlock className="h-4 w-5/6" />
+            </div>
+            <div className="pt-4 border-t border-gray-200 dark:border-gray-700 mt-auto">
+              <ShimmerBlock className="h-4 w-3/4" />
+              <ShimmerBlock className="h-3 w-1/2 mt-2" />
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   </div>
 );
@@ -230,7 +286,14 @@ export default function Security_Compilance() {
   const darkMode = theme === "dark";
 
   if (!data?.Security_or_Compliance) {
-    return <SecurityShimmer darkMode={darkMode} />;
+    return (
+      <div className={`min-h-screen w-full ${darkMode ? "bg-gray-900" : "bg-gray-50"} transition-colors duration-300`}>
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
+          <UrlHeader darkMode={darkMode} />
+          <SecurityShimmer darkMode={darkMode} />
+        </main>
+      </div>
+    );
   }
 
   const metric = data?.Security_or_Compliance || {};
@@ -244,6 +307,8 @@ export default function Security_Compilance() {
   return (
     <div className={`min-h-screen w-full ${mainBg} transition-colors duration-300`}>
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
+
+        <UrlHeader darkMode={darkMode} />
 
         {/* Header Section */}
         <div className={`relative overflow-hidden rounded-3xl p-8 sm:p-10 shadow-2xl ${darkMode ? "bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700" : "bg-white border border-gray-200"}`}>

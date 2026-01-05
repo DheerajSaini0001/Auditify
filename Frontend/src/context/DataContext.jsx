@@ -22,7 +22,10 @@ export const DataProvider = ({ children }) => {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:2000/audit/site", {
+      // Use environment variable for API URL
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
+
+      const res = await fetch(`${API_URL}/audit/site`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ Site: inputValue, Device: device, Report: report }),
@@ -60,7 +63,8 @@ export const DataProvider = ({ children }) => {
 
     const newInterval = setInterval(async () => {
       try {
-        const res = await fetch(`http://localhost:2000/report/${id}`);
+        const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
+        const res = await fetch(`${API_URL}/report/${id}`);
         const updated = await res.json();
 
         if (updated.Status === "completed") {

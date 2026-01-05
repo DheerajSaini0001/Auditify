@@ -43,56 +43,47 @@ const ShimmerBlock = ({ className = "" }) => (
 
 const UxShimmer = ({ darkMode }) => (
   <div className="space-y-12 animate-in fade-in zoom-in duration-300">
-    {/* Header Shimmer */}
+    {/* Header Loading */}
     <div className={`relative overflow-hidden rounded-3xl p-8 sm:p-10 shadow-lg ${darkMode ? "bg-gray-900 border border-gray-800" : "bg-white border border-gray-200"}`}>
-      <div className="flex flex-col md:flex-row gap-8 items-center justify-between">
-        <div className="space-y-6 w-full max-w-2xl">
-          <ShimmerBlock className="h-8 w-32 rounded-full" />
-          <ShimmerBlock className="h-14 w-3/4" />
-          <ShimmerBlock className="h-6 w-1/2" />
-          <div className="flex gap-4 pt-2">
-            <ShimmerBlock className="h-10 w-32 rounded-lg" />
-            <ShimmerBlock className="h-10 w-32 rounded-lg" />
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-500/5 to-transparent animate-[shimmer_2s_infinite]"></div>
+      <div className="flex flex-col md:flex-row gap-8 items-center justify-between relative z-10">
+        <div className="space-y-6 w-full max-w-2xl text-center md:text-left">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-500 text-sm font-medium animate-pulse">
+            <Loader2 className="w-3 h-3 animate-spin" />
+            <span>Initializing Audit</span>
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-4xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-blue-400 dark:to-cyan-400 animate-pulse">Running UX Audit...</h1>
+            <p className={`text-lg ${darkMode ? "text-gray-400" : "text-gray-600"}`}>Analyzing Content Readability, Layout Stability, and Mobile Responsiveness.</p>
           </div>
         </div>
         <div className="flex flex-col items-center gap-4">
-          <ShimmerBlock className="h-40 w-40 rounded-full" />
-          <ShimmerBlock className="h-5 w-24" />
+          <Loader2 className={`w-24 h-24 animate-spin ${darkMode ? "text-blue-500" : "text-blue-600"} opacity-20`} />
+          <span className="text-sm font-bold animate-pulse">Calculating Score...</span>
         </div>
       </div>
     </div>
 
-    {/* Metric Cards Shimmer */}
+    {/* Metric Cards Loading */}
     <div className="space-y-8">
       {/* Section Header */}
-      <div className="flex items-center gap-4 px-2">
-        <ShimmerBlock className="h-12 w-12 rounded-lg" />
+      <div className="flex items-center gap-4 px-2 opacity-50">
+        <div className="p-2 rounded-lg bg-gray-200 dark:bg-gray-800">
+          <Layout size={24} />
+        </div>
         <div className="space-y-2">
-          <ShimmerBlock className="h-7 w-48" />
-          <ShimmerBlock className="h-4 w-32" />
+          <div className="h-6 w-48 bg-gray-200 dark:bg-gray-800 rounded animate-pulse"></div>
         </div>
       </div>
 
       {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[...Array(6)].map((_, i) => (
-          <div key={i} className={`h-56 rounded-xl border p-6 space-y-6 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
-            <div className="flex justify-between items-start">
-              <div className="flex gap-4">
-                <ShimmerBlock className="h-12 w-12 rounded-lg" />
-                <div className="space-y-2">
-                  <ShimmerBlock className="h-5 w-32" />
-                  <ShimmerBlock className="h-5 w-20 rounded-full" />
-                </div>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <ShimmerBlock className="h-4 w-full" />
-              <ShimmerBlock className="h-4 w-5/6" />
-            </div>
-            <div className="pt-4 border-t border-gray-200 dark:border-gray-700 mt-auto">
-              <ShimmerBlock className="h-4 w-3/4" />
-              <ShimmerBlock className="h-3 w-1/2 mt-2" />
+        {["Analyzing Content Readability...", "Checking Tap Targets...", "Measuring Font Sizes...", "Verifying Navigation Depth...", "Scanning Layout Stability...", "Testing Responsive Design..."].map((text, i) => (
+          <div key={i} className={`h-56 rounded-xl border p-6 flex flex-col justify-center items-center gap-4 text-center ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+            <Loader2 className="w-8 h-8 animate-spin text-blue-500 opacity-50" />
+            <div className="space-y-1">
+              <div className={`font-semibold ${darkMode ? "text-gray-300" : "text-gray-700"}`}>{text}</div>
+              <div className="text-xs opacity-50">Please wait...</div>
             </div>
           </div>
         ))}

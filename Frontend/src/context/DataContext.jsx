@@ -11,13 +11,12 @@ export const DataProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [intervalId, setIntervalId] = useState(null);
 
-  // 🚀 FETCH DATA (same)
+  // 🚀 FETCH DATA
   const fetchData = async (inputValue, device, report) => {
-    if (!inputValue) return alert("URL is empty");
+    if (!inputValue) return { success: false, error: "URL is empty" };
 
     if (inputValue.includes(" ") || !inputValue.includes(".")) {
-      alert("Invalid URL");
-      return;
+      return { success: false, error: "Invalid URL format" };
     }
 
     setLoading(true);
@@ -30,14 +29,26 @@ export const DataProvider = ({ children }) => {
       });
 
       const auditData = await res.json();
+
+      if (!res.ok) {
+        // Handle specific status codes
+        if (res.status === 429) {
+          return { success: false, error: "Too many requests. Please wait 15 minutes." };
+        }
+        return { success: false, error: auditData.error || auditData.message || "Audit failed to start." };
+      }
+
       setData(auditData);
 
       if (auditData.Status !== "completed") {
         startLiveFetch(auditData.auditId);
       }
 
-    } catch {
-      alert("Something went wrong!");
+      return { success: true };
+
+    } catch (err) {
+      console.error(err);
+      return { success: false, error: "Server connection failed. Is the backend running?" };
     } finally {
       setLoading(false);
     }

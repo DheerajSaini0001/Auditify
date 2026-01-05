@@ -96,7 +96,11 @@ export default function InputForm() {
       urlToFetch = `https://${urlToFetch}`;
     }
 
-    await fetchData(urlToFetch, device, report);
+    const result = await fetchData(urlToFetch, device, report);
+
+    if (!result?.success) {
+      setError(result?.error || "An unknown error occurred.");
+    }
   };
 
   // Navigate to /report after data arrives

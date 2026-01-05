@@ -4,6 +4,28 @@ import { dirname, join } from "path";
 import SiteReport from "../models/SiteReport.js";
 
 export const startAudit = async (req, res) => {
+  // Helper to validate URL and prevent SSRF
+  const isValidUrl = (string) => {
+    try {
+      const url = new URL(string);
+      // Block localhost, private IPs, and non-http/https protocols
+      if (url.protocol !== "http:" && url.protocol !== "https:") return false;
+      if (
+        url.hostname === "localhost" ||
+        url.hostname === "127.0.0.1" ||
+        url.hostname === "::1" ||
+        url.hostname.startsWith("192.168.") ||
+        url.hostname.startsWith("10.") ||
+        url.hostname.startsWith("172.")
+      ) {
+        return false;
+      }
+      return true;
+    } catch (_) {
+      return false;
+    }
+  };
+
   try {
     let { Site, Device, Report } = req.body;
 
@@ -14,6 +36,10 @@ export const startAudit = async (req, res) => {
     Site = Site.trim().toLowerCase();
     if (!/^https?:\/\//i.test(Site)) {
       Site = "https://" + Site;
+    }
+
+    if (!isValidUrl(Site)) {
+      return res.status(400).json({ error: "Invalid or Restricted URL" });
     }
 
     console.log(`➡️ New Audit Request → ${Site} | ${Device} | ${Report}`);

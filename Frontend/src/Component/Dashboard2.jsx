@@ -11,7 +11,7 @@ import {
   Cell,
   ReferenceLine
 } from "recharts";
-import { NotebookPen, ExternalLink, ArrowRight, Clock, Smartphone, Monitor } from "lucide-react";
+import { NotebookPen, ExternalLink, ArrowRight, Clock, Smartphone, Monitor, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import CircularProgress from "./CircularProgress";
 import { useData } from "../context/DataContext";
@@ -99,23 +99,69 @@ export default function Dashboard2({ darkMode }) {
         </div>
 
 
-        {/* ✅ Loading Shimmer or Main Content */}
+        {/* ✅ Loading State with Specific Cards */}
         {(loading || !data?.Section_Score) ? (
-          <div className="flex flex-col gap-8">
-            {/* Score Card Shimmer */}
-            <div className={`p-8 rounded-2xl ${cardClass} flex flex-col lg:flex-row gap-10 items-center justify-center`}>
-              <ShimmerBlock className="h-32 w-32 rounded-full" />
-              <div className="space-y-4 w-64">
-                <ShimmerBlock className="h-8 w-full" />
-                <ShimmerBlock className="h-4 w-full" />
+          <div className="flex flex-col gap-8 animate-in fade-in duration-500">
+            {/* Score Card Loading */}
+            <div className={`p-8 rounded-3xl ${cardClass} flex flex-col md:flex-row items-center justify-center gap-8 min-h-[300px]`}>
+              <div className="relative">
+                <Loader2 className="w-24 h-24 animate-spin text-emerald-500 opacity-20" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-2xl font-bold animate-pulse">...</span>
+                </div>
+              </div>
+              <div className="space-y-4 text-center md:text-left">
+                <div className="h-8 w-64 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse"></div>
+                <div className="h-4 w-48 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse mx-auto md:mx-0"></div>
+                <div className="flex gap-2 justify-center md:justify-start pt-2">
+                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-500 animate-pulse">Identifying Device...</span>
+                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-500 animate-pulse">Calculating Time...</span>
+                </div>
               </div>
             </div>
 
-            {/* Grid Shimmer */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {[...Array(8)].map((_, i) => (
-                <ShimmerBlock key={i} className={`h-32 w-full rounded-2xl ${darkMode ? 'bg-slate-900' : 'bg-white'} border border-transparent`} />
-              ))}
+            {/* Detailed Metrics Grid Loading */}
+            <div>
+              <h3 className="text-xl font-bold px-1 mb-6 animate-pulse w-48 h-6 bg-slate-200 dark:bg-slate-800 rounded"></h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {sectionMappings.map((item, index) => (
+                  <div
+                    key={item.key}
+                    className={`relative p-6 rounded-2xl border text-left flex flex-col justify-between h-40 overflow-hidden ${cardClass}`}
+                  >
+                    {/* Loading Scan Effect */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-500/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]"></div>
+
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="p-3 rounded-lg bg-slate-100 dark:bg-slate-800">
+                        <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 z-10">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium opacity-50">Analyzing</span>
+                      </div>
+                      <h4 className={`font-semibold ${darkMode ? "text-slate-200" : "text-slate-700"}`}>
+                        {item.name}
+                      </h4>
+                    </div>
+
+                    {/* Progress Bar Placeholder */}
+                    <div className="absolute bottom-0 left-0 w-full h-1 bg-slate-100 dark:bg-slate-800">
+                      <div className="h-full bg-emerald-500/50 w-1/3 animate-[loading_1.5s_ease-in-out_infinite]"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Chart Loading */}
+            <div className={`p-8 rounded-3xl border h-[400px] flex items-center justify-center ${cardClass}`}>
+              <div className="flex flex-col items-center gap-4 opacity-50">
+                <Loader2 className="w-10 h-10 animate-spin" />
+                <span className="text-sm font-medium">Generating Performance Chart...</span>
+              </div>
             </div>
           </div>
         ) : (

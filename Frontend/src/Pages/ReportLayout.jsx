@@ -85,7 +85,7 @@ const ReportLayout = () => {
             }`}
         >
           {/* ✅ Max width container for better readability on large screens */}
-          <main className="flex-1 flex flex-col w-full max-w-7xl space-y-6 sm:space-y-8">
+          <main className="flex-1 flex flex-col w-full max-w-7xl space-y-6 sm:space-y-8 mt-10">
             <UrlHeader darkMode={darkMode} />
 
             {/* Report Components */}

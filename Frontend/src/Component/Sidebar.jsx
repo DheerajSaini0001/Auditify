@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React from "react";
 import {
   Accessibility,
   Gauge,
@@ -7,176 +7,127 @@ import {
   Layout,
   TrendingUp,
   Brain,
-  Database,
   FileText,
-  Loader2
+  Loader2,
+  ChevronRight,
+  BarChart2
 } from "lucide-react";
-import { Link } from "react-router-dom";
-import { ThemeContext } from "../ThemeContext";
+import { Link, useLocation } from "react-router-dom";
 import { useData } from "../context/DataContext";
 import { generatePDF } from "../utils/pdfGenerator";
 
 export default function Sidebar({ darkMode }) {
-  const { data: rawData, loading } = useData();
-  const data = rawData;
+  const { data, loading } = useData();
+  const location = useLocation();
 
-  const sidebarBg = darkMode ? "bg-gray-900 text-white" : "bg-gray-200 text-black";
-  const sidebarBorder = darkMode ? "border-gray-700" : "border-gray-300";
-  const hoverClass = darkMode ? "hover:bg-gray-700 hover:text-blue-500" : "hover:bg-gray-300 hover:text-blue-600";
+  // Define menu items configuration
+  const menuItems = [
+    { key: "Technical_Performance", label: "Technical Performance", path: "/technical-performance", icon: Gauge },
+    { key: "On_Page_SEO", label: "On-Page SEO", path: "/on-page-seo", icon: Image },
+    { key: "Accessibility", label: "Accessibility", path: "/accessibility", icon: Accessibility },
+    { key: "Security_or_Compliance", label: "Security & Compliance", path: "/security-compliance", icon: Shield },
+    { key: "UX_or_Content_Structure", label: "UX & Content", path: "/ux-content-structure", icon: Layout },
+    { key: "Conversion_and_Lead_Flow", label: "Conversion Flow", path: "/conversion-lead-flow", icon: TrendingUp },
+    { key: "AIO_Readiness", label: "AIO Readiness", path: "/aio", icon: Brain },
+  ];
+
+  // Styles
+  const sidebarClass = darkMode
+    ? "bg-[#0B1120] border-r border-slate-800 text-slate-300"
+    : "bg-white border-r border-slate-200 text-slate-600";
+
+  const headerClass = darkMode
+    ? "border-b border-slate-800 bg-[#0B1120]"
+    : "border-b border-slate-200 bg-white";
+
+  const getItemClass = (isActive, isDisabled) => {
+    if (isDisabled) {
+      return `opacity-50 cursor-not-allowed ${darkMode ? "text-slate-600" : "text-slate-400"}`;
+    }
+    if (isActive) {
+      return darkMode
+        ? "bg-emerald-500/10 text-emerald-400 border-r-2 border-emerald-500"
+        : "bg-emerald-50 text-emerald-700 border-r-2 border-emerald-500";
+    }
+    return darkMode
+      ? "hover:bg-slate-800 hover:text-white"
+      : "hover:bg-slate-50 hover:text-slate-900";
+  };
 
   return (
-    <div className={`${sidebarBg} flex flex-col h-full border-r ${sidebarBorder}`}>
-      <div className={`flex justify-center items-center text-2xl p-4 border-b ${sidebarBorder} shrink-0`}>
-        <Link to="/report" replace className={darkMode ? "text-4xl font-bold text-green-100" : "text-4xl font-bold text-green-500"}>
-          Result
+    <div className={`flex flex-col h-full w-64 shrink-0 transition-colors duration-300 ${sidebarClass}`}>
+
+      {/* Header */}
+      <div className={`flex items-center gap-3 p-6 shrink-0 ${headerClass}`}>
+        <div className={`p-2 rounded-lg ${darkMode ? "bg-emerald-500/10 text-emerald-400" : "bg-emerald-50 text-emerald-600"}`}>
+          <BarChart2 className="w-6 h-6" />
+        </div>
+        <Link to="/report" replace className="block">
+          <h2 className={`text-lg font-bold leading-none ${darkMode ? "text-white" : "text-slate-900"}`}>
+            Audit Report
+          </h2>
+          <span className="text-xs font-medium opacity-60">Overview</span>
         </Link>
       </div>
-      <aside
-        className={`flex-1 overflow-y-auto ${sidebarBg}`}
-      >
-        {/* Menu */}
-        <nav className="flex flex-col p-2 space-y-2">
-          {data?.Technical_Performance ?
+
+      {/* Navigation */}
+      <aside className="flex-1 overflow-y-auto py-4 px-3 space-y-1 custom-scrollbar">
+        {menuItems.map((item) => {
+          const isAvailable = data?.[item.key];
+          const isActive = location.pathname === item.path;
+          const Icon = item.icon;
+
+          return (
             <Link
-              replace to="/technical-performance"
-              className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass}`}
+              key={item.key}
+              to={isAvailable ? item.path : "#"}
+              replace
+              className={`
+                group flex items-center justify-between p-3 rounded-lg text-sm font-medium transition-all duration-200
+                ${getItemClass(isActive, !isAvailable)}
+              `}
+              onClick={(e) => !isAvailable && e.preventDefault()}
             >
-              <Gauge size={20} /> <span>Technical Performance</span>
-            </Link>
-            : <Link
-              replace to="/technical-performance"
-              className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass} pointer-events-none opacity-60 cursor-not-allowed `}
-            >
-              <div className="flex flex-row items-center justify-center gap-2"> <Gauge size={20} /> Technical Performance <Loader2 size={20} className="animate-spin w-5 h-5" /></div>
-            </Link>}
-          {data?.On_Page_SEO ? (
-            <Link
-              replace to="/on-page-seo"
-              className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass}`}
-            >
-              <Image size={20} /> <span>On Page SEO</span>
-            </Link>
-          ) : (
-            <Link
-              replace to="/on-page-seo"
-              className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass} pointer-events-none opacity-60 cursor-not-allowed  `}
-            >
-              <div className="flex flex-row items-center justify-center gap-2">
-                <Image size={20} /> On Page SEO{" "}
-                <Loader2 size={20} className="animate-spin w-5 h-5" />
+              <div className="flex items-center gap-3">
+                <Icon className={`w-5 h-5 ${isActive ? "" : "opacity-70 group-hover:opacity-100"}`} />
+                <span>{item.label}</span>
               </div>
-            </Link>
-          )}
 
-          {data?.Accessibility ? (
-            <Link
-              replace to="/accessibility"
-              className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass}`}
-            >
-              <Accessibility size={20} /> <span>Accessibility</span>
-            </Link>
-          ) : (
-            <Link
-              replace to="/accessibility"
-              className={`flex items-center space-x-3 p-3 rounded-md transition pointer-events-none opacity-60 cursor-not-allowed  ${hoverClass}`}
-            >
-              <div className="flex flex-row items-center justify-center gap-2">
-                <Accessibility size={20} /> Accessibility{" "}
-                <Loader2 size={20} className="animate-spin w-5 h-5" />
-              </div>
-            </Link>
-          )}
+              {!isAvailable && (
+                <Loader2 className="w-4 h-4 animate-spin opacity-40 block" />
+              )}
 
-          {data?.Security_or_Compliance ? (
-            <Link
-              replace to="/security-compliance"
-              className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass}`}
-            >
-              <Shield size={20} /> <span>Security/Compliance</span>
+              {isAvailable && isActive && (
+                <ChevronRight className="w-4 h-4 opacity-50 block" />
+              )}
             </Link>
-          ) : (
-            <Link
-              replace to="/security-compliance"
-              className={`flex items-center space-x-3 p-3 rounded-md transition pointer-events-none opacity-60 cursor-not-allowed  ${hoverClass}`}
-            >
-              <div className="flex flex-row items-center justify-center gap-2">
-                <Shield size={20} /> Security/Compliance{" "}
-                <Loader2 size={20} className="animate-spin w-5 h-5" />
-              </div>
-            </Link>
-          )}
-
-          {data?.UX_or_Content_Structure ? (
-            <Link
-              replace to="/ux-content-structure"
-              className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass}`}
-            >
-              <Layout size={20} /> <span>UX & Content Structure</span>
-            </Link>
-          ) : (
-            <Link
-              replace to="/ux-content-structure"
-              disabled
-              className={`flex items-center space-x-3 p-3 rounded-md transition pointer-events-none opacity-60 cursor-not-allowed  ${hoverClass}
-   pointer-events-none opacity-60 cursor-not-allowed `}
-            >
-              <div className="flex flex-row items-center justify-center gap-2">
-                <Layout size={20} /> UX & Content Structure{" "}
-                <Loader2 size={20} className="animate-spin w-5 h-5" />
-              </div>
-            </Link>
-          )}
-
-          {data?.Conversion_and_Lead_Flow ? (
-            <Link
-              replace to="/conversion-lead-flow"
-              className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass}`}
-            >
-              <TrendingUp size={20} /> <span>Conversion & Lead Flow</span>
-            </Link>
-          ) : (
-            <Link
-              replace to="/conversion-lead-flow"
-              className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass} pointer-events-none opacity-60 cursor-not-allowed`}
-            >
-              <div className="flex flex-row items-center justify-center gap-2">
-                <TrendingUp size={20} /> Conversion & Lead Flow{" "}
-                <Loader2 size={20} className="animate-spin w-5 h-5" />
-              </div>
-            </Link>
-          )}
-
-          {data?.AIO_Readiness ? (
-            <Link
-              replace to="/aio"
-              className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass}`}
-            >
-              <Brain size={20} /> <span>AIO (AI-Optimization) Readiness</span>
-            </Link>
-          ) : (
-            <Link
-              replace to="/aio"
-              className={`flex items-center space-x-3 p-3 rounded-md transition ${hoverClass} pointer-events-none opacity-60 cursor-not-allowed`}
-            >
-              <div className="flex flex-row items-center justify-center gap-2">
-                <Brain size={20} /> AIO (AI-Optimization) Readiness{" "}
-                <Loader2 size={20} className="animate-spin w-5 h-5" />
-              </div>
-            </Link>
-          )}
-
-
-          {/* Download Button */}
-          {data?.Section_Score &&
-            <button
-              onClick={() => generatePDF(data)}
-              className={`flex items-center space-x-3 p-3 w-full rounded-md transition ${hoverClass}`}
-            >
-              <FileText className="w-5 h-5" />
-              <span>Download Report</span>
-            </button>}
-        </nav>
+          );
+        })}
       </aside>
+
+      {/* Footer / Actions */}
+      <div className={`p-4 border-t ${darkMode ? "border-slate-800" : "border-slate-200"}`}>
+        {data?.Section_Score ? (
+          <button
+            onClick={() => generatePDF(data)}
+            className={`
+                flex items-center justify-center gap-2 w-full p-3 rounded-xl font-semibold transition-all shadow-sm
+                ${darkMode
+                ? "bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 hover:border-slate-600"
+                : "bg-slate-100 hover:bg-slate-200 text-slate-900 border border-slate-200 hover:border-slate-300"
+              }
+            `}
+          >
+            <FileText className="w-4 h-4" />
+            <span>Download PDF</span>
+          </button>
+        ) : (
+          <div className={`text-xs text-center p-2 opacity-40 ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
+            Waiting for analysis...
+          </div>
+        )}
+      </div>
+
     </div>
   );
 }

@@ -3,51 +3,90 @@ import { Home, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
-export default function NotFound({ darkMode }) {
+export default function NotFound({
+  darkMode,
+  title = "404",
+  subtitle = "Page Not Found",
+  description = "Oops! The page you’re looking for doesn’t exist or might have been moved.",
+  buttonText = "Go Back Home",
+  onButtonClick,
+}) {
   const navigate = useNavigate();
+
+  const handleHome = () => {
+    if (onButtonClick) {
+      onButtonClick();
+    } else {
+      navigate("/");
+    }
+  };
 
   return (
     <div
-      className={`flex flex-col items-center justify-center mt-50 text-center px-6 transition-colors duration-300 ${darkMode ? "bg-gray-900 text-gray-100" : "bg-gray-50 text-gray-800"
+      className={`relative flex flex-col items-center justify-center min-h-[70vh] overflow-hidden px-6 transition-colors duration-300 ${darkMode ? "bg-gray-900 text-gray-100" : "bg-gray-50 text-gray-800"
         }`}
     >
+      {/* Background Glow Effect */}
+      <div
+        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full blur-[120px] opacity-20 pointer-events-none ${darkMode ? "bg-blue-600" : "bg-blue-300"
+          }`}
+      />
+
       <motion.div
-        className="flex flex-col items-center gap-4"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        className="relative z-10 flex flex-col items-center max-w-lg text-center"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
       >
-        <AlertTriangle
-          className={`w-20 h-20 ${darkMode ? "text-yellow-400" : "text-yellow-500"
-            }`}
-        />
-
-        <h1 className="text-4xl sm:text-6xl font-extrabold">404</h1>
-        <h2
-          className={`text-2xl font-semibold ${darkMode ? "text-gray-300" : "text-gray-600"
+        {/* Floating Icon */}
+        <motion.div
+          animate={{ y: [0, -15, 0] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          className={`mb-6 p-5 rounded-full shadow-2xl ${darkMode ? "bg-gray-800 shadow-blue-900/20" : "bg-white shadow-blue-200"
             }`}
         >
-          Page Not Found
+          <AlertTriangle
+            className={`w-16 h-16 sm:w-20 sm:h-20 ${darkMode ? "text-yellow-400" : "text-yellow-500"
+              }`}
+          />
+        </motion.div>
+
+        {/* Title with Gradient */}
+        <h1 className="text-5xl sm:text-7xl font-extrabold tracking-tight mb-2">
+          <span className="bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
+            {title}
+          </span>
+        </h1>
+
+        {/* Subtitle */}
+        <h2
+          className={`text-2xl sm:text-3xl font-semibold mb-4 ${darkMode ? "text-gray-200" : "text-gray-700"
+            }`}
+        >
+          {subtitle}
         </h2>
 
+        {/* Description */}
         <p
-          className={` mt-2 ${darkMode ? "text-gray-400" : "text-gray-500"
+          className={`text-base sm:text-lg mb-8 max-w-md leading-relaxed ${darkMode ? "text-gray-400" : "text-gray-500"
             }`}
         >
-          Oops! The page you’re looking for doesn’t exist or might have been
-          moved.
+          {description}
         </p>
 
-        <button
-          onClick={() => navigate("/")}
-          className={`flex items-center gap-2 mt-6 px-5 py-2 rounded-2xl font-medium shadow-md transition-all duration-200 ${darkMode
-              ? "bg-blue-500 hover:bg-blue-600 text-white"
-              : "bg-blue-600 hover:bg-blue-700 text-white"
+        {/* CTAs */}
+        <motion.button
+          onClick={handleHome}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className={`group flex items-center gap-3 px-8 py-3.5 rounded-full font-semibold shadow-lg transition-all duration-300 ${darkMode
+            ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-500/25"
+            : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-400/30"
             }`}
         >
-          <Home className="w-5 h-5" />
-          Go Back Home
-        </button>
+          <Home className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+          <span>{buttonText}</span>
+        </motion.button>
       </motion.div>
     </div>
   );

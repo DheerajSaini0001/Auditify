@@ -21,7 +21,7 @@ export const startAudit = async (req, res) => {
     const existing = await SiteReport.findOne({ Site, Device, Report }).sort({ createdAt: -1 });
 
     // if (existing && existing.Status === "completed") {
-    if (existing) {
+    if (existing && existing.Status !== "failed") {
       const diff = (Date.now() - new Date(existing.createdAt)) / (1000 * 60);
 
       if (diff < 60) {                          // Set 60 Minutes
@@ -58,19 +58,19 @@ export const startAudit = async (req, res) => {
     });
 
     worker.on("message", async (msg) => {
-  if (msg?.error) {
-    console.log("❌ Audit Failed");
+      if (msg?.error) {
+        console.log("❌ Audit Failed");
 
-    await SiteReport.findByIdAndUpdate(newReport._id, {
-      Status: "failed",
-      Error_Message: msg.error,
-    });
+        await SiteReport.findByIdAndUpdate(newReport._id, {
+          Status: "failed",
+          Error_Message: msg.error,
+        });
 
-    return;
-  }
+        return;
+      }
 
-  console.log("✅ Audit Completed Successfully");
-})
+      console.log("✅ Audit Completed Successfully");
+    })
 
     worker.on("error", async () => {
       await SiteReport.findByIdAndUpdate(newReport._id, { Status: "failed" });

@@ -11,6 +11,7 @@ import Conversion_Lead_Flow from "./Conversion_Lead_Flow";
 import AIO from "./AIO";
 import RawData from "./RawData";
 import { useNavigate } from "react-router-dom";
+import NotFound from "./NotFound";
 
 const ReportLayout = () => {
   const { data, clearData } = useData();
@@ -30,31 +31,22 @@ const ReportLayout = () => {
     return null;
   }
 
-  const handleCheckOther = () => {
-    clearData();
-    navigate("/", { replace: true });
-  };
 
+  // ✅ Responsive Error State
   // ✅ Responsive Error State
   if (data.Status === "failed") {
     return (
-      <div
-        className={`flex flex-col items-center justify-center min-h-[60vh] px-4 text-center space-y-6 ${darkMode ? "text-gray-100" : "text-gray-800"
-          }`}
-      >
-        <p className="text-xl sm:text-2xl font-bold text-red-500">
-          ⚠️ Data Fetching Failed
-        </p>
-        <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">
-          Please try another website.
-        </p>
-        <button
-          onClick={handleCheckOther}
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 text-sm sm:text-base"
-        >
-          🔄 Check Another Website
-        </button>
-      </div>
+      <NotFound
+        darkMode={darkMode}
+        title="Data Fetching Failed"
+        subtitle="Unable to retrieve site metrics"
+        description="Please check the URL or try another website."
+        buttonText="Check Another Website"
+        onButtonClick={() => {
+          clearData();
+          navigate("/", { replace: true });
+        }}
+      />
     );
   }
 

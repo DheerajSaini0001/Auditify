@@ -49,7 +49,6 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
   } catch (error) {
     if (browser) await browser.close();
     console.error("Error fetching Puppeteer_Cheerio data:", error);
-    // res.status(500).json({ success: false, error: "Failed to fetch Puppeteer_Cheerio API data" });
-    return null;
+    throw error;
   }
 }

@@ -203,18 +203,38 @@ export const generatePDF = (originalObj) => {
 
                 // metric block (e.g., LCP, FID)
                 if (typeof metricVal === "object" && !Array.isArray(metricVal)) {
+
+                    // Determine Color based on Status/Score
+                    let blockColor = [245, 245, 245]; // Default Gray
+                    const sVal = Object.entries(metricVal).find(([k]) => k.toLowerCase() === 'status')?.[1];
+
+                    if (sVal) {
+                        const statusStr = String(sVal).toLowerCase();
+                        if (statusStr.includes("pass")) {
+                            blockColor = [220, 252, 231]; // Green-100
+                        } else if (statusStr.includes("fail")) {
+                            blockColor = [254, 226, 226]; // Red-100
+                        } else if (statusStr.includes("warning")) {
+                            blockColor = [255, 237, 213]; // Orange-100
+                        }
+                    }
+
                     rows.push({
                         type: "metric",
                         Key: Metric,
                         Value: "",
+                        blockColor: blockColor
                     });
 
                     Object.entries(metricVal).forEach(([k2, v2]) => {
-                        rows.push({
-                            type: "normal",
-                            Key: cleanKey(k2),
-                            Value: formatValue(v2),
-                        });
+                        // USER REQUEST: Only show Score and Status (Case Insensitive)
+                        if (["score", "status"].includes(k2.toLowerCase())) {
+                            rows.push({
+                                type: "normal",
+                                Key: cleanKey(k2),
+                                Value: formatValue(v2),
+                            });
+                        }
                     });
                 } else {
                     // Simple key-value (e.g., Percentage)
@@ -285,16 +305,16 @@ export const generatePDF = (originalObj) => {
             // ⭐ SECTION HEADER BLOCK (NO BG)
             if (row.type === "section") {
                 dataCell.cell.colSpan = 2;
-                dataCell.cell.styles.fillColor = [220, 235, 255]; // <-- YAHAN FIX KIYA GAYA HAI
+                dataCell.cell.styles.fillColor = [220, 235, 255];
                 dataCell.cell.styles.textColor = [0, 70, 150];
                 dataCell.cell.styles.fontStyle = "bold";
                 dataCell.cell.styles.fontSize = 11;
             }
 
-            // ⭐ METRIC (sub-section) (Gray BG)
+            // ⭐ METRIC (sub-section) (Dynamic BG)
             if (row.type === "metric") {
                 dataCell.cell.colSpan = 2;
-                dataCell.cell.styles.fillColor = [245, 245, 245]; // <-- YEH WALA RAKHA HAI
+                dataCell.cell.styles.fillColor = row.blockColor || [245, 245, 245];
                 dataCell.cell.styles.fontStyle = "bold";
             }
 
@@ -303,9 +323,24 @@ export const generatePDF = (originalObj) => {
                 dataCell.cell.styles.fontStyle = "normal";
             }
 
+            // ⭐ STATUS COLOR CODING
+            if (row.Key === "Status" && dataCell.column.index === 1) {
+                const statusVal = String(row.Value).toLowerCase();
+                if (statusVal.includes("pass")) {
+                    dataCell.cell.styles.textColor = [34, 197, 94]; // Green
+                    dataCell.cell.styles.fontStyle = "bold";
+                } else if (statusVal.includes("fail")) {
+                    dataCell.cell.styles.textColor = [239, 68, 68]; // Red
+                    dataCell.cell.styles.fontStyle = "bold";
+                } else if (statusVal.includes("warning")) {
+                    dataCell.cell.styles.textColor = [249, 115, 22]; // Orange
+                    dataCell.cell.styles.fontStyle = "bold";
+                }
+            }
+
             // ⭐ HEADING SCHEME block (NO BG)
             if (row.type === "heading_box") {
-                dataCell.cell.styles.fillColor = [255, 245, 225]; // <-- YAHAN FIX KIYA GAYA HAI
+                dataCell.cell.styles.fillColor = [255, 245, 225];
                 dataCell.cell.styles.textColor = [100, 70, 20];
                 dataCell.cell.styles.fontStyle = "normal";
                 if (dataCell.column.index === 0) {

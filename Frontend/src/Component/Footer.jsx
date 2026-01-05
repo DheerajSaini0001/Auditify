@@ -6,36 +6,45 @@ export default function Footer() {
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
 
+  // Simplified, professional styles matching the new theme
   const footerClass = darkMode
-    ? "mt-auto flex bg-gray-900 text-gray-200 py-6 pt-8 border-t border-gray-700"
-    : "mt-auto flex bg-gray-200 text-gray-800 py-6 pt-8 border-t border-gray-300";
+    ? "mt-auto w-full py-6 px-6 border-t bg-[#0B1120] border-slate-800 text-slate-400 text-sm"
+    : "mt-auto w-full py-6 px-6 border-t bg-white border-slate-200 text-slate-600 text-sm";
 
-  const linkHoverClass = darkMode
-    ? "hover:text-blue-400 transition"
-    : "hover:text-blue-600 transition";
+  const linkClass = darkMode
+    ? "hover:text-emerald-400 transition-colors"
+    : "hover:text-emerald-600 transition-colors";
 
   return (
     <footer className={footerClass}>
-      <div className="container  w-full px-4 flex flex-col md:flex-row justify-between items-center">
-        <p className="text-sm">
-          <Link replace className={linkHoverClass} to="https://www.sltechsoft.com" target="_blank" rel="noopener noreferrer">
-            &copy; {new Date().getFullYear()} Success Leader Technologies.
-          </Link>{" "}
-          All rights reserved.
-        </p>
+      <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
 
-        <div className="flex space-x-6 mt-4 md:mt-0">
-          <Link replace to="/about" className={linkHoverClass}>
+        {/* Copyright */}
+        <div className="text-center md:text-left">
+          <Link
+            to="https://www.sltechsoft.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`font-medium ${linkClass}`}
+          >
+            &copy; {new Date().getFullYear()} Success Leader Technologies.
+          </Link>
+          <span className="opacity-75"> All rights reserved.</span>
+        </div>
+
+        {/* Simple Links */}
+        <div className="flex items-center gap-8 font-medium">
+          <Link replace to="/about" className={linkClass}>
             About
           </Link>
-          <Link replace to="https://sltechsoft.com/service" className={linkHoverClass}>
+          <a href="https://sltechsoft.com/service" target="_blank" rel="noopener noreferrer" className={linkClass}>
             Services
-          </Link>
-          <Link replace to="https://sltechsoft.com/" className={linkHoverClass}>
+          </a>
+          <a href="https://sltechsoft.com/" target="_blank" rel="noopener noreferrer" className={linkClass}>
             Contact
-          </Link>
-
+          </a>
         </div>
+
       </div>
     </footer>
   );

@@ -13,12 +13,12 @@ import { ThemeProvider } from "./ThemeContext";
 import Navbar from "./Component/Navbar.jsx";
 import Footer from "./Component/Footer.jsx";
 import { DataProvider } from "./context/DataContext.jsx";
-import AppContent from "./AppContent.jsx"; // 👈 naya component banayenge niche
+import AppContent from "./AppContent.jsx"; 
 function App() {
   return (
     <ThemeProvider>
       <DataProvider>
-        <AppContent />  {/* 👈 Ye DataProvider ke andar hai */}
+        <AppContent />
       </DataProvider>
     </ThemeProvider>
   );

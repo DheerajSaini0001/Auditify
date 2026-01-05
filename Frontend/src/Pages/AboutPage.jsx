@@ -1,79 +1,109 @@
 import React, { useContext } from "react";
-import Assets from "../assets/Assets.js";
-import { ThemeContext } from "../ThemeContext"; // ThemeContext import
+import { ThemeContext } from "../context/ThemeContext.jsx";
+import { CheckCircle2, Target, Zap, BarChart3, ShieldCheck, Users } from "lucide-react";
 
-export default function AboutPage({ darkMode }) {
-  const { theme } = useContext(ThemeContext); // If you use theme context globally
+export default function AboutPage() {
+  const { theme } = useContext(ThemeContext);
+  const darkMode = theme === "dark";
 
-  // 🌗 Background based on darkMode
-  const bgStyle = {
-    backgroundImage: `url(${darkMode ? Assets.DarkBg : Assets.Bg})`,
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    backgroundRepeat: "no-repeat",
-    transition: "background-image 0.5s ease-in-out",
-  };
+  // Shared container styles
+  const containerClass = darkMode
+    ? "min-h-screen py-20 px-4 flex flex-col items-center bg-[#0B1120] text-white relative overflow-hidden font-sans selection:bg-emerald-500/30"
+    : "min-h-screen py-20 px-4 flex flex-col items-center bg-slate-50 text-slate-900 relative overflow-hidden font-sans selection:bg-emerald-500/20";
 
-  // 🎨 Dynamic classes
-  const textClass = darkMode ? "text-white" : "text-gray-900";
-  const subTextClass = darkMode ? "text-gray-300" : "text-gray-700";
-  const sectionBg = darkMode
-    ? "bg-gray-800/50 backdrop-blur-md border border-gray-700"
-    : "bg-white/50 backdrop-blur-md border border-gray-200";
+  const cardClass = darkMode
+    ? "p-8 rounded-2xl bg-slate-900/50 border border-slate-700/50 backdrop-blur-sm hover:bg-slate-800/50 transition-colors"
+    : "p-8 rounded-2xl bg-white border border-slate-200 shadow-xl shadow-slate-200/50 hover:border-emerald-500/30 transition-colors";
 
   return (
-    <>
-      <div
-        className={`min-h-screen py-16 px-6 flex flex-col items-center justify-center transition-colors duration-300 ${darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"
-          }`}
-        style={bgStyle}
-      >
-        <div className="   text-center space-y-12">
-          {/* Heading */}
-          <div>
-            <h1
-              className={`text-3xl sm:text-5xl font-extrabold mb-6 drop-shadow-lg ${textClass}`}
-            >
-              About Our Site Audit Tool
-            </h1>
-            <p
-              className={`text-lg   leading-relaxed ${subTextClass}`}
-            >
-              Our Site Audit Tool helps developers, marketers, and businesses
-              improve website performance, SEO, and accessibility — making it
-              easier than ever to diagnose issues and grow your online presence.
+    <div className={containerClass}>
+      {/* Background Grid Pattern - Consistent with InputForm */}
+      <div className={`absolute inset-0 ${darkMode ? 'bg-grid-white/[0.03]' : 'bg-grid-black/[0.03]'} pointer-events-none`} />
+
+      {/* Radial Gradient for depth */}
+      <div className={`absolute inset-0 ${darkMode ? 'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-900/20 via-[#0B1120] to-[#0B1120]' : 'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-50/50 via-slate-50 to-slate-50'}`} pointerEvents="none" />
+
+      <div className="relative z-10 max-w-6xl w-full">
+
+        {/* Header */}
+        <div className="text-center mb-20 space-y-6 animate-in fade-in slide-in-from-bottom-5 duration-700">
+
+          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight">
+            Empowering the Web, <br />
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500">
+              One Audit at a Time.
+            </span>
+          </h1>
+
+          <p className={`max-w-2xl mx-auto text-lg md:text-xl font-light leading-relaxed ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
+            We provide deep insights into performance, SEO, and accessibility to help businesses build faster, compliant, and more profitable websites.
+          </p>
+        </div>
+
+        {/* Content Section */}
+        <div className="grid md:grid-cols-2 gap-8 mb-20">
+
+          {/* Mission Card */}
+          <div className={cardClass}>
+            <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-6">
+              <Target className="w-6 h-6 text-emerald-500" />
+            </div>
+            <h2 className="text-2xl font-bold mb-4">Our Mission</h2>
+            <p className={`leading-relaxed ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
+              Our goal is to democratize technical SEO and performance auditing. We believe every website owner—from freelancers to enterprises—deserves clear, actionable data to improve their digital presence without needing a PhD in computer science.
             </p>
           </div>
 
-          {/* Sections */}
-          <section className="grid md:grid-cols-2 gap-10">
-            {/* Mission */}
-            <div
-              className={`p-8 rounded-2xl shadow-xl hover:scale-105 transition-transform duration-300 ${sectionBg}`}
-            >
-              <h2 className="text-2xl font-extrabold mb-4">Our Mission</h2>
-              <p className="text-base leading-relaxed">
-                👉 To empower website owners and developers by providing
-                actionable insights that enhance site speed, SEO performance,
-                and user experience.
-              </p>
+          {/* Capabilities Grid */}
+          <div className={cardClass}>
+            <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center mb-6">
+              <Zap className="w-6 h-6 text-blue-500" />
             </div>
-
-            {/* Features */}
-            <div
-              className={`p-8 rounded-2xl shadow-xl hover:scale-105 transition-transform duration-300 ${sectionBg}`}
-            >
-              <h2 className="text-2xl font-extrabold mb-4">What We Offer</h2>
-              <ul className="list-disc list-inside space-y-2 text-base">
-                <li>Comprehensive SEO Audits</li>
-                <li>Performance & Speed Optimization Tips</li>
-                <li>Accessibility & Compliance Checks</li>
-                <li>Detailed Reporting Dashboard</li>
-              </ul>
-            </div>
-          </section>
+            <h2 className="text-2xl font-bold mb-4">What We Analyze</h2>
+            <ul className="space-y-4">
+              {[
+                "Core Web Vitals & Performance Speed",
+                "On-Page SEO & Meta Tag Health",
+                "Accessibility Compliance (WCAG)",
+                "Mobile Responsiveness & UX"
+              ].map((item, idx) => (
+                <li key={idx} className="flex items-start gap-3">
+                  <CheckCircle2 className={`w-5 h-5 flex-shrink-0 mt-0.5 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`} />
+                  <span className={darkMode ? "text-slate-300" : "text-slate-700"}>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
+
+        {/* Features / Values Row */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            {
+              icon: <BarChart3 className="w-6 h-6 text-purple-500" />,
+              title: "Data-Driven",
+              desc: "We rely on real-time data from Lighthouse and other industry-standard APIs."
+            },
+            {
+              icon: <ShieldCheck className="w-6 h-6 text-cyan-500" />,
+              title: "Security Focused",
+              desc: "Identifying vulnerabilities and security headers to keep your users safe."
+            },
+            {
+              icon: <Users className="w-6 h-6 text-orange-500" />,
+              title: "User Centric",
+              desc: "Improving the actual experience of your visitors, not just search bots."
+            }
+          ].map((feature, idx) => (
+            <div key={idx} className={`p-6 rounded-xl border transition-all ${darkMode ? 'bg-slate-900/30 border-slate-800 hover:border-slate-700' : 'bg-white border-slate-100 shadow-lg shadow-slate-200/50 hover:border-slate-200'}`}>
+              <div className="mb-4">{feature.icon}</div>
+              <h3 className="font-bold text-lg mb-2">{feature.title}</h3>
+              <p className={`text-sm ${darkMode ? "text-slate-400" : "text-slate-600"}`}>{feature.desc}</p>
+            </div>
+          ))}
+        </div>
+
       </div>
-    </>
+    </div>
   );
 }

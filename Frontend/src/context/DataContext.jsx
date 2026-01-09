@@ -44,7 +44,7 @@ export const DataProvider = ({ children }) => {
       setData(auditData);
 
       if (auditData.Status !== "completed") {
-        startLiveFetch(auditData.auditId);
+        startLiveFetch(auditData._id);
       }
 
       return { success: true };

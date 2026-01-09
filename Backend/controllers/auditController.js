@@ -65,7 +65,7 @@ export const startAudit = async (req, res) => {
 
     res.status(201).json({
       message: "Audit started successfully",
-      auditId: newReport._id,
+      _id: newReport._id,
       Site,
       Device,
       Report,

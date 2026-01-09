@@ -49,6 +49,8 @@ const OverAll = (A, B, C, D, E, F, G) => {
 
     const { browser: b, page, response, $ } = await Puppeteer_Cheerio(Site, Device);
     browser = b;
+    const Screenshot = await page.screenshot({ encoding: "base64", type: "jpeg", quality: 50, fullPage: true });
+    await SiteReport.findByIdAndUpdate(auditId, { Screenshot });
 
     if (Report !== "All") {
       let result;

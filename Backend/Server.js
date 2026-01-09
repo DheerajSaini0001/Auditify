@@ -37,7 +37,7 @@ app.use(cors({
 // 3. Rate Limiter (Prevent DoS)
 const auditLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 Minutes
-  max: 5, // Max 5 audits per IP per 15 mins
+  max: 10, // Max 5 audits per IP per 15 mins
   message: { error: "Too many audit requests, please try again later." },
   standardHeaders: true,
   legacyHeaders: false,

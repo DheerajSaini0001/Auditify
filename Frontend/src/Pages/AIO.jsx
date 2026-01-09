@@ -3,6 +3,7 @@ import UrlHeader from "../Component/UrlHeader";
 import CircularProgress from "../Component/CircularProgress";
 import { useData } from "../context/DataContext";
 import { ThemeContext } from "../context/ThemeContext";
+import LivePreview from "../Component/LivePreview";
 import {
   CheckCircle, XCircle, AlertTriangle, Info,
   Database, FileText, Zap, Server, RefreshCw, Globe,
@@ -235,6 +236,8 @@ export default function AIO() {
       <div className={`min-h-screen w-full ${darkMode ? "bg-gray-900" : "bg-gray-50"} transition-colors duration-300`}>
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
           <UrlHeader darkMode={darkMode} />
+          {/* ✅ Live Preview (Only for Full Audit) */}
+          <LivePreview data={data} showInFullAudit={false} />
           <AIOShimmer darkMode={darkMode} />
         </main>
       </div>
@@ -254,6 +257,9 @@ export default function AIO() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
 
         <UrlHeader darkMode={darkMode} />
+
+        {/* ✅ Live Preview (Only for Full Audit) */}
+        <LivePreview data={data} showInFullAudit={false} />
 
         {/* Header Section */}
         <div className={`relative overflow-hidden rounded-3xl p-8 sm:p-10 shadow-2xl ${darkMode ? "bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700" : "bg-white border border-gray-200"}`}>

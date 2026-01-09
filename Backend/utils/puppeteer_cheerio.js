@@ -16,24 +16,25 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
     if (device === "Mobile") {
 
       await page.setViewport({
-        width: 414,
-        height: 896,
+        width: 390, // iPhone 13/14 base width
+        height: 844,
         isMobile: true,
-        deviceScaleFactor: 2.5,
+        deviceScaleFactor: 3, // Higher density for sharper screenshot
         hasTouch: true,
         isLandscape: false,
       });
 
       await page.setUserAgent(
-        "Mozilla/5.0 (Linux; Android 11; Mobile; rv:109.0) " +
-        "Gecko/109.0 Firefox/109.0"
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) " +
+        "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1"
       );
 
     } else {
+      await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 2 }); // High DPI Desktop
       await page.setUserAgent(
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
         "AppleWebKit/537.36 (KHTML, like Gecko) " +
-        "Chrome/140.0.0.0 Safari/537.36"
+        "Chrome/120.0.0.0 Safari/537.36"
       );
     }
 

@@ -14,6 +14,7 @@ import {
 import { NotebookPen, ExternalLink, ArrowRight, Clock, Smartphone, Monitor, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import CircularProgress from "./CircularProgress";
+import LivePreview from "./LivePreview";
 import { useData } from "../context/DataContext";
 
 // ✅ Custom Shimmer (Modernized)
@@ -97,6 +98,10 @@ export default function Dashboard2({ darkMode }) {
             <span>New Audit</span>
           </button>
         </div>
+
+
+        {/* ✅ Live Preview Component */}
+        <LivePreview data={data} loading={loading} />
 
 
         {/* ✅ Loading State with Specific Cards */}

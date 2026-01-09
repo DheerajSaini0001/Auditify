@@ -19,6 +19,7 @@ const SiteReportSchema = new mongoose.Schema(
     UX_or_Content_Structure: { type: Object, default: null },
     Conversion_and_Lead_Flow: { type: Object, default: null },
     AIO_Readiness: { type: Object, default: null },
+    Screenshot: { type: String, default: null },
     createdAt: { type: Date, default: Date.now, expires: 60 * 60 * 1 }, // 1 hour expiry
   }
 );

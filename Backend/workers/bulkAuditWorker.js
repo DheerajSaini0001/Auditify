@@ -49,7 +49,7 @@ const OverAll = (A, B, C, D, E, F, G) => {
 
         const { browser: b, page, response, $ } = await Puppeteer_Cheerio(url, device);
         browser = b;
-        const Screenshot = await page.screenshot({ encoding: "base64", type: "jpeg", quality: 50, fullPage: true });
+        const Screenshot = await page.screenshot({ encoding: "base64", type: "jpeg", quality: 50, fullPage: false });
 
         // Update screenshot in BulkAudit document
         await BulkAuditReport.findOneAndUpdate(

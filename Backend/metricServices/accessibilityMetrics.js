@@ -1,7 +1,6 @@
 import AxePuppeteer from "@axe-core/puppeteer";
-import SiteReport from "../models/SiteReport.js";
 
-export default async function accessibilityMetrics(url, device, selectedMetric, page, auditId) {
+export default async function accessibilityMetrics(page) {
 
   let axeResults;
   try {
@@ -123,25 +122,20 @@ export default async function accessibilityMetrics(url, device, selectedMetric, 
 
   const actualPercentage = totalWeight > 0 ? parseFloat(((earnedScore / totalWeight) * 100).toFixed(0)) : 0;
 
-  //  Database
-  await SiteReport.findByIdAndUpdate(auditId, {
-    Accessibility: {
-      Percentage: actualPercentage,
-      Color_Contrast: colorContrast,
-      Focus_Order: focusOrder,
-      Focusable_Content: focusableContent,
-      Tab_Index: tabindex,
-      Interactive_Element_Affordance: interactiveElementAffordance,
-      Label: label,
-      Aria_Allowed_Attr: ariaAllowedAttr,
-      Aria_Roles: ariaRoles,
-      Aria_Hidden_Focus: ariaHiddenFocus,
-      Image_Alt: imageAlt,
-      Skip_Links: skipLinks,
-      Landmarks: landMarks,
-    },
-  });
-
-  return actualPercentage;
+  return {
+    Percentage: actualPercentage,
+    Color_Contrast: colorContrast,
+    Focus_Order: focusOrder,
+    Focusable_Content: focusableContent,
+    Tab_Index: tabindex,
+    Interactive_Element_Affordance: interactiveElementAffordance,
+    Label: label,
+    Aria_Allowed_Attr: ariaAllowedAttr,
+    Aria_Roles: ariaRoles,
+    Aria_Hidden_Focus: ariaHiddenFocus,
+    Image_Alt: imageAlt,
+    Skip_Links: skipLinks,
+    Landmarks: landMarks,
+  };
 }
 

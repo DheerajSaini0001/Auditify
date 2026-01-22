@@ -1,9 +1,9 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
-import rateLimit from "express-rate-limit";
-import auditRoutes from "./routes/auditRoutes.js";
-import reportRoutes from "./routes/reportRoutes.js";
+import singleAuditRoutes from "./routes/singleAuditRoutes.js";
+import auditReportRoutes from "./routes/auditReportRoutes.js";
+import bulkAuditRoutes from "./routes/bulkAuditRoutes.js";
 import connectDB from "./config/db.js";
 import dotenv from "dotenv";
 
@@ -12,15 +12,9 @@ const PORT = process.env.PORT || 2000;
 connectDB();
 
 const app = express();
-
-// 1. Basic Security Headers
 app.use(helmet());
 
-// 2. Restrict CORS
-const allowedOrigins = [
-  "http://localhost:5173", // Frontend Dev URL
-  // "https://your-production-domain.com" // Add production URL here
-];
+const allowedOrigins = ["http://localhost:5173"];
 
 app.use(cors({
   origin: function (origin, callback) {
@@ -34,20 +28,11 @@ app.use(cors({
   credentials: true
 }));
 
-// 3. Rate Limiter (Prevent DoS)
-const auditLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 Minutes
-  max: 10, // Max 5 audits per IP per 15 mins
-  message: { error: "Too many audit requests, please try again later." },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+app.use(express.json({ limit: "10kb" }));
 
-app.use(express.json({ limit: "10kb" })); // Limit body size
-
-// Apply limiter ONLY to audit route
-app.use("/audit", auditLimiter, auditRoutes);
-app.use("/report", reportRoutes);
+app.use("/single-audit", singleAuditRoutes);
+app.use("/bulk-audit", bulkAuditRoutes);
+app.use("/audit-report", auditReportRoutes);
 
 app.listen(PORT, () => {
   console.log(`✅ Backend running on http://localhost:${PORT}`);

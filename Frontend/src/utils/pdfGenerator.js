@@ -187,7 +187,7 @@ export const generatePDF = (originalObj) => {
         }
 
         // ⭐ SCHEMA FIX — short readable message
-        if (sectionName.toLowerCase() === "schema") {
+        if (sectionName.toLowerCase() === "schema" || sectionName.toLowerCase() === "siteschema") {
             rows.push({
                 type: "heading_box",
                 Key: "Schema",

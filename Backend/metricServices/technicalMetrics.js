@@ -1,5 +1,4 @@
 import googleAPI from "../utils/googleAPI.js";
-import SiteReport from "../models/SiteReport.js";
 
 function calculateScore(observed, good, poor) {
   if (observed <= good) return 100;
@@ -512,7 +511,7 @@ const evaluateRobots = async (url, browser) => {
 };
 
 // MAIN FUNCTION
-export default async function technicalMetrics(url, device, selectedMetric, page, response, browser, auditId) {
+export default async function technicalMetrics(url, device, page, response, browser) {
 
   const data = await googleAPI(url, device);
 
@@ -521,9 +520,9 @@ export default async function technicalMetrics(url, device, selectedMetric, page
   const cruxData = {
     LCP: { value: cruxMetrics["LARGEST_CONTENTFUL_PAINT_MS"]?.percentile, category: cruxMetrics["LARGEST_CONTENTFUL_PAINT_MS"]?.category, suggestion: "Optimize hero images and defer non-critical CSS." },
     CLS: { value: cruxMetrics["CUMULATIVE_LAYOUT_SHIFT_SCORE"]?.percentile, category: cruxMetrics["CUMULATIVE_LAYOUT_SHIFT_SCORE"]?.category, suggestion: "Set size attributes for images, videos, and ads to prevent layout shifts." },
-    INP: { value: cruxMetrics["INTERACTION_TO_NEXT_PAINT"]?.percentile, category: cruxMetrics["INTERACTION_TO_NEXT_PAINT"]?.category,suggestion: "Reduce main-thread work and optimize JS execution for faster interactivity." },
-    FCP: { value: cruxMetrics["FIRST_CONTENTFUL_PAINT_MS"]?.percentile, category: cruxMetrics["FIRST_CONTENTFUL_PAINT_MS"]?.category,suggestion: "Prioritize above-the-fold content and optimize critical rendering paths." },
-    TTFB: { value: cruxMetrics["EXPERIMENTAL_TIME_TO_FIRST_BYTE"]?.percentile, category: cruxMetrics["EXPERIMENTAL_TIME_TO_FIRST_BYTE"]?.category,suggestion: "Use a CDN, optimize server performance, or enable caching to reduce server response time." }
+    INP: { value: cruxMetrics["INTERACTION_TO_NEXT_PAINT"]?.percentile, category: cruxMetrics["INTERACTION_TO_NEXT_PAINT"]?.category, suggestion: "Reduce main-thread work and optimize JS execution for faster interactivity." },
+    FCP: { value: cruxMetrics["FIRST_CONTENTFUL_PAINT_MS"]?.percentile, category: cruxMetrics["FIRST_CONTENTFUL_PAINT_MS"]?.category, suggestion: "Prioritize above-the-fold content and optimize critical rendering paths." },
+    TTFB: { value: cruxMetrics["EXPERIMENTAL_TIME_TO_FIRST_BYTE"]?.percentile, category: cruxMetrics["EXPERIMENTAL_TIME_TO_FIRST_BYTE"]?.category, suggestion: "Use a CDN, optimize server performance, or enable caching to reduce server response time." }
   };
 
   // Evaluate Metrics
@@ -560,30 +559,26 @@ export default async function technicalMetrics(url, device, selectedMetric, page
     (inp.score * 0.15)
   ).toFixed(0));
 
-  await SiteReport.findByIdAndUpdate(auditId, {
-    Technical_Performance: {
-      Percentage: actualPercentage,
-      Real_User_Experience: cruxData,
-      LCP: lcp,
-      FID: fid,
-      CLS: cls,
-      FCP: fcp,
-      TTFB: ttfb,
-      TBT: tbt,
-      SI: si,
-      INP: inp,
-      Compression: compression,
-      Caching: caching,
-      Resource_Optimization: resourceOptimization,
-      Render_Blocking: renderBlocking,
-      HTTP: https,
-      Sitemap: sitemap,
-      Robots: robots,
-      Structured_Data: structuredData,
-      Broken_Links: brokenLinks,
-      Redirect_Chains: redirect,
-    },
-  });
-
-  return actualPercentage;
+  return {
+    Percentage: actualPercentage,
+    Real_User_Experience: cruxData,
+    LCP: lcp,
+    FID: fid,
+    CLS: cls,
+    FCP: fcp,
+    TTFB: ttfb,
+    TBT: tbt,
+    SI: si,
+    INP: inp,
+    Compression: compression,
+    Caching: caching,
+    Resource_Optimization: resourceOptimization,
+    Render_Blocking: renderBlocking,
+    HTTP: https,
+    Sitemap: sitemap,
+    Robots: robots,
+    Structured_Data: structuredData,
+    Broken_Links: brokenLinks,
+    Redirect_Chains: redirect,
+  };
 }

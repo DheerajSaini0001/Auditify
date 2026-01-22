@@ -1,5 +1,3 @@
-import SiteReport from "../models/SiteReport.js";
-
 const checkSlugs = (url) => {
   try {
     const u = new URL(url);
@@ -664,9 +662,9 @@ const checkSocial = ($) => {
   return { ogMetric, twitterMetric, socialLinksMetric };
 };
 
-export default async function seoMetrics(url, device, selectedMetric, $, auditId, page, browser) {
+export default async function seoMetrics(url, $, page) {
 
-  // Scrape Schema (keeping original logic)
+  // Scrape Schema
   const structuredData = await page.evaluate(() => {
     const scripts = Array.from(document.querySelectorAll('script[type="application/ld+json"]'))
       .map(el => {
@@ -729,34 +727,28 @@ export default async function seoMetrics(url, device, selectedMetric, $, auditId
     (contentQualityMetric.score * weights.Duplicate_Content) +
     (slugMetric.score * weights.URL_Slugs) +
     (httpsMetric.score * weights.HTTPS);
-  // Social metrics removed from score per user request, but kept for display
 
   const actualPercentage = parseFloat(weightedScore.toFixed(0));
 
-  // 5. Save to Database
-  await SiteReport.findByIdAndUpdate(auditId, {
+  return {
     Schema: structuredData,
-    On_Page_SEO: {
-      Title: titleMetric,
-      Meta_Description: metaDescMetric,
-      URL_Structure: urlStructureMetric,
-      Canonical: canonicalMetric,
-      H1: h1Metric,
-      Image: imageMetric,
-      Video: videoMetric,
-      Heading_Hierarchy: hierarchyMetric,
-      Semantic_Tags: semanticMetric,
-      Contextual_Linking: contextualMetric,
-      Links: linksMetric,
-      Duplicate_Content: contentQualityMetric,
-      URL_Slugs: slugMetric,
-      HTTPS: httpsMetric,
-      Open_Graph: ogMetric,
-      Twitter_Card: twitterMetric,
-      Social_Links: socialLinksMetric,
-      Percentage: actualPercentage,
-    }
-  });
-
-  return actualPercentage;
+    Title: titleMetric,
+    Meta_Description: metaDescMetric,
+    URL_Structure: urlStructureMetric,
+    Canonical: canonicalMetric,
+    H1: h1Metric,
+    Image: imageMetric,
+    Video: videoMetric,
+    Heading_Hierarchy: hierarchyMetric,
+    Semantic_Tags: semanticMetric,
+    Contextual_Linking: contextualMetric,
+    Links: linksMetric,
+    Duplicate_Content: contentQualityMetric,
+    URL_Slugs: slugMetric,
+    HTTPS: httpsMetric,
+    Open_Graph: ogMetric,
+    Twitter_Card: twitterMetric,
+    Social_Links: socialLinksMetric,
+    Percentage: actualPercentage,
+  };
 }

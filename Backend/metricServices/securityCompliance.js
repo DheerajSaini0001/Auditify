@@ -4,7 +4,6 @@ import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import dotenv from "dotenv";
 import fetch from "node-fetch";
 import { URL } from "url";
-import SiteReport from "../models/SiteReport.js";
 
 dotenv.config();
 puppeteer.use(StealthPlugin());
@@ -922,7 +921,7 @@ async function checkDeprecatedAPIs(page) {
     : { score: 100, status: "pass", details: "No deprecated APIs used", meta: { location: "Console" } };
 }
 
-export default async function securityCompliance(url, device, selectedMetric, page, response, browser, auditId) {
+export default async function securityCompliance(url, page, response, browser) {
   try {
 
     // Security/Compliance (HTTPS / SSL)
@@ -1070,45 +1069,42 @@ export default async function securityCompliance(url, device, selectedMetric, pa
 
     const totalPercentage = parseFloat(((totalWeightedScore / maxWeightedScore) * 100).toFixed(0));
 
-    await SiteReport.findByIdAndUpdate(auditId, {
-      Security_or_Compliance: {
-        Percentage: totalPercentage,
-        HTTPS: httpsResult,
-        SSL: sslResult,
-        SSL_Expiry: sslDetailsResult.certificateValid,
-        HSTS: sslDetailsResult.hstsEnabled,
-        TLS_Version: sslDetailsResult.tlsVersion,
-        X_Frame_Options: sslDetailsResult.xFrameOptions,
-        CSP: sslDetailsResult.contentSecurityPolicy,
-        X_Content_Type_Options: sslDetailsResult.xContentTypeOptions,
-        Cookies_Secure: cookieResult.hasSecure,
-        Cookies_HttpOnly: cookieResult.hasHttpOnly,
-        Google_Safe_Browsing: safeBrowsingResult,
-        Blacklist: blacklistResult,
-        Malware_Scan: malwareScanResult,
-        SQLi_Exposure: sqliExposureResult,
-        XSS: xssVulnerabilityResult,
-        Cookie_Consent: cookieConsentResult,
-        Privacy_Policy: privacyPolicyResult,
-        Forms_Use_HTTPS: formsUseHTTPSResult,
-        GDPR_CCPA: gdprCcpaResult,
-        Data_Collection: dataCollectionResult,
-        Weak_Default_Credentials: weakDefaultCredsResult,
-        MFA_Enabled: mfaEnabledResult,
-        Admin_Panel_Public: adminPanelPublicResult,
-        Viewport_Meta_Tag: viewportMetaTagResult,
-        HTML_Doctype: htmlDoctypeResult,
-        Character_Encoding: charsetDefinedResult,
-        Browser_Console_Errors: browserErrorsResult,
-        Geolocation_Request: geolocationRequestResult,
-        Input_Paste_Allowed: inputPasteAllowedResult,
-        Notification_Request: notificationRequestResult,
-        Third_Party_Cookies: thirdPartyCookiesResult,
-        Deprecated_APIs: deprecatedAPIsResult
-      }
-    });
+    return {
+      Percentage: totalPercentage,
+      HTTPS: httpsResult,
+      SSL: sslResult,
+      SSL_Expiry: sslDetailsResult.certificateValid,
+      HSTS: sslDetailsResult.hstsEnabled,
+      TLS_Version: sslDetailsResult.tlsVersion,
+      X_Frame_Options: sslDetailsResult.xFrameOptions,
+      CSP: sslDetailsResult.contentSecurityPolicy,
+      X_Content_Type_Options: sslDetailsResult.xContentTypeOptions,
+      Cookies_Secure: cookieResult.hasSecure,
+      Cookies_HttpOnly: cookieResult.hasHttpOnly,
+      Google_Safe_Browsing: safeBrowsingResult,
+      Blacklist: blacklistResult,
+      Malware_Scan: malwareScanResult,
+      SQLi_Exposure: sqliExposureResult,
+      XSS: xssVulnerabilityResult,
+      Cookie_Consent: cookieConsentResult,
+      Privacy_Policy: privacyPolicyResult,
+      Forms_Use_HTTPS: formsUseHTTPSResult,
+      GDPR_CCPA: gdprCcpaResult,
+      Data_Collection: dataCollectionResult,
+      Weak_Default_Credentials: weakDefaultCredsResult,
+      MFA_Enabled: mfaEnabledResult,
+      Admin_Panel_Public: adminPanelPublicResult,
+      Viewport_Meta_Tag: viewportMetaTagResult,
+      HTML_Doctype: htmlDoctypeResult,
+      Character_Encoding: charsetDefinedResult,
+      Browser_Console_Errors: browserErrorsResult,
+      Geolocation_Request: geolocationRequestResult,
+      Input_Paste_Allowed: inputPasteAllowedResult,
+      Notification_Request: notificationRequestResult,
+      Third_Party_Cookies: thirdPartyCookiesResult,
+      Deprecated_APIs: deprecatedAPIsResult
+    };
 
-    return totalPercentage;
   } catch (error) {
     console.error("❌ Error in securityCompliance:", error);
     throw error;

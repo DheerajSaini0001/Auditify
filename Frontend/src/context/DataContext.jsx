@@ -25,10 +25,10 @@ export const DataProvider = ({ children }) => {
       // Use environment variable for API URL
       const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
 
-      const res = await fetch(`${API_URL}/audit/site`, {
+      const res = await fetch(`${API_URL}/single-audit/audit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ Site: inputValue, Device: device, Report: report }),
+        body: JSON.stringify({ url: inputValue, device: device, report: report }),
       });
 
       const auditData = await res.json();
@@ -43,7 +43,7 @@ export const DataProvider = ({ children }) => {
 
       setData(auditData);
 
-      if (auditData.Status !== "completed") {
+      if (auditData.status !== "completed") {
         startLiveFetch(auditData._id);
       }
 
@@ -64,10 +64,10 @@ export const DataProvider = ({ children }) => {
     const newInterval = setInterval(async () => {
       try {
         const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
-        const res = await fetch(`${API_URL}/report/${id}`);
+        const res = await fetch(`${API_URL}/audit-report/single/${id}`);
         const updated = await res.json();
 
-        if (updated.Status === "completed") {
+        if (updated.status === "completed") {
           clearInterval(newInterval);
           setIntervalId(null);
         }
@@ -77,6 +77,55 @@ export const DataProvider = ({ children }) => {
     }, 3000);
 
     setIntervalId(newInterval);
+  };
+
+  // 🚀 BULK AUDIT: DISCOVER
+  const discoverUrls = async (url, maxPages) => {
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
+      const res = await fetch(`${API_URL}/bulk-audit/discover`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url, maxPages }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Discovery failed");
+      return { success: true, data: result };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  };
+
+  // 🚀 BULK AUDIT: START
+  const startBulkAudit = async (url, selectedUrls, device, report) => {
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
+      const res = await fetch(`${API_URL}/bulk-audit/audit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url, selectedUrls, device, report }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Audit start failed");
+      return { success: true, data: result };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  };
+
+  // 🚀 BULK AUDIT: COMPLETED STATUS
+  const getBulkAuditStatus = async (bulkAuditId) => {
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
+      const res = await fetch(`${API_URL}/audit-report/bulk/${bulkAuditId}`);
+      if (!res.ok) {
+        return { success: false, status: res.status };
+      }
+      const result = await res.json();
+      return { success: true, data: result };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
   };
 
   // 🧹 CLEAR
@@ -94,7 +143,7 @@ export const DataProvider = ({ children }) => {
 
   return (
     <DataContext.Provider
-      value={{ data, setData, loading, fetchData, clearData }}
+      value={{ data, setData, loading, fetchData, clearData, discoverUrls, startBulkAudit, getBulkAuditStatus }}
     >
       {children}
     </DataContext.Provider>

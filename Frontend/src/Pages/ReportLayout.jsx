@@ -34,7 +34,7 @@ const ReportLayout = () => {
 
   // ✅ Responsive Error State
   // ✅ Responsive Error State
-  if (data.Status === "failed") {
+  if (data.status === "failed") {
     return (
       <NotFound
         darkMode={darkMode}
@@ -55,7 +55,7 @@ const ReportLayout = () => {
       {/* =================================================
           SCENARIO 1: DASHBOARD VIEW ("All")
       ================================================== */}
-      {data && data.Report === "All" && (
+      {data && data.report === "All" && (
         <div className="flex flex-col w-full space-y-6 sm:space-y-8">
           <section id="dashboard" className="scroll-mt-24">
             <Dashboard2 darkMode={darkMode} />
@@ -70,7 +70,7 @@ const ReportLayout = () => {
       {/* =================================================
           SCENARIO 2: SINGLE REPORT VIEW
       ================================================== */}
-      {data && data.Report !== "All" && (
+      {data && data.report !== "All" && (
         <div
           className={`flex w-full justify-center ${darkMode ? "text-gray-100" : "text-gray-800"
             }`}
@@ -79,25 +79,25 @@ const ReportLayout = () => {
           <main className="flex-1 flex flex-col w-full max-w-7xl space-y-6 sm:space-y-8 mt-10">
             {/* Report Components */}
             <div className="w-full">
-              {data.Report === "Technical Performance" && (
+              {data.report === "Technical Performance" && (
                 <Technical_Performance darkMode={darkMode} />
               )}
-              {data.Report === "On Page SEO" && (
+              {data.report === "On Page SEO" && (
                 <On_Page_SEO darkMode={darkMode} />
               )}
-              {data.Report === "Accessibility" && (
+              {data.report === "Accessibility" && (
                 <Accessibility darkMode={darkMode} />
               )}
-              {data.Report === "Security/Compliance" && (
+              {data.report === "Security/Compliance" && (
                 <Security_Compilance darkMode={darkMode} />
               )}
-              {data.Report === "UX & Content Structure" && (
+              {data.report === "UX & Content Structure" && (
                 <UX_Content_Structure darkMode={darkMode} />
               )}
-              {data.Report === "Conversion & Lead Flow" && (
+              {data.report === "Conversion & Lead Flow" && (
                 <Conversion_Lead_Flow darkMode={darkMode} />
               )}
-              {data.Report === "AIO (AI-Optimization) Readiness" && (
+              {data.report === "AIO (AI-Optimization) Readiness" && (
                 <AIO darkMode={darkMode} />
               )}
             </div>

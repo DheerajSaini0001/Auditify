@@ -1,10 +1,10 @@
 import { Worker } from "worker_threads";
-import { fileURLToPath } from "url";
-import { dirname, join } from "path";
-import SiteReport from "../models/SiteReport.js";
+import { join } from "path";
+import SingleAuditReport from "../models/singleAuditReport.js";
 
 export const startAudit = async (req, res) => {
-  // Helper to validate URL and prevent SSRF
+
+  // validate URL and prevent SSRF
   const isValidUrl = (string) => {
     try {
       const url = new URL(string);
@@ -27,27 +27,27 @@ export const startAudit = async (req, res) => {
   };
 
   try {
-    let { Site, Device, Report } = req.body;
+    let { url, device, report } = req.body;
 
-    if (!Site || !Device || !Report) {
+    if (!url || !device || !report) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    Site = Site.trim().toLowerCase();
-    if (!/^https?:\/\//i.test(Site)) {
-      Site = "https://" + Site;
+    url = url.trim().toLowerCase();
+    if (!/^https?:\/\//i.test(url)) {
+      url = "https://" + url;
     }
 
-    if (!isValidUrl(Site)) {
+    if (!isValidUrl(url)) {
       return res.status(400).json({ error: "Invalid or Restricted URL" });
     }
 
-    console.log(`➡️ New Audit Request → ${Site} | ${Device} | ${Report}`);
+    console.log(`➡️ New Audit Request → ${url} | ${device} | ${report}`);
 
-    const existing = await SiteReport.findOne({ Site, Device, Report }).sort({ createdAt: -1 });
+    const existing = await SingleAuditReport.findOne({ url, device, report }).sort({ createdAt: -1 });
 
     // if (existing && existing.Status === "completed") {
-    if (existing && existing.Status !== "failed") {
+    if (existing && existing.status !== "failed") {
       const diff = (Date.now() - new Date(existing.createdAt)) / (1000 * 60);
 
       if (diff < 60) {                          // Set 60 Minutes
@@ -56,29 +56,30 @@ export const startAudit = async (req, res) => {
       }
     }
 
-    const newReport = await SiteReport.create({
-      Site,
-      Device,
-      Report,
-      Status: "inprogress",
+    const newReport = new SingleAuditReport({
+      url,
+      device,
+      report,
+      status: "inprogress",
     });
+    await newReport.save();
 
     res.status(201).json({
       message: "Audit started successfully",
       _id: newReport._id,
-      Site,
-      Device,
-      Report,
+      url,
+      device,
+      report,
       Status: "inprogress",
     });
 
-    const workerPath = join(process.cwd(), "workers", "auditWorker.js");
+    const workerPath = join(process.cwd(), "workers", "singleAuditWorker.js");
 
     const worker = new Worker(workerPath, {
       workerData: {
-        Site,
-        Device,
-        Report,
+        url,
+        device,
+        report,
         auditId: newReport._id.toString(),
       },
     });
@@ -87,9 +88,9 @@ export const startAudit = async (req, res) => {
       if (msg?.error) {
         console.log("❌ Audit Failed");
 
-        await SiteReport.findByIdAndUpdate(newReport._id, {
-          Status: "failed",
-          Error_Message: msg.error,
+        await SingleAuditReport.findByIdAndUpdate(newReport._id, {
+          status: "failed",
+          error: msg.error,
         });
 
         return;
@@ -99,13 +100,14 @@ export const startAudit = async (req, res) => {
     })
 
     worker.on("error", async () => {
-      await SiteReport.findByIdAndUpdate(newReport._id, { Status: "failed" });
+      await SingleAuditReport.findByIdAndUpdate(newReport._id, { status: "failed" });
       console.log("❌ Audit Failed");
     });
 
   } catch (error) {
     if (!res.headersSent) {
-      res.status(500).json({ error: "Internal Server Error" });
+      console.error("Audit Controller Error:", error);
+      res.status(500).json({ error: "Internal Server Error", details: error.message });
     }
   }
 };

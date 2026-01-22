@@ -3,6 +3,7 @@ import { Routes, Route } from "react-router-dom";
 
 import Homepage from "./Pages/Homepage";
 import AboutPage from "./Pages/AboutPage";
+import BulkAudit from "./Pages/BulkAudit";
 import Technical_Performance from "./Pages/Technical_Performance";
 import On_Page_SEO from "./Pages/On_Page_SEO";
 import Accessibility from "./Pages/Accessibility";
@@ -25,6 +26,7 @@ function AppContentInner() {
     <Routes>
       <Route element={<MainLayout />}>
         <Route path="/" element={<Homepage />} />
+        <Route path="/bulk-audit" element={<BulkAudit />} />
 
         {/* Report Layout handles the dashboard view */}
         <Route

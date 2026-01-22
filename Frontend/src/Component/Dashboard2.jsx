@@ -29,13 +29,13 @@ export default function Dashboard2({ darkMode }) {
   const navigate = useNavigate();
 
   const sectionMappings = useMemo(() => [
-    { key: "Technical_Performance", name: "Technical Performance", link: "technical-performance" },
-    { key: "On_Page_SEO", name: "On-Page SEO", link: "on-page-seo" },
-    { key: "Accessibility", name: "Accessibility", link: "accessibility" },
-    { key: "Security_or_Compliance", name: "Security/Compliance", link: "security-compliance" },
-    { key: "UX_or_Content_Structure", name: "UX & Content", link: "ux-content-structure" },
-    { key: "Conversion_and_Lead_Flow", name: "Conversion & Lead Flow", link: "conversion-lead-flow" },
-    { key: "AIO_Readiness", name: "AIO Readiness", link: "aio" },
+    { key: "technicalPerformance", name: "Technical Performance", link: "technical-performance" },
+    { key: "onPageSEO", name: "On-Page SEO", link: "on-page-seo" },
+    { key: "accessibility", name: "Accessibility", link: "accessibility" },
+    { key: "securityOrCompliance", name: "Security/Compliance", link: "security-compliance" },
+    { key: "UXOrContentStructure", name: "UX & Content", link: "ux-content-structure" },
+    { key: "conversionAndLeadFlow", name: "Conversion & Lead Flow", link: "conversion-lead-flow" },
+    { key: "aioReadiness", name: "AIO Readiness", link: "aio" },
   ], []);
 
   const barData = useMemo(() => sectionMappings.map((section) => ({
@@ -80,23 +80,37 @@ export default function Dashboard2({ darkMode }) {
           <div className="space-y-1 w-full md:w-auto overflow-hidden">
             <h2 className="text-sm font-semibold uppercase tracking-wider opacity-60">Audit Report For</h2>
             <div className="flex items-center gap-2 group">
-              <a href={data?.Site || "#"} target="_blank" rel="noopener noreferrer" className={`text-xl md:text-2xl font-bold truncate hover:underline ${darkMode ? "text-white" : "text-slate-900"}`}>
-                {data?.Site || "Analyzing..."}
+              <a href={data?.url || "#"} target="_blank" rel="noopener noreferrer" className={`text-xl md:text-2xl font-bold truncate hover:underline ${darkMode ? "text-white" : "text-slate-900"}`}>
+                {data?.url || "Analyzing..."}
               </a>
               <ExternalLink className="w-5 h-5 opacity-40 group-hover:opacity-100 transition-opacity" />
             </div>
           </div>
 
-          <button
-            onClick={handleCheckOther}
-            className={`
-                flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white shadow-lg shadow-emerald-500/20 transition-all 
-                bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 hover:scale-[1.02] active:scale-[0.98]
-            `}
-          >
-            <NotebookPen className="w-5 h-5" />
-            <span>New Audit</span>
-          </button>
+          {data?.fromBulkAudit ? (
+            <Link to="/bulk-audit">
+              <button
+                className={`
+                  flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white shadow-lg shadow-emerald-500/20 transition-all 
+                  bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-400 hover:to-indigo-400 hover:scale-[1.02] active:scale-[0.98]
+                `}
+              >
+                <NotebookPen className="w-5 h-5" />
+                <span>Back to List</span>
+              </button>
+            </Link>
+          ) : (
+            <button
+              onClick={handleCheckOther}
+              className={`
+                  flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white shadow-lg shadow-emerald-500/20 transition-all 
+                  bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 hover:scale-[1.02] active:scale-[0.98]
+              `}
+            >
+              <NotebookPen className="w-5 h-5" />
+              <span>New Audit</span>
+            </button>
+          )}
         </div>
 
 
@@ -105,7 +119,7 @@ export default function Dashboard2({ darkMode }) {
 
 
         {/* ✅ Loading State with Specific Cards */}
-        {(loading || !data?.Section_Score) ? (
+        {(loading || !data?.sectionScore) ? (
           <div className="flex flex-col gap-8 animate-in fade-in duration-500">
             {/* Score Card Loading */}
             <div className={`p-8 rounded-3xl ${cardClass} flex flex-col md:flex-row items-center justify-center gap-8 min-h-[300px]`}>
@@ -182,16 +196,16 @@ export default function Dashboard2({ darkMode }) {
 
                 <div className="flex items-center gap-8 z-10">
                   <div className="relative">
-                    <CircularProgress value={data.Score?.toFixed(0) || 0} size={140} stroke={12} />
+                    <CircularProgress value={data.score?.toFixed(0) || 0} size={140} stroke={12} />
                     <div className="absolute inset-0 flex items-center justify-center flex-col">
-                      <span className={`text-4xl font-extrabold ${darkMode ? "text-white" : "text-slate-900"}`}>{data.Score?.toFixed(0)}</span>
+                      <span className={`text-4xl font-extrabold ${darkMode ? "text-white" : "text-slate-900"}`}>{data.score?.toFixed(0)}</span>
                     </div>
                   </div>
                   <div className="space-y-2">
                     <h3 className={`text-2xl font-bold ${darkMode ? "text-white" : "text-slate-900"}`}>Overall Health Score</h3>
                     <p className="opacity-70 max-w-xs">Your website's pulse check based on performance, SEO, and UX factors.</p>
-                    <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold border ${gradeColor(data.Grade)}`}>
-                      Grade {data.Grade || "-"}
+                    <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold border ${gradeColor(data.grade)}`}>
+                      Grade {data.grade || "-"}
                     </div>
                   </div>
                 </div>
@@ -199,17 +213,17 @@ export default function Dashboard2({ darkMode }) {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-col gap-4 w-full md:w-auto z-10">
                   <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-white border-slate-200"}`}>
                     <div className="flex items-center gap-2 text-xs font-bold uppercase opacity-50 mb-1">
-                      {data.Device === "Mobile" ? <Smartphone className="w-3 h-3" /> : <Monitor className="w-3 h-3" />}
+                      {data.device === "Mobile" ? <Smartphone className="w-3 h-3" /> : <Monitor className="w-3 h-3" />}
                       Device
                     </div>
-                    <div className={`text-lg font-semibold ${darkMode ? "text-white" : "text-slate-900"}`}>{data.Device}</div>
+                    <div className={`text-lg font-semibold ${darkMode ? "text-white" : "text-slate-900"}`}>{data.device}</div>
                   </div>
                   <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-white border-slate-200"}`}>
                     <div className="flex items-center gap-2 text-xs font-bold uppercase opacity-50 mb-1">
                       <Clock className="w-3 h-3" />
                       Time
                     </div>
-                    <div className={`text-lg font-semibold ${darkMode ? "text-white" : "text-slate-900"}`}>{data.Time_Taken}</div>
+                    <div className={`text-lg font-semibold ${darkMode ? "text-white" : "text-slate-900"}`}>{data.timeTaken}</div>
                   </div>
                 </div>
               </div>
@@ -218,8 +232,8 @@ export default function Dashboard2({ darkMode }) {
               <div className={`p-8 rounded-3xl flex flex-col justify-center gap-6 border ${cardClass}`}>
                 <div className="space-y-2">
                   <h3 className="text-lg font-bold opacity-80">AI Optimization Readiness</h3>
-                  <div className={`text-3xl font-extrabold ${data.AIO_Compatibility_Badge === "High" ? "text-emerald-500" : "text-amber-500"}`}>
-                    {data.AIO_Compatibility_Badge || "Analysis Pending"}
+                  <div className={`text-3xl font-extrabold ${data.aioCompatibilityBadge === "High" ? "text-emerald-500" : "text-amber-500"}`}>
+                    {data.aioCompatibilityBadge || "Analysis Pending"}
                   </div>
                   <p className="text-sm opacity-60 leading-relaxed">
                     How well your site is optimized for AI search engines like ChatGPT and Gemini.

@@ -1,5 +1,3 @@
-import SiteReport from "../models/SiteReport.js";
-
 // Helper to count syllables in a word (heuristic)
 function countSyllables(word) {
   word = word.toLowerCase().replace(/[^a-z]/g, '');
@@ -50,9 +48,7 @@ function calculateReadabilityStats(text) {
   };
 }
 
-// ----------------------------------------------------------------------------
 // 1. Readability
-// ----------------------------------------------------------------------------
 async function checkReadability(page) {
   // Get all text for overall score
   const textContent = await page.evaluate(() => document.body.innerText);
@@ -181,9 +177,7 @@ async function checkReadability(page) {
   };
 }
 
-// ----------------------------------------------------------------------------
 // 2. CLS
-// ----------------------------------------------------------------------------
 async function checkCLS(page, deviceType) {
   const cls = await page.evaluate(() => {
     return new Promise((resolve) => {
@@ -208,9 +202,7 @@ async function checkCLS(page, deviceType) {
   };
 }
 
-// ----------------------------------------------------------------------------
 // 3. Tap Targets
-// ----------------------------------------------------------------------------
 async function checkTapTargets(page, deviceType) {
   const tapTargetsData = await page.evaluate((deviceType) => {
     const minSize = deviceType === 'mobile' ? 44 : 24;
@@ -250,9 +242,7 @@ async function checkTapTargets(page, deviceType) {
   };
 }
 
-// ----------------------------------------------------------------------------
 // 4. Text Size
-// ----------------------------------------------------------------------------
 async function checkTextSize(page, deviceType) {
   const textSizeData = await page.evaluate((deviceType) => {
     const minSize = deviceType === 'mobile' ? 16 : 14;
@@ -293,9 +283,7 @@ async function checkTextSize(page, deviceType) {
   };
 }
 
-// ----------------------------------------------------------------------------
 // 5. Viewport
-// ----------------------------------------------------------------------------
 async function checkViewport(page, deviceType) {
   if (deviceType !== 'mobile') return { score: 100, status: 'pass', details: 'Not required for desktop.' };
 
@@ -310,9 +298,7 @@ async function checkViewport(page, deviceType) {
   return { score: 0, status: 'fail', details: 'Viewport meta tag missing.' };
 }
 
-// ----------------------------------------------------------------------------
 // 6. Horizontal Scroll
-// ----------------------------------------------------------------------------
 async function checkHorizontalScroll(page, deviceType) {
   const hasHorizontalScroll = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
   let scrollIssues = [];
@@ -340,9 +326,7 @@ async function checkHorizontalScroll(page, deviceType) {
   };
 }
 
-// ----------------------------------------------------------------------------
 // 7. Sticky Header
-// ----------------------------------------------------------------------------
 async function checkStickyHeader(page, deviceType) {
   const headerCheck = await page.evaluate((deviceType) => {
     const headers = Array.from(document.querySelectorAll('header, .header, [class*="header"]'));
@@ -367,9 +351,7 @@ async function checkStickyHeader(page, deviceType) {
   };
 }
 
-// ----------------------------------------------------------------------------
 // 8. Navigation Depth
-// ----------------------------------------------------------------------------
 async function checkNavigationDepth(page) {
   const navDepth = await page.evaluate(() => {
     const navElements = Array.from(document.querySelectorAll('nav, header, [role="navigation"]'));
@@ -406,9 +388,7 @@ async function checkNavigationDepth(page) {
   };
 }
 
-// ----------------------------------------------------------------------------
 // 9. Intrusive Interstitials
-// ----------------------------------------------------------------------------
 async function checkInterstitials(page, deviceType) {
   const interstitialCheck = await page.evaluate((deviceType) => {
     function detectOverlay() {
@@ -456,9 +436,7 @@ async function checkInterstitials(page, deviceType) {
   };
 }
 
-// ----------------------------------------------------------------------------
 // 10. Image Stability
-// ----------------------------------------------------------------------------
 async function checkImageStability(page) {
   const imageStability = await page.evaluate(() => {
     const images = Array.from(document.querySelectorAll('img'));
@@ -489,9 +467,7 @@ async function checkImageStability(page) {
   };
 }
 
-// ----------------------------------------------------------------------------
 // 11. Breadcrumbs
-// ----------------------------------------------------------------------------
 async function checkBreadcrumbs(page) {
   const hasBreadcrumbs = await page.evaluate(() => {
     return !!document.querySelector('nav[aria-label="breadcrumb"], .breadcrumb') ||
@@ -504,9 +480,7 @@ async function checkBreadcrumbs(page) {
   };
 }
 
-// ----------------------------------------------------------------------------
 // 12. Navigation Discoverability
-// ----------------------------------------------------------------------------
 async function checkNavDiscoverability(page) {
   const navDiscoverability = await page.evaluate(() => {
     const hamburgerSelectors = ['.hamburger', '.hamburger-menu', '.menu-icon', '.nav-toggle', 'button[aria-label*="menu"]', '[aria-controls="mobile-menu"]'];
@@ -530,9 +504,7 @@ async function checkNavDiscoverability(page) {
   };
 }
 
-// ----------------------------------------------------------------------------
 // 13. ATF Content
-// ----------------------------------------------------------------------------
 async function checkATF(page) {
   const atfData = await page.evaluate(() => {
     const viewportHeight = window.innerHeight;
@@ -579,9 +551,7 @@ async function checkATF(page) {
   };
 }
 
-// ----------------------------------------------------------------------------
 // 14. Click Feedback
-// ----------------------------------------------------------------------------
 async function checkClickFeedback(page, deviceType) {
   const clickFeedbackData = await page.evaluate(() => {
     const propsToCheck = ["color", "background-color", "border-color", "box-shadow", "transform", "opacity", "cursor", "filter"];
@@ -638,9 +608,7 @@ async function checkClickFeedback(page, deviceType) {
   };
 }
 
-// ----------------------------------------------------------------------------
 // 15. Form Validation
-// ----------------------------------------------------------------------------
 async function checkFormValidation(page) {
   const formValidationData = await page.evaluate(() => {
     function getAssociatedLabel(input) {
@@ -689,9 +657,7 @@ async function checkFormValidation(page) {
   };
 }
 
-// ----------------------------------------------------------------------------
 // 16. Loading Feedback
-// ----------------------------------------------------------------------------
 async function checkLoadingFeedback(page) {
   const loadingFeedbackData = await page.evaluate(() => {
     const LOADING_SELECTORS = ["[aria-busy='true']", "[role='progressbar']", ".spinner", ".loader", ".loading", ".MuiCircularProgress-root", ".ant-spin"];
@@ -719,10 +685,8 @@ async function checkLoadingFeedback(page) {
 }
 
 
-// ----------------------------------------------------------------------------
 // Main Execution Function
-// ----------------------------------------------------------------------------
-export default async function evaluateMobileUX(url, device, selectedMetric, $, page, auditId) {
+export default async function evaluateMobileUX(device, page) {
   const deviceType = device === 'Mobile' ? 'mobile' : 'desktop';
 
   // Execute all checks independently
@@ -775,107 +739,98 @@ export default async function evaluateMobileUX(url, device, selectedMetric, $, p
 
   const overallScore = Math.round((totalScore / maxScore) * 100);
 
-  await SiteReport.findByIdAndUpdate(auditId, {
-    UX_or_Content_Structure: {
-      Percentage: overallScore,
-      Text_Readability: {
-        Score: parseFloat(results.readability.score.toFixed(0)),
-        Status: results.readability.status,
-        Details: results.readability.details,
-        Meta: results.readability.meta
-      },
-      Cumulative_Layout_Shift: {
-        Score: parseFloat(results.cls.score.toFixed(0)),
-        Status: results.cls.status,
-        Details: results.cls.details,
-        Meta: results.cls.meta
-      },
-      Tap_Target_Size: {
-        Score: results.tapTargets.score,
-        Status: results.tapTargets.status,
-        Details: results.tapTargets.details,
-        Meta: results.tapTargets.meta
-      },
-      Text_Font_Size: {
-        Score: results.textSize.score,
-        Status: results.textSize.status,
-        Details: results.textSize.details,
-        Meta: results.textSize.meta
-      },
-      Viewport_Meta_Tag: {
-        Score: results.viewport.score,
-        Status: results.viewport.status,
-        Details: results.viewport.details,
-        Meta: results.viewport.meta
-      },
-      Horizontal_Scroll: {
-        Score: results.horizontalScroll.score,
-        Status: results.horizontalScroll.status,
-        Details: results.horizontalScroll.details,
-        Meta: results.horizontalScroll.meta
-      },
-      Sticky_Header_Height: {
-        Score: results.stickyHeader.score,
-        Status: results.stickyHeader.status,
-        Details: results.stickyHeader.details,
-        Meta: results.stickyHeader.meta
-      },
-      Navigation_Depth: {
-        Score: results.navigationDepth.score,
-        Status: results.navigationDepth.status,
-        Details: results.navigationDepth.details,
-        Meta: results.navigationDepth.meta
-      },
-      Intrusive_Interstitials: {
-        Score: results.interstitials.score,
-        Status: results.interstitials.status,
-        Details: results.interstitials.details,
-        Meta: results.interstitials.meta
-      },
-      Image_Stability: {
-        Score: results.imageStability.score,
-        Status: results.imageStability.status,
-        Details: results.imageStability.details,
-        Meta: results.imageStability.meta
-      },
-      Breadcrumbs: {
-        Score: results.breadcrumbs.score,
-        Status: results.breadcrumbs.status,
-        Details: results.breadcrumbs.details,
-        Meta: results.breadcrumbs.meta
-      },
-      Navigation_Discoverability: {
-        Score: results.navDiscoverability.score,
-        Status: results.navDiscoverability.status,
-        Details: results.navDiscoverability.details,
-        Meta: results.navDiscoverability.meta
-      },
-      Above_The_Fold_Content: {
-        Score: results.atf.score,
-        Status: results.atf.status,
-        Details: results.atf.details,
-        Meta: results.atf.meta
-      },
-      Click_Feedback: {
-        Score: results.clickFeedback.score,
-        Status: results.clickFeedback.status,
-        Details: results.clickFeedback.details,
-        Meta: results.clickFeedback.meta
-      },
-      Form_Validation: {
-        Score: results.formValidation.score,
-        Status: results.formValidation.status,
-        Details: results.formValidation.details,
-        Meta: results.formValidation.meta
-      },
-      Loading_Feedback: {
-        Score: results.loadingFeedback.score,
-        Status: results.loadingFeedback.status,
-        Details: results.loadingFeedback.details,
-        Meta: results.loadingFeedback.meta
-      }
+  return {
+    Percentage: overallScore,
+    Text_Readability: {
+      Score: parseFloat(results.readability.score.toFixed(0)),
+      Status: results.readability.status,
+      Details: results.readability.details,
+      Meta: results.readability.meta
+    },
+    Cumulative_Layout_Shift: {
+      Score: parseFloat(results.cls.score.toFixed(0)),
+      Status: results.cls.status,
+      Details: results.cls.details,
+      Meta: results.cls.meta
+    },
+    Tap_Target_Size: {
+      Score: results.tapTargets.score,
+      Status: results.tapTargets.status,
+      Details: results.tapTargets.details,
+      Meta: results.tapTargets.meta
+    },
+    Text_Font_Size: {
+      Score: results.textSize.score,
+      Status: results.textSize.status,
+      Details: results.textSize.details,
+      Meta: results.textSize.meta
+    },
+    Viewport_Configuration: {
+      Score: results.viewport.score,
+      Status: results.viewport.status,
+      Details: results.viewport.details
+    },
+    Horizontal_Scroll_Check: {
+      Score: results.horizontalScroll.score,
+      Status: results.horizontalScroll.status,
+      Details: results.horizontalScroll.details
+    },
+    Sticky_Header_Usage: {
+      Score: results.stickyHeader.score,
+      Status: results.stickyHeader.status,
+      Details: results.stickyHeader.details
+    },
+    Navigation_Depth: {
+      Score: results.navigationDepth.score,
+      Status: results.navigationDepth.status,
+      Details: results.navigationDepth.details,
+      Meta: results.navigationDepth.meta
+    },
+    Intrusive_Interstitials: {
+      Score: results.interstitials.score,
+      Status: results.interstitials.status,
+      Details: results.interstitials.details
+    },
+    Image_Stability: {
+      Score: results.imageStability.score,
+      Status: results.imageStability.status,
+      Details: results.imageStability.details,
+      Meta: results.imageStability.meta
+    },
+    Breadcrumbs: {
+      Score: results.breadcrumbs.score,
+      Status: results.breadcrumbs.status,
+      Details: results.breadcrumbs.details
+    },
+    Navigation_Discoverability: {
+      Score: results.navDiscoverability.score,
+      Status: results.navDiscoverability.status,
+      Details: results.navDiscoverability.details,
+      Meta: results.navDiscoverability.meta
+    },
+    Above_the_Fold_Content: {
+      Score: results.atf.score,
+      Status: results.atf.status,
+      Details: results.atf.details,
+      Meta: results.atf.meta
+    },
+    Interactive_Click_Feedback: {
+      Score: results.clickFeedback.score,
+      Status: results.clickFeedback.status,
+      Details: results.clickFeedback.details,
+      Meta: results.clickFeedback.meta
+    },
+    Form_Validation_UX: {
+      Score: results.formValidation.score,
+      Status: results.formValidation.status,
+      Details: results.formValidation.details,
+      Meta: results.formValidation.meta
+    },
+    Loading_Feedback: {
+      Score: results.loadingFeedback.score,
+      Status: results.loadingFeedback.status,
+      Details: results.loadingFeedback.details,
+      Meta: results.loadingFeedback.meta
     }
-  });
-
-  return overallScore;
+  };
 }

@@ -174,7 +174,7 @@ export default function On_Page_SEO() {
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
 
-  if (!data?.On_Page_SEO) {
+  if (!data?.onPageSEO) {
     return (
       <div className={`min-h-screen w-full ${darkMode ? "bg-gray-900" : "bg-gray-50"} transition-colors duration-300`}>
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
@@ -187,7 +187,7 @@ export default function On_Page_SEO() {
     );
   }
 
-  const seo = data.On_Page_SEO;
+  const seo = data.onPageSEO;
   const overallScore = seo.Percentage || 0;
   const mainBg = darkMode ? "bg-gray-900" : "bg-gray-50";
   const textColor = darkMode ? "text-white" : "text-gray-900";
@@ -268,9 +268,11 @@ export default function On_Page_SEO() {
                   <span className={`text-xs font-medium uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Score</span>
                 </div>
               </div>
-              <div className={`text-sm font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
-                Time Taken: {data.Time_Taken}
-              </div>
+              {data.report !== "All" && (
+                <div className={`text-sm font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                  Time Taken: {data.timeTaken}
+                </div>
+              )}
             </div>
           </div>
 
@@ -730,7 +732,7 @@ export default function On_Page_SEO() {
           </div>
           <div className={`p-4 rounded-lg overflow-x-auto border ${darkMode ? "bg-gray-900 border-gray-700 text-gray-300" : "bg-gray-50 border-gray-200 text-gray-700"}`}>
             <pre className="text-xs font-mono leading-relaxed">
-              {data.Schema.length > 0 ? JSON.stringify(data.Schema, null, 2) : "No Schema Markup Found"}
+              {!data.siteSchema ? "No Schema Markup Found" : JSON.stringify(data.siteSchema, null, 2)}
             </pre>
           </div>
         </div>

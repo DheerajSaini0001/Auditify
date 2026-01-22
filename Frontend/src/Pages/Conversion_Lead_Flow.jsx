@@ -262,7 +262,7 @@ export default function Conversion_Lead_Flow() {
   const { data, loading } = useData();
   const darkMode = theme === "dark";
 
-  if (!data?.Conversion_and_Lead_Flow) {
+  if (!data?.conversionAndLeadFlow) {
     return (
       <div className={`min-h-screen w-full ${darkMode ? "bg-gray-900" : "bg-gray-50"} transition-colors duration-300`}>
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
@@ -275,7 +275,7 @@ export default function Conversion_Lead_Flow() {
     );
   }
 
-  const flow = data?.Conversion_and_Lead_Flow || {};
+  const flow = data?.conversionAndLeadFlow || {};
   const mainBg = darkMode ? "bg-gray-900" : "bg-gray-50";
   const textColor = darkMode ? "text-white" : "text-gray-900";
 
@@ -327,9 +327,11 @@ export default function Conversion_Lead_Flow() {
                   <span className={`text-xs font-medium uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Score</span>
                 </div>
               </div>
-              <div className={`text-sm font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
-                Time Taken: {data.Time_Taken}
-              </div>
+              {data.report !== "All" && (
+                <div className={`text-sm font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                  Time Taken: {data.timeTaken}
+                </div>
+              )}
             </div>
           </div>
 

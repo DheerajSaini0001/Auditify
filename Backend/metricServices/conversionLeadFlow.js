@@ -1,5 +1,3 @@
-import SiteReport from "../models/SiteReport.js";
-
 // Helper to create standardized metric result
 function createMetricResult(score, status, details, meta = {}) {
   return { score, status, details, meta };
@@ -404,7 +402,7 @@ function checkMultiChannelFollowUp($) {
 }
 
 
-export default async function conversionLeadFlow(url, device, selectedMetric, page, $, auditId) {
+export default async function conversionLeadFlow(page, $) {
 
   // Execute all checks
   const checkCTAsScore = checkCTAs($);
@@ -503,13 +501,8 @@ export default async function conversionLeadFlow(url, device, selectedMetric, pa
 
   const actualPercentage = totalWeight > 0 ? parseFloat(((earnedScore / totalWeight) * 100).toFixed(0)) : 0;
 
-  // Update Database
-  await SiteReport.findByIdAndUpdate(auditId, {
-    Conversion_and_Lead_Flow: {
-      Percentage: actualPercentage,
-      ...metricsMap
-    }
-  });
-
-  return actualPercentage;
+  return {
+    Percentage: actualPercentage,
+    ...metricsMap
+  };
 }

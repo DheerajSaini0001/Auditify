@@ -231,7 +231,7 @@ export default function AIO() {
   const { data, loading } = useData();
   const darkMode = theme === "dark";
 
-  if (loading || !data || data.Status === "inprogress") {
+  if (loading || !data || data.status === "inprogress") {
     return (
       <div className={`min-h-screen w-full ${darkMode ? "bg-gray-900" : "bg-gray-50"} transition-colors duration-300`}>
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
@@ -244,7 +244,7 @@ export default function AIO() {
     );
   }
 
-  const aio = data?.AIO_Readiness || {};
+  const aio = data?.aioReadiness || {};
   const mainBg = darkMode ? "bg-gray-900" : "bg-gray-50";
   const textColor = darkMode ? "text-white" : "text-gray-900";
 
@@ -296,9 +296,11 @@ export default function AIO() {
                   <span className={`text-xs font-medium uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Score</span>
                 </div>
               </div>
-              <div className={`text-sm font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
-                Time Taken: {data.Time_Taken}
-              </div>
+              {data.report !== "All" && (
+                <div className={`text-sm font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                  Time Taken: {data.timeTaken}
+                </div>
+              )}
             </div>
           </div>
 

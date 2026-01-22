@@ -2,19 +2,23 @@ import React, { useContext } from "react";
 import { ThemeContext } from "../context/ThemeContext";
 import { Monitor, Smartphone, ScanLine, Laptop, Wifi } from "lucide-react";
 
-const LivePreview = ({ data }) => {
+const LivePreview = ({ data, showInFullAudit = true }) => {
     const { theme } = useContext(ThemeContext);
     const darkMode = theme === "dark";
 
     // Use strictly data.Screenshot (base64) as per user instruction
-    const screenshotSrc = data?.Screenshot ? `data:image/jpeg;base64,${data.Screenshot}` : null;
+    const screenshotSrc = data?.screenshot ? `data:image/jpeg;base64,${data.screenshot}` : null;
+
+    // Logic to hide if in Full Audit mode and explicitly told to hide
+    const isFullAudit = data?.report === "All";
+    if (isFullAudit && !showInFullAudit) return null;
 
     // Show if we have a screenshot OR if the audit is in progress (waiting for screenshot)
-    if (!screenshotSrc && data?.Status !== "inprogress") return null;
+    if (!screenshotSrc && data?.status !== "inprogress") return null;
 
-    const isMobile = data.Device === "Mobile";
-    const statusText = data?.Status === "inprogress" ? "Running Visual Scan..." : "Live Preview Ready";
-    const isScanning = data?.Status === "inprogress";
+    const isMobile = data.device === "Mobile";
+    const statusText = data?.status === "inprogress" ? "Running Visual Scan..." : "Live Preview Ready";
+    const isScanning = data?.status === "inprogress";
 
     return (
         <div className={`w-full relative group overflow-hidden rounded-3xl transition-all duration-500 hover:shadow-2xl border ${darkMode

@@ -106,7 +106,7 @@ export default function InputForm() {
   // Navigate to /report after data arrives
   // YEH WALA CODE BILKUL SAHI HAI
   useEffect(() => {
-    if (inputValue && data?.Site && !loading) {
+    if (inputValue && data?.url && !loading) {
       // ⭐ FINAL FIX → CLEAN NAVIGATION
       navigate("/report");
       setInputValue("");
@@ -119,8 +119,8 @@ export default function InputForm() {
 
   // Styles
   const containerClass = darkMode
-    ? "min-h-[80vh] flex flex-col items-center justify-center bg-[#0B1120] text-white relative font-sans pb-32"
-    : "min-h-[80vh] flex flex-col items-center justify-center bg-slate-50 text-slate-900 relative font-sans pb-32";
+    ? "min-h-[80vh] flex flex-col items-center justify-center bg-[#0B1120] text-white relative font-sans py-20"
+    : "min-h-[80vh] flex flex-col items-center justify-center bg-slate-50 text-slate-900 relative font-sans py-20";
 
   return (
     <div className={containerClass}>
@@ -131,7 +131,7 @@ export default function InputForm() {
       <div className="relative z-10 w-full max-w-5xl px-4 flex flex-col items-center">
 
         {/* Header Section */}
-        <div className="text-center mb-10 space-y-5 animate-in fade-in slide-in-from-bottom-5 duration-700">
+        <div className="text-center mb-12 space-y-5 animate-in fade-in slide-in-from-bottom-5 duration-700">
 
           <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight">
             Analyze your <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500">Website Health</span>
@@ -258,6 +258,37 @@ export default function InputForm() {
           )}
 
         </form>
+
+        {/* Bulk Audit CTA - Integrated */}
+        <div className="mt-12 w-full max-w-4xl animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-200">
+          <div className={`rounded-2xl p-6 sm:p-8 border transition-all duration-300 ${darkMode
+            ? "bg-slate-900/50 border-slate-700 hover:border-slate-600"
+            : "bg-white/50 border-slate-200 hover:border-slate-300"
+            } shadow-lg backdrop-blur-sm`}>
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
+              <div className="flex-1 space-y-2">
+                <h2 className={`text-xl md:text-2xl font-bold ${darkMode ? "text-white" : "text-slate-900"}`}>
+                  Need to audit <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500">multiple pages</span>?
+                </h2>
+                <p className={`text-sm md:text-base ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
+                  Automatically discover and audit all pages of your website in one go.
+                </p>
+              </div>
+              <button
+                onClick={() => navigate("/bulk-audit")}
+                disabled={loading}
+                className={`
+                  flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-white shadow-lg transition-all 
+                  bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 hover:shadow-blue-500/25 active:scale-95
+                  disabled:opacity-70 disabled:cursor-wait whitespace-nowrap
+                `}
+              >
+                Try Bulk Audit →
+              </button>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );

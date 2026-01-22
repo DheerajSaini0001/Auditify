@@ -1,5 +1,3 @@
-import SiteReport from "../models/SiteReport.js";
-
 // Helper to create standardized metric result
 function createMetricResult(score, status, details, meta = {}) {
   return { score, status, details, meta };
@@ -371,7 +369,7 @@ function checkUserFeedbackLoops($) {
 }
 
 
-export default async function aioReadiness(url, device, selectedMetric, page, $, auditId) {
+export default async function aioReadiness(url, page, $) {
 
   // Execute checks
   const structuredData = checkStructuredData($);
@@ -441,15 +439,9 @@ export default async function aioReadiness(url, device, selectedMetric, page, $,
 
   let badge = actualPercentage >= 50 ? "Yes" : "No";
 
-  // Update Database
-  await SiteReport.findByIdAndUpdate(auditId, {
+  return {
+    Percentage: actualPercentage,
     AIO_Compatibility_Badge: badge,
-    AIO_Readiness: {
-      Percentage: actualPercentage,
-      AIO_Compatibility_Badge: badge,
-      ...metricsMap
-    }
-  });
-
-  return actualPercentage;
+    ...metricsMap
+  };
 }

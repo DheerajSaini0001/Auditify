@@ -18,7 +18,7 @@ export default function MainLayout() {
     // Actually, if data exists, we probably want sidebar even on homepage? 
     // But usually homepage is for entering new URL.
     // Let's stick to: Show sidebar if data exists.
-    const showSidebar = !!data && data.Report === "All";
+    const showSidebar = !!data && data.report === "All" && location.pathname !== "/bulk-audit";
 
     return (
         <div className={`min-h-screen flex flex-col ${darkMode ? "bg-gray-900 text-white" : "bg-gray-50 text-black"}`}>

@@ -22,13 +22,13 @@ export default function Sidebar({ darkMode }) {
 
   // Define menu items configuration
   const menuItems = [
-    { key: "Technical_Performance", label: "Technical Performance", path: "/technical-performance", icon: Gauge },
-    { key: "On_Page_SEO", label: "On-Page SEO", path: "/on-page-seo", icon: Image },
-    { key: "Accessibility", label: "Accessibility", path: "/accessibility", icon: Accessibility },
-    { key: "Security_or_Compliance", label: "Security & Compliance", path: "/security-compliance", icon: Shield },
-    { key: "UX_or_Content_Structure", label: "UX & Content", path: "/ux-content-structure", icon: Layout },
-    { key: "Conversion_and_Lead_Flow", label: "Conversion Flow", path: "/conversion-lead-flow", icon: TrendingUp },
-    { key: "AIO_Readiness", label: "AIO Readiness", path: "/aio", icon: Brain },
+    { key: "technicalPerformance", label: "Technical Performance", path: "/technical-performance", icon: Gauge },
+    { key: "onPageSEO", label: "On-Page SEO", path: "/on-page-seo", icon: Image },
+    { key: "accessibility", label: "Accessibility", path: "/accessibility", icon: Accessibility },
+    { key: "securityOrCompliance", label: "Security & Compliance", path: "/security-compliance", icon: Shield },
+    { key: "UXOrContentStructure", label: "UX & Content", path: "/ux-content-structure", icon: Layout },
+    { key: "conversionAndLeadFlow", label: "Conversion Flow", path: "/conversion-lead-flow", icon: TrendingUp },
+    { key: "aioReadiness", label: "AIO Readiness", path: "/aio", icon: Brain },
   ];
 
   // Styles
@@ -106,7 +106,7 @@ export default function Sidebar({ darkMode }) {
 
       {/* Footer / Actions */}
       <div className={`p-4 border-t ${darkMode ? "border-slate-800" : "border-slate-200"}`}>
-        {data?.Section_Score ? (
+        {data?.sectionScore ? (
           <button
             onClick={() => generatePDF(data)}
             className={`

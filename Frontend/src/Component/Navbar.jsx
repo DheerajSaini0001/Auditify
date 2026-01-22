@@ -1,8 +1,8 @@
 import React, { useContext } from "react";
 import { ThemeContext } from "../context/ThemeContext.jsx";
-import { Menu, X, Sun, Moon } from "lucide-react";
+import { Menu, X, Sun, Moon, Home } from "lucide-react";
 import Assets from "../assets/Assets.js";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useData } from "../context/DataContext.jsx";
 
 const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
@@ -11,6 +11,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
 
   const { data, clearData } = useData();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleGoHome = () => {
     clearData();
@@ -72,6 +73,19 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
 
           {/* Right Section: Actions */}
           <div className="flex items-center gap-3">
+
+            {/* Home Button - Hidden on Home Page */}
+            {location.pathname !== "/" && (
+              <button
+                onClick={handleGoHome}
+                className={`hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 border border-transparent ${buttonClass}`}
+              >
+                <Home className="w-4 h-4" />
+                Home
+              </button>
+            )}
+
+            {/* Theme Toggle */}
 
             {/* Theme Toggle */}
             <button

@@ -80,7 +80,7 @@ const LivePreview = ({ data, showInFullAudit = true }) => {
                         {isScanning && (
                             <div className="absolute inset-0 z-30 pointer-events-none">
                                 <div className="w-full h-full bg-emerald-500/10 absolute top-0 left-0"></div>
-                                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-emerald-400 to-transparent shadow-[0_0_15px_rgba(16,185,129,0.8)] animate-[scan_2s_linear_infinite]"></div>
+                                <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-transparent via-emerald-400 to-transparent shadow-[0_0_15px_rgba(16,185,129,0.8)] animate-[scan-x_2s_linear_infinite]"></div>
                                 {/* Grid Overlay */}
                                 <div className="w-full h-full bg-[linear-gradient(rgba(0,0,0,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.1)_1px,transparent_1px)] bg-[size:20px_20px] opacity-20"></div>
                             </div>

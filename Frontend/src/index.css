@@ -124,3 +124,13 @@ body {
     top: 100%;
   }
 }
+
+@keyframes scan-x {
+  0% {
+    left: 0%;
+  }
+
+  100% {
+    left: 100%;
+  }
+}

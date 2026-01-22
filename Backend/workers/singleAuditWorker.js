@@ -118,12 +118,25 @@ const OverAll = (A, B, C, D, E, F, G) => {
     }
 
     const A_Res = await technicalMetrics(url, device, page, response, browser);
+    await SingleAuditReport.findByIdAndUpdate(currentAuditId, { technicalPerformance: A_Res });
+
     const B_Res = await seoMetrics(url, $, page);
+    await SingleAuditReport.findByIdAndUpdate(currentAuditId, { onPageSEO: B_Res, siteSchema: B_Res?.Schema });
+
     const C_Res = await accessibilityMetrics(page);
+    await SingleAuditReport.findByIdAndUpdate(currentAuditId, { accessibility: C_Res });
+
     const D_Res = await securityCompliance(url, page, response, browser);
+    await SingleAuditReport.findByIdAndUpdate(currentAuditId, { securityOrCompliance: D_Res });
+
     const E_Res = await uxContentStructure(device, page);
+    await SingleAuditReport.findByIdAndUpdate(currentAuditId, { UXOrContentStructure: E_Res });
+
     const F_Res = await conversionLeadFlow(page, $);
+    await SingleAuditReport.findByIdAndUpdate(currentAuditId, { conversionAndLeadFlow: F_Res });
+
     const G_Res = await aioReadiness(url, page, $);
+    await SingleAuditReport.findByIdAndUpdate(currentAuditId, { aioReadiness: G_Res, aioCompatibilityBadge: G_Res?.AIO_Compatibility_Badge });
 
     // Extract percentages for overall score calculation
     const A = A_Res?.Percentage || 0;
@@ -144,15 +157,6 @@ const OverAll = (A, B, C, D, E, F, G) => {
       score: overall.totalScore,
       grade: overall.grade,
       sectionScore: overall.sectionScores,
-      technicalPerformance: A_Res,
-      onPageSEO: B_Res,
-      siteSchema: B_Res?.Schema,
-      accessibility: C_Res,
-      securityOrCompliance: D_Res,
-      UXOrContentStructure: E_Res,
-      conversionAndLeadFlow: F_Res,
-      aioReadiness: G_Res,
-      aioCompatibilityBadge: G_Res?.AIO_Compatibility_Badge
     });
 
     console.log(`🧠 Worker Completed for URL: ${url}`);

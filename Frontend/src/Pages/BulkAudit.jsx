@@ -209,7 +209,7 @@ export default function BulkAudit() {
             setDiscoveredUrls(response.data.urls);
             setBaseUrl(response.data.site);
             setSelectedUrls(response.data.urls); // Select all by default
-            console.log("Discovered URLs:", response.data);
+
         } else {
             console.error("Error discovering URLs:", response.error);
             setError(response.error || "Failed to discover URLs");
@@ -241,7 +241,7 @@ export default function BulkAudit() {
         if (response.success) {
             setBulkAuditId(response.data.bulkAuditId);
             sessionStorage.setItem("activeBulkAuditId", response.data.bulkAuditId);
-            console.log("Audit started:", response.data);
+            
         } else {
             console.error("Error starting audit:", response.error);
             setError(response.error || "Failed to start audit");

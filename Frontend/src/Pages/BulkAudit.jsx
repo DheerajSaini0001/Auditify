@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect } from "react";
 import { Loader2, Monitor, Smartphone, ChevronDown, Settings, AlertCircle, Globe, CheckCircle2, XCircle, Clock, ExternalLink, RefreshCw } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { ThemeContext } from "../context/ThemeContext.jsx";
 import { useData } from "../context/DataContext";
 import SkeletonLoader from "../Component/SkeletonLoader";
@@ -70,6 +70,7 @@ export default function BulkAudit() {
     const { setData, discoverUrls, startBulkAudit, getBulkAuditStatus } = useData();
     const darkMode = theme === "dark";
     const navigate = useNavigate();
+    const { id: paramId } = useParams(); // Get ID from URL if present
 
     // Step 1: URL Discovery
     const [inputValue, setInputValue] = useState("");
@@ -88,60 +89,101 @@ export default function BulkAudit() {
     const [pollingInterval, setPollingInterval] = useState(null);
     const [isRestoring, setIsRestoring] = useState(true);
 
-    // Restore session
+    // Restore session / Handle URL ID
     useEffect(() => {
+        // Priority 1: URL Param (Direct Link)
+        if (paramId) {
+            setBulkAuditId(paramId);
+            setAuditing(true);
+            setIsRestoring(false);
+            return;
+        }
+
+        // Priority 2: Session Storage (Restore previous session if no URL param)
         const savedId = sessionStorage.getItem("activeBulkAuditId");
         if (savedId) {
             setBulkAuditId(savedId);
             setAuditing(true);
         }
         setIsRestoring(false);
-    }, []);
+    }, [paramId]);
 
     const [error, setError] = useState(null);
 
     // Poll for bulk audit status
+    // Poll for bulk audit status
     useEffect(() => {
-        if (bulkAuditId && !pollingInterval) {
-            const interval = setInterval(async () => {
-                const response = await getBulkAuditStatus(bulkAuditId);
+        let isMounted = true;
+        let interval = null;
 
-                if (response.success) {
-                    setBulkAuditData(response.data);
+        const processPollResponse = (response) => {
+            if (!isMounted) return;
 
-                    // Stop polling if completed or failed
-                    if (response.data.status === "completed" || response.data.status === "failed") {
-                        clearInterval(interval);
-                        setPollingInterval(null);
-                        setAuditing(false);
-                    }
-                } else {
-                    console.error("Error polling bulk audit status");
-                    // Handle polling errors (404: Not Found, 429: Rate Limit, 500: Server Error)
-                    const status = response.status;
-                    if (status === 404 || status === 429 || status === 500) {
-                        console.warn("Polling stopping due to error:", status);
-                        clearInterval(interval);
-                        setPollingInterval(null);
-                        setBulkAuditId(null);
-                        sessionStorage.removeItem("activeBulkAuditId");
-                        setBulkAuditData(null);
-                        setAuditing(false);
+            if (response.success) {
+                setBulkAuditData(response.data);
 
-                        if (status === 429) setError("Too many requests. Please try again later.");
-                        else if (status === 500) setError("Server error. Session reset.");
-                    }
+                if (response.data.status === "completed" || response.data.status === "failed") {
+                    if (interval) clearInterval(interval);
+                    setPollingInterval(null);
+                    setAuditing(false);
                 }
-            }, 3000); // Poll every 3 seconds
+            } else {
+                console.error("Error polling bulk audit status");
+                const status = response.status;
+
+                if (status === 404) {
+                    console.warn("Bulk Audit Not Found (404). Redirecting...");
+                    if (interval) clearInterval(interval);
+                    setPollingInterval(null);
+                    setBulkAuditId(null);
+                    setBulkAuditData(null);
+                    sessionStorage.removeItem("activeBulkAuditId");
+                    setAuditing(false);
+
+                    if (paramId) {
+                        navigate("/bulk-audit", { replace: true });
+                    }
+                    return;
+                }
+
+                if (status === 429 || status === 500) {
+                    console.warn("Polling stopping due to error:", status);
+                    if (interval) clearInterval(interval);
+                    setPollingInterval(null);
+                    setAuditing(false);
+
+                    if (status === 429) setError("Too many requests. Please try again later.");
+                    else if (status === 500) setError("Server error. Session reset.");
+                }
+            }
+        };
+
+        if (bulkAuditId && !pollingInterval) {
+            // Start polling (3s)
+            interval = setInterval(async () => {
+                if (!isMounted) return;
+                const response = await getBulkAuditStatus(bulkAuditId);
+                processPollResponse(response);
+            }, 3000);
 
             setPollingInterval(interval);
+
+            // Immediate first check
+            (async () => {
+                if (!isMounted) return;
+                const response = await getBulkAuditStatus(bulkAuditId);
+                processPollResponse(response);
+            })();
         }
 
         return () => {
-            if (pollingInterval) {
-                clearInterval(pollingInterval);
-            }
+            isMounted = false;
+            // Cleanup standard polling interval
+            if (interval) clearInterval(interval);
+            // Cleanup any interval stored in state (though usually same)
+            if (pollingInterval) clearInterval(pollingInterval);
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [bulkAuditId]);
 
     // Step 1: Discover URLs
@@ -458,6 +500,16 @@ export default function BulkAudit() {
                                 </button>
                             </div>
 
+                            {/* Error Message (Step 2) */}
+                            {error && (
+                                <div className="mb-4 animate-in slide-in-from-top-2 fade-in">
+                                    <div className="flex items-center gap-3 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 backdrop-blur-sm">
+                                        <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                                        <span className="text-sm font-medium">{error}</span>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* URL List with Checkboxes */}
                             <div className="space-y-2 max-h-[500px] overflow-y-auto custom-scrollbar">
                                 {discoveredUrls.map((url, index) => (
@@ -535,6 +587,16 @@ export default function BulkAudit() {
 
                 {bulkAuditData && (
                     <div className="w-full max-w-6xl mx-auto mt-10 animate-in fade-in slide-in-from-bottom-5 duration-700">
+
+                        {/* Error Message (Polling) */}
+                        {error && (
+                            <div className="mb-6 animate-in slide-in-from-top-2 fade-in">
+                                <div className="flex items-center gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 backdrop-blur-sm shadow-sm">
+                                    <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                                    <span className="font-medium">{error}</span>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Status Header */}
                         <div className={`p-6 rounded-2xl border mb-6 ${darkMode ? "bg-slate-900/90 border-slate-700" : "bg-white border-slate-200"}`}>

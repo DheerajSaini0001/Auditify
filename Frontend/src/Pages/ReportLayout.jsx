@@ -10,21 +10,57 @@ import UX_Content_Structure from "./UX_Content_Structure";
 import Conversion_Lead_Flow from "./Conversion_Lead_Flow";
 import AIO from "./AIO";
 import RawData from "./RawData";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import NotFound from "./NotFound";
+import { Loader2 } from "lucide-react";
 
 const ReportLayout = () => {
-  const { data, clearData } = useData();
+  const { data, clearData, fetchSingleReport } = useData();
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
   const navigate = useNavigate();
+  const { id } = useParams();
+  const [isFetching, setIsFetching] = React.useState(false);
 
-  // Redirect to home if data is missing
   useEffect(() => {
-    if (!data) {
+    if (id) {
+      // If data is missing OR data exists but ID mismatch -> Fetch
+      if (!data || data._id !== id) {
+        // Clear stale data immediately to prevent flashing old report or wrong state
+        clearData();
+        setIsFetching(true);
+
+        fetchSingleReport(id).then((result) => {
+          setIsFetching(false);
+          // If fetch failed (e.g. 404 Not Found), redirect to home
+          if (!result.success) {
+            navigate("/", { replace: true });
+          }
+        });
+      }
+    } else {
+      // No ID in URL, and no data in context -> Redirect
+      if (!data) {
+        navigate("/", { replace: true });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, navigate, fetchSingleReport]); // Removing 'data' from deps to avoid loop, we check 'data' inside only
+
+  // Watch for sudden data loss (e.g. from live poll 404)
+  useEffect(() => {
+    if (!data && !isFetching) {
       navigate("/", { replace: true });
     }
-  }, [data, navigate]);
+  }, [data, isFetching, navigate]);
+
+  if (isFetching) {
+    return (
+      <div className={`flex h-screen w-full items-center justify-center ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}>
+        <Loader2 className="h-10 w-10 animate-spin text-emerald-500" />
+      </div>
+    );
+  }
 
   // Prevent component rendering while redirecting
   if (!data) {

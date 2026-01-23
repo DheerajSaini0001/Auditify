@@ -1,4 +1,4 @@
-import { createContext, useState, useContext, useEffect } from "react";
+import { createContext, useState, useContext, useEffect, useCallback } from "react";
 
 const DataContext = createContext();
 export const useData = () => useContext(DataContext);
@@ -11,7 +11,26 @@ export const DataProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [intervalId, setIntervalId] = useState(null);
 
-  // 🚀 FETCH DATA
+  // �️ HELPER: Standardized Response Handler
+  const handleResponse = async (res) => {
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      data = {}; // Fallback if JSON parse fails
+    }
+
+    if (!res.ok) {
+      if (res.status === 429) {
+        return { success: false, status: 429, error: data.error || "Too many requests. Please wait 15 minutes." };
+      }
+      return { success: false, status: res.status, error: data.error || data.message || `Request failed with status ${res.status}` };
+    }
+
+    return { success: true, status: res.status, data };
+  };
+
+  // �🚀 FETCH DATA
   const fetchData = async (inputValue, device, report) => {
     if (!inputValue) return { success: false, error: "URL is empty" };
 
@@ -31,16 +50,13 @@ export const DataProvider = ({ children }) => {
         body: JSON.stringify({ url: inputValue, device: device, report: report }),
       });
 
-      const auditData = await res.json();
+      const result = await handleResponse(res);
 
-      if (!res.ok) {
-        // Handle specific status codes
-        if (res.status === 429) {
-          return { success: false, error: "Too many requests. Please wait 15 minutes." };
-        }
-        return { success: false, error: auditData.error || auditData.message || "Audit failed to start." };
+      if (!result.success) {
+        return result;
       }
 
+      const auditData = result.data;
       setData(auditData);
 
       if (auditData.status !== "completed") {
@@ -64,15 +80,25 @@ export const DataProvider = ({ children }) => {
     const newInterval = setInterval(async () => {
       try {
         const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
-        const res = await fetch(`${API_URL}/audit-report/single/${id}`);
-        const updated = await res.json();
+        const res = await fetch(`${API_URL}/single-audit/${id}`);
 
-        if (updated.status === "completed") {
+        // Stop polling if data is lost/deleted (404)
+        if (res.status === 404) {
           clearInterval(newInterval);
           setIntervalId(null);
+          setData(null); // Triggers redirect in ReportLayout
+          return;
         }
 
-        setData(updated);
+        // For live poll, we just silently fail/ignore errors mostly, but we should parse safely
+        if (res.ok) {
+          const updated = await res.json();
+          if (updated.status === "completed") {
+            clearInterval(newInterval);
+            setIntervalId(null);
+          }
+          setData(updated);
+        }
       } catch { }
     }, 3000);
 
@@ -88,9 +114,9 @@ export const DataProvider = ({ children }) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url, maxPages }),
       });
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.error || "Discovery failed");
-      return { success: true, data: result };
+
+      return await handleResponse(res);
+
     } catch (error) {
       return { success: false, error: error.message };
     }
@@ -105,24 +131,43 @@ export const DataProvider = ({ children }) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url, selectedUrls, device, report }),
       });
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.error || "Audit start failed");
-      return { success: true, data: result };
+
+      return await handleResponse(res);
+
     } catch (error) {
       return { success: false, error: error.message };
     }
   };
 
+  // 🚀 SINGLE AUDIT: GET BY ID
+  const fetchSingleReport = useCallback(async (id) => {
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
+      const res = await fetch(`${API_URL}/single-audit/${id}`);
+
+      const result = await handleResponse(res);
+      if (result.success) {
+        setData(result.data);
+      }
+      return result;
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }, []);
+
   // 🚀 BULK AUDIT: COMPLETED STATUS
   const getBulkAuditStatus = async (bulkAuditId) => {
     try {
       const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
-      const res = await fetch(`${API_URL}/audit-report/bulk/${bulkAuditId}`);
-      if (!res.ok) {
-        return { success: false, status: res.status };
+      const res = await fetch(`${API_URL}/bulk-audit/${bulkAuditId}`);
+
+      const result = await handleResponse(res);
+      if (!result.success) {
+        // Pass status code for polling logic
+        return { ...result, status: res.status };
       }
-      const result = await res.json();
-      return { success: true, data: result };
+      return result;
+
     } catch (error) {
       return { success: false, error: error.message };
     }
@@ -143,7 +188,7 @@ export const DataProvider = ({ children }) => {
 
   return (
     <DataContext.Provider
-      value={{ data, setData, loading, fetchData, clearData, discoverUrls, startBulkAudit, getBulkAuditStatus }}
+      value={{ data, setData, loading, fetchData, clearData, discoverUrls, startBulkAudit, getBulkAuditStatus, fetchSingleReport }}
     >
       {children}
     </DataContext.Provider>

@@ -2,7 +2,6 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import singleAuditRoutes from "./routes/singleAuditRoutes.js";
-import auditReportRoutes from "./routes/auditReportRoutes.js";
 import bulkAuditRoutes from "./routes/bulkAuditRoutes.js";
 import connectDB from "./config/db.js";
 import dotenv from "dotenv";
@@ -32,7 +31,6 @@ app.use(express.json({ limit: "10kb" }));
 
 app.use("/single-audit", singleAuditRoutes);
 app.use("/bulk-audit", bulkAuditRoutes);
-app.use("/audit-report", auditReportRoutes);
 
 app.listen(PORT, () => {
   console.log(`✅ Backend running on http://localhost:${PORT}`);

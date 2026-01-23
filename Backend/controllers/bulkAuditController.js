@@ -339,3 +339,21 @@ async function auditSinglePage(bulkAuditId, pageUrl, device, report) {
         }
     });
 }
+
+export const getBulkAuditStatus = async (req, res) => {
+    try {
+        const { bulkAuditId } = req.params;
+
+        const bulkAudit = await BulkAuditReport.findById(bulkAuditId);
+
+        if (!bulkAudit) {
+            return res.status(404).json({ error: "Bulk audit not found" });
+        }
+
+        res.status(200).json(bulkAudit);
+
+    } catch (error) {
+        console.error("Error fetching bulk audit status:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+};

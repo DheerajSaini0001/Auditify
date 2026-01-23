@@ -27,10 +27,15 @@ function AppContentInner() {
       <Route element={<MainLayout />}>
         <Route path="/" element={<Homepage />} />
         <Route path="/bulk-audit" element={<BulkAudit />} />
+        <Route path="/bulk-audit/:id" element={<BulkAudit />} />
 
         {/* Report Layout handles the dashboard view */}
         <Route
           path="/report"
+          element={<ReportLayout />}
+        />
+        <Route
+          path="/report/:id"
           element={<ReportLayout />}
         />
 

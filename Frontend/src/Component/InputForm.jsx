@@ -249,8 +249,8 @@ export default function InputForm() {
 
           {/* Error Message */}
           {error && (
-            <div className="absolute -bottom-16 left-0 right-0 mx-auto w-full max-w-md animate-in slide-in-from-top-2 fade-in">
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 backdrop-blur-sm">
+            <div className="w-full max-w-md mx-auto animate-in slide-in-from-top-2 fade-in mt-6">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 backdrop-blur-sm shadow-sm">
                 <AlertCircle className="w-5 h-5 flex-shrink-0" />
                 <span className="text-sm font-medium">{error}</span>
               </div>

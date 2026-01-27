@@ -194,6 +194,22 @@ const educationalContent = {
 };
 
 // ------------------------------------------------------
+// ✅ Score Calculation Info (Standard Weights)
+// ------------------------------------------------------
+const scoreCalculationInfo = {
+  title: "Score Calculation",
+  use: "The AIO (Artificial Intelligence Optimization) score measures how well AI agents and LLMs can read and understand your site.",
+  impact: "High AIO scores improve visibility in AI search engines (like ChatGPT Search, Perplexity) and voice assistants.",
+  improvement: "Implement structured data (Schema), accessible APIs, and NLP-friendly content structure.",
+  weightage: [
+    { param: "Technical AI Foundation", weight: "35%" },
+    { param: "Content NLP Readiness", weight: "25%" },
+    { param: "Analytics & Tracking", weight: "25%" },
+    { param: "Advanced Capabilities", weight: "15%" }
+  ]
+};
+
+// ------------------------------------------------------
 // ✅ Enhanced Shimmer
 // ------------------------------------------------------
 const ShimmerBlock = ({ className = "" }) => (
@@ -435,6 +451,16 @@ export default function AIO() {
                   <XCircle size={16} className="text-rose-500" />
                   <span>{failedCount} Failed</span>
                 </div>
+              </div>
+
+              <div className="flex items-center gap-2 mt-2 justify-center md:justify-start">
+                <button
+                  onClick={() => setSelectedMetricInfo(scoreCalculationInfo)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${darkMode ? "bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20" : "bg-indigo-50 text-indigo-600 hover:bg-indigo-100"}`}
+                >
+                  <Info size={14} />
+                  <span>How is this calculated?</span>
+                </button>
               </div>
             </div>
 

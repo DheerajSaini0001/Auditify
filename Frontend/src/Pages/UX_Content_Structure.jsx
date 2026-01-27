@@ -134,6 +134,23 @@ const uxEducationalContent = {
 };
 
 // ------------------------------------------------------
+// ✅ Score Calculation Info (Calculated based on average importance)
+// ------------------------------------------------------
+const scoreCalculationInfo = {
+  title: "Score Calculation",
+  use: "The UX & Content score is a weighted average of key usability and structure metrics.",
+  impact: "Better UX/UI scores directly correlate with higher conversion rates and lower bounce rates.",
+  improvement: "Focus on Fixing CLS, Tap Targets, and Readability first.",
+  weightage: [
+    { param: "Mobile & Viewport Configuration", weight: "40%" },
+    { param: "Content Readability & Stability", weight: "20%" },
+    { param: "Interaction & Forms", weight: "20%" },
+    { param: "First Screen Experience (ATF)", weight: "10%" },
+    { param: "Navigation & Structure", weight: "10%" }
+  ]
+};
+
+// ------------------------------------------------------
 // ✅ Enhanced Shimmer
 // ------------------------------------------------------
 const ShimmerBlock = ({ className = "" }) => (
@@ -467,6 +484,16 @@ export default function UX_Content_Structure() {
                   <XCircle size={16} className="text-rose-500" />
                   <span>{failedCount} Failed</span>
                 </div>
+              </div>
+
+              <div className="flex items-center gap-2 mt-2 justify-center md:justify-start">
+                <button
+                  onClick={() => setSelectedMetricInfo(scoreCalculationInfo)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${darkMode ? "bg-blue-500/10 text-blue-400 hover:bg-blue-500/20" : "bg-blue-50 text-blue-600 hover:bg-blue-100"}`}
+                >
+                  <Info size={14} />
+                  <span>How is this calculated?</span>
+                </button>
               </div>
             </div>
 

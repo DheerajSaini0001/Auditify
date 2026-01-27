@@ -313,6 +313,24 @@ const educationalContent = {
 };
 
 // ------------------------------------------------------
+// ✅ Score Calculation Info (Weighted Average)
+// ------------------------------------------------------
+const scoreCalculationInfo = {
+  title: "Score Calculation",
+  use: "The Security score is a weighted assessment of critical security headers and vulnerabilities.",
+  impact: "A high security score builds trust and prevents data breaches.",
+  improvement: "Ensure SSL, HSTS, and Content Security Policy (CSP) are enabled.",
+  weightage: [
+    { param: "Vulnerability Scanning", weight: "35%" },
+    { param: "Browser Security & Best Practices", weight: "20%" },
+    { param: "SSL & HTTPS Security", weight: "15%" },
+    { param: "Security Headers", weight: "15%" },
+    { param: "Compliance & Privacy", weight: "10%" },
+    { param: "Access Control", weight: "5%" }
+  ]
+};
+
+// ------------------------------------------------------
 // ✅ Enhanced Shimmer
 // ------------------------------------------------------
 const ShimmerBlock = ({ className = "" }) => (
@@ -569,6 +587,16 @@ export default function Security_Compilance() {
                   <XCircle size={16} className="text-rose-500" />
                   <span>{failedCount} Failed</span>
                 </div>
+              </div>
+
+              <div className="flex items-center gap-2 mt-2 justify-center md:justify-start">
+                <button
+                  onClick={() => setSelectedMetricInfo(scoreCalculationInfo)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${darkMode ? "bg-blue-500/10 text-blue-400 hover:bg-blue-500/20" : "bg-blue-50 text-blue-600 hover:bg-blue-100"}`}
+                >
+                  <Info size={14} />
+                  <span>How is this calculated?</span>
+                </button>
               </div>
             </div>
 

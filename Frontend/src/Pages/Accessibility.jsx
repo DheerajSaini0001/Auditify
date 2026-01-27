@@ -134,6 +134,22 @@ const educationalContent = {
 };
 
 // ------------------------------------------------------
+// ✅ Score Calculation Info (Standard Weights)
+// ------------------------------------------------------
+const scoreCalculationInfo = {
+  title: "Score Calculation",
+  use: "The Accessibility score measures how usable the site is for all users, including those with disabilities.",
+  impact: "Accessible sites reach 100% of the audience and avoid legal risks.",
+  improvement: "Fix color contrast, ARIA roles, and ensure keyboard navigability.",
+  weightage: [
+    { param: "Navigation & Focus Order", weight: "35%" },
+    { param: "Visual Labels & Contrast", weight: "35%" },
+    { param: "ARIA Roles & Attributes", weight: "25%" },
+    { param: "Interactive Elements", weight: "5%" }
+  ]
+};
+
+// ------------------------------------------------------
 // ✅ Enhanced Shimmer
 // ------------------------------------------------------
 const ShimmerBlock = ({ className = "" }) => (
@@ -390,6 +406,16 @@ export default function Accessibility() {
                   <XCircle size={16} className="text-rose-500" />
                   <span>{failedCount} Failed</span>
                 </div>
+              </div>
+
+              <div className="flex items-center gap-2 mt-2 justify-center md:justify-start">
+                <button
+                  onClick={() => setSelectedMetricInfo(scoreCalculationInfo)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${darkMode ? "bg-blue-500/10 text-blue-400 hover:bg-blue-500/20" : "bg-blue-50 text-blue-600 hover:bg-blue-100"}`}
+                >
+                  <Info size={14} />
+                  <span>How is this calculated?</span>
+                </button>
               </div>
             </div>
 

@@ -128,6 +128,29 @@ const seoMetricExplanations = {
   }
 };
 
+
+
+// ------------------------------------------------------
+// ✅ Score Calculation Info (Standard Weights)
+// ------------------------------------------------------
+const scoreCalculationInfo = {
+  title: "Score Calculation",
+  use: "The On-Page SEO score measures content optimization and technical correctness.",
+  impact: "Proper On-Page SEO improves ranking potential and user engagement.",
+  improvement: "Focus on Title tags, H1s, and unique Meta Descriptions first.",
+  weightage: [
+    { param: "URL Structure & Hierarchy", weight: "15%" },
+    { param: "Image & Video Optimization", weight: "15%" },
+    { param: "Title Tags", weight: "12%" },
+    { param: "Content Quality & Uniqueness", weight: "10%" },
+    { param: "Meta Descriptions", weight: "9%" },
+    { param: "H1 Tags", weight: "9%" },
+    { param: "Contextual Linking", weight: "9%" },
+    { param: "Canonicalization", weight: "8%" },
+    { param: "Other Technical SEO", weight: "13%" }
+  ]
+};
+
 // ------------------------------------------------------
 // ✅ Simple Skeleton
 // ------------------------------------------------------
@@ -332,8 +355,8 @@ export default function On_Page_SEO() {
 
   const allMetrics = [
     seo.Title, seo.Meta_Description, seo.URL_Structure, seo.Canonical, seo.H1,
-    seo.Image, seo.Video, seo.Heading_Hierarchy, seo.Semantic_Tags, seo.Structured_Data,
-    seo.Contextual_Linking, seo.HTTPS, seo.Links, seo.Duplicate_Content, seo.URL_Slugs, seo.Hreflang
+    seo.Image, seo.Video, seo.Heading_Hierarchy, seo.Semantic_Tags,
+    seo.Contextual_Linking, seo.Links, seo.Duplicate_Content, seo.URL_Slugs, seo.HTTPS
   ].filter(Boolean);
 
   const passedCount = allMetrics.filter(m => (getScore(m) !== undefined ? (getScore(m) > 1 ? 100 : getScore(m) * 100) : 0) >= 90).length;
@@ -391,6 +414,16 @@ export default function On_Page_SEO() {
                   <XCircle size={16} className="text-rose-500" />
                   <span>{failedCount} Failed</span>
                 </div>
+              </div>
+
+              <div className="flex items-center gap-2 mt-2 justify-center md:justify-start">
+                <button
+                  onClick={() => setSelectedMetricInfo(scoreCalculationInfo)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${darkMode ? "bg-blue-500/10 text-blue-400 hover:bg-blue-500/20" : "bg-blue-50 text-blue-600 hover:bg-blue-100"}`}
+                >
+                  <Info size={14} />
+                  <span>How is this calculated?</span>
+                </button>
               </div>
             </div>
 

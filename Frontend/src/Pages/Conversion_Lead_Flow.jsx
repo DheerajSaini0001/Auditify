@@ -306,6 +306,24 @@ const educationalContent = {
 };
 
 // ------------------------------------------------------
+// ✅ Score Calculation Info (Standard Weights)
+// ------------------------------------------------------
+const scoreCalculationInfo = {
+  title: "Score Calculation",
+  use: "The Conversion score measures how effective page elements are at driving user action.",
+  impact: "Higher conversion scores mean more leads, sales, and engagement.",
+  improvement: "Ensure CTA visibility, simplified forms, and visible trust signals.",
+  weightage: [
+    { param: "Form Optimization", weight: "25%" },
+    { param: "Call-to-Action (CTA) Strategy", weight: "20%" },
+    { param: "Trust & Social Proof", weight: "15%" },
+    { param: "Engagement Experience", weight: "15%" },
+    { param: "Lead Capture Mechanisms", weight: "15%" },
+    { param: "Mobile Adaptation", weight: "10%" }
+  ]
+};
+
+// ------------------------------------------------------
 // ✅ Enhanced Shimmer
 // ------------------------------------------------------
 const ShimmerBlock = ({ className = "" }) => (
@@ -547,6 +565,16 @@ export default function Conversion_Lead_Flow() {
                   <XCircle size={16} className="text-rose-500" />
                   <span>{failedCount} Failed</span>
                 </div>
+              </div>
+
+              <div className="flex items-center gap-2 mt-2 justify-center md:justify-start">
+                <button
+                  onClick={() => setSelectedMetricInfo(scoreCalculationInfo)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${darkMode ? "bg-blue-500/10 text-blue-400 hover:bg-blue-500/20" : "bg-blue-50 text-blue-600 hover:bg-blue-100"}`}
+                >
+                  <Info size={14} />
+                  <span>How is this calculated?</span>
+                </button>
               </div>
             </div>
 

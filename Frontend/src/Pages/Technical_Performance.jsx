@@ -272,6 +272,29 @@ const MetricCard = ({ details, value, dynamicData, darkMode, icon: Icon, classNa
 // ------------------------------------------------------
 // ✅ Metric Explanations Data
 // ------------------------------------------------------
+
+// ------------------------------------------------------
+// ✅ Score Calculation Info (Standard Weights)
+// ------------------------------------------------------
+const scoreCalculationInfo = {
+  title: "Score Calculation",
+  use: "The Technical Performance score is a weighted average of key performance metrics (Lighthouse v10 model).",
+  impact: "A higher score correlates with better user experience, faster ranking, and lower bounce rates.",
+  improvement: "To improve your score, focus on the metrics with the highest weightage first (LCP, TBT).",
+  weightage: [
+    { param: "Largest Contentful Paint (LCP)", weight: "25%" },
+    { param: "Total Blocking Time (TBT)", weight: "25%" },
+    { param: "Interaction to Next Paint (INP)", weight: "15%" },
+    { param: "First Contentful Paint (FCP)", weight: "10%" },
+    { param: "Speed Index (SI)", weight: "10%" },
+    { param: "Time to First Byte (TTFB)", weight: "10%" },
+    { param: "Cumulative Layout Shift (CLS)", weight: "5%" }
+  ]
+};
+
+// ------------------------------------------------------
+// ✅ Metric Explanations Data
+// ------------------------------------------------------
 const metricExplanations = {
   LCP: {
     use: "Measures loading performance. It marks the point in the page load timeline when the page main content has likely loaded.",
@@ -482,17 +505,22 @@ export default function Technical_Performance() {
   ];
 
   // Calculate Passed/Failed
+  // Calculate Passed/Failed
   const allMetrics = [];
-  sections.forEach(s => {
+  const allowedMetrics = ["LCP", "TBT", "INP", "FCP", "SI", "TTFB", "CLS"];
+
+  sections.forEach((s) => {
     if (s.isCrux && !tech.Real_User_Experience) return;
     const source = s.isCrux ? tech.Real_User_Experience : tech;
-    s.metrics.forEach(m => {
-      if (source[m.key]) allMetrics.push(source[m.key]);
+    s.metrics.forEach((m) => {
+      if (allowedMetrics.includes(m.key) && source[m.key]) {
+        allMetrics.push(source[m.key]);
+      }
     });
   });
 
-  const passedCount = allMetrics.filter(m => m.score >= 90).length;
-  const failedCount = allMetrics.filter(m => m.score < 90).length;
+  const passedCount = allMetrics.filter((m) => m.score >= 90).length;
+  const failedCount = allMetrics.filter((m) => m.score < 90).length;
 
   return (
     <div className={`min-h-screen w-full ${mainBg} transition-colors duration-300`}>
@@ -527,6 +555,16 @@ export default function Technical_Performance() {
                   <XCircle size={16} className="text-rose-500" />
                   <span>{failedCount} Failed</span>
                 </div>
+              </div>
+
+              <div className="flex items-center gap-2 mt-2 justify-center md:justify-start">
+                <button
+                  onClick={() => setSelectedMetricInfo(scoreCalculationInfo)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${darkMode ? "bg-blue-500/10 text-blue-400 hover:bg-blue-500/20" : "bg-blue-50 text-blue-600 hover:bg-blue-100"}`}
+                >
+                  <Info size={14} />
+                  <span>How is this calculated?</span>
+                </button>
               </div>
             </div>
 

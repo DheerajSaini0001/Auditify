@@ -12,6 +12,7 @@ import {
   ChevronDown, ChevronUp, Terminal, Activity,
   ArrowRight, Loader2
 } from "lucide-react";
+import MetricInfoModal from "../Component/MetricInfoModal";
 
 // ------------------------------------------------------
 // ✅ Icon Mapping
@@ -54,37 +55,254 @@ const iconMap = {
 // ✅ Educational Content
 // ------------------------------------------------------
 const educationalContent = {
-  CTA_Visibility: { desc: "Checks if primary CTAs are visible.", why: "Visible CTAs guide users." },
-  CTA_Clarity: { desc: "Evaluates CTA text clarity.", why: "Clear text reduces cognitive load." },
-  CTA_Contrast: { desc: "Assesses button contrast.", why: "High contrast ensures accessibility." },
-  CTA_Crowding: { desc: "Checks for cluttered CTAs.", why: "Crowding causes decision paralysis." },
-  CTA_Flow_Alignment: { desc: "Checks CTA placement flow.", why: "CTAs should match user intent." },
-  Form_Presence: { desc: "Verifies form existence.", why: "Forms capture lead data." },
-  Form_Length: { desc: "Measures form complexity.", why: "Short forms convert better." },
-  Required_vs_Optional_Fields: { desc: "Checks field markings.", why: "Clarity prevents frustration." },
-  Inline_Validation: { desc: "Checks for real-time validation.", why: "Instant feedback improves UX." },
-  Submit_Button_Clarity: { desc: "Analyzes submit button.", why: "Action must be obvious." },
-  AutoFocus_Field: { desc: "Checks auto-focus.", why: "Saves user clicks." },
-  MultiStep_Form_Progress: { desc: "Checks progress indicators.", why: "Encourages completion." },
-  Testimonials: { desc: "Validates testimonials.", why: "Social proof builds trust." },
-  Reviews: { desc: "Checks for reviews.", why: "Reviews influence decisions." },
-  Trust_Badges: { desc: "Detects trust badges.", why: "Badges reassure users." },
-  Client_Logos: { desc: "Verifies client logos.", why: "Logos establish authority." },
-  Case_Studies_Accessibility: { desc: "Checks case studies.", why: "Proof of value." },
-  Exit_Intent_Triggers: { desc: "Detects exit popups.", why: "Recovers lost leads." },
-  Lead_Magnets: { desc: "Checks for lead magnets.", why: "Incentivizes signups." },
-  Contact_Info_Visibility: { desc: "Ensures contact info visibility.", why: "Builds trust." },
-  Chatbot_Presence: { desc: "Verifies chatbot.", why: "Provides instant support." },
-  Interactive_Elements: { desc: "Checks interactive tools.", why: "Increases engagement." },
-  Personalization: { desc: "Assesses personalization.", why: "Relevance boosts conversion." },
-  Progress_Indicators: { desc: "Validates progress bars.", why: "Visualizes completion." },
-  Friendly_Error_Handling: { desc: "Ensures clear errors.", why: "Helps users recover." },
-  Microcopy_Clarity: { desc: "Checks helper text.", why: "Guides users smoothly." },
-  Incentives_Displayed: { desc: "Verifies incentives.", why: "Motivates action." },
-  Scarcity_Urgency: { desc: "Checks urgency triggers.", why: "Encourages immediate action." },
-  Smooth_Scrolling: { desc: "Ensures smooth scroll.", why: "Enhances feel." },
-  Mobile_CTA_Adaptation: { desc: "Checks mobile CTAs.", why: "Critical for mobile users." },
-  MultiChannel_FollowUp: { desc: "Verifies follow-up.", why: "Increases retention." },
+  CTA_Visibility: {
+    title: "CTA Visibility",
+    desc: "Checks if primary CTAs are visible.",
+    why: "Visible CTAs guide users.",
+    use: "Checks if the Call to Action button is above the fold and distinguishable.",
+    impact: "Invisible or hard-to-find CTAs drastically reduce conversion rates.",
+    improvement: "Use contrasting colors and plenty of whitespace around CTAs."
+  },
+  CTA_Clarity: {
+    title: "CTA Clarity",
+    desc: "Evaluates CTA text clarity.",
+    why: "Clear text reduces cognitive load.",
+    use: "Analyzes button text for action-oriented language.",
+    impact: "Vague labels like 'Submit' perform worse than 'Get My Free Quote'.",
+    improvement: "Use clear, benefit-driven text (e.g., 'Start Free Trial')."
+  },
+  CTA_Contrast: {
+    title: "CTA Contrast",
+    desc: "Assesses button contrast.",
+    why: "High contrast ensures accessibility.",
+    use: "Measures color contrast ratio against the background.",
+    impact: "Low contrast buttons blend in, causing users to miss them.",
+    improvement: "Ensure a contrast ratio of at least 4.5:1 (WCAG AA)."
+  },
+  CTA_Crowding: {
+    title: "CTA Crowding",
+    desc: "Checks for cluttered CTAs.",
+    why: "Crowding causes decision paralysis.",
+    use: "Checks proximity of other clickable elements to the CTA.",
+    impact: "Too many choices overwhelm users (Hick's Law), leading to no action.",
+    improvement: "Isolate primary CTAs. Provide only one main goal per section."
+  },
+  CTA_Flow_Alignment: {
+    title: "Flow Alignment",
+    desc: "Checks CTA placement flow.",
+    why: "CTAs should match user intent.",
+    use: "Checks if CTAs appear logically after value propositions.",
+    impact: "Asking for a sale before explaining value leads to rejection.",
+    improvement: "Place CTAs after key benefits or testimonials."
+  },
+  Form_Presence: {
+    title: "Lead Capture Form",
+    desc: "Verifies form existence.",
+    why: "Forms capture lead data.",
+    use: "Detects input forms on the landing page.",
+    impact: "No form means no way to collect user info (unless pure click-through).",
+    improvement: "Embed a simple signup form or email capture field."
+  },
+  Form_Length: {
+    title: "Form Length",
+    desc: "Measures form complexity.",
+    why: "Short forms convert better.",
+    use: "Counts the number of input fields in the form.",
+    impact: "Each extra field reduces conversion rate by ~10-15%.",
+    improvement: "Ask only for essential info (e.g., Email). Enrich data later."
+  },
+  Required_vs_Optional_Fields: {
+    title: "Field Requirements",
+    desc: "Checks field markings.",
+    why: "Clarity prevents frustration.",
+    use: "Checks if required fields are clearly marked (asterisks or labels).",
+    impact: "Users hate guessing which fields are mandatory upon submission error.",
+    improvement: "Mark optional fields explicitly or remove them."
+  },
+  Inline_Validation: {
+    title: "Inline Validation",
+    desc: "Checks for real-time validation.",
+    why: "Instant feedback improves UX.",
+    use: "Checks if the form gives feedback as the user types.",
+    impact: "Waiting until submit to show errors frustrating users and causes abandonment.",
+    improvement: "Implement real-time validation (green checkmarks/red borders)."
+  },
+  Submit_Button_Clarity: {
+    title: "Submit Button",
+    desc: "Analyzes submit button.",
+    why: "Action must be obvious.",
+    use: "Checks the text of the form submit button.",
+    impact: "Generic 'Submit' buttons feel transactional and boring.",
+    improvement: "Use value-based text like 'Send Me the Guide'."
+  },
+  AutoFocus_Field: {
+    title: "Auto-Focus",
+    desc: "Checks auto-focus.",
+    why: "Saves user clicks.",
+    use: "Checks if the first input is auto-focused on load.",
+    impact: "Auto-focus prompts users to start typing immediately, increasing engagement.",
+    improvement: "Add 'autofocus' attribute to the first input on landing pages."
+  },
+  MultiStep_Form_Progress: {
+    title: "Multi-step Progress",
+    desc: "Checks progress indicators.",
+    why: "Encourages completion.",
+    use: "Detects progress bars for long forms.",
+    impact: "Users abandon long forms if they don't know how much is left.",
+    improvement: "Show 'Step 1 of 3' or a progress bar for complex forms."
+  },
+  Testimonials: {
+    title: "Testimonials",
+    desc: "Validates testimonials.",
+    why: "Social proof builds trust.",
+    use: "Scans for testimonial sections or quotes.",
+    impact: "Social proof is a top psychological driver of conversion.",
+    improvement: "Add authentic customer quotes with photos."
+  },
+  Reviews: {
+    title: "Reviews",
+    desc: "Checks for reviews.",
+    why: "Reviews influence decisions.",
+    use: "Checks for star ratings or review widgets.",
+    impact: "0 reviews signals a lack of usage or trust.",
+    improvement: "Embed reviews from Google, Trustpilot, or G2."
+  },
+  Trust_Badges: {
+    title: "Trust Badges",
+    desc: "Detects trust badges.",
+    why: "Badges reassure users.",
+    use: "Scans for security seals, guarantees, or partner logos.",
+    impact: "Visual symbols of trust reduce anxiety about scams.",
+    improvement: "Add badges like 'Secure Checkout', '30-Day Guarantee'."
+  },
+  Client_Logos: {
+    title: "Client Logos",
+    desc: "Verifies client logos.",
+    why: "Logos establish authority.",
+    use: "Checks for a 'Trusted By' logo strip.",
+    impact: "Recognizable brands transfer credibility to you.",
+    improvement: "Showcase logos of your best known clients."
+  },
+  Case_Studies_Accessibility: {
+    title: "Case Studies",
+    desc: "Checks case studies.",
+    why: "Proof of value.",
+    use: "Checks for links to 'Case Studies' or 'Success Stories'.",
+    impact: "Deep dive content proves your solution works.",
+    improvement: "Link to at least one detailed case study."
+  },
+  Exit_Intent_Triggers: {
+    title: "Exit Intent",
+    desc: "Detects exit popups.",
+    why: "Recovers lost leads.",
+    use: "Checks for scripts that trigger on mouse leaving the window.",
+    impact: "Can recover 10-15% of abandoning visitors.",
+    improvement: "Offer a discount or lead magnet when user tries to leave."
+  },
+  Lead_Magnets: {
+    title: "Lead Magnet",
+    desc: "Checks for lead magnets.",
+    why: "Incentivizes signups.",
+    use: "Checks for downloadable resources (PDFs, Ebooks).",
+    impact: "Users rarely give emails for nothing. Value exchange is key.",
+    improvement: "Offer a free checklist, ebook, or trial."
+  },
+  Contact_Info_Visibility: {
+    title: "Contact Info",
+    desc: "Ensures contact info visibility.",
+    why: "Builds trust.",
+    use: "Checks for phone number, email, or physical address.",
+    impact: "Hidden contact info makes a company look like a shell entity.",
+    improvement: "Put your phone or email clearly in the footer/header."
+  },
+  Chatbot_Presence: {
+    title: "Live Chat",
+    desc: "Verifies chatbot.",
+    why: "Provides instant support.",
+    use: "Detects live chat widgets (Intercom, Drift).",
+    impact: "Answers pre-sale questions instantly, boosting conversion.",
+    improvement: "Install a live chat or support bot."
+  },
+  Interactive_Elements: {
+    title: "Interactivity",
+    desc: "Checks interactive tools.",
+    why: "Increases engagement.",
+    use: "Checks for calculators, quizzes, or interactive demos.",
+    impact: "Interactive content converts 2x better than static content.",
+    improvement: "Add a 'ROI Calculator' or 'Product Quiz'."
+  },
+  Personalization: {
+    title: "Personalization",
+    desc: "Assesses personalization.",
+    why: "Relevance boosts conversion.",
+    use: "Checks for dynamic text replacement or personalized greetings.",
+    impact: "Generic pages convert less than tailored ones.",
+    improvement: "Use URL parameters to personalize headlines."
+  },
+  Progress_Indicators: {
+    title: "Progress Indicators",
+    desc: "Validates progress bars.",
+    why: "Visualizes completion.",
+    use: "Checks for step visualizers in funnels.",
+    impact: "Reduces anxiety about process length.",
+    improvement: "Visually show steps (1 -> 2 -> 3) in checkout."
+  },
+  Friendly_Error_Handling: {
+    title: "Error Messages",
+    desc: "Ensures clear errors.",
+    why: "Helps users recover.",
+    use: "Checks if error messages are helpful vs generic.",
+    impact: "'Error 500' scares users. 'Please enter a valid email' helps them.",
+    improvement: "Write human-friendly error copy."
+  },
+  Microcopy_Clarity: {
+    title: "Microcopy",
+    desc: "Checks helper text.",
+    why: "Guides users smoothly.",
+    use: "Checks for small instructional text under fields.",
+    impact: "Clarifies ambiguity (e.g., 'No credit card required').",
+    improvement: "Add reassuring microcopy near friction points."
+  },
+  Incentives_Displayed: {
+    title: "Incentives",
+    desc: "Verifies incentives.",
+    why: "Motivates action.",
+    use: "Checks for 'Free Shipping', 'Bonus', 'Discount' keywords.",
+    impact: "Sweetening the deal tips the scales for hesitant users.",
+    improvement: "Highlight free shipping or bonuses near the button."
+  },
+  Scarcity_Urgency: {
+    title: "Urgency Signals",
+    desc: "Checks urgency triggers.",
+    why: "Encourages immediate action.",
+    use: "Checks for countdown timers or 'Limited Stock' warnings.",
+    impact: "FOMO (Fear Of Missing Out) drives faster decisions.",
+    improvement: "Use authentic urgency (e.g., 'Offer ends soon')."
+  },
+  Smooth_Scrolling: {
+    title: "Smooth Scroll",
+    desc: "Ensures smooth scroll.",
+    why: "Enhances feel.",
+    use: "Checks for 'scroll-behavior: smooth' in CSS.",
+    impact: "Jerky anchor jumps feel broken/old.",
+    improvement: "Enable smooth scrolling for anchor links."
+  },
+  Mobile_CTA_Adaptation: {
+    title: "Mobile Sticky CTA",
+    desc: "Checks mobile CTAs.",
+    why: "Critical for mobile users.",
+    use: "Checks if a sticky CTA exists on mobile screens.",
+    impact: "Mobile users shouldn't scroll miles to find the buy button.",
+    improvement: "Add a sticky bottom bar with a CTA on mobile."
+  },
+  MultiChannel_FollowUp: {
+    title: "Retargeting",
+    desc: "Verifies follow-up.",
+    why: "Increases retention.",
+    use: "Checks for retargeting pixels (FB Pixel, LinkedIn Insight).",
+    impact: "Most users don't buy on visit 1. Retargeting brings them back.",
+    improvement: "Install Facebook Pixel and Google Ads Tag."
+  },
 };
 
 // ------------------------------------------------------
@@ -150,7 +368,7 @@ const ConversionShimmer = ({ darkMode }) => (
 // ------------------------------------------------------
 // ✅ Metric Card (Security Style)
 // ------------------------------------------------------
-const MetricCard = ({ metricKey, data, darkMode }) => {
+const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
   const { score, details, meta } = data || {};
   const isPassed = score === 100;
 
@@ -181,6 +399,18 @@ const MetricCard = ({ metricKey, data, darkMode }) => {
               </p>
             </div>
           </div>
+          {onInfo && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onInfo();
+              }}
+              className={`p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
+              title="Learn more"
+            >
+              <Info size={18} />
+            </button>
+          )}
         </div>
 
         {/* Dynamic Details */}
@@ -260,6 +490,7 @@ const Section = ({ title, icon: Icon, children, darkMode }) => (
 export default function Conversion_Lead_Flow() {
   const { theme } = useContext(ThemeContext);
   const { data, loading } = useData();
+  const [selectedMetricInfo, setSelectedMetricInfo] = React.useState(null);
   const darkMode = theme === "dark";
 
   if (!data?.conversionAndLeadFlow) {
@@ -343,25 +574,31 @@ export default function Conversion_Lead_Flow() {
         {/* Section 1: CTA & Forms */}
         <Section title="Call-to-Actions & Forms" icon={MousePointerClick} darkMode={darkMode}>
           {["CTA_Visibility", "CTA_Clarity", "CTA_Contrast", "CTA_Crowding", "CTA_Flow_Alignment", "Form_Presence", "Form_Length", "Required_vs_Optional_Fields", "Inline_Validation", "Submit_Button_Clarity", "AutoFocus_Field", "MultiStep_Form_Progress"].map((key) => (
-            flow[key] && <MetricCard key={key} metricKey={key} data={flow[key]} darkMode={darkMode} />
+            flow[key] && <MetricCard key={key} metricKey={key} data={flow[key]} darkMode={darkMode} onInfo={() => setSelectedMetricInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
           ))}
         </Section>
 
         {/* Section 2: Trust & Engagement */}
         <Section title="Trust & Engagement Signals" icon={ShieldCheck} darkMode={darkMode}>
           {["Testimonials", "Reviews", "Trust_Badges", "Client_Logos", "Case_Studies_Accessibility", "Lead_Magnets", "Exit_Intent_Triggers", "Chatbot_Presence", "Contact_Info_Visibility"].map((key) => (
-            flow[key] && <MetricCard key={key} metricKey={key} data={flow[key]} darkMode={darkMode} />
+            flow[key] && <MetricCard key={key} metricKey={key} data={flow[key]} darkMode={darkMode} onInfo={() => setSelectedMetricInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
           ))}
         </Section>
 
         {/* Section 3: UX & Interaction */}
         <Section title="UX Flow & Interaction" icon={LayoutTemplate} darkMode={darkMode}>
           {["Interactive_Elements", "Personalization", "Progress_Indicators", "Friendly_Error_Handling", "Microcopy_Clarity", "Incentives_Displayed", "Scarcity_Urgency", "Smooth_Scrolling", "Mobile_CTA_Adaptation", "MultiChannel_FollowUp"].map((key) => (
-            flow[key] && <MetricCard key={key} metricKey={key} data={flow[key]} darkMode={darkMode} />
+            flow[key] && <MetricCard key={key} metricKey={key} data={flow[key]} darkMode={darkMode} onInfo={() => setSelectedMetricInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
           ))}
         </Section>
 
       </main>
+      <MetricInfoModal
+        isOpen={!!selectedMetricInfo}
+        onClose={() => setSelectedMetricInfo(null)}
+        info={selectedMetricInfo}
+        darkMode={darkMode}
+      />
     </div>
   );
 }

@@ -748,7 +748,7 @@ export default async function evaluateMobileUX(device, page) {
       Meta: results.readability.meta
     },
     Cumulative_Layout_Shift: {
-      Score: parseFloat(results.cls.score.toFixed(0)),
+      Score: Math.round(getScore('cls', results.cls)),
       Status: results.cls.status,
       Details: results.cls.details,
       Meta: results.cls.meta

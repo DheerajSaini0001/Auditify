@@ -8,9 +8,9 @@ import {
   Activity, Zap, Layout, MousePointer2, Image as ImageIcon,
   Server, Database, FileCode, Globe, Shield, Link, Map,
   FileText, Search, ArrowRightLeft, Clock, Gauge, AlertTriangle,
-  CheckCircle, XCircle, Loader2
+  CheckCircle, XCircle, Loader2, Info
 } from "lucide-react";
-
+import MetricInfoModal from "../Component/MetricInfoModal";
 // ------------------------------------------------------
 // ✅ Simple Skeleton
 // ------------------------------------------------------
@@ -142,6 +142,7 @@ const MetricCard = ({ details, value, dynamicData, darkMode, icon: Icon, classNa
             </div>
             <div>
               <h3 className={`font-bold text-lg ${textColor}`}>{details.title}</h3>
+              <p className={`text-xs ${subTextColor} font-medium`}>{details.analogy}</p>
               <div className="flex items-center gap-2 mt-1">
                 <span className={`text-xs font-medium px-2 py-0.5 rounded-full w-fit border ${statusColor}`}>
                   {statusText}
@@ -150,8 +151,20 @@ const MetricCard = ({ details, value, dynamicData, darkMode, icon: Icon, classNa
               </div>
             </div>
           </div>
-          <div className={`text-lg font-black ${isPassed ? "text-green-500" : isWarning ? "text-yellow-500" : "text-red-500"}`}>
-            {value !== null && value !== undefined ? `${value}${details.unit || ""}` : "--"}
+          <div className="flex items-start gap-3">
+            <div className={`text-lg font-black ${isPassed ? "text-green-500" : isWarning ? "text-yellow-500" : "text-red-500"}`}>
+              {value !== null && value !== undefined ? `${value}${details.unit || ""}` : "--"}
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                details.onInfo?.();
+              }}
+              className={`mt-1 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
+              title="Learn more about this metric"
+            >
+              <Info size={18} />
+            </button>
           </div>
         </div>
 
@@ -238,18 +251,118 @@ const MetricCard = ({ details, value, dynamicData, darkMode, icon: Icon, classNa
           </div>
         )}
 
-        {/* Educational Content */}
-        <div className="pt-4 border-t border-gray-200 dark:border-gray-700 mt-auto">
-          <p className={`text-sm ${subTextColor}`}>
-            {details.analogy}
-          </p>
-          <p className={`text-xs mt-2 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
-            <span className="font-semibold">Suggestion:</span> {dynamicData?.suggestion || "None"}
-          </p>
-        </div>
+        {/* Educational Content / Suggestion */}
+        {dynamicData?.suggestion && dynamicData.suggestion !== "None" && (
+          <div className="pt-4 border-t border-gray-200 dark:border-gray-700 mt-auto">
+            <p className={`text-xs mt-2 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+              <span className="font-semibold">Suggestion:</span> {dynamicData.suggestion}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
+};
+
+// ------------------------------------------------------
+// ✅ Metric Info Modal
+// ------------------------------------------------------
+
+
+// ------------------------------------------------------
+// ✅ Metric Explanations Data
+// ------------------------------------------------------
+const metricExplanations = {
+  LCP: {
+    use: "Measures loading performance. It marks the point in the page load timeline when the page main content has likely loaded.",
+    impact: "A fast LCP reassures users that the page is useful. Example: A hero image loading within 2.5s keeps the user engaged; if it takes 5s, they might leave.",
+    improvement: "Optimize server response times, cache assets, optimize images (WebP), and remove render-blocking JavaScript."
+  },
+  INP: {
+    use: "Measures responsiveness. It assesses how quickly a page responds to user interactions (clicks, taps) throughout its lifespan.",
+    impact: "High INP frustrates users. Example: Clicking 'Add to Cart' and waiting 1s for a response feels broken and leads to rage clicks.",
+    improvement: "Minimize main thread work, reduce JavaScript execution time, break up long tasks, and optimize event callbacks."
+  },
+  CLS: {
+    use: "Measures visual stability. It quantifies how much page content shifts unexpectedly while reading.",
+    impact: "Poor CLS causes misclicks. Example: Reading an article and suddenly the text moves down because an ad loaded late, causing you to lose your place.",
+    improvement: "Set explicit width/height for images and video, reserve space for ads/embeds, and avoid inserting content above existing content."
+  },
+  FCP: {
+    use: "Measures the time from when the page starts loading to when any part of the page's content is rendered on screen.",
+    impact: "First impression speed. Example: Seeing the background or a header immediately vs a white screen for 3 seconds directly affects perceived speed.",
+    improvement: "Eliminate render-blocking resources, inline critical CSS, preconnect to required origins, and reduce server response time."
+  },
+  TTFB: {
+    use: "Measures the time between the request for a resource and when the first byte of a response begins to arrive.",
+    impact: "Slow TTFB delays everything else. Example: Searching multiple database tables before sending the HTML can cause a 1s delay before the browser receives anything.",
+    improvement: "Optimize database queries, use server-side caching, use a CDN, and avoid expensive logic during page rendering."
+  },
+  FID: {
+    use: "Measures interactivity. How long the browser takes to process the first user interaction (click, tap, key press).",
+    impact: "A delay in processing the first click makes the site feel sluggish. Example: Clicking a menu button but the menu doesn't open for 500ms.",
+    improvement: "Break up Long Tasks, optimize page loading strategies, and use a web worker to offload complex logic."
+  },
+  TBT: {
+    use: "Measures the total amount of time that the main thread was blocked for long enough to prevent input responsiveness.",
+    impact: "Correlates with INP/FID. High TBT means the page is 'frozen' while loading. Example: You can see the buttons but clicking them does nothing.",
+    improvement: "Reduce JavaScript execution, defer unused JS, minimized third-party scripts, and code splitting."
+  },
+  SI: {
+    use: "Speed Index measures how quickly the contents of a page are visibly populated.",
+    impact: "Perceived load speed. Example: A page that progressively loads content quickly (videos/images appearing smoothy) feels faster than one that loads all at once at the end.",
+    improvement: "Optimize content rendering order and minimize main thread work. Ensure text remains visible during webfont load."
+  },
+  Compression: {
+    use: "Reduces the size of text-based assets (HTML, CSS, JS) using algorithms like Gzip or Brotli.",
+    impact: "Smaller files load faster over the network. Example: A 1MB JS file might be 200KB compressed, saving seconds on mobile networks.",
+    improvement: "Enable Gzip or Brotli compression on your server configuration (Nginx/Apache/Cloudflare/Vercel)."
+  },
+  Caching: {
+    use: "Instructs the browser to store static files locally for a set period.",
+    impact: "Repeat visits are instant. Example: A user returning to the site doesn't need to re-download the logo or main CSS, saving data and time.",
+    improvement: "Set `Cache-Control` headers (e.g., `max-age=31536000`) for static immutable assets."
+  },
+  Render_Blocking: {
+    use: "Identifies scripts/styles that prevent the page from displaying until they are downloaded and processed.",
+    impact: "Delays First Paint. Example: A large external CSS file in `<head>` stops the browser from showing anything until it loads.",
+    improvement: "Defer non-critical JS/CSS, inline critical CSS, and preload important resources."
+  },
+  HTTP: {
+    use: "HTTPS provides security; HTTP2 provides performance (multiplexing).",
+    impact: "Trust and speed. Example: HTTP2 allows downloading multiple images simultaneously over one connection, whereas HTTP1.1 queues them.",
+    improvement: "Install an SSL certificate and enable HTTP/2 on your server or CDN."
+  },
+  Resource_Optimization: {
+    use: "Ensures images and code are minified and optimized to the smallest possible size without quality loss.",
+    impact: "Faster downloads. Example: Serving a 4000px image for a 300px thumbnail wastes data and time.",
+    improvement: "Minify CSS/JS, resize images to display size, and use modern formats (AVIF/WebP)."
+  },
+  Sitemap: {
+    use: "Defines the structure of the website for search engines.",
+    impact: "Helps Google discover pages. Example: A new product page appears in search results faster if it's in the sitemap.",
+    improvement: "Generate an XML sitemap and submit it to Google Search Console."
+  },
+  Robots: {
+    use: "Tells crawlers which pages they can or cannot access.",
+    impact: "Controls crawling budget. Example: Preventing Google from crawling admin pages saves resources for important pages.",
+    improvement: "Ensure `robots.txt` exists and doesn't block critical resources (CSS/JS) needed for rendering."
+  },
+  Structured_Data: {
+    use: "Provides explicit clues about the meaning of a page to search engines (Schema.org).",
+    impact: "Rich snippets in search results. Example: Star ratings, product prices, or events showing directly in Google results.",
+    improvement: "Add JSON-LD schema markup for products, articles, organizations, or breadcrumbs."
+  },
+  Broken_Links: {
+    use: "Tracks links that point to non-existent pages (404).",
+    impact: "Bad UX and SEO. Example: User clicks 'Read More' and gets a 'Page Not Found' error, leading to bounce.",
+    improvement: "Audit internal links and fix or redirect broken URLs to relevant content."
+  },
+  Redirect_Chains: {
+    use: "A series of redirects (A -> B -> C) instead of a direct link.",
+    impact: "Increases latency and wastes crawl budget. Example: Page A redirects to B, which redirects to C, adding 2 extra round trips.",
+    improvement: "Update links to point directly to the final destination (A -> C) and remove intermediate hops."
+  }
 };
 
 // ------------------------------------------------------
@@ -278,6 +391,7 @@ const Section = ({ title, subtitle, icon: Icon, children, darkMode }) => (
 export default function Technical_Performance() {
   const { theme } = useContext(ThemeContext);
   const { data, loading } = useData();
+  const [selectedMetricInfo, setSelectedMetricInfo] = React.useState(null);
   const darkMode = theme === "dark";
 
   if (!data?.technicalPerformance) {
@@ -440,7 +554,6 @@ export default function Technical_Performance() {
         {/* Sections */}
         {sections.map((section) => {
           if (section.isCrux && !tech.Real_User_Experience) return null;
-
           return (
             <Section key={section.id} title={section.title} subtitle={section.subtitle} icon={section.icon} darkMode={darkMode}>
               {section.metrics.map((m) => {
@@ -457,7 +570,11 @@ export default function Technical_Performance() {
                 return (
                   <MetricCard
                     key={m.key}
-                    details={{ ...m, isCrux: section.isCrux }}
+                    details={{
+                      ...m,
+                      isCrux: section.isCrux,
+                      onInfo: () => setSelectedMetricInfo({ title: m.title, icon: m.icon, ...metricExplanations[m.key] })
+                    }}
                     dynamicData={dynamicData}
                     value={displayValue}
                     darkMode={darkMode}
@@ -471,6 +588,14 @@ export default function Technical_Performance() {
         })}
 
       </main>
+
+      {/* Portal or direct rendering for Modal */}
+      <MetricInfoModal
+        isOpen={!!selectedMetricInfo}
+        onClose={() => setSelectedMetricInfo(null)}
+        info={selectedMetricInfo}
+        darkMode={darkMode}
+      />
     </div>
   );
 }

@@ -9,6 +9,124 @@ import {
   Layout, FileCode, Lock, Copy, List, Tag, Globe,
   CheckCircle, AlertTriangle, XCircle, Info, Loader2
 } from "lucide-react";
+import MetricInfoModal from "../Component/MetricInfoModal";
+
+const seoMetricExplanations = {
+  Title: {
+    title: "Title Tag",
+    use: "The HTML <title> element that specifies the title of a web page.",
+    impact: "It is the first thing users see in search results. A clear, keyword-optimized title improves CTR and ranking.",
+    improvement: "Keep it between 50-60 characters, distinct for every page, and place important keywords first."
+  },
+  Meta_Description: {
+    title: "Meta Description",
+    use: "A brief summary of the page content that appears under the title in search results.",
+    impact: "Persuades users to click. While not a direct ranking factor, it heavily influences Click-Through Rate (CTR).",
+    improvement: "Write unique summaries (150-160 chars) with a clear call-to-action and relevant keywords."
+  },
+  Canonical: {
+    title: "Canonical Tag",
+    use: "Tells search engines which URL is the 'master' version of a page to prevent duplicate content issues.",
+    impact: "Prevents SEO value dilution across multiple URL variations (e.g., HTTP vs HTTPS, UTM params).",
+    improvement: "Ensure every page has a self-referencing canonical tag or points to its original source."
+  },
+  URL_Structure: {
+    title: "URL Structure",
+    use: "The format and readability of your webpage address.",
+    impact: "Clean URLs are easier for users to read and share, and help search engines understand page context.",
+    improvement: "Use hyphens, keep it short, lowercase, and avoid complex parameters."
+  },
+  H1: {
+    title: "H1 Tag",
+    use: "The main heading of the page, acting as the primary topic indicator.",
+    impact: "Helps Google understand the main topic. Multiple H1s can confuse crawlers about the page's focus.",
+    improvement: "Use exactly one H1 tag per page that includes the primary keyword."
+  },
+  Image: {
+    title: "Image Metadata (Alt Text)",
+    use: "Alt text describes images for screen readers and search engines.",
+    impact: "Crucial for accessibility and Image SEO. Without it, search engines cannot understand the image content.",
+    improvement: "Add descriptive, accurate alt text to every meaningful image. Mark decorative images as hidden."
+  },
+  Compression: {
+    title: "Image Compression",
+    use: "Optimization of image file sizes to improve loading speed.",
+    impact: "Large images slow down page load (LCP), increasing bounce rates and hurting rankings.",
+    improvement: "Compress images (WebP/AVIF), resize to display dimensions, and use lazy loading."
+  },
+  Video: {
+    title: "Internal Videos",
+    use: "Video content hosted or embedded on the page.",
+    impact: "Engages users but can slow down the page if not optimized (lazy loaded).",
+    improvement: "Use lazy loading for embeds (YouTube/Vimeo) and include schema markup for video SEO."
+  },
+  Semantic: {
+    title: "Semantic Tags",
+    use: "HTML5 tags (nav, article, section) that define content meaning.",
+    impact: "Helps search engines understand the layout and importance of different page sections.",
+    improvement: "Replace generic <div> tags with <header>, <nav>, <main>, <article>, and <footer> where appropriate."
+  },
+  Contextual: {
+    title: "Contextual Links",
+    use: "Links embedded within the main body content pointing to other relevant pages.",
+    impact: "Passes authority (PageRank) to other pages and keeps users engaged longer.",
+    improvement: "Add 2-5 internal links per article using descriptive anchor text."
+  },
+  Hierarchy: {
+    title: "Heading Hierarchy",
+    use: "The nested order of headings (H1 > H2 > H3).",
+    impact: "A logical structure allows users and crawlers to skim and understand content relationships.",
+    improvement: "Never skip levels (e.g., don't jump from H2 to H4). usage H2 for main sections and H3 for subsections."
+  },
+  HTTPS: {
+    title: "HTTPS Security",
+    use: "Secure encryption protocol for data transfer.",
+    impact: "A confirmed ranking signal. Users will not trust a site labeled 'Not Secure'.",
+    improvement: "Install an SSL certificate and force redirect all HTTP traffic to HTTPS."
+  },
+  Duplicate: {
+    title: "Content Quality",
+    use: "Uniqueness and depth of the page content.",
+    impact: "Search engines penalize thin or duplicated content. Unique content ranks higher.",
+    improvement: "Ensure content is original, comprehensive, and satisfies user intent."
+  },
+  Links: {
+    title: "Link Profile",
+    use: "The mix of internal and external hyperlinks.",
+    impact: "External links to authority sites build trust; internal links distribute value.",
+    improvement: "Fix broken links immediately. Audit for orphan pages (pages with no internal links)."
+  },
+  Hreflang: {
+    title: "Hreflang Tags",
+    use: "Code that tells Google which language/region a specific page is for.",
+    impact: "Prevents duplicate content across regional sites (e.g., US vs UK) and serves the right language to users.",
+    improvement: "Implement hreflang tags for all multi-lingual or multi-regional versions."
+  },
+  Slug: {
+    title: "URL Slugs",
+    use: "The part of the URL identifying the specific page.",
+    impact: "Short, descriptive slugs (e.g., /seo-audit) are better than ID-based ones (/p=123).",
+    improvement: "Remove stop words (a, the, and) and use keywords."
+  },
+  OpenGraph: {
+    title: "Open Graph Tags",
+    use: "Meta tags that control how URLs look when shared on social media (Facebook, LinkedIn).",
+    impact: "Optimized social previews increase social engagement and click-throughs.",
+    improvement: "Define og:title, og:description, and og:image for every page."
+  },
+  Twitter: {
+    title: "Twitter Card",
+    use: "Metadata specific to Twitter for rich media previews.",
+    impact: "Makes tweets with your link stand out with large images and summaries.",
+    improvement: "Add twitter:card and twitter:image tags."
+  },
+  Social: {
+    title: "Social Profiles",
+    use: "Links to your official social media channels.",
+    impact: "Builds brand trust and entity authority in Google's Knowledge Graph.",
+    improvement: "Link to all active social profiles in the footer or contact page."
+  }
+};
 
 // ------------------------------------------------------
 // ✅ Simple Skeleton
@@ -76,7 +194,7 @@ const OnPageSeoShimmer = ({ darkMode }) => (
 // ------------------------------------------------------
 // ✅ Metric Card (Security Style)
 // ------------------------------------------------------
-const MetricCard = ({ title, description, score, value, unit, darkMode, icon: Icon, children, className }) => {
+const MetricCard = ({ title, description, score, value, unit, darkMode, icon: Icon, children, className, onInfo }) => {
   const displayScore = score !== undefined && score !== null ? (score > 1 ? 100 : Math.round(score * 100)) : 0;
   const isPassed = displayScore >= 90;
   const isWarning = displayScore >= 50 && displayScore < 90;
@@ -116,8 +234,22 @@ const MetricCard = ({ title, description, score, value, unit, darkMode, icon: Ic
               </p>
             </div>
           </div>
-          <div className={`text-lg font-black ${isPassed ? "text-green-500" : isWarning ? "text-yellow-500" : "text-red-500"}`}>
-            {value || "--"} <span className="text-sm font-semibold text-gray-400">{unit}</span>
+          <div className="flex items-start gap-3">
+            <div className={`text-lg font-black ${isPassed ? "text-green-500" : isWarning ? "text-yellow-500" : "text-red-500"}`}>
+              {value || "--"} <span className="text-sm font-semibold text-gray-400">{unit}</span>
+            </div>
+            {onInfo && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onInfo();
+                }}
+                className={`mt-1 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
+                title="Learn more"
+              >
+                <Info size={18} />
+              </button>
+            )}
           </div>
         </div>
 
@@ -143,6 +275,7 @@ const MetricCard = ({ title, description, score, value, unit, darkMode, icon: Ic
           </div>
         )}
       </div>
+
     </div>
   );
 };
@@ -172,6 +305,7 @@ const Section = ({ title, icon: Icon, children, darkMode }) => (
 export default function On_Page_SEO() {
   const { data, loading } = useData();
   const { theme } = useContext(ThemeContext);
+  const [selectedMetricInfo, setSelectedMetricInfo] = React.useState(null);
   const darkMode = theme === "dark";
 
   if (!data?.onPageSEO) {
@@ -283,13 +417,13 @@ export default function On_Page_SEO() {
 
         {/* Content Essentials */}
         <Section title="Content Essentials" icon={FileText} darkMode={darkMode}>
-          <MetricCard title="Title Tag" description={desc.title} score={seo.Title?.score} value={seo.Title?.meta?.length + " chars"} darkMode={darkMode} icon={Tag}>
+          <MetricCard onInfo={() => setSelectedMetricInfo({ ...seoMetricExplanations.Title, icon: Tag })} title="Title Tag" description={desc.title} score={seo.Title?.score} value={seo.Title?.meta?.length + " chars"} darkMode={darkMode} icon={Tag}>
             {seo.Title?.meta?.title && <div className="italic">"{seo.Title.meta.title}"</div>}
           </MetricCard>
-          <MetricCard title="Meta Description" description={desc.meta} score={seo.Meta_Description?.score} value={seo.Meta_Description?.meta?.length + " chars"} darkMode={darkMode} icon={FileText}>
+          <MetricCard onInfo={() => setSelectedMetricInfo({ ...seoMetricExplanations.Meta_Description, icon: FileText })} title="Meta Description" description={desc.meta} score={seo.Meta_Description?.score} value={seo.Meta_Description?.meta?.length + " chars"} darkMode={darkMode} icon={FileText}>
             {seo.Meta_Description?.meta?.description && <div className="italic">"{seo.Meta_Description.meta.description}"</div>}
           </MetricCard>
-          <MetricCard title="Canonical Tag" description={desc.canonical} score={seo.Canonical?.score} value={seo.Canonical?.meta?.isSelfReferencing ? "Self-Ref" : (seo.Canonical?.score === 1 ? "Valid" : "Invalid")} darkMode={darkMode} icon={Copy}>
+          <MetricCard onInfo={() => setSelectedMetricInfo({ ...seoMetricExplanations.Canonical, icon: Copy })} title="Canonical Tag" description={desc.canonical} score={seo.Canonical?.score} value={seo.Canonical?.meta?.isSelfReferencing ? "Self-Ref" : (seo.Canonical?.score === 1 ? "Valid" : "Invalid")} darkMode={darkMode} icon={Copy}>
             <div className="space-y-1 text-xs">
               {seo.Canonical?.details && <div className={seo.Canonical.score === 1 ? "text-green-500 font-medium" : "text-amber-500"}>{seo.Canonical.details}</div>}
               {seo.Canonical?.meta?.canonical && (
@@ -299,7 +433,7 @@ export default function On_Page_SEO() {
               )}
             </div>
           </MetricCard>
-          <MetricCard title="URL Structure" description={desc.url} score={seo.URL_Structure?.score} value={seo.URL_Structure?.score === 1 ? "Clean" : "Issues"} darkMode={darkMode} icon={Link}>
+          <MetricCard onInfo={() => setSelectedMetricInfo({ ...seoMetricExplanations.URL_Structure, icon: Link })} title="URL Structure" description={desc.url} score={seo.URL_Structure?.score} value={seo.URL_Structure?.score === 1 ? "Clean" : "Issues"} darkMode={darkMode} icon={Link}>
             <div className="space-y-2">
               {seo.URL_Structure?.meta?.url && <div className="break-all p-1.5 rounded border font-mono text-xs dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 bg-gray-50 border-gray-200 text-gray-600">{seo.URL_Structure.meta.url}</div>}
               {seo.URL_Structure?.meta?.issues?.length > 0 && (
@@ -315,15 +449,15 @@ export default function On_Page_SEO() {
               )}
             </div>
           </MetricCard>
-          <MetricCard title="H1 Tag" description={desc.h1} score={seo.H1?.score} value={seo.H1?.meta?.count + " Found"} darkMode={darkMode} icon={Layout}>
+          <MetricCard onInfo={() => setSelectedMetricInfo({ ...seoMetricExplanations.H1, icon: Layout })} title="H1 Tag" description={desc.h1} score={seo.H1?.score} value={seo.H1?.meta?.count + " Found"} darkMode={darkMode} icon={Layout}>
             {seo.H1?.meta?.content?.map((h, i) => <div key={i} className="mb-1">• {h}</div>)}
           </MetricCard>
         </Section>
 
         {/* Media & Accessibility */}
         <Section title="Media & Accessibility" icon={ImageIcon} darkMode={darkMode}>
-          {(seo.Image?.meta?.total > 0 || seo.Image?.score !== undefined) && (
-            <MetricCard title="Image Metadata" description="Alt text check." score={seo.Image?.meta?.altScore} value={seo.Image?.meta?.withAlt + "/" + seo.Image?.meta?.total + " optimized"} darkMode={darkMode} icon={ImageIcon}>
+          {seo.Image?.meta?.total > 0 && (
+            <MetricCard onInfo={() => setSelectedMetricInfo({ ...seoMetricExplanations.Image, icon: ImageIcon })} title="Image Metadata" description="Alt text check." score={seo.Image?.meta?.altScore} value={seo.Image?.meta?.withAlt + "/" + seo.Image?.meta?.total + " optimized"} darkMode={darkMode} icon={ImageIcon}>
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className={`p-2 rounded ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
@@ -377,32 +511,34 @@ export default function On_Page_SEO() {
             </MetricCard>
           )}
 
-          <MetricCard title="Compression" description={desc.imagecompression} score={seo.Image?.meta?.sizeScore} value={seo.Image?.meta?.sizeScore === 1 ? "Good" : "Heavy Images"} darkMode={darkMode} icon={ImageIcon}>
-            {seo.Image?.meta?.largeImages?.length > 0 ? (
-              <div className="space-y-1">
-                <div className="font-semibold text-red-500 text-xs uppercase flex items-center gap-1">
-                  <AlertTriangle size={10} />
-                  Large Images ({">"}150KB):
+          {seo.Image?.meta?.total > 0 && (
+            <MetricCard onInfo={() => setSelectedMetricInfo({ ...seoMetricExplanations.Compression, icon: ImageIcon })} title="Compression" description={desc.imagecompression} score={seo.Image?.meta?.sizeScore} value={seo.Image?.meta?.sizeScore === 1 ? "Good" : "Heavy Images"} darkMode={darkMode} icon={ImageIcon}>
+              {seo.Image?.meta?.largeImages?.length > 0 ? (
+                <div className="space-y-1">
+                  <div className="font-semibold text-red-500 text-xs uppercase flex items-center gap-1">
+                    <AlertTriangle size={10} />
+                    Large Images ({">"}150KB):
+                  </div>
+                  <div className={`max-h-32 overflow-y-auto custom-scrollbar p-1.5 rounded border ${darkMode ? "bg-red-900/10 border-red-900/30" : "bg-red-50 border-red-100"}`}>
+                    {seo.Image.meta.largeImages.map((img, i) => (
+                      <div key={i} className="flex justify-between items-center text-[10px] mb-1 last:mb-0">
+                        <span className="truncate opacity-80 font-mono w-2/3" title={img.src}>{img.src.split('/').pop() || "unknown"}</span>
+                        <span className="font-bold text-red-500">{img.size} KB</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className={`max-h-32 overflow-y-auto custom-scrollbar p-1.5 rounded border ${darkMode ? "bg-red-900/10 border-red-900/30" : "bg-red-50 border-red-100"}`}>
-                  {seo.Image.meta.largeImages.map((img, i) => (
-                    <div key={i} className="flex justify-between items-center text-[10px] mb-1 last:mb-0">
-                      <span className="truncate opacity-80 font-mono w-2/3" title={img.src}>{img.src.split('/').pop() || "unknown"}</span>
-                      <span className="font-bold text-red-500">{img.size} KB</span>
-                    </div>
-                  ))}
+              ) : (
+                <div className="text-sm opacity-80 flex items-center gap-2">
+                  <CheckCircle size={14} className="text-green-500" />
+                  <span>All checked images are under 150KB.</span>
                 </div>
-              </div>
-            ) : (
-              <div className="text-sm opacity-80 flex items-center gap-2">
-                <CheckCircle size={14} className="text-green-500" />
-                <span>All checked images are under 150KB.</span>
-              </div>
-            )}
-          </MetricCard>
+              )}
+            </MetricCard>
+          )}
 
-          <MetricCard title="Internal Videos" description={desc.video} score={seo.Video?.score} value={seo.Video?.meta?.total > 0 ? seo.Video?.meta?.total + " Found" : "None"} darkMode={darkMode} icon={Video}>
-            {seo.Video?.meta?.total > 0 ? (
+          {seo.Video?.meta?.total > 0 && (
+            <MetricCard onInfo={() => setSelectedMetricInfo({ ...seoMetricExplanations.Video, icon: Video })} title="Internal Videos" description={desc.video} score={seo.Video?.score} value={seo.Video?.meta?.total + " Found"} darkMode={darkMode} icon={Video}>
               <div className="grid grid-cols-2 gap-2 text-xs mt-2">
                 <div className={`p-2 rounded ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
                   <div className="opacity-70">Total</div>
@@ -421,15 +557,13 @@ export default function On_Page_SEO() {
                   <div className={`text-lg font-bold ${seo.Video.meta.metaCount > 0 ? "text-green-500" : "text-red-500"}`}>{seo.Video.meta.metaCount || 0}</div>
                 </div>
               </div>
-            ) : (
-              <div className="text-xs opacity-60 italic">No video content detected.</div>
-            )}
-          </MetricCard>
+            </MetricCard>
+          )}
         </Section>
 
         {/* Structure & Semantics */}
         <Section title="Structure & Semantics" icon={Layout} darkMode={darkMode}>
-          <MetricCard title="Semantic Tags" description={desc.semantic} score={seo.Semantic_Tags?.score} value={seo.Semantic_Tags?.score === 1 ? "Excellent" : "Partial"} darkMode={darkMode} icon={FileCode}>
+          <MetricCard onInfo={() => setSelectedMetricInfo({ ...seoMetricExplanations.Semantic, icon: FileCode })} title="Semantic Tags" description={desc.semantic} score={seo.Semantic_Tags?.score} value={seo.Semantic_Tags?.score === 1 ? "Excellent" : "Partial"} darkMode={darkMode} icon={FileCode}>
             <div className="grid grid-cols-3 gap-2 mt-2">
               {['main', 'nav', 'header', 'footer', 'article', 'section'].map((tag) => {
                 const isPresent = seo.Semantic_Tags?.meta?.[tag] === 1;
@@ -444,7 +578,7 @@ export default function On_Page_SEO() {
               })}
             </div>
           </MetricCard>
-          <MetricCard title="Contextual Links" description={desc.contextual} score={seo.Contextual_Linking?.score} value={seo.Contextual_Linking?.meta?.totalContextual + " Links"} darkMode={darkMode} icon={Link}>
+          <MetricCard onInfo={() => setSelectedMetricInfo({ ...seoMetricExplanations.Contextual, icon: Link })} title="Contextual Links" description={desc.contextual} score={seo.Contextual_Linking?.score} value={seo.Contextual_Linking?.meta?.totalContextual + " Links"} darkMode={darkMode} icon={Link}>
             <div className="space-y-3">
               {seo.Contextual_Linking?.meta?.missingLinks?.length > 0 && (
                 <div className="space-y-1">
@@ -469,7 +603,7 @@ export default function On_Page_SEO() {
             </div>
           </MetricCard>
           {seo.Heading_Hierarchy && (
-            <MetricCard title="Hierarchy" description={desc.heading} score={seo.Heading_Hierarchy?.score} value={seo.Heading_Hierarchy?.score ? "Logical" : "Broken"} darkMode={darkMode} icon={List} className="md:col-span-2 lg:col-span-3">
+            <MetricCard onInfo={() => setSelectedMetricInfo({ ...seoMetricExplanations.Hierarchy, icon: List })} title="Hierarchy" description={desc.heading} score={seo.Heading_Hierarchy?.score} value={seo.Heading_Hierarchy?.score ? "Logical" : "Broken"} darkMode={darkMode} icon={List} className="md:col-span-2 lg:col-span-3">
               <div className="space-y-4">
                 {/* Heading Counts */}
                 <div className="grid grid-cols-6 gap-2 text-center">
@@ -539,7 +673,7 @@ export default function On_Page_SEO() {
 
         {/* Technical SEO */}
         <Section title="Technical SEO" icon={Lock} darkMode={darkMode}>
-          <MetricCard title="HTTPS" description={seo.HTTPS?.details || "Secure connection."} score={seo.HTTPS?.score} value={seo.HTTPS?.score === 1 ? "Secure Connection" : "Insecure Connection"} darkMode={darkMode} icon={Lock}>
+          <MetricCard onInfo={() => setSelectedMetricInfo({ ...seoMetricExplanations.HTTPS, icon: Lock })} title="HTTPS" description={seo.HTTPS?.details || "Secure connection."} score={seo.HTTPS?.score} value={seo.HTTPS?.score === 1 ? "Secure Connection" : "Insecure Connection"} darkMode={darkMode} icon={Lock}>
             {seo.HTTPS?.meta?.url && (
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
@@ -554,6 +688,7 @@ export default function On_Page_SEO() {
             )}
           </MetricCard>
           <MetricCard
+            onInfo={() => setSelectedMetricInfo({ ...seoMetricExplanations.Duplicate, icon: Copy })}
             title="Content Quality"
             description={desc.duplicate}
             score={seo.Duplicate_Content?.score}
@@ -585,7 +720,7 @@ export default function On_Page_SEO() {
               )}
             </div>
           </MetricCard>
-          <MetricCard title="Link Profile" description={desc.links} score={seo.Links?.score} value={seo.Links?.meta?.total + " Total"} darkMode={darkMode} icon={Globe} className="md:col-span-2 lg:col-span-3">
+          <MetricCard onInfo={() => setSelectedMetricInfo({ ...seoMetricExplanations.Links, icon: Globe })} title="Link Profile" description={desc.links} score={seo.Links?.score} value={seo.Links?.meta?.total + " Total"} darkMode={darkMode} icon={Globe} className="md:col-span-2 lg:col-span-3">
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div className={`p-3 rounded-lg text-center ${darkMode ? "bg-gray-700/50" : "bg-gray-100/50"}`}>
                 <div className="text-xs font-bold uppercase tracking-wider opacity-60 mb-1">Internal</div>
@@ -654,7 +789,7 @@ export default function On_Page_SEO() {
 
           {/* Hreflang - Wrapped in Card */}
           {(seo.Hreflang?.Results?.length > 0 || seo.Hreflang?.Issues?.length > 0) && (
-            <MetricCard title="Hreflang" description="International targeting." score={seo.Hreflang?.score} value={seo.Hreflang?.score === 1 ? "Valid" : "Issues"} darkMode={darkMode} icon={Globe}>
+            <MetricCard onInfo={() => setSelectedMetricInfo({ ...seoMetricExplanations.Hreflang, icon: Globe })} title="Hreflang" description="International targeting." score={seo.Hreflang?.score} value={seo.Hreflang?.score === 1 ? "Valid" : "Issues"} darkMode={darkMode} icon={Globe}>
               <div className="space-y-3">
                 {seo.Hreflang?.Results?.length > 0 && (
                   <div className="space-y-1">
@@ -697,7 +832,7 @@ export default function On_Page_SEO() {
           )}
 
           {/* Slugs - Always show */}
-          <MetricCard title="URL Slugs" description={desc.slug} score={seo.URL_Slugs?.score} value={seo.URL_Slugs?.score === 1 ? "Valid" : "Issues Found"} darkMode={darkMode} icon={Link}>
+          <MetricCard onInfo={() => setSelectedMetricInfo({ ...seoMetricExplanations.Slug, icon: Link })} title="URL Slugs" description={desc.slug} score={seo.URL_Slugs?.score} value={seo.URL_Slugs?.score === 1 ? "Valid" : "Issues Found"} darkMode={darkMode} icon={Link}>
             <div className="space-y-2">
               {seo.URL_Slugs?.meta?.slug && (
                 <div className={`text-xs font-mono p-1.5 rounded break-all ${darkMode ? "bg-gray-700/50 text-gray-300" : "bg-gray-100 text-gray-600"}`}>
@@ -740,7 +875,7 @@ export default function On_Page_SEO() {
         {/* Social Media Optimization */}
         <Section title="Social Media Optimization" icon={Globe} darkMode={darkMode}>
           {/* Open Graph Card */}
-          <MetricCard title="Open Graph" description={seo.Open_Graph?.details || "Social sharing meta tags."} score={seo.Open_Graph?.score} value={seo.Open_Graph?.score === 1 ? "Optimized" : "Missing / Incomplete"} darkMode={darkMode} icon={Globe}>
+          <MetricCard onInfo={() => setSelectedMetricInfo({ ...seoMetricExplanations.OpenGraph, icon: Globe })} title="Open Graph" description={seo.Open_Graph?.details || "Social sharing meta tags."} score={seo.Open_Graph?.score} value={seo.Open_Graph?.score === 1 ? "Optimized" : "Missing / Incomplete"} darkMode={darkMode} icon={Globe}>
             <div className="space-y-3">
               {seo.Open_Graph?.meta?.tags && (
                 <div className="grid grid-cols-1 gap-2">
@@ -763,7 +898,7 @@ export default function On_Page_SEO() {
           </MetricCard>
 
           {/* Twitter Card */}
-          <MetricCard title="Twitter Card" description={seo.Twitter_Card?.details || "Twitter specific meta tags."} score={seo.Twitter_Card?.score} value={seo.Twitter_Card?.score === 1 ? "Optimized" : "Missing / Incomplete"} darkMode={darkMode} icon={Globe}>
+          <MetricCard onInfo={() => setSelectedMetricInfo({ ...seoMetricExplanations.Twitter, icon: Globe })} title="Twitter Card" description={seo.Twitter_Card?.details || "Twitter specific meta tags."} score={seo.Twitter_Card?.score} value={seo.Twitter_Card?.score === 1 ? "Optimized" : "Missing / Incomplete"} darkMode={darkMode} icon={Globe}>
             <div className="space-y-3">
               {seo.Twitter_Card?.meta?.tags && (
                 <div className="grid grid-cols-1 gap-2">
@@ -786,7 +921,7 @@ export default function On_Page_SEO() {
           </MetricCard>
 
           {/* Social Links Card */}
-          <MetricCard title="Social Profiles" description="Detected social media links." score={seo.Social_Links?.score} value={seo.Social_Links?.meta?.count + " Found"} darkMode={darkMode} icon={Globe}>
+          <MetricCard onInfo={() => setSelectedMetricInfo({ ...seoMetricExplanations.Social, icon: Globe })} title="Social Profiles" description="Detected social media links." score={seo.Social_Links?.score} value={seo.Social_Links?.meta?.count + " Found"} darkMode={darkMode} icon={Globe}>
             {seo.Social_Links?.meta?.links?.length > 0 ? (
               <div className="grid grid-cols-2 gap-2">
                 {seo.Social_Links.meta.links.map((link, i) => {
@@ -807,6 +942,12 @@ export default function On_Page_SEO() {
         </Section>
 
       </main>
-    </div >
+      <MetricInfoModal
+        isOpen={!!selectedMetricInfo}
+        onClose={() => setSelectedMetricInfo(null)}
+        info={selectedMetricInfo}
+        darkMode={darkMode}
+      />
+    </div>
   );
 }

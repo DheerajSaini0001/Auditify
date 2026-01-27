@@ -10,6 +10,7 @@ import {
   Layout, Code, Terminal, Bug, MapPin, Share2, CalendarClock,
   Database, EyeOff, MousePointer, Bell, Key, Globe2, Layers, ShieldCheck, Search, Loader2
 } from "lucide-react";
+import MetricInfoModal from "../Component/MetricInfoModal";
 
 // ------------------------------------------------------
 // ✅ Icon Mapping
@@ -53,38 +54,262 @@ const iconMap = {
 // ✅ Educational Content
 // ------------------------------------------------------
 const educationalContent = {
-  HTTPS: { desc: "Ensures secure HTTPS protocol.", why: "Encrypts data in transit." },
-  SSL: { desc: "Checks for valid SSL certificate.", why: "Authenticates site identity." },
-  SSL_Expiry: { desc: "Verifies SSL expiry date.", why: "Expired certificates block users." },
-  HSTS: { desc: "Enforces HTTPS connections.", why: "Prevents downgrade attacks." },
-  TLS_Version: { desc: "Validates TLS version.", why: "Older versions are insecure." },
-  X_Frame_Options: { desc: "Protects against clickjacking.", why: "Prevents malicious embedding." },
-  CSP: { desc: "Content Security Policy.", why: "Mitigates XSS and injection attacks." },
-  X_Content_Type_Options: { desc: "Prevents MIME sniffing.", why: "Stops file type exploits." },
-  Cookies_Secure: { desc: "Ensures Secure flag on cookies.", why: "Protects cookies over network." },
-  Cookies_HttpOnly: { desc: "Prevents JS access to cookies.", why: "Mitigates XSS cookie theft." },
-  Google_Safe_Browsing: { desc: "Checks Google blacklist.", why: "Ensures site isn't flagged." },
-  Blacklist: { desc: "Domain blacklist check.", why: "Protects reputation." },
-  Malware_Scan: { desc: "Scans for malware.", why: "Detects malicious code." },
-  SQLi_Exposure: { desc: "SQL Injection check.", why: "Prevents database compromise." },
-  XSS: { desc: "Cross-Site Scripting check.", why: "Prevents script injection." },
-  Cookie_Consent: { desc: "GDPR Cookie Consent.", why: "Legal compliance." },
-  Privacy_Policy: { desc: "Privacy Policy check.", why: "Builds user trust." },
-  Forms_Use_HTTPS: { desc: "Secure form submission.", why: "Protects user input." },
-  GDPR_CCPA: { desc: "Data protection compliance.", why: "Avoids legal fines." },
-  Data_Collection: { desc: "Data collection disclosure.", why: "Transparency with users." },
-  Weak_Default_Credentials: { desc: "Checks default passwords.", why: "Prevents easy takeovers." },
-  MFA_Enabled: { desc: "Multi-Factor Authentication.", why: "Adds security layer." },
-  Admin_Panel_Public: { desc: "Exposed admin panel.", why: "Reduces attack surface." },
-  Viewport_Meta_Tag: { desc: "Mobile responsiveness.", why: "Essential for UX." },
-  HTML_Doctype: { desc: "HTML Doctype declaration.", why: "Ensures correct rendering." },
-  Character_Encoding: { desc: "UTF-8 encoding.", why: "Prevents text issues." },
-  Browser_Console_Errors: { desc: "Console errors.", why: "Indicates broken code." },
-  Geolocation_Request: { desc: "Geolocation permissions.", why: "Respects user privacy." },
-  Input_Paste_Allowed: { desc: "Paste restrictions.", why: "Bad UX and security." },
-  Notification_Request: { desc: "Notification permissions.", why: "Avoids user annoyance." },
-  Third_Party_Cookies: { desc: "Third-party cookies.", why: "Privacy concern." },
-  Deprecated_APIs: { desc: "Deprecated APIs.", why: "Avoids security holes." },
+  HTTPS: {
+    title: "HTTPS Encryption",
+    desc: "Ensures secure HTTPS protocol.",
+    why: "Encrypts data in transit.",
+    use: "Hypertext Transfer Protocol Secure (HTTPS) uses TLS to encrypt communication.",
+    impact: " Prevents eavesdropping and tampering. Essential for trust and SEO.",
+    improvement: "Obtain an SSL certificate and force redirect HTTP to HTTPS."
+  },
+  SSL: {
+    title: "SSL Certificate",
+    desc: "Checks for valid SSL certificate.",
+    why: "Authenticates site identity.",
+    use: "Verifies that the website has a valid, trusted SSL/TLS certificate.",
+    impact: "Invalid certificates trigger browser warnings, scaring away visitors.",
+    improvement: "Renew certificates before expiry and ensure the chain of trust is complete."
+  },
+  SSL_Expiry: {
+    title: "SSL Expiry",
+    desc: "Verifies SSL expiry date.",
+    why: "Expired certificates block users.",
+    use: "Checks the expiration date of the SSL certificate.",
+    impact: "An expired certificate causes 'Not Secure' warnings immediately.",
+    improvement: "Set up auto-renewal (e.g., Let's Encrypt) to avoid downtime."
+  },
+  HSTS: {
+    title: "HSTS Header",
+    desc: "Enforces HTTPS connections.",
+    why: "Prevents downgrade attacks.",
+    use: "HTTP Strict Transport Security tells browsers to ONLY use HTTPS.",
+    impact: "Protects against man-in-the-middle attacks stripping SSL.",
+    improvement: "Add 'Strict-Transport-Security' header with a long max-age."
+  },
+  TLS_Version: {
+    title: "TLS Protocol",
+    desc: "Validates TLS version.",
+    why: "Older versions are insecure.",
+    use: "Checks the version of Transport Layer Security protocol used.",
+    impact: "TLS 1.0/1.1 have known vulnerabilities (POODLE, BEAST).",
+    improvement: "Disable TLS 1.0/1.1 and enable TLS 1.2 or 1.3 on the server."
+  },
+  X_Frame_Options: {
+    title: "X-Frame-Options",
+    desc: "Protects against clickjacking.",
+    why: "Prevents malicious embedding.",
+    use: "Controls whether the site can be embedded in an <iframe>.",
+    impact: "Prevents attackers from overlaying invisible frames to trick users into clicking.",
+    improvement: "Set header to 'DENY' or 'SAMEORIGIN'."
+  },
+  CSP: {
+    title: "Content Security Policy",
+    desc: "Content Security Policy.",
+    why: "Mitigates XSS and injection attacks.",
+    use: "Whitelists sources of approved content (scripts, styles, images).",
+    impact: "Stop malicious scripts from running even if injected.",
+    improvement: "Define a strict 'Content-Security-Policy' header."
+  },
+  X_Content_Type_Options: {
+    title: "MIME Sniffing",
+    desc: "Prevents MIME sniffing.",
+    why: "Stops file type exploits.",
+    use: "Prevents browsers from interpreting files as a different MIME type.",
+    impact: "Stops drive-by download attacks disguised as images.",
+    improvement: "Set 'X-Content-Type-Options: nosniff'."
+  },
+  Cookies_Secure: {
+    title: "Secure Cookies",
+    desc: "Ensures Secure flag on cookies.",
+    why: "Protects cookies over network.",
+    use: "Ensures cookies are only sent over encrypted HTTPS connections.",
+    impact: "Prevents cookies from being stolen over unencrypted HTTP.",
+    improvement: "Set the 'Secure' flag when setting cookies."
+  },
+  Cookies_HttpOnly: {
+    title: "HttpOnly Cookies",
+    desc: "Prevents JS access to cookies.",
+    why: "Mitigates XSS cookie theft.",
+    use: "Prevents client-side scripts (JavaScript) from accessing cookies.",
+    impact: "Even if XSS occurs, the attacker cannot steal session tokens.",
+    improvement: "Set the 'HttpOnly' flag for session identifiers."
+  },
+  Google_Safe_Browsing: {
+    title: "Safe Browsing",
+    desc: "Checks Google blacklist.",
+    why: "Ensures site isn't flagged.",
+    use: "Checks if the domain is listed in Google's database of unsafe sites.",
+    impact: "Flagged sites show a 'Deceptive Site Ahead' red screen to users.",
+    improvement: "Request a review in Google Search Console if flagged."
+  },
+  Blacklist: {
+    title: "Domain Blacklist",
+    desc: "Domain blacklist check.",
+    why: "Protects reputation.",
+    use: "Checks multiple DNS blacklists (spam, malware).",
+    impact: "Being blacklisted affects email deliverability and trust.",
+    improvement: "Monitor domain reputation and clean up malware if infected."
+  },
+  Malware_Scan: {
+    title: "Malware Detection",
+    desc: "Scans for malware.",
+    why: "Detects malicious code.",
+    use: "Scans page content for known malicious signatures or obfuscated code.",
+    impact: "Malware steals user data and ruins site reputation.",
+    improvement: "Use security plugins, scanners, and keep software updated."
+  },
+  SQLi_Exposure: {
+    title: "SQL Injection",
+    desc: "SQL Injection check.",
+    why: "Prevents database compromise.",
+    use: "Checks if inputs can manipulate database queries.",
+    impact: "Attackers can dump the entire database or delete data.",
+    improvement: "Use prepared statements (parameterized queries) and validate inputs."
+  },
+  XSS: {
+    title: "XSS Protection",
+    desc: "Cross-Site Scripting check.",
+    why: "Prevents script injection.",
+    use: "Checks if user input is properly escaped before rendering.",
+    impact: "XSS allows account takeover and defacement.",
+    improvement: "Sanitize all user inputs and escape outputs."
+  },
+  Cookie_Consent: {
+    title: "Cookie Consent",
+    desc: "GDPR Cookie Consent.",
+    why: "Legal compliance.",
+    use: "Verifies if a cookie consent banner is present.",
+    impact: "Required by GDPR/CCPA. Non-compliance leads to fines.",
+    improvement: "Implement a compliant cookie consent manager."
+  },
+  Privacy_Policy: {
+    title: "Privacy Policy",
+    desc: "Privacy Policy check.",
+    why: "Builds user trust.",
+    use: "Checks for the existence of a privacy policy page.",
+    impact: "Legal requirement in most jurisdictions.",
+    improvement: "Create a clear Privacy Policy page and link it in the footer."
+  },
+  Forms_Use_HTTPS: {
+    title: "Secure Forms",
+    desc: "Secure form submission.",
+    why: "Protects user input.",
+    use: "Ensures login and contact forms submit data over HTTPS.",
+    impact: "Sending passwords over HTTP exposes them to attackers.",
+    improvement: "Update <form action=...> URLs to use https://."
+  },
+  GDPR_CCPA: {
+    title: "GDPR/CCPA",
+    desc: "Data protection compliance.",
+    why: "Avoids legal fines.",
+    use: "Checks for signs of data privacy regulation compliance.",
+    impact: "Protects user rights regarding their personal data.",
+    improvement: "Audit data collection and provide opt-out mechanisms."
+  },
+  Data_Collection: {
+    title: "Data Collection",
+    desc: "Data collection disclosure.",
+    why: "Transparency with users.",
+    use: "Identifies if the site collects sensitive data.",
+    impact: "Users demand transparency about what data is collected.",
+    improvement: "Clearly state data collection practices."
+  },
+  Weak_Default_Credentials: {
+    title: "Default Credentials",
+    desc: "Checks default passwords.",
+    why: "Prevents easy takeovers.",
+    use: "Checks for exposed default login paths or credentials.",
+    impact: "Easiest way for botnets to hijack a site.",
+    improvement: "Change default admin usernames and passwords."
+  },
+  MFA_Enabled: {
+    title: "MFA Status",
+    desc: "Multi-Factor Authentication.",
+    why: "Adds security layer.",
+    use: "Checks if MFA is enforced for sensitive areas.",
+    impact: "Prevents 99.9% of account compromise attacks.",
+    improvement: "Enable 2FA/MFA for all admin accounts."
+  },
+  Admin_Panel_Public: {
+    title: "Admin Exposure",
+    desc: "Exposed admin panel.",
+    why: "Reduces attack surface.",
+    use: "Checks if admin login pages are publicly accessible.",
+    impact: "Invites brute-force attacks.",
+    improvement: "Restrict admin access by IP or use a VPN."
+  },
+  Viewport_Meta_Tag: {
+    title: "Viewport Meta",
+    desc: "Mobile responsiveness.",
+    why: "Essential for UX.",
+    use: "Controls layout on mobile browsers.",
+    impact: "Without it, mobile users see a microscopic desktop version.",
+    improvement: "Add <meta name='viewport' content='width=device-width, initial-scale=1'>"
+  },
+  HTML_Doctype: {
+    title: "Doctype",
+    desc: "HTML Doctype declaration.",
+    why: "Ensures correct rendering.",
+    use: "Specifies the HTML version to the browser.",
+    impact: "Prevents 'Quirks Mode' which breaks layout consistency.",
+    improvement: "Start every HTML document with <!DOCTYPE html>."
+  },
+  Character_Encoding: {
+    title: "Charset",
+    desc: "UTF-8 encoding.",
+    why: "Prevents text issues.",
+    use: "Specifies how characters are represented.",
+    impact: "Incorrect encoding turns special characters into garbled text.",
+    improvement: "Use <meta charset='UTF-8'> in the <head>."
+  },
+  Browser_Console_Errors: {
+    title: "Console Errors",
+    desc: "Console errors.",
+    why: "Indicates broken code.",
+    use: "Checks for JavaScript errors in the browser console.",
+    impact: "Errors often mean broken functionality for the user.",
+    improvement: "Debug and fix JavaScript runtime errors."
+  },
+  Geolocation_Request: {
+    title: "Geolocation",
+    desc: "Geolocation permissions.",
+    why: "Respects user privacy.",
+    use: "Checks if the site requests location data immediately on load.",
+    impact: "Requesting location without context annoys users/leads to high denial rates.",
+    improvement: "Request location only after a user interaction."
+  },
+  Input_Paste_Allowed: {
+    title: "Paste Check",
+    desc: "Paste restrictions.",
+    why: "Bad UX and security.",
+    use: "Checks if pasting is blocked in password fields.",
+    impact: "Blocking paste forces manual entry, encouraging weak passwords and frustrating users.",
+    improvement: "Allow pasting in password fields (NIST recommendation)."
+  },
+  Notification_Request: {
+    title: "Notifications",
+    desc: "Notification permissions.",
+    why: "Avoids user annoyance.",
+    use: "Checks for push notification prompts on load.",
+    impact: "Immediate prompts lead to high block rates and bounce.",
+    improvement: "Ask for notification permission only when relevant."
+  },
+  Third_Party_Cookies: {
+    title: "3rd Party Cookies",
+    desc: "Third-party cookies.",
+    why: "Privacy concern.",
+    use: "Cookies set by domains other than the website itself.",
+    impact: "Track users across the web; increasingly blocked by browsers.",
+    improvement: "Reduce reliance on third-party tracking pixels."
+  },
+  Deprecated_APIs: {
+    title: "Deprecated APIs",
+    desc: "Deprecated APIs.",
+    why: "Avoids security holes.",
+    use: "Checks for usage of old, insecure browser features.",
+    impact: "Deprecated features may be removed, breaking the site.",
+    improvement: "Update code to use modern standard APIs."
+  },
 };
 
 // ------------------------------------------------------
@@ -150,7 +375,7 @@ const SecurityShimmer = ({ darkMode }) => (
 // ------------------------------------------------------
 // ✅ Metric Card (Security Style)
 // ------------------------------------------------------
-const MetricCard = ({ metricKey, data, darkMode }) => {
+const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
   const { score, details, meta } = data || {};
   const isPassed = score === 100;
   const isWarning = score === 50;
@@ -196,6 +421,18 @@ const MetricCard = ({ metricKey, data, darkMode }) => {
               </p>
             </div>
           </div>
+          {onInfo && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onInfo();
+              }}
+              className={`p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
+              title="Learn more"
+            >
+              <Info size={18} />
+            </button>
+          )}
         </div>
 
         {/* Dynamic Details */}
@@ -275,6 +512,7 @@ const Section = ({ title, icon: Icon, children, darkMode }) => (
 export default function Security_Compilance() {
   const { theme } = useContext(ThemeContext);
   const { data, loading } = useData();
+  const [selectedMetricInfo, setSelectedMetricInfo] = React.useState(null);
   const darkMode = theme === "dark";
 
   if (!data?.securityOrCompliance) {
@@ -358,21 +596,21 @@ export default function Security_Compilance() {
         {/* Section 1: Network & Encryption */}
         <Section title="Network & Encryption" icon={Lock} darkMode={darkMode}>
           {["HTTPS", "SSL", "SSL_Expiry", "HSTS", "TLS_Version"].map((key) => (
-            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} />
+            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={() => setSelectedMetricInfo({ ...educationalContent[key], icon: iconMap[key] || Shield })} />
           ))}
         </Section>
 
         {/* Section 2: Security Headers */}
         <Section title="Security Headers" icon={Shield} darkMode={darkMode}>
           {["X_Frame_Options", "CSP", "X_Content_Type_Options", "Cookies_Secure", "Cookies_HttpOnly"].map((key) => (
-            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} />
+            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={() => setSelectedMetricInfo({ ...educationalContent[key], icon: iconMap[key] || Shield })} />
           ))}
         </Section>
 
         {/* Section 3: Compliance & Privacy */}
         <Section title="Compliance & Privacy" icon={FileText} darkMode={darkMode}>
           {["Cookie_Consent", "Privacy_Policy", "GDPR_CCPA", "Data_Collection", "Forms_Use_HTTPS"].map((key) => (
-            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} />
+            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={() => setSelectedMetricInfo({ ...educationalContent[key], icon: iconMap[key] || Shield })} />
           ))}
         </Section>
 
@@ -384,11 +622,17 @@ export default function Security_Compilance() {
             "HTML_Doctype", "Character_Encoding", "Browser_Console_Errors", "Geolocation_Request",
             "Input_Paste_Allowed", "Notification_Request", "Third_Party_Cookies", "Deprecated_APIs",
           ].map((key) => (
-            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} />
+            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={() => setSelectedMetricInfo({ ...educationalContent[key], icon: iconMap[key] || Shield })} />
           ))}
         </Section>
 
       </main>
+      <MetricInfoModal
+        isOpen={!!selectedMetricInfo}
+        onClose={() => setSelectedMetricInfo(null)}
+        info={selectedMetricInfo}
+        darkMode={darkMode}
+      />
     </div>
   );
 }

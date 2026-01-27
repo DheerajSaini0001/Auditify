@@ -10,6 +10,7 @@ import {
   Link, Navigation, Layers, Code, ShieldCheck,
   Keyboard, Focus, Hash, Anchor, Map, Terminal, Loader2
 } from "lucide-react";
+import MetricInfoModal from "../Component/MetricInfoModal";
 
 // ------------------------------------------------------
 // ✅ Icon Mapping
@@ -33,18 +34,103 @@ const iconMap = {
 // ✅ Educational Content
 // ------------------------------------------------------
 const educationalContent = {
-  Color_Contrast: { desc: "Ensures sufficient color contrast.", why: "Essential for users with low vision." },
-  Focus_Order: { desc: "Checks logical focus order.", why: "Critical for keyboard navigation." },
-  Focusable_Content: { desc: "Verifies keyboard reachability.", why: "All interactive elements must be accessible." },
-  Tab_Index: { desc: "Validates tab index usage.", why: "Prevents navigation traps." },
-  Interactive_Element_Affordance: { desc: "Checks visual cues.", why: "Users must know what is clickable." },
-  Label: { desc: "Checks form labels.", why: "Screen readers need labels for inputs." },
-  Aria_Allowed_Attr: { desc: "Validates ARIA attributes.", why: "Prevents screen reader errors." },
-  Aria_Roles: { desc: "Verifies ARIA roles.", why: "Ensures correct element identification." },
-  Aria_Hidden_Focus: { desc: "Checks hidden focusable items.", why: "Prevents confusing navigation." },
-  Image_Alt: { desc: "Checks image alt text.", why: "Describes images to blind users." },
-  Skip_Links: { desc: "Verifies skip links.", why: "Allows bypassing repetitive content." },
-  Landmarks: { desc: "Checks landmark roles.", why: "Aids in page navigation." },
+  Color_Contrast: {
+    title: "Color Contrast",
+    desc: "Ensures sufficient color contrast.",
+    why: "Essential for users with low vision.",
+    use: "Measures the difference in brightness between text and its background.",
+    impact: "Text with low contrast (below 4.5:1) is unreadable for people with visual impairments or in bright sunlight.",
+    improvement: "Increase contrast by darkening text or lightening backgrounds to meet WCAG AA standards."
+  },
+  Focus_Order: {
+    title: "Focus Order",
+    desc: "Checks logical focus order.",
+    why: "Critical for keyboard navigation.",
+    use: "The sequence in which elements receive focus when tabbing through the page.",
+    impact: " illogical focus order confuses keyboard users, making the site difficult to navigate.",
+    improvement: "Ensure the DOM order matches the visual layout. Use tabindex='0' for focusable elements."
+  },
+  Focusable_Content: {
+    title: "Focusable Content",
+    desc: "Verifies keyboard reachability.",
+    why: "All interactive elements must be accessible.",
+    title: "Focusable Content",
+    use: "Ensures all interactive elements (buttons, links, inputs) can be reached via keyboard.",
+    impact: "If elements are not focusable, keyboard-only users cannot use them.",
+    improvement: "Avoid using <div> for buttons. Use <button> or add tabindex='0' and role='button'."
+  },
+  Tab_Index: {
+    title: "Tab Index",
+    desc: "Validates tab index usage.",
+    why: "Prevents navigation traps.",
+    use: "The tabindex attribute controls whether an element is focusable.",
+    impact: "Positive values (>0) break natural focus order. Values of -1 remove elements from tab flow.",
+    improvement: "Avoid positive tabindex. Use '0' for natural flow and '-1' for programmatically focused items."
+  },
+  Interactive_Element_Affordance: {
+    title: "Clickable Targets",
+    desc: "Checks visual cues.",
+    why: "Users must know what is clickable.",
+    use: "Visual indicators that an element is interactive (e.g., cursor pointer, hover styles).",
+    impact: "Without affordance, users may not realize they can interact with buttons or links.",
+    improvement: "Use 'cursor: pointer' CSS on clickable elements and ensure they look distinct."
+  },
+  Label: {
+    title: "Form Labels",
+    desc: "Checks form labels.",
+    why: "Screen readers need labels for inputs.",
+    use: "HTML labels associated with form input fields.",
+    impact: "Screen readers cannot identify what a form field is for without a label.",
+    improvement: "Use <label for='id'> or aria-label attributes for all inputs."
+  },
+  Aria_Allowed_Attr: {
+    title: "ARIA Attributes",
+    desc: "Validates ARIA attributes.",
+    why: "Prevents screen reader errors.",
+    use: "Checks if ARIA attributes used are valid for the element's role.",
+    impact: "Invalid ARIA breaks accessibility trees, causing screen readers to announce nonsense.",
+    improvement: "Follow ARIA specs. Don't use aria-label on <div> unless it has a role."
+  },
+  Aria_Roles: {
+    title: "ARIA Roles",
+    desc: "Verifies ARIA roles.",
+    why: "Ensures correct element identification.",
+    use: "Attributes that define what an element is (e.g., role='button').",
+    impact: "Incorrect roles mislead screen reader users about functionality.",
+    improvement: "Use semantic HTML (<button>) instead of roles where possible."
+  },
+  Aria_Hidden_Focus: {
+    title: "Hidden Focus",
+    desc: "Checks hidden focusable items.",
+    why: "Prevents confusing navigation.",
+    use: "Ensures elements hidden with aria-hidden='true' are not focusable.",
+    impact: "Focusing on a hidden element confuses users as they cannot see where they are.",
+    improvement: "Add tabindex='-1' to elements that are aria-hidden."
+  },
+  Image_Alt: {
+    title: "Alternative Text",
+    desc: "Checks image alt text.",
+    why: "Describes images to blind users.",
+    use: "Text alternatives for non-text content (images).",
+    impact: "Without alt text, blind users miss out on visual information.",
+    improvement: "Add alt='description' to meaningful images. Use empty alt='' for decoration."
+  },
+  Skip_Links: {
+    title: "Skip Links",
+    desc: "Verifies skip links.",
+    why: "Allows bypassing repetitive content.",
+    use: "Hidden links at the top of the page to jump to main content.",
+    impact: "Keyboard users avoid tabbing through 50 menu items on every page load.",
+    improvement: "Implement a 'Skip to Main Content' link as the first focusable element."
+  },
+  Landmarks: {
+    title: "Landmarks",
+    desc: "Checks landmark roles.",
+    why: "Aids in page navigation.",
+    use: "Semantic regions (main, nav, banner, complementary).",
+    impact: "Screen readers can jump between regions, improving navigation speed drastically.",
+    improvement: "Use <main>, <nav>, <header>, <footer> tags."
+  },
 };
 
 // ------------------------------------------------------
@@ -110,7 +196,7 @@ const AccessibilityShimmer = ({ darkMode }) => (
 // ------------------------------------------------------
 // ✅ Metric Card (Security Style)
 // ------------------------------------------------------
-const MetricCard = ({ metricKey, data, darkMode }) => {
+const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
   const { score, details, meta } = data || {};
   const isPassed = score === 100;
   const isWarning = score === 50;
@@ -156,6 +242,18 @@ const MetricCard = ({ metricKey, data, darkMode }) => {
               </p>
             </div>
           </div>
+          {onInfo && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onInfo();
+              }}
+              className={`p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
+              title="Learn more"
+            >
+              <Info size={18} />
+            </button>
+          )}
         </div>
 
         {/* Dynamic Details */}
@@ -235,6 +333,7 @@ const Section = ({ title, icon: Icon, children, darkMode }) => (
 export default function Accessibility() {
   const { theme } = useContext(ThemeContext);
   const { data, loading } = useData();
+  const [selectedMetricInfo, setSelectedMetricInfo] = React.useState(null);
   const darkMode = theme === "dark";
 
   if (!data?.accessibility) {
@@ -318,25 +417,31 @@ export default function Accessibility() {
         {/* Section 1: Visual Accessibility */}
         <Section title="Visual Accessibility" icon={Eye} darkMode={darkMode}>
           {["Color_Contrast", "Image_Alt"].map((key) => (
-            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} />
+            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={() => setSelectedMetricInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
           ))}
         </Section>
 
         {/* Section 2: Keyboard Navigation */}
         <Section title="Keyboard Navigation" icon={Keyboard} darkMode={darkMode}>
           {["Focusable_Content", "Focus_Order", "Tab_Index", "Skip_Links"].map((key) => (
-            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} />
+            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={() => setSelectedMetricInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
           ))}
         </Section>
 
         {/* Section 3: Semantic & ARIA Roles */}
         <Section title="Semantic & ARIA Roles" icon={Code} darkMode={darkMode}>
           {["Label", "Aria_Allowed_Attr", "Aria_Roles", "Aria_Hidden_Focus", "Landmarks", "Interactive_Element_Affordance"].map((key) => (
-            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} />
+            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={() => setSelectedMetricInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
           ))}
         </Section>
 
       </main>
+      <MetricInfoModal
+        isOpen={!!selectedMetricInfo}
+        onClose={() => setSelectedMetricInfo(null)}
+        info={selectedMetricInfo}
+        darkMode={darkMode}
+      />
     </div>
   );
 }

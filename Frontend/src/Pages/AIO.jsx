@@ -11,6 +11,7 @@ import {
   Users, Target, FlaskConical, MessageCircle,
   Brain, Cpu, Network, Loader2
 } from "lucide-react";
+import MetricInfoModal from "../Component/MetricInfoModal";
 
 // ------------------------------------------------------
 // ✅ Icon Mapping
@@ -38,22 +39,158 @@ const iconMap = {
 // ✅ Educational Content
 // ------------------------------------------------------
 const educationalContent = {
-  Structured_Data: { desc: "Checks for valid JSON-LD structured data.", why: "Helps AI understand context." },
-  Metadata_Complete: { desc: "Verifies essential meta tags.", why: "Ensures accurate AI summaries." },
-  Fast_Page_Load: { desc: "Measures page load speed.", why: "Crucial for AI crawling efficiency." },
-  API_Data_Access: { desc: "Checks for accessible API endpoints.", why: "Allows direct data consumption by AI." },
-  Dynamic_Content_Available: { desc: "Detects dynamic content.", why: "Enables personalized experiences." },
-  Multilingual_Support: { desc: "Checks for language tags.", why: "Supports global AI reach." },
-  Content_NLP_Friendly: { desc: "Evaluates semantic structure.", why: "Helps NLP models parse content." },
-  Keywords_Entities_Annotated: { desc: "Checks for keyword annotations.", why: "Identifies key topics for AI." },
-  Content_Updated_Regularly: { desc: "Monitors content freshness.", why: "Fresh content is prioritized." },
-  Internal_Linking_AI_Friendly: { desc: "Analyzes internal links.", why: "Maps site structure for AI." },
-  Duplicate_Content_Detection_Ready: { desc: "Checks for duplicate protection.", why: "Ensures correct indexing." },
-  Behavior_Tracking_Implemented: { desc: "Verifies behavior tracking.", why: "Feeds personalization models." },
-  Segmentation_Profiling_Ready: { desc: "Checks segmentation setup.", why: "Tailors AI responses." },
-  Event_Goal_Tracking_Integrated: { desc: "Validates goal tracking.", why: "Optimizes AI objectives." },
-  AB_Testing_Ready: { desc: "Checks for A/B testing.", why: "Supports automated experiments." },
-  User_Feedback_Loops_Present: { desc: "Detects feedback forms.", why: "Provides training data." },
+  Structured_Data: {
+    title: "Structured Data",
+    desc: "Checks for valid JSON-LD structured data.",
+    why: "Helps AI understand context.",
+    use: "Schema markup (JSON-LD) explicitly tells machines what the content means.",
+    impact: "Essential for Rich Snippets and AI training data.",
+    improvement: "Implement Schema.org types (Article, Product, FAQ)."
+  },
+  Metadata_Complete: {
+    title: "Meta Tags",
+    desc: "Verifies essential meta tags.",
+    why: "Ensures accurate AI summaries.",
+    use: "Checks for title, description, and social meta tags.",
+    impact: "AI summarizers rely on these tags to generate snippets.",
+    improvement: "Ensure every page has unique meta tags."
+  },
+  Fast_Page_Load: {
+    title: "Load Speed",
+    desc: "Measures page load speed.",
+    why: "Crucial for AI crawling efficiency.",
+    use: "Fast loading pages are easier and cheaper for AI bots to crawl.",
+    impact: "Slow sites get crawled less frequently by AI search engines.",
+    improvement: "Optimize LCP and reduce server response time."
+  },
+  API_Data_Access: {
+    title: "API Access",
+    desc: "Checks for accessible API endpoints.",
+    why: "Allows direct data consumption by AI.",
+    use: "Detects if content is accessible via JSON/XML APIs.",
+    impact: "AI agents prefer structured API data over scraping HTML.",
+    improvement: "Expose public content via a REST or GraphQL API."
+  },
+  Dynamic_Content_Available: {
+    title: "Dynamic Content",
+    desc: "Detects dynamic content.",
+    why: "Enables personalized experiences.",
+    use: "Checks if content changes based on user interaction.",
+    impact: "Static sites are harder to personalize for AI-driven user journeys.",
+    improvement: "Use client-side rendering or edge functions."
+  },
+  Multilingual_Support: {
+    title: "Multilingual",
+    desc: "Checks for language tags.",
+    why: "Supports global AI reach.",
+    use: "Verifies headers and HTML tags for language declaration.",
+    impact: "AI translation models fail without clear language signals.",
+    improvement: "Use 'lang' attribute and Hreflang tags."
+  },
+  Content_NLP_Friendly: {
+    title: "NLP Friendly",
+    desc: "Evaluates semantic structure.",
+    why: "Helps NLP models parse content.",
+    use: "Checks sentence structure and semantic HTML.",
+    impact: "Complex, unstructured text confuses Natural Language Processing models.",
+    improvement: "Use simple sentences and semantic tags (<article>, <section>)."
+  },
+  Keywords_Entities_Annotated: {
+    title: "Entity Annotation",
+    desc: "Checks for keyword annotations.",
+    why: "Identifies key topics for AI.",
+    use: "Checks if entities are tagged (e.g., using specific HTML attributes).",
+    impact: "Helps AI map relationships between concepts.",
+    improvement: "Use semantic HTML5 tags to highlight entities."
+  },
+  Content_Updated_Regularly: {
+    title: "Freshness",
+    desc: "Monitors content freshness.",
+    why: "Fresh content is prioritized.",
+    use: "Checks last-modified headers.",
+    impact: "AI models favor up-to-date information.",
+    improvement: "Update content regularly and send 'Last-Modified' headers."
+  },
+  Internal_Linking_AI_Friendly: {
+    title: "Internal Linking",
+    desc: "Analyzes internal links.",
+    why: "Maps site structure for AI.",
+    use: "Checks link depth and anchor text.",
+    impact: "AI crawlers follow links to discover relationships.",
+    improvement: "Use descriptive anchor text for internal links."
+  },
+  Duplicate_Content_Detection_Ready: {
+    title: "Duplicate Check",
+    desc: "Checks for duplicate protection.",
+    why: "Ensures correct indexing.",
+    use: "Verifies canonical tags.",
+    impact: "Duplicate content confuses AI about the authoritative source.",
+    improvement: "Use self-referencing canonical tags."
+  },
+  Behavior_Tracking_Implemented: {
+    title: "Behavior Tracking",
+    desc: "Verifies behavior tracking.",
+    why: "Feeds personalization models.",
+    use: "Checks for analytics scripts.",
+    impact: "Data on user behavior is fuel for AI personalization algorithms.",
+    improvement: "Implement event tracking (Google Analytics 4)."
+  },
+  Segmentation_Profiling_Ready: {
+    title: "Segmentation",
+    desc: "Checks segmentation setup.",
+    why: "Tailors AI responses.",
+    use: "Checks if users can be grouped by attributes.",
+    impact: "AI needs segments to deliver relevant recommendations.",
+    improvement: "Capture user attributes (role, interest)."
+  },
+  Event_Goal_Tracking_Integrated: {
+    title: "Goal Tracking",
+    desc: "Validates goal tracking.",
+    why: "Optimizes AI objectives.",
+    use: "Checks if conversion goals are defined.",
+    impact: "AI optimization needs clear success metrics.",
+    improvement: "Define clear conversion events."
+  },
+  AB_Testing_Ready: {
+    title: "A/B Testing",
+    desc: "Checks for A/B testing.",
+    why: "Supports automated experiments.",
+    use: "Detects testing frameworks.",
+    impact: "AI can auto-optimize pages if testing infrastructure exists.",
+    improvement: "Integrate a testing tool (VWO, Optimizely)."
+  },
+  User_Feedback_Loops_Present: {
+    title: "Feedback Loops",
+    desc: "Detects feedback forms.",
+    why: "Provides training data.",
+    use: "Checks for rating widgets or comment sections.",
+    impact: "User feedback reinforces AI learning (RLHF).",
+    improvement: "Add 'Was this helpful?' buttons."
+  },
+  Dynamic_Personalization: {
+    title: "Dynamic Personalization",
+    desc: "Checks personalization capabilities.",
+    why: "Tailors content to user context.",
+    use: "Verifies ability to change content dynamically.",
+    impact: "Increases engagement.",
+    improvement: "Use personalized content blocks."
+  },
+  AI_Content_Distribution: {
+    title: "AI Distribution",
+    desc: "Checks readiness for AI feeds.",
+    why: "Distributes content via AI channels.",
+    use: "Checks for RSS/Atom feeds.",
+    impact: "Feeds AI aggregators.",
+    improvement: "Enable RSS feeds."
+  },
+  AI_Friendly_Structure: {
+    title: "AI Friendly Structure",
+    desc: "Checks overall structure.",
+    why: "Easier for AI to parse.",
+    use: "Verifies logical hierarchy.",
+    impact: "Better understanding by AI models.",
+    improvement: "Use widely accepted patterns."
+  }
 };
 
 // ------------------------------------------------------
@@ -119,7 +256,7 @@ const AIOShimmer = ({ darkMode }) => (
 // ------------------------------------------------------
 // ✅ Metric Card (Security Style)
 // ------------------------------------------------------
-const MetricCard = ({ metricKey, data, darkMode }) => {
+const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
   const { score, details, meta } = data || {};
   const isPassed = score === 100;
 
@@ -150,6 +287,18 @@ const MetricCard = ({ metricKey, data, darkMode }) => {
               </p>
             </div>
           </div>
+          {onInfo && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onInfo();
+              }}
+              className={`p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
+              title="Learn more"
+            >
+              <Info size={18} />
+            </button>
+          )}
         </div>
 
         {/* Dynamic Details */}
@@ -229,6 +378,7 @@ const Section = ({ title, icon: Icon, children, darkMode }) => (
 export default function AIO() {
   const { theme } = useContext(ThemeContext);
   const { data, loading } = useData();
+  const [selectedMetricInfo, setSelectedMetricInfo] = React.useState(null);
   const darkMode = theme === "dark";
 
   if (loading || !data || data.status === "inprogress") {
@@ -311,29 +461,35 @@ export default function AIO() {
 
         <Section title="AI Data & Structure" icon={Database} darkMode={darkMode}>
           {["Structured_Data", "Metadata_Complete", "Fast_Page_Load", "API_Data_Access", "Dynamic_Content_Available"].map((key) => (
-            aio[key] && <MetricCard key={key} metricKey={key} data={aio[key]} darkMode={darkMode} />
+            aio[key] && <MetricCard key={key} metricKey={key} data={aio[key]} darkMode={darkMode} onInfo={() => setSelectedMetricInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
           ))}
         </Section>
 
         <Section title="AI Content Intelligence" icon={Brain} darkMode={darkMode}>
           {["Multilingual_Support", "Content_NLP_Friendly", "Keywords_Entities_Annotated", "Content_Updated_Regularly", "Internal_Linking_AI_Friendly"].map((key) => (
-            aio[key] && <MetricCard key={key} metricKey={key} data={aio[key]} darkMode={darkMode} />
+            aio[key] && <MetricCard key={key} metricKey={key} data={aio[key]} darkMode={darkMode} onInfo={() => setSelectedMetricInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
           ))}
         </Section>
 
         <Section title="AI Analytics & Automation" icon={Cpu} darkMode={darkMode}>
           {["Duplicate_Content_Detection_Ready", "Behavior_Tracking_Implemented", "Segmentation_Profiling_Ready", "Event_Goal_Tracking_Integrated", "AB_Testing_Ready"].map((key) => (
-            aio[key] && <MetricCard key={key} metricKey={key} data={aio[key]} darkMode={darkMode} />
+            aio[key] && <MetricCard key={key} metricKey={key} data={aio[key]} darkMode={darkMode} onInfo={() => setSelectedMetricInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
           ))}
         </Section>
 
         <Section title="AI Personalization & Feedback" icon={Network} darkMode={darkMode}>
           {["User_Feedback_Loops_Present", "Dynamic_Personalization", "AI_Content_Distribution", "AI_Friendly_Structure"].map((key) => (
-            aio[key] && <MetricCard key={key} metricKey={key} data={aio[key]} darkMode={darkMode} />
+            aio[key] && <MetricCard key={key} metricKey={key} data={aio[key]} darkMode={darkMode} onInfo={() => setSelectedMetricInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
           ))}
         </Section>
 
       </main>
+      <MetricInfoModal
+        isOpen={!!selectedMetricInfo}
+        onClose={() => setSelectedMetricInfo(null)}
+        info={selectedMetricInfo}
+        darkMode={darkMode}
+      />
     </div>
   );
 }

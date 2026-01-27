@@ -8,8 +8,9 @@ import {
   Layout, Type, Smartphone, MoveHorizontal, PanelTop, Menu,
   ChevronRight, Compass, Touchpad, BookOpen, Layers, Image as ImageIcon,
   XOctagon, MonitorPlay, MousePointer2, CheckCircle2, Loader2,
-  ExternalLink, CheckCircle, XCircle
+  ExternalLink, CheckCircle, XCircle, Info
 } from "lucide-react";
+import MetricInfoModal from "../Component/MetricInfoModal";
 
 // ------------------------------------------------------
 // ✅ Icon Mapping
@@ -31,6 +32,105 @@ const iconMap = {
   Click_Feedback: MousePointer2,
   Form_Validation: CheckCircle2,
   Loading_Feedback: Loader2
+};
+
+const uxEducationalContent = {
+  Viewport_Meta_Tag: {
+    title: "Viewport Meta Tag",
+    use: "Controls layout on mobile browsers to fit the screen width.",
+    impact: "Without it, mobile browsers verify render the site as a desktop page, forcing users to zoom in.",
+    improvement: "Add <meta name='viewport' content='width=device-width, initial-scale=1'>"
+  },
+  Horizontal_Scroll: {
+    title: "Horizontal Scroll",
+    use: "Checks if content overflows the screen width, causing awkward scrolling.",
+    impact: "Horizontal scrolling breaks the user flow and is often accidental on mobile.",
+    improvement: "Use CSS 'max-width: 100%' on images/containers and avoid fixed widths in pixels."
+  },
+  Sticky_Header_Height: {
+    title: "Sticky Header",
+    use: "Measures how much screen space the sticky header occupies.",
+    impact: "Large sticky headers reduce the visible area for content, annoying users on small screens.",
+    improvement: "Reduce header height on scroll or hide it when scrolling down."
+  },
+  Navigation_Depth: {
+    title: "Navigation Depth",
+    use: "Measures clicks required to reach deep pages.",
+    impact: "Deeply buried content (4+ clicks) is rarely visited and hurts SEO.",
+    improvement: "Flatten site structure and use mega-menus or related posts."
+  },
+  Breadcrumbs: {
+    title: "Breadcrumbs",
+    use: "Secondary navigation scheme showing user's location.",
+    impact: "Helps users understand hierarchy and navigate back easily.",
+    improvement: "Implement schema.org compliant breadcrumbs on nested pages."
+  },
+  Navigation_Discoverability: {
+    title: "Nav Discoverability",
+    use: "Checks if the navigation menu is easy to find and use.",
+    impact: "Hidden or complex menus frustrate users, increasing bounce rates.",
+    improvement: "Use standard locations (top/left) and clear labels (Menu/Hamburger)."
+  },
+  Tap_Target_Size: {
+    title: "Tap Targets",
+    use: "Checks if buttons and links are large enough to touch.",
+    impact: "Small targets cause 'fat finger' errors and frustration on mobile.",
+    improvement: "Ensure all touch targets are at least 48x48px with spacing."
+  },
+  Text_Readability: {
+    title: "Readability Score",
+    use: "Analyzes sentence length and word complexity (Flesch-Kincaid).",
+    impact: "Content that is too complex scares away casual readers.",
+    improvement: "Use shorter sentences, active voice, and simple words."
+  },
+  Text_Font_Size: {
+    title: "Font Legibility",
+    use: "Checks if text size is readable without zooming.",
+    impact: "Small text (<12px) strains eyes and is an accessibility failure.",
+    improvement: "Use a base font size of at least 16px for body text."
+  },
+  Cumulative_Layout_Shift: {
+    title: "Visual Stability (CLS)",
+    use: "Measures how much page content shifts while loading.",
+    impact: "Shifting content causes accidental clicks and annoyance.",
+    improvement: "Set explicit width/height on images and reserve space for ads."
+  },
+  Image_Stability: {
+    title: "Image Stability",
+    use: "Checks if images have defined dimensions.",
+    impact: "Images without dimensions cause layout shifts (CLS) as they load.",
+    improvement: "Always include width and height attributes or CSS aspect-ratio."
+  },
+  Intrusive_Interstitials: {
+    title: "Popups & Modals",
+    use: "Checks for popups that block content immediately.",
+    impact: "Google penalizes sites that block main content on mobile entry.",
+    improvement: "Use banners instead of full-screen popups, or delay them."
+  },
+  Above_The_Fold_Content: {
+    title: "Above the Fold",
+    use: "Checks if main content is visible immediately without scrolling.",
+    impact: "Users make split-second decisions to stay or leave based on this area.",
+    improvement: "Move hero headlines up and defer bulky elements."
+  },
+  Click_Feedback: {
+    title: "Interaction Feedback",
+    use: "Visual response when clicking/tapping elements.",
+    impact: "Lack of feedback makes the app feel frozen or unresponsive.",
+    improvement: "Add :active and :focus states (color change, ripple)."
+  },
+  Form_Validation: {
+    title: "Form Validation",
+    use: "Real-time feedback for user inputs.",
+    impact: "Prevents frustration by catching errors before submission.",
+    improvement: "Use HTML5 validation (required, type='email') and visual cues."
+  },
+  Loading_Feedback: {
+    title: "Loading States",
+    use: "Indicators like spinners or skeletons during waits.",
+    impact: "Reduces perceived waiting time and uncertainty.",
+    improvement: "Show a skeleton screen or spinner for any action over 300ms."
+  }
 };
 
 // ------------------------------------------------------
@@ -96,9 +196,9 @@ const UxShimmer = ({ darkMode }) => (
 // ------------------------------------------------------
 // ✅ Metric Card Component
 // ------------------------------------------------------
-const MetricCard = ({ title, description, score, meta, darkMode, icon: Icon, type, className }) => {
-  const isPassed = score === 100;
-  const isWarning = score === 50;
+const MetricCard = ({ title, description, score, status, meta, darkMode, icon: Icon, type, className, onInfo }) => {
+  const isPassed = status === 'pass' || score === 100;
+  const isWarning = status === 'warning' || score === 50;
 
   // Simple Colors
   const cardBg = darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200";
@@ -222,6 +322,18 @@ const MetricCard = ({ title, description, score, meta, darkMode, icon: Icon, typ
               </p>
             </div>
           </div>
+          {onInfo && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onInfo();
+              }}
+              className={`p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
+              title="Learn more"
+            >
+              <Info size={18} />
+            </button>
+          )}
         </div>
 
         {/* Dynamic Details */}
@@ -275,6 +387,7 @@ const Section = ({ title, icon: Icon, children, darkMode }) => (
 export default function UX_Content_Structure() {
   const { theme } = useContext(ThemeContext);
   const { data, loading } = useData();
+  const [selectedMetricInfo, setSelectedMetricInfo] = React.useState(null);
   const darkMode = theme === "dark";
 
   if (!data?.UXOrContentStructure) {
@@ -388,10 +501,12 @@ export default function UX_Content_Structure() {
                 title={key.replaceAll("_", " ")}
                 description={results[key]?.Details}
                 score={results[key]?.Score}
+                status={results[key]?.Status}
                 meta={results[key]?.Meta}
                 darkMode={darkMode}
                 icon={iconMap[key] || Layout}
                 className={spanMap[key]}
+                onInfo={() => setSelectedMetricInfo({ ...uxEducationalContent[key], icon: iconMap[key] || Layout })}
               />
             ))}
           </Section>
@@ -407,16 +522,24 @@ export default function UX_Content_Structure() {
                 title={key.replaceAll("_", " ")}
                 description={results[key]?.Details}
                 score={results[key]?.Score}
+                status={results[key]?.Status}
                 meta={results[key]?.Meta}
                 darkMode={darkMode}
                 icon={iconMap[key] || Layout}
                 className="md:col-span-2 lg:col-span-3"
+                onInfo={() => setSelectedMetricInfo({ ...uxEducationalContent[key], icon: iconMap[key] || Layout })}
               />
             ))}
           </Section>
         )}
 
       </main>
+      <MetricInfoModal
+        isOpen={!!selectedMetricInfo}
+        onClose={() => setSelectedMetricInfo(null)}
+        info={selectedMetricInfo}
+        darkMode={darkMode}
+      />
     </div>
   );
 }

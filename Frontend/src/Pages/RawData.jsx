@@ -15,16 +15,23 @@ const RawData = ({ data, darkMode }) => {
   const [copied, setCopied] = useState(false);
 
   // --- Theme Classes ---
+  // The outer container background (the page background)
   const containerBg = darkMode
-    ? "bg-gray-900 border-t border-gray-800"
-    : "bg-gray-50 border-t border-gray-200";
+    ? "bg-slate-950"
+    : "bg-slate-50";
 
-  const cardClass = darkMode
-    ? "bg-gray-800 border border-gray-700"
-    : "bg-white border border-gray-200 shadow-sm";
+  // The Master Card background
+  const masterCardClass = darkMode
+    ? "bg-slate-900 border-slate-800 shadow-black/20"
+    : "bg-white border-slate-200 shadow-slate-200/50";
 
-  const textPrimary = darkMode ? "text-white" : "text-gray-900";
-  const textSecondary = darkMode ? "text-gray-400" : "text-gray-600";
+  // Inner cards (PDF/JSON) need to be distinct from the Master Card
+  const innerCardClass = darkMode
+    ? "bg-slate-800/50 border border-slate-700"
+    : "bg-slate-50 border border-slate-100";
+
+  const textPrimary = darkMode ? "text-white" : "text-slate-900";
+  const textSecondary = darkMode ? "text-slate-400" : "text-slate-500";
 
   // --- Data Prep ---
   if (data?.status !== "completed") return null;
@@ -39,109 +46,137 @@ const RawData = ({ data, darkMode }) => {
   };
 
   return (
-    <div id="raw-data-section" className={`w-full py-16 ${containerBg}`}>
+    <div id="raw-data-section" className={`w-full pt-0 pb-8 ${containerBg}`}>
       <div className="max-w-7xl mx-auto px-4 md:px-8">
 
-        {/* Section Header */}
-        <div className="mb-10">
-          <h2 className={`text-2xl font-bold ${textPrimary}`}>Export & Data</h2>
-          <p className={`mt-2 text-sm ${textSecondary}`}>
-            Download the full audit report or inspect the raw data payload.
-          </p>
-        </div>
+        {/* ✅ Unified Master Card Wrapper */}
+        <div className={`rounded-3xl border overflow-hidden shadow-xl ${masterCardClass}`}>
+          <div className="p-8 md:p-12">
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-
-          {/* --- Card 1: PDF Export --- */}
-          <div className={`p-8 rounded-xl flex flex-col justify-between h-full ${cardClass}`}>
-            <div>
-              <div className="flex items-center gap-4 mb-6">
-                <div className={`p-3 rounded-lg ${darkMode ? "bg-blue-900/30 text-blue-400" : "bg-blue-50 text-blue-600"}`}>
-                  <FileText className="w-6 h-6" />
-                </div>
-                <h3 className={`text-lg font-semibold ${textPrimary}`}>PDF Report</h3>
+            {/* Section Header */}
+            <div className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-4">
+              <div>
+                <h2 className={`text-3xl font-bold tracking-tight mb-3 ${textPrimary}`}>Export & Data Payload</h2>
+                <p className={`text-base ${textSecondary} max-w-2xl`}>
+                  Download the comprehensive audit report or inspect the unfiltered JSON data returned by the analysis engine.
+                </p>
               </div>
-
-              <p className={`text-sm leading-relaxed mb-8 ${textSecondary}`}>
-                Generate a comprehensive PDF document including detailed scores, actionable insights, and visuals. Ideal for client presentations or archiving.
-              </p>
             </div>
 
-            <button
-              onClick={() => generatePDF(data)}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900"
-            >
-              <Download className="w-4 h-4" />
-              Download PDF
-            </button>
-          </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
 
+              {/* --- Card 1: PDF Export (Inner Card) --- */}
+              <div className={`p-8 rounded-2xl flex flex-col transition-all duration-300 hover:-translate-y-1 ${innerCardClass}`}>
+                <div>
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className={`p-3.5 rounded-xl shadow-inner ${darkMode ? "bg-blue-500/10 text-blue-400" : "bg-blue-100 text-blue-600"}`}>
+                      <FileText className="w-8 h-8" strokeWidth={1.5} />
+                    </div>
+                    <div>
+                      <h3 className={`text-xl font-bold ${textPrimary}`}>PDF Report</h3>
+                      <span className={`text-xs font-semibold uppercase tracking-wider ${darkMode ? "text-blue-400" : "text-blue-600"}`}>Document</span>
+                    </div>
+                  </div>
 
-          {/* --- Card 2: JSON Inspector --- */}
-          <div className={`p-8 rounded-xl flex flex-col justify-between h-full ${cardClass}`}>
-            <div>
-              <div className="flex items-center gap-4 mb-6">
-                <div className={`p-3 rounded-lg ${darkMode ? "bg-purple-900/30 text-purple-400" : "bg-purple-50 text-purple-600"}`}>
-                  <Database className="w-6 h-6" />
+                  <p className={`text-sm leading-relaxed mb-10 ${textSecondary}`}>
+                    Generate a professional-grade PDF document featuring detailed scores, visual snapshots, and prioritized actionable insights. Ideal for stakeholder presentations.
+                  </p>
                 </div>
-                <h3 className={`text-lg font-semibold ${textPrimary}`}>Raw Data</h3>
-              </div>
 
-              <p className={`text-sm leading-relaxed mb-8 ${textSecondary}`}>
-                Access the complete JSON dataset returned by the analysis engine. Useful for developers who need to validate values or integrate with other systems.
-              </p>
-            </div>
-
-            <button
-              onClick={() => setShowRaw(!showRaw)}
-              className={`w-full flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-medium border transition-colors ${darkMode
-                  ? "border-gray-600 text-gray-300 hover:bg-gray-700"
-                  : "border-gray-300 text-gray-700 hover:bg-gray-50"
-                }`}
-            >
-              <Code className="w-4 h-4" />
-              {showRaw ? "Close Viewer" : "View JSON Payload"}
-            </button>
-          </div>
-
-        </div>
-
-        {/* --- Collapsible JSON Viewer --- */}
-        <AnimatePresence>
-          {showRaw && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="overflow-hidden"
-            >
-              <div className={`mt-4 rounded-xl border overflow-hidden ${darkMode ? "bg-gray-950 border-gray-800" : "bg-white border-gray-200"}`}>
-                <div className={`flex items-center justify-between px-4 py-3 border-b ${darkMode ? "bg-gray-900 border-gray-800" : "bg-gray-50 border-gray-200"}`}>
-                  <span className={`text-xs font-mono font-medium ${textSecondary}`}>
-                    payload.json
-                  </span>
+                <div className="mt-auto pt-8">
                   <button
-                    onClick={handleCopy}
-                    className={`flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded transition-colors ${copied
-                        ? "text-green-600 bg-green-50"
-                        : darkMode ? "text-gray-400 hover:text-white hover:bg-gray-800" : "text-gray-600 hover:text-black hover:bg-gray-200"
-                      }`}
+                    onClick={() => generatePDF(data)}
+                    className="group w-full flex items-center justify-center gap-3 py-4 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/20 transition-all hover:shadow-blue-600/30 active:scale-[0.98]"
                   >
-                    {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                    {copied ? "Copied" : "Copy"}
+                    <Download className="w-5 h-5 transition-transform group-hover:-translate-y-1" />
+                    <span>Download Comprehensive PDF</span>
                   </button>
                 </div>
-                <div className="p-4 overflow-auto max-h-[500px] custom-scrollbar">
-                  <pre className={`text-xs font-mono leading-relaxed ${darkMode ? "text-blue-300" : "text-blue-800"}`}>
-                    {jsonString}
-                  </pre>
+              </div>
+
+
+              {/* --- Card 2: JSON Inspector (Inner Card) --- */}
+              <div className={`p-8 rounded-2xl flex flex-col transition-all duration-300 hover:-translate-y-1 ${innerCardClass}`}>
+                <div>
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className={`p-3.5 rounded-xl shadow-inner ${darkMode ? "bg-purple-500/10 text-purple-400" : "bg-purple-100 text-purple-600"}`}>
+                      <Database className="w-8 h-8" strokeWidth={1.5} />
+                    </div>
+                    <div>
+                      <h3 className={`text-xl font-bold ${textPrimary}`}>Raw JSON Data</h3>
+                      <span className={`text-xs font-semibold uppercase tracking-wider ${darkMode ? "text-purple-400" : "text-purple-600"}`}>Developer API</span>
+                    </div>
+                  </div>
+
+                  <p className={`text-sm leading-relaxed mb-10 ${textSecondary}`}>
+                    Direct access to the raw JSON object associated with this audit. Use this for debugging, custom integrations, or validating specific metric values manually.
+                  </p>
+                </div>
+
+                <div className="mt-auto pt-8">
+                  <button
+                    onClick={() => setShowRaw(!showRaw)}
+                    className={`w-full flex items-center justify-center gap-2 py-4 rounded-xl text-sm font-bold border transition-all active:scale-[0.98] ${darkMode
+                      ? "border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white"
+                      : "border-slate-300 text-slate-700 hover:bg-white hover:border-slate-400 hover:text-black shadow-sm"
+                      }`}
+                  >
+                    <Code className="w-5 h-5" />
+                    {showRaw ? "Collapse Data Viewer" : "Inspect JSON Payload"}
+                  </button>
                 </div>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
+            </div>
+
+            {/* --- Collapsible JSON Viewer (Code Editor Style) --- */}
+            <AnimatePresence>
+              {showRaw && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0, y: 20 }}
+                  animate={{ height: "auto", opacity: 1, y: 0 }}
+                  exit={{ height: 0, opacity: 0, y: 20 }}
+                  transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }} // smooth easeOutQuint
+                  className="overflow-hidden mt-12"
+                >
+                  <div className={`rounded-2xl border overflow-hidden shadow-2xl ${darkMode ? "bg-[#0f172a] border-slate-800" : "bg-white border-slate-200"}`}>
+
+                    {/* Editor Toolbar */}
+                    <div className={`flex items-center justify-between px-6 py-4 border-b ${darkMode ? "bg-slate-900 border-slate-800" : "bg-slate-50 border-slate-200"}`}>
+                      <div className="flex items-center gap-2">
+                        {/* Mac-like dots */}
+                        <div className="flex gap-1.5 mr-4">
+                          <div className="w-3 h-3 rounded-full bg-red-400/80"></div>
+                          <div className="w-3 h-3 rounded-full bg-amber-400/80"></div>
+                          <div className="w-3 h-3 rounded-full bg-green-400/80"></div>
+                        </div>
+                        <span className={`text-xs font-mono font-medium opacity-70 ${textSecondary}`}>
+                          audit_payload_{data._id || "temp"}.json
+                        </span>
+                      </div>
+                      <button
+                        onClick={handleCopy}
+                        className={`flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-lg transition-all ${copied
+                          ? "text-emerald-600 bg-emerald-50 border border-emerald-100"
+                          : darkMode ? "text-slate-400 hover:text-white hover:bg-slate-800 border border-transparent hover:border-slate-700" : "text-slate-600 hover:text-black hover:bg-white border border-transparent hover:border-slate-200 hover:shadow-sm"
+                          }`}
+                      >
+                        {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                        {copied ? "COPIED" : "COPY RAW"}
+                      </button>
+                    </div>
+
+                    {/* Code Area */}
+                    <div className={`p-6 overflow-auto max-h-[600px] custom-scrollbar text-sm font-mono leading-relaxed ${darkMode ? "text-blue-300 bg-[#0B1120]" : "text-indigo-700 bg-slate-50"}`}>
+                      <pre>{jsonString}</pre>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+          </div>
+        </div>
       </div>
     </div>
   );

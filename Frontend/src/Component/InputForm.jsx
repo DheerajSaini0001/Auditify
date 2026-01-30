@@ -162,7 +162,7 @@ export default function InputForm() {
                 onChange={(e) => setInputValue(e.target.value)}
                 disabled={loading}
                 placeholder="Enter website URL (e.g. example.com)"
-                className={`w-full h-full bg-transparent border-none outline-none text-lg px-4 font-medium placeholder-slate-500 ${darkMode ? "text-white" : "text-slate-900"}`}
+                className={`w-full h-full bg-transparent border-none outline-none text-lg px-4 font-medium placeholder-slate-500 placeholder:text-base ${darkMode ? "text-white" : "text-slate-900"}`}
               />
             </div>
 

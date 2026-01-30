@@ -105,21 +105,17 @@ export default function Sidebar({ darkMode }) {
       </aside>
 
       {/* Footer / Actions */}
-      <div className={`p-4 border-t ${darkMode ? "border-slate-800" : "border-slate-200"}`}>
+      <div className={`p-3 border-t ${darkMode ? "border-slate-800 bg-[#0B1120]" : "border-slate-200 bg-white"}`}>
         {data?.sectionScore ? (
-          <button
-            onClick={() => generatePDF(data)}
-            className={`
-                flex items-center justify-center gap-2 w-full p-3 rounded-xl font-semibold transition-all shadow-sm
-                ${darkMode
-                ? "bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 hover:border-slate-600"
-                : "bg-slate-100 hover:bg-slate-200 text-slate-900 border border-slate-200 hover:border-slate-300"
-              }
-            `}
-          >
-            <FileText className="w-4 h-4" />
-            <span>Download PDF</span>
-          </button>
+          <>
+            <button
+              onClick={() => generatePDF(data)}
+              className="group w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-500 shadow-md shadow-blue-600/20 transition-all hover:shadow-blue-600/30 active:scale-[0.98]"
+            >
+              <FileText className="w-4 h-4" />
+              <span>Download Report</span>
+            </button>
+          </>
         ) : (
           <div className={`text-xs text-center p-2 opacity-40 ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
             Waiting for analysis...

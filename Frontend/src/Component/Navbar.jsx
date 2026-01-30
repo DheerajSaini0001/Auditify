@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
 import { ThemeContext } from "../context/ThemeContext.jsx";
-import { Menu, X, Sun, Moon, Home } from "lucide-react";
+import { Menu, X, Sun, Moon, Home, NotebookPen, Plus } from "lucide-react";
 import Assets from "../assets/Assets.js";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useData } from "../context/DataContext.jsx";
@@ -29,7 +29,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
 
   return (
     <nav className={`sticky top-0 z-50 transition-all duration-300 ${navbarClass}`}>
-      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
 
           {/* Left Section: Mobile Menu & Logo */}
@@ -74,15 +74,30 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
           {/* Right Section: Actions */}
           <div className="flex items-center gap-3">
 
-            {/* Home Button - Hidden on Home Page */}
+            {/* New Audit or Back to Bulk - Hidden on Home Page */}
+            {/* New Audit or Back to Bulk - Hidden on Home Page */}
             {location.pathname !== "/" && (
-              <button
-                onClick={handleGoHome}
-                className={`hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 border border-transparent ${buttonClass}`}
-              >
-                <Home className="w-4 h-4" />
-                Home
-              </button>
+              data?.fromBulkAudit ? (
+                <button
+                  onClick={() => navigate("/bulk-audit")}
+                  className={`hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-white shadow-lg transition-all 
+                  bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-400 hover:to-indigo-400 hover:scale-[1.02] active:scale-[0.98]
+                  shadow-blue-500/20`}
+                >
+                  <NotebookPen className="w-4 h-4" />
+                  <span>Back to List</span>
+                </button>
+              ) : (
+                <button
+                  onClick={handleGoHome}
+                  className={`hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-white shadow-lg transition-all 
+                  bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 hover:scale-[1.02] active:scale-[0.98]
+                  shadow-emerald-500/20`}
+                >
+                  <Plus className="w-5 h-5" />
+                  <span>Start New Audit</span>
+                </button>
+              )
             )}
 
             {/* Theme Toggle */}

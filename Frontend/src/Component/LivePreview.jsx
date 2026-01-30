@@ -2,7 +2,7 @@ import React, { useContext } from "react";
 import { ThemeContext } from "../context/ThemeContext";
 import { Monitor, Smartphone, ScanLine, Laptop, Wifi } from "lucide-react";
 
-const LivePreview = ({ data, showInFullAudit = true }) => {
+const LivePreview = ({ data, showInFullAudit = true, variant = "card" }) => {
     const { theme } = useContext(ThemeContext);
     const darkMode = theme === "dark";
 
@@ -14,98 +14,116 @@ const LivePreview = ({ data, showInFullAudit = true }) => {
     if (isFullAudit && !showInFullAudit) return null;
 
     // Show if we have a screenshot OR if the audit is in progress (waiting for screenshot)
-    if (!screenshotSrc && data?.status !== "inprogress") return null;
+    // REMOVED: if (!screenshotSrc && data?.status !== "inprogress") return null;
+    // We now always render the placeholder if no screenshot is present.
 
     const isMobile = data.device === "Mobile";
     const statusText = data?.status === "inprogress" ? "Running Visual Scan..." : "Live Preview Ready";
     const isScanning = data?.status === "inprogress";
 
+    // Variant "card" now implies the inner styling, but we remove the outer border/shadow 
+    // because the parent Dashboard container already handles the main "box".
+    // We just want a clean layout inside.
+    const containerClasses = "w-full h-full flex flex-col justify-between";
+
     return (
-        <div className={`w-full relative group overflow-hidden rounded-3xl transition-all duration-500 hover:shadow-2xl border ${darkMode
-            ? "bg-gradient-to-br from-gray-900 via-[#0B1120] to-gray-900 border-gray-800 shadow-[0_8px_30px_rgb(0,0,0,0.12)]"
-            : "bg-white border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)]"
-            }`}>
+        <div className={containerClasses}>
 
-            {/* Background Texture/Glow (Subtle) */}
-            <div className={`absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none ${darkMode ? "opacity-30" : "opacity-50"}`}></div>
-
-            {/* Header / Status Bar */}
-            <div className="relative px-4 sm:px-6 py-4 sm:py-5 flex items-center justify-between z-10">
-                <div className="flex items-center gap-3 sm:gap-4">
-                    {/* Device Icon Badge */}
-                    <div className={`relative p-2 sm:p-2.5 rounded-2xl shadow-sm transition-transform group-hover:scale-105 duration-300 ${darkMode
-                        ? "bg-gray-800/80 ring-1 ring-white/10 text-indigo-400"
-                        : "bg-white ring-1 ring-gray-200 text-indigo-600"
-                        }`}>
-                        {isMobile ? <Smartphone className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={2.5} /> : <Laptop className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={2.5} />}
-                        {isScanning && (
-                            <span className="absolute top-0 right-0 -mt-0.5 -mr-0.5 flex h-2.5 w-2.5">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-500"></span>
-                            </span>
-                        )}
+            {/* Header Section matching the reference */}
+            <div className="flex items-center justify-between gap-4 mb-4 px-2">
+                <div className="flex items-center gap-4">
+                    {/* Icon Box */}
+                    <div className={`p-3 rounded-2xl shadow-sm border ${darkMode ? "bg-slate-800 border-slate-700 text-indigo-400" : "bg-white border-slate-100 text-indigo-600"}`}>
+                        {isMobile ? <Smartphone className="w-6 h-6" strokeWidth={2} /> : <Monitor className="w-6 h-6" strokeWidth={2} />}
                     </div>
 
-                    {/* Title & Status */}
-                    <div className="space-y-0.5">
-                        <h2 className={`text-xs sm:text-sm font-bold uppercase tracking-wide ${darkMode ? "text-gray-200" : "text-gray-800"}`}>
+                    {/* Text Info */}
+                    <div>
+                        <h3 className={`text-xs font-bold uppercase tracking-widest mb-1 ${darkMode ? "text-slate-200" : "text-slate-800"}`}>
                             {isMobile ? "Mobile Viewport" : "Desktop Viewport"}
-                        </h2>
+                        </h3>
                         <div className="flex items-center gap-2">
-                            <span className={`inline-block w-1.5 h-1.5 rounded-full ${isScanning ? "bg-amber-500 animate-pulse" : "bg-emerald-500"}`} />
-                            <span className={`text-[10px] sm:text-xs font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${isScanning ? "bg-amber-500 animate-pulse" : "bg-emerald-500"}`}></span>
+                            <span className={`text-xs font-medium ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
                                 {statusText}
                             </span>
                         </div>
                     </div>
                 </div>
+
+                {/* Relocated Pill Style Badge (Above the SS, Right Aligned) */}
+                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border backdrop-blur-sm ${darkMode ? "bg-slate-800/40 border-slate-700 text-slate-400" : "bg-white/80 border-slate-200 text-slate-600 shadow-sm"}`}>
+                    <div className="flex items-center gap-2">
+                        {isMobile ? <Smartphone className="w-3 h-3" /> : <Monitor className="w-3 h-3" />}
+                    </div>
+                    <div className={`w-px h-3 ${darkMode ? "bg-slate-700" : "bg-slate-300"}`}></div>
+                    <span className="text-[10px] font-mono font-medium opacity-80">{isMobile ? "375 x 812" : "1280 x 800"}</span>
+                </div>
             </div>
 
-            {/* Viewport Container */}
-            <div className={`relative w-full flex justify-center items-center p-4 sm:p-6 pt-0 transition-opacity duration-500 ${isScanning ? "opacity-90" : "opacity-100"}`}>
 
-                {/* Simple Output Container (Scrollable Window) */}
+            {/* Main Viewport Window */}
+            <div className="flex-1 flex items-center justify-center w-full relative">
                 <div className={`
-                    relative transition-all duration-500 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent
-                    ${isMobile ? "w-full max-w-[180px] rounded-2xl shadow-lg ring-4" : "w-full max-w-[500px] rounded-xl shadow-md ring-1"}
-                    ${darkMode
-                        ? (isMobile ? "bg-gray-900 ring-gray-800 scrollbar-thumb-gray-600" : "bg-gray-900 ring-white/10 scrollbar-thumb-gray-600")
-                        : (isMobile ? "bg-white ring-gray-100" : "bg-gray-50 ring-black/5")
+                    relative overflow-hidden transition-all duration-500 shadow-xl
+                    ${isMobile
+                        ? "w-[220px] aspect-[9/19] rounded-[2rem] border-4"
+                        : "w-full aspect-[16/10] rounded-xl border"
                     }
-                `}
-                    style={{ aspectRatio: isMobile ? '9/19' : '16/10' }} // Enforce viewport window shape
-                >
-                    <div className="relative w-full min-h-full">
-                        {/* Scanning Scanline Effect - Now GREEN */}
-                        {isScanning && (
+                    ${darkMode
+                        ? "bg-slate-900 border-slate-700"
+                        : "bg-white border-slate-100" // White bg for the window itself
+                    }
+                `}>
+                    {/* Inner Content - Forced Light Background for Canvas */}
+                    <div className="w-full h-full overflow-hidden relative bg-slate-50">
+                        {/* Scanning Overlay - Global (Visible over screenshot too if scanning) */}
+                        {(isScanning && screenshotSrc) && (
                             <div className="absolute inset-0 z-30 pointer-events-none">
-                                <div className="w-full h-full bg-emerald-500/10 absolute top-0 left-0"></div>
-                                <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-transparent via-emerald-400 to-transparent shadow-[0_0_15px_rgba(16,185,129,0.8)] animate-[scan-x_2s_linear_infinite]"></div>
+                                {/* Green Tint */}
+                                <div className="absolute inset-0 bg-emerald-500/5"></div>
                                 {/* Grid Overlay */}
-                                <div className="w-full h-full bg-[linear-gradient(rgba(0,0,0,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.1)_1px,transparent_1px)] bg-[size:20px_20px] opacity-20"></div>
+                                <div className="w-full h-full bg-[linear-gradient(rgba(16,185,129,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(16,185,129,0.1)_1px,transparent_1px)] bg-[size:20px_20px] opacity-20"></div>
+
+                                {/* Scanning Line */}
+                                <div className="absolute top-0 left-0 w-[3px] h-full bg-gradient-to-b from-transparent via-emerald-500 to-transparent shadow-[0_0_20px_rgba(16,185,129,0.6)] animate-[scan-x_2s_linear_infinite]"></div>
                             </div>
                         )}
 
                         {screenshotSrc ? (
-                            <img
-                                src={screenshotSrc}
-                                alt="Audit Preview"
-                                className={`w-full h-auto object-top block`}
-                            />
+                            <div className="w-full h-full overflow-y-auto scrollbar-hide bg-white">
+                                <img
+                                    src={screenshotSrc}
+                                    alt="Audit Preview"
+                                    className="w-full min-h-full object-top object-cover"
+                                />
+                            </div>
                         ) : (
-                            /* Loading Placeholder State */
-                            <div className={`absolute inset-0 flex flex-col items-center justify-center text-center space-y-3 py-16 px-4 ${darkMode ? "bg-gray-800" : "bg-gray-50"}`}>
-                                <div className="relative">
+                            /* Reverted to Clean Centered State (Green Theme) */
+                            <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 overflow-hidden">
+
+                                {/* Scanning Overlay - Inside Placeholder */}
+                                    <div className="absolute inset-0 z-0 pointer-events-none">
+                                        {/* Green Tint */}
+                                        <div className="absolute inset-0 bg-emerald-500/5"></div>
+                                        {/* Grid Overlay */}
+                                        <div className="w-full h-full bg-[linear-gradient(rgba(16,185,129,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(16,185,129,0.1)_1px,transparent_1px)] bg-[size:20px_20px] opacity-20"></div>
+
+                                        {/* Scanning Line */}
+                                        <div className="absolute top-0 left-0 w-[3px] h-full bg-gradient-to-b from-transparent via-emerald-500 to-transparent shadow-[0_0_20px_rgba(16,185,129,0.6)] animate-[scan-x_2s_linear_infinite]"></div>
+                                    </div>
+
+                                <div className="relative z-10 mb-3">
                                     <div className="absolute inset-0 bg-emerald-500 blur-xl opacity-20 animate-pulse"></div>
-                                    <div className={`relative p-3 rounded-xl border ${darkMode ? "bg-gray-900 border-gray-700 text-emerald-400" : "bg-white border-gray-200 text-emerald-600"}`}>
-                                        <ScanLine className="w-6 h-6 animate-pulse" />
+                                    <div className={`relative p-3 rounded-full border shadow-sm ${darkMode ? "bg-slate-800 border-slate-700 text-emerald-400" : "bg-white border-emerald-100 text-emerald-600"}`}>
+                                        <ScanLine className="w-6 h-6 animate-pulse" strokeWidth={1.5} />
                                     </div>
                                 </div>
-                                <div>
-                                    <h3 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
+                                <div className="space-y-0.5 relative z-10">
+                                    <h3 className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-slate-300" : "text-slate-700"}`}>
                                         Rendering
                                     </h3>
-                                    <p className={`text-[10px] ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+                                    <p className={`text-[10px] ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
                                         Capturing visuals...
                                     </p>
                                 </div>
@@ -115,11 +133,6 @@ const LivePreview = ({ data, showInFullAudit = true }) => {
                 </div>
             </div>
 
-            {/* Footer / Info Bar */}
-            <div className={`px-4 sm:px-6 py-3 text-[10px] font-medium border-t flex justify-between items-center opacity-80 ${darkMode ? "border-gray-800 bg-gray-900/30 text-gray-500" : "border-gray-100 bg-gray-50 text-gray-400"}`}>
-                <span>Mode: {isMobile ? "Portrait" : "Landscape"}</span>
-                <span className="font-mono opacity-70">{isMobile ? "375x812" : "1280x800"}</span>
-            </div>
 
         </div>
     );

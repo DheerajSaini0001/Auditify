@@ -92,7 +92,7 @@ const ReportLayout = () => {
           SCENARIO 1: DASHBOARD VIEW ("All")
       ================================================== */}
       {data && data.report === "All" && (
-        <div className="flex flex-col w-full space-y-6 sm:space-y-8">
+        <div className="flex flex-col w-full space-y-0">
           <section id="dashboard" className="scroll-mt-24">
             <Dashboard2 darkMode={darkMode} />
           </section>

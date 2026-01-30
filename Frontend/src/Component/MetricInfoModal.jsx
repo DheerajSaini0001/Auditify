@@ -1,5 +1,5 @@
 import React from 'react';
-import { Activity, Zap, CheckCircle, XCircle, FileText, ChevronRight } from 'lucide-react';
+import { Activity, Zap, CheckCircle, XCircle, FileText, ChevronRight, AlertTriangle } from 'lucide-react';
 
 // ------------------------------------------------------
 // ✅ Reusable Section Card (Clean & Minimal)
@@ -25,6 +25,29 @@ const MetricInfoModal = ({ isOpen, onClose, info, darkMode }) => {
     if (!isOpen || !info) return null;
 
     const Icon = info.icon || Activity;
+    const metricData = info.metricData;
+
+    // Extract thresholds and analysis from backend
+    const thresholds = metricData?.thresholds;
+    const analysis = metricData?.analysis;
+
+    // Get active data (lab or field based on sourceOfTruth or default to lab)
+    const sourceOfTruth = analysis?.sourceOfTruth || "lab";
+    const activeData = metricData?.[sourceOfTruth] || metricData?.lab || {};
+
+    // Determine status color from activeData
+    let statusColor = "text-red-600 bg-red-50 border-red-100";
+    let statusText = "Poor";
+
+    if (activeData?.status === "good") {
+        statusColor = darkMode ? "text-green-400 bg-green-900/20 border-green-800/30" : "text-green-600 bg-green-50 border-green-100";
+        statusText = "Good";
+    } else if (activeData?.status === "needs_improvement") {
+        statusColor = darkMode ? "text-yellow-400 bg-yellow-900/20 border-yellow-800/30" : "text-yellow-600 bg-yellow-50 border-yellow-100";
+        statusText = "Needs Improvement";
+    } else if (darkMode) {
+        statusColor = "text-red-400 bg-red-900/20 border-red-800/30";
+    }
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6" style={{ zIndex: 9999 }}>
@@ -36,14 +59,14 @@ const MetricInfoModal = ({ isOpen, onClose, info, darkMode }) => {
 
             {/* Modal Card */}
             <div
-                className={`flex flex-col relative w-full max-w-2xl max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden transform transition-all ${darkMode ? "bg-gray-900 ring-1 ring-gray-800" : "bg-white"} animate-in zoom-in-95 duration-200`}
+                className={`flex flex-col relative w-full max-w-3xl max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden transform transition-all ${darkMode ? "bg-gray-900 ring-1 ring-gray-800" : "bg-white"} animate-in zoom-in-95 duration-200`}
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Decorative Top Bar */}
                 <div className={`h-1 w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 flex-shrink-0`} />
 
                 {/* Header - Sticky */}
-                <div className={`px-6 md:px-8 pt-6 pb-2 flex items-start justify-between flex-shrink-0 bg-inherit z-10`}>
+                <div className={`px-6 md:px-8 pt-6 pb-4 flex items-start justify-between flex-shrink-0 bg-inherit z-10`}>
                     <div className="flex items-center gap-5">
                         <div className={`p-3 rounded-2xl shadow-sm ${darkMode ? "bg-gray-800 text-blue-400" : "bg-white border border-gray-100 text-blue-600"}`}>
                             <Icon size={32} strokeWidth={1.5} />
@@ -52,10 +75,26 @@ const MetricInfoModal = ({ isOpen, onClose, info, darkMode }) => {
                             <h3 className={`text-2xl font-bold tracking-tight ${darkMode ? "text-white" : "text-gray-900"}`}>
                                 {info.title}
                             </h3>
-                            <div className="flex items-center gap-2">
-                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${darkMode ? "bg-blue-500/10 text-blue-300" : "bg-blue-50 text-blue-700"}`}>
-                                    Metric Insights
-                                </span>
+                            <div className="flex items-center gap-2 flex-wrap">
+                                {info.metricType ? (
+                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${info.metricType.includes("Core Web Vital")
+                                        ? darkMode ? "bg-green-500/10 text-green-300" : "bg-green-50 text-green-700"
+                                        : info.metricType.includes("Legacy")
+                                            ? darkMode ? "bg-orange-500/10 text-orange-300" : "bg-orange-50 text-orange-700"
+                                            : darkMode ? "bg-blue-500/10 text-blue-300" : "bg-blue-50 text-blue-700"
+                                        }`}>
+                                        {info.metricType}
+                                    </span>
+                                ) : (
+                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${darkMode ? "bg-blue-500/10 text-blue-300" : "bg-blue-50 text-blue-700"}`}>
+                                        Metric Insights
+                                    </span>
+                                )}
+                                {metricData && (
+                                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${statusColor}`}>
+                                        {statusText}
+                                    </span>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -68,7 +107,7 @@ const MetricInfoModal = ({ isOpen, onClose, info, darkMode }) => {
                 </div>
 
                 {/* Content Body - Scrollable */}
-                <div className="px-6 md:px-8 pb-8 pt-4 space-y-6 overflow-y-auto custom-scrollbar">
+                <div className="px-6 md:px-8 pb-8 pt-2 space-y-6 overflow-y-auto custom-scrollbar">
 
                     {/* Definition Section */}
                     {info.use && (
@@ -80,6 +119,20 @@ const MetricInfoModal = ({ isOpen, onClose, info, darkMode }) => {
                                 </p>
                             </div>
                         </div>
+                    )}
+
+                    {/* Benchmarks Section (Static) */}
+                    {info.benchmarks && (
+                        <SectionCard
+                            title="Performance Benchmarks"
+                            icon={Activity}
+                            colorClass={darkMode ? "text-indigo-400" : "text-indigo-600"}
+                            darkMode={darkMode}
+                        >
+                            <p className={`text-sm leading-relaxed font-mono ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
+                                {info.benchmarks}
+                            </p>
+                        </SectionCard>
                     )}
 
                     {/* Impact & Improvement Grid */}

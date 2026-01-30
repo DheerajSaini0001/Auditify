@@ -11,6 +11,8 @@ import {
   Keyboard, Focus, Hash, Anchor, Map, Terminal, Loader2, PersonStanding
 } from "lucide-react";
 import MetricInfoModal from "../Component/MetricInfoModal";
+import ParameterInfoModal from "../Component/ParameterInfoModal";
+import { InfoDetails } from "../Component/InfoDetails";
 
 // ------------------------------------------------------
 // ✅ Icon Mapping
@@ -33,169 +35,12 @@ const iconMap = {
 // ------------------------------------------------------
 // ✅ Educational Content
 // ------------------------------------------------------
-const educationalContent = {
-  Color_Contrast: {
-    title: "Color Contrast",
-    desc: "Ensures sufficient color contrast.",
-    why: "Essential for users with low vision.",
-    use: "Measures the difference in brightness between text and its background.",
-    impact: "Text that blends into the background is impossible to read for many users, especially on mobile screens in sunlight.",
-    improvement: "Darken your text or lighten accessibility backgrounds until they stand out clearly.",
-    calculation: "We compare the brightness of your text against its background to ensure they are distinct enough."
-  },
-  Focus_Order: {
-    title: "Focus Order",
-    desc: "Checks logical focus order.",
-    why: "Critical for keyboard navigation.",
-    use: "The sequence in which elements receive focus when tabbing through the page.",
-    impact: "If the 'Tab' key jumps around randomly, keyboard users get lost and cannot navigate your site.",
-    improvement: "Ensure the tab order matches the visual order of elements on the screen.",
-    calculation: "We check the path a keyboard user takes through your page to ensure it follows a logical sequence."
-  },
-  Focusable_Content: {
-    title: "Focusable Content",
-    desc: "Verifies keyboard reachability.",
-    why: "All interactive elements must be accessible.",
-    use: "Ensures all interactive elements (buttons, links, inputs) can be reached via keyboard.",
-    impact: "If a button can't be selected with a keyboard, it effectively doesn't exist for many users.",
-    improvement: "Ensure every interactive element (buttons, links, inputs) can be reached using the 'Tab' key.",
-    calculation: "We verify that every button, link, and form field can be accessed without using a mouse."
-  },
-  Tab_Index: {
-    title: "Tab Index",
-    desc: "Validates tab index usage.",
-    why: "Prevents navigation traps.",
-    use: "The tabindex attribute controls whether an element is focusable.",
-    impact: "Positive tab values break the natural flow, forcing users to jump around unpredictably.",
-    improvement: "Avoid customizing tab order numbers. Let the browser handle the natural flow (0 or -1).",
-    calculation: "We scan for custom navigation orders that disrupt the natural flow of reading."
-  },
-  Interactive_Element_Affordance: {
-    title: "Clickable Targets",
-    desc: "Checks visual cues.",
-    why: "Users must know what is clickable.",
-    use: "Visual indicators that an element is interactive (e.g., cursor pointer, hover styles).",
-    impact: "Users shouldn't have to guess what's clickable. Confusion leads to frustration.",
-    improvement: "Make sure buttons look like buttons. Change the cursor to a 'pointer' when hovering.",
-    calculation: "We check if your buttons and links visually change when a user hovers or focuses on them."
-  },
-  Label: {
-    title: "Form Labels",
-    desc: "Checks form labels.",
-    why: "Screen readers need labels for inputs.",
-    use: "HTML labels associated with form input fields.",
-    impact: "Without labels, a screen reader user has no idea what information to type into a form field.",
-    improvement: "Give every input field a clear, visible label explaining what it is for.",
-    calculation: "We check if every form field has a text label attached to it."
-  },
-  Aria_Allowed_Attr: {
-    title: "ARIA Attributes",
-    desc: "Validates ARIA attributes.",
-    why: "Prevents screen reader errors.",
-    use: "Checks if ARIA attributes used are valid for the element's role.",
-    impact: "Using the wrong accessibility code breaks the experience instead of fixing it.",
-    improvement: "Only use ARIA attributes that are valid for the specific element you are modifying.",
-    calculation: "We validate your accessibility code against official web standards to prevent errors."
-  },
-  Aria_Roles: {
-    title: "ARIA Roles",
-    desc: "Verifies ARIA roles.",
-    why: "Ensures correct element identification.",
-    use: "Attributes that define what an element is (e.g., role='button').",
-    impact: "Misleading roles confuse screen readers (e.g., telling a user an image is a button).",
-    improvement: "Use standard HTML tags (like <button>) instead of custom roles whenever possible.",
-    calculation: "We verify that you are using standard role definitions correctly."
-  },
-  Aria_Hidden_Focus: {
-    title: "Hidden Focus",
-    desc: "Checks hidden focusable items.",
-    why: "Prevents confusing navigation.",
-    use: "Ensures elements hidden with aria-hidden='true' are not focusable.",
-    impact: "Focusing on a hidden element confuses users as they cannot see where they are.",
-    improvement: "Ensure hidden elements cannot be selected by the keyboard.",
-    calculation: "We check if invisible elements are incorrectly capturing the keyboard focus."
-  },
-  Image_Alt: {
-    title: "Alternative Text",
-    desc: "Checks image alt text.",
-    why: "Describes images to blind users.",
-    use: "Text alternatives for non-text content (images).",
-    impact: "Blind users rely on descriptions to understand images. Without them, they miss context.",
-    improvement: "Add a short text description to every image that conveys meaning.",
-    calculation: "We check if your images include 'alt text' descriptions."
-  },
-  Skip_Links: {
-    title: "Skip Links",
-    desc: "Verifies skip links.",
-    why: "Allows bypassing repetitive content.",
-    use: "Hidden links at the top of the page to jump to main content.",
-    impact: "Imagine listening to the entire main menu on every single page load. Skip links let users jump to the content.",
-    improvement: "Add a hidden 'Skip to Content' link at the very top of your page.",
-    calculation: "We look for a shortcut link that allows keyboard users to bypass the main menu."
-  },
-  Landmarks: {
-    title: "Landmarks",
-    desc: "Checks landmark roles.",
-    why: "Aids in page navigation.",
-    use: "Semantic regions (main, nav, banner, complementary).",
-    impact: "Landmarks act like a table of contents, letting screen readers jump between major sections.",
-    improvement: "Define your page regions clearly using standard tags like <main>, <nav>, and <footer>.",
-    calculation: "We check for specific structure tags that define the main areas of your page."
-  },
-};
+const educationalContent = InfoDetails;
 
 // ------------------------------------------------------
 // ✅ Score Calculation Info (Standard Weights)
 // ------------------------------------------------------
-const scoreCalculationInfo = {
-  icon: PersonStanding,
-  title: "Accessibility",
-  guideLink: "https://www.w3.org/WAI/standards-guidelines/wcag/",
-  use: (
-    <div className="space-y-2">
-      <p>Measures how accessible your website is for users who rely on assistive technologies such as screen readers, keyboards, and other accessibility tools.</p>
-      <p>It evaluates whether users can perceive, navigate, and interact with your content regardless of ability.</p>
-    </div>
-  ),
-  impact: "Accessible websites are easier to use for everyone. They improve usability, expand your audience, reduce legal and compliance risk, and often perform better in search engines. Accessibility is also a key part of inclusive, user-first design.",
-  improvement: (
-    <ul className="list-disc pl-5 space-y-2">
-      <li>
-        <span className="font-semibold">Ensure sufficient color contrast:</span> Make sure text and interactive elements are easy to read against their backgrounds.
-      </li>
-      <li>
-        <span className="font-semibold">Support full keyboard navigation:</span> Users should be able to navigate and interact with all elements using a keyboard alone, in a logical order.
-      </li>
-      <li>
-        <span className="font-semibold">Use clear labels for form fields:</span> Inputs, buttons, and controls should have descriptive labels that assistive technologies can understand.
-      </li>
-      <li>
-        <span className="font-semibold">Provide meaningful alternative text for images:</span> Images should include clear descriptions so users who can’t see them still understand their purpose.
-      </li>
-      <li>
-        <span className="font-semibold">Use ARIA roles correctly:</span> Only apply ARIA attributes when needed, and ensure they match the intended role and behavior of elements.
-      </li>
-      <li>
-        <span className="font-semibold">Include page landmarks and skip links:</span> Structural landmarks and skip navigation links help users move efficiently through the page.
-      </li>
-      <li>
-        <span className="font-semibold">Avoid hidden or inaccessible interactive elements:</span> Elements should not be hidden from assistive tools while still receiving focus.
-      </li>
-    </ul>
-  ),
-  calculation: (
-    <div className="space-y-2">
-      <p>We evaluate your page against recognized accessibility best practices using automated checks and structural analysis. The score is based on whether key accessibility requirements are met, with higher weight given to issues that most affect usability for assistive technology users.</p>
-      <p>Each check either passes or fails, and the final score reflects how consistently your site meets accessibility standards.</p>
-    </div>
-  ),
-  weightage: [
-    { param: "Navigation & Focus Order", weight: "35%" },
-    { param: "Visual Labels & Contrast", weight: "35%" },
-    { param: "ARIA Roles & Attributes", weight: "25%" },
-    { param: "Interactive Elements", weight: "5%" }
-  ]
-};
+const scoreCalculationInfo = InfoDetails.Accessibility_Methodology;
 
 // ------------------------------------------------------
 // ✅ Enhanced Shimmer
@@ -393,6 +238,7 @@ export default function Accessibility() {
   const { theme } = useContext(ThemeContext);
   const { data, loading } = useData();
   const [selectedMetricInfo, setSelectedMetricInfo] = React.useState(null);
+  const [selectedParameterInfo, setSelectedParameterInfo] = React.useState(null);
   const darkMode = theme === "dark";
 
   const auditSteps = useMemo(() => [
@@ -547,29 +393,37 @@ export default function Accessibility() {
         {/* Section 1: Visual Accessibility */}
         <Section title="Visual Accessibility" icon={Eye} darkMode={darkMode}>
           {["Color_Contrast", "Image_Alt"].map((key) => (
-            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={() => setSelectedMetricInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
+            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
           ))}
         </Section>
 
         {/* Section 2: Keyboard Navigation */}
         <Section title="Keyboard Navigation" icon={Keyboard} darkMode={darkMode}>
           {["Focusable_Content", "Focus_Order", "Tab_Index", "Skip_Links"].map((key) => (
-            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={() => setSelectedMetricInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
+            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
           ))}
         </Section>
 
         {/* Section 3: Semantic & ARIA Roles */}
         <Section title="Semantic & ARIA Roles" icon={Code} darkMode={darkMode}>
           {["Label", "Aria_Allowed_Attr", "Aria_Roles", "Aria_Hidden_Focus", "Landmarks", "Interactive_Element_Affordance"].map((key) => (
-            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={() => setSelectedMetricInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
+            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
           ))}
         </Section>
 
       </main>
+      {/* Methodology Modal */}
       <MetricInfoModal
         isOpen={!!selectedMetricInfo}
         onClose={() => setSelectedMetricInfo(null)}
         info={selectedMetricInfo}
+        darkMode={darkMode}
+      />
+      {/* Parameter Modal */}
+      <ParameterInfoModal
+        isOpen={!!selectedParameterInfo}
+        onClose={() => setSelectedParameterInfo(null)}
+        info={selectedParameterInfo}
         darkMode={darkMode}
       />
     </div>

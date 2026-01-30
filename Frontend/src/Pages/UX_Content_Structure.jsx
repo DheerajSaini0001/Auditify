@@ -11,6 +11,8 @@ import {
   ExternalLink, CheckCircle, XCircle, Info
 } from "lucide-react";
 import MetricInfoModal from "../Component/MetricInfoModal";
+import ParameterInfoModal from "../Component/ParameterInfoModal";
+import { InfoDetails } from "../Component/InfoDetails";
 
 // ------------------------------------------------------
 // ✅ Icon Mapping
@@ -34,199 +36,12 @@ const iconMap = {
   Loading_Feedback: Loader2
 };
 
-const uxEducationalContent = {
-  Viewport_Meta_Tag: {
-    title: "Viewport Meta Tag",
-    use: "Controls layout on mobile browsers to fit the screen width.",
-    impact: "Without this tag, your site looks like a tiny, zoomed-out desktop version on mobile options.",
-    improvement: "Add the standard viewport tag to the head of your page.",
-    calculation: "We check for the presence and correctness of the <meta name='viewport'> tag."
-  },
-  Horizontal_Scroll: {
-    title: "Horizontal Scroll",
-    use: "Checks if content overflows the screen width, causing awkward scrolling.",
-    impact: "Horizontal scrolling is annoying and usually accidental on mobile. It feels broken.",
-    improvement: "Ensure images and containers don't force the page to be wider than the screen.",
-    calculation: "We verify if any element exceeds the viewport width causing a scrollbar."
-  },
-  Sticky_Header_Height: {
-    title: "Sticky Header",
-    use: "Measures how much screen space the sticky header occupies.",
-    impact: "Big sticky headers eat up valuable screen space, making reading hard on phones.",
-    improvement: "Make your header smaller when users scroll down.",
-    calculation: "We measure the height of fixed position headers relative to the viewport height."
-  },
-  Navigation_Depth: {
-    title: "Navigation Depth",
-    use: "Measures clicks required to reach deep pages.",
-    impact: "If users have to click 4 times to find something, they usually give up.",
-    improvement: "Organize your menu so important pages are just 1 or 2 clicks away.",
-    calculation: "We simulate crawling to determine the minimum number of clicks to reach pages."
-  },
-  Breadcrumbs: {
-    title: "Breadcrumbs",
-    use: "Secondary navigation scheme showing user's location.",
-    impact: "Users get lost easily. Breadcrumbs act like a 'Back' button for categories.",
-    improvement: "Add breadcrumb links to the top of your pages.",
-    calculation: "We look for schema.org BreadcrumbList markup or navigational link structures."
-  },
-  Navigation_Discoverability: {
-    title: "Nav Discoverability",
-    use: "Checks if the navigation menu is easy to find and use.",
-    impact: "If users can't find the menu, they can't explore your site.",
-    improvement: "Put your menu in a standard place (top right or left) where users expect it.",
-    calculation: "We check the positioning and visibility of the distinct navigation menu element."
-  },
-  Tap_Target_Size: {
-    title: "Tap Targets",
-    use: "Checks if buttons and links are large enough to touch.",
-    impact: "Tiny buttons cause 'fat finger' errors. Frustrated users leave.",
-    improvement: "Make buttons larger and add space between them.",
-    calculation: "We measure the computed width and height of interactive elements (min 48x48px is standard)."
-  },
-  Text_Readability: {
-    title: "Readability Score",
-    use: "Analyzes sentence length and word complexity (Flesch-Kincaid).",
-    impact: "If your text is too complicated, people stop reading. Simple language sells.",
-    improvement: "Write short sentences and use simple words.",
-    calculation: "We calculate the Flesch-Kincaid Ease score based on sentence length and syllable count."
-  },
-  Text_Font_Size: {
-    title: "Font Legibility",
-    use: "Checks if text size is readable without zooming.",
-    impact: "Small text forces users to squint or zoom. It's a major usability fail.",
-    improvement: "Increase your base font size to at least 16px.",
-    calculation: "We sample font sizes across the page elements. Body text below 12px fails."
-  },
-  Cumulative_Layout_Shift: {
-    title: "Visual Stability (CLS)",
-    use: "Measures how much page content shifts while loading.",
-    impact: "It's annoying when you try to click a button and it moves. It feels glitchy.",
-    improvement: "Set fixed sizes for images and ads so they don't push content down.",
-    calculation: "We track layout shifts during page load using the PerformanceObserver API."
-  },
-  Image_Stability: {
-    title: "Image Stability",
-    use: "Checks if images have defined dimensions.",
-    impact: "Images without sizes cause the layout to jump as they load.",
-    improvement: "Always specify width and height for your images.",
-    calculation: "We check <img> tags for width and height attributes or CSS aspect-ratio."
-  },
-  Intrusive_Interstitials: {
-    title: "Popups & Modals",
-    use: "Checks for popups that block content immediately.",
-    impact: "Popups that block the screen immediately annoy users and Google.",
-    improvement: "Wait until the user is engaged before showing popups.",
-    calculation: "We detect layout-covering elements that appear immediately upon load."
-  },
-  Above_The_Fold_Content: {
-    title: "Above the Fold",
-    use: "Checks what users see first.",
-    impact: "You have 3 seconds to impress. If the top of your page is empty, users bounce.",
-    improvement: "Put your best headline and image right at the top.",
-    calculation: "We analyze the content visible in the initial viewport for meaningful elements."
-  },
-  Click_Feedback: {
-    title: "Interaction Feedback",
-    use: "Visual response when clicking/tapping elements.",
-    impact: "If buttons don't react, users think the app is frozen.",
-    improvement: "Make buttons change color slightly when clicked or tapped.",
-    calculation: "We check if interactive elements have :hover, :active, or :focus CSS states defined."
-  },
-  Form_Validation: {
-    title: "Form Validation",
-    use: "Real-time feedback for user inputs.",
-    impact: "Waiting until the end to see errors is frustrating.",
-    improvement: "Show clear error messages right when the user makes a mistake.",
-    calculation: "We trigger invalid form inputs and check for UI updates or error messages."
-  },
-  Loading_Feedback: {
-    title: "Loading States",
-    use: "Indicators like spinners or skeletons during waits.",
-    impact: "Staring at a blank screen makes users think the site is broken.",
-    improvement: "Show a simple spinner or skeleton verifying content is loading.",
-    calculation: "We check for specific UI patterns (spinners, skeletons) during network requests."
-  }
-};
+const uxEducationalContent = InfoDetails;
 
 // ------------------------------------------------------
 // ✅ Score Calculation Info (Calculated based on average importance)
 // ------------------------------------------------------
-const scoreCalculationInfo = {
-  icon: Smartphone,
-  title: "Mobile UX & Content Experience",
-  guideLink: "https://developers.google.com/search/mobile-sites",
-  use: (
-    <div className="space-y-2">
-      <p>Measures how easy, readable, and frustration-free your website feels for users — especially on mobile devices.</p>
-      <p>It evaluates layout stability, readability, touch interactions, navigation clarity, visual hierarchy, and feedback signals that directly affect real user experience.</p>
-    </div>
-  ),
-  impact: (
-    <div className="space-y-4">
-      <p>Even fast websites fail if users struggle to read content, tap elements, navigate pages, or understand what’s happening on screen.</p>
-
-      <div>
-        <span className="font-semibold block mb-1">Poor mobile experience leads to:</span>
-        <ul className="list-disc pl-5 space-y-1 text-sm">
-          <li>Higher bounce rates</li>
-          <li>Lower engagement and conversions</li>
-          <li>Frustrated users</li>
-          <li>Reduced search visibility</li>
-        </ul>
-      </div>
-
-      <p className="font-medium">A strong UX keeps users comfortable, confident, and moving forward.</p>
-    </div>
-  ),
-  improvement: (
-    <ul className="list-disc pl-5 space-y-2">
-      <li>
-        <span className="font-semibold">Make content easy to read:</span> Use clear language, short sentences, and appropriate vocabulary based on page type (articles vs product pages).
-      </li>
-      <li>
-        <span className="font-semibold">Prevent layout shifts and visual jumps:</span> Ensure images, headers, and dynamic elements don’t move unexpectedly while the page loads.
-      </li>
-      <li>
-        <span className="font-semibold">Optimize tap targets and text size:</span> Buttons, links, and form fields should be large enough to tap comfortably, with readable font sizes on all devices.
-      </li>
-      <li>
-        <span className="font-semibold">Avoid horizontal scrolling:</span> Pages should fit cleanly within the screen width at common mobile breakpoints.
-      </li>
-      <li>
-        <span className="font-semibold">Use non-intrusive overlays:</span> Avoid popups, modals, or banners that block content or prevent scrolling, especially on mobile.
-      </li>
-      <li>
-        <span className="font-semibold">Ensure strong above-the-fold content:</span> Important headings, visuals, and calls-to-action should be visible without scrolling.
-      </li>
-      <li>
-        <span className="font-semibold">Provide clear interaction feedback:</span> Buttons and links should visually respond when users hover, tap, or click.
-      </li>
-      <li>
-        <span className="font-semibold">Improve navigation clarity:</span> Keep navigation shallow, discoverable, and easy to access with clear menus, breadcrumbs, and search when applicable.
-      </li>
-      <li>
-        <span className="font-semibold">Show loading and processing feedback:</span> Use spinners, skeletons, or progress indicators so users know something is happening.
-      </li>
-      <li>
-        <span className="font-semibold">Maintain form usability:</span> Forms should have clear labels, validation feedback, and accessible error messages.
-      </li>
-    </ul>
-  ),
-  calculation: (
-    <div className="space-y-2">
-      <p>We analyze multiple UX and usability signals related to readability, interaction, layout stability, and navigation behavior.</p>
-      <p>Each factor is weighted based on how strongly it impacts real user frustration, especially on mobile. Issues that block interaction or readability have a greater influence on the final score.</p>
-    </div>
-  ),
-  weightage: [
-    { param: "Mobile & Viewport Configuration", weight: "40%" },
-    { param: "Content Readability & Stability", weight: "20%" },
-    { param: "Interaction & Forms", weight: "20%" },
-    { param: "First Screen Experience (ATF)", weight: "10%" },
-    { param: "Navigation & Structure", weight: "10%" }
-  ]
-};
+const scoreCalculationInfo = InfoDetails.UX_And_Content_Methodology;
 
 // ------------------------------------------------------
 // ✅ Enhanced Shimmer
@@ -478,6 +293,7 @@ export default function UX_Content_Structure() {
   const { theme } = useContext(ThemeContext);
   const { data, loading } = useData();
   const [selectedMetricInfo, setSelectedMetricInfo] = React.useState(null);
+  const [selectedParameterInfo, setSelectedParameterInfo] = React.useState(null);
   const darkMode = theme === "dark";
 
   const auditSteps = useMemo(() => [
@@ -667,7 +483,7 @@ export default function UX_Content_Structure() {
                 darkMode={darkMode}
                 icon={iconMap[key] || Layout}
                 className={spanMap[key]}
-                onInfo={() => setSelectedMetricInfo({ ...uxEducationalContent[key], icon: iconMap[key] || Layout })}
+                onInfo={() => setSelectedParameterInfo({ ...uxEducationalContent[key], icon: iconMap[key] || Layout })}
               />
             ))}
           </Section>
@@ -688,17 +504,25 @@ export default function UX_Content_Structure() {
                 darkMode={darkMode}
                 icon={iconMap[key] || Layout}
                 className="md:col-span-2 lg:col-span-3"
-                onInfo={() => setSelectedMetricInfo({ ...uxEducationalContent[key], icon: iconMap[key] || Layout })}
+                onInfo={() => setSelectedParameterInfo({ ...uxEducationalContent[key], icon: iconMap[key] || Layout })}
               />
             ))}
           </Section>
         )}
 
       </main>
+      {/* Methodology Modal */}
       <MetricInfoModal
         isOpen={!!selectedMetricInfo}
         onClose={() => setSelectedMetricInfo(null)}
         info={selectedMetricInfo}
+        darkMode={darkMode}
+      />
+      {/* Parameter Modal */}
+      <ParameterInfoModal
+        isOpen={!!selectedParameterInfo}
+        onClose={() => setSelectedParameterInfo(null)}
+        info={selectedParameterInfo}
         darkMode={darkMode}
       />
     </div>

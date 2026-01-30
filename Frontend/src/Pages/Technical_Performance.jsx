@@ -11,6 +11,8 @@ import {
   CheckCircle, XCircle, Loader2, Info, Eye, ShieldCheck, LayoutTemplate, TrendingUp, Bot
 } from "lucide-react";
 import MetricInfoModal from "../Component/MetricInfoModal";
+import ParameterInfoModal from "../Component/ParameterInfoModal";
+import { InfoDetails } from "../Component/InfoDetails";
 // ------------------------------------------------------
 // ✅ Simple Skeleton
 // ------------------------------------------------------
@@ -396,159 +398,18 @@ const MetricCard = ({ details, value, dynamicData, darkMode, icon: Icon, classNa
 // ------------------------------------------------------
 // ✅ Score Calculation Info (Standard Weights)
 // ------------------------------------------------------
-const scoreCalculationInfo = {
-  icon: Gauge,
-  title: "Technical Performance",
-  guideLink: "https://developers.google.com/search/docs/appearance/core-web-vitals",
-  use: "Measures how fast, responsive, and visually stable your website is for real users across devices and network conditions.",
-  impact: "Technical performance directly affects how users experience your site. Slow loading, delayed interactions, or shifting layouts frustrate visitors, increase bounce rates, and negatively impact search rankings. Fast and stable sites keep users engaged and are favored by Google.",
-  improvement: (
-    <ul className="list-disc pl-5 space-y-2">
-      <li>
-        <span className="font-semibold">Focus on Core Web Vitals first:</span> Prioritize loading speed, responsiveness, and layout stability, as these have the biggest impact on user experience.
-      </li>
-      <li>
-        <span className="font-semibold">Optimize images and media assets:</span> Ensure images are properly sized, compressed, and delivered efficiently to reduce load times.
-      </li>
-      <li>
-        <span className="font-semibold">Reduce heavy JavaScript and unused code:</span> Minimize long-running scripts and remove unnecessary third-party code that blocks interactions.
-      </li>
-      <li>
-        <span className="font-semibold">Improve server response speed:</span> Use caching, optimize backend processing, and reduce delays before content starts loading.
-      </li>
-      <li>
-        <span className="font-semibold">Prevent layout shifts during loading:</span> Reserve space for images, ads, and dynamic content to keep pages visually stable.
-      </li>
-      <li>
-        <span className="font-semibold">Eliminate render-blocking resources:</span> Defer non-critical scripts and optimize stylesheets to speed up initial rendering.
-      </li>
-    </ul>
-  ),
-  calculation: "We analyze multiple performance signals related to page loading speed, interactivity, and visual stability. These signals are evaluated using both lab testing and real-user data when available. Higher-impact factors contribute more to the final score to reflect what most affects real user experience.",
-  weightage: [
-    { param: "Largest Contentful Paint (LCP)", weight: "25%" },
-    { param: "Total Blocking Time (TBT)", weight: "25%" },
-    { param: "Interaction to Next Paint (INP)", weight: "15%" },
-    { param: "First Contentful Paint (FCP)", weight: "10%" },
-    { param: "Speed Index (SI)", weight: "10%" },
-    { param: "Time to First Byte (TTFB)", weight: "10%" },
-    { param: "Cumulative Layout Shift (CLS)", weight: "5%" }
-  ]
-};
+// ------------------------------------------------------
+// ✅ Score Calculation Info (Standard Weights)
+// ------------------------------------------------------
+const scoreCalculationInfo = InfoDetails.Technical_Performance_Methodology;
 
 // ------------------------------------------------------
 // ✅ Metric Explanations Data
 // ------------------------------------------------------
-const metricExplanations = {
-  LCP: {
-    use: "Measures loading performance by identifying how quickly the largest content element (like a hero image or headline) becomes visible.",
-    impact: "If your main content takes too long to load, users think the site is broken and leave.",
-    improvement: "Make sure your largest image or headline loads instantly. Compress large files and upgrade your hosting if needed.",
-    calculation: "We time how long it takes for the largest visible element (like a banner image) to fully appear on screen."
-  },
-  INP: {
-    use: "Measures responsiveness by tracking how much time elapses between a user's interaction (click, tap, or key press) and the browser's visual response.",
-    impact: "Sluggish buttons frustrate users. If they click 'Add to Cart' and nothing happens instantly, they assume it failed.",
-    improvement: "Reduce heavy code (JavaScript) that runs when pages load. Keep the browser free to respond to clicks.",
-    calculation: "We check the time between a user click/tap and the browser's visual response."
-  },
-  CLS: {
-    use: "Measures visual stability by quantifying how much page content shifts unexpectedly while the user is reading or interacting.",
-    impact: "Shifting content causes frustrating misclicks. Users hate when text jumps while they are reading.",
-    improvement: "Give every image and video exact size dimensions so the browser knows how much space to reserve.",
-    calculation: "We measure how much elements move around on the screen while the page is loading."
-  },
-  FCP: {
-    use: "Measures the time it takes for the very first piece of domestic content (text or image) to appear on the screen after navigation starts.",
-    impact: "This is the first sign of life. A fast start reassures users that loading has begun.",
-    improvement: "Ensure your server responds quickly and eliminate code that blocks the initial view.",
-    calculation: "We measure the time until the very first text or image appears on the screen."
-  },
-  TTFB: {
-    use: "Measures the time it takes for the browser to receive the very first byte of response data from your web server.",
-    impact: "A slow server delays everything else. No amount of frontend tricks can fix a slow backend.",
-    improvement: "Use a faster web host or turn on server caching (saving copies of pages to serve faster).",
-    calculation: "We check how long the browser waits for the first piece of data after requesting your page."
-  },
-  FID: {
-    use: "Measures interactivity. How long the browser takes to process the first user interaction (click, tap, key press).",
-    impact: "Measures annoyance. If the user taps a button and it delays, the site feels unresponsive.",
-    improvement: "Break up large tasks in your code so the browser can breathe and respond to inputs.",
-    calculation: "We measure the delay after the user's first interaction (like a click) before the browser starts processing it."
-  },
-  TBT: {
-    use: "Measures how long the main thread is blocked by heavy tasks, preventing the browser from responding to user inputs during page load.",
-    impact: "A 'frozen' page is useless. High blocking time means the browser is too busy to handle user inputs.",
-    improvement: "Remove unused code and defer non-essential scripts until after the page loads.",
-    calculation: "We sum up all the time periods where the browser is blocked from accepting user input during loading."
-  },
-  SI: {
-    use: "Measures how quickly the visible contents of a page are visually populated during the loading process.",
-    impact: "How fast does the page look ready? Users like seeing content fill the screen quickly.",
-    improvement: "Ensure visible text and images load before hidden footer content.",
-    calculation: "We analyze how quickly the visible parts of the page are painted on the screen."
-  },
-  Compression: {
-    use: "Measures if text-based resources (HTML, CSS, JS) are compressed to reduce file size.",
-    impact: "Sending uncompressed files is like mailing a letter in a giant box. It wastes time and data.",
-    improvement: "Enable Gzip or Brotli compression on your server to shrink file sizes automatically.",
-    calculation: "We check if your text-based files (HTML, CSS, JS) are being sent in a minimized, compressed format."
-  },
-  Caching: {
-    use: "Checks if static assets effectively use browser caching to store files locally for repeat visits.",
-    impact: "Caching lets returning visitors load your site instantly from their own device instead of downloading it again.",
-    improvement: "Set your server to tell browsers to 'save' images and styles for at least a week.",
-    calculation: "We verify if your server instructs browsers to store static files locally for future visits."
-  },
-  Render_Blocking: {
-    use: "Identifies critical scripts or stylesheets in the `<head>` that pause page rendering while they download.",
-    impact: "Some files stop the page from showing anything until they download. This delays the 'first impression'.",
-    improvement: "Move non-critical scripts to the bottom of the page or mark them to load in the background (defer).",
-    calculation: "We identify scripts/styles that force the browser to pause rendering while they download."
-  },
-  HTTP: {
-    use: "Verifies if the site is served over a secure HTTPS connection and supports modern HTTP/2 protocol.",
-    impact: "Modern security (HTTPS) and speed protocols (HTTP/2) are essential for trust and performance.",
-    improvement: "Ensure your SSL certificate is active and your server supports the newer HTTP/2 standard.",
-    calculation: "We check if your connection is secure and using modern, efficient web protocols."
-  },
-  Resource_Optimization: {
-    use: "Checks if images and JavaScript files are optimized (minified/resized) to save bandwidth.",
-    impact: "Large, unoptimized files eat up bandwidth, especially for mobile users on slow connections.",
-    improvement: "Minify your code files (remove spaces) and resize images to the exact size they are shown.",
-    calculation: "We analyze code files for unnecessary whitespace and check if images are larger than they need to be."
-  },
-  Sitemap: {
-    use: "Checks for the presence of a valid XML sitemap to help search engines discover your pages.",
-    impact: "A map helps Google find all your pages, including the ones not easily reachable by links.",
-    improvement: "Create a 'sitemap.xml' file and submit it to Google Search Console.",
-    calculation: "We verify that a sitemap file exists and is accessible to search engines."
-  },
-  Robots: {
-    use: "Verifies the existence and validity of the `robots.txt` file, which controls crawler access.",
-    impact: "This file is the gatekeeper. It tells search engines which parts of your site they are allowed to scan.",
-    improvement: "Ensure you have a robots.txt file that allows Googlebot to access your public pages.",
-    calculation: "We check for a valid 'robots.txt' file that gives clear instructions to web crawlers."
-  },
-  Structured_Data: {
-    use: "Detects the presence of Schema.org markup that helps search engines understand your content.",
-    impact: "Helps Google understand your content types (Articles, Products) to show rich results like stars or pricing.",
-    improvement: "Add standard Schema markup code to your pages to define what they are.",
-    calculation: "We scan for specific code blocks (JSON-LD) that describe your content to machines."
-  },
-  Broken_Links: {
-    use: "Scans the page for hyperlinks that point to non-existent (404) or error pages.",
-    impact: "Dead links are a dead end for users and lower your credibility with search engines.",
-    improvement: "Scan your site regularly and fix or remove any links that result in an error.",
-    calculation: "We test every link on the page to ensure they lead to working destinations."
-  },
-  Redirect_Chains: {
-    use: "Identifies unnecessary chains of redirects (e.g., A → B → C) between the clicked link and the final page.",
-    impact: "Hopping through multiple links (A -> B -> C) slows down loading and wastes resources.",
-    improvement: "Update links to point directly to the final destination URL.",
-    calculation: "We trace the path of your links to ensure they go directly to the target without unnecessary hops."
-  }
-};
+// ------------------------------------------------------
+// ✅ Metric Explanations Data
+// ------------------------------------------------------
+const metricExplanations = InfoDetails;
 
 // ------------------------------------------------------
 // ✅ Section Component
@@ -577,6 +438,7 @@ export default function Technical_Performance() {
   const { theme } = useContext(ThemeContext);
   const { data, loading } = useData();
   const [selectedMetricInfo, setSelectedMetricInfo] = React.useState(null);
+  const [selectedParameterInfo, setSelectedParameterInfo] = React.useState(null);
   const [selectedSource, setSelectedSource] = React.useState("lab"); // "lab" or "field"
   const darkMode = theme === "dark";
 
@@ -903,7 +765,7 @@ export default function Technical_Performance() {
                       details={{
                         ...m,
                         isCrux: section.isCrux,
-                        onInfo: () => setSelectedMetricInfo({
+                        onInfo: () => setSelectedParameterInfo({
                           title: m.title,
                           icon: m.icon,
                           ...metricExplanations[m.key],
@@ -927,14 +789,20 @@ export default function Technical_Performance() {
 
       </main >
 
-      {/* Portal or direct rendering for Modal */}
-      < MetricInfoModal
-        isOpen={!!selectedMetricInfo
-        }
+      {/* Methodology Modal */}
+      <MetricInfoModal
+        isOpen={!!selectedMetricInfo}
         onClose={() => setSelectedMetricInfo(null)}
         info={selectedMetricInfo}
         darkMode={darkMode}
       />
-    </div >
+      {/* Parameter Modal */}
+      <ParameterInfoModal
+        isOpen={!!selectedParameterInfo}
+        onClose={() => setSelectedParameterInfo(null)}
+        info={selectedParameterInfo}
+        darkMode={darkMode}
+      />
+    </div>
   );
 }

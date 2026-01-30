@@ -38,98 +38,114 @@ const uxEducationalContent = {
   Viewport_Meta_Tag: {
     title: "Viewport Meta Tag",
     use: "Controls layout on mobile browsers to fit the screen width.",
-    impact: "Without it, mobile browsers verify render the site as a desktop page, forcing users to zoom in.",
-    improvement: "Add <meta name='viewport' content='width=device-width, initial-scale=1'>"
+    impact: "Without this tag, your site looks like a tiny, zoomed-out desktop version on mobile options.",
+    improvement: "Add the standard viewport tag to the head of your page.",
+    calculation: "We check for the presence and correctness of the <meta name='viewport'> tag."
   },
   Horizontal_Scroll: {
     title: "Horizontal Scroll",
     use: "Checks if content overflows the screen width, causing awkward scrolling.",
-    impact: "Horizontal scrolling breaks the user flow and is often accidental on mobile.",
-    improvement: "Use CSS 'max-width: 100%' on images/containers and avoid fixed widths in pixels."
+    impact: "Horizontal scrolling is annoying and usually accidental on mobile. It feels broken.",
+    improvement: "Ensure images and containers don't force the page to be wider than the screen.",
+    calculation: "We verify if any element exceeds the viewport width causing a scrollbar."
   },
   Sticky_Header_Height: {
     title: "Sticky Header",
     use: "Measures how much screen space the sticky header occupies.",
-    impact: "Large sticky headers reduce the visible area for content, annoying users on small screens.",
-    improvement: "Reduce header height on scroll or hide it when scrolling down."
+    impact: "Big sticky headers eat up valuable screen space, making reading hard on phones.",
+    improvement: "Make your header smaller when users scroll down.",
+    calculation: "We measure the height of fixed position headers relative to the viewport height."
   },
   Navigation_Depth: {
     title: "Navigation Depth",
     use: "Measures clicks required to reach deep pages.",
-    impact: "Deeply buried content (4+ clicks) is rarely visited and hurts SEO.",
-    improvement: "Flatten site structure and use mega-menus or related posts."
+    impact: "If users have to click 4 times to find something, they usually give up.",
+    improvement: "Organize your menu so important pages are just 1 or 2 clicks away.",
+    calculation: "We simulate crawling to determine the minimum number of clicks to reach pages."
   },
   Breadcrumbs: {
     title: "Breadcrumbs",
     use: "Secondary navigation scheme showing user's location.",
-    impact: "Helps users understand hierarchy and navigate back easily.",
-    improvement: "Implement schema.org compliant breadcrumbs on nested pages."
+    impact: "Users get lost easily. Breadcrumbs act like a 'Back' button for categories.",
+    improvement: "Add breadcrumb links to the top of your pages.",
+    calculation: "We look for schema.org BreadcrumbList markup or navigational link structures."
   },
   Navigation_Discoverability: {
     title: "Nav Discoverability",
     use: "Checks if the navigation menu is easy to find and use.",
-    impact: "Hidden or complex menus frustrate users, increasing bounce rates.",
-    improvement: "Use standard locations (top/left) and clear labels (Menu/Hamburger)."
+    impact: "If users can't find the menu, they can't explore your site.",
+    improvement: "Put your menu in a standard place (top right or left) where users expect it.",
+    calculation: "We check the positioning and visibility of the distinct navigation menu element."
   },
   Tap_Target_Size: {
     title: "Tap Targets",
     use: "Checks if buttons and links are large enough to touch.",
-    impact: "Small targets cause 'fat finger' errors and frustration on mobile.",
-    improvement: "Ensure all touch targets are at least 48x48px with spacing."
+    impact: "Tiny buttons cause 'fat finger' errors. Frustrated users leave.",
+    improvement: "Make buttons larger and add space between them.",
+    calculation: "We measure the computed width and height of interactive elements (min 48x48px is standard)."
   },
   Text_Readability: {
     title: "Readability Score",
     use: "Analyzes sentence length and word complexity (Flesch-Kincaid).",
-    impact: "Content that is too complex scares away casual readers.",
-    improvement: "Use shorter sentences, active voice, and simple words."
+    impact: "If your text is too complicated, people stop reading. Simple language sells.",
+    improvement: "Write short sentences and use simple words.",
+    calculation: "We calculate the Flesch-Kincaid Ease score based on sentence length and syllable count."
   },
   Text_Font_Size: {
     title: "Font Legibility",
     use: "Checks if text size is readable without zooming.",
-    impact: "Small text (<12px) strains eyes and is an accessibility failure.",
-    improvement: "Use a base font size of at least 16px for body text."
+    impact: "Small text forces users to squint or zoom. It's a major usability fail.",
+    improvement: "Increase your base font size to at least 16px.",
+    calculation: "We sample font sizes across the page elements. Body text below 12px fails."
   },
   Cumulative_Layout_Shift: {
     title: "Visual Stability (CLS)",
     use: "Measures how much page content shifts while loading.",
-    impact: "Shifting content causes accidental clicks and annoyance.",
-    improvement: "Set explicit width/height on images and reserve space for ads."
+    impact: "It's annoying when you try to click a button and it moves. It feels glitchy.",
+    improvement: "Set fixed sizes for images and ads so they don't push content down.",
+    calculation: "We track layout shifts during page load using the PerformanceObserver API."
   },
   Image_Stability: {
     title: "Image Stability",
     use: "Checks if images have defined dimensions.",
-    impact: "Images without dimensions cause layout shifts (CLS) as they load.",
-    improvement: "Always include width and height attributes or CSS aspect-ratio."
+    impact: "Images without sizes cause the layout to jump as they load.",
+    improvement: "Always specify width and height for your images.",
+    calculation: "We check <img> tags for width and height attributes or CSS aspect-ratio."
   },
   Intrusive_Interstitials: {
     title: "Popups & Modals",
     use: "Checks for popups that block content immediately.",
-    impact: "Google penalizes sites that block main content on mobile entry.",
-    improvement: "Use banners instead of full-screen popups, or delay them."
+    impact: "Popups that block the screen immediately annoy users and Google.",
+    improvement: "Wait until the user is engaged before showing popups.",
+    calculation: "We detect layout-covering elements that appear immediately upon load."
   },
   Above_The_Fold_Content: {
     title: "Above the Fold",
-    use: "Checks if main content is visible immediately without scrolling.",
-    impact: "Users make split-second decisions to stay or leave based on this area.",
-    improvement: "Move hero headlines up and defer bulky elements."
+    use: "Checks what users see first.",
+    impact: "You have 3 seconds to impress. If the top of your page is empty, users bounce.",
+    improvement: "Put your best headline and image right at the top.",
+    calculation: "We analyze the content visible in the initial viewport for meaningful elements."
   },
   Click_Feedback: {
     title: "Interaction Feedback",
     use: "Visual response when clicking/tapping elements.",
-    impact: "Lack of feedback makes the app feel frozen or unresponsive.",
-    improvement: "Add :active and :focus states (color change, ripple)."
+    impact: "If buttons don't react, users think the app is frozen.",
+    improvement: "Make buttons change color slightly when clicked or tapped.",
+    calculation: "We check if interactive elements have :hover, :active, or :focus CSS states defined."
   },
   Form_Validation: {
     title: "Form Validation",
     use: "Real-time feedback for user inputs.",
-    impact: "Prevents frustration by catching errors before submission.",
-    improvement: "Use HTML5 validation (required, type='email') and visual cues."
+    impact: "Waiting until the end to see errors is frustrating.",
+    improvement: "Show clear error messages right when the user makes a mistake.",
+    calculation: "We trigger invalid form inputs and check for UI updates or error messages."
   },
   Loading_Feedback: {
     title: "Loading States",
     use: "Indicators like spinners or skeletons during waits.",
-    impact: "Reduces perceived waiting time and uncertainty.",
-    improvement: "Show a skeleton screen or spinner for any action over 300ms."
+    impact: "Staring at a blank screen makes users think the site is broken.",
+    improvement: "Show a simple spinner or skeleton verifying content is loading.",
+    calculation: "We check for specific UI patterns (spinners, skeletons) during network requests."
   }
 };
 
@@ -137,10 +153,72 @@ const uxEducationalContent = {
 // ✅ Score Calculation Info (Calculated based on average importance)
 // ------------------------------------------------------
 const scoreCalculationInfo = {
-  title: "Score Calculation",
-  use: "The UX & Content score is a weighted average of key usability and structure metrics.",
-  impact: "Better UX/UI scores directly correlate with higher conversion rates and lower bounce rates.",
-  improvement: "Focus on Fixing CLS, Tap Targets, and Readability first.",
+  icon: Smartphone,
+  title: "Mobile UX & Content Experience",
+  guideLink: "https://developers.google.com/search/mobile-sites",
+  use: (
+    <div className="space-y-2">
+      <p>Measures how easy, readable, and frustration-free your website feels for users — especially on mobile devices.</p>
+      <p>It evaluates layout stability, readability, touch interactions, navigation clarity, visual hierarchy, and feedback signals that directly affect real user experience.</p>
+    </div>
+  ),
+  impact: (
+    <div className="space-y-4">
+      <p>Even fast websites fail if users struggle to read content, tap elements, navigate pages, or understand what’s happening on screen.</p>
+
+      <div>
+        <span className="font-semibold block mb-1">Poor mobile experience leads to:</span>
+        <ul className="list-disc pl-5 space-y-1 text-sm">
+          <li>Higher bounce rates</li>
+          <li>Lower engagement and conversions</li>
+          <li>Frustrated users</li>
+          <li>Reduced search visibility</li>
+        </ul>
+      </div>
+
+      <p className="font-medium">A strong UX keeps users comfortable, confident, and moving forward.</p>
+    </div>
+  ),
+  improvement: (
+    <ul className="list-disc pl-5 space-y-2">
+      <li>
+        <span className="font-semibold">Make content easy to read:</span> Use clear language, short sentences, and appropriate vocabulary based on page type (articles vs product pages).
+      </li>
+      <li>
+        <span className="font-semibold">Prevent layout shifts and visual jumps:</span> Ensure images, headers, and dynamic elements don’t move unexpectedly while the page loads.
+      </li>
+      <li>
+        <span className="font-semibold">Optimize tap targets and text size:</span> Buttons, links, and form fields should be large enough to tap comfortably, with readable font sizes on all devices.
+      </li>
+      <li>
+        <span className="font-semibold">Avoid horizontal scrolling:</span> Pages should fit cleanly within the screen width at common mobile breakpoints.
+      </li>
+      <li>
+        <span className="font-semibold">Use non-intrusive overlays:</span> Avoid popups, modals, or banners that block content or prevent scrolling, especially on mobile.
+      </li>
+      <li>
+        <span className="font-semibold">Ensure strong above-the-fold content:</span> Important headings, visuals, and calls-to-action should be visible without scrolling.
+      </li>
+      <li>
+        <span className="font-semibold">Provide clear interaction feedback:</span> Buttons and links should visually respond when users hover, tap, or click.
+      </li>
+      <li>
+        <span className="font-semibold">Improve navigation clarity:</span> Keep navigation shallow, discoverable, and easy to access with clear menus, breadcrumbs, and search when applicable.
+      </li>
+      <li>
+        <span className="font-semibold">Show loading and processing feedback:</span> Use spinners, skeletons, or progress indicators so users know something is happening.
+      </li>
+      <li>
+        <span className="font-semibold">Maintain form usability:</span> Forms should have clear labels, validation feedback, and accessible error messages.
+      </li>
+    </ul>
+  ),
+  calculation: (
+    <div className="space-y-2">
+      <p>We analyze multiple UX and usability signals related to readability, interaction, layout stability, and navigation behavior.</p>
+      <p>Each factor is weighted based on how strongly it impacts real user frustration, especially on mobile. Issues that block interaction or readability have a greater influence on the final score.</p>
+    </div>
+  ),
   weightage: [
     { param: "Mobile & Viewport Configuration", weight: "40%" },
     { param: "Content Readability & Stability", weight: "20%" },
@@ -553,7 +631,7 @@ export default function UX_Content_Structure() {
                         className={`flex items-center gap-2 text-sm font-bold transition-all ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-700"}`}
                       >
                         <Info size={16} />
-                        <span className="border-b border-transparent hover:border-current">Methodology</span>
+                        <span className="border-b border-transparent hover:border-current">Metric Methodology</span>
                       </button>
                     </div>
                   </div>

@@ -59,256 +59,288 @@ const educationalContent = {
     desc: "Ensures secure HTTPS protocol.",
     why: "Encrypts data in transit.",
     use: "Hypertext Transfer Protocol Secure (HTTPS) uses TLS to encrypt communication.",
-    impact: " Prevents eavesdropping and tampering. Essential for trust and SEO.",
-    improvement: "Obtain an SSL certificate and force redirect HTTP to HTTPS."
+    impact: "Prevents eavesdropping. Without it, anyone on the network can read the data your users send.",
+    improvement: "Install an SSL certificate and force your site to load over 'https://'.",
+    calculation: "We check if your site is securely served over an encrypted connection."
   },
   SSL: {
     title: "SSL Certificate",
     desc: "Checks for valid SSL certificate.",
     why: "Authenticates site identity.",
     use: "Verifies that the website has a valid, trusted SSL/TLS certificate.",
-    impact: "Invalid certificates trigger browser warnings, scaring away visitors.",
-    improvement: "Renew certificates before expiry and ensure the chain of trust is complete."
+    impact: "Verifies your identity. Users trust the padlock icon; a warning scares them away immediately.",
+    improvement: "Ensure your security certificate is valid, trusted, and up to date.",
+    calculation: "We verify the validity and chain of trust of your SSL certificate."
   },
   SSL_Expiry: {
     title: "SSL Expiry",
     desc: "Verifies SSL expiry date.",
     why: "Expired certificates block users.",
     use: "Checks the expiration date of the SSL certificate.",
-    impact: "An expired certificate causes 'Not Secure' warnings immediately.",
-    improvement: "Set up auto-renewal (e.g., Let's Encrypt) to avoid downtime."
+    impact: "An expired certificate triggers a 'Not Secure' warning, blocking users from entering your site.",
+    improvement: "Set up auto-renewal for your certificate so it never expires unexpectedly.",
+    calculation: "We check the expiration date to warn you if your certificate is about to expire."
   },
   HSTS: {
     title: "HSTS Header",
     desc: "Enforces HTTPS connections.",
     why: "Prevents downgrade attacks.",
     use: "HTTP Strict Transport Security tells browsers to ONLY use HTTPS.",
-    impact: "Protects against man-in-the-middle attacks stripping SSL.",
-    improvement: "Add 'Strict-Transport-Security' header with a long max-age."
+    impact: "Stops attacks that try to downgrade your secure connection to an insecure one.",
+    improvement: "Enable 'HSTS' on your server to force browsers to always use a secure connection.",
+    calculation: "We look for a specific header that strictly enforces HTTPS connections."
   },
   TLS_Version: {
     title: "TLS Protocol",
     desc: "Validates TLS version.",
     why: "Older versions are insecure.",
     use: "Checks the version of Transport Layer Security protocol used.",
-    impact: "TLS 1.0/1.1 have known vulnerabilities (POODLE, BEAST).",
-    improvement: "Disable TLS 1.0/1.1 and enable TLS 1.2 or 1.3 on the server."
+    impact: "Old security protocols have holes that hackers can exploit.",
+    improvement: "Update your server to support only modern security protocols (TLS 1.2 or 1.3).",
+    calculation: "We check which version of the security protocol your server uses to communicate."
   },
   X_Frame_Options: {
     title: "X-Frame-Options",
     desc: "Protects against clickjacking.",
     why: "Prevents malicious embedding.",
     use: "Controls whether the site can be embedded in an <iframe>.",
-    impact: "Prevents attackers from overlaying invisible frames to trick users into clicking.",
-    improvement: "Set header to 'DENY' or 'SAMEORIGIN'."
+    impact: "Prevents hackers from putting your site inside an invisible frame to trick users (Clickjacking).",
+    improvement: "Add the 'X-Frame-Options' header to stop other sites from embedding yours.",
+    calculation: "We verify if you have rules preventing your site from being embedded in a frame."
   },
   CSP: {
     title: "Content Security Policy",
     desc: "Content Security Policy.",
     why: "Mitigates XSS and injection attacks.",
     use: "Whitelists sources of approved content (scripts, styles, images).",
-    impact: "Stop malicious scripts from running even if injected.",
-    improvement: "Define a strict 'Content-Security-Policy' header."
+    impact: "A strong shield that stops unauthorized scripts from running on your page.",
+    improvement: "Define a policy that allows content only from trusted sources.",
+    calculation: "We check if you have a policy that restricts where content can be loaded from."
   },
   X_Content_Type_Options: {
     title: "MIME Sniffing",
     desc: "Prevents MIME sniffing.",
     why: "Stops file type exploits.",
     use: "Prevents browsers from interpreting files as a different MIME type.",
-    impact: "Stops drive-by download attacks disguised as images.",
-    improvement: "Set 'X-Content-Type-Options: nosniff'."
+    impact: "Stops browsers from being tricked into running a file as a script when it shouldn't be.",
+    improvement: "Add this header to tell browsers to strictly follow the file types you declare.",
+    calculation: "We look for a header that prevents 'MIME-sniffing' attacks."
   },
   Cookies_Secure: {
     title: "Secure Cookies",
     desc: "Ensures Secure flag on cookies.",
     why: "Protects cookies over network.",
     use: "Ensures cookies are only sent over encrypted HTTPS connections.",
-    impact: "Prevents cookies from being stolen over unencrypted HTTP.",
-    improvement: "Set the 'Secure' flag when setting cookies."
+    impact: "Ensures cookies (like login sessions) are only sent over secure channels.",
+    improvement: "Add the 'Secure' flag to your cookies so they never travel over plain HTTP.",
+    calculation: "We verify that sensitive cookies are marked to be sent only over HTTPS."
   },
   Cookies_HttpOnly: {
     title: "HttpOnly Cookies",
     desc: "Prevents JS access to cookies.",
     why: "Mitigates XSS cookie theft.",
     use: "Prevents client-side scripts (JavaScript) from accessing cookies.",
-    impact: "Even if XSS occurs, the attacker cannot steal session tokens.",
-    improvement: "Set the 'HttpOnly' flag for session identifiers."
+    impact: "Prevents malicious scripts from stealing your users' login cookies.",
+    improvement: "Add the 'HttpOnly' flag to cookies so JavaScript cannot access them.",
+    calculation: "We check if your cookies are protected from being accessed by client-side scripts."
   },
   Google_Safe_Browsing: {
     title: "Safe Browsing",
     desc: "Checks Google blacklist.",
     why: "Ensures site isn't flagged.",
     use: "Checks if the domain is listed in Google's database of unsafe sites.",
-    impact: "Flagged sites show a 'Deceptive Site Ahead' red screen to users.",
-    improvement: "Request a review in Google Search Console if flagged."
+    impact: "If Google thinks your site is unsafe, they will show a giant red warning screen to users.",
+    improvement: "Keep your site clean of malware and request a review if you are flagged.",
+    calculation: "We check if your domain is listed on Google's blacklist of unsafe sites."
   },
   Blacklist: {
     title: "Domain Blacklist",
     desc: "Domain blacklist check.",
     why: "Protects reputation.",
     use: "Checks multiple DNS blacklists (spam, malware).",
-    impact: "Being blacklisted affects email deliverability and trust.",
-    improvement: "Monitor domain reputation and clean up malware if infected."
+    impact: "Being blacklisted ruins your reputation and causes your emails to go to spam.",
+    improvement: "Monitor your domain's health and remove any malware immediately.",
+    calculation: "We check multiple global blacklists to see if your domain has been flagged."
   },
   Malware_Scan: {
     title: "Malware Detection",
     desc: "Scans for malware.",
     why: "Detects malicious code.",
     use: "Scans page content for known malicious signatures or obfuscated code.",
-    impact: "Malware steals user data and ruins site reputation.",
-    improvement: "Use security plugins, scanners, and keep software updated."
+    impact: "Malware steals user data and destroys trust. It can get your site banned.",
+    improvement: "Use security scanners and keep your software/plugins updated to prevent infection.",
+    calculation: "We scan your page source for signatures of common malicious code."
   },
   SQLi_Exposure: {
     title: "SQL Injection",
     desc: "SQL Injection check.",
     why: "Prevents database compromise.",
     use: "Checks if inputs can manipulate database queries.",
-    impact: "Attackers can dump the entire database or delete data.",
-    improvement: "Use prepared statements (parameterized queries) and validate inputs."
+    impact: "A major hole that lets attackers steal or delete your entire database.",
+    improvement: "Sanitize all user inputs (forms, search bars) to prevent code injection.",
+    calculation: "We test your input fields to see if they are vulnerable to database manipulation attacks."
   },
   XSS: {
     title: "XSS Protection",
     desc: "Cross-Site Scripting check.",
     why: "Prevents script injection.",
     use: "Checks if user input is properly escaped before rendering.",
-    impact: "XSS allows account takeover and defacement.",
-    improvement: "Sanitize all user inputs and escape outputs."
+    impact: "Allows attackers to inject malicious scripts that can steal accounts or deface your site.",
+    improvement: "Ensure your code 'escapes' (cleans) any user input before showing it on screen.",
+    calculation: "We check if your site properly handles and neutralizes potential script injections."
   },
   Cookie_Consent: {
     title: "Cookie Consent",
     desc: "GDPR Cookie Consent.",
     why: "Legal compliance.",
     use: "Verifies if a cookie consent banner is present.",
-    impact: "Required by GDPR/CCPA. Non-compliance leads to fines.",
-    improvement: "Implement a compliant cookie consent manager."
+    impact: "Required by law (GDPR/CCPA). Ignoring it can lead to heavy fines.",
+    improvement: "Add a clear banner asking users for permission to track them with cookies.",
+    calculation: "We look for a visible banner or popup that manages user consent."
   },
   Privacy_Policy: {
     title: "Privacy Policy",
     desc: "Privacy Policy check.",
     why: "Builds user trust.",
     use: "Checks for the existence of a privacy policy page.",
-    impact: "Legal requirement in most jurisdictions.",
-    improvement: "Create a clear Privacy Policy page and link it in the footer."
+    impact: "Building trust is key. Users and laws require you to explain how you handle data.",
+    improvement: "Create a clear Privacy Policy page and link to it from your footer.",
+    calculation: "We verify that your site has a page explaining your privacy practices."
   },
   Forms_Use_HTTPS: {
     title: "Secure Forms",
     desc: "Secure form submission.",
     why: "Protects user input.",
     use: "Ensures login and contact forms submit data over HTTPS.",
-    impact: "Sending passwords over HTTP exposes them to attackers.",
-    improvement: "Update <form action=...> URLs to use https://."
+    impact: "Sending passwords or messages over an insecure connection allows hackers to read them.",
+    improvement: "Ensure all login and contact forms submit data specifically to 'https' URLs.",
+    calculation: "We check that your forms send data securely, not over plain text connections."
   },
   GDPR_CCPA: {
     title: "GDPR/CCPA",
     desc: "Data protection compliance.",
     why: "Avoids legal fines.",
     use: "Checks for signs of data privacy regulation compliance.",
-    impact: "Protects user rights regarding their personal data.",
-    improvement: "Audit data collection and provide opt-out mechanisms."
+    impact: "Protects user rights. Users want to know they can control their personal data.",
+    improvement: "Provide a clear way for users to request or delete their data ('Do Not Sell My Info').",
+    calculation: "We check for specific legal compliance links and keywords on your site."
   },
   Data_Collection: {
     title: "Data Collection",
     desc: "Data collection disclosure.",
     why: "Transparency with users.",
     use: "Identifies if the site collects sensitive data.",
-    impact: "Users demand transparency about what data is collected.",
-    improvement: "Clearly state data collection practices."
+    impact: "Users are wary of giving info. Transparency increases likelihood of conversion.",
+    improvement: "Only ask for data you need and explain clearly why you need it.",
+    calculation: "We identify what data you are collecting through forms and check for transparency."
   },
   Weak_Default_Credentials: {
     title: "Default Credentials",
     desc: "Checks default passwords.",
     why: "Prevents easy takeovers.",
     use: "Checks for exposed default login paths or credentials.",
-    impact: "Easiest way for botnets to hijack a site.",
-    improvement: "Change default admin usernames and passwords."
+    impact: "Leaving default passwords (like 'admin') is the easiest way to get hacked.",
+    improvement: "Change all default usernames and passwords immediately after installation.",
+    calculation: "We check if common default admin pages are accessible."
   },
   MFA_Enabled: {
     title: "MFA Status",
     desc: "Multi-Factor Authentication.",
     why: "Adds security layer.",
     use: "Checks if MFA is enforced for sensitive areas.",
-    impact: "Prevents 99.9% of account compromise attacks.",
-    improvement: "Enable 2FA/MFA for all admin accounts."
+    impact: "The single most effective way to prevent unauthorized account access.",
+    improvement: "Enable Two-Factor Authentication (2FA) for all administrator accounts.",
+    calculation: "We look for signs that extra login security is required for admin areas."
   },
   Admin_Panel_Public: {
     title: "Admin Exposure",
     desc: "Exposed admin panel.",
     why: "Reduces attack surface.",
     use: "Checks if admin login pages are publicly accessible.",
-    impact: "Invites brute-force attacks.",
-    improvement: "Restrict admin access by IP or use a VPN."
+    impact: "Exposing your login page to the whole world invites brute-force attacks.",
+    improvement: "Hide your admin login page or restrict access to trusted IP addresses.",
+    calculation: "We check if your administrative login page is visible to the public."
   },
   Viewport_Meta_Tag: {
     title: "Viewport Meta",
     desc: "Mobile responsiveness.",
     why: "Essential for UX.",
     use: "Controls layout on mobile browsers.",
-    impact: "Without it, mobile users see a microscopic desktop version.",
-    improvement: "Add <meta name='viewport' content='width=device-width, initial-scale=1'>"
+    impact: "Without this, mobile phones will display a tiny, unreadable desktop version of your site.",
+    improvement: "Add the viewport tag to ensure your site is mobile-friendly.",
+    calculation: "We check if your code tells mobile browsers how to scale the page correctly."
   },
   HTML_Doctype: {
     title: "Doctype",
     desc: "HTML Doctype declaration.",
     why: "Ensures correct rendering.",
     use: "Specifies the HTML version to the browser.",
-    impact: "Prevents 'Quirks Mode' which breaks layout consistency.",
-    improvement: "Start every HTML document with <!DOCTYPE html>."
+    impact: "Tells the browser which version of code you are using. Prevents layout errors.",
+    improvement: "Start every HTML file with the standard DOCTYPE declaration.",
+    calculation: "We verify that your document starts with the correct type declaration."
   },
   Character_Encoding: {
     title: "Charset",
     desc: "UTF-8 encoding.",
     why: "Prevents text issues.",
     use: "Specifies how characters are represented.",
-    impact: "Incorrect encoding turns special characters into garbled text.",
-    improvement: "Use <meta charset='UTF-8'> in the <head>."
+    impact: "Without this, special characters (like emojis or accents) will look like broken symbols.",
+    improvement: "Set your encoding to 'UTF-8' so text displays correctly in all languages.",
+    calculation: "We check if you have declared the correct text character set."
   },
   Browser_Console_Errors: {
     title: "Console Errors",
     desc: "Console errors.",
     why: "Indicates broken code.",
     use: "Checks for JavaScript errors in the browser console.",
-    impact: "Errors often mean broken functionality for the user.",
-    improvement: "Debug and fix JavaScript runtime errors."
+    impact: "Errors in the code indicate broken features that frustrate users.",
+    improvement: "Check your browser console and fix any red error messages.",
+    calculation: "We monitor the browser console for errors that occur while the page loads."
   },
   Geolocation_Request: {
     title: "Geolocation",
     desc: "Geolocation permissions.",
     why: "Respects user privacy.",
     use: "Checks if the site requests location data immediately on load.",
-    impact: "Requesting location without context annoys users/leads to high denial rates.",
-    improvement: "Request location only after a user interaction."
+    impact: "Asking for location immediately annoys users and leads to high 'Block' rates.",
+    improvement: "Only ask for location when the user actually taps a button (like 'Find Store').",
+    calculation: "We check if your site requests location access without user interaction."
   },
   Input_Paste_Allowed: {
     title: "Paste Check",
     desc: "Paste restrictions.",
     why: "Bad UX and security.",
     use: "Checks if pasting is blocked in password fields.",
-    impact: "Blocking paste forces manual entry, encouraging weak passwords and frustrating users.",
-    improvement: "Allow pasting in password fields (NIST recommendation)."
+    impact: "Blocking paste forces users to type long passwords, leading to typos and frustration.",
+    improvement: "Allow users to paste into password fields. It improves security (password managers).",
+    calculation: "We verify that you have not disabled the 'paste' functionality on forms."
   },
   Notification_Request: {
     title: "Notifications",
     desc: "Notification permissions.",
     why: "Avoids user annoyance.",
     use: "Checks for push notification prompts on load.",
-    impact: "Immediate prompts lead to high block rates and bounce.",
-    improvement: "Ask for notification permission only when relevant."
+    impact: "Popups asking for notifications on load are universally hated and usually blocked.",
+    improvement: "Ask for permission only after the user requests to be notified.",
+    calculation: "We check if your site interrupts the user with a notification prompt immediately."
   },
   Third_Party_Cookies: {
     title: "3rd Party Cookies",
     desc: "Third-party cookies.",
     why: "Privacy concern.",
     use: "Cookies set by domains other than the website itself.",
-    impact: "Track users across the web; increasingly blocked by browsers.",
-    improvement: "Reduce reliance on third-party tracking pixels."
+    impact: "Tracking users across the web is becoming restricted and lowers trust.",
+    improvement: "Focus on first-party data. Reduce reliance on external advertising trackers.",
+    calculation: "We identify cookies set by other domains that track user behavior."
   },
   Deprecated_APIs: {
     title: "Deprecated APIs",
     desc: "Deprecated APIs.",
     why: "Avoids security holes.",
     use: "Checks for usage of old, insecure browser features.",
-    impact: "Deprecated features may be removed, breaking the site.",
-    improvement: "Update code to use modern standard APIs."
+    impact: "Using old, removed code features can make your site stop working in new browsers.",
+    improvement: "Update your codebase to use modern, standard browser features.",
+    calculation: "We scan your code for outdated features that browsers are removing."
   },
 };
 
@@ -316,10 +348,50 @@ const educationalContent = {
 // ✅ Score Calculation Info (Weighted Average)
 // ------------------------------------------------------
 const scoreCalculationInfo = {
-  title: "Score Calculation",
-  use: "The Security score is a weighted assessment of critical security headers and vulnerabilities.",
-  impact: "A high security score builds trust and prevents data breaches.",
-  improvement: "Ensure SSL, HSTS, and Content Security Policy (CSP) are enabled.",
+  icon: ShieldCheck,
+  title: "Security & Compliance",
+  guideLink: "https://owasp.org/www-project-top-ten/",
+  use: (
+    <div className="space-y-2">
+      <p>Evaluates how securely your website is configured and whether it follows modern security, privacy, and compliance best practices.</p>
+      <p>It checks encryption, security headers, vulnerabilities, malware risks, data protection, authentication safeguards, and user privacy signals.</p>
+    </div>
+  ),
+  impact: "Security issues put users, data, and your business at risk. Weak configurations can lead to breaches, malware infections, regulatory violations, and loss of trust. A secure and compliant website protects users, reduces legal exposure, and builds credibility with customers and search engines.",
+  improvement: (
+    <ul className="list-disc pl-5 space-y-2">
+      <li>
+        <span className="font-semibold">Secure your site with HTTPS and valid SSL:</span> Ensure your site uses HTTPS, has a valid SSL certificate, and supports modern encryption protocols.
+      </li>
+      <li>
+        <span className="font-semibold">Harden security headers:</span> Use headers that protect against common attacks, such as clickjacking, content injection, and MIME sniffing.
+      </li>
+      <li>
+        <span className="font-semibold">Protect against common vulnerabilities:</span> Prevent exposure to issues like SQL injection, cross-site scripting (XSS), and insecure admin access.
+      </li>
+      <li>
+        <span className="font-semibold">Avoid weak or default credentials:</span> Ensure login systems are protected with secure credentials, proper access controls, and modern authentication practices.
+      </li>
+      <li>
+        <span className="font-semibold">Enable multi-factor authentication where possible:</span> Adding MFA or secure single sign-on greatly reduces account takeover risks.
+      </li>
+      <li>
+        <span className="font-semibold">Ensure cookies and forms are handled securely:</span> Cookies should be properly flagged, and forms should submit data over secure connections only.
+      </li>
+      <li>
+        <span className="font-semibold">Comply with privacy and data protection expectations:</span> Display cookie consent notices, privacy policies, and disclosures about how user data is collected and used.
+      </li>
+      <li>
+        <span className="font-semibold">Prevent unnecessary permission requests:</span> Avoid requesting sensitive permissions (such as notifications or location) without clear user intent.
+      </li>
+    </ul>
+  ),
+  calculation: (
+    <div className="space-y-2">
+      <p>We evaluate your site across multiple security and compliance categories, including encryption, headers, vulnerabilities, authentication, malware reputation, and privacy practices.</p>
+      <p>Each check is weighted based on risk severity. Critical security issues have a stronger impact on the final score, ensuring the result reflects real-world security risk rather than cosmetic issues.</p>
+    </div>
+  ),
   weightage: [
     { param: "Vulnerability Scanning", weight: "35%" },
     { param: "Browser Security & Best Practices", weight: "20%" },
@@ -441,7 +513,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
                 onInfo();
               }}
               className={`p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
-              title="Learn more"
+              title="View Methodology"
             >
               <Info size={18} />
             </button>
@@ -656,7 +728,7 @@ export default function Security_Compilance() {
                         className={`flex items-center gap-2 text-sm font-bold transition-all ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-700"}`}
                       >
                         <Info size={16} />
-                        <span className="border-b border-transparent hover:border-current">Methodology</span>
+                        <span className="border-b border-transparent hover:border-current">Metric Methodology</span>
                       </button>
                     </div>
                   </div>

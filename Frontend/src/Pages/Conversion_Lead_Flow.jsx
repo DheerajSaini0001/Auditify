@@ -60,248 +60,279 @@ const educationalContent = {
     desc: "Checks if primary CTAs are visible.",
     why: "Visible CTAs guide users.",
     use: "Checks if the Call to Action button is above the fold and distinguishable.",
-    impact: "Invisible or hard-to-find CTAs drastically reduce conversion rates.",
-    improvement: "Use contrasting colors and plenty of whitespace around CTAs."
+    impact: "If users can't find the 'Buy' button instantly, they can't buy. It's that simple.",
+    improvement: "Make your main button big, bold, and distinct from everything else.",
+    calculation: "We check if your main Call-to-Action button is clearly visible without scrolling."
   },
   CTA_Clarity: {
     title: "CTA Clarity",
     desc: "Evaluates CTA text clarity.",
     why: "Clear text reduces cognitive load.",
     use: "Analyzes button text for action-oriented language.",
-    impact: "Vague labels like 'Submit' perform worse than 'Get My Free Quote'.",
-    improvement: "Use clear, benefit-driven text (e.g., 'Start Free Trial')."
+    impact: "Vague buttons like 'Submit' kill curiosity. Clear buttons like 'Get My Free Guide' drive action.",
+    improvement: "Use action-oriented text that tells the user exactly what they will get.",
+    calculation: "We read your button text to see if it uses persuasive, action-oriented words."
   },
   CTA_Contrast: {
     title: "CTA Contrast",
     desc: "Assesses button contrast.",
     why: "High contrast ensures accessibility.",
     use: "Measures color contrast ratio against the background.",
-    impact: "Low contrast buttons blend in, causing users to miss them.",
-    improvement: "Ensure a contrast ratio of at least 4.5:1 (WCAG AA)."
+    impact: "Buttons that blend in get ignored. Your primary action must pop off the screen.",
+    improvement: "Use a color for your main button that stands out strongly against the background.",
+    calculation: "We measure how much your button color stands out from the background color."
   },
   CTA_Crowding: {
     title: "CTA Crowding",
     desc: "Checks for cluttered CTAs.",
     why: "Crowding causes decision paralysis.",
     use: "Checks proximity of other clickable elements to the CTA.",
-    impact: "Too many choices overwhelm users (Hick's Law), leading to no action.",
-    improvement: "Isolate primary CTAs. Provide only one main goal per section."
+    impact: "Too many choices confuse users. When faced with clutter, people choose nothing.",
+    improvement: "Give your main button plenty of breathing room (whitespace).",
+    calculation: "We check if other clickable items are too close to your main button."
   },
   CTA_Flow_Alignment: {
     title: "Flow Alignment",
     desc: "Checks CTA placement flow.",
     why: "CTAs should match user intent.",
     use: "Checks if CTAs appear logically after value propositions.",
-    impact: "Asking for a sale before explaining value leads to rejection.",
-    improvement: "Place CTAs after key benefits or testimonials."
+    impact: "Asking for a sale before explaining the value is like proposing on the first date.",
+    improvement: "Place your Call-to-Action immediately after you've made your best pitch.",
+    calculation: "We check if your buttons appear logically after persuasive content."
   },
   Form_Presence: {
     title: "Lead Capture Form",
     desc: "Verifies form existence.",
     why: "Forms capture lead data.",
     use: "Detects input forms on the landing page.",
-    impact: "No form means no way to collect user info (unless pure click-through).",
-    improvement: "Embed a simple signup form or email capture field."
+    impact: "You can't get leads if you don't ask. No form means no way to follow up.",
+    improvement: "Add a simple email signup form to capture interested visitors.",
+    calculation: "We look for a form on your page designed to collect user information."
   },
   Form_Length: {
     title: "Form Length",
     desc: "Measures form complexity.",
     why: "Short forms convert better.",
     use: "Counts the number of input fields in the form.",
-    impact: "Each extra field reduces conversion rate by ~10-15%.",
-    improvement: "Ask only for essential info (e.g., Email). Enrich data later."
+    impact: "Every extra field you ask for cuts your conversion rate significantly.",
+    improvement: "Ask only for what you absolutely need (usually just an email).",
+    calculation: "We count the number of fields in your forms. Fewer is better."
   },
   Required_vs_Optional_Fields: {
     title: "Field Requirements",
     desc: "Checks field markings.",
     why: "Clarity prevents frustration.",
     use: "Checks if required fields are clearly marked (asterisks or labels).",
-    impact: "Users hate guessing which fields are mandatory upon submission error.",
-    improvement: "Mark optional fields explicitly or remove them."
+    impact: "Users hate guessing. Error messages frustrate them and cause drop-offs.",
+    improvement: "Clearly mark which fields are required so users get it right the first time.",
+    calculation: "We check if required fields are visually distinguished from optional ones."
   },
   Inline_Validation: {
     title: "Inline Validation",
     desc: "Checks for real-time validation.",
     why: "Instant feedback improves UX.",
     use: "Checks if the form gives feedback as the user types.",
-    impact: "Waiting until submit to show errors frustrating users and causes abandonment.",
-    improvement: "Implement real-time validation (green checkmarks/red borders)."
+    impact: "Waiting until the end to say 'Error' is annoying. Real-time feedback feels superior.",
+    improvement: "Show a green checkmark as soon as a user fills a field correctly.",
+    calculation: "We check if the form gives immediate feedback while typing."
   },
   Submit_Button_Clarity: {
     title: "Submit Button",
     desc: "Analyzes submit button.",
     why: "Action must be obvious.",
     use: "Checks the text of the form submit button.",
-    impact: "Generic 'Submit' buttons feel transactional and boring.",
-    improvement: "Use value-based text like 'Send Me the Guide'."
+    impact: "'Submit' is boring technical jargon. It feels like filing taxes, not getting value.",
+    improvement: "Change 'Submit' to something exciting like 'Join the Club' or 'Start Now'.",
+    calculation: "We check if you are using generic words or exciting action phrases on buttons."
   },
   AutoFocus_Field: {
     title: "Auto-Focus",
     desc: "Checks auto-focus.",
     why: "Saves user clicks.",
     use: "Checks if the first input is auto-focused on load.",
-    impact: "Auto-focus prompts users to start typing immediately, increasing engagement.",
-    improvement: "Add 'autofocus' attribute to the first input on landing pages."
+    impact: "Autofocus invites the user to type immediately, reducing friction.",
+    improvement: "Make the cursor jump automatically to the first field when the page loads.",
+    calculation: "We check if the first input field is automatically selected on load."
   },
   MultiStep_Form_Progress: {
     title: "Multi-step Progress",
     desc: "Checks progress indicators.",
     why: "Encourages completion.",
     use: "Detects progress bars for long forms.",
-    impact: "Users abandon long forms if they don't know how much is left.",
-    improvement: "Show 'Step 1 of 3' or a progress bar for complex forms."
+    impact: "Long forms feel endless without a map. Users quit if they don't know how far they have to go.",
+    improvement: "Show a simple progress bar (Step 1 of 3) to keep users motivated.",
+    calculation: "For pages with multiple forms or steps, we check for visual progress indicators (e.g., 'Step X of Y' or progress bars)."
   },
   Testimonials: {
     title: "Testimonials",
     desc: "Validates testimonials.",
     why: "Social proof builds trust.",
     use: "Scans for testimonial sections or quotes.",
-    impact: "Social proof is a top psychological driver of conversion.",
-    improvement: "Add authentic customer quotes with photos."
+    impact: "People trust other people more than they trust brands. Social proof is a powerful persuader.",
+    improvement: "Showcase quote from a happy customer to build instant credibility.",
+    calculation: "We check for sections that look like customer quotes or reviews."
   },
   Reviews: {
     title: "Reviews",
     desc: "Checks for reviews.",
     why: "Reviews influence decisions.",
     use: "Checks for star ratings or review widgets.",
-    impact: "0 reviews signals a lack of usage or trust.",
-    improvement: "Embed reviews from Google, Trustpilot, or G2."
+    impact: "Zero reviews looks suspicious. 5-star reviews drive sales.",
+    improvement: "Embed reviews from Google, Trustpilot, or other trusted sources.",
+    calculation: "We look for star ratings or widgets from review platforms."
   },
   Trust_Badges: {
     title: "Trust Badges",
     desc: "Detects trust badges.",
     why: "Badges reassure users.",
     use: "Scans for security seals, guarantees, or partner logos.",
-    impact: "Visual symbols of trust reduce anxiety about scams.",
-    improvement: "Add badges like 'Secure Checkout', '30-Day Guarantee'."
+    impact: "Badges reduce anxiety. They tell users 'your money and data are safe here'.",
+    improvement: "Add recognizable security seals or money-back guarantee badges.",
+    calculation: "We look for images containing keywords like 'secure', 'guarantee', or 'trusted'."
   },
   Client_Logos: {
     title: "Client Logos",
     desc: "Verifies client logos.",
     why: "Logos establish authority.",
     use: "Checks for a 'Trusted By' logo strip.",
-    impact: "Recognizable brands transfer credibility to you.",
-    improvement: "Showcase logos of your best known clients."
+    impact: "If big brands trust you, new visitors will too. It's borrowed credibility.",
+    improvement: "Display a 'Trusted By' strip with logos of recognizable clients.",
+    calculation: "We check for a row of images typically found in a 'Trusted By' section."
   },
   Case_Studies_Accessibility: {
     title: "Case Studies",
     desc: "Checks case studies.",
     why: "Proof of value.",
     use: "Checks for links to 'Case Studies' or 'Success Stories'.",
-    impact: "Deep dive content proves your solution works.",
-    improvement: "Link to at least one detailed case study."
+    impact: "Claims are cheap. Proof is valuable. Case studies show exactly how you deliver results.",
+    improvement: "Link clearly to success stories or detailed case studies.",
+    calculation: "We scan links for anchor text related to 'Case Studies' or 'Success Stories'."
   },
   Exit_Intent_Triggers: {
     title: "Exit Intent",
     desc: "Detects exit popups.",
     why: "Recovers lost leads.",
     use: "Checks for scripts that trigger on mouse leaving the window.",
-    impact: "Can recover 10-15% of abandoning visitors.",
-    improvement: "Offer a discount or lead magnet when user tries to leave."
+    impact: "Most visitors leave and never come back. An exit popup gives you one last chance.",
+    improvement: "Offer a special deal or free guide just as a user tries to close the tab.",
+    calculation: "We detect code that tracks when a user's mouse moves to leave the page."
   },
   Lead_Magnets: {
     title: "Lead Magnet",
     desc: "Checks for lead magnets.",
     why: "Incentivizes signups.",
     use: "Checks for downloadable resources (PDFs, Ebooks).",
-    impact: "Users rarely give emails for nothing. Value exchange is key.",
-    improvement: "Offer a free checklist, ebook, or trial."
+    impact: "Visitors rarely give their email for free. You need to offer something valuable in return.",
+    improvement: "Offer a free ebook, checklist, or discount in exchange for their email.",
+    calculation: "We check for offers of free content (PDFs, Guides) in exchange for signups."
   },
   Contact_Info_Visibility: {
     title: "Contact Info",
     desc: "Ensures contact info visibility.",
     why: "Builds trust.",
     use: "Checks for phone number, email, or physical address.",
-    impact: "Hidden contact info makes a company look like a shell entity.",
-    improvement: "Put your phone or email clearly in the footer/header."
+    impact: "Hiding your contact info makes you look like a scam. Transparency builds trust.",
+    improvement: "Put your phone number or email clearly in the header or footer.",
+    calculation: "We scan the page for phone numbers, emails, or address details."
   },
   Chatbot_Presence: {
     title: "Live Chat",
     desc: "Verifies chatbot.",
     why: "Provides instant support.",
     use: "Detects live chat widgets (Intercom, Drift).",
-    impact: "Answers pre-sale questions instantly, boosting conversion.",
-    improvement: "Install a live chat or support bot."
+    impact: "Customers have questions now. If they have to wait, they go to a competitor.",
+    improvement: "Add a live chat widget to answer pre-sale questions instantly.",
+    calculation: "We check for scripts from popular live chat services."
   },
   Interactive_Elements: {
     title: "Interactivity",
     desc: "Checks interactive tools.",
     why: "Increases engagement.",
     use: "Checks for calculators, quizzes, or interactive demos.",
-    impact: "Interactive content converts 2x better than static content.",
-    improvement: "Add a 'ROI Calculator' or 'Product Quiz'."
+    impact: "Passive reading is boring. Quizzes and calculators engage users and capture leads.",
+    improvement: "Add a simple ROI calculator or a 'Find your fit' quiz.",
+    calculation: "We look for interactive tools like sliders, calculators, or quizzes."
   },
   Personalization: {
     title: "Personalization",
     desc: "Assesses personalization.",
     why: "Relevance boosts conversion.",
     use: "Checks for dynamic text replacement or personalized greetings.",
-    impact: "Generic pages convert less than tailored ones.",
-    improvement: "Use URL parameters to personalize headlines."
+    impact: "Generic messages get generic results. Speaking 'to' the user converts better.",
+    improvement: "Use dynamic text to welcome users based on where they came from.",
+    calculation: "We check for scripts that change content based on user data."
   },
   Progress_Indicators: {
     title: "Progress Indicators",
     desc: "Validates progress bars.",
     why: "Visualizes completion.",
     use: "Checks for step visualizers in funnels.",
-    impact: "Reduces anxiety about process length.",
-    improvement: "Visually show steps (1 -> 2 -> 3) in checkout."
+    impact: "Seeing progress (Step 1 -> 2) motivates users to finish what they started.",
+    improvement: "Visually number the steps in your process or checkout flow.",
+    calculation: "We check for numbered lists or visual steps indicating a process."
   },
   Friendly_Error_Handling: {
     title: "Error Messages",
     desc: "Ensures clear errors.",
     why: "Helps users recover.",
     use: "Checks if error messages are helpful vs generic.",
-    impact: "'Error 500' scares users. 'Please enter a valid email' helps them.",
-    improvement: "Write human-friendly error copy."
+    impact: "Technical errors scare users away. Friendly help keeps them on track.",
+    improvement: "Rewrite error messages to be human, helpful, and polite.",
+    calculation: "We verify if error messages provide helpful guidance."
   },
   Microcopy_Clarity: {
     title: "Microcopy",
     desc: "Checks helper text.",
     why: "Guides users smoothly.",
     use: "Checks for small instructional text under fields.",
-    impact: "Clarifies ambiguity (e.g., 'No credit card required').",
-    improvement: "Add reassuring microcopy near friction points."
+    impact: "Tiny text can remove big fears. 'No credit card required' is a powerful friction remover.",
+    improvement: "Add helpful reassurances under your signup buttons.",
+    calculation: "We look for small helper text near input fields."
   },
   Incentives_Displayed: {
     title: "Incentives",
     desc: "Verifies incentives.",
     why: "Motivates action.",
     use: "Checks for 'Free Shipping', 'Bonus', 'Discount' keywords.",
-    impact: "Sweetening the deal tips the scales for hesitant users.",
-    improvement: "Highlight free shipping or bonuses near the button."
+    impact: "Everyone loves a deal. A clear bonus can be the tipping point for a decision.",
+    improvement: "Clearly mention 'Free Shipping', 'Bonus', or 'Discount' near your price.",
+    calculation: "We scan for keywords related to improved value or savings."
   },
   Scarcity_Urgency: {
     title: "Urgency Signals",
     desc: "Checks urgency triggers.",
     why: "Encourages immediate action.",
     use: "Checks for countdown timers or 'Limited Stock' warnings.",
-    impact: "FOMO (Fear Of Missing Out) drives faster decisions.",
-    improvement: "Use authentic urgency (e.g., 'Offer ends soon')."
+    impact: "Procrastination kills sales. Genuine urgency forces a decision now.",
+    improvement: "Use 'Limited Time' offers or countdowns, but always be honest.",
+    calculation: "We detect elements that signal time sensitivity or limited stock."
   },
   Smooth_Scrolling: {
     title: "Smooth Scroll",
     desc: "Ensures smooth scroll.",
     why: "Enhances feel.",
     use: "Checks for 'scroll-behavior: smooth' in CSS.",
-    impact: "Jerky anchor jumps feel broken/old.",
-    improvement: "Enable smooth scrolling for anchor links."
+    impact: "Jerky movement feels cheap. Smooth movement feels premium.",
+    improvement: "Enable 'smooth scrolling' in your site's code.",
+    calculation: "We check your CSS settings for smooth scrolling behavior."
   },
   Mobile_CTA_Adaptation: {
     title: "Mobile Sticky CTA",
     desc: "Checks mobile CTAs.",
     why: "Critical for mobile users.",
     use: "Checks if a sticky CTA exists on mobile screens.",
-    impact: "Mobile users shouldn't scroll miles to find the buy button.",
-    improvement: "Add a sticky bottom bar with a CTA on mobile."
+    impact: "Mobile screens are small. Don't make users scroll for miles to find the button.",
+    improvement: "Stick a 'Buy' button to the bottom of the screen on mobile devices.",
+    calculation: "We check if a Call-to-Action button stays visible on mobile screens."
   },
   MultiChannel_FollowUp: {
     title: "Retargeting",
     desc: "Verifies follow-up.",
     why: "Increases retention.",
     use: "Checks for retargeting pixels (FB Pixel, LinkedIn Insight).",
-    impact: "Most users don't buy on visit 1. Retargeting brings them back.",
-    improvement: "Install Facebook Pixel and Google Ads Tag."
+    impact: "97% of visitors don't buy the first time. You need a way to bring them back.",
+    improvement: "Install tracking pixels (Facebook/Google) to show ads to past visitors.",
+    calculation: "We look for tracking scripts used for retargeting ads."
   },
 };
 
@@ -309,10 +340,81 @@ const educationalContent = {
 // ✅ Score Calculation Info (Standard Weights)
 // ------------------------------------------------------
 const scoreCalculationInfo = {
-  title: "Score Calculation",
-  use: "The Conversion score measures how effective page elements are at driving user action.",
-  impact: "Higher conversion scores mean more leads, sales, and engagement.",
-  improvement: "Ensure CTA visibility, simplified forms, and visible trust signals.",
+  icon: Target,
+  title: "Conversion & Lead Flow",
+  guideLink: "https://www.nngroup.com/articles/web-form-design/",
+  use: (
+    <div className="space-y-2">
+      <p>Measures how effectively your website guides visitors toward taking meaningful actions — such as signing up, contacting you, or making a purchase.</p>
+      <p>It evaluates call-to-action quality, lead capture forms, trust signals, engagement elements, and overall conversion flow clarity.</p>
+    </div>
+  ),
+  impact: (
+    <div className="space-y-2">
+      <p>Traffic alone doesn’t grow a business — conversions do.</p>
+      <p>If users can’t clearly see what to do next, don’t trust the page, or feel friction while taking action, they’ll leave. Strong conversion flow turns visitors into leads, customers, and revenue.</p>
+    </div>
+  ),
+  improvement: (
+    <ul className="list-disc pl-5 space-y-4">
+      <li>
+        <span className="font-semibold block mb-1">Improve Call-to-Action (CTA) effectiveness:</span>
+        <ul className="list-[circle] pl-5 space-y-1 text-sm">
+          <li>Make sure primary CTAs are visible and easy to find</li>
+          <li>Use clear, action-oriented language (e.g. “Get Started”, “Sign Up”)</li>
+          <li>Ensure CTA buttons stand out visually with strong contrast</li>
+          <li>Avoid cluttering the page with too many CTAs</li>
+          <li>Place CTAs where they naturally fit the user’s reading flow</li>
+        </ul>
+      </li>
+      <li>
+        <span className="font-semibold block mb-1">Optimize forms and lead capture:</span>
+        <ul className="list-[circle] pl-5 space-y-1 text-sm">
+          <li>Keep forms short and focused</li>
+          <li>Clearly mark required vs optional fields</li>
+          <li>Use descriptive submit buttons, not generic labels</li>
+          <li>Add inline validation to prevent form errors</li>
+          <li>Provide progress indicators for multi-step forms</li>
+          <li>Use autofocus to help users start faster</li>
+        </ul>
+      </li>
+      <li>
+        <span className="font-semibold block mb-1">Build trust and credibility:</span>
+        <ul className="list-[circle] pl-5 space-y-1 text-sm">
+          <li>Display testimonials, reviews, or ratings</li>
+          <li>Show trust badges or security indicators where relevant</li>
+          <li>Highlight client logos or case studies</li>
+          <li>Make contact information easy to find</li>
+        </ul>
+      </li>
+      <li>
+        <span className="font-semibold block mb-1">Support engagement and follow-through:</span>
+        <ul className="list-[circle] pl-5 space-y-1 text-sm">
+          <li>Offer lead magnets like guides or downloads</li>
+          <li>Use chat or live support where appropriate</li>
+          <li>Add subtle incentives or offers</li>
+          <li>Avoid aggressive popups, but support exit-intent thoughtfully</li>
+          <li>Include social or multi-channel follow-up options</li>
+        </ul>
+      </li>
+      <li>
+        <span className="font-semibold block mb-1">Reduce friction during interaction:</span>
+        <ul className="list-[circle] pl-5 space-y-1 text-sm">
+          <li>Provide clear microcopy and helper text</li>
+          <li>Use friendly error handling</li>
+          <li>Show progress or loading indicators</li>
+          <li>Ensure CTAs and forms are optimized for mobile users</li>
+        </ul>
+      </li>
+    </ul>
+  ),
+  calculation: (
+    <div className="space-y-2">
+      <p>We evaluate multiple conversion-focused signals across CTAs, forms, trust elements, and user engagement patterns.</p>
+      <p>Each area is weighted based on its impact on real conversion behavior. Strong signals earn full credit, partial optimizations earn partial credit, and missing elements reduce the score.</p>
+      <p>The final score reflects how easy it is for a visitor to move from interest to action.</p>
+    </div>
+  ),
   weightage: [
     { param: "Form Optimization", weight: "25%" },
     { param: "Call-to-Action (CTA) Strategy", weight: "20%" },
@@ -419,7 +521,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
                 onInfo();
               }}
               className={`p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
-              title="Learn more"
+              title="View Methodology"
             >
               <Info size={18} />
             </button>
@@ -634,7 +736,7 @@ export default function Conversion_Lead_Flow() {
                         className={`flex items-center gap-2 text-sm font-bold transition-all ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-700"}`}
                       >
                         <Info size={16} />
-                        <span className="border-b border-transparent hover:border-current">Methodology</span>
+                        <span className="border-b border-transparent hover:border-current">Metric Methodology</span>
                       </button>
                     </div>
                   </div>

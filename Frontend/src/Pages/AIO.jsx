@@ -44,152 +44,171 @@ const educationalContent = {
     desc: "Checks for valid JSON-LD structured data.",
     why: "Helps AI understand context.",
     use: "Schema markup (JSON-LD) explicitly tells machines what the content means.",
-    impact: "Essential for Rich Snippets and AI training data.",
-    improvement: "Implement Schema.org types (Article, Product, FAQ)."
+    impact: "Structured data is like a translator for search engines. It turns your content into answers.",
+    improvement: "Add Schema markup to help Google display rich snippets (stars, prices, FAQs).",
+    calculation: "We scan your code for JSON-LD schema markup."
   },
   Metadata_Complete: {
     title: "Meta Tags",
     desc: "Verifies essential meta tags.",
     why: "Ensures accurate AI summaries.",
     use: "Checks for title, description, and social meta tags.",
-    impact: "AI summarizers rely on these tags to generate snippets.",
-    improvement: "Ensure every page has unique meta tags."
+    impact: "AI bots read your meta tags first. If they are missing, you risk being ignored.",
+    improvement: "Ensure every page has a unique title and description that summarizes the content.",
+    calculation: "We check for the presence of title, description, and social meta tags."
   },
   Fast_Page_Load: {
     title: "Load Speed",
     desc: "Measures page load speed.",
     why: "Crucial for AI crawling efficiency.",
     use: "Fast loading pages are easier and cheaper for AI bots to crawl.",
-    impact: "Slow sites get crawled less frequently by AI search engines.",
-    improvement: "Optimize LCP and reduce server response time."
+    impact: "Slow sites are expensive for AI to crawl. If you're slow, you get indexed less.",
+    improvement: "Speed up your site so AI agents can read more of your pages in less time.",
+    calculation: "We measure how fast your page loads standard content."
   },
   API_Data_Access: {
     title: "API Access",
     desc: "Checks for accessible API endpoints.",
     why: "Allows direct data consumption by AI.",
     use: "Detects if content is accessible via JSON/XML APIs.",
-    impact: "AI agents prefer structured API data over scraping HTML.",
-    improvement: "Expose public content via a REST or GraphQL API."
+    impact: "Advanced AI agents prefer raw data over messy HTML. An API makes you AI-ready.",
+    improvement: "If you have a lot of data, consider offering a public API.",
+    calculation: "We look for links to API documentation."
   },
   Dynamic_Content_Available: {
     title: "Dynamic Content",
     desc: "Detects dynamic content.",
     why: "Enables personalized experiences.",
     use: "Checks if content changes based on user interaction.",
-    impact: "Static sites are harder to personalize for AI-driven user journeys.",
-    improvement: "Use client-side rendering or edge functions."
+    impact: "Static sites are boring. Dynamic sites can adapt to who is visiting.",
+    improvement: "Use tools that let you change content based on user behavior.",
+    calculation: "We check if your site structure allows for dynamic updates."
   },
   Multilingual_Support: {
     title: "Multilingual",
     desc: "Checks for language tags.",
     why: "Supports global AI reach.",
     use: "Verifies headers and HTML tags for language declaration.",
-    impact: "AI translation models fail without clear language signals.",
-    improvement: "Use 'lang' attribute and Hreflang tags."
+    impact: "AI is global. If you only speak English, you miss 80% of the world.",
+    improvement: "Use 'hreflang' tags to tell AI which language your page is in.",
+    calculation: "We check for language tags in your HTML."
   },
   Content_NLP_Friendly: {
     title: "NLP Friendly",
     desc: "Evaluates semantic structure.",
     why: "Helps NLP models parse content.",
     use: "Checks sentence structure and semantic HTML.",
-    impact: "Complex, unstructured text confuses Natural Language Processing models.",
-    improvement: "Use simple sentences and semantic tags (<article>, <section>)."
+    impact: "If your sentences are too complex, AI gets confused. Simple writing wins.",
+    improvement: "Write in short, clear sentences. Use headings to organize your thoughts.",
+    calculation: "We analyze readability and structure."
   },
   Keywords_Entities_Annotated: {
     title: "Entity Annotation",
     desc: "Checks for keyword annotations.",
     why: "Identifies key topics for AI.",
     use: "Checks if entities are tagged (e.g., using specific HTML attributes).",
-    impact: "Helps AI map relationships between concepts.",
-    improvement: "Use semantic HTML5 tags to highlight entities."
+    impact: "Keywords are good, but 'Entities' are better. They help AI understand context.",
+    improvement: "Use markup to highlight important people, places, and products.",
+    calculation: "We check for semantic tags that identify specific entities."
   },
   Content_Updated_Regularly: {
     title: "Freshness",
     desc: "Monitors content freshness.",
     why: "Fresh content is prioritized.",
     use: "Checks last-modified headers.",
-    impact: "AI models favor up-to-date information.",
-    improvement: "Update content regularly and send 'Last-Modified' headers."
+    impact: "Old news is no news. AI loves fresh, up-to-date information.",
+    improvement: "Update your key pages regularly to keep AI coming back.",
+    calculation: "We check the 'Last-Modified' date of your content."
   },
   Internal_Linking_AI_Friendly: {
     title: "Internal Linking",
     desc: "Analyzes internal links.",
     why: "Maps site structure for AI.",
     use: "Checks link depth and anchor text.",
-    impact: "AI crawlers follow links to discover relationships.",
-    improvement: "Use descriptive anchor text for internal links."
+    impact: "Links are the roads AI travels. No links mean dead ends.",
+    improvement: "Use clear text for your links (e.g., 'See Pricing' not 'Click Here').",
+    calculation: "We analyze how your internal links describe the destination."
   },
   Duplicate_Content_Detection_Ready: {
     title: "Duplicate Check",
     desc: "Checks for duplicate protection.",
     why: "Ensures correct indexing.",
     use: "Verifies canonical tags.",
-    impact: "Duplicate content confuses AI about the authoritative source.",
-    improvement: "Use self-referencing canonical tags."
+    impact: "Duplicate content confuses AI. It doesn't know which page is the 'real' one.",
+    improvement: "Use 'canonical' tags to point to the original version of a page.",
+    calculation: "We check for canonical tags."
   },
   Behavior_Tracking_Implemented: {
     title: "Behavior Tracking",
     desc: "Verifies behavior tracking.",
     why: "Feeds personalization models.",
     use: "Checks for analytics scripts.",
-    impact: "Data on user behavior is fuel for AI personalization algorithms.",
-    improvement: "Implement event tracking (Google Analytics 4)."
+    impact: "You receive what you measure. Tracking helps AI learn what users like.",
+    improvement: "Use analytics to track how users interact with your site.",
+    calculation: "We check for common analytics scripts."
   },
   Segmentation_Profiling_Ready: {
     title: "Segmentation",
     desc: "Checks segmentation setup.",
     why: "Tailors AI responses.",
     use: "Checks if users can be grouped by attributes.",
-    impact: "AI needs segments to deliver relevant recommendations.",
-    improvement: "Capture user attributes (role, interest)."
+    impact: "Treating everyone the same is inefficient. Segments allow for targeted AI responses.",
+    improvement: "Group your users by interest or behavior.",
+    calculation: "We check for segmentation tools."
   },
   Event_Goal_Tracking_Integrated: {
     title: "Goal Tracking",
     desc: "Validates goal tracking.",
     why: "Optimizes AI objectives.",
     use: "Checks if conversion goals are defined.",
-    impact: "AI optimization needs clear success metrics.",
-    improvement: "Define clear conversion events."
+    impact: "AI needs a goal. Tell it what 'success' looks like.",
+    improvement: "Define clear goals (like 'Sign Up') for tracking.",
+    calculation: "We check if you are tracking specific success events."
   },
   AB_Testing_Ready: {
     title: "A/B Testing",
     desc: "Checks for A/B testing.",
     why: "Supports automated experiments.",
     use: "Detects testing frameworks.",
-    impact: "AI can auto-optimize pages if testing infrastructure exists.",
-    improvement: "Integrate a testing tool (VWO, Optimizely)."
+    impact: "Guessing is risky. Testing is smart. AI can auto-optimize if you let it.",
+    improvement: "Set up A/B testing to let data decide the best design.",
+    calculation: "We look for testing tools like Optimizely."
   },
   User_Feedback_Loops_Present: {
     title: "Feedback Loops",
     desc: "Detects feedback forms.",
     why: "Provides training data.",
     use: "Checks for rating widgets or comment sections.",
-    impact: "User feedback reinforces AI learning (RLHF).",
-    improvement: "Add 'Was this helpful?' buttons."
+    impact: "Feedback trains the AI. A simple 'thumbs up' can improve results.",
+    improvement: "Add simple feedback buttons to your content.",
+    calculation: "We search for feedback widgets."
   },
   Dynamic_Personalization: {
     title: "Dynamic Personalization",
     desc: "Checks personalization capabilities.",
     why: "Tailors content to user context.",
     use: "Verifies ability to change content dynamically.",
-    impact: "Increases engagement.",
-    improvement: "Use personalized content blocks."
+    impact: "Personalization increases relevance. Relevance increases sales.",
+    improvement: "Show different content to different users based on their history.",
+    calculation: "We check for personalization capabilities."
   },
   AI_Content_Distribution: {
     title: "AI Distribution",
     desc: "Checks readiness for AI feeds.",
     why: "Distributes content via AI channels.",
     use: "Checks for RSS/Atom feeds.",
-    impact: "Feeds AI aggregators.",
-    improvement: "Enable RSS feeds."
+    impact: "Don't wait for users to come to you. Push content to AI where it lives.",
+    improvement: "Use RSS feeds to syndicate your content.",
+    calculation: "We check for RSS feed links."
   },
   AI_Friendly_Structure: {
     title: "AI Friendly Structure",
     desc: "Checks overall structure.",
     why: "Easier for AI to parse.",
     use: "Verifies logical hierarchy.",
-    impact: "Better understanding by AI models.",
-    improvement: "Use widely accepted patterns."
+    impact: "A messy room is hard to clean. A messy code structure is hard for AI to read.",
+    improvement: "Use standard HTML5 tags (header, nav, main, footer) to organize code.",
+    calculation: "We check the logical structure of your HTML code."
   }
 };
 
@@ -197,10 +216,91 @@ const educationalContent = {
 // ✅ Score Calculation Info (Standard Weights)
 // ------------------------------------------------------
 const scoreCalculationInfo = {
-  title: "Score Calculation",
-  use: "The AIO (Artificial Intelligence Optimization) score measures how well AI agents and LLMs can read and understand your site.",
-  impact: "High AIO scores improve visibility in AI search engines (like ChatGPT Search, Perplexity) and voice assistants.",
-  improvement: "Implement structured data (Schema), accessible APIs, and NLP-friendly content structure.",
+  icon: Brain,
+  title: "AI Optimization (AIO) Readiness",
+  guideLink: "https://developers.google.com/search/docs/appearance/structured-data",
+  use: (
+    <div className="space-y-2">
+      <p>Measures how well your website is structured, understood, and usable by modern AI systems — including search engines, AI assistants, recommendation engines, and automation tools.</p>
+      <p>It evaluates whether your content, data, and tracking signals are accessible, interpretable, and ready for AI-driven discovery and optimization.</p>
+    </div>
+  ),
+  impact: (
+    <div className="space-y-4">
+      <p>AI systems increasingly decide what content is surfaced, summarized, recommended, or ignored.</p>
+
+      <div>
+        <span className="font-semibold block mb-1">Websites that are AI-ready:</span>
+        <ul className="list-disc pl-5 space-y-1 text-sm">
+          <li>Are easier for search and AI assistants to understand</li>
+          <li>Appear more accurately in AI-generated answers</li>
+          <li>Enable smarter personalization and automation</li>
+          <li>Adapt faster to future AI-driven platforms</li>
+        </ul>
+      </div>
+
+      <p className="font-medium">AI readiness is quickly becoming as important as SEO.</p>
+    </div>
+  ),
+  improvement: (
+    <ul className="list-disc pl-5 space-y-4">
+      <li>
+        <span className="font-semibold block mb-1">Improve AI understanding of your content:</span>
+        <ul className="list-[circle] pl-5 space-y-1 text-sm">
+          <li>Use structured data (Schema) to clearly describe pages and entities</li>
+          <li>Organize content with semantic HTML and proper headings</li>
+          <li>Ensure text content is clear, well-structured, and machine-readable</li>
+        </ul>
+      </li>
+      <li>
+        <span className="font-semibold block mb-1">Strengthen metadata and content signals:</span>
+        <ul className="list-[circle] pl-5 space-y-1 text-sm">
+          <li>Provide complete metadata for search and sharing platforms</li>
+          <li>Clearly annotate key topics using headings, image alt text, and page structure</li>
+          <li>Keep content fresh and updated when relevant</li>
+        </ul>
+      </li>
+      <li>
+        <span className="font-semibold block mb-1">Enable AI-friendly data access:</span>
+        <ul className="list-[circle] pl-5 space-y-1 text-sm">
+          <li>Expose content and data through APIs or structured endpoints</li>
+          <li>Avoid blocking important content behind scripts or inaccessible formats</li>
+          <li>Ensure pages load quickly for automated crawlers</li>
+        </ul>
+      </li>
+      <li>
+        <span className="font-semibold block mb-1">Support personalization and learning:</span>
+        <ul className="list-[circle] pl-5 space-y-1 text-sm">
+          <li>Implement behavior tracking to understand user interactions</li>
+          <li>Enable segmentation and profiling signals</li>
+          <li>Use dynamic content patterns where appropriate</li>
+        </ul>
+      </li>
+      <li>
+        <span className="font-semibold block mb-1">Improve AI-driven discovery and indexing:</span>
+        <ul className="list-[circle] pl-5 space-y-1 text-sm">
+          <li>Use descriptive internal links, not generic anchors</li>
+          <li>Prevent duplicate content with canonical or indexing controls</li>
+          <li>Support multilingual discovery when targeting multiple regions</li>
+        </ul>
+      </li>
+      <li>
+        <span className="font-semibold block mb-1">Close the optimization feedback loop:</span>
+        <ul className="list-[circle] pl-5 space-y-1 text-sm">
+          <li>Track meaningful events and goals</li>
+          <li>Support A/B testing or experimentation</li>
+          <li>Collect user feedback to guide continuous improvement</li>
+        </ul>
+      </li>
+    </ul>
+  ),
+  calculation: (
+    <div className="space-y-2">
+      <p>We analyze multiple AI-readiness signals across content structure, metadata quality, data accessibility, tracking, and optimization infrastructure.</p>
+      <p>Each area is weighted by its importance to AI understanding and automation. Strong signals earn full credit, partial readiness earns partial credit, and missing foundations reduce the score.</p>
+      <p>An overall AI Readiness badge indicates whether your site meets a minimum baseline for AI compatibility.</p>
+    </div>
+  ),
   weightage: [
     { param: "Technical AI Foundation", weight: "35%" },
     { param: "Content NLP Readiness", weight: "25%" },
@@ -305,7 +405,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
                 onInfo();
               }}
               className={`p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
-              title="Learn more"
+              title="View Methodology"
             >
               <Info size={18} />
             </button>
@@ -520,7 +620,7 @@ export default function AIO() {
                         className={`flex items-center gap-2 text-sm font-bold transition-all ${darkMode ? "text-indigo-400 hover:text-indigo-300" : "text-indigo-600 hover:text-indigo-700"}`}
                       >
                         <Info size={16} />
-                        <span className="border-b border-transparent hover:border-current">Methodology</span>
+                        <span className="border-b border-transparent hover:border-current">Metric Methodology</span>
                       </button>
                     </div>
                   </div>

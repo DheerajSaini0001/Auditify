@@ -15,118 +15,138 @@ const seoMetricExplanations = {
   Title: {
     title: "Title Tag",
     use: "The HTML <title> element that specifies the title of a web page.",
-    impact: "It is the first thing users see in search results. A clear, keyword-optimized title improves CTR and ranking.",
-    improvement: "Keep it between 50-60 characters, distinct for every page, and place important keywords first."
+    impact: "Your title is the first thing people see on Google. A clear, catchy title makes them want to click.",
+    improvement: "Write a unique title (50-60 characters) that includes your main keyword. Make it sound appealing to a human.",
+    calculation: "We check if your title exists, is unique, and fits within standard length limits."
   },
   Meta_Description: {
     title: "Meta Description",
     use: "A brief summary of the page content that appears under the title in search results.",
-    impact: "Persuades users to click. While not a direct ranking factor, it heavily influences Click-Through Rate (CTR).",
-    improvement: "Write unique summaries (150-160 chars) with a clear call-to-action and relevant keywords."
+    impact: "This summary appears under your title. A good description acts like ad copy, convincing users to visit your site.",
+    improvement: "Write a unique, 160-character summary for each page that clearly explains what the user will get.",
+    calculation: "We verify that a description exists and is the right length to be fully displayed in search results."
   },
   Canonical: {
     title: "Canonical Tag",
     use: "Tells search engines which URL is the 'master' version of a page to prevent duplicate content issues.",
-    impact: "Prevents SEO value dilution across multiple URL variations (e.g., HTTP vs HTTPS, UTM params).",
-    improvement: "Ensure every page has a self-referencing canonical tag or points to its original source."
+    impact: "Prevents confusion when multiple pages have similar content. It tells Google which version is the 'original' one.",
+    improvement: "Ensure every page points to itself as the original source unless it is a direct copy of another page.",
+    calculation: "We check for a 'canonical tag' in your code that points to a valid URL."
   },
   URL_Structure: {
     title: "URL Structure",
     use: "The format and readability of your webpage address.",
-    impact: "Clean URLs are easier for users to read and share, and help search engines understand page context.",
-    improvement: "Use hyphens, keep it short, lowercase, and avoid complex parameters."
+    impact: "Simple, readable URLs help users (and Google) guess what the page is about before clicking.",
+    improvement: "Keep URLs short, lowercase, and easy to read. Avoid random numbers or strange symbols.",
+    calculation: "We analyze your link structure to ensure it is readable and free of unnecessary characters."
   },
   H1: {
     title: "H1 Tag",
     use: "The main heading of the page, acting as the primary topic indicator.",
-    impact: "Helps Google understand the main topic. Multiple H1s can confuse crawlers about the page's focus.",
-    improvement: "Use exactly one H1 tag per page that includes the primary keyword."
+    impact: "This is the main headline of your page. It tells Google exactly what the main topic is.",
+    improvement: "Use exactly one main headline (H1) per page that contains your primary keyword.",
+    calculation: "We count the main headlines on your page. Ideally, there should be exactly one."
   },
   Image: {
     title: "Image Metadata (Alt Text)",
     use: "Alt text describes images for screen readers and search engines.",
-    impact: "Crucial for accessibility and Image SEO. Without it, search engines cannot understand the image content.",
-    improvement: "Add descriptive, accurate alt text to every meaningful image. Mark decorative images as hidden."
+    impact: "Alt text describes images to search engines (who can't see) and screen readers (for accessibility).",
+    improvement: "Add a short description to every meaningful image explaining what it shows.",
+    calculation: "We scan your images to see if they have descriptions (alt text) attached to them."
   },
   Compression: {
     title: "Image Compression",
     use: "Optimization of image file sizes to improve loading speed.",
-    impact: "Large images slow down page load (LCP), increasing bounce rates and hurting rankings.",
-    improvement: "Compress images (WebP/AVIF), resize to display dimensions, and use lazy loading."
+    impact: "Large images slow down your site. Users hate waiting for heavy photos to load.",
+    improvement: "Resize images to be only as big as needed and use modern formats like WebP.",
+    calculation: "We verify if your images are saved in optimized formats and logical file sizes."
   },
   Video: {
     title: "Internal Videos",
     use: "Video content hosted or embedded on the page.",
-    impact: "Engages users but can slow down the page if not optimized (lazy loaded).",
-    improvement: "Use lazy loading for embeds (YouTube/Vimeo) and include schema markup for video SEO."
+    impact: "Videos engage users, but if they load too slowly, they can make your page feel sluggish.",
+    improvement: "Prevent videos from loading until the user actually scrolls down to them (lazy loading).",
+    calculation: "We check if your video players are set up to load efficiently only when needed."
   },
   Semantic: {
     title: "Semantic Tags",
     use: "HTML5 tags (nav, article, section) that define content meaning.",
-    impact: "Helps search engines understand the layout and importance of different page sections.",
-    improvement: "Replace generic <div> tags with <header>, <nav>, <main>, <article>, and <footer> where appropriate."
+    impact: "Using correct HTML tags helps search engines understand which parts of your page are content, menus, or footers.",
+    improvement: "Use standard tags like <header>, <nav>, and <footer> to organize your page layout.",
+    calculation: "We look for standard layout tags that help robots understand your page structure."
   },
   Contextual: {
     title: "Contextual Links",
     use: "Links embedded within the main body content pointing to other relevant pages.",
-    impact: "Passes authority (PageRank) to other pages and keeps users engaged longer.",
-    improvement: "Add 2-5 internal links per article using descriptive anchor text."
+    impact: "Links inside your articles help Google discover new pages and understand how your topics are connected.",
+    improvement: "Add links to other relevant pages on your site within your text.",
+    calculation: "We count how many links appear inside your main text paragraphs pointing to your own site."
   },
   Hierarchy: {
     title: "Heading Hierarchy",
     use: "The nested order of headings (H1 > H2 > H3).",
-    impact: "A logical structure allows users and crawlers to skim and understand content relationships.",
-    improvement: "Never skip levels (e.g., don't jump from H2 to H4). usage H2 for main sections and H3 for subsections."
+    impact: "A logical heading structure (H1 -> H2 -> H3) makes your content easier to read and scan.",
+    improvement: "Organize content like an outline. Don't skip levels (e.g., don't go from H1 to H4).",
+    calculation: "We check the order of your headlines to ensure they follow a logical nested sequence."
   },
   HTTPS: {
     title: "HTTPS Security",
     use: "Secure encryption protocol for data transfer.",
-    impact: "A confirmed ranking signal. Users will not trust a site labeled 'Not Secure'.",
-    improvement: "Install an SSL certificate and force redirect all HTTP traffic to HTTPS."
+    impact: "Security is non-negotiable. Users and browsers distrust sites that are not secure.",
+    improvement: "Install an SSL certificate to ensure your site loads securely (https://).",
+    calculation: "We verify if your site connection is secure and encrypted."
   },
   Duplicate: {
     title: "Content Quality",
     use: "Uniqueness and depth of the page content.",
-    impact: "Search engines penalize thin or duplicated content. Unique content ranks higher.",
-    improvement: "Ensure content is original, comprehensive, and satisfies user intent."
+    impact: "Search engines prefer unique content. Repeated content confuses them about which page to rank.",
+    improvement: "Make sure the text on this page is substantially different from other pages on your site.",
+    calculation: "We analyze your text to ensure it isn't identical or highly similar to other pages we have scanned."
   },
   Links: {
     title: "Link Profile",
     use: "The mix of internal and external hyperlinks.",
-    impact: "External links to authority sites build trust; internal links distribute value.",
-    improvement: "Fix broken links immediately. Audit for orphan pages (pages with no internal links)."
+    impact: "Broken links frustrate users and tell Google your site is neglected.",
+    improvement: "Check and fix any links that lead to '404' error pages.",
+    calculation: "We test all the links on your page to ensure they lead to working destinations."
   },
   Hreflang: {
     title: "Hreflang Tags",
     use: "Code that tells Google which language/region a specific page is for.",
-    impact: "Prevents duplicate content across regional sites (e.g., US vs UK) and serves the right language to users.",
-    improvement: "Implement hreflang tags for all multi-lingual or multi-regional versions."
+    impact: "Critical for multi-language sites. It ensures users see the page in their own language.",
+    improvement: "If you have multiple languages, use these tags to tell Google which is which.",
+    calculation: "We check for language tags that direct users to the correct regional version of your site."
   },
   Slug: {
     title: "URL Slugs",
     use: "The part of the URL identifying the specific page.",
-    impact: "Short, descriptive slugs (e.g., /seo-audit) are better than ID-based ones (/p=123).",
-    improvement: "Remove stop words (a, the, and) and use keywords."
+    impact: "The end part of your link (slug) should clearly describe the page content.",
+    improvement: "Use real words instead of ID numbers (e.g., use '/about-us' instead of '/page?id=5').",
+    calculation: "We evaluate the final part of your URL to see if it contains readable keywords."
   },
   OpenGraph: {
     title: "Open Graph Tags",
     use: "Meta tags that control how URLs look when shared on social media (Facebook, LinkedIn).",
-    impact: "Optimized social previews increase social engagement and click-throughs.",
-    improvement: "Define og:title, og:description, and og:image for every page."
+    impact: "Controls how your page looks when shared on Facebook or LinkedIn.",
+    improvement: "Add specific tags (OG tags) so your shares show a nice image and title.",
+    calculation: "We check for social media tags that define your page's preview image and title."
   },
   Twitter: {
     title: "Twitter Card",
     use: "Metadata specific to Twitter for rich media previews.",
-    impact: "Makes tweets with your link stand out with large images and summaries.",
-    improvement: "Add twitter:card and twitter:image tags."
+    impact: "Ensures your links look professional and engaging when shared on Twitter (X).",
+    improvement: "Add TwitterCard tags to control the image and summary shown in tweets.",
+    calculation: "We look for specific tags designed to format your link previews on Twitter."
   },
   Social: {
     title: "Social Profiles",
     use: "Links to your official social media channels.",
-    impact: "Builds brand trust and entity authority in Google's Knowledge Graph.",
-    improvement: "Link to all active social profiles in the footer or contact page."
+    impact: "Linking to your social profiles builds trust and verifies your brand identity.",
+    improvement: "Include links to your active social media accounts in your footer or contact page.",
+    calculation: "We scan for links pointing to major social media platforms."
   }
 };
+
 
 
 
@@ -134,10 +154,50 @@ const seoMetricExplanations = {
 // ✅ Score Calculation Info (Standard Weights)
 // ------------------------------------------------------
 const scoreCalculationInfo = {
-  title: "Score Calculation",
-  use: "The On-Page SEO score measures content optimization and technical correctness.",
-  impact: "Proper On-Page SEO improves ranking potential and user engagement.",
-  improvement: "Focus on Title tags, H1s, and unique Meta Descriptions first.",
+  icon: Search,
+  title: "On-Page SEO",
+  guideLink: "https://developers.google.com/search/docs/fundamentals/seo-starter-guide",
+  use: (
+    <div className="space-y-2">
+      <p>Evaluates how well your page content, structure, and metadata are optimized for search engines and users.</p>
+      <p>This includes page titles, headings, URLs, internal linking, media optimization, and content quality signals that help search engines understand and rank your page.</p>
+    </div>
+  ),
+  impact: "Strong on-page SEO makes your content easier to discover, understand, and rank in search results. Well-structured pages improve visibility, click-through rates, accessibility, and overall user experience—leading to more organic traffic and better engagement.",
+  improvement: (
+    <ul className="list-disc pl-5 space-y-2">
+      <li>
+        <span className="font-semibold">Optimize page titles and meta descriptions:</span> Use clear, descriptive titles and summaries that accurately reflect page content and encourage clicks from search results.
+      </li>
+      <li>
+        <span className="font-semibold">Use a clear heading structure:</span> Ensure each page has a single main heading, followed by logically ordered subheadings that organize content clearly.
+      </li>
+      <li>
+        <span className="font-semibold">Improve content quality and uniqueness:</span> Avoid thin or repetitive content. Provide enough original, meaningful text to fully cover the topic.
+      </li>
+      <li>
+        <span className="font-semibold">Optimize images and videos:</span> Add descriptive alt text, meaningful titles, and ensure media files are properly sized and optimized for performance and accessibility.
+      </li>
+      <li>
+        <span className="font-semibold">Strengthen internal and contextual linking:</span> Use descriptive link text and include links within content to important internal pages, not just navigation menus.
+      </li>
+      <li>
+        <span className="font-semibold">Clean up URLs and slugs:</span> Keep URLs short, readable, lowercase, and hyphen-separated. Avoid unnecessary parameters or overly deep paths.
+      </li>
+      <li>
+        <span className="font-semibold">Use semantic HTML elements:</span> Structure pages with semantic tags to improve readability, accessibility, and search engine understanding.
+      </li>
+      <li>
+        <span className="font-semibold">Ensure canonical and HTTPS best practices:</span> Use valid canonical tags to avoid duplicate content issues and serve pages securely over HTTPS.
+      </li>
+    </ul>
+  ),
+  calculation: (
+    <div className="space-y-2">
+      <p>We analyze multiple on-page SEO signals related to content quality, page structure, metadata, media usage, internal linking, and URL best practices. Each factor contributes to the final score based on its relative importance in helping search engines understand and rank your page.</p>
+      <p>Higher-impact elements—such as titles, content quality, images, internal linking, and headings—carry more weight to reflect what most influences search performance.</p>
+    </div>
+  ),
   weightage: [
     { param: "URL Structure & Hierarchy", weight: "15%" },
     { param: "Image & Video Optimization", weight: "15%" },
@@ -263,7 +323,7 @@ const MetricCard = ({ title, description, score, value, unit, darkMode, icon: Ic
                   onInfo();
                 }}
                 className={`mt-1 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
-                title="Learn more"
+                title="View Methodology"
               >
                 <Info size={18} />
               </button>
@@ -485,7 +545,7 @@ export default function On_Page_SEO() {
                         className={`flex items-center gap-2 text-sm font-bold transition-all ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-700"}`}
                       >
                         <Info size={16} />
-                        <span className="border-b border-transparent hover:border-current">Methodology</span>
+                        <span className="border-b border-transparent hover:border-current">Metric Methodology</span>
                       </button>
                     </div>
                   </div>

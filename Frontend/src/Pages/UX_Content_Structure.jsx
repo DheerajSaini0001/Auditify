@@ -19,8 +19,8 @@ import { InfoDetails } from "../Component/InfoDetails";
 // ------------------------------------------------------
 const iconMap = {
   Viewport_Meta_Tag: Smartphone,
-  Horizontal_Scroll: MoveHorizontal,
-  Sticky_Header_Height: PanelTop,
+  Horizontal_Scroll_Check: MoveHorizontal,
+  Sticky_Header_Usage: PanelTop,
   Navigation_Depth: Menu,
   Breadcrumbs: ChevronRight,
   Navigation_Discoverability: Compass,
@@ -30,9 +30,9 @@ const iconMap = {
   Cumulative_Layout_Shift: Layers,
   Image_Stability: ImageIcon,
   Intrusive_Interstitials: XOctagon,
-  Above_The_Fold_Content: MonitorPlay,
-  Click_Feedback: MousePointer2,
-  Form_Validation: CheckCircle2,
+  Above_the_Fold_Content: MonitorPlay,
+  Interactive_Click_Feedback: MousePointer2,
+  Form_Validation_UX: CheckCircle2,
   Loading_Feedback: Loader2
 };
 

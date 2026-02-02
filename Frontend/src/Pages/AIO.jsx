@@ -40,10 +40,7 @@ const iconMap = {
 // ------------------------------------------------------
 // ✅ Educational Content
 // ------------------------------------------------------
-const educationalContent = {
-  ...InfoDetails,
-  Structured_Data: InfoDetails.AIO_Structured_Data
-};
+const educationalContent = InfoDetails;
 
 // ------------------------------------------------------
 // ✅ Score Calculation Info (Standard Weights)
@@ -396,13 +393,7 @@ export default function AIO() {
         </Section>
 
         <Section title="AI Analytics & Automation" icon={Cpu} darkMode={darkMode}>
-          {["Duplicate_Content_Detection_Ready", "Behavior_Tracking_Implemented", "Segmentation_Profiling_Ready", "Event_Goal_Tracking_Integrated", "AB_Testing_Ready"].map((key) => (
-            aio[key] && <MetricCard key={key} metricKey={key} data={aio[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
-          ))}
-        </Section>
-
-        <Section title="AI Personalization & Feedback" icon={Network} darkMode={darkMode}>
-          {["User_Feedback_Loops_Present", "Dynamic_Personalization", "AI_Content_Distribution", "AI_Friendly_Structure"].map((key) => (
+          {["Duplicate_Content_Detection_Ready", "Behavior_Tracking_Implemented", "Segmentation_Profiling_Ready", "Event_Goal_Tracking_Integrated", "AB_Testing_Ready", "User_Feedback_Loops_Present"].map((key) => (
             aio[key] && <MetricCard key={key} metricKey={key} data={aio[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
           ))}
         </Section>

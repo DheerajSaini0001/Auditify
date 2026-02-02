@@ -881,99 +881,243 @@ export const InfoDetails = {
     // Accessibility
     Color_Contrast: {
         title: "Color Contrast",
-        whatThisMetricIs: "Measures the difference in brightness between text and its background.",
-        whyItMatters: "Text that blends into the background is impossible to read for many users, especially on mobile screens in sunlight.",
-        thresholds: "Good: Ratio ≥ 4.5:1 (AA), Poor: Ratio < 3:1",
-        actualReasonsForFailure: "Text color is too light or background is too dark (or vice versa), leading to low contrast ratio.",
-        howToOvercomeFailure: "Darken text color or lighten background color to ensure sufficient contrast (WCAG AA standard)."
+        whatThisParameterIs: "Checks whether text has sufficient color contrast against its background.",
+        whyItMatters: "Poor contrast makes text difficult to read for users with visual impairments.",
+        thresholds: {
+        good: "No contrast violations",
+        needsImprovement: "Minor contrast issues",
+        poor: "Multiple contrast failures"
+        },
+        actualReasonsForFailure: [
+        "Low contrast between text and background",
+        "Light text on light backgrounds",
+        "Incorrect color combinations"
+        ],
+        howToOvercomeFailure: [
+        "Increase contrast ratio between text and background",
+        "Use accessible color palettes",
+        "Follow WCAG contrast guidelines"
+        ]
     },
     Focus_Order: {
         title: "Focus Order",
-        whatThisMetricIs: "The sequence in which elements receive focus when tabbing through the page.",
-        whyItMatters: "If the 'Tab' key jumps around randomly, keyboard users get lost and cannot navigate your site.",
-        thresholds: "Good: Logical Order, Poor: Random Jumps",
-        actualReasonsForFailure: "DOM order does not match visual order, causing tab focus to jump unexpectedly.",
-        howToOvercomeFailure: "Rearrange HTML elements to match the visual layout or use CSS Flexbox/Grid carefully to maintain order."
+        whatThisParameterIs: "Checks whether interactive elements receive focus in a logical order.",
+        whyItMatters: "Incorrect focus order confuses keyboard and screen reader users.",
+        thresholds: {
+        good: "Logical and sequential focus order",
+        needsImprovement: "Minor focus jumps",
+        poor: "Disorganized focus order"
+        },
+        actualReasonsForFailure: [
+        "Incorrect DOM order",
+        "Improper tabindex usage",
+        "Hidden elements receiving focus"
+        ],
+        howToOvercomeFailure: [
+        "Maintain logical DOM structure",
+        "Avoid unnecessary tabindex values",
+        "Ensure focus follows visual order"
+        ]
     },
     Focusable_Content: {
         title: "Focusable Content",
-        whatThisMetricIs: "Ensures all interactive elements (buttons, links, inputs) can be reached via keyboard.",
-        whyItMatters: "If a button can't be selected with a keyboard, it effectively doesn't exist for many users.",
-        thresholds: "Good: All Reachable, Poor: Unreachable Elements",
-        actualReasonsForFailure: "Using <div> or <span> as buttons without tabindex='0'.",
-        howToOvercomeFailure: "Use semantic <button> and <a> tags, or add tabindex='0' to custom interactive elements."
+        whatThisParameterIs: "Checks whether interactive elements can be reached using keyboard navigation.",
+        whyItMatters: "Users relying on keyboards must be able to access all interactive elements.",
+        thresholds: {
+        good: "All interactive elements are focusable",
+        needsImprovement: "Some elements not keyboard accessible",
+        poor: "Many elements not focusable"
+        },
+        actualReasonsForFailure: [
+        "Interactive elements missing tabindex",
+        "Custom components not keyboard accessible",
+        "Disabled focus styles"
+        ],
+        howToOvercomeFailure: [
+        "Ensure interactive elements are keyboard accessible",
+        "Use semantic HTML elements",
+        "Avoid disabling focus outlines"
+        ]
     },
     Tab_Index: {
-        title: "Tab Index",
-        whatThisMetricIs: "The tabindex attribute controls whether an element is focusable.",
-        whyItMatters: "Positive tab values break the natural flow, forcing users to jump around unpredictably.",
-        thresholds: "Good: 0 or -1, Poor: Positive Values (>0)",
-        actualReasonsForFailure: "Using positive tabindex values (e.g., tabindex='1') which overrides natural DOM order.",
-        howToOvercomeFailure: "Remove positive tabindex values. Rely on DOM order or use tabindex='0' / '-1' only."
+        title: "Tabindex Usage",
+        whatThisParameterIs: "Checks whether tabindex attributes are used correctly.",
+        whyItMatters: "Incorrect tabindex values disrupt keyboard navigation.",
+        thresholds: {
+        good: "Valid tabindex usage",
+        needsImprovement: "Some tabindex misuse",
+        poor: "Negative or excessive tabindex values"
+        },
+        actualReasonsForFailure: [
+        "Positive tabindex values",
+        "Focus order manipulation",
+        "Hidden elements with tabindex"
+        ],
+        howToOvercomeFailure: [
+        "Avoid positive tabindex values",
+        "Use natural DOM order for focus",
+        "Remove tabindex from hidden elements"
+        ]
     },
     Interactive_Element_Affordance: {
-        title: "Clickable Targets",
-        whatThisMetricIs: "Visual indicators that an element is interactive (e.g., cursor pointer, hover styles).",
-        whyItMatters: "Users shouldn't have to guess what's clickable. Confusion leads to frustration.",
-        thresholds: "Good: Visible States, Poor: No Visual Feedback",
-        actualReasonsForFailure: "Removing default outline without replacing it, or missing hover/focus styles.",
-        howToOvercomeFailure: "Ensure all interactive elements have visible :hover and :focus states (e.g., change color, underline)."
+        title: "Interactive Element Affordance",
+        whatThisParameterIs: "Checks whether interactive elements are clearly identifiable.",
+        whyItMatters: "Users must be able to recognize clickable and interactive elements.",
+        thresholds: {
+        good: "Interactive elements clearly identifiable",
+        needsImprovement: "Some unclear interactive elements",
+        poor: "Interactive elements not recognizable"
+        },
+        actualReasonsForFailure: [
+        "Buttons styled as plain text",
+        "Links without visual cues",
+        "Missing hover or focus styles"
+        ],
+        howToOvercomeFailure: [
+        "Use clear button and link styles",
+        "Add hover and focus indicators",
+        "Follow standard UI patterns"
+        ]
     },
     Label: {
         title: "Form Labels",
-        whatThisMetricIs: "HTML labels associated with form input fields.",
-        whyItMatters: "Without labels, a screen reader user has no idea what information to type into a form field.",
-        thresholds: "Good: All Inputs Labeled, Poor: Missing Labels",
-        actualReasonsForFailure: "Form inputs missing associated <label> elements or aria-label attributes.",
-        howToOvercomeFailure: "Link a <label> to every input using the 'for' attribute, or use aria-label for visual-only designs."
+        whatThisParameterIs: "Checks whether form inputs have associated labels.",
+        whyItMatters: "Labels help screen readers announce form fields correctly.",
+        thresholds: {
+        good: "All inputs have labels",
+        needsImprovement: "Some labels missing",
+        poor: "Most inputs unlabeled"
+        },
+        actualReasonsForFailure: [
+        "Missing label elements",
+        "Placeholder text used instead of labels",
+        "Incorrect label associations"
+        ],
+        howToOvercomeFailure: [
+        "Associate labels with inputs",
+        "Avoid using placeholders as labels",
+        "Use aria-label only when necessary"
+        ]
     },
     Aria_Allowed_Attr: {
-        title: "ARIA Attributes",
-        whatThisMetricIs: "Checks if ARIA attributes used are valid for the element's role.",
-        whyItMatters: "Using the wrong accessibility code breaks the experience instead of fixing it.",
-        thresholds: "Good: Valid Attributes, Poor: Invalid/Unsupported",
-        actualReasonsForFailure: "Using ARIA attributes that are not supported by the element's role (e.g., aria-label on a span).",
-        howToOvercomeFailure: "Only use ARIA attributes supported by the HTML element or its assigned role."
+        title: "ARIA Allowed Attributes",
+        whatThisParameterIs: "Checks whether ARIA attributes are valid for their assigned roles.",
+        whyItMatters: "Invalid ARIA usage can confuse assistive technologies.",
+        thresholds: {
+        good: "ARIA attributes used correctly",
+        needsImprovement: "Minor ARIA misuse",
+        poor: "Invalid ARIA attributes"
+        },
+        actualReasonsForFailure: [
+        "Using unsupported ARIA attributes",
+        "ARIA roles without required attributes",
+        "Incorrect ARIA combinations"
+        ],
+        howToOvercomeFailure: [
+        "Use ARIA attributes only when necessary",
+        "Follow ARIA role specifications",
+        "Validate ARIA implementation"
+        ]
     },
     Aria_Roles: {
         title: "ARIA Roles",
-        whatThisMetricIs: "Attributes that define what an element is (e.g., role='button').",
-        whyItMatters: "Misleading roles confuse screen readers (e.g., telling a user an image is a button).",
-        thresholds: "Good: Valid Roles, Poor: Abstract/Invalid Roles",
-        actualReasonsForFailure: "Using abstract roles or misspelling role names.",
-        howToOvercomeFailure: "Use standard HTML5 elements (nav, main, button) where possible, or use valid WAI-ARIA roles."
+        whatThisParameterIs: "Checks whether ARIA roles are valid and correctly applied.",
+        whyItMatters: "ARIA roles help assistive technologies understand page structure.",
+        thresholds: {
+        good: "Valid ARIA roles",
+        needsImprovement: "Some incorrect roles",
+        poor: "Invalid or conflicting roles"
+        },
+        actualReasonsForFailure: [
+        "Invalid ARIA role values",
+        "Redundant ARIA roles",
+        "ARIA roles overriding native semantics"
+        ],
+        howToOvercomeFailure: [
+        "Use native HTML elements first",
+        "Apply ARIA roles only when needed",
+        "Ensure roles match element purpose"
+        ]
     },
     Aria_Hidden_Focus: {
-        title: "Hidden Focus",
-        whatThisMetricIs: "Ensures elements hidden with aria-hidden='true' are not focusable.",
-        whyItMatters: "Focusing on a hidden element confuses users as they cannot see where they are.",
-        thresholds: "Good: Hidden is Unfocusable, Poor: Focus Trapped",
-        actualReasonsForFailure: "Interactive elements (links, buttons) have aria-hidden='true' but are still in tab order.",
-        howToOvercomeFailure: "Add tabindex='-1' to hidden elements or use 'display: none' / 'visibility: hidden' to remove them from tab order."
+        title: "ARIA Hidden Focus",
+        whatThisParameterIs: "Checks whether hidden elements can incorrectly receive focus.",
+        whyItMatters: "Hidden focusable elements confuse keyboard and screen reader users.",
+        thresholds: {
+        good: "No hidden focusable elements",
+        needsImprovement: "Few hidden focus issues",
+        poor: "Multiple hidden focus issues"
+        },
+        actualReasonsForFailure: [
+        "aria-hidden elements still focusable",
+        "Hidden modals or menus receiving focus",
+        "Incorrect visibility handling"
+        ],
+        howToOvercomeFailure: [
+        "Remove focus from hidden elements",
+        "Manage focus when showing or hiding content",
+        "Use aria-hidden correctly"
+        ]
     },
     Image_Alt: {
-        title: "Alternative Text",
-        whatThisMetricIs: "Text alternatives for non-text content (images).",
-        whyItMatters: "Blind users rely on descriptions to understand images. Without them, they miss context.",
-        thresholds: "Good: Present, Poor: Missing",
-        actualReasonsForFailure: "Image tags missing the 'alt' attribute.",
-        howToOvercomeFailure: "Add descriptive 'alt' text to every image tag that conveys meaning."
+        title: "Image Alt Text",
+        whatThisParameterIs: "Checks whether images have meaningful alternative text.",
+        whyItMatters: "Alt text allows screen readers to describe images to users.",
+        thresholds: {
+        good: "All images have meaningful alt text",
+        needsImprovement: "Some alt text missing or generic",
+        poor: "Most images missing alt text"
+        },
+        actualReasonsForFailure: [
+        "Missing alt attributes",
+        "Generic or meaningless alt text",
+        "Decorative images not marked properly"
+        ],
+        howToOvercomeFailure: [
+        "Add descriptive alt text to images",
+        "Use empty alt for decorative images",
+        "Avoid generic alt descriptions"
+        ]
     },
     Skip_Links: {
         title: "Skip Links",
-        whatThisMetricIs: "Hidden links at the top of the page to jump to main content.",
-        whyItMatters: "Imagine listening to the entire main menu on every single page load. Skip links let users jump to the content.",
-        thresholds: "Good: Present & Working, Poor: Missing",
-        actualReasonsForFailure: "No link exists to bypass the main navigation menu.",
-        howToOvercomeFailure: "Add a 'Skip to Content' link as the first focusable element on the page."
+        whatThisParameterIs: "Checks whether a visible skip link is available for keyboard users.",
+        whyItMatters: "Skip links help users bypass repetitive navigation.",
+        thresholds: {
+        good: "Skip link present",
+        needsImprovement: "Skip link hidden or unclear",
+        poor: "No skip link found"
+        },
+        actualReasonsForFailure: [
+        "Skip link missing",
+        "Skip link hidden from keyboard users",
+        "Incorrect skip link target"
+        ],
+        howToOvercomeFailure: [
+        "Add a visible skip to content link",
+        "Ensure skip link is keyboard accessible",
+        "Link skip target to main content"
+        ]
     },
     Landmarks: {
-        title: "Landmarks",
-        whatThisMetricIs: "Semantic regions (main, nav, banner, complementary).",
-        whyItMatters: "Landmarks act like a table of contents, letting screen readers jump between major sections.",
-        thresholds: "Good: Landmarks Defined, Poor: No Regions",
-        actualReasonsForFailure: "Page lacks structural tags like <main>, <nav>, or <header>.",
-        howToOvercomeFailure: "Use HTML5 landmark elements to clearly define the main regions of your page."
+        title: "Landmark Roles",
+        whatThisParameterIs: "Checks whether ARIA landmark roles or semantic landmarks are present.",
+        whyItMatters: "Landmarks help screen reader users navigate page structure efficiently.",
+        thresholds: {
+        good: "Landmark roles present",
+        needsImprovement: "Partial landmark usage",
+        poor: "No landmark roles found"
+        },
+        actualReasonsForFailure: [
+        "Missing main or navigation landmarks",
+        "Improper landmark role usage",
+        "Overuse of generic containers"
+        ],
+        howToOvercomeFailure: [
+        "Use semantic HTML landmarks",
+        "Add ARIA landmark roles where needed",
+        "Ensure clear page regions"
+        ]
     },
 
     // Methodologies (Accessibility)
@@ -1030,239 +1174,586 @@ export const InfoDetails = {
 
     // Security & Compliance
     HTTPS: {
-        title: "HTTPS Encryption",
-        whatThisMetricIs: "Hypertext Transfer Protocol Secure (HTTPS) uses TLS to encrypt communication.",
-        whyItMatters: "Prevents eavesdropping. Without it, anyone on the network can read the data your users send.",
-        whatToDoForAGoodScore: "Install an SSL certificate and force your site to load over 'https://'.",
-        howThisScoreIsCalculated: "We check if your site is securely served over an encrypted connection."
+        title: "HTTPS Usage",
+        whatThisParameterIs: "Checks whether the website is served over a secure HTTPS protocol.",
+        whyItMatters: "HTTPS encrypts data between users and servers, protecting against interception and tampering.",
+        thresholds: {
+        good: "HTTPS enabled",
+        needsImprovement: "Mixed content",
+        poor: "HTTP only"
+        },
+        actualReasonsForFailure: [
+        "Website served over HTTP",
+        "Missing HTTPS redirect",
+        "Invalid URL structure"
+        ],
+        howToOvercomeFailure: [
+        "Install an SSL certificate",
+        "Force HTTPS redirects",
+        "Ensure all resources load over HTTPS"
+        ]
     },
     SSL: {
-        title: "SSL Certificate",
-        whatThisMetricIs: "Verifies that the website has a valid, trusted SSL/TLS certificate.",
-        whyItMatters: "Verifies your identity. Users trust the padlock icon; a warning scares them away immediately.",
-        whatToDoForAGoodScore: "Ensure your security certificate is valid, trusted, and up to date.",
-        howThisScoreIsCalculated: "We verify the validity and chain of trust of your SSL certificate."
+    title: "SSL Connection",
+    whatThisParameterIs: "Checks whether a secure SSL connection is successfully established with the server.",
+    whyItMatters: "A valid SSL connection ensures encrypted communication and protects user data from interception.",
+    thresholds: {
+        good: "SSL connection established successfully",
+        needsImprovement: "SSL present but misconfigured",
+        poor: "SSL connection failed"
+    },
+    actualReasonsForFailure: [
+        "SSL handshake failure",
+        "Invalid or self-signed certificate",
+        "Incorrect server SSL configuration",
+        "Expired or revoked certificate"
+    ],
+    howToOvercomeFailure: [
+        "Install a valid SSL certificate from a trusted authority",
+        "Ensure server supports modern TLS versions",
+        "Fix certificate chain and configuration issues",
+        "Test SSL configuration after deployment"
+    ]
     },
     SSL_Expiry: {
-        title: "SSL Expiry",
-        whatThisMetricIs: "Checks the expiration date of the SSL certificate.",
-        whyItMatters: "An expired certificate triggers a 'Not Secure' warning, blocking users from entering your site.",
-        thresholds: "Good: > 30 Days, Poor: < 30 Days or Expired",
-        actualReasonsForFailure: "Certificate is expired or expiring very soon (within 30 days).",
-        howToOvercomeFailure: "Set up auto-renewal (e.g., Certbot) or renew your certificate manually before it expires."
-    },
-    HSTS: {
-        title: "HSTS Header",
-        whatThisMetricIs: "HTTP Strict Transport Security tells browsers to ONLY use HTTPS.",
-        whyItMatters: "Stops attacks that try to downgrade your secure connection to an insecure one.",
-        thresholds: "Good: Enabled (max-age > 1yr), Poor: Missing",
-        actualReasonsForFailure: "Header missing or max-age is too short.",
-        howToOvercomeFailure: "Add 'Strict-Transport-Security' header with 'max-age=31536000; includeSubDomains'."
+        title: "SSL Certificate Validity",
+        whatThisParameterIs: "Checks whether the SSL certificate is valid and not expired.",
+        whyItMatters: "Expired certificates break trust and expose users to security risks.",
+        thresholds: {
+        good: "Valid, non-expired certificate",
+        needsImprovement: "Certificate nearing expiry",
+        poor: "Expired or invalid certificate"
+        },
+        actualReasonsForFailure: [
+        "Expired SSL certificate",
+        "Incorrect certificate configuration",
+        "Missing SSL security details"
+        ],
+        howToOvercomeFailure: [
+        "Renew SSL certificate before expiry",
+        "Use trusted certificate authorities",
+        "Monitor SSL validity regularly"
+        ]
     },
     TLS_Version: {
-        title: "TLS Protocol",
-        whatThisMetricIs: "Checks the version of Transport Layer Security protocol used.",
-        whyItMatters: "Old security protocols have holes that hackers can exploit.",
-        thresholds: "Good: TLS 1.2/1.3, Poor: TLS 1.0/1.1 or SSL",
-        actualReasonsForFailure: "Server supports deprecated protocols (TLS 1.0, 1.1) which are vulnerable.",
-        howToOvercomeFailure: "Disable TLS 1.0/1.1 in your server configuration and enforce TLS 1.2 or higher."
+        title: "TLS Version",
+        whatThisParameterIs: "Checks whether the site uses a secure TLS protocol version.",
+        whyItMatters: "Older TLS versions are vulnerable to known attacks.",
+        thresholds: {
+        good: "TLS 1.2 or TLS 1.3",
+        needsImprovement: "Older but supported TLS",
+        poor: "Weak or unsupported TLS version"
+        },
+        actualReasonsForFailure: [
+        "TLS 1.0 or 1.1 enabled",
+        "Outdated server configuration"
+        ],
+        howToOvercomeFailure: [
+        "Disable older TLS versions",
+        "Enable TLS 1.2 or TLS 1.3",
+        "Update server security settings"
+        ]
     },
     X_Frame_Options: {
-        title: "X-Frame-Options",
-        whatThisMetricIs: "Controls whether the site can be embedded in an <iframe>.",
-        whyItMatters: "Prevents hackers from putting your site inside an invisible frame to trick users (Clickjacking).",
-        thresholds: "Good: DENY/SAMEORIGIN, Poor: Missing",
-        actualReasonsForFailure: "Header missing, allowing the site to be embedded in malicious iframes.",
-        howToOvercomeFailure: "Set 'X-Frame-Options' header to 'DENY' or 'SAMEORIGIN'."
+    title: "X-Frame-Options Header",
+    whatThisParameterIs: "Checks whether the X-Frame-Options HTTP header is present to control iframe embedding.",
+    whyItMatters: "This header protects the site from clickjacking attacks by preventing it from being embedded in malicious iframes.",
+    thresholds: {
+        good: "X-Frame-Options header present",
+        needsImprovement: "Header present but not strictly configured",
+        poor: "X-Frame-Options header missing"
     },
-    CSP: {
-        title: "Content Security Policy",
-        whatThisMetricIs: "Whitelists sources of approved content (scripts, styles, images).",
-        whyItMatters: "A strong shield that stops unauthorized scripts from running on your page.",
-        thresholds: "Good: Strong Rules, Poor: Missing/Weak",
-        actualReasonsForFailure: "Header missing or configured with wildcards used too broadly.",
-        howToOvercomeFailure: "Implement a restrictive 'Content-Security-Policy' header allowing only trusted domains."
+    actualReasonsForFailure: [
+        "X-Frame-Options header not configured on the server",
+        "Misconfigured security headers",
+        "Reliance on default server settings"
+    ],
+    howToOvercomeFailure: [
+        "Add X-Frame-Options header with DENY or SAMEORIGIN value",
+        "Configure security headers at the server or CDN level",
+        "Verify headers using browser dev tools or security scanners"
+    ]
     },
     X_Content_Type_Options: {
-        title: "MIME Sniffing",
-        whatThisMetricIs: "Prevents browsers from interpreting files as a different MIME type.",
-        whyItMatters: "Stops browsers from being tricked into running a file as a script when it shouldn't be.",
-        thresholds: "Good: nosniff, Poor: Missing",
-        actualReasonsForFailure: "Header missing.",
-        howToOvercomeFailure: "Add 'X-Content-Type-Options: nosniff' header."
+    title: "X-Content-Type-Options Header",
+    whatThisParameterIs: "Checks whether the X-Content-Type-Options HTTP header is present to prevent MIME type sniffing.",
+    whyItMatters: "This header protects against attacks where browsers incorrectly interpret file types, which can lead to script execution vulnerabilities.",
+    thresholds: {
+        good: "X-Content-Type-Options header present (nosniff)",
+        needsImprovement: "Header present but misconfigured",
+        poor: "X-Content-Type-Options header missing"
+    },
+    actualReasonsForFailure: [
+        "X-Content-Type-Options header not set on the server",
+        "Incomplete or missing security header configuration",
+        "Reliance on default server behavior"
+    ],
+    howToOvercomeFailure: [
+        "Add X-Content-Type-Options header with value 'nosniff'",
+        "Configure security headers at the web server or CDN level",
+        "Verify response headers using browser developer tools"
+    ]
+    },
+    HSTS: {
+        title: "HTTP Strict Transport Security (HSTS)",
+        whatThisParameterIs: "Checks whether the HSTS header is enabled.",
+        whyItMatters: "HSTS forces browsers to always use HTTPS, preventing downgrade attacks.",
+        thresholds: {
+        good: "HSTS header present",
+        needsImprovement: "Short max-age value",
+        poor: "HSTS missing"
+        },
+        actualReasonsForFailure: [
+        "HSTS header not set",
+        "Incorrect HSTS configuration"
+        ],
+        howToOvercomeFailure: [
+        "Add Strict-Transport-Security header",
+        "Use a long max-age value",
+        "Enable includeSubDomains if applicable"
+        ]
+    },
+    CSP: {
+        title: "Content Security Policy (CSP)",
+        whatThisParameterIs: "Checks whether a Content Security Policy header is implemented.",
+        whyItMatters: "CSP protects against XSS and data injection attacks.",
+        thresholds: {
+        good: "CSP header present",
+        needsImprovement: "Overly permissive CSP",
+        poor: "CSP missing"
+        },
+        actualReasonsForFailure: [
+        "CSP header missing",
+        "Unsafe inline scripts allowed"
+        ],
+        howToOvercomeFailure: [
+        "Define a strict CSP policy",
+        "Avoid unsafe-inline and unsafe-eval",
+        "Test CSP before enforcing"
+        ]
     },
     Cookies_Secure: {
         title: "Secure Cookies",
-        whatThisMetricIs: "Ensures cookies are only sent over encrypted HTTPS connections.",
-        whyItMatters: "Ensures cookies (like login sessions) are only sent over secure channels.",
-        thresholds: "Good: Secure Flag Set, Poor: Missing",
-        actualReasonsForFailure: "Cookies set without the 'Secure' flag.",
-        howToOvercomeFailure: "Set the 'Secure' flag on all cookies (requires HTTPS)."
+        whatThisParameterIs: "Checks whether cookies use the Secure flag.",
+        whyItMatters: "Secure cookies are only transmitted over HTTPS, reducing risk of interception.",
+        thresholds: {
+        good: "Secure flag enabled",
+        needsImprovement: "Some cookies missing Secure flag",
+        poor: "No cookies use Secure flag"
+        },
+        actualReasonsForFailure: [
+        "Secure flag not set",
+        "Cookies served over HTTP"
+        ],
+        howToOvercomeFailure: [
+        "Enable Secure flag on cookies",
+        "Serve cookies only over HTTPS"
+        ]
     },
     Cookies_HttpOnly: {
         title: "HttpOnly Cookies",
-        whatThisMetricIs: "Prevents client-side scripts (JavaScript) from accessing cookies.",
-        whyItMatters: "Prevents malicious scripts from stealing your users' login cookies.",
-        thresholds: "Good: HttpOnly Flag Set, Poor: Missing",
-        actualReasonsForFailure: "Cookies set without the 'HttpOnly' flag, making them accessible to JS.",
-        howToOvercomeFailure: "Set the 'HttpOnly' flag on session cookies to prevent XSS theft."
-    },
-    Google_Safe_Browsing: {
-        title: "Safe Browsing",
-        whatThisMetricIs: "Checks if the domain is listed in Google's database of unsafe sites.",
-        whyItMatters: "If Google thinks your site is unsafe, they will show a giant red warning screen to users.",
-        thresholds: "Good: Clean, Poor: Listed",
-        actualReasonsForFailure: "Domain is flagged for hosting malware or phishing.",
-        howToOvercomeFailure: "Clean your site of malware/phishing content and request a review in Google Search Console."
-    },
-    Blacklist: {
-        title: "Domain Blacklist",
-        whatThisMetricIs: "Checks multiple DNS blacklists (spam, malware).",
-        whyItMatters: "Being blacklisted ruins your reputation and causes your emails to go to spam.",
-        thresholds: "Good: Not Listed, Poor: Listed",
-        actualReasonsForFailure: "Domain found on one or more DNSBLs (spam/malware lists).",
-        howToOvercomeFailure: "Identify the cause (e.g., infected site, spam emails), fix it, and request delisting."
-    },
-    Malware_Scan: {
-        title: "Malware Detection",
-        whatThisMetricIs: "Scans page content for known malicious signatures or obfuscated code.",
-        whyItMatters: "Malware steals user data and destroys trust. It can get your site banned.",
-        thresholds: "Good: Clean, Poor: Infected",
-        actualReasonsForFailure: "Malicious scripts, iframes, or obfuscated code detected on the page.",
-        howToOvercomeFailure: "Remove malicious code, update all plugins/themes, and restore from a clean backup."
+        whatThisParameterIs: "Checks whether cookies are protected with HttpOnly flag.",
+        whyItMatters: "HttpOnly cookies prevent access via JavaScript, reducing XSS risks.",
+        thresholds: {
+        good: "HttpOnly flag enabled",
+        needsImprovement: "Some cookies missing HttpOnly",
+        poor: "HttpOnly not used"
+        },
+        actualReasonsForFailure: [
+        "HttpOnly flag missing",
+        "Cookies accessible via JavaScript"
+        ],
+        howToOvercomeFailure: [
+        "Enable HttpOnly flag",
+        "Limit JavaScript access to cookies"
+        ]
     },
     SQLi_Exposure: {
-        title: "SQL Injection",
-        whatThisMetricIs: "Checks if inputs can manipulate database queries.",
-        whyItMatters: "A major hole that lets attackers steal or delete your entire database.",
-        thresholds: "Good: Protected, Poor: Vulnerable",
-        actualReasonsForFailure: "Form inputs or URL parameters perform database operations without sanitization.",
-        howToOvercomeFailure: "Use prepared statements (parameterized queries) for all database interaction."
+        title: "SQL Injection Exposure",
+        whatThisParameterIs: "Checks whether the site appears vulnerable to SQL injection attacks.",
+        whyItMatters: "SQL injection can lead to data theft or system compromise.",
+        thresholds: {
+        good: "No SQL injection indicators",
+        needsImprovement: "Suspicious response behavior",
+        poor: "SQL error patterns detected"
+        },
+        actualReasonsForFailure: [
+        "Unsanitized user input",
+        "Exposed database error messages"
+        ],
+        howToOvercomeFailure: [
+        "Use parameterized queries",
+        "Sanitize and validate inputs",
+        "Hide database error messages"
+        ]
     },
     XSS: {
-        title: "XSS Protection",
-        whatThisMetricIs: "Checks if user input is properly escaped before rendering.",
-        whyItMatters: "Allows attackers to inject malicious scripts that can steal accounts or deface your site.",
-        thresholds: "Good: Protected, Poor: Vulnerable",
-        actualReasonsForFailure: "User input is reflected on the page without proper escaping/sanitization.",
-        howToOvercomeFailure: "Sanitize and escape all user inputs before rendering them to HTML or JavaScript."
+        title: "Cross-Site Scripting (XSS)",
+        whatThisParameterIs: "Checks whether user input is reflected without proper sanitization.",
+        whyItMatters: "XSS attacks can hijack user sessions and steal sensitive data.",
+        thresholds: {
+        good: "No reflected scripts",
+        needsImprovement: "Partial input sanitization",
+        poor: "Script payload reflected"
+        },
+        actualReasonsForFailure: [
+        "User input not escaped",
+        "Inline script execution allowed"
+        ],
+        howToOvercomeFailure: [
+        "Escape user-generated content",
+        "Implement CSP",
+        "Avoid inline JavaScript"
+        ]
     },
     Cookie_Consent: {
-        title: "Cookie Consent",
-        whatThisMetricIs: "Verifies if a cookie consent banner is present.",
-        whyItMatters: "Required by law (GDPR/CCPA). Ignoring it can lead to heavy fines.",
-        thresholds: "Good: Banner Present, Poor: Missing",
-        actualReasonsForFailure: "No cookie consent mechanism detected on the page.",
-        howToOvercomeFailure: "Implement a Consent Management Platform (CMP) or simple banner."
+        title: "Cookie Consent Banner",
+        whatThisParameterIs: "Checks whether a cookie consent mechanism is present.",
+        whyItMatters: "Cookie consent is required for GDPR and privacy compliance.",
+        thresholds: {
+        good: "Consent banner present",
+        needsImprovement: "Banner unclear",
+        poor: "No consent banner"
+        },
+        actualReasonsForFailure: [
+        "No cookie banner",
+        "Hidden or non-functional banner"
+        ],
+        howToOvercomeFailure: [
+        "Implement cookie consent banner",
+        "Allow users to manage preferences"
+        ]
     },
     Privacy_Policy: {
         title: "Privacy Policy",
-        whatThisMetricIs: "Checks for the existence of a privacy policy page.",
-        whyItMatters: "Building trust is key. Users and laws require you to explain how you handle data.",
-        thresholds: "Good: Page Found, Poor: Missing",
-        actualReasonsForFailure: "No link to a Privacy Policy page found in footer/navigation.",
-        howToOvercomeFailure: "Create a clear Privacy Policy page and link to it globally (usually in the footer)."
-    },
-    Forms_Use_HTTPS: {
-        title: "Secure Forms",
-        whatThisMetricIs: "Ensures login and contact forms submit data over HTTPS.",
-        whyItMatters: "Sending passwords or messages over an insecure connection allows hackers to read them.",
-        thresholds: "Good: Secure Action, Poor: Insecure Action",
-        actualReasonsForFailure: "Form 'action' attribute points to an HTTP URL.",
-        howToOvercomeFailure: "Update all form action URLs to use HTTPS."
-    },
-    GDPR_CCPA: {
-        title: "GDPR/CCPA",
-        whatThisMetricIs: "Checks for signs of data privacy regulation compliance.",
-        whyItMatters: "Protects user rights. Users want to know they can control their personal data.",
-        thresholds: "Good: Compliant links, Poor: Missing",
-        actualReasonsForFailure: "Missing 'Do Not Sell My Info' or data deletion request mechanisms.",
-        howToOvercomeFailure: "Add clear links/forms for users to exercise their data rights under GDPR/CCPA."
-    },
-    Data_Collection: {
-        title: "Data Collection",
-        whatThisMetricIs: "Identifies if the site collects sensitive data.",
-        whyItMatters: "Users are wary of giving info. Transparency increases likelihood of conversion.",
-        thresholds: "Good: Transparent, Poor: Opaque",
-        actualReasonsForFailure: "Collecting sensitive data (email, phone, location) without clear purpose or disclosure.",
-        howToOvercomeFailure: "For every data point collected, explain 'why' in the UI and link to your Privacy Policy."
-    },
-    Weak_Default_Credentials: {
-        title: "Default Credentials",
-        whatThisMetricIs: "Checks for exposed default login paths or credentials.",
-        whyItMatters: "Leaving default passwords (like 'admin') is the easiest way to get hacked.",
-        whatToDoForAGoodScore: "Change all default usernames and passwords immediately after installation.",
-        howThisScoreIsCalculated: "We check if common default admin pages are accessible."
-    },
-    MFA_Enabled: {
-        title: "MFA Status",
-        whatThisMetricIs: "Checks if MFA is enforced for sensitive areas.",
-        whyItMatters: "The single most effective way to prevent unauthorized account access.",
-        whatToDoForAGoodScore: "Enable Two-Factor Authentication (2FA) for all administrator accounts.",
-        howThisScoreIsCalculated: "We look for signs that extra login security is required for admin areas."
+        whatThisParameterIs: "Checks whether a privacy policy link is available.",
+        whyItMatters: "Privacy policies are legally required and build user trust.",
+        thresholds: {
+        good: "Privacy policy accessible",
+        needsImprovement: "Hard to find policy",
+        poor: "No privacy policy"
+        },
+        actualReasonsForFailure: [
+        "Privacy policy missing",
+        "Broken policy link"
+        ],
+        howToOvercomeFailure: [
+        "Add a privacy policy page",
+        "Link it in footer or menu"
+        ]
     },
     Admin_Panel_Public: {
-        title: "Admin Exposure",
-        whatThisMetricIs: "Checks if admin login pages are publicly accessible.",
-        whyItMatters: "Exposing your login page to the whole world invites brute-force attacks.",
-        whatToDoForAGoodScore: "Hide your admin login page or restrict access to trusted IP addresses.",
-        howThisScoreIsCalculated: "We check if your administrative login page is visible to the public."
+        title: "Public Admin Panel Exposure",
+        whatThisParameterIs: "Checks whether admin or control panels are publicly accessible.",
+        whyItMatters: "Exposed admin panels increase attack surface.",
+        thresholds: {
+        good: "No public admin panels",
+        needsImprovement: "Restricted admin paths",
+        poor: "Admin panel publicly accessible"
+        },
+        actualReasonsForFailure: [
+        "Admin URLs publicly accessible",
+        "No access restrictions"
+        ],
+        howToOvercomeFailure: [
+        "Restrict admin access",
+        "Use authentication and IP restrictions"
+        ]
+    },
+    MFA_Enabled: {
+        title: "Multi-Factor Authentication (MFA)",
+        whatThisParameterIs: "Checks whether MFA or SSO indicators are present on login flows.",
+        whyItMatters: "MFA adds an extra layer of account security.",
+        thresholds: {
+        good: "MFA or SSO detected",
+        needsImprovement: "MFA unclear",
+        poor: "No MFA indicators"
+        },
+        actualReasonsForFailure: [
+        "Single-factor authentication only",
+        "No MFA-related UI elements"
+        ],
+        howToOvercomeFailure: [
+        "Enable MFA for logins",
+        "Use SSO or authenticator-based MFA"
+        ]
+    },
+    Google_Safe_Browsing: {
+    title: "Google Safe Browsing",
+    whatThisParameterIs: "Checks whether the website is flagged for malware or harmful activity by Google Safe Browsing.",
+    whyItMatters: "Sites flagged by Google may be blocked or warned in browsers, harming trust and traffic.",
+    thresholds: {
+        good: "URL not found in Google Safe Browsing database",
+        poor: "URL flagged as unsafe"
+    },
+    actualReasonsForFailure: [
+        "Malware detected on the website",
+        "Previously compromised files",
+        "Suspicious redirects or injected scripts"
+    ],
+    howToOvercomeFailure: [
+        "Remove malware and suspicious scripts",
+        "Request a review in Google Search Console",
+        "Keep CMS and plugins updated"
+    ]
+    },
+    Blacklist: {
+    title: "Domain Blacklist Status",
+    whatThisParameterIs: "Checks whether the domain appears in known security blacklists.",
+    whyItMatters: "Blacklisted domains may be blocked by browsers, email providers, or security tools.",
+    thresholds: {
+        good: "Domain not blacklisted",
+        poor: "Domain found in blacklist databases"
+    },
+    actualReasonsForFailure: [
+        "Malware hosting",
+        "Phishing activity",
+        "Past security breaches"
+    ],
+    howToOvercomeFailure: [
+        "Clean infected files",
+        "Request delisting from blacklist providers",
+        "Improve server security practices"
+    ]
+    },
+    Malware_Scan: {
+    title: "Malware Detection",
+    whatThisParameterIs: "Checks domain reputation using malware scanning services.",
+    whyItMatters: "Malware affects user safety, SEO rankings, and browser trust.",
+    thresholds: {
+        good: "No malware detected",
+        poor: "Malware detected"
+    },
+    actualReasonsForFailure: [
+        "Injected malicious scripts",
+        "Compromised server or CMS",
+        "Unpatched vulnerabilities"
+    ],
+    howToOvercomeFailure: [
+        "Remove malicious files",
+        "Harden server security",
+        "Run regular security scans"
+    ]
+    },
+    Forms_Use_HTTPS: {
+    title: "Secure Form Submission",
+    whatThisParameterIs: "Checks whether form actions submit data over HTTPS.",
+    whyItMatters: "Insecure form submissions can expose sensitive user data.",
+    thresholds: {
+        good: "All forms submit data over HTTPS",
+        poor: "One or more forms use HTTP"
+    },
+    actualReasonsForFailure: [
+        "Form action points to HTTP URL",
+        "Mixed content issues"
+    ],
+    howToOvercomeFailure: [
+        "Update form actions to HTTPS",
+        "Force HTTPS site-wide"
+    ]
+    },
+    GDPR_CCPA: {
+    title: "GDPR / CCPA Compliance",
+    whatThisParameterIs: "Checks for presence of GDPR or CCPA consent notices.",
+    whyItMatters: "Compliance is legally required in many regions and builds user trust.",
+    thresholds: {
+        good: "Consent notice found",
+        poor: "No consent notice found"
+    },
+    actualReasonsForFailure: [
+        "No consent banner implemented",
+        "Hidden or inaccessible consent UI"
+    ],
+    howToOvercomeFailure: [
+        "Add GDPR/CCPA compliant consent banner",
+        "Allow users to manage consent preferences"
+    ]
+    },
+    Data_Collection: {
+    title: "Data Collection Disclosure",
+    whatThisParameterIs: "Checks whether the site discloses how user data is collected and used.",
+    whyItMatters: "Transparency about data usage is required for privacy compliance.",
+    thresholds: {
+        good: "Data collection disclosure found",
+        poor: "No disclosure found"
+    },
+    actualReasonsForFailure: [
+        "Missing privacy or data usage pages",
+        "No clear data usage explanation"
+    ],
+    howToOvercomeFailure: [
+        "Add a detailed privacy policy",
+        "Clearly explain data usage and cookies"
+    ]
+    },
+    Weak_Default_Credentials: {
+    title: "Weak or Default Credentials",
+    whatThisParameterIs: "Checks for indicators of weak or default login credentials.",
+    whyItMatters: "Weak credentials increase the risk of unauthorized access.",
+    thresholds: {
+        good: "No weak credential indicators found",
+        poor: "Weak or default credentials detected"
+    },
+    actualReasonsForFailure: [
+        "Default usernames or passwords",
+        "Missing CSRF protection",
+        "Unprotected login forms"
+    ],
+    howToOvercomeFailure: [
+        "Enforce strong password policies",
+        "Enable CSRF protection and captcha",
+        "Remove default credentials"
+    ]
     },
     HTML_Doctype: {
-        title: "Doctype",
-        whatThisMetricIs: "Specifies the HTML version to the browser.",
-        whyItMatters: "Tells the browser which version of code you are using. Prevents layout errors.",
-        whatToDoForAGoodScore: "Start every HTML file with the standard DOCTYPE declaration.",
-        howThisScoreIsCalculated: "We verify that your document starts with the correct type declaration."
+    title: "HTML Doctype",
+    whatThisParameterIs: "Checks whether a valid HTML5 doctype is declared.",
+    whyItMatters: "Correct doctype ensures consistent rendering across browsers.",
+    thresholds: {
+        good: "HTML5 doctype present",
+        poor: "Missing or incorrect doctype"
+    },
+    actualReasonsForFailure: [
+        "DOCTYPE missing",
+        "Legacy or invalid doctype"
+    ],
+    howToOvercomeFailure: [
+        "Declare <!DOCTYPE html> at document start"
+    ]
     },
     Character_Encoding: {
-        title: "Charset",
-        whatThisMetricIs: "Specifies how characters are represented.",
-        whyItMatters: "Without this, special characters (like emojis or accents) will look like broken symbols.",
-        whatToDoForAGoodScore: "Set your encoding to 'UTF-8' so text displays correctly in all languages.",
-        howThisScoreIsCalculated: "We check if you have declared the correct text character set."
+    title: "Character Encoding",
+    whatThisParameterIs: "Checks whether a character encoding is defined.",
+    whyItMatters: "Missing charset can cause text rendering and security issues.",
+    thresholds: {
+        good: "Charset defined",
+        poor: "Charset missing"
+    },
+    actualReasonsForFailure: [
+        "No meta charset tag",
+        "No charset in HTTP headers"
+    ],
+    howToOvercomeFailure: [
+        "Add <meta charset='UTF-8'>",
+        "Define charset in server headers"
+    ]
     },
     Browser_Console_Errors: {
-        title: "Console Errors",
-        whatThisMetricIs: "Checks for JavaScript errors in the browser console.",
-        whyItMatters: "Errors in the code indicate broken features that frustrate users.",
-        whatToDoForAGoodScore: "Check your browser console and fix any red error messages.",
-        howThisScoreIsCalculated: "We monitor the browser console for errors that occur while the page loads."
+    title: "Browser Console Errors",
+    whatThisParameterIs: "Detects JavaScript and runtime errors in the browser console.",
+    whyItMatters: "Console errors can break functionality and user experience.",
+    thresholds: {
+        good: "No console errors",
+        poor: "Console errors detected"
+    },
+    actualReasonsForFailure: [
+        "JavaScript runtime errors",
+        "Missing or broken scripts"
+    ],
+    howToOvercomeFailure: [
+        "Fix JavaScript errors",
+        "Test scripts across browsers"
+    ]
     },
     Geolocation_Request: {
-        title: "Geolocation",
-        whatThisMetricIs: "Checks if the site requests location data immediately on load.",
-        whyItMatters: "Asking for location immediately annoys users and leads to high 'Block' rates.",
-        whatToDoForAGoodScore: "Only ask for location when the user actually taps a button (like 'Find Store').",
-        howThisScoreIsCalculated: "We check if your site requests location access without user interaction."
+    title: "Geolocation Permission Request",
+    whatThisParameterIs: "Checks whether the page requests geolocation access on load.",
+    whyItMatters: "Unnecessary permission requests reduce user trust.",
+    thresholds: {
+        good: "No geolocation request on load",
+        poor: "Geolocation requested automatically"
+    },
+    actualReasonsForFailure: [
+        "Geolocation API called on page load"
+    ],
+    howToOvercomeFailure: [
+        "Request location only when necessary",
+        "Explain why location access is required"
+    ]
     },
     Input_Paste_Allowed: {
-        title: "Paste Check",
-        whatThisMetricIs: "Checks if pasting is blocked in password fields.",
-        whyItMatters: "Blocking paste forces users to type long passwords, leading to typos and frustration.",
-        whatToDoForAGoodScore: "Allow users to paste into password fields. It improves security (password managers).",
-        howThisScoreIsCalculated: "We verify that you have not disabled the 'paste' functionality on forms."
+    title: "Paste Allowed in Inputs",
+    whatThisParameterIs: "Checks whether users can paste into input fields.",
+    whyItMatters: "Blocking paste harms accessibility and usability.",
+    thresholds: {
+        good: "Paste allowed",
+        poor: "Paste blocked"
+    },
+    actualReasonsForFailure: [
+        "onpaste handlers blocking paste",
+        "Custom JS preventing paste"
+    ],
+    howToOvercomeFailure: [
+        "Allow paste events",
+        "Avoid unnecessary input restrictions"
+    ]
     },
     Notification_Request: {
-        title: "Notifications",
-        whatThisMetricIs: "Checks for push notification prompts on load.",
-        whyItMatters: "Popups asking for notifications on load are universally hated and usually blocked.",
-        whatToDoForAGoodScore: "Ask for permission only after the user requests to be notified.",
-        howThisScoreIsCalculated: "We check if your site interrupts the user with a notification prompt immediately."
+    title: "Notification Permission Request",
+    whatThisParameterIs: "Checks whether notification permission is requested on page load.",
+    whyItMatters: "Aggressive permission requests reduce trust and engagement.",
+    thresholds: {
+        good: "No notification request on load",
+        poor: "Notification requested automatically"
+    },
+    actualReasonsForFailure: [
+        "Notification API triggered on load"
+    ],
+    howToOvercomeFailure: [
+        "Request notifications only after user interaction"
+    ]
     },
     Third_Party_Cookies: {
-        title: "3rd Party Cookies",
-        whatThisMetricIs: "Cookies set by domains other than the website itself.",
-        whyItMatters: "Tracking users across the web is becoming restricted and lowers trust.",
-        whatToDoForAGoodScore: "Focus on first-party data. Reduce reliance on external advertising trackers.",
-        howThisScoreIsCalculated: "We identify cookies set by other domains that track user behavior."
+    title: "Third-Party Cookies",
+    whatThisParameterIs: "Checks whether third-party cookies are set.",
+    whyItMatters: "Third-party cookies raise privacy and compliance concerns.",
+    thresholds: {
+        good: "No third-party cookies detected",
+        poor: "Third-party cookies detected"
+    },
+    actualReasonsForFailure: [
+        "Third-party scripts setting cookies",
+        "Tracking pixels"
+    ],
+    howToOvercomeFailure: [
+        "Audit third-party scripts",
+        "Limit cross-domain cookie usage"
+    ]
     },
     Deprecated_APIs: {
-        title: "Deprecated APIs",
-        whatThisMetricIs: "Checks for usage of old, insecure browser features.",
-        whyItMatters: "Using old, removed code features can make your site stop working in new browsers.",
-        whatToDoForAGoodScore: "Update your codebase to use modern, standard browser features.",
-        howThisScoreIsCalculated: "We scan your code for outdated features that browsers are removing."
+    title: "Deprecated API Usage",
+    whatThisParameterIs: "Detects usage of deprecated browser APIs.",
+    whyItMatters: "Deprecated APIs may break in future browsers.",
+    thresholds: {
+        good: "No deprecated APIs used",
+        poor: "Deprecated APIs detected"
+    },
+    actualReasonsForFailure: [
+        "Legacy JavaScript APIs",
+        "Outdated libraries"
+    ],
+    howToOvercomeFailure: [
+        "Update libraries",
+        "Replace deprecated APIs with modern alternatives"
+    ]
+    },
+    Viewport_Meta_Tag: {
+    title: "Viewport Meta Tag",
+    whatThisParameterIs: "Checks whether the viewport meta tag is present and correctly configured for responsive design.",
+    whyItMatters: "A proper viewport meta tag ensures pages scale correctly on mobile devices and improves usability and accessibility.",
+    thresholds: {
+        good: "Viewport meta tag present with width or initial-scale",
+        needsImprovement: "Viewport meta tag present but misconfigured",
+        poor: "Viewport meta tag missing"
+    },
+    actualReasonsForFailure: [
+        "Viewport meta tag missing",
+        "Viewport meta tag does not define width or initial-scale"
+    ],
+    howToOvercomeFailure: [
+        "Add <meta name='viewport' content='width=device-width, initial-scale=1'> to the head section",
+        "Verify viewport configuration using browser developer tools"
+    ]
     },
 
     // Methodologies (Security & Compliance)
@@ -1323,133 +1814,294 @@ export const InfoDetails = {
     },
 
     // UX & Content 
-    Viewport_Meta_Tag: {
-        title: "Viewport Meta Tag",
-        whatThisMetricIs: "Controls layout on mobile browsers to fit the screen width.",
-        whyItMatters: "Without this tag, your site looks like a tiny, zoomed-out desktop version on mobile options.",
-        thresholds: "Good: Present & Correct, Poor: Missing",
-        actualReasonsForFailure: "Tag missing or configured incorrectly (e.g., fixed width).",
-        howToOvercomeFailure: "Add <meta name='viewport' content='width=device-width, initial-scale=1'> to the <head>."
+    Viewport_Configuration: {
+    title: "Viewport Configuration",
+    whatThisParameterIs: "Checks whether the page defines a proper viewport meta tag for responsive rendering, especially on mobile devices.",
+    whyItMatters: "Without a correct viewport configuration, pages may appear zoomed out, require horizontal scrolling, or be hard to read on mobile screens.",
+    thresholds: {
+        good: "Viewport meta tag present with width=device-width and initial-scale=1",
+        needsImprovement: "Viewport meta tag present but incorrectly configured",
+        poor: "Viewport meta tag missing"
     },
-    Horizontal_Scroll: {
-        title: "Horizontal Scroll",
-        whatThisMetricIs: "Checks if content overflows the screen width, causing awkward scrolling.",
-        whyItMatters: "Horizontal scrolling is annoying and usually accidental on mobile. It feels broken.",
-        thresholds: "Good: None, Poor: Detected",
-        actualReasonsForFailure: "Elements with fixed widths wider than the viewport (e.g., large tables, unscaled images).",
-        howToOvercomeFailure: "Use CSS 'max-width: 100%' on containers and images. Avoid fixed pixel widths."
-    },
-    Sticky_Header_Height: {
-        title: "Sticky Header",
-        whatThisMetricIs: "Measures how much screen space the sticky header occupies.",
-        whyItMatters: "Big sticky headers eat up valuable screen space, making reading hard on phones.",
-        thresholds: "Good: < 15% Screen Height, Poor: > 20%",
-        actualReasonsForFailure: "Header is too tall or does not shrink on scroll.",
-        howToOvercomeFailure: "Reduce header height on mobile or hide it when scrolling down."
-    },
-    Navigation_Depth: {
-        title: "Navigation Depth",
-        whatThisMetricIs: "Measures clicks required to reach deep pages.",
-        whyItMatters: "If users have to click 4 times to find something, they usually give up.",
-        thresholds: "Good: < 4 Clicks, Poor: > 4 Clicks",
-        actualReasonsForFailure: "Content buried deep in nested menus or categories.",
-        howToOvercomeFailure: "Flatten site structure so important pages are accessible in 3 clicks or fewer."
-    },
-    Breadcrumbs: {
-        title: "Breadcrumbs",
-        whatThisMetricIs: "Secondary navigation scheme showing user's location.",
-        whyItMatters: "Users get lost easily. Breadcrumbs act like a 'Back' button for categories.",
-        thresholds: "Good: Present, Poor: Missing",
-        actualReasonsForFailure: "No breadcrumb navigation found on sub-pages.",
-        howToOvercomeFailure: "Add breadcrumb links (Home > Category > Page) to the top of your pages."
-    },
-    Navigation_Discoverability: {
-        title: "Nav Discoverability",
-        whatThisMetricIs: "Checks if the navigation menu is easy to find and use.",
-        whyItMatters: "If users can't find the menu, they can't explore your site.",
-        thresholds: "Good: Standard Location, Poor: Hidden/Non-standard",
-        actualReasonsForFailure: "Menu button is small, low contrast, or placed in an unusual location.",
-        howToOvercomeFailure: "Place navigation in standard locations (top left/right) and use standard icons (hamburger)."
-    },
-    Tap_Target_Size: {
-        title: "Tap Targets",
-        whatThisMetricIs: "Checks if buttons and links are large enough to touch.",
-        whyItMatters: "Tiny buttons cause 'fat finger' errors. Frustrated users leave.",
-        thresholds: "Good: > 48x48px, Poor: < 48x48px",
-        actualReasonsForFailure: "Interactive elements are too small or too close to neighbors.",
-        howToOvercomeFailure: "Increase width/height of touch targets to at least 48px and add spacing."
+    actualReasonsForFailure: [
+        "Viewport meta tag missing from the HTML head",
+        "Viewport meta tag does not include width=device-width",
+        "Viewport meta tag missing initial-scale value",
+        "Viewport configured only for desktop layouts"
+    ],
+    howToOvercomeFailure: [
+        "Add <meta name='viewport' content='width=device-width, initial-scale=1'> in the head section",
+        "Avoid fixed-width layouts on mobile",
+        "Test responsiveness across common mobile breakpoints"
+    ]
     },
     Text_Readability: {
-        title: "Readability Score",
-        whatThisMetricIs: "Analyzes sentence length and word complexity (Flesch-Kincaid).",
-        whyItMatters: "If your text is too complicated, people stop reading. Simple language sells.",
-        thresholds: "Good: Grade 8 or lower, Poor: Grade 12+",
-        actualReasonsForFailure: "Long sentences, complex vocabulary, passive voice, or jargon.",
-        howToOvercomeFailure: "Simplify language, break up long sentences, and aim for an 8th-grade reading level."
+    title: "Text Readability",
+    whatThisParameterIs: "Measures how easy the page content is to read using the Flesch Reading Ease formula.",
+    whyItMatters: "Readable content improves user engagement, comprehension, and conversion rates.",
+    thresholds: {
+        good: "Score within recommended range for page type",
+        needsImprovement: "Slightly complex content",
+        poor: "Hard to read content"
     },
-    Text_Font_Size: {
-        title: "Font Legibility",
-        whatThisMetricIs: "Checks if text size is readable without zooming.",
-        whyItMatters: "Small text forces users to squint or zoom. It's a major usability fail.",
-        thresholds: "Good: Base ≥ 16px, Poor: < 12px",
-        actualReasonsForFailure: "Base font size is set too small.",
-        howToOvercomeFailure: "Set the body font-size to at least 16px (1rem) for mobile devices."
+    actualReasonsForFailure: [
+        "Very long sentences",
+        "Complex vocabulary with many syllables",
+        "Dense paragraphs without breaks"
+    ],
+    howToOvercomeFailure: [
+        "Use shorter sentences",
+        "Replace complex words with simpler alternatives",
+        "Break content into smaller paragraphs"
+    ]
     },
     Cumulative_Layout_Shift: {
-        title: "Visual Stability (CLS)",
-        whatThisMetricIs: "Measures how much page content shifts while loading.",
-        whyItMatters: "It's annoying when you try to click a button and it moves. It feels glitchy.",
-        thresholds: "Good: Stable, Poor: Shifting",
-        actualReasonsForFailure: "Images/Ads loading late without reserved space.",
-        howToOvercomeFailure: "Set fixed width/height for media and ads to reserve space before loading."
+    title: "Cumulative Layout Shift (CLS)",
+    whatThisParameterIs: "Measures unexpected layout movement during page load.",
+    whyItMatters: "Layout shifts frustrate users and can cause accidental clicks.",
+    thresholds: {
+        good: "CLS ≤ 0.1",
+        needsImprovement: "CLS between 0.1 and 0.25",
+        poor: "CLS > 0.25"
     },
-    Image_Stability: {
-        title: "Image Stability",
-        whatThisMetricIs: "Checks if images have defined dimensions.",
-        whyItMatters: "Images without sizes cause the layout to jump as they load.",
-        thresholds: "Good: Dimensions Set, Poor: Missing Dimensions",
-        actualReasonsForFailure: "Image tags missing 'width' and 'height' attributes.",
-        howToOvercomeFailure: "Always specify width and height attributes on <img> tags."
+    actualReasonsForFailure: [
+        "Images without width and height",
+        "Ads injected dynamically",
+        "Late-loading fonts or banners"
+    ],
+    howToOvercomeFailure: [
+        "Define width and height for images",
+        "Reserve space for ads and embeds",
+        "Use font-display swap"
+    ]
+    },
+    Tap_Target_Size: {
+    title: "Tap Target Size",
+    whatThisParameterIs: "Checks whether clickable elements are large enough for touch interaction.",
+    whyItMatters: "Small tap targets cause misclicks and poor mobile usability.",
+    thresholds: {
+        good: "≥ 90% tap targets meet size requirements",
+        needsImprovement: "Some targets are too small",
+        poor: "Many targets are too small"
+    },
+    actualReasonsForFailure: [
+        "Buttons smaller than recommended size",
+        "Links placed too close together"
+    ],
+    howToOvercomeFailure: [
+        "Increase button and link size",
+        "Add spacing between interactive elements"
+    ]
+    },
+    Text_Font_Size: {
+    title: "Text Font Size",
+    whatThisParameterIs: "Checks whether text size meets minimum readability standards.",
+    whyItMatters: "Small text strains the eyes and reduces accessibility.",
+    thresholds: {
+        good: "≥ 90% text meets minimum size",
+        needsImprovement: "Some text is too small",
+        poor: "Most text is too small"
+    },
+    actualReasonsForFailure: [
+        "Font size below recommended minimum",
+        "Overuse of small captions"
+    ],
+    howToOvercomeFailure: [
+        "Increase base font size",
+        "Avoid scaling text too small on mobile"
+    ]
+    },
+    Horizontal_Scroll_Check: {
+    title: "Horizontal Scrolling",
+    whatThisParameterIs: "Detects whether horizontal scrolling is required on the page.",
+    whyItMatters: "Horizontal scrolling breaks mobile usability expectations.",
+    thresholds: {
+        good: "No horizontal scroll",
+        poor: "Horizontal scroll detected"
+    },
+    actualReasonsForFailure: [
+        "Fixed-width elements",
+        "Large images or tables"
+    ],
+    howToOvercomeFailure: [
+        "Use responsive layouts",
+        "Avoid fixed-width containers"
+    ]
+    },
+    Sticky_Header_Usage: {
+    title: "Sticky Header Usage",
+    whatThisParameterIs: "Checks whether sticky headers occupy excessive screen space.",
+    whyItMatters: "Oversized sticky headers reduce visible content area.",
+    thresholds: {
+        good: "Header height within limit",
+        poor: "Header too tall"
+    },
+    actualReasonsForFailure: [
+        "Large fixed headers",
+        "Multiple stacked sticky elements"
+    ],
+    howToOvercomeFailure: [
+        "Reduce header height",
+        "Collapse header on scroll"
+    ]
+    },
+    Navigation_Depth: {
+    title: "Navigation Depth",
+    whatThisParameterIs: "Measures how deep internal pages are within the site structure.",
+    whyItMatters: "Shallow navigation improves discoverability.",
+    thresholds: {
+        good: "≥ 80% links ≤ 3 levels deep",
+        needsImprovement: "Some deep links",
+        poor: "Many deep links"
+    },
+    actualReasonsForFailure: [
+        "Over-nested URLs",
+        "Complex menu structure"
+    ],
+    howToOvercomeFailure: [
+        "Flatten navigation hierarchy",
+        "Improve internal linking"
+    ]
     },
     Intrusive_Interstitials: {
-        title: "Popups & Modals",
-        whatThisMetricIs: "Checks for popups that block content immediately.",
-        whyItMatters: "Popups that block the screen immediately annoy users and Google.",
-        thresholds: "Good: None, Poor: Detected",
-        actualReasonsForFailure: "Full-screen popups appearing immediately on load.",
-        howToOvercomeFailure: "Use smaller banners or delay popups until the user is engaged."
+    title: "Intrusive Interstitials",
+    whatThisParameterIs: "Detects large popups or overlays blocking content.",
+    whyItMatters: "Intrusive popups frustrate users and hurt SEO.",
+    thresholds: {
+        good: "No intrusive interstitials",
+        poor: "Intrusive elements detected"
     },
-    Above_The_Fold_Content: {
-        title: "Above the Fold",
-        whatThisMetricIs: "Checks what users see first.",
-        whyItMatters: "You have 3 seconds to impress. If the top of your page is empty, users bounce.",
-        thresholds: "Good: Content Visible, Poor: Empty/Ads",
-        actualReasonsForFailure: "Initial screen area is empty or dominated by ads/headers.",
-        howToOvercomeFailure: "Place your main value proposition (headline + image) clearly at the top."
+    actualReasonsForFailure: [
+        "Full-screen popups",
+        "Scroll-blocking modals"
+    ],
+    howToOvercomeFailure: [
+        "Use non-intrusive banners",
+        "Delay popups until user interaction"
+    ]
     },
-    Click_Feedback: {
-        title: "Interaction Feedback",
-        whatThisMetricIs: "Visual response when clicking/tapping elements.",
-        whyItMatters: "If buttons don't react, users think the app is frozen.",
-        thresholds: "Good: Visible Feedback, Poor: Static",
-        actualReasonsForFailure: "No CSS :active or :focus styles defined for interactive elements.",
-        howToOvercomeFailure: "Add ':active' scale or color change effects to buttons."
+    Image_Stability: {
+    title: "Image Stability",
+    whatThisParameterIs: "Checks whether images reserve space before loading.",
+    whyItMatters: "Unstable images cause layout shifts.",
+    thresholds: {
+        good: "≥ 90% images stable",
+        poor: "Many unstable images"
     },
-    Form_Validation: {
-        title: "Form Validation",
-        whatThisMetricIs: "Real-time feedback for user inputs.",
-        whyItMatters: "Waiting until the end to see errors is frustrating.",
-        thresholds: "Good: Inline & Clear, Poor: Submit-only",
-        actualReasonsForFailure: "Validation only happens after submit, or error messages are generic.",
-        howToOvercomeFailure: "Validate fields as users type and provide specific, helpful error strings."
+    actualReasonsForFailure: [
+        "Missing width/height attributes",
+        "No aspect-ratio defined"
+    ],
+    howToOvercomeFailure: [
+        "Define width and height",
+        "Use CSS aspect-ratio"
+    ]
+    },
+    Breadcrumbs: {
+    title: "Breadcrumb Navigation",
+    whatThisParameterIs: "Checks whether breadcrumb navigation is present.",
+    whyItMatters: "Breadcrumbs improve navigation clarity and SEO.",
+    thresholds: {
+        good: "Breadcrumbs detected",
+        poor: "Breadcrumbs missing"
+    },
+    actualReasonsForFailure: [
+        "No breadcrumb markup",
+        "Missing schema"
+    ],
+    howToOvercomeFailure: [
+        "Add breadcrumb navigation",
+        "Use BreadcrumbList schema"
+    ]
+    },
+    Navigation_Discoverability: {
+    title: "Navigation Discoverability",
+    whatThisParameterIs: "Checks whether navigation and search are easy to find on mobile.",
+    whyItMatters: "Hidden navigation reduces usability.",
+    thresholds: {
+        good: "Menu and search available",
+        needsImprovement: "Only one present",
+        poor: "Navigation hard to find"
+    },
+    actualReasonsForFailure: [
+        "Hidden menu",
+        "No search option"
+    ],
+    howToOvercomeFailure: [
+        "Add hamburger menu",
+        "Provide visible search"
+    ]
+    },
+    Above_the_Fold_Content: {
+    title: "Above-the-Fold Content",
+    whatThisParameterIs: "Measures how much important content is visible without scrolling.",
+    whyItMatters: "Users expect meaningful content immediately.",
+    thresholds: {
+        good: "≥ 50% important content visible",
+        needsImprovement: "20–49% visible",
+        poor: "< 20% visible"
+    },
+    actualReasonsForFailure: [
+        "Large hero sections",
+        "Excessive banners"
+    ],
+    howToOvercomeFailure: [
+        "Reduce hero height",
+        "Move key content higher"
+    ]
+    },
+    Interactive_Click_Feedback: {
+    title: "Click Feedback",
+    whatThisParameterIs: "Checks whether interactive elements provide visual feedback.",
+    whyItMatters: "Feedback confirms actions to users.",
+    thresholds: {
+        good: "≥ 80% elements show feedback",
+        needsImprovement: "Some feedback missing",
+        poor: "Little or no feedback"
+    },
+    actualReasonsForFailure: [
+        "No hover or active styles",
+        "Missing cursor changes"
+    ],
+    howToOvercomeFailure: [
+        "Add hover/active states",
+        "Use cursor:pointer"
+    ]
+    },
+    Form_Validation_UX: {
+    title: "Form Validation UX",
+    whatThisParameterIs: "Checks whether form inputs have labels and clear validation feedback.",
+    whyItMatters: "Good form UX reduces errors and abandonment.",
+    thresholds: {
+        good: "≥ 90% inputs labeled",
+        needsImprovement: "Some labels missing",
+        poor: "Many unlabeled inputs"
+    },
+    actualReasonsForFailure: [
+        "Missing labels",
+        "Unclear error messages"
+    ],
+    howToOvercomeFailure: [
+        "Add labels or aria-labels",
+        "Show inline error messages"
+    ]
     },
     Loading_Feedback: {
-        title: "Loading States",
-        whatThisMetricIs: "Indicators like spinners or skeletons during waits.",
-        whyItMatters: "Staring at a blank screen makes users think the site is broken.",
-        thresholds: "Good: Spinners/Skeletons, Poor: Blank Screen",
-        actualReasonsForFailure: "No UI feedback during async data loading.",
-        howToOvercomeFailure: "Display loading spinners or skeleton screens while fetching data."
+    title: "Loading Feedback",
+    whatThisParameterIs: "Detects spinners, skeletons, or loading indicators.",
+    whyItMatters: "Loading feedback reassures users during delays.",
+    thresholds: {
+        good: "Loading feedback present",
+        poor: "No loading feedback"
+    },
+    actualReasonsForFailure: [
+        "No spinners or skeleton UI",
+        "Long loading without feedback"
+    ],
+    howToOvercomeFailure: [
+        "Add spinners or skeleton screens",
+        "Show loading text for async actions"
+    ]
     },
 
     // Methodologies (UX & Content )
@@ -1532,255 +2184,501 @@ export const InfoDetails = {
 
     // Conversion & Lead Flow
     CTA_Visibility: {
-        title: "CTA Visibility",
-        whatThisMetricIs: "Checks if the Call to Action button is above the fold and distinguishable.",
-        whyItMatters: "If users can't find the 'Buy' button instantly, they can't buy. It's that simple.",
-        thresholds: "Good: Above Fold, Poor: Below Fold",
-        actualReasonsForFailure: "Primary CTA hidden in footer or pushed down by large hero images/text.",
-        howToOvercomeFailure: "Place your main CTA in the hero section (top 600px visible area)."
+    title: "CTA Visibility",
+    whatThisParameterIs: "Checks whether prominent Call-to-Action buttons are present and visible on the page.",
+    whyItMatters: "CTAs guide users toward conversions like signups, purchases, or downloads.",
+    thresholds: {
+        good: "One or more visible CTAs present",
+        poor: "No CTAs detected"
+    },
+    actualReasonsForFailure: [
+        "No buttons or CTA links on the page",
+        "CTAs hidden below the fold",
+        "CTAs styled like normal text"
+    ],
+    howToOvercomeFailure: [
+        "Add clear CTA buttons",
+        "Place CTAs in hero and key sections",
+        "Use contrasting button styles"
+    ]
     },
     CTA_Clarity: {
-        title: "CTA Clarity",
-        whatThisMetricIs: "Analyzes button text for action-oriented language.",
-        whyItMatters: "Vague buttons like 'Submit' kill curiosity. Clear buttons like 'Get My Free Guide' drive action.",
-        thresholds: "Good: Action-Oriented, Poor: Vague",
-        actualReasonsForFailure: "Using generic words like 'Submit', 'Click Here', or 'Go'.",
-        howToOvercomeFailure: "Use specific, value-driven verbs (e.g., 'Get Started', 'Download PDF', 'Join Now')."
+    title: "CTA Text Clarity",
+    whatThisParameterIs: "Evaluates whether CTA text uses clear, action-oriented language.",
+    whyItMatters: "Clear CTAs reduce hesitation and increase click-through rates.",
+    thresholds: {
+        good: "CTAs use action verbs",
+        poor: "CTAs are vague or generic"
+    },
+    actualReasonsForFailure: [
+        "Generic text like 'Click here'",
+        "Unclear value proposition"
+    ],
+    howToOvercomeFailure: [
+        "Use action verbs like Buy, Get, Download",
+        "Clearly state the benefit"
+    ]
     },
     CTA_Contrast: {
-        title: "CTA Contrast",
-        whatThisMetricIs: "Measures color contrast ratio against the background.",
-        whyItMatters: "Buttons that blend in get ignored. Your primary action must pop off the screen.",
-        thresholds: "Good: High Contrast, Poor: Low Contrast",
-        actualReasonsForFailure: "Button color matches background or branding too closely, lacking visual pop.",
-        howToOvercomeFailure: "Use a complementary color (e.g., Orange on Blue) that stands out strongly."
+    title: "CTA Color Contrast",
+    whatThisParameterIs: "Checks whether CTA buttons have sufficient color contrast.",
+    whyItMatters: "High contrast improves visibility and accessibility.",
+    thresholds: {
+        good: "Contrast ratio ≥ 4.5",
+        poor: "Low contrast CTAs"
+    },
+    actualReasonsForFailure: [
+        "CTA color blends with background",
+        "Low contrast brand colors"
+    ],
+    howToOvercomeFailure: [
+        "Increase contrast between text and background",
+        "Test contrast using accessibility tools"
+    ]
     },
     CTA_Crowding: {
-        title: "CTA Crowding",
-        whatThisMetricIs: "Checks proximity of other clickable elements to the CTA.",
-        whyItMatters: "Too many choices confuse users. When faced with clutter, people choose nothing.",
-        thresholds: "Good: Isolated, Poor: Cluttered",
-        actualReasonsForFailure: "CTA surrounded by links, text, or other buttons, reducing its impact.",
-        howToOvercomeFailure: "Add ample whitespace (padding/margin) around your primary button."
+    title: "CTA Crowding",
+    whatThisParameterIs: "Checks whether too many CTAs appear at once.",
+    whyItMatters: "Too many choices confuse users and reduce conversions.",
+    thresholds: {
+        good: "1–3 CTAs per section",
+        needsImprovement: "Too many CTAs",
+        poor: "No CTAs found"
+    },
+    actualReasonsForFailure: [
+        "Multiple CTAs competing for attention"
+    ],
+    howToOvercomeFailure: [
+        "Prioritize one primary CTA",
+        "Reduce secondary CTAs"
+    ]
     },
     CTA_Flow_Alignment: {
-        title: "Flow Alignment",
-        whatThisMetricIs: "Checks if CTAs appear logically after value propositions.",
-        whyItMatters: "Asking for a sale before explaining the value is like proposing on the first date.",
-        thresholds: "Good: Logical, Poor: Premature",
-        actualReasonsForFailure: "CTA appears before value proposition or explanation.",
-        howToOvercomeFailure: "Place your Call-to-Action immediately after explaining the 'Why'."
+    title: "CTA Flow Alignment",
+    whatThisParameterIs: "Checks whether CTAs appear at logical points in the user journey.",
+    whyItMatters: "Well-timed CTAs match user intent and improve conversion.",
+    thresholds: {
+        good: "CTA placed mid-content",
+        needsImprovement: "CTA too early or too late",
+        poor: "No flow-based CTA found"
+    },
+    actualReasonsForFailure: [
+        "CTA placed before context",
+        "CTA hidden at page end"
+    ],
+    howToOvercomeFailure: [
+        "Place CTAs after key information",
+        "Match CTA to content intent"
+    ]
     },
     Form_Presence: {
-        title: "Lead Capture Form",
-        whatThisMetricIs: "Detects input forms on the landing page.",
-        whyItMatters: "You can't get leads if you don't ask. No form means no way to follow up.",
-        thresholds: "Good: Found, Poor: Missing",
-        actualReasonsForFailure: "No form or email capture input found on the page.",
-        howToOvercomeFailure: "Add a simple email signup form or lead capture section."
+    title: "Lead Form Presence",
+    whatThisParameterIs: "Checks whether lead capture forms are present on the page.",
+    whyItMatters: "Forms are essential for collecting leads and inquiries.",
+    thresholds: {
+        good: "At least one form present",
+        poor: "No forms found"
+    },
+    actualReasonsForFailure: [
+        "No form elements on page"
+    ],
+    howToOvercomeFailure: [
+        "Add signup or contact forms",
+        "Embed lead capture sections"
+    ]
     },
     Form_Length: {
-        title: "Form Length",
-        whatThisMetricIs: "Counts the number of input fields in the form.",
-        whyItMatters: "Every extra field you ask for cuts your conversion rate significantly.",
-        thresholds: "Good: 3-5 Fields, Poor: > 7 Fields",
-        actualReasonsForFailure: "Asking for too much information (phone, address, company) upfront.",
-        howToOvercomeFailure: "Reduce fields to the absolute minimum (often just Name and Email)."
+    title: "Form Length Optimization",
+    whatThisParameterIs: "Evaluates whether forms are short and user-friendly.",
+    whyItMatters: "Shorter forms reduce friction and abandonment.",
+    thresholds: {
+        good: "Less than 7 fields",
+        needsImprovement: "Too many fields"
+    },
+    actualReasonsForFailure: [
+        "Excessive required fields"
+    ],
+    howToOvercomeFailure: [
+        "Remove unnecessary fields",
+        "Split long forms into steps"
+    ]
     },
     Required_vs_Optional_Fields: {
-        title: "Field Requirements",
-        whatThisMetricIs: "Checks if required fields are clearly marked (asterisks or labels).",
-        whyItMatters: "Users hate guessing. Error messages frustrate them and cause drop-offs.",
-        thresholds: "Good: Marked, Poor: Unmarked",
-        actualReasonsForFailure: "Required fields not visually distinguished from optional ones.",
-        howToOvercomeFailure: "Mark required fields with asterisks (*) or '(optional)' labels."
+    title: "Required vs Optional Fields",
+    whatThisParameterIs: "Checks whether required and optional fields are clearly distinguished.",
+    whyItMatters: "Clear labeling reduces user frustration.",
+    thresholds: {
+        good: "Required fields clearly marked",
+        needsImprovement: "No distinction shown"
+    },
+    actualReasonsForFailure: [
+        "Missing required indicators"
+    ],
+    howToOvercomeFailure: [
+        "Mark required fields clearly",
+        "Label optional fields explicitly"
+    ]
     },
     Inline_Validation: {
-        title: "Inline Validation",
-        whatThisMetricIs: "Checks if the form gives feedback as the user types.",
-        whyItMatters: "Waiting until the end to say 'Error' is annoying. Real-time feedback feels superior.",
-        thresholds: "Good: Real-time, Poor: On Submit",
-        actualReasonsForFailure: "Errors only appear after clicking submit, not while typing.",
-        howToOvercomeFailure: "Validate inputs on blur or change and show green checkmarks for success."
+    title: "Inline Form Validation",
+    whatThisParameterIs: "Checks whether forms provide basic inline validation.",
+    whyItMatters: "Immediate feedback reduces form errors.",
+    thresholds: {
+        good: "HTML5 or inline validation present",
+        poor: "No validation detected"
+    },
+    actualReasonsForFailure: [
+        "No required or pattern attributes"
+    ],
+    howToOvercomeFailure: [
+        "Use HTML5 validation",
+        "Add client-side validation"
+    ]
     },
     Submit_Button_Clarity: {
-        title: "Submit Button",
-        whatThisMetricIs: "Checks the text of the form submit button.",
-        whyItMatters: "'Submit' is boring technical jargon. It feels like filing taxes, not getting value.",
-        thresholds: "Good: Specific, Poor: Generic",
-        actualReasonsForFailure: "Button uses generic text like 'Submit' or 'Send'.",
-        howToOvercomeFailure: "Change text to benefit-driven phrases like 'Join the Club' or 'Start Now'."
+    title: "Submit Button Clarity",
+    whatThisParameterIs: "Checks whether submit buttons use clear action text.",
+    whyItMatters: "Clear submit actions improve form completion.",
+    thresholds: {
+        good: "Clear submit text",
+        needsImprovement: "Generic submit text"
     },
-    AutoFocus_Field: {
-        title: "Auto-Focus",
-        whatThisMetricIs: "Checks if the first input is auto-focused on load.",
-        whyItMatters: "Autofocus invites the user to type immediately, reducing friction.",
-        thresholds: "Good: Enabled, Poor: Disabled",
-        actualReasonsForFailure: "User has to manually click the input field to start typing.",
-        howToOvercomeFailure: "Add the 'autofocus' attribute to your most important input field."
-    },
-    MultiStep_Form_Progress: {
-        title: "Multi-step Progress",
-        whatThisMetricIs: "Detects progress bars for long forms.",
-        whyItMatters: "Long forms feel endless without a map. Users quit if they don't know how far they have to go.",
-        thresholds: "Good: Visible, Poor: Hidden",
-        actualReasonsForFailure: "Multi-page form lacks a progress indicator (Step 1 of 3).",
-        howToOvercomeFailure: "Add a visual progress bar or step counter for multi-step flows."
+    actualReasonsForFailure: [
+        "Buttons labeled Submit only"
+    ],
+    howToOvercomeFailure: [
+        "Use action-based submit text"
+    ]
     },
     Testimonials: {
-        title: "Testimonials",
-        whatThisMetricIs: "Scans for testimonial sections or quotes.",
-        whyItMatters: "People trust other people more than they trust brands. Social proof is a powerful persuader.",
-        thresholds: "Good: Found, Poor: Missing",
-        actualReasonsForFailure: "No customer quotes or testimonials found on the page.",
-        howToOvercomeFailure: "Add a dedicated section for customer testimonials/quotes."
+    title: "Testimonials",
+    whatThisParameterIs: "Checks for presence of customer testimonials.",
+    whyItMatters: "Testimonials build trust and credibility.",
+    thresholds: {
+        good: "Testimonials found",
+        poor: "No testimonials"
     },
-    Reviews: {
-        title: "Reviews",
-        whatThisMetricIs: "Checks for star ratings or review widgets.",
-        whyItMatters: "Zero reviews looks suspicious. 5-star reviews drive sales.",
-        thresholds: "Good: Found, Poor: Missing",
-        actualReasonsForFailure: "No 3rd party review widgets (Google, Trustpilot) or star ratings.",
-        howToOvercomeFailure: "Embed authentic reviews/ratings from trusted third-party platforms."
+    actualReasonsForFailure: [
+        "No social proof sections"
+    ],
+    howToOvercomeFailure: [
+        "Add testimonials or reviews"
+    ]
     },
     Trust_Badges: {
-        title: "Trust Badges",
-        whatThisMetricIs: "Scans for security seals, guarantees, or partner logos.",
-        whyItMatters: "Badges reduce anxiety. They tell users 'your money and data are safe here'.",
-        thresholds: "Good: Found, Poor: Missing",
-        actualReasonsForFailure: "No security seals, money-back guarantees, or certification badges.",
-        howToOvercomeFailure: "Display recognized trust badges (SSL, 30-Day Money Back, Norton, etc.)."
+    title: "Trust Badges",
+    whatThisParameterIs: "Checks whether trust or security badges are displayed.",
+    whyItMatters: "Trust badges reassure users about security.",
+    thresholds: {
+        good: "Trust badges present",
+        poor: "No trust badges"
     },
-    Client_Logos: {
-        title: "Client Logos",
-        whatThisMetricIs: "Checks for a 'Trusted By' logo strip.",
-        whyItMatters: "If big brands trust you, new visitors will too. It's borrowed credibility.",
-        thresholds: "Good: Found, Poor: Missing",
-        actualReasonsForFailure: "No 'Trusted By' or partner logo section detected.",
-        howToOvercomeFailure: "Add a logo strip of known clients or partners to build authority."
-    },
-    Case_Studies_Accessibility: {
-        title: "Case Studies",
-        whatThisMetricIs: "Checks for links to 'Case Studies' or 'Success Stories'.",
-        whyItMatters: "Claims are cheap. Proof is valuable. Case studies show exactly how you deliver results.",
-        thresholds: "Good: Linked, Poor: Missing",
-        actualReasonsForFailure: "No dedicated section or links to detailed customer success stories.",
-        howToOvercomeFailure: "Create a 'Case Studies' page and link to it from the main menu or footer."
-    },
-    Exit_Intent_Triggers: {
-        title: "Exit Intent",
-        whatThisMetricIs: "Checks for scripts that trigger on mouse leaving the window.",
-        whyItMatters: "Most visitors leave and never come back. An exit popup gives you one last chance.",
-        thresholds: "Good: Active, Poor: Missing",
-        actualReasonsForFailure: "No mechanism to capture leads when they attempt to close the tab.",
-        howToOvercomeFailure: "Implement an exit-intent popup offering a discount or lead magnet."
-    },
-    Lead_Magnets: {
-        title: "Lead Magnet",
-        whatThisMetricIs: "Checks for downloadable resources (PDFs, Ebooks).",
-        whyItMatters: "Visitors rarely give their email for free. You need to offer something valuable in return.",
-        thresholds: "Good: Offered, Poor: None",
-        actualReasonsForFailure: "Forms ask for email without offering any immediate value in return.",
-        howToOvercomeFailure: "Offer a free PDF guide, checklist, or discount code in exchange for signup."
+    actualReasonsForFailure: [
+        "No security or payment badges"
+    ],
+    howToOvercomeFailure: [
+        "Add SSL, payment, or verification badges"
+    ]
     },
     Contact_Info_Visibility: {
-        title: "Contact Info",
-        whatThisMetricIs: "Checks for phone number, email, or physical address.",
-        whyItMatters: "Hiding your contact info makes you look like a scam. Transparency builds trust.",
-        thresholds: "Good: Visible, Poor: Hidden",
-        actualReasonsForFailure: "Phone number/Email not found in header or footer.",
-        howToOvercomeFailure: "Place your contact email or phone number in the global footer."
+    title: "Contact Information Visibility",
+    whatThisParameterIs: "Checks whether contact details are visible on the page.",
+    whyItMatters: "Visible contact info increases trust and confidence.",
+    thresholds: {
+        good: "Email or phone visible",
+        poor: "No contact info found"
+    },
+    actualReasonsForFailure: [
+        "Contact details hidden or missing"
+    ],
+    howToOvercomeFailure: [
+        "Add email or phone details",
+        "Place contact info in footer or header"
+    ]
     },
     Chatbot_Presence: {
-        title: "Live Chat",
-        whatThisMetricIs: "Detects live chat widgets (Intercom, Drift).",
-        whyItMatters: "Customers have questions now. If they have to wait, they go to a competitor.",
-        thresholds: "Good: Active, Poor: Inactive",
-        actualReasonsForFailure: "No live chat or automated support widget detected.",
-        howToOvercomeFailure: "Install a live chat widget (e.g., Intercom, Tawk.to) to answer questions."
+    title: "Chatbot / Live Chat",
+    whatThisParameterIs: "Checks whether a chatbot or live chat system is present.",
+    whyItMatters: "Live chat helps users resolve doubts instantly.",
+    thresholds: {
+        good: "Chat system detected",
+        needsImprovement: "No chat available"
     },
-    Interactive_Elements: {
-        title: "Interactivity",
-        whatThisMetricIs: "Checks for calculators, quizzes, or interactive demos.",
-        whyItMatters: "Passive reading is boring. Quizzes and calculators engage users and capture leads.",
-        thresholds: "Good: Engaging, Poor: Static",
-        actualReasonsForFailure: "Page contains only static text and images.",
-        howToOvercomeFailure: "Add an ROI calculator, quiz, or interactive slider tool."
+    actualReasonsForFailure: [
+        "No chat widget installed"
+    ],
+    howToOvercomeFailure: [
+        "Integrate live chat or chatbot tools"
+    ]
     },
-    Personalization: {
-        title: "Personalization",
-        whatThisMetricIs: "Checks for dynamic text replacement or personalized greetings.",
-        whyItMatters: "Generic messages get generic results. Speaking 'to' the user converts better.",
-        thresholds: "Good: Personalized, Poor: Generic",
-        actualReasonsForFailure: "Content is static and identical for all visitors.",
-        howToOvercomeFailure: "Use URL parameters or cookies to personalize headlines (e.g., 'Hello, [Name]')."
+    Lead_Magnets: {
+    title: "Lead Magnets",
+    whatThisParameterIs: "Checks whether free resources are offered to capture leads.",
+    whyItMatters: "Lead magnets incentivize users to share contact details.",
+    thresholds: {
+        good: "Lead magnets present",
+        needsImprovement: "No lead magnets"
     },
-    Progress_Indicators: {
-        title: "Progress Indicators",
-        whatThisMetricIs: "Checks for step visualizers in funnels.",
-        whyItMatters: "Seeing progress (Step 1 -> 2) motivates users to finish what they started.",
-        thresholds: "Good: Visual Steps, Poor: Text Only",
-        actualReasonsForFailure: "Multi-step processes described in paragraph text without visual cues.",
-        howToOvercomeFailure: "Use numbered step indicators (1, 2, 3) or a progress bar."
-    },
-    Friendly_Error_Handling: {
-        title: "Error Messages",
-        whatThisMetricIs: "Checks if error messages are helpful vs generic.",
-        whyItMatters: "Technical errors scare users away. Friendly help keeps them on track.",
-        thresholds: "Good: Human, Poor: Technical",
-        actualReasonsForFailure: "Error messages are technical or generic (e.g., 'Error 400', 'Invalid').",
-        howToOvercomeFailure: "Rewrite errors to be helpful (e.g., 'Please use format name@example.com')."
-    },
-    Microcopy_Clarity: {
-        title: "Microcopy",
-        whatThisMetricIs: "Checks for small instructional text under fields.",
-        whyItMatters: "Tiny text can remove big fears. 'No credit card required' is a powerful friction remover.",
-        thresholds: "Good: Supportive, Poor: Absent",
-        actualReasonsForFailure: "Input fields lack helper text to reassure users.",
-        howToOvercomeFailure: "Add reassuring text under inputs for sensitive data (e.g., 'No spam')."
-    },
-    Incentives_Displayed: {
-        title: "Incentives",
-        whatThisMetricIs: "Checks for 'Free Shipping', 'Bonus', 'Discount' keywords.",
-        whyItMatters: "Everyone loves a deal. A clear bonus can be the tipping point for a decision.",
-        thresholds: "Good: Prominent, Poor: Hidden",
-        actualReasonsForFailure: "Incentives buried in wall of text.",
-        howToOvercomeFailure: "Highlight 'Free Shipping' or 'Bonus' near the CTA with bold text/icons."
+    actualReasonsForFailure: [
+        "No free offers or downloads"
+    ],
+    howToOvercomeFailure: [
+        "Offer free guides, ebooks, or tools"
+    ]
     },
     Scarcity_Urgency: {
-        title: "Urgency Signals",
-        whatThisMetricIs: "Checks for countdown timers or 'Limited Stock' warnings.",
-        whyItMatters: "Procrastination kills sales. Genuine urgency forces a decision now.",
-        thresholds: "Good: Honest Urgency, Poor: None",
-        actualReasonsForFailure: "No reason given for user to act immediately.",
-        howToOvercomeFailure: "Use 'Limited Time' offers or show stock availability (if genuine)."
+    title: "Scarcity & Urgency",
+    whatThisParameterIs: "Checks for urgency or scarcity messaging.",
+    whyItMatters: "Urgency encourages quicker decision-making.",
+    thresholds: {
+        good: "Urgency signals present",
+        needsImprovement: "No urgency messaging"
+    },
+    actualReasonsForFailure: [
+        "No time-bound messaging"
+    ],
+    howToOvercomeFailure: [
+        "Add limited-time offers",
+        "Use urgency language carefully"
+    ]
+    },
+    AutoFocus_Field: {
+    title: "Autofocus Field",
+    whatThisParameterIs: "Checks whether important form fields use the autofocus attribute.",
+    whyItMatters: "Autofocus reduces friction and helps users start filling forms faster.",
+    thresholds: {
+        good: "Autofocus present on key input",
+        acceptable: "Autofocus not used (optional best practice)"
+    },
+    actualReasonsForFailure: [
+        "No input field uses autofocus"
+    ],
+    howToOvercomeFailure: [
+        "Add autofocus to the first important input field"
+    ]
+    },
+    MultiStep_Form_Progress: {
+    title: "Multi-Step Form Progress",
+    whatThisParameterIs: "Checks whether multi-step forms show progress indicators.",
+    whyItMatters: "Progress indicators reduce form abandonment by setting expectations.",
+    thresholds: {
+        good: "Progress indicators detected",
+        acceptable: "No multi-step form present"
+    },
+    actualReasonsForFailure: [
+        "Multi-step form without progress UI"
+    ],
+    howToOvercomeFailure: [
+        "Add step indicators or progress bars"
+    ]
+    },
+    Reviews: {
+    title: "User Reviews & Ratings",
+    whatThisParameterIs: "Checks for visible user reviews or star ratings.",
+    whyItMatters: "Reviews act as strong social proof and influence purchase decisions.",
+    thresholds: {
+        good: "Reviews or ratings detected",
+        poor: "No reviews found"
+    },
+    actualReasonsForFailure: [
+        "No visible review or rating section"
+    ],
+    howToOvercomeFailure: [
+        "Display customer reviews or ratings",
+        "Use schema markup for reviews"
+    ]
+    },
+    Client_Logos: {
+    title: "Client / Partner Logos",
+    whatThisParameterIs: "Checks whether client or partner logos are displayed.",
+    whyItMatters: "Logos build credibility and demonstrate trustworthiness.",
+    thresholds: {
+        good: "Client or partner logos found",
+        needsImprovement: "No logos detected"
+    },
+    actualReasonsForFailure: [
+        "No visual brand associations shown"
+    ],
+    howToOvercomeFailure: [
+        "Add logos of clients or partners",
+        "Place logos near testimonials or CTAs"
+    ]
+    },
+    Case_Studies_Accessibility: {
+    title: "Case Studies & Success Stories",
+    whatThisParameterIs: "Checks whether case studies or success stories are accessible.",
+    whyItMatters: "Case studies provide proof of results and reduce buyer hesitation.",
+    thresholds: {
+        good: "Case studies detected",
+        needsImprovement: "No case studies found"
+    },
+    actualReasonsForFailure: [
+        "No success story or case study content"
+    ],
+    howToOvercomeFailure: [
+        "Add case studies with real results",
+        "Link to detailed success stories"
+    ]
+    },
+    Exit_Intent_Triggers: {
+    title: "Exit-Intent Triggers",
+    whatThisParameterIs: "Checks for exit-intent popups or modal triggers.",
+    whyItMatters: "Exit-intent CTAs help recover abandoning users.",
+    thresholds: {
+        good: "Popup or modal detected",
+        needsImprovement: "No exit-intent elements"
+    },
+    actualReasonsForFailure: [
+        "No modal or popup markup found"
+    ],
+    howToOvercomeFailure: [
+        "Add exit-intent popups carefully",
+        "Offer incentives on exit"
+    ]
+    },
+    Interactive_Elements: {
+    title: "Interactive Elements",
+    whatThisParameterIs: "Checks for interactive UI elements like sliders or tooltips.",
+    whyItMatters: "Interactive elements increase engagement and time on site.",
+    thresholds: {
+        good: "Interactive components detected",
+        needsImprovement: "No interactive elements"
+    },
+    actualReasonsForFailure: [
+        "Static content only"
+    ],
+    howToOvercomeFailure: [
+        "Add sliders, carousels, or tooltips"
+    ]
+    },
+    Personalization: {
+    title: "Personalization Signals",
+    whatThisParameterIs: "Checks for personalized messaging on the page.",
+    whyItMatters: "Personalization improves relevance and conversion rates.",
+    thresholds: {
+        good: "Personalization keywords detected",
+        needsImprovement: "No personalization signals"
+    },
+    actualReasonsForFailure: [
+        "Generic messaging for all users"
+    ],
+    howToOvercomeFailure: [
+        "Add personalized greetings or recommendations"
+    ]
+    },
+    Progress_Indicators: {
+    title: "Progress Indicators",
+    whatThisParameterIs: "Checks for visual progress indicators during user flows.",
+    whyItMatters: "Progress indicators reduce uncertainty and improve UX.",
+    thresholds: {
+        good: "Progress UI detected",
+        needsImprovement: "No progress indicators"
+    },
+    actualReasonsForFailure: [
+        "Long flows without visual feedback"
+    ],
+    howToOvercomeFailure: [
+        "Add step counters or progress bars"
+    ]
+    },
+    Friendly_Error_Handling: {
+    title: "Friendly Error Handling",
+    whatThisParameterIs: "Checks whether forms provide basic error handling support.",
+    whyItMatters: "Clear error handling prevents frustration and drop-offs.",
+    thresholds: {
+        good: "Basic error handling detected",
+        needsImprovement: "No explicit error handling"
+    },
+    actualReasonsForFailure: [
+        "No required attributes or validation hints"
+    ],
+    howToOvercomeFailure: [
+        "Add validation messages",
+        "Use required fields with guidance"
+    ]
+    },
+    Microcopy_Clarity: {
+    title: "Microcopy Clarity",
+    whatThisParameterIs: "Checks whether inputs include helpful placeholder or helper text.",
+    whyItMatters: "Good microcopy guides users and reduces mistakes.",
+    thresholds: {
+        good: "Placeholders/helper text present",
+        needsImprovement: "Limited or missing microcopy"
+    },
+    actualReasonsForFailure: [
+        "Inputs without guidance text"
+    ],
+    howToOvercomeFailure: [
+        "Add meaningful placeholder text",
+        "Include helper hints where needed"
+    ]
+    },
+    Incentives_Displayed: {
+    title: "Incentives & Offers",
+    whatThisParameterIs: "Checks whether incentives like discounts or free offers are shown.",
+    whyItMatters: "Incentives motivate users to convert faster.",
+    thresholds: {
+        good: "Incentives detected",
+        needsImprovement: "No incentives visible"
+    },
+    actualReasonsForFailure: [
+        "No offers or promotional messaging"
+    ],
+    howToOvercomeFailure: [
+        "Highlight discounts or free offers",
+        "Add incentive near CTAs"
+    ]
     },
     Smooth_Scrolling: {
-        title: "Smooth Scroll",
-        whatThisMetricIs: "Checks for 'scroll-behavior: smooth' in CSS.",
-        whyItMatters: "Jerky movement feels cheap. Smooth movement feels premium.",
-        thresholds: "Good: Enabled, Poor: Jerky",
-        actualReasonsForFailure: "Default browser anchor jumping is abrupt.",
-        howToOvercomeFailure: "Set 'html { scroll-behavior: smooth; }' in your CSS."
+    title: "Smooth Scrolling",
+    whatThisParameterIs: "Checks whether smooth scrolling or anchor navigation is used.",
+    whyItMatters: "Smooth scrolling improves navigation experience.",
+    thresholds: {
+        good: "Smooth scrolling or anchors detected",
+        needsImprovement: "No smooth scroll behavior"
+    },
+    actualReasonsForFailure: [
+        "No anchor links or smooth scroll styles"
+    ],
+    howToOvercomeFailure: [
+        "Enable CSS smooth scrolling",
+        "Use anchor-based navigation"
+    ]
     },
     Mobile_CTA_Adaptation: {
-        title: "Mobile Sticky CTA",
-        whatThisMetricIs: "Checks if a sticky CTA exists on mobile screens.",
-        whyItMatters: "Mobile screens are small. Don't make users scroll for miles to find the button.",
-        thresholds: "Good: Sticky, Poor: Scrolls Away",
-        actualReasonsForFailure: "CTA scrolls off-screen on long mobile pages.",
-        howToOvercomeFailure: "Implement a sticky footer bar with a 'Buy' or 'Contact' button on mobile."
+    title: "Mobile CTA Adaptation",
+    whatThisParameterIs: "Checks whether CTAs are optimized for mobile devices.",
+    whyItMatters: "Mobile-friendly CTAs improve tap accuracy and conversions.",
+    thresholds: {
+        good: "Mobile CTA styles detected",
+        needsImprovement: "No mobile-specific CTA styling"
+    },
+    actualReasonsForFailure: [
+        "CTAs too small for mobile"
+    ],
+    howToOvercomeFailure: [
+        "Use larger CTA buttons on mobile",
+        "Apply mobile-specific CTA classes"
+    ]
     },
     MultiChannel_FollowUp: {
-        title: "Retargeting",
-        whatThisMetricIs: "Checks for retargeting pixels (FB Pixel, LinkedIn Insight).",
-        whyItMatters: "97% of visitors don't buy the first time. You need a way to bring them back.",
-        thresholds: "Good: Pixels Found, Poor: None",
-        actualReasonsForFailure: "No retargeting pixels (Facebook/Google) detected.",
-        howToOvercomeFailure: "Install Facebook Pixel and Google Ads Tag to retarget visitors."
+    title: "Multi-Channel Follow-Up",
+    whatThisParameterIs: "Checks whether social follow-up channels are available.",
+    whyItMatters: "Multiple channels increase user re-engagement.",
+    thresholds: {
+        good: "Social follow-up links present",
+        needsImprovement: "No follow-up channels"
+    },
+    actualReasonsForFailure: [
+        "No social media links"
+    ],
+    howToOvercomeFailure: [
+        "Add social media follow links",
+        "Encourage multi-channel engagement"
+    ]
     },
 
-    //// Methodologies (Conversion & Lead Flow)
+    // Methodologies (Conversion & Lead Flow)
     Conversion_And_Lead_Flow_Methodology: {
         icon: TrendingUp,
         badge: "Conversion",
@@ -1869,157 +2767,274 @@ export const InfoDetails = {
     },
 
     // AIO Readiness
-    AIO_Structured_Data: {
-        title: "Structured Data",
-        whatThisMetricIs: "Schema markup (JSON-LD) explicitly tells machines what the content means.",
-        whyItMatters: "Structured data is like a translator for search engines. It turns your content into answers.",
-        thresholds: "Good: Valid JSON-LD, Poor: Missing",
-        actualReasonsForFailure: "Review/Product/FAQ data present but not wrapped in Schema markup.",
-        howToOvercomeFailure: "Implement Schema.org JSON-LD for all key content types."
+    Structured_Data: {
+    title: "Structured Data",
+    whatThisParameterIs: "Checks whether valid structured data (JSON-LD) is present on the page.",
+    whyItMatters: "Structured data helps AI systems and search engines understand page content more accurately.",
+    thresholds: {
+        good: "Valid JSON-LD structured data detected",
+        poor: "No valid structured data found"
     },
-    Metadata_Complete: {
-        title: "Meta Tags",
-        whatThisMetricIs: "Checks for title, description, and social meta tags.",
-        whyItMatters: "AI bots read your meta tags first. If they are missing, you risk being ignored.",
-        thresholds: "Good: Complete, Poor: Missing",
-        actualReasonsForFailure: "Missing OpenGraph, Twitter Cards, or basic description tags.",
-        howToOvercomeFailure: "Ensure every page has unique Title, Description, and Social Optimization tags."
-    },
-    Fast_Page_Load: {
-        title: "Load Speed",
-        whatThisMetricIs: "Fast loading pages are easier and cheaper for AI bots to crawl.",
-        whyItMatters: "Slow sites are expensive for AI to crawl. If you're slow, you get indexed less.",
-        thresholds: "Good: < 2.5s, Poor: > 5s",
-        actualReasonsForFailure: "Server response > 1s or unoptimized assets delaying load.",
-        howToOvercomeFailure: "Use caching, CDNs, and image optimization to serve content instantly."
-    },
-    API_Data_Access: {
-        title: "API Access",
-        whatThisMetricIs: "Detects if content is accessible via JSON/XML APIs.",
-        whyItMatters: "Advanced AI agents prefer raw data over messy HTML. An API makes you AI-ready.",
-        thresholds: "Good: Documented, Poor: None",
-        actualReasonsForFailure: "Data locked in HTML structure, hard for bots to extract cleanly.",
-        howToOvercomeFailure: "Provide a public API or JSON endpoints for your content."
-    },
-    Dynamic_Content_Available: {
-        title: "Dynamic Content",
-        whatThisMetricIs: "Checks if content changes based on user interaction.",
-        whyItMatters: "Static sites are boring. Dynamic sites can adapt to who is visiting.",
-        thresholds: "Good: Adaptive, Poor: Static",
-        actualReasonsForFailure: "Site serves identical static HTML to every user/bot.",
-        howToOvercomeFailure: "Use server-side rendering or edge functions to adapt content."
-    },
-    Multilingual_Support: {
-        title: "Multilingual",
-        whatThisMetricIs: "Verifies headers and HTML tags for language declaration.",
-        whyItMatters: "AI is global. If you only speak English, you miss 80% of the world.",
-        thresholds: "Good: Hreflang Found, Poor: English Only",
-        actualReasonsForFailure: "No language declarations or hreflang tags found.",
-        howToOvercomeFailure: "Implement hreflang tags and provide localized content versions."
+    actualReasonsForFailure: [
+        "No JSON-LD scripts present",
+        "Invalid or malformed JSON-LD"
+    ],
+    howToOvercomeFailure: [
+        "Add schema.org structured data",
+        "Validate structured data using schema testing tools"
+    ]
     },
     Content_NLP_Friendly: {
-        title: "NLP Friendly",
-        whatThisMetricIs: "Checks sentence structure and semantic HTML.",
-        whyItMatters: "If your sentences are too complex, AI gets confused. Simple writing wins.",
-        thresholds: "Good: Simple, Poor: Complex",
-        actualReasonsForFailure: "Sentences are too long (> 20 words) or structure is convoluted.",
-        howToOvercomeFailure: "Write in plain English (Grade 8), use short sentences, and clear headings."
+    title: "NLP-Friendly Content Structure",
+    whatThisParameterIs: "Checks whether content uses semantic HTML and logical structure for NLP systems.",
+    whyItMatters: "Well-structured content improves AI understanding and content extraction.",
+    thresholds: {
+        good: "Semantic tags, headings, and paragraphs detected",
+        needsImprovement: "Missing key semantic elements"
+    },
+    actualReasonsForFailure: [
+        "Missing semantic HTML tags",
+        "Improper heading hierarchy",
+        "Content not wrapped in paragraphs or lists"
+    ],
+    howToOvercomeFailure: [
+        "Use semantic tags like article, section, main",
+        "Maintain proper heading hierarchy",
+        "Structure content with paragraphs and lists"
+    ]
+    },
+    Fast_Page_Load: {
+    title: "Fast Page Load (AI Crawlers)",
+    whatThisParameterIs: "Measures whether the page loads quickly enough for AI crawlers.",
+    whyItMatters: "Fast-loading pages are crawled more efficiently by AI and search bots.",
+    thresholds: {
+        good: "Page load ≤ 2 seconds",
+        needsImprovement: "Page load > 2 seconds"
+    },
+    actualReasonsForFailure: [
+        "Heavy scripts or assets",
+        "Slow server response"
+    ],
+    howToOvercomeFailure: [
+        "Optimize assets and scripts",
+        "Improve server performance"
+    ]
+    },
+    API_Data_Access: {
+    title: "API / Data Access",
+    whatThisParameterIs: "Checks whether APIs or machine-readable data endpoints are exposed.",
+    whyItMatters: "AI systems rely on APIs and structured endpoints to fetch data.",
+    thresholds: {
+        good: "API or data endpoints detected",
+        poor: "No API access points found"
+    },
+    actualReasonsForFailure: [
+        "No API endpoints referenced",
+        "No machine-readable data exposed"
+    ],
+    howToOvercomeFailure: [
+        "Expose REST or GraphQL APIs",
+        "Provide JSON endpoints or manifests"
+    ]
     },
     Keywords_Entities_Annotated: {
-        title: "Entity Annotation",
-        whatThisMetricIs: "Checks if entities are tagged (e.g., using specific HTML attributes).",
-        whyItMatters: "Keywords are good, but 'Entities' are better. They help AI understand context.",
-        thresholds: "Good: Tagged, Poor: Plain Text",
-        actualReasonsForFailure: "Important entities (People, Places) are just plain text.",
-        howToOvercomeFailure: "Use semantic tags or Schema to identify key entities."
+    title: "Keyword & Entity Annotation",
+    whatThisParameterIs: "Checks whether keywords and entities are defined via headings, alt text, or metadata.",
+    whyItMatters: "Explicit entities improve AI understanding of content topics.",
+    thresholds: {
+        good: "Keywords/entities detected",
+        poor: "No keyword or entity signals found"
+    },
+    actualReasonsForFailure: [
+        "Missing headings",
+        "Images without alt text",
+        "No keyword metadata"
+    ],
+    howToOvercomeFailure: [
+        "Use descriptive headings",
+        "Add alt text to images",
+        "Annotate key entities clearly"
+    ]
+    },
+    Metadata_Complete: {
+    title: "Metadata Completeness",
+    whatThisParameterIs: "Checks whether essential SEO and social metadata is present.",
+    whyItMatters: "Metadata helps AI summarize and contextualize pages.",
+    thresholds: {
+        good: "Most metadata present",
+        poor: "Essential metadata missing"
+    },
+    actualReasonsForFailure: [
+        "Missing meta description",
+        "Missing Open Graph or Twitter tags"
+    ],
+    howToOvercomeFailure: [
+        "Add title and description tags",
+        "Include OG and Twitter metadata"
+    ]
     },
     Content_Updated_Regularly: {
-        title: "Freshness",
-        whatThisMetricIs: "Checks last-modified headers.",
-        whyItMatters: "Old news is no news. AI loves fresh, up-to-date information.",
-        thresholds: "Good: < 1 Month, Poor: > 1 Year",
-        actualReasonsForFailure: "Last-Modified header is missing or older than 6 months.",
-        howToOvercomeFailure: "Update content regularly and ensure server sends correct Last-Modified headers."
+    title: "Content Freshness",
+    whatThisParameterIs: "Checks whether the page shows recent content updates.",
+    whyItMatters: "Fresh content signals relevance to AI systems.",
+    thresholds: {
+        good: "Updated within last 30 days",
+        needsImprovement: "Content may be outdated"
     },
-    Internal_Linking_AI_Friendly: {
-        title: "Internal Linking",
-        whatThisMetricIs: "Checks link depth and anchor text.",
-        whyItMatters: "Links are the roads AI travels. No links mean dead ends. Generic links confuse context.",
-        thresholds: "Good: Descriptive, Poor: 'Click Here'",
-        actualReasonsForFailure: "Internal links use generic anchor text like 'Read More' or 'Click Here'.",
-        howToOvercomeFailure: "Use descriptive keywords in anchor text (e.g., 'View Pricing Plans' instead of 'Click Here')."
+    actualReasonsForFailure: [
+        "No last-modified date found",
+        "Old content updates"
+    ],
+    howToOvercomeFailure: [
+        "Update content regularly",
+        "Expose last-modified metadata"
+    ]
     },
-    Duplicate_Content_Detection_Ready: {
-        title: "Duplicate Check",
-        whatThisMetricIs: "Verifies canonical tags.",
-        whyItMatters: "Duplicate content confuses AI. It doesn't know which page is the 'real' one.",
-        thresholds: "Good: Canonicalized, Poor: Duplicates",
-        actualReasonsForFailure: "Missing canonical tags, leading to potential duplicate content penalties.",
-        howToOvercomeFailure: "Add self-referencing canonical tags to all unique pages."
+    Dynamic_Content_Available: {
+    title: "Dynamic Content Capability",
+    whatThisParameterIs: "Checks whether the page supports dynamic or interactive content loading.",
+    whyItMatters: "Dynamic content enables personalized and AI-driven experiences.",
+    thresholds: {
+        good: "Dynamic content indicators found",
+        poor: "No dynamic content detected"
+    },
+    actualReasonsForFailure: [
+        "Static-only content",
+        "No client-side rendering or APIs"
+    ],
+    howToOvercomeFailure: [
+        "Implement fetch or API-based updates",
+        "Use modern JS frameworks where needed"
+    ]
     },
     Behavior_Tracking_Implemented: {
-        title: "Behavior Tracking",
-        whatThisMetricIs: "Checks for analytics scripts.",
-        whyItMatters: "You receive what you measure. Tracking helps AI learn what users like.",
-        thresholds: "Good: Active, Poor: Missing",
-        actualReasonsForFailure: "No standard analytics tracking (GA4, Mixpanel) detected.",
-        howToOvercomeFailure: "Install an analytics tracking script to gather user behavior data."
+    title: "Behavior Tracking",
+    whatThisParameterIs: "Checks whether user behavior tracking tools are installed.",
+    whyItMatters: "Behavior data feeds AI-driven optimization and insights.",
+    thresholds: {
+        good: "Analytics or tracking tools detected",
+        poor: "No tracking detected"
+    },
+    actualReasonsForFailure: [
+        "No analytics scripts installed"
+    ],
+    howToOvercomeFailure: [
+        "Integrate analytics tools like GA or Hotjar"
+    ]
     },
     Segmentation_Profiling_Ready: {
-        title: "Segmentation",
-        whatThisMetricIs: "Checks if users can be grouped by attributes.",
-        whyItMatters: "Treating everyone the same is inefficient. Segments allow for targeted AI responses.",
-        thresholds: "Good: Ready, Poor: None",
-        actualReasonsForFailure: "No data collection strategy to segment users by interest/behavior.",
-        howToOvercomeFailure: "Implement mechanisms to tag users based on viewed content or actions."
+    title: "User Segmentation Readiness",
+    whatThisParameterIs: "Checks whether user profiling or segmentation signals exist.",
+    whyItMatters: "Segmentation enables AI-based personalization.",
+    thresholds: {
+        good: "Segmentation indicators detected",
+        poor: "No segmentation signals"
+    },
+    actualReasonsForFailure: [
+        "No user identifiers",
+        "No segment-related data attributes"
+    ],
+    howToOvercomeFailure: [
+        "Implement user profiling",
+        "Add segmentation data attributes"
+    ]
+    },
+    Internal_Linking_AI_Friendly: {
+    title: "AI-Friendly Internal Linking",
+    whatThisParameterIs: "Checks whether internal links use descriptive anchor text.",
+    whyItMatters: "Descriptive links help AI understand site structure.",
+    thresholds: {
+        good: "Descriptive internal links detected",
+        needsImprovement: "Links lack descriptive text"
+    },
+    actualReasonsForFailure: [
+        "Generic anchor text like 'click here'"
+    ],
+    howToOvercomeFailure: [
+        "Use descriptive anchor text",
+        "Improve internal linking strategy"
+    ]
+    },
+    Duplicate_Content_Detection_Ready: {
+    title: "Duplicate Content Protection",
+    whatThisParameterIs: "Checks whether canonical or noindex signals are present.",
+    whyItMatters: "Prevents AI confusion due to duplicate content.",
+    thresholds: {
+        good: "Canonical or noindex present",
+        poor: "No duplication protection"
+    },
+    actualReasonsForFailure: [
+        "Missing canonical tag",
+        "No robots directives"
+    ],
+    howToOvercomeFailure: [
+        "Add canonical URLs",
+        "Use meta robots where appropriate"
+    ]
+    }, 
+    Multilingual_Support: {
+    title: "Multilingual Support",
+    whatThisParameterIs: "Checks whether language signals or hreflang tags are present.",
+    whyItMatters: "Language signals help AI serve correct audiences.",
+    thresholds: {
+        good: "Language or hreflang detected",
+        poor: "No multilingual signals"
+    },
+    actualReasonsForFailure: [
+        "Missing lang attribute",
+        "No hreflang tags"
+    ],
+    howToOvercomeFailure: [
+        "Set HTML lang attribute",
+        "Add hreflang links"
+    ]
     },
     Event_Goal_Tracking_Integrated: {
-        title: "Goal Tracking",
-        whatThisMetricIs: "Checks if conversion goals are defined.",
-        whyItMatters: "AI needs a goal. Tell it what 'success' looks like.",
-        thresholds: "Good: Goals Set, Poor: None",
-        actualReasonsForFailure: "No specific conversion events (signup, purchase) are being tracked.",
-        howToOvercomeFailure: "Define and track key conversion events in your analytics platform."
+    title: "Event & Goal Tracking",
+    whatThisParameterIs: "Checks whether events or goals are tracked.",
+    whyItMatters: "Event data feeds AI optimization loops.",
+    thresholds: {
+        good: "Event tracking detected",
+        poor: "No event tracking"
+    },
+    actualReasonsForFailure: [
+        "No event scripts or handlers"
+    ],
+    howToOvercomeFailure: [
+        "Implement event tracking",
+        "Track key user actions"
+    ]
     },
     AB_Testing_Ready: {
-        title: "A/B Testing",
-        whatThisMetricIs: "Detects testing frameworks.",
-        whyItMatters: "Guessing is risky. Testing is smart. AI can auto-optimize if you let it.",
-        thresholds: "Good: Active, Poor: Inactive",
-        actualReasonsForFailure: "No infrastructure detected for running experiments or A/B tests.",
-        howToOvercomeFailure: "Integrate an A/B testing tool or feature flag system."
+    title: "A/B Testing Readiness",
+    whatThisParameterIs: "Checks whether A/B testing tools are installed.",
+    whyItMatters: "A/B testing enables AI-driven experimentation.",
+    thresholds: {
+        good: "A/B testing tools detected",
+        poor: "No A/B testing found"
+    },
+    actualReasonsForFailure: [
+        "No experimentation tools installed"
+    ],
+    howToOvercomeFailure: [
+        "Integrate A/B testing platforms"
+    ]
     },
     User_Feedback_Loops_Present: {
-        title: "Feedback Loops",
-        whatThisMetricIs: "Checks for rating widgets or comment sections.",
-        whyItMatters: "Feedback trains the AI. A simple 'thumbs up' can improve results.",
-        thresholds: "Good: Active, Poor: None",
-        actualReasonsForFailure: "No way for users to provide feedback on content quality.",
-        howToOvercomeFailure: "Add simple feedback widgets (Stars, Thumbs) to articles or products."
+    title: "User Feedback Loops",
+    whatThisParameterIs: "Checks whether feedback collection mechanisms exist.",
+    whyItMatters: "Feedback improves AI learning and optimization.",
+    thresholds: {
+        good: "Feedback tools or forms detected",
+        poor: "No feedback mechanisms"
     },
-    Dynamic_Personalization: {
-        title: "Dynamic Personalization",
-        whatThisMetricIs: "Verifies ability to change content dynamically.",
-        whyItMatters: "Personalization increases relevance. Relevance increases sales.",
-        thresholds: "Good: Active, Poor: Static",
-        actualReasonsForFailure: "Site experience is identical for all users regardless of history.",
-        howToOvercomeFailure: "Adopt personalization tools to tailor content to user segments."
-    },
-    AI_Content_Distribution: {
-        title: "AI Distribution",
-        whatThisMetricIs: "Checks for RSS/Atom feeds.",
-        whyItMatters: "Don't wait for users to come to you. Push content to AI where it lives.",
-        thresholds: "Good: Feeds Found, Poor: Siloed",
-        actualReasonsForFailure: "Content locked to browser only; no machine-readable feeds.",
-        howToOvercomeFailure: "Generate RSS/Atom feeds for your blog, products, or news."
-    },
-    AI_Friendly_Structure: {
-        title: "AI Friendly Structure",
-        whatThisMetricIs: "Verifies logical hierarchy.",
-        whyItMatters: "A messy room is hard to clean. A messy code structure is hard for AI to read.",
-        thresholds: "Good: Semantic, Poor: Div Soup",
-        actualReasonsForFailure: "Overuse of generic <div> tags instead of semantic HTML5 elements.",
-        howToOvercomeFailure: "Use semantic tags like <main>, <article>, <section>, <header>, <footer>."
+    actualReasonsForFailure: [
+        "No feedback forms or tools"
+    ],
+    howToOvercomeFailure: [
+        "Add surveys or feedback widgets",
+        "Collect user feedback continuously"
+    ]
     },
 
     // Methodologies (AIO Readiness)
@@ -2118,49 +3133,6 @@ export const InfoDetails = {
         ]
     },
 
-    Hreflang: {
-        title: "Hreflang Tags",
-        whatThisParameterIs: "Signifies the language and geographical targeting of a webpage.",
-        whyItMatters: "Ensures that users see the correct version of your site based on their language and location, preventing duplicate content issues.",
-        thresholds: {
-            good: "Valid hreflang tags present",
-            needsImprovement: "Hreflang present but with errors",
-            poor: "No hreflang tags found"
-        },
-        actualReasonsForFailure: [
-            "Missing hreflang tags on multilingual sites",
-            "Incorrect language or country codes",
-            "Missing self-referencing hreflang tag",
-            "Hreflang tags pointing to broken URLs"
-        ],
-        howToOvercomeFailure: [
-            "Add valid hreflang tags to the <head> section",
-            "Use correct ISO language and country codes",
-            "Ensure every page has a self-referencing tag",
-            "Validate tags using Google Search Console"
-        ]
-    },
-    Image_Compression: {
-        title: "Image Compression",
-        whatThisParameterIs: "Measures the file size of images to ensure they are optimized for web.",
-        whyItMatters: "Large images slow down page load times, consuming bandwidth and hurting SEO rankings.",
-        thresholds: {
-            good: "All images < 150KB",
-            needsImprovement: "Some images > 150KB",
-            poor: "Many large, unoptimized images"
-        },
-        actualReasonsForFailure: [
-            "Uploading raw or high-resolution images directly",
-            "Not using modern formats like WebP or AVIF",
-            "Lack of server-side image optimization"
-        ],
-        howToOvercomeFailure: [
-            "Compress images using tools like TinyPNG or Squoosh",
-            "Serve images in WebP or AVIF formats",
-            "Implement lazy loading for off-screen images",
-            "Use responsive images with srcset"
-        ]
-    },
 };
 
 export default InfoDetails;

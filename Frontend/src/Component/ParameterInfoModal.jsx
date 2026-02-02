@@ -104,19 +104,27 @@ const ParameterInfoModal = ({ isOpen, onClose, info, darkMode }) => {
                                 <div className="flex-1">
                                     <h3 className={`font-bold text-base mb-1.5 ${darkMode ? "text-gray-100" : "text-gray-900"}`}>Thresholds</h3>
                                     {typeof info.thresholds === 'object' && info.thresholds !== null ? (
-                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2">
-                                            <div className={`p-2 rounded border ${darkMode ? "bg-emerald-900/20 border-emerald-800 text-emerald-300" : "bg-emerald-50 border-emerald-100 text-emerald-700"}`}>
-                                                <div className="text-[10px] font-bold uppercase tracking-wider opacity-70 mb-0.5">Good</div>
-                                                <div className="font-semibold text-sm">{info.thresholds.good}</div>
-                                            </div>
-                                            <div className={`p-2 rounded border ${darkMode ? "bg-amber-900/20 border-amber-800 text-amber-300" : "bg-amber-50 border-amber-100 text-amber-700"}`}>
-                                                <div className="text-[10px] font-bold uppercase tracking-wider opacity-70 mb-0.5">Needs Impr.</div>
-                                                <div className="font-semibold text-sm">{info.thresholds.needsImprovement}</div>
-                                            </div>
-                                            <div className={`p-2 rounded border ${darkMode ? "bg-rose-900/20 border-rose-800 text-rose-300" : "bg-rose-50 border-rose-100 text-rose-700"}`}>
-                                                <div className="text-[10px] font-bold uppercase tracking-wider opacity-70 mb-0.5">Poor</div>
-                                                <div className="font-semibold text-sm">{info.thresholds.poor}</div>
-                                            </div>
+                                        <div className="flex flex-col sm:flex-row gap-2 mt-2">
+                                            {info.thresholds.good && (
+                                                <div className={`flex-1 p-2 rounded border ${darkMode ? "bg-emerald-900/20 border-emerald-800 text-emerald-300" : "bg-emerald-50 border-emerald-100 text-emerald-700"}`}>
+                                                    <div className="text-[10px] font-bold uppercase tracking-wider opacity-70 mb-0.5">Good</div>
+                                                    <div className="font-semibold text-sm">{info.thresholds.good}</div>
+                                                </div>
+                                            )}
+                                            {(info.thresholds.needsImprovement || info.thresholds.acceptable) && (
+                                                <div className={`flex-1 p-2 rounded border ${darkMode ? "bg-amber-900/20 border-amber-800 text-amber-300" : "bg-amber-50 border-amber-100 text-amber-700"}`}>
+                                                    <div className="text-[10px] font-bold uppercase tracking-wider opacity-70 mb-0.5">
+                                                        {info.thresholds.needsImprovement ? "Needs Impr." : "Acceptable"}
+                                                    </div>
+                                                    <div className="font-semibold text-sm">{info.thresholds.needsImprovement || info.thresholds.acceptable}</div>
+                                                </div>
+                                            )}
+                                            {info.thresholds.poor && (
+                                                <div className={`flex-1 p-2 rounded border ${darkMode ? "bg-rose-900/20 border-rose-800 text-rose-300" : "bg-rose-50 border-rose-100 text-rose-700"}`}>
+                                                    <div className="text-[10px] font-bold uppercase tracking-wider opacity-70 mb-0.5">Poor</div>
+                                                    <div className="font-semibold text-sm">{info.thresholds.poor}</div>
+                                                </div>
+                                            )}
                                         </div>
                                     ) : (
                                         <div className={`text-sm leading-relaxed ${darkMode ? "text-gray-400" : "text-gray-600"}`}>

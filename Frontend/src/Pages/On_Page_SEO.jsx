@@ -187,7 +187,743 @@ const Section = ({ title, icon: Icon, children, darkMode }) => (
 );
 
 // ------------------------------------------------------
-// ✅ Main Component
+// ✅ Specialized Title Tag Card
+// ------------------------------------------------------
+const TitleTagCard = ({ data, darkMode, onInfo }) => {
+  const meta = data?.meta || {};
+  const score = data?.score || 0;
+  const isPassed = score === 1;
+
+  // Status Colors
+  const statusColor = isPassed
+    ? (darkMode ? "text-green-400 bg-green-900/20 border-green-800/30" : "text-green-600 bg-green-50 border-green-100")
+    : (darkMode ? "text-red-400 bg-red-900/20 border-red-800/30" : "text-red-600 bg-red-50 border-red-100");
+
+  const statusText = isPassed ? "Optimized" : "Needs Improvement";
+
+  return (
+    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group col-span-1 md:col-span-2 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+      <div className="p-5 space-y-4">
+        {/* Header */}
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-4">
+            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
+              <Tag size={24} className={darkMode ? "text-blue-400" : "text-blue-600"} />
+            </div>
+            <div>
+              <h3 className={`font-bold text-lg ${darkMode ? "text-gray-100" : "text-gray-900"}`}>Title Tag</h3>
+              <div className={`flex items-center gap-2 mt-1`}>
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${statusColor}`}>
+                  {statusText}
+                </span>
+                <span className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                  ({meta.length || 0} characters)
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {onInfo && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onInfo();
+              }}
+              className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
+            >
+              <Info size={18} />
+            </button>
+          )}
+        </div>
+
+        {/* Content Body */}
+        <div className="space-y-4">
+          {/* The Title Itself */}
+          <div>
+            <h4 className={`text-xs font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+              Current Title
+            </h4>
+            <div className={`p-3 rounded-lg border font-serif text-lg leading-snug ${darkMode ? "bg-gray-900 border-gray-700 text-gray-200" : "bg-gray-50 border-gray-200 text-gray-800"}`}>
+              {meta.title || <span className="italic opacity-50">No title found</span>}
+            </div>
+          </div>
+
+          {/* Analysis Details (Only if we have the new metadata format) */}
+          {meta.why_this_occurred && (
+            <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
+              {/* Analysis */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-500">
+                  <AlertTriangle size={12} />
+                  <span>Analysis</span>
+                </div>
+                <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                  {meta.why_this_occurred}
+                </p>
+              </div>
+
+              {/* Recommendation */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-500">
+                  <CheckCircle size={12} />
+                  <span>Recommendation</span>
+                </div>
+                <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                  {meta.how_to_fix}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Best Practices (Optional footer) */}
+          {meta.seo_best_practices && (
+            <div className={`mt-2 p-2 rounded text-xs opacity-70 flex items-start gap-2 ${darkMode ? "bg-gray-900/50" : "bg-gray-50"}`}>
+              <Info size={12} className="mt-0.5 flex-shrink-0" />
+              <span>{meta.seo_best_practices}</span>
+            </div>
+          )}
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ------------------------------------------------------
+// ✅ Specialized Meta Description Card
+// ------------------------------------------------------
+const MetaDescriptionCard = ({ data, darkMode, onInfo }) => {
+  const meta = data?.meta || {};
+  const score = data?.score || 0;
+  const isPassed = score === 1;
+
+  // Status Colors
+  const statusColor = isPassed
+    ? (darkMode ? "text-green-400 bg-green-900/20 border-green-800/30" : "text-green-600 bg-green-50 border-green-100")
+    : (darkMode ? "text-red-400 bg-red-900/20 border-red-800/30" : "text-red-600 bg-red-50 border-red-100");
+
+  const statusText = isPassed ? "Optimized" : "Needs Improvement";
+
+  return (
+    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group col-span-1 md:col-span-2 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+      <div className="p-5 space-y-4">
+        {/* Header */}
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-4">
+            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
+              <FileText size={24} className={darkMode ? "text-purple-400" : "text-purple-600"} />
+            </div>
+            <div>
+              <h3 className={`font-bold text-lg ${darkMode ? "text-gray-100" : "text-gray-900"}`}>Meta Description</h3>
+              <div className={`flex items-center gap-2 mt-1`}>
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${statusColor}`}>
+                  {statusText}
+                </span>
+                <span className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                  ({meta.length || 0} characters)
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {onInfo && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onInfo();
+              }}
+              className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
+            >
+              <Info size={18} />
+            </button>
+          )}
+        </div>
+
+        {/* Content Body */}
+        <div className="space-y-4">
+          {/* The Description Itself */}
+          <div>
+            <h4 className={`text-xs font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+              Current Description
+            </h4>
+            <div className={`p-3 rounded-lg border font-serif text-sm leading-relaxed ${darkMode ? "bg-gray-900 border-gray-700 text-gray-200" : "bg-gray-50 border-gray-200 text-gray-800"}`}>
+              {meta.description || <span className="italic opacity-50">No meta description found</span>}
+            </div>
+          </div>
+
+          {/* Analysis Details */}
+          {meta.why_this_occurred && (
+            <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
+              {/* Analysis */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-500">
+                  <AlertTriangle size={12} />
+                  <span>Analysis</span>
+                </div>
+                <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                  {meta.why_this_occurred}
+                </p>
+              </div>
+
+              {/* Recommendation */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-500">
+                  <CheckCircle size={12} />
+                  <span>Recommendation</span>
+                </div>
+                <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                  {meta.how_to_fix}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Best Practices (Optional footer) */}
+          {meta.seo_best_practices && (
+            <div className={`mt-2 p-2 rounded text-xs opacity-70 flex items-start gap-2 ${darkMode ? "bg-gray-900/50" : "bg-gray-50"}`}>
+              <Info size={12} className="mt-0.5 flex-shrink-0" />
+              <span>{meta.seo_best_practices}</span>
+            </div>
+          )}
+
+        </div>
+      </div>
+    </div>
+  );
+};
+// ------------------------------------------------------
+// ✅ Specialized Canonical Tag Card
+// ------------------------------------------------------
+const CanonicalTagCard = ({ data, darkMode, onInfo }) => {
+  const meta = data?.meta || {};
+  const score = data?.score || 0;
+  const isPassed = score === 1;
+
+  // Status Colors
+  const statusColor = isPassed
+    ? (darkMode ? "text-green-400 bg-green-900/20 border-green-800/30" : "text-green-600 bg-green-50 border-green-100")
+    : (darkMode ? "text-yellow-400 bg-yellow-900/20 border-yellow-800/30" : "text-yellow-600 bg-yellow-50 border-yellow-100");
+
+  const statusText = isPassed ? "Optimized" : "Warning / Info";
+
+  return (
+    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group col-span-1 md:col-span-2 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+      <div className="p-5 space-y-4">
+        {/* Header */}
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-4">
+            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
+              <Copy size={24} className={darkMode ? "text-pink-400" : "text-pink-600"} />
+            </div>
+            <div>
+              <h3 className={`font-bold text-lg ${darkMode ? "text-gray-100" : "text-gray-900"}`}>Canonical Tag</h3>
+              <div className={`flex items-center gap-2 mt-1`}>
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${statusColor}`}>
+                  {statusText}
+                </span>
+                {meta.isSelfReferencing && (
+                  <span className={`text-xs px-2 py-0.5 rounded-full border ${darkMode ? "border-blue-500/30 text-blue-400 bg-blue-500/10" : "border-blue-200 text-blue-600 bg-blue-50"}`}>
+                    Self-Referencing
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {onInfo && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onInfo();
+              }}
+              className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
+            >
+              <Info size={18} />
+            </button>
+          )}
+        </div>
+
+        {/* Content Body */}
+        <div className="space-y-4">
+          {/* The URL Itself */}
+          <div>
+            <h4 className={`text-xs font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+              Canonical URL
+            </h4>
+            <div className={`p-3 rounded-lg border font-mono text-xs break-all ${darkMode ? "bg-gray-900 border-gray-700 text-gray-300" : "bg-gray-50 border-gray-200 text-gray-600"}`}>
+              {meta.canonical || <span className="italic opacity-50">No canonical tag found</span>}
+            </div>
+          </div>
+
+          {/* Analysis Details */}
+          {meta.why_this_occurred && (
+            <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
+              {/* Analysis */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-500">
+                  <AlertTriangle size={12} />
+                  <span>Analysis</span>
+                </div>
+                <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                  {meta.why_this_occurred}
+                </p>
+              </div>
+
+              {/* Recommendation */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-500">
+                  <CheckCircle size={12} />
+                  <span>Recommendation</span>
+                </div>
+                <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                  {meta.how_to_fix}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Best Practices (Optional footer) */}
+          {meta.seo_best_practices && (
+            <div className={`mt-2 p-2 rounded text-xs opacity-70 flex items-start gap-2 ${darkMode ? "bg-gray-900/50" : "bg-gray-50"}`}>
+              <Info size={12} className="mt-0.5 flex-shrink-0" />
+              <span>{meta.seo_best_practices}</span>
+            </div>
+          )}
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ------------------------------------------------------
+// ✅ Specialized URL Structure Card
+// ------------------------------------------------------
+const URLStructureCard = ({ data, darkMode, onInfo }) => {
+  const meta = data?.meta || {};
+  const score = data?.score || 0;
+  const isPassed = score === 1;
+
+  // Status Colors
+  const statusColor = isPassed
+    ? (darkMode ? "text-green-400 bg-green-900/20 border-green-800/30" : "text-green-600 bg-green-50 border-green-100")
+    : (darkMode ? "text-red-400 bg-red-900/20 border-red-800/30" : "text-red-600 bg-red-50 border-red-100");
+
+  const statusText = isPassed ? "Clean Details" : "Issues Found";
+
+  return (
+    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group col-span-1 md:col-span-2 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+      <div className="p-5 space-y-4">
+        {/* Header */}
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-4">
+            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
+              <Link size={24} className={darkMode ? "text-cyan-400" : "text-cyan-600"} />
+            </div>
+            <div>
+              <h3 className={`font-bold text-lg ${darkMode ? "text-gray-100" : "text-gray-900"}`}>URL Structure</h3>
+              <div className={`flex items-center gap-2 mt-1`}>
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${statusColor}`}>
+                  {statusText}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {onInfo && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onInfo();
+              }}
+              className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
+            >
+              <Info size={18} />
+            </button>
+          )}
+        </div>
+
+        {/* Content Body */}
+        <div className="space-y-4">
+          {/* The URL Itself */}
+          <div>
+            <h4 className={`text-xs font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+              Analyzed URL
+            </h4>
+            <div className={`p-3 rounded-lg border font-mono text-xs break-all ${darkMode ? "bg-gray-900 border-gray-700 text-gray-300" : "bg-gray-50 border-gray-200 text-gray-600"}`}>
+              {meta.url || <span className="italic opacity-50">No URL data</span>}
+            </div>
+          </div>
+
+          {/* Analysis Details */}
+          {meta.why_this_occurred && (
+            <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
+              {/* Analysis */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-500">
+                  <AlertTriangle size={12} />
+                  <span>Analysis</span>
+                </div>
+                <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                  {meta.why_this_occurred}
+                </p>
+              </div>
+
+              {/* Recommendation */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-500">
+                  <CheckCircle size={12} />
+                  <span>Recommendation</span>
+                </div>
+                <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                  {meta.how_to_fix}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Best Practices (Optional footer) */}
+          {meta.seo_best_practices && (
+            <div className={`mt-2 p-2 rounded text-xs opacity-70 flex items-start gap-2 ${darkMode ? "bg-gray-900/50" : "bg-gray-50"}`}>
+              <Info size={12} className="mt-0.5 flex-shrink-0" />
+              <span>{meta.seo_best_practices}</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ------------------------------------------------------
+// ✅ Specialized H1 Tag Card
+// ------------------------------------------------------
+const H1TagCard = ({ data, darkMode, onInfo }) => {
+  const meta = data?.meta || {};
+  const score = data?.score || 0;
+  const isPassed = score === 1;
+
+  // Status Colors
+  const statusColor = isPassed
+    ? (darkMode ? "text-green-400 bg-green-900/20 border-green-800/30" : "text-green-600 bg-green-50 border-green-100")
+    : (darkMode ? "text-red-400 bg-red-900/20 border-red-800/30" : "text-red-600 bg-red-50 border-red-100");
+
+  const statusText = isPassed ? "Optimized" : "Attention Needed";
+
+  return (
+    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group col-span-1 md:col-span-2 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+      <div className="p-5 space-y-4">
+        {/* Header */}
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-4">
+            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
+              <Layout size={24} className={darkMode ? "text-violet-400" : "text-violet-600"} />
+            </div>
+            <div>
+              <h3 className={`font-bold text-lg ${darkMode ? "text-gray-100" : "text-gray-900"}`}>H1 Tag</h3>
+              <div className={`flex items-center gap-2 mt-1`}>
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${statusColor}`}>
+                  {statusText}
+                </span>
+                <span className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                  ({meta.count || 0} Found)
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {onInfo && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onInfo();
+              }}
+              className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
+            >
+              <Info size={18} />
+            </button>
+          )}
+        </div>
+
+        {/* Content Body */}
+        <div className="space-y-4">
+          {/* H1 Content Display */}
+          <div>
+            <h4 className={`text-xs font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+              H1 Content
+            </h4>
+            <div className={`p-3 rounded-lg border leading-tight space-y-2 ${darkMode ? "bg-gray-900 border-gray-700 text-gray-200" : "bg-gray-50 border-gray-200 text-gray-800"}`}>
+              {meta.content && meta.content.length > 0 ? (
+                meta.content.map((h, i) => (
+                  <div key={i} className="font-serif text-lg">• {h}</div>
+                ))
+              ) : (
+                <span className="italic opacity-50">No H1 tag found</span>
+              )}
+            </div>
+          </div>
+
+          {/* Analysis Details */}
+          {meta.why_this_occurred && (
+            <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
+              {/* Analysis */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-500">
+                  <AlertTriangle size={12} />
+                  <span>Analysis</span>
+                </div>
+                <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                  {meta.why_this_occurred}
+                </p>
+              </div>
+
+              {/* Recommendation */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-500">
+                  <CheckCircle size={12} />
+                  <span>Recommendation</span>
+                </div>
+                <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                  {meta.how_to_fix}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Best Practices (Optional footer) */}
+          {meta.seo_best_practices && (
+            <div className={`mt-2 p-2 rounded text-xs opacity-70 flex items-start gap-2 ${darkMode ? "bg-gray-900/50" : "bg-gray-50"}`}>
+              <Info size={12} className="mt-0.5 flex-shrink-0" />
+              <span>{meta.seo_best_practices}</span>
+            </div>
+          )}
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ------------------------------------------------------
+// ✅ Specialized Image Analysis Card
+// ------------------------------------------------------
+const ImageAnalysisCard = ({ data, darkMode, onInfo, baseUrl }) => {
+  const meta = data?.meta || {};
+  const score = data?.score || 0;
+  const isPassed = score === 1; // Strict 100% for green
+
+  const resolveLink = (src) => {
+    if (!src) return "#";
+    try {
+      return new URL(src, baseUrl).href;
+    } catch {
+      return src;
+    }
+  };
+
+  // Status Colors
+  const statusColor = isPassed
+    ? (darkMode ? "text-green-400 bg-green-900/20 border-green-800/30" : "text-green-600 bg-green-50 border-green-100")
+    : (score > 0.7
+      ? (darkMode ? "text-yellow-400 bg-yellow-900/20 border-yellow-800/30" : "text-yellow-600 bg-yellow-50 border-yellow-100")
+      : (darkMode ? "text-red-400 bg-red-900/20 border-red-800/30" : "text-red-600 bg-red-50 border-red-100")
+    );
+
+  const statusText = isPassed ? "Fully Optimized" : (score > 0.7 ? "Good / Improvements" : "Needs Attention");
+
+  return (
+    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group col-span-1 md:col-span-2 lg:col-span-3 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+      <div className="p-5 space-y-4">
+        {/* Header */}
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-4">
+            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
+              <ImageIcon size={24} className={darkMode ? "text-pink-400" : "text-pink-600"} />
+            </div>
+            <div>
+              <h3 className={`font-bold text-lg ${darkMode ? "text-gray-100" : "text-gray-900"}`}>Image Optimization</h3>
+              <div className={`flex items-center gap-2 mt-1`}>
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${statusColor}`}>
+                  {statusText}
+                </span>
+                <span className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                  ({meta.total || 0} Total Images)
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {onInfo && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onInfo();
+              }}
+              className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
+            >
+              <Info size={18} />
+            </button>
+          )}
+        </div>
+
+        {/* Content Body */}
+        <div className="space-y-6">
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-center">
+            {/* 1. With Alt */}
+            <div className={`p-2 rounded border ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
+              <div className={`text-lg font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>{meta.withAlt || 0}</div>
+              <div className="text-[10px] uppercase font-bold tracking-wider opacity-60">With Alt</div>
+            </div>
+
+            {/* 2. Without Alt (New) */}
+            <div className={`p-2 rounded border ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
+              <div className={`text-lg font-bold ${meta.missingAlt?.length > 0 ? "text-red-500" : (darkMode ? "text-white" : "text-gray-900")}`}>
+                {meta.missingAlt?.length || 0}
+              </div>
+              <div className="text-[10px] uppercase font-bold tracking-wider opacity-60">Without Alt</div>
+            </div>
+
+            {/* 3. Without Title */}
+            <div className={`p-2 rounded border ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
+              <div className={`text-lg font-bold ${meta.missingTitle?.length > 0 ? "text-amber-500" : (darkMode ? "text-white" : "text-gray-900")}`}>
+                {meta.missingTitle?.length || 0}
+              </div>
+              <div className="text-[10px] uppercase font-bold tracking-wider opacity-60">Without Title</div>
+            </div>
+
+            {/* 4. Heavy Images */}
+            <div className={`p-2 rounded border ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
+              <div className={`text-lg font-bold ${meta.largeImages?.length > 0 ? "text-red-500" : (darkMode ? "text-white" : "text-gray-900")}`}>
+                {meta.largeImages?.length || 0}
+              </div>
+              <div className="text-[10px] uppercase font-bold tracking-wider opacity-60">Heavy (&gt;150KB)</div>
+            </div>
+          </div>
+
+          {/* Issues List (Clickable Links) */}
+          {/* Issues List (Clickable Links) */}
+          {(meta.missingAlt?.length > 0 || meta.missingTitle?.length > 0 || meta.largeImages?.length > 0) && (
+            <div className="space-y-3">
+              {/* 1. Missing Alt Text */}
+              {meta.missingAlt?.length > 0 && (
+                <div className={`text-xs p-3 rounded border border-red-500/20 bg-red-500/5`}>
+                  <div className="font-bold text-red-500 mb-2 uppercase flex items-center gap-1">
+                    <AlertTriangle size={10} /> Missing Alt Text ({meta.missingAlt.length})
+                  </div>
+                  <div className="space-y-1 max-h-24 overflow-y-auto custom-scrollbar">
+                    {meta.missingAlt.map((img, i) => (
+                      <a
+                        key={i}
+                        href={resolveLink(img.src)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 overflow-hidden hover:underline group/link"
+                        title={img.src}
+                      >
+                        <div className="truncate opacity-70 font-mono text-[10px] group-hover/link:opacity-100 group-hover/link:text-blue-500 transition-colors">
+                          {img.src}
+                        </div>
+                        <Link size={8} className="opacity-0 group-hover/link:opacity-100 transition-opacity" />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 2. Missing Titles (Restored) */}
+              {meta.missingTitle?.length > 0 && (
+                <div className={`text-xs p-3 rounded border border-amber-500/20 bg-amber-500/5`}>
+                  <div className="font-bold text-amber-500 mb-2 uppercase flex items-center gap-1">
+                    <Info size={10} /> Missing Titles ({meta.missingTitle.length})
+                  </div>
+                  <div className="space-y-1 max-h-24 overflow-y-auto custom-scrollbar">
+                    {meta.missingTitle.map((img, i) => (
+                      <a
+                        key={i}
+                        href={resolveLink(img.src)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 overflow-hidden hover:underline group/link"
+                        title={img.src}
+                      >
+                        <div className="truncate opacity-70 font-mono text-[10px] group-hover/link:opacity-100 group-hover/link:text-blue-500 transition-colors">
+                          {img.src}
+                        </div>
+                        <Link size={8} className="opacity-0 group-hover/link:opacity-100 transition-opacity" />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 3. Compression Issues */}
+              {meta.largeImages?.length > 0 && (
+                <div className={`text-xs p-3 rounded border border-amber-500/20 bg-amber-500/5`}>
+                  <div className="font-bold text-amber-500 mb-2 uppercase flex items-center gap-1">
+                    <AlertTriangle size={10} /> Compression Issues ({meta.largeImages.length} {">"} 150KB)
+                  </div>
+                  <div className="space-y-1 max-h-24 overflow-y-auto custom-scrollbar">
+                    {meta.largeImages.map((img, i) => (
+                      <a
+                        key={i}
+                        href={resolveLink(img.src)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-between gap-2 hover:bg-black/5 dark:hover:bg-white/5 p-1 -mx-1 rounded transition-colors group/link"
+                      >
+                        <div className="truncate opacity-70 font-mono text-[10px] group-hover/link:text-blue-500">{img.src}</div>
+                        <div className="font-bold whitespace-nowrap">{img.size} KB</div>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Analysis Details */}
+          {meta.why_this_occurred && (
+            <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
+              {/* Analysis */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-500">
+                  <AlertTriangle size={12} />
+                  <span>Analysis</span>
+                </div>
+                <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                  {meta.why_this_occurred}
+                </p>
+              </div>
+
+              {/* Recommendation */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-500">
+                  <CheckCircle size={12} />
+                  <span>Recommendation</span>
+                </div>
+                <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                  {meta.how_to_fix}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Best Practices (Optional footer) */}
+          {meta.seo_best_practices && (
+            <div className={`mt-2 p-2 rounded text-xs opacity-70 flex items-start gap-2 ${darkMode ? "bg-gray-900/50" : "bg-gray-50"}`}>
+              <Info size={12} className="mt-0.5 flex-shrink-0" />
+              <span>{meta.seo_best_practices}</span>
+            </div>
+          )}
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ------------------------------------------------------
 export default function On_Page_SEO() {
   const { data, loading } = useData();
@@ -257,6 +993,16 @@ export default function On_Page_SEO() {
   const overallScore = seo.Percentage || 0;
   const mainBg = darkMode ? "bg-gray-900" : "bg-gray-50";
   const textColor = darkMode ? "text-white" : "text-gray-900";
+
+  // Helper to resolve relative links against the base URL
+  const resolveLink = (href) => {
+    if (!href) return "#";
+    try {
+      return new URL(href, data.url).href;
+    } catch (e) {
+      return href;
+    }
+  };
 
   // Calculate Passed/Failed
   // Updated to support both old (Score) and new (score) formats temporarily or permanently
@@ -378,125 +1124,53 @@ export default function On_Page_SEO() {
 
         {/* Content Essentials */}
         <Section title="Content Essentials" icon={FileText} darkMode={darkMode}>
-          <MetricCard onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.Title, icon: Tag })} title="Title Tag" description={desc.title} score={seo.Title?.score} value={seo.Title?.meta?.length + " chars"} darkMode={darkMode} icon={Tag}>
-            {seo.Title?.meta?.title && <div className="italic">"{seo.Title.meta.title}"</div>}
-          </MetricCard>
-          <MetricCard onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.Meta_Description, icon: FileText })} title="Meta Description" description={desc.meta} score={seo.Meta_Description?.score} value={seo.Meta_Description?.meta?.length + " chars"} darkMode={darkMode} icon={FileText}>
-            {seo.Meta_Description?.meta?.description && <div className="italic">"{seo.Meta_Description.meta.description}"</div>}
-          </MetricCard>
-          <MetricCard onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.Canonical, icon: Copy })} title="Canonical Tag" description={desc.canonical} score={seo.Canonical?.score} value={seo.Canonical?.meta?.isSelfReferencing ? "Self-Ref" : (seo.Canonical?.score === 1 ? "Valid" : "Invalid")} darkMode={darkMode} icon={Copy}>
-            <div className="space-y-1 text-xs">
-              {seo.Canonical?.details && <div className={seo.Canonical.score === 1 ? "text-green-500 font-medium" : "text-amber-500"}>{seo.Canonical.details}</div>}
-              {seo.Canonical?.meta?.canonical && (
-                <div className={`break-all p-1.5 rounded border ${darkMode ? "bg-gray-800 border-gray-700 font-mono text-gray-300" : "bg-gray-50 border-gray-200 font-mono text-gray-600"}`}>
-                  {seo.Canonical.meta.canonical}
-                </div>
-              )}
-            </div>
-          </MetricCard>
-          <MetricCard onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.URL_Structure, icon: Link })} title="URL Structure" description={desc.url} score={seo.URL_Structure?.score} value={seo.URL_Structure?.score === 1 ? "Clean" : "Issues"} darkMode={darkMode} icon={Link}>
-            <div className="space-y-2">
-              {seo.URL_Structure?.meta?.url && <div className="break-all p-1.5 rounded border font-mono text-xs dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 bg-gray-50 border-gray-200 text-gray-600">{seo.URL_Structure.meta.url}</div>}
-              {seo.URL_Structure?.meta?.issues?.length > 0 && (
-                <div className="space-y-1">
-                  <div className="font-semibold text-red-500 text-xs uppercase">Structure Issues:</div>
-                  {seo.URL_Structure.meta.issues.map((issue, i) => (
-                    <div key={i} className="text-xs opacity-90 flex items-start gap-2">
-                      <XCircle size={12} className="mt-0.5 flex-shrink-0 text-red-500" />
-                      <span>{issue}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </MetricCard>
-          <MetricCard onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.H1, icon: Layout })} title="H1 Tag" description={desc.h1} score={seo.H1?.score} value={seo.H1?.meta?.count + " Found"} darkMode={darkMode} icon={Layout}>
-            {seo.H1?.meta?.content?.map((h, i) => <div key={i} className="mb-1">• {h}</div>)}
-          </MetricCard>
+          {/* Title Tag Card */}
+          <TitleTagCard
+            data={seo.Title}
+            darkMode={darkMode}
+            onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.Title, icon: Tag })}
+          />
+
+          {/* Meta Description Card */}
+          <MetaDescriptionCard
+            data={seo.Meta_Description}
+            darkMode={darkMode}
+            onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.Meta_Description, icon: FileText })}
+          />
+          {/* Canonical Tag Card */}
+          <CanonicalTagCard
+            data={seo.Canonical}
+            darkMode={darkMode}
+            onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.Canonical, icon: Copy })}
+          />
+          {/* URL Structure Card */}
+          <URLStructureCard
+            data={seo.URL_Structure}
+            darkMode={darkMode}
+            onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.URL_Structure, icon: Link })}
+          />
+
+          {/* H1 Tag Card */}
+          <H1TagCard
+            data={seo.H1}
+            darkMode={darkMode}
+            onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.H1, icon: Layout })}
+          />
         </Section>
 
         {/* Media & Accessibility */}
         <Section title="Media & Accessibility" icon={ImageIcon} darkMode={darkMode}>
+          {/* Image Analysis Card */}
           {seo.Image?.meta?.total > 0 && (
-            <MetricCard onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.Image, icon: ImageIcon })} title="Image Metadata" description="Alt text check." score={seo.Image?.meta?.altScore} value={seo.Image?.meta?.withAlt + "/" + seo.Image?.meta?.total + " optimized"} darkMode={darkMode} icon={ImageIcon}>
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className={`p-2 rounded ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
-                    <div className="opacity-70">Total Images</div>
-                    <div className="text-lg font-bold">{seo.Image?.meta?.total || 0}</div>
-                  </div>
-                  <div className={`p-2 rounded ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
-                    <div className="opacity-70">Alt Text</div>
-                    <div className="text-lg font-bold">{seo.Image?.meta?.withAlt || 0} <span className="text-[10px] opacity-60">({Math.round((seo.Image?.meta?.altScore || 0) * 100)}%)</span></div>
-                  </div>
-                  <div className={`p-2 rounded ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
-                    <div className="opacity-70">Meaningful</div>
-                    <div className="text-lg font-bold">{seo.Image?.meta?.meaningfulAlt || 0}</div>
-                  </div>
-                  <div className={`p-2 rounded ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
-                    <div className="opacity-70">Title Attr</div>
-                    <div className="text-lg font-bold">{seo.Image?.meta?.total - (seo.Image?.meta?.missingTitle?.length || 0)}</div>
-                  </div>
-                </div>
-
-                {/* Missing Alt */}
-                {seo.Image?.meta?.missingAlt?.length > 0 && (
-                  <div className="space-y-1">
-                    <div className="font-semibold text-red-500 text-xs uppercase flex items-center gap-1">
-                      <AlertTriangle size={10} />
-                      Missing Alt Text ({seo.Image.meta.missingAlt.length}):
-                    </div>
-                    <div className={`max-h-24 overflow-y-auto custom-scrollbar p-1.5 rounded border ${darkMode ? "bg-red-900/10 border-red-900/30" : "bg-red-50 border-red-100"}`}>
-                      {seo.Image.meta.missingAlt.map((img, i) => (
-                        <div key={i} className="truncate text-[10px] opacity-80 mb-0.5 font-mono" title={img.src}>• {img.src.split('/').pop() || "unknown"}</div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Missing Title */}
-                {seo.Image?.meta?.missingTitle?.length > 0 && (
-                  <div className="space-y-1">
-                    <div className="font-semibold text-amber-500 text-xs uppercase flex items-center gap-1">
-                      <Info size={10} />
-                      Missing Title Attr ({seo.Image.meta.missingTitle.length}):
-                    </div>
-                    <div className={`max-h-24 overflow-y-auto custom-scrollbar p-1.5 rounded border ${darkMode ? "bg-amber-900/10 border-amber-900/30" : "bg-amber-50 border-amber-100"}`}>
-                      {seo.Image.meta.missingTitle.map((img, i) => (
-                        <div key={i} className="truncate text-[10px] opacity-80 mb-0.5 font-mono" title={img.src}>• {img.src.split('/').pop() || "unknown"}</div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </MetricCard>
+            <ImageAnalysisCard
+              data={seo.Image}
+              darkMode={darkMode}
+              onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.Image, icon: ImageIcon })}
+              baseUrl={data.url}
+            />
           )}
 
-          {seo.Image?.meta?.total > 0 && (
-            <MetricCard onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.Image_Compression, icon: ImageIcon })} title="Compression" description={desc.imagecompression} score={seo.Image?.meta?.sizeScore} value={seo.Image?.meta?.sizeScore === 1 ? "Good" : "Heavy Images"} darkMode={darkMode} icon={ImageIcon}>
-              {seo.Image?.meta?.largeImages?.length > 0 ? (
-                <div className="space-y-1">
-                  <div className="font-semibold text-red-500 text-xs uppercase flex items-center gap-1">
-                    <AlertTriangle size={10} />
-                    Large Images ({">"}150KB):
-                  </div>
-                  <div className={`max-h-32 overflow-y-auto custom-scrollbar p-1.5 rounded border ${darkMode ? "bg-red-900/10 border-red-900/30" : "bg-red-50 border-red-100"}`}>
-                    {seo.Image.meta.largeImages.map((img, i) => (
-                      <div key={i} className="flex justify-between items-center text-[10px] mb-1 last:mb-0">
-                        <span className="truncate opacity-80 font-mono w-2/3" title={img.src}>{img.src.split('/').pop() || "unknown"}</span>
-                        <span className="font-bold text-red-500">{img.size} KB</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="text-sm opacity-80 flex items-center gap-2">
-                  <CheckCircle size={14} className="text-green-500" />
-                  <span>All checked images are under 150KB.</span>
-                </div>
-              )}
-            </MetricCard>
-          )}
+
 
           {seo.Video?.meta?.total > 0 && (
             <MetricCard onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.Video, icon: Video })} title="Internal Videos" description={desc.video} score={seo.Video?.score} value={seo.Video?.meta?.total + " Found"} darkMode={darkMode} icon={Video}>
@@ -541,24 +1215,56 @@ export default function On_Page_SEO() {
           </MetricCard>
           <MetricCard onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.Contextual_Linking, icon: Link })} title="Contextual Links" description={desc.contextual} score={seo.Contextual_Linking?.score} value={seo.Contextual_Linking?.meta?.totalContextual + " Links"} darkMode={darkMode} icon={Link}>
             <div className="space-y-3">
-              {seo.Contextual_Linking?.meta?.missingLinks?.length > 0 && (
-                <div className="space-y-1">
-                  <div className="font-semibold text-yellow-500">Missing from Menu:</div>
-                  <div className="flex flex-wrap gap-1">
-                    {seo.Contextual_Linking.meta.missingLinks.map((link, i) => (
-                      <span key={i} className={`px-2 py-0.5 rounded text-xs ${darkMode ? "bg-gray-700" : "bg-gray-100"}`}>{link}</span>
-                    ))}
-                  </div>
+              {/* Issues & Missing Links */}
+              {(seo.Contextual_Linking?.meta?.missingLinks?.length > 0 || seo.Contextual_Linking?.meta?.issues?.length > 0) && (
+                <div className="space-y-2">
+                  <div className="font-semibold text-red-500">Issues Found:</div>
+
+                  {/* General Issues */}
+                  {seo.Contextual_Linking?.meta?.issues?.length > 0 && (
+                    <ul className="list-disc list-inside text-xs opacity-90 space-y-1">
+                      {seo.Contextual_Linking.meta.issues.map((issue, i) => (
+                        <li key={i}>{typeof issue === 'string' ? issue : issue.finding}</li>
+                      ))}
+                    </ul>
+                  )}
+
+                  {/* Missing Links */}
+                  {seo.Contextual_Linking?.meta?.missingLinks?.length > 0 && (
+                    <div className={`p-2 rounded border ${darkMode ? "bg-red-900/10 border-red-900/30" : "bg-red-50 border-red-100"}`}>
+                      <div className="text-xs font-bold text-red-500 mb-1.5 opacity-90">Missing Menu Links ({seo.Contextual_Linking.meta.missingLinks.length}):</div>
+                      <div className="flex flex-wrap gap-1 max-h-32 overflow-y-auto custom-scrollbar">
+                        {seo.Contextual_Linking.meta.missingLinks.map((link, i) => (
+                          <span key={i} className={`px-2 py-0.5 rounded text-xs break-all ${darkMode ? "bg-red-950 text-red-200 border border-red-900/50" : "bg-white border border-red-200 text-red-700 shadow-sm"}`}>
+                            {link}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
-              {seo.Contextual_Linking?.meta?.issues?.length > 0 && (
-                <div className="space-y-1">
-                  <div className="font-semibold text-red-500">Issues Found:</div>
-                  <ul className="list-disc list-inside text-xs opacity-90 space-y-1">
-                    {seo.Contextual_Linking.meta.issues.map((issue, i) => (
-                      <li key={i}>{typeof issue === 'string' ? issue : issue.finding}</li>
+
+              {/* Found Links - Added based on user request */}
+              {seo.Contextual_Linking?.meta?.foundLinks?.length > 0 && (
+                <div className={`mt-3 p-2 rounded border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-gray-50 border-gray-100"}`}>
+                  <div className={`text-xs font-bold mb-2 opacity-90 border-b pb-1 ${darkMode ? "text-gray-300 border-gray-700" : "text-gray-600 border-gray-200"}`}>
+                    Found Contextual Links ({seo.Contextual_Linking.meta.foundLinks.length}):
+                  </div>
+                  <div className="max-h-40 overflow-y-auto custom-scrollbar space-y-1">
+                    {seo.Contextual_Linking.meta.foundLinks.map((link, i) => (
+                      <a
+                        key={i}
+                        href={resolveLink(link)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`block px-2 py-1 rounded text-[10px] font-mono break-all flex items-center gap-2 hover:underline ${darkMode ? "bg-gray-700/50 text-gray-400 hover:bg-gray-700 hover:text-gray-200" : "bg-white border border-gray-100 text-gray-500 hover:text-gray-700 hover:border-gray-200"}`}
+                      >
+                        <div className={`w-1 h-1 rounded-full flex-shrink-0 ${darkMode ? "bg-blue-500" : "bg-blue-600"}`}></div>
+                        {link}
+                      </a>
                     ))}
-                  </ul>
+                  </div>
                 </div>
               )}
             </div>
@@ -702,14 +1408,30 @@ export default function On_Page_SEO() {
                   </div>
                   <div className="max-h-60 overflow-y-auto custom-scrollbar p-2 space-y-1">
                     {seo.Links.meta.internalLinks.map((link, i) => (
-                      <div key={i} className="group p-2 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
-                        <div className="flex items-center gap-2 mb-1">
-                          <div className={`w-1.5 h-1.5 rounded-full ${darkMode ? "bg-blue-500" : "bg-blue-600"}`}></div>
-                          <span className={`text-xs font-bold ${darkMode ? "text-gray-300" : "text-gray-700"} truncate`}>
-                            {link}
+                      <a
+                        key={i}
+                        href={resolveLink(link.href)}
+                        target={link.target === "_blank" ? "_blank" : "_self"}
+                        rel="noopener noreferrer"
+                        className="group block p-2 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                      >
+                        <div className="flex flex-col gap-0.5">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 overflow-hidden">
+                              <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${darkMode ? "bg-blue-500" : "bg-blue-600"}`}></div>
+                              <span className={`text-xs font-bold truncate ${darkMode ? "text-blue-300 group-hover:text-blue-200" : "text-blue-700 group-hover:text-blue-800"}`}>
+                                {link.text || "[No Text]"}
+                              </span>
+                            </div>
+                            <span className={`text-[9px] uppercase tracking-wide font-bold px-1.5 py-0.5 rounded flex-shrink-0 ${link.target === "_blank" ? (darkMode ? "bg-gray-700 text-gray-300" : "bg-gray-200 text-gray-600") : (darkMode ? "bg-gray-800 text-gray-500" : "bg-gray-100 text-gray-400")}`}>
+                              {link.target === "_blank" ? "↗ New Tab" : "Same Tab"}
+                            </span>
+                          </div>
+                          <span className={`text-[10px] font-mono opacity-60 ml-3.5 truncate group-hover:underline ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                            {link.href || link}
                           </span>
                         </div>
-                      </div>
+                      </a>
                     ))}
                   </div>
                 </div>
@@ -723,16 +1445,31 @@ export default function On_Page_SEO() {
                   </div>
                   <div className="max-h-60 overflow-y-auto custom-scrollbar p-2 space-y-1">
                     {seo.Links.meta.externalLinks.map((link, i) => (
-                      <div key={i} className="group p-2 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
-                        <div className="flex items-center gap-2 mb-1">
-                          <div className={`w-1.5 h-1.5 rounded-full ${darkMode ? "bg-purple-500" : "bg-purple-600"}`}></div>
-                          <span className={`text-xs font-bold ${darkMode ? "text-gray-300" : "text-gray-700"} truncate`}>
-                            {link}
+                      <a
+                        key={i}
+                        href={resolveLink(link.href)}
+                        target="_blank" // Always open external links safely
+                        rel="noopener noreferrer"
+                        className="group block p-2 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                      >
+                        <div className="flex flex-col gap-0.5">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 overflow-hidden">
+                              <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${darkMode ? "bg-purple-500" : "bg-purple-600"}`}></div>
+                              <span className={`text-xs font-bold truncate ${darkMode ? "text-purple-300 group-hover:text-purple-200" : "text-purple-700 group-hover:text-purple-800"}`}>
+                                {link.text || "[No Text]"}
+                              </span>
+                              <Globe size={10} className="opacity-40 flex-shrink-0" />
+                            </div>
+                            <span className={`text-[9px] uppercase tracking-wide font-bold px-1.5 py-0.5 rounded flex-shrink-0 ${link.target === "_blank" ? (darkMode ? "bg-gray-700 text-gray-300" : "bg-gray-200 text-gray-600") : (darkMode ? "bg-gray-800 text-gray-500" : "bg-gray-100 text-gray-400")}`}>
+                              {link.target === "_blank" ? "↗ New Tab" : "Same Tab"}
+                            </span>
+                          </div>
+                          <span className={`text-[10px] font-mono opacity-60 ml-3.5 truncate group-hover:underline ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                            {link.href || link}
                           </span>
-                          {/* External Icon */}
-                          <Globe size={10} className="opacity-40" />
                         </div>
-                      </div>
+                      </a>
                     ))}
                   </div>
                 </div>

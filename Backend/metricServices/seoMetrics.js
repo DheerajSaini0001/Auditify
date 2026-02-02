@@ -298,6 +298,37 @@ const checkLinks = ($, url) => {
     const score = descRatio > 0.75 ? 1 : 0.5;
     const details = score === 1 ? "Start links use descriptive text" : "Some links use generic text";
 
+    let explanation = "";
+    let recommendation = "";
+    const issueList = [];
+
+    // Analyze Descriptive Text
+    if (descRatio < 0.75) {
+      issueList.push(`${total - descriptiveCount} links use generic text (e.g., "click here")`);
+    }
+
+    // Analyze Internal/External Balance
+    if (internal === 0 && total > 0) {
+      issueList.push("No internal links found (orphan page risk)");
+    }
+
+    // Analyze Open Targets
+    const unsafeExternal = externalLinksList.filter(l => l.target !== "_blank").length; // Simplified check, ideally check rel=noopener too
+    if (unsafeExternal > 0) {
+      // Not a hard failure usually, but good to note
+    }
+
+    if (total === 0) {
+      explanation = "No navigational or content links were found on this page.";
+      recommendation = "Add internal links to other relevant pages and external links to authoritative sources.";
+    } else if (issueList.length > 0) {
+      explanation = `Link profile analysis found issues: ${issueList.join(", ")}.`;
+      recommendation = "Update generic link text to be descriptive and ensure a healthy mix of internal and external links.";
+    } else {
+      explanation = "The page has a healthy link profile with descriptive anchor text.";
+      recommendation = "Maintain this balance. Ensure external links open in new tabs where appropriate.";
+    }
+
     return evaluateParameter(score, details, {
       total,
       internal,
@@ -305,6 +336,9 @@ const checkLinks = ($, url) => {
       unique: uniqueCount,
       internalLinks: internalLinksList.slice(0, 50),
       externalLinks: externalLinksList.slice(0, 50),
+      why_this_occurred: explanation,
+      how_to_fix: recommendation,
+      seo_best_practices: "Use descriptive anchor text. Internal links help structure. External links add authority.",
       parameter: "1 if ≥ 75% links are descriptive, else 0"
     });
   } catch (err) {
@@ -391,6 +425,7 @@ const checkSemanticTags = async ($) => {
       ...result,
       found: foundTags,
       missing: missingTags,
+      potentialReplacements, // Explicitly return this for frontend use
       why_this_occurred: explanation,
       how_to_fix: recommendation,
       importance: "Medium",
@@ -470,19 +505,35 @@ const checkContextualLinks = ($, url) => {
       }
     });
 
-    if (score === 1 && missingLinks.length > 3) {
-      score = 0.5;
-      // Detailed list is provided in meta.missingLinks, so we don't need a summary text issue here.
+    if (score === 1 && missingLinks.length > 5) { // Increased threshold slightly to be less sensitive
+      score = 0.8;
     }
 
-    const details = score === 1 ? "Good contextual linking" : score === 0.5 ? "Some key links missing from content" : "No contextual links found";
+    const details = score === 1 ? "Good contextual linking" : score === 0.8 ? "Optimization Opportunity" : "No contextual links found";
+
+    let explanation = "";
+    let recommendation = "";
+
+    if (totalContentLinks === 0) {
+      explanation = "No links were found within the main content body (paragraphs, articles).";
+      recommendation = "Add internal links naturally within your content to guide users to related topics.";
+    } else if (missingLinks.length > 0) {
+      explanation = `Found ${totalContentLinks} links in content, but some key menu items are not referenced in the text.`;
+      recommendation = "Consider linking to your key service or category pages directly from the article text where relevant to boost their authority.";
+    } else {
+      explanation = "The page effectively uses in-text links to reference related content.";
+      recommendation = "Continue using descriptive anchor text for your contextual links.";
+    }
 
     return evaluateParameter(score, details, {
       totalContextual: totalContentLinks,
-      foundLinks: Array.from(contentLinks),
-      missingLinks: missingLinks, // Return all links
+      foundLinks: Array.from(contentLinks).slice(0, 50),
+      missingLinks: missingLinks.slice(0, 20),
       issues: issues,
-      parameter: "1 if content links exist, 0.5 if key menu links missing, 0 if none"
+      why_this_occurred: explanation,
+      how_to_fix: recommendation,
+      seo_best_practices: "Contextual links (in-body) carry more weight than navigation links. They help search engines understand the relationship between pages.",
+      parameter: "1 if content links exist, 0.8 if key menu links missing, 0 if none"
     });
 
   } catch (err) {

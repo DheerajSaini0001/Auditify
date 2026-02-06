@@ -8,7 +8,7 @@ import {
   CheckCircle, XCircle, AlertTriangle, Info,
   Eye, MousePointer, Layout, Type, Image as ImageIcon,
   Link, Navigation, Layers, Code, ShieldCheck,
-  Keyboard, Focus, Hash, Anchor, Map, Terminal, Loader2, PersonStanding
+  Keyboard, Focus, Hash, Anchor, Map, Terminal, Loader2, PersonStanding, Globe
 } from "lucide-react";
 import MetricInfoModal from "../Component/MetricInfoModal";
 import ParameterInfoModal from "../Component/ParameterInfoModal";
@@ -30,6 +30,7 @@ const iconMap = {
   Image_Alt: ImageIcon,
   Skip_Links: Anchor,
   Landmarks: Map,
+  Multilingual_Support: Globe,
 };
 
 // ------------------------------------------------------
@@ -406,7 +407,7 @@ export default function Accessibility() {
 
         {/* Section 3: Semantic & ARIA Roles */}
         <Section title="Semantic & ARIA Roles" icon={Code} darkMode={darkMode}>
-          {["Label", "Aria_Allowed_Attr", "Aria_Roles", "Aria_Hidden_Focus", "Landmarks", "Interactive_Element_Affordance"].map((key) => (
+          {["Label", "Aria_Allowed_Attr", "Aria_Roles", "Aria_Hidden_Focus", "Landmarks", "Interactive_Element_Affordance", "Multilingual_Support"].map((key) => (
             metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
           ))}
         </Section>

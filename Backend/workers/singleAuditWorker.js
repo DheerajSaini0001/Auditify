@@ -164,6 +164,8 @@ const OverAll = (A, B, C, D, E, F, G) => {
     parentPort.postMessage({ success: true, reportId: currentAuditId });
 
   } catch (err) {
+    console.error("❌ Worker Error Detail:", err.message);
+    console.error(err.stack); // Log stack trace
     if (currentAuditId) {
       await SingleAuditReport.findByIdAndUpdate(currentAuditId, {
         status: "failed",

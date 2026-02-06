@@ -441,7 +441,7 @@ const checkSemanticTags = async ($) => {
 const checkContextualLinks = ($, url) => {
   try {
     const contentLinks = new Set();
-    const menuLinks = new Set();
+    // const menuLinks = new Set(); // Removed in favor of Map
     const issues = [];
 
     // 1. Identify "Content" Area 
@@ -450,27 +450,90 @@ const checkContextualLinks = ($, url) => {
     const scope = contentArea.length > 0 ? contentArea : $("body");
 
     // 2. Extract Links from Content
+    const foundLinkObjects = [];
+
     scope.find("a").each((i, el) => {
       const $el = $(el);
       const href = $el.attr("href");
+      const text = $el.text().trim() || "[Image/Icon]";
 
       // STRICT CHECK: Ensure this link is NOT inside a known navigation container
       // (nav, header, footer, .navbar, .menu, .sidebar)
       // .closest() checks parent ancestry.
-      if ($el.closest("nav, header, footer, .navbar, .menu, .sidebar, .nav").length > 0) {
+      const isNav = $el.closest("nav, header, footer, .navbar, .menu, .sidebar, .nav").length > 0;
+
+      if (isNav) {
         return; // Skip nav links
       }
 
       // Filter out anchors, javascript, tel, mailto
+      // Filter out anchors, javascript, tel, mailto
       if (href && !href.startsWith("#") && !href.startsWith("javascript") && !href.startsWith("tel") && !href.startsWith("mailto")) {
         contentLinks.add(href);
+
+        // Link Relevance Check
+        const genericAnchors = ["click here", "read more", "learn more", "more", "here", "details", "link", "website"];
+        const lowerText = text.toLowerCase();
+        let isContextual = true;
+        let issue = null;
+
+        // 1. Check for Generic Text
+        if (genericAnchors.includes(lowerText) || text === "[Image/Icon]") {
+          isContextual = false;
+          issue = "Generic anchor text";
+        }
+        // 2. Check overlap between text and route (slug)
+        else {
+          try {
+            const urlObj = new URL(href, url); // resolve against base
+            const path = urlObj.pathname;
+            // Extract words from slug (remove / and -)
+            const slugWords = path.split(/[\/\-_]/).filter(w => w.length > 3);
+            const textWords = lowerText.split(/\s+/).filter(w => w.length > 3);
+
+            // If slug has meaningful words, check for at least ONE match in text
+            if (slugWords.length > 0 && textWords.length > 0) {
+              const hasOverlap = textWords.some(w => slugWords.some(s => s.toLowerCase().includes(w) || w.includes(s.toLowerCase())));
+              if (!hasOverlap) {
+                // Not necessarily strictly "false", but maybe "weak"?
+                // User said: "match text and route if good then contextual otherwise issue"
+                // Let's be strict but allow for some divergence if text is long enough (descriptive)
+                if (textWords.length < 2) {
+                  isContextual = false;
+                  issue = "Text does not match destination";
+                }
+              }
+            }
+          } catch (e) {
+            // If URL parse fails (e.g. relative), simple check
+            if (!href.toLowerCase().includes(lowerText) && lowerText.length < 5) {
+              isContextual = false;
+            }
+          }
+        }
+
+        // Store details for "foundLinks" display
+        foundLinkObjects.push({
+          text: text,
+          route: href,
+          isContextual: isContextual,
+          issue: issue
+        });
       }
     });
 
     // 3. Extract Links from Navigation (Header/Footer/Nav)
+    // 3. Extract Links from Navigation (Header/Footer/Nav)
+    const menuLinksMap = new Map();
+
     $("nav, header, footer, .menu, .nav, .sidebar").find("a").each((i, el) => {
       const href = $(el).attr("href");
-      if (href) menuLinks.add(href);
+      const text = $(el).text().trim() || "Item";
+      if (href) {
+        if (!menuLinksMap.has(href)) {
+          menuLinksMap.set(href, text);
+        }
+      }
     });
 
     // 4. Analysis: Do content links point to important pages?
@@ -491,7 +554,7 @@ const checkContextualLinks = ($, url) => {
     // List of utility keywords to ignore in "Missing" check
     const ignoredPatterns = ["login", "signin", "sign-in", "register", "signup", "sign-up", "cart", "checkout", "account", "profile", "logout", "contact", "about", "privacy", "terms"];
 
-    menuLinks.forEach(link => {
+    menuLinksMap.forEach((text, link) => {
       // logic to check importance? Assume top-level nav is important.
       // Only check internal links
       if (link.startsWith("/") || link.includes(url)) {
@@ -499,7 +562,7 @@ const checkContextualLinks = ($, url) => {
           // Check if it's a utility page
           const lowerLink = link.toLowerCase();
           if (!ignoredPatterns.some(pattern => lowerLink.includes(pattern))) {
-            missingLinks.push(link);
+            missingLinks.push({ text: text, route: link });
           }
         }
       }
@@ -527,7 +590,7 @@ const checkContextualLinks = ($, url) => {
 
     return evaluateParameter(score, details, {
       totalContextual: totalContentLinks,
-      foundLinks: Array.from(contentLinks).slice(0, 50),
+      foundLinks: foundLinkObjects.slice(0, 50),
       missingLinks: missingLinks.slice(0, 20),
       issues: issues,
       why_this_occurred: explanation,
@@ -543,16 +606,32 @@ const checkContextualLinks = ($, url) => {
 
 // Helper to standardized return object
 const evaluateParameter = (score, details, meta = {}) => {
+  const status = score === 1 ? "pass" : score > 0 ? "warning" : "fail";
+
+  if (status === "pass") {
+    const { why_this_occurred, how_to_fix, ...rest } = meta;
+    return {
+      score,
+      status,
+      details,
+      meta: rest
+    };
+  }
+
   return {
     score,
-    status: score === 1 ? "pass" : score > 0 ? "warning" : "fail",
+    status,
     details,
     meta
   };
 };
 
 const checkContentQuality = ($) => {
-  const text = $("body").text().replace(/\s+/g, " ").trim();
+  // Clone body and remove non-visible/irrelevant tags
+  const $body = $('body').clone();
+  $body.find('script, style, noscript, iframe, svg, path, code, nav, footer, header').remove(); // Attempt to isolate main content
+
+  const text = $body.text().replace(/\s+/g, " ").trim();
   const words = text.split(" ").filter(w => w.length > 0);
   const wordCount = words.length;
 
@@ -562,24 +641,31 @@ const checkContentQuality = ($) => {
   }
 
   // 2. Internal Duplication
-  const sentences = text.split(/[.!?]+/).map(s => s.trim().toLowerCase()).filter(s => s.length > 20);
+  // Split by punctuation
+  const rawSentences = text.split(/[.!?]+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 20); // Ignore short fragments
 
-  if (sentences.length === 0) {
+  if (rawSentences.length === 0) {
     return evaluateParameter(1, "Content quality is good", { wordCount, repeatedSentences: [] });
   }
 
-  const sentenceCounts = {};
-  sentences.forEach(s => {
-    sentenceCounts[s] = (sentenceCounts[s] || 0) + 1;
+  const sentenceMap = {};
+
+  rawSentences.forEach(original => {
+    const normalized = original.toLowerCase();
+    if (!sentenceMap[normalized]) {
+      sentenceMap[normalized] = { text: original, count: 0 };
+    }
+    sentenceMap[normalized].count++;
   });
 
-  const repeatedSentences = Object.entries(sentenceCounts)
-    .filter(([_, count]) => count > 1)
-    .map(([text, count]) => ({ text, count }))
+  const repeatedSentences = Object.values(sentenceMap)
+    .filter(item => item.count > 1)
     .sort((a, b) => b.count - a.count);
 
-  const uniqueCount = Object.keys(sentenceCounts).length;
-  const totalSentences = sentences.length;
+  const uniqueCount = Object.keys(sentenceMap).length;
+  const totalSentences = rawSentences.length;
 
   const repetitionRatio = 1 - (uniqueCount / totalSentences);
 
@@ -638,7 +724,7 @@ const checkURLStructure = (url) => {
   }
 };
 
-const checkTitle = ($) => {
+const checkTitle = ($, url) => {
   const titleTag = $("title");
   const exists = titleTag.length > 0;
   const title = exists ? titleTag.text().trim() : "";
@@ -646,6 +732,13 @@ const checkTitle = ($) => {
   let score = 0;
   let explanation = "";
   let recommendation = "";
+
+  // Extract Site Name from URL
+  let siteName = "Site Name";
+  try {
+    const u = new URL(url);
+    siteName = u.hostname.replace(/^www\./, '');
+  } catch (e) { }
 
   if (!exists) {
     score = 0;
@@ -673,6 +766,8 @@ const checkTitle = ($) => {
 
   return evaluateParameter(score, details, {
     title,
+    url,
+    siteName,
     exists, // boolean
     length: titleLength,
     why_this_occurred: explanation,
@@ -933,7 +1028,7 @@ export default async function seoMetrics(url, $, page) {
   });
 
   // 1. Run all checks (Standardized)
-  const titleMetric = checkTitle($);
+  const titleMetric = checkTitle($, url);
   const metaDescMetric = checkMetaDescription($);
   const urlStructureMetric = checkURLStructure(url);
   const canonicalMetric = checkCanonical($, url);

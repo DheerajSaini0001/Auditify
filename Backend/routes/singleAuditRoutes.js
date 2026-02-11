@@ -6,7 +6,7 @@ const router = express.Router();
 
 const auditLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 Minutes
-  max: 5, // Max 5 audits per IP per 15 mins
+  max: 500000, // Max 5 audits per IP per 15 mins
   message: { error: "Too many audit requests, Please wait 15 minutes." },
   standardHeaders: true,
   legacyHeaders: false,

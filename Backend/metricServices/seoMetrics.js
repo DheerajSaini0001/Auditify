@@ -128,22 +128,46 @@ const checkImages = async ($, base_url) => {
     }
 
     // Weighted Score: Alt (50%), Meaningful (20%), Title (10%), Size (20%)
+    // Weighted Score: Alt (50%), Meaningful (20%), Title (10%), Size (20%)
     const weightedScore = (altScore * 0.5) + (meaningfulScore * 0.2) + (titleScore * 0.1) + (sizeScore * 0.2);
     const score = parseFloat(weightedScore.toFixed(2));
 
     const details = score === 1 ? "Images are fully optimized" : "Image optimization opportunities found";
+
+    // Simplified Logic for Explanations
+    let explanation = "";
+    let recommendation = "";
+
+    if (total === 0) {
+      explanation = "No images were found on this page.";
+      recommendation = "Use relevant images to enhance user engagement where necessary.";
+    } else {
+      const issues = [];
+      if (withAlt < total) issues.push(`${total - withAlt} images missing Alt text`);
+      if (largeImages.length > 0) issues.push(`${largeImages.length} images file size > 150KB`);
+      if (meaningfulAlt < total) issues.push(`${total - meaningfulAlt} images have weak/generic Alt text`);
+
+      if (issues.length > 0) {
+        explanation = `Found optimization opportunities: ${issues.join(", ")}.`;
+        recommendation = "Add descriptive Alt text to all images and compress large files to under 150KB (WebP format recommended).";
+      } else {
+        explanation = "All images have valid Alt text, titles, and are optimized for size.";
+        recommendation = "Continue using descriptive Alt tags and optimized image formats.";
+      }
+    }
 
     return evaluateParameter(score, details, {
       total,
       withAlt,
       meaningfulAlt,
       missingAlt: missingAlt.slice(0, 50),
+      withTitle,
       missingTitle: missingTitle.slice(0, 50),
-      largeImages, // New: heavy images list
-      altScore,
-      meaningfulScore,
-      titleScore,
-      sizeScore,
+      largeImages,
+      why_this_occurred: explanation,
+      how_to_fix: recommendation,
+      importance: "High",
+      seo_best_practices: "Images should have descriptive Alt text for accessibility and SEO. File sizes should be compressed (WebP) for fast loading.",
       parameter: 'Weighted: 50% Alt, 20% Meaningful, 10% Title, 20% Size (<150KB)'
     });
   } catch (err) {
@@ -254,15 +278,18 @@ const checkLinks = ($, url) => {
       if (!href) return;
 
       unique.add(href);
-      const text = $(link).text().trim().toLowerCase();
-      if (text && !genericAnchors.includes(text)) descriptiveCount++;
+      const originalText = $(link).text().trim(); // Keep original case
+      const lowerText = originalText.toLowerCase();
+      if (lowerText && !genericAnchors.includes(lowerText)) descriptiveCount++;
+
+      const target = ($(link).attr("target") || "_self").trim();
 
       if (href.startsWith("/") || href.includes(url)) {
         internal++;
-        internalLinksList.push(href);
+        internalLinksList.push({ href, text: originalText || "[No Text]", target }); // Use originalText
       } else if (href.startsWith("http")) {
         external++;
-        externalLinksList.push(href);
+        externalLinksList.push({ href, text: originalText || "[No Text]", target }); // Use originalText
       }
     });
 
@@ -271,6 +298,37 @@ const checkLinks = ($, url) => {
     const score = descRatio > 0.75 ? 1 : 0.5;
     const details = score === 1 ? "Start links use descriptive text" : "Some links use generic text";
 
+    let explanation = "";
+    let recommendation = "";
+    const issueList = [];
+
+    // Analyze Descriptive Text
+    if (descRatio < 0.75) {
+      issueList.push(`${total - descriptiveCount} links use generic text (e.g., "click here")`);
+    }
+
+    // Analyze Internal/External Balance
+    if (internal === 0 && total > 0) {
+      issueList.push("No internal links found (orphan page risk)");
+    }
+
+    // Analyze Open Targets
+    const unsafeExternal = externalLinksList.filter(l => l.target !== "_blank").length; // Simplified check, ideally check rel=noopener too
+    if (unsafeExternal > 0) {
+      // Not a hard failure usually, but good to note
+    }
+
+    if (total === 0) {
+      explanation = "No navigational or content links were found on this page.";
+      recommendation = "Add internal links to other relevant pages and external links to authoritative sources.";
+    } else if (issueList.length > 0) {
+      explanation = `Link profile analysis found issues: ${issueList.join(", ")}.`;
+      recommendation = "Update generic link text to be descriptive and ensure a healthy mix of internal and external links.";
+    } else {
+      explanation = "The page has a healthy link profile with descriptive anchor text.";
+      recommendation = "Maintain this balance. Ensure external links open in new tabs where appropriate.";
+    }
+
     return evaluateParameter(score, details, {
       total,
       internal,
@@ -278,6 +336,9 @@ const checkLinks = ($, url) => {
       unique: uniqueCount,
       internalLinks: internalLinksList.slice(0, 50),
       externalLinks: externalLinksList.slice(0, 50),
+      why_this_occurred: explanation,
+      how_to_fix: recommendation,
+      seo_best_practices: "Use descriptive anchor text. Internal links help structure. External links add authority.",
       parameter: "1 if ≥ 75% links are descriptive, else 0"
     });
   } catch (err) {
@@ -287,42 +348,92 @@ const checkLinks = ($, url) => {
 
 const checkSemanticTags = async ($) => {
   try {
-    const tags = ["main", "nav", "article", "section", "header", "footer"];
+    const tags = ["main", "nav", "article", "section", "header", "footer", "aside"];
     const result = {};
-    let totalScore = 0;
+    const foundTags = [];
+    const missingTags = [];
+    const potentialReplacements = []; // Store detected class-based alternatives
 
     tags.forEach(tag => {
-      const exists = $(tag).length > 0 ? 1 : 0;
-      result[tag] = exists;
-      totalScore += exists;
+      const count = $(tag).length;
+      result[tag] = count > 0 ? 1 : 0;
+
+      if (count > 0) {
+        foundTags.push(tag);
+      } else {
+        missingTags.push(tag);
+        // Heuristic Check: Check for IDs or Classes that suggest this tag should exist
+        // e.g. <div class="header"> or <div id="nav">
+        const heuristicSelector = `div[class*="${tag}"], div[id*="${tag}"]`;
+        if ($(heuristicSelector).length > 0) {
+          potentialReplacements.push(tag);
+        }
+      }
     });
 
-    let score = 0;
-    // Core tags (Main, Nav, Header, Footer) are most important.
-    const coreTags = result.main + result.nav + result.header + result.footer;
-    if (coreTags === 4) score = 1;
-    else if (coreTags >= 2) score = 0.5;
-    else score = 0;
+    // Scoring Logic
+    // Weight core tags higher: Main, Nav, Header, Footer
+    const coreTags = ["main", "nav", "header", "footer"];
+    const optionalTags = ["article", "section", "aside"];
 
-    // Or use the average calculation user liked
-    const avgScore = parseFloat((totalScore / 6).toFixed(2));
+    let coreCount = 0;
+    coreTags.forEach(t => { if (result[t]) coreCount++; });
 
-    // Let's stick to the average score for granularity
-    const finalScore = avgScore;
-    const details = finalScore === 1 ? "Excellent use of semantic tags" : "Partial use of semantic tags";
+    let optionalCount = 0;
+    optionalTags.forEach(t => { if (result[t]) optionalCount++; });
+
+    let finalScore = 0;
+
+    // Core is 70% of score, Optional is 30%
+    // 4 core tags = 0.7 points
+    // 3 optional tags = 0.3 points
+
+    const coreScore = (coreCount / coreTags.length) * 0.7;
+    const optionalScore = (optionalCount / optionalTags.length) * 0.3;
+
+    finalScore = parseFloat((coreScore + optionalScore).toFixed(2));
+
+    let details = "";
+    let explanation = "";
+    let recommendation = "";
+
+    if (finalScore === 1) {
+      details = "Excellent Semantic Structure";
+      explanation = "The page effectively uses all key HTML5 semantic elements (header, nav, main, footer, etc.).";
+      recommendation = "Maintain this structure to ensure accessibility and clear document outlines.";
+    } else if (finalScore >= 0.7) {
+      details = "Good Semantic Structure";
+      explanation = `Most core structure tags are present. Missing: ${missingTags.join(", ")}.`;
+
+      if (potentialReplacements.length > 0) {
+        recommendation = `We detected divs that might serve as semantic elements. Try converting <div class="${potentialReplacements[0]}"> to <${potentialReplacements[0]}>.`;
+      } else {
+        recommendation = `Consider adding the missing <${missingTags[0]}> tag to further define your content structure.`;
+      }
+    } else {
+      details = "Weak Semantic Structure";
+      explanation = `The page relies heavily on generic <div> elements. Missing critical tags: ${missingTags.join(", ")}.`;
+
+      if (potentialReplacements.length > 0) {
+        recommendation = `Detected potential ${potentialReplacements.join(", ")} usage in divs. Using native HTML5 tags like <${potentialReplacements[0]}> is better for SEO and accessibility than <div class="${potentialReplacements[0]}">.`;
+      } else {
+        recommendation = "Refactor the layout to use <header>, <nav>, <main>, and <footer> for better accessibility and SEO understanding.";
+      }
+    }
 
     return evaluateParameter(finalScore, details, {
-      ...result, // main: 1, nav: 0 etc
-      main_score: result.main, // mapping for frontend compatibility if needed
-      nav_score: result.nav,
-      header_score: result.header,
-      footer_score: result.footer,
-      article_score: result.article,
-      section_score: result.section,
-      parameter: "Avg of Main, Nav, Header, Footer, Article, Section existence"
+      ...result,
+      found: foundTags,
+      missing: missingTags,
+      potentialReplacements, // Explicitly return this for frontend use
+      why_this_occurred: explanation,
+      how_to_fix: recommendation,
+      importance: "Medium",
+      seo_best_practices: "HTML5 semantic tags provide meaning to page structure, helping screen readers and search engines understand content roles.",
+      parameter: "Weighted presence of Header, Nav, Main, Footer (Core) + Article, Section, Aside"
     });
   } catch (err) {
-    return evaluateParameter(0, "Error checking semantic tags", { error: err.message });
+    return evaluateParameter(0, "Error checking semantic tags", { error: err.message, importance: "Medium" });
   }
 };
 
@@ -330,7 +441,7 @@ const checkSemanticTags = async ($) => {
 const checkContextualLinks = ($, url) => {
   try {
     const contentLinks = new Set();
-    const menuLinks = new Set();
+    // const menuLinks = new Set(); // Removed in favor of Map
     const issues = [];
 
     // 1. Identify "Content" Area 
@@ -339,18 +450,90 @@ const checkContextualLinks = ($, url) => {
     const scope = contentArea.length > 0 ? contentArea : $("body");
 
     // 2. Extract Links from Content
+    const foundLinkObjects = [];
+
     scope.find("a").each((i, el) => {
-      const href = $(el).attr("href");
+      const $el = $(el);
+      const href = $el.attr("href");
+      const text = $el.text().trim() || "[Image/Icon]";
+
+      // STRICT CHECK: Ensure this link is NOT inside a known navigation container
+      // (nav, header, footer, .navbar, .menu, .sidebar)
+      // .closest() checks parent ancestry.
+      const isNav = $el.closest("nav, header, footer, .navbar, .menu, .sidebar, .nav").length > 0;
+
+      if (isNav) {
+        return; // Skip nav links
+      }
+
+      // Filter out anchors, javascript, tel, mailto
       // Filter out anchors, javascript, tel, mailto
       if (href && !href.startsWith("#") && !href.startsWith("javascript") && !href.startsWith("tel") && !href.startsWith("mailto")) {
         contentLinks.add(href);
+
+        // Link Relevance Check
+        const genericAnchors = ["click here", "read more", "learn more", "more", "here", "details", "link", "website"];
+        const lowerText = text.toLowerCase();
+        let isContextual = true;
+        let issue = null;
+
+        // 1. Check for Generic Text
+        if (genericAnchors.includes(lowerText) || text === "[Image/Icon]") {
+          isContextual = false;
+          issue = "Generic anchor text";
+        }
+        // 2. Check overlap between text and route (slug)
+        else {
+          try {
+            const urlObj = new URL(href, url); // resolve against base
+            const path = urlObj.pathname;
+            // Extract words from slug (remove / and -)
+            const slugWords = path.split(/[\/\-_]/).filter(w => w.length > 3);
+            const textWords = lowerText.split(/\s+/).filter(w => w.length > 3);
+
+            // If slug has meaningful words, check for at least ONE match in text
+            if (slugWords.length > 0 && textWords.length > 0) {
+              const hasOverlap = textWords.some(w => slugWords.some(s => s.toLowerCase().includes(w) || w.includes(s.toLowerCase())));
+              if (!hasOverlap) {
+                // Not necessarily strictly "false", but maybe "weak"?
+                // User said: "match text and route if good then contextual otherwise issue"
+                // Let's be strict but allow for some divergence if text is long enough (descriptive)
+                if (textWords.length < 2) {
+                  isContextual = false;
+                  issue = "Text does not match destination";
+                }
+              }
+            }
+          } catch (e) {
+            // If URL parse fails (e.g. relative), simple check
+            if (!href.toLowerCase().includes(lowerText) && lowerText.length < 5) {
+              isContextual = false;
+            }
+          }
+        }
+
+        // Store details for "foundLinks" display
+        foundLinkObjects.push({
+          text: text,
+          route: href,
+          isContextual: isContextual,
+          issue: issue
+        });
       }
     });
 
     // 3. Extract Links from Navigation (Header/Footer/Nav)
+    // 3. Extract Links from Navigation (Header/Footer/Nav)
+    const menuLinksMap = new Map();
+
     $("nav, header, footer, .menu, .nav, .sidebar").find("a").each((i, el) => {
       const href = $(el).attr("href");
-      if (href) menuLinks.add(href);
+      const text = $(el).text().trim() || "Item";
+      if (href) {
+        if (!menuLinksMap.has(href)) {
+          menuLinksMap.set(href, text);
+        }
+      }
     });
 
     // 4. Analysis: Do content links point to important pages?
@@ -368,28 +551,52 @@ const checkContextualLinks = ($, url) => {
 
     // Advanced: Check if key menu items are linked in content
     const missingLinks = [];
-    menuLinks.forEach(link => {
+    // List of utility keywords to ignore in "Missing" check
+    const ignoredPatterns = ["login", "signin", "sign-in", "register", "signup", "sign-up", "cart", "checkout", "account", "profile", "logout", "contact", "about", "privacy", "terms"];
+
+    menuLinksMap.forEach((text, link) => {
       // logic to check importance? Assume top-level nav is important.
       // Only check internal links
       if (link.startsWith("/") || link.includes(url)) {
         if (!contentLinks.has(link)) {
-          missingLinks.push(link);
+          // Check if it's a utility page
+          const lowerLink = link.toLowerCase();
+          if (!ignoredPatterns.some(pattern => lowerLink.includes(pattern))) {
+            missingLinks.push({ text: text, route: link });
+          }
         }
       }
     });
 
-    if (score === 1 && missingLinks.length > 3) {
-      score = 0.5;
-      issues.push(`${missingLinks.length} key menu pages are not linked contextually.`);
+    if (score === 1 && missingLinks.length > 5) { // Increased threshold slightly to be less sensitive
+      score = 0.8;
     }
 
-    const details = score === 1 ? "Good contextual linking" : score === 0.5 ? "Some key links missing from content" : "No contextual links found";
+    const details = score === 1 ? "Good contextual linking" : score === 0.8 ? "Optimization Opportunity" : "No contextual links found";
+
+    let explanation = "";
+    let recommendation = "";
+
+    if (totalContentLinks === 0) {
+      explanation = "No links were found within the main content body (paragraphs, articles).";
+      recommendation = "Add internal links naturally within your content to guide users to related topics.";
+    } else if (missingLinks.length > 0) {
+      explanation = `Found ${totalContentLinks} links in content, but some key menu items are not referenced in the text.`;
+      recommendation = "Consider linking to your key service or category pages directly from the article text where relevant to boost their authority.";
+    } else {
+      explanation = "The page effectively uses in-text links to reference related content.";
+      recommendation = "Continue using descriptive anchor text for your contextual links.";
+    }
 
     return evaluateParameter(score, details, {
       totalContextual: totalContentLinks,
-      missingLinks: missingLinks.slice(0, 5), // Limit size
+      foundLinks: foundLinkObjects.slice(0, 50),
+      missingLinks: missingLinks.slice(0, 20),
       issues: issues,
-      parameter: "1 if content links exist, 0.5 if key menu links missing, 0 if none"
+      why_this_occurred: explanation,
+      how_to_fix: recommendation,
+      seo_best_practices: "Contextual links (in-body) carry more weight than navigation links. They help search engines understand the relationship between pages.",
+      parameter: "1 if content links exist, 0.8 if key menu links missing, 0 if none"
     });
 
   } catch (err) {
@@ -399,16 +606,32 @@ const checkContextualLinks = ($, url) => {
 
 // Helper to standardized return object
 const evaluateParameter = (score, details, meta = {}) => {
+  const status = score === 1 ? "pass" : score > 0 ? "warning" : "fail";
+
+  if (status === "pass") {
+    const { why_this_occurred, how_to_fix, ...rest } = meta;
+    return {
+      score,
+      status,
+      details,
+      meta: rest
+    };
+  }
+
   return {
     score,
-    status: score === 1 ? "pass" : score > 0 ? "warning" : "fail",
+    status,
     details,
     meta
   };
 };
 
 const checkContentQuality = ($) => {
-  const text = $("body").text().replace(/\s+/g, " ").trim();
+  // Clone body and remove non-visible/irrelevant tags
+  const $body = $('body').clone();
+  $body.find('script, style, noscript, iframe, svg, path, code, nav, footer, header').remove(); // Attempt to isolate main content
+
+  const text = $body.text().replace(/\s+/g, " ").trim();
   const words = text.split(" ").filter(w => w.length > 0);
   const wordCount = words.length;
 
@@ -418,24 +641,31 @@ const checkContentQuality = ($) => {
   }
 
   // 2. Internal Duplication
-  const sentences = text.split(/[.!?]+/).map(s => s.trim().toLowerCase()).filter(s => s.length > 20);
+  // Split by punctuation
+  const rawSentences = text.split(/[.!?]+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 20); // Ignore short fragments
 
-  if (sentences.length === 0) {
+  if (rawSentences.length === 0) {
     return evaluateParameter(1, "Content quality is good", { wordCount, repeatedSentences: [] });
   }
 
-  const sentenceCounts = {};
-  sentences.forEach(s => {
-    sentenceCounts[s] = (sentenceCounts[s] || 0) + 1;
+  const sentenceMap = {};
+
+  rawSentences.forEach(original => {
+    const normalized = original.toLowerCase();
+    if (!sentenceMap[normalized]) {
+      sentenceMap[normalized] = { text: original, count: 0 };
+    }
+    sentenceMap[normalized].count++;
   });
 
-  const repeatedSentences = Object.entries(sentenceCounts)
-    .filter(([_, count]) => count > 1)
-    .map(([text, count]) => ({ text, count }))
+  const repeatedSentences = Object.values(sentenceMap)
+    .filter(item => item.count > 1)
     .sort((a, b) => b.count - a.count);
 
-  const uniqueCount = Object.keys(sentenceCounts).length;
-  const totalSentences = sentences.length;
+  const uniqueCount = Object.keys(sentenceMap).length;
+  const totalSentences = rawSentences.length;
 
   const repetitionRatio = 1 - (uniqueCount / totalSentences);
 
@@ -451,131 +681,104 @@ const checkURLStructure = (url) => {
     const parsed = new URL(url);
     const path = parsed.pathname;
     const issues = [];
+    let explanation = "";
+    let recommendation = "";
 
-    if (path.length > 1 && path === path.toUpperCase()) issues.push("URL should be lowercase");
-    if (path.includes("_")) issues.push("Use hyphens instead of underscores");
-    if (parsed.search) issues.push("URL contains query parameters");
+    if (path.length > 1 && path !== path.toLowerCase()) {
+      issues.push("URL contains uppercase letters");
+    }
+    if (path.includes("_")) {
+      issues.push("URL contains underscores (use hyphens)");
+    }
+    if (parsed.search) {
+      issues.push("URL contains query parameters");
+    }
 
     const segments = path.split('/').filter(Boolean);
-    if (segments.length > 3) issues.push("URL is too deep (> 3 segments)");
+    if (segments.length > 3) {
+      issues.push("URL is too deep (> 3 segments)");
+    }
 
     const score = Math.max(0, 1 - (issues.length * 0.2));
     const details = issues.length === 0 ? "URL structure matches best practices" : `${issues.length} issues found`;
 
+    if (issues.length > 0) {
+      explanation = `The URL structure contains ${issues.length} potential issue(s): ${issues.join(", ")}.`;
+      recommendation = "Simplify the URL structure. Use lowercase letters, hyphens instead of underscores, avoid query parameters for static pages, and keep the path depth shallow.";
+    } else {
+      explanation = "The URL follows standard SEO conventions (clean, concise, and descriptive).";
+      recommendation = "No changes needed. Maintain this structure for future pages.";
+    }
+
     return evaluateParameter(parseFloat(score.toFixed(2)), details, {
       url,
       issues,
+      why_this_occurred: explanation,
+      how_to_fix: recommendation,
+      importance: "Medium",
+      seo_best_practices: "URLs should be short, descriptive, lowercase, use hyphens as separators, and avoid unnecessary parameters.",
       parameter: 'Clean, short, lowercase, hyphen-separated, no params, shallow depth'
     });
   } catch (err) {
-    return evaluateParameter(0, "Invalid URL format", { url, error: err.message });
+    return evaluateParameter(0, "Invalid URL format", { url, error: err.message, why_this_occurred: "The provided URL could not be parsed.", how_to_fix: "Ensure the URL is correctly formatted (e.g. https://example.com).", importance: "Critical", seo_best_practices: "URLs must be valid RFC 3986 strings." });
   }
 };
 
-const checkTitle = ($) => {
-  const title = $("title").text().trim() || "";
+const checkTitle = ($, url) => {
+  const titleTag = $("title");
+  const exists = titleTag.length > 0;
+  const title = exists ? titleTag.text().trim() : "";
   const titleLength = title.length;
   let score = 0;
+  let explanation = "";
+  let recommendation = "";
 
-  if ($("title").length > 0) {
-    if (titleLength >= 30 && titleLength <= 60) score = 1;
-    else score = 0.5;
+  // Extract Site Name from URL
+  let siteName = "Site Name";
+  try {
+    const u = new URL(url);
+    siteName = u.hostname.replace(/^www\./, '');
+  } catch (e) { }
+
+  if (!exists) {
+    score = 0;
+    explanation = "The document is missing a <title> tag in the <head> section.";
+    recommendation = "Add a <title> tag with a descriptive title inside the <head> section.";
+  } else if (titleLength === 0) {
+    score = 0;
+    explanation = "The <title> tag is present but contains no text.";
+    recommendation = "Add descriptive text that summarizes the page content within the <title> tag.";
+  } else if (titleLength < 30) {
+    score = 0.5;
+    explanation = `The title is ${titleLength} characters long, which is considered too short.`;
+    recommendation = "Expand the title to at least 30 characters. Include primary keywords and your brand name.";
+  } else if (titleLength > 60) {
+    score = 0.5;
+    explanation = `The title is ${titleLength} characters long, which exceeds the recommended limit.`;
+    recommendation = "Shorten the title to approx. 60 characters to prevent truncation in search engine results (SERPs).";
+  } else {
+    score = 1;
+    explanation = "The title length is within the optimal range (30-60 characters).";
+    recommendation = "No substantial changes needed. Ensure the title remains relevant to the page content.";
   }
 
-  const details = score === 1 ? "Title tag is optimized" : "Title tag length needs improvement (30-60 chars)";
+  const details = score === 1 ? "Title tag is optimized" : "Title tag requires attention";
+
   return evaluateParameter(score, details, {
     title,
-    exists: $("title").length > 0 ? 1 : 0,
+    url,
+    siteName,
+    exists, // boolean
     length: titleLength,
+    why_this_occurred: explanation,
+    how_to_fix: recommendation,
+    importance: "Critical",
+    seo_best_practices: "Titles should be unique, include main keywords near the beginning, and ideally be between 30-60 characters.",
     parameter: '1 if title exists and 30–60 characters, else 0'
   });
 };
 
-const checkMetaDescription = ($) => {
-  const metaDesc = $('meta[name="description"]').attr("content") || "";
-  const metaDescLength = metaDesc.length;
-  let score = 0;
-
-  if ($('meta[name="description"]').length > 0) {
-    if (metaDescLength >= 50 && metaDescLength <= 160) score = 1;
-    else score = 0.5;
-  }
-
-  const details = score === 1 ? "Meta description is optimized" : score === 0.5 ? "Meta description length needs improvement (50-160 chars)" : "Meta description missing";
-  return evaluateParameter(score, details, {
-    description: metaDesc,
-    length: metaDescLength,
-    exists: $('meta[name="description"]').length > 0 ? 1 : 0,
-    parameter: '1 if meta description exists and ≤ 165 characters, else 0'
-  });
-};
-
-const checkCanonical = ($, url) => {
-  const links = $('link[rel="canonical"]');
-  const exists = links.length > 0 ? 1 : 0;
-  const canonical = links.attr("href") || ""; // Gets first one if multiple
-
-  let score = 0;
-  let details = "Canonical tag missing";
-  let isSelfReferencing = false;
-
-  if (exists) {
-    if (links.length > 1) {
-      score = 0;
-      details = "Multiple canonical tags found (only one allowed)";
-    } else if (!canonical.trim()) {
-      score = 0;
-      details = "Canonical tag exists but href is empty";
-    } else {
-      try {
-        const canonicalUrl = new URL(canonical, url);
-        const currentUrl = new URL(url);
-
-        // Helper: Get comparison string (host without www + path without trailing slash + search) using lowercase
-        const getComparisonString = (uObj) => {
-          const host = uObj.hostname.replace(/^www\./, '').toLowerCase();
-          let path = uObj.pathname;
-          if (path.length > 1 && path.endsWith('/')) {
-            path = path.slice(0, -1);
-          }
-          return host + path + uObj.search;
-        };
-
-        const canonStr = getComparisonString(canonicalUrl);
-        const currStr = getComparisonString(currentUrl);
-
-        isSelfReferencing = canonStr === currStr;
-
-        if (isSelfReferencing) {
-          score = 1;
-          details = "Self-referencing canonical tag";
-        } else {
-          // Check if same root domain (ignoring protocol and www)
-          const canonHost = canonicalUrl.hostname.replace(/^www\./, '');
-          const currHost = currentUrl.hostname.replace(/^www\./, '');
-
-          if (canonHost === currHost) {
-            score = 1;
-            details = "Canonical points to another internal URL";
-          } else {
-            score = 0.5; // Warning check for cross-domain
-            details = "Canonical points to external domain";
-          }
-        }
-      } catch (e) {
-        score = 0;
-        details = "Invalid Canonical URL";
-      }
-    }
-  }
-
-  return evaluateParameter(score, details, {
-    canonical,
-    exists,
-    isSelfReferencing,
-    parameter: '1 if valid canonical exists'
-  });
-};
+/* ... meta description and canonical code is skipped for brevity ... */
 
 const checkH1 = ($) => {
   const h1Count = $("h1").length;
@@ -583,21 +786,171 @@ const checkH1 = ($) => {
 
   let score = 0;
   let details = "H1 tag missing";
+  let explanation = "";
+  let recommendation = "";
 
-  if (h1Count === 1) {
+  if (h1Count === 0) {
+    score = 0;
+    details = "Missing H1 tag";
+    explanation = "No <h1> tag was found on the page.";
+    recommendation = "Add exactly one <h1> tag that describes the main topic of the page. It's crucial for SEO and accessibility.";
+  } else if (h1Count === 1) {
     score = 1;
     details = "Exactly one H1 tag found";
-  } else if (h1Count > 1) {
+    explanation = "The page correctly contains a single H1 tag.";
+    recommendation = "Ensure the H1 text contains your primary keyword and is compelling to users.";
+  } else {
     score = 0.5;
-    details = "Multiple H1 tags found (use only one)";
+    details = `Multiple H1 tags found (${h1Count})`;
+    explanation = "Multiple <h1> tags were detected. While HTML5 allows this, it is generally recommended to have only one main heading per page.";
+    recommendation = "Consolidate your main headings. Use a single <h1> for the page title and <h2>-<h6> for subsections.";
   }
 
   return evaluateParameter(score, details, {
     count: h1Count,
     content,
+    why_this_occurred: explanation,
+    how_to_fix: recommendation,
+    importance: "High",
+    seo_best_practices: "Use a single H1 tag for the main page title. It helps search engines understand the primary topic of your content.",
     parameter: '1 if exactly one H1, 0.5 if >1, 0 if none'
   });
 };
+
+const checkMetaDescription = ($) => {
+  const metaTag = $('meta[name="description"]');
+  const exists = metaTag.length > 0;
+  const metaDesc = exists ? (metaTag.attr("content") || "").trim() : "";
+  const metaDescLength = metaDesc.length;
+
+  let score = 0;
+  let explanation = "";
+  let recommendation = "";
+
+  if (!exists) {
+    score = 0;
+    explanation = "The document is missing a meta description tag.";
+    recommendation = "Add a <meta name=\"description\" content=\"...\"> tag to the <head> of your page.";
+  } else if (metaDescLength === 0) {
+    score = 0;
+    explanation = "The meta description tag exists but the content attribute is empty.";
+    recommendation = "Add a concise summary of the page content to the content attribute.";
+  } else if (metaDescLength < 50) {
+    score = 0.5;
+    explanation = `The meta description is ${metaDescLength} characters long, which is too short to be effective.`;
+    recommendation = "Expand the description to at least 50 characters to better summarize the page for search engines.";
+  } else if (metaDescLength > 160) {
+    score = 0.5;
+    explanation = `The meta description is ${metaDescLength} characters long, which exceeds the recommended limit.`;
+    recommendation = "Shorten the description to around 155-160 characters to prevent truncation in search results.";
+  } else {
+    score = 1;
+    explanation = "The meta description length is within the optimal range (50-160 characters).";
+    recommendation = "Ensure the description accurately reflects the page content and includes a call to action if appropriate.";
+  }
+
+  const details = score === 1 ? "Meta description is optimized" : "Meta description requires attention";
+
+  return evaluateParameter(score, details, {
+    description: metaDesc,
+    length: metaDescLength,
+    exists, // boolean
+    why_this_occurred: explanation,
+    how_to_fix: recommendation,
+    importance: "High",
+    seo_best_practices: "Meta descriptions should be unique, actionable summaries of the page content, ideally between 50-160 characters.",
+    parameter: '1 if meta description exists and 50-160 characters, else 0'
+  });
+};
+
+const checkCanonical = ($, url) => {
+  const links = $('link[rel="canonical"]');
+  const exists = links.length > 0; // Boolean for clarity
+  const canonical = exists ? (links.attr("href") || "").trim() : "";
+
+  let score = 0;
+  let details = "Canonical tag missing";
+  let explanation = "";
+  let recommendation = "";
+  let isSelfReferencing = false;
+
+  if (!exists) {
+    score = 0;
+    explanation = "No canonical tag was found in the <head> section of the page.";
+    recommendation = "Add a <link rel=\"canonical\" href=\"...\" /> tag pointing to the authoritative URL for this page to prevent duplicate content issues.";
+  } else if (links.length > 1) {
+    score = 0;
+    details = "Multiple canonical tags found";
+    explanation = "Multiple <link rel=\"canonical\"> tags were detected on the page.";
+    recommendation = "Ensure only one canonical tag is present per page. Remove duplicate tags.";
+  } else if (!canonical) {
+    score = 0;
+    details = "Canonical tag empty";
+    explanation = "A canonical tag exists, but the href attribute is empty.";
+    recommendation = "Add the correct absolute URL to the href attribute of the canonical tag.";
+  } else {
+    try {
+      const canonicalUrl = new URL(canonical, url);
+      const currentUrl = new URL(url);
+
+      // Helper: Get comparison string
+      const getComparisonString = (uObj) => {
+        const host = uObj.hostname.replace(/^www\./, '').toLowerCase();
+        let path = uObj.pathname;
+        if (path.length > 1 && path.endsWith('/')) {
+          path = path.slice(0, -1);
+        }
+        return host + path + uObj.search;
+      };
+
+      const canonStr = getComparisonString(canonicalUrl);
+      const currStr = getComparisonString(currentUrl);
+
+      isSelfReferencing = canonStr === currStr;
+
+      if (isSelfReferencing) {
+        score = 1;
+        details = "Self-referencing canonical tag";
+        explanation = "The canonical tag correctly points to the current page URL.";
+        recommendation = "No action needed. This confirms the page is the master version.";
+      } else {
+        // Check if same root domain
+        const canonHost = canonicalUrl.hostname.replace(/^www\./, '');
+        const currHost = currentUrl.hostname.replace(/^www\./, '');
+
+        if (canonHost === currHost) {
+          score = 1;
+          details = "Canonical points to another internal URL";
+          explanation = "The canonical tag points to a different URL on the same domain. This indicates this page is a duplicate or variant.";
+          recommendation = "Ensure this is intentional (e.g., for tracking parameters or similar content). If this page should be indexed, point the canonical to itself.";
+        } else {
+          score = 0.5;
+          details = "Canonical points to external domain";
+          explanation = "The canonical tag points to a completely different domain.";
+          recommendation = "Verify if this is a cross-domain syndication. If not, correct the canonical link to point to your own domain.";
+        }
+      }
+    } catch (e) {
+      score = 0;
+      details = "Invalid Canonical URL";
+      explanation = "The URL specified in the canonical tag is malformed.";
+      recommendation = "Correct the URL format in the canonical tag (ensure it includes protocol like https://).";
+    }
+  }
+
+  return evaluateParameter(score, details, {
+    canonical,
+    exists: exists ? 1 : 0, // Keep 1/0 for compatibility if needed, but logic uses boolean
+    isSelfReferencing,
+    why_this_occurred: explanation,
+    how_to_fix: recommendation,
+    importance: "High",
+    seo_best_practices: "Every page should have a self-referencing canonical tag unless it is a duplicate of another page. It prevents duplicate content issues.",
+    parameter: '1 if valid canonical exists'
+  });
+};
+
+
 
 const checkHTTPS = (url) => {
   try {
@@ -675,7 +1028,7 @@ export default async function seoMetrics(url, $, page) {
   });
 
   // 1. Run all checks (Standardized)
-  const titleMetric = checkTitle($);
+  const titleMetric = checkTitle($, url);
   const metaDescMetric = checkMetaDescription($);
   const urlStructureMetric = checkURLStructure(url);
   const canonicalMetric = checkCanonical($, url);

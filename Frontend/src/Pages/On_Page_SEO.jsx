@@ -170,7 +170,7 @@ const MetricCard = ({ title, description, score, value, unit, darkMode, icon: Ic
 // ------------------------------------------------------
 // ✅ Simple Section
 // ------------------------------------------------------
-const Section = ({ title, icon: Icon, children, darkMode, gridCols }) => (
+const Section = ({ title, icon: Icon, children, darkMode }) => (
   <div className="space-y-4">
     <div className="flex items-center gap-3 px-2">
       <div className={`p-2 rounded-lg ${darkMode ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-600"}`}>
@@ -180,7 +180,7 @@ const Section = ({ title, icon: Icon, children, darkMode, gridCols }) => (
         {title}
       </h2>
     </div>
-    <div className={`grid gap-4 ${gridCols || "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"}`}>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {children}
     </div>
   </div>
@@ -196,47 +196,28 @@ const TitleTagCard = ({ data, darkMode, onInfo }) => {
 
   // Status Colors
   const statusColor = isPassed
-    ? (darkMode ? "text-emerald-400 bg-emerald-900/20 border-emerald-800/30" : "text-emerald-600 bg-emerald-50 border-emerald-100")
-    : (darkMode ? "text-rose-400 bg-rose-900/20 border-rose-800/30" : "text-rose-600 bg-rose-50 border-rose-100");
+    ? (darkMode ? "text-green-400 bg-green-900/20 border-green-800/30" : "text-green-600 bg-green-50 border-green-100")
+    : (darkMode ? "text-red-400 bg-red-900/20 border-red-800/30" : "text-red-600 bg-red-50 border-red-100");
 
   const statusText = isPassed ? "Optimized" : "Needs Improvement";
 
-  // Google Preview Helpers
-  const googleTitle = meta.title || "Your Page Title Goes Here";
-  const googleUrl = meta.url || "https://example.com/page-url";
-  const siteName = meta.siteName || "Site Name";
-  const displayUrl = googleUrl.length > 35 ? googleUrl.substring(0, 35) + "..." : googleUrl;
-
-  // Character Count Progress
-  const charLength = meta.length || 0;
-  const maxLen = 70;
-  const progress = Math.min((charLength / maxLen) * 100, 100);
-
-  // Progress Color Logic
-  let progressColor = "bg-gray-300";
-  if (charLength > 0) {
-    if (charLength >= 30 && charLength <= 60) progressColor = "bg-emerald-500";
-    else if (charLength < 30) progressColor = "bg-amber-500";
-    else progressColor = "bg-rose-500";
-  }
-
   return (
-    <div className={`relative overflow-hidden rounded-2xl border shadow-sm hover:shadow-lg transition-all duration-300 group col-span-1 ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}>
-      {/* Decorative top gradient */}
-      <div className={`absolute top-0 left-0 w-full h-1 ${isPassed ? "bg-gradient-to-r from-emerald-400 to-teal-500" : "bg-gradient-to-r from-rose-400 to-orange-500"}`}></div>
-
-      <div className="p-6 space-y-6">
+    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group col-span-1 md:col-span-2 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+      <div className="p-5 space-y-4">
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <div className={`p-3.5 rounded-xl shadow-inner ${darkMode ? "bg-slate-900 text-blue-400" : "bg-blue-50 text-blue-600"}`}>
-              <Tag size={28} strokeWidth={1.5} />
+            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
+              <Tag size={24} className={darkMode ? "text-blue-400" : "text-blue-600"} />
             </div>
             <div>
-              <h3 className={`font-bold text-xl tracking-tight ${darkMode ? "text-slate-100" : "text-slate-900"}`}>Title Tag</h3>
-              <div className="flex items-center gap-2 mt-1.5">
-                <span className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${statusColor}`}>
+              <h3 className={`font-bold text-lg ${darkMode ? "text-gray-100" : "text-gray-900"}`}>Title Tag</h3>
+              <div className={`flex items-center gap-2 mt-1`}>
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${statusColor}`}>
                   {statusText}
+                </span>
+                <span className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                  ({meta.length || 0} characters)
                 </span>
               </div>
             </div>
@@ -248,75 +229,61 @@ const TitleTagCard = ({ data, darkMode, onInfo }) => {
                 e.stopPropagation();
                 onInfo();
               }}
-              className={`p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors ${darkMode ? "text-slate-400 hover:text-white" : "text-slate-400 hover:text-slate-900"}`}
+              className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
             >
-              <Info size={20} />
+              <Info size={18} />
             </button>
           )}
         </div>
 
-        {/* Google SERP Preview */}
-        <div className={`p-5 rounded-xl border ${darkMode ? "bg-slate-950/50 border-slate-800" : "bg-slate-50 border-slate-100"}`}>
-          <div className="mb-3 flex items-center justify-between">
-            <h4 className={`text-xs font-bold uppercase tracking-wider flex items-center gap-2 ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
-              <Globe size={12} /> Google Search Preview
+        {/* Content Body */}
+        <div className="space-y-4">
+          {/* The Title Itself */}
+          <div>
+            <h4 className={`text-xs font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+              Current Title
             </h4>
+            <div className={`p-3 rounded-lg border font-serif text-lg leading-snug ${darkMode ? "bg-gray-900 border-gray-700 text-gray-200" : "bg-gray-50 border-gray-200 text-gray-800"}`}>
+              {meta.title || <span className="italic opacity-50">No title found</span>}
+            </div>
           </div>
 
-          <div className="font-sans">
-            <div className="flex items-center gap-2 mb-1.5">
-              <div className="w-7 h-7 rounded-full bg-gray-200 dark:bg-slate-700 flex items-center justify-center text-[10px] uppercase font-bold text-gray-500 dark:text-slate-400">
-                {siteName.charAt(0).toUpperCase()}
+          {/* Analysis Details (Only if we have the new metadata format) */}
+          {meta.why_this_occurred && (
+            <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
+              {/* Analysis */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-500">
+                  <AlertTriangle size={12} />
+                  <span>Analysis</span>
+                </div>
+                <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                  {meta.why_this_occurred}
+                </p>
               </div>
-              <div className="flex flex-col">
-                <span className={`text-xs font-medium leading-none mb-0.5 ${darkMode ? "text-slate-300" : "text-slate-700"}`}>
-                  {siteName}
-                </span>
-                <span className={`text-[10px] leading-none ${darkMode ? "text-slate-500" : "text-slate-500"}`}>
-                  {displayUrl}
-                </span>
+
+              {/* Recommendation */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-500">
+                  <CheckCircle size={12} />
+                  <span>Recommendation</span>
+                </div>
+                <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                  {meta.how_to_fix}
+                </p>
               </div>
             </div>
-            <h3 className="text-xl text-[#1a0dab] dark:text-[#8ab4f8] hover:underline cursor-pointer truncate font-normal">
-              {googleTitle}
-            </h3>
-          </div>
+          )}
+
+          {/* Best Practices (Optional footer) */}
+          {meta.seo_best_practices && (
+            <div className={`mt-2 p-2 rounded text-xs opacity-70 flex items-start gap-2 ${darkMode ? "bg-gray-900/50" : "bg-gray-50"}`}>
+              <Info size={12} className="mt-0.5 flex-shrink-0" />
+              <span>{meta.seo_best_practices}</span>
+            </div>
+          )}
+
         </div>
-
-        {/* Character Count */}
-        <div className="flex justify-between items-center bg-slate-100 dark:bg-slate-900/50 p-3 rounded-lg">
-          <span className={`text-sm font-medium ${darkMode ? "text-slate-300" : "text-slate-600"}`}>Character Count</span>
-          <span className={`text-sm font-bold font-mono ${darkMode ? "text-slate-200" : "text-slate-800"}`}>
-            {charLength} <span className="text-xs font-normal opacity-50">/ 60 (Optimal)</span>
-          </span>
-        </div>
-
-        {/* Analysis Details */}
-        {meta.why_this_occurred && (
-          <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-slate-800" : "border-slate-100"}`}>
-            {/* Analysis */}
-            <div className={`p-3 rounded-lg ${darkMode ? "bg-slate-900/50" : "bg-white border border-slate-100"}`}>
-              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-500 mb-2">
-                <AlertTriangle size={12} />
-                <span>Analysis</span>
-              </div>
-              <p className={`text-sm leading-relaxed ${darkMode ? "text-slate-300" : "text-slate-600"}`}>
-                {meta.why_this_occurred}
-              </p>
-            </div>
-
-            {/* Recommendation */}
-            <div className={`p-3 rounded-lg ${darkMode ? "bg-slate-900/50" : "bg-white border border-slate-100"}`}>
-              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-500 mb-2">
-                <CheckCircle size={12} />
-                <span>Recommendation</span>
-              </div>
-              <p className={`text-sm leading-relaxed ${darkMode ? "text-slate-300" : "text-slate-600"}`}>
-                {meta.how_to_fix}
-              </p>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
@@ -338,7 +305,7 @@ const MetaDescriptionCard = ({ data, darkMode, onInfo }) => {
   const statusText = isPassed ? "Optimized" : "Needs Improvement";
 
   return (
-    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group col-span-1 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group col-span-1 md:col-span-2 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
       <div className="p-5 space-y-4">
         {/* Header */}
         <div className="flex items-start justify-between">
@@ -440,7 +407,7 @@ const CanonicalTagCard = ({ data, darkMode, onInfo }) => {
   const statusText = isPassed ? "Optimized" : "Warning / Info";
 
   return (
-    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group col-span-1 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group col-span-1 md:col-span-2 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
       <div className="p-5 space-y-4">
         {/* Header */}
         <div className="flex items-start justify-between">
@@ -545,7 +512,7 @@ const URLStructureCard = ({ data, darkMode, onInfo }) => {
   const statusText = isPassed ? "Clean Details" : "Issues Found";
 
   return (
-    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group col-span-1 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group col-span-1 md:col-span-2 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
       <div className="p-5 space-y-4">
         {/* Header */}
         <div className="flex items-start justify-between">
@@ -1451,7 +1418,7 @@ export default function On_Page_SEO() {
         </div>
 
         {/* Content Essentials */}
-        <Section title="Content Essentials" icon={FileText} darkMode={darkMode} gridCols="grid-cols-1 md:grid-cols-2">
+        <Section title="Content Essentials" icon={FileText} darkMode={darkMode}>
           {/* Title Tag Card */}
           <TitleTagCard
             data={seo.Title}
@@ -1571,33 +1538,15 @@ export default function On_Page_SEO() {
                   )}
 
                   {/* Missing Links */}
-                  {/* Missing Links */}
                   {seo.Contextual_Linking?.meta?.missingLinks?.length > 0 && (
                     <div className={`p-2 rounded border ${darkMode ? "bg-red-900/10 border-red-900/30" : "bg-red-50 border-red-100"}`}>
-                      <div className="text-xs font-bold text-red-500 mb-2 opacity-90 border-b border-red-200 pb-1">
-                        Missing Menu Links ({seo.Contextual_Linking.meta.missingLinks.length}):
-                        <span className="block text-[9px] font-normal opacity-70 mt-0.5">Key pages in your menu that are NOT linked in your content.</span>
-                      </div>
-                      <div className="flex flex-col gap-2 max-h-48 overflow-y-auto custom-scrollbar">
-                        {seo.Contextual_Linking.meta.missingLinks.map((linkItem, i) => {
-                          const isObj = typeof linkItem === 'object' && linkItem !== null;
-                          const href = isObj ? linkItem.route : linkItem;
-                          const text = isObj ? (linkItem.text || "Menu Item") : "Menu Link";
-
-                          return (
-                            <div key={i} className={`p-2 rounded border border-red-200/50 ${darkMode ? "bg-red-950/30" : "bg-white"}`}>
-                              <div className="flex items-center gap-2 mb-1">
-                                <div className="w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0"></div>
-                                <span className={`text-xs font-bold truncate ${darkMode ? "text-red-200" : "text-gray-800"}`} title={text}>
-                                  {text}
-                                </span>
-                              </div>
-                              <div className={`pl-3.5 text-[10px] font-mono truncate opacity-60 ${darkMode ? "text-red-300" : "text-red-800"}`} title={href}>
-                                {href}
-                              </div>
-                            </div>
-                          );
-                        })}
+                      <div className="text-xs font-bold text-red-500 mb-1.5 opacity-90">Missing Menu Links ({seo.Contextual_Linking.meta.missingLinks.length}):</div>
+                      <div className="flex flex-wrap gap-1 max-h-32 overflow-y-auto custom-scrollbar">
+                        {seo.Contextual_Linking.meta.missingLinks.map((link, i) => (
+                          <span key={i} className={`px-2 py-0.5 rounded text-xs break-all ${darkMode ? "bg-red-950 text-red-200 border border-red-900/50" : "bg-white border border-red-200 text-red-700 shadow-sm"}`}>
+                            {link}
+                          </span>
+                        ))}
                       </div>
                     </div>
                   )}
@@ -1611,46 +1560,18 @@ export default function On_Page_SEO() {
                     Found Contextual Links ({seo.Contextual_Linking.meta.foundLinks.length}):
                   </div>
                   <div className="max-h-40 overflow-y-auto custom-scrollbar space-y-1">
-                    {seo.Contextual_Linking.meta.foundLinks.map((linkItem, i) => {
-                      // Support both old (string) and new (object) formats
-                      const isObj = typeof linkItem === 'object' && linkItem !== null;
-                      const href = isObj ? linkItem.route : linkItem;
-                      const text = isObj ? (linkItem.text || "[No Text]") : linkItem;
-                      const isContextual = isObj ? linkItem.isContextual : true;
-                      const issue = isObj ? linkItem.issue : null;
-
-                      return (
-                        <a
-                          key={i}
-                          href={resolveLink(href)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={`group block p-2 rounded transition-all border ${darkMode ? "bg-gray-800 border-gray-700 hover:bg-gray-750 hover:border-blue-500/30" : "bg-white border-gray-100 hover:border-blue-200 hover:shadow-sm"}`}
-                        >
-                          <div className="flex items-start justify-between gap-2 mb-1">
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1 ${isContextual ? (darkMode ? "bg-blue-400" : "bg-blue-600") : "bg-amber-500"}`}></div>
-                              <span className={`text-xs font-bold truncate ${darkMode ? "text-gray-200" : "text-gray-800"}`} title={text}>
-                                {text}
-                              </span>
-                            </div>
-                            {isContextual ? (
-                              <span className={`flex-shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${darkMode ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-emerald-50 text-emerald-600 border border-emerald-100"}`}>
-                                Contextual
-                              </span>
-                            ) : (
-                              <span className={`flex-shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${darkMode ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" : "bg-amber-50 text-amber-600 border border-amber-100"}`}>
-                                {issue || "Issue Found"}
-                              </span>
-                            )}
-                          </div>
-
-                          <div className={`pl-3 text-[10px] font-mono truncate opacity-60 group-hover:opacity-100 transition-opacity ${darkMode ? "text-blue-300" : "text-blue-600"}`} title={href}>
-                            {href}
-                          </div>
-                        </a>
-                      );
-                    })}
+                    {seo.Contextual_Linking.meta.foundLinks.map((link, i) => (
+                      <a
+                        key={i}
+                        href={resolveLink(link)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`block px-2 py-1 rounded text-[10px] font-mono break-all flex items-center gap-2 hover:underline ${darkMode ? "bg-gray-700/50 text-gray-400 hover:bg-gray-700 hover:text-gray-200" : "bg-white border border-gray-100 text-gray-500 hover:text-gray-700 hover:border-gray-200"}`}
+                      >
+                        <div className={`w-1 h-1 rounded-full flex-shrink-0 ${darkMode ? "bg-blue-500" : "bg-blue-600"}`}></div>
+                        {link}
+                      </a>
+                    ))}
                   </div>
                 </div>
               )}
@@ -1701,8 +1622,7 @@ export default function On_Page_SEO() {
                             <span className={`text-sm truncate ${h.tag === 'h1' ? "font-bold" :
                               h.tag === 'h2' ? "font-semibold opacity-95" :
                                 h.tag === 'h3' ? "font-medium opacity-90" :
-                                  h.tag === 'h4' ? "font-medium opacity-85" :
-                                    "opacity-80"
+                                  "opacity-80"
                               } ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
                               {h.text}
                             </span>
@@ -1731,7 +1651,7 @@ export default function On_Page_SEO() {
         </Section>
 
         {/* Technical SEO */}
-        <Section title="Technical SEO" icon={Lock} darkMode={darkMode} gridCols="grid-cols-1 md:grid-cols-2">
+        <Section title="Technical SEO" icon={Lock} darkMode={darkMode}>
           <MetricCard onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.HTTPS, icon: Lock })} title="HTTPS" description={seo.HTTPS?.details || "Secure connection."} score={seo.HTTPS?.score} value={seo.HTTPS?.score === 1 ? "Secure Connection" : "Insecure Connection"} darkMode={darkMode} icon={Lock}>
             {seo.HTTPS?.meta?.url && (
               <div className="space-y-2">
@@ -1746,35 +1666,6 @@ export default function On_Page_SEO() {
               </div>
             )}
           </MetricCard>
-
-
-          {/* Slugs - Always show */}
-          <MetricCard onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.URL_Slugs, icon: Link })} title="URL Slugs" description={desc.slug} score={seo.URL_Slugs?.score} value={seo.URL_Slugs?.score === 1 ? "Valid" : "Issues Found"} darkMode={darkMode} icon={Link}>
-            <div className="space-y-2">
-              {seo.URL_Slugs?.meta?.slug && (
-                <div className={`text-xs font-mono p-1.5 rounded break-all ${darkMode ? "bg-gray-700/50 text-gray-300" : "bg-gray-100 text-gray-600"}`}>
-                  /{seo.URL_Slugs.meta.slug}
-                </div>
-              )}
-              {seo.URL_Slugs?.meta?.issues?.length > 0 ? (
-                <div className="space-y-1">
-                  <div className="font-semibold text-red-500 text-xs uppercase">Slug Issues:</div>
-                  {seo.URL_Slugs.meta.issues.map((issue, i) => (
-                    <div key={i} className="text-xs opacity-90 flex items-start gap-2">
-                      <XCircle size={12} className="mt-0.5 flex-shrink-0 text-red-500" />
-                      <span>{issue}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-xs opacity-70 flex items-center gap-1 text-green-500">
-                  <CheckCircle size={12} />
-                  <span>Slug format matches SEO best practices.</span>
-                </div>
-              )}
-            </div>
-          </MetricCard>
-
           <MetricCard
             onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.Content_Quality, icon: Copy })}
             title="Content Quality"
@@ -1860,7 +1751,32 @@ export default function On_Page_SEO() {
             </MetricCard>
           )}
 
-
+          {/* Slugs - Always show */}
+          <MetricCard onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.URL_Slugs, icon: Link })} title="URL Slugs" description={desc.slug} score={seo.URL_Slugs?.score} value={seo.URL_Slugs?.score === 1 ? "Valid" : "Issues Found"} darkMode={darkMode} icon={Link}>
+            <div className="space-y-2">
+              {seo.URL_Slugs?.meta?.slug && (
+                <div className={`text-xs font-mono p-1.5 rounded break-all ${darkMode ? "bg-gray-700/50 text-gray-300" : "bg-gray-100 text-gray-600"}`}>
+                  /{seo.URL_Slugs.meta.slug}
+                </div>
+              )}
+              {seo.URL_Slugs?.meta?.issues?.length > 0 ? (
+                <div className="space-y-1">
+                  <div className="font-semibold text-red-500 text-xs uppercase">Slug Issues:</div>
+                  {seo.URL_Slugs.meta.issues.map((issue, i) => (
+                    <div key={i} className="text-xs opacity-90 flex items-start gap-2">
+                      <XCircle size={12} className="mt-0.5 flex-shrink-0 text-red-500" />
+                      <span>{issue}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-xs opacity-70 flex items-center gap-1 text-green-500">
+                  <CheckCircle size={12} />
+                  <span>Slug format matches SEO best practices.</span>
+                </div>
+              )}
+            </div>
+          </MetricCard>
         </Section>
 
         {/* Schema Data */}

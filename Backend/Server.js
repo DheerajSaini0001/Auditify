@@ -13,7 +13,7 @@ connectDB();
 const app = express();
 app.use(helmet());
 
-const allowedOrigins = ["http://localhost:5173", "https://page-speed-slt-dheerajs-projects-846212f5.vercel.app/"];
+const allowedOrigins = ["http://localhost:5173", "https://audit-tool-slt.vercel.app/"];
 
 app.use(cors({
   origin: function (origin, callback) {

@@ -90,8 +90,21 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
         }
       };
 
-      // Try to find Chrome in Puppeteer's cache
-      let chromePath = await findChromeExecutable('/opt/render/.cache/puppeteer');
+      // Try to find Chrome in project's chrome-cache directory first
+      const { fileURLToPath } = await import('url');
+      const { dirname, join } = await import('path');
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = dirname(__filename);
+      const projectCacheDir = join(__dirname, '..', 'chrome-cache');
+
+      console.log(`Looking for Chrome in project directory: ${projectCacheDir}`);
+      let chromePath = await findChromeExecutable(projectCacheDir);
+
+      if (!chromePath) {
+        // Try Render's cache directory
+        console.log('Not found in project directory, trying Render cache...');
+        chromePath = await findChromeExecutable('/opt/render/.cache/puppeteer');
+      }
 
       if (!chromePath) {
         // Try other common locations

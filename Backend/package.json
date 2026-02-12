@@ -4,8 +4,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon server.js",
-    "build": "npx -y puppeteer browsers install chrome",
-    "postinstall": "npx -y puppeteer browsers install chrome",
+    "build": "PUPPETEER_CACHE_DIR=./chrome-cache npx -y puppeteer browsers install chrome",
+    "postinstall": "PUPPETEER_CACHE_DIR=./chrome-cache npx -y puppeteer browsers install chrome",
     "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

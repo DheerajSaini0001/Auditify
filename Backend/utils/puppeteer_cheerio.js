@@ -1,11 +1,14 @@
 import puppeteer from "puppeteer";
 import * as cheerio from "cheerio";
+import { existsSync, readdirSync } from "fs";
+import { join } from "path";
 
 export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
   let browser;
 
   try {
-    browser = await puppeteer.launch({
+    // Configure launch options
+    const launchOptions = {
       headless: true,
       defaultViewport: null,
       args: [
@@ -15,12 +18,32 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
         "--disable-gpu",
         "--start-maximized"
       ]
-    });
+    };
 
-    // On Render, explicitly set the Chrome path
+    // On Render, find Chrome in the cache directory
     if (process.env.RENDER) {
-      const executablePath = '/opt/render/.cache/puppeteer/chrome/linux-140.0.7339.82/chrome-linux64/chrome';
-      launchOptions.executablePath = executablePath;
+      const cacheDir = '/opt/render/.cache/puppeteer/chrome';
+
+      if (existsSync(cacheDir)) {
+        try {
+          // Find the Chrome version directory (e.g., linux-140.0.7339.82)
+          const versions = readdirSync(cacheDir);
+          if (versions.length > 0) {
+            // Use the first (and likely only) version found
+            const chromeVersion = versions[0];
+            const executablePath = join(cacheDir, chromeVersion, 'chrome-linux64', 'chrome');
+
+            if (existsSync(executablePath)) {
+              launchOptions.executablePath = executablePath;
+              console.log(`✅ Using Chrome at: ${executablePath}`);
+            } else {
+              console.warn(`⚠️ Chrome executable not found at: ${executablePath}`);
+            }
+          }
+        } catch (err) {
+          console.error('Error finding Chrome:', err.message);
+        }
+      }
     }
 
     browser = await puppeteer.launch(launchOptions);

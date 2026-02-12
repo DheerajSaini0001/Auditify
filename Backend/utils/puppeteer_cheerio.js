@@ -8,7 +8,13 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
     browser = await puppeteer.launch({
       headless: true,
       defaultViewport: null,
-      args: ["--no-sandbox", "--disable-setuid-sandbox", "--start-maximized"]
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",  // Critical for cloud environments
+        "--disable-gpu",
+        "--start-maximized"
+      ]
     });
 
     const page = await browser.newPage();

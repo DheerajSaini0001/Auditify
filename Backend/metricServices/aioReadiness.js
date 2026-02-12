@@ -271,7 +271,7 @@ function checkInternalLinkingAIFriendly($, domain) {
       const text = $(el).text().trim();
       if (text.length > 3 && !['click here', 'read more'].includes(text.toLowerCase())) {
         descriptiveLinks++;
-        if (examples.length < 5) examples.push({ text, url: href });
+        if (examples.length < 3) examples.push(text);
       }
     }
   });
@@ -295,7 +295,18 @@ function checkDuplicateContentDetectionReady($) {
   return createMetricResult(0, "fail", "No duplicate content protection found.", { checked: "canonical tag, meta robots" });
 }
 
+function checkMultilingualSupport($) {
+  const lang = $('html').attr('lang');
+  const hreflangs = [];
+  $('link[rel="alternate"][hreflang]').each((i, el) => {
+    hreflangs.push($(el).attr('hreflang'));
+  });
 
+  if ((lang && lang !== 'en') || hreflangs.length > 0) {
+    return createMetricResult(100, "pass", "Multilingual support detected.", { lang, hreflangs });
+  }
+  return createMetricResult(0, "fail", "No multilingual signals found.", { lang: lang || "missing", hreflangsCount: 0 });
+}
 
 // Artificial Intelligence Optimization Readiness (Analytics & Feedback Loops)
 function checkEventGoalTrackingIntegrated($) {
@@ -357,197 +368,6 @@ function checkUserFeedbackLoops($) {
   return createMetricResult(0, "fail", "No user feedback loops found.", { checkedKeywords: keywords });
 }
 
-// Artificial Intelligence Optimization Readiness (AI Visibility & Answer Engine Presence)
-function checkAIVisibility($, url) {
-  try {
-    // 1. Extract Topic & Site Name
-    let topic = $('h1').first().text().trim();
-    if (topic.length < 5) topic = $('title').text().split('|')[0].trim();
-    if (topic.length > 50) topic = topic.substring(0, 50); // Truncate
-
-    // Basic Site Name Extraction
-    let siteName = "Website";
-    try {
-      const u = new URL(url);
-      siteName = u.hostname.replace(/^www\./, '').split('.')[0];
-      siteName = siteName.charAt(0).toUpperCase() + siteName.slice(1);
-    } catch (e) { }
-
-    // 2. Define Engines & Questions
-    const engines = ["ChatGPT", "Google AI Overview", "Perplexity", "Gemini"];
-    const baseQuestions = [
-      `What are the best resources for ${topic}?`,
-      `Top rated websites for ${topic}`,
-      `Explain ${topic} and cite reliable sources`,
-      `Who is a leading authority on ${topic}?`,
-      `Where can I find detailed reviews about ${topic}?`
-    ];
-
-    // 3. Mock AI Responses (Simulated Analysis per Engine)
-    let allResults = [];
-    let engineStats = {};
-
-    engines.forEach(engine => {
-      // Simulate 5-10 queries per engine
-      const numQueries = 5 + Math.floor(Math.random() * 5);
-      let mentions = 0;
-      let citations = 0;
-
-      for (let i = 0; i < numQueries; i++) {
-        const q = baseQuestions[i % baseQuestions.length];
-        // Simulation Logic: Random weighted probability
-        const isMentioned = Math.random() > 0.4;
-        const isCited = isMentioned && Math.random() > 0.3;
-
-        if (isMentioned) mentions++;
-        if (isCited) citations++;
-      }
-
-      engineStats[engine] = {
-        mentions,
-        citations,
-        total: numQueries
-      };
-    });
-
-    // 4. Calculate Aggregate Metrics
-    const totalMentions = Object.values(engineStats).reduce((a, b) => a + b.mentions, 0);
-    const totalCitations = Object.values(engineStats).reduce((a, b) => a + b.citations, 0);
-    const totalQueries = Object.values(engineStats).reduce((a, b) => a + b.total, 0);
-
-    // Score Formula: (Mentions ratio * 40) + (Citation ratio * 60)
-    const mentionRate = totalMentions / totalQueries;
-    const citationRate = totalCitations / totalQueries;
-    const finalScore = Math.round((mentionRate * 40) + (citationRate * 60) * 1.5); // Multiply 1.5 to be generous
-    const normalizedScore = Math.min(100, Math.max(0, finalScore));
-
-    const details = normalizedScore > 70 ? "High AI Visibility" : normalizedScore > 40 ? "Moderate AI Visibility" : "Low AI Visibility";
-
-    return createMetricResult(normalizedScore, normalizedScore > 70 ? "pass" : "warning", details, {
-      topic,
-      siteName,
-      engineStats,
-      totalMentions,
-      totalCitations,
-      totalQueries
-    });
-  } catch (err) {
-    return createMetricResult(0, "fail", "Error checking AI visibility", { error: err.message });
-  }
-}
-
-
-
-// Artificial Intelligence Optimization Readiness (FAQ AI Readiness)
-function checkFAQContent($) {
-  // 1. Definitons & Regex
-  const QUESTION_REGEX = /^(what|how|why|which|where|can|does|is|are)\b/i;
-  const PROMO_REGEX = /best|top|we offer|our company|why choose us|our services/i;
-
-  const isIdealLength = (words) => words >= 30 && words <= 100;
-
-  // 2. Detect Questions
-  const questions = [];
-  // Broader selector to catch FAQs in accordions (button), details (summary), or generic divs
-  $("h1, h2, h3, h4, h5, h6, strong, b, p, button, summary, dt, li, div, span").each((_, el) => {
-    // Avoid selecting containers that have child elements matching the same selector (to prevent duplication)
-    if ($(el).children("h1, h2, h3, h4, h5, h6, strong, b, p, button, summary, dt, li, div, span").length > 0) {
-      return;
-    }
-
-    const text = $(el).text().trim();
-    // User Spec: Check length < 150 and pattern
-    if (text.length > 5 && text.length < 150 && QUESTION_REGEX.test(text)) {
-      questions.push({ text, el: $(el) });
-    }
-  });
-
-  // 3. Extract Answers
-  const faqs = [];
-  questions.forEach(qObj => {
-    // Attempt to find next text block
-    let nextEl = qObj.el.next();
-
-    // If not found, try parent's next (handles inline questions like <li><strong>Question</strong></li>)
-    if (nextEl.length === 0 && !qObj.el.is('h2, h3, h4')) {
-      nextEl = qObj.el.parent().next();
-    }
-
-    let answer = "";
-    if (nextEl.length > 0) {
-      const tagName = nextEl[0].tagName.toLowerCase();
-      // Expanded list of likely answer containers
-      if (['p', 'div', 'span', 'ul', 'ol', 'section', 'article', 'dd'].includes(tagName)) {
-        answer = nextEl.text().trim();
-      }
-    }
-
-    // Clean up
-    answer = answer.replace(/\s+/g, ' ').trim();
-
-    if (answer) {
-      faqs.push({
-        question: qObj.text,
-        answer,
-        wordCount: answer.split(/\s+/).length
-      });
-    }
-  });
-
-  // 4. Detect Schema
-  let hasSchema = false;
-  $('script[type="application/ld+json"]').each((i, el) => {
-    if ($(el).html().includes('"FAQPage"')) hasSchema = true;
-  });
-
-  // 5. Calculate Score (0-10 scale mapped to 100)
-  let score = 0;
-
-  if (faqs.length > 0) score += 3;
-  if (faqs.some(f => isIdealLength(f.wordCount))) score += 2;
-  // Note: Only give promo points if FAQs exist, otherwise simple logic might award points for 0 FAQs
-  if (faqs.length > 0 && faqs.every(f => !PROMO_REGEX.test(f.answer))) score += 2;
-  if (hasSchema) score += 2;
-  if (faqs.length >= 3) score += 1;
-
-  // 6. Generate Issues
-  const issues = [];
-  // Step 9 Compliance: Single Q&A is weak -> Warn
-  if (faqs.length === 0) {
-    issues.push("No FAQ section detected — AI has fewer extractable answers.");
-  } else if (faqs.length < 2) {
-    issues.push("Only 1 FAQ detected — AI prefers broader Q&A sections.");
-  }
-
-  if (!hasSchema) issues.push("FAQ schema missing — AI may struggle to identify Q&A pairs.");
-
-  // Validation Checks
-  let totalWordCount = 0;
-  faqs.forEach(f => {
-    totalWordCount += f.wordCount;
-    if (f.wordCount > 100) issues.push(`FAQ answer too long for AI citation: "${f.question.substring(0, 40)}..."`);
-    if (PROMO_REGEX.test(f.answer)) issues.push(`Promotional language detected in FAQ: "${f.question.substring(0, 40)}..."`);
-  });
-
-  const avg_answer_length = faqs.length > 0 ? Math.round(totalWordCount / faqs.length) : 0;
-  // Step 9: Q&A Found = TRUE IF valid Q&A pairs >= 2
-  const qa_found = faqs.length >= 2;
-
-  // Normalize
-  const finalScore = score * 10;
-  let status = "fail";
-  if (finalScore >= 80) status = "pass";
-  else if (finalScore >= 50) status = "warning";
-
-  return createMetricResult(finalScore, status, `${faqs.length} FAQs found. Score: ${score}/10`, {
-    qa_found,       // Boolean per Step 10
-    qa_count: faqs.length,
-    faq_schema_found: hasSchema,
-    avg_answer_length,
-    issues,
-    faqs: faqs.slice(0, 5) // Return sample for UI
-  });
-}
 
 export default async function aioReadiness(url, page, $) {
 
@@ -555,7 +375,7 @@ export default async function aioReadiness(url, page, $) {
   const structuredData = checkStructuredData($);
   const contentNLPFriendly = checkContentNLPFriendly($);
   const fastPageLoad = await checkFastPageLoadForAI(page); // AWAIT ADDED HERE
-  // const apiDataAccess = checkAPIDataAccess($); // Removed
+  const apiDataAccess = checkAPIDataAccess($);
 
   const keywordsEntitiesAnnotated = checkKeywordsEntitiesAnnotated($);
   const metadataComplete = checkMetadataComplete($);
@@ -568,27 +388,26 @@ export default async function aioReadiness(url, page, $) {
   const domain = Domain(url);
   const internalLinkingAIFriendly = checkInternalLinkingAIFriendly($, domain);
   const duplicateContentDetectionReady = checkDuplicateContentDetectionReady($);
+  const multilingualSupport = checkMultilingualSupport($);
 
   const eventGoalTrackingIntegrated = checkEventGoalTrackingIntegrated($);
   const abTestingReady = checkABTestingReady($);
   const userFeedbackLoopsPresent = checkUserFeedbackLoops($);
-  const aiVisibility = checkAIVisibility($, url);
-  const faqCheck = checkFAQContent($);
 
   // Weights
   const weights = {
-    Structured_Data: 3, Metadata_Complete: 2, Fast_Page_Load: 2,
+    Structured_Data: 3, Metadata_Complete: 2, API_Data_Access: 2, Fast_Page_Load: 2,
     Content_NLP_Friendly: 2, Keywords_Entities_Annotated: 2, Content_Updated_Regularly: 1,
-    Internal_Linking_AI_Friendly: 2, Duplicate_Content_Detection_Ready: 1,
+    Internal_Linking_AI_Friendly: 2, Duplicate_Content_Detection_Ready: 1, Multilingual_Support: 1,
     Behavior_Tracking_Implemented: 2, Segmentation_Profiling_Ready: 1, Event_Goal_Tracking_Integrated: 2,
-    AB_Testing_Ready: 1, User_Feedback_Loops_Present: 1, Dynamic_Content_Available: 1, AI_Visibility: 5,
-    FAQ_Check: 3
+    AB_Testing_Ready: 1, User_Feedback_Loops_Present: 1, Dynamic_Content_Available: 1
   };
 
   const metricsMap = {
     Structured_Data: structuredData,
     Content_NLP_Friendly: contentNLPFriendly,
     Fast_Page_Load: fastPageLoad,
+    API_Data_Access: apiDataAccess,
     Keywords_Entities_Annotated: keywordsEntitiesAnnotated,
     Metadata_Complete: metadataComplete,
     Content_Updated_Regularly: contentUpdatedRegularly,
@@ -597,11 +416,10 @@ export default async function aioReadiness(url, page, $) {
     Segmentation_Profiling_Ready: segmentationProfilingReady,
     Internal_Linking_AI_Friendly: internalLinkingAIFriendly,
     Duplicate_Content_Detection_Ready: duplicateContentDetectionReady,
+    Multilingual_Support: multilingualSupport,
     Event_Goal_Tracking_Integrated: eventGoalTrackingIntegrated,
     AB_Testing_Ready: abTestingReady,
-    User_Feedback_Loops_Present: userFeedbackLoopsPresent,
-    AI_Visibility: aiVisibility,
-    FAQ_Check: faqCheck
+    User_Feedback_Loops_Present: userFeedbackLoopsPresent
   };
 
   let totalWeight = 0;
@@ -612,9 +430,6 @@ export default async function aioReadiness(url, page, $) {
     totalWeight += weight;
     if (metric.score === 100) {
       earnedScore += weight;
-    } else if (metric.score >= 50 && metric.score < 100) {
-      // Adjusted scoring: Partial credit for visibility
-      earnedScore += weight * (metric.score / 100);
     } else if (metric.score === 50) {
       earnedScore += weight * 0.5;
     }

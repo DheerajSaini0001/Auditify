@@ -63,18 +63,6 @@ export default async function accessibilityMetrics(page) {
     return { score: 0, status: "fail", details: "No visible skip link found", meta: { location: "DOM" } };
   }
 
-  async function checkMultilingualSupport(page) {
-    const lang = await page.$eval('html', el => el.getAttribute('lang')).catch(() => null);
-
-    // Check for hreflang tags
-    const hreflangs = await page.$$eval('link[rel="alternate"][hreflang]', els => els.map(el => el.getAttribute('hreflang')));
-
-    if (lang || hreflangs.length > 0) {
-      return { score: 100, status: "pass", details: "Multilingual support detected.", meta: { lang, hreflangs } };
-    }
-    return { score: 0, status: "fail", details: "No multilingual signals found.", meta: { lang: lang || "missing", hreflangsCount: 0 } };
-  }
-
   // Evaluate Metrics
   const colorContrast = evaluateRule(axeResults, "color-contrast", "Color Contrast");
   const focusOrder = evaluateRule(axeResults, "focus-order", "Focus Order");
@@ -89,8 +77,6 @@ export default async function accessibilityMetrics(page) {
 
   const skipLinks = await checkSkipLinks(page);
   const landMarks = await checkLandmarks(page);
-  const multilingualSupport = await checkMultilingualSupport(page);
-
 
   // Calculate Weighted Score
   const weights = {
@@ -105,8 +91,7 @@ export default async function accessibilityMetrics(page) {
     Aria_Hidden_Focus: 2,
     Image_Alt: 3,
     Skip_Links: 1,
-    Landmarks: 1,
-    Multilingual_Support: 1
+    Landmarks: 1
   };
 
   const metricsMap = {
@@ -121,8 +106,7 @@ export default async function accessibilityMetrics(page) {
     Aria_Hidden_Focus: ariaHiddenFocus,
     Image_Alt: imageAlt,
     Skip_Links: skipLinks,
-    Landmarks: landMarks,
-    Multilingual_Support: multilingualSupport
+    Landmarks: landMarks
   };
 
   let totalWeight = 0;
@@ -152,7 +136,6 @@ export default async function accessibilityMetrics(page) {
     Image_Alt: imageAlt,
     Skip_Links: skipLinks,
     Landmarks: landMarks,
-    Multilingual_Support: multilingualSupport
   };
 }
 

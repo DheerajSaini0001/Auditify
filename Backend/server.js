@@ -11,6 +11,10 @@ const PORT = process.env.PORT || 2000;
 connectDB();
 
 const app = express();
+
+// Trust proxy for cloud platforms (Render, Heroku, etc.)
+app.set('trust proxy', 1);
+
 app.use(helmet());
 
 const allowedOrigins = ["http://localhost:5173", "https://audit-tool-slt.vercel.app"];

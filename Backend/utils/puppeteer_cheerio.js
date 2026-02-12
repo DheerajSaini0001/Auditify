@@ -17,6 +17,14 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
       ]
     });
 
+    // On Render, explicitly set the Chrome path
+    if (process.env.RENDER) {
+      const executablePath = '/opt/render/.cache/puppeteer/chrome/linux-140.0.7339.82/chrome-linux64/chrome';
+      launchOptions.executablePath = executablePath;
+    }
+
+    browser = await puppeteer.launch(launchOptions);
+
     const page = await browser.newPage();
 
     if (device === "Mobile") {

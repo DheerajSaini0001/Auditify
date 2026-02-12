@@ -1,7 +1,5 @@
 import puppeteer from "puppeteer";
 import * as cheerio from "cheerio";
-import { existsSync, readdirSync } from "fs";
-import { join } from "path";
 
 export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
   let browser;
@@ -16,37 +14,55 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",  // Critical for cloud environments
         "--disable-gpu",
+        "--no-first-run",
+        "--no-zygote",
+        "--single-process", // Important for Render
         "--start-maximized"
       ]
     };
 
-    // On Render, find Chrome in the cache directory
-    if (process.env.RENDER) {
-      const cacheDir = '/opt/render/.cache/puppeteer/chrome';
-
-      if (existsSync(cacheDir)) {
-        try {
-          // Find the Chrome version directory (e.g., linux-140.0.7339.82)
-          const versions = readdirSync(cacheDir);
-          if (versions.length > 0) {
-            // Use the first (and likely only) version found
-            const chromeVersion = versions[0];
-            const executablePath = join(cacheDir, chromeVersion, 'chrome-linux64', 'chrome');
-
-            if (existsSync(executablePath)) {
-              launchOptions.executablePath = executablePath;
-              console.log(`✅ Using Chrome at: ${executablePath}`);
-            } else {
-              console.warn(`⚠️ Chrome executable not found at: ${executablePath}`);
-            }
-          }
-        } catch (err) {
-          console.error('Error finding Chrome:', err.message);
-        }
-      }
+    // Check if PUPPETEER_EXECUTABLE_PATH is set (from Render environment variables)
+    if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+      launchOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+      console.log(`Using Chrome from PUPPETEER_EXECUTABLE_PATH: ${process.env.PUPPETEER_EXECUTABLE_PATH}`);
     }
 
-    browser = await puppeteer.launch(launchOptions);
+    // Try to use Puppeteer's default Chrome first
+    try {
+      browser = await puppeteer.launch(launchOptions);
+    } catch (error) {
+      // If default fails, try to find Chrome manually
+      console.error('Failed to launch with default settings:', error.message);
+
+      // Try common Chrome locations on Linux
+      const chromePaths = [
+        '/opt/render/.cache/puppeteer/chrome/linux-140.0.7339.82/chrome-linux64/chrome',
+        '/usr/bin/google-chrome-stable',
+        '/usr/bin/google-chrome',
+        '/usr/bin/chromium-browser',
+        '/usr/bin/chromium',
+      ];
+
+      for (const chromePath of chromePaths) {
+        try {
+          const { existsSync } = await import('fs');
+          if (existsSync(chromePath)) {
+            console.log(`Trying Chrome at: ${chromePath}`);
+            launchOptions.executablePath = chromePath;
+            browser = await puppeteer.launch(launchOptions);
+            console.log(`✅ Successfully launched Chrome from: ${chromePath}`);
+            break;
+          }
+        } catch (pathError) {
+          console.log(`Failed with ${chromePath}:`, pathError.message);
+          continue;
+        }
+      }
+
+      if (!browser) {
+        throw new Error('Could not find Chrome in any known location');
+      }
+    }
 
     const page = await browser.newPage();
 

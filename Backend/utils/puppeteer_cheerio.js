@@ -30,37 +30,95 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
     // Try to use Puppeteer's default Chrome first
     try {
       browser = await puppeteer.launch(launchOptions);
+      console.log('✅ Successfully launched Chrome with default settings');
     } catch (error) {
       // If default fails, try to find Chrome manually
       console.error('Failed to launch with default settings:', error.message);
 
-      // Try common Chrome locations on Linux
-      const chromePaths = [
-        '/opt/render/.cache/puppeteer/chrome/linux-140.0.7339.82/chrome-linux64/chrome',
-        '/usr/bin/google-chrome-stable',
-        '/usr/bin/google-chrome',
-        '/usr/bin/chromium-browser',
-        '/usr/bin/chromium',
-      ];
+      // Function to recursively search for Chrome executable
+      const findChromeExecutable = async (baseDir) => {
+        const { readdirSync, statSync, existsSync } = await import('fs');
+        const { join } = await import('path');
 
-      for (const chromePath of chromePaths) {
+        if (!existsSync(baseDir)) {
+          console.log(`Directory does not exist: ${baseDir}`);
+          return null;
+        }
+
+        console.log(`Searching for Chrome in: ${baseDir}`);
+
         try {
-          const { existsSync } = await import('fs');
-          if (existsSync(chromePath)) {
-            console.log(`Trying Chrome at: ${chromePath}`);
-            launchOptions.executablePath = chromePath;
-            browser = await puppeteer.launch(launchOptions);
-            console.log(`✅ Successfully launched Chrome from: ${chromePath}`);
+          const searchDirs = (dir, depth = 0) => {
+            if (depth > 5) return null; // Limit recursion depth
+
+            try {
+              const items = readdirSync(dir);
+
+              for (const item of items) {
+                const fullPath = join(dir, item);
+
+                try {
+                  const stat = statSync(fullPath);
+
+                  // Check if it's the chrome executable
+                  if (item === 'chrome' && !stat.isDirectory()) {
+                    console.log(`Found Chrome executable: ${fullPath}`);
+                    return fullPath;
+                  }
+
+                  // Recursively search subdirectories
+                  if (stat.isDirectory() && !item.startsWith('.')) {
+                    const found = searchDirs(fullPath, depth + 1);
+                    if (found) return found;
+                  }
+                } catch (err) {
+                  // Skip files we can't access
+                  continue;
+                }
+              }
+            } catch (err) {
+              console.log(`Cannot read directory ${dir}:`, err.message);
+            }
+
+            return null;
+          };
+
+          return searchDirs(baseDir);
+        } catch (err) {
+          console.error(`Error searching ${baseDir}:`, err.message);
+          return null;
+        }
+      };
+
+      // Try to find Chrome in Puppeteer's cache
+      let chromePath = await findChromeExecutable('/opt/render/.cache/puppeteer');
+
+      if (!chromePath) {
+        // Try other common locations
+        const commonPaths = [
+          '/usr/bin/google-chrome-stable',
+          '/usr/bin/google-chrome',
+          '/usr/bin/chromium-browser',
+          '/usr/bin/chromium',
+        ];
+
+        const { existsSync } = await import('fs');
+        for (const path of commonPaths) {
+          if (existsSync(path)) {
+            chromePath = path;
+            console.log(`Found Chrome at: ${chromePath}`);
             break;
           }
-        } catch (pathError) {
-          console.log(`Failed with ${chromePath}:`, pathError.message);
-          continue;
         }
       }
 
-      if (!browser) {
-        throw new Error('Could not find Chrome in any known location');
+      if (chromePath) {
+        console.log(`Attempting to launch Chrome from: ${chromePath}`);
+        launchOptions.executablePath = chromePath;
+        browser = await puppeteer.launch(launchOptions);
+        console.log(`✅ Successfully launched Chrome from: ${chromePath}`);
+      } else {
+        throw new Error('Could not find Chrome executable in any known location. Please set PUPPETEER_EXECUTABLE_PATH environment variable.');
       }
     }
 

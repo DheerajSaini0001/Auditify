@@ -160,6 +160,13 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
           )}
         </div>
 
+        {/* Educational Content */}
+        <div className="space-y-4">
+          <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
+            Description: <span className={`normal-case font-normal opacity-100 text-xs leading-relaxed ${subTextColor}`}>{content.whatThisParameterIs || content.desc}</span>
+          </p>
+        </div>
+
         {/* Dynamic Details */}
         <div>
           <h4 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
@@ -180,7 +187,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
 
         {/* Technical Data (Failures) - Inline Scrollable */}
         {hasFailures && (
-          <div>
+          <div className="flex-grow">
             <h4 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
               Technical Data
             </h4>
@@ -198,13 +205,9 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
           </div>
         )}
 
-        {/* Educational Content */}
-        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-          <p className={`text-sm ${subTextColor}`}>
-            {content.desc}
-          </p>
-          <p className={`text-xs mt-2 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
-            <span className="font-semibold">Why:</span> {content.why}
+        <div className={`mt-auto pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
+          <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
+            Why it matters: <span className="normal-case font-normal opacity-100">{content.whyItMatters || content.why}</span>
           </p>
         </div>
       </div>

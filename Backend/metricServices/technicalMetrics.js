@@ -6,513 +6,746 @@ function calculateScore(observed, good, poor) {
   return parseFloat((((poor - observed) / (poor - good)) * 100).toFixed(0));
 }
 
-// METRIC EVALUATION FUNCTIONS
-const evaluateLCP = (data) => {
-  // Lab data (Lighthouse)
-  const labValue = parseFloat((data?.lighthouseResult?.audits?.["largest-contentful-paint"]?.numericValue || 0).toFixed(0));
-  const labScore = calculateScore(labValue, 2500, 4000);
-  const labStatus = labValue <= 2500 ? "good" : labValue <= 4000 ? "needs_improvement" : "poor";
+function calculateStatus(value, goodThreshold, needsImprovementThreshold) {
+  if (value <= goodThreshold) return "good";
+  if (value <= needsImprovementThreshold) return "needs_improvement";
+  return "poor";
+}
 
-  // Field data (CrUX P75)
-  const cruxMetrics = data?.loadingExperience?.metrics || {};
+// LCP - Largest Contentful Paint
+const evaluateLCPLab = (audits) => {
+  const labValue = parseFloat((audits["largest-contentful-paint"]?.numericValue || 0).toFixed(0));
+  const labScore = calculateScore(labValue, 2500, 4000);
+  const labStatus = calculateStatus(labValue, 2500, 4000);
+
+  // Identify specific LCP Element
+  const lcpElementAudit = audits["largest-contentful-paint-element"];
+  const lcpElementItems = lcpElementAudit?.details?.items || [];
+  const lcpItem = lcpElementItems[0] || {};
+  const lcpElement = lcpItem.node?.nodeLabel || lcpItem.node?.selector || "Unknown element";
+
+  const causes = [];
+  const recommendations = [];
+
+  if (labStatus !== "good") {
+
+    // Check TTFB (Time to First Byte)
+    const ttfbVal = audits["server-response-time"]?.numericValue || 0;
+    if (ttfbVal > 600) {
+      causes.push(`High Server Response Time (TTFB: ${Math.round(ttfbVal)}ms)`);
+      recommendations.push("Optimize backend performance, database queries, or use a CDN.");
+    }
+
+    // Check Render Blocking Resources
+    const blockingResources = audits["render-blocking-resources"]?.details?.items || [];
+    if (blockingResources.length > 0) {
+      causes.push(`${blockingResources.length} Render-blocking resource(s) found`);
+      recommendations.push("Defer non-critical JS/CSS and inline critical styles.");
+    }
+
+    // Check for large unoptimized images if LCP is an image
+    const unoptimizedImages = audits["uses-optimized-images"]?.details?.items || [];
+    if (unoptimizedImages.length > 0 && lcpElement.includes("Image")) {
+      causes.push("Unoptimized images affecting load time");
+      recommendations.push("Compress and resize images. Use Next-Gen formats like WebP.");
+    }
+
+    if (causes.length === 0 && labStatus !== "good") {
+      causes.push("General main-thread blocking or large resources");
+      recommendations.push("Review network waterfall and reduce main-thread work.");
+    }
+  }
+
+  return {
+    value: labValue + "ms",
+    score: labScore,
+    status: labStatus,
+    thresholds: {
+      Good: "0-2500ms",
+      Warning: "2500-4000ms",
+      Poor: "4000ms+"
+    },
+    analysis: labStatus === "good" ? null : {
+      lcpElement,
+      causes,
+      recommendations,
+      insight: `LCP is delayed. Primary bottleneck appears to be: ${causes[0] || "unknown"}.`
+    }
+  };
+};
+
+const evaluateLCPCrux = (audits, cruxMetrics) => {
   const fieldValue = cruxMetrics["LARGEST_CONTENTFUL_PAINT_MS"]?.percentile || null;
 
-  let fieldStatus = null;
-  if (fieldValue !== null) {
-    if (fieldValue <= 2500) fieldStatus = "good";
-    else if (fieldValue <= 4000) fieldStatus = "needs_improvement";
-    else fieldStatus = "poor";
-  }
+  if (fieldValue === null) return null;
 
-  // Determine AI Insight based on both lab and field
-  let aiInsight = "";
-  const sourceOfTruth = fieldValue !== null ? "field" : "lab";
+  const fieldStatus = calculateStatus(fieldValue, 2500, 4000);
 
-  if (fieldValue !== null) {
-    if (labStatus === "good" && fieldStatus !== "good") {
-      aiInsight = "Lab data looks good, but real users experience slower LCP performance.";
-    } else if (labStatus === "good" && fieldStatus === "good") {
-      aiInsight = "LCP is within the recommended range and performing well for real users.";
-    } else if (labStatus !== "good" && fieldStatus !== "good") {
-      aiInsight = "LCP is slow for real users and requires immediate optimization.";
-    } else {
-      aiInsight = "LCP performance varies between lab and field conditions.";
+  const causes = [];
+  const recommendations = [];
+
+  if (fieldStatus !== "good") {
+    // 1. Check TTFB (Server Response Time)
+    const ttfbVal = audits["server-response-time"]?.numericValue || 0;
+    if (ttfbVal > 600) {
+      causes.push(`Slow Server Response detected in lab (${Math.round(ttfbVal)}ms)`);
+      recommendations.push("Optimize server/database and implement caching policies.");
     }
-  } else {
-    aiInsight = labStatus === "good"
-      ? "LCP is within the recommended range and performing well."
-      : "LCP is higher than recommended. Optimizing hero elements and reducing render-blocking resources can improve this.";
+
+    // 2. Check Render Blocking Resources
+    const blocking = audits["render-blocking-resources"]?.details?.items || [];
+    if (blocking.length > 0) {
+      causes.push(`${blocking.length} render-blocking resources delaying paint`);
+      recommendations.push("Eliminate render-blocking resources (defer JS, inline critical CSS).");
+    }
+
+    // 3. Unoptimized Images
+    const unoptimized = audits["uses-optimized-images"]?.details?.items || [];
+    if (unoptimized.length > 0) {
+      causes.push("Unoptimized images impacting load time");
+      recommendations.push("Serve images in next-gen formats (WebP/AVIF) and proper sizes.");
+    }
+
+    // 4. Text Compression
+    const unminified = audits["unminified-javascript"]?.details?.items?.length || 0;
+    if (unminified > 0) {
+      causes.push("Unminified JavaScript payloads");
+      recommendations.push("Minify JavaScript and enable text compression (Gzip/Brotli).");
+    }
+
+    if (causes.length === 0) {
+      causes.push("Network or device latency variations");
+      recommendations.push("Use a CDN and reduce total page weight for constrained devices.");
+    }
   }
 
   return {
-    lab: {
-      value: labValue,
-      unit: "ms",
-      score: labScore,
-      status: labStatus
-    },
-    field: fieldValue !== null ? {
-      value: fieldValue,
-      unit: "ms",
-      p75: true,
-      status: fieldStatus
-    } : null,
+    value: fieldValue + "ms",
+    p75: true,
+    status: fieldStatus,
     thresholds: {
-      good: 2500,
-      needsImprovement: 4000
+      Good: "0-2500ms",
+      Warning: "2500-4000ms",
+      Poor: "4000ms+"
     },
-    analysis: {
-      sourceOfTruth,
-      causes: [
-        "Slow server response times",
-        "Render-blocking JavaScript and CSS",
-        "Slow resource load times"
-      ],
-      recommendations: [
-        "Optimize hero images",
-        "Defer non-critical CSS/JS",
-        "Use a CDN"
-      ],
-      aiInsight
+    analysis: fieldStatus === "good" ? null : {
+      causes,
+      recommendations,
+      insight: `LCP is delayed. Primary bottleneck appears to be: ${causes[0] || "unknown"}.`
     }
   };
 };
 
-const evaluateFID = (data) => {
-  // Lab data (Lighthouse - using max-potential-fid as proxy)
-  const labValue = parseFloat((data?.lighthouseResult?.audits?.['max-potential-fid']?.numericValue || 0).toFixed(0));
+// FID - First Input Delay
+const evaluateFIDLab = (audits) => {
+  const labValue = parseFloat((audits['max-potential-fid']?.numericValue || 0).toFixed(0));
   const labScore = calculateScore(labValue, 100, 300);
-  const labStatus = labValue <= 100 ? "good" : labValue <= 300 ? "needs_improvement" : "poor";
+  const labStatus = calculateStatus(labValue, 100, 300);
 
-  // Field data (CrUX P75) - FID is deprecated, but keeping for legacy support
-  const cruxMetrics = data?.loadingExperience?.metrics || {};
+  const causes = [];
+  const recommendations = [];
+
+  if (labStatus !== "good") {
+    // Check Total Blocking Time (TBT)
+    const tbtVal = audits["total-blocking-time"]?.numericValue || 0;
+    if (tbtVal > 200) {
+      causes.push(`High Total Blocking Time (${Math.round(tbtVal)}ms)`);
+      recommendations.push("Break up long tasks and optimize JavaScript execution.");
+    }
+
+    // Check Long Tasks
+    const longTasks = audits["long-tasks"]?.details?.items || [];
+    if (longTasks.length > 0) {
+      causes.push(`${longTasks.length} Long Tasks detected on main thread`);
+      recommendations.push("Code-split and defer non-critical scripts.");
+    }
+
+    // Check JS Bootup Time
+    const bootup = audits["bootup-time"]?.numericValue || 0;
+    if (bootup > 2000) {
+      causes.push("High JavaScript Execution Time");
+      recommendations.push("Reduce JavaScript payload and remove unused code.");
+    }
+
+    if (causes.length === 0) {
+      causes.push("Main thread blocked by script execution");
+      recommendations.push("Profile performance to find long-running functions.");
+    }
+  }
+
+  return {
+    value: labValue + "ms",
+    score: labScore,
+    status: labStatus,
+    thresholds: {
+      Good: "0-100ms",
+      Warning: "100-300ms",
+      Poor: "300ms+"
+    },
+    analysis: labStatus === "good" ? null : {
+      causes,
+      recommendations,
+      insight: `FID is high. Interactive elements are delayed by: ${causes[0] || "main thread blocking"}.`
+    }
+  };
+};
+
+const evaluateFIDCrux = (audits, cruxMetrics) => {
   const fieldValue = cruxMetrics["FIRST_INPUT_DELAY_MS"]?.percentile || null;
 
-  let fieldStatus = null;
-  if (fieldValue !== null) {
-    if (fieldValue <= 100) fieldStatus = "good";
-    else if (fieldValue <= 300) fieldStatus = "needs_improvement";
-    else fieldStatus = "poor";
-  }
+  if (fieldValue === null) return null;
 
-  // Determine AI Insight
-  let aiInsight = "";
-  const sourceOfTruth = fieldValue !== null ? "field" : "lab";
+  const fieldStatus = calculateStatus(fieldValue, 100, 300);
 
-  if (fieldValue !== null) {
-    if (labStatus === "good" && fieldStatus !== "good") {
-      aiInsight = "Lab data looks good, but real users experience slower FID performance.";
-    } else if (labStatus === "good" && fieldStatus === "good") {
-      aiInsight = "FID is within the recommended range and performing well for real users.";
-    } else if (labStatus !== "good" && fieldStatus !== "good") {
-      aiInsight = "FID is slow for real users and requires immediate optimization.";
-    } else {
-      aiInsight = "FID performance varies between lab and field conditions.";
+  const causes = [];
+  const recommendations = [];
+
+  if (fieldStatus !== "good") {
+    // Check TBT as proxy
+    const tbtVal = audits["total-blocking-time"]?.numericValue || 0;
+    if (tbtVal > 300) {
+      causes.push(`High Blocking Time detected in lab (${Math.round(tbtVal)}ms)`);
+      recommendations.push("Optimize Main Thread work to improve responsiveness.");
     }
-  } else {
-    aiInsight = labStatus === "good"
-      ? "FID is within the recommended range and does not require immediate optimization."
-      : "FID is higher than recommended due to main-thread blocking JavaScript execution.";
+
+    // Check Third Party scripts
+    const thirdParty = audits["third-party-summary"]?.details?.items || [];
+    const blockingTp = thirdParty.filter(tp => tp.blockingTime > 50);
+    if (blockingTp.length > 0) {
+      causes.push("Third-party scripts blocking main thread");
+      recommendations.push("Defer or lazy-load third-party tags/trackers.");
+    }
+
+    if (causes.length === 0) {
+      causes.push("Input delay on slower devices");
+      recommendations.push("Optimize for low-end devices by reducing JS payload.");
+    }
   }
 
   return {
-    lab: {
-      value: labValue,
-      unit: "ms",
-      score: labScore,
-      status: labStatus
-    },
-    field: fieldValue !== null ? {
-      value: fieldValue,
-      unit: "ms",
-      p75: true,
-      status: fieldStatus
-    } : null,
+    value: fieldValue + "ms",
+    p75: true,
+    status: fieldStatus,
     thresholds: {
-      good: 100,
-      needsImprovement: 300
+      Good: "0-100ms",
+      Warning: "100-300ms",
+      Poor: "300ms+"
     },
-    analysis: {
-      sourceOfTruth,
-      causes: [
-        "Long JavaScript execution blocking main thread",
-        "Heavy third-party scripts"
-      ],
-      recommendations: [
-        "Break long JavaScript tasks into smaller chunks",
-        "Defer non-critical JavaScript",
-        "Remove unused third-party scripts"
-      ],
-      aiInsight
+    analysis: fieldStatus === "good" ? null : {
+      causes,
+      recommendations,
+      insight: `Real users experience input delays. Primary cause: ${causes[0] || "unknown"}.`
     }
   };
 };
 
-const evaluateCLS = (data) => {
-  // Lab data (Lighthouse)
-  const labValue = parseFloat((data?.lighthouseResult?.audits?.["cumulative-layout-shift"]?.numericValue || 0).toFixed(3));
+// CLS - Cumulative Layout Shift
+const evaluateCLSLab = (audits) => {
+  const labValue = parseFloat((audits["cumulative-layout-shift"]?.numericValue || 0).toFixed(3));
   const labScore = calculateScore(labValue, 0.1, 0.25);
-  const labStatus = labValue <= 0.1 ? "good" : labValue <= 0.25 ? "needs_improvement" : "poor";
+  const labStatus = calculateStatus(labValue, 0.1, 0.25);
 
-  // Field data (CrUX P75) - CLS is reported in hundredths, convert to decimal
-  const cruxMetrics = data?.loadingExperience?.metrics || {};
+  const causes = [];
+  const recommendations = [];
+
+  if (labStatus !== "good") {
+    // Check Unsized Images
+    const unsized = audits["unsized-images"]?.details?.items || [];
+    if (unsized.length > 0) {
+      causes.push("Images missing width/height attributes causing reflow");
+      recommendations.push("Add explicit `width` and `height` attributes to all images.");
+    }
+
+    // Check Layout Shifts
+    const largeShifts = audits["layout-shifts"]?.details?.items || [];
+    if (largeShifts.length > 0) {
+      causes.push("Elements shifting position dynamically");
+      recommendations.push("Ensure ads/embeds have reserved space and avoid inserting content above existing content.");
+    }
+
+    // Font Loading
+    const fontDisplay = audits["font-display"]?.details?.items || [];
+    if (fontDisplay.length > 0) {
+      causes.push("FOUT/FOIT causing layout shifts on font load");
+      recommendations.push("Use `font-display: swap` or preload key fonts.");
+    }
+
+    if (causes.length === 0) {
+      causes.push("Dynamic content shifts not caught by specific audits");
+      recommendations.push("Review late-loading content such as ads or banners.");
+    }
+  }
+
+  return {
+    value: labValue,
+    score: labScore,
+    status: labStatus,
+    thresholds: {
+      Good: "0-0.1",
+      Warning: "0.1-0.25",
+      Poor: "0.25+"
+    },
+    analysis: labStatus === "good" ? null : {
+      causes,
+      recommendations,
+      insight: `Visual stability is low. Shifts are caused by: ${causes[0] || "dynamic content"}.`
+    }
+  };
+};
+
+const evaluateCLSCrux = (audits, cruxMetrics) => {
   const fieldValueRaw = cruxMetrics["CUMULATIVE_LAYOUT_SHIFT_SCORE"]?.percentile || null;
   const fieldValue = fieldValueRaw !== null ? parseFloat((fieldValueRaw / 100).toFixed(3)) : null;
 
-  let fieldStatus = null;
-  if (fieldValue !== null) {
-    if (fieldValue <= 0.1) fieldStatus = "good";
-    else if (fieldValue <= 0.25) fieldStatus = "needs_improvement";
-    else fieldStatus = "poor";
-  }
+  if (fieldValue === null) return null;
 
-  // Determine AI Insight
-  let aiInsight = "";
-  const sourceOfTruth = fieldValue !== null ? "field" : "lab";
+  const fieldStatus = calculateStatus(fieldValue, 0.1, 0.25);
 
-  if (fieldValue !== null) {
-    if (labStatus === "good" && fieldStatus !== "good") {
-      aiInsight = "Lab data looks good, but real users experience more layout shifts.";
-    } else if (labStatus === "good" && fieldStatus === "good") {
-      aiInsight = "CLS is excellent for real users. The page maintains visual stability.";
-    } else if (labStatus !== "good" && fieldStatus !== "good") {
-      aiInsight = "CLS is poor for real users and requires immediate optimization.";
-    } else {
-      aiInsight = "CLS performance varies between lab and field conditions.";
+  const causes = [];
+  const recommendations = [];
+
+  if (fieldStatus !== "good") {
+    // Check Lab CLS for layout shifts
+    const labCLS = audits["cumulative-layout-shift"]?.numericValue || 0;
+    if (labCLS > 0.1) {
+      causes.push("Layout shifts detected during load (font loading, late-injected ads)");
+      recommendations.push("Reserve space for images/ads and use `font-display: swap`.");
     }
-  } else {
-    aiInsight = labStatus === "good"
-      ? "CLS is excellent. The page maintains visual stability during loading."
-      : "CLS indicates visual instability. Configuring size attributes and reserving space for dynamic content will help.";
+
+    // Check Unsized Images (common cause)
+    const unsized = audits["unsized-images"]?.details?.items || [];
+    if (unsized.length > 0) {
+      causes.push("Images missing width/height attributes causing reflow");
+      recommendations.push("Add explicit `width` and `height` attributes to all images.");
+    }
+
+    if (causes.length === 0) {
+      causes.push("Post-load layout shifts (ads, popups, dynamic content)");
+      recommendations.push("Reserve space for late-loading dynamic content.");
+    }
   }
 
   return {
-    lab: {
-      value: labValue,
-      unit: "",
-      score: labScore,
-      status: labStatus
-    },
-    field: fieldValue !== null ? {
-      value: fieldValue,
-      unit: "",
-      p75: true,
-      status: fieldStatus
-    } : null,
+    value: fieldValue,
+    p75: true,
+    status: fieldStatus,
     thresholds: {
-      good: 0.1,
-      needsImprovement: 0.25
+      Good: "0-0.1",
+      Warning: "0.1-0.25",
+      Poor: "0.25+"
     },
-    analysis: {
-      sourceOfTruth,
-      causes: [
-        "Images without dimensions",
-        "Ads, embeds, and iframes without dimensions",
-        "Dynamically injected content"
-      ],
-      recommendations: [
-        "Set size attributes for images, videos, and ads",
-        "Reserve space for ads to prevent layout shifts",
-        "Avoid inserting new content above existing content"
-      ],
-      aiInsight
+    analysis: fieldStatus === "good" ? null : {
+      causes,
+      recommendations,
+      insight: `Real users see layout shifts. Primary cause: ${causes[0] || "dynamic elements"}.`
     }
   };
 };
 
-const evaluateFCP = (data) => {
-  // Lab data (Lighthouse)
-  const labValue = parseFloat((data?.lighthouseResult?.audits['first-contentful-paint']?.numericValue || 0).toFixed(0));
+// FCP - First Contentful Paint
+const evaluateFCPLab = (audits) => {
+  const labValue = parseFloat((audits['first-contentful-paint']?.numericValue || 0).toFixed(0));
   const labScore = calculateScore(labValue, 1800, 3000);
-  const labStatus = labValue <= 1800 ? "good" : labValue <= 3000 ? "needs_improvement" : "poor";
+  const labStatus = calculateStatus(labValue, 1800, 3000);
 
-  // Field data (CrUX P75)
-  const cruxMetrics = data?.loadingExperience?.metrics || {};
+  const causes = [];
+  const recommendations = [];
+
+  if (labStatus !== "good") {
+    // Check TTFB
+    const ttfbVal = audits["server-response-time"]?.numericValue || 0;
+    if (ttfbVal > 600) {
+      causes.push(`High Server Response Time (${Math.round(ttfbVal)}ms)`);
+      recommendations.push("Reduce server response time (TTFB) to allow quicker painting.");
+    }
+
+    // Check Render Blocking
+    const blocking = audits["render-blocking-resources"]?.details?.items || [];
+    if (blocking.length > 0) {
+      causes.push(`${blocking.length} render-blocking resources detected`);
+      recommendations.push("Eliminate render-blocking resources by deferring JS and inlining critical CSS.");
+    }
+
+    // Check Redirects
+    const redirects = audits["redirects"]?.details?.items || [];
+    if (redirects.length > 0) {
+      causes.push("Page redirects delaying initial load");
+      recommendations.push("Minimize redirects to speed up page rendering.");
+    }
+
+    if (causes.length === 0) {
+      causes.push("Critical request chain depth or script execution");
+      recommendations.push("Preload critical requests and reduce critical chain depth.");
+    }
+  }
+
+  return {
+    value: labValue + "ms",
+    score: labScore,
+    status: labStatus,
+    thresholds: {
+      Good: "0-1800ms",
+      Warning: "1800-3000ms",
+      Poor: "3000ms+"
+    },
+    analysis: labStatus === "good" ? null : {
+      causes,
+      recommendations,
+      insight: `First Paint is delayed. Main bottleneck: ${causes[0] || "unknown"}.`
+    }
+  };
+};
+
+const evaluateFCPCrux = (audits, cruxMetrics) => {
   const fieldValue = cruxMetrics["FIRST_CONTENTFUL_PAINT_MS"]?.percentile || null;
 
-  let fieldStatus = null;
-  if (fieldValue !== null) {
-    if (fieldValue <= 1800) fieldStatus = "good";
-    else if (fieldValue <= 3000) fieldStatus = "needs_improvement";
-    else fieldStatus = "poor";
-  }
+  if (fieldValue === null) return null;
 
-  // Determine AI Insight
-  let aiInsight = "";
-  const sourceOfTruth = fieldValue !== null ? "field" : "lab";
+  const fieldStatus = calculateStatus(fieldValue, 1800, 3000);
 
-  if (fieldValue !== null) {
-    if (labStatus === "good" && fieldStatus !== "good") {
-      aiInsight = "Lab data looks good, but real users see content slower.";
-    } else if (labStatus === "good" && fieldStatus === "good") {
-      aiInsight = "FCP is excellent for real users. Content appears quickly.";
-    } else if (labStatus !== "good" && fieldStatus !== "good") {
-      aiInsight = "FCP is slow for real users and requires immediate optimization.";
-    } else {
-      aiInsight = "FCP performance varies between lab and field conditions.";
+  const causes = [];
+  const recommendations = [];
+
+  if (fieldStatus !== "good") {
+    // Correlate with Lab data findings for FCP issues
+
+    // Check TTFB correlation
+    const ttfbVal = audits["server-response-time"]?.numericValue || 0;
+    if (ttfbVal > 600) {
+      causes.push(`Slow Server Response detected in lab (${Math.round(ttfbVal)}ms)`);
+      recommendations.push("Optimize server timing/database queries to improve real-user FCP.");
     }
-  } else {
-    aiInsight = labStatus === "good"
-      ? "FCP is within the recommended range. Users see content quickly."
-      : "FCP is affected by render-blocking resources. Prioritizing above-the-fold content can improve this metric.";
+
+    // Render blocking check
+    const blocking = audits["render-blocking-resources"]?.details?.items?.length || 0;
+    if (blocking > 0) {
+      causes.push("Render-blocking resources delaying paint");
+      recommendations.push("Defer non-critical resources to unblock initial paint.");
+    }
+
+    if (causes.length === 0) {
+      causes.push("Network latency or connection setup time");
+      recommendations.push("Use a CDN and ensure fast TLS/DNS setup.");
+    }
   }
 
   return {
-    lab: {
-      value: labValue,
-      unit: "ms",
-      score: labScore,
-      status: labStatus
-    },
-    field: fieldValue !== null ? {
-      value: fieldValue,
-      unit: "ms",
-      p75: true,
-      status: fieldStatus
-    } : null,
+    value: fieldValue + "ms",
+    p75: true,
+    status: fieldStatus,
     thresholds: {
-      good: 1800,
-      needsImprovement: 3000
+      Good: "0-1800ms",
+      Warning: "1800-3000ms",
+      Poor: "3000ms+"
     },
-    analysis: {
-      sourceOfTruth,
-      causes: [
-        "Render-blocking resources",
-        "Slow font loading",
-        "Network latency"
-      ],
-      recommendations: [
-        "Eliminate render-blocking resources",
-        "Ensure text remains visible during webfont load",
-        "Reduce hydration time"
-      ],
-      aiInsight
+    analysis: fieldStatus === "good" ? null : {
+      causes,
+      recommendations,
+      insight: `Real users experience delayed rendering. Primary factor: ${causes[0] || "network conditions"}.`
     }
   };
 };
 
-const evaluateTTFB = (data) => {
-  // Lab data (Lighthouse)
-  const labValue = parseFloat((data?.lighthouseResult?.audits?.["server-response-time"]?.numericValue || 0).toFixed(0));
+// TTFB - Time to First Byte
+const evaluateTTFBLab = (audits) => {
+  const labValue = parseFloat((audits["server-response-time"]?.numericValue || 0).toFixed(0));
   const labScore = calculateScore(labValue, 800, 1800);
-  const labStatus = labValue <= 800 ? "good" : labValue <= 1800 ? "needs_improvement" : "poor";
+  const labStatus = calculateStatus(labValue, 800, 1800);
 
-  // Field data (CrUX P75)
-  const cruxMetrics = data?.loadingExperience?.metrics || {};
+  const causes = [];
+  const recommendations = [];
+
+  if (labStatus !== "good") {
+    causes.push("Slow server response time detected");
+    recommendations.push("Optimize database queries, enable Gzip, and use a CDN.");
+
+    // Check Redirects
+    const redirects = audits["redirects"]?.details?.items || [];
+    if (redirects.length > 0) {
+      causes.push("Multiple redirects increasing latency");
+      recommendations.push("Reduce redirect chains.");
+    }
+
+    if (causes.length === 0) {
+      causes.push("Server processing capacity reached");
+      recommendations.push("Upgrade server infrastructure or optimize backend code.");
+    }
+  }
+
+  return {
+    value: labValue + "ms",
+    score: labScore,
+    status: labStatus,
+    thresholds: {
+      Good: "0-800ms",
+      Warning: "800-1800ms",
+      Poor: "1800ms+"
+    },
+    analysis: labStatus === "good" ? null : {
+      causes,
+      recommendations,
+      insight: `Server response is slow. Primary issue: ${causes[0] || "backend latency"}.`
+    }
+  };
+};
+
+const evaluateTTFBCrux = (cruxMetrics) => {
   const fieldValue = cruxMetrics["EXPERIMENTAL_TIME_TO_FIRST_BYTE"]?.percentile || null;
 
-  let fieldStatus = null;
-  if (fieldValue !== null) {
-    if (fieldValue <= 800) fieldStatus = "good";
-    else if (fieldValue <= 1800) fieldStatus = "needs_improvement";
-    else fieldStatus = "poor";
-  }
+  if (fieldValue === null) return null;
 
-  // Determine AI Insight
-  let aiInsight = "";
-  const sourceOfTruth = fieldValue !== null ? "field" : "lab";
+  const fieldStatus = calculateStatus(fieldValue, 800, 1800);
 
-  if (fieldValue !== null) {
-    if (labStatus === "good" && fieldStatus !== "good") {
-      aiInsight = "Lab data looks good, but real users experience slower server response.";
-    } else if (labStatus === "good" && fieldStatus === "good") {
-      aiInsight = "TTFB is excellent for real users. Server responds quickly.";
-    } else if (labStatus !== "good" && fieldStatus !== "good") {
-      aiInsight = "TTFB is slow for real users and requires immediate optimization.";
-    } else {
-      aiInsight = "TTFB performance varies between lab and field conditions.";
-    }
-  } else {
-    aiInsight = labStatus === "good"
-      ? "TTFB is excellent. Server is responding quickly to requests."
-      : "TTFB indicates slow server response times. Caching and CDN usage are key strategies to improve this.";
+  const causes = [];
+  const recommendations = [];
+
+  if (fieldStatus !== "good") {
+    causes.push("Slow field TTFB (high server latency)");
+    recommendations.push("Cache dynamic content and optimize database performance.");
+
+    causes.push("Geographic distance from server");
+    recommendations.push("Use a CDN to serve content from edge locations.");
   }
 
   return {
-    lab: {
-      value: labValue,
-      unit: "ms",
-      score: labScore,
-      status: labStatus
-    },
-    field: fieldValue !== null ? {
-      value: fieldValue,
-      unit: "ms",
-      p75: true,
-      status: fieldStatus
-    } : null,
+    value: fieldValue + "ms",
+    p75: true,
+    status: fieldStatus,
     thresholds: {
-      good: 800,
-      needsImprovement: 1800
+      Good: "0-800ms",
+      Warning: "800-1800ms",
+      Poor: "1800ms+"
     },
-    analysis: {
-      sourceOfTruth,
-      causes: [
-        "Slow server response",
-        "Database queries",
-        "Resource intensive API calls"
-      ],
-      recommendations: [
-        "Use a CDN",
-        "Optimize server performance and database queries",
-        "Enable caching to reduce server response time"
-      ],
-      aiInsight
+    analysis: fieldStatus === "good" ? null : {
+      causes,
+      recommendations,
+      insight: `Real users face slow server response. Primary factor: ${causes[0] || "server latency"}.`
     }
   };
 };
 
-const evaluateTBT = (data) => {
-  // Lab data (Lighthouse)
-  const labValue = parseFloat((data?.lighthouseResult?.audits?.["total-blocking-time"]?.numericValue || 0).toFixed(0));
-  const labScore = calculateScore(labValue, 200, 600);
-  const labStatus = labValue <= 200 ? "good" : labValue <= 600 ? "needs_improvement" : "poor";
-
-  // TBT doesn't have CrUX field data (lab-only metric)
-  const aiInsight = labStatus === "good"
-    ? "TBT is within acceptable limits. The main thread is not significantly blocked."
-    : "TBT is high, indicating the main thread is blocked. Breaking up long tasks will improve responsiveness.";
-
-  return {
-    lab: {
-      value: labValue,
-      unit: "ms",
-      score: labScore,
-      status: labStatus
-    },
-    field: null,
-    thresholds: {
-      good: 200,
-      needsImprovement: 600
-    },
-    analysis: {
-      sourceOfTruth: "lab",
-      causes: [
-        "Heavy JavaScript execution",
-        "Long tasks blocking the main thread",
-        "Unnecessary script loading"
-      ],
-      recommendations: [
-        "Split heavy JS tasks",
-        "Defer non-essential scripts",
-        "Implement code splitting"
-      ],
-      aiInsight
-    }
-  };
-};
-
-const evaluateSI = (data) => {
-  // Lab data (Lighthouse)
-  const labValue = parseFloat(((data?.lighthouseResult?.audits?.["speed-index"]?.numericValue || 0)).toFixed(0));
-  const labScore = calculateScore(labValue, 3400, 5800);
-  const labStatus = labValue <= 3400 ? "good" : labValue <= 5800 ? "needs_improvement" : "poor";
-
-  // SI doesn't have CrUX field data (lab-only metric)
-  const aiInsight = labStatus === "good"
-    ? "Speed Index is excellent. Content appears quickly for users."
-    : "Speed Index reflects how quickly content is visually populated. Reducing JS execution time helps improve this.";
-
-  return {
-    lab: {
-      value: labValue,
-      unit: "ms",
-      score: labScore,
-      status: labStatus
-    },
-    field: null,
-    thresholds: {
-      good: 3400,
-      needsImprovement: 5800
-    },
-    analysis: {
-      sourceOfTruth: "lab",
-      causes: [
-        "Slow visible content population",
-        "JavaScript execution delaying rendering",
-        "Main thread blocking"
-      ],
-      recommendations: [
-        "Minimize main thread work",
-        "Reduce JavaScript execution time",
-        "Ensure text remains visible during font load"
-      ],
-      aiInsight
-    }
-  };
-};
-
-const evaluateINP = (data) => {
-  // Lab data (Lighthouse - using TTI as proxy for INP)
-  const labValue = parseFloat((data?.lighthouseResult?.audits?.["interactive"]?.numericValue || 0).toFixed(0));
+// INP - Interaction to Next Paint
+const evaluateINPLab = (audits) => {
+  const labValue = parseFloat((audits["interactive"]?.numericValue || 0).toFixed(0));
   const labScore = calculateScore(labValue, 3800, 7300);
-  const labStatus = labValue <= 3800 ? "good" : labValue <= 7300 ? "needs_improvement" : "poor";
+  const labStatus = calculateStatus(labValue, 3800, 7300);
 
-  // Field data (CrUX P75) - actual INP values
-  const cruxMetrics = data?.loadingExperience?.metrics || {};
+  const causes = [];
+  const recommendations = [];
+
+  if (labStatus !== "good") {
+    // Check Long Tasks
+    const longTasks = audits["long-tasks"]?.details?.items || [];
+    if (longTasks.length > 0) {
+      causes.push(`${longTasks.length} Long Tasks detected on main thread`);
+      recommendations.push("Defer heavy JS execution and break up long tasks.");
+    }
+
+    // Check Bootup Time
+    const bootup = audits["bootup-time"]?.numericValue || 0;
+    if (bootup > 2000) {
+      causes.push("High JavaScript bootup time");
+      recommendations.push("Reduce initial JS payload and code-split bundles.");
+    }
+
+    // Main thread work
+    const mainThread = audits["mainthread-work-breakdown"]?.numericValue || 0;
+    if (mainThread > 4000) {
+      causes.push("Excessive main thread work");
+      recommendations.push("Optimize third-party scripts and minimize main thread activity.");
+    }
+
+    if (causes.length === 0) {
+      causes.push("Input delay due to background tasks");
+      recommendations.push("Profile 'Interaction' cost in DevTools.");
+    }
+  }
+
+  return {
+    value: labValue + "ms",
+    score: labScore,
+    status: labStatus,
+    thresholds: {
+      Good: "0-3800ms",
+      Warning: "3800-7300ms",
+      Poor: "7300ms+"
+    },
+    analysis: labStatus === "good" ? null : {
+      causes,
+      recommendations,
+      insight: `Responsiveness is low. Delays caused by: ${causes[0] || "main thread blocking"}.`
+    }
+  };
+};
+
+const evaluateINPCrux = (audits, cruxMetrics) => {
   const fieldValue = cruxMetrics["INTERACTION_TO_NEXT_PAINT"]?.percentile || null;
 
-  let fieldStatus = null;
-  if (fieldValue !== null) {
-    if (fieldValue <= 200) fieldStatus = "good";
-    else if (fieldValue <= 500) fieldStatus = "needs_improvement";
-    else fieldStatus = "poor";
-  }
+  if (fieldValue === null) return null;
 
-  // Determine AI Insight
-  let aiInsight = "";
-  const sourceOfTruth = fieldValue !== null ? "field" : "lab";
+  const fieldStatus = calculateStatus(fieldValue, 200, 500);
 
-  if (fieldValue !== null) {
-    if (labStatus === "good" && fieldStatus !== "good") {
-      aiInsight = "Lab data looks good, but real users experience slower interactions.";
-    } else if (labStatus === "good" && fieldStatus === "good") {
-      aiInsight = "INP is excellent for real users. The page responds quickly to interactions.";
-    } else if (labStatus !== "good" && fieldStatus !== "good") {
-      aiInsight = "INP is slow for real users and requires immediate optimization.";
-    } else {
-      aiInsight = "INP performance varies between lab and field conditions.";
+  const causes = [];
+  const recommendations = [];
+
+  if (fieldStatus !== "good") {
+    // Check Long Tasks
+    const longTasks = audits["long-tasks"]?.details?.items || [];
+    if (longTasks.length > 0) {
+      causes.push("Long Tasks blocking interactions");
+      recommendations.push("Break up long JavaScript tasks to yield to main thread.");
     }
-  } else {
-    aiInsight = labStatus === "good"
-      ? "INP is performing well. The page responds quickly to user interactions."
-      : "INP values are improved by reducing input latency. Optimizing event handlers is recommended.";
+
+    // Check Third Party
+    const thirdParty = audits["third-party-summary"]?.details?.items || [];
+    if (thirdParty.length > 0) {
+      causes.push("Third-party scripts delaying input");
+      recommendations.push("Audit and defer non-essential third-party scripts.");
+    }
+
+    // Check Reflows/Layout Thrashing (DOM Size)
+    const domSize = audits["dom-size"]?.numericValue || 0;
+    if (domSize > 1500) {
+      causes.push("Large DOM causing style calc delays");
+      recommendations.push("Reduce DOM size to improve layout/paint performance.");
+    }
+
+    if (causes.length === 0) {
+      causes.push("Input delay on real-world devices");
+      recommendations.push("Optimize event handlers and avoid blocking main thread.");
+    }
   }
 
   return {
-    lab: {
-      value: labValue,
-      unit: "ms",
-      score: labScore,
-      status: labStatus
-    },
-    field: fieldValue !== null ? {
-      value: fieldValue,
-      unit: "ms",
-      p75: true,
-      status: fieldStatus
-    } : null,
+    value: fieldValue + "ms",
+    p75: true,
+    status: fieldStatus,
     thresholds: {
-      good: fieldValue !== null ? 200 : 3800,
-      needsImprovement: fieldValue !== null ? 500 : 7300
+      Good: "0-200ms",
+      Warning: "200-500ms",
+      Poor: "500ms+"
     },
-    analysis: {
-      sourceOfTruth,
-      causes: [
-        "Long event handlers",
-        "Complex layout or style recalculations",
-        "Input delay"
-      ],
-      recommendations: [
-        "Reduce main-thread work",
-        "Optimize JS execution",
-        "Break up long tasks"
-      ],
-      aiInsight
+    analysis: fieldStatus === "good" ? null : {
+      causes,
+      recommendations,
+      insight: `Real users face input delays. Primary cause: ${causes[0] || "unknown"}.`
     }
   };
 };
 
+// TBT - Total Blocking Time
+const evaluateTBT = (audits) => {
+  const labValue = parseFloat((audits["total-blocking-time"]?.numericValue || 0).toFixed(0));
+  const labScore = calculateScore(labValue, 200, 600);
+  const labStatus = calculateStatus(labValue, 200, 600);
+
+  const causes = [];
+  const recommendations = [];
+
+  if (labStatus !== "good") {
+    // Check Long Tasks
+    const longTasks = audits["long-tasks"]?.details?.items || [];
+    if (longTasks.length > 0) {
+      causes.push(`${longTasks.length} long tasks blocking the main thread`);
+      recommendations.push("Break up Long Tasks and defer non-critical JS.");
+    }
+
+    // Check Third Party
+    const thirdParty = audits["third-party-summary"]?.details?.items || [];
+    const blockingThirdParty = thirdParty.filter(i => i.blockingTime > 0);
+    if (blockingThirdParty.length > 0) {
+      causes.push("Third-party code blocking main thread");
+      recommendations.push("Audit third-party scripts and use facade loading.");
+    }
+
+    // Check Script Evaluation
+    const scriptEval = audits["bootup-time"]?.details?.items?.filter(i => i.scripting > 500) || [];
+    if (scriptEval.length > 0) {
+      causes.push("Heavy script evaluation");
+      recommendations.push("Optimize script evaluation and remove unused code.");
+    }
+
+    if (causes.length === 0) {
+      causes.push("General main thread congestion");
+      recommendations.push("Minimize main thread work and reduce JS execution time.");
+    }
+  }
+
+  return {
+    value: labValue + "ms",
+    score: labScore,
+    status: labStatus,
+    thresholds: {
+      Good: "0-200ms",
+      Warning: "200-600ms",
+      Poor: "600ms+"
+    },
+    analysis: labStatus === "good" ? null : {
+      sourceOfTruth: "lab",
+      causes,
+      recommendations,
+      insight: `Main thread is blocked. Primary culprit: ${causes[0] || "JavaScript execution"}.`
+    }
+  };
+};
+
+// SI - Speed Index
+const evaluateSI = (audits) => {
+  const labValue = parseFloat(((audits["speed-index"]?.numericValue || 0)).toFixed(0));
+  const labScore = calculateScore(labValue, 3400, 5800);
+  const labStatus = calculateStatus(labValue, 3400, 5800);
+
+  const causes = [];
+  const recommendations = [];
+
+  if (labStatus !== "good") {
+    // Check Main Thread Work
+    const mainThread = audits["mainthread-work-breakdown"]?.numericValue || 0;
+    if (mainThread > 4000) {
+      causes.push("Main thread busy parsing/executing JS/CSS");
+      recommendations.push("Minimize main thread work and reduce JS execution time.");
+    }
+
+    // Check Unused Code
+    const unusedCSS = audits["unused-css-rules"]?.details?.overallSavingsMs || 0;
+    const unusedJS = audits["unused-javascript"]?.details?.overallSavingsMs || 0;
+    if (unusedCSS > 100 || unusedJS > 100) {
+      causes.push("Unused CSS/JS delaying visual rendering");
+      recommendations.push("Remove unused code or defer non-critical assets.");
+    }
+
+    // Check Font Loading
+    const fontDisplay = audits["font-display"]?.details?.items?.length || 0;
+    if (fontDisplay > 0) {
+      causes.push("Invisible text during font load");
+      recommendations.push("Ensure text remains visible during font load via `font-display: swap`.");
+    }
+
+    if (causes.length === 0) {
+      causes.push("Resources competing for bandwidth");
+      recommendations.push("Ensure critical resources are prioritized.");
+    }
+  }
+
+  return {
+    value: labValue + "ms",
+    score: labScore,
+    status: labStatus,
+    thresholds: {
+      Good: "0-3400ms",
+      Warning: "3400-5800ms",
+      Poor: "5800ms+"
+    },
+    analysis: labStatus === "good" ? null : {
+      sourceOfTruth: "lab",
+      causes,
+      recommendations,
+      insight: `Visual page load is slow. Main factor: ${causes[0] || "main thread blocking"}.`
+    }
+  };
+};
+
+// Compression
 const evaluateCompression = async (page) => {
   const resources = await page.evaluate(async () => {
     const urls = Array.from(document.querySelectorAll('script[src], link[rel="stylesheet"][href]'))
@@ -525,9 +758,9 @@ const evaluateCompression = async (page) => {
         const res = await fetch(url, { method: 'HEAD' });
         const encoding = res.headers.get('content-encoding');
         const isCompressed = !!(encoding && (encoding.includes('gzip') || encoding.includes('br') || encoding.includes('deflate')));
-        return { url, isCompressed };
+        return { url, isCompressed, actualEncoding: encoding || 'None' };
       } catch {
-        return { url, isCompressed: true };
+        return { url, isCompressed: true, actualEncoding: 'Error' };
       }
     }));
     return results;
@@ -535,26 +768,57 @@ const evaluateCompression = async (page) => {
 
   const total = resources.length;
   const compressedCount = resources.filter(r => r.isCompressed).length;
-  const uncompressedResources = resources.filter(r => !r.isCompressed).map(r => r.url);
+  const uncompressedResources = resources.filter(r => !r.isCompressed).map(r => ({
+    url: r.url,
+    currentEncoding: r.actualEncoding
+  }));
 
   const score = total === 0 ? 100 : parseFloat(((compressedCount / total) * 100).toFixed(0));
-  const status = score === 100 ? "pass" : "warning";
+
+  let status = "good";
+  if (score < 100) status = "needs_improvement";
+  if (score < 70) status = "poor";
+
+  const causes = [];
+  const recommendations = [];
+
+  if (status !== "good") {
+    causes.push(`${uncompressedResources.length} uncompressed text resources found`);
+    recommendations.push("Enable Gzip or Brotli compression on your web server.");
+
+    if (uncompressedResources.some(u => u.url.includes(".js"))) {
+      causes.push("JavaScript files have no compression");
+      recommendations.push("Ensure .js files are compressed.");
+    }
+    if (uncompressedResources.some(u => u.url.includes(".css"))) {
+      causes.push("CSS files have no compression");
+      recommendations.push("Ensure .css files are compressed.");
+    }
+  }
 
   return {
-    score,
+    value: score + "%",
+    score: score,
     status,
-    details: `${compressedCount}/${total} text resources compressed`,
-    suggestion: "Enable Gzip or Brotli compression for all text-based resources.",
-    meta: {
-      value: score,
-      target: "100%",
-      thresholds: { good: "100%", poor: "0%" },
-      unit: "%",
-      uncompressedResources
+    total: total,
+    compressedCount: compressedCount,
+    uncompressedResourcesCount: uncompressedResources.length,
+    thresholds: {
+      Good: "100%",
+      Warning: "70-99%",
+      Poor: "<70%"
+    },
+    analysis: status === "good" ? null : {
+      target: "Use gzip or brotli compression",
+      causes,
+      recommendations,
+      uncompressedResources,
+      insight: `Bandwidth is wasted. Primary cause: ${causes[0] || "uncompressed assets"}.`
     }
   };
 };
 
+// Caching
 const evaluateCaching = async (page) => {
   const resources = await page.evaluate(async () => {
     const urls = Array.from(document.querySelectorAll('img[src], script[src], link[rel="stylesheet"][href]'))
@@ -566,13 +830,16 @@ const evaluateCaching = async (page) => {
       try {
         const res = await fetch(url, { method: 'HEAD' });
         const cacheControl = res.headers.get('cache-control');
-        if (!cacheControl) return { url, isCached: false };
+        const policy = cacheControl || "None";
+        if (!cacheControl) return { url, isCached: false, policy };
+
         const maxAgeMatch = cacheControl.match(/max-age=(\d+)/);
-        if (!maxAgeMatch) return { url, isCached: false };
+        if (!maxAgeMatch) return { url, isCached: false, policy };
+
         const isCached = parseInt(maxAgeMatch[1], 10) >= 604800; // 7 days
-        return { url, isCached };
+        return { url, isCached, policy };
       } catch {
-        return { url, isCached: true };
+        return { url, isCached: true, policy: "Error" };
       }
     }));
     return results;
@@ -580,26 +847,53 @@ const evaluateCaching = async (page) => {
 
   const total = resources.length;
   const cachedCount = resources.filter(r => r.isCached).length;
-  const uncachedResources = resources.filter(r => !r.isCached).map(r => r.url);
+  const uncachedResources = resources.filter(r => !r.isCached).map(r => ({
+    url: r.url,
+    cachePolicy: r.policy
+  }));
 
   const score = total === 0 ? 100 : parseFloat(((cachedCount / total) * 100).toFixed(0));
-  const status = score >= 90 ? "pass" : "warning";
+
+  let status = "good";
+  if (score < 90) status = "needs_improvement";
+  if (score < 50) status = "poor";
+
+  const causes = [];
+  const recommendations = [];
+
+  if (status !== "good") {
+    causes.push(`${uncachedResources.length} resources with short or missing cache policy`);
+    recommendations.push("Set a long `max-age` (e.g. 1 year) for static assets.");
+
+    if (uncachedResources.some(u => u.url.match(/\.(jpg|png|webp|css|js)$/))) {
+      causes.push("Static assets (images/JS/CSS) not effectively cached");
+      recommendations.push("Ensure your CDN or server sends correct `Cache-Control` headers.");
+    }
+  }
 
   return {
-    score,
+    value: score + "%",
+    score: score,
     status,
-    details: `${cachedCount}/${total} static resources cached > 7 days`,
-    suggestion: "Configure long cache TTL (max-age) for static assets.",
-    meta: {
-      value: score,
+    total: total,
+    cachedCount: cachedCount,
+    uncachedResourcesCount: uncachedResources.length,
+    thresholds: {
+      Good: "≥90%",
+      Warning: "50-89%",
+      Poor: "<50%"
+    },
+    analysis: status === "good" ? null : {
       target: "≥ 7 days",
-      thresholds: { good: 100, poor: 50 },
-      unit: "%",
-      uncachedResources
+      causes,
+      recommendations,
+      uncachedResources,
+      insight: `Repeat visits are slow. Caching issues found in: ${causes[0] || "static resources"}.`
     }
   };
 };
 
+// Resource Optimization
 const evaluateResourceOptimization = async (page) => {
   const result = await page.evaluate(() => {
     const images = Array.from(document.querySelectorAll('img'));
@@ -608,7 +902,11 @@ const evaluateResourceOptimization = async (page) => {
     const unoptimizedImagesList = images.filter(img => {
       if (img.naturalWidth === 0) return false;
       return !(img.naturalWidth <= (img.clientWidth * 2) && img.naturalHeight <= (img.clientHeight * 2));
-    }).map(img => img.src);
+    }).map(img => ({
+      url: img.src,
+      type: "Image",
+      details: `Displayed: ${img.clientWidth}x${img.clientHeight}px, Natural: ${img.naturalWidth}x${img.naturalHeight}px`
+    }));
 
     const optimizedImagesCount = totalImages - unoptimizedImagesList.length;
 
@@ -617,7 +915,14 @@ const evaluateResourceOptimization = async (page) => {
 
     const unminifiedScriptsList = scripts.filter(s => {
       return !(s.src.includes('.min') || s.src.includes('cdn'));
-    }).map(s => s.src);
+    }).map(s => {
+      const loading = s.defer ? 'defer' : (s.async ? 'async' : 'blocking');
+      return {
+        url: s.src,
+        type: "Script",
+        details: `Status: Unminified, Loading: ${loading}`
+      };
+    });
 
     const minifiedScriptsCount = totalScripts - unminifiedScriptsList.length;
 
@@ -634,25 +939,52 @@ const evaluateResourceOptimization = async (page) => {
   const imgScore = result.totalImages === 0 ? 100 : (result.optimizedImagesCount / result.totalImages) * 100;
   const scriptScore = result.totalScripts === 0 ? 100 : (result.minifiedScriptsCount / result.totalScripts) * 100;
   const score = parseFloat(((imgScore + scriptScore) / 2).toFixed(0));
-  const status = score >= 80 ? "pass" : "warning";
+
+  let status = "good";
+  if (score < 90) status = "needs_improvement";
+  if (score < 50) status = "poor";
+
+  const causes = [];
+  const recommendations = [];
+
+  if (status !== "good") {
+    if (result.unoptimizedImagesList.length > 0) {
+      causes.push(`${result.unoptimizedImagesList.length} images are larger than their display size`);
+      recommendations.push("Resize images to match their specific display dimensions.");
+    }
+    if (result.unminifiedScriptsList.length > 0) {
+      causes.push(`${result.unminifiedScriptsList.length} JavaScript files are unminified`);
+      recommendations.push("Minify JavaScript files to reduce payload size.");
+    }
+  }
 
   return {
-    score,
+    value: score + "%",
+    score: score,
     status,
-    details: "Image sizing and script minification check",
-    suggestion: "Resize images to display dimensions and minify JavaScript files.",
-    meta: {
-      value: score,
-      target: "Optimized",
-      thresholds: { good: "80%", poor: "50%" },
-      imagesOptimized: `${result.optimizedImagesCount}/${result.totalImages}`,
-      scriptsMinified: `${result.minifiedScriptsCount}/${result.totalScripts}`,
+    totalImages: result.totalImages,
+    optimizedImagesCount: result.optimizedImagesCount,
+    unoptimizedImagesCount: result.unoptimizedImagesList.length,
+    totalScripts: result.totalScripts,
+    minifiedScriptsCount: result.minifiedScriptsCount,
+    unminifiedScriptsCount: result.unminifiedScriptsList.length,
+    thresholds: {
+      Good: "≥90%",
+      Warning: "50-89%",
+      Poor: "<50%"
+    },
+    analysis: status === "good" ? null : {
+      target: "Optimized Assets",
+      causes,
+      recommendations,
       unoptimizedImages: result.unoptimizedImagesList,
-      unminifiedScripts: result.unminifiedScriptsList
+      unminifiedScripts: result.unminifiedScriptsList,
+      insight: `Resources are heavy. Optimization needed for: ${causes[0] || "assets"}.`
     }
   };
 };
 
+// Render Blocking Resources
 const evaluateRenderBlocking = async (page) => {
   const blockingResources = await page.evaluate(() => {
     const links = Array.from(document.querySelectorAll('head link[rel="stylesheet"]'));
@@ -661,76 +993,144 @@ const evaluateRenderBlocking = async (page) => {
     const blockingLinks = links.filter(link => {
       const media = link.media;
       return !media || media === 'all' || media === 'screen';
-    }).map(link => link.href);
+    }).map(link => ({
+      url: link.href,
+      details: link.media
+        ? `Blocks rendering due to media attribute: '${link.media}'`
+        : "Blocks rendering (missing media attribute defaults to 'all')"
+    }));
 
     const blockingScripts = scripts.filter(script => {
       return !script.hasAttribute('async') && !script.hasAttribute('defer');
-    }).map(script => script.src);
+    }).map(script => ({
+      url: script.src,
+      details: "Synchronous script execution blocks DOM construction (missing 'async'/'defer')"
+    }));
 
     return [...blockingLinks, ...blockingScripts];
   });
 
   const blockingCount = blockingResources.length;
   const score = blockingCount === 0 ? 100 : Math.max(0, 100 - (blockingCount * 10));
-  const status = score === 100 ? "pass" : "warning";
+
+  let status = "good";
+  if (score < 100) status = "needs_improvement";
+  if (score < 50) status = "poor";
+
+  const causes = [];
+  const recommendations = [];
+
+  if (status !== "good") {
+    causes.push(`${blockingCount} render-blocking resources found`);
+    recommendations.push("Defer non-critical JavaScript and inline critical CSS.");
+
+    if (blockingResources.some(u => u.url.endsWith(".css"))) {
+      causes.push("Blocking CSS files delaying paint");
+      recommendations.push("Load non-critical CSS asynchronously.");
+    }
+  }
 
   return {
-    score,
+    value: score + "%",
+    score: score,
     status,
-    details: `${blockingCount} render-blocking resources found`,
-    suggestion: "Defer non-critical JS and use media attributes for CSS.",
-    meta: {
-      value: blockingCount,
-      target: "0 items",
-      thresholds: { good: "0 items", poor: "5 items" },
-      unit: "items",
-      blockingResources
+    blockingCount,
+    thresholds: {
+      Good: "100%",
+      Warning: "50-99%",
+      Poor: "<50%"
+    },
+    analysis: status === "good" ? null : {
+      target: "0 Blocking Resources",
+      causes,
+      recommendations,
+      blockingResources,
+      insight: `First Paint is delayed. Blocking resources: ${blockingCount}.`
     }
   };
 };
 
+// HTTPS - Hypertext Transfer Protocol Secure
 const evaluateHTTPS = (response) => {
   const security = response.securityDetails();
   const isSecure = !!security;
-  const protocol = security ? security.protocol() : 'http';
+  const protocol = security ? security.protocol() : 'http/1.1';
 
   const score = isSecure ? 100 : 0;
-  const status = isSecure ? "pass" : "fail";
+
+  let status = "good";
+  if (!isSecure) status = "poor";
+
+  const causes = [];
+  const recommendations = [];
+
+  if (status !== "good") {
+    causes.push("Connection is insecure (HTTP)");
+    recommendations.push("Implement SSL/TLS certificates and enforce HTTPS.");
+
+    if (protocol === 'http/1.1' || protocol === 'http') {
+      causes.push("Legacy protocol version");
+      recommendations.push("Upgrade to HTTP/2 or HTTP/3 for better performance.");
+    }
+  }
 
   return {
-    score,
+    value: score + "%",
+    score: score,
     status,
-    details: isSecure ? `Secure (${protocol})` : "Insecure",
-    suggestion: "Migrate to HTTPS and enable HTTP/2.",
-    meta: {
-      value: score,
-      target: "Enabled",
-      thresholds: { good: "100%", poor: "0%" },
-      protocol: protocol
+    protocol,
+    thresholds: {
+      Good: "HTTPS Enabled",
+      Poor: "HTTPS Absent"
+    },
+    analysis: status === "good" ? null : {
+      target: "HTTPS Enabled",
+      causes,
+      recommendations,
+      insight: `Security risk detected. Site uses: ${protocol}.`
     }
   };
 };
 
+// Redirect Chains
 const evaluateRedirectChains = (response) => {
   const chain = response.request().redirectChain();
+  const redirectDetails = chain.map(req => req.url()).concat(response.url());
   const hops = chain.length;
   const score = hops <= 1 ? 100 : 0;
-  const status = score === 100 ? "pass" : "warning";
+
+  let status = "good";
+  if (hops > 1) status = "poor";
+
+  const causes = [];
+  const recommendations = [];
+
+  if (status !== "good") {
+    causes.push(`${hops} redirect hops detected`);
+    recommendations.push("Remove unnecessary redirects and point links directly to the final destination.");
+  }
+
 
   return {
-    score,
+    value: score + "%",
+    score: score,
     status,
-    details: `${hops} redirect hops`,
-    suggestion: "Reduce redirect chains to speed up page load and improve crawlability.",
-    meta: {
-      value: hops,
-      unit: "hops",
+    hops,
+    redirectDetails,
+    thresholds: {
+      Good: "≤ 1 hop",
+      Poor: "> 1 hop"
+    },
+    analysis: status === "good" ? null : {
       target: "≤ 1 hop",
-      thresholds: { good: "1 hop", poor: "3 hops" }
+      causes,
+      recommendations,
+      insight: `Latency increased by ${hops} redirects. Simplify the URL structure.`
     }
   };
 };
 
+// Structured Data
 const evaluateStructuredData = async (page) => {
   const result = await page.evaluate(() => {
     const scripts = Array.from(document.querySelectorAll('script[type="application/ld+json"]'))
@@ -740,125 +1140,133 @@ const evaluateStructuredData = async (page) => {
       .filter(Boolean);
 
     const types = scripts.map(s => s['@type']).filter(Boolean);
-    return { hasData: scripts.length > 0, types: types.join(', ') };
+    return { hasData: scripts.length > 0, types: types.join(', '), content: scripts };
   });
 
   const score = result.hasData ? 100 : 0;
-  const status = result.hasData ? "pass" : "pass";
+
+  let status = "good";
+  if (!result.hasData) status = "poor";
+
+  const causes = [];
+  const recommendations = [];
+
+  if (status !== "good") {
+    causes.push("No JSON-LD structured data found");
+    recommendations.push("Add Schema.org structured data to enhance search results.");
+  }
 
   return {
-    score,
+    value: score + "%",
+    score: score,
     status,
-    details: result.hasData ? "Structured data found" : "Structured data missing",
-    suggestion: "Add structured data to improve search results display.",
-    meta: {
-      hasStructuredData: result.hasData,
-      target: "Present",
-      thresholds: { good: "Present", poor: "None" },
-      typesFound: result.types || "None"
+    content: result.content || null,
+    thresholds: {
+      Good: "Present",
+      Poor: "Absent"
+    },
+    analysis: status === "good" ? null : {
+      target: "Structured Data Present",
+      causes,
+      recommendations,
+      insight: `Rich snippets missed. Add structured data for better SEO visibility.`
     }
   };
 };
 
-const evaluateBrokenLinks = async (page) => {
-  const links = await page.$$eval("a[href]", (anchors) =>
-    anchors
-      .map((a) => a.href)
-      .filter((l) => l && l.startsWith("http"))
-  );
-
-  let brokenCount = 0;
-  const brokenLinksList = [];
-
-  await Promise.all(
-    links.map(async (link) => {
-      try {
-        const status = await page.evaluate(async (l) => {
-          try {
-            const res = await fetch(l, { method: "HEAD" });
-            return res.status;
-          } catch {
-            return 0;
-          }
-        }, link);
-
-        if (status === 0 || status >= 400) {
-          brokenCount++;
-          brokenLinksList.push({ url: link, status });
-        }
-      } catch {
-        brokenCount++;
-        brokenLinksList.push({ url: link, status: 'Error' });
-      }
-    })
-  );
-
-  const totalLinks = links.length || 1;
-  const brokenPercent = parseFloat(((brokenCount / totalLinks) * 100).toFixed(0));
-  const score = brokenPercent === 0 ? 100 : 0;
-  const status = score === 100 ? "pass" : "fail";
-
-  return {
-    score,
-    status,
-    details: `${brokenPercent}% broken links`,
-    suggestion: "Fix all broken links to improve user experience and SEO.",
-    meta: {
-      brokenCount,
-      totalLinks,
-      brokenPercent,
-      target: "0 broken",
-      thresholds: { good: "0 broken", poor: "1 broken" },
-      brokenLinksList
-    }
-  };
-};
-
+// Sitemap
 const evaluateSitemap = async (url, browser) => {
   let exists = false;
+  let content = null;
   try {
     const sitemapUrl = new URL("/sitemap.xml", url).href;
     const sitemapPage = await browser.newPage();
-    const response = await sitemapPage.goto(sitemapUrl, { waitUntil: "networkidle2", timeout: 60000 });
+    const response = await sitemapPage.goto(sitemapUrl, { waitUntil: "domcontentloaded", timeout: 60000 });
     exists = response.status() === 200;
+    if (exists) {
+      content = await response.text();
+    }
     sitemapPage.close();
   } catch {
     exists = false;
   }
 
   const score = exists ? 100 : 0;
-  const status = exists ? "pass" : "warning";
+
+  let status = "good";
+  if (!exists) status = "poor";
+
+  const causes = [];
+  const recommendations = [];
+
+  if (status !== "good") {
+    causes.push("sitemap.xml not found at root");
+    recommendations.push("Generate and submit a sitemap.xml to Google Search Console.");
+  }
 
   return {
-    score,
+    value: score + "%",
+    score: score,
     status,
-    details: exists ? "Sitemap found" : "Sitemap missing",
-    suggestion: "Add sitemap.xml and submit it to search engines for better indexing.",
-    meta: { exists, target: "Present", thresholds: { good: "Present", poor: "Missing" } }
+    content: content ? content : null,
+    thresholds: {
+      Good: "Present",
+      Poor: "Absent"
+    },
+    analysis: status === "good" ? null : {
+      target: "Sitemap Present",
+      causes,
+      recommendations,
+      insight: `Crawlability risk. Sitemap is missing.`
+    }
   };
 };
 
+// Robots.txt
 const evaluateRobots = async (url, browser) => {
   let exists = false;
+  let content = null;
   try {
     const robotsUrl = new URL("/robots.txt", url).href;
     const robotsPage = await browser.newPage();
-    const response = await robotsPage.goto(robotsUrl, { waitUntil: "networkidle2", timeout: 60000 });
+    const response = await robotsPage.goto(robotsUrl, { waitUntil: "domcontentloaded", timeout: 60000 });
     exists = response.status() === 200;
+    if (exists) {
+      content = await response.text();
+    }
     robotsPage.close();
   } catch {
     exists = false;
   }
 
   const score = exists ? 100 : 0;
-  const status = exists ? "pass" : "warning";
+
+  let status = "good";
+  if (!exists) status = "poor";
+
+  const causes = [];
+  const recommendations = [];
+
+  if (status !== "good") {
+    causes.push("robots.txt file not found");
+    recommendations.push("Create a robots.txt file to control crawler access.");
+  }
 
   return {
-    score,
+    value: score + "%",
+    score: score,
     status,
-    details: exists ? "Robots.txt found" : "Robots.txt missing",
-    suggestion: "Ensure robots.txt exists and allows proper crawling.",
-    meta: { exists, target: "Present", thresholds: { good: "Present", poor: "Missing" } }
+    content: content ? content : null,
+    thresholds: {
+      Good: "Present",
+      Poor: "Absent"
+    },
+    analysis: status === "good" ? null : {
+      target: "Robots.txt Present",
+      causes,
+      recommendations,
+      insight: `Crawling is uncontrolled. Robots.txt is missing.`
+    }
   };
 };
 
@@ -866,16 +1274,24 @@ const evaluateRobots = async (url, browser) => {
 export default async function technicalMetrics(url, device, page, response, browser) {
 
   const data = await googleAPI(url, device);
+  const audits = data?.lighthouseResult?.audits || {};
+  const cruxMetrics = data?.loadingExperience?.metrics || {};
 
   // Evaluate Metrics
-  const lcp = evaluateLCP(data);
-  const fid = evaluateFID(data);
-  const cls = evaluateCLS(data);
-  const fcp = evaluateFCP(data);
-  const ttfb = evaluateTTFB(data);
-  const tbt = evaluateTBT(data);
-  const si = evaluateSI(data);
-  const inp = evaluateINP(data);
+  const lcpLab = evaluateLCPLab(audits);
+  const lcpCrux = evaluateLCPCrux(audits, cruxMetrics);
+  const fidLab = evaluateFIDLab(audits);
+  const fidCrux = evaluateFIDCrux(audits, cruxMetrics);
+  const clsLab = evaluateCLSLab(audits);
+  const clsCrux = evaluateCLSCrux(audits, cruxMetrics);
+  const fcpLab = evaluateFCPLab(audits);
+  const fcpCrux = evaluateFCPCrux(audits, cruxMetrics);
+  const ttfbLab = evaluateTTFBLab(audits);
+  const ttfbCrux = evaluateTTFBCrux(cruxMetrics);
+  const inpLab = evaluateINPLab(audits);
+  const inpCrux = evaluateINPCrux(audits, cruxMetrics);
+  const tbt = evaluateTBT(audits);
+  const si = evaluateSI(audits);
 
   const compression = await evaluateCompression(page);
   const caching = await evaluateCaching(page);
@@ -885,33 +1301,57 @@ export default async function technicalMetrics(url, device, page, response, brow
 
   const redirect = evaluateRedirectChains(response);
   const structuredData = await evaluateStructuredData(page);
-  const brokenLinks = await evaluateBrokenLinks(page);
   const sitemap = await evaluateSitemap(url, browser);
   const robots = await evaluateRobots(url, browser);
 
+  // Calculate Sub-Scores
+  const coreVitalsScore = (
+    (lcpLab.score * 0.10) +
+    (tbt.score * 0.10) +
+    (clsLab.score * 0.05) +
+    (fcpLab.score * 0.05) +
+    (si.score * 0.05) +
+    (ttfbLab.score * 0.05) +
+    (inpLab.score * 0.05)
+  ) / 0.45;
 
+  const assetsScore = (
+    (compression.score * 0.05) +
+    (caching.score * 0.05) +
+    (resourceOptimization.score * 0.05) +
+    (renderBlocking.score * 0.05)
+  ) / 0.20;
 
-  // Calculate Overall Score (Weighted) - using lab scores
+  const seoScore = (
+    (https.score * 0.10) +
+    (redirect.score * 0.05) +
+    (structuredData.score * 0.05) +
+    (sitemap.score * 0.10) +
+    (robots.score * 0.05)
+  ) / 0.35;
+
+  // Calculate Overall Score
   const actualPercentage = parseFloat((
-    (lcp.lab.score * 0.25) +
-    (tbt.lab.score * 0.25) +
-    (cls.lab.score * 0.05) +
-    (fcp.lab.score * 0.10) +
-    (si.lab.score * 0.10) +
-    (ttfb.lab.score * 0.10) +
-    (inp.lab.score * 0.15)
+    (coreVitalsScore * 0.45) +
+    (assetsScore * 0.20) +
+    (seoScore * 0.35)
   ).toFixed(0));
 
   return {
     Percentage: actualPercentage,
-    LCP: lcp,
-    FID: fid,
-    CLS: cls,
-    FCP: fcp,
-    TTFB: ttfb,
-    TBT: tbt,
-    SI: si,
-    INP: inp,
+    Scores: {
+      CoreVitals: Math.round(coreVitalsScore),
+      Assets: Math.round(assetsScore),
+      SEO: Math.round(seoScore)
+    },
+    LCP: { lab: lcpLab, crux: lcpCrux },
+    FID: { lab: fidLab, crux: fidCrux },
+    CLS: { lab: clsLab, crux: clsCrux },
+    FCP: { lab: fcpLab, crux: fcpCrux },
+    TTFB: { lab: ttfbLab, crux: ttfbCrux },
+    INP: { lab: inpLab, crux: inpCrux },
+    TBT: { lab: tbt, crux: null },
+    SI: { lab: si, crux: null },
     Compression: compression,
     Caching: caching,
     Resource_Optimization: resourceOptimization,
@@ -920,7 +1360,6 @@ export default async function technicalMetrics(url, device, page, response, brow
     Sitemap: sitemap,
     Robots: robots,
     Structured_Data: structuredData,
-    Broken_Links: brokenLinks,
     Redirect_Chains: redirect,
   };
 }

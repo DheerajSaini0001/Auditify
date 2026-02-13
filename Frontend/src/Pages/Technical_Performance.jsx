@@ -8,22 +8,16 @@ import {
   Activity, Zap, Layout, MousePointer2, Image as ImageIcon,
   Server, Database, FileCode, Globe, Shield, Link, Map,
   FileText, Search, ArrowRightLeft, Clock, Gauge, AlertTriangle,
-  CheckCircle, XCircle, Loader2, Info, Eye, ShieldCheck, LayoutTemplate, TrendingUp, Bot
+  CheckCircle, XCircle, Loader2, Info, Eye, ShieldCheck, LayoutTemplate, TrendingUp, Bot, ChevronDown, ChevronUp
 } from "lucide-react";
 import MetricInfoModal from "../Component/MetricInfoModal";
 import ParameterInfoModal from "../Component/ParameterInfoModal";
 import { InfoDetails } from "../Component/InfoDetails";
-// ------------------------------------------------------
-// ✅ Simple Skeleton
-// ------------------------------------------------------
-// ------------------------------------------------------
-// ✅ Enhanced Shimmer
-// ------------------------------------------------------
-const ShimmerBlock = ({ className = "" }) => (
-  <div className={`relative overflow-hidden bg-gray-200 dark:bg-gray-800 rounded-lg ${className}`}>
-    <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/50 dark:via-white/10 to-transparent"></div>
-  </div>
-);
+import ThresholdBar from "../Component/reusablecomponent/ThresholdBar";
+import MetricCard from "../Component/reusablecomponent/MetricCard";
+import DirectThresholdBar from "../Component/reusablecomponent/DirectThresholdBar";
+import MetricAnalysisDetails from "../Component/reusablecomponent/MetricAnalysisDetails";
+
 
 const TechShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
   const step = steps[currentStep] || steps[0];
@@ -82,322 +76,7 @@ const TechShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
   );
 };
 
-// ------------------------------------------------------
-// ✅ Metric Card (Security Style)
-// ------------------------------------------------------
-const MetricCard = ({ details, value, dynamicData, darkMode, icon: Icon, className, selectedSource, metricKey }) => {
-  // Check if this metric has lab/field structure
-  const hasLabFieldStructure = dynamicData?.lab || dynamicData?.field;
 
-  // Use activeData based on selectedSource, with fallback to lab if field is null/unavailable
-  const activeData = hasLabFieldStructure
-    ? (selectedSource === "field" && dynamicData.field ? dynamicData.field : dynamicData.lab)
-    : dynamicData;
-
-  // Determine Status from activeData
-  let status = "pass";
-  if (activeData?.status) {
-    // Map backend status to our status
-    if (activeData.status === "good") status = "pass";
-    else if (activeData.status === "needs_improvement") status = "warning";
-    else if (activeData.status === "poor") status = "fail";
-  } else if (details.isCrux) {
-    if (activeData?.category === "SLOW") status = "fail";
-    else if (activeData?.category === "AVERAGE") status = "warning";
-    else status = "pass";
-  }
-
-  const isPassed = status === "pass";
-  const isWarning = status === "warning";
-
-  // Simple Colors
-  const cardBg = darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200";
-  const textColor = darkMode ? "text-gray-100" : "text-gray-900";
-  const subTextColor = darkMode ? "text-gray-400" : "text-gray-500";
-
-  let statusColor = "text-red-600 bg-red-50 border-red-100";
-  let statusText = "Failed";
-
-  if (darkMode) {
-    statusColor = "text-red-400 bg-red-900/20 border-red-800/30";
-  }
-
-  if (isPassed) {
-    statusColor = darkMode ? "text-green-400 bg-green-900/20 border-green-800/30" : "text-green-600 bg-green-50 border-green-100";
-    statusText = "Passed";
-  } else if (isWarning) {
-    statusColor = darkMode ? "text-yellow-400 bg-yellow-900/20 border-yellow-800/30" : "text-yellow-600 bg-yellow-50 border-yellow-100";
-    statusText = "Warning";
-  }
-
-  const meta = activeData?.meta || {};
-  const excludedKeys = ['value', 'unit', 'score', 'status', 'details', 'suggestion', 'exists', 'hasStructuredData', 'brokenLinksList', 'target', 'uncompressedResources', 'uncachedResources', 'unoptimizedImages', 'unminifiedScripts', 'blockingResources'];
-  const metaKeys = Object.keys(meta).filter(key => !excludedKeys.includes(key));
-
-  // Lists
-  const brokenLinks = meta.brokenLinksList || [];
-  const uncompressedResources = meta.uncompressedResources || [];
-  const uncachedResources = meta.uncachedResources || [];
-  const unoptimizedImages = meta.unoptimizedImages || [];
-  const unminifiedScripts = meta.unminifiedScripts || [];
-  const blockingResources = meta.blockingResources || [];
-
-  const activeLists = [
-    { title: "Uncompressed Resources", items: uncompressedResources },
-    { title: "Uncached Resources", items: uncachedResources },
-    { title: "Unoptimized Images", items: unoptimizedImages },
-    { title: "Unminified Scripts", items: unminifiedScripts },
-    { title: "Blocking Resources", items: blockingResources },
-    { title: "Broken Links", items: brokenLinks.map(l => l.url) }
-  ].filter(l => l.items.length > 0);
-
-  // Get display value from activeData for lab/field metrics
-  const displayValue = hasLabFieldStructure
-    ? `${activeData?.value || 0}${activeData?.unit || ""}`
-    : (value !== null && value !== undefined ? `${value}${details.unit || ""}` : "--");
-
-
-  return (
-    <div className={`relative overflow-hidden rounded-xl border ${cardBg} shadow-sm hover:shadow-md transition-shadow group ${className || ""}`}>
-      <div className="p-5 space-y-4 h-full flex flex-col">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-4">
-            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
-              <Icon size={24} className={darkMode ? "text-blue-400" : "text-blue-600"} />
-            </div>
-            <div>
-              <h3 className={`font-bold text-lg ${textColor}`}>{details.title}</h3>
-              <p className={`text-xs ${subTextColor} font-medium`}>{details.analogy}</p>
-              <div className="flex items-center gap-2 mt-1 flex-wrap">
-                <span className={`text-xs font-medium px-2 py-0.5 rounded-full w-fit border ${statusColor}`}>
-                  {statusText}
-                </span>
-                {hasLabFieldStructure && (
-                  <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full ${selectedSource === "lab"
-                    ? darkMode ? "bg-blue-900/30 text-blue-400 border border-blue-700" : "bg-blue-100 text-blue-700 border border-blue-300"
-                    : darkMode ? "bg-purple-900/30 text-purple-400 border border-purple-700" : "bg-purple-100 text-purple-700 border border-purple-300"
-                    }`}>
-                    {selectedSource === "lab"
-                      ? "LAB"
-                      : (dynamicData.field ? "REAL USERS" : "LAB")}
-                  </span>
-                )}
-                {details.isCrux && <span className="text-[10px] uppercase tracking-wider opacity-60 font-bold">CrUX</span>}
-              </div>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <div className={`text-lg font-black ${isPassed ? "text-green-500" : isWarning ? "text-yellow-500" : "text-red-500"}`}>
-              {displayValue}
-            </div>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                details.onInfo?.();
-              }}
-              className={`mt-1 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
-              title="View Methodology"
-            >
-              <Info size={18} />
-            </button>
-          </div>
-        </div>
-
-        {/* Current Value Display for Lab/Field Metrics */}
-        {hasLabFieldStructure && activeData?.value !== undefined && (
-          <div>
-            <h4 className={`text-xs font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
-              Current Value
-            </h4>
-            <p className={`text-sm font-medium ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
-              {details.title} is <span className={`font-bold ${isPassed ? "text-green-500" : isWarning ? "text-yellow-500" : "text-red-500"}`}>{activeData.value}{activeData.unit}</span>
-            </p>
-          </div>
-        )}
-
-        {/* Thresholds - Only for Lab/Field Metrics */}
-        {hasLabFieldStructure && dynamicData?.thresholds && (
-          <div>
-            <h4 className={`text-xs font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
-              Thresholds
-            </h4>
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-xs">
-                <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-600"}`}>Good:</span>
-                <span className={`font-mono font-semibold ${darkMode ? "text-green-400" : "text-green-600"}`}>
-                  ≤ {dynamicData.thresholds.good}{activeData?.unit || "ms"}
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-600"}`}>Needs Improvement:</span>
-                <span className={`font-mono font-semibold ${darkMode ? "text-yellow-400" : "text-yellow-600"}`}>
-                  {dynamicData.thresholds.good + 1}–{dynamicData.thresholds.needsImprovement}{activeData?.unit || "ms"}
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-600"}`}>Poor:</span>
-                <span className={`font-mono font-semibold ${darkMode ? "text-red-400" : "text-red-600"}`}>
-                  &gt; {dynamicData.thresholds.needsImprovement}{activeData?.unit || "ms"}
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Common Causes - Only for Lab/Field Metrics */}
-        {hasLabFieldStructure && dynamicData?.analysis?.causes && dynamicData.analysis.causes.length > 0 && (
-          <div>
-            <h4 className={`text-xs font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
-              Common Causes
-            </h4>
-            <ul className="space-y-1">
-              {dynamicData.analysis.causes.map((cause, idx) => (
-                <li key={idx} className={`text-xs flex items-start gap-1.5 ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
-                  <span className="text-orange-500 mt-0.5">•</span>
-                  <span>{cause}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* Recommendations - Only for Lab/Field Metrics */}
-        {hasLabFieldStructure && dynamicData?.analysis?.recommendations && dynamicData.analysis.recommendations.length > 0 && (
-          <div>
-            <h4 className={`text-xs font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
-              Recommendations
-            </h4>
-            <ul className="space-y-1">
-              {dynamicData.analysis.recommendations.map((rec, idx) => (
-                <li key={idx} className={`text-xs flex items-start gap-1.5 ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
-                  <span className="text-emerald-500 mt-0.5">✓</span>
-                  <span>{rec}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* AI Insight - Only for Lab/Field Metrics */}
-        {hasLabFieldStructure && dynamicData?.analysis?.aiInsight && (
-          <div className={`p-3 rounded-lg ${darkMode ? "bg-gradient-to-br from-purple-500/10 to-blue-500/10 border border-purple-500/20" : "bg-gradient-to-br from-purple-50 to-blue-50 border border-purple-200"}`}>
-            <div className="flex gap-2 items-start">
-              <span className="text-lg flex-shrink-0">🤖</span>
-              <p className={`text-xs leading-relaxed ${darkMode ? "text-purple-200" : "text-slate-700"}`}>
-                <span className="font-semibold">AI Insight:</span> {dynamicData.analysis.aiInsight}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Dynamic Details - Hidden for CrUX and Lab/Field Metrics */}
-        {!details.isCrux && !hasLabFieldStructure && (
-          <div>
-            <h4 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
-              Status Detail
-            </h4>
-            <p className={`text-sm font-medium ${isPassed ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
-              {activeData?.details || "No details available"}
-            </p>
-          </div>
-        )}
-
-        {/* Technical Data - Hidden for Lab/Field Metrics */}
-        {!hasLabFieldStructure && (metaKeys.length > 0 || activeLists.length > 0) && (
-          <div className="flex-grow">
-            <h4 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
-              Technical Data
-            </h4>
-            <div className={`p-2 rounded text-xs font-mono overflow-x-auto ${darkMode ? "bg-gray-900 text-gray-300" : "bg-gray-100 text-gray-700"}`}>
-
-              {/* Layout for Broken Links: Split Meta Keys (left) and Lists (right) */}
-              {details.key === 'Broken_Links' ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Left: Meta Keys (Counts) */}
-                  <div className="space-y-1">
-                    {metaKeys.map(k => (
-                      <div key={k} className="flex flex-col sm:flex-row sm:gap-2 mb-1 last:mb-0">
-                        <span className="font-semibold opacity-70">{k.replace(/([A-Z])/g, ' $1').trim()}:</span>
-                        <span className="break-all">
-                          {typeof meta[k] === 'object' ? JSON.stringify(meta[k]).replace(/"/g, '').replace(/{/g, '').replace(/}/g, '').replace(/,/g, ', ') : String(meta[k])}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Right: Lists (Broken Links) */}
-                  <div className="space-y-2">
-                    {activeLists.map((list, idx) => (
-                      <div key={idx}>
-                        <div className="font-semibold opacity-80 mb-1">{list.title} ({list.items.length})</div>
-                        <div className="pl-2 border-l-2 border-gray-300 dark:border-gray-700 max-h-32 overflow-y-auto custom-scrollbar">
-                          {list.items.map((item, i) => (
-                            <div key={i} className="truncate mb-0.5" title={item}>{item}</div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                /* Default Layout */
-                <>
-                  {/* Meta Keys */}
-                  {metaKeys.map(k => (
-                    <div key={k} className="flex flex-col sm:flex-row sm:gap-2 mb-1 last:mb-0">
-                      <span className="font-semibold opacity-70">{k.replace(/([A-Z])/g, ' $1').trim()}:</span>
-                      <span className="break-all">
-                        {typeof meta[k] === 'object' ? JSON.stringify(meta[k]).replace(/"/g, '').replace(/{/g, '').replace(/}/g, '').replace(/,/g, ', ') : String(meta[k])}
-                      </span>
-                    </div>
-                  ))}
-
-                  {/* Lists - Grid Layout for Resource Optimization */}
-                  {activeLists.length > 0 && (
-                    <div className={`mt-2 ${details.key === 'Resource_Optimization' ? 'grid grid-cols-1 md:grid-cols-2 gap-4' : 'space-y-2'}`}>
-                      {activeLists.map((list, idx) => (
-                        <div key={idx} className={details.key !== 'Resource_Optimization' ? "mt-2 first:mt-0" : ""}>
-                          <div className="font-semibold opacity-80 mb-1">{list.title} ({list.items.length})</div>
-                          <div className="pl-2 border-l-2 border-gray-300 dark:border-gray-700 max-h-24 overflow-y-auto custom-scrollbar">
-                            {list.items.map((item, i) => (
-                              <div key={i} className="truncate mb-0.5" title={item}>{item}</div>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Educational Content / Suggestion - Hidden for Lab/Field Metrics */}
-        {!hasLabFieldStructure && activeData?.suggestion && activeData.suggestion !== "None" && (
-          <div className="pt-4 border-t border-gray-200 dark:border-gray-700 mt-auto">
-            <p className={`text-xs mt-2 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
-              <span className="font-semibold">Suggestion:</span> {activeData.suggestion}
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-// ------------------------------------------------------
-// ✅ Metric Info Modal
-// ------------------------------------------------------
-
-
-// ------------------------------------------------------
-// ✅ Metric Explanations Data
-// ------------------------------------------------------
-
-// ------------------------------------------------------
-// ✅ Score Calculation Info (Standard Weights)
-// ------------------------------------------------------
 // ------------------------------------------------------
 // ✅ Score Calculation Info (Standard Weights)
 // ------------------------------------------------------
@@ -406,26 +85,26 @@ const scoreCalculationInfo = InfoDetails.Technical_Performance_Methodology;
 // ------------------------------------------------------
 // ✅ Metric Explanations Data
 // ------------------------------------------------------
-// ------------------------------------------------------
-// ✅ Metric Explanations Data
-// ------------------------------------------------------
 const metricExplanations = InfoDetails;
 
 // ------------------------------------------------------
 // ✅ Section Component
 // ------------------------------------------------------
-const Section = ({ title, subtitle, icon: Icon, children, darkMode }) => (
+const Section = ({ title, subtitle, icon: Icon, children, darkMode, action }) => (
   <div className="space-y-4">
-    <div className="flex items-center gap-3 px-2">
-      <div className={`p-2 rounded-lg ${darkMode ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-600"}`}>
-        <Icon size={20} />
+    <div className="flex items-center justify-between px-2">
+      <div className="flex items-center gap-3">
+        <div className={`p-2 rounded-lg ${darkMode ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-600"}`}>
+          <Icon size={20} />
+        </div>
+        <div>
+          <h2 className={`text-xl font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>{title}</h2>
+          <p className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-500"}`}>{subtitle}</p>
+        </div>
       </div>
-      <div>
-        <h2 className={`text-xl font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>{title}</h2>
-        <p className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-500"}`}>{subtitle}</p>
-      </div>
+      {action && <div>{action}</div>}
     </div>
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
       {children}
     </div>
   </div>
@@ -440,6 +119,8 @@ export default function Technical_Performance() {
   const [selectedMetricInfo, setSelectedMetricInfo] = React.useState(null);
   const [selectedParameterInfo, setSelectedParameterInfo] = React.useState(null);
   const [selectedSource, setSelectedSource] = React.useState("lab"); // "lab" or "field"
+  const [expandedDetails, setExpandedDetails] = React.useState({});
+  const toggleDetails = (metric) => setExpandedDetails(prev => ({ ...prev, [metric]: !prev[metric] }));
   const darkMode = theme === "dark";
 
   const auditSteps = useMemo(() => [
@@ -497,109 +178,41 @@ export default function Technical_Performance() {
   const mainBg = darkMode ? "bg-gray-900" : "bg-gray-50";
   const textColor = darkMode ? "text-white" : "text-gray-900";
 
-  // Sections Config
-  const sections = [
-    {
-      id: "crux",
-      title: "Real User Experience",
-      subtitle: "Field data from actual users (CrUX)",
-      icon: Globe,
-      isCrux: true,
-      metrics: [
-        { key: 'LCP', title: "Largest Contentful Paint", analogy: "Time until main content is visible.", unit: "ms", icon: Layout },
-        { key: 'INP', title: "Interaction to Next Paint", analogy: "Overall responsiveness.", unit: "ms", icon: Activity },
-        { key: 'CLS', title: "Cumulative Layout Shift", analogy: "Visual stability of the page.", unit: "", icon: Layout },
-        { key: 'FCP', title: "First Contentful Paint", analogy: "First visual response.", unit: "ms", icon: Zap },
-        { key: 'TTFB', title: "Time To First Byte", analogy: "Server response speed.", unit: "ms", icon: Server }
-      ]
-    },
-    {
-      id: "core-vitals",
-      title: "Core Web Vitals",
-      subtitle: "Lab data simulation",
-      icon: Activity,
-      metrics: [
-        { key: 'LCP', title: "Largest Contentful Paint", analogy: "Main content load speed.", unit: "ms", icon: Layout },
-        { key: 'FID', title: "First Input Delay", analogy: "Input responsiveness.", unit: "ms", icon: MousePointer2 },
-        { key: 'INP', title: "Interaction to Next Paint", analogy: "Interaction latency.", unit: "ms", icon: Activity },
-        { key: 'CLS', title: "Cumulative Layout Shift", analogy: "Visual stability.", unit: "", icon: Layout },
-      ]
-    },
-    {
-      id: "performance",
-      title: "Performance",
-      subtitle: "Speed & loading metrics",
-      icon: Zap,
-      metrics: [
-        { key: 'FCP', title: "First Contentful Paint", analogy: "First paint time.", unit: "ms", icon: Zap },
-        { key: 'TTFB', title: "Time To First Byte", analogy: "Server latency.", unit: "ms", icon: Server },
-        { key: 'TBT', title: "Total Blocking Time", analogy: "Main thread blocking time.", unit: "ms", icon: Clock },
-        { key: 'SI', title: "Speed Index", analogy: "Visual population speed.", unit: "ms", icon: Gauge }
-      ]
-    },
-    {
-      id: "assets",
-      title: "Assets & Server",
-      subtitle: "Optimization checks",
-      icon: Server,
-      metrics: [
-        { key: 'Compression', title: "Text Compression", analogy: "Gzip/Brotli compression.", unit: "", icon: FileCode, getValue: (m) => m.meta.value === 100 ? "Enabled" : `${m.meta.value}%` },
-        { key: 'Caching', title: "Caching Policy", analogy: "Browser caching settings.", unit: "%", icon: Database, getValue: (m) => `${m.meta.value}` },
-        { key: 'Render_Blocking', title: "Render-Blocking", analogy: "Critical path blocking.", unit: "", icon: AlertTriangle, getValue: (m) => m.meta.value === 0 ? "None" : `${m.meta.value} items` },
-        { key: 'HTTP', title: "HTTPS / HTTP2", analogy: "Secure transport protocols.", unit: "", icon: Shield, getValue: (m) => m.score === 100 ? "Secure" : "Insecure" },
-        { key: 'Resource_Optimization', title: "Resource Optimization", analogy: "Image & code minification.", unit: "", icon: ImageIcon, getValue: (m) => m.score >= 80 ? "Optimized" : "Needs Work", className: "md:col-span-2" },
-      ]
-    },
-    {
-      id: "seo",
-      title: "SEO & Crawlability",
-      subtitle: "Search engine visibility",
-      icon: Search,
-      metrics: [
-        { key: 'Sitemap', title: "Sitemap", analogy: "XML Sitemap presence.", unit: "", icon: Map, getValue: (m) => m.meta.exists ? "Found" : "Missing" },
-        { key: 'Robots', title: "Robots.txt", analogy: "Crawling instructions.", unit: "", icon: FileText, getValue: (m) => m.meta.exists ? "Found" : "Missing" },
-        { key: 'Structured_Data', title: "Structured Data", analogy: "Schema markup.", unit: "", icon: FileCode, getValue: (m) => m.meta.hasStructuredData ? "Found" : "Missing" },
-        { key: 'Broken_Links', title: "Broken Links", analogy: "Dead internal links.", unit: "%", icon: Link, getValue: (m) => m.meta.brokenPercent, className: "md:col-span-2" },
-        { key: 'Redirect_Chains', title: "Redirect Chains", analogy: "Multiple redirects.", unit: " hops", icon: ArrowRightLeft, getValue: (m) => m.meta.value }
-      ]
-    }
-  ];
+  // Helper to safely get metric score for counting passed/failed
+  const getMetricScore = (key) => {
+    const m = tech[key];
+    if (!m) return 0;
+    // If it has separate lab/crux structure
+    if (m.lab) return m.lab.score || 0;
+    // Legacy/Direct structure
+    return m.score !== undefined ? m.score : 0;
+  };
 
-  // Calculate Passed/Failed based on lab data only
-  const allMetrics = [];
-  const allowedMetrics = ["LCP", "TBT", "INP", "FCP", "SI", "TTFB", "CLS"];
+  // Calculate passed/failed metrics manually
+  let passedCount = 0;
+  let failedCount = 0;
 
-  sections.forEach((s) => {
-    if (s.isCrux && !tech.Real_User_Experience) return;
-    const source = s.isCrux ? tech.Real_User_Experience : tech;
-    if (!source) return;
+  if (getMetricScore("LCP") >= 90) passedCount++; else failedCount++;
+  if (getMetricScore("FID") >= 90) passedCount++; else failedCount++;
+  if (getMetricScore("TBT") >= 90) passedCount++; else failedCount++;
+  if (getMetricScore("INP") >= 90) passedCount++; else failedCount++;
+  if (getMetricScore("FCP") >= 90) passedCount++; else failedCount++;
+  if (getMetricScore("SI") >= 90) passedCount++; else failedCount++;
+  if (getMetricScore("TTFB") >= 90) passedCount++; else failedCount++;
+  if (getMetricScore("CLS") >= 90) passedCount++; else failedCount++;
 
-    s.metrics.forEach((m) => {
-      if (allowedMetrics.includes(m.key) && source[m.key]) {
-        const metricData = source[m.key];
+  // Assets & Server (5 Parameters)
+  if (tech.Compression?.status === "good") passedCount++; else failedCount++;
+  if (tech.Caching?.status === "good") passedCount++; else failedCount++;
+  if (tech.Render_Blocking?.status === "good") passedCount++; else failedCount++;
+  if (tech.HTTP?.status === "good") passedCount++; else failedCount++;
+  if (tech.Resource_Optimization?.status === "good") passedCount++; else failedCount++;
 
-        // Check if metric has lab/field structure
-        const hasLabFieldStructure = metricData?.lab || metricData?.field;
-
-        if (hasLabFieldStructure) {
-          // Always use lab data for passed/failed count
-          const labData = metricData.lab;
-
-          if (labData?.score !== undefined) {
-            allMetrics.push(labData);
-          }
-        } else {
-          // Legacy metric structure
-          if (metricData?.score !== undefined) {
-            allMetrics.push(metricData);
-          }
-        }
-      }
-    });
-  });
-
-  const passedCount = allMetrics.filter((m) => m.score >= 90).length;
-  const failedCount = allMetrics.filter((m) => m.score < 90).length;
+  // SEO & Crawlability (4 Parameters)
+  if (tech.Sitemap?.status === "good") passedCount++; else failedCount++;
+  if (tech.Robots?.status === "good") passedCount++; else failedCount++;
+  if (tech.Structured_Data?.status === "good") passedCount++; else failedCount++;
+  if (tech.Redirect_Chains?.status === "good") passedCount++; else failedCount++;
 
   return (
     <div className={`w-full ${mainBg} transition-colors duration-300`}>
@@ -691,36 +304,7 @@ export default function Technical_Performance() {
                       </div>
 
 
-                      {/* Data Source Toggle */}
-                      <div className={`flex flex-wrap items-center ${data.report === "All" ? "gap-6 justify-start" : "gap-4 justify-start"}`}>
-                        <span className="text-[11px] font-black uppercase tracking-[0.2em] opacity-60">Data Source</span>
 
-                        <div className={`flex p-1 ${data.report === "All" ? "rounded-2xl" : "rounded-xl"} border ${darkMode ? "bg-slate-950/40 border-slate-800" : "bg-slate-100/50 border-slate-200"}`}>
-                          <button
-                            onClick={() => setSelectedSource("lab")}
-                            className={`flex items-center gap-3 px-6 py-2.5 rounded-xl transition-all duration-300 ${selectedSource === "lab"
-                              ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30"
-                              : `hover:bg-slate-400/10 ${darkMode ? "text-slate-400" : "text-slate-600"}`
-                              }`}
-                          >
-                            <Zap size={16} className={selectedSource === "lab" ? "text-white" : "text-blue-500"} />
-                            <span className="text-sm font-bold">Lab Data</span>
-                            {selectedSource === "lab" && <CheckCircle className="w-4 h-4 ml-1" />}
-                          </button>
-
-                          <button
-                            onClick={() => setSelectedSource("field")}
-                            className={`flex items-center gap-3 px-6 py-2.5 rounded-xl transition-all duration-300 ${selectedSource === "field"
-                              ? "bg-purple-600 text-white shadow-lg shadow-purple-500/30"
-                              : `hover:bg-slate-400/10 ${darkMode ? "text-slate-400" : "text-slate-600"}`
-                              }`}
-                          >
-                            <TrendingUp size={16} className={selectedSource === "field" ? "text-white" : "text-purple-500"} />
-                            <span className="text-sm font-bold">Real User Data</span>
-                            {selectedSource === "field" && <CheckCircle className="w-4 h-4 ml-1" />}
-                          </button>
-                        </div>
-                      </div>
                     </div>
 
                     {/* Circular Progress */}
@@ -742,52 +326,823 @@ export default function Technical_Performance() {
           )}
         </div>
 
-        {/* Sections */}
-        {
-          data?.technicalPerformance && sections.map((section) => {
-            if (section.isCrux && !tech.Real_User_Experience) return null;
-            return (
-              <Section key={section.id} title={section.title} subtitle={section.subtitle} icon={section.icon} darkMode={darkMode}>
-                {section.metrics.map((m) => {
-                  const dataSource = section.isCrux ? tech.Real_User_Experience : tech;
-                  const dynamicData = dataSource[m.key];
+        {/* Sections - Manual Unrolled Rendering */}
+        {data?.technicalPerformance && (
+          <>
+            {/* Core Web Vitals */}
+            <Section
+              title="Technical Performance Metrics"
+              subtitle="Core Web Vitals & Loading Metrics"
+              icon={Activity}
+              darkMode={darkMode}
+              action={
+                <div className={`flex items-center p-1 rounded-lg border ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}>
+                  <button
+                    onClick={() => setSelectedSource("lab")}
+                    className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${selectedSource === "lab" ? (darkMode ? "bg-blue-600 text-white shadow-sm" : "bg-blue-50 text-blue-600 shadow-sm") : (darkMode ? "text-slate-400 hover:text-slate-200" : "text-slate-500 hover:text-slate-700")}`}
+                  >
+                    Lab Data
+                  </button>
+                  <button
+                    onClick={() => setSelectedSource("field")}
+                    className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${selectedSource === "field" ? (darkMode ? "bg-blue-600 text-white shadow-sm" : "bg-blue-50 text-blue-600 shadow-sm") : (darkMode ? "text-slate-400 hover:text-slate-200" : "text-slate-500 hover:text-slate-700")}`}
+                  >
+                    Real User
+                  </button>
+                </div>
+              }
+            >
+              {tech.LCP && (
+                <MetricCard
+                  title="Largest Contentful Paint"
+                  icon={Layout}
+                  metricData={tech.LCP}
+                  selectedSource={selectedSource}
+                  darkMode={darkMode}
+                  description="Largest Contentful Paint (LCP) measures how long it takes for the main content to become visible; a fast LCP ensures users perceive the page as truly useful immediately."
+                  whyItMatters="LCP is the primary indicator of how fast your page 'feels'. A good LCP keeps users from leaving due to perceived slow loading."
+                  onInfoClick={() => setSelectedParameterInfo({ title: "Largest Contentful Paint", icon: Layout, ...metricExplanations.LCP, metricData: tech.LCP })}
+                />
+              )}
 
-                  let displayValue = dynamicData?.meta?.value;
-                  if (m.getValue) {
-                    displayValue = m.getValue(dynamicData);
-                  } else if (section.isCrux) {
-                    displayValue = dynamicData?.value;
-                  }
+              {tech.FID && (
+                <MetricCard
+                  title="First Input Delay"
+                  icon={MousePointer2}
+                  metricData={tech.FID}
+                  selectedSource={selectedSource}
+                  darkMode={darkMode}
+                  description="First Input Delay (FID) measures the time from a user's first interaction to the browser's response; low FID is critical for making a site feel responsive and snappy."
+                  whyItMatters="FID is critical on highly interactive pages. High delay frustrates users and leads to a negative impression of your site's quality."
+                  onInfoClick={() => setSelectedParameterInfo({ title: "First Input Delay", icon: MousePointer2, ...metricExplanations.FID, metricData: tech.FID })}
+                />
+              )}
 
-                  return (
-                    <MetricCard
-                      key={m.key}
-                      details={{
-                        ...m,
-                        isCrux: section.isCrux,
-                        onInfo: () => setSelectedParameterInfo({
-                          title: m.title,
-                          icon: m.icon,
-                          ...metricExplanations[m.key],
-                          metricData: dynamicData // Pass full metric data for modal
-                        })
-                      }}
-                      dynamicData={dynamicData}
-                      value={displayValue}
+              {tech.INP && (
+                <MetricCard
+                  title="Interaction to Next Paint"
+                  icon={Activity}
+                  metricData={tech.INP}
+                  selectedSource={selectedSource}
+                  darkMode={darkMode}
+                  description="Interaction to Next Paint (INP) quantifies the latency of all user interactions throughout the entire visit; it is the ultimate measure of overall application responsiveness."
+                  whyItMatters="INP is the most accurate reflection of a site's responsiveness. A high INP makes the app feel 'laggy' or broken to the end user."
+                  onInfoClick={() => setSelectedParameterInfo({ title: "Interaction to Next Paint", icon: Activity, ...metricExplanations.INP, metricData: tech.INP })}
+                />
+              )}
+
+              {tech.CLS && (
+                <MetricCard
+                  title="Cumulative Layout Shift"
+                  icon={Layout}
+                  metricData={tech.CLS}
+                  selectedSource={selectedSource}
+                  darkMode={darkMode}
+                  description="Cumulative Layout Shift (CLS) measures unexpected movement of page elements; a low score prevents annoying layout jumps that cause users to click the wrong things."
+                  whyItMatters="A stable UI prevents accidental clicks and enhances trust. High CLS is one of the most common reasons for user frustration."
+                  onInfoClick={() => setSelectedParameterInfo({ title: "Cumulative Layout Shift", icon: Layout, ...metricExplanations.CLS, metricData: tech.CLS })}
+                />
+              )}
+
+              {tech.FCP && (
+                <MetricCard
+                  title="First Contentful Paint"
+                  icon={Zap}
+                  metricData={tech.FCP}
+                  selectedSource={selectedSource}
+                  darkMode={darkMode}
+                  description="First Contentful Paint (FCP) is the timestamp when the first text or image is rendered; it is the first signal to the user that the page is actually loading."
+                  whyItMatters="FCP provides the first visual feedback. Speeding up FCP reduces the 'bounce rate' of users who might leave if they see nothing."
+                  onInfoClick={() => setSelectedParameterInfo({ title: "First Contentful Paint", icon: Zap, ...metricExplanations.FCP, metricData: tech.FCP })}
+                />
+              )}
+
+              {tech.TTFB && (
+                <MetricCard
+                  title="Time To First Byte"
+                  icon={Server}
+                  metricData={tech.TTFB}
+                  selectedSource={selectedSource}
+                  darkMode={darkMode}
+                  description="Time to First Byte (TTFB) measures the server's responsiveness; it is the foundation of speed, as a slow server response delays every other part of the page."
+                  whyItMatters="If TTFB is slow, every other metric will be slow. It is the most critical server-side performance indicator."
+                  onInfoClick={() => setSelectedParameterInfo({ title: "Time To First Byte", icon: Server, ...metricExplanations.TTFB, metricData: tech.TTFB })}
+                />
+              )}
+
+              {tech.TBT && (
+                <MetricCard
+                  title="Total Blocking Time"
+                  icon={Clock}
+                  metricData={tech.TBT}
+                  selectedSource={selectedSource}
+                  darkMode={darkMode}
+                  description="Total Blocking Time (TBT) tracks how long the main thread is occupied by long tasks; reducing TBT is essential for preventing the 'frozen' feeling during page load."
+                  whyItMatters="TBT correlates with user frustration. High blocking time prevents users from scrolling or clicking during the most critical load phase."
+                  onInfoClick={() => setSelectedParameterInfo({ title: "Total Blocking Time", icon: Clock, ...metricExplanations.TBT, metricData: tech.TBT })}
+                />
+              )}
+
+              {tech.SI && (
+                <MetricCard
+                  title="Speed Index"
+                  icon={Gauge}
+                  metricData={tech.SI}
+                  selectedSource={selectedSource}
+                  darkMode={darkMode}
+                  description="Speed Index (SI) calculates how quickly content visually populates the screen; a lower index means users aren't left staring at a blank or half-rendered page."
+                  whyItMatters="A better Speed Index means your page looks complete faster. This is vital for maintaining user interest during the first few seconds."
+                  onInfoClick={() => setSelectedParameterInfo({ title: "Speed Index", icon: Gauge, ...metricExplanations.SI, metricData: tech.SI })}
+                />
+              )}
+            </Section>
+
+            {/* Assets & Server */}
+            <Section title="Assets & Server" subtitle="Optimization checks" icon={Server} darkMode={darkMode}>
+              {tech.Compression && (() => {
+                const needsData = tech.Compression;
+                const status = needsData.status || "poor";
+                const isPassed = status === "pass";
+                const cardBg = darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200";
+                const textColor = darkMode ? "text-gray-100" : "text-gray-900";
+                const subTextColor = darkMode ? "text-gray-400" : "text-gray-500";
+                const statusBadgeColor = status === "good" ? (darkMode ? "bg-emerald-900/30 text-emerald-400 border-emerald-800" : "bg-emerald-50 text-emerald-600 border-emerald-100") : status === "needs_improvement" ? (darkMode ? "bg-amber-900/30 text-amber-400 border-amber-800" : "bg-amber-50 text-amber-600 border-amber-100") : (darkMode ? "bg-rose-900/30 text-rose-400 border-rose-800" : "bg-rose-50 text-rose-600 border-rose-100");
+                const statusText = status === "good" ? "Passed" : status === "needs_improvement" ? "Needs Impr." : "Poor";
+                const valueColor = status === "good" ? (darkMode ? "text-emerald-400" : "text-emerald-600") : status === "needs_improvement" ? (darkMode ? "text-amber-400" : "text-amber-600") : (darkMode ? "text-rose-400" : "text-rose-600");
+                const displayValue = `${needsData.value}`;
+
+                return (
+                  <div className={`rounded-2xl border ${cardBg} shadow-sm hover:shadow-md transition-all duration-300 p-6 flex flex-col h-full`}>
+                    <div className="flex items-start justify-between mb-6">
+                      <div className="flex items-start gap-4">
+                        <div className={`p-3 rounded-xl flex-shrink-0 ${darkMode ? "bg-blue-900/20 text-blue-400" : "bg-blue-50 text-blue-600"}`}>
+                          <FileCode size={24} strokeWidth={2} />
+                        </div>
+                        <div>
+                          <h3 className={`font-bold text-lg leading-tight mb-1 ${textColor}`}>Text Compression</h3>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`text-xs font-bold px-2.5 py-1 rounded-md border ${statusBadgeColor}`}>{statusText}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <button onClick={(e) => { e.stopPropagation(); setSelectedParameterInfo({ title: "Text Compression", icon: FileCode, ...metricExplanations.Compression, metricData: tech.Compression }) }} className={`p-1.5 rounded-full transition-colors ${darkMode ? "text-gray-500 hover:text-gray-300 hover:bg-gray-700" : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"}`} title="View Methodology">
+                        <Info size={20} />
+                      </button>
+                    </div>
+                    <div className="space-y-6 flex-grow">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
+                        Description: <span className={`normal-case font-normal opacity-100 text-xs leading-relaxed ${subTextColor}`}>Compressing text-based files (HTML, CSS, JS) reduces their size, allowing them to download faster and significantly decreasing initial page load time.</span>
+                      </p>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className={`p-4 rounded-xl border col-span-2 ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                          <div className="flex justify-between items-center">
+                            <p className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Overall Score</p>
+                            <span className={`text-xs font-black px-3 py-1 rounded-lg ${needsData.status === "good" ? (darkMode ? "bg-emerald-900/20 text-emerald-400 border border-emerald-800/30" : "bg-emerald-50 text-emerald-600 border border-emerald-100") : needsData.status === "needs_improvement" ? (darkMode ? "bg-amber-900/20 text-amber-400 border border-amber-800/30" : "bg-amber-50 text-amber-600 border border-amber-100") : (darkMode ? "bg-rose-900/20 text-rose-400 border border-rose-800/30" : "bg-rose-50 text-rose-600 border border-rose-100")}`}>
+                              {needsData.value}
+                            </span>
+                          </div>
+                        </div>
+                        <div className={`p-3 rounded-xl border ${darkMode ? "bg-emerald-900/10 border-emerald-800/30" : "bg-emerald-50 border-emerald-100"}`}>
+                          <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>Compressed</p>
+                          <p className={`text-xl font-black ${darkMode ? "text-emerald-300" : "text-emerald-700"}`}>{needsData.compressedCount || 0}</p>
+                        </div>
+                        <div className={`p-3 rounded-xl border ${darkMode ? "bg-rose-900/10 border-rose-800/30" : "bg-rose-50 border-rose-100"}`}>
+                          <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>Uncompressed</p>
+                          <p className={`text-xl font-black ${darkMode ? "text-rose-300" : "text-rose-700"}`}>{needsData.uncompressedResourcesCount || 0}</p>
+                        </div>
+                      </div>
+
+                      <div>
+                        <DirectThresholdBar metricData={{ ...needsData, value: displayValue }} darkMode={darkMode} />
+                      </div>
+                    </div>
+                    <div className={`mt-auto pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
+                        Why it matters: <span className="normal-case font-normal opacity-100">Compression can reduce file sizes by up to 70%, drastically speeding up data transfer for mobile and slow-connection users.</span>
+                      </p>
+                    </div>
+                    <MetricAnalysisDetails
+                      analysis={needsData?.analysis}
                       darkMode={darkMode}
-                      icon={m.icon}
-                      className={m.className}
-                      selectedSource={selectedSource}
-                      metricKey={m.key}
+                      isOpen={expandedDetails.compression}
+                      onToggle={() => toggleDetails('compression')}
                     />
-                  );
-                })}
-              </Section>
-            );
-          })
-        }
+                  </div>
+                );
+              })()}
+
+              {tech.Caching && (() => {
+                const needsData = tech.Caching;
+                const status = needsData.status || "poor";
+                const isPassed = status === "pass";
+                const cardBg = darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200";
+                const textColor = darkMode ? "text-gray-100" : "text-gray-900";
+                const subTextColor = darkMode ? "text-gray-400" : "text-gray-500";
+                const statusBadgeColor = status === "good" ? (darkMode ? "bg-emerald-900/30 text-emerald-400 border-emerald-800" : "bg-emerald-50 text-emerald-600 border-emerald-100") : status === "needs_improvement" ? (darkMode ? "bg-amber-900/30 text-amber-400 border-amber-800" : "bg-amber-50 text-amber-600 border-amber-100") : (darkMode ? "bg-rose-900/30 text-rose-400 border-rose-800" : "bg-rose-50 text-rose-600 border-rose-100");
+                const statusText = status === "good" ? "Passed" : status === "needs_improvement" ? "Needs Impr." : "Poor";
+                const valueColor = status === "good" ? (darkMode ? "text-emerald-400" : "text-emerald-600") : status === "needs_improvement" ? (darkMode ? "text-amber-400" : "text-amber-600") : (darkMode ? "text-rose-400" : "text-rose-600");
+                const displayValue = `${needsData.value}`;
+
+                return (
+                  <div className={`rounded-2xl border ${cardBg} shadow-sm hover:shadow-md transition-all duration-300 p-6 flex flex-col h-full`}>
+                    <div className="flex items-start justify-between mb-6">
+                      <div className="flex items-start gap-4">
+                        <div className={`p-3 rounded-xl flex-shrink-0 ${darkMode ? "bg-blue-900/20 text-blue-400" : "bg-blue-50 text-blue-600"}`}>
+                          <Database size={24} strokeWidth={2} />
+                        </div>
+                        <div>
+                          <h3 className={`font-bold text-lg leading-tight mb-1 ${textColor}`}>Caching Policy</h3>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`text-xs font-bold px-2.5 py-1 rounded-md border ${statusBadgeColor}`}>{statusText}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <button onClick={(e) => { e.stopPropagation(); setSelectedParameterInfo({ title: "Caching Policy", icon: Database, ...metricExplanations.Caching, metricData: tech.Caching }) }} className={`p-1.5 rounded-full transition-colors ${darkMode ? "text-gray-500 hover:text-gray-300 hover:bg-gray-700" : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"}`} title="View Methodology">
+                        <Info size={20} />
+                      </button>
+                    </div>
+                    <div className="space-y-6 flex-grow">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
+                        Description: <span className={`normal-case font-normal opacity-100 text-xs leading-relaxed ${subTextColor}`}>Browser caching stores static assets locally on the user device, eliminating the need to re-download them on repeat visits and making your site feel much faster.</span>
+                      </p>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className={`p-4 rounded-xl border col-span-2 ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                          <div className="flex justify-between items-center">
+                            <p className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Overall Score</p>
+                            <span className={`text-xs font-black px-3 py-1 rounded-lg ${needsData.status === "good" ? (darkMode ? "bg-emerald-900/20 text-emerald-400 border border-emerald-800/30" : "bg-emerald-50 text-emerald-600 border border-emerald-100") : needsData.status === "needs_improvement" ? (darkMode ? "bg-amber-900/20 text-amber-400 border border-amber-800/30" : "bg-amber-50 text-amber-600 border border-amber-100") : (darkMode ? "bg-rose-900/20 text-rose-400 border border-rose-800/30" : "bg-rose-50 text-rose-600 border border-rose-100")}`}>
+                              {needsData.value}
+                            </span>
+                          </div>
+                        </div>
+                        <div className={`p-3 rounded-xl border ${darkMode ? "bg-emerald-900/10 border-emerald-800/30" : "bg-emerald-50 border-emerald-100"}`}>
+                          <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>Cached</p>
+                          <p className={`text-xl font-black ${darkMode ? "text-emerald-300" : "text-emerald-700"}`}>{needsData.cachedCount || 0}</p>
+                        </div>
+                        <div className={`p-3 rounded-xl border ${darkMode ? "bg-rose-900/10 border-rose-800/30" : "bg-rose-50 border-rose-100"}`}>
+                          <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>Uncached</p>
+                          <p className={`text-xl font-black ${darkMode ? "text-rose-300" : "text-rose-700"}`}>{needsData.uncachedResourcesCount || 0}</p>
+                        </div>
+                      </div>
+
+                      <div>
+                        <DirectThresholdBar metricData={{ ...needsData, value: displayValue }} darkMode={darkMode} />
+                      </div>
+                    </div>
+                    <div className={`mt-auto pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
+                        Why it matters: <span className="normal-case font-normal opacity-100">Efficient caching reduces server costs and provides an 'instant' feel for returning visitors by reading files directly from their disk.</span>
+                      </p>
+                    </div>
+                    <MetricAnalysisDetails
+                      analysis={needsData?.analysis}
+                      darkMode={darkMode}
+                      isOpen={expandedDetails.caching}
+                      onToggle={() => toggleDetails('caching')}
+                    />
+                  </div>
+                );
+              })()}
+
+              {tech.Render_Blocking && (() => {
+                const needsData = tech.Render_Blocking;
+                const status = needsData.status || "poor";
+                const isPassed = status === "pass";
+                const cardBg = darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200";
+                const textColor = darkMode ? "text-gray-100" : "text-gray-900";
+                const subTextColor = darkMode ? "text-gray-400" : "text-gray-500";
+                const statusBadgeColor = status === "good" ? (darkMode ? "bg-emerald-900/30 text-emerald-400 border-emerald-800" : "bg-emerald-50 text-emerald-600 border-emerald-100") : status === "needs_improvement" ? (darkMode ? "bg-amber-900/30 text-amber-400 border-amber-800" : "bg-amber-50 text-amber-600 border-amber-100") : (darkMode ? "bg-rose-900/30 text-rose-400 border-rose-800" : "bg-rose-50 text-rose-600 border-rose-100");
+                const statusText = status === "good" ? "Passed" : status === "needs_improvement" ? "Needs Impr." : "Poor";
+                const valueColor = status === "good" ? (darkMode ? "text-emerald-400" : "text-emerald-600") : status === "needs_improvement" ? (darkMode ? "text-amber-400" : "text-amber-600") : (darkMode ? "text-rose-400" : "text-rose-600");
+                const displayValue = needsData.blockingCount === 0 ? "None" : `${needsData.blockingCount} items`;
+
+                return (
+                  <div className={`rounded-2xl border ${cardBg} shadow-sm hover:shadow-md transition-all duration-300 p-6 flex flex-col h-full`}>
+                    <div className="flex items-start justify-between mb-6">
+                      <div className="flex items-start gap-4">
+                        <div className={`p-3 rounded-xl flex-shrink-0 ${darkMode ? "bg-blue-900/20 text-blue-400" : "bg-blue-50 text-blue-600"}`}>
+                          <AlertTriangle size={24} strokeWidth={2} />
+                        </div>
+                        <div>
+                          <h3 className={`font-bold text-lg leading-tight mb-1 ${textColor}`}>Render-Blocking</h3>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`text-xs font-bold px-2.5 py-1 rounded-md border ${statusBadgeColor}`}>{statusText}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <button onClick={(e) => { e.stopPropagation(); setSelectedParameterInfo({ title: "Render-Blocking", icon: AlertTriangle, ...metricExplanations.Render_Blocking, metricData: tech.Render_Blocking }) }} className={`p-1.5 rounded-full transition-colors ${darkMode ? "text-gray-500 hover:text-gray-300 hover:bg-gray-700" : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"}`} title="View Methodology">
+                        <Info size={20} />
+                      </button>
+                    </div>
+                    <div className="space-y-6 flex-grow">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
+                        Description: <span className={`normal-case font-normal opacity-100 text-xs leading-relaxed ${subTextColor}`}>Render-blocking resources are scripts and stylesheets that stop the browser from showing content until they load; removing them enables an instant visual experience.</span>
+                      </p>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className={`p-4 rounded-xl border col-span-2 ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                          <div className="flex justify-between items-center">
+                            <p className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Overall Score</p>
+                            <span className={`text-xs font-black px-3 py-1 rounded-lg ${needsData.status === "good" ? (darkMode ? "bg-emerald-900/20 text-emerald-400 border border-emerald-800/30" : "bg-emerald-50 text-emerald-600 border border-emerald-100") : needsData.status === "needs_improvement" ? (darkMode ? "bg-amber-900/20 text-amber-400 border border-amber-800/30" : "bg-amber-50 text-amber-600 border border-amber-100") : (darkMode ? "bg-rose-900/20 text-rose-400 border border-rose-800/30" : "bg-rose-50 text-rose-600 border border-rose-100")}`}>
+                              {needsData.value}
+                            </span>
+                          </div>
+                        </div>
+                        <div className={`p-3 rounded-xl border ${darkMode ? "bg-rose-900/10 border-rose-800/30" : "bg-rose-50 border-rose-100"}`}>
+                          <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>Blocking</p>
+                          <p className={`text-xl font-black ${darkMode ? "text-rose-300" : "text-rose-700"}`}>{needsData.blockingCount || 0}</p>
+                        </div>
+                        <div className={`p-3 rounded-xl border ${darkMode ? "bg-blue-900/10 border-blue-800/30" : "bg-blue-50 border-blue-100"}`}>
+                          <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-blue-400" : "text-blue-600"}`}>Target</p>
+                          <p className={`text-xl font-black ${darkMode ? "text-blue-300" : "text-blue-700"}`}>0</p>
+                        </div>
+                      </div>
+
+                      <div>
+                        <DirectThresholdBar metricData={{ ...needsData, value: displayValue }} darkMode={darkMode} />
+                      </div>
+                    </div>
+                    <div className={`mt-auto pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
+                        Why it matters: <span className="normal-case font-normal opacity-100">Eliminating render-blockers ensures that users see your content immediately, without waiting for secondary styles or scripts to finish loading.</span>
+                      </p>
+                    </div>
+                    <MetricAnalysisDetails
+                      analysis={needsData?.analysis}
+                      darkMode={darkMode}
+                      isOpen={expandedDetails.renderBlocking}
+                      onToggle={() => toggleDetails('renderBlocking')}
+                    />
+                  </div>
+                );
+              })()}
+
+              {tech.HTTP && (() => {
+                const needsData = tech.HTTP;
+                const status = needsData.status || "poor";
+                const isPassed = status === "pass";
+                const cardBg = darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200";
+                const textColor = darkMode ? "text-gray-100" : "text-gray-900";
+                const subTextColor = darkMode ? "text-gray-400" : "text-gray-500";
+                const statusBadgeColor = status === "good" ? (darkMode ? "bg-emerald-900/30 text-emerald-400 border-emerald-800" : "bg-emerald-50 text-emerald-600 border-emerald-100") : status === "needs_improvement" ? (darkMode ? "bg-amber-900/30 text-amber-400 border-amber-800" : "bg-amber-50 text-amber-600 border-amber-100") : (darkMode ? "bg-rose-900/30 text-rose-400 border-rose-800" : "bg-rose-50 text-rose-600 border-rose-100");
+                const statusText = status === "good" ? "Passed" : status === "needs_improvement" ? "Needs Impr." : "Poor";
+                const valueColor = status === "good" ? (darkMode ? "text-emerald-400" : "text-emerald-600") : status === "needs_improvement" ? (darkMode ? "text-amber-400" : "text-amber-600") : (darkMode ? "text-rose-400" : "text-rose-600");
+                const displayValue = status === "good" ? "Secure" : "Insecure";
+
+                return (
+                  <div className={`rounded-2xl border ${cardBg} shadow-sm hover:shadow-md transition-all duration-300 p-6 flex flex-col h-full`}>
+                    <div className="flex items-start justify-between mb-6">
+                      <div className="flex items-start gap-4">
+                        <div className={`p-3 rounded-xl flex-shrink-0 ${darkMode ? "bg-blue-900/20 text-blue-400" : "bg-blue-50 text-blue-600"}`}>
+                          <Shield size={24} strokeWidth={2} />
+                        </div>
+                        <div>
+                          <h3 className={`font-bold text-lg leading-tight mb-1 ${textColor}`}>HTTPS / HTTP2</h3>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`text-xs font-bold px-2.5 py-1 rounded-md border ${statusBadgeColor}`}>{statusText}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <button onClick={(e) => { e.stopPropagation(); setSelectedParameterInfo({ title: "HTTPS / HTTP2", icon: Shield, ...metricExplanations.HTTP, metricData: tech.HTTP }) }} className={`p-1.5 rounded-full transition-colors ${darkMode ? "text-gray-500 hover:text-gray-300 hover:bg-gray-700" : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"}`} title="View Methodology">
+                        <Info size={20} />
+                      </button>
+                    </div>
+                    <div className="space-y-6 flex-grow">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
+                        Description: <span className={`normal-case font-normal opacity-100 text-xs leading-relaxed ${subTextColor}`}>HTTPS encrypts data for security, while HTTP/2 allows multiple files to be sent simultaneously (multiplexing), ensuring both a safe and high-speed connection.</span>
+                      </p>
+
+                      <div className="grid grid-cols-1 gap-4">
+                        <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                          <div className="flex justify-between items-center">
+                            <p className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Overall Security</p>
+                            <span className={`text-xs font-black uppercase px-3 py-1 rounded-lg ${needsData.status === "good" ? (darkMode ? "bg-emerald-900/20 text-emerald-400 border border-emerald-800/30" : "bg-emerald-50 text-emerald-600 border border-emerald-100") : needsData.status === "needs_improvement" ? (darkMode ? "bg-amber-900/20 text-amber-400 border border-amber-800/30" : "bg-amber-50 text-amber-600 border border-amber-100") : (darkMode ? "bg-rose-900/20 text-rose-400 border border-rose-800/30" : "bg-rose-50 text-rose-600 border border-rose-100")}`}>
+                              {displayValue}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                          <div className="flex justify-between items-center">
+                            <p className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Active Protocol</p>
+                            <span className={`text-xs font-black uppercase px-3 py-1 rounded-lg ${needsData.status === "good" ? (darkMode ? "bg-emerald-900/20 text-emerald-400 border border-emerald-800/30" : "bg-emerald-50 text-emerald-600 border border-emerald-100") : needsData.status === "needs_improvement" ? (darkMode ? "bg-amber-900/20 text-amber-400 border border-amber-800/30" : "bg-amber-50 text-amber-600 border border-amber-100") : (darkMode ? "bg-rose-900/20 text-rose-400 border border-rose-800/30" : "bg-rose-50 text-rose-600 border border-rose-100")}`}>
+                              {needsData.protocol || "Unknown"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <DirectThresholdBar metricData={{ ...needsData, value: displayValue }} darkMode={darkMode} />
+                      </div>
+                    </div>
+                    <div className={`mt-auto pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
+                        Why it matters: <span className="normal-case font-normal opacity-100">HTTPS is a ranking factor for SEO and required for modern performance features like HTTP/2, which delivers high-speed parallel asset loading.</span>
+                      </p>
+                    </div>
+                    <MetricAnalysisDetails
+                      analysis={needsData?.analysis}
+                      darkMode={darkMode}
+                      isOpen={expandedDetails.http}
+                      onToggle={() => toggleDetails('http')}
+                    />
+                  </div>
+                );
+              })()}
+
+              {tech.Resource_Optimization && (() => {
+                const needsData = tech.Resource_Optimization;
+                const status = needsData.status || "poor";
+                const isPassed = status === "pass";
+                const cardBg = darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200";
+                const textColor = darkMode ? "text-gray-100" : "text-gray-900";
+                const subTextColor = darkMode ? "text-gray-400" : "text-gray-500";
+                const statusBadgeColor = status === "good" ? (darkMode ? "bg-emerald-900/30 text-emerald-400 border-emerald-800" : "bg-emerald-50 text-emerald-600 border-emerald-100") : status === "needs_improvement" ? (darkMode ? "bg-amber-900/30 text-amber-400 border-amber-800" : "bg-amber-50 text-amber-600 border-amber-100") : (darkMode ? "bg-rose-900/30 text-rose-400 border-rose-800" : "bg-rose-50 text-rose-600 border-rose-100");
+                const statusText = status === "good" ? "Passed" : status === "needs_improvement" ? "Needs Impr." : "Poor";
+                const valueColor = status === "good" ? (darkMode ? "text-emerald-400" : "text-emerald-600") : status === "needs_improvement" ? (darkMode ? "text-amber-400" : "text-amber-600") : (darkMode ? "text-rose-400" : "text-rose-600");
+                const displayValue = status === "good" ? "Optimized" : "Needs Work";
+
+                return (
+                  <div className={`rounded-2xl border ${cardBg} shadow-sm hover:shadow-md transition-all duration-300 p-6 flex flex-col h-full md:col-span-2`}>
+                    <div className="flex items-start justify-between mb-6">
+                      <div className="flex items-start gap-4">
+                        <div className={`p-3 rounded-xl flex-shrink-0 ${darkMode ? "bg-blue-900/20 text-blue-400" : "bg-blue-50 text-blue-600"}`}>
+                          <ImageIcon size={24} strokeWidth={2} />
+                        </div>
+                        <div>
+                          <h3 className={`font-bold text-lg leading-tight mb-1 ${textColor}`}>Resource Optimization</h3>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`text-xs font-bold px-2.5 py-1 rounded-md border ${statusBadgeColor}`}>{statusText}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <button onClick={(e) => { e.stopPropagation(); setSelectedParameterInfo({ title: "Resource Optimization", icon: ImageIcon, ...metricExplanations.Resource_Optimization, metricData: tech.Resource_Optimization }) }} className={`p-1.5 rounded-full transition-colors ${darkMode ? "text-gray-500 hover:text-gray-300 hover:bg-gray-700" : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"}`} title="View Methodology">
+                        <Info size={20} />
+                      </button>
+                    </div>
+                    <div className="space-y-6 flex-grow">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
+                        Description: <span className={`normal-case font-normal opacity-100 text-xs leading-relaxed ${subTextColor}`}>Optimizing images and scripts involves compressing files and using modern formats to minimize payload weight, reducing data usage and speeding up rendering.</span>
+                      </p>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className={`p-4 rounded-xl border sm:col-span-2 ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                          <div className="flex justify-between items-center">
+                            <p className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Overall Score</p>
+                            <span className={`text-xs font-black px-3 py-1 rounded-lg ${needsData.status === "good" ? (darkMode ? "bg-emerald-900/20 text-emerald-400 border border-emerald-800/30" : "bg-emerald-50 text-emerald-600 border border-emerald-100") : needsData.status === "needs_improvement" ? (darkMode ? "bg-amber-900/20 text-amber-400 border border-amber-800/30" : "bg-amber-50 text-amber-600 border border-amber-100") : (darkMode ? "bg-rose-900/20 text-rose-400 border border-rose-800/30" : "bg-rose-50 text-rose-600 border border-rose-100")}`}>
+                              {needsData.value}
+                            </span>
+                          </div>
+                        </div>
+                        {/* Images Stats Group */}
+                        <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                          <div className="flex justify-between items-center mb-3">
+                            <p className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Images</p>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${darkMode ? "bg-blue-900/20 text-blue-400" : "bg-blue-50 text-blue-600"}`}>
+                              {needsData.totalImages || 0} Total
+                            </span>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                              <span className={`text-[11px] ${subTextColor}`}>Optimized</span>
+                              <span className={`text-xs font-bold ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>{needsData.optimizedImagesCount || 0}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className={`text-[11px] ${subTextColor}`}>Heavy/Large</span>
+                              <span className={`text-xs font-bold ${darkMode ? "text-rose-400" : "text-rose-600"}`}>{needsData.unoptimizedImagesCount || 0}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Scripts Stats Group */}
+                        <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                          <div className="flex justify-between items-center mb-3">
+                            <p className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Scripts</p>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${darkMode ? "bg-blue-900/20 text-blue-400" : "bg-blue-50 text-blue-600"}`}>
+                              {needsData.totalScripts || 0} Total
+                            </span>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                              <span className={`text-[11px] ${subTextColor}`}>Minified</span>
+                              <span className={`text-xs font-bold ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>{needsData.minifiedScriptsCount || 0}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className={`text-[11px] ${subTextColor}`}>Unminified</span>
+                              <span className={`text-xs font-bold ${darkMode ? "text-rose-400" : "text-rose-600"}`}>{needsData.unminifiedScriptsCount || 0}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <DirectThresholdBar metricData={{ ...needsData, value: displayValue }} darkMode={darkMode} />
+                      </div>
+                    </div>
+                    <div className={`mt-auto pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
+                        Why it matters: <span className="normal-case font-normal opacity-100">Proper optimization reduces the CPU and battery power required to render your page, keeping it smooth on all devices.</span>
+                      </p>
+                    </div>
+                    <MetricAnalysisDetails
+                      analysis={needsData?.analysis}
+                      darkMode={darkMode}
+                      isOpen={expandedDetails.resourceOptimization}
+                      onToggle={() => toggleDetails('resourceOptimization')}
+                    />
+                  </div>
+                );
+              })()}
+            </Section>
+
+            {/* SEO & Crawlability */}
+            <Section title="SEO & Crawlability" subtitle="Search engine visibility" icon={Search} darkMode={darkMode}>
+              {tech.Sitemap && (() => {
+                const needsData = tech.Sitemap;
+                const status = needsData.status || "poor";
+                const isPassed = status === "pass";
+                const cardBg = darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200";
+                const textColor = darkMode ? "text-gray-100" : "text-gray-900";
+                const subTextColor = darkMode ? "text-gray-400" : "text-gray-500";
+                const statusBadgeColor = status === "good" ? (darkMode ? "bg-emerald-900/30 text-emerald-400 border-emerald-800" : "bg-emerald-50 text-emerald-600 border-emerald-100") : status === "needs_improvement" ? (darkMode ? "bg-amber-900/30 text-amber-400 border-amber-800" : "bg-amber-50 text-amber-600 border-amber-100") : (darkMode ? "bg-rose-900/30 text-rose-400 border-rose-800" : "bg-rose-50 text-rose-600 border-rose-100");
+                const statusText = status === "good" ? "Passed" : status === "needs_improvement" ? "Needs Impr." : "Poor";
+                const valueColor = status === "good" ? (darkMode ? "text-emerald-400" : "text-emerald-600") : status === "needs_improvement" ? (darkMode ? "text-amber-400" : "text-amber-600") : (darkMode ? "text-rose-400" : "text-rose-600");
+                const displayValue = status === "good" ? "Found" : "Missing";
+
+                return (
+                  <div className={`rounded-2xl border ${cardBg} shadow-sm hover:shadow-md transition-all duration-300 p-6 flex flex-col h-full`}>
+                    <div className="flex items-start justify-between mb-6">
+                      <div className="flex items-start gap-4">
+                        <div className={`p-3 rounded-xl flex-shrink-0 ${darkMode ? "bg-blue-900/20 text-blue-400" : "bg-blue-50 text-blue-600"}`}>
+                          <Map size={24} strokeWidth={2} />
+                        </div>
+                        <div>
+                          <h3 className={`font-bold text-lg leading-tight mb-1 ${textColor}`}>Sitemap</h3>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`text-xs font-bold px-2.5 py-1 rounded-md border ${statusBadgeColor}`}>{statusText}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <button onClick={(e) => { e.stopPropagation(); setSelectedParameterInfo({ title: "Sitemap", icon: Map, ...metricExplanations.Sitemap, metricData: tech.Sitemap }) }} className={`p-1.5 rounded-full transition-colors ${darkMode ? "text-gray-500 hover:text-gray-300 hover:bg-gray-700" : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"}`} title="View Methodology">
+                        <Info size={20} />
+                      </button>
+                    </div>
+                    <div className="space-y-6 flex-grow">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
+                        Description: <span className={`normal-case font-normal opacity-100 text-xs leading-relaxed ${subTextColor}`}>A Sitemap is a roadmap of your URLs that helps search engine bots discover and index every page efficiently, significantly boosting your site's overall visibility.</span>
+                      </p>
+
+                      <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                        <div className="flex justify-between items-center">
+                          <p className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Sitemap Status</p>
+                          <span className={`text-xs font-black uppercase px-3 py-1 rounded-lg ${needsData.status === "good" ? (darkMode ? "bg-emerald-900/20 text-emerald-400 border border-emerald-800/30" : "bg-emerald-50 text-emerald-600 border border-emerald-100") : needsData.status === "needs_improvement" ? (darkMode ? "bg-amber-900/20 text-amber-400 border border-amber-800/30" : "bg-amber-50 text-amber-600 border border-amber-100") : (darkMode ? "bg-rose-900/20 text-rose-400 border border-rose-800/30" : "bg-rose-50 text-rose-600 border border-rose-100")}`}>
+                            {needsData.status === "good" ? "Found" : "Missing"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <DirectThresholdBar metricData={{ ...needsData, value: displayValue }} darkMode={darkMode} />
+                      </div>
+                    </div>
+                    <div className={`mt-auto pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
+                        Why it matters: <span className="normal-case font-normal opacity-100">Without a sitemap, your newest or deeper pages might take weeks to be found by search engines, leading to lost traffic and revenue.</span>
+                      </p>
+                    </div>
+                    <MetricAnalysisDetails
+                      analysis={needsData?.analysis ? { ...needsData.analysis, content: needsData.content } : needsData.content ? { content: needsData.content } : null}
+                      darkMode={darkMode}
+                      isOpen={expandedDetails.sitemap}
+                      onToggle={() => toggleDetails('sitemap')}
+                    />
+                  </div>
+                );
+              })()}
+
+              {tech.Robots && (() => {
+                const needsData = tech.Robots;
+                const status = needsData.status || "poor";
+                const isPassed = status === "pass";
+                const cardBg = darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200";
+                const textColor = darkMode ? "text-gray-100" : "text-gray-900";
+                const subTextColor = darkMode ? "text-gray-400" : "text-gray-500";
+                const statusBadgeColor = status === "good" ? (darkMode ? "bg-emerald-900/30 text-emerald-400 border-emerald-800" : "bg-emerald-50 text-emerald-600 border-emerald-100") : status === "needs_improvement" ? (darkMode ? "bg-amber-900/30 text-amber-400 border-amber-800" : "bg-amber-50 text-amber-600 border-amber-100") : (darkMode ? "bg-rose-900/30 text-rose-400 border-rose-800" : "bg-rose-50 text-rose-600 border-rose-100");
+                const statusText = status === "good" ? "Passed" : status === "needs_improvement" ? "Needs Impr." : "Poor";
+                const valueColor = status === "good" ? (darkMode ? "text-emerald-400" : "text-emerald-600") : status === "needs_improvement" ? (darkMode ? "text-amber-400" : "text-amber-600") : (darkMode ? "text-rose-400" : "text-rose-600");
+                const displayValue = status === "good" ? "Found" : "Missing";
+
+                return (
+                  <div className={`rounded-2xl border ${cardBg} shadow-sm hover:shadow-md transition-all duration-300 p-6 flex flex-col h-full`}>
+                    <div className="flex items-start justify-between mb-6">
+                      <div className="flex items-start gap-4">
+                        <div className={`p-3 rounded-xl flex-shrink-0 ${darkMode ? "bg-blue-900/20 text-blue-400" : "bg-blue-50 text-blue-600"}`}>
+                          <FileText size={24} strokeWidth={2} />
+                        </div>
+                        <div>
+                          <h3 className={`font-bold text-lg leading-tight mb-1 ${textColor}`}>Robots.txt</h3>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`text-xs font-bold px-2.5 py-1 rounded-md border ${statusBadgeColor}`}>{statusText}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <button onClick={(e) => { e.stopPropagation(); setSelectedParameterInfo({ title: "Robots.txt", icon: FileText, ...metricExplanations.Robots, metricData: tech.Robots }) }} className={`p-1.5 rounded-full transition-colors ${darkMode ? "text-gray-500 hover:text-gray-300 hover:bg-gray-700" : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"}`} title="View Methodology">
+                        <Info size={20} />
+                      </button>
+                    </div>
+                    <div className="space-y-6 flex-grow">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
+                        Description: <span className={`normal-case font-normal opacity-100 text-xs leading-relaxed ${subTextColor}`}>Robots.txt is a control file that guides search engine crawlers on which parts of your site should be indexed, protecting private areas and optimizing crawl budget.</span>
+                      </p>
+
+                      <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                        <div className="flex justify-between items-center">
+                          <p className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Robots Status</p>
+                          <span className={`text-xs font-black uppercase px-3 py-1 rounded-lg ${needsData.status === "good" ? (darkMode ? "bg-emerald-900/20 text-emerald-400 border border-emerald-800/30" : "bg-emerald-50 text-emerald-600 border border-emerald-100") : needsData.status === "needs_improvement" ? (darkMode ? "bg-amber-900/20 text-amber-400 border border-amber-800/30" : "bg-amber-50 text-amber-600 border border-amber-100") : (darkMode ? "bg-rose-900/20 text-rose-400 border border-rose-800/30" : "bg-rose-50 text-rose-600 border border-rose-100")}`}>
+                            {needsData.status === "good" ? "Found" : "Missing"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <DirectThresholdBar metricData={{ ...needsData, value: displayValue }} darkMode={darkMode} />
+                      </div>
+                    </div>
+                    <div className={`mt-auto pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
+                        Why it matters: <span className="normal-case font-normal opacity-100">Misconfigured robots.txt can accidentally hide your entire site from Google. Managing it correctly ensures search bots focus on your most important content.</span>
+                      </p>
+                    </div>
+                    <MetricAnalysisDetails
+                      analysis={needsData?.analysis ? { ...needsData.analysis, content: needsData.content } : needsData.content ? { content: needsData.content } : null}
+                      darkMode={darkMode}
+                      isOpen={expandedDetails.robots}
+                      onToggle={() => toggleDetails('robots')}
+                    />
+                  </div>
+                );
+              })()}
+
+              {tech.Structured_Data && (() => {
+                const needsData = tech.Structured_Data;
+                const status = needsData.status || "poor";
+                const isPassed = status === "pass";
+                const cardBg = darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200";
+                const textColor = darkMode ? "text-gray-100" : "text-gray-900";
+                const subTextColor = darkMode ? "text-gray-400" : "text-gray-500";
+                const statusBadgeColor = status === "good" ? (darkMode ? "bg-emerald-900/30 text-emerald-400 border-emerald-800" : "bg-emerald-50 text-emerald-600 border-emerald-100") : status === "needs_improvement" ? (darkMode ? "bg-amber-900/30 text-amber-400 border-amber-800" : "bg-amber-50 text-amber-600 border-amber-100") : (darkMode ? "bg-rose-900/30 text-rose-400 border-rose-800" : "bg-rose-50 text-rose-600 border-rose-100");
+                const statusText = status === "good" ? "Passed" : status === "needs_improvement" ? "Needs Impr." : "Poor";
+                const valueColor = status === "good" ? (darkMode ? "text-emerald-400" : "text-emerald-600") : status === "needs_improvement" ? (darkMode ? "text-amber-400" : "text-amber-600") : (darkMode ? "text-rose-400" : "text-rose-600");
+                const displayValue = status === "good" ? "Found" : "Missing";
+
+                return (
+                  <div className={`rounded-2xl border ${cardBg} shadow-sm hover:shadow-md transition-all duration-300 p-6 flex flex-col h-full`}>
+                    <div className="flex items-start justify-between mb-6">
+                      <div className="flex items-start gap-4">
+                        <div className={`p-3 rounded-xl flex-shrink-0 ${darkMode ? "bg-blue-900/20 text-blue-400" : "bg-blue-50 text-blue-600"}`}>
+                          <FileCode size={24} strokeWidth={2} />
+                        </div>
+                        <div>
+                          <h3 className={`font-bold text-lg leading-tight mb-1 ${textColor}`}>Structured Data</h3>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`text-xs font-bold px-2.5 py-1 rounded-md border ${statusBadgeColor}`}>{statusText}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <button onClick={(e) => { e.stopPropagation(); setSelectedParameterInfo({ title: "Structured Data", icon: FileCode, ...metricExplanations.Structured_Data, metricData: tech.Structured_Data }) }} className={`p-1.5 rounded-full transition-colors ${darkMode ? "text-gray-500 hover:text-gray-300 hover:bg-gray-700" : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"}`} title="View Methodology">
+                        <Info size={20} />
+                      </button>
+                    </div>
+                    <div className="space-y-6 flex-grow">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
+                        Description: <span className={`normal-case font-normal opacity-100 text-xs leading-relaxed ${subTextColor}`}>Structured data (Schema) provides explicit clues to search engines about the meaning of your content, leading to enhanced 'Rich Results' in search listings.</span>
+                      </p>
+
+                      <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                        <div className="flex justify-between items-center">
+                          <p className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Detected Entities</p>
+                          <span className={`text-xs font-black uppercase px-3 py-1 rounded-lg ${needsData.status === "good" ? (darkMode ? "bg-emerald-900/20 text-emerald-400 border border-emerald-800/30" : "bg-emerald-50 text-emerald-600 border border-emerald-100") : needsData.status === "needs_improvement" ? (darkMode ? "bg-amber-900/20 text-amber-400 border border-amber-800/30" : "bg-amber-50 text-amber-600 border border-amber-100") : (darkMode ? "bg-rose-900/20 text-rose-400 border border-rose-800/30" : "bg-rose-50 text-rose-600 border border-rose-100")}`}>
+                            {needsData.content?.length || 0} Found
+                          </span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <DirectThresholdBar metricData={{ ...needsData, value: displayValue }} darkMode={darkMode} />
+                      </div>
+                    </div>
+                    <div className={`mt-auto pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
+                        Why it matters: <span className="normal-case font-normal opacity-100">Structured data is the key to getting 'Rich Snippets' (stars, prices, FAQs) in search results, which can double your click-through rate (CTR).</span>
+                      </p>
+                    </div>
+                    <MetricAnalysisDetails
+                      analysis={needsData?.analysis ? { ...needsData.analysis, content: needsData.content } : needsData.content ? { content: needsData.content } : null}
+                      darkMode={darkMode}
+                      isOpen={expandedDetails.structuredData}
+                      onToggle={() => toggleDetails('structuredData')}
+                    />
+                  </div>
+                );
+              })()}
+
+
+              {tech.Redirect_Chains && (() => {
+                const needsData = tech.Redirect_Chains;
+                const status = needsData.status || "poor";
+                const isPassed = status === "pass";
+                const cardBg = darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200";
+                const textColor = darkMode ? "text-gray-100" : "text-gray-900";
+                const subTextColor = darkMode ? "text-gray-400" : "text-gray-500";
+                const statusBadgeColor = status === "good" ? (darkMode ? "bg-emerald-900/30 text-emerald-400 border-emerald-800" : "bg-emerald-50 text-emerald-600 border-emerald-100") : status === "needs_improvement" ? (darkMode ? "bg-amber-900/30 text-amber-400 border-amber-800" : "bg-amber-50 text-amber-600 border-amber-100") : (darkMode ? "bg-rose-900/30 text-rose-400 border-rose-800" : "bg-rose-50 text-rose-600 border-rose-100");
+                const statusText = status === "good" ? "Passed" : status === "needs_improvement" ? "Needs Impr." : "Poor";
+                const valueColor = status === "good" ? (darkMode ? "text-emerald-400" : "text-emerald-600") : status === "needs_improvement" ? (darkMode ? "text-amber-400" : "text-amber-600") : (darkMode ? "text-rose-400" : "text-rose-600");
+                const displayValue = needsData.hops + " hops";
+
+                return (
+                  <div className={`rounded-2xl border ${cardBg} shadow-sm hover:shadow-md transition-all duration-300 p-6 flex flex-col h-full`}>
+                    <div className="flex items-start justify-between mb-6">
+                      <div className="flex items-start gap-4">
+                        <div className={`p-3 rounded-xl flex-shrink-0 ${darkMode ? "bg-blue-900/20 text-blue-400" : "bg-blue-50 text-blue-600"}`}>
+                          <ArrowRightLeft size={24} strokeWidth={2} />
+                        </div>
+                        <div>
+                          <h3 className={`font-bold text-lg leading-tight mb-1 ${textColor}`}>Redirect Chains</h3>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`text-xs font-bold px-2.5 py-1 rounded-md border ${statusBadgeColor}`}>{statusText}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <button onClick={(e) => { e.stopPropagation(); setSelectedParameterInfo({ title: "Redirect Chains", icon: ArrowRightLeft, ...metricExplanations.Redirect_Chains, metricData: tech.Redirect_Chains }) }} className={`p-1.5 rounded-full transition-colors ${darkMode ? "text-gray-500 hover:text-gray-300 hover:bg-gray-700" : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"}`} title="View Methodology">
+                        <Info size={20} />
+                      </button>
+                    </div>
+                    <div className="space-y-6 flex-grow">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
+                        Description: <span className={`normal-case font-normal opacity-100 text-xs leading-relaxed ${subTextColor}`}>Redirect chains occur when one URL points to another through multiple steps, which significantly delays the user's arrival and confuses search engine bots.</span>
+                      </p>
+
+                      <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-center">
+                            <p className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Total Hops</p>
+                            <span className={`text-xs font-black px-2.5 py-1 rounded-lg ${needsData.hops <= 1 ? (darkMode ? "bg-emerald-900/20 text-emerald-400" : "bg-emerald-50 text-emerald-600") : (darkMode ? "bg-rose-900/20 text-rose-400" : "bg-rose-50 text-rose-600")}`}>
+                              {needsData.hops}
+                            </span>
+                          </div>
+
+                          {needsData.redirectDetails && needsData.redirectDetails.length > 0 && (
+                            <div className="pt-3 border-t border-dashed border-gray-200 dark:border-gray-700">
+                              <p className={`text-[10px] font-bold uppercase tracking-wider mb-3 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Redirect Path</p>
+                              <div className="flex flex-col gap-2">
+                                {needsData.redirectDetails.map((url, idx) => (
+                                  <div key={idx} className="flex flex-col items-start">
+                                    <div className="flex items-center gap-2 w-full">
+                                      <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${idx === needsData.redirectDetails.length - 1 ? "bg-emerald-500" : "bg-blue-500"}`} />
+                                      <p className={`text-[10px] font-mono truncate flex-grow ${darkMode ? "text-gray-300" : "text-gray-600"}`} title={url}>
+                                        {url}
+                                      </p>
+                                    </div>
+                                    {idx < needsData.redirectDetails.length - 1 && (
+                                      <div className="ml-0.5 flex flex-col items-center gap-0.5 py-1">
+                                        <div className="w-[1px] h-2 bg-gray-300 dark:bg-gray-600" />
+                                        <ChevronDown size={10} className={darkMode ? "text-gray-500" : "text-gray-400"} />
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div>
+                        <DirectThresholdBar metricData={{ ...needsData, value: displayValue }} darkMode={darkMode} />
+                      </div>
+                    </div>
+                    <div className={`mt-auto pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
+                        Why it matters: <span className="normal-case font-normal opacity-100">Each hop in a redirect chain adds hundreds of milliseconds of 'dead time' where the user sees a white screen. Clean URLs provide the fastest experience.</span>
+                      </p>
+                    </div>
+                    <MetricAnalysisDetails
+                      analysis={needsData?.analysis}
+                      darkMode={darkMode}
+                      isOpen={expandedDetails.redirectChains}
+                      onToggle={() => toggleDetails('redirectChains')}
+                    />
+                  </div>
+                );
+              })()}
+            </Section>
+          </>
+        )}
 
       </main >
+
 
       {/* Methodology Modal */}
       <MetricInfoModal

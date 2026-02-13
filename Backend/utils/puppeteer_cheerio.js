@@ -19,8 +19,8 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
         "--disable-dev-shm-usage",
         "--disable-gpu",
         "--no-first-run",
-        "--no-zygote",
-        "--single-process",
+        // "--no-zygote",
+        // "--single-process",
         "--start-maximized"
       ]
     };

@@ -730,6 +730,49 @@ export const InfoDetails = {
         ]
     },
 
+    Robots_Txt: {
+        title: "Robots.txt",
+        whatThisParameterIs: "The robots.txt file provides instructions to web robots (crawlers) about which areas of the site should or should not be indexed.",
+        whatItCalculates: "It checks for the presence of a robots.txt file at the root of the domain and analyzes its content for basic indexability rules.",
+        whyItMatters: "A properly configured robots.txt file helps manage crawl budget and prevents search engines from indexing private or irrelevant sections of your site.",
+        thresholds: {
+            good: "File exists and is accessible",
+            needsImprovement: "File is empty or misconfigured",
+            poor: "File missing"
+        },
+        actualReasonsForFailure: [
+            "Robots.txt file not found",
+            "File is returning a 4xx or 5xx error",
+            "Disallow: / is blocking entire site indexing"
+        ],
+        howToOvercomeFailure: [
+            "Create a valid robots.txt file at the root directory",
+            "Ensure it doesn't block critical page sections",
+            "Link to your XML sitemap within the file"
+        ]
+    },
+    Sitemap: {
+        title: "XML Sitemap",
+        whatThisParameterIs: "An XML Sitemap is a file that lists all important pages of a website, helping search engines discover and crawl them efficiently.",
+        whatItCalculates: "It checks for common sitemap locations (sitemap.xml) and verifies if the file is valid XML and accessible to crawlers.",
+        whyItMatters: "Sitemaps act as a roadmap for search engines, ensuring that newly created or updated pages are found and indexed quickly.",
+        thresholds: {
+            good: "Valid sitemap.xml detected",
+            needsImprovement: "Sitemap exists but contains errors",
+            poor: "No sitemap detected"
+        },
+        actualReasonsForFailure: [
+            "Sitemap.xml not found",
+            "Invalid XML format",
+            "Sitemap includes non-canonical or broken links"
+        ],
+        howToOvercomeFailure: [
+            "Generate a dynamic XML sitemap",
+            "Submit the sitemap URL to Google Search Console",
+            "Ensure only indexable URLs are included"
+        ]
+    },
+
     // Methodologies (On-Page SEO)
     On_Page_SEO_Methodology: {
         icon: Search,
@@ -778,15 +821,10 @@ export const InfoDetails = {
             </div>
         ),
         weightage: [
-            { param: "URL Structure & Hierarchy", weight: "15%" },
-            { param: "Image & Video Optimization", weight: "15%" },
-            { param: "Title Tags", weight: "12%" },
-            { param: "Content Quality & Uniqueness", weight: "10%" },
-            { param: "Meta Descriptions", weight: "9%" },
-            { param: "H1 Tags", weight: "9%" },
-            { param: "Contextual Linking", weight: "9%" },
-            { param: "Canonicalization", weight: "8%" },
-            { param: "Other Technical SEO", weight: "13%" }
+            { param: "Content Mastery (Title, Meta, H1, Quality)", weight: "45%" },
+            { param: "Technical Foundation (Canonical, Sitemap, Robots, Schema)", weight: "26%" },
+            { param: "Social & Authority (Links, Contextual, OG/Twitter)", weight: "16%" },
+            { param: "Media & Experience (Images, Hierarchy, Semantic)", weight: "13%" }
         ]
     },
 

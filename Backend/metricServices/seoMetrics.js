@@ -273,23 +273,51 @@ const checkLinks = ($, url) => {
     const genericAnchors = ["click here", "read more", "more", "details", "here"];
     let descriptiveCount = 0;
 
+    let baseHostname;
+    try {
+      baseHostname = new URL(url).hostname;
+    } catch (e) {
+      baseHostname = "";
+    }
+
     links.forEach(link => {
       const href = $(link).attr("href");
       if (!href) return;
 
+      // Filter obviously non-link schemes to avoid noise if desired, 
+      // but new URL() check below handles protocols well.
+      // We keep raw href in unique set to match previous behavior or consider resolving it.
       unique.add(href);
-      const originalText = $(link).text().trim(); // Keep original case
+
+      const originalText = $(link).text().trim();
       const lowerText = originalText.toLowerCase();
       if (lowerText && !genericAnchors.includes(lowerText)) descriptiveCount++;
 
       const target = ($(link).attr("target") || "_self").trim();
 
-      if (href.startsWith("/") || href.includes(url)) {
-        internal++;
-        internalLinksList.push({ href, text: originalText || "[No Text]", target }); // Use originalText
-      } else if (href.startsWith("http")) {
-        external++;
-        externalLinksList.push({ href, text: originalText || "[No Text]", target }); // Use originalText
+      try {
+        // Resolve absolute URL to handle relative paths and base tags implicitly
+        const resolvedUrl = new URL(href, url);
+
+        // Only count http/https links
+        if (resolvedUrl.protocol === "http:" || resolvedUrl.protocol === "https:") {
+          // Normalize (strip www.)
+          const linkHostname = resolvedUrl.hostname.replace(/^www\./, '');
+          const baseHost = baseHostname.replace(/^www\./, '');
+
+          // Internal: Same Hostname
+          if (linkHostname === baseHost) {
+            internal++;
+            internalLinksList.push({ href, text: originalText || "[No Text]", target });
+          }
+          // External: Different Hostname
+          else {
+            external++;
+            externalLinksList.push({ href, text: originalText || "[No Text]", target });
+          }
+        }
+      } catch (e) {
+        // Skip invalid URLs (javascript:..., mailto:..., or malformed)
       }
     });
 
@@ -334,8 +362,8 @@ const checkLinks = ($, url) => {
       internal,
       external,
       unique: uniqueCount,
-      internalLinks: internalLinksList.slice(0, 50),
-      externalLinks: externalLinksList.slice(0, 50),
+      internalLinks: internalLinksList,
+      externalLinks: externalLinksList,
       why_this_occurred: explanation,
       how_to_fix: recommendation,
       seo_best_practices: "Use descriptive anchor text. Internal links help structure. External links add authority.",
@@ -527,7 +555,7 @@ const checkContextualLinks = ($, url) => {
 
     return evaluateParameter(score, details, {
       totalContextual: totalContentLinks,
-      foundLinks: Array.from(contentLinks).slice(0, 50),
+      foundLinks: Array.from(contentLinks),
       missingLinks: missingLinks.slice(0, 20),
       issues: issues,
       why_this_occurred: explanation,
@@ -552,7 +580,13 @@ const evaluateParameter = (score, details, meta = {}) => {
 };
 
 const checkContentQuality = ($) => {
-  const text = $("body").text().replace(/\s+/g, " ").trim();
+  // Use a clone to avoid modifying the original DOM for other checks
+  const $body = $("body").clone();
+
+  // Remove scripts, styles, and non-visible elements
+  $body.find("script, style, noscript, template, svg, img, video, iframe, link, meta, [hidden], [aria-hidden='true'], header, footer, nav").remove();
+
+  const text = $body.text().replace(/\s+/g, " ").trim();
   const words = text.split(" ").filter(w => w.length > 0);
   const wordCount = words.length;
 

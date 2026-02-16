@@ -170,7 +170,7 @@ const MetricCard = ({ title, description, score, value, unit, darkMode, icon: Ic
 // ------------------------------------------------------
 // ✅ Simple Section
 // ------------------------------------------------------
-const Section = ({ title, icon: Icon, children, darkMode }) => (
+const Section = ({ title, icon: Icon, children, darkMode, gridClasses = "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" }) => (
   <div className="space-y-4">
     <div className="flex items-center gap-3 px-2">
       <div className={`p-2 rounded-lg ${darkMode ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-600"}`}>
@@ -180,7 +180,7 @@ const Section = ({ title, icon: Icon, children, darkMode }) => (
         {title}
       </h2>
     </div>
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className={`grid ${gridClasses} gap-4`}>
       {children}
     </div>
   </div>
@@ -202,7 +202,7 @@ const TitleTagCard = ({ data, darkMode, onInfo }) => {
   const statusText = isPassed ? "Optimized" : "Needs Improvement";
 
   return (
-    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group col-span-1 md:col-span-2 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group col-span-1 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
       <div className="p-5 space-y-4">
         {/* Header */}
         <div className="flex items-start justify-between">
@@ -249,7 +249,7 @@ const TitleTagCard = ({ data, darkMode, onInfo }) => {
           </div>
 
           {/* Analysis Details (Only if we have the new metadata format) */}
-          {meta.why_this_occurred && (
+          {meta.why_this_occurred && !isPassed && (
             <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
               {/* Analysis */}
               <div className="space-y-2">
@@ -305,7 +305,7 @@ const MetaDescriptionCard = ({ data, darkMode, onInfo }) => {
   const statusText = isPassed ? "Optimized" : "Needs Improvement";
 
   return (
-    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group col-span-1 md:col-span-2 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group col-span-1 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
       <div className="p-5 space-y-4">
         {/* Header */}
         <div className="flex items-start justify-between">
@@ -352,7 +352,7 @@ const MetaDescriptionCard = ({ data, darkMode, onInfo }) => {
           </div>
 
           {/* Analysis Details */}
-          {meta.why_this_occurred && (
+          {meta.why_this_occurred && !isPassed && (
             <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
               {/* Analysis */}
               <div className="space-y-2">
@@ -407,7 +407,7 @@ const CanonicalTagCard = ({ data, darkMode, onInfo }) => {
   const statusText = isPassed ? "Optimized" : "Warning / Info";
 
   return (
-    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group col-span-1 md:col-span-2 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group col-span-1 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
       <div className="p-5 space-y-4">
         {/* Header */}
         <div className="flex items-start justify-between">
@@ -456,7 +456,7 @@ const CanonicalTagCard = ({ data, darkMode, onInfo }) => {
           </div>
 
           {/* Analysis Details */}
-          {meta.why_this_occurred && (
+          {meta.why_this_occurred && !isPassed && (
             <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
               {/* Analysis */}
               <div className="space-y-2">
@@ -512,7 +512,7 @@ const URLStructureCard = ({ data, darkMode, onInfo }) => {
   const statusText = isPassed ? "Clean Details" : "Issues Found";
 
   return (
-    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group col-span-1 md:col-span-2 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group col-span-1 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
       <div className="p-5 space-y-4">
         {/* Header */}
         <div className="flex items-start justify-between">
@@ -556,7 +556,7 @@ const URLStructureCard = ({ data, darkMode, onInfo }) => {
           </div>
 
           {/* Analysis Details */}
-          {meta.why_this_occurred && (
+          {meta.why_this_occurred && !isPassed && (
             <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
               {/* Analysis */}
               <div className="space-y-2">
@@ -664,7 +664,7 @@ const H1TagCard = ({ data, darkMode, onInfo }) => {
           </div>
 
           {/* Analysis Details */}
-          {meta.why_this_occurred && (
+          {meta.why_this_occurred && !isPassed && (
             <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
               {/* Analysis */}
               <div className="space-y-2">
@@ -884,7 +884,7 @@ const ImageAnalysisCard = ({ data, darkMode, onInfo, baseUrl }) => {
           )}
 
           {/* Analysis Details */}
-          {meta.why_this_occurred && (
+          {meta.why_this_occurred && !isPassed && (
             <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
               {/* Analysis */}
               <div className="space-y-2">
@@ -1023,7 +1023,7 @@ const SemanticTagsCard = ({ data, darkMode, onInfo, className }) => {
         )}
 
         {/* Analysis Details */}
-        {meta.why_this_occurred && (
+        {meta.why_this_occurred && !isPassed && (
           <div className={`grid grid-cols-1 gap-2 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-500">
@@ -1051,9 +1051,158 @@ const SemanticTagsCard = ({ data, darkMode, onInfo, className }) => {
 };
 
 // ------------------------------------------------------
+// ✅ Specialized Contextual Analysis Card
+// ------------------------------------------------------
+const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink }) => {
+  const meta = data?.meta || {};
+  const score = data?.score || 0;
+
+  // Logic from renderLinkList
+  const isContextual = (text, href) => {
+    if (!text || !href) return false;
+    const normalizedText = text.toLowerCase().trim().replace(/[^a-z0-9]/g, "");
+    if (!normalizedText) return false;
+    try {
+      const urlObj = href.startsWith('http') ? new URL(href) : { pathname: href };
+      const urlPath = urlObj.pathname || href;
+      if (urlPath === "/" || urlPath === "") {
+        return normalizedText.includes("home") || normalizedText.includes("index") || normalizedText.includes("main");
+      }
+      const cleanPath = urlPath.replace(/\.[^/.]+$/, "").replace(/\/$/, "");
+      const slug = cleanPath.split('/').pop().toLowerCase().replace(/[^a-z0-9]/g, "");
+      if (!slug) return false;
+      return normalizedText.includes(slug) || slug.includes(normalizedText);
+    } catch { return false; }
+  };
+
+  // Combine Internal & External Links for analysis
+  const allLinks = [
+    ...(linksData?.meta?.internalLinks || []),
+    ...(linksData?.meta?.externalLinks || [])
+  ];
+
+  // Analyze Links
+  const analyzedLinks = allLinks.map(link => ({
+    ...link,
+    isContextual: isContextual(link.text, link.href)
+  }));
+
+  const contextualLinks = analyzedLinks.filter(l => l.isContextual);
+  const nonContextualLinks = analyzedLinks.filter(l => !l.isContextual);
+
+  // Determine score based on ratio
+  const contextualRatio = allLinks.length > 0 ? contextualLinks.length / allLinks.length : 0;
+  const derivedScore = contextualRatio > 0.5 ? 1 : (contextualRatio > 0.3 ? 0.7 : 0);
+  const finalScore = score !== undefined ? score : derivedScore; // Prefer API score if exists
+
+  const isPassed = finalScore > 0.7; // Strict threshold for contextual
+
+  // Status Colors
+  const statusColor = isPassed
+    ? (darkMode ? "text-green-400 bg-green-900/20 border-green-800/30" : "text-green-600 bg-green-50 border-green-100")
+    : (finalScore > 0.4
+      ? (darkMode ? "text-yellow-400 bg-yellow-900/20 border-yellow-800/30" : "text-yellow-600 bg-yellow-50 border-yellow-100")
+      : (darkMode ? "text-red-400 bg-red-900/20 border-red-800/30" : "text-red-600 bg-red-50 border-red-100")
+    );
+
+  const statusText = isPassed ? "Good Context" : "Improve Relevance";
+
+  return (
+    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group lg:col-span-3 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+      <div className="p-5 space-y-5">
+        {/* Header */}
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-4">
+            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
+              <Link size={24} className={darkMode ? "text-amber-400" : "text-amber-600"} />
+            </div>
+            <div>
+              <h3 className={`font-bold text-lg ${darkMode ? "text-gray-100" : "text-gray-900"}`}>Contextual Links</h3>
+              <div className={`flex items-center gap-2 mt-1`}>
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${statusColor}`}>
+                  {statusText}
+                </span>
+                <span className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                  ({contextualLinks.length} / {allLinks.length} Contextual)
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {onInfo && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onInfo(); }}
+              className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
+            >
+              <Info size={18} />
+            </button>
+          )}
+        </div>
+
+        {/* New Viz: Contextual vs Non-Contextual Lists */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Contextual Links */}
+          <div className={`rounded-xl border overflow-hidden flex flex-col ${darkMode ? "bg-black/20 border-gray-700" : "bg-gray-50 border-gray-200"}`} style={{ maxHeight: '300px' }}>
+            <div className={`px-4 py-2 border-b text-xs font-bold uppercase tracking-wider sticky top-0 bg-opacity-90 backdrop-blur ${darkMode ? "bg-emerald-900/30 border-gray-700 text-emerald-400" : "bg-emerald-50 border-gray-200 text-emerald-700"}`}>
+              Contextual Links ({contextualLinks.length})
+            </div>
+            <div className="overflow-y-auto custom-scrollbar p-1 space-y-1 flex-1">
+              {contextualLinks.length > 0 ? contextualLinks.map((link, i) => (
+                <a key={i} href={resolveLink(link.href)} target="_blank" rel="noopener noreferrer" className={`block p-2 rounded text-[10px] break-all border group/link transition-all ${darkMode ? "bg-emerald-900/10 border-transparent hover:bg-emerald-900/20" : "bg-white border-transparent hover:border-emerald-200 hover:shadow-sm"}`}>
+                  <div className={`font-bold mb-0.5 ${darkMode ? "text-emerald-300" : "text-emerald-700"}`}>"{link.text}"</div>
+                  <div className="opacity-50 font-mono text-[9px] truncate group-hover/link:opacity-80 transition-opacity">{link.href}</div>
+                </a>
+              )) : <div className="p-4 text-center opacity-50 text-[10px]">No contextual links found.</div>}
+            </div>
+          </div>
+
+          {/* Non-Contextual Links */}
+          <div className={`rounded-xl border overflow-hidden flex flex-col ${darkMode ? "bg-black/20 border-gray-700" : "bg-gray-50 border-gray-200"}`} style={{ maxHeight: '300px' }}>
+            <div className={`px-4 py-2 border-b text-xs font-bold uppercase tracking-wider sticky top-0 bg-opacity-90 backdrop-blur ${darkMode ? "bg-amber-900/30 border-gray-700 text-amber-400" : "bg-amber-50 border-gray-200 text-amber-700"}`}>
+              Non-Contextual Links ({nonContextualLinks.length})
+            </div>
+            <div className="overflow-y-auto custom-scrollbar p-1 space-y-1 flex-1">
+              {nonContextualLinks.length > 0 ? nonContextualLinks.map((link, i) => (
+                <a key={i} href={resolveLink(link.href)} target="_blank" rel="noopener noreferrer" className={`block p-2 rounded text-[10px] break-all border group/link transition-all ${darkMode ? "bg-amber-900/10 border-transparent hover:bg-amber-900/20" : "bg-white border-transparent hover:border-amber-200 hover:shadow-sm"}`}>
+                  <div className={`font-bold mb-0.5 ${darkMode ? "text-amber-300" : "text-amber-700"}`}>"{link.text}"</div>
+                  <div className="opacity-50 font-mono text-[9px] truncate group-hover/link:opacity-80 transition-opacity">{link.href}</div>
+                </a>
+              )) : <div className="p-4 text-center opacity-50 text-[10px]">All links are contextual!</div>}
+            </div>
+          </div>
+        </div>
+
+        {/* Analysis & Recs from API */}
+        {meta.why_this_occurred && !isPassed && (
+          <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-500">
+                <AlertTriangle size={12} />
+                <span>Analysis</span>
+              </div>
+              <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                {meta.why_this_occurred}
+              </p>
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-500">
+                <CheckCircle size={12} />
+                <span>Recommendation</span>
+              </div>
+              <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                {meta.how_to_fix}
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // ✅ Specialized Link Profile Card
 // ------------------------------------------------------
-const LinkProfileCard = ({ data, darkMode, onInfo, resolveLink }) => {
+const LinkProfileCard = ({ data, darkMode, onInfo, resolveLink, className = "lg:col-span-3" }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
   const isPassed = score === 1;
@@ -1078,6 +1227,8 @@ const LinkProfileCard = ({ data, darkMode, onInfo, resolveLink }) => {
       );
     }
 
+
+
     // Group links by their target
     const grouped = links.reduce((acc, link) => {
       const t = link.target || "_self";
@@ -1088,44 +1239,58 @@ const LinkProfileCard = ({ data, darkMode, onInfo, resolveLink }) => {
 
     return (
       <div className="max-h-60 overflow-y-auto custom-scrollbar p-1 space-y-4">
-        {Object.entries(grouped).map(([target, groupLinks]) => (
-          <div key={target} className="space-y-1">
-            <div className={`sticky top-0 z-10 px-2 py-1 text-[10px] font-bold uppercase tracking-wider backdrop-blur-md border-b ${darkMode ? "bg-gray-800/80 border-gray-700 text-gray-400" : "bg-white/80 border-gray-100 text-gray-500"}`}>
-              Target: <span className={darkMode ? "text-gray-200" : "text-gray-800"}>{target}</span> <span className="opacity-50">({groupLinks.length})</span>
+        {Object.entries(grouped)
+          .sort(([a], [b]) => {
+            if (a === "_self") return -1;
+            if (b === "_self") return 1;
+            return a.localeCompare(b);
+          })
+          .map(([target, groupLinks]) => (
+            <div key={target} className="space-y-1">
+              <div className={`sticky top-0 z-10 px-2 py-1 text-[10px] font-bold uppercase tracking-wider backdrop-blur-md border-b ${darkMode ? "bg-gray-800/80 border-gray-700 text-gray-400" : "bg-white/80 border-gray-100 text-gray-500"}`}>
+                Target: <span className={darkMode ? "text-gray-200" : "text-gray-800"}>{target}</span> <span className="opacity-50">({groupLinks.length})</span>
+              </div>
+              {groupLinks.map((link, i) => {
+
+                return (
+                  <a
+                    key={i}
+                    href={resolveLink ? resolveLink(link.href) : link.href}
+                    target={link.target === "_blank" ? "_blank" : "_self"}
+                    rel="noopener noreferrer"
+                    className={`group block p-2 rounded border transition-all ${darkMode ? "bg-gray-900/30 border-gray-700 hover:bg-gray-800" : "bg-white border-gray-100 hover:bg-gray-50 hover:border-blue-200"}`}
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <div className="flex items-center gap-2 overflow-hidden flex-1">
+                        <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${type === "internal" ? "bg-blue-500" : "bg-purple-500"}`} />
+                        <span className={`text-xs font-bold truncate ${darkMode ? "text-gray-200" : "text-gray-800"}`}>
+                          {link.text || "[No Text]"}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-1.5">
+
+
+                        {/* Target Badge */}
+                        <span className={`text-[9px] uppercase font-bold px-1.5 py-0.5 rounded flex-shrink-0 ${darkMode ? "bg-gray-800 text-gray-400 border border-gray-700" : "bg-gray-100 text-gray-500 border border-gray-200"}`}>
+                          {link.target || "_self"}
+                        </span>
+                      </div>
+                    </div>
+                    <div className={`text-[10px] font-mono truncate opacity-50 pl-3.5 group-hover:opacity-100 ${darkMode ? "text-blue-300" : "text-blue-600"}`}>
+                      {link.href}
+                    </div>
+                  </a>
+                );
+              })}
             </div>
-            {groupLinks.map((link, i) => (
-              <a
-                key={i}
-                href={resolveLink ? resolveLink(link.href) : link.href}
-                target={link.target === "_blank" ? "_blank" : "_self"}
-                rel="noopener noreferrer"
-                className={`group block p-2 rounded border transition-all ${darkMode ? "bg-gray-900/30 border-gray-700 hover:bg-gray-800" : "bg-white border-gray-100 hover:bg-gray-50 hover:border-blue-200"}`}
-              >
-                <div className="flex items-center justify-between gap-2 mb-1">
-                  <div className="flex items-center gap-2 overflow-hidden">
-                    <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${type === "internal" ? "bg-blue-500" : "bg-purple-500"}`} />
-                    <span className={`text-xs font-bold truncate ${darkMode ? "text-gray-200" : "text-gray-800"}`}>
-                      {link.text || "[No Text]"}
-                    </span>
-                  </div>
-                  {/* Visible Target Badge */}
-                  <span className={`text-[9px] uppercase font-bold px-1.5 py-0.5 rounded flex-shrink-0 ${darkMode ? "bg-gray-800 text-gray-400 border border-gray-700" : "bg-gray-100 text-gray-500 border border-gray-200"}`}>
-                    {link.target || "_self"}
-                  </span>
-                </div>
-                <div className={`text-[10px] font-mono truncate opacity-50 pl-3.5 group-hover:opacity-100 ${darkMode ? "text-blue-300" : "text-blue-600"}`}>
-                  {link.href}
-                </div>
-              </a>
-            ))}
-          </div>
-        ))}
+          ))}
       </div>
     );
   };
 
   return (
-    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group lg:col-span-3 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group ${className} ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
       <div className="p-5 space-y-5">
         {/* Header */}
         <div className="flex items-start justify-between">
@@ -1158,12 +1323,12 @@ const LinkProfileCard = ({ data, darkMode, onInfo, resolveLink }) => {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-3 gap-3">
-          <div onClick={() => setActiveTab("internal")} className={`cursor-pointer p-3 rounded border text-center transition-all ${activeTab === "internal" ? (darkMode ? "bg-blue-900/20 border-blue-500 ring-1 ring-blue-500" : "bg-blue-50 border-blue-500 ring-1 ring-blue-500") : (darkMode ? "bg-gray-900/50 border-gray-700 hover:border-gray-600" : "bg-gray-50 border-gray-200 hover:border-gray-300")}`}>
+          <div title="Links pointing to pages on the same domain" onClick={() => setActiveTab("internal")} className={`cursor-pointer p-3 rounded border text-center transition-all ${activeTab === "internal" ? (darkMode ? "bg-blue-900/20 border-blue-500 ring-1 ring-blue-500" : "bg-blue-50 border-blue-500 ring-1 ring-blue-500") : (darkMode ? "bg-gray-900/50 border-gray-700 hover:border-gray-600" : "bg-gray-50 border-gray-200 hover:border-gray-300")}`}>
             <div className={`text-2xl font-black ${darkMode ? "text-blue-400" : "text-blue-600"}`}>{meta.internal || 0}</div>
             <div className="text-[10px] font-bold uppercase tracking-wider opacity-60">Internal</div>
           </div>
 
-          <div onClick={() => setActiveTab("external")} className={`cursor-pointer p-3 rounded border text-center transition-all ${activeTab === "external" ? (darkMode ? "bg-purple-900/20 border-purple-500 ring-1 ring-purple-500" : "bg-purple-50 border-purple-500 ring-1 ring-purple-500") : (darkMode ? "bg-gray-900/50 border-gray-700 hover:border-gray-600" : "bg-gray-50 border-gray-200 hover:border-gray-300")}`}>
+          <div title="Links pointing to different domains" onClick={() => setActiveTab("external")} className={`cursor-pointer p-3 rounded border text-center transition-all ${activeTab === "external" ? (darkMode ? "bg-purple-900/20 border-purple-500 ring-1 ring-purple-500" : "bg-purple-50 border-purple-500 ring-1 ring-purple-500") : (darkMode ? "bg-gray-900/50 border-gray-700 hover:border-gray-600" : "bg-gray-50 border-gray-200 hover:border-gray-300")}`}>
             <div className={`text-2xl font-black ${darkMode ? "text-purple-400" : "text-purple-600"}`}>{meta.external || 0}</div>
             <div className="text-[10px] font-bold uppercase tracking-wider opacity-60">External</div>
           </div>
@@ -1179,7 +1344,7 @@ const LinkProfileCard = ({ data, darkMode, onInfo, resolveLink }) => {
           <div className={`px-4 py-2 border-b text-xs font-bold uppercase tracking-wider flex justify-between items-center ${darkMode ? "border-gray-700 text-gray-400" : "border-gray-200 text-gray-500"}`}>
             <span>{activeTab === "internal" ? "Internal Links" : "External Links"}</span>
             <span className="opacity-50 text-[10px]">
-              Showing top {activeTab === "internal" ? meta.internalLinks?.length : meta.externalLinks?.length}
+              Total: {activeTab === "internal" ? meta.internalLinks?.length : meta.externalLinks?.length}
             </span>
           </div>
           <div className="bg-opacity-50">
@@ -1261,7 +1426,7 @@ export default function On_Page_SEO() {
 
             <div className="flex flex-col xl:flex-row min-h-[300px]">
               {/* Left Panel: Live Preview (Only if not All) */}
-              {data.report !== "All" && (
+              {data?.report !== "All" && (
                 <div className={`w-full xl:w-[45%] p-3 lg:p-4 flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/5 blur-3xl rounded-full pointer-events-none"></div>
                   <div className="w-full relative z-10">
@@ -1418,7 +1583,7 @@ export default function On_Page_SEO() {
         </div>
 
         {/* Content Essentials */}
-        <Section title="Content Essentials" icon={FileText} darkMode={darkMode}>
+        <Section title="Content Essentials" icon={FileText} darkMode={darkMode} gridClasses="grid-cols-1 md:grid-cols-2">
           {/* Title Tag Card */}
           <TitleTagCard
             data={seo.Title}
@@ -1499,84 +1664,13 @@ export default function On_Page_SEO() {
             onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.Semantic_Tags, icon: FileCode })}
             className="lg:col-span-3"
           />
-          <MetricCard className="lg:col-span-3" onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.Contextual_Linking, icon: Link })} title="Contextual Links" description={desc.contextual} score={seo.Contextual_Linking?.score} value={seo.Contextual_Linking?.meta?.totalContextual + " Links"} darkMode={darkMode} icon={Link}>
-            {seo.Contextual_Linking?.meta?.why_this_occurred && (
-              <div className="mb-3 space-y-2">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-500">
-                    <AlertTriangle size={12} />
-                    <span>Analysis</span>
-                  </div>
-                  <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                    {seo.Contextual_Linking.meta.why_this_occurred}
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-500">
-                    <CheckCircle size={12} />
-                    <span>Recommendation</span>
-                  </div>
-                  <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                    {seo.Contextual_Linking.meta.how_to_fix}
-                  </p>
-                </div>
-              </div>
-            )}
-            <div className="space-y-3">
-              {/* Issues & Missing Links */}
-              {(seo.Contextual_Linking?.meta?.missingLinks?.length > 0 || seo.Contextual_Linking?.meta?.issues?.length > 0) && (
-                <div className="space-y-2">
-                  <div className="font-semibold text-red-500">Issues Found:</div>
-
-                  {/* General Issues */}
-                  {seo.Contextual_Linking?.meta?.issues?.length > 0 && (
-                    <ul className="list-disc list-inside text-xs opacity-90 space-y-1">
-                      {seo.Contextual_Linking.meta.issues.map((issue, i) => (
-                        <li key={i}>{typeof issue === 'string' ? issue : issue.finding}</li>
-                      ))}
-                    </ul>
-                  )}
-
-                  {/* Missing Links */}
-                  {seo.Contextual_Linking?.meta?.missingLinks?.length > 0 && (
-                    <div className={`p-2 rounded border ${darkMode ? "bg-red-900/10 border-red-900/30" : "bg-red-50 border-red-100"}`}>
-                      <div className="text-xs font-bold text-red-500 mb-1.5 opacity-90">Missing Menu Links ({seo.Contextual_Linking.meta.missingLinks.length}):</div>
-                      <div className="flex flex-wrap gap-1 max-h-32 overflow-y-auto custom-scrollbar">
-                        {seo.Contextual_Linking.meta.missingLinks.map((link, i) => (
-                          <span key={i} className={`px-2 py-0.5 rounded text-xs break-all ${darkMode ? "bg-red-950 text-red-200 border border-red-900/50" : "bg-white border border-red-200 text-red-700 shadow-sm"}`}>
-                            {link}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Found Links - Added based on user request */}
-              {seo.Contextual_Linking?.meta?.foundLinks?.length > 0 && (
-                <div className={`mt-3 p-2 rounded border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-gray-50 border-gray-100"}`}>
-                  <div className={`text-xs font-bold mb-2 opacity-90 border-b pb-1 ${darkMode ? "text-gray-300 border-gray-700" : "text-gray-600 border-gray-200"}`}>
-                    Found Contextual Links ({seo.Contextual_Linking.meta.foundLinks.length}):
-                  </div>
-                  <div className="max-h-40 overflow-y-auto custom-scrollbar space-y-1">
-                    {seo.Contextual_Linking.meta.foundLinks.map((link, i) => (
-                      <a
-                        key={i}
-                        href={resolveLink(link)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={`block px-2 py-1 rounded text-[10px] font-mono break-all flex items-center gap-2 hover:underline ${darkMode ? "bg-gray-700/50 text-gray-400 hover:bg-gray-700 hover:text-gray-200" : "bg-white border border-gray-100 text-gray-500 hover:text-gray-700 hover:border-gray-200"}`}
-                      >
-                        <div className={`w-1 h-1 rounded-full flex-shrink-0 ${darkMode ? "bg-blue-500" : "bg-blue-600"}`}></div>
-                        {link}
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </MetricCard>
+          <ContextualAnalysisCard
+            data={seo.Contextual_Linking}
+            linksData={seo.Links}
+            darkMode={darkMode}
+            onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.Contextual_Linking, icon: Link })}
+            resolveLink={resolveLink}
+          />
           {seo.Heading_Hierarchy && (
             <MetricCard onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.Heading_Hierarchy, icon: List })} title="Hierarchy" description={desc.heading} score={seo.Heading_Hierarchy?.score} value={seo.Heading_Hierarchy?.score ? "Logical" : "Broken"} darkMode={darkMode} icon={List} className="md:col-span-2 lg:col-span-3">
               <div className="space-y-4">
@@ -1651,7 +1745,7 @@ export default function On_Page_SEO() {
         </Section>
 
         {/* Technical SEO */}
-        <Section title="Technical SEO" icon={Lock} darkMode={darkMode}>
+        <Section title="Technical SEO" icon={Lock} darkMode={darkMode} gridClasses="grid-cols-1 md:grid-cols-2">
           <MetricCard onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.HTTPS, icon: Lock })} title="HTTPS" description={seo.HTTPS?.details || "Secure connection."} score={seo.HTTPS?.score} value={seo.HTTPS?.score === 1 ? "Secure Connection" : "Insecure Connection"} darkMode={darkMode} icon={Lock}>
             {seo.HTTPS?.meta?.url && (
               <div className="space-y-2">
@@ -1704,6 +1798,7 @@ export default function On_Page_SEO() {
             darkMode={darkMode}
             onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.Links, icon: Globe })}
             resolveLink={resolveLink}
+            className="md:col-span-2"
           />
 
 

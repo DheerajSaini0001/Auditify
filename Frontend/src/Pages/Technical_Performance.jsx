@@ -216,7 +216,7 @@ export default function Technical_Performance() {
 
   return (
     <div className={`w-full ${mainBg} transition-colors duration-300`}>
-      <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-8`}>
+      <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-8`}>
 
         {/* ✅ Unified Master Card */}
         <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
@@ -230,7 +230,7 @@ export default function Technical_Performance() {
           {loading || !data?.technicalPerformance ? (
             <div className="flex flex-col xl:flex-row min-h-[300px]">
               {/* Left Panel: Live Preview (Only if not All) */}
-              {data.report !== "All" && (
+              {data?.report !== "All" && (
                 <div className={`w-full xl:w-1/2 p-6 flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/30 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/5 blur-3xl rounded-full pointer-events-none"></div>
                   <div className="w-full relative z-10 px-2 lg:px-6">
@@ -247,11 +247,11 @@ export default function Technical_Performance() {
               </div>
             </div>
           ) : (
-            <div className={`flex flex-col xl:flex-row ${data.report === "All" ? "" : "min-h-[300px]"}`}>
+            <div className={`flex flex-col xl:flex-row ${data?.report === "All" ? "" : "min-h-[300px]"}`}>
 
               {/* Left Panel: Live Preview (Only if not All) */}
-              {data.report !== "All" && (
-                <div className={`w-full xl:w-[45%] ${data.report === "All" ? "p-6 lg:p-10" : "p-3 lg:p-4"} flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
+              {data?.report !== "All" && (
+                <div className={`w-full xl:w-[45%] ${data?.report === "All" ? "p-6 lg:p-10" : "p-3 lg:p-4"} flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/5 blur-3xl rounded-full pointer-events-none"></div>
                   <div className="w-full relative z-10">
                     <LivePreview data={data} loading={loading} variant="plain" />
@@ -260,20 +260,20 @@ export default function Technical_Performance() {
               )}
 
               {/* Right Panel: Metrics & Score */}
-              <div className={`flex-1 ${data.report === "All" ? "px-6 pb-4 pt-2 lg:px-10 lg:pt-2" : "px-6 pb-4 pt-4 lg:px-12 lg:pt-6"} flex flex-col justify-center`}>
-                <div className={`w-full ${data.report === "All" ? "" : "max-w-2xl mx-auto"} ${data.report === "All" ? "space-y-10" : "space-y-8"}`}>
+              <div className={`flex-1 ${data?.report === "All" ? "px-6 pb-4 pt-2 lg:px-10 lg:pt-2" : "px-6 pb-4 pt-4 lg:px-12 lg:pt-6"} flex flex-col justify-center`}>
+                <div className={`w-full ${data?.report === "All" ? "" : "max-w-2xl mx-auto"} ${data?.report === "All" ? "space-y-10" : "space-y-8"}`}>
 
                   {/* Top Content Area */}
-                  <div className={`flex flex-col md:flex-row items-center ${data.report === "All" ? "gap-10 md:gap-14 justify-between" : "gap-8 md:gap-12 justify-center"}`}>
+                  <div className={`flex flex-col md:flex-row items-center ${data?.report === "All" ? "gap-10 md:gap-14 justify-between" : "gap-8 md:gap-12 justify-center"}`}>
 
                     {/* Text Content */}
-                    <div className={`flex-1 ${data.report === "All" ? "space-y-5" : "space-y-4"} text-left order-2 md:order-1`}>
-                      <div className={`${data.report === "All" ? "space-y-2" : "space-y-1.5"}`}>
+                    <div className={`flex-1 ${data?.report === "All" ? "space-y-5" : "space-y-4"} text-left order-2 md:order-1`}>
+                      <div className={`${data?.report === "All" ? "space-y-2" : "space-y-1.5"}`}>
                         <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-blue-100/50 text-blue-600 border border-blue-200"}`}>
                           <Activity className="w-3.5 h-3.5" />
                           <span>Performance Audit</span>
                         </div>
-                        <h3 className={`${data.report === "All" ? "text-3xl lg:text-5xl" : "text-2xl lg:text-4xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
+                        <h3 className={`${data?.report === "All" ? "text-3xl lg:text-5xl" : "text-2xl lg:text-4xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
                           Technical <span className="text-blue-500">Performance</span>
                         </h3>
                         <p className={`text-sm leading-relaxed opacity-70 ${darkMode ? "text-slate-300" : "text-slate-600"}`}>
@@ -282,8 +282,8 @@ export default function Technical_Performance() {
                       </div>
 
                       {/* Stats & Tools */}
-                      <div className={`flex flex-wrap items-center ${data.report === "All" ? "gap-6" : "gap-5"}`}>
-                        <div className={`flex items-center ${data.report === "All" ? "gap-5" : "gap-4"}`}>
+                      <div className={`flex flex-wrap items-center ${data?.report === "All" ? "gap-6" : "gap-5"}`}>
+                        <div className={`flex items-center ${data?.report === "All" ? "gap-5" : "gap-4"}`}>
                           <div className="flex items-center gap-2">
                             <CheckCircle size={18} className="text-emerald-500" />
                             <span className="text-sm font-bold">{passedCount} Passed</span>
@@ -310,9 +310,9 @@ export default function Technical_Performance() {
                     {/* Circular Progress */}
                     <div className="relative flex-shrink-0 group cursor-default order-1 md:order-2">
                       <div className={`absolute -inset-8 rounded-full blur-3xl opacity-25 transition-opacity duration-700 group-hover:opacity-40 ${overallScore >= 80 ? "bg-emerald-500" : "bg-amber-500"}`}></div>
-                      <CircularProgress value={overallScore} size={data.report === "All" ? 180 : 150} stroke={14} />
+                      <CircularProgress value={overallScore} size={data?.report === "All" ? 180 : 150} stroke={14} />
                       <div className="absolute inset-0 flex items-center justify-center flex-col gap-0.5">
-                        <span className={`${data.report === "All" ? "text-5xl" : "text-3xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>{overallScore}%</span>
+                        <span className={`${data?.report === "All" ? "text-5xl" : "text-3xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>{overallScore}%</span>
                         <span className="text-[11px] font-bold uppercase tracking-[0.2em] opacity-50">SCORE</span>
                       </div>
                     </div>

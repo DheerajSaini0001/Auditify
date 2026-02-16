@@ -1,3 +1,13 @@
+// Helper to standardized return object
+const evaluateParameter = (score, details, meta = {}) => {
+  return {
+    score,
+    status: score === 1 ? "pass" : score > 0 ? "warning" : "fail",
+    details,
+    meta
+  };
+};
+
 const checkSlugs = (url) => {
   try {
     const u = new URL(url);
@@ -27,7 +37,6 @@ const checkSlugs = (url) => {
       slug: lastSegment,
       valid,
       issues: checks,
-      parameter: '1 if slug exists, ≤50 characters, lowercase hyphenated'
     });
   } catch (e) {
     return evaluateParameter(0, "Invalid URL for slug check", { error: e.message });
@@ -165,10 +174,7 @@ const checkImages = async ($, base_url) => {
       missingTitle: missingTitle.slice(0, 50),
       largeImages,
       why_this_occurred: explanation,
-      how_to_fix: recommendation,
-      importance: "High",
-      seo_best_practices: "Images should have descriptive Alt text for accessibility and SEO. File sizes should be compressed (WebP) for fast loading.",
-      parameter: 'Weighted: 50% Alt, 20% Meaningful, 10% Title, 20% Size (<150KB)'
+      how_to_fix: recommendation
     });
   } catch (err) {
     return evaluateParameter(0, "Error checking images", { error: err.message });
@@ -213,7 +219,6 @@ const checkVideos = ($) => {
       embeddingCount: embedding,
       lazyCount: lazyLoading,
       metaCount: metadata,
-      parameter: 'Avg of Embedding, Lazy-Load, and Metadata scores'
     });
 
   } catch (err) {
@@ -257,7 +262,6 @@ const checkHeadingHierarchy = ($) => {
     counts,
     headings: headingList,
     issues,
-    parameter: '1 if headings follow proper H1→H2→H3 order, else 0'
   });
 };
 
@@ -365,9 +369,7 @@ const checkLinks = ($, url) => {
       internalLinks: internalLinksList,
       externalLinks: externalLinksList,
       why_this_occurred: explanation,
-      how_to_fix: recommendation,
-      seo_best_practices: "Use descriptive anchor text. Internal links help structure. External links add authority.",
-      parameter: "1 if ≥ 75% links are descriptive, else 0"
+      how_to_fix: recommendation
     });
   } catch (err) {
     return evaluateParameter(0, "Error checking links", { error: err.message });
@@ -455,17 +457,13 @@ const checkSemanticTags = async ($) => {
       missing: missingTags,
       potentialReplacements, // Explicitly return this for frontend use
       why_this_occurred: explanation,
-      how_to_fix: recommendation,
-      importance: "Medium",
-      seo_best_practices: "HTML5 semantic tags provide meaning to page structure, helping screen readers and search engines understand content roles.",
-      parameter: "Weighted presence of Header, Nav, Main, Footer (Core) + Article, Section, Aside"
+      how_to_fix: recommendation
     });
   } catch (err) {
     return evaluateParameter(0, "Error checking semantic tags", { error: err.message, importance: "Medium" });
   }
 };
 
-// On-Page SEO (Structure & Uniqueness) 
 const checkContextualLinks = ($, url) => {
   try {
     const contentLinks = new Set();
@@ -559,24 +557,12 @@ const checkContextualLinks = ($, url) => {
       missingLinks: missingLinks.slice(0, 20),
       issues: issues,
       why_this_occurred: explanation,
-      how_to_fix: recommendation,
-      seo_best_practices: "Contextual links (in-body) carry more weight than navigation links. They help search engines understand the relationship between pages.",
-      parameter: "1 if content links exist, 0.8 if key menu links missing, 0 if none"
+      how_to_fix: recommendation
     });
 
   } catch (err) {
     return evaluateParameter(0, "Error checking contextual links", { error: err.message });
   }
-};
-
-// Helper to standardized return object
-const evaluateParameter = (score, details, meta = {}) => {
-  return {
-    score,
-    status: score === 1 ? "pass" : score > 0 ? "warning" : "fail",
-    details,
-    meta
-  };
 };
 
 const checkContentQuality = ($) => {
@@ -663,9 +649,6 @@ const checkURLStructure = (url) => {
       issues,
       why_this_occurred: explanation,
       how_to_fix: recommendation,
-      importance: "Medium",
-      seo_best_practices: "URLs should be short, descriptive, lowercase, use hyphens as separators, and avoid unnecessary parameters.",
-      parameter: 'Clean, short, lowercase, hyphen-separated, no params, shallow depth'
     });
   } catch (err) {
     return evaluateParameter(0, "Invalid URL format", { url, error: err.message, why_this_occurred: "The provided URL could not be parsed.", how_to_fix: "Ensure the URL is correctly formatted (e.g. https://example.com).", importance: "Critical", seo_best_practices: "URLs must be valid RFC 3986 strings." });
@@ -711,13 +694,8 @@ const checkTitle = ($) => {
     length: titleLength,
     why_this_occurred: explanation,
     how_to_fix: recommendation,
-    importance: "Critical",
-    seo_best_practices: "Titles should be unique, include main keywords near the beginning, and ideally be between 30-60 characters.",
-    parameter: '1 if title exists and 30–60 characters, else 0'
   });
 };
-
-/* ... meta description and canonical code is skipped for brevity ... */
 
 const checkH1 = ($) => {
   const h1Count = $("h1").length;
@@ -750,9 +728,6 @@ const checkH1 = ($) => {
     content,
     why_this_occurred: explanation,
     how_to_fix: recommendation,
-    importance: "High",
-    seo_best_practices: "Use a single H1 tag for the main page title. It helps search engines understand the primary topic of your content.",
-    parameter: '1 if exactly one H1, 0.5 if >1, 0 if none'
   });
 };
 
@@ -796,9 +771,6 @@ const checkMetaDescription = ($) => {
     exists, // boolean
     why_this_occurred: explanation,
     how_to_fix: recommendation,
-    importance: "High",
-    seo_best_practices: "Meta descriptions should be unique, actionable summaries of the page content, ideally between 50-160 characters.",
-    parameter: '1 if meta description exists and 50-160 characters, else 0'
   });
 };
 
@@ -883,23 +855,7 @@ const checkCanonical = ($, url) => {
     isSelfReferencing,
     why_this_occurred: explanation,
     how_to_fix: recommendation,
-    importance: "High",
-    seo_best_practices: "Every page should have a self-referencing canonical tag unless it is a duplicate of another page. It prevents duplicate content issues.",
-    parameter: '1 if valid canonical exists'
   });
-};
-
-
-
-const checkHTTPS = (url) => {
-  try {
-    const parsedUrl = new URL(url);
-    const isHttps = parsedUrl.protocol === 'https:';
-
-    return evaluateParameter(isHttps ? 1 : 0, isHttps ? "Site is served over HTTPS" : "Site is not using HTTPS", { url, isHttps });
-  } catch (error) {
-    return evaluateParameter(0, "Invalid URL", { error: error.message });
-  }
 };
 
 const checkSocial = ($) => {
@@ -920,12 +876,14 @@ const checkSocial = ($) => {
   const ogMetric = evaluateParameter(ogScore, ogDetails, { tags: ogTags, missing: ogMissing, parameter: "1 if og:title, og:image, og:url exist" });
 
   // 2. Twitter Card
+  const getTw = (key) => $(`meta[name="${key}"], meta[property="${key}"]`).attr("content");
+
   const twTags = {
-    "twitter:site": $('meta[name="twitter:site"]').attr("content"),
-    "twitter:card": $('meta[name="twitter:card"]').attr("content"),
-    "twitter:image": $('meta[name="twitter:image"]').attr("content"),
-    "twitter:title": $('meta[name="twitter:title"]').attr("content"),
-    "twitter:description": $('meta[name="twitter:description"]').attr("content")
+    "twitter:site": getTw("twitter:site"),
+    "twitter:card": getTw("twitter:card"),
+    "twitter:image": getTw("twitter:image") || getTw("twitter:image:src"),
+    "twitter:title": getTw("twitter:title"),
+    "twitter:description": getTw("twitter:description")
   };
   const twRequired = ["twitter:card", "twitter:title"];
   const twCount = twRequired.reduce((acc, key) => acc + (twTags[key] ? 1 : 0), 0);
@@ -954,19 +912,99 @@ const checkSocial = ($) => {
   return { ogMetric, twitterMetric, socialLinksMetric };
 };
 
+const checkRobotsTxt = async (url) => {
+  try {
+    const robotsUrl = new URL("/robots.txt", url).href;
+    const response = await fetch(robotsUrl, { signal: AbortSignal.timeout(5000) });
+    const exists = response.status === 200;
+    const content = exists ? await response.text() : null;
+
+    const score = exists ? 1 : 0;
+    const details = exists ? "Robots.txt is present" : "Robots.txt not found";
+
+    const explanation = exists
+      ? "A robots.txt file was found at the root of your domain."
+      : "Robots.txt is missing. Crawling is uncontrolled and search engines may index restricted areas.";
+    const recommendation = exists
+      ? "Ensure your robots.txt file correctly allows or disallows crawlers as intended."
+      : "Create a robots.txt file at the root of your domain to guide search engine crawlers.";
+
+    return evaluateParameter(score, details, {
+      content,
+      exists,
+      why_this_occurred: explanation,
+      how_to_fix: recommendation,
+    });
+  } catch (e) {
+    return evaluateParameter(0, "Robots.txt check failed", { error: e.message });
+  }
+};
+
+const checkSitemap = async (url) => {
+  try {
+    const sitemapUrl = new URL("/sitemap.xml", url).href;
+    const response = await fetch(sitemapUrl, { signal: AbortSignal.timeout(5000) });
+    const exists = response.status === 200;
+    const content = exists ? await response.text() : null;
+
+    const score = exists ? 1 : 0;
+    const details = exists ? "Sitemap.xml is present" : "Sitemap.xml not found";
+
+    const explanation = exists
+      ? "A sitemap.xml file was found at the root of your domain."
+      : "The sitemap.xml file is missing. Sitemaps help search engines find and crawl all of your important pages.";
+    const recommendation = exists
+      ? "Ensure your sitemap is submitted to Google Search Console and kept up-to-date."
+      : "Generate a sitemap.xml file and submit it to Google Search Console to improve crawlability.";
+
+    return evaluateParameter(score, details, {
+      content,
+      exists,
+      why_this_occurred: explanation,
+      how_to_fix: recommendation,
+    });
+  } catch (e) {
+    return evaluateParameter(0, "Sitemap check failed", { error: e.message });
+  }
+};
+
+const checkStructuredData = async (page) => {
+  try {
+    const result = await page.evaluate(() => {
+      const scripts = Array.from(document.querySelectorAll('script[type="application/ld+json"]'))
+        .map(el => {
+          try { return JSON.parse(el.innerText); } catch { return null; }
+        })
+        .filter(Boolean);
+
+      const types = scripts.map(s => s['@type']).filter(Boolean);
+      return { hasData: scripts.length > 0, types: types.join(', '), content: scripts };
+    });
+
+    const score = result.hasData ? 1 : 0;
+    const details = result.hasData ? "Structured Data found" : "Structured Data missing";
+
+    const explanation = result.hasData
+      ? `Found JSON-LD structured data of type(s): ${result.types}.`
+      : "No JSON-LD structured data found on the page.";
+    const recommendation = result.hasData
+      ? "Ensure your structured data is valid according to Schema.org and covers key elements."
+      : "Add Schema.org structured data (JSON-LD) to help search engines understand your content and display rich snippets.";
+
+    return evaluateParameter(score, details, {
+      content: result.content,
+      types: result.types,
+      exists: result.hasData,
+      why_this_occurred: explanation,
+      how_to_fix: recommendation,
+    });
+  } catch (e) {
+    return evaluateParameter(0, "Structured Data check failed", { error: e.message });
+  }
+};
+
 export default async function seoMetrics(url, $, page) {
 
-  // Scrape Schema
-  const structuredData = await page.evaluate(() => {
-    const scripts = Array.from(document.querySelectorAll('script[type="application/ld+json"]'))
-      .map(el => {
-        try { return JSON.parse(el.innerText); } catch { return null; }
-      })
-      .filter(Boolean)
-    return scripts
-  });
-
-  // 1. Run all checks (Standardized)
   const titleMetric = checkTitle($);
   const metaDescMetric = checkMetaDescription($);
   const urlStructureMetric = checkURLStructure(url);
@@ -980,50 +1018,56 @@ export default async function seoMetrics(url, $, page) {
   const linksMetric = checkLinks($, url);
   const contentQualityMetric = checkContentQuality($);
   const slugMetric = checkSlugs(url);
-  const httpsMetric = checkHTTPS(url);
+  const robotsMetric = await checkRobotsTxt(url);
+  const sitemapMetric = await checkSitemap(url);
+  const structuredDataMetric = await checkStructuredData(page);
 
-  // Consoliated Social Check
   const { ogMetric, twitterMetric, socialLinksMetric } = checkSocial($);
 
-  // 3. Scoring Weights (Sum = 100)
   const weights = {
-    Title: 12,
-    Meta_Description: 9,
-    URL_Structure: 6,
+    Title: 15,
+    Meta_Description: 8,
+    H1: 10,
+    Duplicate_Content: 12,
+    Image: 8,
     Canonical: 8,
-    H1: 9,
-    Image: 11,
-    Video: 3,
-    Heading_Hierarchy: 6,
-    Semantic_Tags: 3,
-    Contextual_Linking: 9,
-    Links: 5,
-    Duplicate_Content: 9,
-    URL_Slugs: 4,
-    HTTPS: 6
+    Contextual_Linking: 8,
+    Sitemap: 5,
+    Robots_Txt: 4,
+    Structured_Data: 6,
+    Heading_Hierarchy: 3,
+    URL_Slugs: 3,
+    Links: 3,
+    Semantic_Tags: 1,
+    Video: 1,
+    Open_Graph: 2,
+    Twitter_Card: 2,
+    Social_Links: 1
   };
 
-  // 4. Calculate Weighted Score
   const weightedScore =
     (titleMetric.score * weights.Title) +
     (metaDescMetric.score * weights.Meta_Description) +
-    (urlStructureMetric.score * weights.URL_Structure) +
-    (canonicalMetric.score * weights.Canonical) +
     (h1Metric.score * weights.H1) +
-    (imageMetric.score * weights.Image) +
-    (videoMetric.score * weights.Video) +
-    (hierarchyMetric.score * weights.Heading_Hierarchy) +
-    (semanticMetric.score * weights.Semantic_Tags) +
-    (contextualMetric.score * weights.Contextual_Linking) +
-    (linksMetric.score * weights.Links) +
     (contentQualityMetric.score * weights.Duplicate_Content) +
+    (imageMetric.score * weights.Image) +
+    (canonicalMetric.score * weights.Canonical) +
+    (contextualMetric.score * weights.Contextual_Linking) +
+    (sitemapMetric.score * weights.Sitemap) +
+    (robotsMetric.score * weights.Robots_Txt) +
+    (structuredDataMetric.score * weights.Structured_Data) +
+    (hierarchyMetric.score * weights.Heading_Hierarchy) +
     (slugMetric.score * weights.URL_Slugs) +
-    (httpsMetric.score * weights.HTTPS);
+    (linksMetric.score * weights.Links) +
+    (semanticMetric.score * weights.Semantic_Tags) +
+    (videoMetric.score * weights.Video) +
+    (ogMetric.score * weights.Open_Graph) +
+    (twitterMetric.score * weights.Twitter_Card) +
+    (socialLinksMetric.score * weights.Social_Links);
 
   const actualPercentage = parseFloat(weightedScore.toFixed(0));
 
   return {
-    Schema: structuredData,
     Title: titleMetric,
     Meta_Description: metaDescMetric,
     URL_Structure: urlStructureMetric,
@@ -1037,7 +1081,9 @@ export default async function seoMetrics(url, $, page) {
     Links: linksMetric,
     Duplicate_Content: contentQualityMetric,
     URL_Slugs: slugMetric,
-    HTTPS: httpsMetric,
+    Robots_Txt: robotsMetric,
+    Sitemap: sitemapMetric,
+    Structured_Data: structuredDataMetric,
     Open_Graph: ogMetric,
     Twitter_Card: twitterMetric,
     Social_Links: socialLinksMetric,

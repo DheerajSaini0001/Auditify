@@ -17,7 +17,7 @@ const LivePreview = ({ data, showInFullAudit = true, variant = "card" }) => {
     // REMOVED: if (!screenshotSrc && data?.status !== "inprogress") return null;
     // We now always render the placeholder if no screenshot is present.
 
-    const isMobile = data.device === "Mobile";
+    const isMobile = data?.device === "Mobile";
     const statusText = data?.status === "inprogress" ? "Running Visual Scan..." : "Live Preview Ready";
     const isScanning = data?.status === "inprogress";
 
@@ -103,15 +103,15 @@ const LivePreview = ({ data, showInFullAudit = true, variant = "card" }) => {
                             <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 overflow-hidden">
 
                                 {/* Scanning Overlay - Inside Placeholder */}
-                                    <div className="absolute inset-0 z-0 pointer-events-none">
-                                        {/* Green Tint */}
-                                        <div className="absolute inset-0 bg-emerald-500/5"></div>
-                                        {/* Grid Overlay */}
-                                        <div className="w-full h-full bg-[linear-gradient(rgba(16,185,129,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(16,185,129,0.1)_1px,transparent_1px)] bg-[size:20px_20px] opacity-20"></div>
+                                <div className="absolute inset-0 z-0 pointer-events-none">
+                                    {/* Green Tint */}
+                                    <div className="absolute inset-0 bg-emerald-500/5"></div>
+                                    {/* Grid Overlay */}
+                                    <div className="w-full h-full bg-[linear-gradient(rgba(16,185,129,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(16,185,129,0.1)_1px,transparent_1px)] bg-[size:20px_20px] opacity-20"></div>
 
-                                        {/* Scanning Line */}
-                                        <div className="absolute top-0 left-0 w-[3px] h-full bg-gradient-to-b from-transparent via-emerald-500 to-transparent shadow-[0_0_20px_rgba(16,185,129,0.6)] animate-[scan-x_2s_linear_infinite]"></div>
-                                    </div>
+                                    {/* Scanning Line */}
+                                    <div className="absolute top-0 left-0 w-[3px] h-full bg-gradient-to-b from-transparent via-emerald-500 to-transparent shadow-[0_0_20px_rgba(16,185,129,0.6)] animate-[scan-x_2s_linear_infinite]"></div>
+                                </div>
 
                                 <div className="relative z-10 mb-3">
                                     <div className="absolute inset-0 bg-emerald-500 blur-xl opacity-20 animate-pulse"></div>

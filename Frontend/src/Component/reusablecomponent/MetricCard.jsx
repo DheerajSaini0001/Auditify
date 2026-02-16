@@ -12,8 +12,22 @@ const MetricCard = ({
     description,
     whyItMatters,
     onInfoClick,
+    isOpen,
+    onToggle,
 }) => {
-    const [showDetails, setShowDetails] = useState(false);
+    const [internalOpen, setInternalOpen] = useState(false);
+
+    // Determine if controlled or uncontrolled
+    const isControlled = isOpen !== undefined;
+    const showDetails = isControlled ? isOpen : internalOpen;
+
+    const handleToggle = () => {
+        if (isControlled && onToggle) {
+            onToggle();
+        } else {
+            setInternalOpen(!internalOpen);
+        }
+    };
 
     if (!metricData) return null;
 
@@ -156,7 +170,7 @@ const MetricCard = ({
                 analysis={activeData?.analysis}
                 darkMode={darkMode}
                 isOpen={showDetails}
-                onToggle={() => setShowDetails(!showDetails)}
+                onToggle={handleToggle}
             />
 
         </div>

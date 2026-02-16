@@ -7,7 +7,8 @@ import {
     ClipboardCheck,
     ArrowUpRight,
     Activity,
-    AlertTriangle
+    AlertTriangle,
+    Calculator
 } from 'lucide-react';
 
 const ParameterInfoModal = ({ isOpen, onClose, info, darkMode }) => {
@@ -70,6 +71,23 @@ const ParameterInfoModal = ({ isOpen, onClose, info, darkMode }) => {
                                     <h3 className={`font-bold text-base mb-1.5 ${darkMode ? "text-gray-100" : "text-gray-900"}`}>What this parameter is</h3>
                                     <div className={`text-sm leading-relaxed ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
                                         {info.whatThisParameterIs || info.whatThisMetricIs}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* New: What it Calculates (info.whatItCalculates) */}
+                    {info.whatItCalculates && (
+                        <div className={`p-5 rounded-2xl border transition-colors ${darkMode ? "bg-gray-800/40 border-gray-700 hover:border-gray-600" : "bg-white border-gray-100 hover:border-indigo-100 hover:shadow-sm"}`}>
+                            <div className="flex gap-4">
+                                <div className="flex-shrink-0 mt-0.5">
+                                    <Calculator className="w-6 h-6 text-indigo-500" />
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className={`font-bold text-base mb-1.5 ${darkMode ? "text-gray-100" : "text-gray-900"}`}>What it calculates</h3>
+                                    <div className={`text-sm leading-relaxed ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
+                                        {info.whatItCalculates}
                                     </div>
                                 </div>
                             </div>

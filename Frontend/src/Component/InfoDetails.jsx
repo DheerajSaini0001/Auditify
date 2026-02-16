@@ -208,27 +208,6 @@ export const InfoDetails = {
             "Configure proper cache-control headers"
         ]
     },
-    Resource_Optimization: {
-        title: "Resource Optimization",
-        whatThisParameterIs: "Resource Optimization focuses on the efficient delivery of images and scripts to reduce page weight.",
-        whatItCalculates: "We analyze image dimensions against their display size on the screen and check JavaScript files for minification to ensure no unnecessary bytes are transferred.",
-        whyItMatters: "Optimizing images and scripts reduces overall page weight, saving bandwidth and speeding up rendering.",
-        thresholds: {
-            good: "≥ 80% resources optimized",
-            needsImprovement: "50% – 79% optimized",
-            poor: "< 50% optimized"
-        },
-        actualReasonsForFailure: [
-            "Images larger than display size",
-            "Unminified JavaScript files",
-            "Serving high-resolution images unnecessarily"
-        ],
-        howToOvercomeFailure: [
-            "Resize images to match display dimensions",
-            "Minify JavaScript files",
-            "Serve responsive images"
-        ]
-    },
     Render_Blocking: {
         title: "Render Blocking Resources",
         whatThisParameterIs: "Render Blocking Resources are scripts and stylesheets that prevent the page from displaying content until they are fully loaded and processed.",
@@ -553,27 +532,6 @@ export const InfoDetails = {
             "Follow sequential heading order",
             "Use headings for structure, not styling",
             "Ensure a single H1"
-        ]
-    },
-    HTTPS: {
-        title: "HTTPS",
-        whatThisParameterIs: "HTTPS (Hypertext Transfer Protocol Secure) is an internet communication protocol that protects the integrity and confidentiality of data.",
-        whatItCalculates: "It checks the protocol of the requested URL and verifies if the server redirects all HTTP requests to HTTPS.",
-        whyItMatters: "Google prioritizes secure sites, and users are more likely to trust and transact on pages with the secure padlock icon.",
-        thresholds: {
-            good: "HTTPS enabled",
-            needsImprovement: "Mixed content",
-            poor: "HTTP only"
-        },
-        actualReasonsForFailure: [
-            "SSL certificate not installed",
-            "Mixed HTTP/HTTPS resources",
-            "Incorrect redirects"
-        ],
-        howToOvercomeFailure: [
-            "Install SSL certificate",
-            "Redirect HTTP to HTTPS",
-            "Fix mixed content issues"
         ]
     },
     Content_Quality: {

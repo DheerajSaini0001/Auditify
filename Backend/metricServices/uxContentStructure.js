@@ -450,7 +450,7 @@ async function checkImageStability(page) {
         issues.push({ src: img.src || 'No Source', details: 'Missing explicit width/height or aspect-ratio' });
       }
     });
-    return { total: images.length, issues: issues.slice(0, 10) };
+    return { total: images.length, issues: issues.slice(0, 50) };
   });
 
   const score = imageStability.total > 0 ? Math.round(((imageStability.total - imageStability.issues.length) / imageStability.total) * 100) : 100;
@@ -469,6 +469,18 @@ async function checkImageStability(page) {
 
 // 11. Breadcrumbs
 async function checkBreadcrumbs(page) {
+  const isHomepage = await page.evaluate(() => {
+    return window.location.pathname === '/' || window.location.pathname === '';
+  });
+
+  if (isHomepage) {
+    return {
+      score: 100,
+      status: 'pass',
+      details: 'Breadcrumbs are not required on the homepage.'
+    };
+  }
+
   const hasBreadcrumbs = await page.evaluate(() => {
     return !!document.querySelector('nav[aria-label="breadcrumb"], .breadcrumb') ||
       !!document.querySelector('script[type="application/ld+json"]')?.innerText.includes('BreadcrumbList');
@@ -485,6 +497,7 @@ async function checkNavDiscoverability(page) {
   const navDiscoverability = await page.evaluate(() => {
     const hamburgerSelectors = ['.hamburger', '.hamburger-menu', '.menu-icon', '.nav-toggle', 'button[aria-label*="menu"]', '[aria-controls="mobile-menu"]'];
     const searchSelectors = ['input[type="search"]', 'input[placeholder*="search" i]', '[role="search"]', 'button[class*="search" i]'];
+    const navSelectors = ['nav', '[role="navigation"]', '.nav', '.navigation', '.navbar', '.main-menu', '#main-menu', '.site-nav', '.header-nav', 'ul[class*="menu"]'];
 
     let hamburgerFound = false;
     for (let sel of hamburgerSelectors) if (document.querySelector(sel)) { hamburgerFound = true; break; }
@@ -492,15 +505,27 @@ async function checkNavDiscoverability(page) {
     let searchFound = false;
     for (let sel of searchSelectors) if (document.querySelector(sel)) { searchFound = true; break; }
 
-    return { hamburger_present: hamburgerFound ? 1 : 0, search_present: searchFound ? 1 : 0 };
+    let navFound = false;
+    for (let sel of navSelectors) if (document.querySelector(sel)) { navFound = true; break; }
+
+    return {
+      hamburger_present: hamburgerFound ? 1 : 0,
+      search_present: searchFound ? 1 : 0,
+      nav_menu_present: navFound ? 1 : 0
+    };
   });
 
-  const score = (navDiscoverability.hamburger_present * 50) + (navDiscoverability.search_present * 50);
+  const score = (navDiscoverability.hamburger_present * 30) + (navDiscoverability.search_present * 30) + (navDiscoverability.nav_menu_present * 40);
+
   return {
     score,
-    status: score === 100 ? 'pass' : (score >= 50 ? 'warning' : 'fail'),
-    details: `Hamburger: ${navDiscoverability.hamburger_present ? 'Yes' : 'No'}, Search: ${navDiscoverability.search_present ? 'Yes' : 'No'}`,
-    meta: { hasHamburger: !!navDiscoverability.hamburger_present, hasSearch: !!navDiscoverability.search_present }
+    status: score === 100 ? 'pass' : (score >= 40 ? 'warning' : 'fail'),
+    details: `Navigation Menu: ${navDiscoverability.nav_menu_present ? 'Yes' : 'No'}, Hamburger: ${navDiscoverability.hamburger_present ? 'Yes' : 'No'}, Search: ${navDiscoverability.search_present ? 'Yes' : 'No'}`,
+    meta: {
+      hasHamburger: !!navDiscoverability.hamburger_present,
+      hasSearch: !!navDiscoverability.search_present,
+      hasNavMenu: !!navDiscoverability.nav_menu_present
+    }
   };
 }
 
@@ -685,6 +710,102 @@ async function checkLoadingFeedback(page) {
 }
 
 
+// 17. Broken Links
+async function checkBrokenLinks(page) {
+  const linksData = await page.evaluate(() => {
+    const anchors = Array.from(document.querySelectorAll('a[href]'));
+    return anchors
+      .map(a => {
+        let href = a.href;
+        try {
+          const u = new URL(href);
+          u.hash = "";
+          href = u.href;
+        } catch (e) { }
+        return { href: href, text: a.innerText.trim().substring(0, 50) };
+      })
+      .filter(l => l.href.startsWith('http'));
+  });
+
+  const uniqueMap = new Map();
+  linksData.forEach(l => { if (!uniqueMap.has(l.href)) uniqueMap.set(l.href, l.text); });
+
+  // Limit to 40 unique links
+  const urlsToCheck = Array.from(uniqueMap.keys()).slice(0, 40);
+  const brokenLinks = [];
+
+  const checkUrl = async (url) => {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+      // 1. Try HEAD first
+      let res = await fetch(url, {
+        method: 'HEAD',
+        signal: controller.signal,
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' }
+      });
+      clearTimeout(timeoutId);
+
+      let status = res.status;
+
+      // Filter out immediate false positives (Auth/Rate Limit/Bot Protection)
+      if (status === 403 || status === 429 || status === 999 || status === 406 || status === 405) {
+        return;
+      }
+
+      // 2. If HEAD failed (e.g. 404), try GET to confirm (some servers block HEAD)
+      if (status >= 400) {
+        const controllerGet = new AbortController();
+        const timeoutGet = setTimeout(() => controllerGet.abort(), 10000);
+        res = await fetch(url, {
+          method: 'GET',
+          signal: controllerGet.signal,
+          headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' }
+        });
+        clearTimeout(timeoutGet);
+        status = res.status;
+      }
+
+      // Final Check after GET
+      if (status >= 400 && status !== 403 && status !== 429 && status !== 999 && status !== 406) {
+        brokenLinks.push({ url, status: status, text: uniqueMap.get(url) });
+      }
+
+    } catch (error) {
+      let reason = 'Network Error';
+      if (error.name === 'AbortError') reason = 'Timeout';
+      else if (error.cause && error.cause.code === 'ENOTFOUND') reason = 'DNS Error';
+      else if (error.cause && error.cause.code === 'ECONNREFUSED') reason = 'Connection Refused';
+
+      // Only count definitive failures
+      if (reason === 'DNS Error' || reason === 'Connection Refused') {
+        brokenLinks.push({ url, status: reason, text: uniqueMap.get(url) });
+      }
+    }
+  };
+
+  // Run in parallel chunks of 5
+  for (let i = 0; i < urlsToCheck.length; i += 5) {
+    await Promise.all(urlsToCheck.slice(i, i + 5).map(checkUrl));
+  }
+
+  const score = brokenLinks.length === 0 ? 100 : Math.max(0, 100 - (brokenLinks.length * 25));
+
+  return {
+    score,
+    status: score === 100 ? 'pass' : 'fail',
+    details: brokenLinks.length === 0 ? "No broken links found." : `${brokenLinks.length} broken links detected.`,
+    meta: {
+      totalChecked: urlsToCheck.length,
+      brokenCount: brokenLinks.length,
+      failedNodes: brokenLinks.map(b => ({ reason: `Status: ${b.status}`, href: b.url, text: b.text }))
+    }
+  };
+}
+
+
+
 // Main Execution Function
 export default async function evaluateMobileUX(device, page) {
   const deviceType = device === 'Mobile' ? 'mobile' : 'desktop';
@@ -698,7 +819,6 @@ export default async function evaluateMobileUX(device, page) {
     viewport: await checkViewport(page, deviceType),
     horizontalScroll: await checkHorizontalScroll(page, deviceType),
     stickyHeader: await checkStickyHeader(page, deviceType),
-    navigationDepth: await checkNavigationDepth(page),
     interstitials: await checkInterstitials(page, deviceType),
     imageStability: await checkImageStability(page),
     breadcrumbs: await checkBreadcrumbs(page),
@@ -706,7 +826,8 @@ export default async function evaluateMobileUX(device, page) {
     atf: await checkATF(page),
     clickFeedback: await checkClickFeedback(page, deviceType),
     formValidation: await checkFormValidation(page),
-    loadingFeedback: await checkLoadingFeedback(page)
+    loadingFeedback: await checkLoadingFeedback(page),
+    brokenLinks: await checkBrokenLinks(page)
   };
 
   // Calculate Overall Score
@@ -714,8 +835,8 @@ export default async function evaluateMobileUX(device, page) {
   let maxScore = 0;
   const weights = {
     cls: 2, tapTargets: 3, textSize: 3, viewport: 3, horizontalScroll: 3, stickyHeader: 1,
-    readability: 2, navigationDepth: 2, interstitials: 3, imageStability: 2,
-    breadcrumbs: 1, navDiscoverability: 2, atf: 3, clickFeedback: 2, formValidation: 3, loadingFeedback: 2
+    readability: 2, interstitials: 3, imageStability: 2,
+    breadcrumbs: 1, navDiscoverability: 2, atf: 3, clickFeedback: 2, formValidation: 3, loadingFeedback: 2, brokenLinks: 3
   };
 
   // Helper to normalize scores for calculation
@@ -780,12 +901,7 @@ export default async function evaluateMobileUX(device, page) {
       Status: results.stickyHeader.status,
       Details: results.stickyHeader.details
     },
-    Navigation_Depth: {
-      Score: results.navigationDepth.score,
-      Status: results.navigationDepth.status,
-      Details: results.navigationDepth.details,
-      Meta: results.navigationDepth.meta
-    },
+
     Intrusive_Interstitials: {
       Score: results.interstitials.score,
       Status: results.interstitials.status,
@@ -831,6 +947,12 @@ export default async function evaluateMobileUX(device, page) {
       Status: results.loadingFeedback.status,
       Details: results.loadingFeedback.details,
       Meta: results.loadingFeedback.meta
+    },
+    Broken_Links: {
+      Score: results.brokenLinks.score,
+      Status: results.brokenLinks.status,
+      Details: results.brokenLinks.details,
+      Meta: results.brokenLinks.meta
     }
   };
 }

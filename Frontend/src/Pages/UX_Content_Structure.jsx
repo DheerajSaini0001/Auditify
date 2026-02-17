@@ -6,9 +6,9 @@ import { ThemeContext } from "../context/ThemeContext";
 import LivePreview from "../Component/LivePreview";
 import {
   Layout, Type, Smartphone, MoveHorizontal, PanelTop, Menu,
-  ChevronRight, Compass, Touchpad, BookOpen, Layers, Image as ImageIcon,
+  ChevronRight, ChevronUp, Compass, Touchpad, BookOpen, Layers, Image as ImageIcon,
   XOctagon, MonitorPlay, MousePointer2, CheckCircle2, Loader2,
-  ExternalLink, CheckCircle, XCircle, Info
+  ExternalLink, CheckCircle, XCircle, Info, Search, Unlink
 } from "lucide-react";
 import MetricInfoModal from "../Component/MetricInfoModal";
 import ParameterInfoModal from "../Component/ParameterInfoModal";
@@ -33,7 +33,8 @@ const iconMap = {
   Above_the_Fold_Content: MonitorPlay,
   Interactive_Click_Feedback: MousePointer2,
   Form_Validation_UX: CheckCircle2,
-  Loading_Feedback: Loader2
+  Loading_Feedback: Loader2,
+  Broken_Links: Unlink
 };
 
 const uxEducationalContent = InfoDetails;
@@ -105,6 +106,13 @@ const MetricCard = ({ title, description, score, status, meta, darkMode, icon: I
   const isPassed = status === 'pass' || score === 100;
   const isWarning = status === 'warning' || score === 50;
 
+  // Get static educational content
+  const info = InfoDetails[type] || {};
+  const reasons = info.actualReasonsForFailure || [];
+  const recommendations = info.howToOvercomeFailure || [];
+
+
+
   // Simple Colors
   const cardBg = darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200";
   const textColor = darkMode ? "text-gray-100" : "text-gray-900";
@@ -112,6 +120,7 @@ const MetricCard = ({ title, description, score, status, meta, darkMode, icon: I
 
   let statusColor = "text-red-600 bg-red-50 border-red-100";
   let statusText = "Failed";
+  let progressBarColor = "bg-red-500";
 
   if (darkMode) {
     statusColor = "text-red-400 bg-red-900/20 border-red-800/30";
@@ -120,45 +129,148 @@ const MetricCard = ({ title, description, score, status, meta, darkMode, icon: I
   if (isPassed) {
     statusColor = darkMode ? "text-green-400 bg-green-900/20 border-green-800/30" : "text-green-600 bg-green-50 border-green-100";
     statusText = "Passed";
+    progressBarColor = "bg-emerald-500";
   } else if (isWarning) {
     statusColor = darkMode ? "text-yellow-400 bg-yellow-900/20 border-yellow-800/30" : "text-yellow-600 bg-yellow-50 border-yellow-100";
     statusText = "Warning";
+    progressBarColor = "bg-amber-500";
   }
 
-  const hasDetails = meta && (
-    (Array.isArray(meta.failedNodes) && meta.failedNodes.length > 0) ||
-    (Array.isArray(meta.problematicContent) && meta.problematicContent.length > 0) ||
-    (Array.isArray(meta.smallTargets) && meta.smallTargets.length > 0) ||
-    (Array.isArray(meta.smallFonts) && meta.smallFonts.length > 0) ||
-    (Array.isArray(meta.unstableImages) && meta.unstableImages.length > 0) ||
-    (Array.isArray(meta.deepLinks) && meta.deepLinks.length > 0) ||
-    (typeof meta === 'object' && Object.keys(meta).length > 0)
-  );
+  // --- Specific Renderers for Meta Data ---
 
-  const renderDetails = () => {
+  const renderSpecificMeta = () => {
+    // 1. Text Readability Specifics
     if (type === 'Text_Readability' && meta?.overallStats) {
       return (
-        <div className="space-y-2">
+        <div className="space-y-4">
           <div className="grid grid-cols-3 gap-2 text-center">
-            <div className={`p-2 rounded ${darkMode ? "bg-gray-700" : "bg-gray-100"}`}>
-              <div className="text-[10px] uppercase opacity-60">Score</div>
-              <div className="font-bold">{meta.overallStats.score?.toFixed(1)}</div>
+            <div className={`p-2 rounded ${darkMode ? "bg-slate-900/50 border border-slate-700" : "bg-gray-50 border-gray-100"}`}>
+              <div className={`text-[10px] uppercase font-bold opacity-60 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Score</div>
+              <div className={`font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>{meta.overallStats.score?.toFixed(1)}</div>
             </div>
-            <div className={`p-2 rounded ${darkMode ? "bg-gray-700" : "bg-gray-100"}`}>
-              <div className="text-[10px] uppercase opacity-60">Words/Sent</div>
-              <div className="font-bold">{meta.overallStats.ASL?.toFixed(1)}</div>
+            <div className={`p-2 rounded ${darkMode ? "bg-slate-900/50 border border-slate-700" : "bg-gray-50 border-gray-100"}`}>
+              <div className={`text-[10px] uppercase font-bold opacity-60 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Words/Sent</div>
+              <div className={`font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>{meta.overallStats.ASL?.toFixed(1)}</div>
             </div>
-            <div className={`p-2 rounded ${darkMode ? "bg-gray-700" : "bg-gray-100"}`}>
-              <div className="text-[10px] uppercase opacity-60">Syll/Word</div>
-              <div className="font-bold">{meta.overallStats.ASW?.toFixed(2)}</div>
+            <div className={`p-2 rounded ${darkMode ? "bg-slate-900/50 border border-slate-700" : "bg-gray-50 border-gray-100"}`}>
+              <div className={`text-[10px] uppercase font-bold opacity-60 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Syll/Word</div>
+              <div className={`font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>{meta.overallStats.ASW?.toFixed(2)}</div>
             </div>
           </div>
-          {/* Grid layout for problematic content if card is wide */}
-          <div className={className?.includes('col-span') ? "grid grid-cols-1 md:grid-cols-2 gap-2" : "space-y-2"}>
-            {meta.problematicContent?.map((item, i) => (
-              <div key={i} className="text-xs border-l-2 border-red-500 pl-2 mt-2">
-                <div className="font-bold text-red-500">{item.reason}</div>
-                <div className="italic opacity-70">"{item.text}"</div>
+          {meta.problematicContent && meta.problematicContent.length > 0 && (
+            <div className="mt-2">
+              <h5 className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Problematic Sentences</h5>
+              <div className={`max-h-60 overflow-y-auto rounded-lg border ${darkMode ? "bg-slate-900/30 border-slate-700" : "bg-gray-50 border-gray-200"}`}>
+                {meta.problematicContent.map((item, i) => (
+                  <div key={i} className={`p-2 border-b last:border-0 text-xs break-all ${darkMode ? "border-slate-800 text-gray-300" : "border-gray-200 text-gray-700"}`}>
+                    <div className="font-bold text-rose-500 mb-0.5">{item.reason}</div>
+                    <span className="italic opacity-90">"{item.text}"</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // 2. Image Stability Specifics
+    if (type === 'Image_Stability' && meta) {
+      return (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className={`p-3 rounded-lg border ${darkMode ? "bg-slate-900/50 border-slate-700" : "bg-gray-50 border-gray-100"}`}>
+              <div className={`text-[10px] uppercase font-bold tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Total Images</div>
+              <div className={`text-xl font-black ${darkMode ? "text-white" : "text-gray-900"}`}>{meta.total || 0}</div>
+            </div>
+            <div className={`p-3 rounded-lg border ${darkMode ? "bg-rose-900/20 border-rose-800/30" : "bg-rose-50 border-rose-200"}`}>
+              <div className={`text-[10px] uppercase font-bold tracking-wider ${darkMode ? "text-rose-400" : "text-rose-600"}`}>Unstable Images</div>
+              <div className={`text-xl font-black ${darkMode ? "text-rose-400" : "text-rose-600"}`}>{meta.failed || meta.unstableImages?.length || 0}</div>
+            </div>
+          </div>
+
+          {meta.unstableImages && meta.unstableImages.length > 0 && (
+            <div className="mt-2">
+              <h5 className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Unstable Image Links</h5>
+              <div className={`max-h-60 overflow-y-auto rounded-lg border ${darkMode ? "bg-slate-900/30 border-slate-700" : "bg-gray-50 border-gray-200"}`}>
+                {meta.unstableImages.map((img, idx) => (
+                  <div key={idx} className={`p-3 border-b last:border-0 ${darkMode ? "border-slate-800" : "border-gray-200"}`}>
+                    <div className="flex items-start gap-2">
+                      <ImageIcon size={14} className={`mt-0.5 flex-shrink-0 ${darkMode ? "text-gray-500" : "text-gray-400"}`} />
+                      <div className="min-w-0 flex-1">
+                        <a href={img.src} target="_blank" rel="noopener noreferrer" className={`text-xs font-mono hover:underline break-all block ${darkMode ? "text-blue-400" : "text-blue-600"}`}>
+                          {img.src}
+                        </a>
+                        {img.details && <p className={`text-[10px] mt-1 ${darkMode ? "text-gray-500" : "text-gray-500"}`}>{img.details}</p>}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // 3. Navigation Discoverability Specifics
+    if (type === 'Navigation_Discoverability' && meta) {
+      const items = [
+        { label: "Main Navigation", value: meta.hasNavMenu, icon: Compass },
+        { label: "Hamburger Menu", value: meta.hasHamburger, icon: Menu },
+        { label: "Search Option", value: meta.hasSearch, icon: Search }
+      ];
+
+      return (
+        <div className="grid grid-cols-1 gap-2">
+          {items.map((item, idx) => (
+            <div key={idx} className={`flex items-center justify-between p-3 rounded-lg border ${darkMode ? "bg-slate-900/40 border-slate-700" : "bg-gray-50 border-gray-100"}`}>
+              <div className="flex items-center gap-3">
+                <div className={`p-1.5 rounded-md ${darkMode ? "bg-slate-800 text-gray-400" : "bg-white text-gray-500 shadow-sm"}`}>
+                  <item.icon size={14} />
+                </div>
+                <span className={`text-xs font-semibold ${darkMode ? "text-gray-300" : "text-gray-700"}`}>{item.label}</span>
+              </div>
+              {item.value ? (
+                <div className="flex items-center gap-1.5 text-emerald-500">
+                  <CheckCircle2 size={14} />
+                  <span className="text-[10px] font-bold uppercase tracking-wider">Present</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5 text-rose-500">
+                  <XCircle size={14} />
+                  <span className="text-[10px] font-bold uppercase tracking-wider">Missing</span>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    // 2. Generic List Renderer (Targets, Fonts, etc.)
+    const listItems =
+      meta?.smallTargets ||
+      meta?.smallFonts ||
+      meta?.deepLinks ||
+      meta?.failedNodes ||
+      meta?.problematicContent; // Text Readability uses this
+
+    if (Array.isArray(listItems) && listItems.length > 0) {
+      return (
+        <div className="mt-2">
+          <h5 className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Affected Elements</h5>
+          <div className={`max-h-60 overflow-y-auto rounded-lg border ${darkMode ? "bg-slate-900/30 border-slate-700" : "bg-gray-50 border-gray-200"}`}>
+            {listItems.map((item, i) => (
+              <div key={i} className={`p-2 border-b last:border-0 text-xs break-all ${darkMode ? "border-slate-800 text-gray-300" : "border-gray-200 text-gray-700"}`}>
+                {item.reason && <div className="font-bold text-rose-500 mb-0.5">{item.reason}</div>}
+                {/* Try to show the most relevant field */}
+                {item.tag && <span className="font-mono font-bold opacity-70 mr-2">{item.tag}</span>}
+                {item.text && <span className="italic opacity-90">"{item.text.substring(0, 100)}{item.text.length > 100 ? '...' : ''}"</span>}
+                {item.src && <div className="font-mono text-[10px] opacity-70 mt-1">{item.src}</div>}
+                {item.href && <div className="font-mono text-[10px] opacity-70 mt-1">{item.href}</div>}
+                {item.size && <span className="ml-2 opacity-60">({item.size})</span>}
+                {item.width && item.height && <span className="ml-2 opacity-60">({Math.round(item.width)}x{Math.round(item.height)}px)</span>}
               </div>
             ))}
           </div>
@@ -166,103 +278,108 @@ const MetricCard = ({ title, description, score, status, meta, darkMode, icon: I
       );
     }
 
-    // Generic List Renderer for various issues
-    const listItems =
-      meta?.smallTargets ||
-      meta?.smallFonts ||
-      meta?.unstableImages ||
-      meta?.deepLinks ||
-      meta?.failedNodes;
-
-    if (Array.isArray(listItems) && listItems.length > 0) {
+    // 3. Object Renderer (Fallback)
+    if (meta && typeof meta === 'object') {
       return (
-        <div className={`max-h-64 overflow-y-auto custom-scrollbar ${className?.includes('col-span') ? "grid grid-cols-1 md:grid-cols-2 gap-4" : "space-y-2"}`}>
-          {listItems.map((item, i) => (
-            <div key={i} className="text-xs border-b border-gray-200 dark:border-gray-700 pb-2 last:border-0 break-words">
-              {item.tag && <span className="font-mono font-bold opacity-70 mr-2">{item.tag}</span>}
-              {item.text && <span className="italic">"{item.text}"</span>}
-              {item.src && <div className="truncate opacity-60">{item.src}</div>}
-              {item.href && <div className="truncate opacity-60">{item.href}</div>}
-              {item.width && item.height && <span className="ml-2 opacity-60">({Math.round(item.width)}x{Math.round(item.height)})</span>}
-              {item.size && <span className="ml-2 opacity-60">({item.size})</span>}
-              {item.depth && <span className="ml-2 font-bold">Depth: {item.depth}</span>}
-            </div>
-          ))}
-        </div>
-      );
-    }
-
-    // Generic Object Renderer
-    if (typeof meta === 'object') {
-      return (
-        <div className="space-y-1">
+        <div className={`p-3 rounded-lg border space-y-1 ${darkMode ? "bg-slate-900/30 border-slate-700" : "bg-gray-50 border-gray-200"}`}>
           {Object.entries(meta).map(([k, v]) => {
             if (typeof v === 'object' || Array.isArray(v)) return null;
+            // Skip mapped fields that we handled specifically above if they leaked here
+            if (['total', 'failed', 'passed'].includes(k) && type === 'Image_Stability') return null;
+
             return (
               <div key={k} className="flex justify-between text-xs">
-                <span className="opacity-70">{k.replace(/([A-Z])/g, ' $1').trim()}:</span>
-                <span className="font-mono">{String(v)}</span>
+                <span className={`opacity-70 ${darkMode ? "text-gray-400" : "text-gray-600"}`}>{k.replace(/([A-Z])/g, ' $1').trim()}:</span>
+                <span className={`font-mono font-bold ${darkMode ? "text-gray-200" : "text-gray-800"}`}>{String(v)}</span>
               </div>
             );
           })}
         </div>
       );
     }
-
     return null;
   };
 
+  const specificMetaContent = renderSpecificMeta();
+  const showAnalysis = !isPassed && (reasons.length > 0 || recommendations.length > 0);
+  const hasContent = specificMetaContent || showAnalysis;
+
   return (
-    <div className={`relative overflow-hidden rounded-xl border ${cardBg} shadow-sm hover:shadow-md transition-shadow group ${className || ""}`}>
-      <div className="p-5 space-y-4 h-full flex flex-col">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-4">
-            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
-              <Icon size={24} className={darkMode ? "text-blue-400" : "text-blue-600"} />
-            </div>
-            <div>
-              <h3 className={`font-bold text-lg ${textColor}`}>{title}</h3>
-              <p className={`text-xs font-medium mt-1 px-2 py-0.5 rounded-full w-fit border ${statusColor}`}>
-                {statusText}
-              </p>
+    <div className={`rounded-2xl border ${cardBg} shadow-sm hover:shadow-md transition-all duration-300 p-6 flex flex-col h-full group ${className || ""}`}>
+
+      {/* Header */}
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-start gap-4">
+          <div className={`p-3 rounded-xl flex-shrink-0 transition-transform duration-300 group-hover:scale-110 ${darkMode ? "bg-blue-900/20 text-blue-400" : "bg-blue-50 text-blue-600"}`}>
+            <Icon size={24} strokeWidth={2} />
+          </div>
+          <div>
+            <h3 className={`font-bold text-lg leading-tight mb-1 ${textColor}`}>{title}</h3>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className={`text-xs font-bold px-2.5 py-1 rounded-md border ${statusColor}`}>{statusText}</span>
+              <span className={`text-xs font-bold px-2.5 py-1 rounded-md border ${darkMode ? "border-gray-700 text-gray-400" : "border-gray-200 text-gray-500"}`}>
+                Score: {score}
+              </span>
             </div>
           </div>
-          {onInfo && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onInfo();
-              }}
-              className={`p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
-              title="Learn more"
-            >
-              <Info size={18} />
-            </button>
-          )}
         </div>
-
-        {/* Dynamic Details */}
-        <div>
-          <h4 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
-            Status Detail
-          </h4>
-          <p className={`text-sm font-medium ${isPassed ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
-            {description || "No details available"}
-          </p>
-        </div>
-
-        {/* Technical Data / Diagnostics - Inline Scrollable */}
-        {hasDetails && (
-          <div className="flex-grow">
-            <h4 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
-              Technical Data
-            </h4>
-            <div className={`p-2 rounded text-xs overflow-x-auto border ${darkMode ? "bg-gray-900 border-gray-700 text-gray-300" : "bg-gray-50 border-gray-200 text-gray-700"}`}>
-              {renderDetails()}
-            </div>
-          </div>
+        {onInfo && (
+          <button onClick={(e) => { e.stopPropagation(); onInfo(); }} className={`p-2 rounded-full transition-colors ${darkMode ? "text-gray-500 hover:text-gray-300 hover:bg-gray-700" : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"}`} title="View Methodology">
+            <Info size={18} />
+          </button>
         )}
       </div>
+
+      {/* Main Content */}
+      <div className="space-y-4 flex-grow">
+        <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
+          Description: <span className={`normal-case font-normal opacity-100 text-xs leading-relaxed ${subTextColor}`}>{description || info.whatThisParameterIs || "No details available."}</span>
+        </p>
+
+        {/* Progress Bar */}
+        <div className="w-full h-2 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
+          <div className={`h-full rounded-full transition-all duration-1000 ${progressBarColor}`} style={{ width: `${score}%` }} />
+        </div>
+      </div>
+
+      {/* Expanded Details Area */}
+      {hasContent && (
+        <div className={`mt-6 pt-4 border-t space-y-6 ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
+
+          {/* 1. Metric Specific Data (Evidence) */}
+          {specificMetaContent}
+
+          {/* 2. Analysis (Reasons) */}
+          {!isPassed && reasons.length > 0 && (
+            <div>
+              <h5 className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>Analysis & Potential Causes</h5>
+              <ul className="space-y-2">
+                {reasons.map((reason, idx) => (
+                  <li key={idx} className={`text-xs flex items-start gap-2 ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
+                    <span className="mt-1.5 w-1 h-1 rounded-full bg-rose-500 flex-shrink-0" />
+                    <span>{reason}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* 3. Recommendations (Fixes) */}
+          {!isPassed && recommendations.length > 0 && (
+            <div>
+              <h5 className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>Recommendation</h5>
+              <ul className="space-y-2">
+                {recommendations.map((rec, idx) => (
+                  <li key={idx} className={`text-xs flex items-start gap-2 ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
+                    <span className="mt-1.5 w-1 h-1 rounded-full bg-emerald-500 flex-shrink-0" />
+                    <span>{rec}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
@@ -366,8 +483,8 @@ export default function UX_Content_Structure() {
     Tap_Target_Size: "md:col-span-2",
     Text_Font_Size: "md:col-span-2",
     Image_Stability: "md:col-span-2",
-    Navigation_Depth: "md:col-span-2",
     Navigation_Discoverability: "md:col-span-2",
+    Broken_Links: "md:col-span-2",
   };
 
   const detailedKeys = [
@@ -375,8 +492,8 @@ export default function UX_Content_Structure() {
     "Tap_Target_Size",
     "Text_Font_Size",
     "Image_Stability",
-    "Navigation_Depth",
-    "Navigation_Discoverability"
+    "Navigation_Discoverability",
+    "Broken_Links"
   ];
 
   const quickMetrics = metrics.filter(k => !detailedKeys.includes(k));

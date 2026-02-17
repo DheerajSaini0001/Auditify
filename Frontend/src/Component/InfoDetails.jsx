@@ -1936,20 +1936,22 @@ export const InfoDetails = {
     },
     Navigation_Discoverability: {
         title: "Navigation Discoverability",
-        whatThisParameterIs: "Checks whether navigation and search are easy to find on mobile.",
-        whyItMatters: "Hidden navigation reduces usability.",
+        whatThisParameterIs: "Checks whether a main navigation menu, mobile hamburger menu, and search option are clear and present.",
+        whyItMatters: "Users rely on visible navigation to find content quickly. Hidden menus increase bounce rates.",
         thresholds: {
-            good: "Menu and search available",
-            needsImprovement: "Only one present",
-            poor: "Navigation hard to find"
+            good: "Nav menu, hamburger, and search available",
+            needsImprovement: "One or more missing",
+            poor: "No navigation elements found"
         },
         actualReasonsForFailure: [
-            "Hidden menu",
-            "No search option"
+            "Missing main navigation menu",
+            "No hamburger menu on mobile",
+            "No visible search option"
         ],
         howToOvercomeFailure: [
-            "Add hamburger menu",
-            "Provide visible search"
+            "Use <nav> or role='navigation' for main menu",
+            "Ensure hamburger menu is visible on mobile",
+            "Add a search bar or icon"
         ]
     },
     Above_the_Fold_Content: {
@@ -2021,6 +2023,26 @@ export const InfoDetails = {
         howToOvercomeFailure: [
             "Add spinners or skeleton screens",
             "Show loading text for async actions"
+        ]
+    },
+    Broken_Links: {
+        title: "Broken Links",
+        whatThisParameterIs: "Scans for hyperlinks that point to non-existent pages (404 errors) or unreachable servers.",
+        whyItMatters: "Broken links frustrate users, interrupt navigation, and negatively impact search engine rankings.",
+        thresholds: {
+            good: "0 broken links",
+            warning: "1 broken link",
+            poor: "> 1 broken link"
+        },
+        actualReasonsForFailure: [
+            "Mistyped URLs",
+            "Linked content has been deleted or moved",
+            "Server errors on destination site"
+        ],
+        howToOvercomeFailure: [
+            "Correct the URL",
+            "Remove the link if content is gone",
+            "Set up 301 redirects for moved content"
         ]
     },
 

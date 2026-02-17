@@ -374,6 +374,7 @@ const checkLinks = ($, url) => {
   }
 };
 
+
 const checkSemanticTags = async ($) => {
   try {
     const tags = ["main", "nav", "article", "section", "header", "footer", "aside"];
@@ -978,6 +979,8 @@ export default async function seoMetrics(url, $, page) {
   const semanticMetric = await checkSemanticTags($);
   const contextualMetric = checkContextualLinks($, url);
   const linksMetric = checkLinks($, url);
+
+
   const contentQualityMetric = checkContentQuality($);
   const slugMetric = checkSlugs(url);
   const httpsMetric = checkHTTPS(url);

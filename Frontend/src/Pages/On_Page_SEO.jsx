@@ -21,7 +21,7 @@ const seoMetricExplanations = InfoDetails;
 
 const getStatusFromScore = (score) => {
   if (score === 1) return "pass";
-  if (score >= 0.7) return "average";
+  if (score >= 0.5) return "average";
   return "fail";
 };
 
@@ -1356,7 +1356,7 @@ const VideoAnalysisCard = ({ data, darkMode, onInfo, className = "" }) => {
 
 
 
-  const statusText = isPassed ? "Fully Optimized" : (score >= 0.7 ? "Partially Optimized" : "Needs Attention");
+  const statusText = isPassed ? "Fully Optimized" : (score >= 0.5 ? "Partially Optimized" : "Needs Attention");
 
   return (
     <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group ${className} ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>

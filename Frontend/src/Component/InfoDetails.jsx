@@ -15,8 +15,8 @@ export const InfoDetails = {
     // Technical Performance - Core Web Vitals & Performance
     LCP: {
         title: "Largest Contentful Paint (LCP)",
-        whatThisParameterIs: "Largest Contentful Paint (LCP) is a Core Web Vital that indicates when the main content of the page has likely loaded.",
-        whatItCalculates: "We measure the render time of the largest image or text block visible within the viewport relative to when the user first navigated to the page.",
+        whatThisParameterIs: "Largest Contentful Paint (LCP) is a Core Web Vital metric that measures the time it takes for the largest visible element (image or text block) to render within the viewport.",
+        whatItCalculates: "We analyze the Lighthouse audit trace to determine the render time of the largest image or text block relative to the page load start.",
         whyItMatters: "A fast LCP helps reassure the user that the page is useful. Poor LCP can lead to higher bounce rates and lower search rankings.",
         thresholds: {
             good: "≤ 2.5s",
@@ -24,45 +24,45 @@ export const InfoDetails = {
             poor: "> 4s"
         },
         actualReasonsForFailure: [
-            "Slow server response time",
-            "Large or unoptimized hero images",
-            "Render-blocking CSS and JavaScript",
-            "Incorrect lazy loading on LCP element",
-            "Missing or misconfigured CDN"
+            "High TTFB delaying initial HTML delivery",
+            "Render-blocking scripts or stylesheets",
+            "Redirect chains delaying resource fetch",
+            "Critical request chains too deep"
         ],
         howToOvercomeFailure: [
-            "Optimize images using WebP or AVIF",
-            "Preload the LCP element",
-            "Improve server performance and caching",
-            "Inline critical CSS",
-            "Defer non-essential JavaScript"
+            "Optimize backend performance and database queries",
+            "Defer non-critical JS/CSS and inline critical styles",
+            "Compress and resize images (WebP)",
+            "Review network waterfall and reduce main-thread work"
         ]
     },
     INP: {
         title: "Interaction to Next Paint (INP)",
-        whatThisParameterIs: "Interaction to Next Paint (INP) is a Core Web Vital that assesses a page's overall responsiveness to user interactions.",
-        whatItCalculates: "We measure the latency of all click, tap, and keyboard interactions that occur throughout the lifespan of the page, reporting the longest duration observed.",
+        whatThisParameterIs: "Interaction to Next Paint (INP) is a Core Web Vital metric that measures the latency of every user interaction (clicks, taps, and keyboard inputs) throughout the lifespan of the page.",
+        whatItCalculates: "For Lab data, we use Total Blocking Time (TBT) as a proxy. For Field data, we use CrUX 'interaction-to-next-paint' metric which measures real user interaction latency.",
         whyItMatters: "High responsiveness ensures that the page feels alive and reacts instantly to user input, preventing frustration.",
         thresholds: {
-            good: "≤ 200ms",
-            needsImprovement: "200ms – 500ms",
-            poor: "> 500ms"
+            good: "≤ 200ms (Field) / ≤ 3.8s (Lab)",
+            needsImprovement: "200ms–500ms (Field) / 3.8s–7.3s (Lab)",
+            poor: "> 500ms (Field) / > 7.3s (Lab)"
         },
         actualReasonsForFailure: [
-            "Long event handlers",
-            "Heavy main-thread work",
-            "Complex layout or style recalculations"
+            "Long Tasks (>50ms) blocking main thread",
+            "Heavy JavaScript execution during startup",
+            "Large DOM causing style calculation delays",
+            "Third-party scripts handling input events"
         ],
         howToOvercomeFailure: [
-            "Optimize event handlers",
-            "Reduce main-thread workload",
-            "Break up long tasks"
+            "Defer heavy JS execution and break up long tasks",
+            "Reduce initial JS payload and code-split bundles",
+            "Optimize third-party scripts",
+            "Reduce DOM size (< 1500 nodes)"
         ]
     },
     CLS: {
         title: "Cumulative Layout Shift (CLS)",
-        whatThisParameterIs: "Cumulative Layout Shift (CLS) is a Core Web Vital that measures the visual stability of a page.",
-        whatItCalculates: "We calculate the burst score for every unexpected layout shift that occurs during the entire lifespan of the page. A layout shift occurs any time a visible element changes its position from one rendered frame to the next.",
+        whatThisParameterIs: "Cumulative Layout Shift (CLS) is a Core Web Vital metric that quantifies how much visible content shifts unexpectedly during the page's lifespan.",
+        whatItCalculates: "We analyze the Lighthouse 'cumulative-layout-shift' audit (Lab) and CrUX data (Field) to sum the scores of all unexpected layout shifts.",
         whyItMatters: "Visual stability prevents annoying unexpected movement of content, which can cause reading difficulties or accidental clicks.",
         thresholds: {
             good: "≤ 0.1",
@@ -70,20 +70,22 @@ export const InfoDetails = {
             poor: "> 0.25"
         },
         actualReasonsForFailure: [
-            "Images without width and height attributes",
-            "Ads or embeds without reserved space",
-            "Dynamically injected content"
+            "Images missing width/height attributes",
+            "Late-loading ads or embeds",
+            "FOUT (Flash of Unstyled Text) causing reflow",
+            "Dynamic content injected above viewport"
         ],
         howToOvercomeFailure: [
-            "Set explicit size attributes for images and media",
-            "Reserve space for ads and embeds",
-            "Avoid inserting content above existing elements"
+            "Add explicit `width` and `height` attributes to all images",
+            "Reserve space for ads/embeds to prevent shifts",
+            "Use `font-display: swap` or preload key fonts",
+            "Review late-loading dynamic content"
         ]
     },
     FCP: {
         title: "First Contentful Paint (FCP)",
-        whatThisParameterIs: "First Contentful Paint (FCP) marks the time at which the first text or image is painted.",
-        whatItCalculates: "We measure the time from when the page starts loading to when any part of the page's content is rendered on the screen. This includes text, images (including background images), <svg> elements, or non-white <canvas> elements.",
+        whatThisParameterIs: "First Contentful Paint (FCP) measures the time from when the page starts loading to when any part of the page's content (text, images, SVGs) is rendered on the screen.",
+        whatItCalculates: "We use the Lighthouse 'first-contentful-paint' audit to identify the precise timestamp when the first DOM content (text, image, svg) is rendered.",
         whyItMatters: "A fast FCP provides immediate visual feedback to the user that the server is responding and content is incoming.",
         thresholds: {
             good: "≤ 1.8s",
@@ -91,20 +93,22 @@ export const InfoDetails = {
             poor: "> 3s"
         },
         actualReasonsForFailure: [
-            "Render-blocking CSS and JavaScript",
-            "Slow font loading",
-            "Network latency"
+            "Main thread busy parsing/executing JS",
+            "Unused CSS/JS delaying rendering",
+            "Invisible text during font load",
+            "Resources competing for bandwidth"
         ],
         howToOvercomeFailure: [
+            "Reduce server response time (TTFB)",
             "Eliminate render-blocking resources",
-            "Optimize font loading strategy",
-            "Prioritize above-the-fold content"
+            "Minimize redirects",
+            "Preload critical requests"
         ]
     },
     TTFB: {
         title: "Time to First Byte (TTFB)",
-        whatThisParameterIs: "Time to First Byte (TTFB) is a foundational metric that measures the responsiveness of the web server.",
-        whatItCalculates: "We measure the time from the start of the navigation to the time when the first byte of the response is received by the browser.",
+        whatThisParameterIs: "Time to First Byte (TTFB) measures the duration from the user or client making an HTTP request to the first byte of the page being received by the client's browser.",
+        whatItCalculates: "We measure the time from the initial request to the receipt of the first byte using Lighthouse 'server-response-time' (Lab) and CrUX 'experimental_time_to_first_byte' (Field).",
         whyItMatters: "A low TTFB is crucial because the browser cannot start rendering any content until it receives the first byte of data.",
         thresholds: {
             good: "≤ 800ms",
@@ -112,20 +116,22 @@ export const InfoDetails = {
             poor: "> 1.8s"
         },
         actualReasonsForFailure: [
-            "Slow backend processing",
-            "Unoptimized database queries",
-            "Lack of server-side caching"
+            "Database queries taking too long",
+            "Lack of server-side caching",
+            "Multiple redirects before initial response",
+            "Server resource exhaustion (CPU/RAM)"
         ],
         howToOvercomeFailure: [
-            "Enable server-side caching",
-            "Optimize backend logic and database queries",
-            "Use a CDN to serve content closer to users"
+            "Optimize server/database queries",
+            "Enable Gzip/Brotli compression",
+            "Use a CDN to serve content from edge locations",
+            "Reduce redirect chains"
         ]
     },
     TBT: {
         title: "Total Blocking Time (TBT)",
-        whatThisParameterIs: "Total Blocking Time (TBT) is a lab metric that measures the total amount of time that a page is blocked from responding to user input.",
-        whatItCalculates: "We sum the blocking time for all long tasks (tasks longer than 50ms) between First Contentful Paint and Time to Interactive. The blocking time for a long task is the duration exceeding 50ms.",
+        whatThisParameterIs: "Total Blocking Time (TBT) measures the total amount of time that a page is blocked from responding to user input, such as mouse clicks, screen taps, or keyboard presses.",
+        whatItCalculates: "We sum the duration of all 'long tasks' (tasks > 50ms) between First Contentful Paint and Time to Interactive, found in the Main Thread work breakdown.",
         whyItMatters: "Minimizing blocking time ensures the main thread is free to handle user input, keeping the page interactive during load.",
         thresholds: {
             good: "≤ 200ms",
@@ -133,20 +139,22 @@ export const InfoDetails = {
             poor: "> 600ms"
         },
         actualReasonsForFailure: [
-            "Heavy JavaScript execution",
-            "Long-running tasks on the main thread",
-            "Excessive third-party scripts"
+            "Long Tasks (>50ms) on main thread",
+            "Heavy script evaluation/parsing",
+            "Third-party scripts blocking execution",
+            "Hydration of large JS bundles"
         ],
         howToOvercomeFailure: [
-            "Split long JavaScript tasks",
-            "Defer non-critical scripts",
-            "Implement code splitting"
+            "Break up Long Tasks (>50ms)",
+            "Defer non-critical JS",
+            "Audit third-party scripts and use facade loading",
+            "Optimize script evaluation"
         ]
     },
     SI: {
         title: "Speed Index (SI)",
-        whatThisParameterIs: "Speed Index (SI) is a page load performance metric that shows how quickly the contents of a page are visibly populated.",
-        whatItCalculates: "We capture a video of the page load in the browser and compute the visual progression between frames using the Speedline algorithm.",
+        whatThisParameterIs: "Speed Index (SI) measures how quickly the contents of a page are visually populated during the page load.",
+        whatItCalculates: "We calculate the speed at which the page content is visually populated using the 'speed-index' audit from Lighthouse.",
         whyItMatters: "A low Speed Index signifies that the visible parts of the page serve the user quickly, enhancing perceived performance.",
         thresholds: {
             good: "≤ 3.4s",
@@ -159,9 +167,10 @@ export const InfoDetails = {
             "Main-thread blocking"
         ],
         howToOvercomeFailure: [
-            "Reduce JavaScript execution time",
-            "Optimize rendering pipeline",
-            "Ensure text remains visible during font load"
+            "Minimize main thread work",
+            "Remove unused CSS/JS or defer non-critical assets",
+            "Ensure text remains visible during font load",
+            "Prioritize critical resources"
         ]
     },
 
@@ -169,33 +178,32 @@ export const InfoDetails = {
     Compression: {
         title: "Text Compression",
         whatThisParameterIs: "Text Compression refers to the practice of reducing the size of text-based assets (HTML, CSS, JS) using algorithms like Gzip or Brotli.",
-        whatItCalculates: "We check the HTTP response headers (specifically `Content-Encoding`) for all text-based assets to confirm if they are served with Gzip, Brotli, or Deflate compression.",
+        whatItCalculates: "We analyze the `Content-Encoding` header for `gzip` or `br` and compare original vs. compressed sizes.",
         whyItMatters: "Compressed text resources significantly reduce the number of bytes transferred, leading to faster download times.",
         thresholds: {
             good: "100% resources compressed",
-            needsImprovement: "80% – 99% compressed",
-            poor: "< 80% compressed"
+            needsImprovement: "70% – 99% compressed",
+            poor: "< 70% compressed"
         },
         actualReasonsForFailure: [
-            "Gzip or Brotli not enabled on server",
-            "Incorrect server configuration",
-            "Static assets served without compression"
+            "Text assets (HTML/CSS/JS) served without compression",
+            "Server configuration missing Gzip/Brotli rules",
+            "Compression applied only to specific file types"
         ],
         howToOvercomeFailure: [
-            "Enable Gzip or Brotli on the server",
-            "Configure compression for all text-based resources",
-            "Verify compression via response headers"
+            "Enable Gzip or Brotli on the web server",
+            "Ensure .js and .css files are compressed"
         ]
     },
     Caching: {
         title: "Browser Caching",
         whatThisParameterIs: "Browser Caching allows the browser to store static files locally to avoid downloading them on subsequent visits.",
-        whatItCalculates: "We inspect the `Cache-Control` and `Expires` headers of all static resources to verify if they have an effective caching policy with a sufficiently long max-age.",
+        whatItCalculates: "We inspect the `Cache-Control` header of all static resources to verify if they have a `max-age` directive greater than 7 days.",
         whyItMatters: "Effective caching policies drastically reduce load times for returning visitors by serving content from their local device.",
         thresholds: {
-            good: "≥ 7 days cache duration",
-            needsImprovement: "1 – 7 days",
-            poor: "< 1 day or no caching"
+            good: "≥ 90% resources cached (>7 days)",
+            needsImprovement: "50% – 89% resources cached",
+            poor: "< 50% resources cached"
         },
         actualReasonsForFailure: [
             "Missing cache-control headers",
@@ -203,76 +211,74 @@ export const InfoDetails = {
             "Dynamic caching applied to static assets"
         ],
         howToOvercomeFailure: [
-            "Set long max-age for static assets",
-            "Use immutable caching for versioned files",
-            "Configure proper cache-control headers"
+            "Set a long `max-age` (e.g. 1 year) for static assets",
+            "Ensure CDN or server sends correct `Cache-Control` headers"
         ]
     },
     Render_Blocking: {
         title: "Render Blocking Resources",
-        whatThisParameterIs: "Render Blocking Resources are scripts and stylesheets that prevent the page from displaying content until they are fully loaded and processed.",
-        whatItCalculates: "We identify scripts and stylesheets in the `<head>` that block the first paiint of the page, checking for attributes like `defer`, `async`, or media queries that unblock rendering.",
+        whatThisParameterIs: "Render-blocking resources are static files, such as fonts, HTML, CSS, and JavaScript, that prevent a web page from loading or displaying content to the user until they are processed.",
+        whatItCalculates: "We identify scripts in the `<head>` without `async` or `defer` attributes and stylesheets without media attributes that delay the first paint.",
         whyItMatters: "Eliminating render-blocking resources allows the browser to paint the page content much sooner.",
         thresholds: {
             good: "0 blocking resources",
-            needsImprovement: "1 – 3 blocking resources",
-            poor: "> 3 blocking resources"
+            needsImprovement: "1 – 5 blocking resources",
+            poor: "> 5 blocking resources"
         },
         actualReasonsForFailure: [
-            "CSS files loaded without media attributes",
-            "JavaScript without async or defer",
-            "Large critical CSS files"
+            "<script> tags missing 'async' or 'defer'",
+            "<link rel='stylesheet'> missing 'media' attribute",
+            "Heavy CSS bundles loading synchronously",
+            "External scripts in <head>"
         ],
         howToOvercomeFailure: [
             "Defer non-critical JavaScript",
             "Inline critical CSS",
-            "Use media attributes for non-critical styles"
+            "Load non-critical CSS asynchronously"
         ]
     },
 
     // Technical Performance - SEO & Crawlability
     Resource_Optimization: {
         title: "Resource Optimization",
-        whatThisParameterIs: "Resource Optimization (SEO) ensures that media and scripts do not negatively impact the crawlability or user experience.",
-        whatItCalculates: "It evaluates if images are properly sized and if scripts are minified, similar to the asset optimization check but with a focus on SEO impact.",
+        whatThisParameterIs: "Resource Optimization in SEO context refers to the practice of refining website assets (images, scripts, styles) to minimize file size and load time without compromising quality.",
+        whatItCalculates: "We compare the natural dimensions of images against their display size and check if script URLs contain '.min' or 'cdn'.",
         whyItMatters: "Optimizing assets for SEO prevents slow load times from negatively impacting crawl budget and user engagement signals.",
         thresholds: {
-            good: "≥ 80% images optimized and scripts minified",
-            needsImprovement: "50% – 79% resources optimized",
+            good: "≥ 90% resources optimized",
+            needsImprovement: "50% – 89% resources optimized",
             poor: "< 50% resources optimized"
         },
         actualReasonsForFailure: [
-            "Images served larger than their display dimensions",
-            "JavaScript files not minified",
-            "Serving high-resolution images unnecessarily",
-            "Lack of responsive image usage"
+            "Images displayed larger than natural dimensions",
+            "JavaScript files not minified (.min.js)",
+            "Images missing explicit width/height",
+            "Assets not served from a CDN"
         ],
         howToOvercomeFailure: [
-            "Resize images to match display dimensions",
-            "Compress images and use modern formats like WebP",
-            "Minify JavaScript files",
-            "Use responsive images and proper srcset attributes"
+            "Resize images to match their specific display dimensions",
+            "Minify JavaScript files to reduce payload size"
         ]
     },
     Redirect_Chains: {
         title: "Redirect Chains",
-        whatThisParameterIs: "Redirect Chains occur when a URL redirects to another URL, which then redirects to another, creating a sequence of hops.",
-        whatItCalculates: "We trace the full redirect path from the initial request to the final destination URL, counting the number of hops (3xx status codes) encountered.",
+        whatThisParameterIs: "A Redirect Chain is a series of multiple redirects (301 or 302) that occur between the initial URL requested and the final destination URL.",
+        whatItCalculates: "We trace the full redirect path using the browser's request interception to count the number of hops.",
         whyItMatters: "Redirect chains increase latency by requiring multiple round-trips to the server before the page can even start loading.",
         thresholds: {
             good: "≤ 1 redirect",
-            needsImprovement: "2 redirects",
-            poor: "≥ 3 redirects"
+            needsImprovement: "N/A",
+            poor: "> 1 redirect"
         },
         actualReasonsForFailure: [
-            "Legacy URL redirects",
-            "HTTP to HTTPS redirect chains",
-            "Incorrect canonical URL setup"
+            "Multiple redirects (hops > 1)",
+            "Redirect loops",
+            "http to https redirects not resolving immediately",
+            "Trailing slash redirects"
         ],
         howToOvercomeFailure: [
-            "Update links to final destination URLs",
-            "Remove unnecessary redirect hops",
-            "Fix redirect rules at server level"
+            "Remove unnecessary redirects",
+            "Point links directly to the final destination URL"
         ]
     },
 
@@ -287,43 +293,40 @@ export const InfoDetails = {
         whatToDoForAGoodScore: (
             <ul className="list-disc pl-5 space-y-2">
                 <li>
-                    <span className="font-semibold">Focus on Core Web Vitals first:</span> Prioritize loading speed, responsiveness, and layout stability, as these have the biggest impact on user experience.
+                    <span className="font-semibold">Master Core Web Vitals (45% of score):</span> Prioritize LCP (load speed), INP (responsiveness), and CLS (visual stability) as they are heavily weighted.
                 </li>
                 <li>
-                    <span className="font-semibold">Optimize images and media assets:</span> Ensure images are properly sized, compressed, and delivered efficiently to reduce load times.
+                    <span className="font-semibold">Optimize Server Response (TTFB):</span> Ensure the server responds in under 800ms using caching and database optimization to build a strong foundation.
                 </li>
                 <li>
-                    <span className="font-semibold">Reduce heavy JavaScript and unused code:</span> Minimize long-running scripts and remove unnecessary third-party code that blocks interactions.
+                    <span className="font-semibold">Minimize Main Thread Blocking (TBT):</span> Break up long JavaScript tasks and defer non-critical scripts to keep the page interactive.
                 </li>
                 <li>
-                    <span className="font-semibold">Improve server response speed:</span> Use caching, optimize backend processing, and reduce delays before content starts loading.
+                    <span className="font-semibold">Maximize Asset Optimization:</span> Compress text resources (Gzip/Brotli), cache static assets for &gt;7 days, and resize/compress images.
                 </li>
                 <li>
-                    <span className="font-semibold">Prevent layout shifts during loading:</span> Reserve space for images, ads, and dynamic content to keep pages visually stable.
-                </li>
-                <li>
-                    <span className="font-semibold">Eliminate render-blocking resources:</span> Defer non-critical scripts and optimize stylesheets to speed up initial rendering.
+                    <span className="font-semibold">Clear the Render Path:</span> Eliminate render-blocking resources and remove unnecessary redirect chains to speed up the first paint.
                 </li>
             </ul>
         ),
-        howThisScoreIsCalculated: "We analyze multiple performance signals related to page loading speed, interactivity, and visual stability. These signals are evaluated using both lab testing and real-user data when available. Higher-impact factors contribute more to the final score to reflect what most affects real user experience.",
+        howThisScoreIsCalculated: "We calculate a weighted average of Core Web Vitals (45%), Load Speed metrics (22%), and Technical Optimization checks (33%). Lab data from Lighthouse and Field data from CrUX (if available) are combined to provide the most accurate assessment of real-world performance.",
         weightage: [
             { param: "Largest Contentful Paint (LCP)", weight: "15%" },
             { param: "Interaction to Next Paint (INP)", weight: "15%" },
             { param: "Cumulative Layout Shift (CLS)", weight: "15%" },
             { param: "First Contentful Paint (FCP)", weight: "6%" },
-            { param: "Speed Index (SI)", weight: "8%" },
-            { param: "Total Blocking Time (TBT)", weight: "8%" },
             { param: "Time to First Byte (TTFB)", weight: "8%" },
-            { param: "Assets & Optimization", weight: "25%" }
+            { param: "Total Blocking Time (TBT)", weight: "8%" },
+            { param: "Speed Index (SI)", weight: "8%" },
+            { param: "Asset Optimization (Compression, Caching, etc.)", weight: "25%" }
         ]
     },
 
     // On-Page SEO
     Title: {
         title: "Title Tag",
-        whatThisParameterIs: "Title Tags specify the title of a web page and are displayed on search engine results pages (SERPs) as the clickable headline.",
-        whatItCalculates: "It retrieves the content of the <title> tag and validates its length (typically 30-60 characters) and uniqueness.",
+        whatThisParameterIs: "The Title Tag is an HTML element (<title>) that specifies the title of a web page, which is displayed on search engine results pages (SERPs) and in the browser's title bar.",
+        whatItCalculates: "We extract the `<title>` tag content and validate its length is between 30 and 60 characters.",
         whyItMatters: "Title tags are the primary way search engines and users determine the relevance of your page to a search query.",
         thresholds: {
             good: "30–60 characters",
@@ -331,20 +334,22 @@ export const InfoDetails = {
             poor: "Missing title tag"
         },
         actualReasonsForFailure: [
-            "Title tag missing",
-            "Title too short or too long",
-            "Duplicate or generic titles"
+            "Title tag missing entirely",
+            "Title length < 30 characters (Too Short)",
+            "Title length > 60 characters (Too Long)",
+            "Title tag empty"
         ],
         howToOvercomeFailure: [
-            "Add a unique title tag for each page",
-            "Keep title length between 30–60 characters",
-            "Include the primary keyword naturally"
+            "Add a <title> tag with a descriptive title inside <head>",
+            "Expand short titles to at least 30 characters",
+            "Shorten long titles to approx. 60 characters",
+            "Include primary keywords and brand name"
         ]
     },
     Meta_Description: {
         title: "Meta Description",
-        whatThisParameterIs: "Meta Descriptions provide a brief summary of a web page's content, often appearing under the title in search results.",
-        whatItCalculates: "It extracts the content attribute from the <meta name='description'> tag and checks if its length falls within the recommended range (50-160 characters).",
+        whatThisParameterIs: "A Meta Description is an HTML attribute that provides a brief summary of a web page's content, often appearing as the snippet text under the title in search engine results.",
+        whatItCalculates: "We extract the `<meta name='description'>` content and validate its length is between 50 and 160 characters.",
         whyItMatters: "A compelling meta description acts as an ad for your page in search results, directly influencing click-through rates.",
         thresholds: {
             good: "50–160 characters",
@@ -353,40 +358,44 @@ export const InfoDetails = {
         },
         actualReasonsForFailure: [
             "Meta description missing",
-            "Description too short or too long",
-            "Duplicate descriptions"
+            "Description length < 50 characters (Too Short)",
+            "Description length > 160 characters (Too Long)",
+            "Description content empty"
         ],
         howToOvercomeFailure: [
-            "Write unique meta descriptions",
-            "Keep length within 50–160 characters",
-            "Clearly summarize page content"
+            "Add a <meta name='description'> tag to the <head>",
+            "Expand description to at least 50 characters",
+            "Shorten description to around 155-160 characters",
+            "Summarize page content accurately"
         ]
     },
     Canonical: {
         title: "Canonical Tag",
-        whatThisParameterIs: "Canonical Tags inform search engines which version of a URL is the master copy, preventing duplicate content issues.",
-        whatItCalculates: "It inspects the <link rel='canonical'> tag to ensure it exists, points to a valid URL, and matches the preferred domain version.",
+        whatThisParameterIs: "A Canonical Tag (rel='canonical') is an HTML snippet that defines the main version for duplicate, near-duplicate, or similar pages, telling search engines which URL to index.",
+        whatItCalculates: "We verify the presence of a single `<link rel='canonical'>` tag and check if it points to a valid, absolute URL that matches the current page (self-referencing).",
         whyItMatters: "Canonical tags tell search engines which URL represents the master copy of a page, preventing duplicate content penalties.",
         thresholds: {
-            good: "Single valid canonical tag",
-            needsImprovement: "Canonical points to another URL",
-            poor: "Missing or invalid canonical"
+            good: "Single valid canonical tag (1.0)",
+            needsImprovement: "Points to external URL (0.5)",
+            poor: "Missing or invalid canonical (0)"
         },
         actualReasonsForFailure: [
             "Canonical tag missing",
-            "Multiple canonical tags",
-            "Canonical pointing to wrong or external URL"
+            "Canonical points to external domain",
+            "Multiple canonical tags found",
+            "Canonical href is empty"
         ],
         howToOvercomeFailure: [
-            "Add one canonical tag per page",
-            "Ensure canonical points to preferred URL",
-            "Avoid cross-domain canonicals unless intentional"
+            "Add a <link rel='canonical'> pointing to the authoritative URL",
+            "Ensure only one canonical tag is present",
+            "Correct the URL format (absolute URL required)",
+            "Point canonical to self if page is master version"
         ]
     },
     URL_Structure: {
         title: "URL Structure",
-        whatThisParameterIs: "URL Structure refers to the organization and formatting of the webpage address.",
-        whatItCalculates: "It analyzes the URL string for length, depth (number of segments), and the use of SEO-friendly characters (lowercase, hyphens).",
+        whatThisParameterIs: "URL Structure refers to the format, length, and readability of the web address that locates a specific page on the internet.",
+        whatItCalculates: "We parse the URL path to check for uppercase letters, underscores, depth (>3 segments), and query parameters.",
         whyItMatters: "Clean, descriptive URLs are easier for users to read and for search engines to crawl and index.",
         thresholds: {
             good: "Short, lowercase, hyphenated, ≤3 levels deep",
@@ -400,16 +409,15 @@ export const InfoDetails = {
             "Query parameters present"
         ],
         howToOvercomeFailure: [
-            "Use lowercase letters",
-            "Replace underscores with hyphens",
-            "Keep URL depth shallow",
-            "Remove unnecessary parameters"
+            "Refactor layout to use <header>, <nav>, <main>, <footer>",
+            "Convert <div> elements to semantic tags where appropriate",
+            "Ensure correct nesting of semantic regions"
         ]
     },
     H1: {
         title: "H1 Tag",
-        whatThisParameterIs: "The H1 Tag is the main heading of a page, serving as a primary indicator of the page's topic to both users and search engines.",
-        whatItCalculates: "It counts the number of <h1> elements on the page; a good score requires exactly one descriptive H1 tag.",
+        whatThisParameterIs: "The H1 Tag is the primary heading element in HTML, used to define the main underlying topic of the webpage's content.",
+        whatItCalculates: "We count the number of `<h1>` tags on the page to ensure exactly one exists.",
         whyItMatters: "The H1 tag is the most important heading, signaling the main topic of the page to both users and search engines.",
         thresholds: {
             good: "Exactly one H1 tag",
@@ -422,15 +430,15 @@ export const InfoDetails = {
             "Non-descriptive H1 content"
         ],
         howToOvercomeFailure: [
-            "Use exactly one H1 per page",
-            "Make H1 descriptive and relevant",
-            "Include the main keyword naturally"
+            "Add exactly one <h1> tag per page",
+            "Consolidate multiple headings into one H1",
+            "Ensure H1 describes the main topic"
         ]
     },
     Image: {
         title: "Image Optimization",
-        whatThisParameterIs: "Image Optimization involves ensuring images have descriptive alt text and are appropriately sized.",
-        whatItCalculates: "It iterates through all <img> tags to check for the presence of the alt attribute and may check file size headers if available.",
+        whatThisParameterIs: "Image Optimization is the process of delivering high-quality images in the right format, dimension, and resolution while keeping the smallest possible file size.",
+        whatItCalculates: "We scan all `<img>` tags for the presence of `alt` attributes, filter out generic terms (e.g. 'image'), and check if file sizes exceed 150KB.",
         whyItMatters: "Optimized images load faster and, with proper alt text, become accessible to screen readers and indexable by image search.",
         thresholds: {
             good: "Alt text present & images <150KB",
@@ -443,15 +451,15 @@ export const InfoDetails = {
             "Missing title attributes"
         ],
         howToOvercomeFailure: [
-            "Add descriptive alt text",
-            "Compress and resize images",
-            "Use modern formats like WebP"
+            "Add descriptive Alt text to all images",
+            "Compress large files to under 150KB",
+            "Use WebP format recommended"
         ]
     },
     Video: {
         title: "Video Optimization",
-        whatThisParameterIs: "Video Optimization ensures video content is embedded efficiently to avoid performance penalties.",
-        whatItCalculates: "It checks video embeds (iframe, video tags) for attributes like loading='lazy' and the presence of schema metadata.",
+        whatThisParameterIs: "Video Optimization refers to the technical configuration of video content (embedding, lazy loading, metadata) to ensure it plays efficiently without slowing down page load.",
+        whatItCalculates: "We identify `<video>` and `<iframe>` elements (YouTube/Vimeo) and check for `loading='lazy'` attributes and schema metadata.",
         whyItMatters: "Properly optimized and embedded videos enhance engagement without sacrificing page load speed.",
         thresholds: {
             good: "Videos embedded correctly with lazy loading and metadata",
@@ -473,8 +481,8 @@ export const InfoDetails = {
     },
     Semantic_Tags: {
         title: "Semantic HTML Tags",
-        whatThisParameterIs: "Semantic HTML Tags provide meaning to the web page structure (e.g., <header>, <nav>, <main>, <footer>) rather than just presentation.",
-        whatItCalculates: "It parses the HTML to verify the presence and proper nesting of core semantic landmark elements.",
+        whatThisParameterIs: "Semantic HTML Tags are HTML elements that clearly provide meaning to the web page structure (e.g., <article>, <nav>, <section>) for browsers and screen readers.",
+        whatItCalculates: "We check for the presence of core HTML5 landmarks: `<main>`, `<nav>`, `<header>`, `<footer>`, `<article>`, `<section>`, and `<aside>`.",
         whyItMatters: "Semantic HTML improves accessibility and helps search engines understand the structure and importance of your content.",
         thresholds: {
             good: "Core semantic tags present",
@@ -494,8 +502,8 @@ export const InfoDetails = {
     },
     Contextual_Linking: {
         title: "Contextual Linking",
-        whatThisParameterIs: "Contextual Linking refers to internal links placed within the main body content of a page, connecting related topics.",
-        whatItCalculates: "It identifies links (<a> tags) within the main content area (excluding nav/footer) and evaluates their quantity and relevance.",
+        whatThisParameterIs: "Contextual Linking refers to the practice of placing hyperlinks within the body text of a webpage that point to other relevant internal content.",
+        whatItCalculates: "We identify links within the main content area (excluding navigation menus) and check if they point to internal pages.",
         whyItMatters: "Internal links help distribute page authority and guide users and crawlers to related content.",
         thresholds: {
             good: "Contextual links present",
@@ -508,20 +516,20 @@ export const InfoDetails = {
             "Poor internal linking strategy"
         ],
         howToOvercomeFailure: [
-            "Add internal links within content",
-            "Link to important pages contextually",
-            "Use descriptive anchor text"
+            "Add internal links naturally within content body",
+            "Link to key service/category pages from article text",
+            "Use descriptive anchor text for contextual links"
         ]
     },
     Heading_Hierarchy: {
         title: "Heading Hierarchy",
-        whatThisParameterIs: "Heading Hierarchy is the logical ordering of heading tags (H1-H6) to structure content.",
-        whatItCalculates: "It scans the document order of heading tags to ensure they follow a sequential structure (e.g., H2 follows H1) without skipping levels.",
+        whatThisParameterIs: "Heading Hierarchy is the logical arrangement of a webpage's headings (H1 to H6) to create a clear, nested structure for the content.",
+        whatItCalculates: "We traverse the heading tags (H1-H6) in document order to ensure no levels are skipped (e.g., H2 followed immediately by H4).",
         whyItMatters: "A logical heading structure makes content easier to skim for users and easier to parse for search engines.",
         thresholds: {
-            good: "Logical hierarchy without skips",
-            needsImprovement: "Minor heading level skips",
-            poor: "Missing H1 or major hierarchy issues"
+            good: "Logical hierarchy (1.0)",
+            needsImprovement: "N/A",
+            poor: "Skips levels or missing H1 (0)"
         },
         actualReasonsForFailure: [
             "Skipped heading levels",
@@ -529,15 +537,15 @@ export const InfoDetails = {
             "Improper heading order"
         ],
         howToOvercomeFailure: [
-            "Follow sequential heading order",
-            "Use headings for structure, not styling",
-            "Ensure a single H1"
+            "Fix skipped heading levels (e.g. H2 -> H3)",
+            "Start hierarchy with H1",
+            "Use H2-H6 for subsections logically"
         ]
     },
     Content_Quality: {
         title: "Content Quality",
-        whatThisParameterIs: "Content Quality evaluates the depth, uniqueness, and value of the text on the page.",
-        whatItCalculates: "It counts the total word count of the main content and may check for keyword density or duplicate text blocks.",
+        whatThisParameterIs: "Content Quality uses heuristics like word count and sentence repetition to assess the depth and originality of the page content.",
+        whatItCalculates: "We count the words in the main content area (aiming for >300) and detect repeated sentences to identify thin or duplicate content.",
         whyItMatters: "High-quality, unique content is the single most important factor for ranking well in search results.",
         thresholds: {
             good: "≥300 words, low repetition",
@@ -545,46 +553,47 @@ export const InfoDetails = {
             poor: "Thin or highly repetitive content"
         },
         actualReasonsForFailure: [
-            "Low word count",
-            "Repeated sentences",
-            "Boilerplate content"
+            "Total word count < 300 words (Thin Content)",
+            "High sentence repetition ratio (>10%)",
+            "Duplicate text blocks detected"
         ],
         howToOvercomeFailure: [
-            "Add unique, valuable content",
-            "Reduce repetition",
-            "Improve topical depth"
+            "Add unique, valuable content (> 300 words)",
+            "Rewrite repeated sentences",
+            "Ensure content provides depth on the topic"
         ]
     },
     Links: {
         title: "Anchor Text Quality",
-        whatThisParameterIs: "Anchor Text Quality assesses the descriptive nature of the clickable text in hyperlinks.",
-        whatItCalculates: "It analyzes the text content of <a> tags, flagging generic terms like 'click here' or 'read more' versus descriptive keywords.",
+        whatThisParameterIs: "Anchor Text is the visible, clickable text in a hyperlink that links one page to another.",
+        whatItCalculates: "We analyze anchor text for generic phrases (e.g., 'click here') and calculate the ratio of descriptive links.",
         whyItMatters: "Descriptive anchor text provides context to users and search engines about the destination page's topic.",
         thresholds: {
-            good: "≥75% descriptive anchors",
-            needsImprovement: "Mixed anchor quality",
-            poor: "Mostly generic anchors"
+            good: "≥ 75% descriptive anchors (1.0)",
+            needsImprovement: "< 75% descriptive (0.5)",
+            poor: "N/A"
         },
         actualReasonsForFailure: [
-            "Generic anchors like click here",
-            "Repeated non-descriptive text",
-            "Missing anchor context"
+            "High ratio of generic anchors ('click here')",
+            "No internal links found",
+            "Links with empty anchor text",
+            "Unsafe external links (missing target='_blank')"
         ],
         howToOvercomeFailure: [
-            "Use descriptive anchor text",
-            "Avoid generic phrases",
-            "Match anchors with linked content"
+            "Update generic link text to be descriptive",
+            "Ensure healthy mix of internal/external links",
+            "Set target='_blank' for external links"
         ]
     },
     URL_Slugs: {
         title: "URL Slugs",
-        whatThisParameterIs: "URL Slugs are the part of the URL that identifies a specific page in a readable format.",
-        whatItCalculates: "It isolates the final segment of the URL path and checks for readability, length, and keyword inclusion (avoiding ID numbers).",
+        whatThisParameterIs: "A URL Slug is the specific part of a URL that identifies a particular page on a website in a human-readable form.",
+        whatItCalculates: "We analyze the last segment of the URL path for length (>50 chars), uppercase letters, underscores, and numeric IDs.",
         whyItMatters: "Readable slugs with keywords improve user experience and can provide a slight ranking boost.",
         thresholds: {
-            good: "≤50 chars, lowercase, hyphenated",
-            needsImprovement: "Minor formatting issues",
-            poor: "Long or unreadable slug"
+            good: "Clean slug (1.0)",
+            needsImprovement: "Formatting issues (0.5)",
+            poor: "N/A"
         },
         actualReasonsForFailure: [
             "Slug too long",
@@ -592,38 +601,38 @@ export const InfoDetails = {
             "Numbers or IDs in slug"
         ],
         howToOvercomeFailure: [
-            "Keep slugs short and descriptive",
-            "Use lowercase and hyphens",
-            "Remove unnecessary numbers"
+            "Simplify the URL structure",
+            "Use lowercase letters only",
+            "Use hyphens instead of underscores",
+            "Keep path depth shallow (< 4 segments)"
         ]
     },
     Structured_Data: {
         title: "Structured Data (Schema Markup)",
-        whatThisParameterIs: "Structured Data (Schema Markup) is code that helps search engines understand specific content types (events, recipes, reviews).",
-        whatItCalculates: "It searches for JSON-LD scripts or microdata to verify valid schema implementation and required properties.",
+        whatThisParameterIs: "Structured Data (Schema Markup) is a standardized format for providing information about a page and classifying the page content for search engines.",
+        whatItCalculates: "We search for `<script type='application/ld+json'>` blocks and validate their JSON content.",
         whyItMatters: "Structured data enables rich snippets (like stars, prices, or events) in search results, increasing visibility.",
         thresholds: {
-            good: "Valid structured data present",
-            needsImprovement: "Partial or invalid structured data",
-            poor: "No structured data found"
+            good: "Schema detected (1.0)",
+            needsImprovement: "N/A",
+            poor: "No schema detected (0)"
         },
         actualReasonsForFailure: [
-            "No JSON-LD structured data implemented",
-            "Invalid or malformed schema markup",
-            "Missing required schema properties",
-            "Incorrect schema type used"
+            "No JSON-LD script found",
+            "Invalid JSON syntax in script",
+            "Missing required Schema properties",
+            "Unrecognized @type"
         ],
         howToOvercomeFailure: [
             "Add relevant JSON-LD schema markup",
-            "Use appropriate schema types (Article, Product, FAQ, etc.)",
-            "Validate schema using testing tools",
-            "Fix errors and warnings in structured data"
+            "Validate schema with Google Rich Results Test",
+            "Fix JSON syntax errors"
         ]
     },
     Open_Graph: {
         title: "Open Graph Tags",
-        whatThisParameterIs: "Open Graph Protocol metadata controls how URLs are displayed when shared on social media platforms like Facebook or LinkedIn.",
-        whatItCalculates: "It checks for the presence of <meta property='og:title'>, og:image, and og:url tags.",
+        whatThisParameterIs: "The Open Graph protocol is a set of meta tags that allows any web page to become a rich object in a social graph, controlling how it looks when shared.",
+        whatItCalculates: "We check for the presence of `og:title`, `og:description`, `og:image`, and `og:url` meta tags.",
         whyItMatters: "Open Graph tags ensure your content looks attractive and professional when shared on social media, driving more clicks.",
         thresholds: {
             good: "og:title, og:image, and og:url present",
@@ -631,22 +640,21 @@ export const InfoDetails = {
             poor: "No Open Graph tags found"
         },
         actualReasonsForFailure: [
-            "Missing og:title, og:image, or og:url",
-            "Incomplete Open Graph metadata",
-            "Incorrect or broken image URLs",
-            "Using default or generic Open Graph values"
+            "Missing 'og:title' or 'og:image'",
+            "Missing 'og:url' property",
+            "Incomplete set of Open Graph tags",
+            "Empty content in OG tags"
         ],
         howToOvercomeFailure: [
-            "Add og:title, og:image, and og:url meta tags",
-            "Use high-quality, accessible images for sharing",
-            "Ensure Open Graph values match page content",
-            "Validate Open Graph tags before publishing"
+            "Add 'og:title', 'og:image', and 'og:url' meta tags",
+            "Ensure image URLs are absolute and valid",
+            "Fill in missing OG properties"
         ]
     },
     Twitter_Card: {
         title: "Twitter Card Tags",
-        whatThisParameterIs: "Twitter Cards allow you to attach rich photos, videos, and media experiences to Tweets.",
-        whatItCalculates: "It verifies the existence of <meta name='twitter:card'>, twitter:title, and twitter:image tags.",
+        whatThisParameterIs: "Twitter Cards are a type of meta tag implementation that allows users to attach rich photos, videos, and media experiences to Tweets.",
+        whatItCalculates: "We check for `twitter:card`, `twitter:title`, `twitter:description`, and `twitter:image` meta tags.",
         whyItMatters: "Twitter Cards transform standard links into rich media experiences, increasing engagement and followers from tweets.",
         thresholds: {
             good: "twitter:card and twitter:title present",
@@ -654,80 +662,79 @@ export const InfoDetails = {
             poor: "No Twitter Card tags found"
         },
         actualReasonsForFailure: [
-            "Missing twitter:card or twitter:title tags",
-            "Incomplete Twitter Card metadata",
-            "Incorrect or broken image URLs",
-            "Using generic or default Twitter Card values"
+            "Missing 'twitter:card' definition",
+            "Missing 'twitter:title'",
+            "Missing 'twitter:image'",
+            "Empty content in Twitter tags"
         ],
         howToOvercomeFailure: [
-            "Add twitter:card and twitter:title meta tags",
-            "Include twitter:image and twitter:description",
-            "Ensure Twitter Card content matches page content",
-            "Validate Twitter Card implementation before publishing"
+            "Add 'twitter:card' and 'twitter:title' meta tags",
+            "Ensure twitter:image is present",
+            "Validate with Twitter Card Validator"
         ]
     },
     Social_Links: {
         title: "Social Profile Links",
-        whatThisParameterIs: "Social Profile Links connect your website to your official social media presence.",
-        whatItCalculates: "It scans all external links on the page to identify URLs pointing to known social media platforms.",
+        whatThisParameterIs: "Social Profile Links are hyperlinks on a website that direct users to the entity's official profiles on social networking platforms.",
+        whatItCalculates: "We scan all external links to identify URLs matching known social media platforms (Facebook, Twitter, LinkedIn, etc.).",
         whyItMatters: "Linking to social profiles verifies your brand identity and provides users with legitimate ways to connect.",
         thresholds: {
-            good: "At least one social profile link present",
-            needsImprovement: "Social profiles exist but are incomplete",
-            poor: "No social profile links found"
+            good: "Social links present (1.0)",
+            needsImprovement: "N/A",
+            poor: "No social links found (0)"
         },
         actualReasonsForFailure: [
-            "No social media profile links on the website",
-            "Social links hidden or hard to find",
-            "Incorrect or broken social profile URLs"
+            "No external links to social domains found",
+            "Links to social profiles broken",
+            "Social links not recognized"
         ],
         howToOvercomeFailure: [
-            "Add links to official social media profiles",
-            "Place social links in header, footer, or contact page",
-            "Ensure social profile URLs are correct and active"
+            "Add links to your official social media profiles",
+            "Fix broken or incorrect social URLs",
+            "Ensure links point to recognized platforms"
         ]
     },
 
     Robots_Txt: {
         title: "Robots.txt",
-        whatThisParameterIs: "The robots.txt file provides instructions to web robots (crawlers) about which areas of the site should or should not be indexed.",
-        whatItCalculates: "It checks for the presence of a robots.txt file at the root of the domain and analyzes its content for basic indexability rules.",
+        whatThisParameterIs: "The robots.txt file is a text file that resides in the root directory of a site and instructs web crawlers which pages or files they can or cannot request.",
+        whatItCalculates: "We attempt to fetch the `/robots.txt` file from the root domain.",
         whyItMatters: "A properly configured robots.txt file helps manage crawl budget and prevents search engines from indexing private or irrelevant sections of your site.",
         thresholds: {
-            good: "File exists and is accessible",
-            needsImprovement: "File is empty or misconfigured",
-            poor: "File missing"
+            good: "File exists (1.0)",
+            needsImprovement: "N/A",
+            poor: "File missing (0)"
         },
         actualReasonsForFailure: [
-            "Robots.txt file not found",
-            "File is returning a 4xx or 5xx error",
-            "Disallow: / is blocking entire site indexing"
+            "Robots.txt file not found (404)",
+            "File exists but is empty",
+            "Server error preventing fetch"
         ],
         howToOvercomeFailure: [
-            "Create a valid robots.txt file at the root directory",
-            "Ensure it doesn't block critical page sections",
-            "Link to your XML sitemap within the file"
+            "Create a valid robots.txt file at root domain",
+            "Ensure it allows crawling of important content",
+            "Fix server errors preventing file access"
         ]
     },
     Sitemap: {
         title: "XML Sitemap",
-        whatThisParameterIs: "An XML Sitemap is a file that lists all important pages of a website, helping search engines discover and crawl them efficiently.",
-        whatItCalculates: "It checks for common sitemap locations (sitemap.xml) and verifies if the file is valid XML and accessible to crawlers.",
+        whatThisParameterIs: "An XML Sitemap is a file that lists a website's essential pages to make sure search engines can find and crawl them all.",
+        whatItCalculates: "We attempt to fetch the `/sitemap.xml` file from the root domain.",
         whyItMatters: "Sitemaps act as a roadmap for search engines, ensuring that newly created or updated pages are found and indexed quickly.",
         thresholds: {
-            good: "Valid sitemap.xml detected",
-            needsImprovement: "Sitemap exists but contains errors",
-            poor: "No sitemap detected"
+            good: "File exists (1.0)",
+            needsImprovement: "N/A",
+            poor: "File missing (0)"
         },
         actualReasonsForFailure: [
-            "Sitemap.xml not found",
-            "Invalid XML format",
-            "Sitemap includes non-canonical or broken links"
+            "Sitemap.xml not found (404)",
+            "Sitemap file is empty",
+            "Server error preventing fetch"
         ],
         howToOvercomeFailure: [
-            "Generate a dynamic XML sitemap",
-            "Submit the sitemap URL to Google Search Console",
-            "Ensure only indexable URLs are included"
+            "Generate and upload sitemap.xml to root",
+            "Submit sitemap to Google Search Console",
+            "Ensure sitemap contains valid URLs"
         ]
     },
 
@@ -747,42 +754,39 @@ export const InfoDetails = {
         whatToDoForAGoodScore: (
             <ul className="list-disc pl-5 space-y-2">
                 <li>
-                    <span className="font-semibold">Optimize page titles and meta descriptions:</span> Use clear, descriptive titles and summaries that accurately reflect page content and encourage clicks from search results.
+                    <span className="font-semibold">Prioritize High-Weight Content Signals:</span> Focus on unique Page Titles (15%), compelling H1 tags (10%), and high-quality, non-duplicate content (12%).
                 </li>
                 <li>
-                    <span className="font-semibold">Use a clear heading structure:</span> Ensure each page has a single main heading, followed by logically ordered subheadings that organize content clearly.
+                    <span className="font-semibold">Build Strong Internal Connectivity:</span> Ensure contextual links (8%) point to key pages and your URL structure (3%) is clean and descriptive.
                 </li>
                 <li>
-                    <span className="font-semibold">Improve content quality and uniqueness:</span> Avoid thin or repetitive content. Provide enough original, meaningful text to fully cover the topic.
+                    <span className="font-semibold">Technical Authority:</span> Implement correct Canonical tags (8%) to prevent duplication and valid Structured Data (6%) for rich snippets.
                 </li>
                 <li>
-                    <span className="font-semibold">Optimize images and videos:</span> Add descriptive alt text, meaningful titles, and ensure media files are properly sized and optimized for performance and accessibility.
+                    <span className="font-semibold">Optimize Media & Structure:</span> Ensure all images have Alt text (8%) and follow a logical Heading Hierarchy (3%).
                 </li>
                 <li>
-                    <span className="font-semibold">Strengthen internal and contextual linking:</span> Use descriptive link text and include links within content to important internal pages, not just navigation menus.
-                </li>
-                <li>
-                    <span className="font-semibold">Clean up URLs and slugs:</span> Keep URLs short, readable, lowercase, and hyphen-separated. Avoid unnecessary parameters or overly deep paths.
-                </li>
-                <li>
-                    <span className="font-semibold">Use semantic HTML elements:</span> Structure pages with semantic tags to improve readability, accessibility, and search engine understanding.
-                </li>
-                <li>
-                    <span className="font-semibold">Ensure canonical and HTTPS best practices:</span> Use valid canonical tags to avoid duplicate content issues and serve pages securely over HTTPS.
+                    <span className="font-semibold">Ensure Crawlability:</span> Maintain a valid Sitemap (5%) and Robots.txt (4%) to help search engines index your site effectively.
                 </li>
             </ul>
         ),
         howThisScoreIsCalculated: (
             <div className="space-y-2">
-                <p>We analyze multiple on-page SEO signals related to content quality, page structure, metadata, media usage, internal linking, and URL best practices. Each factor contributes to the final score based on its relative importance in helping search engines understand and rank your page.</p>
-                <p>Higher-impact elements—such as titles, content quality, images, internal linking, and headings—carry more weight to reflect what most influences search performance.</p>
+                <p>The On-Page SEO score is a weighted sum of 18 distinct ranking factors. We prioritize elements that have the highest correlation with search rankings, such as unique content, title tags, and technical crawling directives.</p>
+                <p>Content quality and basic metadata make up nearly half the score, while technical elements like canonicals and sitemaps form the backbone of crawlability.</p>
             </div>
         ),
         weightage: [
-            { param: "Content Mastery (Title, Meta, H1, Quality)", weight: "45%" },
-            { param: "Technical Foundation (Canonical, Sitemap, Robots, Schema)", weight: "26%" },
-            { param: "Social & Authority (Links, Contextual, OG/Twitter)", weight: "16%" },
-            { param: "Media & Experience (Images, Hierarchy, Semantic)", weight: "13%" }
+            { param: "Title Tag", weight: "15%" },
+            { param: "Content Quality (Uniqueness)", weight: "12%" },
+            { param: "H1 Tag", weight: "10%" },
+            { param: "Meta Description", weight: "8%" },
+            { param: "Image Optimization", weight: "8%" },
+            { param: "Canonical Tag", weight: "8%" },
+            { param: "Contextual Linking", weight: "8%" },
+            { param: "Structured Data", weight: "6%" },
+            { param: "Sitemap & Robots.txt", weight: "9%" },
+            { param: "Other Factors (Headings, Social, URLs)", weight: "16%" }
         ]
     },
 
@@ -2151,7 +2155,7 @@ export const InfoDetails = {
             "Low contrast brand colors"
         ],
         howToOvercomeFailure: [
-            "Increase contrast between text and background",
+            "Increase contrast ratio between text and background",
             "Test contrast using accessibility tools"
         ]
     },
@@ -2762,9 +2766,10 @@ export const InfoDetails = {
             poor: "No keyword or entity signals found"
         },
         actualReasonsForFailure: [
-            "Missing headings",
-            "Images without alt text",
-            "No keyword metadata"
+            "Missing 'loading=lazy' attribute",
+            "Missing Schema.org metadata for video",
+            "Videos embedded without iframe/video tag",
+            "Autoplay enabled without mute"
         ],
         howToOvercomeFailure: [
             "Use descriptive headings",

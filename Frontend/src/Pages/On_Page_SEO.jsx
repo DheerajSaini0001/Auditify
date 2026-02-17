@@ -1532,12 +1532,16 @@ const RobotsTxtCard = ({ data, darkMode, onInfo }) => {
       seoMetricExplanations={seoMetricExplanations}
       showAnalysis={false}
     >
-      {meta?.content && (
+      {meta?.exists ? (
         <div className="space-y-1">
           <div className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>File content (Preview):</div>
           <pre className={`p-2 rounded text-[10px] font-mono whitespace-pre-wrap max-h-32 overflow-y-auto ${darkMode ? "bg-gray-900 text-gray-400" : "bg-gray-50 text-gray-600 border border-gray-100"}`}>
-            {meta.content}
+            {meta.content || <span className="italic opacity-50">File is empty</span>}
           </pre>
+        </div>
+      ) : (
+        <div className={`p-4 rounded-lg border border-dashed text-center text-xs italic ${darkMode ? "bg-gray-900/30 border-gray-700 text-gray-500" : "bg-gray-50 border-gray-200 text-gray-400"}`}>
+          Robots.txt file not found.
         </div>
       )}
 
@@ -1593,12 +1597,16 @@ const SitemapCard = ({ data, darkMode, onInfo }) => {
       seoMetricExplanations={seoMetricExplanations}
       showAnalysis={false}
     >
-      {meta?.content && (
+      {meta?.exists ? (
         <div className="space-y-1">
           <div className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>File content (Preview):</div>
           <pre className={`p-2 rounded text-[10px] font-mono whitespace-pre-wrap max-h-92 overflow-y-auto ${darkMode ? "bg-gray-900 text-gray-400" : "bg-gray-50 text-gray-600 border border-gray-100"}`}>
-            {meta.content}
+            {meta.content || <span className="italic opacity-50">File is empty</span>}
           </pre>
+        </div>
+      ) : (
+        <div className={`p-4 rounded-lg border border-dashed text-center text-xs italic ${darkMode ? "bg-gray-900/30 border-gray-700 text-gray-500" : "bg-gray-50 border-gray-200 text-gray-400"}`}>
+          Sitemap.xml file not found.
         </div>
       )}
 
@@ -1671,25 +1679,33 @@ const StructuredDataCard = ({ data, darkMode, onInfo, className = "" }) => {
             </span>
           </div>
 
-          {meta?.types && (
-            <div className="space-y-1">
-              <div className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Detected Schema Types:</div>
-              <div className={`flex flex-wrap gap-1`}>
-                {meta.types.split(',').map((type, i) => (
-                  <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-medium ${darkMode ? "bg-indigo-900/30 text-indigo-300" : "bg-indigo-50 text-indigo-700 border border-indigo-100"}`}>
-                    {type.trim()}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+          {meta?.exists ? (
+            <>
+              {meta?.types && (
+                <div className="space-y-1">
+                  <div className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Detected Schema Types:</div>
+                  <div className={`flex flex-wrap gap-1`}>
+                    {meta.types.split(',').map((type, i) => (
+                      <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-medium ${darkMode ? "bg-indigo-900/30 text-indigo-300" : "bg-indigo-50 text-indigo-700 border border-indigo-100"}`}>
+                        {type.trim()}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-          {meta?.content?.length > 0 && (
-            <div className="space-y-1">
-              <div className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Raw JSON-LD Content:</div>
-              <pre className={`p-2 rounded text-[10px] font-mono whitespace-pre-wrap max-h-80 overflow-y-auto ${darkMode ? "bg-gray-900 text-gray-400" : "bg-gray-50 text-gray-600 border border-gray-100"}`}>
-                {JSON.stringify(meta.content, null, 2)}
-              </pre>
+              {meta?.content?.length > 0 && (
+                <div className="space-y-1">
+                  <div className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Raw JSON-LD Content:</div>
+                  <pre className={`p-2 rounded text-[10px] font-mono whitespace-pre-wrap max-h-80 overflow-y-auto ${darkMode ? "bg-gray-900 text-gray-400" : "bg-gray-50 text-gray-600 border border-gray-100"}`}>
+                    {JSON.stringify(meta.content, null, 2)}
+                  </pre>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className={`p-4 rounded-lg border border-dashed text-center text-xs italic ${darkMode ? "bg-gray-900/30 border-gray-700 text-gray-500" : "bg-gray-50 border-gray-200 text-gray-400"}`}>
+              No Structured Data (JSON-LD) found.
             </div>
           )}
 

@@ -64,7 +64,7 @@ const OverAll = (A, B, C, D, E, F, G) => {
           result = await seoMetrics(url, $, page);
           break;
         case "Accessibility":
-          result = await accessibilityMetrics(page);
+          result = await accessibilityMetrics(page, $);
           break;
         case "Security/Compliance":
           result = await securityCompliance(url, page, response, browser);
@@ -123,7 +123,7 @@ const OverAll = (A, B, C, D, E, F, G) => {
     const B_Res = await seoMetrics(url, $, page);
     await SingleAuditReport.findByIdAndUpdate(currentAuditId, { onPageSEO: B_Res, siteSchema: B_Res?.Schema });
 
-    const C_Res = await accessibilityMetrics(page);
+    const C_Res = await accessibilityMetrics(page, $);
     await SingleAuditReport.findByIdAndUpdate(currentAuditId, { accessibility: C_Res });
 
     const D_Res = await securityCompliance(url, page, response, browser);

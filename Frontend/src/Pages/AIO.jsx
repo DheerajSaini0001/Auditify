@@ -6,7 +6,7 @@ import { ThemeContext } from "../context/ThemeContext";
 import LivePreview from "../Component/LivePreview";
 import {
   CheckCircle, XCircle, AlertTriangle, Info,
-  Database, FileText, Zap, Server, RefreshCw, Globe,
+  Database, FileText, Zap, Server, RefreshCw,
   MessageSquare, Tag, Calendar, Link, Copy, Activity,
   Users, Target, FlaskConical, MessageCircle,
   Brain, Cpu, Network, Loader2
@@ -24,7 +24,7 @@ const iconMap = {
   Fast_Page_Load: Zap,
   API_Data_Access: Server,
   Dynamic_Content_Available: RefreshCw,
-  Multilingual_Support: Globe,
+
   Content_NLP_Friendly: MessageSquare,
   Keywords_Entities_Annotated: Tag,
   Content_Updated_Regularly: Calendar,
@@ -392,7 +392,7 @@ export default function AIO() {
         </Section>
 
         <Section title="AI Content Intelligence" icon={Brain} darkMode={darkMode}>
-          {["Multilingual_Support", "Content_NLP_Friendly", "Keywords_Entities_Annotated", "Content_Updated_Regularly", "Internal_Linking_AI_Friendly"].map((key) => (
+          {["Content_NLP_Friendly", "Keywords_Entities_Annotated", "Content_Updated_Regularly", "Internal_Linking_AI_Friendly"].map((key) => (
             aio[key] && <MetricCard key={key} metricKey={key} data={aio[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
           ))}
         </Section>

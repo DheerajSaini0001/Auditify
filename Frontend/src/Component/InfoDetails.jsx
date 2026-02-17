@@ -1039,6 +1039,24 @@ export const InfoDetails = {
             "Ensure clear page regions"
         ]
     },
+    Multilingual_Support: {
+        title: "Multilingual Support",
+        whatThisParameterIs: "Multilingual Support ensures locale definitions are present for correct language interpretation.",
+        whatItCalculates: "It checks hreflang tags and lang attributes on the HTML element.",
+        whyItMatters: "Explicit language tagging ensures screen readers use the correct voice profile and pronunciation rules, improving accessibility for international users.",
+        thresholds: {
+            good: "Language or hreflang detected",
+            poor: "No multilingual signals"
+        },
+        actualReasonsForFailure: [
+            "Missing lang attribute",
+            "No hreflang tags"
+        ],
+        howToOvercomeFailure: [
+            "Set HTML lang attribute",
+            "Add hreflang links"
+        ]
+    },
 
     // Methodologies (Accessibility)
     Accessibility_Methodology: {
@@ -2916,24 +2934,7 @@ export const InfoDetails = {
             "Use meta robots where appropriate"
         ]
     },
-    Multilingual_Support: {
-        title: "Multilingual Support",
-        whatThisParameterIs: "Multilingual Signal Check ensures locale definitions.",
-        whatItCalculates: "It checks hreflang tags and lang attributes.",
-        whyItMatters: "Explicit language tagging ensures your content feeds the correct language-specific AI models.",
-        thresholds: {
-            good: "Language or hreflang detected",
-            poor: "No multilingual signals"
-        },
-        actualReasonsForFailure: [
-            "Missing lang attribute",
-            "No hreflang tags"
-        ],
-        howToOvercomeFailure: [
-            "Set HTML lang attribute",
-            "Add hreflang links"
-        ]
-    },
+
     Event_Goal_Tracking_Integrated: {
         title: "Event & Goal Tracking",
         whatThisParameterIs: "Key Event Tracking checks for conversion telemetry.",

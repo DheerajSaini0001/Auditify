@@ -295,18 +295,7 @@ function checkDuplicateContentDetectionReady($) {
   return createMetricResult(0, "fail", "No duplicate content protection found.", { checked: "canonical tag, meta robots" });
 }
 
-function checkMultilingualSupport($) {
-  const lang = $('html').attr('lang');
-  const hreflangs = [];
-  $('link[rel="alternate"][hreflang]').each((i, el) => {
-    hreflangs.push($(el).attr('hreflang'));
-  });
 
-  if ((lang && lang !== 'en') || hreflangs.length > 0) {
-    return createMetricResult(100, "pass", "Multilingual support detected.", { lang, hreflangs });
-  }
-  return createMetricResult(0, "fail", "No multilingual signals found.", { lang: lang || "missing", hreflangsCount: 0 });
-}
 
 // Artificial Intelligence Optimization Readiness (Analytics & Feedback Loops)
 function checkEventGoalTrackingIntegrated($) {
@@ -388,7 +377,7 @@ export default async function aioReadiness(url, page, $) {
   const domain = Domain(url);
   const internalLinkingAIFriendly = checkInternalLinkingAIFriendly($, domain);
   const duplicateContentDetectionReady = checkDuplicateContentDetectionReady($);
-  const multilingualSupport = checkMultilingualSupport($);
+
 
   const eventGoalTrackingIntegrated = checkEventGoalTrackingIntegrated($);
   const abTestingReady = checkABTestingReady($);
@@ -398,7 +387,7 @@ export default async function aioReadiness(url, page, $) {
   const weights = {
     Structured_Data: 3, Metadata_Complete: 2, API_Data_Access: 2, Fast_Page_Load: 2,
     Content_NLP_Friendly: 2, Keywords_Entities_Annotated: 2, Content_Updated_Regularly: 1,
-    Internal_Linking_AI_Friendly: 2, Duplicate_Content_Detection_Ready: 1, Multilingual_Support: 1,
+    Internal_Linking_AI_Friendly: 2, Duplicate_Content_Detection_Ready: 1,
     Behavior_Tracking_Implemented: 2, Segmentation_Profiling_Ready: 1, Event_Goal_Tracking_Integrated: 2,
     AB_Testing_Ready: 1, User_Feedback_Loops_Present: 1, Dynamic_Content_Available: 1
   };
@@ -416,7 +405,7 @@ export default async function aioReadiness(url, page, $) {
     Segmentation_Profiling_Ready: segmentationProfilingReady,
     Internal_Linking_AI_Friendly: internalLinkingAIFriendly,
     Duplicate_Content_Detection_Ready: duplicateContentDetectionReady,
-    Multilingual_Support: multilingualSupport,
+
     Event_Goal_Tracking_Integrated: eventGoalTrackingIntegrated,
     AB_Testing_Ready: abTestingReady,
     User_Feedback_Loops_Present: userFeedbackLoopsPresent

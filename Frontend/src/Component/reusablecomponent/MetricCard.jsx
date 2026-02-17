@@ -12,8 +12,22 @@ const MetricCard = ({
     description,
     whyItMatters,
     onInfoClick,
+    isOpen,
+    onToggle,
 }) => {
-    const [showDetails, setShowDetails] = useState(false);
+    const [internalOpen, setInternalOpen] = useState(false);
+
+    // Determine if controlled or uncontrolled
+    const isControlled = isOpen !== undefined;
+    const showDetails = isControlled ? isOpen : internalOpen;
+
+    const handleToggle = () => {
+        if (isControlled && onToggle) {
+            onToggle();
+        } else {
+            setInternalOpen(!internalOpen);
+        }
+    };
 
     if (!metricData) return null;
 
@@ -94,19 +108,34 @@ const MetricCard = ({
                         </div>
                     </div>
                 </div>
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        if (onInfoClick) onInfoClick();
-                    }}
-                    className={`p-1.5 rounded-full transition-colors ${darkMode
-                        ? "text-gray-500 hover:text-gray-300 hover:bg-gray-700"
-                        : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-                        }`}
-                    title="View Methodology"
-                >
-                    <Info size={20} />
-                </button>
+
+                <div className="flex items-center gap-1">
+                    {activeData?.analysis && (
+                        <button
+                            onClick={handleToggle}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${darkMode
+                                ? "bg-slate-700 hover:bg-slate-600 text-slate-300"
+                                : "bg-slate-100 hover:bg-slate-200 text-slate-600"
+                                }`}
+                        >
+                            {showDetails ? "Hide Details" : "View Details"}
+                            {showDetails ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                        </button>
+                    )}
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (onInfoClick) onInfoClick();
+                        }}
+                        className={`p-1.5 rounded-full transition-colors ${darkMode
+                            ? "text-gray-500 hover:text-gray-300 hover:bg-gray-700"
+                            : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                            }`}
+                        title="View Methodology"
+                    >
+                        <Info size={20} />
+                    </button>
+                </div>
             </div>
             <div className="space-y-6 flex-grow">
                 <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
@@ -156,7 +185,7 @@ const MetricCard = ({
                 analysis={activeData?.analysis}
                 darkMode={darkMode}
                 isOpen={showDetails}
-                onToggle={() => setShowDetails(!showDetails)}
+                onToggle={handleToggle}
             />
 
         </div>

@@ -80,6 +80,7 @@ const evaluateLCPCrux = (audits, cruxMetrics) => {
   if (fieldValue === null) return null;
 
   const fieldStatus = calculateStatus(fieldValue, 2500, 4000);
+  const fieldScore = calculateScore(fieldValue, 2500, 4000);
 
   const causes = [];
   const recommendations = [];
@@ -121,6 +122,7 @@ const evaluateLCPCrux = (audits, cruxMetrics) => {
 
   return {
     value: fieldValue + "ms",
+    score: fieldScore,
     p75: true,
     status: fieldStatus,
     thresholds: {
@@ -132,109 +134,6 @@ const evaluateLCPCrux = (audits, cruxMetrics) => {
       causes,
       recommendations,
       insight: `LCP is delayed. Primary bottleneck appears to be: ${causes[0] || "unknown"}.`
-    }
-  };
-};
-
-// FID - First Input Delay
-const evaluateFIDLab = (audits) => {
-  const labValue = parseFloat((audits['max-potential-fid']?.numericValue || 0).toFixed(0));
-  const labScore = calculateScore(labValue, 100, 300);
-  const labStatus = calculateStatus(labValue, 100, 300);
-
-  const causes = [];
-  const recommendations = [];
-
-  if (labStatus !== "good") {
-    // Check Total Blocking Time (TBT)
-    const tbtVal = audits["total-blocking-time"]?.numericValue || 0;
-    if (tbtVal > 200) {
-      causes.push(`High Total Blocking Time (${Math.round(tbtVal)}ms)`);
-      recommendations.push("Break up long tasks and optimize JavaScript execution.");
-    }
-
-    // Check Long Tasks
-    const longTasks = audits["long-tasks"]?.details?.items || [];
-    if (longTasks.length > 0) {
-      causes.push(`${longTasks.length} Long Tasks detected on main thread`);
-      recommendations.push("Code-split and defer non-critical scripts.");
-    }
-
-    // Check JS Bootup Time
-    const bootup = audits["bootup-time"]?.numericValue || 0;
-    if (bootup > 2000) {
-      causes.push("High JavaScript Execution Time");
-      recommendations.push("Reduce JavaScript payload and remove unused code.");
-    }
-
-    if (causes.length === 0) {
-      causes.push("Main thread blocked by script execution");
-      recommendations.push("Profile performance to find long-running functions.");
-    }
-  }
-
-  return {
-    value: labValue + "ms",
-    score: labScore,
-    status: labStatus,
-    thresholds: {
-      Good: "0-100ms",
-      Warning: "100-300ms",
-      Poor: "300ms+"
-    },
-    analysis: labStatus === "good" ? null : {
-      causes,
-      recommendations,
-      insight: `FID is high. Interactive elements are delayed by: ${causes[0] || "main thread blocking"}.`
-    }
-  };
-};
-
-const evaluateFIDCrux = (audits, cruxMetrics) => {
-  const fieldValue = cruxMetrics["FIRST_INPUT_DELAY_MS"]?.percentile || null;
-
-  if (fieldValue === null) return null;
-
-  const fieldStatus = calculateStatus(fieldValue, 100, 300);
-
-  const causes = [];
-  const recommendations = [];
-
-  if (fieldStatus !== "good") {
-    // Check TBT as proxy
-    const tbtVal = audits["total-blocking-time"]?.numericValue || 0;
-    if (tbtVal > 300) {
-      causes.push(`High Blocking Time detected in lab (${Math.round(tbtVal)}ms)`);
-      recommendations.push("Optimize Main Thread work to improve responsiveness.");
-    }
-
-    // Check Third Party scripts
-    const thirdParty = audits["third-party-summary"]?.details?.items || [];
-    const blockingTp = thirdParty.filter(tp => tp.blockingTime > 50);
-    if (blockingTp.length > 0) {
-      causes.push("Third-party scripts blocking main thread");
-      recommendations.push("Defer or lazy-load third-party tags/trackers.");
-    }
-
-    if (causes.length === 0) {
-      causes.push("Input delay on slower devices");
-      recommendations.push("Optimize for low-end devices by reducing JS payload.");
-    }
-  }
-
-  return {
-    value: fieldValue + "ms",
-    p75: true,
-    status: fieldStatus,
-    thresholds: {
-      Good: "0-100ms",
-      Warning: "100-300ms",
-      Poor: "300ms+"
-    },
-    analysis: fieldStatus === "good" ? null : {
-      causes,
-      recommendations,
-      insight: `Real users experience input delays. Primary cause: ${causes[0] || "unknown"}.`
     }
   };
 };
@@ -300,6 +199,7 @@ const evaluateCLSCrux = (audits, cruxMetrics) => {
   if (fieldValue === null) return null;
 
   const fieldStatus = calculateStatus(fieldValue, 0.1, 0.25);
+  const fieldScore = calculateScore(fieldValue, 0.1, 0.25);
 
   const causes = [];
   const recommendations = [];
@@ -327,6 +227,7 @@ const evaluateCLSCrux = (audits, cruxMetrics) => {
 
   return {
     value: fieldValue,
+    score: fieldScore,
     p75: true,
     status: fieldStatus,
     thresholds: {
@@ -402,6 +303,7 @@ const evaluateFCPCrux = (audits, cruxMetrics) => {
   if (fieldValue === null) return null;
 
   const fieldStatus = calculateStatus(fieldValue, 1800, 3000);
+  const fieldScore = calculateScore(fieldValue, 1800, 3000);
 
   const causes = [];
   const recommendations = [];
@@ -431,6 +333,7 @@ const evaluateFCPCrux = (audits, cruxMetrics) => {
 
   return {
     value: fieldValue + "ms",
+    score: fieldScore,
     p75: true,
     status: fieldStatus,
     thresholds: {
@@ -495,6 +398,7 @@ const evaluateTTFBCrux = (cruxMetrics) => {
   if (fieldValue === null) return null;
 
   const fieldStatus = calculateStatus(fieldValue, 800, 1800);
+  const fieldScore = calculateScore(fieldValue, 800, 1800);
 
   const causes = [];
   const recommendations = [];
@@ -509,6 +413,7 @@ const evaluateTTFBCrux = (cruxMetrics) => {
 
   return {
     value: fieldValue + "ms",
+    score: fieldScore,
     p75: true,
     status: fieldStatus,
     thresholds: {
@@ -584,6 +489,7 @@ const evaluateINPCrux = (audits, cruxMetrics) => {
   if (fieldValue === null) return null;
 
   const fieldStatus = calculateStatus(fieldValue, 200, 500);
+  const fieldScore = calculateScore(fieldValue, 200, 500);
 
   const causes = [];
   const recommendations = [];
@@ -618,6 +524,7 @@ const evaluateINPCrux = (audits, cruxMetrics) => {
 
   return {
     value: fieldValue + "ms",
+    score: fieldScore,
     p75: true,
     status: fieldStatus,
     thresholds: {
@@ -1050,48 +957,6 @@ const evaluateRenderBlocking = async (page) => {
   };
 };
 
-// HTTPS - Hypertext Transfer Protocol Secure
-const evaluateHTTPS = (response) => {
-  const security = response.securityDetails();
-  const isSecure = !!security;
-  const protocol = security ? security.protocol() : 'http/1.1';
-
-  const score = isSecure ? 100 : 0;
-
-  let status = "good";
-  if (!isSecure) status = "poor";
-
-  const causes = [];
-  const recommendations = [];
-
-  if (status !== "good") {
-    causes.push("Connection is insecure (HTTP)");
-    recommendations.push("Implement SSL/TLS certificates and enforce HTTPS.");
-
-    if (protocol === 'http/1.1' || protocol === 'http') {
-      causes.push("Legacy protocol version");
-      recommendations.push("Upgrade to HTTP/2 or HTTP/3 for better performance.");
-    }
-  }
-
-  return {
-    value: score + "%",
-    score: score,
-    status,
-    protocol,
-    thresholds: {
-      Good: "HTTPS Enabled",
-      Poor: "HTTPS Absent"
-    },
-    analysis: status === "good" ? null : {
-      target: "HTTPS Enabled",
-      causes,
-      recommendations,
-      insight: `Security risk detected. Site uses: ${protocol}.`
-    }
-  };
-};
-
 // Redirect Chains
 const evaluateRedirectChains = (response) => {
   const chain = response.request().redirectChain();
@@ -1130,146 +995,6 @@ const evaluateRedirectChains = (response) => {
   };
 };
 
-// Structured Data
-const evaluateStructuredData = async (page) => {
-  const result = await page.evaluate(() => {
-    const scripts = Array.from(document.querySelectorAll('script[type="application/ld+json"]'))
-      .map(el => {
-        try { return JSON.parse(el.innerText); } catch { return null; }
-      })
-      .filter(Boolean);
-
-    const types = scripts.map(s => s['@type']).filter(Boolean);
-    return { hasData: scripts.length > 0, types: types.join(', '), content: scripts };
-  });
-
-  const score = result.hasData ? 100 : 0;
-
-  let status = "good";
-  if (!result.hasData) status = "poor";
-
-  const causes = [];
-  const recommendations = [];
-
-  if (status !== "good") {
-    causes.push("No JSON-LD structured data found");
-    recommendations.push("Add Schema.org structured data to enhance search results.");
-  }
-
-  return {
-    value: score + "%",
-    score: score,
-    status,
-    content: result.content || null,
-    thresholds: {
-      Good: "Present",
-      Poor: "Absent"
-    },
-    analysis: status === "good" ? null : {
-      target: "Structured Data Present",
-      causes,
-      recommendations,
-      insight: `Rich snippets missed. Add structured data for better SEO visibility.`
-    }
-  };
-};
-
-// Sitemap
-const evaluateSitemap = async (url, browser) => {
-  let exists = false;
-  let content = null;
-  try {
-    const sitemapUrl = new URL("/sitemap.xml", url).href;
-    const sitemapPage = await browser.newPage();
-    const response = await sitemapPage.goto(sitemapUrl, { waitUntil: "domcontentloaded", timeout: 60000 });
-    exists = response.status() === 200;
-    if (exists) {
-      content = await response.text();
-    }
-    sitemapPage.close();
-  } catch {
-    exists = false;
-  }
-
-  const score = exists ? 100 : 0;
-
-  let status = "good";
-  if (!exists) status = "poor";
-
-  const causes = [];
-  const recommendations = [];
-
-  if (status !== "good") {
-    causes.push("sitemap.xml not found at root");
-    recommendations.push("Generate and submit a sitemap.xml to Google Search Console.");
-  }
-
-  return {
-    value: score + "%",
-    score: score,
-    status,
-    content: content ? content : null,
-    thresholds: {
-      Good: "Present",
-      Poor: "Absent"
-    },
-    analysis: status === "good" ? null : {
-      target: "Sitemap Present",
-      causes,
-      recommendations,
-      insight: `Crawlability risk. Sitemap is missing.`
-    }
-  };
-};
-
-// Robots.txt
-const evaluateRobots = async (url, browser) => {
-  let exists = false;
-  let content = null;
-  try {
-    const robotsUrl = new URL("/robots.txt", url).href;
-    const robotsPage = await browser.newPage();
-    const response = await robotsPage.goto(robotsUrl, { waitUntil: "domcontentloaded", timeout: 60000 });
-    exists = response.status() === 200;
-    if (exists) {
-      content = await response.text();
-    }
-    robotsPage.close();
-  } catch {
-    exists = false;
-  }
-
-  const score = exists ? 100 : 0;
-
-  let status = "good";
-  if (!exists) status = "poor";
-
-  const causes = [];
-  const recommendations = [];
-
-  if (status !== "good") {
-    causes.push("robots.txt file not found");
-    recommendations.push("Create a robots.txt file to control crawler access.");
-  }
-
-  return {
-    value: score + "%",
-    score: score,
-    status,
-    content: content ? content : null,
-    thresholds: {
-      Good: "Present",
-      Poor: "Absent"
-    },
-    analysis: status === "good" ? null : {
-      target: "Robots.txt Present",
-      causes,
-      recommendations,
-      insight: `Crawling is uncontrolled. Robots.txt is missing.`
-    }
-  };
-};
-
 // MAIN FUNCTION
 export default async function technicalMetrics(url, device, page, response, browser) {
 
@@ -1280,8 +1005,6 @@ export default async function technicalMetrics(url, device, page, response, brow
   // Evaluate Metrics
   const lcpLab = evaluateLCPLab(audits);
   const lcpCrux = evaluateLCPCrux(audits, cruxMetrics);
-  const fidLab = evaluateFIDLab(audits);
-  const fidCrux = evaluateFIDCrux(audits, cruxMetrics);
   const clsLab = evaluateCLSLab(audits);
   const clsCrux = evaluateCLSCrux(audits, cruxMetrics);
   const fcpLab = evaluateFCPLab(audits);
@@ -1297,55 +1020,39 @@ export default async function technicalMetrics(url, device, page, response, brow
   const caching = await evaluateCaching(page);
   const resourceOptimization = await evaluateResourceOptimization(page);
   const renderBlocking = await evaluateRenderBlocking(page);
-  const https = evaluateHTTPS(response);
-
   const redirect = evaluateRedirectChains(response);
-  const structuredData = await evaluateStructuredData(page);
-  const sitemap = await evaluateSitemap(url, browser);
-  const robots = await evaluateRobots(url, browser);
 
-  // Calculate Sub-Scores
-  const coreVitalsScore = (
-    (lcpLab.score * 0.10) +
-    (tbt.score * 0.10) +
-    (clsLab.score * 0.05) +
-    (fcpLab.score * 0.05) +
-    (si.score * 0.05) +
-    (ttfbLab.score * 0.05) +
-    (inpLab.score * 0.05)
-  ) / 0.45;
+  const getScore = (metric) => metric?.score || 0;
 
-  const assetsScore = (
-    (compression.score * 0.05) +
-    (caching.score * 0.05) +
-    (resourceOptimization.score * 0.05) +
-    (renderBlocking.score * 0.05)
-  ) / 0.20;
+  // 1. Core Vitals & Lab Metrics
+  const scoreLCP = (getScore(lcpLab) * 0.07) + (getScore(lcpCrux) * 0.08); // 15%
+  const scoreINP = (getScore(inpLab) * 0.07) + (getScore(inpCrux) * 0.08); // 15%
+  const scoreCLS = (getScore(clsLab) * 0.07) + (getScore(clsCrux) * 0.08); // 15%
+  const scoreFCP = (getScore(fcpLab) * 0.03) + (getScore(fcpCrux) * 0.03); // 6%
+  const scoreTTFB = (getScore(ttfbLab) * 0.04) + (getScore(ttfbCrux) * 0.04); // 8%
 
-  const seoScore = (
-    (https.score * 0.10) +
-    (redirect.score * 0.05) +
-    (structuredData.score * 0.05) +
-    (sitemap.score * 0.10) +
-    (robots.score * 0.05)
-  ) / 0.35;
+  // 2. Other Lab Metrics
+  const scoreTBT = getScore(tbt) * 0.08; // 8%
+  const scoreSI = getScore(si) * 0.08;   // 8%
+
+  // 3. Assets & Performance
+  const scoreCompression = getScore(compression) * 0.05; // 5%
+  const scoreCaching = getScore(caching) * 0.05;         // 5%
+  const scoreResourceOpt = getScore(resourceOptimization) * 0.06; // 6%
+  const scoreRenderBlocking = getScore(renderBlocking) * 0.05;    // 5%
+  const scoreRedirect = getScore(redirect) * 0.04;       // 4%
 
   // Calculate Overall Score
   const actualPercentage = parseFloat((
-    (coreVitalsScore * 0.45) +
-    (assetsScore * 0.20) +
-    (seoScore * 0.35)
+    scoreLCP + scoreINP + scoreCLS + scoreFCP + scoreTTFB +
+    scoreTBT + scoreSI +
+    scoreCompression + scoreCaching + scoreResourceOpt + scoreRenderBlocking +
+    scoreRedirect
   ).toFixed(0));
 
   return {
     Percentage: actualPercentage,
-    Scores: {
-      CoreVitals: Math.round(coreVitalsScore),
-      Assets: Math.round(assetsScore),
-      SEO: Math.round(seoScore)
-    },
     LCP: { lab: lcpLab, crux: lcpCrux },
-    FID: { lab: fidLab, crux: fidCrux },
     CLS: { lab: clsLab, crux: clsCrux },
     FCP: { lab: fcpLab, crux: fcpCrux },
     TTFB: { lab: ttfbLab, crux: ttfbCrux },
@@ -1356,10 +1063,6 @@ export default async function technicalMetrics(url, device, page, response, brow
     Caching: caching,
     Resource_Optimization: resourceOptimization,
     Render_Blocking: renderBlocking,
-    HTTP: https,
-    Sitemap: sitemap,
-    Robots: robots,
-    Structured_Data: structuredData,
     Redirect_Chains: redirect,
   };
 }

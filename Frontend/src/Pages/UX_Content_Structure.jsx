@@ -403,6 +403,57 @@ const MetricCard = ({ title, description, score, status, meta, darkMode, icon: I
       );
     }
 
+    // 4. Loading Feedback Specifics
+    if (type === 'Loading_Feedback' && meta?.summary) {
+      return (
+        <div className="grid grid-cols-2 gap-4">
+          <div className={`p-4 rounded-xl border flex flex-col items-center justify-center text-center gap-2 ${darkMode ? "bg-slate-900/40 border-slate-700" : "bg-white border-slate-200"}`}>
+            <div className={`p-2 rounded-full ${darkMode ? "bg-blue-900/30 text-blue-400" : "bg-blue-100/50 text-blue-600"}`}>
+              <Loader2 size={24} className="animate-spin" />
+            </div>
+            <div>
+              <span className={`block text-3xl font-black ${darkMode ? "text-white" : "text-gray-900"}`}>
+                {meta.summary.spinners}
+              </span>
+              <span className={`text-[10px] font-bold uppercase tracking-wider opacity-60 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                Spinners
+              </span>
+            </div>
+          </div>
+
+          <div className={`p-4 rounded-xl border flex flex-col items-center justify-center text-center gap-2 ${darkMode ? "bg-slate-900/40 border-slate-700" : "bg-white border-slate-200"}`}>
+            <div className={`p-2 rounded-full ${darkMode ? "bg-purple-900/30 text-purple-400" : "bg-purple-100/50 text-purple-600"}`}>
+              <Layout size={24} />
+            </div>
+            <div>
+              <span className={`block text-3xl font-black ${darkMode ? "text-white" : "text-gray-900"}`}>
+                {meta.summary.skeletons}
+              </span>
+              <span className={`text-[10px] font-bold uppercase tracking-wider opacity-60 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                Skeletons
+              </span>
+            </div>
+          </div>
+
+          {meta.textIndicators && meta.textIndicators.length > 0 && (
+            <div className={`col-span-2 mt-2`}>
+              <h5 className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Text Indicators Found</h5>
+              <div className={`max-h-32 overflow-y-auto rounded-lg border ${darkMode ? "bg-slate-900/30 border-slate-700" : "bg-gray-50 border-gray-100"}`}>
+                {meta.textIndicators.map((indicator, idx) => (
+                  <div key={idx} className={`p-2 border-b last:border-0 flex sticky top-0 justify-between items-center text-xs ${darkMode ? "border-slate-800 text-gray-300" : "border-gray-200 text-gray-700"}`}>
+                    <span className="font-mono font-bold">"{indicator.text}"</span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded opacity-60 ${darkMode ? "bg-slate-800 text-gray-400" : "bg-gray-200 text-gray-600"}`}>
+                      &lt;{indicator.tag}&gt;
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
     // 2. Generic List Renderer (Targets, Fonts, etc.)
     const listItems =
       meta?.smallTargets ||

@@ -730,7 +730,15 @@ async function checkLoadingFeedback(page) {
     const hasLoadingFeedback = spinners.length > 0 || skeletons.length > 0 || textLoading.length > 0;
     return {
       hasLoadingFeedback,
-      summary: { spinners: spinners.length, skeletons: skeletons.length, loadingText: textLoading.length }
+      summary: {
+        spinners: spinners.length,
+        skeletons: skeletons.length,
+        loadingText: textLoading.length
+      },
+      textIndicators: textLoading.map(el => ({
+        text: el.innerText.substring(0, 50),
+        tag: el.tagName
+      }))
     };
   });
 

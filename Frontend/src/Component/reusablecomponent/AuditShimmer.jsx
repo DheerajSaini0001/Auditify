@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 
-export const AuditShimmer = ({ darkMode, loading, data, auditSteps = [] }) => {
+export const AuditShimmer = ({ darkMode, loading, data, auditSteps = [], metricKey = "technicalPerformance" }) => {
     const [activeStep, setActiveStep] = useState(0);
 
     useEffect(() => {
-        if (loading || !data?.technicalPerformance) {
+        if (loading || !data?.[metricKey]) {
             if (auditSteps.length > 0) {
                 const interval = setInterval(() => {
                     setActiveStep((prev) => (prev + 1) % auditSteps.length);
@@ -13,9 +13,9 @@ export const AuditShimmer = ({ darkMode, loading, data, auditSteps = [] }) => {
                 return () => clearInterval(interval);
             }
         }
-    }, [loading, data, auditSteps.length]);
+    }, [loading, data, auditSteps.length, metricKey]);
 
-    if (!loading && data?.technicalPerformance) return null;
+    if (!loading && data?.[metricKey]) return null;
 
     const step = auditSteps[activeStep] || auditSteps[0];
     if (!step) return null;

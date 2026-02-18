@@ -793,254 +793,394 @@ export const InfoDetails = {
     // Accessibility
     Color_Contrast: {
         title: "Color Contrast",
-        whatThisParameterIs: "Color Contrast is the difference in luminance between foreground text and its background.",
-        whatItCalculates: "It computes the contrast ratio of text elements against their computed background color and checks for WCAG AA (4.5:1) compliance.",
-        whyItMatters: "Sufficient contrast is vital for users with low vision or color blindness to read content without strain.",
+        whatThisParameterIs: "Color Contrast is the difference in brightness and color between text and its background, ensuring legibility for all users.",
+        whatItCalculates: "We evaluate the contrast ratio of text elements against their background colors using the WCAG 2.0 algorithm.",
+        whyItMatters: "Good contrast ensures content is legible for all users, including those with visual impairments or viewing screens in difficult lighting.",
         thresholds: {
-            good: "No contrast violations",
-            needsImprovement: "Minor contrast issues",
-            poor: "Multiple contrast failures"
+            good: "Ratio ≥ 4.5:1 (normal text), ≥ 3:1 (large text)",
+            needsImprovement: "Ratio < 4.5:1 but readable",
+            poor: "Ratio < 3:1 (illegible)"
         },
         actualReasonsForFailure: [
-            "Low contrast between text and background",
-            "Light text on light backgrounds",
-            "Incorrect color combinations"
+            "Text elements do not have enough contrast against their background colors",
+            "Background images interfering with text readability",
+            "Low opacity text colors"
         ],
         howToOvercomeFailure: [
-            "Increase contrast ratio between text and background",
-            "Use accessible color palettes",
-            "Follow WCAG contrast guidelines"
+            "Increase the contrast between text and background colors",
+            "Aim for at least 4.5:1 for normal text and 3:1 for large text",
+            "Use a contrast checker tool during design"
         ]
     },
     Focus_Order: {
         title: "Focus Order",
-        whatThisParameterIs: "Focus Order ensures that the sequence in which elements receive focus is logical and intuitive.",
-        whatItCalculates: "It tabulates the order of focusable elements in the DOM and verifies if it matches the visual layout.",
-        whyItMatters: "A logical focus order allows keyboard users to navigate the page in a predictable and efficient manner.",
+        whatThisParameterIs: "Focus Order is the sequential path that keyboard navigation (Tab key) follows through interactive elements on a webpage.",
+        whatItCalculates: "We verify that the tab order of interactive elements follows a logical sequence that matches the visual layout of the page.",
+        whyItMatters: "A logical focus order typically follows the visual layout, ensuring a predictable and intuitive navigation experience for keyboard users.",
         thresholds: {
-            good: "Logical and sequential focus order",
-            needsImprovement: "Minor focus jumps",
-            poor: "Disorganized focus order"
+            good: "Tab order matches visual layout",
+            needsImprovement: "Minor deviations in order",
+            poor: "Focus jumps randomly across the page"
         },
         actualReasonsForFailure: [
-            "Incorrect DOM order",
-            "Improper tabindex usage",
-            "Hidden elements receiving focus"
+            "The tab order does not match the visual layout",
+            "Elements receiving focus in an illogical sequence",
+            "DOM order significantly different from visual presentation"
         ],
         howToOvercomeFailure: [
-            "Maintain logical DOM structure",
-            "Avoid unnecessary tabindex values",
-            "Ensure focus follows visual order"
+            "Rearrange DOM elements to match the visual order",
+            "Use tabindex='0' to insert elements into the natural tab flow",
+            "Avoid positive tabindex values which disrupt natural order"
         ]
     },
     Focusable_Content: {
         title: "Focusable Content",
-        whatThisParameterIs: "Focusable Content checks that all interactive interface components can be accessed via keyboard.",
-        whatItCalculates: "It identifies interactive elements (buttons, links, inputs) and verifies they do not have tabindex='-1' unless intended.",
-        whyItMatters: "Ensuring all interactive elements are focusable guarantees that keyboard-only users can use your site.",
+        whatThisParameterIs: "Focusable Content refers to elements (like links, buttons, and form fields) that can receive keyboard focus and be operated by users.",
+        whatItCalculates: "We check if all interactive elements (buttons, links, inputs) can be reached and activated using keyboard navigation.",
+        whyItMatters: "Keyboard focusability is essential for users with motor disabilities who rely on keyboard navigation instead of a mouse.",
         thresholds: {
             good: "All interactive elements are focusable",
-            needsImprovement: "Some elements not keyboard accessible",
-            poor: "Many elements not focusable"
+            needsImprovement: "Some elements skipped",
+            poor: "Critical controls inaccessible via keyboard"
         },
         actualReasonsForFailure: [
-            "Interactive elements missing tabindex",
-            "Custom components not keyboard accessible",
-            "Disabled focus styles"
+            "Interactive elements (like custom buttons) cannot be reached using the Tab key",
+            "Click handlers bound to non-interactive elements (div/span)",
+            "Elements hidden from focus using incorrect tabindex"
         ],
         howToOvercomeFailure: [
-            "Ensure interactive elements are keyboard accessible",
-            "Use semantic HTML elements",
-            "Avoid disabling focus outlines"
+            "Use semantic HTML elements (<button>, <a>) whenever possible",
+            "Add tabindex='0' to custom interactive elements",
+            "Ensure all clickable elements are in the tab order"
         ]
     },
     Tab_Index: {
         title: "Tabindex Usage",
-        whatThisParameterIs: "Tabindex Usage controls the order of keyboard navigation for an element.",
-        whatItCalculates: "It scans for tabindex attributes, flagging positive values (which disrupt natural order) or unnecessary use on non-interactive elements.",
-        whyItMatters: "Proper tabindex usage preserves the natural navigation flow, preventing confusion for keyboard users.",
+        whatThisParameterIs: "The tabindex attribute controls whether an element is focusable and defines its position in the document's sequential focus navigation order.",
+        whatItCalculates: "We scan for elements using positive tabindex values (> 0), which override the natural DOM order.",
+        whyItMatters: "Positive tabindex values disrupt the natural tab order, leading to a confusing and unpredictable navigation flow for keyboard users.",
         thresholds: {
-            good: "Valid tabindex usage",
-            needsImprovement: "Some tabindex misuse",
-            poor: "Negative or excessive tabindex values"
+            good: "No positive tabindex usage",
+            needsImprovement: "N/A",
+            poor: "Positive tabindex values detected"
         },
         actualReasonsForFailure: [
-            "Positive tabindex values",
-            "Focus order manipulation",
-            "Hidden elements with tabindex"
+            "Elements with tabindex > 0 disrupt the natural tab order",
+            "Tabindex used to force an illogical navigation flow"
         ],
         howToOvercomeFailure: [
-            "Avoid positive tabindex values",
-            "Use natural DOM order for focus",
-            "Remove tabindex from hidden elements"
+            "Remove positive tabindex values completely",
+            "Rely on the natural document source order for navigation",
+            "Use tabindex='0' for focusability or '-1' to remove from flow"
         ]
     },
     Interactive_Element_Affordance: {
         title: "Interactive Element Affordance",
-        whatThisParameterIs: "Interactive Element Affordance ensures that clickable elements are visually distinct.",
-        whatItCalculates: "It checks computed styles of interactive elements to ensuring they have distinct visual indicators like hover/focus states or standard cursors.",
-        whyItMatters: "Clear visual cues for interactive elements help all users, especially those with cognitive disabilities, identifying what is clickable.",
+        whatThisParameterIs: "Interactive Element Affordance refers to the visual cues (like hover states, distinct colors, or cursors) that indicate an element is clickable.",
+        whatItCalculates: "We check if interactive elements (buttons, links) have appropriate roles and visual indicators identifying them as interactive.",
+        whyItMatters: "Clear visual cues for interactive elements improve usability by removing ambiguity about what allows user input.",
         thresholds: {
-            good: "Interactive elements clearly identifiable",
-            needsImprovement: "Some unclear interactive elements",
-            poor: "Interactive elements not recognizable"
+            good: "All interactive elements have correct roles",
+            needsImprovement: "Some elements lack roles",
+            poor: "Clickable elements indistinguishable from text"
         },
         actualReasonsForFailure: [
-            "Buttons styled as plain text",
-            "Links without visual cues",
-            "Missing hover or focus styles"
+            "Clickable elements (like divs with onclick) lack semantic roles",
+            "Buttons or links missing accessible names or roles",
+            "Interactive elements missing standard visual cues"
         ],
         howToOvercomeFailure: [
-            "Use clear button and link styles",
-            "Add hover and focus indicators",
-            "Follow standard UI patterns"
+            "Add role='button' or role='link' to custom interactive elements",
+            "Ensure tabindex='0' is present on custom controls",
+            "Prefer native <button> and <a> elements"
         ]
     },
     Label: {
         title: "Form Labels",
-        whatThisParameterIs: "Form Labels provide text descriptions for input fields, essential for screen readers.",
-        whatItCalculates: "It verifies that every <input>, <select>, and <textarea> has an associated <label>, aria-label, or aria-labelledby attribute.",
-        whyItMatters: "Labels are essential for screen readers to identify the purpose of form fields, enabling users to input data correctly.",
+        whatThisParameterIs: "Form Labels are text elements programmatically associated with form controls to describe their purpose to assistive technologies.",
+        whatItCalculates: "We verify that every form input field has a programmatically associated label element or descriptive attribute.",
+        whyItMatters: "Labels provide essential context for screen readers; without them, users may not understand the purpose of input fields.",
         thresholds: {
-            good: "All inputs have labels",
-            needsImprovement: "Some labels missing",
-            poor: "Most inputs unlabeled"
+            good: "100% of inputs labeled",
+            needsImprovement: "Minor omissions",
+            poor: "Critical inputs missing labels"
         },
         actualReasonsForFailure: [
-            "Missing label elements",
-            "Placeholder text used instead of labels",
-            "Incorrect label associations"
+            "Inputs without labels are inaccessible to screen readers",
+            "Placeholder text used as a substitute for a true label",
+            "Labels not correctly associated via 'for' attribute"
         ],
         howToOvercomeFailure: [
-            "Associate labels with inputs",
-            "Avoid using placeholders as labels",
-            "Use aria-label only when necessary"
+            "Associate a <label for='id'> with every input element",
+            "Use aria-label or aria-labelledby if a visible label is not possible",
+            "Ensure labels describe the purpose of the field clearly"
         ]
     },
     Aria_Allowed_Attr: {
         title: "ARIA Allowed Attributes",
-        whatThisParameterIs: "ARIA Allowed Attributes ensures that ARIA attributes are valid for the element's role.",
-        whatItCalculates: "It checks elements with ARIA roles to ensure the attributes used (e.g., aria-checked) are permitted for that specific role.",
-        whyItMatters: "Correct ARIA usage prevents technical conflicts that can render assistive technologies unable to interpret the element.",
+        whatThisParameterIs: "ARIA Allowed Attributes defines which WAI-ARIA states and properties are valid for use on an element with a specific ARIA role.",
+        whatItCalculates: "We check if the ARIA attributes used on an element are permitted for its assigned role according to the WAI-ARIA specification.",
+        whyItMatters: "Ensures ARIA attributes are valid for the element's role, preventing conflicting or confusing signals to assistive technologies.",
         thresholds: {
-            good: "ARIA attributes used correctly",
-            needsImprovement: "Minor ARIA misuse",
-            poor: "Invalid ARIA attributes"
+            good: "All ARIA attributes valid",
+            needsImprovement: "N/A",
+            poor: "Invalid attribute-role combinations"
         },
         actualReasonsForFailure: [
-            "Using unsupported ARIA attributes",
-            "ARIA roles without required attributes",
-            "Incorrect ARIA combinations"
+            "Attributes are not permitted for the element's role (e.g., aria-checked on a generic div)",
+            "Using ARIA attributes on elements that don't support them",
+            "Typographical errors in attribute names"
         ],
         howToOvercomeFailure: [
-            "Use ARIA attributes only when necessary",
-            "Follow ARIA role specifications",
-            "Validate ARIA implementation"
+            "Remove invalid attributes for the specific role",
+            "Change the element's role to one that supports the attribute",
+            "Consult the WAI-ARIA specification for valid combinations"
         ]
     },
     Aria_Roles: {
         title: "ARIA Roles",
-        whatThisParameterIs: "ARIA Roles define the semantic purpose of an element to assistive technologies.",
-        whatItCalculates: "It validates role attribute values against the WAI-ARIA specification to ensure they are standard and correctly applied.",
-        whyItMatters: "Valid ARIA roles ensure that screen readers correctly announce the purpose and behavior of custom widgets.",
+        whatThisParameterIs: "ARIA Roles provide semantic meaning to content, allowing screen readers to understand the type and purpose of user interface elements.",
+        whatItCalculates: "We validate that all 'role' attribute values used on the page exist in the WAI-ARIA specification.",
+        whyItMatters: "Correct ARIA roles allow screen readers to accurately convey the purpose and behavior of interface elements.",
         thresholds: {
-            good: "Valid ARIA roles",
-            needsImprovement: "Some incorrect roles",
-            poor: "Invalid or conflicting roles"
+            good: "All roles are valid WAI-ARIA roles",
+            needsImprovement: "N/A",
+            poor: "Non-existent or abstract roles used"
         },
         actualReasonsForFailure: [
-            "Invalid ARIA role values",
-            "Redundant ARIA roles",
-            "ARIA roles overriding native semantics"
+            "Elements use non-existent or abstract ARIA roles",
+            "Typos in role values",
+            "Using roles that are not part of the ARIA standard"
         ],
         howToOvercomeFailure: [
-            "Use native HTML elements first",
-            "Apply ARIA roles only when needed",
-            "Ensure roles match element purpose"
+            "Start with native HTML elements (button, nav, main) before adding roles",
+            "Check role spelling against the WAI-ARIA specification",
+            "Remove invalid role attributes"
         ]
     },
     Aria_Hidden_Focus: {
         title: "ARIA Hidden Focus",
-        whatThisParameterIs: "ARIA Hidden Focus prevents elements hidden from screen readers from receiving keyboard focus.",
-        whatItCalculates: "It identifies elements with aria-hidden='true' and checks if they or their descendants contain focusable elements.",
-        whyItMatters: "Hidden focusable elements can trap keyboard users in invisible parts of the page, causing severe usability issues.",
+        whatThisParameterIs: "ARIA Hidden Focus refers to the erroneous state where an element is hidden from assistive technology (aria-hidden='true') but remains keyboard focusable.",
+        whatItCalculates: "We identify elements marked with aria-hidden='true' that still contain focusable children.",
+        whyItMatters: "Focusable elements must not be hidden from screen readers, as this creates 'keyboard traps' where users can navigate to elements they cannot perceive.",
         thresholds: {
             good: "No hidden focusable elements",
-            needsImprovement: "Few hidden focus issues",
-            poor: "Multiple hidden focus issues"
+            needsImprovement: "N/A",
+            poor: "Focusable content hidden from screen readers"
         },
         actualReasonsForFailure: [
-            "aria-hidden elements still focusable",
-            "Hidden modals or menus receiving focus",
-            "Incorrect visibility handling"
+            "User can tab to elements that screen readers will ignore",
+            "aria-hidden='true' applied to a container with interactive links/buttons",
+            "Focus execution not managed when hiding content"
         ],
         howToOvercomeFailure: [
-            "Remove focus from hidden elements",
-            "Manage focus when showing or hiding content",
-            "Use aria-hidden correctly"
+            "Remove aria-hidden from focusable elements",
+            "Add tabindex='-1' to elements that should be hidden but are focusable",
+            "Ensure hidden content is truly removed from the focus order"
         ]
     },
     Image_Alt: {
         title: "Image Alt Text",
-        whatThisParameterIs: "Image Alt Text provides a textual alternative for images for users who cannot see them.",
-        whatItCalculates: "It checks all <img> elements for the presence of a non-empty alt attribute, unless marked as decorative.",
-        whyItMatters: "Alternative text provides the content and function of images to users who cannot see them, including screen reader users.",
+        whatThisParameterIs: "Alt Text (Alternative Text) is a textual description applied to image tags that is displayed when the image cannot be loaded and read by screen readers.",
+        whatItCalculates: "We check every <img> tag to ensure it has an alt attribute, either with descriptive text or empty (alt='') if decorative.",
+        whyItMatters: "Alt text provides essential description for images, allowing screen reader users to understand visual content.",
         thresholds: {
-            good: "All images have meaningful alt text",
-            needsImprovement: "Some alt text missing or generic",
-            poor: "Most images missing alt text"
+            good: "All images have alt attributes",
+            needsImprovement: "N/A",
+            poor: "Images missing alt attributes"
         },
         actualReasonsForFailure: [
-            "Missing alt attributes",
-            "Generic or meaningless alt text",
-            "Decorative images not marked properly"
+            "Images without alt text are invisible to screen readers",
+            "Decorative images missing the empty alt attribute",
+            "Alt text is the filename (e.g., image.jpg) instead of a description"
         ],
         howToOvercomeFailure: [
-            "Add descriptive alt text to images",
-            "Use empty alt for decorative images",
-            "Avoid generic alt descriptions"
+            "Add descriptive alt text that conveys the image's meaning",
+            "Use alt='' (empty string) for purely decorative images",
+            "Ensure complex images have detailed descriptions"
         ]
     },
     Skip_Links: {
         title: "Skip Links",
-        whatThisParameterIs: "Skip Links provide a mechanism for users to bypass repeated content (like headers) and jump to the main content.",
-        whatItCalculates: "It looks for an internal link at the top of the body that points to the main content area and is visible on focus.",
-        whyItMatters: "Skip links are a crucial efficiency feature for keyboard users, allowing them to bypass repetitive navigation menus.",
+        whatThisParameterIs: "Skip Links are internal navigation links placed at the top of the page that allow keyboard users to bypass repetitive content (like headers) and jump to the main content.",
+        whatItCalculates: "We verify the presence of a 'Skip to Content' link at the top of the page that correctly targets a main content area ID.",
+        whyItMatters: "Skip links allow keyboard and screen reader users to bypass repetitive navigation and immediately access the main content.",
         thresholds: {
-            good: "Skip link present",
-            needsImprovement: "Skip link hidden or unclear",
+            good: "Valid, working skip link present",
+            needsImprovement: "Link present but target broken",
             poor: "No skip link found"
         },
         actualReasonsForFailure: [
-            "Skip link missing",
-            "Skip link hidden from keyboard users",
-            "Incorrect skip link target"
+            "No 'Skip to Content' link found on the page",
+            "Clicking the skip link does nothing (broken target ID)",
+            "Skip link is not the first focusable element"
         ],
         howToOvercomeFailure: [
-            "Add a visible skip to content link",
-            "Ensure skip link is keyboard accessible",
-            "Link skip target to main content"
+            "Add a link with text 'Skip to Content' pointing to <main id='content'>",
+            "Ensure the target ID exists in the DOM",
+            "Make sure the skip link becomes visible when it receives focus"
         ]
     },
     Landmarks: {
         title: "Landmark Roles",
-        whatThisParameterIs: "Landmark Roles programmatically identify sections of a page (banner, main, navigation) to aid navigation.",
-        whatItCalculates: "It checks for the presence of HTML5 landmark elements or equivalent role attributes on major page sections.",
-        whyItMatters: "Landmarks allow screen reader users to jump directly to major sections of the page, significantly improving navigation speed.",
+        whatThisParameterIs: "Landmark Roles are programmatic labels that identify large content areas (like main, navigation, search) to help assistive technologies navigate the page structure.",
+        whatItCalculates: "We check for the presence of primary HTML5 structural landmarks: <main>, <nav>, <header>, and <footer>.",
+        whyItMatters: "Landmark roles (main, nav, etc.) provide a semantic map of the page, allowing screen reader users to jump efficiently between sections.",
         thresholds: {
-            good: "Landmark roles present",
-            needsImprovement: "Partial landmark usage",
-            poor: "No landmark roles found"
+            good: "Primary landmarks (Main, Nav, Header) present",
+            needsImprovement: "Some landmarks missing",
+            poor: "No semantic landmarks found"
         },
         actualReasonsForFailure: [
-            "Missing main or navigation landmarks",
-            "Improper landmark role usage",
-            "Overuse of generic containers"
+            "Page structure is difficult to navigate (missing <main> or <nav>)",
+            "Content structured entirely with generic <div>s",
+            "Roles not properly defined"
         ],
         howToOvercomeFailure: [
-            "Use semantic HTML landmarks",
-            "Add ARIA landmark roles where needed",
-            "Ensure clear page regions"
+            "Use HTML5 semantic elements (main, nav, header, footer) instead of divs",
+            "Add role attributes (role='main') if semantic tags cannot be used",
+            "Ensure every page has exactly one <main> landmark"
+        ]
+    },
+    Link_Name: {
+        title: "Link Name",
+        whatThisParameterIs: "Link Name refers to the accessible text label of a hyperlink that describes its destination or function to assistive technologies.",
+        whatItCalculates: "We verify that every link (<a>) has discernible text content or an accessible label.",
+        whyItMatters: "Descriptive link text ensures users using screen readers understand the destination or function of a link without needing surrounding context.",
+        thresholds: {
+            good: "All links have discernible text",
+            needsImprovement: "N/A",
+            poor: "Links with no accessible name"
+        },
+        actualReasonsForFailure: [
+            "Empty links or icon-only links without labels are confusing",
+            "Links containing only non-text formatting",
+            "Images inside links missing alt text"
+        ],
+        howToOvercomeFailure: [
+            "Add meaningful text content to the link",
+            "Use aria-label for icon-only links",
+            "Ensure images inside links have alt text"
+        ]
+    },
+    Button_Name: {
+        title: "Button Name",
+        whatThisParameterIs: "Button Name is the accessible text label associated with a button that describes the action it performs.",
+        whatItCalculates: "We verify that every button has discernible text content or an accessible label.",
+        whyItMatters: "Buttons must have accessible names so screen reader users understand what action will be triggered.",
+        thresholds: {
+            good: "All buttons have discernible text",
+            needsImprovement: "N/A",
+            poor: "Buttons with no accessible name"
+        },
+        actualReasonsForFailure: [
+            "Icon buttons or empty buttons without labels are unusable",
+            "Buttons rely on visual cues alone",
+            "Text inside button is hidden from screen readers"
+        ],
+        howToOvercomeFailure: [
+            "Add text content inside the <button> tag",
+            "Use aria-label for icon-only buttons",
+            "Ensure the label clearly describes the button's action"
+        ]
+    },
+    Document_Title: {
+        title: "Document Title",
+        whatThisParameterIs: "The Document Title is the text defined in the <title> HTML tag, used by browsers, search engines, and screen readers to identify the page.",
+        whatItCalculates: "We check the <head> section to ensure a non-empty <title> tag is present.",
+        whyItMatters: "The document title is the first element announced by screen readers, providing immediate context about the current page.",
+        thresholds: {
+            good: "Non-empty <title> present",
+            needsImprovement: "N/A",
+            poor: "Title is missing or empty"
+        },
+        actualReasonsForFailure: [
+            "Document title is missing or empty",
+            "Title tag exists but contains no text"
+        ],
+        howToOvercomeFailure: [
+            "Add a <title> element to the <head> of the page",
+            "Ensure the title provides a concise summary of the page content",
+            "Make sure the title is unique for each page"
+        ]
+    },
+    Html_Has_Lang: {
+        title: "HTML Language Attribute",
+        whatThisParameterIs: "The HTML Language Attribute (lang) specifies the primary human language of the document's content.",
+        whatItCalculates: "We check that the <html> element has a valid 'lang' attribute.",
+        whyItMatters: "The language attribute ensures screen readers use the correct pronunciation and accent for the content.",
+        thresholds: {
+            good: "Valid lang attribute present",
+            needsImprovement: "N/A",
+            poor: "Lang attribute missing or invalid"
+        },
+        actualReasonsForFailure: [
+            "Missing lang attribute on <html> element",
+            "Lang attribute is empty or contains an invalid code"
+        ],
+        howToOvercomeFailure: [
+            "Add lang='en' (or your language code) to the <html> tag",
+            "Ensure the language code conforms to BCP 47 standards"
+        ]
+    },
+    Meta_Viewport: {
+        title: "Meta Viewport",
+        whatThisParameterIs: "The Meta Viewport tag controls the layout and scaling dimensions of the web page on mobile browsers.",
+        whatItCalculates: "We check the meta viewport tag to ensure it does not restrict user zooming/scaling.",
+        whyItMatters: "Restricting zoom capabilities prevents users with low vision from scaling text to a readable size, creating a major accessibility barrier.",
+        thresholds: {
+            good: "Zooming is enabled",
+            needsImprovement: "N/A",
+            poor: "User scaling is disabled"
+        },
+        actualReasonsForFailure: [
+            "Viewport meta tag restricts zooming (user-scalable=no)",
+            "Maximum-scale is set to 1.0, preventing zoom"
+        ],
+        howToOvercomeFailure: [
+            "Remove 'user-scalable=no' from the viewport tag",
+            "Avoid setting maximum-scale to 1.0",
+            "Ensure users can scale the content up to at least 200%"
+        ]
+    },
+    List: {
+        title: "List Structure",
+        whatThisParameterIs: "List Structure refers to the semantic usage of <ul>, <ol>, and <dl> tags to group related content items.",
+        whatItCalculates: "We check that list elements (<ul>, <ol>) only contain <li> elements (or script/template tags).",
+        whyItMatters: "Semantic list structures allow screen readers to announce the number of items and current position, aiding comprehension.",
+        thresholds: {
+            good: "Lists only contain <li> items",
+            needsImprovement: "N/A",
+            poor: "Lists usually invalid children"
+        },
+        actualReasonsForFailure: [
+            "Lists (ul/ol) must only contain li elements",
+            "Text or other elements found directly inside <ul>/<ol>"
+        ],
+        howToOvercomeFailure: [
+            "Ensure <ul> and <ol> only contain <li> elements directly",
+            "Move non-list content outside the list container",
+            "Wrap orphaned <li> elements in a valid list parent"
+        ]
+    },
+    Heading_Order: {
+        title: "Heading Order",
+        whatThisParameterIs: "Heading Order refers to the logical hierarchy of heading tags (H1–H6) that outlines the structure of the page content.",
+        whatItCalculates: "We verify that heading steps are sequential (e.g., h1 -> h2) and do not skip levels (e.g., h1 -> h3).",
+        whyItMatters: "A logical heading hierarchy allows users to understand the content structure and navigate the document outline efficiently.",
+        thresholds: {
+            good: "Headings follow logical order",
+            needsImprovement: "Minor skips",
+            poor: "Major structural skips"
+        },
+        actualReasonsForFailure: [
+            "Headings that skip levels (e.g., h1 to h3)",
+            "Multiple H1 tags or missing H1"
+        ],
+        howToOvercomeFailure: [
+            "Ensure headings are sequential (h1 followed by h2, etc.)",
+            "Do not skip heading levels for visual effect",
+            "Use CSS classes for styling instead of choosing heading tags based on size"
         ]
     },
     Multilingual_Support: {
@@ -1070,7 +1210,7 @@ export const InfoDetails = {
         guideLink: "https://www.w3.org/WAI/standards-guidelines/wcag/",
         whatThisMetricIs: (
             <div className="space-y-2">
-                <p>Measures how accessible your website is for users who rely on assistive technologies such as screen readers, keyboards, and and other accessibility tools.</p>
+                <p>Measures how accessible your website is for users who rely on assistive technologies such as screen readers, keyboards, and other accessibility tools.</p>
                 <p>It evaluates whether users can perceive, navigate, and interact with your content regardless of ability.</p>
             </div>
         ),
@@ -1078,39 +1218,39 @@ export const InfoDetails = {
         whatToDoForAGoodScore: (
             <ul className="list-disc pl-5 space-y-2">
                 <li>
-                    <span className="font-semibold">Ensure sufficient color contrast:</span> Make sure text and interactive elements are easy to read against their backgrounds.
+                    <span className="font-semibold">Ensure meaningful text alternatives:</span> Give all images descriptive alt text and ensure buttons and links have discernible names describing their purpose.
                 </li>
                 <li>
-                    <span className="font-semibold">Support full keyboard navigation:</span> Users should be able to navigate and interact with all elements using a keyboard alone, in a logical order.
+                    <span className="font-semibold">Guarantee keyboard operability:</span> Verify that all interactive elements are focusable, have a visible focus indicators, and follow a logical tab order.
                 </li>
                 <li>
-                    <span className="font-semibold">Use clear labels for form fields:</span> Inputs, buttons, and controls should have descriptive labels that assistive technologies can understand.
+                    <span className="font-semibold">Maintain sufficient color contrast:</span> Ensure text and interactive elements stand out clearly against their backgrounds (aim for a 4.5:1 ratio).
                 </li>
                 <li>
-                    <span className="font-semibold">Provide meaningful alternative text for images:</span> Images should include clear descriptions so users who can’t see them still understand their purpose.
+                    <span className="font-semibold">Label all form inputs:</span> Every input field must have a visible label or accessible name to be usable by assistive technologies.
                 </li>
                 <li>
-                    <span className="font-semibold">Use ARIA roles correctly:</span> Only apply ARIA attributes when needed, and ensure they match the intended role and behavior of elements.
+                    <span className="font-semibold">Structure content logically:</span> Use proper heading hierarchy (H1–H6), landmarks (main, nav), and lists to help screen readers navigate efficiently.
                 </li>
                 <li>
-                    <span className="font-semibold">Include page landmarks and skip links:</span> Structural landmarks and skip navigation links help users move efficiently through the page.
+                    <span className="font-semibold">Define page context:</span> Set a unique document title and correct HTML language attribute to help users orient themselves immediately.
                 </li>
                 <li>
-                    <span className="font-semibold">Avoid hidden or inaccessible interactive elements:</span> Elements should not be hidden from assistive tools while still receiving focus.
+                    <span className="font-semibold">Use ARIA with care:</span> Only use ARIA roles and attributes when native HTML cannot achieve the desired result, and ensure they are valid.
                 </li>
             </ul>
         ),
         howThisScoreIsCalculated: (
             <div className="space-y-2">
-                <p>We evaluate your page against recognized accessibility best practices using automated checks and structural analysis. The score is based on whether key accessibility requirements are met, with higher weight given to issues that most affect usability for assistive technology users.</p>
-                <p>Each check either passes or fails, and the final score reflects how consistently your site meets accessibility standards.</p>
+                <p>The Accessibility score is a weighted average of 19 distinct checks, prioritizing high-impact issues like color contrast, keyboard navigation, and form labeling.</p>
+                <p>Each check contributes to the total score based on the severity of findings: Passing checks earn 100%, warnings (moderate issues) earn 50%, and critical failures earn 0%.</p>
             </div>
         ),
         weightage: [
-            { param: "Navigation & Focus Order", weight: "35%" },
-            { param: "Visual Labels & Contrast", weight: "35%" },
-            { param: "ARIA Roles & Attributes", weight: "25%" },
-            { param: "Interactive Elements", weight: "5%" }
+            { param: "Visual Labels & Contrast", weight: "34%" },
+            { param: "Navigation & Focus Order", weight: "31%" },
+            { param: "Interactive Elements & Names", weight: "18%" },
+            { param: "ARIA Roles & Semantics", weight: "17%" }
         ]
     },
 
@@ -2806,10 +2946,9 @@ export const InfoDetails = {
             poor: "No keyword or entity signals found"
         },
         actualReasonsForFailure: [
-            "Missing 'loading=lazy' attribute",
-            "Missing Schema.org metadata for video",
-            "Videos embedded without iframe/video tag",
-            "Autoplay enabled without mute"
+            "No emphasis tags used for keywords",
+            "Missing meta keywords",
+            "Content lacks structured entity references"
         ],
         howToOvercomeFailure: [
             "Use descriptive headings",

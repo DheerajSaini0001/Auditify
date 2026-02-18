@@ -8,15 +8,15 @@ import {
   CheckCircle, XCircle, AlertTriangle, Info,
   Eye, MousePointer, Layout, Type, Image as ImageIcon,
   Link, Navigation, Layers, Code, ShieldCheck,
-  Keyboard, Focus, Hash, Anchor, Map, Terminal, Loader2, PersonStanding, Globe
+  Keyboard, Focus, Hash, Anchor, Map, Terminal, Loader2, PersonStanding,
+  ChevronDown, ChevronUp, ExternalLink, Copy
 } from "lucide-react";
+import { AuditShimmer } from "../Component/reusablecomponent/AuditShimmer";
 import MetricInfoModal from "../Component/MetricInfoModal";
 import ParameterInfoModal from "../Component/ParameterInfoModal";
 import { InfoDetails } from "../Component/InfoDetails";
 
-// ------------------------------------------------------
-// ✅ Icon Mapping
-// ------------------------------------------------------
+// Icon Mapping
 const iconMap = {
   Color_Contrast: Type,
   Focus_Order: Navigation,
@@ -30,214 +30,314 @@ const iconMap = {
   Image_Alt: ImageIcon,
   Skip_Links: Anchor,
   Landmarks: Map,
-  Multilingual_Support: Globe,
+  Link_Name: Link,
+  Button_Name: MousePointer,
+  Document_Title: Type,
+  Html_Has_Lang: Code,
+  Meta_Viewport: Layout,
+  List: Layout,
+  Heading_Order: Type,
 };
 
-// ------------------------------------------------------
-// ✅ Educational Content
-// ------------------------------------------------------
 const educationalContent = InfoDetails;
-
-// ------------------------------------------------------
-// ✅ Score Calculation Info (Standard Weights)
-// ------------------------------------------------------
 const scoreCalculationInfo = InfoDetails.Accessibility_Methodology;
 
-// ------------------------------------------------------
-// ✅ Enhanced Shimmer
-// ------------------------------------------------------
-const ShimmerBlock = ({ className = "" }) => (
-  <div className={`relative overflow-hidden bg-gray-200 dark:bg-gray-800 rounded-lg ${className}`}>
-    <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/50 dark:via-white/10 to-transparent"></div>
-  </div>
-);
-
-const AccessShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
-  const step = steps[currentStep] || steps[0];
-
-  return (
-    <div className="flex flex-col items-center justify-center py-8 px-4 animate-in fade-in zoom-in duration-500 min-h-[350px]">
-      <div className={`w-full max-w-xl rounded-[32px] p-8 flex flex-col items-center text-center transition-all duration-500 ${darkMode ? "bg-slate-800/40 border border-slate-700/50" : "bg-slate-100/60 border border-slate-200/50"}`}>
-        {/* Icon Container (Circle) */}
-        <div className={`w-20 h-20 rounded-full flex items-center justify-center shadow-xl transition-all duration-500 ${darkMode ? "bg-slate-900 shadow-black/40 text-white" : "bg-[#1e293b] shadow-slate-400/30 text-white"}`}>
-          <div className="animate-pulse">
-            {React.cloneElement(step.icon, {
-              className: "w-8 h-8",
-              strokeWidth: 2.5
-            })}
-          </div>
-        </div>
-
-        {/* Title */}
-        <h2 className={`mt-6 text-2xl font-bold tracking-tight transition-all duration-500 ${darkMode ? "text-white" : "text-slate-900"}`}>
-          {step.title}
-        </h2>
-
-        {/* Description */}
-        <p className={`mt-4 text-base leading-relaxed max-w-sm mx-auto transition-all duration-500 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
-          {step.text}
-        </p>
-
-        {/* Processing State */}
-        <div className="mt-8 flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
-          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          <span className="text-xs font-bold uppercase tracking-wider">Processing</span>
-        </div>
-
-        {/* Progress Indicators */}
-        <div className="flex items-center gap-2 mt-6">
-          {steps.map((_, i) => (
-            <div
-              key={i}
-              className={`h-1.5 rounded-full transition-all duration-500 ${i === currentStep ? "w-6 bg-blue-500" : i < currentStep ? "w-6 bg-blue-500/40" : "w-2 bg-slate-400/30"}`}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ------------------------------------------------------
-// ✅ Metric Card (Security Style)
-// ------------------------------------------------------
+// Simplified Metric Card
 const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
-  const { score, details, meta } = data || {};
+  const { score, details, analysis } = data || {};
+  const meta = analysis;
   const isPassed = score === 100;
   const isWarning = score === 50;
+  const [showDetails, setShowDetails] = React.useState(false);
 
   const Icon = iconMap[metricKey] || CheckCircle;
-  const content = educationalContent[metricKey] || { desc: "Accessibility check.", why: "Important for inclusive design." };
+  const content = educationalContent[metricKey] || { desc: "Accessibility check.", why: "Ensures inclusivity." };
   const title = metricKey.replaceAll("_", " ");
 
-  // Simple Colors
-  const cardBg = darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200";
-  const textColor = darkMode ? "text-gray-100" : "text-gray-900";
-  const subTextColor = darkMode ? "text-gray-400" : "text-gray-500";
+  const colors = {
+    emerald: { light: "text-emerald-600", dark: "text-emerald-400", border: "border-l-emerald-500", bg: "bg-emerald-50 text-emerald-700 border-emerald-100" },
+    amber: { light: "text-amber-600", dark: "text-amber-400", border: "border-l-amber-500", bg: "bg-amber-50 text-amber-700 border-amber-100" },
+    rose: { light: "text-rose-600", dark: "text-rose-400", border: "border-l-rose-500", bg: "bg-rose-50 text-rose-700 border-rose-100" }
+  };
 
-  let statusColor = "text-red-600 bg-red-50 border-red-100";
-  let statusText = "Failed";
-
-  if (darkMode) {
-    statusColor = "text-red-400 bg-red-900/20 border-red-800/30";
-  }
-
-  if (isPassed) {
-    statusColor = darkMode ? "text-green-400 bg-green-900/20 border-green-800/30" : "text-green-600 bg-green-50 border-green-100";
-    statusText = "Passed";
-  } else if (isWarning) {
-    statusColor = darkMode ? "text-yellow-400 bg-yellow-900/20 border-yellow-800/30" : "text-yellow-600 bg-yellow-50 border-yellow-100";
-    statusText = "Warning";
-  }
-
-  const hasFailures = meta && meta.failedNodes && meta.failedNodes.length > 0;
+  const statusType = isPassed ? "emerald" : (isWarning ? "amber" : "rose");
+  const themeColors = colors[statusType];
+  const cardBg = darkMode ? "bg-gray-800/80 border-gray-700" : "bg-white border-gray-200";
+  const statusLabel = isPassed ? "Passed" : (isWarning ? "Warning" : "Failed");
 
   return (
-    <div className={`relative overflow-hidden rounded-xl border ${cardBg} shadow-sm hover:shadow-md transition-shadow group`}>
-      <div className="p-5 space-y-4">
-        <div className="flex items-start justify-between">
+    <div className={`relative overflow-hidden rounded-2xl border ${cardBg} shadow-sm hover:shadow-md transition-all duration-300 flex flex-col`}>
+      <div className="p-5 space-y-5">
+        {/* 1. Header Section */}
+        <div className="flex justify-between items-start">
           <div className="flex items-center gap-4">
-            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
-              <Icon size={24} className={darkMode ? "text-blue-400" : "text-blue-600"} />
+            {/* Icon Box */}
+            <div className={`p-3 rounded-xl ${darkMode ? "bg-slate-700/50" : "bg-slate-100"} shrink-0`}>
+              <Icon size={24} className={darkMode ? themeColors.dark : themeColors.light} />
             </div>
-            <div>
-              <h3 className={`font-bold text-lg ${textColor}`}>{title}</h3>
-              <p className={`text-xs font-medium mt-1 px-2 py-0.5 rounded-full w-fit border ${statusColor}`}>
-                {statusText}
-              </p>
-            </div>
-          </div>
-          {onInfo && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onInfo();
-              }}
-              className={`p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
-              title="View Methodology"
-            >
-              <Info size={18} />
-            </button>
-          )}
-        </div>
 
-        {/* Educational Content */}
-        <div className="space-y-4">
-          <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
-            Description: <span className={`normal-case font-normal opacity-100 text-xs leading-relaxed ${subTextColor}`}>{content.whatThisParameterIs || content.desc}</span>
-          </p>
-        </div>
-
-        {/* Dynamic Details */}
-        <div>
-          <h4 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
-            Status Detail
-          </h4>
-          <p className={`text-sm font-medium ${isPassed ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
-            {details || "No details available"}
-          </p>
-          {meta?.count !== undefined && !isPassed && (
-            <div className="mt-2 text-xs">
-              <span className={`font-semibold ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Issues Found: </span>
-              <code className={`px-1.5 py-0.5 rounded ${darkMode ? "bg-gray-700 text-gray-200" : "bg-gray-100 text-gray-800"}`}>
-                {String(meta.count)}
-              </code>
-            </div>
-          )}
-        </div>
-
-        {/* Technical Data (Failures) - Inline Scrollable */}
-        {hasFailures && (
-          <div className="flex-grow">
-            <h4 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
-              Technical Data
-            </h4>
-            <div className={`p-2 rounded text-xs font-mono overflow-x-auto ${darkMode ? "bg-gray-900 text-gray-300" : "bg-gray-100 text-gray-700"}`}>
-              <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
-                {meta.failedNodes.map((node, idx) => (
-                  <div key={idx} className="space-y-1 border-b border-gray-200 dark:border-gray-800 pb-2 last:border-0 last:pb-0">
-                    <div className="font-bold break-all">{node.target}</div>
-                    <div className="opacity-80 pl-2 border-l-2 border-red-500">{node.failureSummary}</div>
-                    {node.html && <div className="opacity-60 truncate pl-2">{node.html}</div>}
-                  </div>
-                ))}
+            <div className="space-y-1.5 flex-1 min-w-0">
+              <h3 className={`font-bold text-lg tracking-tight ${darkMode ? "text-white" : "text-slate-900"} truncate`}>
+                {title}
+              </h3>
+              <div className="flex items-center gap-3">
+                <div className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${darkMode ? `bg-${statusType}-500/10 text-${statusType}-400` : themeColors.bg}`}>
+                  {statusLabel}
+                </div>
               </div>
             </div>
           </div>
-        )}
 
-        <div className={`mt-auto pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
-          <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
-            Why it matters: <span className="normal-case font-normal opacity-100">{content.whyItMatters || content.why}</span>
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            {(!isPassed || meta?.failedNodes || meta?.present || meta?.missing) && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowDetails(!showDetails); }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${darkMode ? "bg-slate-700/50 text-slate-300 hover:bg-slate-700" : "bg-slate-50 text-slate-600 hover:bg-slate-100"}`}
+              >
+                {showDetails ? "Hide Details" : "View Details"}
+                {showDetails ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+              </button>
+            )}
+            {onInfo && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onInfo(); }}
+                className={`p-1.5 rounded-full transition-colors ${darkMode ? "text-slate-500 hover:text-white" : "text-slate-400 hover:text-slate-900"}`}
+                title="Methodology"
+              >
+                <Info size={20} />
+              </button>
+            )}
+          </div>
         </div>
+
+        {/* 2. Description Section */}
+        <div className="space-y-3">
+          <div className="text-xs leading-relaxed font-medium">
+            <span className={`font-black uppercase tracking-widest text-[10px] mr-2 ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
+              Description:
+            </span>
+            <span className={darkMode ? "text-slate-300" : "text-slate-600"}>
+              {content.whatThisParameterIs}
+            </span>
+          </div>
+
+          <div className="text-xs leading-relaxed font-medium">
+            <span className={`font-black uppercase tracking-widest text-[10px] mr-2 ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
+              Threshold:
+            </span>
+            <span className={darkMode ? "text-slate-300" : "text-slate-600"}>
+              {data.threshold}
+            </span>
+          </div>
+        </div>
+
+        {/* 3. Status Section */}
+        <div className="space-y-2">
+          <h4 className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
+            Current Status
+          </h4>
+          <div className={`p-5 rounded-2xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-slate-100/30 border-slate-200/50"}`}>
+            <p className={`text-base font-bold ${isPassed ? "text-emerald-500" : "text-rose-500"}`}>
+              {details || "Audit Passed"}
+            </p>
+            {meta?.count !== undefined && !isPassed && (
+              <p className="mt-1 text-[11px] font-bold uppercase tracking-tight opacity-40">
+                {meta.count} elements affected
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div className={`h-px w-full ${darkMode ? "bg-slate-700/50" : "bg-slate-100"}`} />
+
+        {/* 4. Why It Matters Section */}
+        <div className="text-xs leading-relaxed font-medium pb-1">
+          <span className={`font-black uppercase tracking-widest text-[10px] mr-2 ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
+            Why it matters:
+          </span>
+          <span className={darkMode ? "text-slate-400" : "text-slate-500"}>
+            {content.whyItMatters}
+          </span>
+        </div>
+
+
+
+        {/* 5. Expanded Technical Content */}
+        {showDetails && (
+          <div className="pt-2 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+            {/* Analysis Metadata */}
+            {(meta?.impact || meta?.helpUrl || meta?.description) && (
+              <div className="space-y-3">
+                {meta.description && (
+                  <div className={`p-3 rounded-lg border-l-4 ${darkMode ? "bg-slate-800/50 border-l-blue-500/50 text-slate-300" : "bg-blue-50/50 border-l-blue-400 text-slate-700"}`}>
+                    <p className="text-xs font-medium leading-relaxed">
+                      {meta.description}
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-3">
+                  {meta.impact && (
+                    <div className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider border ${meta.impact === 'critical' || meta.impact === 'serious'
+                      ? "bg-rose-500/10 text-rose-500 border-rose-500/20"
+                      : (meta.impact === 'moderate' ? "bg-amber-500/10 text-amber-500 border-amber-500/20" : "bg-blue-500/10 text-blue-500 border-blue-500/20")
+                      }`}>
+                      Impact: {meta.impact}
+                    </div>
+                  )}
+
+                  {meta.helpUrl && (
+                    <a href={meta.helpUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-blue-500 hover:text-blue-400 transition-colors">
+                      Why is this an issue? <ExternalLink size={10} />
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Landmarks Specific Data */}
+            {(meta?.present || meta?.missing) && (
+              <div className="grid grid-cols-1 gap-4">
+                {meta.present?.length > 0 && (
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500 opacity-60 flex items-center gap-2">
+                      <CheckCircle size={10} /> Found Landmarks
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {meta.present.map((item, idx) => (
+                        <div key={idx} className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border ${darkMode ? "bg-emerald-500/5 border-emerald-500/20 text-emerald-400" : "bg-emerald-50 border-emerald-100 text-emerald-700"}`}>
+                          {item}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {meta.missing?.length > 0 && (
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-rose-500 opacity-60 flex items-center gap-2">
+                      <AlertTriangle size={10} /> Missing Landmarks
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {meta.missing.map((item, idx) => (
+                        <div key={idx} className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border ${darkMode ? "bg-rose-500/5 border-rose-500/20 text-rose-400" : "bg-rose-50 border-rose-100 text-rose-700"}`}>
+                          {item}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Cause & Recommendation */}
+            <div className={`p-4 rounded-xl space-y-4 border ${darkMode ? "bg-blue-500/5 border-blue-500/20" : "bg-blue-50/50 border-blue-100"}`}>
+              {data.cause && (
+                <div className="space-y-1">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-blue-500">Root Cause:</span>
+                  <p className={`text-xs font-semibold leading-relaxed ${darkMode ? "text-slate-300" : "text-slate-700"}`}>{data.cause}</p>
+                </div>
+              )}
+              {data.recommendation && (
+                <div className="space-y-1">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-blue-500">Fix Action Plan:</span>
+                  <div className="flex gap-2 items-start">
+                    <ShieldCheck size={14} className="mt-0.5 text-blue-500 shrink-0" />
+                    <p className={`text-xs font-bold leading-relaxed ${darkMode ? "text-slate-200" : "text-slate-800"}`}>{data.recommendation}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Affected Nodes */}
+            {meta?.failedNodes && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Affected Elements & Issues</span>
+                  {meta.help && (
+                    <span className="text-[10px] font-bold text-blue-500/60 italic">"{meta.help}"</span>
+                  )}
+                </div>
+                <div className="space-y-4 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
+                  {meta.failedNodes.map((node, idx) => (
+                    <div key={idx} className={`p-4 rounded-xl border transition-colors ${darkMode ? "bg-slate-900/40 border-slate-800 hover:border-slate-700" : "bg-white border-slate-200 hover:border-slate-300"} space-y-3`}>
+
+                      {/* Technical Issue - The most important part */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2">
+                          <AlertTriangle size={12} className="text-amber-500 shrink-0" />
+                          <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Issue Detected</span>
+                        </div>
+                        <p className={`text-xs font-bold leading-relaxed ${darkMode ? "text-slate-200" : "text-slate-800"}`}>
+                          {node.failureSummary.replace("Fix any of the following:", "").trim()}
+                        </p>
+                      </div>
+
+                      {/* Selector with Copy */}
+                      <div className="space-y-1.5 relative group/selector">
+                        <span className="text-[9px] font-bold uppercase opacity-40 tracking-wider">Target Element</span>
+                        <div className={`p-2 pr-8 rounded-lg font-mono text-[10px] break-all border ${darkMode ? "bg-slate-950/50 border-slate-800 text-blue-400" : "bg-slate-50 border-slate-200 text-blue-600"}`}>
+                          {Array.isArray(node.target) ? node.target.join(" ") : node.target}
+                        </div>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(Array.isArray(node.target) ? node.target.join(" ") : node.target);
+                          }}
+                          className={`absolute bottom-2 right-2 p-1 rounded hover:bg-black/5 dark:hover:bg-white/10 transition-colors opacity-0 group-hover/selector:opacity-100 ${darkMode ? "text-slate-400" : "text-slate-500"}`}
+                          title="Copy Selector"
+                        >
+                          <Copy size={12} />
+                        </button>
+                      </div>
+
+                      {/* HTML Snippet */}
+                      {node.html && (
+                        <div className="space-y-1.5 group/html">
+                          <span className="text-[9px] font-bold uppercase opacity-40 tracking-wider">Source HTML</span>
+                          <div className="relative">
+                            <div className="p-3 rounded-lg bg-slate-950 overflow-hidden border border-slate-800">
+                              <code className="text-[10px] font-mono text-slate-400 block whitespace-pre-wrap leading-tight">{node.html}</code>
+                            </div>
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(node.html);
+                                alert("HTML snippet copied!");
+                              }}
+                              className="absolute top-2 right-2 p-1.5 rounded-md bg-white/10 text-white opacity-0 group-hover/html:opacity-100 transition-opacity hover:bg-white/20"
+                              title="Copy HTML"
+                            >
+                              <Copy size={12} />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
-// ------------------------------------------------------
-// ✅ Simple Section
-// ------------------------------------------------------
 const Section = ({ title, icon: Icon, children, darkMode }) => (
-  <div className="space-y-4">
-    <div className="flex items-center gap-3 px-2">
-      <div className={`p-2 rounded-lg ${darkMode ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-600"}`}>
+  <div className="space-y-5">
+    <div className="flex items-center gap-4 px-2">
+      <div className={`p-2.5 rounded-xl ${darkMode ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-600 shadow-sm"}`}>
         <Icon size={20} />
       </div>
-      <h2 className={`text-xl font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>
-        {title}
-      </h2>
+      <h2 className={`text-xl font-bold tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>{title}</h2>
     </div>
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {children}
     </div>
   </div>
 );
 
-// ------------------------------------------------------
-// ✅ Main Component
-// ------------------------------------------------------
+// Accessibility Dashboard
 export default function Accessibility() {
   const { theme } = useContext(ThemeContext);
   const { data, loading } = useData();
@@ -246,38 +346,75 @@ export default function Accessibility() {
   const darkMode = theme === "dark";
 
   const auditSteps = useMemo(() => [
-    { icon: <Eye className="w-8 h-8 text-blue-500" />, title: "Visual Accessibility", text: "Checking Color Contrast ratios and text readability for low-vision users..." },
-    { icon: <Keyboard className="w-8 h-8 text-purple-500" />, title: "Keyboard Navigation", text: "Verifying Focus Order, Tab Index, and Skip Links for keyboard-only users..." },
-    { icon: <Code className="w-8 h-8 text-teal-500" />, title: "ARIA & Semantics", text: "Validating ARIA roles, labels, and semantic HTML structure for screen readers..." },
-    { icon: <ImageIcon className="w-8 h-8 text-indigo-500" />, title: "Media Alternatives", text: "Scanning images for Alt text and media elements for captions/transcripts..." },
-    { icon: <MousePointer className="w-8 h-8 text-amber-500" />, title: "Interactive Elements", text: "Ensuring all buttons, links, and inputs have clear affordance and labels..." },
+    { icon: <Eye />, title: "Visual & Media Analysis", text: "Checking Color Contrast, Image Alt Text, and Viewport scaling..." },
+    { icon: <Keyboard />, title: "Keyboard Navigation", text: "Verifying Focus Order, Tab Index, Skip Links, and Focus traps..." },
+    { icon: <MousePointer />, title: "Interactive Elements", text: "Analyzing Buttons, Links, Click targets, and Affordances..." },
+    { icon: <Layers />, title: "ARIA & Semantics", text: "Validating ARIA Roles, Attributes, Hidden content, and Labels..." },
+    { icon: <Layout />, title: "Page Structure", text: "Checking Heading hierarchy, Landmarks, Lists, and Document Title..." },
   ], []);
 
   const [activeStep, setActiveStep] = React.useState(0);
-
   React.useEffect(() => {
     if (loading || !data?.accessibility) {
-      const interval = setInterval(() => {
-        setActiveStep((prev) => (prev + 1) % auditSteps.length);
-      }, 2000);
+      const interval = setInterval(() => { setActiveStep(prev => (prev + 1) % auditSteps.length); }, 2500);
       return () => clearInterval(interval);
     }
   }, [loading, data, auditSteps.length]);
 
+
   if (!data?.accessibility) {
     return (
-      <div className={`w-full ${darkMode ? "bg-gray-900" : "bg-gray-50"} transition-colors duration-300`}>
-        <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-8`}>
-          {/* ✅ Unified Master Card Loading State */}
-          <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
-
-            {/* 1. URL Header */}
-            <div>
-              <UrlHeader data={data} darkMode={darkMode} />
-            </div>
-
+      <div className={`w-full min-h-screen ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}>
+        <main className="max-w-7xl mx-auto px-6 py-10">
+          <div className={`rounded-3xl overflow-hidden ${darkMode ? "bg-slate-800/40 border border-slate-700/50" : "bg-white border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
+            <UrlHeader data={data} darkMode={darkMode} />
             <div className="flex flex-col xl:flex-row min-h-[300px]">
-              {/* Left Panel: Live Preview (Only if not All) */}
+              {data.report !== "All" && (
+                <div className={`w-full xl:w-[45%] p-6 border-b xl:border-b-0 xl:border-r ${darkMode ? "border-slate-800" : "border-slate-100"}`}>
+                  <LivePreview data={data} loading={loading} variant="plain" />
+                </div>
+              )}
+              <div className="flex-1 flex items-center justify-center">
+                <AuditShimmer darkMode={darkMode} loading={loading} data={data} auditSteps={auditSteps} metricKey="accessibility" />
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  const metric = data.accessibility;
+  const allMetrics = Object.values(metric).filter(val => typeof val === 'object' && val !== null && 'score' in val);
+  const passedCount = allMetrics.filter(m => m.score === 100).length;
+  const warningCount = allMetrics.filter(m => m.score === 50).length;
+  const failedCount = allMetrics.filter(m => m.score < 50).length;
+
+  return (
+    <div className={`w-full min-h-screen ${darkMode ? "bg-gray-900" : "bg-gray-50"} transition-colors duration-300`}>
+      <main className="max-w-7xl mx-auto px-6 py-10 space-y-12">
+        {/* ✅ Unified Master Card */}
+        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
+
+          <UrlHeader data={data} darkMode={darkMode} />
+
+          {loading || !data?.accessibility ? (
+            <div className="flex flex-col xl:flex-row min-h-[300px]">
+              {data.report !== "All" && (
+                <div className={`w-full xl:w-[45%] p-6 flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/30 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/5 blur-3xl rounded-full pointer-events-none"></div>
+                  <div className="w-full relative z-10 px-2 lg:px-6">
+                    <LivePreview data={data} loading={loading} variant="plain" />
+                  </div>
+                </div>
+              )}
+              <div className="flex-1 flex items-center justify-center">
+                <AuditShimmer darkMode={darkMode} loading={loading} data={data} auditSteps={auditSteps} metricKey="accessibility" />
+              </div>
+            </div>
+          ) : (
+            <div className={`flex flex-col xl:flex-row ${data.report === "All" ? "" : "min-h-[300px]"}`}>
+              {/* Left Panel: Live Preview */}
               {data.report !== "All" && (
                 <div className={`w-full xl:w-[45%] p-3 lg:p-4 flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/5 blur-3xl rounded-full pointer-events-none"></div>
@@ -287,149 +424,93 @@ export default function Accessibility() {
                 </div>
               )}
 
-              {/* Right/Full Panel: Audit Steps */}
-              <div className="flex-1 flex items-center justify-center">
-                <div className="w-full">
-                  <AccessShimmer darkMode={darkMode} steps={auditSteps} currentStep={activeStep} />
-                </div>
-              </div>
-            </div>
-          </div>
-        </main>
-      </div>
-    );
-  }
+              {/* Right Panel: Metrics & Score */}
+              <div className={`flex-1 ${data.report === "All" ? "px-6 pb-4 pt-2 lg:px-10 lg:pt-2" : "px-6 pb-4 pt-4 lg:px-12 lg:pt-6"} flex flex-col justify-center`}>
+                <div className={`w-full ${data.report === "All" ? "" : "max-w-2xl mx-auto"} ${data.report === "All" ? "space-y-10" : "space-y-8"}`}>
 
-  const metric = data?.accessibility || {};
-  const mainBg = darkMode ? "bg-gray-900" : "bg-gray-50";
-  const textColor = darkMode ? "text-white" : "text-gray-900";
+                  <div className={`flex flex-col md:flex-row items-center ${data.report === "All" ? "gap-10 md:gap-14 justify-between" : "gap-8 md:gap-12 justify-center"}`}>
 
-  const allMetrics = Object.values(metric).filter(val => typeof val === 'object' && val !== null && 'score' in val);
-  const passedCount = allMetrics.filter(m => m.score === 100).length;
-  const failedCount = allMetrics.filter(m => m.score < 100).length;
-
-  return (
-    <div className={`w-full ${mainBg} transition-colors duration-300`}>
-      <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-8`}>
-
-        {/* ✅ Unified Master Card */}
-        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
-
-          {/* 1. URL Header */}
-          <div>
-            <UrlHeader data={data} darkMode={darkMode} />
-          </div>
-
-          {/* 2. Card Body */}
-          <div className={`flex flex-col xl:flex-row ${data.report === "All" ? "" : "min-h-[300px]"}`}>
-
-            {/* Left Panel: Live Preview (Only if not All) */}
-            {data.report !== "All" && (
-              <div className={`w-full xl:w-[45%] ${data.report === "All" ? "p-6 lg:p-10" : "p-3 lg:p-4"} flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/5 blur-3xl rounded-full pointer-events-none"></div>
-                <div className="w-full relative z-10">
-                  <LivePreview data={data} loading={loading} variant="plain" />
-                </div>
-              </div>
-            )}
-
-            {/* Right Panel: Metrics & Score */}
-            <div className={`flex-1 ${data.report === "All" ? "px-6 pb-4 pt-2 lg:px-10 lg:pt-2" : "px-6 pb-4 pt-4 lg:px-12 lg:pt-6"} flex flex-col justify-center`}>
-              <div className={`w-full ${data.report === "All" ? "" : "max-w-2xl mx-auto"} ${data.report === "All" ? "space-y-10" : "space-y-8"}`}>
-
-                {/* Top Content Area */}
-                <div className={`flex flex-col md:flex-row items-center ${data.report === "All" ? "gap-10 md:gap-14 justify-between" : "gap-8 md:gap-12 justify-center"}`}>
-
-                  {/* Text Content */}
-                  <div className={`flex-1 ${data.report === "All" ? "space-y-5" : "space-y-4"} text-left order-2 md:order-1`}>
-                    <div className={`${data.report === "All" ? "space-y-2" : "space-y-1.5"}`}>
-                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-blue-100/50 text-blue-600 border border-blue-200"}`}>
-                        <ShieldCheck className="w-3.5 h-3.5" />
-                        <span>WCAG 2.1 Audit</span>
+                    {/* Text Content */}
+                    <div className={`flex-1 ${data.report === "All" ? "space-y-5" : "space-y-4"} text-left order-2 md:order-1`}>
+                      <div className={`${data.report === "All" ? "space-y-2" : "space-y-1.5"}`}>
+                        <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-blue-100/50 text-blue-600 border border-blue-200"}`}>
+                          <ShieldCheck className="w-3.5 h-3.5" />
+                          <span>WCAG 2.1 Audit</span>
+                        </div>
+                        <h3 className={`${data.report === "All" ? "text-3xl lg:text-5xl" : "text-2xl lg:text-4xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
+                          Accessibility <span className="text-blue-500">Health</span>
+                        </h3>
+                        <p className={`text-sm leading-relaxed opacity-70 ${darkMode ? "text-slate-300" : "text-slate-600"}`}>
+                          Comprehensive analysis of your website's accessibility, ensuring an inclusive experience for all users.
+                        </p>
                       </div>
-                      <h3 className={`${data.report === "All" ? "text-3xl lg:text-5xl" : "text-2xl lg:text-4xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
-                        Accessibility <span className="text-blue-500">Health</span>
-                      </h3>
-                      <p className={`text-sm leading-relaxed opacity-70 ${darkMode ? "text-slate-300" : "text-slate-600"}`}>
-                        Comprehensive analysis of your website's accessibility, ensuring an inclusive experience for all users.
-                      </p>
+
+                      <div className={`flex flex-wrap items-center ${data.report === "All" ? "gap-6" : "gap-5"}`}>
+                        <div className={`flex items-center ${data.report === "All" ? "gap-5" : "gap-4"}`}>
+                          <div className="flex items-center gap-2">
+                            <CheckCircle size={18} className="text-emerald-500" />
+                            <span className="text-sm font-bold">{passedCount} Passed</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <AlertTriangle size={18} className="text-amber-500" />
+                            <span className="text-sm font-bold">{warningCount} Warning</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <XCircle size={18} className="text-rose-500" />
+                            <span className="text-sm font-bold">{failedCount} Failed</span>
+                          </div>
+                        </div>
+                        <div className={`w-px h-4 ${darkMode ? "bg-slate-800" : "bg-slate-200 hidden md:block"}`}></div>
+                        <button
+                          onClick={() => setSelectedMetricInfo(scoreCalculationInfo)}
+                          className={`flex items-center gap-2 text-sm font-bold transition-all ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-700"}`}
+                        >
+                          <Info size={16} />
+                          <span className="border-b border-transparent hover:border-current">Metric Methodology</span>
+                        </button>
+                      </div>
                     </div>
 
-                    {/* Stats & Tools */}
-                    <div className={`flex flex-wrap items-center ${data.report === "All" ? "gap-6" : "gap-5"}`}>
-                      <div className={`flex items-center ${data.report === "All" ? "gap-5" : "gap-4"}`}>
-                        <div className="flex items-center gap-2">
-                          <CheckCircle size={18} className="text-emerald-500" />
-                          <span className="text-sm font-bold">{passedCount} Passed</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <XCircle size={18} className="text-rose-500" />
-                          <span className="text-sm font-bold">{failedCount} Failed</span>
-                        </div>
+                    {/* Circular Progress */}
+                    <div className="relative flex-shrink-0 group cursor-default order-1 md:order-2">
+                      <div className={`absolute -inset-8 rounded-full blur-3xl opacity-25 transition-opacity duration-700 group-hover:opacity-40 ${metric?.Percentage >= 80 ? "bg-emerald-500" : "bg-amber-500"}`}></div>
+                      <CircularProgress value={metric?.Percentage || 0} size={data.report === "All" ? 180 : 150} stroke={14} />
+                      <div className="absolute inset-0 flex items-center justify-center flex-col gap-0.5">
+                        <span className={`${data.report === "All" ? "text-5xl" : "text-3xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>{metric?.Percentage || 0}%</span>
+                        <span className="text-[11px] font-bold uppercase tracking-[0.2em] opacity-50">SCORE</span>
                       </div>
-                      <div className={`w-px h-4 ${darkMode ? "bg-slate-800" : "bg-slate-200 hidden md:block"}`}></div>
-                      <button
-                        onClick={() => setSelectedMetricInfo(scoreCalculationInfo)}
-                        className={`flex items-center gap-2 text-sm font-bold transition-all ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-700"}`}
-                      >
-                        <Info size={16} />
-                        <span className="border-b border-transparent hover:border-current">Metric Methodology</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Circular Progress */}
-                  <div className="relative flex-shrink-0 group cursor-default order-1 md:order-2">
-                    <div className={`absolute -inset-8 rounded-full blur-3xl opacity-25 transition-opacity duration-700 group-hover:opacity-40 ${metric?.Percentage >= 80 ? "bg-emerald-500" : "bg-amber-500"}`}></div>
-                    <CircularProgress value={metric?.Percentage || 0} size={data.report === "All" ? 180 : 150} stroke={14} />
-                    <div className="absolute inset-0 flex items-center justify-center flex-col gap-0.5">
-                      <span className={`${data.report === "All" ? "text-5xl" : "text-3xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>{metric?.Percentage || 0}%</span>
-                      <span className="text-[11px] font-bold uppercase tracking-[0.2em] opacity-50">SCORE</span>
                     </div>
                   </div>
                 </div>
-
               </div>
             </div>
-          </div>
+          )}
         </div>
 
-        {/* Section 1: Visual Accessibility */}
-        <Section title="Visual Accessibility" icon={Eye} darkMode={darkMode}>
-          {["Color_Contrast", "Image_Alt"].map((key) => (
-            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
+        {/* Visual Accessibility Section */}
+        <Section title="Visual & Media" icon={Eye} darkMode={darkMode}>
+          {["Color_Contrast", "Image_Alt", "Meta_Viewport"].map(k => metric[k] && (
+            <MetricCard key={k} metricKey={k} data={metric[k]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[k], icon: iconMap[k] })} />
           ))}
         </Section>
 
-        {/* Section 2: Keyboard Navigation */}
-        <Section title="Keyboard Navigation" icon={Keyboard} darkMode={darkMode}>
-          {["Focusable_Content", "Focus_Order", "Tab_Index", "Skip_Links"].map((key) => (
-            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
+        {/* Interaction Section */}
+        <Section title="Keyboard & Interaction" icon={Keyboard} darkMode={darkMode}>
+          {["Focusable_Content", "Focus_Order", "Tab_Index", "Skip_Links", "Interactive_Element_Affordance", "Aria_Hidden_Focus"].map(k => metric[k] && (
+            <MetricCard key={k} metricKey={k} data={metric[k]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[k], icon: iconMap[k] })} />
           ))}
         </Section>
 
-        {/* Section 3: Semantic & ARIA Roles */}
-        <Section title="Semantic & ARIA Roles" icon={Code} darkMode={darkMode}>
-          {["Label", "Aria_Allowed_Attr", "Aria_Roles", "Aria_Hidden_Focus", "Landmarks", "Interactive_Element_Affordance", "Multilingual_Support"].map((key) => (
-            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
+        {/* Roles & Details Section */}
+        <Section title="Semantics & Roles" icon={Code} darkMode={darkMode}>
+          {["Label", "Button_Name", "Link_Name", "Aria_Roles", "Landmarks", "Document_Title", "Html_Has_Lang", "List", "Heading_Order", "Aria_Allowed_Attr"].map(k => metric[k] && (
+            <MetricCard key={k} metricKey={k} data={metric[k]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[k], icon: iconMap[k] })} />
           ))}
         </Section>
-
       </main>
-      {/* Methodology Modal */}
-      <MetricInfoModal
-        isOpen={!!selectedMetricInfo}
-        onClose={() => setSelectedMetricInfo(null)}
-        info={selectedMetricInfo}
-        darkMode={darkMode}
-      />
-      {/* Parameter Modal */}
-      <ParameterInfoModal
-        isOpen={!!selectedParameterInfo}
-        onClose={() => setSelectedParameterInfo(null)}
-        info={selectedParameterInfo}
-        darkMode={darkMode}
-      />
+
+      <MetricInfoModal isOpen={!!selectedMetricInfo} onClose={() => setSelectedMetricInfo(null)} info={selectedMetricInfo} darkMode={darkMode} />
+      <ParameterInfoModal isOpen={!!selectedParameterInfo} onClose={() => setSelectedParameterInfo(null)} info={selectedParameterInfo} darkMode={darkMode} />
     </div>
   );
 }

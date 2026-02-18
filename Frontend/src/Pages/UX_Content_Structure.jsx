@@ -8,7 +8,7 @@ import {
   Layout, Type, Smartphone, MoveHorizontal, PanelTop, Menu,
   ChevronRight, ChevronUp, Compass, Touchpad, BookOpen, Layers, Image as ImageIcon,
   XOctagon, MonitorPlay, MousePointer2, CheckCircle2, Loader2,
-  ExternalLink, CheckCircle, XCircle, Info, Search, Unlink
+  ExternalLink, CheckCircle, XCircle, Info, Search, Unlink, Tag, AlertTriangle
 } from "lucide-react";
 import MetricInfoModal from "../Component/MetricInfoModal";
 import ParameterInfoModal from "../Component/ParameterInfoModal";
@@ -139,6 +139,161 @@ const MetricCard = ({ title, description, score, status, meta, darkMode, icon: I
   // --- Specific Renderers for Meta Data ---
 
   const renderSpecificMeta = () => {
+    // 0. Form Validation UX Specifics
+    if (type === 'Form_Validation_UX' && (meta?.failedNodes || meta?.failedForms)) {
+      const items = meta.failedNodes || meta.failedForms || [];
+      const missingLabelCount = items.filter(i => (i.status === 'fail' || !i.status) && i.reason?.toLowerCase().includes("missing associated label")).length;
+
+      const getSolution = (reason, status) => {
+        if (status === 'pass') return "No action needed. Implementation is correct.";
+        const r = reason?.toLowerCase() || "";
+        if (r.includes("label")) return "Add a <label> element linked to this input via 'for' attribute.";
+        if (r.includes("message") || r.includes("feedback")) return "Add an element to display validation error messages using ARIA live regions.";
+        if (r.includes("required")) return "Mark the input as required and provide visual cues.";
+        if (r.includes("autocomplete")) return "Add a valid 'autocomplete' attribute to help users fill forms faster.";
+        return "Ensure the input follows accessibility and validation best practices.";
+      };
+
+      if (items.length > 0) {
+        return (
+          <div className="space-y-4">
+            {/* Summary Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex items-center gap-3 p-4 rounded-xl border bg-gradient-to-br from-blue-50 to-indigo-50/50 border-blue-100 dark:from-blue-900/20 dark:to-indigo-900/10 dark:border-blue-800/30">
+                <div className="p-2 rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-800 dark:text-blue-200">
+                  <Type size={20} />
+                </div>
+                <div>
+                  <p className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-blue-300" : "text-blue-600"}`}>Total Inputs</p>
+                  <p className={`text-2xl font-black ${darkMode ? "text-white" : "text-gray-900"}`}>{items.length}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 p-4 rounded-xl border bg-gradient-to-br from-amber-50 to-orange-50/50 border-amber-100 dark:from-amber-900/20 dark:to-orange-900/10 dark:border-amber-800/30">
+                <div className="p-2 rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-800 dark:text-amber-200">
+                  <Tag size={20} />
+                </div>
+                <div>
+                  <p className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-amber-300" : "text-amber-600"}`}>Missing Labels</p>
+                  <p className={`text-2xl font-black ${darkMode ? "text-white" : "text-gray-900"}`}>{missingLabelCount}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <h5 className={`text-[10px] font-bold uppercase tracking-wider mb-3 flex items-center gap-2 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                <Search size={12} />
+                Input Field Analysis
+              </h5>
+
+              <div className={`max-h-96 overflow-y-auto rounded-xl border ${darkMode ? "bg-slate-900/30 border-slate-700" : "bg-gray-50 border-gray-200"}`}>
+                {items.map((item, i) => {
+                  const identifier = (() => {
+                    const snip = item.snippet || "";
+                    const p = snip.match(/placeholder=["']([^"']+)["']/);
+                    if (p) return `Placeholder: "${p[1]}"`;
+                    const n = snip.match(/name=["']([^"']+)["']/);
+                    if (n) return `Name: "${n[1]}"`;
+                    const id = snip.match(/id=["']([^"']+)["']/);
+                    if (id) return `ID: "${id[1]}"`;
+                    if (item.id) return `ID: "${item.id}"`;
+                    return `<${item.tag || "input"}>`;
+                  })();
+
+                  const isPassed = item.status === 'pass';
+
+                  return (
+                    <div key={i} className={`p-4 border-b last:border-0 text-xs group ${darkMode ? "border-slate-800 hover:bg-slate-800/50" : "border-gray-200 hover:bg-white"} transition-all`}>
+                      <div className="flex flex-col gap-3">
+
+                        {/* ✅ User Requested: Error Identifier */}
+                        <div className={`flex items-center gap-2 pb-2 border-b border-dashed mb-1 ${darkMode ? "border-gray-700/50" : "border-gray-200"}`}>
+                          <span className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
+                            Field Identifier:
+                          </span>
+                          <span className={`text-sm font-bold font-mono ${darkMode ? "text-blue-300" : "text-blue-600"}`}>
+                            {identifier}
+                          </span>
+                          {isPassed && (
+                            <span className={`ml-auto px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider ${darkMode ? "bg-green-900/30 text-green-400 border border-green-800/50" : "bg-green-100 text-green-700 border border-green-200"}`}>
+                              Passed
+                            </span>
+                          )}
+                          {!isPassed && (
+                            <span className={`ml-auto px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider ${darkMode ? "bg-red-900/30 text-red-400 border border-red-800/50" : "bg-red-100 text-red-700 border border-red-200"}`}>
+                              Failed
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Top Row: Tag & Location */}
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className={`px-2 py-1 rounded-md text-[10px] font-mono border font-bold ${darkMode ? "bg-slate-800 border-slate-700 text-slate-300" : "bg-white border-slate-200 text-slate-600"}`}>
+                              Line {item.loc?.start?.line || "?"}
+                            </span>
+                            <code className={`px-2 py-1 rounded-md text-sm font-bold ${darkMode ? "bg-blue-900/30 text-blue-200" : "bg-blue-50 text-blue-700"}`}>
+                              {item.tag || item.selector || "<input>"}
+                            </code>
+                          </div>
+                          {item.id && (
+                            <div className="flex items-center gap-1.5 opacity-60">
+                              <span className="text-[10px] font-bold uppercase">ID:</span>
+                              <span className="font-mono text-xs">{item.id}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Middle Row: Code Snippet (The Description part) */}
+                        <div className="relative">
+                          <div className={`absolute top-0 left-0 bottom-0 w-1 rounded-l-md ${isPassed ? (darkMode ? "bg-emerald-500" : "bg-emerald-400") : (darkMode ? "bg-rose-500" : "bg-rose-400")}`}></div>
+                          <div className={`pl-3 pr-2 py-2 rounded-r-md font-mono text-[11px] overflow-x-auto whitespace-pre-wrap break-all ${darkMode ? "bg-black/40 text-gray-300" : "bg-gray-100 text-gray-700"}`}>
+                            {item.snippet || "No code snippet available"}
+                          </div>
+                        </div>
+
+                        {/* Bottom Row: Issue & Fix Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-1">
+                          {/* The Issue / Status */}
+                          <div className={`p-3 rounded-lg border flex items-start gap-2 ${isPassed ? (darkMode ? "bg-emerald-900/10 border-emerald-500/20" : "bg-emerald-50 border-emerald-100") : (darkMode ? "bg-rose-900/10 border-rose-500/20" : "bg-rose-50 border-rose-100")}`}>
+                            {isPassed ? (
+                              <CheckCircle2 size={14} className={`mt-0.5 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`} />
+                            ) : (
+                              <AlertTriangle size={14} className={`mt-0.5 ${darkMode ? "text-rose-400" : "text-rose-600"}`} />
+                            )}
+                            <div>
+                              <div className={`text-[10px] font-bold uppercase mb-0.5 ${isPassed ? (darkMode ? "text-emerald-400" : "text-emerald-600") : (darkMode ? "text-rose-400" : "text-rose-600")}`}>
+                                {isPassed ? "Validation Status" : "Issue Detected"}
+                              </div>
+                              <div className={`font-medium leading-relaxed ${isPassed ? (darkMode ? "text-emerald-100" : "text-emerald-800") : (darkMode ? "text-rose-100" : "text-rose-800")}`}>
+                                {item.reason || (isPassed ? "Input is valid." : "Validation failed for this element.")}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* The Fix / Recommendation */}
+                          <div className={`p-3 rounded-lg border flex items-start gap-2 ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
+                            <Info size={14} className={`mt-0.5 ${darkMode ? "text-slate-400" : "text-slate-500"}`} />
+                            <div>
+                              <div className={`text-[10px] font-bold uppercase mb-0.5 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Recommendation</div>
+                              <div className={`font-medium leading-relaxed ${darkMode ? "text-slate-300" : "text-slate-700"}`}>
+                                {getSolution(item.reason, item.status)}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        );
+      }
+    }
+
+
     // 1. Text Readability Specifics
     if (type === 'Text_Readability' && meta?.overallStats) {
       return (
@@ -485,6 +640,7 @@ export default function UX_Content_Structure() {
     Image_Stability: "md:col-span-2",
     Navigation_Discoverability: "md:col-span-2",
     Broken_Links: "md:col-span-2",
+    Form_Validation_UX: "md:col-span-2 lg:col-span-3",
   };
 
   const detailedKeys = [
@@ -493,7 +649,8 @@ export default function UX_Content_Structure() {
     "Text_Font_Size",
     "Image_Stability",
     "Navigation_Discoverability",
-    "Broken_Links"
+    "Broken_Links",
+    "Form_Validation_UX"
   ];
 
   const quickMetrics = metrics.filter(k => !detailedKeys.includes(k));

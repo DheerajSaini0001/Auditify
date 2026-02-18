@@ -679,18 +679,30 @@ async function checkFormValidation(page) {
     const results = inputs.map(input => {
       const label = getAssociatedLabel(input);
       const error = getErrorMessage(input);
+      const snippet = input.outerHTML;
+
+      let reason = [];
+      if (!label) reason.push("Missing associated label");
+      else reason.push("Valid label found");
+
       return {
         tag: input.tagName,
         hasLabel: !!label,
         hasErrorMessage: !!error,
-        labelText: label ? label.substring(0, 50) : null
+        labelText: label ? label.substring(0, 50) : null,
+        snippet: snippet,
+        id: input.id,
+        loc: { start: { line: "?" } },
+        reason: reason.join(", "),
+        status: !!label ? "pass" : "fail"
       };
     });
 
     return {
       totalInputs: results.length,
       withLabels: results.filter(r => r.hasLabel).length,
-      missingLabels: results.filter(r => !r.hasLabel).map(r => r.tag), // For frontend compatibility
+      missingLabels: results.filter(r => !r.hasLabel).map(r => r.tag),
+      failedNodes: results, // Returns ALL inputs (passed & failed) to display in the UI list
       inputs: results
     };
   });

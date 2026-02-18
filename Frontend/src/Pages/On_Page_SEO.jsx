@@ -934,9 +934,16 @@ const LinkProfileCard = ({ data, darkMode, onInfo, resolveLink, className = "lg:
               <span className={`font-bold ${darkMode ? "text-gray-200" : "text-gray-700"}`}>"{link.text || "No Anchor Text"}"</span>
               {link.target === "_blank" && <ExternalLink size={10} className="mt-0.5 opacity-40 shrink-0" />}
             </div>
-            <a href={resolveLink(link.href)} target="_blank" rel="noopener noreferrer" className={`font-mono text-[9px] block truncate transition-colors ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-700"}`}>
-              {link.href}
-            </a>
+            <div className="flex items-center gap-1.5 min-w-0">
+              {link.target && (
+                <span className={`text-[8px] font-mono px-1.5 py-0.5 rounded border opacity-70 shrink-0 ${darkMode ? "border-gray-600 text-gray-400 bg-gray-900/50" : "border-gray-200 text-gray-500 bg-gray-50"}`}>
+                  {link.target}
+                </span>
+              )}
+              <a href={resolveLink(link.href)} target="_blank" rel="noopener noreferrer" className={`font-mono text-[9px] truncate transition-colors flex-1 min-w-0 ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-700"}`}>
+                {link.href}
+              </a>
+            </div>
           </div>
         ))}
       </div>

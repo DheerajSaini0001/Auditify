@@ -1971,7 +1971,7 @@ export const InfoDetails = {
     Above_the_Fold_Content: {
         title: "Above-the-Fold Content",
         whatThisParameterIs: "Above-the-Fold Content checks if the primary content is visible without scrolling.",
-        whatItCalculates: "It analyzes the content density in the initial viewport compared to headers/banners.",
+        whatItCalculates: "We calculate the Weighted ATF Score by comparing the weighted sum of important elements visible in the initial viewport against the total weighted sum of important elements on the entire page. Important elements include Headings (H1-H3, weight 4-5), Media (Img/Video, weight 3), Interactive elements (Buttons/Inputs, weight 2-3), and substantial text blocks.",
         whyItMatters: "Users decide in seconds whether to stay; empty visible space leads to high bounce rates.",
         thresholds: {
             good: "≥ 50% important content visible",
@@ -1990,7 +1990,7 @@ export const InfoDetails = {
     Interactive_Click_Feedback: {
         title: "Click Feedback",
         whatThisParameterIs: "Click Feedback ensures interactive elements provide visual response states.",
-        whatItCalculates: "It checks for :hover and :active CSS styles or cursor changes on clickable elements.",
+        whatItCalculates: "We identify all interactive elements (buttons, links, inputs, etc.) and verify if they exhibit visual changes (color, background, shadow, transform, opacity, etc.) on :hover for Desktop or :active for Mobile. The score represents the percentage of interactive elements that provide this visual feedback.",
         whyItMatters: "Visual feedback confirms to the user that their interaction was registered.",
         thresholds: {
             good: "≥ 80% elements show feedback",

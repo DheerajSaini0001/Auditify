@@ -533,26 +533,42 @@ async function checkNavDiscoverability(page) {
 async function checkATF(page) {
   const atfData = await page.evaluate(() => {
     const viewportHeight = window.innerHeight;
-    function isVisible(el) {
+
+    // Check if element is rendered in the DOM (ignoring viewport visibility)
+    function isRendered(el) {
       const style = window.getComputedStyle(el);
       if (style.display === "none" || style.visibility === "hidden" || style.opacity === "0") return false;
       const rect = el.getBoundingClientRect();
-      return rect.width > 0 && rect.height > 0 && rect.bottom > 0 && rect.top < window.innerHeight;
+      // Only check if it has dimensions, not if it's in the viewport
+      return rect.width > 0 && rect.height > 0;
     }
+
+    // Check if element is overlapping with the viewport (Above The Fold)
+    function isInViewport(el) {
+      const rect = el.getBoundingClientRect();
+      return rect.bottom > 0 && rect.top < window.innerHeight;
+    }
+
     function isImportant(el) {
       const tag = el.tagName;
       if (["H1", "H2", "H3", "IMG", "VIDEO", "BUTTON", "INPUT", "A", "NAV"].includes(tag)) return true;
       if ((tag === "P" || tag === "SPAN" || tag === "DIV") && el.innerText.trim().length > 20) return true;
       return el.getBoundingClientRect().height > window.innerHeight * 0.2;
     }
+
     function getWeight(el) {
       const WEIGHTS = { H1: 5, H2: 4, IMG: 3, VIDEO: 3, P: 2, BUTTON: 2, A: 1, INPUT: 3, NAV: 2, DEFAULT: 1 };
       return WEIGHTS[el.tagName] || WEIGHTS.DEFAULT;
     }
 
-    const allVisible = [...document.body.querySelectorAll("*")].filter(isVisible);
-    const importantElements = allVisible.filter(isImportant);
-    const importantAboveFold = importantElements.filter(el => el.getBoundingClientRect().top < window.innerHeight);
+    // Get ALL rendered elements on the page first
+    const allRendered = [...document.body.querySelectorAll("*")].filter(isRendered);
+
+    // Filter for important elements (Whole Page)
+    const importantElements = allRendered.filter(isImportant);
+
+    // Filter for important elements specifically Above The Fold
+    const importantAboveFold = importantElements.filter(isInViewport);
 
     const totalWeight = importantElements.reduce((sum, el) => sum + getWeight(el), 0);
     const weightAboveFold = importantAboveFold.reduce((sum, el) => sum + getWeight(el), 0);
@@ -565,7 +581,13 @@ async function checkATF(page) {
       return { tag: el.tagName, text: text, top: Math.round(el.getBoundingClientRect().top), weight: getWeight(el) };
     });
 
-    return { viewportHeight, importantVisible: importantAboveFold.length, totalImportant: importantElements.length, atfScore: weightedATF, elements: visibleElementDetails };
+    return {
+      viewportHeight,
+      importantVisible: importantAboveFold.length,
+      totalImportant: importantElements.length,
+      atfScore: weightedATF,
+      elements: visibleElementDetails
+    };
   });
 
   return {

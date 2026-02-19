@@ -454,6 +454,129 @@ const MetricCard = ({ title, description, score, status, meta, darkMode, icon: I
       );
     }
 
+    // 5. Interactive Click Feedback Specifics
+    if (type === 'Interactive_Click_Feedback' && meta) {
+      const checkedProperties = ["color", "background-color", "border-color", "box-shadow", "transform", "opacity", "cursor", "filter"];
+
+      return (
+        <div className="space-y-4">
+          {/* Section 1: Checked Properties */}
+          <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700" : "bg-white border-slate-200"}`}>
+            <h5 className={`text-[10px] font-bold uppercase tracking-wider mb-3 flex items-center gap-2 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+              <CheckCircle2 size={12} />
+              Monitored CSS Properties
+            </h5>
+            <div className="flex flex-wrap gap-2">
+              {checkedProperties.map((prop, idx) => (
+                <span key={idx} className={`px-2 py-1 rounded-md text-[10px] font-mono border transition-colors ${darkMode ? "bg-slate-800 border-slate-700 text-blue-300 hover:bg-slate-700" : "bg-blue-50 border-blue-100 text-blue-600 hover:bg-blue-100"}`}>
+                  {prop}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Section 2: Stats */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className={`p-3 rounded-lg border text-center flex flex-col justify-center ${darkMode ? "bg-slate-900/50 border-slate-700" : "bg-gray-50 border-gray-100"}`}>
+              <div className={`text-[10px] uppercase font-bold opacity-60 mb-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Total Interactive</div>
+              <div className={`text-2xl font-black ${darkMode ? "text-white" : "text-gray-900"}`}>{meta.totalInteractive || 0}</div>
+            </div>
+            <div className={`p-3 rounded-lg border text-center flex flex-col justify-center ${darkMode ? "bg-emerald-900/10 border-emerald-800/30" : "bg-emerald-50 border-emerald-100"}`}>
+              <div className={`text-[10px] uppercase font-bold opacity-60 mb-1 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>With Feedback</div>
+              <div className={`text-2xl font-black ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>{meta.withFeedback || 0}</div>
+            </div>
+          </div>
+
+          {/* Section 3: Elements List */}
+          {meta.elements && meta.elements.length > 0 && (
+            <div className="mt-2">
+              <h5 className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Interactive Elements Sample</h5>
+              <div className={`max-h-48 overflow-y-auto rounded-lg border ${darkMode ? "bg-slate-900/30 border-slate-700" : "bg-gray-50 border-gray-200"}`}>
+                {meta.elements.map((el, idx) => (
+                  <div key={idx} className={`p-2 border-b last:border-0 text-xs flex justify-between items-center group ${darkMode ? "border-slate-800 text-gray-300 hover:bg-slate-800/50" : "border-gray-200 text-gray-700 hover:bg-gray-50"}`}>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono border ${darkMode ? "bg-slate-800 border-slate-700 text-slate-400" : "bg-white border-slate-200 text-slate-500"}`}>&lt;{el.tag ? el.tag.toLowerCase() : 'el'}&gt;</span>
+                      <span className="truncate max-w-[120px] font-medium opacity-90" title={el.text}>{el.text || "No text"}</span>
+                    </div>
+                    {el.feedback?.hasFeedback ? (
+                      <span className={`flex-shrink-0 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${darkMode ? "bg-emerald-900/30 text-emerald-400 border border-emerald-800/50" : "bg-emerald-100 text-emerald-700 border border-emerald-200"}`}>Has Feedback</span>
+                    ) : (
+                      <span className={`flex-shrink-0 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${darkMode ? "bg-rose-900/30 text-rose-400 border border-rose-800/50" : "bg-rose-100 text-rose-700 border border-rose-200"}`}>No Feedback</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // 6. Broken Links Specifics
+    if (type === 'Broken_Links' && meta) {
+      return (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {/* Total */}
+            <div className={`p-3 rounded-lg border text-center ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}>
+              <div className={`text-[10px] uppercase font-bold opacity-60 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Total Checked</div>
+              <div className={`text-2xl font-black ${darkMode ? "text-white" : "text-gray-900"}`}>{meta.totalChecked || 0}</div>
+            </div>
+
+            {/* Internal */}
+            <div className={`p-3 rounded-lg border text-center ${darkMode ? "bg-blue-900/20 border-blue-800/30" : "bg-blue-50 border-blue-100"}`}>
+              <div className={`text-[10px] uppercase font-bold opacity-60 ${darkMode ? "text-blue-400" : "text-blue-600"}`}>Internal</div>
+              <div className={`text-2xl font-black ${darkMode ? "text-blue-400" : "text-blue-600"}`}>{meta.totalInternal || 0}</div>
+            </div>
+
+            {/* External */}
+            <div className={`p-3 rounded-lg border text-center ${darkMode ? "bg-purple-900/20 border-purple-800/30" : "bg-purple-50 border-purple-100"}`}>
+              <div className={`text-[10px] uppercase font-bold opacity-60 ${darkMode ? "text-purple-400" : "text-purple-600"}`}>External</div>
+              <div className={`text-2xl font-black ${darkMode ? "text-purple-400" : "text-purple-600"}`}>{meta.totalExternal || 0}</div>
+            </div>
+
+            {/* Broken */}
+            <div className={`p-3 rounded-lg border text-center ${meta.brokenCount > 0 ? (darkMode ? "bg-rose-900/20 border-rose-800/30" : "bg-rose-50 border-rose-100") : (darkMode ? "bg-emerald-900/20 border-emerald-800/30" : "bg-emerald-50 border-emerald-100")}`}>
+              <div className={`text-[10px] uppercase font-bold opacity-60 ${meta.brokenCount > 0 ? (darkMode ? "text-rose-400" : "text-rose-600") : (darkMode ? "text-emerald-400" : "text-emerald-600")}`}>Broken</div>
+              <div className={`text-2xl font-black ${meta.brokenCount > 0 ? (darkMode ? "text-rose-400" : "text-rose-600") : (darkMode ? "text-emerald-400" : "text-emerald-600")}`}>{meta.brokenCount || 0}</div>
+            </div>
+          </div>
+
+          {(meta.brokenInternalCount > 0 || meta.brokenExternalCount > 0) && (
+            <div className="flex gap-4 text-xs font-bold uppercase tracking-wider opacity-80">
+              {meta.brokenInternalCount > 0 && <span className="text-rose-500">{meta.brokenInternalCount} Internal Broken</span>}
+              {meta.brokenExternalCount > 0 && <span className="text-amber-500">{meta.brokenExternalCount} External Broken</span>}
+            </div>
+          )}
+
+          {/* Failed Nodes List */}
+          {meta.failedNodes && meta.failedNodes.length > 0 && (
+            <div className="mt-2">
+              <h5 className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Broken Link Issues</h5>
+              <div className={`max-h-60 overflow-y-auto rounded-lg border ${darkMode ? "bg-slate-900/30 border-slate-700" : "bg-gray-50 border-gray-200"}`}>
+                {meta.failedNodes.map((node, i) => (
+                  <div key={i} className={`p-3 border-b last:border-0 ${darkMode ? "border-slate-800" : "border-gray-200"}`}>
+                    <div className="flex justify-between items-start mb-1">
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider ${node.isInternal ? (darkMode ? "bg-blue-900/30 text-blue-400" : "bg-blue-100 text-blue-700") : (darkMode ? "bg-purple-900/30 text-purple-400" : "bg-purple-100 text-purple-700")}`}>
+                        {node.isInternal ? "Internal" : "External"}
+                      </span>
+                      <span className={`text-[10px] font-mono opacity-70 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>
+                        {node.reason}
+                      </span>
+                    </div>
+                    <a href={node.href} target="_blank" rel="noopener noreferrer" className={`block text-xs font-mono break-all hover:underline ${darkMode ? "text-gray-300 hover:text-white" : "text-gray-700 hover:text-black"}`}>
+                      {node.href}
+                    </a>
+                    {node.text && <div className={`text-[10px] mt-1 italic opacity-60 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>"{node.text}"</div>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
     // 2. Generic List Renderer (Targets, Fonts, etc.)
     const listItems =
       meta?.smallTargets ||
@@ -679,7 +802,13 @@ export default function UX_Content_Structure() {
   const mainBg = darkMode ? "bg-gray-900" : "bg-gray-50";
   const textColor = darkMode ? "text-white" : "text-gray-900";
 
-  const metrics = Object.keys(results).filter(k => typeof results[k] === 'object' && results[k]?.Score !== undefined);
+  const metrics = Object.keys(results).filter(k => {
+    const metric = results[k];
+    if (typeof metric !== 'object' || metric?.Score === undefined) return false;
+    // Skip Breadcrumbs on homepage
+    if (k === 'Breadcrumbs' && metric?.Meta?.isHomepage) return false;
+    return true;
+  });
   const passedCount = metrics.filter(k => results[k].Score === 100).length;
   const failedCount = metrics.filter(k => results[k].Score < 100).length;
 

@@ -477,7 +477,8 @@ async function checkBreadcrumbs(page) {
     return {
       score: 100,
       status: 'pass',
-      details: 'Breadcrumbs are not required on the homepage.'
+      details: 'Breadcrumbs are not required on the homepage.',
+      meta: { isHomepage: true }
     };
   }
 
@@ -488,7 +489,8 @@ async function checkBreadcrumbs(page) {
   return {
     score: hasBreadcrumbs ? 100 : 0,
     status: hasBreadcrumbs ? 'pass' : 'fail',
-    details: hasBreadcrumbs ? 'Breadcrumbs detected.' : 'No breadcrumbs found.'
+    details: hasBreadcrumbs ? 'Breadcrumbs detected.' : 'No breadcrumbs found.',
+    meta: { isHomepage: false }
   };
 }
 
@@ -756,6 +758,7 @@ async function checkLoadingFeedback(page) {
 async function checkBrokenLinks(page) {
   const linksData = await page.evaluate(() => {
     const anchors = Array.from(document.querySelectorAll('a[href]'));
+    const hostname = window.location.hostname;
     return anchors
       .map(a => {
         let href = a.href;
@@ -763,20 +766,32 @@ async function checkBrokenLinks(page) {
           const u = new URL(href);
           u.hash = "";
           href = u.href;
-        } catch (e) { }
-        return { href: href, text: a.innerText.trim().substring(0, 50) };
+
+          return {
+            href: href,
+            text: a.innerText.trim().substring(0, 50),
+            isInternal: u.hostname === hostname
+          };
+        } catch (e) {
+          return null;
+        }
       })
-      .filter(l => l.href.startsWith('http'));
+      .filter(l => l && l.href.startsWith('http'));
   });
 
   const uniqueMap = new Map();
-  linksData.forEach(l => { if (!uniqueMap.has(l.href)) uniqueMap.set(l.href, l.text); });
+  linksData.forEach(l => {
+    if (!uniqueMap.has(l.href)) {
+      uniqueMap.set(l.href, { text: l.text, isInternal: l.isInternal });
+    }
+  });
 
-  // Limit to 40 unique links
-  const urlsToCheck = Array.from(uniqueMap.keys()).slice(0, 40);
+  // Check all unique links
+  const urlsToCheck = Array.from(uniqueMap.keys());
   const brokenLinks = [];
 
   const checkUrl = async (url) => {
+    const linkInfo = uniqueMap.get(url);
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 8000);
@@ -811,7 +826,12 @@ async function checkBrokenLinks(page) {
 
       // Final Check after GET
       if (status >= 400 && status !== 403 && status !== 429 && status !== 999 && status !== 406) {
-        brokenLinks.push({ url, status: status, text: uniqueMap.get(url) });
+        brokenLinks.push({
+          url,
+          status: status,
+          text: linkInfo.text,
+          isInternal: linkInfo.isInternal
+        });
       }
 
     } catch (error) {
@@ -822,7 +842,12 @@ async function checkBrokenLinks(page) {
 
       // Only count definitive failures
       if (reason === 'DNS Error' || reason === 'Connection Refused') {
-        brokenLinks.push({ url, status: reason, text: uniqueMap.get(url) });
+        brokenLinks.push({
+          url,
+          status: reason,
+          text: linkInfo.text,
+          isInternal: linkInfo.isInternal
+        });
       }
     }
   };
@@ -831,6 +856,17 @@ async function checkBrokenLinks(page) {
   for (let i = 0; i < urlsToCheck.length; i += 5) {
     await Promise.all(urlsToCheck.slice(i, i + 5).map(checkUrl));
   }
+
+  // Calculate Breakdown
+  let totalInternal = 0;
+  let totalExternal = 0;
+  urlsToCheck.forEach(url => {
+    if (uniqueMap.get(url).isInternal) totalInternal++;
+    else totalExternal++;
+  });
+
+  const brokenInternalCount = brokenLinks.filter(b => b.isInternal).length;
+  const brokenExternalCount = brokenLinks.filter(b => !b.isInternal).length;
 
   const score = brokenLinks.length === 0 ? 100 : Math.max(0, 100 - (brokenLinks.length * 25));
 
@@ -841,7 +877,16 @@ async function checkBrokenLinks(page) {
     meta: {
       totalChecked: urlsToCheck.length,
       brokenCount: brokenLinks.length,
-      failedNodes: brokenLinks.map(b => ({ reason: `Status: ${b.status}`, href: b.url, text: b.text }))
+      totalInternal,
+      totalExternal,
+      brokenInternalCount,
+      brokenExternalCount,
+      failedNodes: brokenLinks.map(b => ({
+        reason: `Status: ${b.status}`,
+        href: b.url,
+        text: b.text,
+        isInternal: b.isInternal
+      }))
     }
   };
 }
@@ -958,7 +1003,8 @@ export default async function evaluateMobileUX(device, page) {
     Breadcrumbs: {
       Score: results.breadcrumbs.score,
       Status: results.breadcrumbs.status,
-      Details: results.breadcrumbs.details
+      Details: results.breadcrumbs.details,
+      Meta: results.breadcrumbs.meta
     },
     Navigation_Discoverability: {
       Score: results.navDiscoverability.score,

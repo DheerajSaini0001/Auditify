@@ -12,12 +12,12 @@ import {
 
 export const InfoDetails = {
 
-    // Technical Performance - Core Web Vitals & Performance
+    // Technical Performance
     LCP: {
         title: "Largest Contentful Paint (LCP)",
-        whatThisParameterIs: "Largest Contentful Paint (LCP) is a Core Web Vital metric that measures the time it takes for the largest visible element (image or text block) to render within the viewport.",
+        whatThisParameterIs: "LCP (Largest Contentful Paint) measures how quickly the main part of your page shows up. It tells us when the largest image or text block is finally visible to the visitor.",
         whatItCalculates: "We analyze the Lighthouse audit trace to determine the render time of the largest image or text block relative to the page load start.",
-        whyItMatters: "A fast LCP helps reassure the user that the page is useful. Poor LCP can lead to higher bounce rates and lower search rankings.",
+        whyItMatters: "Fast loading keeps visitors happy. If your main content takes too long to appear, people will give up and leave, which also hurts your ranking on Google.",
         thresholds: {
             good: "≤ 2.5s",
             needsImprovement: "2.5s – 4s",
@@ -38,9 +38,9 @@ export const InfoDetails = {
     },
     INP: {
         title: "Interaction to Next Paint (INP)",
-        whatThisParameterIs: "Interaction to Next Paint (INP) is a Core Web Vital metric that measures the latency of every user interaction (clicks, taps, and keyboard inputs) throughout the lifespan of the page.",
+        whatThisParameterIs: "INP (Interaction to Next Paint) measures how fast your site reacts when a user clicks or taps something. It's like a 'responsiveness' check for your website.",
         whatItCalculates: "For Lab data, we use Total Blocking Time (TBT) as a proxy. For Field data, we use CrUX 'interaction-to-next-paint' metric which measures real user interaction latency.",
-        whyItMatters: "High responsiveness ensures that the page feels alive and reacts instantly to user input, preventing frustration.",
+        whyItMatters: "Nobody likes a site that feels 'laggy.' Instant reactions to clicks make your website feel alive, professional, and easy to use.",
         thresholds: {
             good: "≤ 200ms (Field) / ≤ 3.8s (Lab)",
             needsImprovement: "200ms–500ms (Field) / 3.8s–7.3s (Lab)",
@@ -61,9 +61,9 @@ export const InfoDetails = {
     },
     CLS: {
         title: "Cumulative Layout Shift (CLS)",
-        whatThisParameterIs: "Cumulative Layout Shift (CLS) is a Core Web Vital metric that quantifies how much visible content shifts unexpectedly during the page's lifespan.",
+        whatThisParameterIs: "CLS (Cumulative Layout Shift) measures how much the page content jumps around while loading. A stable page prevents accidental clicks and frustration.",
         whatItCalculates: "We analyze the Lighthouse 'cumulative-layout-shift' audit (Lab) and CrUX data (Field) to sum the scores of all unexpected layout shifts.",
-        whyItMatters: "Visual stability prevents annoying unexpected movement of content, which can cause reading difficulties or accidental clicks.",
+        whyItMatters: "It's incredibly annoying when you're about to click a button and the page jumps, making you click the wrong thing. A stable page builds trust.",
         thresholds: {
             good: "≤ 0.1",
             needsImprovement: "0.1 – 0.25",
@@ -84,9 +84,9 @@ export const InfoDetails = {
     },
     FCP: {
         title: "First Contentful Paint (FCP)",
-        whatThisParameterIs: "First Contentful Paint (FCP) measures the time from when the page starts loading to when any part of the page's content (text, images, SVGs) is rendered on the screen.",
+        whatThisParameterIs: "FCP (First Contentful Paint) marks the exact moment when the very first piece of content—like text or an image—appears on the screen.",
         whatItCalculates: "We use the Lighthouse 'first-contentful-paint' audit to identify the precise timestamp when the first DOM content (text, image, svg) is rendered.",
-        whyItMatters: "A fast FCP provides immediate visual feedback to the user that the server is responding and content is incoming.",
+        whyItMatters: "FCP is the 'first impression' of your site's speed. Fast feedback tells visitors that your site is working and content is on its way.",
         thresholds: {
             good: "≤ 1.8s",
             needsImprovement: "1.8s – 3s",
@@ -107,9 +107,9 @@ export const InfoDetails = {
     },
     TTFB: {
         title: "Time to First Byte (TTFB)",
-        whatThisParameterIs: "Time to First Byte (TTFB) measures the duration from the user or client making an HTTP request to the first byte of the page being received by the client's browser.",
+        whatThisParameterIs: "TTFB (Time to First Byte) measures how long your server takes to send back the very first bit of data after someone tries to visit your site.",
         whatItCalculates: "We measure the time from the initial request to the receipt of the first byte using Lighthouse 'server-response-time' (Lab) and CrUX 'experimental_time_to_first_byte' (Field).",
-        whyItMatters: "A low TTFB is crucial because the browser cannot start rendering any content until it receives the first byte of data.",
+        whyItMatters: "Everything else waits for this. If your server is slow to respond, your entire website feels slow, no matter how optimized your code is.",
         thresholds: {
             good: "≤ 800ms",
             needsImprovement: "800ms – 1.8s",
@@ -130,9 +130,9 @@ export const InfoDetails = {
     },
     TBT: {
         title: "Total Blocking Time (TBT)",
-        whatThisParameterIs: "Total Blocking Time (TBT) measures the total amount of time that a page is blocked from responding to user input, such as mouse clicks, screen taps, or keyboard presses.",
+        whatThisParameterIs: "TBT (Total Blocking Time) calculates how long the page is 'frozen' while loading, which prevents users from clicking or scrolling.",
         whatItCalculates: "We sum the duration of all 'long tasks' (tasks > 50ms) between First Contentful Paint and Time to Interactive, found in the Main Thread work breakdown.",
-        whyItMatters: "Minimizing blocking time ensures the main thread is free to handle user input, keeping the page interactive during load.",
+        whyItMatters: "If your page is frozen while loading, users can't do anything. Reducing blocking time makes your site feel snappy and responsive immediately.",
         thresholds: {
             good: "≤ 200ms",
             needsImprovement: "200ms – 600ms",
@@ -153,9 +153,9 @@ export const InfoDetails = {
     },
     SI: {
         title: "Speed Index (SI)",
-        whatThisParameterIs: "Speed Index (SI) measures how quickly the contents of a page are visually populated during the page load.",
+        whatThisParameterIs: "Speed Index tells you how quickly the visible parts of your page are filled with content. It's all about how fast the page 'feels' to a user.",
         whatItCalculates: "We calculate the speed at which the page content is visually populated using the 'speed-index' audit from Lighthouse.",
-        whyItMatters: "A low Speed Index signifies that the visible parts of the page serve the user quickly, enhancing perceived performance.",
+        whyItMatters: "A low Speed Index means your visitors aren't staring at a blank screen. It's about making the wait feel as short as possible.",
         thresholds: {
             good: "≤ 3.4s",
             needsImprovement: "3.4s – 5.8s",
@@ -173,13 +173,11 @@ export const InfoDetails = {
             "Prioritize critical resources"
         ]
     },
-
-    // Technical Performance - Assets & Server
     Compression: {
         title: "Text Compression",
-        whatThisParameterIs: "Text Compression refers to the practice of reducing the size of text-based assets (HTML, CSS, JS) using algorithms like Gzip or Brotli.",
+        whatThisParameterIs: "Text compression shrinks the size of your website's code (like HTML and CSS) so it travels faster across the internet to your visitors.",
         whatItCalculates: "We analyze the `Content-Encoding` header for `gzip` or `br` and compare original vs. compressed sizes.",
-        whyItMatters: "Compressed text resources significantly reduce the number of bytes transferred, leading to faster download times.",
+        whyItMatters: "Smaller files travel faster. Compressing text is one of the easiest ways to speed up your site for people on slow or mobile connections.",
         thresholds: {
             good: "100% resources compressed",
             needsImprovement: "70% – 99% compressed",
@@ -197,9 +195,9 @@ export const InfoDetails = {
     },
     Caching: {
         title: "Browser Caching",
-        whatThisParameterIs: "Browser Caching allows the browser to store static files locally to avoid downloading them on subsequent visits.",
+        whatThisParameterIs: "Browser caching stores parts of your site on the visitor's device so they don't have to download everything again the next time they visit.",
         whatItCalculates: "We inspect the `Cache-Control` header of all static resources to verify if they have a `max-age` directive greater than 7 days.",
-        whyItMatters: "Effective caching policies drastically reduce load times for returning visitors by serving content from their local device.",
+        whyItMatters: "Repeat visitors shouldn't have to wait. Caching makes your site load almost instantly for people who have visited you before.",
         thresholds: {
             good: "≥ 90% resources cached (>7 days)",
             needsImprovement: "50% – 89% resources cached",
@@ -217,9 +215,9 @@ export const InfoDetails = {
     },
     Render_Blocking: {
         title: "Render Blocking Resources",
-        whatThisParameterIs: "Render-blocking resources are static files, such as fonts, HTML, CSS, and JavaScript, that prevent a web page from loading or displaying content to the user until they are processed.",
+        whatThisParameterIs: "Render-blocking resources are files that force the browser to stop and wait before it can show anything on the screen.",
         whatItCalculates: "We identify scripts in the `<head>` without `async` or `defer` attributes and stylesheets without media attributes that delay the first paint.",
-        whyItMatters: "Eliminating render-blocking resources allows the browser to paint the page content much sooner.",
+        whyItMatters: "Removing these 'roadblocks' allows your site to show its face much sooner, keeping visitors engaged from the very first second.",
         thresholds: {
             good: "0 blocking resources",
             needsImprovement: "1 – 5 blocking resources",
@@ -237,13 +235,11 @@ export const InfoDetails = {
             "Load non-critical CSS asynchronously"
         ]
     },
-
-    // Technical Performance - SEO & Crawlability
     Resource_Optimization: {
         title: "Resource Optimization",
-        whatThisParameterIs: "Resource Optimization in SEO context refers to the practice of refining website assets (images, scripts, styles) to minimize file size and load time without compromising quality.",
+        whatThisParameterIs: "Resource optimization means making your images and scripts as small and efficient as possible without losing quality.",
         whatItCalculates: "We compare the natural dimensions of images against their display size and check if script URLs contain '.min' or 'cdn'.",
-        whyItMatters: "Optimizing assets for SEO prevents slow load times from negatively impacting crawl budget and user engagement signals.",
+        whyItMatters: "Search engines favor efficient sites. Optimized assets save bandwidth and ensure that a slow image doesn't ruin your visitor's experience.",
         thresholds: {
             good: "≥ 90% resources optimized",
             needsImprovement: "50% – 89% resources optimized",
@@ -262,12 +258,11 @@ export const InfoDetails = {
     },
     Redirect_Chains: {
         title: "Redirect Chains",
-        whatThisParameterIs: "A Redirect Chain is a series of multiple redirects (301 or 302) that occur between the initial URL requested and the final destination URL.",
+        whatThisParameterIs: "A redirect chain is when one URL leads to another, which leads to another. This creates unnecessary delays before the page even starts loading.",
         whatItCalculates: "We trace the full redirect path using the browser's request interception to count the number of hops.",
-        whyItMatters: "Redirect chains increase latency by requiring multiple round-trips to the server before the page can even start loading.",
+        whyItMatters: "Every redirect is a detour. TheseDetours add up quickly, making your site feel sluggish before a single pixel even appears.",
         thresholds: {
             good: "≤ 1 redirect",
-            needsImprovement: "N/A",
             poor: "> 1 redirect"
         },
         actualReasonsForFailure: [
@@ -288,8 +283,8 @@ export const InfoDetails = {
         badge: "Performance",
         title: "Technical Performance",
         guideLink: "https://developers.google.com/search/docs/appearance/core-web-vitals",
-        whatThisMetricIs: "Measures how fast, responsive, and visually stable your website is for real users across devices and network conditions.",
-        whyItMatters: "Technical performance directly affects how users experience your site. Slow loading, delayed interactions, or shifting layouts frustrate visitors, increase bounce rates, and negatively impact search rankings. Fast and stable sites keep users engaged and are favored by Google.",
+        whatThisMetricIs: "A comprehensive health check of your website's speed, responsiveness, and 'smoothness.' It tells you how well your site performs for real people in the real world.",
+        whyItMatters: "First impressions are everything. A fast, stable site makes your brand look professional, keeps visitors from leaving in frustration, and is rewarded with much better rankings by search engines like Google.",
         whatToDoForAGoodScore: (
             <ul className="list-disc pl-5 space-y-2">
                 <li>
@@ -325,9 +320,9 @@ export const InfoDetails = {
     // On-Page SEO
     Title: {
         title: "Title Tag",
-        whatThisParameterIs: "The Title Tag is an HTML element (<title>) that specifies the title of a web page, which is displayed on search engine results pages (SERPs) and in the browser's title bar.",
+        whatThisParameterIs: "The Title Tag is the headline of your webpage that appears in search results and at the top of your browser tab.",
         whatItCalculates: "We extract the `<title>` tag content and validate its length is between 30 and 60 characters.",
-        whyItMatters: "Title tags are the primary way search engines and users determine the relevance of your page to a search query.",
+        whyItMatters: "Your title is the first thing people see in Google. A great title gets more clicks and tells search engines exactly what you're offering.",
         thresholds: {
             good: "30–60 characters",
             needsImprovement: "<30 or >60 characters",
@@ -348,9 +343,9 @@ export const InfoDetails = {
     },
     Meta_Description: {
         title: "Meta Description",
-        whatThisParameterIs: "A Meta Description is an HTML attribute that provides a brief summary of a web page's content, often appearing as the snippet text under the title in search engine results.",
+        whatThisParameterIs: "A Meta Description is a short summary of your page that appears under your title in search results, helping users decide to click.",
         whatItCalculates: "We extract the `<meta name='description'>` content and validate its length is between 50 and 160 characters.",
-        whyItMatters: "A compelling meta description acts as an ad for your page in search results, directly influencing click-through rates.",
+        whyItMatters: "This is your 'sales pitch' in search results. A good description convinces people that your page has the answer they're looking for.",
         thresholds: {
             good: "50–160 characters",
             needsImprovement: "<50 or >160 characters",
@@ -371,9 +366,9 @@ export const InfoDetails = {
     },
     Canonical: {
         title: "Canonical Tag",
-        whatThisParameterIs: "A Canonical Tag (rel='canonical') is an HTML snippet that defines the main version for duplicate, near-duplicate, or similar pages, telling search engines which URL to index.",
+        whatThisParameterIs: "A Canonical Tag tells search engines which version of a page is the 'master copy,' avoiding confusion if you have similar content on different URLs.",
         whatItCalculates: "We verify the presence of a single `<link rel='canonical'>` tag and check if it points to a valid, absolute URL that matches the current page (self-referencing).",
-        whyItMatters: "Canonical tags tell search engines which URL represents the master copy of a page, preventing duplicate content penalties.",
+        whyItMatters: "It prevents search engines from getting confused. By pointing to one 'main' version, you ensure that all your ranking power goes to the right page.",
         thresholds: {
             good: "Single valid canonical tag (1.0)",
             needsImprovement: "Points to external URL (0.5)",
@@ -394,9 +389,9 @@ export const InfoDetails = {
     },
     URL_Structure: {
         title: "URL Structure",
-        whatThisParameterIs: "URL Structure refers to the format, length, and readability of the web address that locates a specific page on the internet.",
+        whatThisParameterIs: "URL Structure is the layout of your web address. A clean address is easier for both people and search engines to understand.",
         whatItCalculates: "We parse the URL path to check for uppercase letters, underscores, depth (>3 segments), and query parameters.",
-        whyItMatters: "Clean, descriptive URLs are easier for users to read and for search engines to crawl and index.",
+        whyItMatters: "Clean web addresses are much more likely to be clicked and shared. They also help search engines index your site more effectively.",
         thresholds: {
             good: "Short, lowercase, hyphenated, ≤3 levels deep",
             needsImprovement: "Minor formatting issues",
@@ -416,9 +411,9 @@ export const InfoDetails = {
     },
     H1: {
         title: "H1 Tag",
-        whatThisParameterIs: "The H1 Tag is the primary heading element in HTML, used to define the main underlying topic of the webpage's content.",
+        whatThisParameterIs: "The H1 Tag is the main heading of your page. It's like a book title that tells everyone what the content is about.",
         whatItCalculates: "We count the number of `<h1>` tags on the page to ensure exactly one exists.",
-        whyItMatters: "The H1 tag is the most important heading, signaling the main topic of the page to both users and search engines.",
+        whyItMatters: "The H1 is the 'main headline.' It's the strongest signal to search engines about what the most important topic on your page is.",
         thresholds: {
             good: "Exactly one H1 tag",
             needsImprovement: "Multiple H1 tags",
@@ -437,9 +432,9 @@ export const InfoDetails = {
     },
     Image: {
         title: "Image Optimization",
-        whatThisParameterIs: "Image Optimization is the process of delivering high-quality images in the right format, dimension, and resolution while keeping the smallest possible file size.",
+        whatThisParameterIs: "Image Optimization ensures your pictures are the right size and have hidden 'alt text' so everyone (including search engines) knows what's in them.",
         whatItCalculates: "We scan all `<img>` tags for the presence of `alt` attributes, filter out generic terms (e.g. 'image'), and check if file sizes exceed 150KB.",
-        whyItMatters: "Optimized images load faster and, with proper alt text, become accessible to screen readers and indexable by image search.",
+        whyItMatters: "Optimized images aren't just faster—they help you show up in Image Search and ensure visually impaired users know what's in your photos.",
         thresholds: {
             good: "Alt text present & images <150KB",
             needsImprovement: "Partial optimization",
@@ -458,9 +453,9 @@ export const InfoDetails = {
     },
     Video: {
         title: "Video Optimization",
-        whatThisParameterIs: "Video Optimization refers to the technical configuration of video content (embedding, lazy loading, metadata) to ensure it plays efficiently without slowing down page load.",
+        whatThisParameterIs: "Video Optimization makes sure your videos play smoothly and don't slow down the rest of your page while it's loading.",
         whatItCalculates: "We identify `<video>` and `<iframe>` elements (YouTube/Vimeo) and check for `loading='lazy'` attributes and schema metadata.",
-        whyItMatters: "Properly optimized and embedded videos enhance engagement without sacrificing page load speed.",
+        whyItMatters: "Videos are great for engagement, but they are heavy. Proper setup keeps your site fast while still offering rich media to your visitors.",
         thresholds: {
             good: "Videos embedded correctly with lazy loading and metadata",
             needsImprovement: "Partial optimization (missing lazy loading or metadata)",
@@ -481,9 +476,9 @@ export const InfoDetails = {
     },
     Semantic_Tags: {
         title: "Semantic HTML Tags",
-        whatThisParameterIs: "Semantic HTML Tags are HTML elements that clearly provide meaning to the web page structure (e.g., <article>, <nav>, <section>) for browsers and screen readers.",
+        whatThisParameterIs: "Semantic tags are labels in your code (like 'header' or 'article') that help search engines and screen readers understand how your page is organized.",
         whatItCalculates: "We check for the presence of core HTML5 landmarks: `<main>`, `<nav>`, `<header>`, `<footer>`, `<article>`, `<section>`, and `<aside>`.",
-        whyItMatters: "Semantic HTML improves accessibility and helps search engines understand the structure and importance of your content.",
+        whyItMatters: "Think of these as the 'chapters' of your book. They help search engines and accessibility tools navigate and understand your content with ease.",
         thresholds: {
             good: "Core semantic tags present",
             needsImprovement: "Partial usage",
@@ -502,9 +497,9 @@ export const InfoDetails = {
     },
     Contextual_Linking: {
         title: "Contextual Linking",
-        whatThisParameterIs: "Contextual Linking refers to the practice of placing hyperlinks within the body text of a webpage that point to other relevant internal content.",
+        whatThisParameterIs: "Contextual linking means adding helpful links within your text that point to other related pages on your website.",
         whatItCalculates: "We identify links within the main content area (excluding navigation menus) and check if they point to internal pages.",
-        whyItMatters: "Internal links help distribute page authority and guide users and crawlers to related content.",
+        whyItMatters: "Internal links help visitors (and search bots) discover more of your great content, keeping people on your site longer.",
         thresholds: {
             good: "Contextual links present",
             needsImprovement: "Some key links missing",
@@ -523,12 +518,11 @@ export const InfoDetails = {
     },
     Heading_Hierarchy: {
         title: "Heading Hierarchy",
-        whatThisParameterIs: "Heading Hierarchy is the logical arrangement of a webpage's headings (H1 to H6) to create a clear, nested structure for the content.",
+        whatThisParameterIs: "Heading Hierarchy is the logical order of your titles (H1, H2, H3). It creates an easy-to-follow outline for your readers.",
         whatItCalculates: "We traverse the heading tags (H1-H6) in document order to ensure no levels are skipped (e.g., H2 followed immediately by H4).",
-        whyItMatters: "A logical heading structure makes content easier to skim for users and easier to parse for search engines.",
+        whyItMatters: "A logical outline makes your site easy to skim. Readers can quickly find the section they need without getting lost in a mess of text.",
         thresholds: {
             good: "Logical hierarchy (1.0)",
-            needsImprovement: "N/A",
             poor: "Skips levels or missing H1 (0)"
         },
         actualReasonsForFailure: [
@@ -544,9 +538,9 @@ export const InfoDetails = {
     },
     Content_Quality: {
         title: "Content Quality",
-        whatThisParameterIs: "Content Quality uses heuristics like word count and sentence repetition to assess the depth and originality of the page content.",
+        whatThisParameterIs: "Content Quality checks if your page has enough unique and useful information to be valuable to your visitors.",
         whatItCalculates: "We count the words in the main content area (aiming for >300) and detect repeated sentences to identify thin or duplicate content.",
-        whyItMatters: "High-quality, unique content is the single most important factor for ranking well in search results.",
+        whyItMatters: "Unique, helpful information is the #1 way to rank higher. Search engines love sites that provide real value instead of just copying others.",
         thresholds: {
             good: "≥300 words, low repetition",
             needsImprovement: "Some repetition detected",
@@ -565,13 +559,12 @@ export const InfoDetails = {
     },
     Links: {
         title: "Anchor Text Quality",
-        whatThisParameterIs: "Anchor Text is the visible, clickable text in a hyperlink that links one page to another.",
+        whatThisParameterIs: "Anchor text is the clickable word or phrase in a link. Using descriptive words helps people know where the link will take them.",
         whatItCalculates: "We analyze anchor text for generic phrases (e.g., 'click here') and calculate the ratio of descriptive links.",
-        whyItMatters: "Descriptive anchor text provides context to users and search engines about the destination page's topic.",
+        whyItMatters: "Clear link text like 'See Our Pricing' is much better than 'Click Here.' It tells users (and Google) exactly where the link leads.",
         thresholds: {
             good: "≥ 75% descriptive anchors (1.0)",
-            needsImprovement: "< 75% descriptive (0.5)",
-            poor: "N/A"
+            needsImprovement: "< 75% descriptive (0.5)"
         },
         actualReasonsForFailure: [
             "High ratio of generic anchors ('click here')",
@@ -587,13 +580,12 @@ export const InfoDetails = {
     },
     URL_Slugs: {
         title: "URL Slugs",
-        whatThisParameterIs: "A URL Slug is the specific part of a URL that identifies a particular page on a website in a human-readable form.",
+        whatThisParameterIs: "A URL slug is the last part of your web address that identifies the specific page in a way that's easy for humans to read.",
         whatItCalculates: "We analyze the last segment of the URL path for length (>50 chars), uppercase letters, underscores, and numeric IDs.",
-        whyItMatters: "Readable slugs with keywords improve user experience and can provide a slight ranking boost.",
+        whyItMatters: "Short, readable slugs are much more welcoming. They look professional in social media shares and are easy for search engines to read.",
         thresholds: {
             good: "Clean slug (1.0)",
-            needsImprovement: "Formatting issues (0.5)",
-            poor: "N/A"
+            needsImprovement: "Formatting issues (0.5)"
         },
         actualReasonsForFailure: [
             "Slug too long",
@@ -609,12 +601,11 @@ export const InfoDetails = {
     },
     Structured_Data: {
         title: "Structured Data (Schema Markup)",
-        whatThisParameterIs: "Structured Data (Schema Markup) is a standardized format for providing information about a page and classifying the page content for search engines.",
+        whatThisParameterIs: "Structured Data (Schema) is hidden code that helps search engines show 'extra' info like star ratings or prices directly in search results.",
         whatItCalculates: "We search for `<script type='application/ld+json'>` blocks and validate their JSON content.",
-        whyItMatters: "Structured data enables rich snippets (like stars, prices, or events) in search results, increasing visibility.",
+        whyItMatters: "Structured data helps you stand out. Things like star ratings and prices in search results can greatly increase the number of people who click your link.",
         thresholds: {
             good: "Schema detected (1.0)",
-            needsImprovement: "N/A",
             poor: "No schema detected (0)"
         },
         actualReasonsForFailure: [
@@ -631,9 +622,9 @@ export const InfoDetails = {
     },
     Open_Graph: {
         title: "Open Graph Tags",
-        whatThisParameterIs: "The Open Graph protocol is a set of meta tags that allows any web page to become a rich object in a social graph, controlling how it looks when shared.",
+        whatThisParameterIs: "Open Graph tags control how your page looks when someone shares a link to it on social media platforms like Facebook or LinkedIn.",
         whatItCalculates: "We check for the presence of `og:title`, `og:description`, `og:image`, and `og:url` meta tags.",
-        whyItMatters: "Open Graph tags ensure your content looks attractive and professional when shared on social media, driving more clicks.",
+        whyItMatters: "When your links look professional on Facebook or LinkedIn with a great image and title, people are much more likely to share and click them.",
         thresholds: {
             good: "og:title, og:image, and og:url present",
             needsImprovement: "Some required Open Graph tags missing",
@@ -653,9 +644,9 @@ export const InfoDetails = {
     },
     Twitter_Card: {
         title: "Twitter Card Tags",
-        whatThisParameterIs: "Twitter Cards are a type of meta tag implementation that allows users to attach rich photos, videos, and media experiences to Tweets.",
+        whatThisParameterIs: "Twitter Cards are special tags that make your links look like rich, attractive posts when they are shared on Twitter.",
         whatItCalculates: "We check for `twitter:card`, `twitter:title`, `twitter:description`, and `twitter:image` meta tags.",
-        whyItMatters: "Twitter Cards transform standard links into rich media experiences, increasing engagement and followers from tweets.",
+        whyItMatters: "Twitter Cards turn a boring link into a beautiful 'card' with a big photo, making your content stand out in a busy Twitter feed.",
         thresholds: {
             good: "twitter:card and twitter:title present",
             needsImprovement: "Some required Twitter Card tags missing",
@@ -675,12 +666,11 @@ export const InfoDetails = {
     },
     Social_Links: {
         title: "Social Profile Links",
-        whatThisParameterIs: "Social Profile Links are hyperlinks on a website that direct users to the entity's official profiles on social networking platforms.",
+        whatThisParameterIs: "Social Profile Links connect your website to your official social media pages, helping visitors find your community.",
         whatItCalculates: "We scan all external links to identify URLs matching known social media platforms (Facebook, Twitter, LinkedIn, etc.).",
-        whyItMatters: "Linking to social profiles verifies your brand identity and provides users with legitimate ways to connect.",
+        whyItMatters: "These links show you are a real brand with a real community. They make it easy for your most loyal fans to follow you everywhere.",
         thresholds: {
             good: "Social links present (1.0)",
-            needsImprovement: "N/A",
             poor: "No social links found (0)"
         },
         actualReasonsForFailure: [
@@ -697,12 +687,11 @@ export const InfoDetails = {
 
     Robots_Txt: {
         title: "Robots.txt",
-        whatThisParameterIs: "The robots.txt file is a text file that resides in the root directory of a site and instructs web crawlers which pages or files they can or cannot request.",
+        whatThisParameterIs: "The Robots.txt file is a set of instructions for search engine 'crawlers' telling them which parts of your site they are allowed to visit.",
         whatItCalculates: "We attempt to fetch the `/robots.txt` file from the root domain.",
-        whyItMatters: "A properly configured robots.txt file helps manage crawl budget and prevents search engines from indexing private or irrelevant sections of your site.",
+        whyItMatters: "This file is like a 'keep out' or 'welcome' sign for search bots. It ensures they don't waste time on parts of your site that don't need to be indexed.",
         thresholds: {
             good: "File exists (1.0)",
-            needsImprovement: "N/A",
             poor: "File missing (0)"
         },
         actualReasonsForFailure: [
@@ -718,12 +707,11 @@ export const InfoDetails = {
     },
     Sitemap: {
         title: "XML Sitemap",
-        whatThisParameterIs: "An XML Sitemap is a file that lists a website's essential pages to make sure search engines can find and crawl them all.",
+        whatThisParameterIs: "An XML Sitemap is like a map of your website that helps search engines find and index all your important pages quickly.",
         whatItCalculates: "We attempt to fetch the `/sitemap.xml` file from the root domain.",
-        whyItMatters: "Sitemaps act as a roadmap for search engines, ensuring that newly created or updated pages are found and indexed quickly.",
+        whyItMatters: "A sitemap ensures Google doesn't miss any of your pages. It's the fastest way to get your new content found and shown to the world.",
         thresholds: {
             good: "File exists (1.0)",
-            needsImprovement: "N/A",
             poor: "File missing (0)"
         },
         actualReasonsForFailure: [
@@ -744,13 +732,8 @@ export const InfoDetails = {
         badge: "SEO",
         title: "On-Page SEO",
         guideLink: "https://developers.google.com/search/docs/fundamentals/seo-starter-guide",
-        whatThisMetricIs: (
-            <div className="space-y-2">
-                <p>Evaluates how well your page content, structure, and metadata are optimized for search engines and users.</p>
-                <p>This includes page titles, headings, URLs, internal linking, media optimization, and content quality signals that help search engines understand and rank your page.</p>
-            </div>
-        ),
-        whyItMatters: "Strong on-page SEO makes your content easier to discover, understand, and rank in search results. Well-structured pages improve visibility, click-through rates, accessibility, and overall user experience—leading to more organic traffic and better engagement.",
+        whatThisMetricIs: "Analyzes how well search engines can read and understand your website. It's like checking the 'labels' on your digital products to ensure the right customers can find them when they search.",
+        whyItMatters: "If search engines can't find you, neither can your customers. Superior On-Page SEO makes your website stand out, turning it into a powerful magnet for high-quality traffic and new business opportunities.",
         whatToDoForAGoodScore: (
             <ul className="list-disc pl-5 space-y-2">
                 <li>
@@ -790,12 +773,12 @@ export const InfoDetails = {
         ]
     },
 
-    // Accessibility
+
     Color_Contrast: {
         title: "Color Contrast",
-        whatThisParameterIs: "Color Contrast is the difference in brightness and color between text and its background, ensuring legibility for all users.",
+        whatThisParameterIs: "Color Contrast is the difference in brightness between text and its background. High contrast makes your words easy for everyone to read.",
         whatItCalculates: "We evaluate the contrast ratio of text elements against their background colors using the WCAG 2.0 algorithm.",
-        whyItMatters: "Good contrast ensures content is legible for all users, including those with visual impairments or viewing screens in difficult lighting.",
+        whyItMatters: "Good contrast ensures your content is readable for everyone, including those with visual impairments or people viewing your site in bright sunlight.",
         thresholds: {
             good: "Ratio ≥ 4.5:1 (normal text), ≥ 3:1 (large text)",
             needsImprovement: "Ratio < 4.5:1 but readable",
@@ -814,9 +797,9 @@ export const InfoDetails = {
     },
     Focus_Order: {
         title: "Focus Order",
-        whatThisParameterIs: "Focus Order is the sequential path that keyboard navigation (Tab key) follows through interactive elements on a webpage.",
+        whatThisParameterIs: "Focus Order is the path someone takes through your site using only their keyboard. A logical path helps them navigate without a mouse.",
         whatItCalculates: "We verify that the tab order of interactive elements follows a logical sequence that matches the visual layout of the page.",
-        whyItMatters: "A logical focus order typically follows the visual layout, ensuring a predictable and intuitive navigation experience for keyboard users.",
+        whyItMatters: "A logical focus order makes your site predictable and easy to use. It ensures keyboard users aren't left 'jumping' all over the place to find a link.",
         thresholds: {
             good: "Tab order matches visual layout",
             needsImprovement: "Minor deviations in order",
@@ -835,9 +818,9 @@ export const InfoDetails = {
     },
     Focusable_Content: {
         title: "Focusable Content",
-        whatThisParameterIs: "Focusable Content refers to elements (like links, buttons, and form fields) that can receive keyboard focus and be operated by users.",
+        whatThisParameterIs: "Focusable Content are parts of your site—like links and buttons—that people can reach and use using just their keyboard.",
         whatItCalculates: "We check if all interactive elements (buttons, links, inputs) can be reached and activated using keyboard navigation.",
-        whyItMatters: "Keyboard focusability is essential for users with motor disabilities who rely on keyboard navigation instead of a mouse.",
+        whyItMatters: "If a user can't select a button, they can't use your site. Focusability is the difference between a working website and an broken experience for many users.",
         thresholds: {
             good: "All interactive elements are focusable",
             needsImprovement: "Some elements skipped",
@@ -856,12 +839,11 @@ export const InfoDetails = {
     },
     Tab_Index: {
         title: "Tabindex Usage",
-        whatThisParameterIs: "The tabindex attribute controls whether an element is focusable and defines its position in the document's sequential focus navigation order.",
+        whatThisParameterIs: "The Tabindex setting tells the browser the order in which items should be selected when a user presses the 'Tab' key.",
         whatItCalculates: "We scan for elements using positive tabindex values (> 0), which override the natural DOM order.",
-        whyItMatters: "Positive tabindex values disrupt the natural tab order, leading to a confusing and unpredictable navigation flow for keyboard users.",
+        whyItMatters: "Messing with the tab order is like rearranging the keys on someone's keyboard—it makes navigation confusing and unpredictable.",
         thresholds: {
             good: "No positive tabindex usage",
-            needsImprovement: "N/A",
             poor: "Positive tabindex values detected"
         },
         actualReasonsForFailure: [
@@ -876,9 +858,9 @@ export const InfoDetails = {
     },
     Interactive_Element_Affordance: {
         title: "Interactive Element Affordance",
-        whatThisParameterIs: "Interactive Element Affordance refers to the visual cues (like hover states, distinct colors, or cursors) that indicate an element is clickable.",
+        whatThisParameterIs: "Interactive cues (like colors or hover effects) show users which parts of your page are 'clickable' buttons or links.",
         whatItCalculates: "We check if interactive elements (buttons, links) have appropriate roles and visual indicators identifying them as interactive.",
-        whyItMatters: "Clear visual cues for interactive elements improve usability by removing ambiguity about what allows user input.",
+        whyItMatters: "Clear visual cues remove the guesswork, letting users feel confident that they know what to click to get what they need.",
         thresholds: {
             good: "All interactive elements have correct roles",
             needsImprovement: "Some elements lack roles",
@@ -897,9 +879,9 @@ export const InfoDetails = {
     },
     Label: {
         title: "Form Labels",
-        whatThisParameterIs: "Form Labels are text elements programmatically associated with form controls to describe their purpose to assistive technologies.",
+        whatThisParameterIs: "Form Labels are text descriptions attached to input boxes, telling screen reader users exactly what they need to type in each field.",
         whatItCalculates: "We verify that every form input field has a programmatically associated label element or descriptive attribute.",
-        whyItMatters: "Labels provide essential context for screen readers; without them, users may not understand the purpose of input fields.",
+        whyItMatters: "Without labels, screen readers might just say 'Edit Box' instead of 'Enter Your Email.' Good labels ensure everyone knows exactly what to do.",
         thresholds: {
             good: "100% of inputs labeled",
             needsImprovement: "Minor omissions",
@@ -918,12 +900,11 @@ export const InfoDetails = {
     },
     Aria_Allowed_Attr: {
         title: "ARIA Allowed Attributes",
-        whatThisParameterIs: "ARIA Allowed Attributes defines which WAI-ARIA states and properties are valid for use on an element with a specific ARIA role.",
+        whatThisParameterIs: "ARIA Attributes are special labels that give extra information to screen readers about how your website's features work.",
         whatItCalculates: "We check if the ARIA attributes used on an element are permitted for its assigned role according to the WAI-ARIA specification.",
-        whyItMatters: "Ensures ARIA attributes are valid for the element's role, preventing conflicting or confusing signals to assistive technologies.",
+        whyItMatters: "Valid attributes ensure that the helpful descriptions you add actually work correctly for people using assistive tools.",
         thresholds: {
             good: "All ARIA attributes valid",
-            needsImprovement: "N/A",
             poor: "Invalid attribute-role combinations"
         },
         actualReasonsForFailure: [
@@ -939,12 +920,11 @@ export const InfoDetails = {
     },
     Aria_Roles: {
         title: "ARIA Roles",
-        whatThisParameterIs: "ARIA Roles provide semantic meaning to content, allowing screen readers to understand the type and purpose of user interface elements.",
+        whatThisParameterIs: "ARIA Roles tell assistive tools exactly what an element does—for example, 'this is a button' or 'this is a navigation menu'.",
         whatItCalculates: "We validate that all 'role' attribute values used on the page exist in the WAI-ARIA specification.",
-        whyItMatters: "Correct ARIA roles allow screen readers to accurately convey the purpose and behavior of interface elements.",
+        whyItMatters: "Correct roles are like signposts for screen readers, helping users understand if they are interacting with a menu, a slider, or a simple button.",
         thresholds: {
             good: "All roles are valid WAI-ARIA roles",
-            needsImprovement: "N/A",
             poor: "Non-existent or abstract roles used"
         },
         actualReasonsForFailure: [
@@ -960,12 +940,11 @@ export const InfoDetails = {
     },
     Aria_Hidden_Focus: {
         title: "ARIA Hidden Focus",
-        whatThisParameterIs: "ARIA Hidden Focus refers to the erroneous state where an element is hidden from assistive technology (aria-hidden='true') but remains keyboard focusable.",
+        whatThisParameterIs: "This check ensures that invisible parts of your site don't accidentally 'trap' a user who is navigating with their keyboard.",
         whatItCalculates: "We identify elements marked with aria-hidden='true' that still contain focusable children.",
-        whyItMatters: "Focusable elements must not be hidden from screen readers, as this creates 'keyboard traps' where users can navigate to elements they cannot perceive.",
+        whyItMatters: "This prevents 'keyboard traps' where a user can select something they can't even see or hear, leading to major frustration.",
         thresholds: {
             good: "No hidden focusable elements",
-            needsImprovement: "N/A",
             poor: "Focusable content hidden from screen readers"
         },
         actualReasonsForFailure: [
@@ -981,12 +960,11 @@ export const InfoDetails = {
     },
     Image_Alt: {
         title: "Image Alt Text",
-        whatThisParameterIs: "Alt Text (Alternative Text) is a textual description applied to image tags that is displayed when the image cannot be loaded and read by screen readers.",
+        whatThisParameterIs: "Alt Text is a hidden description for your images. It helps visually impaired users (and search engines) understand what's in the picture.",
         whatItCalculates: "We check every <img> tag to ensure it has an alt attribute, either with descriptive text or empty (alt='') if decorative.",
-        whyItMatters: "Alt text provides essential description for images, allowing screen reader users to understand visual content.",
+        whyItMatters: "Alt text is the only way some users can 'see' your images. It also helps Google understand your photos for its search results.",
         thresholds: {
             good: "All images have alt attributes",
-            needsImprovement: "N/A",
             poor: "Images missing alt attributes"
         },
         actualReasonsForFailure: [
@@ -1002,9 +980,9 @@ export const InfoDetails = {
     },
     Skip_Links: {
         title: "Skip Links",
-        whatThisParameterIs: "Skip Links are internal navigation links placed at the top of the page that allow keyboard users to bypass repetitive content (like headers) and jump to the main content.",
+        whatThisParameterIs: "A Skip Link is a hidden shortcut that allows keyboard users to jump straight to your main content, skipping over the menus.",
         whatItCalculates: "We verify the presence of a 'Skip to Content' link at the top of the page that correctly targets a main content area ID.",
-        whyItMatters: "Skip links allow keyboard and screen reader users to bypass repetitive navigation and immediately access the main content.",
+        whyItMatters: "Imagine having to listen to the same menu items on every single page. Skip links let users get straight to the 'good stuff' quickly.",
         thresholds: {
             good: "Valid, working skip link present",
             needsImprovement: "Link present but target broken",
@@ -1023,9 +1001,9 @@ export const InfoDetails = {
     },
     Landmarks: {
         title: "Landmark Roles",
-        whatThisParameterIs: "Landmark Roles are programmatic labels that identify large content areas (like main, navigation, search) to help assistive technologies navigate the page structure.",
+        whatThisParameterIs: "Landmark Roles are like digital signposts (like 'Header' or 'Main Content') that help people navigate your page structure efficiently.",
         whatItCalculates: "We check for the presence of primary HTML5 structural landmarks: <main>, <nav>, <header>, and <footer>.",
-        whyItMatters: "Landmark roles (main, nav, etc.) provide a semantic map of the page, allowing screen reader users to jump efficiently between sections.",
+        whyItMatters: "Landmarks are like the 'Home' or 'Menu' buttons on a phone—they give users a quick way to find their way around your page's structure.",
         thresholds: {
             good: "Primary landmarks (Main, Nav, Header) present",
             needsImprovement: "Some landmarks missing",
@@ -1044,12 +1022,11 @@ export const InfoDetails = {
     },
     Link_Name: {
         title: "Link Name",
-        whatThisParameterIs: "Link Name refers to the accessible text label of a hyperlink that describes its destination or function to assistive technologies.",
+        whatThisParameterIs: "A Link Name is the text that describes where a link goes. Clear labels help users know exactly what will happen when they click.",
         whatItCalculates: "We verify that every link (<a>) has discernible text content or an accessible label.",
-        whyItMatters: "Descriptive link text ensures users using screen readers understand the destination or function of a link without needing surrounding context.",
+        whyItMatters: "A link called 'Learn More' can be confusing if there are 10 of them. Specific names like 'View Pricing' tell users exactly where they're headed.",
         thresholds: {
             good: "All links have discernible text",
-            needsImprovement: "N/A",
             poor: "Links with no accessible name"
         },
         actualReasonsForFailure: [
@@ -1065,12 +1042,11 @@ export const InfoDetails = {
     },
     Button_Name: {
         title: "Button Name",
-        whatThisParameterIs: "Button Name is the accessible text label associated with a button that describes the action it performs.",
+        whatThisParameterIs: "A Button Name is the label that describes what a button does (like 'Submit' or 'Search'), making it clear for screen reader users.",
         whatItCalculates: "We verify that every button has discernible text content or an accessible label.",
-        whyItMatters: "Buttons must have accessible names so screen reader users understand what action will be triggered.",
+        whyItMatters: "Every button needs a voice. A clear name ensures that everyone understands what will happen when they click or tap it.",
         thresholds: {
             good: "All buttons have discernible text",
-            needsImprovement: "N/A",
             poor: "Buttons with no accessible name"
         },
         actualReasonsForFailure: [
@@ -1086,12 +1062,11 @@ export const InfoDetails = {
     },
     Document_Title: {
         title: "Document Title",
-        whatThisParameterIs: "The Document Title is the text defined in the <title> HTML tag, used by browsers, search engines, and screen readers to identify the page.",
+        whatThisParameterIs: "The Document Title is the name of your page shown in browser tabs. It's the first thing a screen reader says to describe your page.",
         whatItCalculates: "We check the <head> section to ensure a non-empty <title> tag is present.",
-        whyItMatters: "The document title is the first element announced by screen readers, providing immediate context about the current page.",
+        whyItMatters: "The title is the very first thing a screen reader announces. It gives users immediate confirmation that they've landed on the right page.",
         thresholds: {
             good: "Non-empty <title> present",
-            needsImprovement: "N/A",
             poor: "Title is missing or empty"
         },
         actualReasonsForFailure: [
@@ -1106,12 +1081,11 @@ export const InfoDetails = {
     },
     Html_Has_Lang: {
         title: "HTML Language Attribute",
-        whatThisParameterIs: "The HTML Language Attribute (lang) specifies the primary human language of the document's content.",
+        whatThisParameterIs: "The Language Attribute tells browsers and screen readers which language your site is written in, so they use the right accent.",
         whatItCalculates: "We check that the <html> element has a valid 'lang' attribute.",
-        whyItMatters: "The language attribute ensures screen readers use the correct pronunciation and accent for the content.",
+        whyItMatters: "It ensures that a screen reader doesn't try to read English text with a French accent, making your site easy to listen to and understand.",
         thresholds: {
             good: "Valid lang attribute present",
-            needsImprovement: "N/A",
             poor: "Lang attribute missing or invalid"
         },
         actualReasonsForFailure: [
@@ -1125,12 +1099,11 @@ export const InfoDetails = {
     },
     Meta_Viewport: {
         title: "Meta Viewport",
-        whatThisParameterIs: "The Meta Viewport tag controls the layout and scaling dimensions of the web page on mobile browsers.",
+        whatThisParameterIs: "The Viewport tag controls how your site looks on mobile. It should always allow users to 'pinch-to-zoom' for better readability.",
         whatItCalculates: "We check the meta viewport tag to ensure it does not restrict user zooming/scaling.",
-        whyItMatters: "Restricting zoom capabilities prevents users with low vision from scaling text to a readable size, creating a major accessibility barrier.",
+        whyItMatters: "For many users, being able to zoom in is the only way to read small text. Blocking this feature is an unnecessary hurdle for your visitors.",
         thresholds: {
             good: "Zooming is enabled",
-            needsImprovement: "N/A",
             poor: "User scaling is disabled"
         },
         actualReasonsForFailure: [
@@ -1145,12 +1118,11 @@ export const InfoDetails = {
     },
     List: {
         title: "List Structure",
-        whatThisParameterIs: "List Structure refers to the semantic usage of <ul>, <ol>, and <dl> tags to group related content items.",
+        whatThisParameterIs: "List Structure uses proper coding for bulleted lists, allowing screen readers to tell users exactly how many items are in the list.",
         whatItCalculates: "We check that list elements (<ul>, <ol>) only contain <li> elements (or script/template tags).",
-        whyItMatters: "Semantic list structures allow screen readers to announce the number of items and current position, aiding comprehension.",
+        whyItMatters: "Correct list coding ensures that visitors aren't just hearing a long string of items without knowing where the list starts and ends.",
         thresholds: {
             good: "Lists only contain <li> items",
-            needsImprovement: "N/A",
             poor: "Lists usually invalid children"
         },
         actualReasonsForFailure: [
@@ -1165,9 +1137,9 @@ export const InfoDetails = {
     },
     Heading_Order: {
         title: "Heading Order",
-        whatThisParameterIs: "Heading Order refers to the logical hierarchy of heading tags (H1–H6) that outlines the structure of the page content.",
+        whatThisParameterIs: "Heading Order is the logical flow of your titles. Keeping them in sequence (H1, then H2, then H3) makes your page easy to follow.",
         whatItCalculates: "We verify that heading steps are sequential (e.g., h1 -> h2) and do not skip levels (e.g., h1 -> h3).",
-        whyItMatters: "A logical heading hierarchy allows users to understand the content structure and navigate the document outline efficiently.",
+        whyItMatters: "A logical title flow is like a clear table of contents. It helps everyone—including search engines—understand how your content is built.",
         thresholds: {
             good: "Headings follow logical order",
             needsImprovement: "Minor skips",
@@ -1185,9 +1157,9 @@ export const InfoDetails = {
     },
     Multilingual_Support: {
         title: "Multilingual Support",
-        whatThisParameterIs: "Multilingual Support ensures locale definitions are present for correct language interpretation.",
+        whatThisParameterIs: "Multilingual Support ensures your site correctly identifies different languages, helping global users and translation tools.",
         whatItCalculates: "It checks hreflang tags and lang attributes on the HTML element.",
-        whyItMatters: "Explicit language tagging ensures screen readers use the correct voice profile and pronunciation rules, improving accessibility for international users.",
+        whyItMatters: "Explicit language tagging ensures your site speaks the 'right language' to every visitor, making the experience seamless for everyone.",
         thresholds: {
             good: "Language or hreflang detected",
             poor: "No multilingual signals"
@@ -1208,13 +1180,8 @@ export const InfoDetails = {
         badge: "Accessibility",
         title: "Accessibility",
         guideLink: "https://www.w3.org/WAI/standards-guidelines/wcag/",
-        whatThisMetricIs: (
-            <div className="space-y-2">
-                <p>Measures how accessible your website is for users who rely on assistive technologies such as screen readers, keyboards, and other accessibility tools.</p>
-                <p>It evaluates whether users can perceive, navigate, and interact with your content regardless of ability.</p>
-            </div>
-        ),
-        whyItMatters: "Accessible websites are easier to use for everyone. They improve usability, expand your audience, reduce legal and compliance risk, and often perform better in search engines. Accessibility is also a key part of inclusive, user-first design.",
+        whatThisMetricIs: "Evaluates how easy it is for *everyone* to use your website, including those with vision or hearing challenges. It’s about 'Digital Inclusion'—making sure your content is open to all.",
+        whyItMatters: "An accessible website is a welcoming website. By removing barriers, you show that you value every visitor, expand your reach to millions of people, and create a more inclusive, professional brand image.",
         whatToDoForAGoodScore: (
             <ul className="list-disc pl-5 space-y-2">
                 <li>
@@ -1257,605 +1224,464 @@ export const InfoDetails = {
     // Security & Compliance
     HTTPS: {
         title: "HTTPS Usage",
-        whatThisParameterIs: "HTTPS Usage confirms that the website is communicating over a secure channel.",
+        whatThisParameterIs: "HTTPS is a secure way for your browser to talk to a website, ensuring that your connection is always private and safe.",
         whatItCalculates: "It verifies that the page is loaded via the https protocol scheme.",
-        whyItMatters: "HTTPS encrypts data between users and servers, ensuring that sensitive information like passwords and credit card numbers cannot be intercepted.",
+        whyItMatters: "HTTPS creates a private and secure connection between your visitor and the server, making it impossible for hackers to snoop on sensitive information.",
         thresholds: {
             good: "HTTPS enabled",
-            needsImprovement: "Mixed content",
             poor: "HTTP only"
         },
         actualReasonsForFailure: [
-            "Website served over HTTP",
-            "Missing HTTPS redirect",
-            "Invalid URL structure"
+            "The website is served over HTTP instead of HTTPS",
+            "Automatic redirect to HTTPS is missing",
+            "Internal resources are being loaded over insecure connections (mixed content)"
         ],
         howToOvercomeFailure: [
-            "Install an SSL certificate",
-            "Force HTTPS redirects",
-            "Ensure all resources load over HTTPS"
+            "Obtain and install a valid SSL certificate",
+            "Enforce HTTPS by redirecting all HTTP traffic to HTTPS",
+            "Ensure all internal scripts, styles, and images use HTTPS URLs"
         ]
     },
     SSL: {
         title: "SSL Connection",
-        whatThisParameterIs: "SSL Connection validates the handshake and establishment of a secure session.",
+        whatThisParameterIs: "An SSL connection is a secure handshake between your browser and the website that starts an encrypted session.",
         whatItCalculates: "It attempts to establish a TLS connection to the server and verifies the handshake succeeds without errors.",
-        whyItMatters: "A valid SSL connection is the prerequisite for establishing a secure, encrypted channel between client and server.",
+        whyItMatters: "A valid SSL connection is like a digital 'green light' that tells browsers your website is authentic and safe for users to visit.",
         thresholds: {
             good: "SSL connection established successfully",
-            needsImprovement: "SSL present but misconfigured",
+            needsImprovement: "Certificate nearing expiry (less than 30 days)",
             poor: "SSL connection failed"
         },
         actualReasonsForFailure: [
-            "SSL handshake failure",
-            "Invalid or self-signed certificate",
-            "Incorrect server SSL configuration",
-            "Expired or revoked certificate"
+            "SSL connection failed or handshake failure",
+            "The SSL certificate has expired or is invalid",
+            "The certificate is valid but nearing expiration (less than 30 days)"
         ],
         howToOvercomeFailure: [
-            "Install a valid SSL certificate from a trusted authority",
-            "Ensure server supports modern TLS versions",
-            "Fix certificate chain and configuration issues",
-            "Test SSL configuration after deployment"
-        ]
-    },
-    SSL_Expiry: {
-        title: "SSL Certificate Validity",
-        whatThisParameterIs: "SSL Certificate Validity checks the expiration date of the server's security certificate.",
-        whatItCalculates: "It inspects the certificate's validTo date field and compares it against the current date.",
-        whyItMatters: "An expired certificate triggers scary browser warnings that drive visitors away and breaks the secure connection.",
-        thresholds: {
-            good: "Valid, non-expired certificate",
-            needsImprovement: "Certificate nearing expiry",
-            poor: "Expired or invalid certificate"
-        },
-        actualReasonsForFailure: [
-            "Expired SSL certificate",
-            "Incorrect certificate configuration",
-            "Missing SSL security details"
-        ],
-        howToOvercomeFailure: [
-            "Renew SSL certificate before expiry",
-            "Use trusted certificate authorities",
-            "Monitor SSL validity regularly"
+            "Check the SSL certificate status and server security configuration",
+            "Renew the SSL certificate immediately if expired or nearing expiry",
+            "Ensure the server is configured to support modern TLS handshakes"
         ]
     },
     TLS_Version: {
         title: "TLS Version",
-        whatThisParameterIs: "TLS Version indicates the security protocol version used for encryption.",
-        whatItCalculates: "It negotiates the connection to determine the protocol version (e.g., TLS 1.2, 1.3) and flags obsolete versions like 1.0/1.1.",
-        whyItMatters: "Older TLS versions have known security flaws that can be exploited to decrypt sensitive traffic.",
+        whatThisParameterIs: "TLS is the technology that powers your secure connection. Using the latest version ensures you have the strongest protection against modern hackers.",
+        whatItCalculates: "It negotiates the connection to determine the protocol version (e.g., TLS 1.2, 1.3) and flags obsolete versions.",
+        whyItMatters: "Using the latest security protocols is like having the latest home security system—it protects you against the newest tricks used by intruders.",
         thresholds: {
             good: "TLS 1.2 or TLS 1.3",
-            needsImprovement: "Older but supported TLS",
-            poor: "Weak or unsupported TLS version"
+            poor: "Obsolete TLS version (1.0 or 1.1) or no security details"
         },
         actualReasonsForFailure: [
-            "TLS 1.0 or 1.1 enabled",
-            "Outdated server configuration"
+            "The server supports older, insecure TLS versions (e.g., TLS 1.0 or 1.1)",
+            "Unable to determine the TLS version due to missing security details",
+            "The server does not respond to security protocol probes"
         ],
         howToOvercomeFailure: [
-            "Disable older TLS versions",
-            "Enable TLS 1.2 or TLS 1.3",
-            "Update server security settings"
+            "Disable TLS 1.0/1.1 and enable TLS 1.2 or TLS 1.3 on your web server",
+            "Update server security settings to use modern cipher suites",
+            "Ensure the server is reachable and supports standard security handshakes"
         ]
     },
     X_Frame_Options: {
         title: "X-Frame-Options Header",
-        whatThisParameterIs: "X-Frame-Options Header controls whether the site can be embedded in iframes, preventing clickjacking.",
-        whatItCalculates: "It checks HTTP response headers for the presence and value (DENY/SAMEORIGIN) of X-Frame-Options.",
-        whyItMatters: "This header prevents your site from being secretly embedded in other sites, protecting users from clickjacking attacks.",
+        whatThisParameterIs: "The X-Frame-Options setting prevents other websites from 'stealing' your site's appearance to trick users into clicking things they shouldn't.",
+        whatItCalculates: "It checks HTTP response headers for the presence and value of the 'X-Frame-Options' header.",
+        whyItMatters: "This header stops a sneaky trick where hackers 'layer' your site under theirs to fool people into clicking buttons they can't see.",
         thresholds: {
             good: "X-Frame-Options header present",
-            needsImprovement: "Header present but not strictly configured",
-            poor: "X-Frame-Options header missing"
+            poor: "X-Frame-Options header missing or no response"
         },
         actualReasonsForFailure: [
-            "X-Frame-Options header not configured on the server",
-            "Misconfigured security headers",
-            "Reliance on default server settings"
+            "The X-Frame-Options header is missing, making the site vulnerable to clickjacking",
+            "No response was received from the server during the header check",
+            "The header is misconfigured or not recognized by modern browsers"
         ],
         howToOvercomeFailure: [
-            "Add X-Frame-Options header with DENY or SAMEORIGIN value",
-            "Configure security headers at the server or CDN level",
-            "Verify headers using browser dev tools or security scanners"
+            "Set the 'X-Frame-Options' header to 'DENY' or 'SAMEORIGIN' on your server",
+            "Configure security headers at the web server (Nginx/Apache) or CDN level",
+            "Verify the presence of headers using browser developer tools"
         ]
     },
     X_Content_Type_Options: {
         title: "X-Content-Type-Options Header",
-        whatThisParameterIs: "X-Content-Type-Options Header prevents browsers from interpreting files as a different MIME type.",
-        whatItCalculates: "It checks HTTP response headers for X-Content-Type-Options: nosniff.",
-        whyItMatters: "Prevents the browser from being tricked into executing malicious code disguised as a different file type.",
+        whatThisParameterIs: "This security setting prevents browsers from trying to 'guess' what kind of file they are loading, which stops certain types of malicious attacks.",
+        whatItCalculates: "It checks for the 'X-Content-Type-Options: nosniff' response header.",
+        whyItMatters: "It prevents browsers from being tricked into running a dangerous script when it was supposed to be a regular picture or text file.",
         thresholds: {
-            good: "X-Content-Type-Options header present (nosniff)",
-            needsImprovement: "Header present but misconfigured",
-            poor: "X-Content-Type-Options header missing"
+            good: "X-Content-Type-Options: nosniff present",
+            poor: "X-Content-Type-Options header missing or no response"
         },
         actualReasonsForFailure: [
-            "X-Content-Type-Options header not set on the server",
-            "Incomplete or missing security header configuration",
-            "Reliance on default server behavior"
+            "The X-Content-Type-Options header is missing from the server response",
+            "No response was received from the server to verify the header",
+            "The header value is not set specifically to 'nosniff'"
         ],
         howToOvercomeFailure: [
-            "Add X-Content-Type-Options header with value 'nosniff'",
-            "Configure security headers at the web server or CDN level",
-            "Verify response headers using browser developer tools"
+            "Add the 'X-Content-Type-Options: nosniff' header to all server responses",
+            "Configure this header at the web server level to prevent MIME type sniffing",
+            "Verify header configuration using a security header scanner"
         ]
     },
     HSTS: {
         title: "HTTP Strict Transport Security (HSTS)",
-        whatThisParameterIs: "HTTP Strict Transport Security (HSTS) instructs browsers to only interact with the site using HTTPS.",
-        whatItCalculates: "It checks execution for the Strict-Transport-Security response header and its max-age directive.",
-        whyItMatters: "HSTS eliminates the window of vulnerability during the initial HTTP request, forcing a secure connection immediately.",
+        whatThisParameterIs: "HSTS is an a 'force-secure' command that tells browsers to never use an insecure connection when visiting your website.",
+        whatItCalculates: "It checks for the 'Strict-Transport-Security' response header and its configuration.",
+        whyItMatters: "HSTS closes a tiny but dangerous gap where a hacker could try to redirect your visitors to an unencrypted version of your site.",
         thresholds: {
             good: "HSTS header present",
-            needsImprovement: "Short max-age value",
-            poor: "HSTS missing"
+            poor: "HSTS header missing or no response"
         },
         actualReasonsForFailure: [
-            "HSTS header not set",
-            "Incorrect HSTS configuration"
+            "The HTTP Strict Transport Security (HSTS) header is missing",
+            "No response was received from the server for the HSTS check",
+            "The HSTS header is missing a required max-age directive"
         ],
         howToOvercomeFailure: [
-            "Add Strict-Transport-Security header",
-            "Use a long max-age value",
-            "Enable includeSubDomains if applicable"
+            "Add the 'Strict-Transport-Security' header to enforce secure HTTPS connections",
+            "Configure a long max-age (e.g., 31536000 seconds) for the HSTS header",
+            "Consider adding the 'includeSubDomains' and 'preload' directives"
         ]
     },
     CSP: {
         title: "Content Security Policy (CSP)",
-        whatThisParameterIs: "Content Security Policy (CSP) restricts the sources from which content can be loaded.",
-        whatItCalculates: "It checks for the Content-Security-Policy header and validates its directives.",
-        whyItMatters: "CSP is a powerful defense that restricts the sources of executable scripts, effectively mitigating most XSS attacks.",
+        whatThisParameterIs: "A Content Security Policy (CSP) is a set of rules that tells the browser which sources are safe to load content from, stopping unauthorized scripts.",
+        whatItCalculates: "It checks for the 'Content-Security-Policy' response header.",
+        whyItMatters: "Think of CSP as a 'security guard' for your site's code, ensuring only trusted scripts are allowed to run on your page.",
         thresholds: {
             good: "CSP header present",
-            needsImprovement: "Overly permissive CSP",
-            poor: "CSP missing"
+            poor: "CSP header missing or no response"
         },
         actualReasonsForFailure: [
-            "CSP header missing",
-            "Unsafe inline scripts allowed"
+            "The Content-Security-Policy (CSP) header is missing from the response",
+            "No response was received from the server during the CSP probe",
+            "The CSP header is present but empty or overly permissive"
         ],
         howToOvercomeFailure: [
-            "Define a strict CSP policy",
-            "Avoid unsafe-inline and unsafe-eval",
-            "Test CSP before enforcing"
+            "Implement a robust 'Content-Security-Policy' header to prevent XSS and data injection",
+            "Start with a strict policy and use 'report-only' mode during initial testing",
+            "Restrict the 'script-src' directive to trusted sources only"
         ]
     },
     Cookies_Secure: {
         title: "Secure Cookies",
-        whatThisParameterIs: "Secure Cookies Flag ensures that cookies are only transmitted over encrypted HTTPS connections.",
-        whatItCalculates: "It iterates through all cookies set by the page and checks if the Secure attribute is present.",
-        whyItMatters: "The Secure flag ensures that cookies containing sensitive session IDs are never sent over insecure HTTP connections.",
+        whatThisParameterIs: "The 'Secure' flag tells the browser to only send cookies over an encrypted HTTPS connection.",
+        whatItCalculates: "It verifies if all cookies set by the page have the 'Secure' attribute.",
+        whyItMatters: "Marking cookies as 'Secure' ensures that sensitive login data is never sent over an unencrypted connection where it could be stolen.",
         thresholds: {
-            good: "Secure flag enabled",
-            needsImprovement: "Some cookies missing Secure flag",
-            poor: "No cookies use Secure flag"
+            good: "All cookies are secure",
+            poor: "Some cookies missing 'Secure' flag"
         },
         actualReasonsForFailure: [
-            "Secure flag not set",
-            "Cookies served over HTTP"
+            "One or more cookies are set without the 'Secure' flag",
+            "Cookies are being sent over an unencrypted (HTTP) connection",
+            "Session cookies are exposed to interception"
         ],
         howToOvercomeFailure: [
-            "Enable Secure flag on cookies",
-            "Serve cookies only over HTTPS"
+            "Ensure all application cookies are set with the 'Secure' attribute",
+            "Enforce HTTPS site-wide so that secure cookies are always transmittable",
+            "Audit third-party scripts that may be setting insecure cookies"
         ]
     },
     Cookies_HttpOnly: {
         title: "HttpOnly Cookies",
-        whatThisParameterIs: "HttpOnly Cookies Flag prevents client-side scripts from accessing cookies, mitigating XSS attacks.",
-        whatItCalculates: "It iterates through all cookies and verifies the presence of the HttpOnly attribute.",
-        whyItMatters: "The HttpOnly flag protects session cookies from being stolen via XSS vulnerabilities.",
+        whatThisParameterIs: "The 'HttpOnly' flag prevents website scripts from touching your sensitive cookies, adding an extra layer of protection.",
+        whatItCalculates: "It verifies if all cookies set by the page have the 'HttpOnly' attribute.",
+        whyItMatters: "The 'HttpOnly' flag acts as a shield, preventing scripts from stealing your session cookies even if a hacker finds a way to run code on your page.",
         thresholds: {
-            good: "HttpOnly flag enabled",
-            needsImprovement: "Some cookies missing HttpOnly",
-            poor: "HttpOnly not used"
+            good: "All cookies are HttpOnly",
+            poor: "Some cookies missing 'HttpOnly' flag"
         },
         actualReasonsForFailure: [
-            "HttpOnly flag missing",
-            "Cookies accessible via JavaScript"
+            "Some cookies are set without the 'HttpOnly' flag, making them accessible to JavaScript",
+            "Potentially sensitive session identifiers are accessible to client-side scripts",
+            "Insecure cookie configuration increases risk of session hijacking"
         ],
         howToOvercomeFailure: [
-            "Enable HttpOnly flag",
-            "Limit JavaScript access to cookies"
+            "Set the 'HttpOnly' attribute on all sensitive cookies, especially session IDs",
+            "Limit the scope of cookies using the 'Path' and 'Domain' attributes",
+            "Configure your application framework to default to HttpOnly for all cookies"
         ]
     },
     SQLi_Exposure: {
         title: "SQL Injection Exposure",
-        whatThisParameterIs: "SQL Injection Exposure checks for common patterns that indicate database vulnerabilities.",
-        whatItCalculates: "It sends test payloads (like ' OR '1'='1) to input fields or URL parameters and analyzes the response for database error messages.",
-        whyItMatters: "SQL injection is a critical vulnerability that can allow attackers to steal, delete, or modify your entire database.",
+        whatThisParameterIs: "This check looks for 'holes' in your website that could allow hackers to sneak into your database and steal information.",
+        whatItCalculates: "It sends test payloads to input fields and analyzes the response for database errors or significant length differences.",
+        whyItMatters: "A single 'hole' could let a hacker see your entire customer list. Fixing these ensures your private data stays private.",
         thresholds: {
-            good: "No SQL injection indicators",
-            needsImprovement: "Suspicious response behavior",
-            poor: "SQL error patterns detected"
+            good: "No SQL injection indicators detected",
+            poor: "Exposed database error or significant response length change"
         },
         actualReasonsForFailure: [
-            "Unsanitized user input",
-            "Exposed database error messages"
+            "An exposed database error message was detected in response to a test payload",
+            "A significant difference in response length was found, suggesting potential blind SQL injection",
+            "The application does not properly sanitize user-provided input parameters"
         ],
         howToOvercomeFailure: [
-            "Use parameterized queries",
-            "Sanitize and validate inputs",
-            "Hide database error messages"
+            "Use parameterized queries (Prepared Statements) for all database interactions",
+            "Ensure strict input validation and sanitization on all user-controlled data",
+            "Handle database errors gracefully and avoid returning detailed error messages to the client"
         ]
     },
     XSS: {
         title: "Cross-Site Scripting (XSS)",
-        whatThisParameterIs: "Cross-Site Scripting (XSS) Protection involves sanitizing user input and preventing execution of malicious scripts.",
-        whatItCalculates: "It simulates input reflection by injecting safe test strings and checking if they are returned unescaped in the HTML response.",
-        whyItMatters: "XSS vulnerabilities allow attackers to execute arbitrary scripts in victims' browsers, potentially stealing sessions or data.",
+        whatThisParameterIs: "XSS protection stops hackers from 'injecting' their own malicious code into your website to steal user data or take over accounts.",
+        whatItCalculates: "It injects a script payload and checks if it executes (triggering a dialog) or is reflected unescaped in the HTML.",
+        whyItMatters: "XSS is like a Trojan horse—it sneaks malicious code into your site to trick your users. Stopping it protects both you and your visitors.",
         thresholds: {
-            good: "No reflected scripts",
-            needsImprovement: "Partial input sanitization",
-            poor: "Script payload reflected"
+            good: "No execution or reflection of script payload",
+            needsImprovement: "Payload reflected but not executed",
+            poor: "Script payload executed (dialog triggered)"
         },
         actualReasonsForFailure: [
-            "User input not escaped",
-            "Inline script execution allowed"
+            "The test script payload was successfully executed by the browser (XSS confirmed)",
+            "The script payload was reflected unescaped in the response, creating a high risk of XSS",
+            "The application lacks proper output encoding for user-provided reflections"
         ],
         howToOvercomeFailure: [
-            "Escape user-generated content",
-            "Implement CSP",
-            "Avoid inline JavaScript"
+            "Implement strict, context-sensitive output encoding for all user-generated content",
+            "Adopt a robust Content Security Policy (CSP) to block unauthorized script execution",
+            "Avoid using 'dangerouslySetInnerHTML' or similar functions without extreme caution"
         ]
     },
     Cookie_Consent: {
         title: "Cookie Consent Banner",
-        whatThisParameterIs: "Cookie Consent Banner is a mechanism to obtain user permission for tracking cookies.",
-        whatItCalculates: "It searches the DOM for common cookie banner text/identifiers or checks for specific cookie consent management platform (CMP) scripts.",
-        whyItMatters: "Transparent cookie practices and consent mechanisms are legal requirements in many jurisdictions (GDPR/CCPA).",
+        whatThisParameterIs: "A Cookie Consent banner asks visitors for permission before tracking them, which is required by modern privacy laws.",
+        whatItCalculates: "It searches the DOM for common cookie consent banner patterns, selectors, and visibility.",
+        whyItMatters: "A clear cookie banner builds trust by being upfront with your visitors, showing them that you respect their data and their choices.",
         thresholds: {
-            good: "Consent banner present",
-            needsImprovement: "Banner unclear",
-            poor: "No consent banner"
+            good: "Visible cookie consent banner found",
+            poor: "No visible cookie consent banner matching common patterns"
         },
         actualReasonsForFailure: [
-            "No cookie banner",
-            "Hidden or non-functional banner"
+            "No visible element matching common cookie consent banner patterns was detected",
+            "The cookie consent banner is present but not visible to the user",
+            "The banner does not follow standard compliance patterns used by audit engines"
         ],
         howToOvercomeFailure: [
-            "Implement cookie consent banner",
-            "Allow users to manage preferences"
+            "Implement a clearly visible cookie consent banner that loads on initial page entry",
+            "Ensure the banner is compliant with GDPR, CCPA, and other relevant privacy regulations",
+            "Verify the banner is not hidden by CSS (e.g., display: none or zero opacity)"
         ]
     },
     Privacy_Policy: {
         title: "Privacy Policy",
-        whatThisParameterIs: "Privacy Policy Availability ensures users can access information about data handling practices.",
-        whatItCalculates: "It scans the page (especially footer links) for anchor tags containing text like 'Privacy Policy' or 'Privacy'.",
-        whyItMatters: "A clear privacy policy builds trust by informing users exactly how their personal data is collected and used.",
+        whatThisParameterIs: "A clear Privacy Policy tells your visitors exactly how you handle their personal data, building trust and meeting legal requirements.",
+        whatItCalculates: "It scans all visible links on the page for anchor tags related to 'Privacy Policy' or 'Privacy'.",
+        whyItMatters: "A clear policy is a huge sign of professionalism. It tells users you take their privacy seriously and have nothing to hide.",
         thresholds: {
-            good: "Privacy policy accessible",
-            needsImprovement: "Hard to find policy",
-            poor: "No privacy policy"
+            good: "Visible privacy policy link found",
+            poor: "No visible privacy policy link matching patterns found"
         },
         actualReasonsForFailure: [
-            "Privacy policy missing",
-            "Broken policy link"
+            "No visible link matching 'Privacy Policy' text or URL patterns was found",
+            "The privacy policy link is present but hidden from view or non-functional",
+            "The link exists but its text is not recognizable as a privacy policy disclosure"
         ],
         howToOvercomeFailure: [
-            "Add a privacy policy page",
-            "Link it in footer or menu"
+            "Ensure a clearly visible 'Privacy Policy' link is present on every page, typically in the footer",
+            "Verify the link text is recognizable (e.g., 'Privacy Policy' or 'Data Policy')",
+            "Ensure the policy page is reachable and provides comprehensive privacy disclosures"
         ]
     },
     Admin_Panel_Public: {
         title: "Public Admin Panel Exposure",
-        whatThisParameterIs: "Public Admin Panel Exposure checks if sensitive administrative interfaces are accessible to the public.",
-        whatItCalculates: "It probes common administrative paths (e.g., /admin, /wp-admin, /login) to see if they return a 200 OK status accessible to unauthenticated users.",
-        whyItMatters: "Hiding admin login pages reduces the risk of brute-force attacks and automated vulnerability scanning.",
+        whatThisParameterIs: "This check ensures your website's 'control center' isn't visible to the public, preventing hackers from trying to break in.",
+        whatItCalculates: "It probes common administrative paths and checks for successful responses containing admin-related keywords.",
+        whyItMatters: "Hiding these 'backdoors' makes it much harder for automated hacker programs to find a way into your website's private areas.",
         thresholds: {
-            good: "No public admin panels",
-            needsImprovement: "Restricted admin paths",
-            poor: "Admin panel publicly accessible"
+            good: "No public admin panels detected",
+            poor: "Public admin panel exposed or accessible"
         },
         actualReasonsForFailure: [
-            "Admin URLs publicly accessible",
-            "No access restrictions"
+            "An administrative panel was detected at a common path (e.g., /admin, /wp-admin)",
+            "The admin panel is publicly accessible without proper authentication or IP restrictions",
+            "Common admin keywords were found in a page that should be restricted"
         ],
         howToOvercomeFailure: [
-            "Restrict admin access",
-            "Use authentication and IP restrictions"
+            "Restrict access to administrative panels using IP whitelisting or VPNs",
+            "Move admin interfaces to non-standard, non-public URLs",
+            "Enforce strong authentication (MFA) on all administrative entry points"
         ]
     },
     MFA_Enabled: {
         title: "Multi-Factor Authentication (MFA)",
-        whatThisParameterIs: "Multi-Factor Authentication (MFA) Availability checks for indicators that the site supports stronger authentication methods.",
-        whatItCalculates: "It detects the presence of SSO (Single Sign-On) options or text indicating '2FA', 'MFA', or 'Authenticator' on login pages.",
-        whyItMatters: "MFA significantly reduces the risk of account compromise, even if a password is stolen.",
+        whatThisParameterIs: "MFA (Multi-Factor Authentication) adds an extra layer of security beyond just a password, like a code sent to your phone.",
+        whatItCalculates: "It scans the page for MFA-related input fields, specific keywords ('2FA', 'OTP'), or SSO/Federated login indicators.",
+        whyItMatters: "Even if someone steals your password, MFA ensures they still can't get in. It's the ultimate protection for your most sensitive accounts.",
         thresholds: {
-            good: "MFA or SSO detected",
-            needsImprovement: "MFA unclear",
-            poor: "No MFA indicators"
+            good: "MFA or SSO indicators detected on the login page",
+            poor: "No visible MFA or SSO indicators found"
         },
         actualReasonsForFailure: [
-            "Single-factor authentication only",
-            "No MFA-related UI elements"
+            "No explicit Multi-Factor Authentication (MFA) or SSO options were detected on the entry page",
+            "The login form appears to use single-factor authentication only",
+            "MFA indicators are missing from visible page text and input attributes"
         ],
         howToOvercomeFailure: [
-            "Enable MFA for logins",
-            "Use SSO or authenticator-based MFA"
+            "Ensure MFA is available and enforced for all user accounts, especially sensitive ones",
+            "Provide modern authentication options like SSO (Google, Microsoft) or Authenticator apps",
+            "Display clear indicators on the login page if MFA is required in a subsequent step"
         ]
     },
     Google_Safe_Browsing: {
         title: "Google Safe Browsing",
-        whatThisParameterIs: "Google Safe Browsing Status indicates if the site is listed in Google's database of unsafe websites.",
-        whatItCalculates: "It queries the Google Safe Browsing API with the site's URL to check for malware or phishing flags.",
-        whyItMatters: "Being blacklisted by Google Safe Browsing results in a 'Deceptive Site Ahead' warning that blocks almost all traffic.",
+        whatThisParameterIs: "Google Safe Browsing checks if your site has been 'red-flagged' by Google for containing dangerous software or scams.",
+        whatItCalculates: "It queries the Google Safe Browsing API to check for active threat flags against the URL.",
+        whyItMatters: "If Google flags your site as dangerous, they will block almost all your traffic with a giant warning—fixing this protects your reputation and traffic.",
         thresholds: {
-            good: "URL not found in Google Safe Browsing database",
-            poor: "URL flagged as unsafe"
+            good: "URL not flagged by Google Safe Browsing",
+            poor: "URL flagged as unsafe (Malware/Phishing)"
         },
         actualReasonsForFailure: [
-            "Malware detected on the website",
-            "Previously compromised files",
-            "Suspicious redirects or injected scripts"
+            "The URL is currently flagged as unsafe (malware or phishing) in Google's database",
+            "The API request to Google Safe Browsing failed, preventing a definitive check",
+            "Matches for social engineering or unwanted software were found for this domain"
         ],
         howToOvercomeFailure: [
-            "Remove malware and suspicious scripts",
-            "Request a review in Google Search Console",
-            "Keep CMS and plugins updated"
+            "Check the 'Security Issues' report in Google Search Console for specific details",
+            "Remove all malicious content, injected scripts, and compromised files immediately",
+            "Request a security review from Google after the site has been fully cleaned"
         ]
     },
     Blacklist: {
         title: "Domain Blacklist Status",
-        whatThisParameterIs: "Domain Blacklist Status checks if the domain is present on major security blocklists.",
-        whatItCalculates: "It cross-references the domain against aggregated DNSBL (DNS-based Blackhole List) databases.",
-        whyItMatters: "Email and security blacklists can cause your emails to be marked as spam and your site to be blocked by firewalls.",
+        whatThisParameterIs: "Domain Blacklist Status shows if your website has been added to a 'do not visit' list used by security companies worldwide.",
+        whatItCalculates: "It cross-references the domain and URL against aggregated reputation and security databases.",
+        whyItMatters: "Being blacklisted means your site is marked as 'untrustworthy' by the internet's security systems, which can kill your traffic and business.",
         thresholds: {
-            good: "Domain not blacklisted",
-            poor: "Domain found in blacklist databases"
+            good: "Domain not present on major security blacklists",
+            poor: "Domain or URL found in one or more blacklists"
         },
         actualReasonsForFailure: [
-            "Malware hosting",
-            "Phishing activity",
-            "Past security breaches"
+            "The domain or URL is listed in the Google Safe Browsing or VirusTotal blacklist",
+            "One or more security vendors have flagged this domain as malicious",
+            "The domain has been associated with past malware hosting or phishing activity"
         ],
         howToOvercomeFailure: [
-            "Clean infected files",
-            "Request delisting from blacklist providers",
-            "Improve server security practices"
+            "Review detailed security reports from Google and VirusTotal to find the root cause",
+            "Remove any malicious files or server configurations that triggered the blacklist",
+            "Request delisting from each service individually after resolving the security issues"
         ]
     },
     Malware_Scan: {
         title: "Malware Detection",
-        whatThisParameterIs: "Malware Detection scans the website's public files for signatures of known malicious code.",
-        whatItCalculates: "It analyzes response content and external resources for patterns matching known malware signatures or webshells.",
-        whyItMatters: "Detecting and removing malware is critical to protecting your users' devices and your site's reputation.",
+        whatThisParameterIs: "Malware Detection scans your site for hidden 'viruses' or digital traps that could harm your visitors' computers.",
+        whatItCalculates: "It queries the VirusTotal API to check for malicious or suspicious detections from dozens of security vendors.",
+        whyItMatters: "Regular scans ensure your site isn't secretly spreading viruses to your visitors, which would permanently damage their trust in your brand.",
         thresholds: {
-            good: "No malware detected",
-            poor: "Malware detected"
+            good: "No malicious signatures detected",
+            poor: "Malicious signatures detected by security vendors"
         },
         actualReasonsForFailure: [
-            "Injected malicious scripts",
-            "Compromised server or CMS",
-            "Unpatched vulnerabilities"
+            "One or more security vendors have flagged the domain as containing malicious content",
+            "The scan detected signatures consistent with malware, trojans, or webshells",
+            "The domain is listed as 'malicious' or 'suspicious' by VirusTotal vendors"
         ],
         howToOvercomeFailure: [
-            "Remove malicious files",
-            "Harden server security",
-            "Run regular security scans"
+            "Investigate the specific detections listed on VirusTotal for your domain",
+            "Conduct a full server-side scan of your files and database for malicious code",
+            "Harden your server security and update all CMS, themes, and plugins"
         ]
     },
     Forms_Use_HTTPS: {
         title: "Secure Form Submission",
-        whatThisParameterIs: "Secure Form Submission ensures that all data entered into forms is sent securely.",
-        whatItCalculates: "It parses action attributes of all <form> tags to ensure they start with https:// or are relative paths on an HTTPS site.",
-        whyItMatters: "Submitting forms over HTTP exposes user data (passwords, credit cards) to anyone monitoring the network.",
+        whatThisParameterIs: "Secure Form Submission ensures that any info someone types into your forms (like a password) is sent safely and privately.",
+        whatItCalculates: "It parses the 'action' attributes of all <form> tags to ensure they use the HTTPS protocol scheme.",
+        whyItMatters: "When users send you their info, they expect it to be private. Secure forms ensure that hackers can't 'listen in' on what your users are typing.",
         thresholds: {
             good: "All forms submit data over HTTPS",
-            poor: "One or more forms use HTTP"
+            poor: "One or more forms use insecure HTTP for submission"
         },
         actualReasonsForFailure: [
-            "Form action points to HTTP URL",
-            "Mixed content issues"
+            "One or more forms on the page are configured to submit data over an unencrypted (HTTP) connection",
+            "The form action URL uses 'http://' instead of 'https://'",
+            "Mixed content issues are preventing secure form submission paths"
         ],
         howToOvercomeFailure: [
-            "Update form actions to HTTPS",
-            "Force HTTPS site-wide"
+            "Update the 'action' attribute of all <form> tags to use absolute HTTPS URLs",
+            "Ensure the entire page is served over HTTPS to avoid protocol mismatch",
+            "Use relative paths for form actions if your entire site is forced to HTTPS"
         ]
     },
     GDPR_CCPA: {
         title: "GDPR / CCPA Compliance",
-        whatThisParameterIs: "GDPR / CCPA Compliance checks for explicit user data rights and consent mechanisms.",
-        whatItCalculates: "It looks for text or links related to 'Do Not Sell My Personal Information', 'GDPR', 'CCPA', or 'Cookie Settings'.",
-        whyItMatters: "Adhering to privacy laws avoids hefty fines and demonstrates respect for user privacy rights.",
+        whatThisParameterIs: "This check looks for signs that your site respects global privacy laws, giving users control over their data.",
+        whatItCalculates: "It scans page text for keywords like 'GDPR' or 'CCPA' and detects standard compliance widgets (CMPs).",
+        whyItMatters: "Following privacy laws isn't just about avoiding fines—it's about showing your global audience that you respect their personal rights.",
         thresholds: {
-            good: "Consent notice found",
-            poor: "No consent notice found"
+            good: "GDPR/CCPA notice or standard compliance widgets detected",
+            poor: "No GDPR/CCPA mention or compliant widgets found"
         },
         actualReasonsForFailure: [
-            "No consent banner implemented",
-            "Hidden or inaccessible consent UI"
+            "No specific text mentioning GDPR, CCPA, or user data rights was found on the page",
+            "Standard compliance widgets or platform selectors were not detected",
+            "Information about data rights is missing or not easily discoverable"
         ],
         howToOvercomeFailure: [
-            "Add GDPR/CCPA compliant consent banner",
-            "Allow users to manage consent preferences"
+            "Ensure your site explicitly mentions GDPR and CCPA compliance in its privacy sections",
+            "Implement a compliant Consent Management Platform (CMP) or visible link to 'Do Not Sell'",
+            "Clear and explicit mention of data handling rights should be accessible to all users"
         ]
     },
     Data_Collection: {
         title: "Data Collection Disclosure",
-        whatThisParameterIs: "Checks whether the site discloses how user data is collected and used.",
-        whyItMatters: "Transparency about data usage is required for privacy compliance.",
+        whatThisParameterIs: "Data Collection Disclosure ensures you are being honest with your visitors about what information you are collecting from them.",
+        whatItCalculates: "It scans visible links and headings for explicit mentions of 'Data Collection' or 'Information We Collect'.",
+        whyItMatters: "Honesty is the best policy. Being clear about what data you collect builds a strong, honest relationship with your customers.",
         thresholds: {
-            good: "Data collection disclosure found",
-            poor: "No disclosure found"
+            good: "Explicit data collection disclosure found",
+            poor: "No visible details about data collection were found"
         },
         actualReasonsForFailure: [
-            "Missing privacy or data usage pages",
-            "No clear data usage explanation"
+            "No visible links or headings were found that explicitly mention data collection or usage",
+            "Disclosure is buried or missing standard keywords like 'Information We Collect'",
+            "The site lacks a dedicated section explaining its data gathering practices"
         ],
         howToOvercomeFailure: [
-            "Add a detailed privacy policy",
-            "Clearly explain data usage and cookies"
+            "Add a clearly marked section in your privacy policy detailing what data is collected",
+            "Ensure that headers or links related to 'Data Usage' are visible in the footer or menu",
+            "Be transparent about third-party data sharing and cookie collection"
         ]
     },
     Weak_Default_Credentials: {
         title: "Weak or Default Credentials",
-        whatThisParameterIs: "Checks for indicators of weak or default login credentials.",
-        whyItMatters: "Weak credentials increase the risk of unauthorized access.",
+        whatThisParameterIs: "This check looks for 'obvious' passwords (like 'admin' or '1234') that make it easy for hackers to take control of your site.",
+        whatItCalculates: "It scans page text for default credentials and attempts a test login using common 'admin/admin' patterns.",
+        whyItMatters: "Weak passwords are an open invitation for hackers. Using strong, unique credentials is the simplest way to keep your site safe.",
         thresholds: {
-            good: "No weak credential indicators found",
-            poor: "Weak or default credentials detected"
+            good: "No default or weak credential indicators detected",
+            poor: "Credentials mentioned in text or weak login attempt succeeded"
         },
         actualReasonsForFailure: [
-            "Default usernames or passwords",
-            "Missing CSRF protection",
-            "Unprotected login forms"
+            "Default credentials (e.g., 'admin/admin') were explicitly found in the page text",
+            "The application was successfully accessed during an automated test with weak credentials",
+            "A login form exists but does not appear to enforce strong credential requirements"
         ],
         howToOvercomeFailure: [
-            "Enforce strong password policies",
-            "Enable CSRF protection and captcha",
-            "Remove default credentials"
-        ]
-    },
-    HTML_Doctype: {
-        title: "HTML Doctype",
-        whatThisParameterIs: "Checks whether a valid HTML5 doctype is declared.",
-        whyItMatters: "Correct doctype ensures consistent rendering across browsers.",
-        thresholds: {
-            good: "HTML5 doctype present",
-            poor: "Missing or incorrect doctype"
-        },
-        actualReasonsForFailure: [
-            "DOCTYPE missing",
-            "Legacy or invalid doctype"
-        ],
-        howToOvercomeFailure: [
-            "Declare <!DOCTYPE html> at document start"
-        ]
-    },
-    Character_Encoding: {
-        title: "Character Encoding",
-        whatThisParameterIs: "Checks whether a character encoding is defined.",
-        whyItMatters: "Missing charset can cause text rendering and security issues.",
-        thresholds: {
-            good: "Charset defined",
-            poor: "Charset missing"
-        },
-        actualReasonsForFailure: [
-            "No meta charset tag",
-            "No charset in HTTP headers"
-        ],
-        howToOvercomeFailure: [
-            "Add <meta charset='UTF-8'>",
-            "Define charset in server headers"
-        ]
-    },
-    Browser_Console_Errors: {
-        title: "Browser Console Errors",
-        whatThisParameterIs: "Detects JavaScript and runtime errors in the browser console.",
-        whyItMatters: "Console errors can break functionality and user experience.",
-        thresholds: {
-            good: "No console errors",
-            poor: "Console errors detected"
-        },
-        actualReasonsForFailure: [
-            "JavaScript runtime errors",
-            "Missing or broken scripts"
-        ],
-        howToOvercomeFailure: [
-            "Fix JavaScript errors",
-            "Test scripts across browsers"
-        ]
-    },
-    Geolocation_Request: {
-        title: "Geolocation Permission Request",
-        whatThisParameterIs: "Checks whether the page requests geolocation access on load.",
-        whyItMatters: "Unnecessary permission requests reduce user trust.",
-        thresholds: {
-            good: "No geolocation request on load",
-            poor: "Geolocation requested automatically"
-        },
-        actualReasonsForFailure: [
-            "Geolocation API called on page load"
-        ],
-        howToOvercomeFailure: [
-            "Request location only when necessary",
-            "Explain why location access is required"
-        ]
-    },
-    Input_Paste_Allowed: {
-        title: "Paste Allowed in Inputs",
-        whatThisParameterIs: "Checks whether users can paste into input fields.",
-        whyItMatters: "Blocking paste harms accessibility and usability.",
-        thresholds: {
-            good: "Paste allowed",
-            poor: "Paste blocked"
-        },
-        actualReasonsForFailure: [
-            "onpaste handlers blocking paste",
-            "Custom JS preventing paste"
-        ],
-        howToOvercomeFailure: [
-            "Allow paste events",
-            "Avoid unnecessary input restrictions"
-        ]
-    },
-    Notification_Request: {
-        title: "Notification Permission Request",
-        whatThisParameterIs: "Checks whether notification permission is requested on page load.",
-        whyItMatters: "Aggressive permission requests reduce trust and engagement.",
-        thresholds: {
-            good: "No notification request on load",
-            poor: "Notification requested automatically"
-        },
-        actualReasonsForFailure: [
-            "Notification API triggered on load"
-        ],
-        howToOvercomeFailure: [
-            "Request notifications only after user interaction"
+            "Remove any mention of default usernames or passwords from your public pages",
+            "Change all default administrative credentials immediately after installation",
+            "Enforce a strong password policy and implement account lockout for failed attempts"
         ]
     },
     Third_Party_Cookies: {
         title: "Third-Party Cookies",
-        whatThisParameterIs: "Checks whether third-party cookies are set.",
-        whyItMatters: "Third-party cookies raise privacy and compliance concerns.",
+        whatThisParameterIs: "This check identifies 'outside' trackers that are following your visitors, which can impact privacy and load times.",
+        whatItCalculates: "It compares the domain of each cookie with the main hostname to identify external sources.",
+        whyItMatters: "Reducing 'outsider' tracking makes your site feel more private and often helps it load faster for your visitors.",
         thresholds: {
             good: "No third-party cookies detected",
-            poor: "Third-party cookies detected"
+            poor: "One or more third-party cookies identified"
         },
         actualReasonsForFailure: [
-            "Third-party scripts setting cookies",
-            "Tracking pixels"
+            "Cookies from external domains are being stored, posing potential privacy risks",
+            "Tracking or advertising scripts are setting cookies without explicit first-party scope",
+            "Sensitive user data could be shared with external domains via cookie storage"
         ],
         howToOvercomeFailure: [
-            "Audit third-party scripts",
-            "Limit cross-domain cookie usage"
-        ]
-    },
-    Deprecated_APIs: {
-        title: "Deprecated API Usage",
-        whatThisParameterIs: "Detects usage of deprecated browser APIs.",
-        whyItMatters: "Deprecated APIs may break in future browsers.",
-        thresholds: {
-            good: "No deprecated APIs used",
-            poor: "Deprecated APIs detected"
-        },
-        actualReasonsForFailure: [
-            "Legacy JavaScript APIs",
-            "Outdated libraries"
-        ],
-        howToOvercomeFailure: [
-            "Update libraries",
-            "Replace deprecated APIs with modern alternatives"
-        ]
-    },
-    Viewport_Meta_Tag: {
-        title: "Viewport Meta Tag",
-        whatThisParameterIs: "Checks whether the viewport meta tag is present and correctly configured for responsive design.",
-        whyItMatters: "A proper viewport meta tag ensures pages scale correctly on mobile devices and improves usability and accessibility.",
-        thresholds: {
-            good: "Viewport meta tag present with width or initial-scale",
-            needsImprovement: "Viewport meta tag present but misconfigured",
-            poor: "Viewport meta tag missing"
-        },
-        actualReasonsForFailure: [
-            "Viewport meta tag missing",
-            "Viewport meta tag does not define width or initial-scale"
-        ],
-        howToOvercomeFailure: [
-            "Add <meta name='viewport' content='width=device-width, initial-scale=1'> to the head section",
-            "Verify viewport configuration using browser developer tools"
+            "Audit all third-party scripts (ads, analytics, social) to see if they are necessary",
+            "Use cookie-free alternatives for simple tracking wherever possible",
+            "Ensure that all third-party cookie usage complies with GDPR and CCPA regulations"
         ]
     },
 
@@ -1867,57 +1693,69 @@ export const InfoDetails = {
         guideLink: "https://owasp.org/www-project-top-ten/",
         whatThisMetricIs: (
             <div className="space-y-2">
-                <p>Evaluates how securely your website is configured and whether it follows modern security, privacy, and compliance best practices.</p>
-                <p>It checks encryption, security headers, vulnerabilities, malware risks, data protection, authentication safeguards, and user privacy signals.</p>
+                <p>This audit acts as a digital safety check for your website. It analyzes whether your site is a safe place for visitors to browse, share information, and do business.</p>
+                <p>We scan everything from your encryption strength and 'hacker-proof' settings to how well you protect user privacy and guard against malicious software.</p>
             </div>
         ),
-        whyItMatters: "Security issues put users, data, and your business at risk. Weak configurations can lead to breaches, malware infections, regulatory violations, and loss of trust. A secure and compliant website protects users, reduces legal exposure, and builds credibility with customers and search engines.",
+        whyItMatters: (
+            <div className="space-y-4">
+                <p>In today's world, security is the 'entrance fee' for doing business online. If visitors don't feel safe on your site, they won't stay, they won't buy, and they certainly won't return.</p>
+
+                <div>
+                    <span className="font-semibold block mb-1">A secure website gives you and your users:</span>
+                    <ul className="list-disc pl-5 space-y-1 text-sm">
+                        <li><strong>Peace of Mind:</strong> Knowing that sensitive data (like passwords and credit cards) is locked behind industrial-strength encryption.</li>
+                        <li><strong>Instant Trust:</strong> Showing the 'Secure' padlock that tells visitors their connection is private and authentic.</li>
+                        <li><strong>Brand Protection:</strong> Preventing your site from being flagged as 'Dangerous' or 'Not Secure' by browsers and search engines.</li>
+                        <li><strong>Legal Safety:</strong> Meeting essential privacy standards (like GDPR) to avoid fines and show respect for user rights.</li>
+                        <li><strong>Hacker Resilience:</strong> Stopping digital intruders before they can cause damage to your site or reputation.</li>
+                    </ul>
+                </div>
+
+                <p className="font-medium">A secure site isn't just a technical requirement—it's a commitment to your customers' safety.</p>
+            </div>
+        ),
         whatToDoForAGoodScore: (
             <ul className="list-disc pl-5 space-y-2">
                 <li>
-                    <span className="font-semibold">Secure your site with HTTPS and valid SSL:</span> Ensure your site uses HTTPS, has a valid SSL certificate, and supports modern encryption protocols.
+                    <span className="font-semibold">Secure your site with HTTPS and valid SSL:</span> Ensure your site uses HTTPS, has a valid SSL certificate (not nearing expiry), and supports modern encryption protocols (TLS 1.2+).
                 </li>
                 <li>
-                    <span className="font-semibold">Harden security headers:</span> Use headers that protect against common attacks, such as clickjacking, content injection, and MIME sniffing.
+                    <span className="font-semibold">Identify and Patch Critical Vulnerabilities:</span> Use tools to scan for and fix issues like SQL Injection, Cross-Site Scripting (XSS), and exposed database errors.
                 </li>
                 <li>
-                    <span className="font-semibold">Protect against common vulnerabilities:</span> Prevent exposure to issues like SQL injection, cross-site scripting (XSS), and insecure admin access.
+                    <span className="font-semibold">Harden Security Headers:</span> Implement robust headers like Content Security Policy (CSP), HSTS, X-Frame-Options, and X-Content-Type-Options to stop code injection and clickjacking.
                 </li>
                 <li>
-                    <span className="font-semibold">Avoid weak or default credentials:</span> Ensure login systems are protected with secure credentials, proper access controls, and modern authentication practices.
+                    <span className="font-semibold">Monitor Malware and Domain Reputation:</span> Regularly check against Google Safe Browsing and global blacklists to ensure your site hasn't been compromised or flagged as malicious.
                 </li>
                 <li>
-                    <span className="font-semibold">Enable multi-factor authentication where possible:</span> Adding MFA or secure single sign-on greatly reduces account takeover risks.
+                    <span className="font-semibold">Protect Administrative Access:</span> Ensure administrative panels are not publicly accessible and that all login systems avoid weak or default credentials.
                 </li>
                 <li>
-                    <span className="font-semibold">Ensure cookies and forms are handled securely:</span> Cookies should be properly flagged, and forms should submit data over secure connections only.
+                    <span className="font-semibold">Secure Cookies and Authentication:</span> Sensitive cookies must have 'Secure' and 'HttpOnly' flags, and multi-factor authentication (MFA) should be supported where possible.
                 </li>
                 <li>
-                    <span className="font-semibold">Comply with privacy and data protection expectations:</span> Display cookie consent notices, privacy policies, and disclosures about how user data is collected and used.
-                </li>
-                <li>
-                    <span className="font-semibold">Prevent unnecessary permission requests:</span> Avoid requesting sensitive permissions (such as notifications or location) without clear user intent.
+                    <span className="font-semibold">Ensure Compliance and Privacy:</span> Maintain a visible Privacy Policy, display clear Cookie Consent banners, and adhere to global data protection laws like GDPR and CCPA.
                 </li>
             </ul>
         ),
         howThisScoreIsCalculated: (
             <div className="space-y-2">
-                <p>We evaluate your site across multiple security and compliance categories, including encryption, headers, vulnerabilities, authentication, malware reputation, and privacy practices.</p>
-                <p>Each check is weighted based on risk severity. Critical security issues have a stronger impact on the final score, ensuring the result reflects real-world security risk rather than cosmetic issues.</p>
+                <p>We calculate this score by performing an automated security audit that cross-references your site against 20+ critical security parameters and vulnerability databases.</p>
+                <p>Each check is assigned a weight based on its severity—from critical threats like SQL Injection and Malware (high weight) to best-practice headers and privacy signals (lower weight). The final score reflects the overall risk profile of your web environment.</p>
             </div>
         ),
         weightage: [
-            { param: "Vulnerability Scanning", weight: "35%" },
-            { param: "Browser Security & Best Practices", weight: "20%" },
-            { param: "SSL & HTTPS Security", weight: "15%" },
-            { param: "Security Headers", weight: "15%" },
-            { param: "Compliance & Privacy", weight: "10%" },
-            { param: "Access Control", weight: "5%" }
+            { param: "Critical Vulnerabilities & Malware", weight: "30%" },
+            { param: "Encryption & Transport Security", weight: "20%" },
+            { param: "Authentication & Access Control", weight: "20%" },
+            { param: "Browser Hardening & Security Headers", weight: "19%" },
+            { param: "Data Privacy & Legal Compliance", weight: "11%" }
         ]
     },
 
     // UX & Content 
-
     Text_Readability: {
         title: "Text Readability",
         whatThisParameterIs: "Text Readability analysis evaluates the complexity of your content using the Flesch Reading Ease formula.",
@@ -1929,162 +1767,179 @@ export const InfoDetails = {
             poor: "Hard to read content"
         },
         actualReasonsForFailure: [
-            "Very long sentences",
-            "Complex vocabulary with many syllables",
-            "Dense paragraphs without breaks"
+            "Very long sentences with complex grammatical structures",
+            "Vocabulary with high syllable counts and technical jargon",
+            "Dense paragraphs without adequate white space or breaks"
         ],
         howToOvercomeFailure: [
-            "Use shorter sentences",
-            "Replace complex words with simpler alternatives",
-            "Break content into smaller paragraphs"
+            "Use shorter, more direct sentences (avg 15-20 words)",
+            "Replace complex terminology with simpler alternatives",
+            "Break dense blocks of text into smaller, digestible paragraphs",
+            "Use an active voice and clear headings to guide the reader"
         ]
     },
 
     Tap_Target_Size: {
         title: "Tap Target Size",
-        whatThisParameterIs: "Tap Target Size checks if interactive elements are large enough for touch interactions.",
-        whatItCalculates: "It measures the rendered dimensions of buttons/links and verifies they meet the 48x48px (or similar) guidelines.",
-        whyItMatters: "Small tap targets cause frustration and misclicks by users on mobile devices.",
+        whatThisParameterIs: "Tap Target Size checks if interactive elements are large enough for comfortable touch interactions.",
+        whatItCalculates: "It measures the rendered dimensions of buttons/links and verifies they meet the minimum 48x48px recommended guideline.",
+        whyItMatters: "Small tap targets cause frustration, misclicks, and accessibility barriers for mobile users.",
         thresholds: {
             good: "≥ 90% tap targets meet size requirements",
-            needsImprovement: "Some targets are too small",
-            poor: "Many targets are too small"
+            needsImprovement: "Some targets are too small or close together",
+            poor: "Many interactive elements are too small for touch"
         },
         actualReasonsForFailure: [
-            "Buttons smaller than recommended size",
-            "Links placed too close together"
+            "Buttons or interactive elements are smaller than the recommended 48px size",
+            "Links or menu items are placed too close together, causing misclicks",
+            "Small icons are used as primary navigation without adequate touch area"
         ],
         howToOvercomeFailure: [
-            "Increase button and link size",
-            "Add spacing between interactive elements"
+            "Increase the size of all buttons and clickable elements to at least 48x48px",
+            "Ensure a minimum of 8px spacing (padding or margin) between interactive targets",
+            "Add padding around small links and icons to expand their hit area"
         ]
     },
     Text_Font_Size: {
         title: "Text Font Size",
-        whatThisParameterIs: "Text Font Size ensures that text is legible on mobile devices without zooming.",
-        whatItCalculates: "It checks computed font sizes of text elements against a minimum threshold (e.g., 12px or 16px).",
-        whyItMatters: "Small text forces users to zoom or squint, harming accessibility and mobile experience.",
+        whatThisParameterIs: "Text Font Size ensures that content is legible on mobile devices without requiring the user to zoom.",
+        whatItCalculates: "It checks computed font sizes against a minimum legibility threshold (typically 12px or 16px).",
+        whyItMatters: "Small text content causes eye strain and forces users to zoom, harming the mobile experience.",
         thresholds: {
-            good: "≥ 90% text meets minimum size",
-            needsImprovement: "Some text is too small",
-            poor: "Most text is too small"
+            good: "≥ 90% text meets minimum size (e.g., 16px)",
+            needsImprovement: "Some text elements are too small to read easily",
+            poor: "The majority of the page uses illegible font sizes"
         },
         actualReasonsForFailure: [
-            "Font size below recommended minimum",
-            "Overuse of small captions"
+            "Base font size is below the recommended 16px for primary content",
+            "Overuse of small captions or fine print (below 12px) for functional text",
+            "Inconsistent font scaling that makes some labels difficult to read"
         ],
         howToOvercomeFailure: [
-            "Increase base font size",
-            "Avoid scaling text too small on mobile"
+            "Increase global base font size in your CSS (16px is standard)",
+            "Avoid font sizes below 12px for any user-facing instructions or content",
+            "Use clear, high-contrast typography to improve mobile legibility"
         ]
     },
     Horizontal_Scroll_Check: {
         title: "Horizontal Scrolling",
-        whatThisParameterIs: "Horizontal Scroll Check detects if the page content overflows the viewport width.",
-        whatItCalculates: "It compares the scrollWidth of the document body against the clientWidth.",
-        whyItMatters: "Horizontal scrolling on mobile is a major usability flaw that breaks the user experience.",
+        whatThisParameterIs: "Horizontal Scroll Check detects if the page content overflows the viewport width on mobile devices.",
+        whatItCalculates: "It compares the total scrollWidth of the document against the window width to detect overflow.",
+        whyItMatters: "Unintended horizontal scrolling is a major mobile usability flaw that breaks navigation and layouts.",
         thresholds: {
-            good: "No horizontal scroll",
-            poor: "Horizontal scroll detected"
+            good: "No horizontal scroll detected",
+            poor: "Horizontal scroll detected on the primary viewport"
         },
         actualReasonsForFailure: [
-            "Fixed-width elements",
-            "Large images or tables"
+            "Fixed-width containers or elements (divs, tables) forced to exceed viewport width",
+            "Large images or media assets not properly constrained to 100% width",
+            "Wide margins or absolute positioning pushing elements outside of the view"
         ],
         howToOvercomeFailure: [
-            "Use responsive layouts",
-            "Avoid fixed-width containers"
+            "Use responsive, percentage-based widths or Flexbox/Grid layouts",
+            "Ensure all images and videos have 'max-width: 100%' set in CSS",
+            "Remove fixed pixel widths and use relative units like vw, % or rem"
         ]
     },
     Sticky_Header_Usage: {
-        title: "Sticky Header Usage",
-        whatThisParameterIs: "Sticky Header Analysis checks if fixed headers obstruct too much of the screen.",
-        whatItCalculates: "It calculates the height of fixed-position head elements relative to the viewport height.",
-        whyItMatters: "Oversized sticky headers reduce the visible area for content, frustrating users.",
+        title: "Sticky Header Analysis",
+        whatThisParameterIs: "Sticky Header Analysis checks if fixed or sticky headers obstruct an excessive portion of the screen.",
+        whatItCalculates: "It measures the height of fixed-position head elements and compares it to the viewport height.",
+        whyItMatters: "Oversized sticky headers reduce the reading area and clutter the UI on smaller screens.",
         thresholds: {
-            good: "Header height within limit",
-            poor: "Header too tall"
+            good: "Sticky header height within a reasonable limit",
+            poor: "Header is too tall and obstructs content"
         },
         actualReasonsForFailure: [
-            "Large fixed headers",
-            "Multiple stacked sticky elements"
+            "Large fixed headers occupying more than 15-20% of the screen height",
+            "Multiple stacked sticky elements (e.g., promo bar + main navigation)",
+            "Headers that do not collapse or shrink upon scrolling down"
         ],
         howToOvercomeFailure: [
-            "Reduce header height",
-            "Collapse header on scroll"
+            "Reduce the vertical height of your fixed header on mobile devices",
+            "Implement a 'hide on scroll' behavior for the header to maximize screen space",
+            "Combine multiple sticky elements into a single, compact navigation bar"
         ]
     },
     Navigation_Depth: {
         title: "Navigation Depth",
-        whatThisParameterIs: "Navigation Depth measures how many clicks it takes to reach specific pages.",
-        whatItCalculates: "It analyzes the URL structure or crawl depth to determine the distance from the homepage.",
-        whyItMatters: "Deeply buried content is harder for users and search engines to find.",
+        whatThisParameterIs: "Navigation Depth measures the number of clicks required for a user to reach specific pages from the homepage.",
+        whatItCalculates: "It analyzes the URL path structure to determine the distance in 'clicks' from the root domain.",
+        whyItMatters: "Content buried too deep is difficult for users to discover and harder for search engines to index.",
         thresholds: {
-            good: "≥ 80% links ≤ 3 levels deep",
-            needsImprovement: "Some deep links",
-            poor: "Many deep links"
+            good: "≥ 80% links within 3 clicks of the homepage",
+            needsImprovement: "Significant content buried 4+ levels deep",
+            poor: "Most primary content is extremely deep in the hierarchy"
         },
         actualReasonsForFailure: [
-            "Over-nested URLs",
-            "Complex menu structure"
+            "Overly nested URL structures (e.g., more than 4 levels of subfolders)",
+            "A complex or inaccessible menu structure that hides important landing pages",
+            "Core content missing direct links from parent or category pages"
         ],
         howToOvercomeFailure: [
-            "Flatten navigation hierarchy",
-            "Improve internal linking"
+            "Flatten your site's navigation hierarchy to ensure content is reached in 3 clicks or less",
+            "Improve internal linking strategy by adding 'Related Content' or category sidebars",
+            "Simplify the main menu to focus on high-level navigation paths"
         ]
     },
     Intrusive_Interstitials: {
         title: "Intrusive Interstitials",
-        whatThisParameterIs: "Intrusive Interstitials Check detects popups that block the main content.",
-        whatItCalculates: "It identifies fixed-position elements with high z-index that cover a significant portion of the viewport on load.",
-        whyItMatters: "Popups that block content annoy users and can trigger SEO penalties.",
+        whatThisParameterIs: "Intrusive Interstitials detection identifies popups or overlays that obstruct the user's view of the main content.",
+        whatItCalculates: "It searches for large elements with high z-index that cover a significant portion of the viewport on load.",
+        whyItMatters: "aggressive popups frustrate users, increase bounce rates, and can trigger SEO ranking penalties.",
         thresholds: {
-            good: "No intrusive interstitials",
-            poor: "Intrusive elements detected"
+            good: "No intrusive interstitials detected",
+            poor: "Intrusive elements or full-page overlays identified"
         },
         actualReasonsForFailure: [
-            "Full-screen popups",
-            "Scroll-blocking modals"
+            "Full-screen popups or 'splash' pages that block content immediately upon load",
+            "Scroll-blocking modals that prevent interaction with the underlying page",
+            "Oversized 'Install App' or 'Subscribe' banners that dominate the screen"
         ],
         howToOvercomeFailure: [
-            "Use non-intrusive banners",
-            "Delay popups until user interaction"
+            "Use non-intrusive banners or toast notifications that only cover a small part of the screen",
+            "Delay the appearance of popups until the user has spent time on the page or scrolled down",
+            "Ensure 'Close' buttons are prominent, easy to hit, and clear on all screen sizes"
         ]
     },
     Image_Stability: {
         title: "Image Stability",
-        whatThisParameterIs: "Image Stability checks if images have explicit dimensions to prevent layout shifts.",
-        whatItCalculates: "It verifies that width and height attributes (or CSS aspect-ratio) are set on image elements.",
-        whyItMatters: "Images without dimensions cause the layout to jump as they load, creating a jarring experience.",
+        whatThisParameterIs: "Image Stability checks if media elements have predefined dimensions to prevent layout shifts during page load.",
+        whatItCalculates: "It verifies the presence of 'width' and 'height' attributes or CSS 'aspect-ratio' on images.",
+        whyItMatters: "Images without dimensions cause 'Cumulative Layout Shift', which makes the page jump around as content loads.",
         thresholds: {
-            good: "≥ 90% images stable",
-            poor: "Many unstable images"
+            good: "≥ 90% images are stable with explicit dimensions",
+            poor: "Many unstable images causing layout shifts"
         },
         actualReasonsForFailure: [
-            "Missing width/height attributes",
-            "No aspect-ratio defined"
+            "Missing explicit 'width' and 'height' attributes on <img> tags",
+            "No 'aspect-ratio' defined in CSS to reserve space for dynamically loaded media",
+            "Background images without containing elements that maintain their space"
         ],
         howToOvercomeFailure: [
-            "Define width and height",
-            "Use CSS aspect-ratio"
+            "Always include explicit 'width' and 'height' attributes for all static images",
+            "Use the 'aspect-ratio' property in CSS for responsive images to reserve vertical space",
+            "Use placeholders or skeleton loaders for large media assets"
         ]
     },
     Breadcrumbs: {
         title: "Breadcrumb Navigation",
-        whatThisParameterIs: "Breadcrumb Navigation checks for the presence of breadcrumb trails.",
-        whatItCalculates: "It looks for structured data (BreadcrumbList) or navigation links matching a breadcrumb pattern.",
-        whyItMatters: "Breadcrumbs provide context and an easy way for users to navigate back to parent categories.",
+        whatThisParameterIs: "Breadcrumb Navigation checks for the presence of a hierarchical trail to help users understand their location.",
+        whatItCalculates: "It scans for structured data (BreadcrumbList) or navigation elements matching breadcrumb patterns.",
+        whyItMatters: "Breadcrumbs improve navigation usability and help search engines crawl and understand your site structure.",
         thresholds: {
-            good: "Breadcrumbs detected",
-            poor: "Breadcrumbs missing"
+            good: "Breadcrumb trail or Schema markup detected",
+            poor: "No visible breadcrumbs found for multi-level paths"
         },
         actualReasonsForFailure: [
-            "No breadcrumb markup",
-            "Missing schema"
+            "No visible breadcrumb navigation trail detected on internal or deep pages",
+            "Missing 'BreadcrumbList' structured data (JSON-LD or Microdata) for SEO enrichment",
+            "Breadcrumbs are present but non-functional or not linked to parent categories"
         ],
         howToOvercomeFailure: [
-            "Add breadcrumb navigation",
-            "Use BreadcrumbList schema"
+            "Add a visible breadcrumb trail at the top of all pages except the homepage",
+            "Implement correct 'BreadcrumbList' Schema.org markup to enhance search results",
+            "Ensure the breadcrumb trail accurately reflects the current hierarchical location of the page"
         ]
     },
     Navigation_Discoverability: {

@@ -67,8 +67,8 @@ const LivePreview = ({ data, showInFullAudit = true, variant = "card" }) => {
                 <div className={`
                     relative overflow-hidden transition-all duration-500 shadow-xl
                     ${isMobile
-                        ? "w-[220px] aspect-[9/19] rounded-[2rem] border-4"
-                        : "w-full aspect-[16/10] rounded-xl border"
+                        ? "w-[220px] aspect-[393/852] border-4"
+                        : "w-full aspect-[16/9] border"
                     }
                     ${darkMode
                         ? "bg-slate-900 border-slate-700"

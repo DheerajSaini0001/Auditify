@@ -14,9 +14,6 @@ import MetricInfoModal from "../Component/MetricInfoModal";
 import ParameterInfoModal from "../Component/ParameterInfoModal";
 import { InfoDetails } from "../Component/InfoDetails";
 
-// ------------------------------------------------------
-// ✅ Icon Mapping
-// ------------------------------------------------------
 const iconMap = {
   HTTPS: Lock,
   SSL: ShieldCheck,
@@ -52,24 +49,8 @@ const iconMap = {
   Deprecated_APIs: AlertTriangle,
 };
 
-// ------------------------------------------------------
-// ✅ Educational Content
-// ------------------------------------------------------
 const educationalContent = InfoDetails;
-
-// ------------------------------------------------------
-// ✅ Score Calculation Info (Weighted Average)
-// ------------------------------------------------------
 const scoreCalculationInfo = InfoDetails.Security_And_Compliance_Methodology;
-
-// ------------------------------------------------------
-// ✅ Enhanced Shimmer
-// ------------------------------------------------------
-const ShimmerBlock = ({ className = "" }) => (
-  <div className={`relative overflow-hidden bg-gray-200 dark:bg-gray-800 rounded-lg ${className}`}>
-    <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/50 dark:via-white/10 to-transparent"></div>
-  </div>
-);
 
 const SecurityShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
   const step = steps[currentStep] || steps[0];
@@ -117,13 +98,11 @@ const SecurityShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
   );
 };
 
-// ------------------------------------------------------
-// ✅ Metric Card (Security Style)
-// ------------------------------------------------------
 const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
-  const { score, details, meta } = data || {};
-  const isPassed = score === 100;
-  const isWarning = score === 50;
+  const { status, details, meta, analysis } = data || {};
+  const isPassed = status === "pass";
+  const isWarning = status === "warning";
+  const [showAnalysis, setShowAnalysis] = React.useState(false);
 
   const Icon = iconMap[metricKey] || Shield;
   const content = educationalContent[metricKey] || { desc: "Security check.", why: "Important for security." };
@@ -134,26 +113,22 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
   const textColor = darkMode ? "text-gray-100" : "text-gray-900";
   const subTextColor = darkMode ? "text-gray-400" : "text-gray-500";
 
-  let statusColor = "text-red-600 bg-red-50 border-red-100";
+  let statusColor = darkMode ? "text-rose-400 bg-rose-500/10 border-rose-500/20" : "text-rose-600 bg-rose-50 border-rose-100";
   let statusText = "Failed";
 
-  if (darkMode) {
-    statusColor = "text-red-400 bg-red-900/20 border-red-800/30";
-  }
-
   if (isPassed) {
-    statusColor = darkMode ? "text-green-400 bg-green-900/20 border-green-800/30" : "text-green-600 bg-green-50 border-green-100";
+    statusColor = darkMode ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" : "text-emerald-600 bg-emerald-50 border-emerald-100";
     statusText = "Passed";
   } else if (isWarning) {
-    statusColor = darkMode ? "text-yellow-400 bg-yellow-900/20 border-yellow-800/30" : "text-yellow-600 bg-yellow-50 border-yellow-100";
+    statusColor = darkMode ? "text-amber-400 bg-amber-500/10 border-amber-500/20" : "text-amber-600 bg-amber-50 border-amber-100";
     statusText = "Warning";
   }
 
   const hasMetaDetails = meta && Object.keys(meta).some(k => k !== 'count' && k !== 'value');
 
   return (
-    <div className={`relative overflow-hidden rounded-xl border ${cardBg} shadow-sm hover:shadow-md transition-shadow group`}>
-      <div className="p-5 space-y-4">
+    <div className={`relative overflow-hidden rounded-xl border ${cardBg} shadow-sm hover:shadow-md transition-shadow group flex flex-col`}>
+      <div className="p-5 space-y-4 flex-grow">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
             <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
@@ -166,18 +141,34 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
               </p>
             </div>
           </div>
-          {onInfo && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onInfo();
-              }}
-              className={`p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
-              title="View Methodology"
-            >
-              <Info size={18} />
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {!isPassed && analysis && (
+              <button
+                onClick={() => setShowAnalysis(!showAnalysis)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all duration-300 ${showAnalysis
+                  ? (darkMode ? "bg-blue-500/20 text-blue-400 border border-blue-500/30" : "bg-blue-50 text-blue-700 border border-blue-100")
+                  : (darkMode ? "text-gray-400 hover:text-white hover:bg-gray-700 border border-transparent" : "text-gray-400 hover:text-gray-900 hover:bg-gray-100 border border-transparent")
+                  }`}
+                title={showAnalysis ? "Hide Detail" : "View Detail"}
+              >
+                <span className="text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">
+                  {showAnalysis ? "Hide Detail" : "View Detail"}
+                </span>
+              </button>
+            )}
+            {onInfo && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onInfo();
+                }}
+                className={`p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
+                title="View Methodology"
+              >
+                <Info size={18} />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Educational Content */}
@@ -188,58 +179,637 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
         </div>
 
         {/* Dynamic Details */}
-        <div>
-          <h4 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
-            Status Detail
-          </h4>
-          <p className={`text-sm font-medium ${isPassed ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
-            {details || "No details available"}
-          </p>
-          {meta?.value && (
-            <div className="mt-2 text-xs">
-              <span className={`font-semibold ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Detected: </span>
-              <code className={`px-1.5 py-0.5 rounded ${darkMode ? "bg-gray-700 text-gray-200" : "bg-gray-100 text-gray-800"}`}>
-                {String(meta.value)}
-              </code>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <h4 className={`text-[10px] font-bold uppercase tracking-widest ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+                Status Detail
+              </h4>
+              <div className={`h-[1px] flex-grow ${darkMode ? "bg-gray-700/50" : "bg-gray-100"}`}></div>
+            </div>
+            <div className={`p-3 rounded-lg border transition-all duration-300 ${isPassed ? (darkMode ? "bg-emerald-500/5 border-emerald-500/10" : "bg-emerald-50/50 border-emerald-100") :
+              isWarning ? (darkMode ? "bg-amber-500/5 border-amber-500/20" : "bg-amber-50/50 border-amber-100") :
+                (darkMode ? "bg-rose-500/5 border-rose-500/20" : "bg-rose-50/50 border-rose-100")
+              }`}>
+              <p className={`text-sm font-semibold leading-relaxed ${isPassed ? "text-emerald-600 dark:text-emerald-400" :
+                isWarning ? "text-amber-600 dark:text-amber-400" :
+                  "text-rose-600 dark:text-rose-400"
+                }`}>
+                {details || "No details available"}
+              </p>
+            </div>
+          </div>
+
+          {metricKey === "HTTPS" && data?.protocol && (
+            <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"} space-y-1.5`}>
+              <div className="flex justify-between items-center">
+                <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Protocol:</span>
+                <code className={`px-1.5 py-0.5 rounded font-mono font-bold ${darkMode ? "bg-blue-500/10 text-blue-400" : "bg-blue-50 text-blue-700"}`}>
+                  {data.protocol}
+                </code>
+              </div>
+            </div>
+          )}
+
+          {metricKey === "SSL" && data?.validTo && (
+            <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"} space-y-1.5`}>
+              <div className="flex justify-between items-center">
+                <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Expires:</span>
+                <code className={`px-1.5 py-0.5 rounded font-mono font-bold ${darkMode ? "bg-emerald-500/10 text-emerald-400" : "bg-emerald-50 text-emerald-700"}`}>
+                  {new Date(data.validTo).toLocaleDateString()}
+                </code>
+              </div>
+            </div>
+          )}
+
+          {metricKey === "TLS_Version" && data?.version && (
+            <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"} space-y-1.5`}>
+              <div className="flex justify-between items-center">
+                <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Version:</span>
+                <code className={`px-1.5 py-0.5 rounded font-mono font-bold ${darkMode ? "bg-purple-500/10 text-purple-400" : "bg-purple-50 text-purple-700"}`}>
+                  {data.version}
+                </code>
+              </div>
+            </div>
+          )}
+
+          {metricKey === "HSTS" && data?.hstsValue && (() => {
+            const parts = (data.hstsValue || "").split(';').map(p => p.trim().toLowerCase());
+            const maxAgePart = parts.find(p => p.startsWith('max-age='));
+            const maxAgeSeconds = maxAgePart ? parseInt(maxAgePart.split('=')[1] || "0", 10) : 0;
+            const days = Math.round(maxAgeSeconds / 86400);
+            const subdomains = parts.includes('includesubdomains');
+            const preload = parts.includes('preload');
+
+            return (
+              <div className={`mt-3 p-2 rounded border border-dashed ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"} space-y-1.5`}>
+                <div className="flex justify-between text-xs items-center">
+                  <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Max Age:</span>
+                  <span className={`font-mono font-bold ${darkMode ? "text-gray-200" : "text-gray-800"}`}>
+                    {days} days
+                  </span>
+                </div>
+                {subdomains && (
+                  <div className="flex justify-between text-xs items-center">
+                    <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Subdomains:</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-bold text-[10px] uppercase tracking-wider">Included</span>
+                  </div>
+                )}
+                {preload && (
+                  <div className="flex justify-between text-xs items-center">
+                    <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Preload:</span>
+                    <span className="text-purple-600 dark:text-purple-400 font-bold text-[10px] uppercase tracking-wider">Enabled</span>
+                  </div>
+                )}
+              </div>
+            )
+          })()}
+
+          {metricKey === "X_Frame_Options" && data?.xFrameValue && (
+            <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"} space-y-1.5`}>
+              <div className="flex justify-between items-center">
+                <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Policy:</span>
+                <code className={`px-1.5 py-0.5 rounded font-bold ${darkMode ? "bg-gray-700 text-purple-300" : "bg-gray-200 text-purple-700"}`}>
+                  {data.xFrameValue}
+                </code>
+              </div>
+            </div>
+          )}
+
+          {metricKey === "CSP" && data?.cspValue && (() => {
+            const directives = (data.cspValue || "").split(';').filter(d => d.trim());
+            return (
+              <div className={`mt-3 p-2 rounded border border-dashed ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"} space-y-2`}>
+                <div className="flex justify-between text-xs items-center mb-1 border-b border-dashed pb-2 border-gray-500/20">
+                  <span className={`font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Directives</span>
+                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${darkMode ? "bg-blue-500/20 text-blue-300" : "bg-blue-100 text-blue-700"}`}>{directives.length} Rules</span>
+                </div>
+                <div className="max-h-32 overflow-y-auto pr-1 space-y-1.5 custom-scrollbar text-[10px] font-mono leading-relaxed">
+                  {directives.map((d, i) => (
+                    <div key={i} className={`p-1.5 rounded break-all border ${darkMode ? "bg-gray-900/50 border-gray-700 text-gray-300" : "bg-white border-gray-200 text-gray-600"}`}>
+                      {d.trim()}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+          })()}
+
+          {metricKey === "X_Content_Type_Options" && data?.xContentTypeValue && (
+            <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"} space-y-1.5`}>
+              <div className="flex justify-between items-center">
+                <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>MIME Sniffing:</span>
+                <span className={`font-bold ${data.xContentTypeValue.includes('nosniff') ? "text-emerald-500" : "text-rose-500"}`}>
+                  {data.xContentTypeValue.includes('nosniff') ? "Disabled (Safe)" : "Enabled (Unsafe)"}
+                </span>
+              </div>
+              <div className={`mt-1 font-mono text-[10px] opacity-70 p-1 rounded ${darkMode ? "bg-black/20" : "bg-gray-200/50"}`}>
+                Header: {data.xContentTypeValue}
+              </div>
+            </div>
+          )}
+
+          {metricKey === "Cookies_Secure" && data?.cookies && (() => {
+            const total = data.cookies.length || 0;
+            const insecureCount = data.insecureCookies?.length || 0;
+            const secureCount = total - insecureCount;
+
+            return (
+              <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"} space-y-1.5`}>
+                <div className="flex justify-between items-center">
+                  <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Total Cookies:</span>
+                  <span className={`font-bold ${darkMode ? "text-gray-200" : "text-gray-800"}`}>{total}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Secure (HTTPS only):</span>
+                  <span className="text-emerald-500 font-bold">{secureCount}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Insecure (Missing Flag):</span>
+                  <span className={`${insecureCount > 0 ? "text-rose-500" : "text-gray-500"} font-bold`}>{insecureCount}</span>
+                </div>
+              </div>
+            );
+          })()}
+
+          {metricKey === "Cookies_HttpOnly" && data?.cookies && (() => {
+            const total = data.cookies.length || 0;
+            const exposedCount = data.scriptAccessibleCookies?.length || 0;
+            const protectedCount = total - exposedCount;
+
+            return (
+              <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"} space-y-1.5`}>
+                <div className="flex justify-between items-center">
+                  <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Total Cookies:</span>
+                  <span className={`font-bold ${darkMode ? "text-gray-200" : "text-gray-800"}`}>{total}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>HttpOnly (No JS Access):</span>
+                  <span className="text-emerald-500 font-bold">{protectedCount}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Exposed (Standard):</span>
+                  <span className={`${exposedCount > 0 ? "text-rose-500" : "text-gray-500"} font-bold`}>{exposedCount}</span>
+                </div>
+              </div>
+            );
+          })()}
+
+          {metricKey === "Third_Party_Cookies" && (data?.thirdPartyCookies || data?.uniqueDomains) && (() => {
+            const total = data.thirdPartyCookies?.length || 0;
+            const domainCount = data.uniqueDomains ? data.uniqueDomains.split(',').length : 0;
+
+            return (
+              <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"} space-y-1.5`}>
+                <div className="flex justify-between items-center">
+                  <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>3rd-Party Cookies:</span>
+                  <span className={`font-bold ${total > 0 ? "text-rose-500" : "text-emerald-500"}`}>{total}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Unique Domains:</span>
+                  <span className={`font-bold ${domainCount > 0 ? "text-rose-500" : "text-emerald-500"}`}>{domainCount}</span>
+                </div>
+              </div>
+            );
+          })()}
+
+          {metricKey === "Google_Safe_Browsing" && data?.matches && (
+            <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"}`}>
+              <div className="flex justify-between items-center">
+                <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Security Matches:</span>
+                <span className={`font-bold ${data.matches.length > 0 ? "text-rose-500" : "text-emerald-500"}`}>{data.matches.length} Threats</span>
+              </div>
+            </div>
+          )}
+
+          {metricKey === "Malware_Scan" && data?.stats && (
+            <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"} space-y-1.5`}>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                <div className="flex justify-between">
+                  <span className="opacity-60">Malicious:</span>
+                  <span className={`font-bold ${data.stats.malicious > 0 ? "text-rose-500" : "text-emerald-500"}`}>{data.stats.malicious}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="opacity-60">Suspicious:</span>
+                  <span className={`font-bold ${data.stats.suspicious > 0 ? "text-amber-500" : "text-emerald-500"}`}>{data.stats.suspicious}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {metricKey === "Blacklist" && (data?.googleSafeBrowsing || data?.virusTotal) && (
+            <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"} space-y-1.5`}>
+              <div className="flex justify-between items-center">
+                <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Safe Browsing:</span>
+                <span className={`font-bold ${data.googleSafeBrowsing?.status === "pass" ? "text-emerald-500" : "text-rose-500"}`}>
+                  {data.googleSafeBrowsing?.status === "pass" ? "Clean" : "Flagged"}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>VirusTotal:</span>
+                <span className={`font-bold ${data.virusTotal?.status === "pass" ? "text-emerald-500" : "text-rose-500"}`}>
+                  {data.virusTotal?.status === "pass" ? "Clean" : "Flagged"}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {(metricKey === "SQLi_Exposure" || metricKey === "XSS") && data?.payload && (
+            <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"}`}>
+              <div className="flex flex-col gap-1">
+                <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Testing Payload:</span>
+                <code className={`p-1.5 rounded break-all font-mono text-[10px] ${darkMode ? "bg-gray-900/80 text-rose-300" : "bg-rose-50 text-rose-700"}`}>
+                  {data.payload}
+                </code>
+              </div>
+            </div>
+          )}
+
+          {metricKey === "Admin_Panel_Public" && data?.url && (
+            <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"}`}>
+              <div className="flex flex-col gap-1">
+                <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Exposed URL:</span>
+                <div className={`p-1.5 rounded truncate font-mono text-[10px] ${darkMode ? "bg-gray-900/80 text-blue-300" : "bg-blue-50 text-blue-700"}`}>
+                  {data.url}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {metricKey === "Weak_Default_Credentials" && data?.credentials && (
+            <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"}`}>
+              <div className="flex justify-between items-center">
+                <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Credentials Found:</span>
+                <span className="text-rose-500 font-bold font-mono">{data.credentials}</span>
+              </div>
+            </div>
+          )}
+
+          {metricKey === "Forms_Use_HTTPS" && data?.insecureForms && (
+            <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"}`}>
+              <div className="flex justify-between items-center">
+                <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Insecure Forms:</span>
+                <span className={`font-bold ${data.insecureForms.length > 0 ? "text-rose-500" : "text-emerald-500"}`}>{data.insecureForms.length} Found</span>
+              </div>
+            </div>
+          )}
+
+          {metricKey === "MFA_Enabled" && (data?.foundKeyword || data?.ssoFound) && (
+            <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"}`}>
+              <div className="flex flex-col gap-1">
+                <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Authentication Evidence:</span>
+                <div className={`p-1.5 rounded truncate italic text-[10px] ${darkMode ? "bg-gray-900/80 text-emerald-300" : "bg-emerald-50 text-emerald-700"}`}>
+                  {data.foundKeyword || data.ssoFound}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {metricKey === "GDPR_CCPA" && (data?.foundKeyword || data?.foundSelector) && (
+            <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"}`}>
+              <div className="flex flex-col gap-1">
+                <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Compliance Indicator:</span>
+                <div className={`p-1.5 rounded truncate italic text-[10px] ${darkMode ? "bg-gray-900/80 text-emerald-300" : "bg-emerald-50 text-emerald-700"}`}>
+                  {data.foundKeyword || data.foundSelector}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {metricKey === "Cookie_Consent" && data?.selector && (
+            <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"}`}>
+              <div className="flex flex-col gap-1">
+                <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Banner Selector:</span>
+                <div className={`p-1.5 rounded truncate font-mono text-[10px] ${darkMode ? "bg-gray-900/80 text-emerald-300" : "bg-emerald-50 text-emerald-700"}`}>
+                  {data.selector}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {metricKey === "Privacy_Policy" && data?.foundLink && (
+            <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"}`}>
+              <div className="flex flex-col gap-1">
+                <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Policy Link:</span>
+                <div className={`p-1.5 rounded truncate font-mono text-[10px] ${darkMode ? "bg-gray-900/80 text-blue-300" : "bg-blue-50 text-blue-700"}`}>
+                  {data.foundLink}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {metricKey === "Data_Collection" && (data?.foundLink || data?.foundHeading) && (
+            <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"}`}>
+              <div className="flex flex-col gap-1">
+                <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Disclosure Evidence:</span>
+                <div className={`p-1.5 rounded truncate italic text-[10px] ${darkMode ? "bg-gray-900/80 text-emerald-300" : "bg-emerald-50 text-emerald-700"}`}>
+                  {data.foundLink || data.foundHeading}
+                </div>
+              </div>
             </div>
           )}
         </div>
+        <div className={`mt-auto border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
+          <div className="py-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
+              Why it matters: <span className="normal-case font-normal opacity-100">{content.whyItMatters || content.why}</span>
+            </p>
+          </div>
+        </div>
 
-        {/* Technical Data */}
-        {!isPassed && hasMetaDetails && (
-          <div className="flex-grow">
-            <h4 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
-              Technical Data
-            </h4>
-            <div className={`p-2 rounded text-xs font-mono overflow-x-auto ${darkMode ? "bg-gray-900 text-gray-300" : "bg-gray-100 text-gray-700"}`}>
-              {Object.entries(meta).map(([k, v]) => {
-                if (k === 'count' || k === 'value') return null;
+        {!isPassed && analysis && showAnalysis && (
+          <div className={`p-5 border-t animate-in fade-in slide-in-from-top-2 ${darkMode ? "border-gray-700 bg-gray-900/50" : "border-gray-100 bg-slate-50"}`}>
+            <div className="space-y-3">
+              <div>
+                <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 text-rose-500`}>Root Cause</h5>
+                <p className={`text-xs leading-relaxed ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
+                  {analysis.cause || "No specific cause identified."}
+                </p>
+              </div>
+              <div>
+                <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 text-blue-500`}>Recommendation</h5>
+                <p className={`text-xs leading-relaxed ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
+                  {analysis.recommendation || "No specific recommendation available."}
+                </p>
+              </div>
+
+              {metricKey === "Cookies_HttpOnly" && data?.scriptAccessibleCookies?.length > 0 && (
+                <div>
+                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 text-rose-500`}>Exposed Cookies (JS Accessible)</h5>
+                  <div className={`mt-1 p-2 rounded max-h-32 overflow-y-auto custom-scrollbar border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+                    <ul className="space-y-1">
+                      {data.scriptAccessibleCookies.map((cookieName, idx) => (
+                        <li key={idx} className={`text-[10px] font-mono flex items-center gap-2 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                          <span className="w-1.5 h-1.5 bg-rose-500 rounded-full flex-shrink-0"></span>
+                          <span className="break-all">{cookieName}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              {metricKey === "Cookies_Secure" && data?.insecureCookies?.length > 0 && (
+                <div>
+                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 text-rose-500`}>Insecure Cookies (HTTP Only)</h5>
+                  <div className={`mt-1 p-2 rounded max-h-32 overflow-y-auto custom-scrollbar border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+                    <ul className="space-y-1">
+                      {data.insecureCookies.map((cookieName, idx) => (
+                        <li key={idx} className={`text-[10px] font-mono flex items-center gap-2 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                          <span className="w-1.5 h-1.5 bg-rose-500 rounded-full flex-shrink-0"></span>
+                          <span className="break-all">{cookieName}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              {metricKey === "HTTPS" && data?.protocol && (
+                <div>
+                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 text-rose-500`}>Detected Protocol</h5>
+                  <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-rose-500/5 border-rose-500/20 text-rose-300" : "bg-rose-50 border-rose-100 text-rose-700"}`}>
+                    <span className="w-1.5 h-1.5 bg-rose-500 rounded-full flex-shrink-0"></span>
+                    {data.protocol}
+                  </div>
+                </div>
+              )}
+
+              {metricKey === "SSL" && data?.validTo && (
+                <div>
+                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 text-amber-500`}>Certificate Expiry</h5>
+                  <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-amber-500/5 border-amber-500/20 text-amber-300" : "bg-amber-50 border-amber-100 text-amber-700"}`}>
+                    <span className="w-1.5 h-1.5 bg-amber-500 rounded-full flex-shrink-0"></span>
+                    {new Date(data.validTo).toLocaleString()}
+                  </div>
+                </div>
+              )}
+
+              {metricKey === "TLS_Version" && data?.version && (
+                <div>
+                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 text-rose-500`}>Detected Version</h5>
+                  <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-rose-500/5 border-rose-500/20 text-rose-300" : "bg-rose-50 border-rose-100 text-rose-700"}`}>
+                    <span className="w-1.5 h-1.5 bg-rose-500 rounded-full flex-shrink-0"></span>
+                    {data.version}
+                  </div>
+                </div>
+              )}
+
+              {metricKey === "HSTS" && data?.hstsValue && (
+                <div>
+                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 text-rose-500`}>HSTS Header Value</h5>
+                  <div className={`mt-1 p-2 rounded border flex items-start gap-2 font-mono text-[10px] break-all ${darkMode ? "bg-rose-500/5 border-rose-500/20 text-rose-300" : "bg-rose-50 border-rose-100 text-rose-700"}`}>
+                    <span className="w-1.5 h-1.5 bg-rose-500 rounded-full mt-1 flex-shrink-0"></span>
+                    {data.hstsValue}
+                  </div>
+                </div>
+              )}
+
+              {metricKey === "CSP" && data?.cspValue && (() => {
+                const directives = (data.cspValue || "").split(';').filter(d => d.trim());
                 return (
-                  <div key={k} className="flex flex-col sm:flex-row sm:gap-2 mb-1 last:mb-0">
-                    <span className="font-semibold opacity-70">{k.replace(/([A-Z])/g, ' $1').trim()}:</span>
-                    <span className="break-all">{typeof v === 'object' ? JSON.stringify(v) : String(v)}</span>
+                  <div>
+                    <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 text-rose-500`}>CSP Directives</h5>
+                    <div className={`mt-1 p-2 rounded max-h-48 overflow-y-auto custom-scrollbar border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+                      <ul className="space-y-1.5">
+                        {directives.map((d, i) => (
+                          <li key={i} className={`p-2 rounded text-[10px] font-mono flex items-start gap-2 border border-dashed ${darkMode ? "bg-gray-900/50 border-gray-700 text-gray-300" : "bg-gray-50 border-gray-200 text-gray-600"}`}>
+                            <span className="w-1.5 h-1.5 bg-rose-500 rounded-full mt-1 flex-shrink-0"></span>
+                            <span className="break-all">{d.trim()}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
                 );
-              })}
+              })()}
+
+              {metricKey === "X_Frame_Options" && data?.xFrameValue && (
+                <div>
+                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 text-rose-500`}>X-Frame-Options Value</h5>
+                  <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-rose-500/5 border-rose-500/20 text-rose-300" : "bg-rose-50 border-rose-100 text-rose-700"}`}>
+                    <span className="w-1.5 h-1.5 bg-rose-500 rounded-full flex-shrink-0"></span>
+                    {data.xFrameValue}
+                  </div>
+                </div>
+              )}
+
+              {metricKey === "X_Content_Type_Options" && data?.xContentTypeValue && (
+                <div>
+                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 text-rose-500`}>X-Content-Type-Options Value</h5>
+                  <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-rose-500/5 border-rose-500/20 text-rose-300" : "bg-rose-50 border-rose-100 text-rose-700"}`}>
+                    <span className="w-1.5 h-1.5 bg-rose-500 rounded-full flex-shrink-0"></span>
+                    {data.xContentTypeValue}
+                  </div>
+                </div>
+              )}
+
+              {/* Dynamic Evidence for Remaining Parameters */}
+              {(metricKey === "SQLi_Exposure" || metricKey === "XSS") && data?.payload && (
+                <div>
+                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 text-rose-500`}>Testing Payload</h5>
+                  <div className={`mt-1 p-2 rounded border font-mono text-[10px] break-all ${darkMode ? "bg-rose-500/5 border-rose-500/20 text-rose-300" : "bg-rose-50 border-rose-100 text-rose-700"}`}>
+                    <div className="flex items-start gap-2">
+                      <span className="w-1.5 h-1.5 bg-rose-500 rounded-full mt-1 flex-shrink-0"></span>
+                      <span>{data.payload}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {metricKey === "Google_Safe_Browsing" && data?.matches?.length > 0 && (
+                <div>
+                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 text-rose-500`}>Detected Threats</h5>
+                  <div className={`mt-1 p-2 rounded max-h-32 overflow-y-auto custom-scrollbar border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+                    <ul className="space-y-2">
+                      {data.matches.map((match, idx) => (
+                        <li key={idx} className={`p-2 rounded border flex flex-col gap-1 ${darkMode ? "bg-rose-500/10 border-rose-500/20" : "bg-rose-50 border-rose-100"}`}>
+                          <div className="flex justify-between items-center text-[10px]">
+                            <span className="font-bold uppercase text-rose-500 flex items-center gap-2">
+                              <span className="w-1.5 h-1.5 bg-rose-500 rounded-full"></span>
+                              {match.threatType}
+                            </span>
+                            <span className={`opacity-70 ${darkMode ? "text-gray-400" : "text-gray-600"}`}>{match.platformType}</span>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              {metricKey === "Malware_Scan" && data?.stats && (
+                <div>
+                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 text-blue-500`}>Security Vendor Stats</h5>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { label: 'Malicious', val: data.stats.malicious, color: 'text-rose-500' },
+                      { label: 'Suspicious', val: data.stats.suspicious, color: 'text-amber-500' },
+                      { label: 'Harmless', val: data.stats.harmless, color: 'text-emerald-500' },
+                      { label: 'Undetected', val: data.stats.undetected, color: 'text-gray-400' }
+                    ].map(s => (
+                      <div key={s.label} className={`p-1.5 rounded flex justify-between items-center ${darkMode ? "bg-gray-800" : "bg-gray-50"}`}>
+                        <span className="text-[10px] opacity-70">{s.label}</span>
+                        <span className={`text-[10px] font-bold ${s.color}`}>{s.val}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {metricKey === "Admin_Panel_Public" && data?.url && (
+                <div>
+                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 text-rose-500`}>Exposed URL</h5>
+                  <div className={`mt-1 p-2 rounded border ${darkMode ? "bg-blue-500/5 border-blue-500/20" : "bg-blue-50 border-blue-100"}`}>
+                    <a href={data.url} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 p-1 text-[10px] font-mono break-all hover:underline ${darkMode ? "text-blue-400" : "text-blue-600"}`}>
+                      <span className="w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0"></span>
+                      {data.url}
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              {metricKey === "Forms_Use_HTTPS" && data?.insecureForms?.length > 0 && (
+                <div>
+                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 text-rose-500`}>Insecure Form Actions</h5>
+                  <div className={`mt-1 p-2 rounded max-h-32 overflow-y-auto custom-scrollbar border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+                    <ul className="space-y-1.5">
+                      {data.insecureForms.map((action, idx) => (
+                        <li key={idx} className={`p-2 rounded text-[10px] font-mono flex items-center gap-2 border border-dashed ${darkMode ? "bg-gray-900/50 border-gray-700 text-gray-300" : "bg-gray-50 border-gray-200 text-gray-600"}`}>
+                          <span className="w-1.5 h-1.5 bg-rose-500 rounded-full flex-shrink-0"></span>
+                          <span className="break-all">{action || "(Empty Action)"}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              {metricKey === "Weak_Default_Credentials" && data?.credentials && (
+                <div>
+                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 text-rose-500`}>Identified Credentials</h5>
+                  <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-rose-500/5 border-rose-500/20 text-rose-300" : "bg-rose-50 border-rose-100 text-rose-700"}`}>
+                    <span className="w-1.5 h-1.5 bg-rose-500 rounded-full flex-shrink-0"></span>
+                    {data.credentials}
+                  </div>
+                </div>
+              )}
+
+              {(metricKey === "MFA_Enabled" || metricKey === "GDPR_CCPA") && (data?.foundKeyword || data?.ssoFound) && (
+                <div>
+                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 text-emerald-500`}>Evidence Found</h5>
+                  <div className={`p-2 rounded text-[10px] italic ${darkMode ? "bg-gray-800 text-gray-300" : "bg-emerald-50 text-emerald-700"}`}>
+                    "{data.foundKeyword || data.ssoFound}"
+                  </div>
+                </div>
+              )}
+
+              {(metricKey === "Privacy_Policy" || metricKey === "Data_Collection") && data?.foundLink && (
+                <div>
+                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 text-emerald-500`}>Detected Link</h5>
+                  <a href={data.foundLink} target="_blank" rel="noopener noreferrer" className={`block p-2 rounded text-[10px] font-mono break-all hover:underline ${darkMode ? "bg-gray-800 text-blue-400" : "bg-blue-50 text-blue-600"}`}>
+                    {data.foundLink}
+                  </a>
+                </div>
+              )}
+
+              {metricKey === "Third_Party_Cookies" && data?.uniqueDomains && (
+                <div>
+                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 text-rose-500`}>Third-Party Domains</h5>
+                  <div className={`mt-1 p-3 rounded max-h-32 overflow-y-auto custom-scrollbar border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+                    <div className="flex flex-wrap gap-1.5">
+                      {data.uniqueDomains.split(',').map((domain, idx) => (
+                        <span key={idx} className={`px-2 py-0.5 rounded text-[10px] font-mono flex items-center gap-2 ${darkMode ? "bg-rose-500/10 border-rose-500/20 text-rose-300" : "bg-rose-50 border-rose-100 text-rose-600"}`}>
+                          <span className="w-1 h-1 bg-current rounded-full"></span>
+                          {domain.trim()}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {metricKey === "Blacklist" && (data?.googleSafeBrowsing || data?.virusTotal) && (
+                <div className="space-y-2">
+                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 text-rose-500`}>Blacklist Sources</h5>
+                  <div className="grid grid-cols-2 gap-2">
+                    {data.googleSafeBrowsing && (
+                      <div className={`p-2 rounded border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"}`}>
+                        <div className="text-[10px] opacity-70">Google Safe</div>
+                        <div className={`text-[10px] font-bold ${data.googleSafeBrowsing.status === 'pass' ? 'text-emerald-500' : 'text-rose-500'}`}>
+                          {data.googleSafeBrowsing.status === 'pass' ? 'Clean' : 'Flagged'}
+                        </div>
+                      </div>
+                    )}
+                    {data.virusTotal && (
+                      <div className={`p-2 rounded border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"}`}>
+                        <div className="text-[10px] opacity-70">VirusTotal</div>
+                        <div className={`text-[10px] font-bold ${data.virusTotal.status === 'pass' ? 'text-emerald-500' : 'text-rose-500'}`}>
+                          {data.virusTotal.status === 'pass' ? 'Clean' : 'Flagged'}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {metricKey === "Cookie_Consent" && data?.selector && (
+                <div>
+                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 text-emerald-500`}>Detected Selector</h5>
+                  <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-emerald-500/5 border-emerald-500/20 text-emerald-300" : "bg-emerald-50 border-emerald-100 text-emerald-700"}`}>
+                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full flex-shrink-0"></span>
+                    {data.selector}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
-
-        {!(!isPassed && hasMetaDetails) && <div className="flex-grow" />}
-
-        <div className={`mt-auto pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
-          <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
-            Why it matters: <span className="normal-case font-normal opacity-100">{content.whyItMatters || content.why}</span>
-          </p>
-        </div>
       </div>
     </div>
   );
 };
 
-// ------------------------------------------------------
-// ✅ Simple Section
-// ------------------------------------------------------
 const Section = ({ title, icon: Icon, children, darkMode }) => (
   <div className="space-y-4">
     <div className="flex items-center gap-3 px-2">
@@ -250,15 +820,12 @@ const Section = ({ title, icon: Icon, children, darkMode }) => (
         {title}
       </h2>
     </div>
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
       {children}
     </div>
   </div>
 );
 
-// ------------------------------------------------------
-// ✅ Main Component
-// ------------------------------------------------------
 export default function Security_Compilance() {
   const { theme } = useContext(ThemeContext);
   const { data, loading } = useData();
@@ -267,11 +834,11 @@ export default function Security_Compilance() {
   const darkMode = theme === "dark";
 
   const auditSteps = useMemo(() => [
-    { icon: <Lock className="w-8 h-8 text-blue-500" />, title: "SSL & Encryption", text: "Verifying HTTPS, SSL certificates, and HSTS headers for secure connections..." },
-    { icon: <Shield className="w-8 h-8 text-purple-500" />, title: "Vulnerability Scan", text: "Scanning for XSS, SQL Injection, and known malware signatures..." },
-    { icon: <FileText className="w-8 h-8 text-teal-500" />, title: "Security Headers", text: "Checking Content Security Policy (CSP), X-Frame-Options, and secure cookies..." },
-    { icon: <Globe2 className="w-8 h-8 text-indigo-500" />, title: "Compliance", text: "Auditing GDPR/CCPA readiness, privacy policies, and cookie consent banners..." },
-    { icon: <Key className="w-8 h-8 text-amber-500" />, title: "Access Control", text: "Testing for exposed admin panels, weak credentials, and MFA status..." },
+    { icon: <Lock className="w-8 h-8 text-blue-500" />, title: "SSL & Encryption", text: "Verifying HTTPS redirection, SSL certificate validity, TLS handshake versions, and HSTS enforcement..." },
+    { icon: <Bug className="w-8 h-8 text-rose-500" />, title: "Vulnerability Scan", text: "Simulating SQL Injection and XSS attacks, while cross-referencing with global threat intelligence databases..." },
+    { icon: <ShieldCheck className="w-8 h-8 text-teal-500" />, title: "Security Headers", text: "Auditing Content Security Policy (CSP), anti-clickjacking headers, and secure HttpOnly cookie flags..." },
+    { icon: <Globe2 className="w-8 h-8 text-indigo-500" />, title: "Compliance", text: "Evaluating GDPR/CCPA readiness, privacy policy visibility, and auditing third-party cookie tracking..." },
+    { icon: <Key className="w-8 h-8 text-amber-500" />, title: "Access Control", text: "Testing for exposed admin panels, weak default credentials, secure form submission, and MFA availability..." },
   ], []);
 
   const [activeStep, setActiveStep] = React.useState(0);
@@ -289,17 +856,13 @@ export default function Security_Compilance() {
     return (
       <div className={`w-full ${darkMode ? "bg-gray-900" : "bg-gray-50"} transition-colors duration-300`}>
         <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-8`}>
-          {/* ✅ Unified Master Card Loading State */}
           <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
-
-            {/* 1. URL Header */}
             <div>
               <UrlHeader data={data} darkMode={darkMode} />
             </div>
 
             <div className="flex flex-col xl:flex-row min-h-[300px]">
-              {/* Left Panel: Live Preview (Only if not All) */}
-              {data.report !== "All" && (
+              {data?.report !== "All" && (
                 <div className={`w-full xl:w-[45%] p-3 lg:p-4 flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/5 blur-3xl rounded-full pointer-events-none"></div>
                   <div className="w-full relative z-10">
@@ -308,7 +871,6 @@ export default function Security_Compilance() {
                 </div>
               )}
 
-              {/* Right/Full Panel: Audit Steps */}
               <div className="flex-1 flex items-center justify-center">
                 <div className="w-full">
                   <SecurityShimmer darkMode={darkMode} steps={auditSteps} currentStep={activeStep} />
@@ -323,28 +885,21 @@ export default function Security_Compilance() {
 
   const metric = data?.securityOrCompliance || {};
   const mainBg = darkMode ? "bg-gray-900" : "bg-gray-50";
-  const textColor = darkMode ? "text-white" : "text-gray-900";
 
-  const allMetrics = Object.values(metric).filter(val => typeof val === 'object' && val !== null && 'score' in val);
-  const passedCount = allMetrics.filter(m => m.score === 100).length;
-  const failedCount = allMetrics.filter(m => m.score < 100).length;
+  const allMetrics = Object.values(metric).filter(val => typeof val === 'object' && val !== null && 'status' in val);
+  const passedCount = allMetrics.filter(m => m.status === "pass").length;
+  const warningCount = allMetrics.filter(m => m.status === "warning").length;
+  const failedCount = allMetrics.filter(m => m.status === "fail").length;
 
   return (
     <div className={`w-full ${mainBg} transition-colors duration-300`}>
       <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-8`}>
-
-        {/* ✅ Unified Master Card */}
         <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
-
-          {/* 1. URL Header */}
           <div>
             <UrlHeader data={data} darkMode={darkMode} />
           </div>
 
-          {/* 2. Card Body */}
           <div className={`flex flex-col xl:flex-row ${data.report === "All" ? "" : "min-h-[300px]"}`}>
-
-            {/* Left Panel: Live Preview (Only if not All) */}
             {data.report !== "All" && (
               <div className={`w-full xl:w-[45%] ${data.report === "All" ? "p-6 lg:p-10" : "p-3 lg:p-4"} flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/5 blur-3xl rounded-full pointer-events-none"></div>
@@ -354,14 +909,9 @@ export default function Security_Compilance() {
               </div>
             )}
 
-            {/* Right Panel: Metrics & Score */}
             <div className={`flex-1 ${data.report === "All" ? "px-6 pb-4 pt-2 lg:px-10 lg:pt-2" : "px-6 pb-4 pt-4 lg:px-12 lg:pt-6"} flex flex-col justify-center`}>
               <div className={`w-full ${data.report === "All" ? "" : "max-w-2xl mx-auto"} ${data.report === "All" ? "space-y-10" : "space-y-8"}`}>
-
-                {/* Top Content Area */}
                 <div className={`flex flex-col md:flex-row items-center ${data.report === "All" ? "gap-10 md:gap-14 justify-between" : "gap-8 md:gap-12 justify-center"}`}>
-
-                  {/* Text Content */}
                   <div className={`flex-1 ${data.report === "All" ? "space-y-5" : "space-y-4"} text-left order-2 md:order-1`}>
                     <div className={`${data.report === "All" ? "space-y-2" : "space-y-1.5"}`}>
                       <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-blue-100/50 text-blue-600 border border-blue-200"}`}>
@@ -376,13 +926,18 @@ export default function Security_Compilance() {
                       </p>
                     </div>
 
-                    {/* Stats & Tools */}
                     <div className={`flex flex-wrap items-center ${data.report === "All" ? "gap-6" : "gap-5"}`}>
                       <div className={`flex items-center ${data.report === "All" ? "gap-5" : "gap-4"}`}>
                         <div className="flex items-center gap-2">
                           <CheckCircle size={18} className="text-emerald-500" />
                           <span className="text-sm font-bold">{passedCount} Passed</span>
                         </div>
+                        {warningCount > 0 && (
+                          <div className="flex items-center gap-2">
+                            <AlertTriangle size={18} className="text-amber-500" />
+                            <span className="text-sm font-bold">{warningCount} Warning</span>
+                          </div>
+                        )}
                         <div className="flex items-center gap-2">
                           <XCircle size={18} className="text-rose-500" />
                           <span className="text-sm font-bold">{failedCount} Failed</span>
@@ -399,7 +954,6 @@ export default function Security_Compilance() {
                     </div>
                   </div>
 
-                  {/* Circular Progress */}
                   <div className="relative flex-shrink-0 group cursor-default order-1 md:order-2">
                     <div className={`absolute -inset-8 rounded-full blur-3xl opacity-25 transition-opacity duration-700 group-hover:opacity-40 ${metric?.Percentage >= 80 ? "bg-emerald-500" : "bg-amber-500"}`}></div>
                     <CircularProgress value={metric?.Percentage || 0} size={data.report === "All" ? 180 : 150} stroke={14} />
@@ -409,54 +963,57 @@ export default function Security_Compilance() {
                     </div>
                   </div>
                 </div>
-
               </div>
             </div>
           </div>
         </div>
 
-        {/* Section 1: Network & Encryption */}
         <Section title="Network & Encryption" icon={Lock} darkMode={darkMode}>
-          {["HTTPS", "SSL", "SSL_Expiry", "HSTS", "TLS_Version"].map((key) => (
+          {["HTTPS", "SSL", "TLS_Version", "HSTS"].map((key) => (
             metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || Shield })} />
           ))}
         </Section>
 
-        {/* Section 2: Security Headers */}
-        <Section title="Security Headers" icon={Shield} darkMode={darkMode}>
-          {["X_Frame_Options", "CSP", "X_Content_Type_Options", "Cookies_Secure", "Cookies_HttpOnly"].map((key) => (
-            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || Shield })} />
-          ))}
-        </Section>
-
-        {/* Section 3: Compliance & Privacy */}
-        <Section title="Compliance & Privacy" icon={FileText} darkMode={darkMode}>
-          {["Cookie_Consent", "Privacy_Policy", "GDPR_CCPA", "Data_Collection", "Forms_Use_HTTPS"].map((key) => (
-            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || Shield })} />
-          ))}
-        </Section>
-
-        {/* Section 4: Vulnerability & Browser Checks */}
-        <Section title="Vulnerabilities & Browser Security" icon={AlertTriangle} darkMode={darkMode}>
+        <Section title="Vulnerability Detection" icon={Bug} darkMode={darkMode}>
           {[
-            "Google_Safe_Browsing", "Blacklist", "Malware_Scan", "SQLi_Exposure", "XSS",
-            "Weak_Default_Credentials", "MFA_Enabled", "Admin_Panel_Public", "Viewport_Meta_Tag",
-            "HTML_Doctype", "Character_Encoding", "Browser_Console_Errors", "Geolocation_Request",
-            "Input_Paste_Allowed", "Notification_Request", "Third_Party_Cookies", "Deprecated_APIs",
+            "SQLi_Exposure", "XSS", "Google_Safe_Browsing", "Blacklist", "Malware_Scan"
           ].map((key) => (
             metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || Shield })} />
           ))}
         </Section>
 
+        <Section title="Access Control & Authentication" icon={Key} darkMode={darkMode}>
+          {[
+            "Weak_Default_Credentials", "MFA_Enabled", "Admin_Panel_Public", "Forms_Use_HTTPS"
+          ].map((key) => (
+            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || Shield })} />
+          ))}
+        </Section>
+
+        <Section title="Security Headers & Cookies" icon={ShieldCheck} darkMode={darkMode}>
+          {[
+            "CSP", "X_Frame_Options", "X_Content_Type_Options", "Cookies_Secure", "Cookies_HttpOnly"
+          ].map((key) => (
+            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || Shield })} />
+          ))}
+        </Section>
+
+        <Section title="Compliance & Privacy" icon={Globe2} darkMode={darkMode}>
+          {[
+            "Cookie_Consent", "GDPR_CCPA", "Privacy_Policy",
+            "Data_Collection", "Third_Party_Cookies"
+          ].map((key) => (
+            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || Shield })} />
+          ))}
+        </Section>
       </main>
-      {/* Methodology Modal */}
+
       <MetricInfoModal
         isOpen={!!selectedMetricInfo}
         onClose={() => setSelectedMetricInfo(null)}
         info={selectedMetricInfo}
         darkMode={darkMode}
       />
-      {/* Parameter Modal */}
       <ParameterInfoModal
         isOpen={!!selectedParameterInfo}
         onClose={() => setSelectedParameterInfo(null)}

@@ -11,7 +11,7 @@ import {
   Keyboard, Focus, Hash, Anchor, Map, Terminal, Loader2, PersonStanding,
   ChevronDown, ChevronUp, ExternalLink, Copy
 } from "lucide-react";
-import { AuditShimmer } from "../Component/reusablecomponent/AuditShimmer";
+
 import MetricInfoModal from "../Component/MetricInfoModal";
 import ParameterInfoModal from "../Component/ParameterInfoModal";
 import { InfoDetails } from "../Component/InfoDetails";
@@ -41,6 +41,52 @@ const iconMap = {
 
 const educationalContent = InfoDetails;
 const scoreCalculationInfo = InfoDetails.Accessibility_Methodology;
+
+const AccessibilityShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
+  const step = steps[currentStep] || steps[0];
+
+  return (
+    <div className="flex flex-col items-center justify-center py-8 px-4 animate-in fade-in zoom-in duration-500 min-h-[350px]">
+      <div className={`w-full max-w-xl rounded-[32px] p-8 flex flex-col items-center text-center transition-all duration-500 ${darkMode ? "bg-slate-800/40 border border-slate-700/50" : "bg-slate-100/60 border border-slate-200/50"}`}>
+        {/* Icon Container (Circle) */}
+        <div className={`w-20 h-20 rounded-full flex items-center justify-center shadow-xl transition-all duration-500 ${darkMode ? "bg-slate-900 shadow-black/40 text-white" : "bg-[#1e293b] shadow-slate-400/30 text-white"}`}>
+          <div className="animate-pulse">
+            {React.cloneElement(step.icon, {
+              className: "w-8 h-8",
+              strokeWidth: 2.5
+            })}
+          </div>
+        </div>
+
+        {/* Title */}
+        <h2 className={`mt-6 text-2xl font-bold tracking-tight transition-all duration-500 ${darkMode ? "text-white" : "text-slate-900"}`}>
+          {step.title}
+        </h2>
+
+        {/* Description */}
+        <p className={`mt-4 text-base leading-relaxed max-w-sm mx-auto transition-all duration-500 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
+          {step.text}
+        </p>
+
+        {/* Processing State */}
+        <div className="mt-8 flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
+          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          <span className="text-xs font-bold uppercase tracking-wider">Processing</span>
+        </div>
+
+        {/* Progress Indicators */}
+        <div className="flex items-center gap-2 mt-6">
+          {steps.map((_, i) => (
+            <div
+              key={i}
+              className={`h-1.5 rounded-full transition-all duration-500 ${i === currentStep ? "w-6 bg-blue-500" : i < currentStep ? "w-6 bg-blue-500/40" : "w-2 bg-slate-400/30"}`}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // Simplified Metric Card
 const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
@@ -346,17 +392,17 @@ export default function Accessibility() {
   const darkMode = theme === "dark";
 
   const auditSteps = useMemo(() => [
-    { icon: <Eye />, title: "Visual & Media Analysis", text: "Checking Color Contrast, Image Alt Text, and Viewport scaling..." },
-    { icon: <Keyboard />, title: "Keyboard Navigation", text: "Verifying Focus Order, Tab Index, Skip Links, and Focus traps..." },
-    { icon: <MousePointer />, title: "Interactive Elements", text: "Analyzing Buttons, Links, Click targets, and Affordances..." },
-    { icon: <Layers />, title: "ARIA & Semantics", text: "Validating ARIA Roles, Attributes, Hidden content, and Labels..." },
-    { icon: <Layout />, title: "Page Structure", text: "Checking Heading hierarchy, Landmarks, Lists, and Document Title..." },
+    { icon: <Eye className="w-8 h-8 text-blue-500" />, title: "Visual & Media Analysis", text: "Checking Color Contrast, Image Alt Text, and Viewport scaling..." },
+    { icon: <Keyboard className="w-8 h-8 text-purple-500" />, title: "Keyboard Navigation", text: "Verifying Focus Order, Tab Index, Skip Links, and Focus traps..." },
+    { icon: <MousePointer className="w-8 h-8 text-emerald-500" />, title: "Interactive Elements", text: "Analyzing Buttons, Links, Click targets, and Affordances..." },
+    { icon: <Layers className="w-8 h-8 text-amber-500" />, title: "ARIA & Semantics", text: "Validating ARIA Roles, Attributes, Hidden content, and Labels..." },
+    { icon: <Layout className="w-8 h-8 text-rose-500" />, title: "Page Structure", text: "Checking Heading hierarchy, Landmarks, Lists, and Document Title..." },
   ], []);
 
   const [activeStep, setActiveStep] = React.useState(0);
   React.useEffect(() => {
     if (loading || !data?.accessibility) {
-      const interval = setInterval(() => { setActiveStep(prev => (prev + 1) % auditSteps.length); }, 2500);
+      const interval = setInterval(() => { setActiveStep(prev => (prev + 1) % auditSteps.length); }, 2000);
       return () => clearInterval(interval);
     }
   }, [loading, data, auditSteps.length]);
@@ -364,18 +410,27 @@ export default function Accessibility() {
 
   if (!data?.accessibility) {
     return (
-      <div className={`w-full min-h-screen ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}>
-        <main className="max-w-7xl mx-auto px-6 py-10">
-          <div className={`rounded-3xl overflow-hidden ${darkMode ? "bg-slate-800/40 border border-slate-700/50" : "bg-white border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
-            <UrlHeader data={data} darkMode={darkMode} />
+      <div className={`w-full ${darkMode ? "bg-gray-900" : "bg-gray-50"} transition-colors duration-300`}>
+        <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-8`}>
+          <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
+            <div>
+              <UrlHeader data={data} darkMode={darkMode} />
+            </div>
+
             <div className="flex flex-col xl:flex-row min-h-[300px]">
-              {data.report !== "All" && (
-                <div className={`w-full xl:w-[45%] p-6 border-b xl:border-b-0 xl:border-r ${darkMode ? "border-slate-800" : "border-slate-100"}`}>
-                  <LivePreview data={data} loading={loading} variant="plain" />
+              {data?.report !== "All" && (
+                <div className={`w-full xl:w-[45%] p-3 lg:p-4 flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/5 blur-3xl rounded-full pointer-events-none"></div>
+                  <div className="w-full relative z-10">
+                    <LivePreview data={data} loading={loading} variant="plain" />
+                  </div>
                 </div>
               )}
+
               <div className="flex-1 flex items-center justify-center">
-                <AuditShimmer darkMode={darkMode} loading={loading} data={data} auditSteps={auditSteps} metricKey="accessibility" />
+                <div className="w-full">
+                  <AccessibilityShimmer darkMode={darkMode} steps={auditSteps} currentStep={activeStep} />
+                </div>
               </div>
             </div>
           </div>
@@ -409,7 +464,7 @@ export default function Accessibility() {
                 </div>
               )}
               <div className="flex-1 flex items-center justify-center">
-                <AuditShimmer darkMode={darkMode} loading={loading} data={data} auditSteps={auditSteps} metricKey="accessibility" />
+                <AccessibilityShimmer darkMode={darkMode} steps={auditSteps} currentStep={activeStep} />
               </div>
             </div>
           ) : (

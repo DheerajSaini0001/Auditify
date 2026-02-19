@@ -11,205 +11,450 @@ puppeteer.use(StealthPlugin());
 const safeBrowsingAPI = process.env.SafeBrowsing;
 const VT_KEY = process.env.vt_key;
 
-
-
-// Security/Compliance (HTTPS / SSL)
-function checkHTTPS(url) {
-  try {
-    const parsedUrl = new URL(url);
-    const isHttps = parsedUrl.protocol === "https:";
-    return {
-      score: isHttps ? 100 : 0,
-      status: isHttps ? "pass" : "fail",
-      details: isHttps ? "Protocol is HTTPS" : "Protocol is HTTP, not HTTPS",
-      meta: { location: "URL Protocol" }
-    };
-  } catch {
-    return {
-      score: 0,
-      status: "fail",
-      details: "Invalid URL",
-      meta: { location: "URL Parsing" }
-    };
-  }
-}
-
-function checkSSLDetails(response) {
-  try {
-    if (!response) throw new Error("Response is null");
-    const securityDetails = response.securityDetails();
-    const headers = response.headers();
-
-    let certificateValid, tlsVersion;
-
-    if (securityDetails) {
-      const expiryDate = new Date(securityDetails.validTo() * 1000);
-      const isValidDate = !isNaN(expiryDate.getTime());
-      const isCertValid = isValidDate && expiryDate > new Date();
-
-      certificateValid = {
-        score: isCertValid ? 100 : 0,
-        status: isCertValid ? "pass" : "fail",
-        details: isCertValid ? "Certificate is valid" : (isValidDate ? `Certificate expired on ${expiryDate.toISOString()}` : "Certificate expiry date invalid"),
-        meta: { location: "SSL Certificate", expiryDate: isValidDate ? expiryDate.toISOString() : null }
-      };
-
-      const tls = securityDetails.protocol(); // e.g., "TLS 1.3"
-      const isStrongTls = tls.includes('1.2') || tls.includes('1.3');
-      tlsVersion = {
-        score: isStrongTls ? 100 : 0,
-        status: isStrongTls ? "pass" : "fail",
-        details: isStrongTls ? `Strong TLS version: ${tls}` : `Weak TLS version: ${tls}`,
-        meta: { location: "SSL Protocol", version: tls }
-      };
-    } else {
-      certificateValid = { score: 0, status: "fail", details: "No security details available", meta: { location: "SSL Certificate" } };
-      tlsVersion = { score: 0, status: "fail", details: "No security details available", meta: { location: "SSL Protocol" } };
-    }
-
-    const hstsVal = headers['strict-transport-security'];
-    const hstsEnabled = hstsVal
-      ? { score: 100, status: "pass", details: "HSTS header is present", meta: { location: "Response Headers", value: hstsVal } }
-      : { score: 0, status: "fail", details: "HSTS header is missing", meta: { location: "Response Headers" } };
-
-    const xFrameVal = headers['x-frame-options'];
-    const xFrameOptions = xFrameVal
-      ? { score: 100, status: "pass", details: "X-Frame-Options header is present", meta: { location: "Response Headers", value: xFrameVal } }
-      : { score: 0, status: "fail", details: "X-Frame-Options header is missing", meta: { location: "Response Headers" } };
-
-    const cspVal = headers['content-security-policy'];
-    const contentSecurityPolicy = cspVal
-      ? { score: 100, status: "pass", details: "CSP header is present", meta: { location: "Response Headers", value: cspVal } }
-      : { score: 0, status: "fail", details: "CSP header is missing", meta: { location: "Response Headers" } };
-
-    const xContentTypeVal = headers['x-content-type-options'];
-    const xContentTypeOptions = xContentTypeVal
-      ? { score: 100, status: "pass", details: "X-Content-Type-Options header is present", meta: { location: "Response Headers", value: xContentTypeVal } }
-      : { score: 0, status: "fail", details: "X-Content-Type-Options header is missing", meta: { location: "Response Headers" } };
-
-    return {
-      certificateValid, tlsVersion, hstsEnabled, xFrameOptions, contentSecurityPolicy, xContentTypeOptions
-    };
-  } catch (error) {
-    console.error("Error in checkSSLDetails:", error.message);
-    const errorResult = { score: 0, status: "fail", details: "Error checking SSL details", meta: { location: "SSL" } };
-    return {
-      certificateValid: { ...errorResult },
-      tlsVersion: { ...errorResult },
-      hstsEnabled: { ...errorResult },
-      xFrameOptions: { ...errorResult },
-      contentSecurityPolicy: { ...errorResult },
-      xContentTypeOptions: { ...errorResult }
-    };
-  }
-}
-
-// Security/Compliance (Security Headers)
-async function checkCookiesSecure(page) {
-  try {
-    const cookies = await page.cookies();
-    if (!cookies.length) {
-      return {
-        cookies: [],
-        hasSecure: { score: 0, status: "fail", details: "No cookies found", meta: { location: "Cookies", cookies: [] } },
-        hasHttpOnly: { score: 0, status: "fail", details: "No cookies found", meta: { location: "Cookies", cookies: [] } }
-      };
-    }
-    const hasSecureBool = cookies.some((c) => c.secure);
-    const hasHttpOnlyBool = cookies.some((c) => c.httpOnly);
-
-    return {
-      cookies,
-      hasSecure: {
-        score: hasSecureBool ? 100 : 0,
-        status: hasSecureBool ? "pass" : "fail",
-        details: hasSecureBool ? "Secure flag set on cookies" : "Secure flag missing on some cookies",
-        meta: { location: "Cookies", totalCookies: cookies.length }
-      },
-      hasHttpOnly: {
-        score: hasHttpOnlyBool ? 100 : 0,
-        status: hasHttpOnlyBool ? "pass" : "fail",
-        details: hasHttpOnlyBool ? "HttpOnly flag set on cookies" : "HttpOnly flag missing on some cookies",
-        meta: { location: "Cookies", totalCookies: cookies.length }
-      }
-    };
-  } catch (err) {
-    return {
-      cookies: [],
-      hasSecure: { score: 0, status: "fail", details: "Error checking cookies", meta: { location: "Cookies" } },
-      hasHttpOnly: { score: 0, status: "fail", details: "Error checking cookies", meta: { location: "Cookies" } }
-    };
-  }
-}
-
-// Security/Compliance (Vulnerability / Malware Check)
 function Domain(urlString) {
   const u = new URL(urlString);
   let host = u.hostname;
   if (host.startsWith("www.")) host = host.slice(4);
   return host;
 }
-async function checkGoogleSafeBrowsing(url) {
-  if (!safeBrowsingAPI) return { score: 100, status: "pass", details: "Safe Browsing API key missing", meta: { location: "Configuration" } }; // Default to pass if no key
-  try {
-    const endpoint = `https://safebrowsing.googleapis.com/v4/threatMatches:find?key=${safeBrowsingAPI}`;
-    const body = {
-      client: { clientId: "myapp", clientVersion: "1.0" },
-      threatInfo: {
-        threatTypes: ["MALWARE"],
-        platformTypes: ["ANY_PLATFORM"],
-        threatEntryTypes: ["URL"],
-        threatEntries: [{ url }],
-      },
+
+// HTTPS (Hypertext Transfer Protocol Secure)
+function checkHTTPS(url) {
+  const parsedUrl = new URL(url);
+  const isHttps = parsedUrl.protocol === "https:";
+  return {
+    score: isHttps ? 100 : 0,
+    status: isHttps ? "pass" : "fail",
+    details: isHttps ? "Protocol is HTTPS" : `Protocol is ${parsedUrl.protocol}, not HTTPS`,
+    protocol: parsedUrl.protocol,
+    analysis: isHttps ? null : {
+      cause: `The website is served over ${parsedUrl.protocol} instead of HTTPS.`,
+      recommendation: "Enforce HTTPS by obtaining an SSL certificate and redirecting all HTTP traffic to HTTPS."
+    }
+  };
+}
+
+// SSL (Secure Sockets Layer) Connection
+function checkSSLConnection(response) {
+  if (!response.ok()) {
+    return {
+      score: 0,
+      status: "fail",
+      details: `SSL connection failed (Status: ${response.status()})`,
+      analysis: {
+        cause: "The SSL connection could not be established.",
+        recommendation: "Check the SSL certificate and server configuration."
+      }
     };
+  }
+  const securityDetails = response.securityDetails();
+  const validTo = securityDetails ? new Date(securityDetails.validTo() * 1000).toISOString() : null;
+
+  if (validTo) {
+    const expiryDate = new Date(validTo);
+    const daysUntilExpiry = Math.floor((expiryDate - new Date()) / (1000 * 60 * 60 * 24));
+
+    if (daysUntilExpiry < 30) {
+      return {
+        score: 75,
+        status: "warning",
+        details: `SSL connection established, but certificate expires soon (in ${daysUntilExpiry} days)`,
+        validTo,
+        analysis: {
+          cause: "The SSL certificate is valid but nearing expiration.",
+          recommendation: "Renew the SSL certificate soon to avoid service interruption."
+        }
+      };
+    }
+  }
+
+  return {
+    score: 100,
+    status: "pass",
+    details: "SSL connection established",
+    validTo,
+    analysis: null
+  };
+}
+
+// TLS(Transport Layer Security) Version
+function checkTLSVersion(response) {
+  if (!response) return { score: 0, status: "fail", details: "No response available", analysis: { cause: "No response to check TLS version", recommendation: "Ensure server is reachable" } };
+
+  const securityDetails = response.securityDetails();
+  if (!securityDetails) {
+    return {
+      score: 0,
+      status: "fail",
+      details: "No security details available",
+      analysis: {
+        cause: "Unable to determine TLS version.",
+        recommendation: "Ensure the server supports standard TLS protocols."
+      }
+    };
+  }
+
+  const tls = securityDetails.protocol(); // e.g., "TLS 1.3"
+  const isStrongTls = tls.includes('1.2') || tls.includes('1.3');
+
+  return {
+    score: isStrongTls ? 100 : 0,
+    status: isStrongTls ? "pass" : "fail",
+    details: isStrongTls ? `Strong TLS version: ${tls}` : `Weak TLS version: ${tls}`,
+    version: tls,
+    analysis: isStrongTls ? null : {
+      cause: "The server supports older, insecure TLS versions (e.g., TLS 1.0 or 1.1).",
+      recommendation: "Disable TLS 1.0/1.1 and enable TLS 1.2 or TLS 1.3 on your server."
+    }
+  };
+}
+
+// HSTS (HTTP Strict Transport Security)
+function checkHSTS(response) {
+  if (!response) return { score: 0, status: "fail", details: "No response available for HSTS check", analysis: { cause: "No response received.", recommendation: "Check server connectivity." } };
+
+  const headers = response.headers();
+  const hstsVal = headers['strict-transport-security'];
+
+  if (hstsVal) {
+    return {
+      score: 100,
+      status: "pass",
+      details: "HSTS header is present",
+      hstsValue: hstsVal,
+      analysis: null
+    };
+  }
+
+  return {
+    score: 0,
+    status: "fail",
+    details: "HSTS header is missing",
+    analysis: {
+      cause: "The HTTP Strict Transport Security (HSTS) header is missing.",
+      recommendation: "Add the 'Strict-Transport-Security' header to enforce HTTPS connections."
+    }
+  };
+}
+
+// X-Frame-Options
+function checkXFrameOptions(response) {
+  if (!response) return { score: 0, status: "fail", details: "No response available for X-Frame-Options check", analysis: { cause: "No response received.", recommendation: "Check server connectivity." } };
+
+  const headers = response.headers();
+  const xFrameVal = headers['x-frame-options'];
+
+  if (xFrameVal) {
+    return {
+      score: 100,
+      status: "pass",
+      details: "X-Frame-Options header is present",
+      xFrameValue: xFrameVal,
+      analysis: null
+    };
+  }
+
+  return {
+    score: 0,
+    status: "fail",
+    details: "X-Frame-Options header is missing",
+    analysis: {
+      cause: "The X-Frame-Options header is missing, making the site vulnerable to clickjacking.",
+      recommendation: "Set the 'X-Frame-Options' header to 'DENY' or 'SAMEORIGIN'."
+    }
+  };
+}
+
+// CSP (Content Security Policy)
+function checkCSP(response) {
+  if (!response) return { score: 0, status: "fail", details: "No response available for CSP check", analysis: { cause: "No response received.", recommendation: "Check server connectivity." } };
+
+  const headers = response.headers();
+  const cspVal = headers['content-security-policy'];
+
+  if (cspVal) {
+    return {
+      score: 100,
+      status: "pass",
+      details: "CSP header is present",
+      cspValue: cspVal,
+      analysis: null
+    };
+  }
+
+  return {
+    score: 0,
+    status: "fail",
+    details: "CSP header is missing",
+    analysis: {
+      cause: "The Content-Security-Policy (CSP) header is missing.",
+      recommendation: "Implement a robust CSP header to prevent XSS and data injection attacks."
+    }
+  };
+}
+
+// X-Content-Type-Options
+function checkXContentTypeOptions(response) {
+  if (!response) return { score: 0, status: "fail", details: "No response available for X-Content-Type-Options check", analysis: { cause: "No response received.", recommendation: "Check server connectivity." } };
+
+  const headers = response.headers();
+  const xContentTypeVal = headers['x-content-type-options'];
+
+  if (xContentTypeVal) {
+    return {
+      score: 100,
+      status: "pass",
+      details: "X-Content-Type-Options header is present",
+      xContentTypeValue: xContentTypeVal,
+      analysis: null
+    };
+  }
+
+  return {
+    score: 0,
+    status: "fail",
+    details: "X-Content-Type-Options header is missing",
+    analysis: {
+      cause: "The X-Content-Type-Options header is missing.",
+      recommendation: "Add the 'X-Content-Type-Options: nosniff' header to prevent MIME type sniffing."
+    }
+  };
+}
+
+// Cookies - Secure Flag
+async function checkCookiesSecureFlag(page) {
+  const cookies = await page.cookies();
+
+  if (!cookies.length) {
+    return {
+      score: 100,
+      status: "pass",
+      details: "No cookies found - Safe",
+      analysis: null
+    };
+  }
+
+  // Check if *all* cookies have the Secure flag
+  const allSecure = cookies.every((c) => c.secure);
+  const insecureCookies = cookies.filter(c => !c.secure).map(c => c.name);
+
+  return {
+    score: allSecure ? 100 : 0,
+    status: allSecure ? "pass" : "fail",
+    details: allSecure
+      ? "All cookies have the Secure flag"
+      : `Secure flag missing on: ${insecureCookies.join(", ")}`,
+    cookies,
+    insecureCookies,
+    allSecure,
+    analysis: allSecure ? null : {
+      cause: "Some cookies are set without the 'Secure' flag, allowing them to be sent over unencrypted connections.",
+      recommendation: "Ensure all cookies are set with the 'Secure' attribute so they are only sent over HTTPS."
+    }
+  };
+}
+
+// Cookies - HttpOnly Flag
+async function checkCookiesHttpOnlyFlag(page) {
+  const cookies = await page.cookies();
+
+  if (!cookies.length) {
+    return {
+      score: 100,
+      status: "pass",
+      details: "No cookies found - Safe",
+      analysis: null
+    };
+  }
+
+  // Check if *all* cookies have the HttpOnly flag
+  const allHttpOnly = cookies.every((c) => c.httpOnly);
+  const scriptAccessibleCookies = cookies.filter(c => !c.httpOnly).map(c => c.name);
+
+  return {
+    score: allHttpOnly ? 100 : 0,
+    status: allHttpOnly ? "pass" : "fail",
+    details: allHttpOnly
+      ? "All cookies have the HttpOnly flag"
+      : `HttpOnly flag missing on: ${scriptAccessibleCookies.join(", ")}`,
+    cookies,
+    scriptAccessibleCookies,
+    allHttpOnly,
+    analysis: allHttpOnly ? null : {
+      cause: "Some cookies are set without the 'HttpOnly' flag, making them accessible to client-side scripts.",
+      recommendation: "Set the 'HttpOnly' attribute on sensitive cookies to prevent access via XSS."
+    }
+  };
+}
+
+// Cookies - Third Party Cookies
+async function checkThirdPartyCookies(url, page) {
+  const pageHostname = new URL(url).hostname;
+  const cookies = await page.cookies();
+
+  const thirdPartyCookies = cookies.filter(cookie => {
+    const cookieDomain = cookie.domain.startsWith('.') ? cookie.domain.slice(1) : cookie.domain;
+    return !pageHostname.includes(cookieDomain) && !cookieDomain.includes(pageHostname);
+  });
+
+  if (thirdPartyCookies.length > 0) {
+    const uniqueDomains = [...new Set(thirdPartyCookies.map(c => c.domain))].join(", ");
+    return {
+      score: 0,
+      status: "fail",
+      details: `Third-party cookies detected from: ${uniqueDomains}`,
+      thirdPartyCookies,
+      uniqueDomains,
+      analysis: {
+        cause: "Cookies from external domains are being stored on the user's browser.",
+        recommendation: "Audit third-party scripts (ads, analytics) and ensure they comply with privacy regulations (GDPR/CCPA)."
+      }
+    };
+  }
+
+  return {
+    score: 100,
+    status: "pass",
+    details: "No third-party cookies detected",
+    analysis: null
+  };
+}
+
+// Google Safe Browsing
+async function checkGoogleSafeBrowsing(url) {
+  if (!safeBrowsingAPI) return { score: 100, status: "pass", details: "Safe Browsing API key missing", analysis: { location: "Configuration" } };
+
+  const endpoint = `https://safebrowsing.googleapis.com/v4/threatMatches:find?key=${safeBrowsingAPI}`;
+  const body = {
+    client: { clientId: "myapp", clientVersion: "1.0" },
+    threatInfo: {
+      threatTypes: ["MALWARE", "SOCIAL_ENGINEERING", "UNWANTED_SOFTWARE", "POTENTIALLY_HARMFUL_APPLICATION"],
+      platformTypes: ["ANY_PLATFORM"],
+      threatEntryTypes: ["URL"],
+      threatEntries: [{ url }],
+    },
+  };
+
+  try {
     const res = await fetch(endpoint, {
       method: "POST",
       body: JSON.stringify(body),
       headers: { "Content-Type": "application/json" },
     });
+
+    if (!res.ok) {
+      return { score: 0, status: "error", details: `Google Safe Browsing API Error: ${res.statusText}`, analysis: { cause: "API Request Failed" } };
+    }
+
     const j = await res.json();
-    const isSafe = !j.matches;
-    return {
-      score: isSafe ? 100 : 0,
-      status: isSafe ? "pass" : "fail",
-      details: isSafe ? "URL not found in Safe Browsing database" : "URL found in Safe Browsing database",
-      meta: { location: "Google Safe Browsing", matches: j.matches || [] }
-    };
-  } catch {
-    return { score: 0, status: "fail", details: "Error checking Safe Browsing", meta: { location: "Google Safe Browsing" } };
+    const matches = j.matches || [];
+    const isSafe = matches.length === 0;
+
+    if (isSafe) {
+      return {
+        score: 100,
+        status: "pass",
+        details: "URL not flagged by Google Safe Browsing",
+        analysis: null
+      };
+    } else {
+      return {
+        score: 0,
+        status: "fail",
+        details: "URL flagged by Google Safe Browsing",
+        matches,
+        analysis: {
+          cause: "The URL is listed as unsafe (malware/phishing/unwanted software).",
+          recommendation: "Immediate action required: Check Google Search Console Security Issues report and clean site."
+        }
+      };
+    }
+  } catch (error) {
+    return { score: 0, status: "error", details: `Check failed: ${error.message}`, analysis: { cause: error.message } };
   }
 }
 
+// VirusTotal
 async function checkVirusTotal(domain) {
+  if (!VT_KEY) return { score: 100, status: "pass", details: "VirusTotal API key missing (Skipped)", analysis: null };
+
+  const endpoint = `https://www.virustotal.com/api/v3/domains/${domain}`;
+
   try {
-    if (!VT_KEY) return { score: 100, status: "pass", details: "VirusTotal API key missing", meta: { location: "Configuration" } };
-    const endpoint = `https://www.virustotal.com/api/v3/domains/${domain}`;
     const res = await fetch(endpoint, { headers: { "x-apikey": VT_KEY } });
-    if (!res.ok) return { score: 0, status: "fail", details: "VirusTotal API error", meta: { location: "VirusTotal" } };
+
+    if (!res.ok) {
+      return {
+        score: 0,
+        status: "error",
+        details: `VirusTotal API error: ${res.status}`,
+        analysis: { cause: `API responded with status ${res.status}` }
+      };
+    }
+
     const j = await res.json();
     const stats = j?.data?.attributes?.last_analysis_stats || {};
-    const isMalicious = stats.malicious && stats.malicious > 0;
-    return {
-      score: isMalicious ? 0 : 100,
-      status: isMalicious ? "fail" : "pass",
-      details: isMalicious ? `Malicious detections: ${stats.malicious}` : "No malicious detections",
-      meta: { location: "VirusTotal", stats }
-    };
-  } catch {
-    return { score: 0, status: "fail", details: "Error checking VirusTotal", meta: { location: "VirusTotal" } };
+
+    const malicious = stats.malicious || 0;
+    const suspicious = stats.suspicious || 0;
+    const isClean = malicious === 0 && suspicious === 0;
+
+    if (isClean) {
+      return {
+        score: 100,
+        status: "pass",
+        details: "No malicious or suspicious detections",
+        analysis: null
+      };
+    } else {
+      return {
+        score: 0,
+        status: "fail",
+        details: `Detections occurred: ${malicious} malicious, ${suspicious} suspicious`,
+        stats,
+        analysis: {
+          cause: "The domain is flagged by one or more security vendors.",
+          recommendation: "Investigate the specific flags on VirusTotal. Clean up any malware or compromised content if confirmed."
+        }
+      };
+    }
+  } catch (error) {
+    return { score: 0, status: "error", details: `Check failed: ${error.message}`, analysis: { cause: error.message } };
   }
 }
 
+// Domain Blacklist
 async function checkDomainBlacklist(domain, url) {
-  const [g, v] = await Promise.all([
+  const [googleSafeBrowsing, virusTotal] = await Promise.all([
     checkGoogleSafeBrowsing(url),
     checkVirusTotal(domain),
   ]);
-  if (g.score === 0) return { score: 0, status: "fail", details: g.details, meta: g.meta };
-  if (v.score === 0) return { score: 0, status: "fail", details: v.details, meta: v.meta };
-  return { score: 100, status: "pass", details: "Domain not found in blacklists", meta: { location: "Blacklist Databases" } };
+
+  const isGoogleSafe = googleSafeBrowsing.status === "pass";
+  const isVirusTotalSafe = virusTotal.status === "pass";
+  const allSafe = isGoogleSafe && isVirusTotalSafe;
+
+  let details = "Domain not found in blacklists";
+  if (!allSafe) {
+    if (!isGoogleSafe && !isVirusTotalSafe) details = "Domain found in both Google Safe Browsing and VirusTotal blacklists";
+    else if (!isGoogleSafe) details = "Domain found in Google Safe Browsing blacklist";
+    else details = "Domain found in VirusTotal blacklist";
+  }
+
+  return {
+    score: allSafe ? 100 : 0,
+    status: allSafe ? "pass" : "fail",
+    details,
+    googleSafeBrowsing,
+    virusTotal,
+    analysis: allSafe ? null : {
+      cause: "The domain or URL is listed in one or more security blacklists (Google Safe Browsing or VirusTotal).",
+      recommendation: "Review the detailed reports from Google and VirusTotal. Request a review from the respective services after cleaning up any malware or security issues."
+    }
+  };
 }
 
+// SQL Injection
 async function checkSQLiExposure(urlString, options = {}) {
   const { timeout = 15000, lengthDiffThreshold = 0.25 } = options;
 
@@ -243,29 +488,33 @@ async function checkSQLiExposure(urlString, options = {}) {
     return sqlErrorPatterns.some((rx) => rx.test(body));
   }
 
-  let url;
-  try {
-    url = new URL(urlString);
-  } catch {
-    return { score: 100, status: "pass", details: "Invalid URL, skipping SQLi check", meta: { location: "URL Parsing" } };
-  }
+  const url = new URL(urlString);
 
   async function fetchBody(u) {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
     try {
-      const res = await fetch(u.toString(), { redirect: "follow", timeout });
+      const res = await fetch(u.toString(), {
+        redirect: "follow",
+        signal: controller.signal
+      });
       const text = await res.text();
+      clearTimeout(id);
       return { status: res.status, text };
-    } catch {
-      return { status: 0, text: "" };
+    } catch (error) {
+      clearTimeout(id);
+      return { status: 0, text: "" }; // Return empty on error/timeout
     }
   }
 
+  // Baseline request
   const baseline = await fetchBody(url);
   const baselineText = baseline.text || "";
   const baselineLength = baselineText.length || 0;
 
+  // Identify parameters to test
   const params = Array.from(url.searchParams.keys());
-  const testParams = params.length ? params : ["q"];
+  const testParams = params.length ? params : ["q", "id", "search"]; // added generic params
 
   for (const param of testParams) {
     for (const p of payloads) {
@@ -276,837 +525,779 @@ async function checkSQLiExposure(urlString, options = {}) {
       const body = res.text || "";
       const length = body.length || 0;
 
-      if (looksLikeSQLError(body)) return { score: 0, status: "fail", details: `SQL error detected with payload: ${p}`, meta: { location: `Param: ${param}`, payload: p } };
-      if (baselineLength > 0) {
+      // Check for SQL error messages in response
+      if (looksLikeSQLError(body)) {
+        return {
+          score: 0,
+          status: "fail",
+          details: `SQL injection vulnerability detected with payload: ${p}`,
+          payload: p,
+          analysis: {
+            cause: "The application exposed a database error message in response to the injected payload.",
+            recommendation: "Ensure all user inputs are sanitized and use parameterized queries (Prepared Statements) to prevent SQL injection."
+          }
+        };
+      }
+
+      // Check for significant content length difference (heuristic for blind SQLi)
+      if (baselineLength > 0 && length > 0) {
         const diff = Math.abs(length - baselineLength) / baselineLength;
-        if (diff >= lengthDiffThreshold) return { score: 0, status: "fail", details: `Significant response length difference with payload: ${p}`, meta: { location: `Param: ${param}`, payload: p } };
-      } else {
-        if (length > 0) return { score: 0, status: "fail", details: `Response content appeared with payload: ${p}`, meta: { location: `Param: ${param}`, payload: p } };
+        if (diff >= lengthDiffThreshold && res.status >= 200 && res.status < 400) {
+          return {
+            score: 0,
+            status: "fail",
+            details: `Significant response length difference with payload: ${p}`,
+            payload: p,
+            analysis: {
+              cause: "Response length changed significantly with SQL injection payload, suggesting potential blind SQL injection.",
+              recommendation: "Ensure application handles invalid input gracefully without altering response structure unpredictably."
+            }
+          };
+        }
       }
-      if (res.status === 500) return { score: 0, status: "fail", details: `Server error (500) with payload: ${p}`, meta: { location: `Param: ${param}`, payload: p } };
     }
   }
 
-  return { score: 100, status: "pass", details: "No SQL injection vulnerabilities detected", meta: { location: "URL Parameters" } };
+  return {
+    score: 100,
+    status: "pass",
+    details: "No SQL injection vulnerabilities detected (Basic Scan)",
+    analysis: null
+  };
 }
 
+// XSS (Cross-Site Scripting)
 async function checkXSS(url, browser) {
+  const payload = "<script>alert('XSS')</script>";
+  let page = null;
+  let xssTriggered = false;
+
   try {
-    const payload = `<script>alert(1)</script>`;
-    const testUrl = url.includes("?")
-      ? `${url}&xss=${encodeURIComponent(payload)}`
-      : `${url}?xss=${encodeURIComponent(payload)}`;
+    page = await browser.newPage();
 
-    const testURLPage = await browser.newPage()
-    await testURLPage.goto(testUrl, { waitUntil: "networkidle2", timeout: 360000 });
-    await testURLPage.waitForSelector("body", { timeout: 360000 });
-    const html = await testURLPage.content(); // Fixed: use testURLPage instead of page
-    await testURLPage.close();
-    const isXssReflected = html.toLowerCase().includes(payload.toLowerCase());
-    return {
-      score: isXssReflected ? 0 : 100,
-      status: isXssReflected ? "fail" : "pass",
-      details: isXssReflected ? "XSS payload reflected in response" : "XSS payload not reflected",
-      meta: { location: "HTML Body" }
-    };
-  } catch {
-    return { score: 0, status: "fail", details: "Error checking XSS", meta: { location: "XSS Check" } };
-  }
-}
-
-// Security/Compliance (Privacy & Compliance)
-async function checkCookieConsent(page) {
-  try {
-    const consentSelectors = [
-      "[id*=cookie]",
-      "[class*=cookie]",
-      "[id*=consent]",
-      "[class*=consent]",
-      "[aria-label*=cookie]",
-      "[data-cookie-banner]",
-    ];
-
-    for (const selector of consentSelectors) {
-      const exists = await page.$(selector);
-      if (exists) {
-        return { score: 100, status: "pass", details: "Cookie consent banner found", meta: { location: `Selector: ${selector}` } };
+    // Listen for alert dialogs to confirm script execution
+    page.on('dialog', async dialog => {
+      if (dialog.message() === 'XSS') {
+        xssTriggered = true;
       }
-    }
-    return { score: 0, status: "fail", details: "No cookie consent banner found", meta: { location: "HTML DOM" } };
-  } catch (err) {
-    return { score: 0, status: "fail", details: "Error checking cookie consent", meta: { location: "HTML DOM" } };
-  }
-}
-
-async function checkPrivacyPolicy(page) {
-  try {
-    const links = await page.$$eval("a", (anchors) =>
-      anchors.map((a) => (a.href || "").toLowerCase())
-    );
-    const privacyPatterns = ["privacy", "privacy-policy", "privacy_policy"];
-    const found = links.some((link) =>
-      privacyPatterns.some((pattern) => link.includes(pattern))
-    );
-    return found
-      ? { score: 100, status: "pass", details: "Privacy policy link found", meta: { location: "Footer/Menu" } }
-      : { score: 0, status: "fail", details: "No privacy policy link found", meta: { location: "Footer/Menu" } };
-  } catch (err) {
-    return { score: 0, status: "fail", details: "Error checking privacy policy", meta: { location: "HTML DOM" } };
-  }
-}
-
-async function checkFormsUseHTTPS(page) {
-  try {
-    const forms = await page.$$eval("form", (forms) =>
-      forms.map((f) => f.getAttribute("action") || "")
-    );
-
-    if (!forms.length) return { score: 100, status: "pass", details: "No forms found", meta: { location: "HTML DOM" } };
-
-    const insecureForms = forms.filter((action) => {
-      if (!action || action.startsWith("/")) return false;
-      try {
-        return new URL(action).protocol !== "https:";
-      } catch {
-        return false;
-      }
+      await dialog.dismiss();
     });
 
-    return insecureForms.length === 0
-      ? { score: 100, status: "pass", details: "All forms use HTTPS", meta: { location: "Forms" } }
-      : { score: 0, status: "fail", details: `Found ${insecureForms.length} form(s) using HTTP`, meta: { location: "Forms", insecureForms } };
-  } catch (err) {
-    return { score: 0, status: "fail", details: "Error checking forms", meta: { location: "HTML DOM" } };
-  }
-}
+    const testUrl = new URL(url);
+    testUrl.searchParams.set("xss_test", payload);
 
-async function checkGDPRCCPA(page) {
-  try {
-    // Common selectors for GDPR/CCPA consent banners
-    const consentSelectors = [
-      "[id*=gdpr]",
-      "[class*=gdpr]",
-      "[id*=cookie]",
-      "[class*=cookie]",
-      "[id*=consent]",
-      "[class*=consent]",
-      "[aria-label*=cookie]",
-      "[data-cookie-banner]",
-      "[id*=ccpa]",
-      "[class*=ccpa]",
-      "[data-ccpa-consent]",
-    ];
+    // Navigate with a reasonable timeout
+    await page.goto(testUrl.toString(), { waitUntil: "networkidle2", timeout: 30000 });
 
-    for (const selector of consentSelectors) {
-      const exists = await page.$(selector);
-      if (exists) {
-        return { score: 100, status: "pass", details: "GDPR/CCPA notice found", meta: { location: `Selector: ${selector}` } };
-      }
+    // Also check for raw payload reflection combined with execution status
+    const content = await page.content();
+    const isReflected = content.includes(payload);
+
+    // If script executed, it's a critical Fail.
+    if (xssTriggered) {
+      return {
+        score: 0,
+        status: "fail",
+        details: "Confirmed XSS: Script payload executed (alert triggered)",
+        payload: payload,
+        analysis: {
+          cause: "The application reflects user input without sanitization, allowing arbitrary script execution.",
+          recommendation: "Implement strict context-sensitive output encoding and Content Security Policy (CSP)."
+        }
+      };
     }
 
-    return { score: 0, status: "fail", details: "No GDPR/CCPA notice found", meta: { location: "HTML DOM" } };
-  } catch (err) {
-    return { score: 0, status: "fail", details: "Error checking GDPR/CCPA", meta: { location: "HTML DOM" } };
+    // If reflected but didn't execute (e.g. blocked by browser or CSP), it's a warning/fail
+    if (isReflected) {
+      return {
+        score: 50,
+        status: "warning",
+        details: "XSS payload reflected in response but execution not confirmed",
+        analysis: {
+          cause: "The application reflects user input. While script execution wasn't confirmed (possibly blocked by browser/CSP), reflection is risky.",
+          recommendation: "Ensure all reflections are properly escaped."
+        }
+      };
+    }
+
+    return {
+      score: 100,
+      status: "pass",
+      details: "XSS payload not reflected or executed",
+      analysis: null
+    };
+
+  } catch (error) {
+    return {
+      score: 0, // Error state
+      status: "error",
+      details: `XSS Check failed: ${error.message}`,
+      analysis: { cause: error.message }
+    };
+  } finally {
+    if (page) await page.close();
   }
 }
 
+// Cookie Consent
+async function checkCookieConsent(page) {
+  const commonSelectors = [
+    "#onetrust-banner-sdk", // OneTrust
+    "#CybotCookiebotDialog", // Cookiebot
+    ".cc-banner", // CookieConsent
+    "#catapult-cookie-bar", // Catapult
+    "#cookie-law-info-bar", // CRL
+    ".cookie-banner",
+    ".privacy-banner",
+    "[id*='cookie-notification']",
+    "[class*='cookie-notification']"
+  ];
+
+  const genericSelectors = [
+    "[id*='cookie']",
+    "[class*='cookie']",
+    "[id*='consent']",
+    "[class*='consent']",
+    "[aria-label*='cookie']",
+    "[data-cookie-banner]",
+  ];
+
+  const allSelectors = [...commonSelectors, ...genericSelectors];
+
+  for (const selector of allSelectors) {
+    const element = await page.$(selector);
+    if (element) {
+      const box = await element.boundingBox();
+      if (box && box.height > 0 && box.width > 0) {
+        return {
+          score: 100,
+          status: "pass",
+          details: `Cookie consent banner detected (Pattern: ${selector})`,
+          selector,
+          analysis: null
+        };
+      }
+    }
+  }
+
+  return {
+    score: 0,
+    status: "fail",
+    details: "No visible cookie consent banner found",
+    analysis: {
+      cause: "No element matching common cookie consent patterns was found or visible.",
+      recommendation: "Implement a visible cookie consent banner compliant with GDPR/CCPA."
+    }
+  };
+}
+
+// Privacy Policy
+async function checkPrivacyPolicy(page) {
+  const links = await page.$$eval("a", (anchors) =>
+    anchors.map((a) => ({
+      href: (a.href || "").toLowerCase(),
+      text: (a.innerText || "").toLowerCase(),
+      visible: a.offsetWidth > 0 && a.offsetHeight > 0
+    }))
+  );
+
+  const privacyPatterns = ["privacy", "privacy policy", "privacy-policy", "privacy_policy", "data protection"];
+
+  const foundLink = links.find((link) =>
+    link.visible && (
+      privacyPatterns.some((pattern) => link.href.includes(pattern)) ||
+      privacyPatterns.some((pattern) => link.text.includes(pattern))
+    )
+  );
+
+  if (foundLink) {
+    return {
+      score: 100,
+      status: "pass",
+      details: "Visible Privacy Policy link found",
+      foundLink: foundLink.href,
+      analysis: null
+    };
+  } else {
+    return {
+      score: 0,
+      status: "fail",
+      details: "No visible privacy policy link found",
+      analysis: {
+        cause: "No visible link matching 'Privacy Policy' patterns was found in the page links.",
+        recommendation: "Ensure a clearly visible 'Privacy Policy' link is present in the footer or navigation menu."
+      }
+    };
+  }
+}
+
+// GDPR/CCPA (General Data Protection Regulation/California Consumer Privacy Act)
+async function checkGDPRCCPA(page) {
+  // Check for specific GDPR/CCPA keywords in the page text
+  const pageText = await page.evaluate(() => document.body.innerText.toLowerCase());
+  const keywords = [
+    "gdpr",
+    "ccpa",
+    "california consumer privacy act",
+    "general data protection regulation",
+    "do not sell my personal information",
+    "don't sell my personal information",
+    "cookie preferences",
+    "manage cookies",
+    "legal notice",
+    "imprint"
+  ];
+
+  const foundKeyword = keywords.find(k => pageText.includes(k));
+
+  // Also check for specific element identifiers related to compliance frameworks (CMP)
+  const complianceSelectors = [
+    "[id*='gdpr']",
+    "[class*='gdpr']",
+    "[id*='ccpa']",
+    "[class*='ccpa']",
+    "[data-ccpa]",
+    "#onetrust-pc-btn-handler", // OneTrust preference center
+    ".fc-preference-consent", // Funding Choices
+    "[aria-label*='privacy settings']"
+  ];
+
+  let foundSelector = null;
+  for (const selector of complianceSelectors) {
+    const element = await page.$(selector);
+    if (element) {
+      const box = await element.boundingBox();
+      if (box && box.height > 0 && box.width > 0) {
+        foundSelector = selector;
+        break;
+      }
+    }
+  }
+
+  if (foundKeyword || foundSelector) {
+    return {
+      score: 100,
+      status: "pass",
+      details: foundKeyword
+        ? `GDPR/CCPA compliance text found: "${foundKeyword}"`
+        : `GDPR/CCPA compliance element found (${foundSelector})`,
+      foundKeyword,
+      foundSelector,
+      analysis: null
+    };
+  }
+
+  return {
+    score: 0,
+    status: "fail",
+    details: "No specific GDPR/CCPA notice or text found",
+    analysis: {
+      cause: "No text mentioning GDPR, CCPA, or data rights was found, nor were any standard compliance widgets detected.",
+      recommendation: "Ensure explicit mention of user rights (GDPR/CCPA) or a link to 'Do Not Sell My Personal Information' is present."
+    }
+  };
+}
+
+// Data Collection
 async function checkDataCollection(page) {
-  try {
-    // Get all anchor hrefs
-    const links = await page.$$eval("a", (anchors) =>
-      anchors.map((a) => (a.href || "").toLowerCase())
-    );
+  // 1. Check keywords in visible links (href and text)
+  const links = await page.$$eval("a", (anchors) =>
+    anchors.map((a) => ({
+      href: (a.href || "").toLowerCase(),
+      text: (a.innerText || "").toLowerCase(),
+      visible: a.offsetWidth > 0 && a.offsetHeight > 0
+    }))
+  );
 
-    // Keywords for data collection disclosure
-    const dataKeywords = [
-      "data-collection",
-      "data-usage",
-      "how we collect data",
-      "information we collect",
-      "personal information",
-      "user data",
-      "privacy",
-      "terms-of-service",
-      "terms-of-use",
-      "cookies",
-    ];
+  const dataLinkKeywords = [
+    "data collection",
+    "data usage",
+    "data policy",
+    "information we collect",
+    "usage policy",
+    "privacy center"
+  ];
 
-    const found = links.some((link) =>
-      dataKeywords.some((keyword) => link.includes(keyword))
-    );
-    return found
-      ? { score: 100, status: "pass", details: "Data collection disclosure found", meta: { location: "Footer/Menu" } }
-      : { score: 0, status: "fail", details: "No data collection disclosure found", meta: { location: "Footer/Menu" } };
-  } catch (err) {
-    return { score: 0, status: "fail", details: "Error checking data collection", meta: { location: "HTML DOM" } };
+  const foundLink = links.find(link =>
+    link.visible && dataLinkKeywords.some(k => link.href.includes(k) || link.text.includes(k))
+  );
+
+  if (foundLink) {
+    return {
+      score: 100,
+      status: "pass",
+      details: "Data collection disclosure link found",
+      foundLink: foundLink.href,
+      analysis: null
+    };
+  }
+
+  // 2. Check for headings (H1-H6) that expressly mention data collection
+  // This helps if the disclosure is inline on the current page
+  const headings = await page.$$eval("h1, h2, h3, h4, h5, h6", (els) =>
+    els.map(el => ({
+      text: (el.innerText || "").toLowerCase(),
+      visible: el.offsetWidth > 0 && el.offsetHeight > 0
+    }))
+  );
+
+  const headingKeywords = [
+    "how we use your data",
+    "information collection",
+    "what information we collect",
+    "data we collect"
+  ];
+
+  const foundHeading = headings.find(h =>
+    h.visible && headingKeywords.some(k => h.text.includes(k))
+  );
+
+  if (foundHeading) {
+    return {
+      score: 100,
+      status: "pass",
+      details: `Data collection section found: "${foundHeading.text}"`,
+      foundHeading: foundHeading.text,
+      analysis: null
+    };
+  }
+
+  // 3. Fallback: If Privacy Policy exists (checked separately), we might assume it covers this, 
+  // but strictly for this check, we look for explicit "Data Collection" mentions.
+  // We return fail/warning if specific references aren't found.
+
+  return {
+    score: 0,
+    status: "fail",
+    details: "No explicit 'Data Collection' disclosure found",
+    analysis: {
+      cause: "No visible links or headings were found that explicitly mention 'Data Collection', 'Information We Collect', or similar.",
+      recommendation: "Ensure your Privacy Policy or Terms have a clearly marked section detailing data collection practices."
+    }
+  };
+}
+
+// Forms Use HTTPS
+async function checkFormsUseHTTPS(page) {
+  const pageUrl = page.url();
+
+  const forms = await page.$$eval("form", (forms) =>
+    forms.map((f) => f.getAttribute("action") || "")
+  );
+
+  if (!forms.length) return { score: 100, status: "pass", details: "No forms found", analysis: null };
+
+  const insecureForms = forms.filter((action) => {
+    try {
+      const resolvedUrl = new URL(action, pageUrl);
+      return resolvedUrl.protocol !== "https:";
+    } catch (e) {
+      return false;
+    }
+  });
+
+  if (insecureForms.length === 0) {
+    return {
+      score: 100,
+      status: "pass",
+      details: "All forms use HTTPS",
+      analysis: null
+    };
+  } else {
+    return {
+      score: 0,
+      status: "fail",
+      details: `Found ${insecureForms.length} form(s) using insecure protocols`,
+      insecureForms,
+      analysis: {
+        cause: "One or more forms on the page are configured to submit data over an unencrypted (HTTP) connection.",
+        recommendation: "Update the 'action' attribute of all forms to start with 'https://' or use relative paths on an HTTPS site."
+      }
+    };
   }
 }
 
-// Security/Compliance ( Authentication & Access Control)
-async function checkAdminPanelPublic(baseUrl, options = {}) {
-  const {
-    timeout = 5000, // Reduced timeout for faster execution
-    maxBodyChars = 20000,
-  } = options;
-
-  // Refined paths: Focus on ADMIN interfaces, not user logins
-  const adminPaths = [
-    "/admin",
-    "/admin/login",
-    "/administrator",
-    "/wp-admin/",
-    "/wp-login.php",
-    "/cms",
-    "/backend",
-    "/controlpanel",
-    "/admin.php",
-    "/phpmyadmin/",
-    "/sqladmin/",
-    "/dashboard",
+// Weak Default Credentials
+async function checkWeakDefaultCredentials(page) {
+  // 1. Passive Scan: Check page text for explicit mentions
+  const pageText = await page.evaluate(() => document.body.innerText.toLowerCase());
+  const explicitIndicators = [
+    "default password",
+    "default credentials",
+    "username: admin",
+    "password: admin",
+    "admin/admin",
+    "demo login",
+    "login with admin",
+    "use admin",
   ];
 
-  // Refined keywords: Avoid generic "login" terms that match 404 pages or user areas
-  const adminKeywords = [
-    "wp-login.php",
-    "wordpress",
-    "phpmyadmin",
-    "administrator",
-    "admin panel",
-    "control panel",
-    "dashboard",
-    "administration",
-    "admin area"
-  ];
-
-  function looksLikeAdmin(body) {
-    if (!body) return false;
-    const low = body.slice(0, maxBodyChars).toLowerCase();
-    return adminKeywords.some((kw) => low.includes(kw));
+  if (explicitIndicators.some((kw) => pageText.includes(kw))) {
+    return {
+      score: 0,
+      status: "fail",
+      details: "Default credentials mentioned in visible text",
+      analysis: {
+        cause: "The page content explicitly mentions default credentials (e.g., 'admin/admin').",
+        recommendation: "Remove any mention of default credentials and ensure they are changed in production."
+      }
+    };
   }
+
+  // 2. Active Scan: Attempt to login with weak credentials if a form exists
+  const loginForm = await page.$("form input[type='password']");
+  if (!loginForm) {
+    return {
+      score: 100,
+      status: "pass",
+      details: "No login form detected",
+      analysis: null
+    };
+  }
+
+  const credentials = [
+    { u: "admin", p: "admin" },
+    { u: "admin", p: "password" },
+    { u: "root", p: "root" },
+    { u: "user", p: "user" }
+  ];
+
+  // We only test the first set to avoid account lockouts or excessive requests in this compliance check
+  const cred = credentials[0];
+
+  try {
+    // Attempt to fill likely username/password fields
+    const userField = await page.$("input[type='text'], input[type='email'], input[name*='user'], input[name*='login']");
+    const passField = await page.$("input[type='password']");
+    const submitBtn = await page.$("button[type='submit'], input[type='submit']");
+
+    if (userField && passField && submitBtn) {
+      await userField.type(cred.u);
+      await passField.type(cred.p);
+
+      // Wait for navigation or failure message
+      const navigationPromise = page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 5000 }).catch(() => null);
+      await submitBtn.click();
+      await navigationPromise;
+
+      // Check for success indicators (URL change, "dashboard", "welcome", logout button)
+      const newUrl = page.url();
+      const newText = await page.evaluate(() => document.body.innerText.toLowerCase());
+
+      const successKeywords = ["dashboard", "welcome", "logout", "sign out", "my account"];
+      const isSuccess = successKeywords.some(k => newText.includes(k)) && !newText.includes("invalid") && !newText.includes("incorrect");
+
+      if (isSuccess) {
+        return {
+          score: 0,
+          status: "fail",
+          details: `Login successful with weak credentials (${cred.u}/${cred.p})`,
+          credentials: `${cred.u}/${cred.p}`,
+          analysis: {
+            cause: "The application accepts weak or default credentials.",
+            recommendation: "Enforce strong password policies and change all default accounts immediately."
+          }
+        };
+      }
+    }
+  } catch (e) {
+    // Ignore active check errors (e.g. selectors not found during interaction)
+  }
+
+  return {
+    score: 100,
+    status: "pass",
+    details: "No weak default credentials detected (Basic Scan)",
+    analysis: null
+  };
+}
+
+// Authentication & Access Control
+async function checkAdminPanelPublic(baseUrl, options = {}) {
+  const { timeout = 5000, maxBodyChars = 20000 } = options;
 
   let origin;
   try {
     const u = new URL(baseUrl);
-    origin = `${u.protocol}//${u.host}`;
-  } catch {
-    return { score: 100, status: "pass", details: "Invalid URL", meta: { location: "URL Parsing" } };
+    origin = u.origin;
+  } catch (e) {
+    return { score: 100, status: "error", details: "Invalid Base URL for Admin Check", analysis: null };
   }
 
-  async function checkPath(path) {
+  const adminPaths = [
+    "/admin", "/admin/login", "/administrator", "/wp-admin/", "/wp-login.php",
+    "/cms", "/backend", "/controlpanel", "/admin.php", "/phpmyadmin/",
+    "/sqladmin/", "/dashboard", "/login.php"
+  ];
+
+  const adminKeywords = [
+    "wp-login.php", "wordpress", "phpmyadmin", "administrator",
+    "admin panel", "control panel", "dashboard", "administration", "admin area"
+  ];
+
+  const checkPath = async (path) => {
     const tryUrl = new URL(path, origin).toString();
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeout);
 
     try {
-      const res = await fetch(tryUrl, { redirect: "follow", signal: controller.signal });
-      clearTimeout(id);
+      const res = await fetch(tryUrl, { method: 'GET', redirect: "follow", signal: controller.signal });
 
-      // 401/403 means it exists but is protected -> Pass (or Warning, but usually Pass for "Publicly Accessible")
+      // 401/403 means it exists but is protected -> Pass
       if (res.status === 401 || res.status === 403) return null;
 
       if (res.status === 200) {
-        // Check if it's a soft 404 or just a generic page
-        const body = await res.text();
-        if (looksLikeAdmin(body)) {
-          return { score: 0, status: "fail", details: `Admin panel exposed at ${path}`, meta: { location: "Admin Paths", url: tryUrl } };
+        // Check content to avoid false positives (e.g. soft 404s)
+        const text = await res.text();
+        const lowText = text.slice(0, maxBodyChars).toLowerCase();
+
+        if (adminKeywords.some(kw => lowText.includes(kw))) {
+          return {
+            score: 0,
+            status: "fail",
+            details: `Admin panel exposed at ${path}`,
+            url: tryUrl,
+            path,
+            analysis: {
+              cause: `An administrative panel appears to be publicly accessible at ${path}.`,
+              recommendation: "Restrict access to admin panels using IP whitelisting or move them to a non-public URL."
+            }
+          };
         }
       }
-      return null; // Path is safe or not an admin panel
     } catch (err) {
+      // Ignore network errors (timeout, connection refused) as effectively "not public"
+      return null;
+    } finally {
       clearTimeout(id);
-      return null; // Network error/timeout -> assume unreachable/safe
     }
-  }
+    return null;
+  };
 
-  // Execute checks in parallel for speed
   const results = await Promise.all(adminPaths.map(p => checkPath(p)));
-
   const failure = results.find(r => r !== null);
+
   if (failure) return failure;
 
-  return { score: 100, status: "pass", details: "No public admin panels found", meta: { location: "Admin Paths", checked: adminPaths.length } };
+  return {
+    score: 100,
+    status: "pass",
+    details: "No public admin panels found",
+    analysis: { checked: adminPaths.length }
+  };
 }
 
-async function checkWeakDefaultCredentials(page) {
-  try {
-    // 1) quick page text scan for explicit "default credentials" mentions
-    const pageText = await page.evaluate(() => document.documentElement.innerText || "");
-    const lowText = (pageText || "").toLowerCase();
-    const explicitIndicators = [
-      "default password",
-      "default credentials",
-      "username: admin",
-      "password: admin",
-      "admin/admin",
-      "demo login",
-      "test credentials",
-      "login with admin",
-      "use admin",
-    ];
-    if (explicitIndicators.some((kw) => lowText.includes(kw))) {
-      return { score: 0, status: "fail", details: "Default credentials mentioned in text", meta: { location: "Page Content" } };
-    }
-
-    // 2) find login forms (forms that contain an input[type=password])
-    const forms = await page.$$eval("form", (forms) =>
-      forms.map((f) => {
-        const inputs = Array.from(f.querySelectorAll("input")).map((i) => ({
-          name: i.getAttribute("name") || "",
-          id: i.getAttribute("id") || "",
-          type: i.getAttribute("type") || "",
-          placeholder: i.getAttribute("placeholder") || "",
-          value: i.getAttribute("value") || "",
-          autocomplete: i.getAttribute("autocomplete") || "",
-        }));
-        return {
-          action: f.getAttribute("action") || "",
-          method: (f.getAttribute("method") || "get").toLowerCase(),
-          inputs,
-          html: f.innerHTML.slice(0, 2000), // small sample
-        };
-      })
-    );
-
-    // If no forms, that's fine (no direct login form)
-    for (const form of forms) {
-      // does the form have a password field?
-      const hasPassword = form.inputs.some((i) => (i.type || "").toLowerCase() === "password");
-      if (!hasPassword) continue;
-
-      // check for CSRF token style fields (name contains csrf, token, _token, auth)
-      const hasCsrf = form.inputs.some((i) =>
-        /csrf|token|authenticity_token|_token|anti_csrf/i.test(i.name + " " + i.id)
-      );
-
-      // check for captcha presence in form html or page (recaptcha iframe, captcha text etc.)
-      const captchaPresent =
-        /recaptcha|g-recaptcha|captcha|hcaptcha|data-sitekey/i.test(form.html) ||
-        /recaptcha|g-recaptcha|captcha|hcaptcha|data-sitekey/i.test(lowText);
-
-      // check username-like input placeholders/values that equal common defaults
-      const usernameDefaults = ["admin", "root", "administrator", "user", "test"];
-      const usernamePreset = form.inputs.some((i) =>
-        usernameDefaults.includes((i.value || i.placeholder || "").toLowerCase())
-      );
-
-      // check if form action points to suspicious known endpoints
-      const actionLower = (form.action || "").toLowerCase();
-      const adminActionIndicators = ["wp-login.php", "phpmyadmin", "pma", "/admin", "/login"];
-
-      const actionLooksAdmin = adminActionIndicators.some((s) => actionLower.includes(s));
-
-      // Heuristics: flag if login form exists AND:
-      //  - username preset to 'admin' OR
-      //  - no CSRF token AND no captcha (makes brute forcing/default creds easier) OR
-      //  - action looks like common admin endpoint
-      if (usernamePreset) {
-        return { score: 0, status: "fail", details: "Username field preset with default value", meta: { location: "Login Form" } };
-      }
-
-      if (!hasCsrf && !captchaPresent) {
-        // no CSRF and no captcha — higher chance weak/default creds could be exploited
-        return { score: 0, status: "fail", details: "Login form missing CSRF token and Captcha", meta: { location: "Login Form" } };
-      }
-
-      if (actionLooksAdmin) {
-        // exposed admin login endpoint present
-        return { score: 0, status: "fail", details: "Login form action points to admin endpoint", meta: { location: "Login Form" } };
-      }
-    }
-
-    // 3) Inspect headers for WWW-Authenticate (basic auth) — weaker check via fetch to origin
-    try {
-      // use page's location origin
-      const origin = await page.evaluate(() => location.origin);
-      const headRes = await fetch(origin, { method: "HEAD", redirect: "follow" });
-      const wwwAuth = headRes.headers.get("www-authenticate") || "";
-      if (wwwAuth) {
-        // presence of Basic auth does not mean weak creds, but we flag for review
-        return { score: 0, status: "fail", details: "Basic Auth (WWW-Authenticate) detected", meta: { location: "Response Headers" } };
-      }
-    } catch (e) {
-      // non-fatal; ignore
-    }
-
-    // 4) If we reached here, no obvious passive indicators found
-    return { score: 100, status: "pass", details: "No weak credential indicators found", meta: { location: "Page Content" } };
-  } catch (err) {
-    // on error treat as safe (1) — or you may choose to return 0 to be conservative
-    return { score: 100, status: "pass", details: "Error checking credentials, assuming safe", meta: { location: "Page Content" } };
-  }
-}
-
+// MFA Enabled
 async function checkMFAEnabled(page) {
-  try {
-    // Find all login forms
-    const forms = await page.$$eval("form", (forms) =>
-      forms.map((f) => ({
-        inputs: Array.from(f.querySelectorAll("input")).map(i => ({
-          type: i.type,
-          placeholder: i.placeholder || "",
-          name: i.name || "",
-          id: i.id || ""
-        })),
-        text: f.innerText || "",
-        action: f.getAttribute("action") || ""
-      }))
-    );
+  // 1. Check for specific input fields indicative of MFA (e.g., 6-digit code fields)
+  // Often MFA inputs have specific attributes like autocomplete="one-time-code" or numeric patterns
+  const mfaInputs = await page.$$eval("input", (inputs) =>
+    inputs.some(i =>
+      (i.autocomplete === "one-time-code") ||
+      (i.name && /otp|mfa|2fa|verification|code/i.test(i.name)) ||
+      (i.placeholder && /enter code|verification code|6-digit/i.test(i.placeholder))
+    )
+  );
 
-    for (const form of forms) {
-      const hasPassword = form.inputs.some(i => i.type === "password");
-      if (!hasPassword) continue;
-
-      // Heuristic: look for MFA keywords in text or input names/placeholder
-      const text = form.text.toLowerCase();
-      const inputsText = form.inputs.map(i => (i.placeholder + i.name + i.id).toLowerCase()).join(" ");
-      const action = form.action.toLowerCase();
-
-      // Expanded keywords including SSO/SAML which often imply MFA
-      const mfaKeywords = [
-        "otp", "two-factor", "2fa", "authenticator", "verification code", "mfa",
-        "security key", "yubikey", "webauthn", "one-time password",
-        "sso", "saml", "single sign-on", "okta", "auth0"
-      ];
-
-      const foundKeyword = mfaKeywords.find(k => text.includes(k) || inputsText.includes(k) || action.includes(k));
-
-      if (foundKeyword) {
-        return {
-          score: 100,
-          status: "pass",
-          details: `MFA/SSO indicator found: "${foundKeyword}"`,
-          meta: { location: "Login Form", keyword: foundKeyword }
-        };
-      }
-    }
-
+  if (mfaInputs) {
     return {
-      score: 0,
-      status: "fail",
-      details: "No visible MFA or SSO indicators on login page",
-      meta: { location: "Login Form", note: "MFA might be on a second screen" }
+      score: 100,
+      status: "pass",
+      details: "MFA-related input field detected",
+      analysis: null
     };
-  } catch (err) {
-    return { score: 0, status: "fail", details: "Error checking MFA", meta: { location: "Login Form" } };
   }
-}
 
-// Lighthouse
-async function checkViewportMetaTag(page) {
+  // 2. Check for text indicators on the page (e.g., "Login with SSO", "Use Security Key")
+  const pageText = await page.evaluate(() => document.body.innerText.toLowerCase());
+  const mfaKeywords = [
+    "two-factor",
+    "2fa",
+    "multi-factor",
+    "mfa",
+    "authenticator app",
+    "verification code",
+    "security key",
+    "one-time password",
+    "send sms",
+    "backup code"
+  ];
 
-  // Evaluate in the browser context
-  const hasViewport = await page.evaluate(() => {
-    const meta = document.querySelector('meta[name="viewport"]');
-    if (!meta) return { score: 0, status: "fail", details: "No viewport meta tag found", meta: { location: "HTML Head" } };
+  const foundKeyword = mfaKeywords.find(k => pageText.includes(k));
 
-    const content = meta.getAttribute("content") || "";
-    // check for "width=" or "initial-scale="
-    if (content.includes("width=") || content.includes("initial-scale=")) {
-      return { score: 100, status: "pass", details: "Viewport meta tag configured correctly", meta: { location: "HTML Head" } };
-    } else {
-      return { score: 0, status: "fail", details: "Viewport meta tag missing width or initial-scale", meta: { location: "HTML Head" } };
-    }
-  });
-
-  return hasViewport;
-}
-
-async function checkHtmlDoctype(page) {
-  // Evaluate in the page context
-  const hasDoctype = await page.evaluate(() => {
-    const dt = document.doctype;
-    if (!dt) return { score: 0, status: "fail", details: "No DOCTYPE declared", meta: { location: "Document Start" } };
-    // Check if it's <!DOCTYPE html>
-    return dt.name.toLowerCase() === "html"
-      ? { score: 100, status: "pass", details: "DOCTYPE is HTML5", meta: { location: "Document Start" } }
-      : { score: 0, status: "fail", details: `DOCTYPE is ${dt.name}, expected html`, meta: { location: "Document Start" } };
-  });
-
-  return hasDoctype;
-}
-
-async function checkCharsetDefined(page) {
-
-  let hasHeaderCharset = 0;
-
-  // Listen for response headers to detect charset
-  page.on("response", (response) => {
-    const headers = response.headers();
-    const contentType = headers["content-type"];
-    if (contentType && contentType.toLowerCase().includes("charset=")) {
-      hasHeaderCharset = 1;
-    }
-  });
-
-  // Check <meta charset> tag in HTML
-  const hasMetaCharset = await page.evaluate(() => {
-    const meta = document.querySelector("meta[charset]");
-    return meta ? 1 : 0;
-  });
-
-  // Pass if either HTML or HTTP header defines charset
-  if (hasMetaCharset) return { score: 100, status: "pass", details: "Charset defined in meta tag", meta: { location: "HTML Head" } };
-  if (hasHeaderCharset) return { score: 100, status: "pass", details: "Charset defined in HTTP header", meta: { location: "Response Headers" } };
-
-  return { score: 0, status: "fail", details: "No charset defined in meta tag or headers", meta: { location: "HTML Head / Headers" } };
-}
-
-async function checkNoBrowserErrors(page) {
-
-  let hasConsoleErrors = 0;
-
-  // Listen for console messages
-  page.on("console", (msg) => {
-    if (msg.type() === "error") {
-      hasConsoleErrors = 1;
-    }
-  });
-
-  // Also listen for runtime exceptions (JS errors)
-  page.on("pageerror", () => {
-    hasConsoleErrors = 1;
-  });
-
-  // Return 1 if no errors, 0 if errors found
-  return hasConsoleErrors
-    ? { score: 0, status: "fail", details: "Browser console errors detected", meta: { location: "Console" } }
-    : { score: 100, status: "pass", details: "No browser console errors detected", meta: { location: "Console" } };
-}
-
-async function checkGeolocationRequest(url, page) {
-
-  let geolocationRequested = 0;
-
-  // Create CDP session to listen to permission requests
-  const client = await page.target().createCDPSession();
-  await client.send("Browser.grantPermissions", {
-    origin: url,
-    permissions: [], // initially no permissions granted
-  });
-
-  client.on("Permission.requested", (event) => {
-    if (event.permissionType === "geolocation") {
-      geolocationRequested = 1; // geolocation requested
-    }
-  });
-
-  // Navigate to the page
-
-  // Return 1 if page does NOT request geolocation (pass), 0 if it does
-  return geolocationRequested
-    ? { score: 0, status: "fail", details: "Geolocation permission requested on load", meta: { location: "Page Load" } }
-    : { score: 100, status: "pass", details: "No geolocation permission requested", meta: { location: "Page Load" } };
-}
-
-async function checkInputPasteAllowed(page) {
-  // Evaluate in browser context
-  const allowsPaste = await page.evaluate(() => {
-    const inputs = Array.from(document.querySelectorAll("input, textarea"));
-
-    for (let input of inputs) {
-      // Check for onpaste attribute that blocks pasting
-      const onpaste = input.getAttribute("onpaste");
-      if (onpaste && onpaste.toLowerCase().includes("return false")) {
-        return { score: 0, status: "fail", details: "Paste blocked via onpaste attribute", meta: { location: `Input: ${input.name || input.id || 'unknown'}` } };
-      }
-
-      // Programmatically test if paste is blocked
-      let blocked = false;
-      // We can't easily dispatch events inside evaluate that trigger the actual blocking if it's done via addEventListener in a complex way without more context,
-      // but we can try a simple dispatch.
-      // However, for this check, we'll rely on the previous logic or a simplified version.
-      // The previous logic had:
-      /*
-      const testEvent = new ClipboardEvent("paste", { ... });
-      const blocked = !input.dispatchEvent(testEvent);
-      */
-      // But ClipboardEvent constructor might not work in all contexts or might need specific handling.
-      // Let's stick to the onpaste check and a basic event dispatch if possible, or just the onpaste check if that's safer for now.
-      // The previous code had a complex event dispatch. Let's try to restore it.
-
-      try {
-        const testEvent = new Event("paste", { bubbles: true, cancelable: true });
-        // We can't easily check if preventDefault was called without wrapping it, but we are in the page context.
-        // Let's just check if the event returns false.
-        const result = input.dispatchEvent(testEvent);
-        if (result === false) {
-          return { score: 0, status: "fail", details: "Paste blocked via event listener", meta: { location: `Input: ${input.name || input.id || 'unknown'}` } };
-        }
-      } catch (e) {
-        // ignore
-      }
-    }
-
-    return { score: 100, status: "pass", details: "Paste allowed in all inputs", meta: { location: "Input Fields" } };
-  });
-
-  return allowsPaste;
-}
-
-async function checkNotificationRequest(page) {
-
-  let notificationRequested = 0;
-
-  // Override Notification.requestPermission to detect requests
-  await page.evaluateOnNewDocument(() => {
-    const original = Notification.requestPermission;
-    Notification.requestPermission = function (...args) {
-      window.__notificationRequested = true;
-      return original.apply(this, args);
+  if (foundKeyword) {
+    return {
+      score: 100,
+      status: "pass",
+      details: `MFA indicator found in text: "${foundKeyword}"`,
+      foundKeyword,
+      analysis: null
     };
-    window.__notificationRequested = false;
-  });
+  }
 
-  // Check if notification was requested
-  const requested = await page.evaluate(() => window.__notificationRequested);
-  if (requested) notificationRequested = 1;
+  // 3. Check for SSO/Federated Login buttons which imply delegated auth (often enforcing MFA)
+  const ssoKeywords = ["sso", "saml", "okta", "auth0", "duo", "continue with google", "continue with microsoft", "login with"];
+  const ssoFound = ssoKeywords.find(k => pageText.includes(k));
 
-  // Return 1 if notifications are NOT requested (pass), 0 if requested
-  return notificationRequested
-    ? { score: 0, status: "fail", details: "Notification permission requested on load", meta: { location: "Page Load" } }
-    : { score: 100, status: "pass", details: "No notification permission requested", meta: { location: "Page Load" } };
-}
+  if (ssoFound) {
+    return {
+      score: 100,
+      status: "pass",
+      details: `SSO/Federated login detected: "${ssoFound}" (Likely supports MFA)`,
+      ssoFound,
+      analysis: null
+    };
+  }
 
-async function checkThirdPartyCookies(url, page) {
-
-  let thirdPartyCookieFound = 0;
-
-  // Parse the origin of the page
-  const pageOrigin = new URL(url).origin;
-
-  // Intercept responses to check Set-Cookie headers
-  page.on("response", async (response) => {
-    const headers = response.headers();
-    if (headers["set-cookie"]) {
-      // Sometimes multiple cookies in one header
-      const cookies = headers["set-cookie"].split(",");
-      for (let cookie of cookies) {
-        // Extract cookie domain if specified
-        const domainMatch = cookie.match(/domain=([^;]+)/i);
-        const cookieDomain = domainMatch ? domainMatch[1] : null;
-
-        if (cookieDomain && !cookieDomain.includes(new URL(pageOrigin).hostname)) {
-          // Cookie domain is different → third-party cookie
-          thirdPartyCookieFound = 1;
-        }
-      }
+  // If no indicators found, we can't be sure MFA isn't available post-login.
+  // Reporting as 'warning' or 'info' rather than strict fail is often better for this passive check.
+  return {
+    score: 50,
+    status: "warning",
+    details: "No visible MFA/2FA indicators found on login page",
+    analysis: {
+      cause: "Could not detect explicit Multi-Factor Authentication (MFA) or SSO options on the entry page.",
+      recommendation: "Ensure MFA is available and enforced for sensitive accounts. If it is a post-login step, this check may miss it."
     }
-  });
-
-  // Return 1 if no third-party cookies, 0 if any found
-  return thirdPartyCookieFound
-    ? { score: 0, status: "fail", details: "Third-party cookies detected", meta: { location: "Response Headers" } }
-    : { score: 100, status: "pass", details: "No third-party cookies detected", meta: { location: "Response Headers" } };
-}
-
-async function checkDeprecatedAPIs(page) {
-
-  let deprecatedAPIUsed = 0;
-
-  // Listen for console warnings
-  page.on("console", (msg) => {
-    if (msg.type() === "warning") {
-      const text = msg.text().toLowerCase();
-      // Some browsers label deprecated APIs in warning messages
-      if (text.includes("deprecated") || text.includes("is deprecated")) {
-        deprecatedAPIUsed = 1;
-      }
-    }
-  });
-
-
-  // Return 1 if no deprecated APIs used, 0 if found
-  return deprecatedAPIUsed
-    ? { score: 0, status: "fail", details: "Deprecated APIs used", meta: { location: "Console Warnings" } }
-    : { score: 100, status: "pass", details: "No deprecated APIs used", meta: { location: "Console" } };
+  };
 }
 
 export default async function securityCompliance(url, page, response, browser) {
-  try {
 
-    // Security/Compliance (HTTPS / SSL)
-    const httpsResult = checkHTTPS(url);
+  const domain = Domain(url);
+  const httpsResult = checkHTTPS(url);
+  const sslResult = checkSSLConnection(response);
+  const tlsVersionResult = checkTLSVersion(response);
+  const hstsResult = checkHSTS(response);
 
-    const sslDetailsResult = checkSSLDetails(response);
-    const sslResult = response.ok()
-      ? { score: 100, status: "pass", details: "SSL connection established", meta: { location: "Connection" } }
-      : { score: 0, status: "fail", details: `SSL connection failed (Status: ${response.status()})`, meta: { location: "Connection" } };
+  const xFrameOptionsResult = checkXFrameOptions(response);
+  const cspResult = checkCSP(response);
+  const xContentTypeOptionsResult = checkXContentTypeOptions(response);
 
-    // Security/Compliance (Security Headers)
-    const cookieResult = await checkCookiesSecure(page);
+  const cookieSecureResult = await checkCookiesSecureFlag(page);
+  const cookieHttpOnlyResult = await checkCookiesHttpOnlyFlag(page);
+  const thirdPartyCookiesResult = await checkThirdPartyCookies(url, page);
 
-    // Security/Compliance (Vulnerability / Malware Check)
-    const domain = Domain(url);
-    const safeBrowsingResult = await checkGoogleSafeBrowsing(url);
+  const safeBrowsingResult = await checkGoogleSafeBrowsing(url);
+  const blacklistResult = await checkDomainBlacklist(domain, url);
+  const malwareScanResult = await checkVirusTotal(domain);
 
-    const blacklistResult = await checkDomainBlacklist(domain, url);
+  const sqliExposureResult = await checkSQLiExposure(url);
 
-    const malwareScanResult = await checkVirusTotal(domain);
+  const cookieConsentResult = await checkCookieConsent(page);
+  const privacyPolicyResult = await checkPrivacyPolicy(page);
+  const gdprCcpaResult = await checkGDPRCCPA(page);
+  const dataCollectionResult = await checkDataCollection(page);
 
-    const sqliExposureResult = await checkSQLiExposure(url);
+  const formsUseHTTPSResult = await checkFormsUseHTTPS(page);
+  const weakDefaultCredsResult = await checkWeakDefaultCredentials(page);
+  const mfaEnabledResult = await checkMFAEnabled(page);
+  const adminPanelPublicResult = await checkAdminPanelPublic(url);
 
-    // Security/Compliance (Privacy & Compliance)
-    const cookieConsentResult = await checkCookieConsent(page);
+  const xssVulnerabilityResult = await checkXSS(url, browser);
 
-    const privacyPolicyResult = await checkPrivacyPolicy(page);
+  // Weights: Critical=10, Severe=8-9, High=7, Medium=4-6, Low=1-3
+  const weights = {
+    // Critical Infrastructure & Vulnerabilities
+    HTTPS: 10,
+    SSL: 10,
+    SQLi_Exposure: 10,
+    XSS: 10,
+    Weak_Default_Credentials: 10,
+    Google_Safe_Browsing: 10,
+    Blacklist: 10,
+    Malware_Scan: 10,
 
-    const formsUseHTTPSResult = await checkFormsUseHTTPS(page);
+    // Severe Risks
+    Admin_Panel_Public: 9,
+    Forms_Use_HTTPS: 8,
+    CSP: 8,
 
-    const gdprCcpaResult = await checkGDPRCCPA(page);
+    // High Importance / Best Practices
+    TLS_Version: 7,
+    HSTS: 7,
+    Cookies_Secure: 7,
+    Cookies_HttpOnly: 7,
 
-    const dataCollectionResult = await checkDataCollection(page);
+    // Medium Importance / Defense in Depth
+    MFA_Enabled: 6,
+    X_Frame_Options: 5,
+    X_Content_Type_Options: 5,
 
-    // Security/Compliance ( Authentication & Access Control)
-    const weakDefaultCredsResult = await checkWeakDefaultCredentials(page);
+    // Compliance & Privacy
+    Cookie_Consent: 4,
+    GDPR_CCPA: 4,
+    Privacy_Policy: 4,
 
-    const mfaEnabledResult = await checkMFAEnabled(page);
+    // Low / Informational
+    Data_Collection: 3,
+    Third_Party_Cookies: 3,
+  };
 
-    const adminPanelPublicResult = await checkAdminPanelPublic(url);
+  const results = {
+    HTTPS: httpsResult,
+    SSL: sslResult,
+    HSTS: hstsResult,
+    TLS_Version: tlsVersionResult,
+    X_Frame_Options: xFrameOptionsResult,
+    CSP: cspResult,
+    X_Content_Type_Options: xContentTypeOptionsResult,
+    Cookies_Secure: cookieSecureResult,
+    Cookies_HttpOnly: cookieHttpOnlyResult,
+    Google_Safe_Browsing: safeBrowsingResult,
+    Blacklist: blacklistResult,
+    Malware_Scan: malwareScanResult,
+    SQLi_Exposure: sqliExposureResult,
+    XSS: xssVulnerabilityResult,
+    Cookie_Consent: cookieConsentResult,
+    Privacy_Policy: privacyPolicyResult,
+    Forms_Use_HTTPS: formsUseHTTPSResult,
+    GDPR_CCPA: gdprCcpaResult,
+    Data_Collection: dataCollectionResult,
+    Weak_Default_Credentials: weakDefaultCredsResult,
+    MFA_Enabled: mfaEnabledResult,
+    Admin_Panel_Public: adminPanelPublicResult,
+    Third_Party_Cookies: thirdPartyCookiesResult,
+  };
 
-    // Security/Compliance (Vulnerability / Malware Check)
-    const xssVulnerabilityResult = await checkXSS(url, browser);
+  let totalWeightedScore = 0;
+  let maxWeightedScore = 0;
 
-    // Lighthouse
-    const viewportMetaTagResult = await checkViewportMetaTag(page);
-
-    const htmlDoctypeResult = await checkHtmlDoctype(page);
-
-    const charsetDefinedResult = await checkCharsetDefined(page);
-
-    const browserErrorsResult = await checkNoBrowserErrors(page);
-
-    const geolocationRequestResult = await checkGeolocationRequest(url, page);
-
-    const inputPasteAllowedResult = await checkInputPasteAllowed(page);
-
-    const notificationRequestResult = await checkNotificationRequest(page);
-
-    const thirdPartyCookiesResult = await checkThirdPartyCookies(url, page);
-
-    const deprecatedAPIsResult = await checkDeprecatedAPIs(page);
-
-    // Weighted Score Calculation
-    // Weights: Critical=5, High=3, Medium=2, Low=1
-    const weights = {
-      HTTPS: 5,
-      SSL: 5,
-      SSL_Expiry: 5,
-      HSTS: 3,
-      TLS_Version: 3,
-      X_Frame_Options: 2,
-      CSP: 3,
-      X_Content_Type_Options: 2,
-      Cookies_Secure: 3,
-      Cookies_HttpOnly: 3,
-      Google_Safe_Browsing: 5,
-      Blacklist: 5,
-      Malware_Scan: 5,
-      SQLi_Exposure: 5,
-      XSS: 5,
-      Cookie_Consent: 2,
-      Privacy_Policy: 2,
-      Forms_Use_HTTPS: 5,
-      GDPR_CCPA: 2,
-      Data_Collection: 2,
-      Weak_Default_Credentials: 5,
-      MFA_Enabled: 3,
-      Admin_Panel_Public: 3,
-      Viewport_Meta_Tag: 1,
-      HTML_Doctype: 1,
-      Character_Encoding: 1,
-      Browser_Console_Errors: 2,
-      Geolocation_Request: 1,
-      Input_Paste_Allowed: 1,
-      Notification_Request: 1,
-      Third_Party_Cookies: 2,
-      Deprecated_APIs: 1
-    };
-
-    const results = {
-      HTTPS: httpsResult,
-      SSL: sslResult,
-      SSL_Expiry: sslDetailsResult.certificateValid,
-      HSTS: sslDetailsResult.hstsEnabled,
-      TLS_Version: sslDetailsResult.tlsVersion,
-      X_Frame_Options: sslDetailsResult.xFrameOptions,
-      CSP: sslDetailsResult.contentSecurityPolicy,
-      X_Content_Type_Options: sslDetailsResult.xContentTypeOptions,
-      Cookies_Secure: cookieResult.hasSecure,
-      Cookies_HttpOnly: cookieResult.hasHttpOnly,
-      Google_Safe_Browsing: safeBrowsingResult,
-      Blacklist: blacklistResult,
-      Malware_Scan: malwareScanResult,
-      SQLi_Exposure: sqliExposureResult,
-      XSS: xssVulnerabilityResult,
-      Cookie_Consent: cookieConsentResult,
-      Privacy_Policy: privacyPolicyResult,
-      Forms_Use_HTTPS: formsUseHTTPSResult,
-      GDPR_CCPA: gdprCcpaResult,
-      Data_Collection: dataCollectionResult,
-      Weak_Default_Credentials: weakDefaultCredsResult,
-      MFA_Enabled: mfaEnabledResult,
-      Admin_Panel_Public: adminPanelPublicResult,
-      Viewport_Meta_Tag: viewportMetaTagResult,
-      HTML_Doctype: htmlDoctypeResult,
-      Character_Encoding: charsetDefinedResult,
-      Browser_Console_Errors: browserErrorsResult,
-      Geolocation_Request: geolocationRequestResult,
-      Input_Paste_Allowed: inputPasteAllowedResult,
-      Notification_Request: notificationRequestResult,
-      Third_Party_Cookies: thirdPartyCookiesResult,
-      Deprecated_APIs: deprecatedAPIsResult
-    };
-
-    let totalWeightedScore = 0;
-    let maxWeightedScore = 0;
-
-    for (const key in results) {
-      const weight = weights[key] || 1;
-      const result = results[key];
-      totalWeightedScore += (result.score || 0) * weight;
-      maxWeightedScore += 100 * weight;
-    }
-
-    const totalPercentage = parseFloat(((totalWeightedScore / maxWeightedScore) * 100).toFixed(0));
-
-    return {
-      Percentage: totalPercentage,
-      HTTPS: httpsResult,
-      SSL: sslResult,
-      SSL_Expiry: sslDetailsResult.certificateValid,
-      HSTS: sslDetailsResult.hstsEnabled,
-      TLS_Version: sslDetailsResult.tlsVersion,
-      X_Frame_Options: sslDetailsResult.xFrameOptions,
-      CSP: sslDetailsResult.contentSecurityPolicy,
-      X_Content_Type_Options: sslDetailsResult.xContentTypeOptions,
-      Cookies_Secure: cookieResult.hasSecure,
-      Cookies_HttpOnly: cookieResult.hasHttpOnly,
-      Google_Safe_Browsing: safeBrowsingResult,
-      Blacklist: blacklistResult,
-      Malware_Scan: malwareScanResult,
-      SQLi_Exposure: sqliExposureResult,
-      XSS: xssVulnerabilityResult,
-      Cookie_Consent: cookieConsentResult,
-      Privacy_Policy: privacyPolicyResult,
-      Forms_Use_HTTPS: formsUseHTTPSResult,
-      GDPR_CCPA: gdprCcpaResult,
-      Data_Collection: dataCollectionResult,
-      Weak_Default_Credentials: weakDefaultCredsResult,
-      MFA_Enabled: mfaEnabledResult,
-      Admin_Panel_Public: adminPanelPublicResult,
-      Viewport_Meta_Tag: viewportMetaTagResult,
-      HTML_Doctype: htmlDoctypeResult,
-      Character_Encoding: charsetDefinedResult,
-      Browser_Console_Errors: browserErrorsResult,
-      Geolocation_Request: geolocationRequestResult,
-      Input_Paste_Allowed: inputPasteAllowedResult,
-      Notification_Request: notificationRequestResult,
-      Third_Party_Cookies: thirdPartyCookiesResult,
-      Deprecated_APIs: deprecatedAPIsResult
-    };
-
-  } catch (error) {
-    console.error("❌ Error in securityCompliance:", error);
-    throw error;
+  for (const key in results) {
+    const weight = weights[key] || 1;
+    const result = results[key];
+    totalWeightedScore += (result.score || 0) * weight;
+    maxWeightedScore += 100 * weight;
   }
+
+  const totalPercentage = parseFloat(((totalWeightedScore / maxWeightedScore) * 100).toFixed(0));
+
+  return {
+    Percentage: totalPercentage,
+    HTTPS: httpsResult,
+    SSL: sslResult,
+    HSTS: hstsResult,
+    TLS_Version: tlsVersionResult,
+    X_Frame_Options: xFrameOptionsResult,
+    CSP: cspResult,
+    X_Content_Type_Options: xContentTypeOptionsResult,
+    Cookies_Secure: cookieSecureResult,
+    Cookies_HttpOnly: cookieHttpOnlyResult,
+    Google_Safe_Browsing: safeBrowsingResult,
+    Blacklist: blacklistResult,
+    Malware_Scan: malwareScanResult,
+    SQLi_Exposure: sqliExposureResult,
+    XSS: xssVulnerabilityResult,
+    Cookie_Consent: cookieConsentResult,
+    Privacy_Policy: privacyPolicyResult,
+    Forms_Use_HTTPS: formsUseHTTPSResult,
+    GDPR_CCPA: gdprCcpaResult,
+    Data_Collection: dataCollectionResult,
+    Weak_Default_Credentials: weakDefaultCredsResult,
+    MFA_Enabled: mfaEnabledResult,
+    Admin_Panel_Public: adminPanelPublicResult,
+    Third_Party_Cookies: thirdPartyCookiesResult,
+  };
+
+
 }

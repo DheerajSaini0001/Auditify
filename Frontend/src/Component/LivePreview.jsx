@@ -57,7 +57,7 @@ const LivePreview = ({ data, showInFullAudit = true, variant = "card" }) => {
                         {isMobile ? <Smartphone className="w-3 h-3" /> : <Monitor className="w-3 h-3" />}
                     </div>
                     <div className={`w-px h-3 ${darkMode ? "bg-slate-700" : "bg-slate-300"}`}></div>
-                    <span className="text-[10px] font-mono font-medium opacity-80">{isMobile ? "375 x 812" : "1280 x 800"}</span>
+                    <span className="text-[10px] font-mono font-medium opacity-80">{isMobile ? "393 x 852" : "1920 x 1080"}</span>
                 </div>
             </div>
 

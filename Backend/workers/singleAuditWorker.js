@@ -48,10 +48,9 @@ const OverAll = (A, B, C, D, E, F, G) => {
       await dbConnect();
     }
 
-    const { browser: b, page, response, $ } = await Puppeteer_Cheerio(url, device);
+    const { browser: b, page, response, $, screenshot } = await Puppeteer_Cheerio(url, device);
     browser = b;
-    const Screenshot = await page.screenshot({ encoding: "base64", type: "jpeg", quality: 50, fullPage: false });
-    await SingleAuditReport.findByIdAndUpdate(currentAuditId, { screenshot: Screenshot });
+    await SingleAuditReport.findByIdAndUpdate(currentAuditId, { screenshot });
 
     if (report !== "All") {
       let result;

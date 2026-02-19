@@ -31,27 +31,26 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
     const page = await browser.newPage();
 
     if (device === "Mobile") {
-
       await page.setViewport({
-        width: 390, // iPhone 13/14 base width
-        height: 844,
+        width: 393, // Modern industry standard (iPhone 15/16 Pro)
+        height: 852,
         isMobile: true,
-        deviceScaleFactor: 3, // Higher density for sharper screenshot
+        deviceScaleFactor: 3, // Retina display quality
         hasTouch: true,
         isLandscape: false,
       });
 
       await page.setUserAgent(
-        "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) " +
-        "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1"
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) " +
+        "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1"
       );
 
     } else {
-      await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 2 }); // High DPI Desktop
+      await page.setViewport({ width: 1920, height: 1080, deviceScaleFactor: 2 }); // Full HD Standard Desktop
       await page.setUserAgent(
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
         "AppleWebKit/537.36 (KHTML, like Gecko) " +
-        "Chrome/120.0.0.0 Safari/537.36"
+        "Chrome/125.0.0.0 Safari/537.36"
       );
     }
 
@@ -67,10 +66,17 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
     const response = await page.goto(url, { waitUntil: "networkidle2", timeout: 360000 }); // 6 minutes
     await page.waitForSelector("body", { timeout: 360000 }); // 6 minutes
 
+    const screenshot = await page.screenshot({
+      encoding: "base64",
+      type: "jpeg",
+      quality: 50,
+      fullPage: false
+    });
+
     const htmlData = await page.content();
     const $ = cheerio.load(htmlData);
 
-    return { browser, page, response, $ };
+    return { browser, page, response, $, screenshot };
 
   } catch (error) {
     if (browser) await browser.close();

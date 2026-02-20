@@ -2138,516 +2138,437 @@ export const InfoDetails = {
     },
 
     // Conversion & Lead Flow
-    CTA_Visibility: {
-        title: "CTA Visibility",
-        whatThisParameterIs: "Call-to-Action Visibility ensures that your primary conversion buttons are immediately noticeable.",
-        whatItCalculates: "It scans the Fold and key sections for button elements with high visual weight (size, color).",
-        whyItMatters: "If users can't find the 'Buy' or 'Sign Up' button in seconds, conversion rates drop significantly.",
+    CTA_Presence: {
+        title: "CTA Presence",
+        whatThisParameterIs: "We check if your main 'action buttons' (like Buy or Sign Up) are easy to see and haven't been missed.",
+        whatItCalculates: "We scan the page for prominent buttons and links specifically designed as Calls-to-Action (buttons, .cta, .btn, etc.).",
+        whyItMatters: "If users can't spot the 'Buy' or 'Sign Up' button in seconds, they will leave without acting.",
         thresholds: {
-            good: "One or more visible CTAs present",
-            poor: "No CTAs detected"
+            good: "One or more clear CTAs present",
+            poor: "No prominent CTAs detected"
         },
         actualReasonsForFailure: [
-            "No buttons or CTA links on the page",
-            "CTAs hidden below the fold",
-            "CTAs styled like normal text"
+            "No elements matching common CTA patterns (buttons, primary links) were detected",
+            "Buttons lack standard CTA class names or identifiable attributes",
+            "CTAs are hidden or styled like normal text"
         ],
         howToOvercomeFailure: [
-            "Add clear CTA buttons",
-            "Place CTAs in hero and key sections",
-            "Use contrasting button styles"
+            "Add at least one clear Call-to-Action button like 'Get Started' or 'Contact Us'",
+            "Ensure your main buttons use standard HTML buttons or classes like .btn or .cta",
+            "Make CTAs consistently visible and prominent"
         ]
     },
     CTA_Clarity: {
         title: "CTA Text Clarity",
-        whatThisParameterIs: "CTA Text Clarity evaluates the language used on buttons to ensure it drives action.",
-        whatItCalculates: "It analyzes button text for action verbs (e.g., 'Get', 'Start', 'Join') vs generic text ('Submit', 'Click Here').",
-        whyItMatters: "Action-oriented text reduces friction by explicitly telling the user what will happen next.",
+        whatThisParameterIs: "We check if your button text is clear and tells people exactly what happens when they click.",
+        whatItCalculates: "We analyze the text labels of your buttons to ensure they use strong, action-oriented verbs (e.g., 'Buy', 'Download', 'Join').",
+        whyItMatters: "Vague buttons like 'Submit' cause hesitation. Clear words like 'Get Started' give users confidence to click.",
         thresholds: {
-            good: "CTAs use action verbs",
-            poor: "CTAs are vague or generic"
+            good: "CTAs use clear action verbs",
+            poor: "CTA text is vague or generic"
         },
         actualReasonsForFailure: [
-            "Generic text like 'Click here'",
-            "Unclear value proposition"
+            "Buttons or links use passive or ambiguous labels (e.g., 'Click Here', 'More Info')",
+            "Button text does not contain strong action verbs",
+            "Labels are too long or confusing"
         ],
         howToOvercomeFailure: [
-            "Use action verbs like Buy, Get, Download",
-            "Clearly state the benefit"
+            "Use action-oriented verbs like 'Buy Now', 'Download', or 'Register' to drive engagement",
+            "Replace generic labels with specific value propositions",
+            "Keep CTA text short and punchy"
         ]
     },
-    CTA_Contrast: {
-        title: "CTA Color Contrast",
-        whatThisParameterIs: "CTA Color Contrast checks if buttons stand out against their background.",
-        whatItCalculates: "It computes the luminance contrast ratio between the button background and the surrounding container.",
-        whyItMatters: "High contrast ensures CTAs draw the eye and meet accessibility standards for all users.",
-        thresholds: {
-            good: "Contrast ratio ≥ 4.5",
-            poor: "Low contrast CTAs"
-        },
-        actualReasonsForFailure: [
-            "CTA color blends with background",
-            "Low contrast brand colors"
-        ],
-        howToOvercomeFailure: [
-            "Increase contrast ratio between text and background",
-            "Test contrast using accessibility tools"
-        ]
-    },
+
     CTA_Crowding: {
         title: "CTA Crowding",
-        whatThisParameterIs: "CTA Crowding Analysis checks for competing calls-to-action in the same section.",
-        whatItCalculates: "It counts the number of primary button elements within a single viewport height.",
-        whyItMatters: "Too many choices cause analysis paralysis, resulting in users taking no action at all.",
+        whatThisParameterIs: "We check if you have too many buttons close together, which can confuse visitors.",
+        whatItCalculates: "We count the total number of primary Calls-to-Action on the page to ensure users aren't overwhelmed with too many choices.",
+        whyItMatters: "Too many choices confuse users. When people are overwhelmed, they often choose nothing at all.",
         thresholds: {
-            good: "1–3 CTAs per section",
-            needsImprovement: "Too many CTAs",
+            good: "1–3 CTAs (Optimal)",
+            warning: "More than 3 CTAs (Potential Clutter)",
             poor: "No CTAs found"
         },
         actualReasonsForFailure: [
-            "Multiple CTAs competing for attention"
+            "The number of CTA elements exceeds the recommended limit, potentially causing choice paralysis",
+            "Multiple primary actions competing for attention",
+            "Lack of a clear primary goal"
         ],
         howToOvercomeFailure: [
-            "Prioritize one primary CTA",
-            "Reduce secondary CTAs"
+            "Focus on one or two primary actions to guide the user effectively",
+            "Reduce the number of competing buttons in a single view",
+            "Differentiate visually between primary and secondary actions"
+        ]
+    },
+    Link_Relevance: {
+        title: "Link Relevance",
+        whatThisParameterIs: "We check if your buttons lead users to the right pages (like a checkout page) instead of a random blog post.",
+        whatItCalculates: "We scan buttons with keywords like 'Buy', 'Sign Up', or 'Register' and verify their links point to conversion-focused pages (e.g., 'checkout', 'pricing', 'product') rather than informational pages (e.g., 'blog', 'about', 'faq').",
+        whyItMatters: "If a user clicks 'Buy Now' and lands on an About page, the momentum is lost. Direct paths to conversion reduce drop-offs.",
+        thresholds: {
+            good: "CTAs link to relevant pages",
+            warning: "Mismatch detected (e.g. 'Buy' -> 'Blog')"
+        },
+        actualReasonsForFailure: [
+            "High-intent buttons (Buy/Sign Up) link to informational pages (Blog, About, FAQ)",
+            "CTAs lead to generic pages instead of specific conversion steps",
+            "Link destinations do not match the user's intent"
+        ],
+        howToOvercomeFailure: [
+            "Ensure 'Buy' buttons link directly to Checkout, Cart, or Product pages",
+            "Point 'Sign Up' buttons to Registration or Pricing pages",
+            "Avoid linking conversion buttons to Blog, About, or Contact pages"
         ]
     },
     CTA_Flow_Alignment: {
         title: "CTA Flow Alignment",
-        whatThisParameterIs: "CTA Flow Alignment validates that CTAs appear at logical decision points.",
-        whatItCalculates: "It checks the position of CTAs relative to content blocks (e.g., after value props or pricing).",
-        whyItMatters: "Asking for a commitment before providing value leads to rejection; timing is key.",
+        whatThisParameterIs: "We check if your buttons are placed at the most natural points where a visitor is ready to act.",
+        whatItCalculates: "We check the position of your primary Call-to-Action relative to the rest of the page content to ensure it appears at the right moment.",
+        whyItMatters: "Asking for a commitment before explaining the value is pushy. Asking too late means they might miss it.",
         thresholds: {
-            good: "CTA placed mid-content",
-            needsImprovement: "CTA too early or too late",
-            poor: "No flow-based CTA found"
+            good: "CTA well-positioned (10-90% of page)",
+            warning: "CTA too early (<10%) or too late (>90%)",
+            poor: "No flow-aligned CTA found"
         },
         actualReasonsForFailure: [
-            "CTA placed before context",
-            "CTA hidden at page end"
+            "Primary CTA is placed at the extreme top (too early) or bottom (too late) of the content",
+            "No CTAs with strong keywords found in the main content flow",
+            "User is asked to commit before understanding the value"
         ],
         howToOvercomeFailure: [
-            "Place CTAs after key information",
-            "Match CTA to content intent"
+            "Position CTAs where users have enough context to make a decision, typically after a value proposition",
+            "Distribute CTAs evenly throughout long pages",
+            "Ensure a CTA is visible at the moment of highest interest"
         ]
     },
     Form_Presence: {
         title: "Lead Form Presence",
-        whatThisParameterIs: "Lead Form Presence checks availability of mechanisms for users to convert.",
-        whatItCalculates: "It detects <form> elements or input fields specifically associated with lead capture (email, phone).",
-        whyItMatters: "Without a functional form, there is no way for interested visitors to become leads.",
+        whatThisParameterIs: "We check if you have a contact or signup form so visitors can easily get in touch.",
+        whatItCalculates: "We scan the page for standard HTML <form> elements to ensure there's a way for visitors to convert.",
+        whyItMatters: "You can't get leads if there's no form to fill out. It's the front door to your business.",
         thresholds: {
             good: "At least one form present",
-            poor: "No forms found"
+            poor: "No forms detected"
         },
         actualReasonsForFailure: [
-            "No form elements on page"
+            "The page does not contain any <form> elements for lead capture",
+            "Forms might be hidden or loaded via inaccessible scripts",
+            "No direct method for user input found"
         ],
         howToOvercomeFailure: [
-            "Add signup or contact forms",
-            "Embed lead capture sections"
+            "Add a contact or lead generation form to capture visitor information directly",
+            "Ensure forms are rendered as proper HTML elements",
+            "Make sure at least one form is easily accessible"
         ]
     },
     Form_Length: {
         title: "Form Length Optimization",
-        whatThisParameterIs: "Form Length Optimization evaluates the friction caused by the number of fields.",
-        whatItCalculates: "It counts the number of visible input fields in the primary conversion form.",
-        whyItMatters: "Every additional field decreases conversion rates; shorter forms perform significantly better.",
+        whatThisParameterIs: "We check if your forms are short and sweet, or if they're too long and scaring people away.",
+        whatItCalculates: "We count the number of visible input fields in your forms to ensure they aren't too long or intimidating.",
+        whyItMatters: "Each extra question gives users another reason to quit. Shorter forms almost always convert better.",
         thresholds: {
-            good: "Less than 7 fields",
-            needsImprovement: "Too many fields"
+            good: "Concise form (< 7 fields)",
+            warning: "Long form (≥ 7 fields)",
+            pass: "No forms to analyze"
         },
         actualReasonsForFailure: [
-            "Excessive required fields"
+            "One or more forms have many fields (7+), which can discourage completions",
+            "Forms appear cluttered or demanding to the user",
+            "Requesting unnecessary information upfront"
         ],
         howToOvercomeFailure: [
-            "Remove unnecessary fields",
-            "Split long forms into steps"
+            "Reduce the number of required fields to the absolute minimum",
+            "Break long forms into multiple steps (multi-step form)",
+            "Collect enriched data later in the user journey"
         ]
     },
     Required_vs_Optional_Fields: {
         title: "Required vs Optional Fields",
-        whatThisParameterIs: "Field Requirement Clarity ensures users know which fields are mandatory.",
-        whatItCalculates: "It checks for visual indicators (asterisks, 'Optional' text) on form labels.",
-        whyItMatters: "Unclear requirements lead to validation errors and frustration, causing abandonment.",
+        whatThisParameterIs: "We check if you've clearly marked which boxes *must* be filled in, so visitors don't get frustrated.",
+        whatItCalculates: "We check if form fields clearly indicate whether they are required or optional using asterisks (*) or text labels.",
+        whyItMatters: "Guessing games frustrate users. If they get an error for a field they thought was optional, they are likely to give up.",
         thresholds: {
-            good: "Required fields clearly marked",
-            needsImprovement: "No distinction shown"
+            good: "Requirements clearly marked",
+            warning: "No visual distinction found",
+            pass: "No inputs to analyze"
         },
         actualReasonsForFailure: [
-            "Missing required indicators"
+            "Form fields do not use visual indicators (like *) or labels ('optional') to guide the user",
+            "Missing 'required' attributes on mandatory inputs",
+            "Users cannot easily distinguish mandatory fields"
         ],
         howToOvercomeFailure: [
-            "Mark required fields clearly",
-            "Label optional fields explicitly"
+            "Clearly mark required fields with an asterisk (*) or 'Required' label",
+            "Explicitly label optional fields (e.g., '(Optional)')",
+            "Ensure visual cues match the underlying HTML validation"
         ]
     },
     Inline_Validation: {
         title: "Inline Form Validation",
-        whatThisParameterIs: "Inline Form Validation checks for real-time feedback on user input.",
-        whatItCalculates: "It simulates input typing and checks for immediate validity messages (HTML5 or custom JS).",
-        whyItMatters: "Correcting errors as they happen is much less frustrating than submitting and getting a list of errors.",
+        whatThisParameterIs: "We check if your form gives helpful 'instant feedback' (like a green checkmark) as people type.",
+        whatItCalculates: "We check for standard HTML5 validation attributes (like required, pattern, type='email') that provide immediate feedback.",
+        whyItMatters: "Waiting until the end to see errors is annoying. Instant feedback helps users fix mistakes quickly and finish the form.",
         thresholds: {
-            good: "HTML5 or inline validation present",
-            poor: "No validation detected"
+            good: "Inline validation detected",
+            poor: "No validation attributes found"
         },
         actualReasonsForFailure: [
-            "No required or pattern attributes"
+            "Form inputs lack HTML5 validation attributes (e.g., 'required', 'pattern')",
+            "Users can submit empty or invalid data without immediate feedback",
+            "Lack of client-side validation logic"
         ],
         howToOvercomeFailure: [
-            "Use HTML5 validation",
-            "Add client-side validation"
+            "Add HTML5 'required' and 'pattern' attributes to form inputs",
+            "Use specific input types like 'email' or 'tel' to trigger browser validation",
+            "Implement real-time JS validation for complex fields"
         ]
     },
     Submit_Button_Clarity: {
         title: "Submit Button Clarity",
-        whatThisParameterIs: "Submit Button Clarity checks that the final action button describes the outcome.",
-        whatItCalculates: "It analyzes the text of the submit button for specificity (e.g., 'Create Account' vs 'Submit').",
-        whyItMatters: "Generic labels like 'Submit' create a disconnect; specific labels reinforce the value proposition.",
+        whatThisParameterIs: "We check if your final 'Send' button clearly explains what will happen next (e.g., 'Get My Quote').",
+        whatItCalculates: "We analyze the text of your form submission buttons to see if they use clear, encouraging language.",
+        whyItMatters: "A button saying 'Submit' is boring. Specific text like 'Get My Quote' implies a reward and excites the user.",
         thresholds: {
-            good: "Clear submit text",
-            needsImprovement: "Generic submit text"
+            good: "Clear, action-oriented text",
+            warning: "Generic label (e.g. 'Submit')",
+            pass: "No submit buttons found"
         },
         actualReasonsForFailure: [
-            "Buttons labeled Submit only"
+            "Submit buttons use generic labels like 'Submit' instead of specific actions",
+            "Button text is vague or missing",
+            "Failed to reinforce the value of the action"
         ],
         howToOvercomeFailure: [
-            "Use action-based submit text"
+            "Use specific text like 'Get My Quote', 'Join Now', or 'Send Message'",
+            "Avoid generic labels like 'Submit', 'Go', or 'Enter'",
+            "Clearly state what happens next in the button text"
         ]
     },
     Testimonials: {
         title: "Testimonials",
-        whatThisParameterIs: "Testimonial Presence verifies that social proof elements are displayed to build credibility.",
-        whatItCalculates: "It scans the page for keywords like 'testimonial', 'review', or 'client says' in section headers.",
-        whyItMatters: "User testimonials reduce anxiety and build trust, which are critical for conversion.",
+        whatThisParameterIs: "We look for real stories or quotes from happy customers that prove people love your brand.",
+        whatItCalculates: "We scan for sections or elements identified as testimonials, reviews, or client feedback using standard keywords.",
+        whyItMatters: "People trust other people more than they trust brands. Authentic reviews reduce anxiety about buying.",
         thresholds: {
-            good: "Testimonials found",
-            poor: "No testimonials"
+            good: "Testimonials section detected",
+            poor: "No testimonials found"
         },
         actualReasonsForFailure: [
-            "No social proof sections"
+            "No section or elements were found that indicate client testimonials or success stories",
+            "Testimonial classes or IDs matching common patterns were not found",
+            "Lack of social proof content"
         ],
         howToOvercomeFailure: [
-            "Add testimonials or reviews"
+            "Add at least 2-3 customer testimonials to build credibility",
+            "Use class names like 'testimonial' or 'client-review' to help identification",
+            "Include photos and names with testimonials for authenticity"
         ]
     },
     Trust_Badges: {
         title: "Trust Badges",
-        whatThisParameterIs: "Trust Badge Verification checks for security seals or payment icons.",
-        whatItCalculates: "It looks for images with alt text containing 'secure', 'ssl', 'visa', 'paypal', or 'guarantee'.",
-        whyItMatters: "Visual symbols of security reassure users that their data and money are safe.",
+        whatThisParameterIs: "We check for trust symbols (like secure payment icons) that help visitors feel safe sharing their info.",
+        whatItCalculates: "We search for images that represent security, payment methods, or trust guarantees (e.g., 'SSL', 'Verified', 'Secure').",
+        whyItMatters: "Users are wary of online scams. Visual trust signals reassure them that their data and money are safe.",
         thresholds: {
-            good: "Trust badges present",
-            poor: "No trust badges"
+            good: "Trust badges visible",
+            poor: "No trust badges detected"
         },
         actualReasonsForFailure: [
-            "No security or payment badges"
+            "No trust-related images (security, SSL, verified) were detected",
+            "Trust badges might be background images or SVG icons without descriptive text",
+            "Missing visual signals of security"
         ],
         howToOvercomeFailure: [
-            "Add SSL, payment, or verification badges"
+            "Include icons for security or industry certifications (e.g., SSL, ISO)",
+            "Ensure trust badge images have descriptive content or alt text",
+            "Place badges near sensitive areas like forms or checkout"
         ]
     },
-    Contact_Info_Visibility: {
-        title: "Contact Information Visibility",
-        whatThisParameterIs: "Contact Information Availability ensures users can easily reach your business.",
-        whatItCalculates: "It searches specifically for phone numbers, email addresses, or a 'Contact Us' link in the header/footer.",
-        whyItMatters: "Visible contact details legitimize the business and provide a safety net for hesitant buyers.",
-        thresholds: {
-            good: "Email or phone visible",
-            poor: "No contact info found"
-        },
-        actualReasonsForFailure: [
-            "Contact details hidden or missing"
-        ],
-        howToOvercomeFailure: [
-            "Add email or phone details",
-            "Place contact info in footer or header"
-        ]
-    },
-    Chatbot_Presence: {
-        title: "Chatbot / Live Chat",
-        whatThisParameterIs: "Live Chat Availability checks for real-time support options.",
-        whatItCalculates: "It detects scripts from known chat providers (Intercom, Drift, Zendesk) or chat widget elements.",
-        whyItMatters: "Immediate answers to pre-sales questions can prevent users from abandoning the site.",
-        thresholds: {
-            good: "Chat system detected",
-            needsImprovement: "No chat available"
-        },
-        actualReasonsForFailure: [
-            "No chat widget installed"
-        ],
-        howToOvercomeFailure: [
-            "Integrate live chat or chatbot tools"
-        ]
-    },
+
     Lead_Magnets: {
         title: "Lead Magnets",
-        whatThisParameterIs: "Lead Magnet Detection looks for high-value free resources offered in exchange for contact info.",
-        whatItCalculates: "It identifies potential offers like 'ebook', 'guide', 'whitepaper', or 'free trial'.",
-        whyItMatters: "Lead magnets are effective for capturing early-stage prospect emails.",
+        whatThisParameterIs: "We check if you're offering something valuable for free (like a guide) to encourage people to sign up.",
+        whatItCalculates: "We look for text indicating high-value free resources like 'ebook', 'guide', 'whitepaper', or 'download'.",
+        whyItMatters: "Most visitors aren't ready to buy yet. A freebie captures their information so you can follow up later.",
         thresholds: {
-            good: "Lead magnets present",
-            needsImprovement: "No lead magnets"
+            good: "Lead magnet detected",
+            warning: "No lead magnets found"
         },
         actualReasonsForFailure: [
-            "No free offers or downloads"
+            "No high-value offers like ebooks, guides, or whitepapers were detected in the text",
+            "Keywords related to downloadable resources are missing",
+            "Offer is not clearly communicated"
         ],
         howToOvercomeFailure: [
-            "Offer free guides, ebooks, or tools"
+            "Offer a relevant lead magnet (e.g., a PDF guide or checklist)",
+            "Use clear text like 'Download our Free Guide' or 'Get the Ebook'",
+            "Make the exchange of value clear to the user"
         ]
     },
-    Scarcity_Urgency: {
-        title: "Scarcity & Urgency",
-        whatThisParameterIs: "Scarcity & Urgency Signals checks for time-sensitive or limited-stock messaging.",
-        whatItCalculates: "It scans for text patterns like 'limited time', 'only X left', 'expires in', or countdown timers.",
-        whyItMatters: "Urgency triggers 'Fear Of Missing Out' (FOMO), encouraging faster decision-making.",
-        thresholds: {
-            good: "Urgency signals present",
-            needsImprovement: "No urgency messaging"
-        },
-        actualReasonsForFailure: [
-            "No time-bound messaging"
-        ],
-        howToOvercomeFailure: [
-            "Add limited-time offers",
-            "Use urgency language carefully"
-        ]
-    },
-    AutoFocus_Field: {
-        title: "Autofocus Field",
-        whatThisParameterIs: "Autofocus Optimization checks if the first input field is automatically selected on load.",
-        whatItCalculates: "It verifies if the autofocus attribute is present on the primary input field of key forms.",
-        whyItMatters: "Autofocus saves the user a click and immediately invites them to start typing.",
-        thresholds: {
-            good: "Autofocus present on key input",
-            acceptable: "Autofocus not used (optional best practice)"
-        },
-        actualReasonsForFailure: [
-            "No input field uses autofocus"
-        ],
-        howToOvercomeFailure: [
-            "Add autofocus to the first important input field"
-        ]
-    },
+
     MultiStep_Form_Progress: {
         title: "Multi-Step Form Progress",
-        whatThisParameterIs: "Multi-Step Form Progress checks for indicators in long forms.",
-        whatItCalculates: "It looks for ordered lists or progress bar elements associated with <form> containers.",
-        whyItMatters: "Knowing how many steps remain reduces anxiety and abandonment in complex forms.",
+        whatThisParameterIs: "We check if you've broken long forms into easy steps that feel less overwhelming to finish.",
+        whatItCalculates: "We check for progress indicators or step labels often used in multi-page forms.",
+        whyItMatters: "A huge list of questions is intimidating. Breaking it up into small steps makes it feel easier to finish.",
         thresholds: {
-            good: "Progress indicators detected",
-            acceptable: "No multi-step form present"
+            good: "Progress indicators present",
+            pass: "No multi-step form detected"
         },
         actualReasonsForFailure: [
-            "Multi-step form without progress UI"
+            "No progress bars or step indicators were found on a potential multi-step form",
+            "Multi-step forms lack visual cues for the user's journey",
+            "Steps are not clearly labeled"
         ],
         howToOvercomeFailure: [
-            "Add step indicators or progress bars"
+            "Add a progress bar or step counter (e.g., 'Step 1 of 3') for longer processes",
+            "Use standard class names like '.step' or '.progress' for detection",
+            "Clearly show the user where they are in the process"
+        ]
+    },
+    Progress_Indicators: {
+        title: "Progress Indicators",
+        whatThisParameterIs: "We check for a 'progress bar' that shows visitors exactly how close they are to the finish line.",
+        whatItCalculates: "We look for general progress bars or step indicators that guide users through any process.",
+        whyItMatters: "People are motivated to finish what they start. Seeing '50% Complete' encourages them to keep going.",
+        thresholds: {
+            good: "Progress indicators detected",
+            warning: "No progress indicators found"
+        },
+        actualReasonsForFailure: [
+            "No elements matching progress bar, step, or progress patterns were found",
+            "Users may feel lost in complex flows without status updates",
+            "Missing visual feedback on process completion"
+        ],
+        howToOvercomeFailure: [
+            "Add progress indicators for any multi-stage processes",
+            "Use standard HTML <progress> elements or identifiable classes",
+            "Keep the user informed of their status"
         ]
     },
     Reviews: {
         title: "User Reviews & Ratings",
-        whatThisParameterIs: "Review & Rating Content checks for structured review data or star ratings.",
-        whatItCalculates: "It looks for Schema.org AggregateRating or visual star elements (★★★★★).",
-        whyItMatters: "Star ratings provide instant social proof and influence purchasing decisions.",
+        whatThisParameterIs: "We look for star ratings or customer scores that give visitors confidence in your business.",
+        whatItCalculates: "We search for visual elements representing user ratings, stars, or customer reviews.",
+        whyItMatters: "Social proof is powerful. Seeing 5 stars instantly builds credibility and makes users want to buy.",
         thresholds: {
-            good: "Reviews or ratings detected",
+            good: "Reviews/Ratings detected",
             poor: "No reviews found"
         },
         actualReasonsForFailure: [
-            "No visible review or rating section"
+            "No aggregate ratings or specific user review elements were detected",
+            "Keywords like 'review', 'rating', or 'stars' were not found in class names or IDs",
+            "Star ratings are missing or hidden"
         ],
         howToOvercomeFailure: [
-            "Display customer reviews or ratings",
-            "Use schema markup for reviews"
+            "Display star ratings or numerical scores prominently",
+            "Use standard class names for review sections",
+            "Ensure reviews are visible and not hidden in tabs"
         ]
     },
     Client_Logos: {
         title: "Client / Partner Logos",
-        whatThisParameterIs: "Client Logo Showcase checks for a 'Trusted By' section.",
-        whatItCalculates: "It scans for a grid of images in a section labeled 'clients', 'partners', or 'trusted by'.",
-        whyItMatters: "Displaying recognizable brand logos leverages the authority of established companies.",
+        whatThisParameterIs: "We look for a 'Trusted By' section with logos of companies you've worked with to show authority.",
+        whatItCalculates: "We scan for sections showcasing client or partner logos to establish authority.",
+        whyItMatters: "Proprietary authority helps. Showing that you work with established brands makes you look professional and safe.",
         thresholds: {
-            good: "Client or partner logos found",
-            needsImprovement: "No logos detected"
+            good: "Client/Partner logos detected",
+            warning: "No client logos detected"
         },
         actualReasonsForFailure: [
-            "No visual brand associations shown"
+            "The page does not prominently feature logos of partners or previous clients",
+            "Selectors related to client logos returned no results",
+            "Missing visual trust signals"
         ],
         howToOvercomeFailure: [
-            "Add logos of clients or partners",
-            "Place logos near testimonials or CTAs"
+            "Display a 'Logos' or 'Trusted By' section with well-known brands",
+            "Use descriptive class names like '.client-logo' or '.partner-logo'",
+            "Include logos near conversion points"
         ]
     },
     Case_Studies_Accessibility: {
         title: "Case Studies & Success Stories",
-        whatThisParameterIs: "Case Study Availability checks for deep-dive success stories.",
-        whatItCalculates: "It looks for links with text 'Case Study', 'Success Story', or 'Client Story'.",
-        whyItMatters: "Detailed case studies prove the value proposition with real-world evidence.",
+        whatThisParameterIs: "We check for detailed success stories that prove you can deliver real results for your clients.",
+        whatItCalculates: "We search the page content for mentions of 'case study', 'success story', or 'client success'.",
+        whyItMatters: "Claims are easy to make; proof is hard. Case studies prove you can deliver results, which builds massive trust.",
         thresholds: {
             good: "Case studies detected",
-            needsImprovement: "No case studies found"
+            warning: "No case studies found"
         },
         actualReasonsForFailure: [
-            "No success story or case study content"
+            "No textual references to 'case studies' or 'success stories' were found in the content",
+            "Detailed proof of results or success is missing",
+            "Links to case studies are not clearly labeled"
         ],
         howToOvercomeFailure: [
-            "Add case studies with real results",
-            "Link to detailed success stories"
-        ]
-    },
-    Exit_Intent_Triggers: {
-        title: "Exit-Intent Triggers",
-        whatThisParameterIs: "Exit-Intent Mechanisms checks for functionality that captures abandoning users.",
-        whatItCalculates: "It analyzes scripts for mouseleave event listeners or use of exit-intent libraries.",
-        whyItMatters: "Exit-intent popups give you one last chance to convert a user before they leave forever.",
-        thresholds: {
-            good: "Popup or modal detected",
-            needsImprovement: "No exit-intent elements"
-        },
-        actualReasonsForFailure: [
-            "No modal or popup markup found"
-        ],
-        howToOvercomeFailure: [
-            "Add exit-intent popups carefully",
-            "Offer incentives on exit"
-        ]
-    },
-    Interactive_Elements: {
-        title: "Interactive Elements",
-        whatThisParameterIs: "Interactive Element Usage checks for engagement widgets.",
-        whatItCalculates: "It detects calculators, quizzes, sliders, or configuators on the page.",
-        whyItMatters: "Interactive tools keep users on-site longer and increase psychological ownership.",
-        thresholds: {
-            good: "Interactive components detected",
-            needsImprovement: "No interactive elements"
-        },
-        actualReasonsForFailure: [
-            "Static content only"
-        ],
-        howToOvercomeFailure: [
-            "Add sliders, carousels, or tooltips"
-        ]
-    },
-    Personalization: {
-        title: "Personalization Signals",
-        whatThisParameterIs: "Personalization Signal checks for dynamic user-specific content.",
-        whatItCalculates: "It looks for elements that might display user names or tailored recommendations (often via data attributes).",
-        whyItMatters: "Personalized experiences feel more relevant and significantly boost conversion rates.",
-        thresholds: {
-            good: "Personalization keywords detected",
-            needsImprovement: "No personalization signals"
-        },
-        actualReasonsForFailure: [
-            "Generic messaging for all users"
-        ],
-        howToOvercomeFailure: [
-            "Add personalized greetings or recommendations"
+            "Showcase real-world examples through detailed case studies or success stories",
+            "Feature a dedicated 'Success Stories' section",
+            "Link to case studies from relevant product/service pages"
         ]
     },
 
+
     Friendly_Error_Handling: {
         title: "Friendly Error Handling",
-        whatThisParameterIs: "Error Message Friendliness evaluates the tone and clarity of form errors.",
-        whatItCalculates: "It inspects the DOM for error containers and checks if messages are specific (e.g., 'Email is required') rather than generic.",
-        whyItMatters: "Frustrating error messages are a top cause of form abandonment.",
+        whatThisParameterIs: "We check if your error messages are kind and helpful, guiding users to fix mistakes easily.",
+        whatItCalculates: "We check for the presence of error message containers or validation attributes that help users fix mistakes.",
+        whyItMatters: "Blaming the user feels bad. Helpful hints like 'Please include an @ in your email' make the user feel supported.",
         thresholds: {
-            good: "Basic error handling detected",
-            needsImprovement: "No explicit error handling"
+            good: "Error handling indicators detected",
+            warning: "No explicit error cues found"
         },
         actualReasonsForFailure: [
-            "No required attributes or validation hints"
+            "No clear error message containers or validation attributes were identified",
+            "Users lack guidance when inputting invalid data",
+            "Validation feedback is missing"
         ],
         howToOvercomeFailure: [
-            "Add validation messages",
-            "Use required fields with guidance"
+            "Design and implement clear, helpful error messages",
+            "Ensure input fields have validation states (e.g., aria-invalid)",
+            "Guide users to fix mistakes in real-time"
         ]
     },
     Microcopy_Clarity: {
         title: "Microcopy Clarity",
-        whatThisParameterIs: "Microcopy Quality checks for helpful instructional text in forms.",
-        whatItCalculates: "It checks input fields for placeholder attributes or adjacent help text elements.",
-        whyItMatters: "Microcopy clarifies ambiguous fields and reduces user error.",
+        whatThisParameterIs: "We check for small helpful hints inside your form fields that make them effortless to fill out.",
+        whatItCalculates: "We look for helpful text like input placeholders or helper text that explains what to type.",
+        whyItMatters: "Tiny clarifications prevent big confusions. They make the form feel effortless to fill out.",
         thresholds: {
-            good: "Placeholders/helper text present",
-            needsImprovement: "Limited or missing microcopy"
+            good: "Helper text/placeholders detected",
+            warning: "Limited microcopy found"
         },
         actualReasonsForFailure: [
-            "Inputs without guidance text"
+            "Form inputs lack placeholders or descriptive helper text",
+            "Fields are ambiguous or lack context for the user",
+            "User has to guess the required format"
         ],
         howToOvercomeFailure: [
-            "Add meaningful placeholder text",
-            "Include helper hints where needed"
+            "Add descriptive microcopy and meaningful placeholders",
+            "Include small helper text below complex fields",
+            "Anticipate user questions with instructional text"
         ]
     },
     Incentives_Displayed: {
         title: "Incentives & Offers",
-        whatThisParameterIs: "Incentive Visibility checks for clear value-add offers.",
-        whatItCalculates: "It searches for terms like 'free shipping', 'money-back guarantee', 'bonus', or 'discount'.",
-        whyItMatters: "Clear incentives remove friction and provide a reason to buy now.",
+        whatThisParameterIs: "We look for exciting offers—like 'Free Shipping' or a 'Limited Time Discount'—that encourage action.",
+        whatItCalculates: "We scan the text for promotional keywords like 'free', 'discount', 'offer', or 'guarantee'.",
+        whyItMatters: "Everyone loves a deal. A clear incentive gives users a logical reason to act *now*.",
         thresholds: {
             good: "Incentives detected",
-            needsImprovement: "No incentives visible"
+            warning: "No incentives found"
         },
         actualReasonsForFailure: [
-            "No offers or promotional messaging"
+            "No promotional language or special offers were detected in the content",
+            "Value propositions like discounts or bonuses are missing",
+            "Offers are hidden or not text-based"
         ],
         howToOvercomeFailure: [
-            "Highlight discounts or free offers",
-            "Add incentive near CTAs"
+            "Highlight special offers, discounts, or 'risk-free' trials",
+            "Use words like 'Free', 'Save', or 'Bonus' to attract attention",
+            "Make incentives visible near Calls-to-Action"
         ]
     },
-    Smooth_Scrolling: {
-        title: "Smooth Scrolling",
-        whatThisParameterIs: "Smooth Scrolling Behavior checks for pleasant navigation transitions.",
-        whatItCalculates: "It verifies if scroll-behavior: smooth is applied in CSS or JS.",
-        whyItMatters: "Jarring jumps between sections can disorient users; smooth scrolling maintains context.",
-        thresholds: {
-            good: "Smooth scrolling or anchors detected",
-            needsImprovement: "No smooth scroll behavior"
-        },
-        actualReasonsForFailure: [
-            "No anchor links or smooth scroll styles"
-        ],
-        howToOvercomeFailure: [
-            "Enable CSS smooth scrolling",
-            "Use anchor-based navigation"
-        ]
-    },
-    Mobile_CTA_Adaptation: {
-        title: "Mobile CTA Adaptation",
-        whatThisParameterIs: "Mobile CTA Optimization checks if buttons are sized for thumbs.",
-        whatItCalculates: "It compares button dimensions on mobile viewports to ensure they span the full width or are easily tappable.",
-        whyItMatters: "Mobile users need larger, easier-to-hit targets to convert comfortably.",
-        thresholds: {
-            good: "Mobile CTA styles detected",
-            needsImprovement: "No mobile-specific CTA styling"
-        },
-        actualReasonsForFailure: [
-            "CTAs too small for mobile"
-        ],
-        howToOvercomeFailure: [
-            "Use larger CTA buttons on mobile",
-            "Apply mobile-specific CTA classes"
-        ]
-    },
-    MultiChannel_FollowUp: {
-        title: "Multi-Channel Follow-Up",
-        whatThisParameterIs: "Multi-Channel Engagement checks for social or community links.",
-        whatItCalculates: "It detects links to major social platforms or community Discords/Slacks.",
-        whyItMatters: "Allowing users to follow you elsewhere keeps them in your ecosystem if they aren't ready to buy yet.",
-        thresholds: {
-            good: "Social follow-up links present",
-            needsImprovement: "No follow-up channels"
-        },
-        actualReasonsForFailure: [
-            "No social media links"
-        ],
-        howToOvercomeFailure: [
-            "Add social media follow links",
-            "Encourage multi-channel engagement"
-        ]
-    },
+
 
     // Methodologies (Conversion & Lead Flow)
     Conversion_And_Lead_Flow_Methodology: {
@@ -2657,83 +2578,68 @@ export const InfoDetails = {
         guideLink: "https://www.nngroup.com/articles/web-form-design/",
         whatThisMetricIs: (
             <div className="space-y-2">
-                <p>Measures how effectively your website guides visitors toward taking meaningful actions — such as signing up, contacting you, or making a purchase.</p>
-                <p>It evaluates call-to-action quality, lead capture forms, trust signals, engagement elements, and overall conversion flow clarity.</p>
+                <p>This score checks if your website is good at turning visitors into customers.</p>
+                <p>We look at the key things that make people subscribe or buy: clear buttons, simple forms, and proof that your business can be trusted.</p>
             </div>
         ),
         whyItMatters: (
             <div className="space-y-2">
-                <p>Traffic alone doesn’t grow a business — conversions do.</p>
-                <p>If users can’t clearly see what to do next, don’t trust the page, or feel friction while taking action, they’ll leave. Strong conversion flow turns visitors into leads, customers, and revenue.</p>
+                <p>Traffic is vanity; sales are sanity. You don't just want visitors, you want results.</p>
+                <p>If people can't figure out where to click or get frustrated by long forms, they leave. A good conversion flow guides them effortlessly to the finish line.</p>
             </div>
         ),
         whatToDoForAGoodScore: (
             <ul className="list-disc pl-5 space-y-4">
                 <li>
-                    <span className="font-semibold block mb-1">Improve Call-to-Action (CTA) effectiveness:</span>
+                    <span className="font-semibold block mb-1">Make your buttons impossible to miss:</span>
                     <ul className="list-[circle] pl-5 space-y-1 text-sm">
-                        <li>Make sure primary CTAs are visible and easy to find</li>
-                        <li>Use clear, action-oriented language (e.g. “Get Started”, “Sign Up”)</li>
-                        <li>Ensure CTA buttons stand out visually with strong contrast</li>
-                        <li>Avoid cluttering the page with too many CTAs</li>
-                        <li>Place CTAs where they naturally fit the user’s reading flow</li>
+                        <li>Design buttons to look clickable, using standard classes like <strong>.btn</strong> or <strong>.cta</strong>.</li>
+                        <li>Use exciting words on buttons (e.g. "Get Started", "Join Now") instead of just "Submit".</li>
+                        <li>Don't overwhelm users. Stick to 1-3 main buttons per section.</li>
+                        <li>Place buttons where people are reading—not hidden at the very top or bottom.</li>
                     </ul>
                 </li>
                 <li>
-                    <span className="font-semibold block mb-1">Optimize forms and lead capture:</span>
+                    <span className="font-semibold block mb-1">Make forms easy to finish:</span>
                     <ul className="list-[circle] pl-5 space-y-1 text-sm">
-                        <li>Keep forms short and focused</li>
-                        <li>Clearly mark required vs optional fields</li>
-                        <li>Use descriptive submit buttons, not generic labels</li>
-                        <li>Add inline validation to prevent form errors</li>
-                        <li>Provide progress indicators for multi-step forms</li>
-                        <li>Use autofocus to help users start faster</li>
+                        <li>Include at least one clear signup or contact form using standard HTML tags.</li>
+                        <li>Short forms convert better. Try to ask for fewer than 7 things.</li>
+                        <li>Clearly mark which fields are <strong>Required (*)</strong> so users don't guess.</li>
+                        <li>Use specific input types (like "email") so mobile keyboards render correctly.</li>
+                        <li>Make the final button describe the result, like "Get My Quote".</li>
                     </ul>
                 </li>
                 <li>
-                    <span className="font-semibold block mb-1">Build trust and credibility:</span>
+                    <span className="font-semibold block mb-1">Show that you can be trusted:</span>
                     <ul className="list-[circle] pl-5 space-y-1 text-sm">
-                        <li>Display testimonials, reviews, or ratings</li>
-                        <li>Show trust badges or security indicators where relevant</li>
-                        <li>Highlight client logos or case studies</li>
-                        <li>Make contact information easy to find</li>
+                        <li>Add a section titled <strong>"Testimonials"</strong> or <strong>"Reviews"</strong> to show social proof.</li>
+                        <li>Display security badges (like SSL icons) to reassure visitors your site is safe.</li>
+                        <li>Show off your partners in a section labeled "Clients" or "Trusted By".</li>
+                        <li>Offer something valuable for free (like a <strong>Guide</strong> or <strong>Ebook</strong>).</li>
                     </ul>
                 </li>
                 <li>
-                    <span className="font-semibold block mb-1">Support engagement and follow-through:</span>
+                    <span className="font-semibold block mb-1">Remove roadblocks:</span>
                     <ul className="list-[circle] pl-5 space-y-1 text-sm">
-                        <li>Offer lead magnets like guides or downloads</li>
-                        <li>Use chat or live support where appropriate</li>
-                        <li>Add subtle incentives or offers</li>
-                        <li>Avoid aggressive popups, but support exit-intent thoughtfully</li>
-                        <li>Include social or multi-channel follow-up options</li>
-                    </ul>
-                </li>
-                <li>
-                    <span className="font-semibold block mb-1">Reduce friction during interaction:</span>
-                    <ul className="list-[circle] pl-5 space-y-1 text-sm">
-                        <li>Provide clear microcopy and helper text</li>
-                        <li>Use friendly error handling</li>
-                        <li>Show progress or loading indicators</li>
-                        <li>Ensure CTAs and forms are optimized for mobile users</li>
+                        <li>Add helpful hints inside form boxes (placeholders) to guide typing.</li>
+                        <li>If your form is long, use a progress bar to show how much is left.</li>
+                        <li>Make sure error messages are friendly and help users fix mistakes.</li>
+                        <li>Mention perks like "Free Shipping" or "Discount" near your buttons.</li>
                     </ul>
                 </li>
             </ul>
         ),
         howThisScoreIsCalculated: (
             <div className="space-y-2">
-                <p>We evaluate multiple conversion-focused signals across CTAs, forms, trust elements, and user engagement patterns.</p>
-                <p>Each area is weighted based on its impact on real conversion behavior. Strong signals earn full credit, partial optimizations earn partial credit, and missing elements reduce the score.</p>
-                <p>The final score reflects how easy it is for a visitor to move from interest to action.</p>
+                <p>Think of this score as a "mystery shopper" report for your website. We automatically scan your page to see how easy it is for a stranger to become a customer.</p>
+                <p>We give top points for the essentials—like clear buttons and short forms—because these matter most. We also look for trust signals like reviews and security badges.</p>
+                <p>If your forms are too long, your buttons are hidden, or users can't tell if you're trustworthy, your score goes down.</p>
             </div>
         ),
         weightage: [
-            { param: "Form Optimization", weight: "25%" },
-            { param: "Call-to-Action (CTA) Strategy", weight: "20%" },
-            { param: "Trust & Social Proof", weight: "15%" },
-            { param: "Engagement Experience", weight: "15%" },
-            { param: "Lead Capture Mechanisms", weight: "15%" },
-            { param: "Mobile Adaptation", weight: "10%" }
+            { param: "Call-to-Actions & Forms", weight: "50%" },
+            { param: "Trust & Credibility", weight: "25%" },
+            { param: "User Flow & Experience", weight: "25%" }
         ]
     },
 

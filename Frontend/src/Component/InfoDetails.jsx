@@ -1757,305 +1757,316 @@ export const InfoDetails = {
 
     // UX & Content 
     Text_Readability: {
-        title: "Text Readability",
-        whatThisParameterIs: "Text Readability analysis evaluates the complexity of your content using the Flesch Reading Ease formula.",
-        whatItCalculates: "It analyzes sentence length and syllable count to determine a readability score (0-100).",
-        whyItMatters: "Content that is easy to read improves user comprehension, engagement, and retention.",
+        title: "Readable Writing",
+        whatThisParameterIs: "We check if your text is easy to read or if it uses long, complicated sentences that might confuse people.",
+        whatItCalculates: "We count the number of words in each sentence and the syllables in your words to calculate a standard 'Readability Score' for your content.",
+        whyItMatters: "Most people skim online content. If your writing is too complex for your audience, they will stop reading midway, leading to higher exit rates and lost opportunities to share your message.",
         thresholds: {
-            good: "Score within recommended range for page type",
-            needsImprovement: "Slightly complex content",
-            poor: "Hard to read content"
+            good: "Score matches the target for your page type",
+            needsImprovement: "Content is a bit complex for most readers",
+            poor: "Content is very difficult to read"
         },
         actualReasonsForFailure: [
-            "Very long sentences with complex grammatical structures",
-            "Vocabulary with high syllable counts and technical jargon",
-            "Dense paragraphs without adequate white space or breaks"
+            "Sentences are too long (average more than 20 words)",
+            "Vocabulary choice is too advanced or academic",
+            "Paragraphs are dense and lack clear, simple language"
         ],
         howToOvercomeFailure: [
-            "Use shorter, more direct sentences (avg 15-20 words)",
-            "Replace complex terminology with simpler alternatives",
-            "Break dense blocks of text into smaller, digestible paragraphs",
-            "Use an active voice and clear headings to guide the reader"
-        ]
-    },
-
-    Tap_Target_Size: {
-        title: "Tap Target Size",
-        whatThisParameterIs: "Tap Target Size checks if interactive elements are large enough for comfortable touch interactions.",
-        whatItCalculates: "It measures the rendered dimensions of buttons/links and verifies they meet the minimum 48x48px recommended guideline.",
-        whyItMatters: "Small tap targets cause frustration, misclicks, and accessibility barriers for mobile users.",
-        thresholds: {
-            good: "≥ 90% tap targets meet size requirements",
-            needsImprovement: "Some targets are too small or close together",
-            poor: "Many interactive elements are too small for touch"
-        },
-        actualReasonsForFailure: [
-            "Buttons or interactive elements are smaller than the recommended 48px size",
-            "Links or menu items are placed too close together, causing misclicks",
-            "Small icons are used as primary navigation without adequate touch area"
-        ],
-        howToOvercomeFailure: [
-            "Increase the size of all buttons and clickable elements to at least 48x48px",
-            "Ensure a minimum of 8px spacing (padding or margin) between interactive targets",
-            "Add padding around small links and icons to expand their hit area"
-        ]
-    },
-    Text_Font_Size: {
-        title: "Text Font Size",
-        whatThisParameterIs: "Text Font Size ensures that content is legible on mobile devices without requiring the user to zoom.",
-        whatItCalculates: "It checks computed font sizes against a minimum legibility threshold (typically 12px or 16px).",
-        whyItMatters: "Small text content causes eye strain and forces users to zoom, harming the mobile experience.",
-        thresholds: {
-            good: "≥ 90% text meets minimum size (e.g., 16px)",
-            needsImprovement: "Some text elements are too small to read easily",
-            poor: "The majority of the page uses illegible font sizes"
-        },
-        actualReasonsForFailure: [
-            "Base font size is below the recommended 16px for primary content",
-            "Overuse of small captions or fine print (below 12px) for functional text",
-            "Inconsistent font scaling that makes some labels difficult to read"
-        ],
-        howToOvercomeFailure: [
-            "Increase global base font size in your CSS (16px is standard)",
-            "Avoid font sizes below 12px for any user-facing instructions or content",
-            "Use clear, high-contrast typography to improve mobile legibility"
-        ]
-    },
-    Horizontal_Scroll_Check: {
-        title: "Horizontal Scrolling",
-        whatThisParameterIs: "Horizontal Scroll Check detects if the page content overflows the viewport width on mobile devices.",
-        whatItCalculates: "It compares the total scrollWidth of the document against the window width to detect overflow.",
-        whyItMatters: "Unintended horizontal scrolling is a major mobile usability flaw that breaks navigation and layouts.",
-        thresholds: {
-            good: "No horizontal scroll detected",
-            poor: "Horizontal scroll detected on the primary viewport"
-        },
-        actualReasonsForFailure: [
-            "Fixed-width containers or elements (divs, tables) forced to exceed viewport width",
-            "Large images or media assets not properly constrained to 100% width",
-            "Wide margins or absolute positioning pushing elements outside of the view"
-        ],
-        howToOvercomeFailure: [
-            "Use responsive, percentage-based widths or Flexbox/Grid layouts",
-            "Ensure all images and videos have 'max-width: 100%' set in CSS",
-            "Remove fixed pixel widths and use relative units like vw, % or rem"
+            "Break long sentences into two shorter ones",
+            "Swap out complex, high-syllable words for simpler alternatives",
+            "Aim for a more conversational tone that matches your audience's level"
         ]
     },
     Sticky_Header_Usage: {
-        title: "Sticky Header Analysis",
-        whatThisParameterIs: "Sticky Header Analysis checks if fixed or sticky headers obstruct an excessive portion of the screen.",
-        whatItCalculates: "It measures the height of fixed-position head elements and compares it to the viewport height.",
-        whyItMatters: "Oversized sticky headers reduce the reading area and clutter the UI on smaller screens.",
+        title: "Top Menu Size",
+        whatThisParameterIs: "We check if your top menu is 'sticky' but not so big that it covers up the content people are trying to read.",
+        whatItCalculates: "We measure exactly how many pixels of screen space your top menu takes up to make sure it isn't hiding the content people came to read.",
+        whyItMatters: "On small mobile screens, every millimeter counts. If your header is too tall, it forces users to scroll more to see less, which feels claustrophobic and frustrating.",
         thresholds: {
-            good: "Sticky header height within a reasonable limit",
-            poor: "Header is too tall and obstructs content"
+            good: "Header height is within optimal limits",
+            needsImprovement: "Header is slightly taller than recommended",
+            poor: "Header is oversized and blocks too much of the screen"
         },
         actualReasonsForFailure: [
-            "Large fixed headers occupying more than 15-20% of the screen height",
-            "Multiple stacked sticky elements (e.g., promo bar + main navigation)",
-            "Headers that do not collapse or shrink upon scrolling down"
+            "The top menu is taller than 64 pixels on phones or 100 pixels on computers",
+            "Multiple rows of navigation are taking up too much vertical space",
+            "Large logos or excessive padding are inflating the header height"
         ],
         howToOvercomeFailure: [
-            "Reduce the vertical height of your fixed header on mobile devices",
-            "Implement a 'hide on scroll' behavior for the header to maximize screen space",
-            "Combine multiple sticky elements into a single, compact navigation bar"
-        ]
-    },
-    Navigation_Depth: {
-        title: "Navigation Depth",
-        whatThisParameterIs: "Navigation Depth measures the number of clicks required for a user to reach specific pages from the homepage.",
-        whatItCalculates: "It analyzes the URL path structure to determine the distance in 'clicks' from the root domain.",
-        whyItMatters: "Content buried too deep is difficult for users to discover and harder for search engines to index.",
-        thresholds: {
-            good: "≥ 80% links within 3 clicks of the homepage",
-            needsImprovement: "Significant content buried 4+ levels deep",
-            poor: "Most primary content is extremely deep in the hierarchy"
-        },
-        actualReasonsForFailure: [
-            "Overly nested URL structures (e.g., more than 4 levels of subfolders)",
-            "A complex or inaccessible menu structure that hides important landing pages",
-            "Core content missing direct links from parent or category pages"
-        ],
-        howToOvercomeFailure: [
-            "Flatten your site's navigation hierarchy to ensure content is reached in 3 clicks or less",
-            "Improve internal linking strategy by adding 'Related Content' or category sidebars",
-            "Simplify the main menu to focus on high-level navigation paths"
+            "Reduce the vertical height or padding of your top menu",
+            "Implement a 'hide on scroll' behavior so the menu only appears when users scroll up",
+            "Simplify your mobile header to show only the most essential links"
         ]
     },
     Intrusive_Interstitials: {
-        title: "Intrusive Interstitials",
-        whatThisParameterIs: "Intrusive Interstitials detection identifies popups or overlays that obstruct the user's view of the main content.",
-        whatItCalculates: "It searches for large elements with high z-index that cover a significant portion of the viewport on load.",
-        whyItMatters: "aggressive popups frustrate users, increase bounce rates, and can trigger SEO ranking penalties.",
+        title: "Pop-up Distractions",
+        whatThisParameterIs: "We search for annoying pop-ups or overlays that block the user's view and make it hard to use the page.",
+        whatItCalculates: "We scan your page for full-screen overlays, pop-ups that block scrolling, and large modals that stop users from reaching your content.",
+        whyItMatters: "Pop-ups are the #1 source of mobile frustration. They don't just annoy users—they can also get your site penalized by search engines, making you harder to find online.",
         thresholds: {
-            good: "No intrusive interstitials detected",
-            poor: "Intrusive elements or full-page overlays identified"
+            good: "No intrusive pop-ups or overlays detected",
+            needsImprovement: "Modals found that might disrupt the user experience",
+            poor: "Full-screen pop-ups or scroll-blocks are preventing access to content"
         },
         actualReasonsForFailure: [
-            "Full-screen popups or 'splash' pages that block content immediately upon load",
-            "Scroll-blocking modals that prevent interaction with the underlying page",
-            "Oversized 'Install App' or 'Subscribe' banners that dominate the screen"
+            "A full-screen overlay is blocking the content immediately on load",
+            "The page prevents scrolling until a user interacts with a pop-up",
+            "A large modal is covering more than 30% of the screen"
         ],
         howToOvercomeFailure: [
-            "Use non-intrusive banners or toast notifications that only cover a small part of the screen",
-            "Delay the appearance of popups until the user has spent time on the page or scrolled down",
-            "Ensure 'Close' buttons are prominent, easy to hit, and clear on all screen sizes"
-        ]
-    },
-    Image_Stability: {
-        title: "Image Stability",
-        whatThisParameterIs: "Image Stability checks if media elements have predefined dimensions to prevent layout shifts during page load.",
-        whatItCalculates: "It verifies the presence of 'width' and 'height' attributes or CSS 'aspect-ratio' on images.",
-        whyItMatters: "Images without dimensions cause 'Cumulative Layout Shift', which makes the page jump around as content loads.",
-        thresholds: {
-            good: "≥ 90% images are stable with explicit dimensions",
-            poor: "Many unstable images causing layout shifts"
-        },
-        actualReasonsForFailure: [
-            "Missing explicit 'width' and 'height' attributes on <img> tags",
-            "No 'aspect-ratio' defined in CSS to reserve space for dynamically loaded media",
-            "Background images without containing elements that maintain their space"
-        ],
-        howToOvercomeFailure: [
-            "Always include explicit 'width' and 'height' attributes for all static images",
-            "Use the 'aspect-ratio' property in CSS for responsive images to reserve vertical space",
-            "Use placeholders or skeleton loaders for large media assets"
+            "Replace full-screen pop-ups with smaller banners that don't block content",
+            "Wait until the user has scrolled down or spent time on the page before showing a modal",
+            "Always ensure 'Close' buttons are very easy to find and tap"
         ]
     },
     Breadcrumbs: {
-        title: "Breadcrumb Navigation",
-        whatThisParameterIs: "Breadcrumb Navigation checks for the presence of a hierarchical trail to help users understand their location.",
-        whatItCalculates: "It scans for structured data (BreadcrumbList) or navigation elements matching breadcrumb patterns.",
-        whyItMatters: "Breadcrumbs improve navigation usability and help search engines crawl and understand your site structure.",
+        title: "Navigation Path",
+        whatThisParameterIs: "We look for a 'navigation path' that shows users exactly where they are within your site's structure.",
+        whatItCalculates: "We look for navigation trails or special 'breadcrumb' code that helps users and search engines work out where they are on your site.",
+        whyItMatters: "Breadcrumbs help users understand the scale of your site. They significantly reduce 'pogo-sticking' (going back and forth repeatedly) and help search engines index your pages better.",
         thresholds: {
-            good: "Breadcrumb trail or Schema markup detected",
-            poor: "No visible breadcrumbs found for multi-level paths"
+            good: "Clear breadcrumb trail or technical markup detected",
+            poor: "No visible way for users to track their path on deep pages"
         },
         actualReasonsForFailure: [
-            "No visible breadcrumb navigation trail detected on internal or deep pages",
-            "Missing 'BreadcrumbList' structured data (JSON-LD or Microdata) for SEO enrichment",
-            "Breadcrumbs are present but non-functional or not linked to parent categories"
+            "No navigation trail found on a page deep within the site structure",
+            "Missing technical 'Schema' markup that helps search engines understand your path",
+            "Breadcrumbs are missing links back to parent pages"
         ],
         howToOvercomeFailure: [
-            "Add a visible breadcrumb trail at the top of all pages except the homepage",
-            "Implement correct 'BreadcrumbList' Schema.org markup to enhance search results",
-            "Ensure the breadcrumb trail accurately reflects the current hierarchical location of the page"
+            "Add a visible 'path' (e.g., Home > Shop > Shoes) at the top of internal pages",
+            "Add 'BreadcrumbList' technical markup to your page's code",
+            "Ensure the breadcrumb is easy to read and all parts of the trail are clickable"
         ]
     },
     Navigation_Discoverability: {
-        title: "Navigation Discoverability",
-        whatThisParameterIs: "Navigation Discoverability ensures menus and search features are easily accessible on mobile.",
-        whatItCalculates: "It checks for the presence of a visible 'hamburger' menu icon or search bar in the viewport.",
-        whyItMatters: "Hidden or hard-to-find navigation causes users to feel lost and leave the site.",
+        title: "Easy-to-Find Menu",
+        whatThisParameterIs: "We check if your menu and search bar are easy to find, so visitors don't get lost trying to explore your site.",
+        whatItCalculates: "We look for three specific things: a menu button (hamburger), a search box, and a main navigation menu, making sure they are all easy to find.",
+        whyItMatters: "Navigation is how users complete their goals. If the way forward isn't immediately obvious, users will experience 'choice paralysis' and likely leave for a competitor's site.",
         thresholds: {
-            good: "Nav menu, hamburger, and search available",
-            needsImprovement: "One or more missing",
-            poor: "No navigation elements found"
+            good: "Menu button, search bar, and main navigation are all easy to find",
+            needsImprovement: "One or more useful navigation tools (like search) are missing",
+            poor: "Essential navigation controls are hidden or non-existent"
         },
         actualReasonsForFailure: [
-            "Missing main navigation menu",
-            "No hamburger menu on mobile",
-            "No visible search option"
+            "No main navigation menu was detected on the page",
+            "Missing a search bar which makes finding specific info harder",
+            "On mobile, the 'hamburger' menu icon is missing or hard to spot"
         ],
         howToOvercomeFailure: [
-            "Use <nav> or role='navigation' for main menu",
-            "Ensure hamburger menu is visible on mobile",
-            "Add a search bar or icon"
+            "Ensure your main menu is in a standard, easy-to-find location",
+            "Add a search bar or a clearly visible search icon in the header",
+            "Use clear icons (like the three horizontal lines for a menu) that users recognize"
         ]
     },
     Above_the_Fold_Content: {
-        title: "Above-the-Fold Content",
-        whatThisParameterIs: "Above-the-Fold Content checks if the primary content is visible without scrolling.",
-        whatItCalculates: "We calculate the Weighted ATF Score by comparing the weighted sum of important elements visible in the initial viewport against the total weighted sum of important elements on the entire page. Important elements include Headings (H1-H3, weight 4-5), Media (Img/Video, weight 3), Interactive elements (Buttons/Inputs, weight 2-3), and substantial text blocks.",
-        whyItMatters: "Users decide in seconds whether to stay; empty visible space leads to high bounce rates.",
+        title: "First Impression (Top View)",
+        whatThisParameterIs: "We check if your most important info appears at the very top of the screen, so users don't have to scroll to see the 'good stuff'.",
+        whatItCalculates: "We identify all the important pieces of your page—like titles and buttons—and calculate what percentage of them appear before a user has to scroll.",
+        whyItMatters: "Users decide whether to stay or leave in less than 3 seconds. If your value proposition isn't visible right away at the top, you risk losing those visitors before they even begin to scroll.",
         thresholds: {
-            good: "≥ 50% important content visible",
-            needsImprovement: "20–49% visible",
-            poor: "< 20% visible"
+            good: "Most important content is visible right away",
+            needsImprovement: "Key content is partially pushed down the page",
+            poor: "Nearly no important content is visible without scrolling"
         },
         actualReasonsForFailure: [
-            "Large hero sections",
-            "Excessive banners"
+            "A giant banner or hero image is pushing your main headline way down",
+            "Too much empty space at the top of the page is forcing unnecessary scrolling",
+            "Important buttons (like 'Buy Now') are buried below the initial view"
         ],
         howToOvercomeFailure: [
-            "Reduce hero height",
-            "Move key content higher"
+            "Move your main headline and primary 'action button' higher up the page",
+            "Reduce the height of giant hero images or videos on mobile devices",
+            "Trim unnecessary whitespace at the very top of your design"
         ]
     },
     Interactive_Click_Feedback: {
         title: "Click Feedback",
-        whatThisParameterIs: "Click Feedback ensures interactive elements provide visual response states.",
-        whatItCalculates: "We identify all interactive elements (buttons, links, inputs, etc.) and verify if they exhibit visual changes (color, background, shadow, transform, opacity, etc.) on :hover for Desktop or :active for Mobile. The score represents the percentage of interactive elements that provide this visual feedback.",
-        whyItMatters: "Visual feedback confirms to the user that their interaction was registered.",
+        whatThisParameterIs: "We ensure buttons and links 'react' (like changing color) when someone clicks them, confirming their action worked.",
+        whatItCalculates: "We test your buttons and links to see if they change color, move, or glow when someone hovers over or clicks them.",
+        whyItMatters: "Feedback provides 'digital confidence.' When things change color when touched, users feel in control. Without it, they often double-tap or click repeatedly, causing errors or frustration.",
         thresholds: {
-            good: "≥ 80% elements show feedback",
-            needsImprovement: "Some feedback missing",
-            poor: "Little or no feedback"
+            good: "Almost all buttons and links show clear visual feedback",
+            needsImprovement: "Some buttons feel 'dead' when you interact with them",
+            poor: "Interactive elements don't change at all, making the site feel static"
         },
         actualReasonsForFailure: [
-            "No hover or active styles",
-            "Missing cursor changes"
+            "Buttons don't change color or size when clicked or hovered over",
+            "Links look like normal text and don't react to mouse-overs",
+            "Form boxes don't highlight when someone starts typing in them"
         ],
         howToOvercomeFailure: [
-            "Add hover/active states",
-            "Use cursor:pointer"
-        ]
-    },
-    Form_Validation_UX: {
-        title: "Form Validation UX",
-        whatThisParameterIs: "Form Validation UX checks for user-friendly validation messages.",
-        whatItCalculates: "It tests form submission with invalid data and checks for the appearance of error messages/styles.",
-        whyItMatters: "Clear validation helps users correct errors quickly and complete forms successfully.",
-        thresholds: {
-            good: "≥ 90% inputs labeled",
-            needsImprovement: "Some labels missing",
-            poor: "Many unlabeled inputs"
-        },
-        actualReasonsForFailure: [
-            "Missing labels",
-            "Unclear error messages"
-        ],
-        howToOvercomeFailure: [
-            "Add labels or aria-labels",
-            "Show inline error messages"
+            "Add a hover effect (like a color change) to every clickable button",
+            "Ensure links change appearance when someone hovers over them",
+            "Add an 'active' state so buttons look 'pressed' when clicked"
         ]
     },
     Loading_Feedback: {
         title: "Loading Feedback",
-        whatThisParameterIs: "Loading Feedback checks for visual indicators during wait times.",
-        whatItCalculates: "It detects the presence of spinners, skeleton screens, or progress bars during async operations.",
-        whyItMatters: "Loading indicators reduce perceived wait time and reassure users the system is working.",
+        whatThisParameterIs: "We check if your site shows a loading signal (like a spinner) while waiting for content, so users know it's not frozen.",
+        whatItCalculates: "We scan for visual progress signals like spinning icons or shimmering 'skeleton' boxes that show your site is busy fetching information.",
+        whyItMatters: "Waiting is easier when you know progress is happening. Visual cues like spinners significantly improve 'perceived speed,' making your site feel faster even if the load time is the same.",
         thresholds: {
-            good: "Loading feedback present",
-            poor: "No loading feedback"
+            good: "Clear visual indicators like spinners or shimmer effects are used",
+            needsImprovement: "Only simple text indicators were found, which can be easily missed",
+            poor: "No visual sign that the site is working or loading"
         },
         actualReasonsForFailure: [
-            "No spinners or skeleton UI",
-            "Long loading without feedback"
+            "The site stays completely blank while waiting for data to load",
+            "Only a tiny, hard-to-see text message says 'Loading...'",
+            "Users aren't told that a button click is being processed"
         ],
         howToOvercomeFailure: [
-            "Add spinners or skeleton screens",
-            "Show loading text for async actions"
+            "Add a spinning icon or a loading bar during longer waits",
+            "Use 'skeleton screens' (gray boxes) to show where content will appear",
+            "Change button text to 'Processing...' immediately after a user clicks"
         ]
     },
     Broken_Links: {
         title: "Broken Links",
-        whatThisParameterIs: "Scans for hyperlinks that point to non-existent pages (404 errors) or unreachable servers.",
-        whyItMatters: "Broken links frustrate users, interrupt navigation, and negatively impact search engine rankings.",
+        whatItCalculates: "Our system clicks every link on your page behind the scenes to make sure they all lead to active pages and not '404 - Not Found' errors.",
+        whyItMatters: "Broken links destroy trust and professionalism. They also hurt your SEO rankings because they signal to search engines that your website might be poorly maintained or outdated.",
         thresholds: {
-            good: "0 broken links",
-            warning: "1 broken link",
-            poor: "> 1 broken link"
+            good: "All links are active and working perfectly",
+            needsImprovement: "Found a single broken link that needs fixing",
+            poor: "Multiple broken links were detected, leading to a frustrating experience"
         },
         actualReasonsForFailure: [
-            "Mistyped URLs",
-            "Linked content has been deleted or moved",
-            "Server errors on destination site"
+            "A link points to a page that has been deleted or moved",
+            "A typo in a web address is leading users to a dead end",
+            "External websites you linked to are no longer active"
         ],
         howToOvercomeFailure: [
-            "Correct the URL",
-            "Remove the link if content is gone",
-            "Set up 301 redirects for moved content"
+            "Update any broken links to point to the correct, live pages",
+            "Remove links to content that no longer exists",
+            "Ensure all web addresses are spelled correctly without extra spaces"
+        ]
+    },
+    UX_Content_Hierarchy_Clarity: {
+        title: "Organized Titles",
+        whatThisParameterIs: "We check if your headings follow a logical order, making it easy for people to skim and find the information they need.",
+        whatItCalculates: "We check if your page has exactly one main title (H1) and that all your sub-headings follow a logical, step-by-step order.",
+        whyItMatters: "Proper hierarchy acts as a 'visual anchor' for the eye. It lets users mentally scan and find exactly what they need in seconds, which is crucial for busy mobile visitors.",
+        thresholds: {
+            good: "Heading structure is perfectly organized and logical",
+            needsImprovement: "Missing a main title or headings are out of order",
+            poor: "No clear heading structure found, making it hard to follow"
+        },
+        actualReasonsForFailure: [
+            "Your page is missing a main title (H1 tag)",
+            "The headings skip levels (for example, jumping from a title directly to a small sub-heading)",
+            "There is more than one main title on the same page"
+        ],
+        howToOvercomeFailure: [
+            "Add exactly one main title (H1) that describes what the page is about",
+            "Use sub-headings (H2, H3) in a descending order like an outline",
+            "Don't use heading tags just to make text look bigger; use them for structure"
+        ]
+    },
+    Section_Labeling_Clarity: {
+        title: "Clear Section Labels",
+        whatThisParameterIs: "We check if each part of your page has a clear title so visitors know exactly what they're looking at.",
+        whatItCalculates: "We divide your page into its natural parts and check if each section has a clear title or label explaining what is inside.",
+        whyItMatters: "Headings act as signposts. Without them, users have to exert more 'cognitive effort' to figure out what each section is for, which quickly leads to user fatigue and site exits.",
+        thresholds: {
+            good: "Most parts of the page are clearly titled and defined",
+            needsImprovement: "Some blocks of content lack clear labels",
+            poor: "Major sections are generic and unlabeled"
+        },
+        actualReasonsForFailure: [
+            "Large sections of the page don't have their own descriptive headlines",
+            "Content blocks are just dumped on the page without a clear grouping",
+            "A user wouldn't know what a section is about without reading every word"
+        ],
+        howToOvercomeFailure: [
+            "Add a descriptive heading at the start of every major content block",
+            "Group related information together under a single topic title",
+            "Use clear, bold labels for specialized sections like 'Features' or 'Reviews'"
+        ]
+    },
+    Content_Density_Balance: {
+        title: "Page Breathing Room",
+        whatThisParameterIs: "We check for a healthy balance of text and 'breathing room' (whitespace) to prevent your page from feeling cluttered.",
+        whatItCalculates: "We calculate the total amount of text per screen height, making sure there is enough empty 'breathing room' between your paragraphs.",
+        whyItMatters: "Whitespace isn't 'empty space'—it's an active design tool. It reduces eye strain and helps users focus on your most important content and buttons without feeling overwhelmed.",
+        thresholds: {
+            good: "Content feels balanced and easy to skim",
+            needsImprovement: "Too much text is packed into a single screen view",
+            poor: "The page is either extremely cluttered or almost empty"
+        },
+        actualReasonsForFailure: [
+            "Paragraphs are too long (more than 5 or 6 lines of text)",
+            "Text lines are squeezed too close together with no 'breathing room'",
+            "Information is so dense that it's physically tiring to look at"
+        ],
+        howToOvercomeFailure: [
+            "Break long paragraphs into smaller chunks of 2 or 3 sentences",
+            "Increase the space between lines of text (line-height)",
+            "Use images or divider lines to create breaks in long walls of text"
+        ]
+    },
+    Page_to_Page_Flow: {
+        title: "Smooth User Journey",
+        whatThisParameterIs: "We check if your content flows naturally from one topic to the next, keeping your readers engaged and moving forward.",
+        whatItCalculates: "We check if your page has a footer, a healthy number of internal links, and a clear next step to make sure your visitors never reach a dead end.",
+        whyItMatters: "Every page should be a stepping stone, not a destination. A logical flow guides users through your site's narrative and naturally pushes them toward your conversion goals.",
+        thresholds: {
+            good: "The page has a clear beginning, middle, and end",
+            needsImprovement: "The user might hit a 'dead end' without being told what to do next",
+            poor: "Content feels random and disjointed, with no clear path to follow"
+        },
+        actualReasonsForFailure: [
+            "There's no footer at the bottom to give users their next options",
+            "Important sections jump from one topic to another without a smooth transition",
+            "There are no 'internal links' to guide users to other parts of your site"
+        ],
+        howToOvercomeFailure: [
+            "Add a consistent footer with links to your main pages",
+            "Ensure every page ends with a clear 'What's Next' button or link",
+            "Group related topics under common titles to create a logical narrative"
+        ]
+    },
+    Layout_Consistency: {
+        title: "Layout Consistency",
+        whatThisParameterIs: "We check if your page design stays consistent and organized, creating a predictable and comfortable experience.",
+        whatItCalculates: "We look for modern layout patterns (like Grid or Flexbox) that keep your headlines, images, and buttons balanced and perfectly aligned.",
+        whyItMatters: "Consistency reduces the 'learning curve' for your site. When buttons and spacing look the same everywhere, users feel more comfortable, confident, and trust your brand's authority.",
+        thresholds: {
+            good: "The page layout is orderly and uses consistent patterns",
+            needsImprovement: "Some elements look misaligned or out of place",
+            poor: "The design feels chaotic with no predictable structure"
+        },
+        actualReasonsForFailure: [
+            "Buttons use different colors or styles without a clear reason",
+            "Spacing (margins) between sections is uneven and looks messy",
+            "Modern design systems (like Grid or Flexbox) aren't being used to keep things straight"
+        ],
+        howToOvercomeFailure: [
+            "Use a standard layout system to ensure everything is perfectly aligned",
+            "Standardize your spacing so gaps between sections are always the same",
+            "Ensure similar items (like all primary buttons) share the exact same style"
+        ]
+    },
+    In_Page_Navigation: {
+        title: "Long Page Shortcuts",
+        whatThisParameterIs: "We look for 'shortcuts' on long pages, like 'Back to Top' buttons, to save your visitors from endless scrolling.",
+        whatItCalculates: "On long pages, we check if you have 'Back to Top' buttons or jump links that save users the trouble of scrolling long distances.",
+        whyItMatters: "On long mobile pages, scrolling back up to the menu feels like a chore. Providing navigation shortcuts respects your user's time and keeps them engaged with your content longer.",
+        thresholds: {
+            good: "Shortcuts are present for all long-form content",
+            needsImprovement: "The page is very long but lacks helpful navigation tools",
+            poor: "Extremely long pages with no way for users to jump back to the top"
+        },
+        actualReasonsForFailure: [
+            "The page is 3 to 4 times longer than the screen but has no 'Back to Top' button",
+            "Users have to manually scroll all the way up to reach the menu again",
+            "There are no 'jump links' to help people skip to the specific info they need"
+        ],
+        howToOvercomeFailure: [
+            "Add a 'Back to Top' button that appears after the user has scrolled down",
+            "For long articles, add a 'Table of Contents' with links to each section",
+            "Ensure all navigation shortcuts work smoothly without jumping too abruptly"
         ]
     },
 
@@ -2067,73 +2078,71 @@ export const InfoDetails = {
         guideLink: "https://developers.google.com/search/mobile-sites",
         whatThisMetricIs: (
             <div className="space-y-2">
-                <p>Measures how easy, readable, and frustration-free your website feels for users — especially on mobile devices.</p>
-                <p>It evaluates layout stability, readability, touch interactions, navigation clarity, visual hierarchy, and feedback signals that directly affect real user experience.</p>
+                <p>This is a 15-point 'health check' that measures how easy and pleasant your website feels for visitors.</p>
+                <p>It checks everything from how easy your text is to read, to whether your buttons are easy to find and your page layout is organized.</p>
             </div>
         ),
         whyItMatters: (
             <div className="space-y-4">
-                <p>Even fast websites fail if users struggle to read content, tap elements, navigate pages, or understand what’s happening on screen.</p>
+                <p>Even the fastest website will fail if users struggle to read your content, find your menu, or trust your professional appearance.</p>
 
                 <div>
-                    <span className="font-semibold block mb-1">Poor mobile experience leads to:</span>
+                    <span className="font-semibold block mb-1">Poor content experience leads to:</span>
                     <ul className="list-disc pl-5 space-y-1 text-sm">
-                        <li>Higher bounce rates</li>
-                        <li>Lower engagement and conversions</li>
-                        <li>Frustrated users</li>
-                        <li>Reduced search visibility</li>
+                        <li>Immediate exits due to 'Information Overload'</li>
+                        <li>Loss of brand trust because of broken links or messy layouts</li>
+                        <li>Frustration when buttons don't react or pop-ups block the view</li>
+                        <li>Lower search rankings as users quickly bounce back to results</li>
                     </ul>
                 </div>
 
-                <p className="font-medium">A strong UX keeps users comfortable, confident, and moving forward.</p>
+                <p className="font-medium">A strong UX turns casual visitors into confident customers by making their journey effortless.</p>
             </div>
         ),
         whatToDoForAGoodScore: (
             <ul className="list-disc pl-5 space-y-2">
                 <li>
-                    <span className="font-semibold">Make content easy to read:</span> Use clear language, short sentences, and appropriate vocabulary based on page type (articles vs product pages).
+                    <span className="font-semibold">Prioritize the 'Above-the-Fold' experience:</span> Move your most important headlines and 'Call to Action' buttons to the very top (ATF Content).
                 </li>
                 <li>
-                    <span className="font-semibold">Prevent layout shifts and visual jumps:</span> Ensure images, headers, and dynamic elements don’t move unexpectedly while the page loads.
+                    <span className="font-semibold">Remove interaction blockers:</span> Eliminate full-screen overlays and aggressive pop-ups that stand between the user and your content (Intrusive Interstitials).
                 </li>
                 <li>
-                    <span className="font-semibold">Optimize tap targets and text size:</span> Buttons, links, and form fields should be large enough to tap comfortably, with readable font sizes on all devices.
+                    <span className="font-semibold">Build trust with reliability:</span> Ensure every link on your page works perfectly and follow a logical heading order (Broken Links & Hierarchy).
                 </li>
                 <li>
-                    <span className="font-semibold">Avoid horizontal scrolling:</span> Pages should fit cleanly within the screen width at common mobile breakpoints.
+                    <span className="font-semibold">Write for your audience:</span> Use simple, clear sentences and vocabulary that matches your readers' expectations (Text Readability).
                 </li>
                 <li>
-                    <span className="font-semibold">Use non-intrusive overlays:</span> Avoid popups, modals, or banners that block content or prevent scrolling, especially on mobile.
+                    <span className="font-semibold">Make your menu easy to find:</span> Always provide a visible menu button, search bar, and breadcrumbs for deeper pages (Nav Discoverability & Breadcrumbs).
                 </li>
                 <li>
-                    <span className="font-semibold">Ensure strong above-the-fold content:</span> Important headings, visuals, and calls-to-action should be visible without scrolling.
+                    <span className="font-semibold">Provide immediate visual cues:</span> Ensure buttons 'glow' or change color when touched and show loading signs during waits (Click Feedback & Loading Feedback).
                 </li>
                 <li>
-                    <span className="font-semibold">Provide clear interaction feedback:</span> Buttons and links should visually respond when users hover, tap, or click.
+                    <span className="font-semibold">Organize with clear signposts:</span> Use descriptive section titles and a consistent layout system to help users skim your page (Section Labeling & Layout Consistency).
                 </li>
                 <li>
-                    <span className="font-semibold">Improve navigation clarity:</span> Keep navigation shallow, discoverable, and easy to access with clear menus, breadcrumbs, and search when applicable.
+                    <span className="font-semibold">Optimize content density:</span> Balance your text with white space to avoid 'wall-of-text' fatigue (Content Density).
                 </li>
                 <li>
-                    <span className="font-semibold">Show loading and processing feedback:</span> Use spinners, skeletons, or progress indicators so users know something is happening.
+                    <span className="font-semibold">Guide the user journey:</span> Use a helpful footer and navigation shortcuts like 'Back to Top' buttons on long pages (Flow & In-Page Nav).
                 </li>
                 <li>
-                    <span className="font-semibold">Maintain form usability:</span> Forms should have clear labels, validation feedback, and accessible error messages.
+                    <span className="font-semibold">Keep headers compact:</span> Ensure your top menu doesn't take up too much vertical space on mobile devices (Sticky Header).
                 </li>
             </ul>
         ),
         howThisScoreIsCalculated: (
             <div className="space-y-2">
-                <p>We analyze multiple UX and usability signals related to readability, interaction, layout stability, and navigation behavior.</p>
-                <p>Each factor is weighted based on how strongly it impacts real user frustration, especially on mobile. Issues that block interaction or readability have a greater influence on the final score.</p>
+                <p>We perform 15 specialized checks across three tiers of importance. Each check is scored against industry standards for readability, accessibility, and navigational logic.</p>
+                <p>The final percentage is a weighted average where critical blockers (like broken links or pop-ups) have a higher impact on your score than minor layout polishing.</p>
             </div>
         ),
         weightage: [
-            { param: "Mobile & Viewport Configuration", weight: "40%" },
-            { param: "Content Readability & Stability", weight: "20%" },
-            { param: "Interaction & Forms", weight: "20%" },
-            { param: "First Screen Experience (ATF)", weight: "10%" },
-            { param: "Navigation & Structure", weight: "10%" }
+            { param: "Critical Experience (Blockers, First Impression, Broken Links)", weight: "32%" },
+            { param: "Engagement & Logic (Readability, Feedback, Nav Discoverability)", weight: "50%" },
+            { param: "Support & Layout (Header Size, Breadcrumbs, Consistency)", weight: "18%" }
         ]
     },
 

@@ -1,4 +1,4 @@
-import React, { useContext, useMemo } from "react";
+import React, { useContext, useMemo, useState } from "react";
 import UrlHeader from "../Component/UrlHeader";
 import CircularProgress from "../Component/CircularProgress";
 import { useData } from "../context/DataContext";
@@ -8,50 +8,34 @@ import {
   Layout, Type, Smartphone, MoveHorizontal, PanelTop, Menu,
   ChevronRight, ChevronUp, Compass, Touchpad, BookOpen, Layers, Image as ImageIcon,
   XOctagon, MonitorPlay, MousePointer2, CheckCircle2, Loader2,
-  ExternalLink, CheckCircle, XCircle, Info, Search, Unlink, Tag, AlertTriangle
+  ExternalLink, CheckCircle, XCircle, Info, Search, Unlink, Tag, AlertTriangle,
+  ListTree, AlignLeft, Grid3X3, Repeat, AppWindow, Anchor, Navigation
 } from "lucide-react";
 import MetricInfoModal from "../Component/MetricInfoModal";
 import ParameterInfoModal from "../Component/ParameterInfoModal";
 import { InfoDetails } from "../Component/InfoDetails";
 
-// ------------------------------------------------------
-// ✅ Icon Mapping
-// ------------------------------------------------------
 const iconMap = {
-  Viewport_Meta_Tag: Smartphone,
-  Horizontal_Scroll_Check: MoveHorizontal,
+  Text_Readability: BookOpen,
   Sticky_Header_Usage: PanelTop,
-  Navigation_Depth: Menu,
+  Intrusive_Interstitials: XOctagon,
   Breadcrumbs: ChevronRight,
   Navigation_Discoverability: Compass,
-  Tap_Target_Size: Touchpad,
-  Text_Readability: BookOpen,
-  Text_Font_Size: Type,
-  Cumulative_Layout_Shift: Layers,
-  Image_Stability: ImageIcon,
-  Intrusive_Interstitials: XOctagon,
   Above_the_Fold_Content: MonitorPlay,
   Interactive_Click_Feedback: MousePointer2,
-  Form_Validation_UX: CheckCircle2,
   Loading_Feedback: Loader2,
-  Broken_Links: Unlink
+  Broken_Links: Unlink,
+  UX_Content_Hierarchy_Clarity: ListTree,
+  Section_Labeling_Clarity: AlignLeft,
+  Content_Density_Balance: Grid3X3,
+  Page_to_Page_Flow: Repeat,
+  Layout_Consistency: AppWindow,
+  In_Page_Navigation: Anchor
 };
 
 const uxEducationalContent = InfoDetails;
-
-// ------------------------------------------------------
-// ✅ Score Calculation Info (Calculated based on average importance)
-// ------------------------------------------------------
 const scoreCalculationInfo = InfoDetails.UX_And_Content_Methodology;
 
-// ------------------------------------------------------
-// ✅ Enhanced Shimmer
-// ------------------------------------------------------
-const ShimmerBlock = ({ className = "" }) => (
-  <div className={`relative overflow-hidden bg-gray-200 dark:bg-gray-800 rounded-lg ${className}`}>
-    <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/50 dark:via-white/10 to-transparent"></div>
-  </div>
-);
 
 const UxShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
   const step = steps[currentStep] || steps[0];
@@ -99,623 +83,488 @@ const UxShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
   );
 };
 
-// ------------------------------------------------------
-// ✅ Metric Card Component
-// ------------------------------------------------------
-const MetricCard = ({ title, description, score, status, meta, darkMode, icon: Icon, type, className, onInfo }) => {
+const MetricCard = ({ title, description, score, status, analysis, meta, darkMode, icon: Icon, type, className, onInfo }) => {
   const isPassed = status === 'pass' || score === 100;
   const isWarning = status === 'warning' || score === 50;
+  const [isOpen, setIsOpen] = useState(false);
 
   // Get static educational content
   const info = InfoDetails[type] || {};
   const reasons = info.actualReasonsForFailure || [];
   const recommendations = info.howToOvercomeFailure || [];
 
-
-
   // Simple Colors
   const cardBg = darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200";
   const textColor = darkMode ? "text-gray-100" : "text-gray-900";
   const subTextColor = darkMode ? "text-gray-400" : "text-gray-500";
 
-  let statusColor = "text-red-600 bg-red-50 border-red-100";
-  let statusText = "Failed";
-  let progressBarColor = "bg-red-500";
-
-  if (darkMode) {
-    statusColor = "text-red-400 bg-red-900/20 border-red-800/30";
-  }
+  let statusBg = "bg-rose-500";
+  let statusBorder = "border-rose-500";
+  let statusTextColor = "text-rose-500";
+  let statusLabel = "Needs Improvement";
 
   if (isPassed) {
-    statusColor = darkMode ? "text-green-400 bg-green-900/20 border-green-800/30" : "text-green-600 bg-green-50 border-green-100";
-    statusText = "Passed";
-    progressBarColor = "bg-emerald-500";
+    statusBg = "bg-emerald-500";
+    statusBorder = "border-emerald-500";
+    statusTextColor = "text-emerald-500";
+    statusLabel = "Optimized";
   } else if (isWarning) {
-    statusColor = darkMode ? "text-yellow-400 bg-yellow-900/20 border-yellow-800/30" : "text-yellow-600 bg-yellow-50 border-yellow-100";
-    statusText = "Warning";
-    progressBarColor = "bg-amber-500";
+    statusBg = "bg-amber-500";
+    statusBorder = "border-amber-500";
+    statusTextColor = "text-amber-500";
+    statusLabel = "Warning";
   }
 
-  // --- Specific Renderers for Meta Data ---
-
-  const renderSpecificMeta = () => {
-    // 0. Form Validation UX Specifics
-    if (type === 'Form_Validation_UX' && (meta?.failedNodes || meta?.failedForms)) {
-      const items = meta.failedNodes || meta.failedForms || [];
-      const missingLabelCount = items.filter(i => (i.status === 'fail' || !i.status) && i.reason?.toLowerCase().includes("missing associated label")).length;
-
-      const getSolution = (reason, status) => {
-        if (status === 'pass') return "No action needed. Implementation is correct.";
-        const r = reason?.toLowerCase() || "";
-        if (r.includes("label")) return "Add a <label> element linked to this input via 'for' attribute.";
-        if (r.includes("message") || r.includes("feedback")) return "Add an element to display validation error messages using ARIA live regions.";
-        if (r.includes("required")) return "Mark the input as required and provide visual cues.";
-        if (r.includes("autocomplete")) return "Add a valid 'autocomplete' attribute to help users fill forms faster.";
-        return "Ensure the input follows accessibility and validation best practices.";
-      };
-
-      if (items.length > 0) {
-        return (
-          <div className="space-y-4">
-            {/* Summary Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex items-center gap-3 p-4 rounded-xl border bg-gradient-to-br from-blue-50 to-indigo-50/50 border-blue-100 dark:from-blue-900/20 dark:to-indigo-900/10 dark:border-blue-800/30">
-                <div className="p-2 rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-800 dark:text-blue-200">
-                  <Type size={20} />
-                </div>
-                <div>
-                  <p className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-blue-300" : "text-blue-600"}`}>Total Inputs</p>
-                  <p className={`text-2xl font-black ${darkMode ? "text-white" : "text-gray-900"}`}>{items.length}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 p-4 rounded-xl border bg-gradient-to-br from-amber-50 to-orange-50/50 border-amber-100 dark:from-amber-900/20 dark:to-orange-900/10 dark:border-amber-800/30">
-                <div className="p-2 rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-800 dark:text-amber-200">
-                  <Tag size={20} />
-                </div>
-                <div>
-                  <p className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-amber-300" : "text-amber-600"}`}>Missing Labels</p>
-                  <p className={`text-2xl font-black ${darkMode ? "text-white" : "text-gray-900"}`}>{missingLabelCount}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <h5 className={`text-[10px] font-bold uppercase tracking-wider mb-3 flex items-center gap-2 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
-                <Search size={12} />
-                Input Field Analysis
-              </h5>
-
-              <div className={`max-h-96 overflow-y-auto rounded-xl border ${darkMode ? "bg-slate-900/30 border-slate-700" : "bg-gray-50 border-gray-200"}`}>
-                {items.map((item, i) => {
-                  const identifier = (() => {
-                    const snip = item.snippet || "";
-                    const p = snip.match(/placeholder=["']([^"']+)["']/);
-                    if (p) return `Placeholder: "${p[1]}"`;
-                    const n = snip.match(/name=["']([^"']+)["']/);
-                    if (n) return `Name: "${n[1]}"`;
-                    const id = snip.match(/id=["']([^"']+)["']/);
-                    if (id) return `ID: "${id[1]}"`;
-                    if (item.id) return `ID: "${item.id}"`;
-                    return `<${item.tag || "input"}>`;
-                  })();
-
-                  const isPassed = item.status === 'pass';
-
-                  return (
-                    <div key={i} className={`p-4 border-b last:border-0 text-xs group ${darkMode ? "border-slate-800 hover:bg-slate-800/50" : "border-gray-200 hover:bg-white"} transition-all`}>
-                      <div className="flex flex-col gap-3">
-
-                        {/* ✅ User Requested: Error Identifier */}
-                        <div className={`flex items-center gap-2 pb-2 border-b border-dashed mb-1 ${darkMode ? "border-gray-700/50" : "border-gray-200"}`}>
-                          <span className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
-                            Field Identifier:
-                          </span>
-                          <span className={`text-sm font-bold font-mono ${darkMode ? "text-blue-300" : "text-blue-600"}`}>
-                            {identifier}
-                          </span>
-                          {isPassed && (
-                            <span className={`ml-auto px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider ${darkMode ? "bg-green-900/30 text-green-400 border border-green-800/50" : "bg-green-100 text-green-700 border border-green-200"}`}>
-                              Passed
-                            </span>
-                          )}
-                          {!isPassed && (
-                            <span className={`ml-auto px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider ${darkMode ? "bg-red-900/30 text-red-400 border border-red-800/50" : "bg-red-100 text-red-700 border border-red-200"}`}>
-                              Failed
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Top Row: Tag & Location */}
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className={`px-2 py-1 rounded-md text-[10px] font-mono border font-bold ${darkMode ? "bg-slate-800 border-slate-700 text-slate-300" : "bg-white border-slate-200 text-slate-600"}`}>
-                              Line {item.loc?.start?.line || "?"}
-                            </span>
-                            <code className={`px-2 py-1 rounded-md text-sm font-bold ${darkMode ? "bg-blue-900/30 text-blue-200" : "bg-blue-50 text-blue-700"}`}>
-                              {item.tag || item.selector || "<input>"}
-                            </code>
-                          </div>
-                          {item.id && (
-                            <div className="flex items-center gap-1.5 opacity-60">
-                              <span className="text-[10px] font-bold uppercase">ID:</span>
-                              <span className="font-mono text-xs">{item.id}</span>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Middle Row: Code Snippet (The Description part) */}
-                        <div className="relative">
-                          <div className={`absolute top-0 left-0 bottom-0 w-1 rounded-l-md ${isPassed ? (darkMode ? "bg-emerald-500" : "bg-emerald-400") : (darkMode ? "bg-rose-500" : "bg-rose-400")}`}></div>
-                          <div className={`pl-3 pr-2 py-2 rounded-r-md font-mono text-[11px] overflow-x-auto whitespace-pre-wrap break-all ${darkMode ? "bg-black/40 text-gray-300" : "bg-gray-100 text-gray-700"}`}>
-                            {item.snippet || "No code snippet available"}
-                          </div>
-                        </div>
-
-                        {/* Bottom Row: Issue & Fix Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-1">
-                          {/* The Issue / Status */}
-                          <div className={`p-3 rounded-lg border flex items-start gap-2 ${isPassed ? (darkMode ? "bg-emerald-900/10 border-emerald-500/20" : "bg-emerald-50 border-emerald-100") : (darkMode ? "bg-rose-900/10 border-rose-500/20" : "bg-rose-50 border-rose-100")}`}>
-                            {isPassed ? (
-                              <CheckCircle2 size={14} className={`mt-0.5 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`} />
-                            ) : (
-                              <AlertTriangle size={14} className={`mt-0.5 ${darkMode ? "text-rose-400" : "text-rose-600"}`} />
-                            )}
-                            <div>
-                              <div className={`text-[10px] font-bold uppercase mb-0.5 ${isPassed ? (darkMode ? "text-emerald-400" : "text-emerald-600") : (darkMode ? "text-rose-400" : "text-rose-600")}`}>
-                                {isPassed ? "Validation Status" : "Issue Detected"}
-                              </div>
-                              <div className={`font-medium leading-relaxed ${isPassed ? (darkMode ? "text-emerald-100" : "text-emerald-800") : (darkMode ? "text-rose-100" : "text-rose-800")}`}>
-                                {item.reason || (isPassed ? "Input is valid." : "Validation failed for this element.")}
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* The Fix / Recommendation */}
-                          <div className={`p-3 rounded-lg border flex items-start gap-2 ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
-                            <Info size={14} className={`mt-0.5 ${darkMode ? "text-slate-400" : "text-slate-500"}`} />
-                            <div>
-                              <div className={`text-[10px] font-bold uppercase mb-0.5 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Recommendation</div>
-                              <div className={`font-medium leading-relaxed ${darkMode ? "text-slate-300" : "text-slate-700"}`}>
-                                {getSolution(item.reason, item.status)}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        );
-      }
-    }
-
-
-    // 1. Text Readability Specifics
-    if (type === 'Text_Readability' && meta?.overallStats) {
-      return (
-        <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-2 text-center">
-            <div className={`p-2 rounded ${darkMode ? "bg-slate-900/50 border border-slate-700" : "bg-gray-50 border-gray-100"}`}>
-              <div className={`text-[10px] uppercase font-bold opacity-60 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Score</div>
-              <div className={`font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>{meta.overallStats.score?.toFixed(1)}</div>
-            </div>
-            <div className={`p-2 rounded ${darkMode ? "bg-slate-900/50 border border-slate-700" : "bg-gray-50 border-gray-100"}`}>
-              <div className={`text-[10px] uppercase font-bold opacity-60 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Words/Sent</div>
-              <div className={`font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>{meta.overallStats.ASL?.toFixed(1)}</div>
-            </div>
-            <div className={`p-2 rounded ${darkMode ? "bg-slate-900/50 border border-slate-700" : "bg-gray-50 border-gray-100"}`}>
-              <div className={`text-[10px] uppercase font-bold opacity-60 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Syll/Word</div>
-              <div className={`font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>{meta.overallStats.ASW?.toFixed(2)}</div>
-            </div>
-          </div>
-          {meta.problematicContent && meta.problematicContent.length > 0 && (
-            <div className="mt-2">
-              <h5 className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Problematic Sentences</h5>
-              <div className={`max-h-60 overflow-y-auto rounded-lg border ${darkMode ? "bg-slate-900/30 border-slate-700" : "bg-gray-50 border-gray-200"}`}>
-                {meta.problematicContent.map((item, i) => (
-                  <div key={i} className={`p-2 border-b last:border-0 text-xs break-all ${darkMode ? "border-slate-800 text-gray-300" : "border-gray-200 text-gray-700"}`}>
-                    <div className="font-bold text-rose-500 mb-0.5">{item.reason}</div>
-                    <span className="italic opacity-90">"{item.text}"</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    // 2. Image Stability Specifics
-    if (type === 'Image_Stability' && meta) {
-      return (
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className={`p-3 rounded-lg border ${darkMode ? "bg-slate-900/50 border-slate-700" : "bg-gray-50 border-gray-100"}`}>
-              <div className={`text-[10px] uppercase font-bold tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Total Images</div>
-              <div className={`text-xl font-black ${darkMode ? "text-white" : "text-gray-900"}`}>{meta.total || 0}</div>
-            </div>
-            <div className={`p-3 rounded-lg border ${darkMode ? "bg-rose-900/20 border-rose-800/30" : "bg-rose-50 border-rose-200"}`}>
-              <div className={`text-[10px] uppercase font-bold tracking-wider ${darkMode ? "text-rose-400" : "text-rose-600"}`}>Unstable Images</div>
-              <div className={`text-xl font-black ${darkMode ? "text-rose-400" : "text-rose-600"}`}>{meta.failed || meta.unstableImages?.length || 0}</div>
-            </div>
-          </div>
-
-          {meta.unstableImages && meta.unstableImages.length > 0 && (
-            <div className="mt-2">
-              <h5 className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Unstable Image Links</h5>
-              <div className={`max-h-60 overflow-y-auto rounded-lg border ${darkMode ? "bg-slate-900/30 border-slate-700" : "bg-gray-50 border-gray-200"}`}>
-                {meta.unstableImages.map((img, idx) => (
-                  <div key={idx} className={`p-3 border-b last:border-0 ${darkMode ? "border-slate-800" : "border-gray-200"}`}>
-                    <div className="flex items-start gap-2">
-                      <ImageIcon size={14} className={`mt-0.5 flex-shrink-0 ${darkMode ? "text-gray-500" : "text-gray-400"}`} />
-                      <div className="min-w-0 flex-1">
-                        <a href={img.src} target="_blank" rel="noopener noreferrer" className={`text-xs font-mono hover:underline break-all block ${darkMode ? "text-blue-400" : "text-blue-600"}`}>
-                          {img.src}
-                        </a>
-                        {img.details && <p className={`text-[10px] mt-1 ${darkMode ? "text-gray-500" : "text-gray-500"}`}>{img.details}</p>}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    // 3. Navigation Discoverability Specifics
-    if (type === 'Navigation_Discoverability' && meta) {
-      const items = [
-        { label: "Main Navigation", value: meta.hasNavMenu, icon: Compass },
-        { label: "Hamburger Menu", value: meta.hasHamburger, icon: Menu },
-        { label: "Search Option", value: meta.hasSearch, icon: Search }
-      ];
-
-      return (
-        <div className="grid grid-cols-1 gap-2">
-          {items.map((item, idx) => (
-            <div key={idx} className={`flex items-center justify-between p-3 rounded-lg border ${darkMode ? "bg-slate-900/40 border-slate-700" : "bg-gray-50 border-gray-100"}`}>
-              <div className="flex items-center gap-3">
-                <div className={`p-1.5 rounded-md ${darkMode ? "bg-slate-800 text-gray-400" : "bg-white text-gray-500 shadow-sm"}`}>
-                  <item.icon size={14} />
-                </div>
-                <span className={`text-xs font-semibold ${darkMode ? "text-gray-300" : "text-gray-700"}`}>{item.label}</span>
-              </div>
-              {item.value ? (
-                <div className="flex items-center gap-1.5 text-emerald-500">
-                  <CheckCircle2 size={14} />
-                  <span className="text-[10px] font-bold uppercase tracking-wider">Present</span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-1.5 text-rose-500">
-                  <XCircle size={14} />
-                  <span className="text-[10px] font-bold uppercase tracking-wider">Missing</span>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      );
-    }
-
-    // 4. Loading Feedback Specifics
-    if (type === 'Loading_Feedback' && meta?.summary) {
-      return (
-        <div className="grid grid-cols-2 gap-4">
-          <div className={`p-4 rounded-xl border flex flex-col items-center justify-center text-center gap-2 ${darkMode ? "bg-slate-900/40 border-slate-700" : "bg-white border-slate-200"}`}>
-            <div className={`p-2 rounded-full ${darkMode ? "bg-blue-900/30 text-blue-400" : "bg-blue-100/50 text-blue-600"}`}>
-              <Loader2 size={24} className="animate-spin" />
-            </div>
-            <div>
-              <span className={`block text-3xl font-black ${darkMode ? "text-white" : "text-gray-900"}`}>
-                {meta.summary.spinners}
-              </span>
-              <span className={`text-[10px] font-bold uppercase tracking-wider opacity-60 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
-                Spinners
-              </span>
-            </div>
-          </div>
-
-          <div className={`p-4 rounded-xl border flex flex-col items-center justify-center text-center gap-2 ${darkMode ? "bg-slate-900/40 border-slate-700" : "bg-white border-slate-200"}`}>
-            <div className={`p-2 rounded-full ${darkMode ? "bg-purple-900/30 text-purple-400" : "bg-purple-100/50 text-purple-600"}`}>
-              <Layout size={24} />
-            </div>
-            <div>
-              <span className={`block text-3xl font-black ${darkMode ? "text-white" : "text-gray-900"}`}>
-                {meta.summary.skeletons}
-              </span>
-              <span className={`text-[10px] font-bold uppercase tracking-wider opacity-60 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
-                Skeletons
-              </span>
-            </div>
-          </div>
-
-          {meta.textIndicators && meta.textIndicators.length > 0 && (
-            <div className={`col-span-2 mt-2`}>
-              <h5 className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Text Indicators Found</h5>
-              <div className={`max-h-32 overflow-y-auto rounded-lg border ${darkMode ? "bg-slate-900/30 border-slate-700" : "bg-gray-50 border-gray-100"}`}>
-                {meta.textIndicators.map((indicator, idx) => (
-                  <div key={idx} className={`p-2 border-b last:border-0 flex sticky top-0 justify-between items-center text-xs ${darkMode ? "border-slate-800 text-gray-300" : "border-gray-200 text-gray-700"}`}>
-                    <span className="font-mono font-bold">"{indicator.text}"</span>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded opacity-60 ${darkMode ? "bg-slate-800 text-gray-400" : "bg-gray-200 text-gray-600"}`}>
-                      &lt;{indicator.tag}&gt;
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    // 5. Interactive Click Feedback Specifics
-    if (type === 'Interactive_Click_Feedback' && meta) {
-      const checkedProperties = ["color", "background-color", "border-color", "box-shadow", "transform", "opacity", "cursor", "filter"];
-
-      return (
-        <div className="space-y-4">
-          {/* Section 1: Checked Properties */}
-          <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700" : "bg-white border-slate-200"}`}>
-            <h5 className={`text-[10px] font-bold uppercase tracking-wider mb-3 flex items-center gap-2 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
-              <CheckCircle2 size={12} />
-              Monitored CSS Properties
-            </h5>
-            <div className="flex flex-wrap gap-2">
-              {checkedProperties.map((prop, idx) => (
-                <span key={idx} className={`px-2 py-1 rounded-md text-[10px] font-mono border transition-colors ${darkMode ? "bg-slate-800 border-slate-700 text-blue-300 hover:bg-slate-700" : "bg-blue-50 border-blue-100 text-blue-600 hover:bg-blue-100"}`}>
-                  {prop}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* Section 2: Stats */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className={`p-3 rounded-lg border text-center flex flex-col justify-center ${darkMode ? "bg-slate-900/50 border-slate-700" : "bg-gray-50 border-gray-100"}`}>
-              <div className={`text-[10px] uppercase font-bold opacity-60 mb-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Total Interactive</div>
-              <div className={`text-2xl font-black ${darkMode ? "text-white" : "text-gray-900"}`}>{meta.totalInteractive || 0}</div>
-            </div>
-            <div className={`p-3 rounded-lg border text-center flex flex-col justify-center ${darkMode ? "bg-emerald-900/10 border-emerald-800/30" : "bg-emerald-50 border-emerald-100"}`}>
-              <div className={`text-[10px] uppercase font-bold opacity-60 mb-1 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>With Feedback</div>
-              <div className={`text-2xl font-black ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>{meta.withFeedback || 0}</div>
-            </div>
-          </div>
-
-          {/* Section 3: Elements List */}
-          {meta.elements && meta.elements.length > 0 && (
-            <div className="mt-2">
-              <h5 className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Interactive Elements Sample</h5>
-              <div className={`max-h-48 overflow-y-auto rounded-lg border ${darkMode ? "bg-slate-900/30 border-slate-700" : "bg-gray-50 border-gray-200"}`}>
-                {meta.elements.map((el, idx) => (
-                  <div key={idx} className={`p-2 border-b last:border-0 text-xs flex justify-between items-center group ${darkMode ? "border-slate-800 text-gray-300 hover:bg-slate-800/50" : "border-gray-200 text-gray-700 hover:bg-gray-50"}`}>
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono border ${darkMode ? "bg-slate-800 border-slate-700 text-slate-400" : "bg-white border-slate-200 text-slate-500"}`}>&lt;{el.tag ? el.tag.toLowerCase() : 'el'}&gt;</span>
-                      <span className="truncate max-w-[120px] font-medium opacity-90" title={el.text}>{el.text || "No text"}</span>
-                    </div>
-                    {el.feedback?.hasFeedback ? (
-                      <span className={`flex-shrink-0 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${darkMode ? "bg-emerald-900/30 text-emerald-400 border border-emerald-800/50" : "bg-emerald-100 text-emerald-700 border border-emerald-200"}`}>Has Feedback</span>
-                    ) : (
-                      <span className={`flex-shrink-0 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${darkMode ? "bg-rose-900/30 text-rose-400 border border-rose-800/50" : "bg-rose-100 text-rose-700 border border-rose-200"}`}>No Feedback</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    // 6. Broken Links Specifics
-    if (type === 'Broken_Links' && meta) {
-      return (
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {/* Total */}
-            <div className={`p-3 rounded-lg border text-center ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}>
-              <div className={`text-[10px] uppercase font-bold opacity-60 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Total Checked</div>
-              <div className={`text-2xl font-black ${darkMode ? "text-white" : "text-gray-900"}`}>{meta.totalChecked || 0}</div>
-            </div>
-
-            {/* Internal */}
-            <div className={`p-3 rounded-lg border text-center ${darkMode ? "bg-blue-900/20 border-blue-800/30" : "bg-blue-50 border-blue-100"}`}>
-              <div className={`text-[10px] uppercase font-bold opacity-60 ${darkMode ? "text-blue-400" : "text-blue-600"}`}>Internal</div>
-              <div className={`text-2xl font-black ${darkMode ? "text-blue-400" : "text-blue-600"}`}>{meta.totalInternal || 0}</div>
-            </div>
-
-            {/* External */}
-            <div className={`p-3 rounded-lg border text-center ${darkMode ? "bg-purple-900/20 border-purple-800/30" : "bg-purple-50 border-purple-100"}`}>
-              <div className={`text-[10px] uppercase font-bold opacity-60 ${darkMode ? "text-purple-400" : "text-purple-600"}`}>External</div>
-              <div className={`text-2xl font-black ${darkMode ? "text-purple-400" : "text-purple-600"}`}>{meta.totalExternal || 0}</div>
-            </div>
-
-            {/* Broken */}
-            <div className={`p-3 rounded-lg border text-center ${meta.brokenCount > 0 ? (darkMode ? "bg-rose-900/20 border-rose-800/30" : "bg-rose-50 border-rose-100") : (darkMode ? "bg-emerald-900/20 border-emerald-800/30" : "bg-emerald-50 border-emerald-100")}`}>
-              <div className={`text-[10px] uppercase font-bold opacity-60 ${meta.brokenCount > 0 ? (darkMode ? "text-rose-400" : "text-rose-600") : (darkMode ? "text-emerald-400" : "text-emerald-600")}`}>Broken</div>
-              <div className={`text-2xl font-black ${meta.brokenCount > 0 ? (darkMode ? "text-rose-400" : "text-rose-600") : (darkMode ? "text-emerald-400" : "text-emerald-600")}`}>{meta.brokenCount || 0}</div>
-            </div>
-          </div>
-
-          {(meta.brokenInternalCount > 0 || meta.brokenExternalCount > 0) && (
-            <div className="flex gap-4 text-xs font-bold uppercase tracking-wider opacity-80">
-              {meta.brokenInternalCount > 0 && <span className="text-rose-500">{meta.brokenInternalCount} Internal Broken</span>}
-              {meta.brokenExternalCount > 0 && <span className="text-amber-500">{meta.brokenExternalCount} External Broken</span>}
-            </div>
-          )}
-
-          {/* Failed Nodes List */}
-          {meta.failedNodes && meta.failedNodes.length > 0 && (
-            <div className="mt-2">
-              <h5 className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Broken Link Issues</h5>
-              <div className={`max-h-60 overflow-y-auto rounded-lg border ${darkMode ? "bg-slate-900/30 border-slate-700" : "bg-gray-50 border-gray-200"}`}>
-                {meta.failedNodes.map((node, i) => (
-                  <div key={i} className={`p-3 border-b last:border-0 ${darkMode ? "border-slate-800" : "border-gray-200"}`}>
-                    <div className="flex justify-between items-start mb-1">
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider ${node.isInternal ? (darkMode ? "bg-blue-900/30 text-blue-400" : "bg-blue-100 text-blue-700") : (darkMode ? "bg-purple-900/30 text-purple-400" : "bg-purple-100 text-purple-700")}`}>
-                        {node.isInternal ? "Internal" : "External"}
-                      </span>
-                      <span className={`text-[10px] font-mono opacity-70 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>
-                        {node.reason}
-                      </span>
-                    </div>
-                    <a href={node.href} target="_blank" rel="noopener noreferrer" className={`block text-xs font-mono break-all hover:underline ${darkMode ? "text-gray-300 hover:text-white" : "text-gray-700 hover:text-black"}`}>
-                      {node.href}
-                    </a>
-                    {node.text && <div className={`text-[10px] mt-1 italic opacity-60 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>"{node.text}"</div>}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    // 2. Generic List Renderer (Targets, Fonts, etc.)
-    const listItems =
-      meta?.smallTargets ||
-      meta?.smallFonts ||
-      meta?.deepLinks ||
-      meta?.failedNodes ||
-      meta?.problematicContent; // Text Readability uses this
-
-    if (Array.isArray(listItems) && listItems.length > 0) {
-      return (
-        <div className="mt-2">
-          <h5 className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Affected Elements</h5>
-          <div className={`max-h-60 overflow-y-auto rounded-lg border ${darkMode ? "bg-slate-900/30 border-slate-700" : "bg-gray-50 border-gray-200"}`}>
-            {listItems.map((item, i) => (
-              <div key={i} className={`p-2 border-b last:border-0 text-xs break-all ${darkMode ? "border-slate-800 text-gray-300" : "border-gray-200 text-gray-700"}`}>
-                {item.reason && <div className="font-bold text-rose-500 mb-0.5">{item.reason}</div>}
-                {/* Try to show the most relevant field */}
-                {item.tag && <span className="font-mono font-bold opacity-70 mr-2">{item.tag}</span>}
-                {item.text && <span className="italic opacity-90">"{item.text.substring(0, 100)}{item.text.length > 100 ? '...' : ''}"</span>}
-                {item.src && <div className="font-mono text-[10px] opacity-70 mt-1">{item.src}</div>}
-                {item.href && <div className="font-mono text-[10px] opacity-70 mt-1">{item.href}</div>}
-                {item.size && <span className="ml-2 opacity-60">({item.size})</span>}
-                {item.width && item.height && <span className="ml-2 opacity-60">({Math.round(item.width)}x{Math.round(item.height)}px)</span>}
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    // 3. Object Renderer (Fallback)
-    if (meta && typeof meta === 'object') {
-      return (
-        <div className={`p-3 rounded-lg border space-y-1 ${darkMode ? "bg-slate-900/30 border-slate-700" : "bg-gray-50 border-gray-200"}`}>
-          {Object.entries(meta).map(([k, v]) => {
-            if (typeof v === 'object' || Array.isArray(v)) return null;
-            // Skip mapped fields that we handled specifically above if they leaked here
-            if (['total', 'failed', 'passed'].includes(k) && type === 'Image_Stability') return null;
-
-            return (
-              <div key={k} className="flex justify-between text-xs">
-                <span className={`opacity-70 ${darkMode ? "text-gray-400" : "text-gray-600"}`}>{k.replace(/([A-Z])/g, ' $1').trim()}:</span>
-                <span className={`font-mono font-bold ${darkMode ? "text-gray-200" : "text-gray-800"}`}>{String(v)}</span>
-              </div>
-            );
-          })}
-        </div>
-      );
-    }
-    return null;
-  };
-
-  const specificMetaContent = renderSpecificMeta();
-  const showAnalysis = !isPassed && (reasons.length > 0 || recommendations.length > 0);
-  const hasContent = specificMetaContent || showAnalysis;
+  const statusColor = `${statusTextColor} ${statusBg}/10 ${statusBorder}/20`;
 
   return (
-    <div className={`rounded-2xl border ${cardBg} shadow-sm hover:shadow-md transition-all duration-300 p-6 flex flex-col h-full group ${className || ""}`}>
+    <div className={`relative overflow-hidden rounded-xl border ${cardBg} shadow-sm hover:shadow-md transition-shadow group ${className || ""}`}>
+      <div className="p-5 space-y-4">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-4">
+            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
+              <Icon size={24} className={darkMode ? "text-blue-400" : "text-blue-600"} />
+            </div>
+            <div>
+              <h3 className={`font-bold text-lg ${textColor}`}>{title}</h3>
+              <p className={`text-xs font-medium mt-1 px-2 py-0.5 rounded-full w-fit border ${statusColor}`}>
+                {statusLabel}
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2 items-center">
+            {!isPassed && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsOpen(!isOpen);
+                }}
+                className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded transition-colors ${isOpen ? (darkMode ? "bg-slate-700 text-slate-200" : "bg-slate-200 text-slate-800") : (darkMode ? "text-gray-400 hover:text-white hover:bg-gray-800" : "text-gray-500 hover:text-gray-900 hover:bg-gray-100")}`}
+                title="Toggle Analysis"
+              >
+                {isOpen ? "Hide Detail" : "View Detail"}
+              </button>
+            )}
 
-      {/* Header */}
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-start gap-4">
-          <div className={`p-3 rounded-xl flex-shrink-0 transition-transform duration-300 group-hover:scale-110 ${darkMode ? "bg-blue-900/20 text-blue-400" : "bg-blue-50 text-blue-600"}`}>
-            <Icon size={24} strokeWidth={2} />
+            {onInfo && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onInfo();
+                }}
+                className={`p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
+                title="View Methodology"
+              >
+                <Info size={18} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
+            Description: <span className={`normal-case font-normal opacity-100 text-xs leading-relaxed ${subTextColor}`}>{info.whatThisParameterIs || "No details available."}</span>
+          </p>
+        </div>
+
+        <div className={`mt-4 p-4 rounded-lg flex items-start gap-3 ${darkMode ? "bg-slate-800/50" : "bg-slate-50"}`}>
+          <div className={`mt-0.5 p-1.5 rounded-full flex-shrink-0 ${isPassed ? "bg-emerald-500/10 text-emerald-500" : isWarning ? "bg-amber-500/10 text-amber-500" : "bg-rose-500/10 text-rose-500"}`}>
+            {isPassed ? <CheckCircle size={14} /> : isWarning ? <AlertTriangle size={14} /> : <XCircle size={14} />}
           </div>
           <div>
-            <h3 className={`font-bold text-lg leading-tight mb-1 ${textColor}`}>{title}</h3>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className={`text-xs font-bold px-2.5 py-1 rounded-md border ${statusColor}`}>{statusText}</span>
-              <span className={`text-xs font-bold px-2.5 py-1 rounded-md border ${darkMode ? "border-gray-700 text-gray-400" : "border-gray-200 text-gray-500"}`}>
-                Score: {score}
-              </span>
-            </div>
+            <h4 className={`text-xs font-bold uppercase tracking-wide mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
+              Key Insight
+            </h4>
+            <p className={`text-sm font-medium leading-relaxed ${darkMode ? "text-slate-200" : "text-slate-700"}`}>
+              {description}
+            </p>
           </div>
         </div>
-        {onInfo && (
-          <button onClick={(e) => { e.stopPropagation(); onInfo(); }} className={`p-2 rounded-full transition-colors ${darkMode ? "text-gray-500 hover:text-gray-300 hover:bg-gray-700" : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"}`} title="View Methodology">
-            <Info size={18} />
-          </button>
+
+        {/* Audit Details Area */}
+        <div className="space-y-6">
+          {/* Inline Meta Attributes */}
+          <div className="space-y-4">
+            {/* 1. Content & Readability Section */}
+            {type === "Text_Readability" && meta?.overallStats && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h5 className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Page Target</h5>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${darkMode ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-700"}`}>
+                    {meta.pageType} ({meta.targetMin}-{meta.targetMax})
+                  </span>
+                </div>
+                <div>
+                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Readability Index</h5>
+                  <div className={`mt-1 p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                    <span>Complexity Score:</span>
+                    <span>{meta.overallStats.score?.toFixed(1)} / 100</span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                    <p className="opacity-70 mb-1">Sentences</p>
+                    <p className="font-bold">{meta.overallStats.sentenceCount} found</p>
+                  </div>
+                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                    <p className="opacity-70 mb-1">Avg Length</p>
+                    <p className="font-bold">{meta.overallStats.ASL?.toFixed(1)} words</p>
+                  </div>
+                </div>
+
+                {/* Problematic Sentences */}
+                {meta.problematicContent?.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-dashed border-slate-700/50">
+                    <h5 className={`text-[11px] font-bold uppercase tracking-wider mb-3 flex items-center gap-2 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>
+                      <AlertTriangle size={14} />
+                      Hard-to-Read Content
+                    </h5>
+                    <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1.5 custom-scrollbar">
+                      {meta.problematicContent.map((item, idx) => (
+                        <div key={idx} className={`group relative p-2.5 rounded-lg border transition-all duration-300 hover:scale-[1.01] ${darkMode ? "bg-rose-500/5 border-rose-500/20 hover:bg-rose-500/10" : "bg-rose-50/50 border-rose-100 hover:bg-rose-50"}`}>
+                          <p className={`text-[11px] leading-relaxed italic mb-1.5 ${darkMode ? "text-slate-200" : "text-slate-700"}`}>
+                            "{item.text}"
+                          </p>
+                          <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-tight ${darkMode ? "bg-rose-500/20 text-rose-300" : "bg-rose-100 text-rose-700"}`}>
+                            <Info size={10} />
+                            {item.reason}
+                          </div>
+
+                          {/* Score Badge */}
+                          <div className={`absolute top-2 right-2 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded ${item.score < 30 ? "bg-rose-500 text-white" : "bg-amber-500 text-white"}`}>
+                            Score: {Math.round(item.score)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {type === "UX_Content_Hierarchy_Clarity" && meta && (
+              <div className="space-y-3">
+                <div>
+                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Heading Distro</h5>
+                  <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-indigo-400"></span>
+                    <span className="break-all">{meta.h1Count} H1 found | {meta.totalHeadings} total tags</span>
+                  </div>
+                </div>
+                <div>
+                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Sequence Logic</h5>
+                  <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${meta.isSequential ? "bg-emerald-400" : "bg-rose-400"}`}></span>
+                    <span className="break-all">{meta.isSequential ? "Perfect Nesting" : "Non-sequential levels detected"}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {type === "Section_Labeling_Clarity" && meta && (
+              <div>
+                <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Semantic Clarity</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-emerald-400"></span>
+                  <span className="break-all">{meta.labeledCount} of {meta.totalSections} sections correctly labeled</span>
+                </div>
+              </div>
+            )}
+
+            {type === "Content_Density_Balance" && meta && (
+              <div className="space-y-3">
+                <div>
+                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Visual Load</h5>
+                  <div className={`mt-1 p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                    <span>Density Score:</span>
+                    <span>{meta.densityScore?.toFixed(2)} pts</span>
+                  </div>
+                </div>
+                <div className={`p-2 rounded border font-mono text-[10px] flex justify-between ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <span className="opacity-70">Text Volume:</span>
+                  <span className="font-bold">{meta.charCount?.toLocaleString()} chars</span>
+                </div>
+              </div>
+            )}
+
+            {/* 2. Navigation & Flow Section */}
+            {type === "Navigation_Discoverability" && meta && (
+              <div>
+                <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Discovery Assets</h5>
+                <div className="grid grid-cols-1 gap-1.5 mt-2">
+                  {[
+                    { l: "Global Nav", v: meta.hasNavMenu },
+                    { l: "Mobile Menu", v: meta.hasHamburger },
+                    { l: "Search Field", v: meta.hasSearch }
+                  ].map((item, i) => (
+                    <div key={i} className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
+                      <span className={darkMode ? "text-slate-300" : "text-slate-600"}>{item.l}:</span>
+                      <span className={item.v ? "text-emerald-500 font-bold" : "text-rose-500 font-bold"}>{item.v ? "ACTIVE" : "MISSING"}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {type === "Breadcrumbs" && meta && (
+              <div>
+                <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Path Anchors</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-blue-400"></span>
+                  <span className="break-all">{meta.isHomepage ? "Homepage (Exempt)" : (status === 'pass' ? "Secondary Path Active" : "No path trail found")}</span>
+                </div>
+              </div>
+            )}
+
+            {type === "In_Page_Navigation" && meta && (
+              <div>
+                <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Local Routing</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-blue-400"></span>
+                  <span className="break-all">{meta.anchorLinks} Skip-links | Top-scroll: {meta.backToTop ? "Yes" : "No"}</span>
+                </div>
+              </div>
+            )}
+
+            {type === "Page_to_Page_Flow" && meta && (
+              <div className="space-y-2">
+                <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Traversal Map</h5>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                    <p className="opacity-70 mb-1">Next Steps</p>
+                    <p className="font-bold">{meta.nextStepCTAs} Buttons Found</p>
+                  </div>
+                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                    <p className="opacity-70 mb-1">Inter-linking</p>
+                    <p className="font-bold">{meta.internalLinks} Internal links</p>
+                  </div>
+                </div>
+                <div className={`p-2 rounded border font-mono text-[10px] flex justify-between ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <span className="opacity-70">Site Footer:</span>
+                  <span className={meta.hasFooter ? "text-emerald-500 font-bold" : "text-rose-500 font-bold"}>{meta.hasFooter ? "ACTIVE" : "MISSING"}</span>
+                </div>
+              </div>
+            )}
+
+            {/* 3. Interactive Experience Section */}
+            {type === "Interactive_Click_Feedback" && meta && (
+              <div className="space-y-2">
+                <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>State Response</h5>
+                <div className={`p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${meta.withFeedback === meta.totalInteractive ? "bg-emerald-400" : "bg-amber-400"}`}></span>
+                  <span className="break-all">{meta.withFeedback} of {meta.totalInteractive} assets react</span>
+                </div>
+
+                {meta.elements?.length > 0 && (
+                  <div className="grid grid-cols-1 gap-1 max-h-[80px] overflow-y-auto pr-1 custom-scrollbar border-t border-dashed border-slate-700/30 pt-2">
+                    {meta.elements.map((el, idx) => (
+                      <div key={idx} className={`flex items-center justify-between gap-2 p-1 rounded border text-[9px] ${darkMode ? "bg-slate-800/30 border-slate-700/50" : "bg-slate-50 border-slate-200/50"}`}>
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className={`font-bold opacity-60 uppercase scale-90 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
+                            {el.tag}
+                          </span>
+                          <p className={`font-medium truncate ${darkMode ? "text-slate-200" : "text-slate-700"}`}>
+                            {el.text || 'Unnamed'}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-0.5 flex-shrink-0">
+                          <div className={`w-0.5 h-0.5 rounded-full ${el.feedback.hoverChanged ? "bg-emerald-500" : "bg-slate-300/20"}`} />
+                          <div className={`w-0.5 h-0.5 rounded-full ${el.feedback.activeChanged ? "bg-emerald-500" : "bg-slate-300/20"}`} />
+                          <div className={`w-0.5 h-0.5 rounded-full ${el.feedback.focusChanged ? "bg-emerald-500" : "bg-slate-300/20"}`} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {type === "Loading_Feedback" && meta?.summary && (
+              <div>
+                <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Async Signals</h5>
+                <div className="grid grid-cols-1 gap-1.5 mt-2">
+                  {[
+                    { l: "Spinners", v: meta.summary.spinners },
+                    { l: "Skeletons", v: meta.summary.skeletons },
+                    { l: "Text Indicators", v: meta.summary.textLoading?.length || 0 }
+                  ].map((item, i) => (
+                    <div key={i} className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
+                      <span className={darkMode ? "text-slate-300" : "text-slate-600"}>{item.l}:</span>
+                      <span className={item.v > 0 ? "text-emerald-500 font-bold" : "text-slate-400"}>{item.v} detected</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {type === "Broken_Links" && meta && (
+              <div className="space-y-3">
+                <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>URL Health</h5>
+                <div className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <span className="opacity-70">Results:</span>
+                  <span className={meta.brokenCount > 0 ? "text-rose-500 font-bold" : "text-emerald-500 font-bold"}>{meta.brokenCount} Broken / {meta.totalChecked} Checked</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                    <p className="opacity-70 mb-1">Internal</p>
+                    <p className="font-bold">{meta.totalInternal} links</p>
+                  </div>
+                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                    <p className="opacity-70 mb-1">External</p>
+                    <p className="font-bold">{meta.totalExternal} links</p>
+                  </div>
+                </div>
+
+                {/* Broken Links List */}
+                {meta.brokenLinks?.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-dashed border-slate-700/50">
+                    <h5 className={`text-[11px] font-bold uppercase tracking-wider mb-3 flex items-center gap-2 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>
+                      <Unlink size={14} />
+                      Identified Broken Links
+                    </h5>
+                    <div className="space-y-1.5 max-h-[160px] overflow-y-auto pr-1.5 custom-scrollbar">
+                      {meta.brokenLinks.map((link, idx) => (
+                        <div key={idx} className={`p-2 rounded-lg border flex items-start justify-between gap-2.5 text-[10px] transition-colors ${darkMode ? "bg-rose-500/5 border-rose-500/20 hover:bg-rose-500/10" : "bg-rose-50 border-rose-100 hover:bg-rose-100"}`}>
+                          <div className="flex-1 min-w-0">
+                            <p className={`font-bold truncate text-[10px] mb-0.5 ${darkMode ? "text-slate-200" : "text-slate-800"}`}>
+                              {link.text || 'Anchor Link'}
+                            </p>
+                            <p className="truncate opacity-60 font-mono text-[8px]">{link.url}</p>
+                          </div>
+                          <div className={`flex-shrink-0 px-1.5 py-0.5 rounded font-bold uppercase tracking-tighter text-[9px] ${darkMode ? "bg-rose-500/20 text-rose-400" : "bg-rose-100 text-rose-700"}`}>
+                            {link.status}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 4. Mobile Layout & Stability Section */}
+            {type === "Above_the_Fold_Content" && meta && (
+              <div className="space-y-3">
+                <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Initial Exposure</h5>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                    <p className="opacity-70 mb-1">ATF Score</p>
+                    <p className="font-bold text-indigo-500">{meta.atfScore}%</p>
+                  </div>
+                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                    <p className="opacity-70 mb-1">Viewport</p>
+                    <p className="font-bold">{meta.viewportHeight}px</p>
+                  </div>
+                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                    <p className="opacity-70 mb-1">Visible Assets</p>
+                    <p className="font-bold">{meta.importantVisible}</p>
+                  </div>
+                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                    <p className="opacity-70 mb-1">Total Assets</p>
+                    <p className="font-bold">{meta.totalImportant}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {type === "Sticky_Header_Usage" && meta && (
+              <div>
+                <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Viewport Footprint</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-blue-400"></span>
+                  <span className="break-all">{meta.height}px height used (Max: {meta.limit}px)</span>
+                </div>
+              </div>
+            )}
+
+            {type === "Intrusive_Interstitials" && meta && (
+              <div>
+                <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Obstruction Level</h5>
+                <div className="grid grid-cols-1 gap-1.5 mt-2">
+                  {[
+                    { l: "Full Overlay", v: meta.hasOverlay },
+                    { l: "Scroll Block", v: meta.hasScrollBlock },
+                    { l: "Modal Shield", v: meta.hasModal }
+                  ].map((item, i) => (
+                    <div key={i} className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
+                      <span className={darkMode ? "text-slate-300" : "text-slate-600"}>{item.l}:</span>
+                      <span className={item.v ? "text-rose-500 font-bold" : "text-emerald-500 font-bold"}>{item.v ? "ACTIVE" : "NONE"}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {type === "Layout_Consistency" && meta && (
+              <div>
+                <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Grid Engine</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-emerald-400"></span>
+                  <span className="break-all">{meta.hasFlexOrGrid ? "Modern Flex/Grid Layout" : "Legacy Structural Pattern"}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className={`mt-auto pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
+          <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
+            Why it matters: <span className="normal-case font-normal opacity-100">{info.whyItMatters || "Important for user experience."}</span>
+          </p>
+        </div>
+
+        {/* Expanded Analysis Content */}
+        {isOpen && (
+          <div className={`mt-3 p-3 rounded-lg text-xs leading-relaxed border animate-in slide-in-from-top-2 duration-200 ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-white border-slate-200 text-slate-600"}`}>
+
+            {/* Cause */}
+            {(analysis?.cause || reasons.length > 0) && (
+              <div className="mb-4">
+                <p className={`font-semibold mb-1 ${darkMode ? "text-slate-200" : "text-slate-700"}`}>Cause:</p>
+                <div className="pl-1 opacity-90">
+                  {analysis?.cause ? (
+                    <p>{analysis.cause}</p>
+                  ) : (
+                    <ul className="space-y-1">
+                      {reasons.map((reason, idx) => (
+                        <li key={idx} className="flex items-start gap-2">
+                          <span className="mt-1.5 w-1 h-1 rounded-full bg-rose-500 flex-shrink-0" />
+                          <span>{reason}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Recommendation */}
+            {(analysis?.recommendation || recommendations.length > 0) && (
+              <div>
+                <p className={`font-semibold mb-1 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>Recommendation:</p>
+                <div className="pl-1 opacity-90">
+                  {analysis?.recommendation ? (
+                    <p>{analysis.recommendation}</p>
+                  ) : (
+                    <ul className="space-y-1">
+                      {recommendations.map((rec, idx) => (
+                        <li key={idx} className="flex items-start gap-2">
+                          <span className="mt-1.5 w-1 h-1 rounded-full bg-emerald-500 flex-shrink-0" />
+                          <span>{rec}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         )}
       </div>
-
-      {/* Main Content */}
-      <div className="space-y-4 flex-grow">
-        <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
-          Description: <span className={`normal-case font-normal opacity-100 text-xs leading-relaxed ${subTextColor}`}>{description || info.whatThisParameterIs || "No details available."}</span>
-        </p>
-
-        {/* Progress Bar */}
-        <div className="w-full h-2 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
-          <div className={`h-full rounded-full transition-all duration-1000 ${progressBarColor}`} style={{ width: `${score}%` }} />
-        </div>
-      </div>
-
-      {/* Expanded Details Area */}
-      {hasContent && (
-        <div className={`mt-6 pt-4 border-t space-y-6 ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
-
-          {/* 1. Metric Specific Data (Evidence) */}
-          {specificMetaContent}
-
-          {/* 2. Analysis (Reasons) */}
-          {!isPassed && reasons.length > 0 && (
-            <div>
-              <h5 className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>Analysis & Potential Causes</h5>
-              <ul className="space-y-2">
-                {reasons.map((reason, idx) => (
-                  <li key={idx} className={`text-xs flex items-start gap-2 ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
-                    <span className="mt-1.5 w-1 h-1 rounded-full bg-rose-500 flex-shrink-0" />
-                    <span>{reason}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* 3. Recommendations (Fixes) */}
-          {!isPassed && recommendations.length > 0 && (
-            <div>
-              <h5 className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>Recommendation</h5>
-              <ul className="space-y-2">
-                {recommendations.map((rec, idx) => (
-                  <li key={idx} className={`text-xs flex items-start gap-2 ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
-                    <span className="mt-1.5 w-1 h-1 rounded-full bg-emerald-500 flex-shrink-0" />
-                    <span>{rec}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
+    </div >
   );
 };
 
-// ------------------------------------------------------
-// ✅ Simple Section
-// ------------------------------------------------------
 const Section = ({ title, icon: Icon, children, darkMode }) => (
   <div className="space-y-4">
     <div className="flex items-center gap-3 px-2">
@@ -726,15 +575,12 @@ const Section = ({ title, icon: Icon, children, darkMode }) => (
         {title}
       </h2>
     </div>
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {children}
     </div>
   </div>
 );
 
-// ------------------------------------------------------
-// ✅ Main Component
-// ------------------------------------------------------
 export default function UX_Content_Structure() {
   const { theme } = useContext(ThemeContext);
   const { data, loading } = useData();
@@ -743,11 +589,11 @@ export default function UX_Content_Structure() {
   const darkMode = theme === "dark";
 
   const auditSteps = useMemo(() => [
-    { icon: <BookOpen className="w-8 h-8 text-blue-500" />, title: "Content Readability", text: "Analyzing sentence length, word complexity, and font sizing for optimal reading..." },
-    { icon: <Touchpad className="w-8 h-8 text-purple-500" />, title: "Tap Targets", text: "Verifying button sizes and spacing to ensure touch-friendliness on mobile devices..." },
-    { icon: <Layers className="w-8 h-8 text-teal-500" />, title: "Visual Stability", text: "Measuring Cumulative Layout Shift (CLS) and image dimensions..." },
-    { icon: <Smartphone className="w-8 h-8 text-indigo-500" />, title: "Mobile Responsiveness", text: "Checking Viewport meta tags and horizontal scrolling issues..." },
-    { icon: <Menu className="w-8 h-8 text-amber-500" />, title: "Navigation Structure", text: "Evaluating menu depth and breadcrumb reliability for easy user flow..." },
+    { icon: <BookOpen className="w-8 h-8 text-blue-500" />, title: "Content & Readability", text: "Analyzing language complexity, text flow, and reading ease for optimal engagement..." },
+    { icon: <ListTree className="w-8 h-8 text-purple-500" />, title: "Visual Hierarchy", text: "Evaluating heading structure and content organization for clear information flow..." },
+    { icon: <Compass className="w-8 h-8 text-teal-500" />, text: "Verifying navigation discoverability, breadcrumbs, and in-page anchor links..." },
+    { icon: <MonitorPlay className="w-8 h-8 text-indigo-500" />, title: "Interactive Experience", text: "Measuring ATF content visibility, click feedback, and layout consistency..." },
+    { icon: <Loader2 className="w-8 h-8 text-amber-500" />, title: "Usability Signals", text: "Checking for broken links, loading feedback, and intrusive interstitials..." },
   ], []);
 
   const [activeStep, setActiveStep] = React.useState(0);
@@ -804,41 +650,69 @@ export default function UX_Content_Structure() {
 
   const metrics = Object.keys(results).filter(k => {
     const metric = results[k];
-    if (typeof metric !== 'object' || metric?.Score === undefined) return false;
+    if (typeof metric !== 'object') return false;
+    const scoreVal = metric.Score ?? metric.score;
+    if (scoreVal === undefined) return false;
+
     // Skip Breadcrumbs on homepage
-    if (k === 'Breadcrumbs' && metric?.Meta?.isHomepage) return false;
+    const meta = metric.Meta ?? metric.meta;
+    if (k === 'Breadcrumbs' && meta?.isHomepage) return false;
     return true;
   });
-  const passedCount = metrics.filter(k => results[k].Score === 100).length;
-  const failedCount = metrics.filter(k => results[k].Score < 100).length;
+
+  const getStatus = (key) => results[key]?.Status ?? results[key]?.status;
+  const getScoreValue = (key) => results[key]?.Score ?? results[key]?.score ?? 0;
+
+  const passedCount = metrics.filter(k => getStatus(k) === 'pass').length;
+  const warningCount = metrics.filter(k => getStatus(k) === 'warning').length;
+  const failedCount = metrics.filter(k => getStatus(k) === 'fail').length;
 
   // Define column spans for metrics with potentially large content
   const spanMap = {
-    Text_Readability: "md:col-span-2 lg:col-span-3",
-    Tap_Target_Size: "md:col-span-2",
-    Text_Font_Size: "md:col-span-2",
-    Image_Stability: "md:col-span-2",
+    Text_Readability: "md:col-span-2",
+    UX_Content_Hierarchy_Clarity: "md:col-span-2",
+    Above_the_Fold_Content: "md:col-span-2",
     Navigation_Discoverability: "md:col-span-2",
+    In_Page_Navigation: "md:col-span-2",
     Broken_Links: "md:col-span-2",
-    Form_Validation_UX: "md:col-span-2 lg:col-span-3",
+    Page_to_Page_Flow: "md:col-span-2",
   };
 
   const detailedKeys = [
     "Text_Readability",
-    "Tap_Target_Size",
-    "Text_Font_Size",
-    "Image_Stability",
+    "UX_Content_Hierarchy_Clarity",
     "Navigation_Discoverability",
+    "In_Page_Navigation",
     "Broken_Links",
-    "Form_Validation_UX"
+    "Page_to_Page_Flow"
   ];
 
-  const quickMetrics = metrics.filter(k => !detailedKeys.includes(k));
-  const detailedMetrics = metrics.filter(k => detailedKeys.includes(k));
+  const sectionDefinitions = [
+    {
+      title: "Content & Readability",
+      icon: BookOpen,
+      keys: ["Text_Readability", "UX_Content_Hierarchy_Clarity", "Section_Labeling_Clarity", "Content_Density_Balance"]
+    },
+    {
+      title: "Navigation & Flow",
+      icon: Compass,
+      keys: ["Navigation_Discoverability", "Breadcrumbs", "In_Page_Navigation", "Page_to_Page_Flow"]
+    },
+    {
+      title: "Interactive Experience",
+      icon: MousePointer2,
+      keys: ["Interactive_Click_Feedback", "Loading_Feedback", "Broken_Links"]
+    },
+    {
+      title: "Mobile Layout & Stability",
+      icon: Smartphone,
+      keys: ["Above_the_Fold_Content", "Sticky_Header_Usage", "Intrusive_Interstitials", "Layout_Consistency"]
+    }
+  ];
 
   return (
     <div className={`w-full ${mainBg} transition-colors duration-300`}>
-      <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-8`}>
+      <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-12`}>
 
         {/* ✅ Unified Master Card */}
         <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
@@ -885,10 +759,14 @@ export default function UX_Content_Structure() {
 
                     {/* Stats & Tools */}
                     <div className={`flex flex-wrap items-center ${data.report === "All" ? "gap-6" : "gap-5"}`}>
-                      <div className={`flex items-center ${data.report === "All" ? "gap-5" : "gap-4"}`}>
+                      <div className={`flex flex-wrap items-center ${data.report === "All" ? "gap-5" : "gap-4"}`}>
                         <div className="flex items-center gap-2">
                           <CheckCircle size={18} className="text-emerald-500" />
                           <span className="text-sm font-bold">{passedCount} Passed</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <AlertTriangle size={18} className="text-amber-500" />
+                          <span className="text-sm font-bold">{warningCount} Warning</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <XCircle size={18} className="text-rose-500" />
@@ -922,47 +800,32 @@ export default function UX_Content_Structure() {
           </div>
         </div>
 
-        {/* Quick Checks Section */}
-        {quickMetrics.length > 0 && (
-          <Section title="Quick Checks" icon={CheckCircle2} darkMode={darkMode}>
-            {quickMetrics.map((key) => (
-              <MetricCard
-                key={key}
-                type={key}
-                title={key.replaceAll("_", " ")}
-                description={results[key]?.Details}
-                score={results[key]?.Score}
-                status={results[key]?.Status}
-                meta={results[key]?.Meta}
-                darkMode={darkMode}
-                icon={iconMap[key] || Layout}
-                className={spanMap[key]}
-                onInfo={() => setSelectedParameterInfo({ ...uxEducationalContent[key], icon: iconMap[key] || Layout })}
-              />
-            ))}
-          </Section>
-        )}
+        {/* Filtered Sections */}
+        {sectionDefinitions.map((section, idx) => {
+          const sectionMetrics = section.keys.filter(k => metrics.includes(k));
+          if (sectionMetrics.length === 0) return null;
 
-        {/* Detailed Analysis Section */}
-        {detailedMetrics.length > 0 && (
-          <Section title="Detailed Analysis" icon={Layout} darkMode={darkMode}>
-            {detailedMetrics.map((key) => (
-              <MetricCard
-                key={key}
-                type={key}
-                title={key.replaceAll("_", " ")}
-                description={results[key]?.Details}
-                score={results[key]?.Score}
-                status={results[key]?.Status}
-                meta={results[key]?.Meta}
-                darkMode={darkMode}
-                icon={iconMap[key] || Layout}
-                className="md:col-span-2 lg:col-span-3"
-                onInfo={() => setSelectedParameterInfo({ ...uxEducationalContent[key], icon: iconMap[key] || Layout })}
-              />
-            ))}
-          </Section>
-        )}
+          return (
+            <Section key={idx} title={section.title} icon={section.icon} darkMode={darkMode}>
+              {sectionMetrics.map((key) => (
+                <MetricCard
+                  key={key}
+                  type={key}
+                  title={key.replaceAll("_", " ")}
+                  description={results[key]?.Details ?? results[key]?.details}
+                  score={results[key]?.Score ?? results[key]?.score ?? 0}
+                  status={results[key]?.Status ?? results[key]?.status}
+                  analysis={results[key]?.Analysis ?? results[key]?.analysis}
+                  meta={results[key]?.Meta ?? results[key]?.meta}
+                  darkMode={darkMode}
+                  icon={iconMap[key] || Layout}
+                  className={spanMap[key]}
+                  onInfo={() => setSelectedParameterInfo({ ...uxEducationalContent[key], icon: iconMap[key] || Layout })}
+                />
+              ))}
+            </Section>
+          );
+        })}
 
       </main>
       {/* Methodology Modal */}

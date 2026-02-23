@@ -48,7 +48,7 @@ function calculateReadabilityStats(text) {
   };
 }
 
-// 1. Readability
+// Readability
 async function checkReadability(page) {
   // Get all text for overall score
   const textContent = await page.evaluate(() => document.body.innerText);
@@ -108,19 +108,21 @@ async function checkReadability(page) {
 
     // 5. Word Count
     const bodyText = document.body.innerText || '';
-    const wordCount = bodyText.split(/\s+/).length;
+    const wordCount = bodyText.split(/\s+/).filter(w => w.length > 0).length;
 
     // 6. Combined Rule (Scoring Logic)
-    if (isProductUrl || schemaType === 'Product' || hasBuyCTA || hasAddToCart) {
-      return 'Product Page';
-    }
-    if (isBlogUrl || schemaType === 'Article' || (hasArticleTag && wordCount > 500)) {
-      return 'Article/Blog';
-    }
-    if (wordCount > 500) return 'Article/Blog';
-    if (wordCount < 300 && (hasPrice || hasBuyCTA)) return 'Product Page';
+    let score = 0;
+    if (isProductUrl) score += 2;
+    if (schemaType === 'Product') score += 2;
+    if (hasBuyCTA || hasAddToCart || hasPrice) score += 2;
+    if (isBlogUrl) score -= 2;
+    if (schemaType === 'Article') score -= 2;
+    if (wordCount > 600) score -= 2;
 
-    return 'Article/Blog'; // Default safe fallback
+    if (score >= 2) return 'Product Page';
+    if (score <= -2) return 'Article/Blog';
+
+    return wordCount > 400 ? 'Article/Blog' : 'Product Page';
   });
 
   // Define Limits based on Page Type
@@ -134,7 +136,25 @@ async function checkReadability(page) {
   }
 
   const tolerance = 15;
-  const passed = overallFleschScore >= readabilityMin && overallFleschScore <= (readabilityMax + tolerance);
+  let status = 'fail';
+  let analysis = {
+    cause: "The content uses extremely complex sentence structures and very advanced vocabulary.",
+    recommendation: "Simplify the language significantly. Use shorter sentences and common words to ensure the content is accessible to a wider audience."
+  };
+
+  if (overallFleschScore >= readabilityMin && overallFleschScore <= readabilityMax) {
+    status = 'pass';
+    analysis = {
+      cause: "The content readability matches the target for this page type.",
+      recommendation: "Maintain this level of clarity. Continue using simple, direct language."
+    };
+  } else if (overallFleschScore >= (readabilityMin - 10) && overallFleschScore <= (readabilityMax + tolerance)) {
+    status = 'warning';
+    analysis = {
+      cause: "The content is slightly more complex than ideal for this page type.",
+      recommendation: "Consider breaking up long sentences and replacing particularly complex words with simpler alternatives."
+    };
+  }
 
   // Analyze Paragraphs
   const problematicContent = [];
@@ -165,168 +185,20 @@ async function checkReadability(page) {
 
   return {
     score: overallFleschScore,
-    status: passed ? 'pass' : 'fail',
-    details: `Type: ${pageType}. Score: ${overallFleschScore.toFixed(2)}. Target: ${readabilityMin}-${readabilityMax} (allowed +${tolerance}).`,
+    status: status,
+    details: `This ${pageType} has a readability score of ${overallFleschScore.toFixed(0)} out of 100, which is ${status === 'pass' ? 'perfect' : (status === 'warning' ? 'a bit complex' : 'very difficult')} for your readers.`,
+    analysis: analysis,
     meta: {
       pageType: pageType,
       targetMin: readabilityMin,
       targetMax: readabilityMax,
-      problematicContent: problematicContent.slice(0, 5),
+      problematicContent: problematicContent.slice(0, 20),
       overallStats: overallStats
     }
   };
 }
 
-// 2. CLS
-async function checkCLS(page, deviceType) {
-  const cls = await page.evaluate(() => {
-    return new Promise((resolve) => {
-      let cumulativeLayoutShift = 0;
-      try {
-        const observer = new PerformanceObserver((list) => {
-          for (const entry of list.getEntries()) {
-            if (!entry.hadRecentInput) cumulativeLayoutShift += entry.value;
-          }
-        });
-        observer.observe({ type: 'layout-shift', buffered: true });
-        setTimeout(() => resolve(cumulativeLayoutShift), 1000);
-      } catch (e) { resolve(0); }
-    });
-  });
-
-  const clsLimit = deviceType === 'mobile' ? 0.15 : 0.10;
-  return {
-    score: cls,
-    status: cls <= clsLimit ? 'pass' : 'fail',
-    details: `CLS is ${cls.toFixed(4)}. Limit is ${clsLimit}.`
-  };
-}
-
-// 3. Tap Targets
-async function checkTapTargets(page, deviceType) {
-  const tapTargetsData = await page.evaluate((deviceType) => {
-    const minSize = deviceType === 'mobile' ? 44 : 24;
-    const clickableElements = Array.from(document.querySelectorAll('a, button, input, select, textarea, [role="button"]'));
-    const total = clickableElements.length;
-    const issues = [];
-    clickableElements.forEach(el => {
-      const rect = el.getBoundingClientRect();
-      if (rect.width > 0 && rect.height > 0) {
-        if (rect.width < minSize || rect.height < minSize) {
-          issues.push({
-            tag: el.tagName,
-            text: el.innerText ? el.innerText.substring(0, 20) : el.id || el.className,
-            width: rect.width,
-            height: rect.height
-          });
-        }
-      }
-    });
-    return { total, issues };
-  }, deviceType);
-
-  const tapScore = tapTargetsData.total > 0
-    ? Math.round(((tapTargetsData.total - tapTargetsData.issues.length) / tapTargetsData.total) * 100)
-    : 100;
-
-  return {
-    score: tapScore,
-    status: tapScore >= 90 ? 'pass' : 'fail',
-    details: `${tapTargetsData.issues.length} tap targets are too small.`,
-    meta: {
-      total: tapTargetsData.total,
-      passed: tapTargetsData.total - tapTargetsData.issues.length,
-      failed: tapTargetsData.issues.length,
-      smallTargets: tapTargetsData.issues
-    }
-  };
-}
-
-// 4. Text Size
-async function checkTextSize(page, deviceType) {
-  const textSizeData = await page.evaluate((deviceType) => {
-    const minSize = deviceType === 'mobile' ? 16 : 14;
-    const textElements = Array.from(document.querySelectorAll('p, span, div, li, a, h1, h2, h3, h4, h5, h6'));
-    const validElements = textElements.filter(el => {
-      return Array.from(el.childNodes).some(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim().length > 0);
-    });
-    const issues = [];
-    validElements.forEach(el => {
-      const style = window.getComputedStyle(el);
-      const fontSize = parseFloat(style.fontSize);
-      if (fontSize < minSize) {
-        issues.push({
-          tag: el.tagName,
-          text: el.innerText ? el.innerText.substring(0, 20) : '',
-          size: style.fontSize,
-          fontSize: fontSize
-        });
-      }
-    });
-    return { total: validElements.length, issues: issues.slice(0, 20) };
-  }, deviceType);
-
-  const textScore = textSizeData.total > 0
-    ? Math.round(((textSizeData.total - textSizeData.issues.length) / textSizeData.total) * 100)
-    : 100;
-
-  return {
-    score: textScore,
-    status: textScore >= 90 ? 'pass' : 'fail',
-    details: `${textSizeData.issues.length} elements have small font size.`,
-    meta: {
-      total: textSizeData.total,
-      passed: textSizeData.total - textSizeData.issues.length,
-      failed: textSizeData.issues.length,
-      smallFonts: textSizeData.issues
-    }
-  };
-}
-
-// 5. Viewport
-async function checkViewport(page, deviceType) {
-  if (deviceType !== 'mobile') return { score: 100, status: 'pass', details: 'Not required for desktop.' };
-
-  const viewportMeta = await page.$('meta[name="viewport"]');
-  if (viewportMeta) {
-    const content = await page.evaluate(el => el.getAttribute('content'), viewportMeta);
-    if (content.includes('width=device-width') && content.includes('initial-scale=1')) {
-      return { score: 100, status: 'pass', details: 'Viewport meta tag is correct.' };
-    }
-    return { score: 0, status: 'fail', details: `Viewport content incorrect: ${content}` };
-  }
-  return { score: 0, status: 'fail', details: 'Viewport meta tag missing.' };
-}
-
-// 6. Horizontal Scroll
-async function checkHorizontalScroll(page, deviceType) {
-  const hasHorizontalScroll = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
-  let scrollIssues = [];
-  if (deviceType === 'mobile') {
-    const breakpoints = [320, 375, 414, 480];
-    for (const width of breakpoints) {
-      await page.setViewport({ width, height: 800, isMobile: true });
-      const scroll = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
-      if (scroll) scrollIssues.push(`${width}px`);
-    }
-    await page.setViewport({ width: 375, height: 812, isMobile: true });
-  }
-
-  if (hasHorizontalScroll || scrollIssues.length > 0) {
-    return {
-      score: 0,
-      status: 'fail',
-      details: `Horizontal scroll detected at: ${hasHorizontalScroll ? 'Current Viewport' : ''} ${scrollIssues.join(', ')}`
-    };
-  }
-  return {
-    score: 100,
-    status: 'pass',
-    details: 'No horizontal scroll detected.'
-  };
-}
-
-// 7. Sticky Header
+// Sticky Header
 async function checkStickyHeader(page, deviceType) {
   const headerCheck = await page.evaluate((deviceType) => {
     const headers = Array.from(document.querySelectorAll('header, .header, [class*="header"]'));
@@ -341,54 +213,43 @@ async function checkStickyHeader(page, deviceType) {
       const rect = h.getBoundingClientRect();
       if (rect.height > maxH) maxH = rect.height;
     }
-    return { status: maxH <= maxLimit ? 'pass' : 'fail', height: maxH, limit: maxLimit };
+    let status = 'pass';
+    if (maxH > maxLimit) {
+      status = maxH <= maxLimit * 1.25 ? 'warning' : 'fail';
+    }
+    return { status, height: maxH, limit: maxLimit };
   }, deviceType);
 
-  return {
-    score: headerCheck.status === 'pass' ? 100 : 0,
-    status: headerCheck.status,
-    details: `Sticky header height: ${headerCheck.height}px. Limit: ${headerCheck.limit}px.`
+  let analysis = {
+    cause: "The sticky header's height exceeds the recommended limit, which can obstruct a significant portion of the viewport, especially on smaller screens.",
+    recommendation: "Reduce the height of the sticky header or implement a 'hide on scroll down, show on scroll up' behavior to maximize usable screen space."
   };
-}
 
-// 8. Navigation Depth
-async function checkNavigationDepth(page) {
-  const navDepth = await page.evaluate(() => {
-    const navElements = Array.from(document.querySelectorAll('nav, header, [role="navigation"]'));
-    let links = [];
-    if (navElements.length > 0) {
-      navElements.forEach(nav => links = links.concat(Array.from(nav.querySelectorAll('a[href]'))));
-    } else {
-      links = Array.from(document.querySelectorAll('a[href]'));
-    }
-
-    const internalLinks = links.filter(l => l.hostname === window.location.hostname);
-    if (internalLinks.length === 0) return { score: 100, details: 'No internal navigation links found.', links: [] };
-
-    let shallow = 0;
-    const linkDetails = [];
-    internalLinks.forEach(l => {
-      const depth = l.pathname.replace(/^\/|\/$/g, '').split('/').filter(s => s.length > 0).length;
-      if (depth <= 3) shallow++;
-      if (linkDetails.length < 20) linkDetails.push({ text: l.innerText.substring(0, 30) || 'No Text', href: l.pathname, depth });
-    });
-    const percentage = (shallow / internalLinks.length) * 100;
-    return {
-      score: percentage,
-      details: `${shallow} out of ${internalLinks.length} navigation links are ≤3 clicks deep.`,
-      links: linkDetails
+  if (headerCheck.status === 'pass') {
+    analysis = {
+      cause: "The sticky header height is within optimal limits.",
+      recommendation: "Keep the header compact to ensure maximum content visibility."
     };
-  });
+  } else if (headerCheck.status === 'warning') {
+    analysis = {
+      cause: "The sticky header is slightly taller than recommended.",
+      recommendation: "Consider reducing padding or font sizes in the sticky header to regain screen real estate."
+    };
+  }
 
   return {
-    score: Math.round(navDepth.score),
-    status: navDepth.score >= 80 ? 'pass' : 'fail',
-    details: navDepth.details,
-    meta: { deepLinks: navDepth.links }
+    score: headerCheck.status === 'pass' ? 100 : (headerCheck.status === 'warning' ? 70 : 0),
+    status: headerCheck.status,
+    details: `Your top menu takes up ${headerCheck.height} pixels of screen space, while the recommended limit is ${headerCheck.limit} pixels.`,
+    analysis: analysis,
+    meta: {
+      height: headerCheck.height,
+      limit: headerCheck.limit
+    }
   };
 }
 
-// 9. Intrusive Interstitials
+// Intrusive Interstitials
 async function checkInterstitials(page, deviceType) {
   const interstitialCheck = await page.evaluate((deviceType) => {
     function detectOverlay() {
@@ -406,11 +267,15 @@ async function checkInterstitials(page, deviceType) {
       const htmlStyle = window.getComputedStyle(document.documentElement);
       return bodyStyle.overflow === "hidden" || htmlStyle.overflow === "hidden";
     }
+
     function detectModal() {
       return [...document.querySelectorAll("*")].some(el => {
         const rect = el.getBoundingClientRect();
         const style = window.getComputedStyle(el);
-        return style.position === "fixed" && rect.width >= 300 && rect.height >= 250 && parseInt(style.zIndex) > 999;
+        return style.position === "fixed" &&
+          rect.width >= window.innerWidth * 0.4 &&
+          rect.height >= window.innerHeight * 0.3 &&
+          parseInt(style.zIndex) > 500;
       });
     }
 
@@ -418,56 +283,56 @@ async function checkInterstitials(page, deviceType) {
     const hasScrollBlock = detectScrollBlock();
     const hasModal = detectModal();
     let details = [];
+
     if (hasOverlay) details.push("Full-screen overlay detected");
     if (hasScrollBlock) details.push("Scroll blocking detected");
     if (hasModal) details.push("Intrusive modal detected");
 
+    let status = 'pass';
+    if (hasOverlay || hasScrollBlock) {
+      status = 'fail';
+    } else if (hasModal) {
+      status = 'warning';
+    }
+
     const prefix = deviceType === 'mobile' ? 'Mobile View' : 'Desktop View';
     return {
-      status: (hasOverlay || hasScrollBlock || hasModal) ? 'fail' : 'pass',
-      details: details.length > 0 ? `${prefix}: ${details.join(", ")}` : `${prefix}: No intrusive interstitials found.`
+      status,
+      details: details.length > 0 ? `We found distractions: ${details.join(", ")}.` : `No annoying pop-ups or full-screen overlays were found.`
     };
   }, deviceType);
 
-  return {
-    score: interstitialCheck.status === 'pass' ? 100 : 0,
-    status: interstitialCheck.status,
-    details: interstitialCheck.details
+  let analysis = {
+    cause: "No intrusive interstitials found.",
+    recommendation: "Continue to avoid full-screen pop-ups that block the user's primary task."
   };
-}
 
-// 10. Image Stability
-async function checkImageStability(page) {
-  const imageStability = await page.evaluate(() => {
-    const images = Array.from(document.querySelectorAll('img'));
-    const issues = [];
-    images.forEach(img => {
-      const hasWidth = img.hasAttribute('width');
-      const hasHeight = img.hasAttribute('height');
-      const style = window.getComputedStyle(img);
-      const hasAspectRatio = style.aspectRatio !== 'auto';
-      if (!((hasWidth && hasHeight) || hasAspectRatio)) {
-        issues.push({ src: img.src || 'No Source', details: 'Missing explicit width/height or aspect-ratio' });
-      }
-    });
-    return { total: images.length, issues: issues.slice(0, 50) };
-  });
+  if (interstitialCheck.status === 'fail') {
+    analysis = {
+      cause: "Full-screen overlays or scroll-blocking elements are preventing users from reaching the content.",
+      recommendation: "Remove full-screen interstitials. Use non-blocking banners or inline calls-to-action instead."
+    };
+  } else if (interstitialCheck.status === 'warning') {
+    analysis = {
+      cause: "A modal was detected that might disrupt the user experience.",
+      recommendation: "Ensure modals are easy to dismiss and do not appear immediately upon page load."
+    };
+  }
 
-  const score = imageStability.total > 0 ? Math.round(((imageStability.total - imageStability.issues.length) / imageStability.total) * 100) : 100;
   return {
-    score,
-    status: score >= 90 ? 'pass' : 'fail',
-    details: `${imageStability.issues.length} unstable images found.`,
+    score: interstitialCheck.status === 'pass' ? 100 : (interstitialCheck.status === 'warning' ? 50 : 0),
+    status: interstitialCheck.status,
+    details: interstitialCheck.details,
+    analysis: analysis,
     meta: {
-      total: imageStability.total,
-      passed: imageStability.total - imageStability.issues.length,
-      failed: imageStability.issues.length,
-      unstableImages: imageStability.issues
+      hasOverlay: interstitialCheck.details.includes("overlay"),
+      hasScrollBlock: interstitialCheck.details.includes("Scroll"),
+      hasModal: interstitialCheck.details.includes("modal")
     }
   };
 }
 
-// 11. Breadcrumbs
+// Breadcrumbs
 async function checkBreadcrumbs(page) {
   const isHomepage = await page.evaluate(() => {
     return window.location.pathname === '/' || window.location.pathname === '';
@@ -478,6 +343,10 @@ async function checkBreadcrumbs(page) {
       score: 100,
       status: 'pass',
       details: 'Breadcrumbs are not required on the homepage.',
+      analysis: {
+        cause: "The page is a root-level homepage.",
+        recommendation: "Breadcrumbs are not necessary here. Maintain clearly visible primary navigation."
+      },
       meta: { isHomepage: true }
     };
   }
@@ -486,20 +355,45 @@ async function checkBreadcrumbs(page) {
     return !!document.querySelector('nav[aria-label="breadcrumb"], .breadcrumb') ||
       !!document.querySelector('script[type="application/ld+json"]')?.innerText.includes('BreadcrumbList');
   });
+
+  let analysis = {
+    cause: "Breadcrumbs are present, aiding user navigation.",
+    recommendation: "Keep breadcrumbs consistent across all inner pages to help users track their location."
+  };
+
+  if (!hasBreadcrumbs) {
+    analysis = {
+      cause: "The absence of breadcrumbs makes it difficult for users to track their location within the site's hierarchy.",
+      recommendation: "Implement breadcrumb navigation to provide a clear path back to parent categories, especially on deep sub-pages."
+    };
+  }
+
   return {
     score: hasBreadcrumbs ? 100 : 0,
     status: hasBreadcrumbs ? 'pass' : 'fail',
-    details: hasBreadcrumbs ? 'Breadcrumbs detected.' : 'No breadcrumbs found.',
+    details: hasBreadcrumbs ? 'A clear navigation path (breadcrumbs) was found for your visitors.' : 'No visible navigation path was found to help users track their location.',
+    analysis: analysis,
     meta: { isHomepage: false }
   };
 }
 
-// 12. Navigation Discoverability
+// Navigation Discoverability
 async function checkNavDiscoverability(page) {
   const navDiscoverability = await page.evaluate(() => {
-    const hamburgerSelectors = ['.hamburger', '.hamburger-menu', '.menu-icon', '.nav-toggle', 'button[aria-label*="menu"]', '[aria-controls="mobile-menu"]'];
-    const searchSelectors = ['input[type="search"]', 'input[placeholder*="search" i]', '[role="search"]', 'button[class*="search" i]'];
-    const navSelectors = ['nav', '[role="navigation"]', '.nav', '.navigation', '.navbar', '.main-menu', '#main-menu', '.site-nav', '.header-nav', 'ul[class*="menu"]'];
+    const hamburgerSelectors = [
+      '.hamburger', '.hamburger-menu', '.menu-icon', '.nav-toggle',
+      'button[aria-label*="menu"]', '[aria-controls*="menu"]',
+      '.navbar-toggler', '.nav-icon', '.mobile-menu-button'
+    ];
+    const searchSelectors = [
+      'input[type="search"]', 'input[placeholder*="search" i]',
+      '[role="search"]', 'button[class*="search" i]', '#search-btn', '.search-icon'
+    ];
+    const navSelectors = [
+      'nav', '[role="navigation"]', '.nav', '.navigation', '.navbar',
+      '.main-menu', '#main-menu', '.site-nav', '.header-nav',
+      'ul[class*="menu"]', 'div[class*="menu"] > ul'
+    ];
 
     let hamburgerFound = false;
     for (let sel of hamburgerSelectors) if (document.querySelector(sel)) { hamburgerFound = true; break; }
@@ -518,11 +412,30 @@ async function checkNavDiscoverability(page) {
   });
 
   const score = (navDiscoverability.hamburger_present * 30) + (navDiscoverability.search_present * 30) + (navDiscoverability.nav_menu_present * 40);
+  const status = score === 100 ? 'pass' : (score >= 40 ? 'warning' : 'fail');
+
+  let analysis = {
+    cause: "Key navigation elements (Menu, Search) are clearly presence.",
+    recommendation: "Maintain the visibility of these elements. Ensure search is easily accessible from any page."
+  };
+
+  if (status === 'fail') {
+    analysis = {
+      cause: "Multiple essential navigation controls are missing or hidden.",
+      recommendation: "Ensure that at least a primary navigation menu and a search bar are easily discoverable for all users."
+    };
+  } else if (status === 'warning') {
+    analysis = {
+      cause: "One or more useful navigation elements (like search) are missing.",
+      recommendation: "Consider adding a search bar or a more visible hamburger menu to improve content discoverability."
+    };
+  }
 
   return {
     score,
-    status: score === 100 ? 'pass' : (score >= 40 ? 'warning' : 'fail'),
-    details: `Navigation Menu: ${navDiscoverability.nav_menu_present ? 'Yes' : 'No'}, Hamburger: ${navDiscoverability.hamburger_present ? 'Yes' : 'No'}, Search: ${navDiscoverability.search_present ? 'Yes' : 'No'}`,
+    status: status,
+    details: `Found: ${navDiscoverability.nav_menu_present ? 'Navigation Menu' : 'No Menu'}, ${navDiscoverability.hamburger_present ? 'Menu Icon' : 'No Icon'}, ${navDiscoverability.search_present ? 'Search Bar' : 'No Search'}.`,
+    analysis: analysis,
     meta: {
       hasHamburger: !!navDiscoverability.hamburger_present,
       hasSearch: !!navDiscoverability.search_present,
@@ -531,7 +444,7 @@ async function checkNavDiscoverability(page) {
   };
 }
 
-// 13. ATF Content
+// ATF Content
 async function checkATF(page) {
   const atfData = await page.evaluate(() => {
     const viewportHeight = window.innerHeight;
@@ -553,13 +466,15 @@ async function checkATF(page) {
 
     function isImportant(el) {
       const tag = el.tagName;
-      if (["H1", "H2", "H3", "IMG", "VIDEO", "BUTTON", "INPUT", "A", "NAV"].includes(tag)) return true;
-      if ((tag === "P" || tag === "SPAN" || tag === "DIV") && el.innerText.trim().length > 20) return true;
-      return el.getBoundingClientRect().height > window.innerHeight * 0.2;
+      if (["H1", "H2", "H3", "BUTTON", "NAV", "A"].includes(tag)) return true;
+      if (tag === "IMG" && el.width > 50 && el.height > 50) return true;
+      if (tag === "VIDEO") return true;
+      if ((tag === "P" || tag === "DIV" || tag === "SPAN") && el.innerText.trim().length > 40) return true;
+      return false;
     }
 
     function getWeight(el) {
-      const WEIGHTS = { H1: 5, H2: 4, IMG: 3, VIDEO: 3, P: 2, BUTTON: 2, A: 1, INPUT: 3, NAV: 2, DEFAULT: 1 };
+      const WEIGHTS = { H1: 10, H2: 8, H3: 6, BUTTON: 7, IMG: 5, VIDEO: 5, NAV: 4, A: 3, P: 2, DEFAULT: 1 };
       return WEIGHTS[el.tagName] || WEIGHTS.DEFAULT;
     }
 
@@ -592,15 +507,34 @@ async function checkATF(page) {
     };
   });
 
+  const status = atfData.atfScore >= 50 ? 'pass' : (atfData.atfScore >= 20 ? 'warning' : 'fail');
+  let analysis = {
+    cause: "Primary content and actions are well-positioned above the fold.",
+    recommendation: "Keep critical information near the top to reduce the need for immediate scrolling."
+  };
+
+  if (status === 'fail') {
+    analysis = {
+      cause: "Very little important content is visible without scrolling.",
+      recommendation: "Move your headline and primary CTA higher up to ensure they are seen immediately."
+    };
+  } else if (status === 'warning') {
+    analysis = {
+      cause: "Important content is partially obscured or pushed down the page.",
+      recommendation: "Reduce large hero images or white space at the top to bring value-driven content into view sooner."
+    };
+  }
+
   return {
     score: atfData.atfScore,
-    status: atfData.atfScore >= 50 ? 'pass' : (atfData.atfScore >= 20 ? 'warning' : 'fail'),
-    details: `Weighted ATF Score: ${atfData.atfScore}%. ${atfData.importantVisible} important elements visible out of ${atfData.totalImportant} total important elements.`,
+    status: status,
+    details: `About ${atfData.atfScore}% of your most important content (titles, images, and buttons) is visible before any scrolling is needed.`,
+    analysis: analysis,
     meta: atfData
   };
 }
 
-// 14. Click Feedback
+// Click Feedback
 async function checkClickFeedback(page, deviceType) {
   const clickFeedbackData = await page.evaluate(() => {
     const propsToCheck = ["color", "background-color", "border-color", "box-shadow", "transform", "opacity", "cursor", "filter"];
@@ -627,12 +561,20 @@ async function checkClickFeedback(page, deviceType) {
       const normal = extract(el);
       const hover = extract(el, ":hover");
       const active = extract(el, ":active");
+
       const hoverChanged = propsToCheck.some(p => normal[p] !== hover[p]);
       const activeChanged = propsToCheck.some(p => normal[p] !== active[p]);
+      const focusChanged = propsToCheck.some(p => normal[p] !== extract(el, ":focus")[p]);
+
       return {
         tag: el.tagName,
-        text: el.innerText ? el.innerText.trim().slice(0, 100) : '',
-        feedback: { hoverChanged, activeChanged, hasFeedback: hoverChanged || activeChanged }
+        text: el.innerText ? el.innerText.trim().slice(0, 50) : '',
+        feedback: {
+          hoverChanged,
+          activeChanged,
+          focusChanged,
+          hasFeedback: hoverChanged || activeChanged || focusChanged
+        }
       };
     });
 
@@ -649,76 +591,34 @@ async function checkClickFeedback(page, deviceType) {
     ? Math.round(((deviceType === 'mobile' ? clickFeedbackData.withActive : clickFeedbackData.withHover) / clickFeedbackData.totalInteractive) * 100)
     : 100;
 
+  const status = feedbackScore >= 80 ? 'pass' : (feedbackScore >= 50 ? 'warning' : 'fail');
+  let analysis = {
+    cause: "Most interactive elements provide clear visual feedback on interaction.",
+    recommendation: "Continue using hover and active states to make the UI feel responsive."
+  };
+
+  if (status === 'fail') {
+    analysis = {
+      cause: "Many interactive elements lack visual changes, making the UI feel static and unresponsive.",
+      recommendation: "Add CSS hover and active states to all buttons, links, and form elements."
+    };
+  } else if (status === 'warning') {
+    analysis = {
+      cause: "Some interactive elements do not provide enough visual feedback.",
+      recommendation: "Ensure that all clickable elements change color, scale, or shadow when hovered or clicked."
+    };
+  }
+
   return {
     score: feedbackScore,
-    status: feedbackScore >= 80 ? 'pass' : (feedbackScore >= 50 ? 'warning' : 'fail'),
-    details: `Interactive Elements: ${clickFeedbackData.totalInteractive}. Feedback detected: ${deviceType === 'mobile' ? clickFeedbackData.withActive : clickFeedbackData.withHover}.`,
+    status: status,
+    details: `We tested ${clickFeedbackData.totalInteractive} interactive items, and ${deviceType === 'mobile' ? clickFeedbackData.withActive : clickFeedbackData.withHover} of them responded clearly to touch or clicks.`,
+    analysis: analysis,
     meta: { missingPointerCursor: clickFeedbackData.totalInteractive - (deviceType === 'mobile' ? clickFeedbackData.withActive : clickFeedbackData.withHover), ...clickFeedbackData }
   };
 }
 
-// 15. Form Validation
-async function checkFormValidation(page) {
-  const formValidationData = await page.evaluate(() => {
-    function getAssociatedLabel(input) {
-      if (input.id && document.querySelector(`label[for="${input.id}"]`)) return document.querySelector(`label[for="${input.id}"]`).innerText.trim();
-      if (input.closest('label')) return input.closest('label').innerText.trim();
-      if (input.getAttribute("aria-label")) return input.getAttribute("aria-label").trim();
-      if (input.getAttribute("aria-labelledby") && document.getElementById(input.getAttribute("aria-labelledby"))) return document.getElementById(input.getAttribute("aria-labelledby")).innerText.trim();
-      return null;
-    }
-    function getErrorMessage(input) {
-      const selectors = [".error", ".error-message", ".invalid", ".form-error", "[aria-live]", "[role='alert']", ".text-danger", ".text-red-500"];
-      const form = input.closest("form") || document;
-      for (const selector of selectors) {
-        const err = form.querySelector(selector);
-        if (err && err.innerText.trim().length > 0) return err.innerText.trim();
-      }
-      return null;
-    }
-
-    const inputs = [...document.querySelectorAll("input:not([type='hidden']), textarea, select")].filter(el => el.style.display !== 'none');
-    const results = inputs.map(input => {
-      const label = getAssociatedLabel(input);
-      const error = getErrorMessage(input);
-      const snippet = input.outerHTML;
-
-      let reason = [];
-      if (!label) reason.push("Missing associated label");
-      else reason.push("Valid label found");
-
-      return {
-        tag: input.tagName,
-        hasLabel: !!label,
-        hasErrorMessage: !!error,
-        labelText: label ? label.substring(0, 50) : null,
-        snippet: snippet,
-        id: input.id,
-        loc: { start: { line: "?" } },
-        reason: reason.join(", "),
-        status: !!label ? "pass" : "fail"
-      };
-    });
-
-    return {
-      totalInputs: results.length,
-      withLabels: results.filter(r => r.hasLabel).length,
-      missingLabels: results.filter(r => !r.hasLabel).map(r => r.tag),
-      failedNodes: results, // Returns ALL inputs (passed & failed) to display in the UI list
-      inputs: results
-    };
-  });
-
-  const formScore = formValidationData.totalInputs > 0 ? Math.round((formValidationData.withLabels / formValidationData.totalInputs) * 100) : 100;
-  return {
-    score: formScore,
-    status: formScore >= 90 ? 'pass' : (formScore >= 50 ? 'warning' : 'fail'),
-    details: `Found ${formValidationData.totalInputs} inputs. ${formValidationData.withLabels} have valid labels.`,
-    meta: formValidationData
-  };
-}
-
-// 16. Loading Feedback
+// Loading Feedback
 async function checkLoadingFeedback(page) {
   const loadingFeedbackData = await page.evaluate(() => {
     const LOADING_SELECTORS = ["[aria-busy='true']", "[role='progressbar']", ".spinner", ".loader", ".loading", ".MuiCircularProgress-root", ".ant-spin"];
@@ -744,17 +644,42 @@ async function checkLoadingFeedback(page) {
     };
   });
 
-  const loadingScore = loadingFeedbackData.hasLoadingFeedback ? 100 : 0;
+  let status = 'fail';
+  if (loadingFeedbackData.summary.spinners > 0 || loadingFeedbackData.summary.skeletons > 0) {
+    status = 'pass';
+  } else if (loadingFeedbackData.summary.loadingText > 0) {
+    status = 'warning';
+  }
+
+  const loadingScore = status === 'pass' ? 100 : (status === 'warning' ? 50 : 0);
+
+  let analysis = {
+    cause: "Visual loading indicators like spinners or skeletons are correctly implemented.",
+    recommendation: "Maintain these indicators to keep users informed during asynchronous operations."
+  };
+
+  if (status === 'fail') {
+    analysis = {
+      cause: "No standard loading indicators were detected.",
+      recommendation: "Implement skeleton screens or spinners to communicate that content is being loaded."
+    };
+  } else if (status === 'warning') {
+    analysis = {
+      cause: "Only simple text indicators were found, which can be easily missed.",
+      recommendation: "Upgrade text-based loading messages to more prominent visual indicators like spinners or shimmer effects."
+    };
+  }
+
   return {
     score: loadingScore,
-    status: loadingScore === 100 ? 'pass' : 'fail',
-    details: loadingFeedbackData.hasLoadingFeedback ? `Detected ${loadingFeedbackData.summary.spinners} spinners, ${loadingFeedbackData.summary.skeletons} skeletons.` : 'No standard loading indicators detected.',
+    status: status,
+    details: loadingFeedbackData.hasLoadingFeedback ? `We found ${loadingFeedbackData.summary.spinners + loadingFeedbackData.summary.skeletons} visual signals (like icons and shimmers) that show the page is loading.` : 'No visual signals were found to tell the user that the site is working or loading.',
+    analysis: analysis,
     meta: loadingFeedbackData
   };
 }
 
-
-// 17. Broken Links
+// Broken Links
 async function checkBrokenLinks(page) {
   const linksData = await page.evaluate(() => {
     const anchors = Array.from(document.querySelectorAll('a[href]'));
@@ -869,178 +794,362 @@ async function checkBrokenLinks(page) {
   const brokenExternalCount = brokenLinks.filter(b => !b.isInternal).length;
 
   const score = brokenLinks.length === 0 ? 100 : Math.max(0, 100 - (brokenLinks.length * 25));
+  const status = score === 100 ? 'pass' : (score >= 75 ? 'warning' : 'fail');
+
+  let analysis = {
+    cause: "All links on the page are valid and accessible.",
+    recommendation: "Periodic link audits are recommended to ensure external links remain active."
+  };
+
+  if (status === 'fail') {
+    analysis = {
+      cause: "Multiple broken links were found, leading to 404 errors.",
+      recommendation: "Fix or remove all links pointing to non-existent pages to prevent user frustration."
+    };
+  } else if (status === 'warning') {
+    analysis = {
+      cause: "A single broken link was detected.",
+      recommendation: "Update the single broken link to point to a valid destination."
+    };
+  }
 
   return {
     score,
-    status: score === 100 ? 'pass' : 'fail',
-    details: brokenLinks.length === 0 ? "No broken links found." : `${brokenLinks.length} broken links detected.`,
+    status: status,
+    details: brokenLinks.length === 0 ? "Every link on your page works perfectly." : `We found ${brokenLinks.length} 'dead-end' links that lead to errors.`,
+    analysis: analysis,
     meta: {
-      totalChecked: urlsToCheck.length,
       brokenCount: brokenLinks.length,
+      brokenLinks: brokenLinks.slice(0, 20),
+      totalChecked: urlsToCheck.length,
       totalInternal,
-      totalExternal,
-      brokenInternalCount,
-      brokenExternalCount,
-      failedNodes: brokenLinks.map(b => ({
-        reason: `Status: ${b.status}`,
-        href: b.url,
-        text: b.text,
-        isInternal: b.isInternal
-      }))
+      totalExternal
     }
   };
 }
 
+// Hierarchy Clarity
+async function checkHierarchyClarity(page) {
+  const hierarchyData = await page.evaluate(() => {
+    const headings = Array.from(document.querySelectorAll('h1, h2, h3, h4, h5, h6'));
+    const h1Count = headings.filter(h => h.tagName === 'H1').length;
 
+    let isSequential = true;
+    for (let i = 0; i < headings.length - 1; i++) {
+      const currentLevel = parseInt(headings[i].tagName[1]);
+      const nextLevel = parseInt(headings[i + 1].tagName[1]);
+      if (nextLevel > currentLevel + 1) isSequential = false;
+    }
 
-// Main Execution Function
+    return {
+      h1Count,
+      totalHeadings: headings.length,
+      isSequential
+    };
+  });
+
+  let status = 'pass';
+  let score = 100;
+  if (hierarchyData.h1Count !== 1) {
+    status = 'warning';
+    score = 70;
+  }
+  if (hierarchyData.totalHeadings === 0) {
+    status = 'fail';
+    score = 0;
+  }
+
+  let analysis = {
+    cause: "Header hierarchy is correct with a single H1 and sequential levels.",
+    recommendation: "Maintain this clear structure for both users and search engines."
+  };
+
+  if (status === 'fail') {
+    analysis = {
+      cause: "No headings found on the page, creating a flat and unguided content structure.",
+      recommendation: "Implement a clear heading hierarchy starting with a single H1 and nesting sub-sections with H2-H4."
+    };
+  } else if (status === 'warning') {
+    analysis = {
+      cause: hierarchyData.h1Count === 0 ? "Missing H1 tag." : "Multiple H1 tags detected or skipping header levels.",
+      recommendation: "Ensure exactly one H1 describes the page title and that subheadings follow a logical order without skipping levels."
+    };
+  }
+
+  return {
+    score,
+    status,
+    details: `We found ${hierarchyData.h1Count} main title and a total of ${hierarchyData.totalHeadings} headings to guide the reader.`,
+    analysis,
+    meta: hierarchyData
+  };
+}
+
+// Section Labeling Clarity
+async function checkSectionLabeling(page) {
+  const labelingData = await page.evaluate(() => {
+    const sections = Array.from(document.querySelectorAll('section, article, .section, .block'));
+    const labeledSections = sections.filter(s => s.querySelector('h1, h2, h3, h4') || s.getAttribute('aria-label'));
+    return {
+      totalSections: sections.length,
+      labeledCount: labeledSections.length
+    };
+  });
+
+  const score = labelingData.totalSections > 0 ? Math.round((labelingData.labeledCount / labelingData.totalSections) * 100) : 100;
+  const status = score >= 90 ? 'pass' : (score >= 60 ? 'warning' : 'fail');
+
+  let analysis = {
+    cause: "Most page sections are clearly defined and labeled.",
+    recommendation: "Keep using semantic section markers to help users mentally map the page."
+  };
+
+  if (status === 'fail') {
+    analysis = {
+      cause: "Page content lacks clear structural grouping or section labeling.",
+      recommendation: "Wrap related content in <section> tags and ensure each has a descriptive heading."
+    };
+  } else if (status === 'warning') {
+    analysis = {
+      cause: "Some content blocks are present without clear titles or labels.",
+      recommendation: "Ensure every major section has a visible heading to improve scanning behavior."
+    };
+  }
+
+  return {
+    score,
+    status,
+    details: `${labelingData.labeledCount} out of your ${labelingData.totalSections} page sections have clear, descriptive titles.`,
+    analysis,
+    meta: labelingData
+  };
+}
+
+// Content Density Balance
+async function checkContentDensity(page, deviceType) {
+  const densityData = await page.evaluate((deviceType) => {
+    const bodyHeight = document.body.scrollHeight;
+    const viewportHeight = window.innerHeight;
+    const textLength = document.body.innerText.length;
+    const scrollFactor = bodyHeight / viewportHeight;
+
+    // Simple heuristic: length of text per "screen"
+    const densityScore = (textLength / scrollFactor) / 1000;
+
+    return { densityScore, scrollFactor };
+  }, deviceType);
+
+  let status = 'pass';
+  let score = 100;
+
+  // Adjust density thresholds for mobile vs desktop
+  const highDensityLimit = deviceType === 'mobile' ? 4 : 6;
+  const lowDensityLimit = deviceType === 'mobile' ? 0.3 : 0.6;
+
+  if (densityData.densityScore > highDensityLimit) {
+    status = 'warning';
+    score = 60;
+  } else if (densityData.densityScore < lowDensityLimit) {
+    status = 'warning';
+    score = 60;
+  }
+
+  let analysis = {
+    cause: "The amount of content per screen feels balanced and breathable.",
+    recommendation: "Maintain the current balance of text and whitespace."
+  };
+
+  if (status === 'warning') {
+    analysis = {
+      cause: densityData.densityScore > highDensityLimit ? "Content is too dense, making it overwhelming for users." : "Content is too sparse, requiring excessive scrolling for little information.",
+      recommendation: densityData.densityScore > highDensityLimit ? "Use more whitespace, shorter paragraphs, and images to break up text blocks." : "Consolidate information or add more value-driven content to the page."
+    };
+  }
+
+  return {
+    score,
+    status,
+    details: `The balance of text and 'breathing room' on your page is rated as ${densityData.densityScore > 4 ? 'dense' : (densityData.densityScore < 0.5 ? 'sparse' : 'comfortable')}.`,
+    analysis,
+    meta: densityData
+  };
+}
+
+// Page-to-Page Flow
+async function checkPageFlow(page) {
+  const flowData = await page.evaluate(() => {
+    const hasFooter = !!document.querySelector('footer');
+    const internalLinks = Array.from(document.querySelectorAll('a')).filter(a => a.href.includes(window.location.hostname)).length;
+    const nextStepCTAs = Array.from(document.querySelectorAll('button, a.btn')).length;
+
+    return { hasFooter, internalLinks, nextStepCTAs };
+  });
+
+  const hasFlow = flowData.hasFooter && flowData.internalLinks > 2 && flowData.nextStepCTAs > 0;
+  const status = hasFlow ? 'pass' : 'warning';
+  const score = hasFlow ? 100 : 60;
+
+  let analysis = {
+    cause: "The page provides a clear structural flow with a footer and subsequent navigation steps.",
+    recommendation: "Continue ensuring every page leads the user toward a logical next action."
+  };
+
+  if (status === 'warning') {
+    analysis = {
+      cause: "The user might reach a 'dead end' without clear guidance on what to do next.",
+      recommendation: "Add a consistent footer and ensuring prominent primary actions (CTAs) are always available."
+    };
+  }
+
+  return {
+    score,
+    status,
+    details: `We found a footer and ${flowData.nextStepCTAs} clear 'next step' buttons to keep your visitors moving forward.`,
+    analysis,
+    meta: flowData
+  };
+}
+
+// Layout Consistency
+async function checkLayoutConsistency(page) {
+  const layoutData = await page.evaluate(() => {
+    const bodyStyle = window.getComputedStyle(document.body);
+    const hasFlexOrGrid = bodyStyle.display === 'flex' || bodyStyle.display === 'grid' ||
+      !!document.querySelector('[style*="display: flex"], [style*="display: grid"]') ||
+      !!document.querySelector('.container, .row, .grid');
+
+    return { hasFlexOrGrid };
+  });
+
+  const status = layoutData.hasFlexOrGrid ? 'pass' : 'warning';
+  const score = layoutData.hasFlexOrGrid ? 100 : 70;
+
+  let analysis = {
+    cause: "The layout uses modern structural patterns indicating consistent spacing.",
+    recommendation: "Ensure grid gutters and margins remain uniform across different screen sizes."
+  };
+
+  if (status === 'warning') {
+    analysis = {
+      cause: "Layout structure appears ad-hoc, which may lead to spacing inconsistencies.",
+      recommendation: "Utilize a standard CSS Grid or Flexbox-based layout system to ensure visual alignment."
+    };
+  }
+
+  return {
+    score,
+    status,
+    details: `Your page layout ${layoutData.hasFlexOrGrid ? 'uses organized, modern design patterns' : 'appears a bit unstructured and could use more consistent spacing'}.`,
+    analysis,
+    meta: layoutData
+  };
+}
+
+// In-Page Navigation
+async function checkInPageNav(page, deviceType) {
+  const navData = await page.evaluate((deviceType) => {
+    const anchorLinks = Array.from(document.querySelectorAll('a[href^="#"]')).filter(a => a.getAttribute('href').length > 1).length;
+    const backToTop = !!document.querySelector('a[href="#top"], .back-to-top, button[id*="top"]');
+    const hasLongPage = document.body.scrollHeight > window.innerHeight * (deviceType === 'mobile' ? 2.5 : 4);
+
+    return { anchorLinks, backToTop, hasLongPage };
+  }, deviceType);
+
+  let status = 'pass';
+  if (navData.hasLongPage && navData.anchorLinks === 0 && !navData.backToTop) status = 'warning';
+  const score = status === 'pass' ? 100 : 60;
+
+  let analysis = {
+    cause: "Navigational aids like anchor links or 'back to top' are provided for long-form content.",
+    recommendation: "Continue using skip-links and anchor points for content-heavy pages."
+  };
+
+  if (status === 'warning') {
+    analysis = {
+      cause: "The page is long but lacks in-page navigation shortcuts.",
+      recommendation: "Add a 'Table of Contents' or 'Back to Top' button to help users navigate long vertical layouts."
+    };
+  }
+
+  return {
+    score,
+    status,
+    details: `Found ${navData.anchorLinks} jump links and ${navData.backToTop ? 'a' : 'no'} 'Back to Top' button on this long page.`,
+    analysis,
+    meta: navData
+  };
+}
+
 export default async function evaluateMobileUX(device, page) {
   const deviceType = device === 'Mobile' ? 'mobile' : 'desktop';
 
-  // Execute all checks independently
+  const readability = await checkReadability(page);
+  const stickyHeader = await checkStickyHeader(page, deviceType);
+  const interstitials = await checkInterstitials(page, deviceType);
+  const breadcrumbs = await checkBreadcrumbs(page);
+  const navDiscoverability = await checkNavDiscoverability(page);
+  const atf = await checkATF(page);
+  const clickFeedback = await checkClickFeedback(page, deviceType);
+  const loadingFeedback = await checkLoadingFeedback(page);
+  const brokenLinks = await checkBrokenLinks(page);
+  const hierarchy = await checkHierarchyClarity(page);
+  const labeling = await checkSectionLabeling(page);
+  const density = await checkContentDensity(page, deviceType);
+  const flow = await checkPageFlow(page);
+  const layout = await checkLayoutConsistency(page);
+  const inPageNav = await checkInPageNav(page, deviceType);
+
   const results = {
-    readability: await checkReadability(page),
-    cls: await checkCLS(page, deviceType),
-    tapTargets: await checkTapTargets(page, deviceType),
-    textSize: await checkTextSize(page, deviceType),
-    viewport: await checkViewport(page, deviceType),
-    horizontalScroll: await checkHorizontalScroll(page, deviceType),
-    stickyHeader: await checkStickyHeader(page, deviceType),
-    interstitials: await checkInterstitials(page, deviceType),
-    imageStability: await checkImageStability(page),
-    breadcrumbs: await checkBreadcrumbs(page),
-    navDiscoverability: await checkNavDiscoverability(page),
-    atf: await checkATF(page),
-    clickFeedback: await checkClickFeedback(page, deviceType),
-    formValidation: await checkFormValidation(page),
-    loadingFeedback: await checkLoadingFeedback(page),
-    brokenLinks: await checkBrokenLinks(page)
+    Text_Readability: readability,
+    Sticky_Header_Usage: stickyHeader,
+    Intrusive_Interstitials: interstitials,
+    Breadcrumbs: breadcrumbs,
+    Navigation_Discoverability: navDiscoverability,
+    Above_the_Fold_Content: atf,
+    Interactive_Click_Feedback: clickFeedback,
+    Loading_Feedback: loadingFeedback,
+    Broken_Links: brokenLinks,
+    UX_Content_Hierarchy_Clarity: hierarchy,
+    Section_Labeling_Clarity: labeling,
+    Content_Density_Balance: density,
+    Page_to_Page_Flow: flow,
+    Layout_Consistency: layout,
+    In_Page_Navigation: inPageNav
   };
 
-  // Calculate Overall Score
-  let totalScore = 0;
-  let maxScore = 0;
+  let weightedSum = 0;
+  let totalPossibleWeight = 0;
+
   const weights = {
-    cls: 2, tapTargets: 3, textSize: 3, viewport: 3, horizontalScroll: 3, stickyHeader: 1,
-    readability: 2, interstitials: 3, imageStability: 2,
-    breadcrumbs: 1, navDiscoverability: 2, atf: 3, clickFeedback: 2, formValidation: 3, loadingFeedback: 2, brokenLinks: 3
+    Text_Readability: 2,
+    Sticky_Header_Usage: 1,
+    Intrusive_Interstitials: 3,
+    Breadcrumbs: 1,
+    Navigation_Discoverability: 2,
+    Above_the_Fold_Content: 3,
+    Interactive_Click_Feedback: 2,
+    Loading_Feedback: 2,
+    Broken_Links: 3,
+    UX_Content_Hierarchy_Clarity: 2,
+    Section_Labeling_Clarity: 2,
+    Content_Density_Balance: 1,
+    Page_to_Page_Flow: 2,
+    Layout_Consistency: 1,
+    In_Page_Navigation: 1
   };
 
-  // Helper to normalize scores for calculation
-  const getScore = (key, res) => {
-    if (key === 'cls') {
-      // Special handling for CLS value
-      const val = res.score;
-      if (val > 0.25) return 0;
-      if (val > 0.1) return 50 + ((0.25 - val) / 0.15) * 40;
-      return 90 + ((0.1 - val) / 0.1) * 10;
-    }
-    return Math.max(0, Math.min(100, res.score));
-  };
-
-  for (const key in results) {
+  for (const [key, result] of Object.entries(results)) {
     const weight = weights[key] || 1;
-    const score = getScore(key, results[key]);
-    totalScore += score * weight;
-    maxScore += 100 * weight;
+    const score = result ? Math.max(0, Math.min(100, result.score || 0)) : 0;
+
+    weightedSum += (score * weight);
+    totalPossibleWeight += (100 * weight);
   }
 
-  const overallScore = Math.round((totalScore / maxScore) * 100);
+  const overallScore = totalPossibleWeight > 0 ? Math.round((weightedSum / totalPossibleWeight) * 100) : 0;
 
   return {
     Percentage: overallScore,
-    Text_Readability: {
-      Score: parseFloat(results.readability.score.toFixed(0)),
-      Status: results.readability.status,
-      Details: results.readability.details,
-      Meta: results.readability.meta
-    },
-    Cumulative_Layout_Shift: {
-      Score: Math.round(getScore('cls', results.cls)),
-      Status: results.cls.status,
-      Details: results.cls.details,
-      Meta: results.cls.meta
-    },
-    Tap_Target_Size: {
-      Score: results.tapTargets.score,
-      Status: results.tapTargets.status,
-      Details: results.tapTargets.details,
-      Meta: results.tapTargets.meta
-    },
-    Text_Font_Size: {
-      Score: results.textSize.score,
-      Status: results.textSize.status,
-      Details: results.textSize.details,
-      Meta: results.textSize.meta
-    },
-    Viewport_Configuration: {
-      Score: results.viewport.score,
-      Status: results.viewport.status,
-      Details: results.viewport.details
-    },
-    Horizontal_Scroll_Check: {
-      Score: results.horizontalScroll.score,
-      Status: results.horizontalScroll.status,
-      Details: results.horizontalScroll.details
-    },
-    Sticky_Header_Usage: {
-      Score: results.stickyHeader.score,
-      Status: results.stickyHeader.status,
-      Details: results.stickyHeader.details
-    },
-
-    Intrusive_Interstitials: {
-      Score: results.interstitials.score,
-      Status: results.interstitials.status,
-      Details: results.interstitials.details
-    },
-    Image_Stability: {
-      Score: results.imageStability.score,
-      Status: results.imageStability.status,
-      Details: results.imageStability.details,
-      Meta: results.imageStability.meta
-    },
-    Breadcrumbs: {
-      Score: results.breadcrumbs.score,
-      Status: results.breadcrumbs.status,
-      Details: results.breadcrumbs.details,
-      Meta: results.breadcrumbs.meta
-    },
-    Navigation_Discoverability: {
-      Score: results.navDiscoverability.score,
-      Status: results.navDiscoverability.status,
-      Details: results.navDiscoverability.details,
-      Meta: results.navDiscoverability.meta
-    },
-    Above_the_Fold_Content: {
-      Score: results.atf.score,
-      Status: results.atf.status,
-      Details: results.atf.details,
-      Meta: results.atf.meta
-    },
-    Interactive_Click_Feedback: {
-      Score: results.clickFeedback.score,
-      Status: results.clickFeedback.status,
-      Details: results.clickFeedback.details,
-      Meta: results.clickFeedback.meta
-    },
-    Form_Validation_UX: {
-      Score: results.formValidation.score,
-      Status: results.formValidation.status,
-      Details: results.formValidation.details,
-      Meta: results.formValidation.meta
-    },
-    Loading_Feedback: {
-      Score: results.loadingFeedback.score,
-      Status: results.loadingFeedback.status,
-      Details: results.loadingFeedback.details,
-      Meta: results.loadingFeedback.meta
-    },
-    Broken_Links: {
-      Score: results.brokenLinks.score,
-      Status: results.brokenLinks.status,
-      Details: results.brokenLinks.details,
-      Meta: results.brokenLinks.meta
-    }
+    ...results
   };
 }

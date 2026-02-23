@@ -2186,7 +2186,7 @@ export const InfoDetails = {
         whyItMatters: "Too many choices confuse users. When people are overwhelmed, they often choose nothing at all.",
         thresholds: {
             good: "1–3 CTAs (Optimal)",
-            warning: "More than 3 CTAs (Potential Clutter)",
+            needsImprovement: "More than 3 CTAs (Potential Clutter)",
             poor: "No CTAs found"
         },
         actualReasonsForFailure: [
@@ -2207,7 +2207,7 @@ export const InfoDetails = {
         whyItMatters: "If a user clicks 'Buy Now' and lands on an About page, the momentum is lost. Direct paths to conversion reduce drop-offs.",
         thresholds: {
             good: "CTAs link to relevant pages",
-            warning: "Mismatch detected (e.g. 'Buy' -> 'Blog')"
+            needsImprovement: "Mismatch detected (e.g. 'Buy' -> 'Blog')"
         },
         actualReasonsForFailure: [
             "High-intent buttons (Buy/Sign Up) link to informational pages (Blog, About, FAQ)",
@@ -2227,7 +2227,7 @@ export const InfoDetails = {
         whyItMatters: "Asking for a commitment before explaining the value is pushy. Asking too late means they might miss it.",
         thresholds: {
             good: "CTA well-positioned (10-90% of page)",
-            warning: "CTA too early (<10%) or too late (>90%)",
+            needsImprovement: "CTA too early (<10%) or too late (>90%)",
             poor: "No flow-aligned CTA found"
         },
         actualReasonsForFailure: [
@@ -2268,8 +2268,8 @@ export const InfoDetails = {
         whyItMatters: "Each extra question gives users another reason to quit. Shorter forms almost always convert better.",
         thresholds: {
             good: "Concise form (< 7 fields)",
-            warning: "Long form (≥ 7 fields)",
-            pass: "No forms to analyze"
+            needsImprovement: "Long form (≥ 7 fields)",
+            poor: "No forms to analyze"
         },
         actualReasonsForFailure: [
             "One or more forms have many fields (7+), which can discourage completions",
@@ -2289,8 +2289,8 @@ export const InfoDetails = {
         whyItMatters: "Guessing games frustrate users. If they get an error for a field they thought was optional, they are likely to give up.",
         thresholds: {
             good: "Requirements clearly marked",
-            warning: "No visual distinction found",
-            pass: "No inputs to analyze"
+            needsImprovement: "No visual distinction found",
+            poor: "No inputs to analyze"
         },
         actualReasonsForFailure: [
             "Form fields do not use visual indicators (like *) or labels ('optional') to guide the user",
@@ -2330,8 +2330,8 @@ export const InfoDetails = {
         whyItMatters: "A button saying 'Submit' is boring. Specific text like 'Get My Quote' implies a reward and excites the user.",
         thresholds: {
             good: "Clear, action-oriented text",
-            warning: "Generic label (e.g. 'Submit')",
-            pass: "No submit buttons found"
+            needsImprovement: "Generic label (e.g. 'Submit')",
+            poor: "No submit buttons found"
         },
         actualReasonsForFailure: [
             "Submit buttons use generic labels like 'Submit' instead of specific actions",
@@ -2392,7 +2392,7 @@ export const InfoDetails = {
         whyItMatters: "Most visitors aren't ready to buy yet. A freebie captures their information so you can follow up later.",
         thresholds: {
             good: "Lead magnet detected",
-            warning: "No lead magnets found"
+            needsImprovement: "No lead magnets found"
         },
         actualReasonsForFailure: [
             "No high-value offers like ebooks, guides, or whitepapers were detected in the text",
@@ -2413,7 +2413,7 @@ export const InfoDetails = {
         whyItMatters: "A huge list of questions is intimidating. Breaking it up into small steps makes it feel easier to finish.",
         thresholds: {
             good: "Progress indicators present",
-            pass: "No multi-step form detected"
+            poor: "No multi-step form detected"
         },
         actualReasonsForFailure: [
             "No progress bars or step indicators were found on a potential multi-step form",
@@ -2433,7 +2433,7 @@ export const InfoDetails = {
         whyItMatters: "People are motivated to finish what they start. Seeing '50% Complete' encourages them to keep going.",
         thresholds: {
             good: "Progress indicators detected",
-            warning: "No progress indicators found"
+            needsImprovement: "No progress indicators found"
         },
         actualReasonsForFailure: [
             "No elements matching progress bar, step, or progress patterns were found",
@@ -2473,7 +2473,7 @@ export const InfoDetails = {
         whyItMatters: "Proprietary authority helps. Showing that you work with established brands makes you look professional and safe.",
         thresholds: {
             good: "Client/Partner logos detected",
-            warning: "No client logos detected"
+            needsImprovement: "No client logos detected"
         },
         actualReasonsForFailure: [
             "The page does not prominently feature logos of partners or previous clients",
@@ -2493,7 +2493,7 @@ export const InfoDetails = {
         whyItMatters: "Claims are easy to make; proof is hard. Case studies prove you can deliver results, which builds massive trust.",
         thresholds: {
             good: "Case studies detected",
-            warning: "No case studies found"
+            needsImprovement: "No case studies found"
         },
         actualReasonsForFailure: [
             "No textual references to 'case studies' or 'success stories' were found in the content",
@@ -2515,7 +2515,7 @@ export const InfoDetails = {
         whyItMatters: "Blaming the user feels bad. Helpful hints like 'Please include an @ in your email' make the user feel supported.",
         thresholds: {
             good: "Error handling indicators detected",
-            warning: "No explicit error cues found"
+            needsImprovement: "No explicit error cues found"
         },
         actualReasonsForFailure: [
             "No clear error message containers or validation attributes were identified",
@@ -2535,7 +2535,7 @@ export const InfoDetails = {
         whyItMatters: "Tiny clarifications prevent big confusions. They make the form feel effortless to fill out.",
         thresholds: {
             good: "Helper text/placeholders detected",
-            warning: "Limited microcopy found"
+            needsImprovement: "Limited microcopy found"
         },
         actualReasonsForFailure: [
             "Form inputs lack placeholders or descriptive helper text",
@@ -2555,7 +2555,7 @@ export const InfoDetails = {
         whyItMatters: "Everyone loves a deal. A clear incentive gives users a logical reason to act *now*.",
         thresholds: {
             good: "Incentives detected",
-            warning: "No incentives found"
+            needsImprovement: "No incentives found"
         },
         actualReasonsForFailure: [
             "No promotional language or special offers were detected in the content",
@@ -2644,250 +2644,297 @@ export const InfoDetails = {
     },
 
     // AIO Readiness
-
-    Content_NLP_Friendly: {
-        whatThisParameterIs: "NLP Content Structure checks if content is optimized for Natural Language Processing.",
-        whatItCalculates: "It analyzes HTML structure (headings, paragraphs, lists) to ensure text is easily extractable by AI bots.",
-        whyItMatters: "AI models (like ChatGPT) rely on clean, semantic structure to understand and cite your content.",
+    Structured_Data: {
+        title: "Structured Data (JSON-LD)",
+        whatThisParameterIs: "It checks if your page uses a special 'AI-readable' code called JSON-LD that tells bots exactly what your page is about.",
+        whatItCalculates: "It scans every line of code to find 'JSON-LD' scripts that define your site's identity—checking if they are written correctly and include recognized categories like Articles, People, or Products.",
+        whyItMatters: "Without this, AI bots have to guess what your data means. This code acts like a translation layer that ensures AI understands your products, reviews, or articles perfectly.",
         thresholds: {
-            good: "Semantic tags, headings, and paragraphs detected",
-            needsImprovement: "Missing key semantic elements"
+            good: "Valid, error-free code describing multiple sections",
+            needsImprovement: "Code found but has small typing errors or limited variety",
+            poor: "No valid JSON-LD code found in the page header"
         },
         actualReasonsForFailure: [
-            "Missing semantic HTML tags",
-            "Improper heading hierarchy",
-            "Content not wrapped in paragraphs or lists"
+            "No 'JSON-LD' code blocks found in your site's header",
+            "Small typos in the code (syntax errors) that make it unreadable",
+            "The code is too simple and doesn't tell AI enough about your page"
         ],
         howToOvercomeFailure: [
-            "Use semantic tags like article, section, main",
-            "Maintain proper heading hierarchy",
-            "Structure content with paragraphs and lists"
-        ]
-    },
-    Fast_Page_Load: {
-        whatThisParameterIs: "AI Crawler Speed ensures pages load quickly for time-constrained bots.",
-        whatItCalculates: "It measures the Time to First Byte (TTFB) and total resources size specifically for bot user-agents.",
-        whyItMatters: "Crawlers have limited crawl budgets; slow pages get indexed less frequently.",
-        thresholds: {
-            good: "Page load ≤ 2 seconds",
-            needsImprovement: "Page load > 2 seconds"
-        },
-        actualReasonsForFailure: [
-            "Heavy scripts or assets",
-            "Slow server response"
-        ],
-        howToOvercomeFailure: [
-            "Optimize assets and scripts",
-            "Improve server performance"
-        ]
-    },
-    API_Data_Access: {
-        whatThisParameterIs: "Data Accessibility (API) checks if site content is exposed via machine-readable endpoints.",
-        whatItCalculates: "It detects references to RSS feeds, JSON endpoints, or public APIs in <link> tags or headers.",
-        whyItMatters: "Exposing data structurally allows AI agents to consume your content more accurately than scraping.",
-        thresholds: {
-            good: "API or data endpoints detected",
-            poor: "No API access points found"
-        },
-        actualReasonsForFailure: [
-            "No API endpoints referenced",
-            "No machine-readable data exposed"
-        ],
-        howToOvercomeFailure: [
-            "Expose REST or GraphQL APIs",
-            "Provide JSON endpoints or manifests"
-        ]
-    },
-    Keywords_Entities_Annotated: {
-        whatThisParameterIs: "Entity & Keyword Annotation checks for explicit semantic tagging.",
-        whatItCalculates: "It looks for emphasis tags (<em>, <strong>) highlighting key entities or presence of meta keywords.",
-        whyItMatters: "Highlighting key entities helps AI disambiguate terms and understand the core topic.",
-        thresholds: {
-            good: "Keywords/entities detected",
-            poor: "No keyword or entity signals found"
-        },
-        actualReasonsForFailure: [
-            "No emphasis tags used for keywords",
-            "Missing meta keywords",
-            "Content lacks structured entity references"
-        ],
-        howToOvercomeFailure: [
-            "Use descriptive headings",
-            "Add alt text to images",
-            "Annotate key entities clearly"
-        ]
-    },
-    Metadata_Complete: {
-        whatThisParameterIs: "AI Metadata Completeness checks for tags that summarize content.",
-        whatItCalculates: "It verifies the presence of og:description, twitter:description, and description meta tags.",
-        whyItMatters: "AI snippets rely on these summaries to represent your page in chat responses.",
-        thresholds: {
-            good: "Most metadata present",
-            poor: "Essential metadata missing"
-        },
-        actualReasonsForFailure: [
-            "Missing meta description",
-            "Missing Open Graph or Twitter tags"
-        ],
-        howToOvercomeFailure: [
-            "Add title and description tags",
-            "Include OG and Twitter metadata"
+            "Install a Schema plugin or add JSON-LD code to your page",
+            "Use a 'code validator' to fix tiny commas or bracket errors",
+            "Add more detail, like your Organization name, reviews, or prices"
         ]
     },
     Content_Updated_Regularly: {
         title: "Content Freshness",
-        whatThisParameterIs: "Content Freshness Verification checks the recency of the page.",
-        whatItCalculates: "It extracts dates from last-modified headers or datePublished/dateModified schema.",
-        whyItMatters: "AI models prioritize recent information to avoid hallucinating outdated facts.",
+        whatThisParameterIs: "It checks for signals like 'last updated' tags to see how recently your information was reviewed or added to the site.",
+        whatItCalculates: "It searches for hidden 'time-stamps' in your page code—like 'last-modified' dates—to calculate exactly how many days have passed since you last touched the content.",
+        whyItMatters: "AI models hate giving outdated advice. Fresh content shows bots that your site is a reliable source for current information, which can lead to better rankings and more citations.",
         thresholds: {
-            good: "Updated within last 30 days",
-            needsImprovement: "Content may be outdated"
+            good: "Content was updated within the last 30 days",
+            needsImprovement: "The 'Update Signal' is missing or the content is over a month old",
+            poor: "No update timestamp found (Meta or Time tags)"
         },
         actualReasonsForFailure: [
-            "No last-modified date found",
-            "Old content updates"
+            "No digital timestamp found to tell AI when you last updated",
+            "Content hasn't been refreshed in over 30 days",
+            "The date is written in a format the AI can't understand"
         ],
         howToOvercomeFailure: [
-            "Update content regularly",
-            "Expose last-modified metadata"
+            "Make a small edit or refresh your page at least once a month",
+            "Ensure your website system is 'stamping' the date on every page",
+            "Check that your 'Last Modified' date is clearly visible to bots"
         ]
     },
-    Dynamic_Content_Available: {
-        title: "Dynamic Content Capability",
-        whatThisParameterIs: "Dynamic Content Support checks for modern reactive capabilities.",
-        whatItCalculates: "It detects libraries like React, Vue, or HTMX that facilitate dynamic updates.",
-        whyItMatters: "Dynamic sites can serve personalized AI experiences in real-time.",
+    Content_NLP_Friendly: {
+        title: "NLP Content Structure",
+        whatThisParameterIs: "It evaluates if your content is organized using clear headings, paragraphs, and lists so that AI can easily extract information.",
+        whatItCalculates: "It takes a 'structural scan' of your page to see if you're using proper labels (like H1s, Articles, and Sections) to group your thoughts logically.",
+        whyItMatters: "AI models read more like humans than older search engines. If your text isn't clearly structured, the AI might misunderstand your message or fail to cite you in its answers.",
         thresholds: {
-            good: "Dynamic content indicators found",
-            poor: "No dynamic content detected"
+            good: "Logical groups found with clear labels and hierarchy",
+            needsImprovement: "Content is just plain text without structural labels",
+            poor: "Missing basic structural tags (Article, Section, or Headings)"
         },
         actualReasonsForFailure: [
-            "Static-only content",
-            "No client-side rendering or APIs"
+            "No 'Header', 'Article', or 'Section' labels found in the code",
+            "No clear hierarchy (H1, H2, H3) used to divide topics",
+            "Text is just a big block without paragraph or list containers"
         ],
         howToOvercomeFailure: [
-            "Implement fetch or API-based updates",
-            "Use modern JS frameworks where needed"
+            "Wrap your main content in an <article> tag",
+            "Use clear H2 and H3 headings for every new subtopic",
+            "Ensure your body text is made of small paragraphs and lists"
         ]
     },
-    Behavior_Tracking_Implemented: {
-        title: "Behavior Tracking",
-        whatThisParameterIs: "User Behavior Tracking checks for analytics integration.",
-        whatItCalculates: "It identifies scripts for GA4, Mixpanel, or custom telemetry.",
-        whyItMatters: "Feeding usage data back into AI models is essential for training optimization algorithms.",
+    Keywords_Entities_Annotated: {
+        title: "Entity & Keyword Annotation",
+        whatThisParameterIs: "It looks for signals that highlight your most important topics, such as clear headings and descriptive 'alt text' on your images.",
+        whatItCalculates: "It looks for two things: a 'Keyword Tag' that lists your main topics, and 'Alt Text' on images that explains what's happening in your pictures.",
+        whyItMatters: "AI needs help identifying what the 'main character' of your page is. By clearly labeling your key terms and image contents, you help AI categorize your site for the right searches.",
         thresholds: {
-            good: "Analytics or tracking tools detected",
-            poor: "No tracking detected"
+            good: "Keywords are provided and every image has a description",
+            needsImprovement: "Keywords are missing OR some images aren't labeled",
+            poor: "No keyword tags, image descriptions, or headings detected"
         },
         actualReasonsForFailure: [
-            "No analytics scripts installed"
+            "The 'Meta Keywords' list is missing from your page code",
+            "You have images that don't have descriptions (Alt tags)",
+            "No descriptive headings that mention your main topic"
         ],
         howToOvercomeFailure: [
-            "Integrate analytics tools like GA or Hotjar"
-        ]
-    },
-    Segmentation_Profiling_Ready: {
-        title: "User Segmentation Readiness",
-        whatThisParameterIs: "Segmentation Readiness checks for data attributes used in personalization.",
-        whatItCalculates: "It looks for data-user-segment or similar attributes in the DOM or data layer.",
-        whyItMatters: "Segmentation allows serving different content varieties to different AI personas.",
-        thresholds: {
-            good: "Segmentation indicators detected",
-            poor: "No segmentation signals"
-        },
-        actualReasonsForFailure: [
-            "No user identifiers",
-            "No segment-related data attributes"
-        ],
-        howToOvercomeFailure: [
-            "Implement user profiling",
-            "Add segmentation data attributes"
+            "Add a 'Keywords' tag to your page with 3-5 main terms",
+            "Go through your images and add a descriptive 'Alt' label to each",
+            "Include your main topic name in your first two' headings"
         ]
     },
     Internal_Linking_AI_Friendly: {
         title: "AI-Friendly Internal Linking",
-        whatThisParameterIs: "Semantic Internal Linking checks link context.",
-        whatItCalculates: "It inspects anchor text of internal links for descriptive keywords vs generic 'click here'.",
-        whyItMatters: "Descriptive anchors build a knowledge graph that helps AIs understand site topology.",
+        whatThisParameterIs: "It analyzes the text you use for links within your site, making sure they are descriptive (like 'Search SEO Guide') instead of generic (like 'Click here').",
+        whatItCalculates: "It looks at every link on your page to see if the words you use to describe the link match where the link is actually going.",
+        whyItMatters: "Descriptive links help AI build a 'map' of your entire website. If your links are descriptive, the AI knows exactly what's on the next page before it even gets there.",
         thresholds: {
-            good: "Descriptive internal links detected",
-            needsImprovement: "Links lack descriptive text"
+            good: "Most links use specific names (e.g., 'Blue Shoes') for buttons",
+            needsImprovement: "More than half your links use generic words like 'Click Here'",
+            poor: "No discoverable internal links found on the page"
         },
         actualReasonsForFailure: [
-            "Generic anchor text like 'click here'"
+            "No links found that connect to other pages on your own site",
+            "Using 'Read More' or 'Click Here' too many times as link text",
+            "Links don't give any clue about what the next page is about"
         ],
         howToOvercomeFailure: [
-            "Use descriptive anchor text",
-            "Improve internal linking strategy"
+            "Rename 'Click Here' to something like 'See Our SEO Pricing'",
+            "Make sure your links use the actual name of the page they point to",
+            "Add a few curated links to related articles within your text"
         ]
     },
     Duplicate_Content_Detection_Ready: {
         title: "Duplicate Content Protection",
-        whatThisParameterIs: "Duplicate Content Prevention checks for canonicalization.",
-        whatItCalculates: "It ensures <link rel='canonical'> is present and correct.",
-        whyItMatters: "Canonicals prevent AI from learning conflicting information from duplicate pages.",
+        whatThisParameterIs: "It checks for 'canonical tags' which are digital signals that tell AI which version of a page is the original one.",
+        whatItCalculates: "It checks if you've marked your page with 'Master Copy' signals (Canonical tags) or 'Do Not Index' instructions to keep AI from getting confused.",
+        whyItMatters: "If AI sees the same information on multiple URLs, it gets confused about which one to show. This tag ensures your 'Master Copy' gets all the credit and ranking power.",
         thresholds: {
-            good: "Canonical or noindex present",
-            poor: "No duplication protection"
+            good: "Clear 'Master Copy' (Canonical) signal detected",
+            poor: "No signals found to help AI handle duplicate content"
         },
         actualReasonsForFailure: [
-            "Missing canonical tag",
-            "No robots directives"
+            "Missing the 'Canonical' tag that points to the original URL",
+            "You have identical content on multiple pages without a 'Master' link",
+            "No instructions telling AI which duplicate pages to ignore"
         ],
         howToOvercomeFailure: [
-            "Add canonical URLs",
-            "Use meta robots where appropriate"
+            "Add a 'rel=canonical' tag to your page header",
+            "If a page is just a duplicate, use a 'Noindex' instruction",
+            "Ensure every page points to its 'Home' URL as the original"
         ]
     },
-
-    Event_Goal_Tracking_Integrated: {
-        title: "Event & Goal Tracking",
-        whatThisParameterIs: "Key Event Tracking checks for conversion telemetry.",
-        whatItCalculates: "It looks for event triggers on key buttons (e.g. onClick, dataLayer.push).",
-        whyItMatters: "Tracking success events enables AI agents to optimize for actual outcomes.",
+    Content_Completeness: {
+        title: "Content Completeness",
+        whatThisParameterIs: "It evaluates if your page provides a full 'story'—with a clear introduction, deep body text, and a final summary.",
+        whatItCalculates: "It counts your total words (aiming for 400+) and looks for cues in your text that signal a clear beginning, middle, and end.",
+        whyItMatters: "AI 'Answers' are only as good as the source. A complete, exhaustive page provides the depth needed for AI to generate a full response without having to go look at other websites.",
         thresholds: {
-            good: "Event tracking detected",
-            poor: "No event tracking"
+            good: "Word count > 400 with a clear intro and summary",
+            needsImprovement: "Content is too short or doesn't have a clear flow",
+            poor: "Content is extremely thin or lacks all structural flow"
         },
         actualReasonsForFailure: [
-            "No event scripts or handlers"
+            "The page has very few descriptive words (less than 400)",
+            "Missing a clear 'Intro' or a summarizing 'Conclusion' section",
+            "The logic of the page feels fragmented or unfinished"
         ],
         howToOvercomeFailure: [
-            "Implement event tracking",
-            "Track key user actions"
+            "Write a clear, 2-3 sentence introduction to your topic",
+            "Add a final 'Summary' or 'Conclusion' heading at the end",
+            "Ensure your total word count covers the topic deeply (+400 words)"
         ]
     },
-    AB_Testing_Ready: {
-        title: "A/B Testing Readiness",
-        whatThisParameterIs: "Experimentation Infrastructure checks for A/B testing tools.",
-        whatItCalculates: "It detects scripts for Optimizely, VWO, or similar platforms.",
-        whyItMatters: "A/B testing provides the ground-truth data needed to validate AI-generated improvements.",
+    Topical_Focus_Clarity: {
+        title: "Topical Focus Clarity",
+        whatThisParameterIs: "It ensures that your main page title and your biggest heading (H1) are aligned and talking about the same specific topic.",
+        whatItCalculates: "It compares the words in your browser tab (Title) with the words in your main page heading (H1) to see if they're in perfect sync.",
+        whyItMatters: "If your title says 'Red Shoes' and your heading says 'Blue Pants,' AI gets confused. Matching them perfectly sends a clear 'Intelligence signal' about your page’s purpose.",
         thresholds: {
-            good: "A/B testing tools detected",
-            poor: "No A/B testing found"
+            good: "Title and H1 share at least 2 primary keywords",
+            needsImprovement: "The Title and Heading are talking about different things",
+            poor: "Title and main heading have zero keyword overlap"
         },
         actualReasonsForFailure: [
-            "No experimentation tools installed"
+            "The keywords in your Title don't appear in your main heading",
+            "Your main heading is too generic (like 'Welcome') while your Title is specific",
+            "They use completely different words for the same thing"
         ],
         howToOvercomeFailure: [
-            "Integrate A/B testing platforms"
+            "Make sure your H1 heading uses the same primary name as your Title",
+            "Don't use vague greetings; be specific in both places",
+            "Use your project's main 'Keyword' in both the H1 and Title tag"
         ]
     },
-    User_Feedback_Loops_Present: {
-        title: "User Feedback Loops",
-        whatThisParameterIs: "Feedback Loop Integration checks for direct user input mechanisms.",
-        whatItCalculates: "It finds elements related to ratings, comments, or feedback widgets.",
-        whyItMatters: "Direct human feedback is the most valuable signal for reinforcing helpful AI answers.",
+    Answer_Oriented_Structure: {
+        title: "Answer-Oriented Structure",
+        whatThisParameterIs: "It looks for headings framed as questions (like 'How do I...?') or special FAQ sections that are ready to be used in AI chat responses.",
+        whatItCalculates: "It hunts for headings that start with 'How', 'What', or 'Why', and checks if you've added a special 'FAQ code' that's easy for AI to quote.",
+        whyItMatters: "Modern AI (like ChatGPT or Perplexity) looks for direct answers to user questions. Having this structure makes it much more likely that your content will be the one chosen as the 'Best Answer'.",
         thresholds: {
-            good: "Feedback tools or forms detected",
-            poor: "No feedback mechanisms"
+            good: "Found question-based headings or a structured FAQ section",
+            needsImprovement: "Content just explains things without answering direct questions",
+            poor: "No question-based content or FAQ data detected"
         },
         actualReasonsForFailure: [
-            "No feedback forms or tools"
+            "No headings found that look like questions user might ask",
+            "Missing the 'FAQ' technical code in your page background",
+            "Content is written in a passive way that doesn't address queries"
         ],
         howToOvercomeFailure: [
-            "Add surveys or feedback widgets",
-            "Collect user feedback continuously"
+            "Add sub-headings like 'How to Fix X' or 'What is Y?'",
+            "Include an FAQ section at the bottom of your page",
+            "Give clear, 1-2 sentence answers right after your question headings"
+        ]
+    },
+    Content_Chunking: {
+        title: "Content Chunking",
+        whatThisParameterIs: "It checks if you've broken long text into small, readable bites instead of giant blocks of text that are hard to scan.",
+        whatItCalculates: "It measures the length of your paragraphs (aiming for under 80 words) and how often you use headings to break things up.",
+        whyItMatters: "Giant walls of text are difficult for AI models to summarize. Breaking your content into smaller 'chunks' leads to more accurate AI summaries and better user engagement.",
+        thresholds: {
+            good: "Small, bite-sized paragraphs with frequent sub-headings",
+            needsImprovement: "Paragraphs are too long (uninterrupted walls of text)",
+            poor: "Severe wall of text detected with no readable breaks"
+        },
+        actualReasonsForFailure: [
+            "You have paragraphs longer than 80 words",
+            "Too much text without any headings to separate the ideas",
+            "The layout looks overwhelming for a reader (and a bot)"
+        ],
+        howToOvercomeFailure: [
+            "Break any paragraph longer than 4 lines into two pieces",
+            "Add a sub-heading (H2/H3) every few hundred words",
+            "Use white space and clear breaks between thematic points"
+        ]
+    },
+    Lists_Structured_Blocks: {
+        title: "Lists & Structured Blocks",
+        whatThisParameterIs: "It detects if you've used bullet points, tables, or numbered lists to present important data points.",
+        whatItCalculates: "It counts the number of bullet points, numbered lists, and data tables you use to organize your key facts.",
+        whyItMatters: "AI loves lists. Information formatted in bullets or tables is much easier for bots to grab and display in 'Top 10' lists or comparison tables in search results.",
+        thresholds: {
+            good: "Lists or tables found within the main body text",
+            needsImprovement: "Content relies exclusively on long paragraphs of text",
+            poor: "Entire page is plain paragraphs with no lists or tables"
+        },
+        actualReasonsForFailure: [
+            "No 'Bulleted' or 'Numbered' lists found on the page",
+            "Important numbers or steps are buried deep in paragraphs",
+            "The data lacks visual or structural variety"
+        ],
+        howToOvercomeFailure: [
+            "Turn your 3+ key points into a bulleted list",
+            "Use a table if you're comparing specifications or data",
+            "Use a 'Callout' block for your most important takeaway"
+        ]
+    },
+    Terminology_Consistency: {
+        title: "Terminology Consistency",
+        whatThisParameterIs: "It verifies that the main terms used in your headings are consistently supported and explained within your body text.",
+        whatItCalculates: "It checks if the main words in your headings are actually mentioned and explained in the text below them.",
+        whyItMatters: "If you keep changing how you refer to your main topic, AI can't build a strong 'knowledge graph' of your expertise. Consistent language makes you look like a trustworthy authority.",
+        thresholds: {
+            good: "Primary heading terms are used frequently in the body",
+            needsImprovement: "Headings mention words that don't appear in the main text",
+            poor: "Keywords are used once or vary wildly across the page"
+        },
+        actualReasonsForFailure: [
+            "Main topic words from headings are only mentioned once",
+            "Using too many different synonyms that confuse the AI",
+            "Weak connection between your 'Titles' and your 'Body Text'"
+        ],
+        howToOvercomeFailure: [
+            "Pick 2-3 primary terms and stick with them throughout",
+            "Ensure your body text directly supports what the heading promised",
+            "Avoid switching terminology in every other paragraph"
+        ]
+    },
+    Author_Source_Attribution: {
+        title: "Author & Source Attribution",
+        whatThisParameterIs: "It searches for a clear 'Byline' (who wrote this?) and author information that proves the content was created by a real person with expertise.",
+        whatItCalculates: "It looks for an 'Author Byline' (By [Name]), professional credentials, and digital ID code (Schema) that proves a real human wrote the piece.",
+        whyItMatters: "To fight AI-generated spam, engines now prioritize 'Human Authority.' Showing exactly who wrote the content proves to AI that your information is expert-led and trustworthy.",
+        thresholds: {
+            good: "Found a clear author name and professional background code",
+            needsImprovement: "The content appears 'anonymous' to AI crawlers",
+            poor: "Zero author information or human credentials identified"
+        },
+        actualReasonsForFailure: [
+            "No author name or 'By' line visible to the AI",
+            "Missing the digital 'Author code' in your site background",
+            "Anonymous content that lacks any sign of a real human creator"
+        ],
+        howToOvercomeFailure: [
+            "Add a clear 'By [Your Name]' line to your articles",
+            "Create a mini 'Author bio' at the bottom of the page",
+            "Ensure your website uses 'Author' technical code (Schema)"
+        ]
+    },
+    Fact_Vs_Opinion: {
+        title: "Fact vs Opinion Separation",
+        whatThisParameterIs: "It looks for outbound links and citations to reputable research, news, or government sites that back up your factual claims.",
+        whatItCalculates: "It scours your page for external links to reputable sites (like .edu, .gov, or Wikipedia) and specific 'Source' sections.",
+        whyItMatters: "AI models try to avoid 'hallucinating' (making things up). By citing your sources, you provide 'proof' that your content is factually correct, which builds high trust scores with AI engines.",
+        thresholds: {
+            good: "Visible citations or a 'Sources' section found",
+            needsImprovement: "Statements are made without linking to any proof",
+            poor: "No external links or citations found to back up claims"
+        },
+        actualReasonsForFailure: [
+            "No links found leading to high-authority, trusted websites",
+            "Missing a clear 'References' or 'Sources' list",
+            "Content makes claims but doesn't show where they came from"
+        ],
+        howToOvercomeFailure: [
+            "Link out to a few reputable news or research sites",
+            "Add a 'Sources' heading at the end of your page",
+            "Use small reference numbers in your text to signal proof"
         ]
     },
 
@@ -2899,91 +2946,67 @@ export const InfoDetails = {
         guideLink: "https://developers.google.com/search/docs/appearance/structured-data",
         whatThisMetricIs: (
             <div className="space-y-2">
-                <p>Measures how well your website is structured, understood, and usable by modern AI systems — including search engines, AI assistants, recommendation engines, and automation tools.</p>
-                <p>It evaluates whether your content, data, and tracking signals are accessible, interpretable, and ready for AI-driven discovery and optimization.</p>
+                <p>This score measures how easy it is for Artificial Intelligence (like ChatGPT, Perplexity, or Google Gemni) to find, understand, and use your content to answer user questions.</p>
+                <p>We audit 14 critical signals—ranging from hidden "Identity Code" to how well your text answers direct questions—to give you a roadmap for the future of AI-driven search.</p>
             </div>
         ),
         whyItMatters: (
             <div className="space-y-4">
-                <p>AI systems increasingly decide what content is surfaced, summarized, recommended, or ignored.</p>
+                <p>AI models are now the primary way people discover information. If an AI can't "read" your site easily, it won't recommend you to its users.</p>
 
                 <div>
-                    <span className="font-semibold block mb-1">Websites that are AI-ready:</span>
+                    <span className="font-semibold block mb-1">A high AIO score means:</span>
                     <ul className="list-disc pl-5 space-y-1 text-sm">
-                        <li>Are easier for search and AI assistants to understand</li>
-                        <li>Appear more accurately in AI-generated answers</li>
-                        <li>Enable smarter personalization and automation</li>
-                        <li>Adapt faster to future AI-driven platforms</li>
+                        <li>Your site appears as a "Primary Source" in AI chat responses</li>
+                        <li>Your brand is categorized as an "Authority" in your industry</li>
+                        <li>Your data is pulled into comparison tables and "Top 10" lists</li>
+                        <li>You get traffic from future-facing search engines (SearchGPT, Perplexity)</li>
                     </ul>
                 </div>
 
-                <p className="font-medium">AI readiness is quickly becoming as important as SEO.</p>
+                <p className="font-medium">In the age of AI, being readable to machines is just as important as being readable to humans.</p>
             </div>
         ),
         whatToDoForAGoodScore: (
             <ul className="list-disc pl-5 space-y-4">
                 <li>
-                    <span className="font-semibold block mb-1">Improve AI understanding of your content:</span>
+                    <span className="font-semibold block mb-1">Build a Technical 'Identity' for AI:</span>
                     <ul className="list-[circle] pl-5 space-y-1 text-sm">
-                        <li>Use structured data (Schema) to clearly describe pages and entities</li>
-                        <li>Organize content with semantic HTML and proper headings</li>
-                        <li>Ensure text content is clear, well-structured, and machine-readable</li>
+                        <li>Use Structured Data (JSON-LD) to clearly define who you are and what you do.</li>
+                        <li>Ensure every page has a "Master Copy" (Canonical) signal to avoid confusing bots.</li>
+                        <li>Keep your content fresh—AI prioritizes information updated in the last 30 days.</li>
                     </ul>
                 </li>
                 <li>
-                    <span className="font-semibold block mb-1">Strengthen metadata and content signals:</span>
+                    <span className="font-semibold block mb-1">Optimize for 'The Best Answer':</span>
                     <ul className="list-[circle] pl-5 space-y-1 text-sm">
-                        <li>Provide complete metadata for search and sharing platforms</li>
-                        <li>Clearly annotate key topics using headings, image alt text, and page structure</li>
-                        <li>Keep content fresh and updated when relevant</li>
+                        <li>Frame your headings as questions (e.g., "How to...?") to match how people talk to AI.</li>
+                        <li>Break long "Walls of Text" into small chunks so AI can summarize you accurately.</li>
+                        <li>Use bullet points and tables—AI loves structured data extraction.</li>
                     </ul>
                 </li>
                 <li>
-                    <span className="font-semibold block mb-1">Enable AI-friendly data access:</span>
+                    <span className="font-semibold block mb-1">Prove Your Authority & Trust:</span>
                     <ul className="list-[circle] pl-5 space-y-1 text-sm">
-                        <li>Expose content and data through APIs or structured endpoints</li>
-                        <li>Avoid blocking important content behind scripts or inaccessible formats</li>
-                        <li>Ensure pages load quickly for automated crawlers</li>
-                    </ul>
-                </li>
-                <li>
-                    <span className="font-semibold block mb-1">Support personalization and learning:</span>
-                    <ul className="list-[circle] pl-5 space-y-1 text-sm">
-                        <li>Implement behavior tracking to understand user interactions</li>
-                        <li>Enable segmentation and profiling signals</li>
-                        <li>Use dynamic content patterns where appropriate</li>
-                    </ul>
-                </li>
-                <li>
-                    <span className="font-semibold block mb-1">Improve AI-driven discovery and indexing:</span>
-                    <ul className="list-[circle] pl-5 space-y-1 text-sm">
-                        <li>Use descriptive internal links, not generic anchors</li>
-                        <li>Prevent duplicate content with canonical or indexing controls</li>
-                        <li>Support multilingual discovery when targeting multiple regions</li>
-                    </ul>
-                </li>
-                <li>
-                    <span className="font-semibold block mb-1">Close the optimization feedback loop:</span>
-                    <ul className="list-[circle] pl-5 space-y-1 text-sm">
-                        <li>Track meaningful events and goals</li>
-                        <li>Support A/B testing or experimentation</li>
-                        <li>Collect user feedback to guide continuous improvement</li>
+                        <li>Include a clear "Byline" and Author Bio to prove a real human edited the content.</li>
+                        <li>Link to expert outside sources (like .edu or .gov) to verify your factual claims.</li>
+                        <li>Keep your terminology consistent so AI can build a stable "Knowledge Map" of your brand.</li>
                     </ul>
                 </li>
             </ul>
         ),
         howThisScoreIsCalculated: (
             <div className="space-y-2">
-                <p>We analyze multiple AI-readiness signals across content structure, metadata quality, data accessibility, tracking, and optimization infrastructure.</p>
-                <p>Each area is weighted by its importance to AI understanding and automation. Strong signals earn full credit, partial readiness earns partial credit, and missing foundations reduce the score.</p>
-                <p>An overall AI Readiness badge indicates whether your site meets a minimum baseline for AI compatibility.</p>
+                <p>Our audit engine automatically tests your page against 14 specific AIO parameters found in the backend. Each test is weighted based on its importance to modern Large Language Models (LLMs).</p>
+                <p>We look for a "Technical Foundation" (Identity Code and Freshness), "AI Readability" (Chunking and Lists), and "Trust Signals" (Author info and Citations).</p>
+                <p>An overall score of 80%+ earns you the "AI-Ready" badge, signaling that your site is fully optimized for the next generation of search.</p>
             </div>
         ),
         weightage: [
-            { param: "Technical AI Foundation", weight: "35%" },
-            { param: "Content NLP Readiness", weight: "25%" },
-            { param: "Analytics & Tracking", weight: "25%" },
-            { param: "Advanced Capabilities", weight: "15%" }
+            { param: "Technical Foundation (Metadata & Freshness)", weight: "28%" },
+            { param: "AI Readability (Chunking & Structure)", weight: "28%" },
+            { param: "Search Intent (Question & Keyword Alignment)", weight: "24%" },
+            { param: "Authority & Trust (Author & Citations)", weight: "20%" }
         ]
     },
 

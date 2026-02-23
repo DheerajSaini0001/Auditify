@@ -70,7 +70,7 @@ export const startAudit = async (req, res) => {
       url,
       device,
       report,
-      Status: "inprogress",
+      status: "inprogress",
     });
 
     const workerPath = join(process.cwd(), "workers", "singleAuditWorker.js");

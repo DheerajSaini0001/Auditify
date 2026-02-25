@@ -766,19 +766,19 @@ export default async function aioReadiness(url, page, $) {
   // Weights
   const weights = {
     Structured_Data: 3,
-    Content_NLP_Friendly: 2,
+    Content_NLP_Friendly: 3,
     Keywords_Entities_Annotated: 2,
-    Content_Updated_Regularly: 1,
+    Content_Updated_Regularly: 2,
     Internal_Linking_AI_Friendly: 2,
     Duplicate_Content_Detection_Ready: 1,
-    Topical_Focus_Clarity: 2,
-    Answer_Oriented_Structure: 2,
+    Topical_Focus_Clarity: 3,
+    Answer_Oriented_Structure: 3,
     Content_Chunking: 2,
     Lists_Structured_Blocks: 2,
     Terminology_Consistency: 1,
     Author_Source_Attribution: 2,
     Fact_Vs_Opinion: 2,
-    Content_Completeness: 1
+    Content_Completeness: 2
   };
 
   const metricsMap = {

@@ -12,7 +12,6 @@ connectDB();
 
 const app = express();
 
-// Trust proxy for cloud platforms (Render, Heroku, etc.)
 app.set('trust proxy', 1);
 
 app.use(helmet());

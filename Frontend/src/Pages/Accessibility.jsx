@@ -90,8 +90,7 @@ const AccessibilityShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
 
 // Simplified Metric Card
 const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
-  const { score, details, analysis } = data || {};
-  const meta = analysis;
+  const { score, details, meta, analysis } = data || {};
   const isPassed = score === 100;
   const isWarning = score === 50;
   const [showDetails, setShowDetails] = React.useState(false);
@@ -172,7 +171,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
               Threshold:
             </span>
             <span className={darkMode ? "text-slate-300" : "text-slate-600"}>
-              {data.threshold}
+              {meta?.threshold}
             </span>
           </div>
         </div>
@@ -278,18 +277,18 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
 
             {/* Cause & Recommendation */}
             <div className={`p-4 rounded-xl space-y-4 border ${darkMode ? "bg-blue-500/5 border-blue-500/20" : "bg-blue-50/50 border-blue-100"}`}>
-              {data.cause && (
+              {analysis?.cause && (
                 <div className="space-y-1">
                   <span className="text-[9px] font-black uppercase tracking-widest text-blue-500">Root Cause:</span>
-                  <p className={`text-xs font-semibold leading-relaxed ${darkMode ? "text-slate-300" : "text-slate-700"}`}>{data.cause}</p>
+                  <p className={`text-xs font-semibold leading-relaxed ${darkMode ? "text-slate-300" : "text-slate-700"}`}>{analysis.cause}</p>
                 </div>
               )}
-              {data.recommendation && (
+              {analysis?.recommendation && (
                 <div className="space-y-1">
                   <span className="text-[9px] font-black uppercase tracking-widest text-blue-500">Fix Action Plan:</span>
                   <div className="flex gap-2 items-start">
                     <ShieldCheck size={14} className="mt-0.5 text-blue-500 shrink-0" />
-                    <p className={`text-xs font-bold leading-relaxed ${darkMode ? "text-slate-200" : "text-slate-800"}`}>{data.recommendation}</p>
+                    <p className={`text-xs font-bold leading-relaxed ${darkMode ? "text-slate-200" : "text-slate-800"}`}>{analysis.recommendation}</p>
                   </div>
                 </div>
               )}

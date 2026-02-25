@@ -31,8 +31,9 @@ const checkColorContrast = (results) => {
       score,
       status,
       details: "Text elements meet minimum contrast ratios (4.5:1 / 3:1).",
-      recommendation: "Continue maintaining high contrast for readability.",
-      threshold: "Standard text should have 4.5:1 ratio, large text 3:1.",
+      meta: {
+        threshold: "Standard text should have 4.5:1 ratio, large text 3:1.",
+      },
       analysis: null
     };
   }
@@ -42,10 +43,8 @@ const checkColorContrast = (results) => {
     score,
     status,
     details: `Insufficient color contrast found (${violation.nodes.length} occurrences).`,
-    cause: "Text elements do not have enough contrast against their background colors, making them hard to read.",
-    recommendation: "Increase contrast between text and background. Aim for at least 4.5:1 for normal text and 3:1 for large text.",
-    threshold: "Standard text should have 4.5:1 ratio, large text 3:1.",
-    analysis: {
+    meta: {
+      threshold: "Standard text should have 4.5:1 ratio, large text 3:1.",
       impact: violation.impact,
       description: violation.description,
       help: violation.help,
@@ -53,6 +52,10 @@ const checkColorContrast = (results) => {
       tags: violation.tags,
       failedNodes: failedNodes,
       count: violation.nodes.length
+    },
+    analysis: {
+      cause: "Text elements do not have enough contrast against their background colors, making them hard to read.",
+      recommendation: "Increase contrast between text and background. Aim for at least 4.5:1 for normal text and 3:1 for large text.",
     }
   };
 };
@@ -66,8 +69,9 @@ const checkFocusOrder = (results) => {
       score,
       status,
       details: "Focus order follows a logical, sequential path.",
-      recommendation: "Maintain logical tab order for keyboard users.",
-      threshold: "Tab order must match visual layout.",
+      meta: {
+        threshold: "Tab order must match visual layout.",
+      },
       analysis: null
     };
   }
@@ -77,10 +81,8 @@ const checkFocusOrder = (results) => {
     score,
     status,
     details: `Illogical focus order detected (${violation.nodes.length} occurrences).`,
-    cause: "The tab order of interactive elements does not match the visual layout, confusing keyboard users.",
-    recommendation: "Rearrange DOM elements or use tabindex='0' to match visual order. Avoid positive tabindex.",
-    threshold: "Tab order must match visual layout.",
-    analysis: {
+    meta: {
+      threshold: "Tab order must match visual layout.",
       impact: violation.impact,
       description: violation.description,
       help: violation.help,
@@ -88,6 +90,10 @@ const checkFocusOrder = (results) => {
       tags: violation.tags,
       failedNodes: failedNodes,
       count: violation.nodes.length
+    },
+    analysis: {
+      cause: "The tab order of interactive elements does not match the visual layout, confusing keyboard users.",
+      recommendation: "Rearrange DOM elements or use tabindex='0' to match visual order. Avoid positive tabindex.",
     }
   };
 };
@@ -101,8 +107,9 @@ const checkFocusableContent = (results) => {
       score,
       status,
       details: "All interactive elements are reachable via keyboard.",
-      recommendation: "Ensure new interactive elements remain keyboard accessible.",
-      threshold: "All clickable items must be keyboard accessible.",
+      meta: {
+        threshold: "All clickable items must be keyboard accessible.",
+      },
       analysis: null
     };
   }
@@ -112,10 +119,8 @@ const checkFocusableContent = (results) => {
     score,
     status,
     details: `Keyboard unreachable elements found (${violation.nodes.length} occurrences).`,
-    cause: "Interactive elements (like buttons, links) cannot be reached using the Tab key.",
-    recommendation: "Make elements focusable by using semantic HTML (button, a) or adding tabindex='0'.",
-    threshold: "All clickable items must be keyboard accessible.",
-    analysis: {
+    meta: {
+      threshold: "All clickable items must be keyboard accessible.",
       impact: violation.impact,
       description: violation.description,
       help: violation.help,
@@ -123,6 +128,10 @@ const checkFocusableContent = (results) => {
       tags: violation.tags,
       failedNodes: failedNodes,
       count: violation.nodes.length
+    },
+    analysis: {
+      cause: "Interactive elements (like buttons, links) cannot be reached using the Tab key.",
+      recommendation: "Make elements focusable by using semantic HTML (button, a) or adding tabindex='0'.",
     }
   };
 };
@@ -136,8 +145,9 @@ const checkTabIndex = (results) => {
       score,
       status,
       details: "No elements use positive tabindex.",
-      recommendation: "Continue avoiding positive tabindex.",
-      threshold: "Avoid custom tab orders for natural navigation.",
+      meta: {
+        threshold: "Avoid custom tab orders for natural navigation.",
+      },
       analysis: null
     };
   }
@@ -147,10 +157,8 @@ const checkTabIndex = (results) => {
     score,
     status,
     details: `Positive tabindex usage detected (${violation.nodes.length} occurrences).`,
-    cause: "Elements with tabindex > 0 disrupt the natural tab order.",
-    recommendation: "Remove positive tabindex values. Use document order or tabindex='0'.",
-    threshold: "Avoid custom tab orders for natural navigation.",
-    analysis: {
+    meta: {
+      threshold: "Avoid custom tab orders for natural navigation.",
       impact: violation.impact,
       description: violation.description,
       help: violation.help,
@@ -158,6 +166,10 @@ const checkTabIndex = (results) => {
       tags: violation.tags,
       failedNodes: failedNodes,
       count: violation.nodes.length
+    },
+    analysis: {
+      cause: "Elements with tabindex > 0 disrupt the natural tab order.",
+      recommendation: "Remove positive tabindex values. Use document order or tabindex='0'.",
     }
   };
 };
@@ -171,8 +183,9 @@ const checkInteractiveElementAffordance = (results) => {
       score,
       status,
       details: "All interactive elements have proper roles and affordances.",
-      recommendation: "Keep using semantic elements for interactivity.",
-      threshold: "Buttons and links must look and act clickable.",
+      meta: {
+        threshold: "Buttons and links must look and act clickable.",
+      },
       analysis: null
     };
   }
@@ -182,10 +195,8 @@ const checkInteractiveElementAffordance = (results) => {
     score,
     status,
     details: `Ambiguous interactive elements found (${violation.nodes.length} occurrences).`,
-    cause: "Clickable elements (like divs with onclick) lack semantic roles.",
-    recommendation: "Add role='button' and tabindex='0', or use native <button>.",
-    threshold: "Buttons and links must look and act clickable.",
-    analysis: {
+    meta: {
+      threshold: "Buttons and links must look and act clickable.",
       impact: violation.impact,
       description: violation.description,
       help: violation.help,
@@ -193,6 +204,10 @@ const checkInteractiveElementAffordance = (results) => {
       tags: violation.tags,
       failedNodes: failedNodes,
       count: violation.nodes.length
+    },
+    analysis: {
+      cause: "Clickable elements (like divs with onclick) lack semantic roles.",
+      recommendation: "Add role='button' and tabindex='0', or use native <button>.",
     }
   };
 };
@@ -206,8 +221,9 @@ const checkLabel = (results) => {
       score,
       status,
       details: "All form inputs have proper labels.",
-      recommendation: "Maintain explicit labeling for all form controls.",
-      threshold: "Every form input must have a clear text label.",
+      meta: {
+        threshold: "Every form input must have a clear text label.",
+      },
       analysis: null
     };
   }
@@ -217,10 +233,8 @@ const checkLabel = (results) => {
     score,
     status,
     details: `Unlabeled form fields detected (${violation.nodes.length} occurrences).`,
-    cause: "Inputs without labels are inaccessible to screen readers.",
-    recommendation: "Associate a <label for='id'> or use aria-label/aria-labelledby.",
-    threshold: "Every form input must have a clear text label.",
-    analysis: {
+    meta: {
+      threshold: "Every form input must have a clear text label.",
       impact: violation.impact,
       description: violation.description,
       help: violation.help,
@@ -228,6 +242,10 @@ const checkLabel = (results) => {
       tags: violation.tags,
       failedNodes: failedNodes,
       count: violation.nodes.length
+    },
+    analysis: {
+      cause: "Inputs without labels are inaccessible to screen readers.",
+      recommendation: "Associate a <label for='id'> or use aria-label/aria-labelledby.",
     }
   };
 };
@@ -241,8 +259,9 @@ const checkAriaAllowedAttr = (results) => {
       score,
       status,
       details: "ARIA attributes are valid for their roles.",
-      recommendation: "Validate ARIA usage against specification.",
-      threshold: "Accessibility tags must match their intended use.",
+      meta: {
+        threshold: "Accessibility tags must match their intended use.",
+      },
       analysis: null
     };
   }
@@ -252,10 +271,8 @@ const checkAriaAllowedAttr = (results) => {
     score,
     status,
     details: `Invalid ARIA attributes detected (${violation.nodes.length} occurrences).`,
-    cause: "Some attributes are not permitted for the element's role (e.g., aria-checked on a button).",
-    recommendation: "Remove invalid attributes or change the role to one that supports them.",
-    threshold: "Accessibility tags must match their intended use.",
-    analysis: {
+    meta: {
+      threshold: "Accessibility tags must match their intended use.",
       impact: violation.impact,
       description: violation.description,
       help: violation.help,
@@ -263,6 +280,10 @@ const checkAriaAllowedAttr = (results) => {
       tags: violation.tags,
       failedNodes: failedNodes,
       count: violation.nodes.length
+    },
+    analysis: {
+      cause: "Some attributes are not permitted for the element's role (e.g., aria-checked on a button).",
+      recommendation: "Remove invalid attributes or change the role to one that supports them.",
     }
   };
 };
@@ -276,8 +297,9 @@ const checkAriaRoles = (results) => {
       score,
       status,
       details: "All ARIA roles are valid.",
-      recommendation: "Use standard WAI-ARIA roles to enhance semantics.",
-      threshold: "Elements must be correctly identified (e.g., 'button').",
+      meta: {
+        threshold: "Elements must be correctly identified (e.g., 'button').",
+      },
       analysis: null
     };
   }
@@ -287,10 +309,8 @@ const checkAriaRoles = (results) => {
     score,
     status,
     details: `Invalid ARIA roles found (${violation.nodes.length} occurrences).`,
-    cause: "Elements use non-existent or abstract ARIA roles.",
-    recommendation: "Check role spelling and ensure it exists in the WAI-ARIA specification.",
-    threshold: "Elements must be correctly identified (e.g., 'button').",
-    analysis: {
+    meta: {
+      threshold: "Elements must be correctly identified (e.g., 'button').",
       impact: violation.impact,
       description: violation.description,
       help: violation.help,
@@ -298,6 +318,10 @@ const checkAriaRoles = (results) => {
       tags: violation.tags,
       failedNodes: failedNodes,
       count: violation.nodes.length
+    },
+    analysis: {
+      cause: "Elements use non-existent or abstract ARIA roles.",
+      recommendation: "Check role spelling and ensure it exists in the WAI-ARIA specification.",
     }
   };
 };
@@ -311,8 +335,9 @@ const checkAriaHiddenFocus = (results) => {
       score,
       status,
       details: "Hidden content (aria-hidden) contains no focusable elements.",
-      recommendation: "Keep non-interactive content hidden correctly.",
-      threshold: "Hidden content must not trap keyboard focus.",
+      meta: {
+        threshold: "Hidden content must not trap keyboard focus.",
+      },
       analysis: null
     };
   }
@@ -322,10 +347,8 @@ const checkAriaHiddenFocus = (results) => {
     score,
     status,
     details: `Focusable elements hidden with aria-hidden (${violation.nodes.length} occurrences).`,
-    cause: "User can tab to elements that screen readers will ignore.",
-    recommendation: "Remove aria-hidden from focusable elements or add tabindex='-1'.",
-    threshold: "Hidden content must not trap keyboard focus.",
-    analysis: {
+    meta: {
+      threshold: "Hidden content must not trap keyboard focus.",
       impact: violation.impact,
       description: violation.description,
       help: violation.help,
@@ -333,6 +356,10 @@ const checkAriaHiddenFocus = (results) => {
       tags: violation.tags,
       failedNodes: failedNodes,
       count: violation.nodes.length
+    },
+    analysis: {
+      cause: "User can tab to elements that screen readers will ignore.",
+      recommendation: "Remove aria-hidden from focusable elements or add tabindex='-1'.",
     }
   };
 };
@@ -346,8 +373,9 @@ const checkImageAlt = (results) => {
       score,
       status,
       details: "All images have valid alt text.",
-      recommendation: "Ensure alt text remains descriptive for new images.",
-      threshold: "All images must have text descriptions or be marked decorative.",
+      meta: {
+        threshold: "All images must have text descriptions or be marked decorative.",
+      },
       analysis: null
     };
   }
@@ -357,10 +385,8 @@ const checkImageAlt = (results) => {
     score,
     status,
     details: `Images missing alt text detected (${violation.nodes.length} occurrences).`,
-    cause: "Images without alt text are invisible to screen readers.",
-    recommendation: "Add descriptive alt text or use alt='' for decorative images.",
-    threshold: "All images must have text descriptions or be marked decorative.",
-    analysis: {
+    meta: {
+      threshold: "All images must have text descriptions or be marked decorative.",
       impact: violation.impact,
       description: violation.description,
       help: violation.help,
@@ -368,6 +394,10 @@ const checkImageAlt = (results) => {
       tags: violation.tags,
       failedNodes: failedNodes,
       count: violation.nodes.length
+    },
+    analysis: {
+      cause: "Images without alt text are invisible to screen readers.",
+      recommendation: "Add descriptive alt text or use alt='' for decorative images.",
     }
   };
 };
@@ -381,8 +411,9 @@ const checkLinkName = (results) => {
       score,
       status,
       details: "All links have discernible text.",
-      recommendation: "Keep link text descriptive and concise.",
-      threshold: "All links must have clear, descriptive text.",
+      meta: {
+        threshold: "All links must have clear, descriptive text.",
+      },
       analysis: null
     };
   }
@@ -392,10 +423,8 @@ const checkLinkName = (results) => {
     score,
     status,
     details: `Links without text detected (${violation.nodes.length} occurrences).`,
-    cause: "Empty links or icon-only links without labels are confusing.",
-    recommendation: "Add text content or use aria-label for icon links.",
-    threshold: "All links must have clear, descriptive text.",
-    analysis: {
+    meta: {
+      threshold: "All links must have clear, descriptive text.",
       impact: violation.impact,
       description: violation.description,
       help: violation.help,
@@ -403,6 +432,10 @@ const checkLinkName = (results) => {
       tags: violation.tags,
       failedNodes: failedNodes,
       count: violation.nodes.length
+    },
+    analysis: {
+      cause: "Empty links or icon-only links without labels are confusing.",
+      recommendation: "Add text content or use aria-label for icon links.",
     }
   };
 };
@@ -416,8 +449,9 @@ const checkButtonName = (results) => {
       score,
       status,
       details: "All buttons have discernible text.",
-      recommendation: "Maintain clear labeling for actions.",
-      threshold: "All buttons must have clear, descriptive labels.",
+      meta: {
+        threshold: "All buttons must have clear, descriptive labels.",
+      },
       analysis: null
     };
   }
@@ -427,10 +461,8 @@ const checkButtonName = (results) => {
     score,
     status,
     details: `Buttons missing labels detected (${violation.nodes.length} occurrences).`,
-    cause: "Icon buttons or empty buttons without labels are unusable for screen readers.",
-    recommendation: "Add text inside <button>, or use aria-label/aria-labelledby.",
-    threshold: "All buttons must have clear, descriptive labels.",
-    analysis: {
+    meta: {
+      threshold: "All buttons must have clear, descriptive labels.",
       impact: violation.impact,
       description: violation.description,
       help: violation.help,
@@ -438,6 +470,10 @@ const checkButtonName = (results) => {
       tags: violation.tags,
       failedNodes: failedNodes,
       count: violation.nodes.length
+    },
+    analysis: {
+      cause: "Icon buttons or empty buttons without labels are unusable for screen readers.",
+      recommendation: "Add text inside <button>, or use aria-label/aria-labelledby.",
     }
   };
 };
@@ -451,8 +487,9 @@ const checkDocumentTitle = (results) => {
       score,
       status,
       details: "Page has a valid, non-empty <title>.",
-      recommendation: "Keep title descriptive and unique.",
-      threshold: "Page must have a descriptive browser tab title.",
+      meta: {
+        threshold: "Page must have a descriptive browser tab title.",
+      },
       analysis: null
     };
   }
@@ -462,10 +499,8 @@ const checkDocumentTitle = (results) => {
     score,
     status,
     details: "Document title is missing or empty.",
-    cause: "Without a title, users cannot identify the page content in tabs or search results.",
-    recommendation: "Add a <title> element to the <head>.",
-    threshold: "Page must have a descriptive browser tab title.",
-    analysis: {
+    meta: {
+      threshold: "Page must have a descriptive browser tab title.",
       impact: violation.impact,
       description: violation.description,
       help: violation.help,
@@ -473,6 +508,10 @@ const checkDocumentTitle = (results) => {
       tags: violation.tags,
       failedNodes: failedNodes,
       count: violation.nodes.length
+    },
+    analysis: {
+      cause: "Without a title, users cannot identify the page content in tabs or search results.",
+      recommendation: "Add a <title> element to the <head>.",
     }
   };
 };
@@ -486,8 +525,9 @@ const checkHtmlHasLang = (results) => {
       score,
       status,
       details: "The <html> element has a valid lang attribute.",
-      recommendation: "Ensure lang matches the page content language.",
-      threshold: "Document language must be clearly defined (e.g., lang='en').",
+      meta: {
+        threshold: "Document language must be clearly defined (e.g., lang='en').",
+      },
       analysis: null
     };
   }
@@ -497,10 +537,8 @@ const checkHtmlHasLang = (results) => {
     score,
     status,
     details: "Missing or invalid lang attribute on <html>.",
-    cause: "Screen readers need lang to set the correct voice profile.",
-    recommendation: "Add lang='en' (or checked code) to the <html> tag.",
-    threshold: "Document language must be clearly defined (e.g., lang='en').",
-    analysis: {
+    meta: {
+      threshold: "Document language must be clearly defined (e.g., lang='en').",
       impact: violation.impact,
       description: violation.description,
       help: violation.help,
@@ -508,6 +546,10 @@ const checkHtmlHasLang = (results) => {
       tags: violation.tags,
       failedNodes: failedNodes,
       count: violation.nodes.length
+    },
+    analysis: {
+      cause: "Screen readers need lang to set the correct voice profile.",
+      recommendation: "Add lang='en' (or checked code) to the <html> tag.",
     }
   };
 };
@@ -521,8 +563,9 @@ const checkMetaViewport = (results) => {
       score,
       status,
       details: "Viewport allows user scaling.",
-      recommendation: "Keep user-scalable='yes' for low-vision users.",
-      threshold: "Users must be allowed to zoom in for readability.",
+      meta: {
+        threshold: "Users must be allowed to zoom in for readability.",
+      },
       analysis: null
     };
   }
@@ -532,10 +575,8 @@ const checkMetaViewport = (results) => {
     score,
     status,
     details: "Viewport meta tag restricts zooming.",
-    cause: "Disabling zoom prevents low-vision users from increasing text size.",
-    recommendation: "Remove user-scalable='no' or maximum-scale='1'.",
-    threshold: "Users must be allowed to zoom in for readability.",
-    analysis: {
+    meta: {
+      threshold: "Users must be allowed to zoom in for readability.",
       impact: violation.impact,
       description: violation.description,
       help: violation.help,
@@ -543,6 +584,10 @@ const checkMetaViewport = (results) => {
       tags: violation.tags,
       failedNodes: failedNodes,
       count: violation.nodes.length
+    },
+    analysis: {
+      cause: "Disabling zoom prevents low-vision users from increasing text size.",
+      recommendation: "Remove user-scalable='no' or maximum-scale='1'.",
     }
   };
 };
@@ -556,8 +601,9 @@ const checkList = (results) => {
       score,
       status,
       details: "All lists use valid structure (ul/ol/dl).",
-      recommendation: "Keep using semantic listing elements.",
-      threshold: "Lists must be correctly structured for screen readers.",
+      meta: {
+        threshold: "Lists must be correctly structured for screen readers.",
+      },
       analysis: null
     };
   }
@@ -567,10 +613,8 @@ const checkList = (results) => {
     score,
     status,
     details: `Improper list structure detected (${violation.nodes.length} occurrences).`,
-    cause: "Lists (ul/ol) must only contain li elements.",
-    recommendation: "Ensure <ul> and <ol> only contain <li> elements directly.",
-    threshold: "Lists must be correctly structured for screen readers.",
-    analysis: {
+    meta: {
+      threshold: "Lists must be correctly structured for screen readers.",
       impact: violation.impact,
       description: violation.description,
       help: violation.help,
@@ -578,6 +622,10 @@ const checkList = (results) => {
       tags: violation.tags,
       failedNodes: failedNodes,
       count: violation.nodes.length
+    },
+    analysis: {
+      cause: "Lists (ul/ol) must only contain li elements.",
+      recommendation: "Ensure <ul> and <ol> only contain <li> elements directly.",
     }
   };
 };
@@ -591,8 +639,9 @@ const checkHeadingOrder = (results) => {
       score,
       status,
       details: "Headings follow a logical hierarchy (h1 -> h2).",
-      recommendation: "Maintain sequential heading levels.",
-      threshold: "Headings must follow a logical hierarchy (H1, H2, etc.).",
+      meta: {
+        threshold: "Headings must follow a logical hierarchy (H1, H2, etc.).",
+      },
       analysis: null
     };
   }
@@ -602,10 +651,8 @@ const checkHeadingOrder = (results) => {
     score,
     status,
     details: `Skipped heading levels detected (${violation.nodes.length} occurrences).`,
-    cause: "Headings that skip levels (e.g., h1 to h3) confuse screen reader navigation.",
-    recommendation: "Ensure headings are sequential (h1 -> h2 -> h3).",
-    threshold: "Headings must follow a logical hierarchy (H1, H2, etc.).",
-    analysis: {
+    meta: {
+      threshold: "Headings must follow a logical hierarchy (H1, H2, etc.).",
       impact: violation.impact,
       description: violation.description,
       help: violation.help,
@@ -613,6 +660,10 @@ const checkHeadingOrder = (results) => {
       tags: violation.tags,
       failedNodes: failedNodes,
       count: violation.nodes.length
+    },
+    analysis: {
+      cause: "Headings that skip levels (e.g., h1 to h3) confuse screen reader navigation.",
+      recommendation: "Ensure headings are sequential (h1 -> h2 -> h3).",
     }
   };
 };
@@ -640,7 +691,7 @@ async function checkLandmarks(page) {
 
   const count = present.length;
 
-  const analysis = {
+  const analysisData = {
     present,
     missing,
     count
@@ -651,11 +702,11 @@ async function checkLandmarks(page) {
       score: 100,
       status: "pass",
       details: `Landmarks found: ${present.join(", ")}.`,
-      recommendation: missing.length > 0
-        ? `Consider adding: ${missing.join(", ")} for better structure.`
-        : "Excellent landmark structure.",
-      threshold: "Primary sections (Header, Main, Footer) must be present.",
-      analysis
+      meta: {
+        threshold: "Primary sections (Header, Main, Footer) must be present.",
+        ...analysisData
+      },
+      analysis: null
     };
   }
 
@@ -663,10 +714,14 @@ async function checkLandmarks(page) {
     score: 0,
     status: "fail",
     details: "No primary landmarks found (Main, Nav, Header).",
-    cause: "Page structure is difficult for screen readers to navigate without landmarks.",
-    recommendation: "Use HTML5 semantic elements (main, nav, header) or ARIA roles.",
-    threshold: "Primary sections (Header, Main, Footer) must be present.",
-    analysis
+    meta: {
+      threshold: "Primary sections (Header, Main, Footer) must be present.",
+      ...analysisData
+    },
+    analysis: {
+      cause: "Page structure is difficult for screen readers to navigate without landmarks.",
+      recommendation: "Use HTML5 semantic elements (main, nav, header) or ARIA roles.",
+    }
   };
 }
 
@@ -691,8 +746,11 @@ async function checkSkipLinks(page) {
           score: 100,
           status: "pass",
           details: `Valid skip link found ("${text.trim()}" -> "${href}") targeting existing element.`,
-          recommendation: "Ensure the skip link is visible when focused.",
-          threshold: "A 'Skip to Content' link is required for keyboard users.",
+          meta: {
+            threshold: "A 'Skip to Content' link is required for keyboard users.",
+            linkText: text.trim(),
+            target: href
+          },
           analysis: null
         };
       } else {
@@ -706,10 +764,14 @@ async function checkSkipLinks(page) {
       score: 0,
       status: "fail",
       details: `Skip link(s) found but target element(s) missing: ${brokenSkipLinks.join(", ")}.`,
-      cause: "Clicking the skip link does nothing.",
-      recommendation: "Ensure the skip link URL matches the ID of the main content container.",
-      threshold: "A 'Skip to Content' link is required for keyboard users.",
-      analysis: null
+      meta: {
+        threshold: "A 'Skip to Content' link is required for keyboard users.",
+        brokenLinks: brokenSkipLinks
+      },
+      analysis: {
+        cause: "Clicking the skip link does nothing.",
+        recommendation: "Ensure the skip link URL matches the ID of the main content container.",
+      }
     };
   }
 
@@ -717,10 +779,13 @@ async function checkSkipLinks(page) {
     score: 0,
     status: "fail",
     details: "No valid 'Skip to Content' link found.",
-    cause: "Keyboard users cannot bypass repetitive navigation.",
-    recommendation: "Add a link with text 'Skip to content' pointing to <main id='content'>.",
-    threshold: "A 'Skip to Content' link is required for keyboard users.",
-    analysis: null
+    meta: {
+      threshold: "A 'Skip to Content' link is required for keyboard users.",
+    },
+    analysis: {
+      cause: "Keyboard users cannot bypass repetitive navigation.",
+      recommendation: "Add a link with text 'Skip to content' pointing to <main id='content'>.",
+    }
   };
 }
 

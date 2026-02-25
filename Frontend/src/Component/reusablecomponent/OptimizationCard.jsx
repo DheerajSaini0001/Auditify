@@ -92,6 +92,7 @@ const OptimizationCard = ({
             {/* Analysis Details */}
             <MetricAnalysisDetails
                 analysis={needsData?.analysis}
+                meta={needsData?.meta}
                 darkMode={darkMode}
                 isOpen={isOpen}
                 onToggle={onToggle}
@@ -108,10 +109,10 @@ const getThemeStyles = (darkMode, status) => {
 
     let statusBadgeColor, statusText;
 
-    if (status === "good" || status === "pass") {
+    if (status === "pass") {
         statusBadgeColor = darkMode ? "bg-emerald-900/30 text-emerald-400 border-emerald-800" : "bg-emerald-50 text-emerald-600 border-emerald-100";
         statusText = "Passed";
-    } else if (status === "needs_improvement") {
+    } else if (status === "warning") {
         statusBadgeColor = darkMode ? "bg-amber-900/30 text-amber-400 border-amber-800" : "bg-amber-50 text-amber-600 border-amber-100";
         statusText = "Warning";
     } else {

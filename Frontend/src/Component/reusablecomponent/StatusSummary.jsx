@@ -7,8 +7,9 @@ const StatusSummary = ({ tech, className = "gap-4" }) => {
     let warningCount = 0;
 
     const checkStatus = (status) => {
-        if (status === "good") passedCount++;
-        else if (status === "needs_improvement") warningCount++;
+        if (!status) return;
+        if (status === "pass") passedCount++;
+        else if (status === "warning") warningCount++;
         else failedCount++;
     };
 

@@ -37,13 +37,13 @@ const MetricCard = ({
             ? needsData.crux
             : needsData.lab || needsData;
 
-    const status = activeData.status || "poor";
+    const status = activeData.status || "fail";
     const statusBadgeColor =
-        status === "good"
+        (status === "pass")
             ? darkMode
                 ? "bg-emerald-900/30 text-emerald-400 border-emerald-800"
                 : "bg-emerald-50 text-emerald-600 border-emerald-100"
-            : status === "needs_improvement"
+            : (status === "needs_improvement" || status === "warning")
                 ? darkMode
                     ? "bg-amber-900/30 text-amber-400 border-amber-800"
                     : "bg-amber-50 text-amber-600 border-amber-100"
@@ -52,18 +52,18 @@ const MetricCard = ({
                     : "bg-rose-50 text-rose-600 border-rose-100";
 
     const statusText =
-        status === "good"
+        (status === "pass")
             ? "Passed"
-            : status === "needs_improvement"
-                ? "Warning" // Note: Some cards used "Needs Impr." I will stick to the LCP example "Warning" or consistency? LCP had "Warning", others "Needs Impr.". I'll use "Warning" for consistency with the requested card.
+            : (status === "warning")
+                ? "Warning"
                 : "Poor";
 
     const valueColor =
-        status === "good"
+        (status === "pass")
             ? darkMode
                 ? "text-emerald-400"
                 : "text-emerald-600"
-            : status === "needs_improvement"
+            : (status === "warning")
                 ? darkMode
                     ? "text-amber-400"
                     : "text-amber-600"
@@ -154,8 +154,7 @@ const MetricCard = ({
                     >
                         {title} is{" "}
                         <span className={`font-black text-xl ml-1 ${valueColor}`}>
-                            {activeData.value}
-                            {activeData.unit}
+                            {activeData.meta.value}
                         </span>
                     </div>
                 </div>
@@ -163,8 +162,8 @@ const MetricCard = ({
                     <ThresholdBar
                         activeData={activeData}
                         metricData={metricData}
-                        isPassed={status === "good"}
-                        isWarning={status === "needs_improvement"}
+                        isPassed={status === "pass"}
+                        isWarning={status === "warning"}
                         darkMode={darkMode}
                         scaleFactor={1.5}
                     />
@@ -183,6 +182,7 @@ const MetricCard = ({
             </div>
             <MetricAnalysisDetails
                 analysis={activeData?.analysis}
+                meta={activeData.meta}
                 darkMode={darkMode}
                 isOpen={showDetails}
                 onToggle={handleToggle}

@@ -9,7 +9,7 @@ const ThresholdBar = ({
     scaleFactor = 1.33
 }) => {
     const data = activeData || metricData;
-    const thresholdsSource = data?.thresholds || metricData?.thresholds;
+    const thresholdsSource = data?.meta?.thresholds;
 
     if (!thresholdsSource) return null;
 
@@ -44,12 +44,12 @@ const ThresholdBar = ({
     let poorWidth = 100 - goodWidth - niWidth;
 
     // Parse numeric value from the data
-    let numericValue = parseFloat(String(data.value).replace(/[^0-9.]/g, ''));
+    let numericValue = parseFloat(String(data.meta.value).replace(/[^0-9.]/g, ''));
 
     const currentPercent = Math.min((numericValue / maxScale) * 100, 100);
 
-    const passed = isPassed !== undefined ? isPassed : (data.status === "good");
-    const warning = isWarning !== undefined ? isWarning : (data.status === "needs_improvement");
+    const passed = isPassed !== undefined ? isPassed : (data.status === "pass");
+    const warning = isWarning !== undefined ? isWarning : (data.status === "warning");
 
     return (
         <div className="mt-4">
@@ -73,7 +73,7 @@ const ThresholdBar = ({
                     >
                         <div className={`absolute -top-1.5 left-1/2 transform -translate-x-1/2 w-2 h-2 rotate-45 border border-white dark:border-gray-900 ${passed ? "bg-emerald-500" : warning ? "bg-amber-500" : "bg-rose-500"}`}></div>
                         <div className={`absolute bottom-full mb-1 left-1/2 transform -translate-x-1/2 text-[10px] font-bold px-1 py-0.5 rounded bg-white shadow-sm border border-gray-200 whitespace-nowrap z-20 ${passed ? "text-emerald-600" : warning ? "text-amber-600" : "text-rose-600"}`}>
-                            {data.value}
+                            {data.meta.value}
                         </div>
                     </div>
                 </div>

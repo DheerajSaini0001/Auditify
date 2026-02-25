@@ -2,12 +2,10 @@ import React from "react";
 
 const DirectThresholdBar = ({ metricData, darkMode }) => {
 
-    const { status, thresholds, value } = metricData;
+    const { meta } = metricData;
 
+    const thresholds = meta?.thresholds || {};
     const hasTextThresholds = thresholds.Good || thresholds.Warning || thresholds.Poor;
-    const isPassed = status === "good";
-    const isWarning = status === "needs_improvement";
-    const displayValue = value;
 
     return (
         <div className="w-full">

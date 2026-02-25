@@ -26,7 +26,9 @@ function checkHTTPS(url) {
     score: isHttps ? 100 : 0,
     status: isHttps ? "pass" : "fail",
     details: isHttps ? "Protocol is HTTPS" : `Protocol is ${parsedUrl.protocol}, not HTTPS`,
-    protocol: parsedUrl.protocol,
+    meta: {
+      protocol: parsedUrl.protocol
+    },
     analysis: isHttps ? null : {
       cause: `The website is served over ${parsedUrl.protocol} instead of HTTPS.`,
       recommendation: "Enforce HTTPS by obtaining an SSL certificate and redirecting all HTTP traffic to HTTPS."
@@ -41,6 +43,9 @@ function checkSSLConnection(response) {
       score: 0,
       status: "fail",
       details: `SSL connection failed (Status: ${response.status()})`,
+      meta: {
+        httpStatus: response.status()
+      },
       analysis: {
         cause: "The SSL connection could not be established.",
         recommendation: "Check the SSL certificate and server configuration."
@@ -59,7 +64,10 @@ function checkSSLConnection(response) {
         score: 75,
         status: "warning",
         details: `SSL connection established, but certificate expires soon (in ${daysUntilExpiry} days)`,
-        validTo,
+        meta: {
+          validTo,
+          daysUntilExpiry
+        },
         analysis: {
           cause: "The SSL certificate is valid but nearing expiration.",
           recommendation: "Renew the SSL certificate soon to avoid service interruption."
@@ -72,14 +80,16 @@ function checkSSLConnection(response) {
     score: 100,
     status: "pass",
     details: "SSL connection established",
-    validTo,
+    meta: {
+      validTo
+    },
     analysis: null
   };
 }
 
 // TLS(Transport Layer Security) Version
 function checkTLSVersion(response) {
-  if (!response) return { score: 0, status: "fail", details: "No response available", analysis: { cause: "No response to check TLS version", recommendation: "Ensure server is reachable" } };
+  if (!response) return { score: 0, status: "fail", details: "No response available", meta: {}, analysis: { cause: "No response to check TLS version", recommendation: "Ensure server is reachable" } };
 
   const securityDetails = response.securityDetails();
   if (!securityDetails) {
@@ -87,6 +97,7 @@ function checkTLSVersion(response) {
       score: 0,
       status: "fail",
       details: "No security details available",
+      meta: {},
       analysis: {
         cause: "Unable to determine TLS version.",
         recommendation: "Ensure the server supports standard TLS protocols."
@@ -101,7 +112,9 @@ function checkTLSVersion(response) {
     score: isStrongTls ? 100 : 0,
     status: isStrongTls ? "pass" : "fail",
     details: isStrongTls ? `Strong TLS version: ${tls}` : `Weak TLS version: ${tls}`,
-    version: tls,
+    meta: {
+      version: tls
+    },
     analysis: isStrongTls ? null : {
       cause: "The server supports older, insecure TLS versions (e.g., TLS 1.0 or 1.1).",
       recommendation: "Disable TLS 1.0/1.1 and enable TLS 1.2 or TLS 1.3 on your server."
@@ -111,7 +124,7 @@ function checkTLSVersion(response) {
 
 // HSTS (HTTP Strict Transport Security)
 function checkHSTS(response) {
-  if (!response) return { score: 0, status: "fail", details: "No response available for HSTS check", analysis: { cause: "No response received.", recommendation: "Check server connectivity." } };
+  if (!response) return { score: 0, status: "fail", details: "No response available for HSTS check", meta: {}, analysis: { cause: "No response received.", recommendation: "Check server connectivity." } };
 
   const headers = response.headers();
   const hstsVal = headers['strict-transport-security'];
@@ -121,7 +134,9 @@ function checkHSTS(response) {
       score: 100,
       status: "pass",
       details: "HSTS header is present",
-      hstsValue: hstsVal,
+      meta: {
+        value: hstsVal
+      },
       analysis: null
     };
   }
@@ -130,6 +145,7 @@ function checkHSTS(response) {
     score: 0,
     status: "fail",
     details: "HSTS header is missing",
+    meta: {},
     analysis: {
       cause: "The HTTP Strict Transport Security (HSTS) header is missing.",
       recommendation: "Add the 'Strict-Transport-Security' header to enforce HTTPS connections."
@@ -139,7 +155,7 @@ function checkHSTS(response) {
 
 // X-Frame-Options
 function checkXFrameOptions(response) {
-  if (!response) return { score: 0, status: "fail", details: "No response available for X-Frame-Options check", analysis: { cause: "No response received.", recommendation: "Check server connectivity." } };
+  if (!response) return { score: 0, status: "fail", details: "No response available for X-Frame-Options check", meta: {}, analysis: { cause: "No response received.", recommendation: "Check server connectivity." } };
 
   const headers = response.headers();
   const xFrameVal = headers['x-frame-options'];
@@ -149,7 +165,9 @@ function checkXFrameOptions(response) {
       score: 100,
       status: "pass",
       details: "X-Frame-Options header is present",
-      xFrameValue: xFrameVal,
+      meta: {
+        value: xFrameVal
+      },
       analysis: null
     };
   }
@@ -158,6 +176,7 @@ function checkXFrameOptions(response) {
     score: 0,
     status: "fail",
     details: "X-Frame-Options header is missing",
+    meta: {},
     analysis: {
       cause: "The X-Frame-Options header is missing, making the site vulnerable to clickjacking.",
       recommendation: "Set the 'X-Frame-Options' header to 'DENY' or 'SAMEORIGIN'."
@@ -167,7 +186,7 @@ function checkXFrameOptions(response) {
 
 // CSP (Content Security Policy)
 function checkCSP(response) {
-  if (!response) return { score: 0, status: "fail", details: "No response available for CSP check", analysis: { cause: "No response received.", recommendation: "Check server connectivity." } };
+  if (!response) return { score: 0, status: "fail", details: "No response available for CSP check", meta: {}, analysis: { cause: "No response received.", recommendation: "Check server connectivity." } };
 
   const headers = response.headers();
   const cspVal = headers['content-security-policy'];
@@ -177,7 +196,9 @@ function checkCSP(response) {
       score: 100,
       status: "pass",
       details: "CSP header is present",
-      cspValue: cspVal,
+      meta: {
+        value: cspVal
+      },
       analysis: null
     };
   }
@@ -186,6 +207,7 @@ function checkCSP(response) {
     score: 0,
     status: "fail",
     details: "CSP header is missing",
+    meta: {},
     analysis: {
       cause: "The Content-Security-Policy (CSP) header is missing.",
       recommendation: "Implement a robust CSP header to prevent XSS and data injection attacks."
@@ -195,7 +217,7 @@ function checkCSP(response) {
 
 // X-Content-Type-Options
 function checkXContentTypeOptions(response) {
-  if (!response) return { score: 0, status: "fail", details: "No response available for X-Content-Type-Options check", analysis: { cause: "No response received.", recommendation: "Check server connectivity." } };
+  if (!response) return { score: 0, status: "fail", details: "No response available for X-Content-Type-Options check", meta: {}, analysis: { cause: "No response received.", recommendation: "Check server connectivity." } };
 
   const headers = response.headers();
   const xContentTypeVal = headers['x-content-type-options'];
@@ -205,7 +227,9 @@ function checkXContentTypeOptions(response) {
       score: 100,
       status: "pass",
       details: "X-Content-Type-Options header is present",
-      xContentTypeValue: xContentTypeVal,
+      meta: {
+        value: xContentTypeVal
+      },
       analysis: null
     };
   }
@@ -214,6 +238,7 @@ function checkXContentTypeOptions(response) {
     score: 0,
     status: "fail",
     details: "X-Content-Type-Options header is missing",
+    meta: {},
     analysis: {
       cause: "The X-Content-Type-Options header is missing.",
       recommendation: "Add the 'X-Content-Type-Options: nosniff' header to prevent MIME type sniffing."
@@ -230,6 +255,9 @@ async function checkCookiesSecureFlag(page) {
       score: 100,
       status: "pass",
       details: "No cookies found - Safe",
+      meta: {
+        cookies: []
+      },
       analysis: null
     };
   }
@@ -244,9 +272,11 @@ async function checkCookiesSecureFlag(page) {
     details: allSecure
       ? "All cookies have the Secure flag"
       : `Secure flag missing on: ${insecureCookies.join(", ")}`,
-    cookies,
-    insecureCookies,
-    allSecure,
+    meta: {
+      cookies,
+      insecureCookies,
+      allSecure
+    },
     analysis: allSecure ? null : {
       cause: "Some cookies are set without the 'Secure' flag, allowing them to be sent over unencrypted connections.",
       recommendation: "Ensure all cookies are set with the 'Secure' attribute so they are only sent over HTTPS."
@@ -263,6 +293,9 @@ async function checkCookiesHttpOnlyFlag(page) {
       score: 100,
       status: "pass",
       details: "No cookies found - Safe",
+      meta: {
+        cookies: []
+      },
       analysis: null
     };
   }
@@ -277,9 +310,11 @@ async function checkCookiesHttpOnlyFlag(page) {
     details: allHttpOnly
       ? "All cookies have the HttpOnly flag"
       : `HttpOnly flag missing on: ${scriptAccessibleCookies.join(", ")}`,
-    cookies,
-    scriptAccessibleCookies,
-    allHttpOnly,
+    meta: {
+      cookies,
+      scriptAccessibleCookies,
+      allHttpOnly
+    },
     analysis: allHttpOnly ? null : {
       cause: "Some cookies are set without the 'HttpOnly' flag, making them accessible to client-side scripts.",
       recommendation: "Set the 'HttpOnly' attribute on sensitive cookies to prevent access via XSS."
@@ -303,8 +338,10 @@ async function checkThirdPartyCookies(url, page) {
       score: 0,
       status: "fail",
       details: `Third-party cookies detected from: ${uniqueDomains}`,
-      thirdPartyCookies,
-      uniqueDomains,
+      meta: {
+        thirdPartyCookies,
+        uniqueDomains
+      },
       analysis: {
         cause: "Cookies from external domains are being stored on the user's browser.",
         recommendation: "Audit third-party scripts (ads, analytics) and ensure they comply with privacy regulations (GDPR/CCPA)."
@@ -316,13 +353,16 @@ async function checkThirdPartyCookies(url, page) {
     score: 100,
     status: "pass",
     details: "No third-party cookies detected",
+    meta: {
+      thirdPartyCookies: []
+    },
     analysis: null
   };
 }
 
 // Google Safe Browsing
 async function checkGoogleSafeBrowsing(url) {
-  if (!safeBrowsingAPI) return { score: 100, status: "pass", details: "Safe Browsing API key missing", analysis: { location: "Configuration" } };
+  if (!safeBrowsingAPI) return { score: 100, status: "pass", details: "Safe Browsing API key missing", meta: {}, analysis: { location: "Configuration" } };
 
   const endpoint = `https://safebrowsing.googleapis.com/v4/threatMatches:find?key=${safeBrowsingAPI}`;
   const body = {
@@ -343,7 +383,7 @@ async function checkGoogleSafeBrowsing(url) {
     });
 
     if (!res.ok) {
-      return { score: 0, status: "error", details: `Google Safe Browsing API Error: ${res.statusText}`, analysis: { cause: "API Request Failed" } };
+      return { score: 0, status: "error", details: `Google Safe Browsing API Error: ${res.statusText}`, meta: { status: res.status }, analysis: { cause: "API Request Failed" } };
     }
 
     const j = await res.json();
@@ -355,6 +395,7 @@ async function checkGoogleSafeBrowsing(url) {
         score: 100,
         status: "pass",
         details: "URL not flagged by Google Safe Browsing",
+        meta: { matches },
         analysis: null
       };
     } else {
@@ -362,7 +403,7 @@ async function checkGoogleSafeBrowsing(url) {
         score: 0,
         status: "fail",
         details: "URL flagged by Google Safe Browsing",
-        matches,
+        meta: { matches },
         analysis: {
           cause: "The URL is listed as unsafe (malware/phishing/unwanted software).",
           recommendation: "Immediate action required: Check Google Search Console Security Issues report and clean site."
@@ -370,13 +411,13 @@ async function checkGoogleSafeBrowsing(url) {
       };
     }
   } catch (error) {
-    return { score: 0, status: "error", details: `Check failed: ${error.message}`, analysis: { cause: error.message } };
+    return { score: 0, status: "error", details: `Check failed: ${error.message}`, meta: {}, analysis: { cause: error.message } };
   }
 }
 
 // VirusTotal
 async function checkVirusTotal(domain) {
-  if (!VT_KEY) return { score: 100, status: "pass", details: "VirusTotal API key missing (Skipped)", analysis: null };
+  if (!VT_KEY) return { score: 100, status: "pass", details: "VirusTotal API key missing (Skipped)", meta: {}, analysis: null };
 
   const endpoint = `https://www.virustotal.com/api/v3/domains/${domain}`;
 
@@ -388,6 +429,7 @@ async function checkVirusTotal(domain) {
         score: 0,
         status: "error",
         details: `VirusTotal API error: ${res.status}`,
+        meta: { httpStatus: res.status },
         analysis: { cause: `API responded with status ${res.status}` }
       };
     }
@@ -404,6 +446,7 @@ async function checkVirusTotal(domain) {
         score: 100,
         status: "pass",
         details: "No malicious or suspicious detections",
+        meta: { stats },
         analysis: null
       };
     } else {
@@ -411,7 +454,7 @@ async function checkVirusTotal(domain) {
         score: 0,
         status: "fail",
         details: `Detections occurred: ${malicious} malicious, ${suspicious} suspicious`,
-        stats,
+        meta: { stats },
         analysis: {
           cause: "The domain is flagged by one or more security vendors.",
           recommendation: "Investigate the specific flags on VirusTotal. Clean up any malware or compromised content if confirmed."
@@ -419,7 +462,7 @@ async function checkVirusTotal(domain) {
       };
     }
   } catch (error) {
-    return { score: 0, status: "error", details: `Check failed: ${error.message}`, analysis: { cause: error.message } };
+    return { score: 0, status: "error", details: `Check failed: ${error.message}`, meta: {}, analysis: { cause: error.message } };
   }
 }
 
@@ -445,8 +488,10 @@ async function checkDomainBlacklist(domain, url) {
     score: allSafe ? 100 : 0,
     status: allSafe ? "pass" : "fail",
     details,
-    googleSafeBrowsing,
-    virusTotal,
+    meta: {
+      googleSafeBrowsing,
+      virusTotal
+    },
     analysis: allSafe ? null : {
       cause: "The domain or URL is listed in one or more security blacklists (Google Safe Browsing or VirusTotal).",
       recommendation: "Review the detailed reports from Google and VirusTotal. Request a review from the respective services after cleaning up any malware or security issues."
@@ -531,7 +576,10 @@ async function checkSQLiExposure(urlString, options = {}) {
           score: 0,
           status: "fail",
           details: `SQL injection vulnerability detected with payload: ${p}`,
-          payload: p,
+          meta: {
+            payload: p,
+            param: param
+          },
           analysis: {
             cause: "The application exposed a database error message in response to the injected payload.",
             recommendation: "Ensure all user inputs are sanitized and use parameterized queries (Prepared Statements) to prevent SQL injection."
@@ -547,7 +595,11 @@ async function checkSQLiExposure(urlString, options = {}) {
             score: 0,
             status: "fail",
             details: `Significant response length difference with payload: ${p}`,
-            payload: p,
+            meta: {
+              payload: p,
+              param: param,
+              diff: diff
+            },
             analysis: {
               cause: "Response length changed significantly with SQL injection payload, suggesting potential blind SQL injection.",
               recommendation: "Ensure application handles invalid input gracefully without altering response structure unpredictably."
@@ -562,6 +614,10 @@ async function checkSQLiExposure(urlString, options = {}) {
     score: 100,
     status: "pass",
     details: "No SQL injection vulnerabilities detected (Basic Scan)",
+    meta: {
+      testedParams: testParams,
+      payloadCount: payloads.length
+    },
     analysis: null
   };
 }
@@ -599,7 +655,11 @@ async function checkXSS(url, browser) {
         score: 0,
         status: "fail",
         details: "Confirmed XSS: Script payload executed (alert triggered)",
-        payload: payload,
+        meta: {
+          payload,
+          triggered: true,
+          reflected: isReflected
+        },
         analysis: {
           cause: "The application reflects user input without sanitization, allowing arbitrary script execution.",
           recommendation: "Implement strict context-sensitive output encoding and Content Security Policy (CSP)."
@@ -613,6 +673,11 @@ async function checkXSS(url, browser) {
         score: 50,
         status: "warning",
         details: "XSS payload reflected in response but execution not confirmed",
+        meta: {
+          payload,
+          triggered: false,
+          reflected: true
+        },
         analysis: {
           cause: "The application reflects user input. While script execution wasn't confirmed (possibly blocked by browser/CSP), reflection is risky.",
           recommendation: "Ensure all reflections are properly escaped."
@@ -624,6 +689,11 @@ async function checkXSS(url, browser) {
       score: 100,
       status: "pass",
       details: "XSS payload not reflected or executed",
+      meta: {
+        payload,
+        triggered: false,
+        reflected: false
+      },
       analysis: null
     };
 
@@ -632,6 +702,7 @@ async function checkXSS(url, browser) {
       score: 0, // Error state
       status: "error",
       details: `XSS Check failed: ${error.message}`,
+      meta: {},
       analysis: { cause: error.message }
     };
   } finally {
@@ -673,7 +744,9 @@ async function checkCookieConsent(page) {
           score: 100,
           status: "pass",
           details: `Cookie consent banner detected (Pattern: ${selector})`,
-          selector,
+          meta: {
+            selector
+          },
           analysis: null
         };
       }
@@ -684,6 +757,7 @@ async function checkCookieConsent(page) {
     score: 0,
     status: "fail",
     details: "No visible cookie consent banner found",
+    meta: {},
     analysis: {
       cause: "No element matching common cookie consent patterns was found or visible.",
       recommendation: "Implement a visible cookie consent banner compliant with GDPR/CCPA."
@@ -715,7 +789,9 @@ async function checkPrivacyPolicy(page) {
       score: 100,
       status: "pass",
       details: "Visible Privacy Policy link found",
-      foundLink: foundLink.href,
+      meta: {
+        foundLink: foundLink.href
+      },
       analysis: null
     };
   } else {
@@ -723,6 +799,7 @@ async function checkPrivacyPolicy(page) {
       score: 0,
       status: "fail",
       details: "No visible privacy policy link found",
+      meta: {},
       analysis: {
         cause: "No visible link matching 'Privacy Policy' patterns was found in the page links.",
         recommendation: "Ensure a clearly visible 'Privacy Policy' link is present in the footer or navigation menu."
@@ -781,8 +858,10 @@ async function checkGDPRCCPA(page) {
       details: foundKeyword
         ? `GDPR/CCPA compliance text found: "${foundKeyword}"`
         : `GDPR/CCPA compliance element found (${foundSelector})`,
-      foundKeyword,
-      foundSelector,
+      meta: {
+        foundKeyword,
+        foundSelector
+      },
       analysis: null
     };
   }
@@ -791,6 +870,7 @@ async function checkGDPRCCPA(page) {
     score: 0,
     status: "fail",
     details: "No specific GDPR/CCPA notice or text found",
+    meta: {},
     analysis: {
       cause: "No text mentioning GDPR, CCPA, or data rights was found, nor were any standard compliance widgets detected.",
       recommendation: "Ensure explicit mention of user rights (GDPR/CCPA) or a link to 'Do Not Sell My Personal Information' is present."
@@ -827,13 +907,14 @@ async function checkDataCollection(page) {
       score: 100,
       status: "pass",
       details: "Data collection disclosure link found",
-      foundLink: foundLink.href,
+      meta: {
+        foundLink: foundLink.href
+      },
       analysis: null
     };
   }
 
   // 2. Check for headings (H1-H6) that expressly mention data collection
-  // This helps if the disclosure is inline on the current page
   const headings = await page.$$eval("h1, h2, h3, h4, h5, h6", (els) =>
     els.map(el => ({
       text: (el.innerText || "").toLowerCase(),
@@ -857,19 +938,18 @@ async function checkDataCollection(page) {
       score: 100,
       status: "pass",
       details: `Data collection section found: "${foundHeading.text}"`,
-      foundHeading: foundHeading.text,
+      meta: {
+        foundHeading: foundHeading.text
+      },
       analysis: null
     };
   }
-
-  // 3. Fallback: If Privacy Policy exists (checked separately), we might assume it covers this, 
-  // but strictly for this check, we look for explicit "Data Collection" mentions.
-  // We return fail/warning if specific references aren't found.
 
   return {
     score: 0,
     status: "fail",
     details: "No explicit 'Data Collection' disclosure found",
+    meta: {},
     analysis: {
       cause: "No visible links or headings were found that explicitly mention 'Data Collection', 'Information We Collect', or similar.",
       recommendation: "Ensure your Privacy Policy or Terms have a clearly marked section detailing data collection practices."
@@ -885,7 +965,7 @@ async function checkFormsUseHTTPS(page) {
     forms.map((f) => f.getAttribute("action") || "")
   );
 
-  if (!forms.length) return { score: 100, status: "pass", details: "No forms found", analysis: null };
+  if (!forms.length) return { score: 100, status: "pass", details: "No forms found", meta: { formsCount: 0 }, analysis: null };
 
   const insecureForms = forms.filter((action) => {
     try {
@@ -901,6 +981,10 @@ async function checkFormsUseHTTPS(page) {
       score: 100,
       status: "pass",
       details: "All forms use HTTPS",
+      meta: {
+        formsCount: forms.length,
+        insecureForms: []
+      },
       analysis: null
     };
   } else {
@@ -908,7 +992,10 @@ async function checkFormsUseHTTPS(page) {
       score: 0,
       status: "fail",
       details: `Found ${insecureForms.length} form(s) using insecure protocols`,
-      insecureForms,
+      meta: {
+        formsCount: forms.length,
+        insecureForms
+      },
       analysis: {
         cause: "One or more forms on the page are configured to submit data over an unencrypted (HTTP) connection.",
         recommendation: "Update the 'action' attribute of all forms to start with 'https://' or use relative paths on an HTTPS site."
@@ -937,6 +1024,10 @@ async function checkWeakDefaultCredentials(page) {
       score: 0,
       status: "fail",
       details: "Default credentials mentioned in visible text",
+      meta: {
+        scanType: "passive",
+        match: explicitIndicators.find((kw) => pageText.includes(kw))
+      },
       analysis: {
         cause: "The page content explicitly mentions default credentials (e.g., 'admin/admin').",
         recommendation: "Remove any mention of default credentials and ensure they are changed in production."
@@ -951,6 +1042,10 @@ async function checkWeakDefaultCredentials(page) {
       score: 100,
       status: "pass",
       details: "No login form detected",
+      meta: {
+        scanType: "active",
+        formDetected: false
+      },
       analysis: null
     };
   }
@@ -992,7 +1087,11 @@ async function checkWeakDefaultCredentials(page) {
           score: 0,
           status: "fail",
           details: `Login successful with weak credentials (${cred.u}/${cred.p})`,
-          credentials: `${cred.u}/${cred.p}`,
+          meta: {
+            scanType: "active",
+            credentials: `${cred.u}/${cred.p}`,
+            newUrl
+          },
           analysis: {
             cause: "The application accepts weak or default credentials.",
             recommendation: "Enforce strong password policies and change all default accounts immediately."
@@ -1008,6 +1107,11 @@ async function checkWeakDefaultCredentials(page) {
     score: 100,
     status: "pass",
     details: "No weak default credentials detected (Basic Scan)",
+    meta: {
+      scanType: "active",
+      formDetected: true,
+      testedCount: 1
+    },
     analysis: null
   };
 }
@@ -1021,7 +1125,7 @@ async function checkAdminPanelPublic(baseUrl, options = {}) {
     const u = new URL(baseUrl);
     origin = u.origin;
   } catch (e) {
-    return { score: 100, status: "error", details: "Invalid Base URL for Admin Check", analysis: null };
+    return { score: 100, status: "error", details: "Invalid Base URL for Admin Check", meta: {}, analysis: null };
   }
 
   const adminPaths = [
@@ -1056,8 +1160,11 @@ async function checkAdminPanelPublic(baseUrl, options = {}) {
             score: 0,
             status: "fail",
             details: `Admin panel exposed at ${path}`,
-            url: tryUrl,
-            path,
+            meta: {
+              url: tryUrl,
+              path,
+              status: res.status
+            },
             analysis: {
               cause: `An administrative panel appears to be publicly accessible at ${path}.`,
               recommendation: "Restrict access to admin panels using IP whitelisting or move them to a non-public URL."
@@ -1083,14 +1190,16 @@ async function checkAdminPanelPublic(baseUrl, options = {}) {
     score: 100,
     status: "pass",
     details: "No public admin panels found",
-    analysis: { checked: adminPaths.length }
+    meta: {
+      pathsChecked: adminPaths.length
+    },
+    analysis: null
   };
 }
 
 // MFA Enabled
 async function checkMFAEnabled(page) {
   // 1. Check for specific input fields indicative of MFA (e.g., 6-digit code fields)
-  // Often MFA inputs have specific attributes like autocomplete="one-time-code" or numeric patterns
   const mfaInputs = await page.$$eval("input", (inputs) =>
     inputs.some(i =>
       (i.autocomplete === "one-time-code") ||
@@ -1104,6 +1213,9 @@ async function checkMFAEnabled(page) {
       score: 100,
       status: "pass",
       details: "MFA-related input field detected",
+      meta: {
+        method: "input-detection"
+      },
       analysis: null
     };
   }
@@ -1130,7 +1242,10 @@ async function checkMFAEnabled(page) {
       score: 100,
       status: "pass",
       details: `MFA indicator found in text: "${foundKeyword}"`,
-      foundKeyword,
+      meta: {
+        method: "text-detection",
+        foundKeyword
+      },
       analysis: null
     };
   }
@@ -1144,17 +1259,19 @@ async function checkMFAEnabled(page) {
       score: 100,
       status: "pass",
       details: `SSO/Federated login detected: "${ssoFound}" (Likely supports MFA)`,
-      ssoFound,
+      meta: {
+        method: "sso-detection",
+        ssoFound
+      },
       analysis: null
     };
   }
 
-  // If no indicators found, we can't be sure MFA isn't available post-login.
-  // Reporting as 'warning' or 'info' rather than strict fail is often better for this passive check.
   return {
     score: 50,
     status: "warning",
     details: "No visible MFA/2FA indicators found on login page",
+    meta: {},
     analysis: {
       cause: "Could not detect explicit Multi-Factor Authentication (MFA) or SSO options on the entry page.",
       recommendation: "Ensure MFA is available and enforced for sensitive accounts. If it is a post-login step, this check may miss it."

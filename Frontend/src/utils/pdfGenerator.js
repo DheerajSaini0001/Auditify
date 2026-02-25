@@ -94,18 +94,6 @@ const getStatusColor = (status, score) => {
     return [100, 100, 100]; // Grey
 };
 
-const addFooter = (doc, pageNumber) => {
-    const totalPages = doc.getNumberOfPages();
-    const str = `Page ${pageNumber} of ${totalPages}`;
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-
-    doc.setFontSize(8);
-    doc.setTextColor(150, 150, 150);
-    doc.text("PageSpeed SLT - Comprehensive Website Audit", 40, pageHeight - 20);
-    doc.text(str, pageWidth - 80, pageHeight - 20);
-};
-
 export const generatePDF = (data) => {
     if (!data) return;
 
@@ -117,136 +105,11 @@ export const generatePDF = (data) => {
     // --- COLORS ---
     const primaryColor = [41, 128, 185]; // Blue
     const secondaryColor = [44, 62, 80]; // Dark Navy
-    const accentColor = [236, 240, 241]; // Light Gray
-    const successColor = [39, 174, 96];
-    const warningColor = [230, 126, 34];
-    const errorColor = [192, 57, 43];
+    const successColor = [34, 197, 94];
+    const warningColor = [249, 115, 22];
+    const errorColor = [239, 68, 68];
+    const textColor = [52, 73, 94];
 
-    let yPos = 40;
-
-    // --- HELPER: DRAW HEADER ---
-    const drawHeader = () => {
-        doc.setFillColor(...primaryColor);
-        doc.rect(0, 0, pageWidth, 15, "F"); // Top branded bar
-    };
-
-    // --- PAGE 1: COVER & SUMMARY ---
-    drawHeader();
-    yPos = 80;
-
-    // Title Section
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(32);
-    doc.setTextColor(...secondaryColor);
-    doc.text("PageSpeed SLT", margin, yPos);
-
-    doc.setFontSize(14);
-    doc.setTextColor(127, 140, 141);
-    doc.setFont("helvetica", "normal");
-    doc.text("Comprehensive Deep-Dive Audit Report", margin, yPos + 20);
-
-    // Report Metadata Table (Right Aligned - conceptually)
-    const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-    doc.setFontSize(10);
-    doc.text(`Generated on: ${dateStr}`, margin, yPos + 45);
-
-    yPos += 80;
-
-    // --- EXECUTIVE SUMMARY CARD ---
-    const overallScore = (data.score ?? data.Score ?? 0);
-    const overallGrade = (data.grade || data.Grade || "N/A");
-
-    // Determine Color
-    let badgeColor = overallScore >= 90 ? successColor : overallScore >= 50 ? warningColor : errorColor;
-
-    // Card Background
-    doc.setFillColor(250, 250, 250);
-    doc.setDrawColor(230, 230, 230);
-    doc.roundedRect(margin, yPos, pageWidth - (margin * 2), 140, 5, 5, "FD");
-
-    // Score Circle (Left)
-    const circleX = margin + 70;
-    const circleY = yPos + 70;
-    doc.setFillColor(...badgeColor);
-    doc.circle(circleX, circleY, 40, "F");
-
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(28);
-    doc.setFont("helvetica", "bold");
-    doc.text(`${overallScore}`, circleX, circleY + 10, { align: "center" });
-
-    // Details (Right)
-    const textStartX = margin + 140;
-    doc.setTextColor(...secondaryColor);
-    doc.setFontSize(22);
-    doc.text(`Grade ${overallGrade}`, textStartX, yPos + 45);
-
-    doc.setFontSize(12);
-    doc.setTextColor(100, 100, 100);
-    doc.setFont("helvetica", "normal");
-
-    const urlText = data.url || data.Site || "Analyzed Website";
-    // Check url length
-    const displayUrl = urlText.length > 50 ? urlText.substring(0, 50) + "..." : urlText;
-
-    doc.text(`Target URL: ${displayUrl}`, textStartX, yPos + 75);
-    doc.text(`Device Strategy: ${data.device || data.Device || "Desktop"}`, textStartX, yPos + 95);
-
-    yPos += 180;
-
-    // --- SECTION BREAKDOWN SUMMARY ---
-    const sectionScores = data.sectionScore || data.Section_Score;
-    if (sectionScores && Array.isArray(sectionScores) && sectionScores.length > 0) {
-        doc.setFontSize(16);
-        doc.setTextColor(...secondaryColor);
-        doc.setFont("helvetica", "bold");
-        doc.text("Performance Overview", margin, yPos);
-        yPos += 20;
-
-        const scoreRows = sectionScores.map(s => {
-            const name = s.name || s.Name || "Unknown";
-            const val = s.score ?? s.Score ?? 0;
-            let assessment = "Critical";
-            if (val >= 90) assessment = "Excellent";
-            else if (val >= 50) assessment = "Needs Work";
-            return { name, val, assessment };
-        });
-
-        autoTable(doc, {
-            startY: yPos,
-            head: [['Audit Category', 'Score', 'Status']],
-            body: scoreRows.map(r => [r.name, r.val + "%", r.assessment]),
-            theme: 'grid',
-            headStyles: {
-                fillColor: secondaryColor,
-                textColor: 255,
-                fontStyle: 'bold',
-                halign: 'left',
-                cellPadding: 8
-            },
-            bodyStyles: {
-                cellPadding: 8,
-                fontSize: 10,
-                textColor: 50
-            },
-            columnStyles: {
-                0: { cellWidth: 'auto' },
-                1: { cellWidth: 60, halign: 'center', fontStyle: 'bold' },
-                2: { cellWidth: 100, halign: 'center' }
-            },
-            didParseCell: (data) => {
-                if (data.section === 'body' && data.column.index === 1) {
-                    const val = parseInt(data.cell.raw);
-                    if (val >= 90) data.cell.styles.textColor = successColor;
-                    else if (val >= 50) data.cell.styles.textColor = warningColor;
-                    else data.cell.styles.textColor = errorColor;
-                }
-            }
-        });
-        yPos = doc.lastAutoTable.finalY + 40;
-    }
-
-    // --- DETAILED AUDIT SECTIONS ---
     const sections = [
         { key: 'technicalPerformance', alt: 'Technical_Performance', title: 'Technical Performance' },
         { key: 'onPageSEO', alt: 'On_Page_SEO', title: 'On-Page SEO' },
@@ -257,168 +120,256 @@ export const generatePDF = (data) => {
         { key: 'aioReadiness', alt: 'AIO_Readiness', title: 'AIO Readiness' }
     ];
 
+    // --- HELPERS ---
+    const drawBranding = () => {
+        doc.setFillColor(...primaryColor);
+        doc.rect(0, 0, pageWidth, 5, "F");
+    };
+
+    const addFooter = () => {
+        const totalPages = doc.getNumberOfPages();
+        for (let i = 1; i <= totalPages; i++) {
+            doc.setPage(i);
+            doc.setFillColor(...secondaryColor);
+            doc.rect(0, pageHeight - 15, pageWidth, 15, "F");
+
+            doc.setFontSize(8);
+            doc.setTextColor(150, 150, 150);
+            const str = `Page ${i} of ${totalPages}`;
+            doc.text(str, pageWidth - margin, pageHeight - 20, { align: 'right' });
+            doc.text("PageSpeed SLT - Confidential Technical Audit", margin, pageHeight - 20);
+        }
+    };
+
+    let yPos = 0;
+
+    // --- PAGE 1: INTEGRATED COVER & SUMMARY ---
+    // Left Accent Sidebar
+    doc.setFillColor(...secondaryColor);
+    doc.rect(0, 0, 10, pageHeight, "F");
+
+    drawBranding();
+    yPos = 80;
+
+    // Header Section
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(42);
+    doc.setTextColor(...secondaryColor);
+    doc.text("WEBSITE", margin + 10, yPos);
+    yPos += 45;
+    doc.text("AUDIT REPORT", margin + 10, yPos);
+
+    yPos += 15;
+    doc.setFillColor(...primaryColor);
+    doc.rect(margin + 10, yPos, 60, 4, "F");
+
+    yPos += 35;
+    doc.setFontSize(15);
+    doc.setTextColor(...primaryColor);
+    doc.setFont("helvetica", "normal");
+    doc.text("Comprehensive Deep-Dive Audit & Performance Roadmap", margin + 10, yPos);
+
+    // Meta Info Block
+    yPos += 60;
+    const siteUrl = data.url || data.Site || "Reported URL";
+    const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    doc.setFillColor(248, 250, 252);
+    doc.setDrawColor(226, 232, 240);
+    doc.roundedRect(margin + 10, yPos - 15, pageWidth - (margin * 2) - 10, 55, 6, 6, "FD");
+
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(100, 116, 139);
+    doc.text("TARGET AUDIT URL", margin + 25, yPos + 5);
+    doc.text("DATE GENERATED", margin + 25, yPos + 25);
+
+    doc.setFontSize(10);
+    doc.setTextColor(...secondaryColor);
+    doc.setFont("helvetica", "normal");
+    doc.text(siteUrl.length > 70 ? siteUrl.substring(0, 70) + "..." : siteUrl, margin + 130, yPos + 5);
+    doc.text(dateStr, margin + 130, yPos + 25);
+
+    // --- EXECUTIVE SUMMARY ---
+    yPos += 90;
+    doc.setFontSize(20);
+    doc.setTextColor(...secondaryColor);
+    doc.setFont("helvetica", "bold");
+    doc.text("Executive Summary", margin + 10, yPos);
+
+    const overallScore = (data.score ?? data.Score ?? 0);
+    const overallGrade = (data.grade || data.Grade || "N/A");
+    let badgeColor = overallScore >= 90 ? successColor : overallScore >= 50 ? warningColor : errorColor;
+    let statusLabel = overallScore >= 90 ? "OPTIMAL PERFORMANCE" : overallScore >= 50 ? "NEEDS IMPROVEMENT" : "CRITICAL ATTENTION";
+
+    // Status Label Tag
+    doc.setFontSize(9);
+    doc.setFillColor(...badgeColor);
+    doc.roundedRect(pageWidth - margin - 140, yPos - 17, 130, 20, 10, 10, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.text(statusLabel, pageWidth - margin - 75, yPos - 4, { align: "center" });
+
+    yPos += 30;
+    doc.setFillColor(252, 252, 253);
+    doc.setDrawColor(226, 232, 240);
+    doc.roundedRect(margin + 10, yPos, pageWidth - (margin * 2) - 10, 100, 8, 8, "FD");
+
+    // Score Circle
+    const circleX = margin + 70;
+    const circleY = yPos + 50;
+    doc.setFillColor(...badgeColor);
+    doc.circle(circleX, circleY, 36, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(26);
+    doc.text(`${overallScore}`, circleX, circleY + 8, { align: "center" });
+
+    doc.setTextColor(...secondaryColor);
+    doc.setFontSize(22);
+    doc.text(`Grade: ${overallGrade}`, margin + 125, yPos + 48);
+    doc.setFontSize(10);
+    doc.setTextColor(100, 116, 139);
+    doc.setFont("helvetica", "normal");
+    doc.text(`The overall score is calculated across all ${sections.filter(s => data[s.key] || data[s.alt]).length} audit categories.`, margin + 125, yPos + 68);
+
+    yPos += 160;
+
+    // TOC
+    doc.setFontSize(16);
+    doc.setTextColor(...secondaryColor);
+    doc.setFont("helvetica", "bold");
+    doc.text("Audit Index", margin + 10, yPos);
+
+    yPos += 30;
+    let tocY = yPos;
+    let count = 1;
+
+    sections.forEach((sec) => {
+        const hasData = data[sec.key] || data[sec.alt];
+        if (hasData) {
+            // Bullet Point
+            doc.setFillColor(...primaryColor);
+            doc.circle(margin + 18, tocY - 4, 3, "F");
+
+            doc.setFontSize(10);
+            doc.setTextColor(...textColor);
+            doc.setFont("helvetica", "bold");
+            doc.text(`${sec.title}`, margin + 30, tocY);
+
+            doc.setDrawColor(241, 245, 249);
+            doc.line(margin + 175, tocY - 3, pageWidth - margin - 10, tocY - 3);
+
+            tocY += 24;
+            count++;
+        }
+    });
+
+    // --- AUDIT SECTIONS (Each on a fresh page) ---
     sections.forEach(sec => {
         const sectionData = data[sec.key] || data[sec.alt];
         if (!sectionData || (typeof sectionData === 'object' && Object.keys(sectionData).length === 0)) return;
 
-        // Page Break Logic
-        if (yPos > pageHeight - 100) {
-            doc.addPage();
-            drawHeader();
-            yPos = 60;
-        }
+        doc.addPage();
+        drawBranding();
+        yPos = 60;
 
-        // Section Title
-        doc.setFillColor(245, 247, 250);
-        doc.rect(margin, yPos - 15, pageWidth - (margin * 2), 30, 'F'); // Subheader bg
-
-        doc.setFontSize(14);
+        doc.setFontSize(22);
         doc.setTextColor(...primaryColor);
         doc.setFont("helvetica", "bold");
-        doc.text(sec.title.toUpperCase(), margin + 10, yPos + 5);
-        yPos += 30;
+        doc.text(sec.title, margin, yPos);
+
+        doc.setDrawColor(...primaryColor);
+        doc.setLineWidth(2);
+        doc.line(margin, yPos + 8, margin + 40, yPos + 8);
+
+        yPos += 45;
 
         const tableRows = [];
 
-        // Crux Data (if any)
-        if (sectionData.Real_User_Experience) {
-            Object.entries(sectionData.Real_User_Experience).forEach(([metric, val]) => {
-                tableRows.push({
-                    name: `Core Web Vital: ${cleanKey(metric)}`,
-                    details: `Value: ${val.value || '-'}\n${val.suggestion || ''}`,
-                    status: val.category === 'GOOD' ? 'Pass' : val.category === 'POOR' ? 'Fail' : 'Warning',
-                    score: val.category === 'GOOD' ? 100 : val.category === 'POOR' ? 0 : 50
-                });
-            });
-        }
-
-        // Metrics Loop
+        // Section Parameters & Core Web Vitals (Lab vs Field)
         Object.entries(sectionData).forEach(([k, v]) => {
-            if (['Percentage', 'Real_User_Experience', 'Schema', 'siteSchema'].includes(k)) return;
+            if (['Percentage', 'Real_User_Experience', 'Schema', 'siteSchema', 'Section_Score', 'score', 'grade'].includes(k)) return;
 
-            if (v && typeof v === 'object' && !Array.isArray(v)) {
-                // ... same logic as before but cleaner structure ...
-                const name = cleanKey(k);
-                const valDetails = v.details || v.Details || (v.value != null ? String(v.value) : "");
-                const valSuggestion = v.suggestion || v.Suggestion || "";
-                const valScore = v.score ?? v.Score ?? 0;
-                let valStatus = v.status || v.Status || "";
-                if (!valStatus) valStatus = (valScore >= 90) ? 'Pass' : 'Fail';
+            // Helper to process a single metric object (supports nested lab/crux)
+            const processMetric = (metric, subName = "") => {
+                if (!metric || typeof metric !== 'object' || Array.isArray(metric)) return;
 
+                const name = subName ? `${cleanKey(k)} (${subName})` : cleanKey(k);
+                const valDetails = metric.details || metric.Details || (metric.value != null ? String(metric.value) : "");
+                const valStatus = (metric.status || metric.Status || (metric.score >= 90 ? 'Pass' : (metric.score >= 50 ? 'Warning' : 'Fail')));
                 const statusClean = cleanKey(valStatus);
                 const isIssue = cleanedStatusIsIssue(statusClean);
 
-                let cellContent = "";
+                const cause = metric.cause || (metric.analysis && metric.analysis.cause) || (metric.meta && metric.meta.why_this_occurred) || "";
+                const recommendation = metric.recommendation || (metric.analysis && metric.analysis.recommendation) || (metric.meta && metric.meta.how_to_fix) || metric.suggestion || metric.Suggestion || "";
 
-                // Analysis
-                if (valDetails) {
-                    let text = sanitizeText(valDetails);
-                    if (text.length > 60 && !text.includes(' ') && !text.includes('\n')) text = text.substring(0, 60) + "...";
-                    if (isIssue) cellContent += `ISSUE: ${text}`;
-                    else cellContent += text;
-                }
-                // Fix
-                if (valSuggestion && isIssue) {
-                    cellContent += `\n\nFIX: ${sanitizeText(valSuggestion)}`;
-                }
+                let cellBody = sanitizeText(valDetails);
+                if (cause && isIssue) cellBody += `\n\nCause: ${sanitizeText(cause)}`;
+                if (recommendation && isIssue) cellBody += `\n\nRecommendation: ${sanitizeText(recommendation)}`;
 
-                // Meta
-                if (v.meta || v.Meta) {
-                    const metaObj = v.meta || v.Meta;
-                    let metaLines = [];
-                    // Target
-                    const targetInfo = metaObj.target || metaObj.parameter;
-                    if (targetInfo && typeof targetInfo === 'string') metaLines.push(`Target: ${sanitizeText(targetInfo)}`);
+                tableRows.push({ name, details: cellBody, status: statusClean, score: metric.score ?? metric.Score ?? 0 });
+            };
 
-                    // Lists
-                    const listKeys = [
-                        { key: 'unoptimizedImages', label: 'Unoptimized Images' },
-                        { key: 'brokenLinksList', label: 'Broken Links', mapFn: (i) => i.url || i },
-                        { key: 'failedNodes', label: 'Failing Elements', mapFn: (i) => (i.html || i.target || "").slice(0, 80) },
-                        { key: 'issues', label: 'Findings' },
-                        { key: 'failingElements', label: 'Elements', mapFn: (i) => i.text || i },
-                        { key: 'evidence', label: 'Evidence' }
-                    ];
-
-                    let listFound = false;
-                    for (const { key, label, mapFn } of listKeys) {
-                        const val = metaObj[key];
-                        if (Array.isArray(val) && val.length > 0) {
-                            if (listFound) continue;
-                            const count = val.length;
-                            const itemsToShow = val.slice(0, 3).map(item => {
-                                const str = mapFn ? mapFn(item) : (typeof item === 'object' ? JSON.stringify(item) : String(item));
-                                return sanitizeText(str);
-                            });
-                            metaLines.push(`${label} (${count}):\n- ${itemsToShow.join('\n- ')}`);
-                            if (count > 3) metaLines.push(`...and ${count - 3} more`);
-                            listFound = true;
-                        }
-                    }
-                    if (metaLines.length > 0) cellContent += `\n\n${metaLines.join("\n")}`;
-                }
-
-                tableRows.push({ name, details: cellContent, status: statusClean, score: valScore });
-
-            } else if (v && typeof v !== 'object') {
-                tableRows.push({ name: cleanKey(k), details: String(v), status: 'Info', score: null });
+            // Detect Lab/Crux structure (Typical for Technical Performance)
+            if (v && typeof v === 'object' && (v.lab || v.crux)) {
+                if (v.lab) processMetric(v.lab, "Lab Data");
+                if (v.crux) processMetric(v.crux, "Real-World Data");
+            } else {
+                processMetric(v);
             }
         });
 
         if (tableRows.length > 0) {
             autoTable(doc, {
                 startY: yPos,
-                head: [['Metric', 'Analysis & Recommendations', 'Status']],
+                head: [['Parameter', 'Description & Action Plan', 'Status']],
                 body: tableRows.map(r => [r.name, r.details, r.status]),
-                theme: 'plain', // Cleaner look
-                styles: {
-                    fontSize: 9,
-                    cellPadding: 10,
-                    overflow: 'linebreak',
-                    valign: 'top',
-                    lineColor: [230, 230, 230],
-                    lineWidth: { bottom: 0.5 }
-                },
-                headStyles: {
-                    fillColor: [255, 255, 255],
-                    textColor: [100, 100, 100],
-                    fontStyle: 'bold',
-                    lineWidth: { bottom: 1, top: 0, left: 0, right: 0 },
-                    lineColor: [200, 200, 200]
-                },
+                theme: 'striped',
+                headStyles: { fillColor: secondaryColor, textColor: 255, fontSize: 10, cellPadding: 10 },
+                bodyStyles: { fontSize: 9, cellPadding: 10, textColor: [40, 40, 40], valign: 'top' },
                 columnStyles: {
-                    0: { cellWidth: 100, fontStyle: 'bold', textColor: [50, 50, 50] },
-                    1: { cellWidth: 'auto', textColor: [80, 80, 80] },
-                    2: { cellWidth: 60, halign: 'center', fontStyle: 'bold' }
+                    0: { cellWidth: 120, fontStyle: 'bold' },
+                    1: { cellWidth: 'auto' },
+                    2: { cellWidth: 65, halign: 'center', fontStyle: 'bold' }
                 },
                 didParseCell: (data) => {
                     if (data.section === 'body' && data.column.index === 2) {
-                        const row = tableRows[data.row.index];
-                        if (row.score !== null) {
-                            data.cell.styles.textColor = getStatusColor(row.status, row.score);
-                        } else {
-                            data.cell.styles.textColor = [150, 150, 150];
-                        }
+                        const r = tableRows[data.row.index];
+                        data.cell.styles.textColor = getStatusColor(r.status, r.score);
                     }
                 }
             });
-            yPos = doc.lastAutoTable.finalY + 30;
         }
     });
 
-    // --- FOOTER ON ALL PAGES ---
-    const pageCount = doc.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        doc.setFillColor(...primaryColor);
-        doc.rect(0, pageHeight - 15, pageWidth, 15, "F"); // Bottom bar
+    // --- FINAL PAGE: CLOSING ---
+    doc.addPage();
+    drawBranding();
+    yPos = 100;
 
-        doc.setFontSize(8);
-        doc.setTextColor(150, 150, 150);
-        doc.text(`Page ${i} of ${pageCount}`, pageWidth - margin, pageHeight - 20, { align: 'right' });
-        doc.text("PageSpeed SLT Audit", margin, pageHeight - 20);
-    }
+    doc.setFontSize(24);
+    doc.setTextColor(...secondaryColor);
+    doc.text("Next Steps & Disclaimer", margin, yPos);
 
-    let siteName = (data.url || "site").replace(/^https?:\/\//, '').replace(/[^\w]/g, '_');
-    doc.save(`PageSpeed_SLT_Audit_${siteName}.pdf`);
+    yPos += 40;
+    doc.setFontSize(10);
+    doc.setTextColor(...textColor);
+
+    const closingText = [
+        "1. Immediate Actions: Address all 'Fail' status parameters as they directly impact your SEO and performance.",
+        "2. Continuous Monitoring: Run this audit monthly to catch new issues as your content updates.",
+        "3. Technical Integration: Share this report with your engineering team for structural fixes.",
+        "",
+        "Disclaimer: This report is based on automated assessment tools and simulated visitor data. Results may vary based on user device, connection speed, and geographic location. PageSpeed SLT does not guarantee specific SERP rankings."
+    ];
+
+    closingText.forEach(line => {
+        const splitText = doc.splitTextToSize(line, pageWidth - (margin * 2));
+        doc.text(splitText, margin, yPos);
+        yPos += (splitText.length * 14) + 6;
+    });
+
+    addFooter();
+
+    const fileName = siteUrl.replace(/^https?:\/\//, '').replace(/[^\w]/g, '_');
+    doc.save(`Audit_Report_${fileName}.pdf`);
 };

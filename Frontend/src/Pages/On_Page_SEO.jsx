@@ -1,4 +1,4 @@
-import React, { useContext, useMemo } from "react";
+﻿import React, { useContext, useMemo } from "react";
 import UrlHeader from "../Component/UrlHeader";
 import CircularProgress from "../Component/CircularProgress";
 import { useData } from "../context/DataContext";
@@ -17,18 +17,16 @@ import ScoreBadge from "../Component/reusablecomponent/ScoreBadge";
 import SEOCard from "../Component/reusablecomponent/SEOCard";
 import { AuditShimmer } from "../Component/reusablecomponent/AuditShimmer";
 
-const seoMetricExplanations = InfoDetails;
-
 const getStatusFromScore = (score) => {
-  if (score === 1) return "pass";
-  if (score >= 0.5) return "average";
+  if (score >= 90) return "pass";
+  if (score >= 50) return "warning";
   return "fail";
 };
 
-// ✅ Score Calculation Info (Standard Weights)
+// Score Calculation Info (Standard Weights)
 const scoreCalculationInfo = InfoDetails.On_Page_SEO_Methodology;
 
-// ✅ Simple Section (Custom for On-Page SEO grid layouts)
+// Simple Section (Custom for On-Page SEO grid layouts)
 const Section = ({ title, icon: Icon, children, darkMode, gridClasses = "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" }) => (
   <div className="space-y-4">
     <div className="flex items-center gap-3 px-2">
@@ -45,11 +43,13 @@ const Section = ({ title, icon: Icon, children, darkMode, gridClasses = "grid-co
   </div>
 );
 
-// ✅ Specialized Title Tag Card
+// Specialized Title Tag Card
 const TitleTagCard = ({ data, darkMode, onInfo }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
-  const isPassed = score === 1;
+  const status = data?.status || "fail";
+  const analysis = data?.analysis;
+  const isPassed = status === "pass";
 
   const statusText = isPassed ? "Optimized" : "Needs Improvement";
 
@@ -80,7 +80,7 @@ const TitleTagCard = ({ data, darkMode, onInfo }) => {
           </div>
 
           <div className="flex items-center gap-1">
-            {meta.why_this_occurred && !isPassed && (
+            {analysis && !isPassed && (
               <button
                 onClick={() => setShowDetails(!showDetails)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${darkMode
@@ -112,7 +112,7 @@ const TitleTagCard = ({ data, darkMode, onInfo }) => {
           <div>
             <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>DESCRIPTION: </span>
             <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {seoMetricExplanations.Title.whatThisParameterIs}
+              {InfoDetails.Title.whatThisParameterIs}
             </span>
           </div>
 
@@ -131,12 +131,12 @@ const TitleTagCard = ({ data, darkMode, onInfo }) => {
           <div className={`pt-3 border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
             <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>WHY IT MATTERS: </span>
             <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {seoMetricExplanations.Title.whyItMatters}
+              {InfoDetails.Title.whyItMatters}
             </span>
           </div>
 
           {/* Analysis Details (Only if toggled) */}
-          {showDetails && meta.why_this_occurred && !isPassed && (
+          {showDetails && analysis && !isPassed && (
             <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
               {/* Analysis */}
               <div className="space-y-2">
@@ -145,7 +145,7 @@ const TitleTagCard = ({ data, darkMode, onInfo }) => {
                   <span>Analysis</span>
                 </div>
                 <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                  {meta.why_this_occurred}
+                  {analysis.cause}
                 </p>
               </div>
 
@@ -156,7 +156,7 @@ const TitleTagCard = ({ data, darkMode, onInfo }) => {
                   <span>Recommendation</span>
                 </div>
                 <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                  {meta.how_to_fix}
+                  {analysis.recommendation}
                 </p>
               </div>
             </div>
@@ -168,11 +168,12 @@ const TitleTagCard = ({ data, darkMode, onInfo }) => {
   );
 };
 
-// ✅ Specialized Meta Description Card
+// Specialized Meta Description Card
 const MetaDescriptionCard = ({ data, darkMode, onInfo }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
-  const isPassed = score === 1;
+  const status = data?.status || "fail";
+  const isPassed = status === "pass";
   const statusText = isPassed ? "Optimized" : "Needs Improvement";
 
   return (
@@ -180,16 +181,18 @@ const MetaDescriptionCard = ({ data, darkMode, onInfo }) => {
       title="Meta Description"
       icon={FileText}
       iconColor="text-purple-400"
-      score={score}
+      score={data?.score}
+      status={getStatusFromScore(score)}
       statusText={statusText}
       meta={meta}
+      analysis={data?.analysis}
       metricKey="Meta_Description"
       darkMode={darkMode}
       onInfo={onInfo}
       className="col-span-1"
       headerInfo={`(${meta.length || 0} characters)`}
       getStatusFromScore={getStatusFromScore}
-      seoMetricExplanations={seoMetricExplanations}
+      InfoDetails={InfoDetails}
     >
       <div>
         <h4 className={`text-xs font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
@@ -203,12 +206,13 @@ const MetaDescriptionCard = ({ data, darkMode, onInfo }) => {
   );
 };
 // ------------------------------------------------------
-// ✅ Specialized Canonical Tag Card
+// Specialized Canonical Tag Card
 // ------------------------------------------------------
 const CanonicalTagCard = ({ data, darkMode, onInfo }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
-  const isPassed = score === 1;
+  const status = data?.status || "fail";
+  const isPassed = status === "pass";
   const statusText = isPassed ? "Optimized" : "Warning / Info";
 
   return (
@@ -216,15 +220,17 @@ const CanonicalTagCard = ({ data, darkMode, onInfo }) => {
       title="Canonical Tag"
       icon={Copy}
       iconColor="text-pink-400"
-      score={score}
+      score={data?.score}
+      status={getStatusFromScore(score)}
       statusText={statusText}
       meta={meta}
+      analysis={data?.analysis}
       metricKey="Canonical"
       darkMode={darkMode}
       onInfo={onInfo}
       className="col-span-1"
       getStatusFromScore={getStatusFromScore}
-      seoMetricExplanations={seoMetricExplanations}
+      InfoDetails={InfoDetails}
       headerInfo={meta.isSelfReferencing && (
         <span className={`text-xs px-2 py-0.5 rounded-full border ${darkMode ? "border-blue-500/30 text-blue-400 bg-blue-500/10" : "border-blue-200 text-blue-600 bg-blue-50"}`}>
           Self-Referencing
@@ -244,12 +250,13 @@ const CanonicalTagCard = ({ data, darkMode, onInfo }) => {
 };
 
 // ------------------------------------------------------
-// ✅ Specialized URL Structure Card
+// Specialized URL Structure Card
 // ------------------------------------------------------
 const URLStructureCard = ({ data, darkMode, onInfo }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
-  const isPassed = score === 1;
+  const status = data?.status || "fail";
+  const isPassed = status === "pass";
   const statusText = isPassed ? "Clean Details" : "Issues Found";
 
   return (
@@ -257,15 +264,17 @@ const URLStructureCard = ({ data, darkMode, onInfo }) => {
       title="URL Structure"
       icon={Link}
       iconColor="text-cyan-400"
-      score={score}
+      score={data?.score}
+      status={getStatusFromScore(score)}
       statusText={statusText}
       meta={meta}
+      analysis={data?.analysis}
       metricKey="URL_Structure"
       darkMode={darkMode}
       onInfo={onInfo}
       className="col-span-1"
       getStatusFromScore={getStatusFromScore}
-      seoMetricExplanations={seoMetricExplanations}
+      InfoDetails={InfoDetails}
     >
       <div>
         <h4 className={`text-xs font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
@@ -280,12 +289,15 @@ const URLStructureCard = ({ data, darkMode, onInfo }) => {
 };
 
 // ------------------------------------------------------
-// ✅ Specialized H1 Tag Card
+// Specialized H1 Tag Card
 // ------------------------------------------------------
+// Specialized H1 Tag Card
 const H1TagCard = ({ data, darkMode, onInfo }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
-  const isPassed = score === 1;
+  const status = data?.status || "fail";
+  const analysis = data?.analysis;
+  const isPassed = status === "pass";
   const statusText = isPassed ? "Optimized" : "Attention Needed";
 
   return (
@@ -333,7 +345,7 @@ const H1TagCard = ({ data, darkMode, onInfo }) => {
           <div>
             <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>DESCRIPTION: </span>
             <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {seoMetricExplanations.H1.whatThisParameterIs}
+              {InfoDetails.H1.whatThisParameterIs}
             </span>
           </div>
 
@@ -357,12 +369,12 @@ const H1TagCard = ({ data, darkMode, onInfo }) => {
           <div className={`pt-3 border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
             <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>WHY IT MATTERS: </span>
             <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {seoMetricExplanations.H1.whyItMatters}
+              {InfoDetails.H1.whyItMatters}
             </span>
           </div>
 
           {/* Analysis Details */}
-          {meta.why_this_occurred && !isPassed && (
+          {analysis && !isPassed && (
             <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-500">
@@ -370,7 +382,7 @@ const H1TagCard = ({ data, darkMode, onInfo }) => {
                   <span>Analysis</span>
                 </div>
                 <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                  {meta.why_this_occurred}
+                  {analysis.cause}
                 </p>
               </div>
               <div className="space-y-2">
@@ -379,7 +391,7 @@ const H1TagCard = ({ data, darkMode, onInfo }) => {
                   <span>Recommendation</span>
                 </div>
                 <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                  {meta.how_to_fix}
+                  {analysis.recommendation}
                 </p>
               </div>
             </div>
@@ -391,14 +403,16 @@ const H1TagCard = ({ data, darkMode, onInfo }) => {
 };
 
 // ------------------------------------------------------
-// ✅ Specialized Image Analysis Card
+// Specialized Image Analysis Card
 // ------------------------------------------------------
 const ImageAnalysisCard = ({ data, darkMode, onInfo, resolveLink, className = "" }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
-  const isPassed = score === 1; // Strict 100% for green
+  const status = data?.status || "fail";
+  const analysis = data?.analysis;
+  const isPassed = status === "pass";
 
-  const statusText = isPassed ? "Fully Optimized" : (score > 0.7 ? "Good / Improvements" : "Needs Attention");
+  const statusText = isPassed ? "Fully Optimized" : (score >= 50 ? "Good / Improvements" : "Needs Attention");
 
   return (
     <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group col-span-1 md:col-span-2 lg:col-span-3 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
@@ -445,7 +459,7 @@ const ImageAnalysisCard = ({ data, darkMode, onInfo, resolveLink, className = ""
           <div >
             <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>DESCRIPTION: </span>
             <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {seoMetricExplanations.Image.whatThisParameterIs}
+              {InfoDetails.Image.whatThisParameterIs}
             </span>
           </div>
 
@@ -568,13 +582,13 @@ const ImageAnalysisCard = ({ data, darkMode, onInfo, resolveLink, className = ""
           <div className={`pt-3 border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
             <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>WHY IT MATTERS: </span>
             <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {seoMetricExplanations.Image.whyItMatters}
+              {InfoDetails.Image.whyItMatters}
             </span>
           </div>
 
           {/* Analysis Details */}
           {
-            meta.why_this_occurred && !isPassed && (
+            analysis && !isPassed && (
               <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
                 {/* Analysis */}
                 <div className="space-y-2">
@@ -583,7 +597,7 @@ const ImageAnalysisCard = ({ data, darkMode, onInfo, resolveLink, className = ""
                     <span>Analysis</span>
                   </div>
                   <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                    {meta.why_this_occurred}
+                    {analysis.cause}
                   </p>
                 </div>
 
@@ -594,7 +608,7 @@ const ImageAnalysisCard = ({ data, darkMode, onInfo, resolveLink, className = ""
                     <span>Recommendation</span>
                   </div>
                   <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                    {meta.how_to_fix}
+                    {analysis.recommendation}
                   </p>
                 </div>
               </div>
@@ -607,14 +621,16 @@ const ImageAnalysisCard = ({ data, darkMode, onInfo, resolveLink, className = ""
   );
 };
 // ------------------------------------------------------
-// ✅ Specialized Semantic Tags Card
+// Specialized Semantic Tags Card
 // ------------------------------------------------------
 const SemanticTagsCard = ({ data, darkMode, onInfo, className }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
-  const isPassed = score === 1;
+  const status = data?.status || "fail";
+  const analysis = data?.analysis;
+  const isPassed = status === "pass";
 
-  const statusText = isPassed ? "Excellent Structure" : (score >= 0.7 ? "Good Structure" : "Weak Structure");
+  const statusText = isPassed ? "Excellent Structure" : (score >= 50 ? "Good Structure" : "Weak Structure");
 
   const renderTagBadge = (tagName, isCritical) => {
     const exists = meta.found?.some(t => t.toLowerCase() === tagName.toLowerCase());
@@ -668,7 +684,7 @@ const SemanticTagsCard = ({ data, darkMode, onInfo, className }) => {
           <div className="mb-4">
             <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>DESCRIPTION: </span>
             <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {seoMetricExplanations.Semantic_Tags.whatThisParameterIs}
+              {InfoDetails.Semantic_Tags.whatThisParameterIs}
             </span>
           </div>
 
@@ -710,13 +726,13 @@ const SemanticTagsCard = ({ data, darkMode, onInfo, className }) => {
         <div className={`pt-3 border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
           <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>WHY IT MATTERS: </span>
           <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-            {seoMetricExplanations.Semantic_Tags.whyItMatters}
+            {InfoDetails.Semantic_Tags.whyItMatters}
           </span>
         </div>
 
         {/* Analysis Details */}
         {
-          meta.why_this_occurred && !isPassed && (
+          analysis && !isPassed && (
             <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-500">
@@ -724,7 +740,7 @@ const SemanticTagsCard = ({ data, darkMode, onInfo, className }) => {
                   <span>Analysis</span>
                 </div>
                 <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                  {meta.why_this_occurred}
+                  {analysis.cause}
                 </p>
               </div>
               <div className="space-y-1">
@@ -733,7 +749,7 @@ const SemanticTagsCard = ({ data, darkMode, onInfo, className }) => {
                   <span>Recommendation</span>
                 </div>
                 <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                  {meta.how_to_fix}
+                  {analysis.recommendation}
                 </p>
               </div>
             </div>
@@ -746,7 +762,7 @@ const SemanticTagsCard = ({ data, darkMode, onInfo, className }) => {
 };
 
 // ------------------------------------------------------
-// ✅ Specialized Contextual Analysis Card
+// Specialized Contextual Analysis Card
 // ------------------------------------------------------
 const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink }) => {
   const meta = data?.meta || {};
@@ -787,10 +803,11 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
 
   // Determine score based on ratio
   const contextualRatio = allLinks.length > 0 ? contextualLinks.length / allLinks.length : 0;
-  const derivedScore = contextualRatio > 0.5 ? 1 : (contextualRatio > 0.3 ? 0.7 : 0);
-  const finalScore = score !== undefined ? score : derivedScore; // Prefer API score if exists
+  const derivedScore = contextualRatio > 0.5 ? 100 : (contextualRatio > 0.3 ? 70 : 0);
+  const finalScore = score !== undefined ? (score <= 1 ? score * 100 : score) : derivedScore;
+  const finalStatus = data.status || (finalScore >= 90 ? "pass" : finalScore >= 50 ? "warning" : "fail");
 
-  const isPassed = finalScore > 0.7; // Strict threshold for contextual
+  const isPassed = finalStatus === "pass";
   const statusText = isPassed ? "Good Context" : "Improve Relevance";
 
   return (
@@ -838,7 +855,7 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
           <div>
             <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>DESCRIPTION: </span>
             <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {seoMetricExplanations.Contextual_Linking.whatThisParameterIs}
+              {InfoDetails.Contextual_Linking.whatThisParameterIs}
             </span>
           </div>
 
@@ -878,13 +895,13 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
           <div className={`pt-3 border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
             <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>WHY IT MATTERS: </span>
             <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {seoMetricExplanations.Contextual_Linking.whyItMatters}
+              {InfoDetails.Contextual_Linking.whyItMatters}
             </span>
           </div>
 
           {/* Analysis & Recs from API */}
           {
-            meta.why_this_occurred && !isPassed && (
+            data.analysis.cause && !isPassed && (
               <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-500">
@@ -892,7 +909,7 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
                     <span>Analysis</span>
                   </div>
                   <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                    {meta.why_this_occurred}
+                    {data.analysis.cause}
                   </p>
                 </div>
                 <div className="space-y-1">
@@ -901,7 +918,7 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
                     <span>Recommendation</span>
                   </div>
                   <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                    {meta.how_to_fix}
+                    {data.analysis.recommendation}
                   </p>
                 </div>
               </div>
@@ -917,7 +934,8 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
 const LinkProfileCard = ({ data, darkMode, onInfo, resolveLink, className = "lg:col-span-3" }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
-  const isPassed = score === 1;
+  const status = data?.status || "fail";
+  const isPassed = status === "pass";
   const [activeTab, setActiveTab] = React.useState("internal");
 
   const statusText = isPassed ? "Healthy Link Profile" : "Needs Review";
@@ -994,7 +1012,7 @@ const LinkProfileCard = ({ data, darkMode, onInfo, resolveLink, className = "lg:
           <div>
             <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>DESCRIPTION: </span>
             <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {seoMetricExplanations.Links.whatThisParameterIs}
+              {InfoDetails.Links.whatThisParameterIs}
             </span>
           </div>
         </div>
@@ -1037,13 +1055,13 @@ const LinkProfileCard = ({ data, darkMode, onInfo, resolveLink, className = "lg:
         <div className={`pt-3 border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
           <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>WHY IT MATTERS: </span>
           <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-            {seoMetricExplanations.Links.whyItMatters}
+            {InfoDetails.Links.whyItMatters}
           </span>
         </div>
 
         {/* Analysis Details */}
         {
-          meta.why_this_occurred && (
+          data.analysis && (
             <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-500">
@@ -1051,7 +1069,7 @@ const LinkProfileCard = ({ data, darkMode, onInfo, resolveLink, className = "lg:
                   <span>Analysis</span>
                 </div>
                 <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                  {meta.why_this_occurred}
+                  {data.analysis.cause}
                 </p>
               </div>
               <div className="space-y-1">
@@ -1060,7 +1078,7 @@ const LinkProfileCard = ({ data, darkMode, onInfo, resolveLink, className = "lg:
                   <span>Recommendation</span>
                 </div>
                 <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                  {meta.how_to_fix}
+                  {data.analysis.recommendation}
                 </p>
               </div>
             </div>
@@ -1073,14 +1091,14 @@ const LinkProfileCard = ({ data, darkMode, onInfo, resolveLink, className = "lg:
 };
 
 // ------------------------------------------------------
-// ✅ Specialized Heading Hierarchy Card
+// Specialized Heading Hierarchy Card
 // ------------------------------------------------------
 const HeadingHierarchyCard = ({ data, darkMode, onInfo }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
-  const isPassed = score === 1;
-
-
+  const status = data?.status || "fail";
+  const analysis = data?.analysis;
+  const isPassed = status === "pass";
 
   const statusText = isPassed ? "Logical Structure" : "Imbalanced Hierarchy";
 
@@ -1123,7 +1141,7 @@ const HeadingHierarchyCard = ({ data, darkMode, onInfo }) => {
           <div>
             <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>DESCRIPTION: </span>
             <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {seoMetricExplanations.Heading_Hierarchy.whatThisParameterIs}
+              {InfoDetails.Heading_Hierarchy.whatThisParameterIs}
             </span>
           </div>
 
@@ -1186,7 +1204,7 @@ const HeadingHierarchyCard = ({ data, darkMode, onInfo }) => {
           <div className={`pt-3 border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
             <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>WHY IT MATTERS: </span>
             <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {seoMetricExplanations.Heading_Hierarchy.whyItMatters}
+              {InfoDetails.Heading_Hierarchy.whyItMatters}
             </span>
           </div>
 
@@ -1206,7 +1224,7 @@ const HeadingHierarchyCard = ({ data, darkMode, onInfo }) => {
                     </div>
                   )) : (
                     <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                      {data?.why_this_occurred || "Hierarchy is logical and follows SEO best practices."}
+                      {data?.analysis?.cause || "Hierarchy is logical and follows SEO best practices."}
                     </p>
                   )}
                 </div>
@@ -1219,7 +1237,7 @@ const HeadingHierarchyCard = ({ data, darkMode, onInfo }) => {
                   <span>Recommendation</span>
                 </div>
                 <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                  {data?.how_to_fix || "Ensure headings follow a logical sequence (H1 → H2 → H3) and don't skip levels."}
+                  {data?.analysis?.recommendation || "Ensure headings follow a logical sequence (H1 → H2 → H3) and don't skip levels."}
                 </p>
               </div>
             </div>
@@ -1232,17 +1250,16 @@ const HeadingHierarchyCard = ({ data, darkMode, onInfo }) => {
 };
 
 // ------------------------------------------------------
-// ✅ Specialized Content Quality Card
+// Specialized Content Quality Card
 // ------------------------------------------------------
 const ContentQualityCard = ({ data, darkMode, onInfo }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
-  const isPassed = score === 1;
+  const status = data?.status || "fail";
+  const analysis = data?.analysis;
+  const isPassed = status === "pass";
 
-  // Status Colors
-
-
-  const statusText = isPassed ? "High Quality" : (score >= 0.5 ? "Acceptable Depth" : "Thin Content / Repetition");
+  const statusText = isPassed ? "High Quality" : (score >= 50 ? "Acceptable Depth" : "Thin Content / Repetition");
 
   return (
     <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group col-span-1 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
@@ -1284,7 +1301,7 @@ const ContentQualityCard = ({ data, darkMode, onInfo }) => {
           <div>
             <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>DESCRIPTION: </span>
             <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {seoMetricExplanations.Content_Quality.whatThisParameterIs}
+              {InfoDetails.Content_Quality.whatThisParameterIs}
             </span>
           </div>
 
@@ -1316,12 +1333,12 @@ const ContentQualityCard = ({ data, darkMode, onInfo }) => {
           <div className={`pt-3 border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
             <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>WHY IT MATTERS: </span>
             <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {seoMetricExplanations.Content_Quality.whyItMatters}
+              {InfoDetails.Content_Quality.whyItMatters}
             </span>
           </div>
 
           {/* Analysis Details */}
-          {meta.why_this_occurred && !isPassed && (
+          {data.analysis && !isPassed && (
             <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
               {/* Analysis */}
               <div className="space-y-2">
@@ -1330,7 +1347,7 @@ const ContentQualityCard = ({ data, darkMode, onInfo }) => {
                   <span>Analysis</span>
                 </div>
                 <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                  {meta.why_this_occurred}
+                  {data.analysis.cause}
                 </p>
               </div>
 
@@ -1341,7 +1358,7 @@ const ContentQualityCard = ({ data, darkMode, onInfo }) => {
                   <span>Recommendation</span>
                 </div>
                 <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                  {meta.how_to_fix}
+                  {data.analysis.recommendation}
                 </p>
               </div>
             </div>
@@ -1354,16 +1371,16 @@ const ContentQualityCard = ({ data, darkMode, onInfo }) => {
 };
 
 // ------------------------------------------------------
-// ✅ Specialized Video Analysis Card
+// Specialized Video Analysis Card
 // ------------------------------------------------------
 const VideoAnalysisCard = ({ data, darkMode, onInfo, className = "" }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
-  const isPassed = score === 1;
+  const status = data?.status || "fail";
+  const analysis = data?.analysis;
+  const isPassed = status === "pass";
 
-
-
-  const statusText = isPassed ? "Fully Optimized" : (score >= 0.5 ? "Partially Optimized" : "Needs Attention");
+  const statusText = isPassed ? "Fully Optimized" : (score >= 50 ? "Partially Optimized" : "Needs Attention");
 
   return (
     <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group ${className} ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
@@ -1399,7 +1416,7 @@ const VideoAnalysisCard = ({ data, darkMode, onInfo, className = "" }) => {
           <div>
             <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>DESCRIPTION: </span>
             <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {seoMetricExplanations.Video?.whatThisParameterIs || "Evaluates how videos are optimized for performance and discovery."}
+              {InfoDetails.Video?.whatThisParameterIs || "Evaluates how videos are optimized for performance and discovery."}
             </span>
           </div>
 
@@ -1425,7 +1442,7 @@ const VideoAnalysisCard = ({ data, darkMode, onInfo, className = "" }) => {
           <div className={`pt-3 border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
             <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>WHY IT MATTERS: </span>
             <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {seoMetricExplanations.Video?.whyItMatters || "Optimized videos improve user engagement and can appear in rich search results."}
+              {InfoDetails.Video?.whyItMatters || "Optimized videos improve user engagement and can appear in rich search results."}
             </span>
           </div>
         </div>
@@ -1435,12 +1452,13 @@ const VideoAnalysisCard = ({ data, darkMode, onInfo, className = "" }) => {
 };
 
 // ------------------------------------------------------
-// ✅ Specialized URL Slugs Card
+// Specialized URL Slugs Card
 // ------------------------------------------------------
 const URLSlugCard = ({ data, darkMode, onInfo }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
-  const isPassed = score === 1;
+  const status = data?.status || "fail";
+  const isPassed = status === "pass";
   const statusText = isPassed ? "Clean Slugs" : "SEO Issues Found";
 
   return (
@@ -1456,7 +1474,7 @@ const URLSlugCard = ({ data, darkMode, onInfo }) => {
       onInfo={onInfo}
       className="col-span-1"
       getStatusFromScore={getStatusFromScore}
-      seoMetricExplanations={seoMetricExplanations}
+      InfoDetails={InfoDetails}
       showAnalysis={false}
     >
       <div className="space-y-2">
@@ -1488,7 +1506,7 @@ const URLSlugCard = ({ data, darkMode, onInfo }) => {
       </div>
 
       {/* Custom Analysis Section for Slugs */}
-      {meta.why_this_occurred && !isPassed && (
+      {data.analysis && !isPassed && (
         <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-500">
@@ -1496,7 +1514,7 @@ const URLSlugCard = ({ data, darkMode, onInfo }) => {
               <span>Analysis</span>
             </div>
             <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {meta.why_this_occurred}
+              {data.analysis.cause}
             </p>
           </div>
           <div className="space-y-2">
@@ -1505,7 +1523,7 @@ const URLSlugCard = ({ data, darkMode, onInfo }) => {
               <span>Recommendation</span>
             </div>
             <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {meta.how_to_fix || "Use lowercase letters, numbers, and hyphens. Avoid spaces or underscores."}
+              {data.analysis.recommendation || "Use lowercase letters, numbers, and hyphens. Avoid spaces or underscores."}
             </p>
           </div>
         </div>
@@ -1515,12 +1533,13 @@ const URLSlugCard = ({ data, darkMode, onInfo }) => {
 };
 
 // ------------------------------------------------------
-// ✅ Specialized Robots.txt Card
+// Specialized Robots.txt Card
 // ------------------------------------------------------
 const RobotsTxtCard = ({ data, darkMode, onInfo }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
-  const isPassed = score === 1;
+  const status = data?.status || "fail";
+  const isPassed = status === "pass";
   const statusText = isPassed ? "Found" : "Missing";
 
   return (
@@ -1529,14 +1548,16 @@ const RobotsTxtCard = ({ data, darkMode, onInfo }) => {
       icon={FileCode}
       iconColor="text-orange-400"
       score={score}
+      status={data.status}
       statusText={statusText}
+      analysis={data.analysis}
       meta={meta}
       metricKey="Robots_Txt"
       darkMode={darkMode}
       onInfo={onInfo}
       className="col-span-1"
       getStatusFromScore={getStatusFromScore}
-      seoMetricExplanations={seoMetricExplanations}
+      InfoDetails={InfoDetails}
       showAnalysis={false}
     >
       {meta?.content && (
@@ -1549,7 +1570,7 @@ const RobotsTxtCard = ({ data, darkMode, onInfo }) => {
       )}
 
       {/* Custom Analysis */}
-      {meta.why_this_occurred && !isPassed && (
+      {data.analysis && !isPassed && (
         <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-500">
@@ -1557,7 +1578,7 @@ const RobotsTxtCard = ({ data, darkMode, onInfo }) => {
               <span>Analysis</span>
             </div>
             <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {meta.why_this_occurred}
+              {data.analysis.cause}
             </p>
           </div>
           <div className="space-y-1">
@@ -1566,7 +1587,7 @@ const RobotsTxtCard = ({ data, darkMode, onInfo }) => {
               <span>Recommendation</span>
             </div>
             <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {meta.how_to_fix}
+              {data.analysis.recommendation}
             </p>
           </div>
         </div>
@@ -1576,12 +1597,13 @@ const RobotsTxtCard = ({ data, darkMode, onInfo }) => {
 };
 
 // ------------------------------------------------------
-// ✅ Specialized Sitemap Card
+// Specialized Sitemap Card
 // ------------------------------------------------------
 const SitemapCard = ({ data, darkMode, onInfo }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
-  const isPassed = score === 1;
+  const status = data?.status || "fail";
+  const isPassed = status === "pass";
   const statusText = isPassed ? "Found" : "Missing";
 
   return (
@@ -1590,14 +1612,16 @@ const SitemapCard = ({ data, darkMode, onInfo }) => {
       icon={Search}
       iconColor="text-blue-400"
       score={score}
+      status={status}
       statusText={statusText}
+      analysis={data.analysis}
       meta={meta}
       metricKey="Sitemap"
       darkMode={darkMode}
       onInfo={onInfo}
       className="col-span-1"
       getStatusFromScore={getStatusFromScore}
-      seoMetricExplanations={seoMetricExplanations}
+      InfoDetails={InfoDetails}
       showAnalysis={false}
     >
       {meta?.content && (
@@ -1610,7 +1634,7 @@ const SitemapCard = ({ data, darkMode, onInfo }) => {
       )}
 
       {/* Custom Analysis */}
-      {meta.why_this_occurred && !isPassed && (
+      {data.analysis && !isPassed && (
         <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-500">
@@ -1618,7 +1642,7 @@ const SitemapCard = ({ data, darkMode, onInfo }) => {
               <span>Analysis</span>
             </div>
             <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {meta.why_this_occurred}
+              {data.analysis.cause}
             </p>
           </div>
           <div className="space-y-1">
@@ -1627,7 +1651,7 @@ const SitemapCard = ({ data, darkMode, onInfo }) => {
               <span>Recommendation</span>
             </div>
             <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {meta.how_to_fix}
+              {data.analysis.recommendation}
             </p>
           </div>
         </div>
@@ -1641,7 +1665,8 @@ const SitemapCard = ({ data, darkMode, onInfo }) => {
 const StructuredDataCard = ({ data, darkMode, onInfo, className = "" }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
-  const isPassed = score === 1;
+  const status = data?.status || "fail";
+  const isPassed = status === "pass";
 
   return (
     <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group ${className} ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
@@ -1674,7 +1699,7 @@ const StructuredDataCard = ({ data, darkMode, onInfo, className = "" }) => {
           <div>
             <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>DESCRIPTION: </span>
             <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {seoMetricExplanations.Structured_Data.whatThisParameterIs}
+              {InfoDetails.Structured_Data.whatThisParameterIs}
             </span>
           </div>
 
@@ -1703,7 +1728,7 @@ const StructuredDataCard = ({ data, darkMode, onInfo, className = "" }) => {
           <div className={`pt-3 border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
             <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>WHY IT MATTERS: </span>
             <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {seoMetricExplanations.Structured_Data.whyItMatters}
+              {InfoDetails.Structured_Data.whyItMatters}
             </span>
           </div>
         </div>
@@ -1714,13 +1739,14 @@ const StructuredDataCard = ({ data, darkMode, onInfo, className = "" }) => {
 
 
 // ------------------------------------------------------
-// ✅ Specialized Social Media Cards
+// Specialized Social Media Cards
 // ------------------------------------------------------
 
 const OpenGraphCard = ({ data, darkMode, onInfo, className = "" }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
-  const isPassed = score === 1;
+  const status = data?.status || "fail";
+  const isPassed = status === "pass";
 
   return (
     <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group ${className} ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
@@ -1753,7 +1779,7 @@ const OpenGraphCard = ({ data, darkMode, onInfo, className = "" }) => {
           <div>
             <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>DESCRIPTION: </span>
             <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {seoMetricExplanations.Open_Graph.whatThisParameterIs}
+              {InfoDetails.Open_Graph.whatThisParameterIs}
             </span>
           </div>
 
@@ -1773,7 +1799,7 @@ const OpenGraphCard = ({ data, darkMode, onInfo, className = "" }) => {
           <div className={`pt-3 border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
             <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>WHY IT MATTERS: </span>
             <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {seoMetricExplanations.Open_Graph.whyItMatters}
+              {InfoDetails.Open_Graph.whyItMatters}
             </span>
           </div>
         </div>
@@ -1785,7 +1811,8 @@ const OpenGraphCard = ({ data, darkMode, onInfo, className = "" }) => {
 const TwitterCardCard = ({ data, darkMode, onInfo, className = "" }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
-  const isPassed = score === 1;
+  const status = data?.status || "fail";
+  const isPassed = status === "pass";
 
   return (
     <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group ${className} ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
@@ -1818,7 +1845,7 @@ const TwitterCardCard = ({ data, darkMode, onInfo, className = "" }) => {
           <div>
             <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>DESCRIPTION: </span>
             <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {seoMetricExplanations.Twitter_Card.whatThisParameterIs}
+              {InfoDetails.Twitter_Card.whatThisParameterIs}
             </span>
           </div>
 
@@ -1838,7 +1865,7 @@ const TwitterCardCard = ({ data, darkMode, onInfo, className = "" }) => {
           <div className={`pt-3 border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
             <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>WHY IT MATTERS: </span>
             <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {seoMetricExplanations.Twitter_Card.whyItMatters}
+              {InfoDetails.Twitter_Card.whyItMatters}
             </span>
           </div>
         </div>
@@ -1850,7 +1877,8 @@ const TwitterCardCard = ({ data, darkMode, onInfo, className = "" }) => {
 const SocialProfilesCard = ({ data, darkMode, onInfo, className = "" }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
-  const isPassed = score === 1;
+  const status = data?.status || "fail";
+  const isPassed = status === "pass";
 
   const getPlatformInfo = (url) => {
     const u = url.toLowerCase();
@@ -1893,7 +1921,7 @@ const SocialProfilesCard = ({ data, darkMode, onInfo, className = "" }) => {
           <div>
             <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>DESCRIPTION: </span>
             <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {seoMetricExplanations.Social_Links.whatThisParameterIs}
+              {InfoDetails.Social_Links.whatThisParameterIs}
             </span>
           </div>
 
@@ -1926,7 +1954,7 @@ const SocialProfilesCard = ({ data, darkMode, onInfo, className = "" }) => {
           <div className={`pt-3 border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
             <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>WHY IT MATTERS: </span>
             <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {seoMetricExplanations.Social_Links.whyItMatters}
+              {InfoDetails.Social_Links.whyItMatters}
             </span>
           </div>
         </div>
@@ -2001,7 +2029,7 @@ export default function On_Page_SEO() {
     return (
       <div className={`w-full ${darkMode ? "bg-gray-900" : "bg-gray-50"} transition-colors duration-300`}>
         <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-8`}>
-          {/* ✅ Unified Master Card Loading State */}
+          {/* Unified Master Card Loading State */}
           <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
 
             {/* 1. URL Header */}
@@ -2052,7 +2080,7 @@ export default function On_Page_SEO() {
     <div className={`w-full ${mainBg} transition-colors duration-300`}>
       <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-8`}>
 
-        {/* ✅ Unified Master Card */}
+        {/* Unified Master Card */}
         <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
 
           {/* 1. URL Header */}
@@ -2143,28 +2171,28 @@ export default function On_Page_SEO() {
           <TitleTagCard
             data={seo.Title}
             darkMode={darkMode}
-            onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.Title, icon: Tag })}
+            onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Title, icon: Tag })}
           />
           <H1TagCard
             data={seo.H1}
             darkMode={darkMode}
-            onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.H1, icon: Layout })}
+            onInfo={() => setSelectedParameterInfo({ ...InfoDetails.H1, icon: Layout })}
           />
           <MetaDescriptionCard
             data={seo.Meta_Description}
             darkMode={darkMode}
-            onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.Meta_Description, icon: FileText })}
+            onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Meta_Description, icon: FileText })}
           />
           <ContentQualityCard
             data={seo.Duplicate_Content}
             darkMode={darkMode}
-            onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.Content_Quality, icon: Copy })}
+            onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Content_Quality, icon: Copy })}
           />
           <ContextualAnalysisCard
             data={seo.Contextual_Linking}
             linksData={seo.Links}
             darkMode={darkMode}
-            onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.Contextual_Linking, icon: Link })}
+            onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Contextual_Linking, icon: Link })}
             resolveLink={resolveLink}
             className="md:col-span-2"
           />
@@ -2175,32 +2203,32 @@ export default function On_Page_SEO() {
           <CanonicalTagCard
             data={seo.Canonical}
             darkMode={darkMode}
-            onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.Canonical, icon: Copy })}
+            onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Canonical, icon: Copy })}
           />
           <RobotsTxtCard
             data={seo.Robots_Txt}
             darkMode={darkMode}
-            onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.Robots_Txt, icon: FileCode })}
+            onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Robots_Txt, icon: FileCode })}
           />
           <SitemapCard
             data={seo.Sitemap}
             darkMode={darkMode}
-            onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.Sitemap, icon: Search })}
+            onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Sitemap, icon: Search })}
           />
           <StructuredDataCard
             data={seo.Structured_Data}
             darkMode={darkMode}
-            onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.Structured_Data, icon: Tag })}
+            onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Structured_Data, icon: Tag })}
           />
           <URLStructureCard
             data={seo.URL_Structure}
             darkMode={darkMode}
-            onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.URL_Structure, icon: Link })}
+            onInfo={() => setSelectedParameterInfo({ ...InfoDetails.URL_Structure, icon: Link })}
           />
           <URLSlugCard
             data={seo.URL_Slugs}
             darkMode={darkMode}
-            onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.URL_Slugs, icon: Link })}
+            onInfo={() => setSelectedParameterInfo({ ...InfoDetails.URL_Slugs, icon: Link })}
           />
         </Section>
 
@@ -2210,7 +2238,7 @@ export default function On_Page_SEO() {
             <ImageAnalysisCard
               data={seo.Image}
               darkMode={darkMode}
-              onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.Image, icon: ImageIcon })}
+              onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Image, icon: ImageIcon })}
               resolveLink={resolveLink}
               className="lg:col-span-2"
             />
@@ -2220,7 +2248,7 @@ export default function On_Page_SEO() {
             <VideoAnalysisCard
               data={seo.Video}
               darkMode={darkMode}
-              onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.Video, icon: Video })}
+              onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Video, icon: Video })}
             />
           )}
 
@@ -2228,14 +2256,14 @@ export default function On_Page_SEO() {
             <HeadingHierarchyCard
               data={seo.Heading_Hierarchy}
               darkMode={darkMode}
-              onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.Heading_Hierarchy, icon: List })}
+              onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Heading_Hierarchy, icon: List })}
             />
           )}
 
           <SemanticTagsCard
             data={seo.Semantic_Tags}
             darkMode={darkMode}
-            onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.Semantic_Tags, icon: FileCode })}
+            onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Semantic_Tags, icon: FileCode })}
             className="lg:col-span-3"
           />
         </Section>
@@ -2245,24 +2273,24 @@ export default function On_Page_SEO() {
           <LinkProfileCard
             data={seo.Links}
             darkMode={darkMode}
-            onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.Links, icon: Globe })}
+            onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Links, icon: Globe })}
             resolveLink={resolveLink}
             className="md:col-span-2"
           />
           <OpenGraphCard
             data={seo.Open_Graph}
             darkMode={darkMode}
-            onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.Open_Graph, icon: Globe })}
+            onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Open_Graph, icon: Globe })}
           />
           <TwitterCardCard
             data={seo.Twitter_Card}
             darkMode={darkMode}
-            onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.Twitter_Card, icon: Globe })}
+            onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Twitter_Card, icon: Globe })}
           />
           <SocialProfilesCard
             data={seo.Social_Links}
             darkMode={darkMode}
-            onInfo={() => setSelectedParameterInfo({ ...seoMetricExplanations.Social_Links, icon: Globe })}
+            onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Social_Links, icon: Globe })}
             className="md:col-span-2"
           />
         </Section>

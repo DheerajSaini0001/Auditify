@@ -1,5 +1,6 @@
 import React from "react";
 import { ChevronUp, ChevronDown, Info, AlertTriangle, CheckCircle } from "lucide-react";
+import { InfoDetails as DefaultInfoDetails } from "../../Component/InfoDetails";
 import ScoreBadge from "./ScoreBadge";
 
 /**
@@ -19,15 +20,17 @@ import ScoreBadge from "./ScoreBadge";
  * @param {React.ReactNode} children - Custom card content
  * @param {boolean} showAnalysis - Whether to show Analysis/Recommendation section
  * @param {function} getStatusFromScore - Score to status mapper function
- * @param {object} seoMetricExplanations - SEO explanations object
+ * @param {object} InfoDetails - SEO explanations object (Optional prop)
  */
 const SEOCard = ({
     title,
     icon: Icon,
     iconColor = "text-blue-400",
-    score,
+    score, // 0-100 now
+    status, // pass, warning, fail
     statusText,
     meta,
+    analysis,
     metricKey,
     darkMode,
     onInfo,
@@ -36,10 +39,13 @@ const SEOCard = ({
     children,
     showAnalysis = true,
     getStatusFromScore,
-    seoMetricExplanations,
+    InfoDetails: propInfoDetails,
 }) => {
+    const InfoDetails = propInfoDetails || DefaultInfoDetails;
     const [showDetails, setShowDetails] = React.useState(false);
-    const isPassed = score === 1;
+    const currentStatus = getStatusFromScore ? getStatusFromScore(score) : status;
+    const isPassed = currentStatus === "pass";
+    const currentAnalysis = analysis;
 
     return (
         <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group ${className} ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
@@ -54,7 +60,7 @@ const SEOCard = ({
                             <h3 className={`font-bold text-lg ${darkMode ? "text-gray-100" : "text-gray-900"}`}>{title}</h3>
                             <div className={`flex items-center gap-2 mt-1`}>
                                 <ScoreBadge
-                                    status={getStatusFromScore(score)}
+                                    status={currentStatus}
                                     value={statusText}
                                     darkMode={darkMode}
                                 />
@@ -68,7 +74,7 @@ const SEOCard = ({
                     </div>
 
                     <div className="flex items-center gap-1">
-                        {showAnalysis && meta?.why_this_occurred && !isPassed && (
+                        {showAnalysis && currentAnalysis && !isPassed && (
                             <button
                                 onClick={() => setShowDetails(!showDetails)}
                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${darkMode
@@ -97,11 +103,11 @@ const SEOCard = ({
                 {/* Content Body */}
                 <div className="space-y-4">
                     {/* Description */}
-                    {metricKey && seoMetricExplanations?.[metricKey] && (
+                    {metricKey && InfoDetails?.[metricKey] && (
                         <div>
                             <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>DESCRIPTION: </span>
                             <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                                {seoMetricExplanations[metricKey].whatThisParameterIs}
+                                {InfoDetails[metricKey].whatThisParameterIs || InfoDetails[metricKey].whatThisMetricIs || InfoDetails[metricKey].whatThisParameterIs}
                             </span>
                         </div>
                     )}
@@ -110,17 +116,17 @@ const SEOCard = ({
                     {children}
 
                     {/* Why it matters */}
-                    {metricKey && seoMetricExplanations?.[metricKey] && (
+                    {metricKey && InfoDetails?.[metricKey] && (
                         <div className={`pt-3 border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
                             <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>WHY IT MATTERS: </span>
                             <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                                {seoMetricExplanations[metricKey].whyItMatters}
+                                {InfoDetails[metricKey].whyItMatters || "No description available."}
                             </span>
                         </div>
                     )}
 
                     {/* Analysis Details (Only if toggled) */}
-                    {showAnalysis && showDetails && meta?.why_this_occurred && !isPassed && (
+                    {showAnalysis && showDetails && currentAnalysis && !isPassed && (
                         <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
                             {/* Analysis */}
                             <div className="space-y-2">
@@ -129,7 +135,7 @@ const SEOCard = ({
                                     <span>Analysis</span>
                                 </div>
                                 <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                                    {meta.why_this_occurred}
+                                    {currentAnalysis.cause}
                                 </p>
                             </div>
 
@@ -140,7 +146,7 @@ const SEOCard = ({
                                     <span>Recommendation</span>
                                 </div>
                                 <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                                    {meta.how_to_fix}
+                                    {currentAnalysis.recommendation}
                                 </p>
                             </div>
                         </div>

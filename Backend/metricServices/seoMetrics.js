@@ -1,10 +1,20 @@
 // Helper to standardized return object
 const evaluateParameter = (score, details, meta = {}) => {
+  const status = score === 1 ? "pass" : score >= 0.5 ? "warning" : "fail";
+  const { why_this_occurred, how_to_fix, ...restMeta } = meta;
+
   return {
-    score,
-    status: score === 1 ? "pass" : score > 0 ? "warning" : "fail",
+    score: Math.round(score * 100),
+    status,
     details,
-    meta
+    meta: {
+      ...restMeta,
+      value: Math.round(score * 100) + "%"
+    },
+    analysis: status === "pass" ? null : {
+      cause: why_this_occurred || "Issue detected with this metric.",
+      recommendation: how_to_fix || "Follow SEO best practices to improve this score."
+    }
   };
 };
 
@@ -1028,45 +1038,47 @@ export default async function seoMetrics(url, $, page) {
   const { ogMetric, twitterMetric, socialLinksMetric } = checkSocial($);
 
   const weights = {
-    Title: 15,
-    Meta_Description: 8,
-    H1: 10,
-    Duplicate_Content: 12,
-    Image: 8,
-    Canonical: 8,
-    Contextual_Linking: 8,
-    Sitemap: 5,
-    Robots_Txt: 4,
-    Structured_Data: 6,
-    Heading_Hierarchy: 3,
-    URL_Slugs: 3,
-    Links: 3,
-    Semantic_Tags: 1,
-    Video: 1,
-    Open_Graph: 2,
-    Twitter_Card: 2,
-    Social_Links: 1
+    Title: 0.15,
+    Meta_Description: 0.08,
+    H1: 0.10,
+    Duplicate_Content: 0.12,
+    Image: 0.08,
+    Canonical: 0.08,
+    Contextual_Linking: 0.08,
+    Sitemap: 0.05,
+    Robots_Txt: 0.04,
+    Structured_Data: 0.06,
+    Heading_Hierarchy: 0.03,
+    URL_Slugs: 0.03,
+    Links: 0.03,
+    Semantic_Tags: 0.01,
+    Video: 0.01,
+    Open_Graph: 0.02,
+    Twitter_Card: 0.02,
+    Social_Links: 0.01
   };
 
+  const getScore = (metric) => metric?.score || 0;
+
   const weightedScore =
-    (titleMetric.score * weights.Title) +
-    (metaDescMetric.score * weights.Meta_Description) +
-    (h1Metric.score * weights.H1) +
-    (contentQualityMetric.score * weights.Duplicate_Content) +
-    (imageMetric.score * weights.Image) +
-    (canonicalMetric.score * weights.Canonical) +
-    (contextualMetric.score * weights.Contextual_Linking) +
-    (sitemapMetric.score * weights.Sitemap) +
-    (robotsMetric.score * weights.Robots_Txt) +
-    (structuredDataMetric.score * weights.Structured_Data) +
-    (hierarchyMetric.score * weights.Heading_Hierarchy) +
-    (slugMetric.score * weights.URL_Slugs) +
-    (linksMetric.score * weights.Links) +
-    (semanticMetric.score * weights.Semantic_Tags) +
-    (videoMetric.score * weights.Video) +
-    (ogMetric.score * weights.Open_Graph) +
-    (twitterMetric.score * weights.Twitter_Card) +
-    (socialLinksMetric.score * weights.Social_Links);
+    (getScore(titleMetric) * weights.Title) +
+    (getScore(metaDescMetric) * weights.Meta_Description) +
+    (getScore(h1Metric) * weights.H1) +
+    (getScore(contentQualityMetric) * weights.Duplicate_Content) +
+    (getScore(imageMetric) * weights.Image) +
+    (getScore(canonicalMetric) * weights.Canonical) +
+    (getScore(contextualMetric) * weights.Contextual_Linking) +
+    (getScore(sitemapMetric) * weights.Sitemap) +
+    (getScore(robotsMetric) * weights.Robots_Txt) +
+    (getScore(structuredDataMetric) * weights.Structured_Data) +
+    (getScore(hierarchyMetric) * weights.Heading_Hierarchy) +
+    (getScore(slugMetric) * weights.URL_Slugs) +
+    (getScore(linksMetric) * weights.Links) +
+    (getScore(semanticMetric) * weights.Semantic_Tags) +
+    (getScore(videoMetric) * weights.Video) +
+    (getScore(ogMetric) * weights.Open_Graph) +
+    (getScore(twitterMetric) * weights.Twitter_Card) +
+    (getScore(socialLinksMetric) * weights.Social_Links);
 
   const actualPercentage = parseFloat(weightedScore.toFixed(0));
 

@@ -7,9 +7,9 @@ function calculateScore(observed, good, poor) {
 }
 
 function calculateStatus(value, goodThreshold, needsImprovementThreshold) {
-  if (value <= goodThreshold) return "good";
-  if (value <= needsImprovementThreshold) return "needs_improvement";
-  return "poor";
+  if (value <= goodThreshold) return "pass";
+  if (value <= needsImprovementThreshold) return "warning";
+  return "fail";
 }
 
 // LCP - Largest Contentful Paint
@@ -27,8 +27,7 @@ const evaluateLCPLab = (audits) => {
   const causes = [];
   const recommendations = [];
 
-  if (labStatus !== "good") {
-
+  if (labStatus !== "pass") {
     // Check TTFB (Time to First Byte)
     const ttfbVal = audits["server-response-time"]?.numericValue || 0;
     if (ttfbVal > 600) {
@@ -50,26 +49,24 @@ const evaluateLCPLab = (audits) => {
       recommendations.push("Compress and resize images. Use Next-Gen formats like WebP.");
     }
 
-    if (causes.length === 0 && labStatus !== "good") {
+    if (causes.length === 0) {
       causes.push("General main-thread blocking or large resources");
       recommendations.push("Review network waterfall and reduce main-thread work.");
     }
   }
 
   return {
-    value: labValue + "ms",
     score: labScore,
     status: labStatus,
-    thresholds: {
-      Good: "0-2500ms",
-      Warning: "2500-4000ms",
-      Poor: "4000ms+"
-    },
-    analysis: labStatus === "good" ? null : {
+    details: labStatus === "pass" ? "LCP is within optimal range." : `LCP is delayed (${labValue}ms).`,
+    meta: {
+      value: labValue + "ms",
       lcpElement,
-      causes,
-      recommendations,
-      insight: `LCP is delayed. Primary bottleneck appears to be: ${causes[0] || "unknown"}.`
+      thresholds: { Good: "0-2500ms", Warning: "2500-4000ms", Poor: "4000ms+" }
+    },
+    analysis: labStatus === "pass" ? null : {
+      cause: causes[0] || "General main-thread blocking or large resources",
+      recommendation: recommendations[0] || "Review network waterfall and reduce main-thread work."
     }
   };
 };
@@ -85,7 +82,7 @@ const evaluateLCPCrux = (audits, cruxMetrics) => {
   const causes = [];
   const recommendations = [];
 
-  if (fieldStatus !== "good") {
+  if (fieldStatus !== "pass") {
     // 1. Check TTFB (Server Response Time)
     const ttfbVal = audits["server-response-time"]?.numericValue || 0;
     if (ttfbVal > 600) {
@@ -121,19 +118,17 @@ const evaluateLCPCrux = (audits, cruxMetrics) => {
   }
 
   return {
-    value: fieldValue + "ms",
     score: fieldScore,
-    p75: true,
     status: fieldStatus,
-    thresholds: {
-      Good: "0-2500ms",
-      Warning: "2500-4000ms",
-      Poor: "4000ms+"
+    details: fieldStatus === "pass" ? "LCP (Real Users) is within optimal range." : `Real users experience LCP delay (${fieldValue}ms).`,
+    meta: {
+      value: fieldValue + "ms",
+      p75: true,
+      thresholds: { Good: "0-2500ms", Warning: "2500-4000ms", Poor: "4000ms+" }
     },
-    analysis: fieldStatus === "good" ? null : {
-      causes,
-      recommendations,
-      insight: `LCP is delayed. Primary bottleneck appears to be: ${causes[0] || "unknown"}.`
+    analysis: fieldStatus === "pass" ? null : {
+      cause: causes[0] || "Network or device latency variations",
+      recommendation: recommendations[0] || "Use a CDN and reduce total page weight for constrained devices."
     }
   };
 };
@@ -147,7 +142,7 @@ const evaluateCLSLab = (audits) => {
   const causes = [];
   const recommendations = [];
 
-  if (labStatus !== "good") {
+  if (labStatus !== "pass") {
     // Check Unsized Images
     const unsized = audits["unsized-images"]?.details?.items || [];
     if (unsized.length > 0) {
@@ -176,18 +171,16 @@ const evaluateCLSLab = (audits) => {
   }
 
   return {
-    value: labValue,
     score: labScore,
     status: labStatus,
-    thresholds: {
-      Good: "0-0.1",
-      Warning: "0.1-0.25",
-      Poor: "0.25+"
+    details: labStatus === "pass" ? "Visual stability is excellent." : `Layout shifts detected (${labValue}).`,
+    meta: {
+      value: labValue,
+      thresholds: { Good: "0-0.1", Warning: "0.1-0.25", Poor: "0.25+" }
     },
-    analysis: labStatus === "good" ? null : {
-      causes,
-      recommendations,
-      insight: `Visual stability is low. Shifts are caused by: ${causes[0] || "dynamic content"}.`
+    analysis: labStatus === "pass" ? null : {
+      cause: causes[0] || "Dynamic content shifts",
+      recommendation: recommendations[0] || "Review late-loading content such as ads or banners."
     }
   };
 };
@@ -204,7 +197,7 @@ const evaluateCLSCrux = (audits, cruxMetrics) => {
   const causes = [];
   const recommendations = [];
 
-  if (fieldStatus !== "good") {
+  if (fieldStatus !== "pass") {
     // Check Lab CLS for layout shifts
     const labCLS = audits["cumulative-layout-shift"]?.numericValue || 0;
     if (labCLS > 0.1) {
@@ -226,19 +219,17 @@ const evaluateCLSCrux = (audits, cruxMetrics) => {
   }
 
   return {
-    value: fieldValue,
     score: fieldScore,
-    p75: true,
     status: fieldStatus,
-    thresholds: {
-      Good: "0-0.1",
-      Warning: "0.1-0.25",
-      Poor: "0.25+"
+    details: fieldStatus === "pass" ? "Real-world visual stability is good." : `Real users experience layout shifts (${fieldValue}).`,
+    meta: {
+      value: fieldValue,
+      p75: true,
+      thresholds: { Good: "0-0.1", Warning: "0.1-0.25", Poor: "0.25+" }
     },
-    analysis: fieldStatus === "good" ? null : {
-      causes,
-      recommendations,
-      insight: `Real users see layout shifts. Primary cause: ${causes[0] || "dynamic elements"}.`
+    analysis: fieldStatus === "pass" ? null : {
+      cause: causes[0] || "Post-load layout shifts",
+      recommendation: recommendations[0] || "Reserve space for late-loading dynamic content."
     }
   };
 };
@@ -252,7 +243,7 @@ const evaluateFCPLab = (audits) => {
   const causes = [];
   const recommendations = [];
 
-  if (labStatus !== "good") {
+  if (labStatus !== "pass") {
     // Check TTFB
     const ttfbVal = audits["server-response-time"]?.numericValue || 0;
     if (ttfbVal > 600) {
@@ -281,18 +272,16 @@ const evaluateFCPLab = (audits) => {
   }
 
   return {
-    value: labValue + "ms",
     score: labScore,
     status: labStatus,
-    thresholds: {
-      Good: "0-1800ms",
-      Warning: "1800-3000ms",
-      Poor: "3000ms+"
+    details: labStatus === "pass" ? "First Paint timing is good." : `First Paint is delayed (${labValue}ms).`,
+    meta: {
+      value: labValue + "ms",
+      thresholds: { Good: "0-1800ms", Warning: "1800-3000ms", Poor: "3000ms+" }
     },
-    analysis: labStatus === "good" ? null : {
-      causes,
-      recommendations,
-      insight: `First Paint is delayed. Main bottleneck: ${causes[0] || "unknown"}.`
+    analysis: labStatus === "pass" ? null : {
+      cause: causes[0] || "Critical request chain depth or script execution",
+      recommendation: recommendations[0] || "Preload critical requests and reduce critical chain depth."
     }
   };
 };
@@ -308,9 +297,7 @@ const evaluateFCPCrux = (audits, cruxMetrics) => {
   const causes = [];
   const recommendations = [];
 
-  if (fieldStatus !== "good") {
-    // Correlate with Lab data findings for FCP issues
-
+  if (fieldStatus !== "pass") {
     // Check TTFB correlation
     const ttfbVal = audits["server-response-time"]?.numericValue || 0;
     if (ttfbVal > 600) {
@@ -332,19 +319,17 @@ const evaluateFCPCrux = (audits, cruxMetrics) => {
   }
 
   return {
-    value: fieldValue + "ms",
     score: fieldScore,
-    p75: true,
     status: fieldStatus,
-    thresholds: {
-      Good: "0-1800ms",
-      Warning: "1800-3000ms",
-      Poor: "3000ms+"
+    details: fieldStatus === "pass" ? "Real-world First Paint is optimal." : `Real users experience FCP delay (${fieldValue}ms).`,
+    meta: {
+      value: fieldValue + "ms",
+      p75: true,
+      thresholds: { Good: "0-1800ms", Warning: "1800-3000ms", Poor: "3000ms+" }
     },
-    analysis: fieldStatus === "good" ? null : {
-      causes,
-      recommendations,
-      insight: `Real users experience delayed rendering. Primary factor: ${causes[0] || "network conditions"}.`
+    analysis: fieldStatus === "pass" ? null : {
+      cause: causes[0] || "Network latency or connection setup time",
+      recommendation: recommendations[0] || "Use a CDN and ensure fast TLS/DNS setup."
     }
   };
 };
@@ -358,7 +343,7 @@ const evaluateTTFBLab = (audits) => {
   const causes = [];
   const recommendations = [];
 
-  if (labStatus !== "good") {
+  if (labStatus !== "pass") {
     causes.push("Slow server response time detected");
     recommendations.push("Optimize database queries, enable Gzip, and use a CDN.");
 
@@ -376,18 +361,16 @@ const evaluateTTFBLab = (audits) => {
   }
 
   return {
-    value: labValue + "ms",
     score: labScore,
     status: labStatus,
-    thresholds: {
-      Good: "0-800ms",
-      Warning: "800-1800ms",
-      Poor: "1800ms+"
+    details: labStatus === "pass" ? "Server response time is excellent." : `Server response is slow (${labValue}ms).`,
+    meta: {
+      value: labValue + "ms",
+      thresholds: { Good: "0-800ms", Warning: "800-1800ms", Poor: "1800ms+" }
     },
-    analysis: labStatus === "good" ? null : {
-      causes,
-      recommendations,
-      insight: `Server response is slow. Primary issue: ${causes[0] || "backend latency"}.`
+    analysis: labStatus === "pass" ? null : {
+      cause: causes[0] || "Server processing capacity reached",
+      recommendation: recommendations[0] || "Upgrade server infrastructure or optimize backend code."
     }
   };
 };
@@ -403,7 +386,7 @@ const evaluateTTFBCrux = (cruxMetrics) => {
   const causes = [];
   const recommendations = [];
 
-  if (fieldStatus !== "good") {
+  if (fieldStatus !== "pass") {
     causes.push("Slow field TTFB (high server latency)");
     recommendations.push("Cache dynamic content and optimize database performance.");
 
@@ -412,19 +395,17 @@ const evaluateTTFBCrux = (cruxMetrics) => {
   }
 
   return {
-    value: fieldValue + "ms",
     score: fieldScore,
-    p75: true,
     status: fieldStatus,
-    thresholds: {
-      Good: "0-800ms",
-      Warning: "800-1800ms",
-      Poor: "1800ms+"
+    details: fieldStatus === "pass" ? "Real-world server response is good." : `Real users face slow server response (${fieldValue}ms).`,
+    meta: {
+      value: fieldValue + "ms",
+      p75: true,
+      thresholds: { Good: "0-800ms", Warning: "800-1800ms", Poor: "1800ms+" }
     },
-    analysis: fieldStatus === "good" ? null : {
-      causes,
-      recommendations,
-      insight: `Real users face slow server response. Primary factor: ${causes[0] || "server latency"}.`
+    analysis: fieldStatus === "pass" ? null : {
+      cause: causes[0] || "Slow field TTFB (high server latency)",
+      recommendation: recommendations[0] || "Use a CDN to serve content from edge locations."
     }
   };
 };
@@ -438,7 +419,7 @@ const evaluateINPLab = (audits) => {
   const causes = [];
   const recommendations = [];
 
-  if (labStatus !== "good") {
+  if (labStatus !== "pass") {
     // Check Long Tasks
     const longTasks = audits["long-tasks"]?.details?.items || [];
     if (longTasks.length > 0) {
@@ -467,18 +448,16 @@ const evaluateINPLab = (audits) => {
   }
 
   return {
-    value: labValue + "ms",
     score: labScore,
     status: labStatus,
-    thresholds: {
-      Good: "0-3800ms",
-      Warning: "3800-7300ms",
-      Poor: "7300ms+"
+    details: labStatus === "pass" ? "Interaction responsiveness is good." : `Responsiveness is low (${labValue}ms).`,
+    meta: {
+      value: labValue + "ms",
+      thresholds: { Good: "0-3800ms", Warning: "3800-7300ms", Poor: "7300ms+" }
     },
-    analysis: labStatus === "good" ? null : {
-      causes,
-      recommendations,
-      insight: `Responsiveness is low. Delays caused by: ${causes[0] || "main thread blocking"}.`
+    analysis: labStatus === "pass" ? null : {
+      cause: causes[0] || "Input delay due to background tasks",
+      recommendation: recommendations[0] || "Profile 'Interaction' cost in DevTools."
     }
   };
 };
@@ -494,7 +473,7 @@ const evaluateINPCrux = (audits, cruxMetrics) => {
   const causes = [];
   const recommendations = [];
 
-  if (fieldStatus !== "good") {
+  if (fieldStatus !== "pass") {
     // Check Long Tasks
     const longTasks = audits["long-tasks"]?.details?.items || [];
     if (longTasks.length > 0) {
@@ -523,19 +502,17 @@ const evaluateINPCrux = (audits, cruxMetrics) => {
   }
 
   return {
-    value: fieldValue + "ms",
     score: fieldScore,
-    p75: true,
     status: fieldStatus,
-    thresholds: {
-      Good: "0-200ms",
-      Warning: "200-500ms",
-      Poor: "500ms+"
+    details: fieldStatus === "pass" ? "Real-world interaction feedback is fast." : `Real users face input delays (${fieldValue}ms).`,
+    meta: {
+      value: fieldValue + "ms",
+      p75: true,
+      thresholds: { Good: "0-200ms", Warning: "200-500ms", Poor: "500ms+" }
     },
-    analysis: fieldStatus === "good" ? null : {
-      causes,
-      recommendations,
-      insight: `Real users face input delays. Primary cause: ${causes[0] || "unknown"}.`
+    analysis: fieldStatus === "pass" ? null : {
+      cause: causes[0] || "Input delay on real-world devices",
+      recommendation: recommendations[0] || "Optimize event handlers and avoid blocking main thread."
     }
   };
 };
@@ -549,7 +526,7 @@ const evaluateTBT = (audits) => {
   const causes = [];
   const recommendations = [];
 
-  if (labStatus !== "good") {
+  if (labStatus !== "pass") {
     // Check Long Tasks
     const longTasks = audits["long-tasks"]?.details?.items || [];
     if (longTasks.length > 0) {
@@ -579,19 +556,16 @@ const evaluateTBT = (audits) => {
   }
 
   return {
-    value: labValue + "ms",
     score: labScore,
     status: labStatus,
-    thresholds: {
-      Good: "0-200ms",
-      Warning: "200-600ms",
-      Poor: "600ms+"
+    details: labStatus === "pass" ? "Main thread is clear." : `Main thread is blocked (${labValue}ms).`,
+    meta: {
+      value: labValue + "ms",
+      thresholds: { Good: "0-200ms", Warning: "200-600ms", Poor: "600ms+" }
     },
-    analysis: labStatus === "good" ? null : {
-      sourceOfTruth: "lab",
-      causes,
-      recommendations,
-      insight: `Main thread is blocked. Primary culprit: ${causes[0] || "JavaScript execution"}.`
+    analysis: labStatus === "pass" ? null : {
+      cause: causes[0] || "General main thread congestion",
+      recommendation: recommendations[0] || "Minimize main thread work and reduce JS execution time."
     }
   };
 };
@@ -605,7 +579,7 @@ const evaluateSI = (audits) => {
   const causes = [];
   const recommendations = [];
 
-  if (labStatus !== "good") {
+  if (labStatus !== "pass") {
     // Check Main Thread Work
     const mainThread = audits["mainthread-work-breakdown"]?.numericValue || 0;
     if (mainThread > 4000) {
@@ -635,19 +609,16 @@ const evaluateSI = (audits) => {
   }
 
   return {
-    value: labValue + "ms",
     score: labScore,
     status: labStatus,
-    thresholds: {
-      Good: "0-3400ms",
-      Warning: "3400-5800ms",
-      Poor: "5800ms+"
+    details: labStatus === "pass" ? "Visual load speed is optimal." : `Visual page load is slow (${labValue}ms).`,
+    meta: {
+      value: labValue + "ms",
+      thresholds: { Good: "0-3400ms", Warning: "3400-5800ms", Poor: "5800ms+" }
     },
-    analysis: labStatus === "good" ? null : {
-      sourceOfTruth: "lab",
-      causes,
-      recommendations,
-      insight: `Visual page load is slow. Main factor: ${causes[0] || "main thread blocking"}.`
+    analysis: labStatus === "pass" ? null : {
+      cause: causes[0] || "Resources competing for bandwidth",
+      recommendation: recommendations[0] || "Ensure critical resources are prioritized."
     }
   };
 };
@@ -682,14 +653,14 @@ const evaluateCompression = async (page) => {
 
   const score = total === 0 ? 100 : parseFloat(((compressedCount / total) * 100).toFixed(0));
 
-  let status = "good";
-  if (score < 100) status = "needs_improvement";
-  if (score < 70) status = "poor";
+  let status = "pass";
+  if (score < 100) status = "warning";
+  if (score < 70) status = "fail";
 
   const causes = [];
   const recommendations = [];
 
-  if (status !== "good") {
+  if (status !== "pass") {
     causes.push(`${uncompressedResources.length} uncompressed text resources found`);
     recommendations.push("Enable Gzip or Brotli compression on your web server.");
 
@@ -704,23 +675,21 @@ const evaluateCompression = async (page) => {
   }
 
   return {
-    value: score + "%",
     score: score,
     status,
-    total: total,
-    compressedCount: compressedCount,
-    uncompressedResourcesCount: uncompressedResources.length,
-    thresholds: {
-      Good: "100%",
-      Warning: "70-99%",
-      Poor: "<70%"
-    },
-    analysis: status === "good" ? null : {
+    details: status === "pass" ? "All text resources are compressed." : `Uncompressed assets found (${uncompressedResources.length}).`,
+    meta: {
+      value: score + "%",
+      total: total,
+      compressedCount: compressedCount,
+      uncompressedCount: uncompressedResources.length,
       target: "Use gzip or brotli compression",
-      causes,
-      recommendations,
       uncompressedResources,
-      insight: `Bandwidth is wasted. Primary cause: ${causes[0] || "uncompressed assets"}.`
+      thresholds: { Good: "100%", Warning: "70-99%", Poor: "<70%" }
+    },
+    analysis: status === "pass" ? null : {
+      cause: causes[0] || "Bandwidth waste due to uncompressed assets",
+      recommendation: recommendations[0] || "Enable Gzip or Brotli compression on your web server."
     }
   };
 };
@@ -761,14 +730,14 @@ const evaluateCaching = async (page) => {
 
   const score = total === 0 ? 100 : parseFloat(((cachedCount / total) * 100).toFixed(0));
 
-  let status = "good";
-  if (score < 90) status = "needs_improvement";
-  if (score < 50) status = "poor";
+  let status = "pass";
+  if (score < 90) status = "warning";
+  if (score < 50) status = "fail";
 
   const causes = [];
   const recommendations = [];
 
-  if (status !== "good") {
+  if (status !== "pass") {
     causes.push(`${uncachedResources.length} resources with short or missing cache policy`);
     recommendations.push("Set a long `max-age` (e.g. 1 year) for static assets.");
 
@@ -779,23 +748,21 @@ const evaluateCaching = async (page) => {
   }
 
   return {
-    value: score + "%",
     score: score,
     status,
-    total: total,
-    cachedCount: cachedCount,
-    uncachedResourcesCount: uncachedResources.length,
-    thresholds: {
-      Good: "≥90%",
-      Warning: "50-89%",
-      Poor: "<50%"
-    },
-    analysis: status === "good" ? null : {
+    details: status === "pass" ? "Caching policies are optimal." : `Caching issues found in ${uncachedResources.length} resources.`,
+    meta: {
+      value: score + "%",
+      total: total,
+      cachedCount: cachedCount,
+      uncachedCount: uncachedResources.length,
       target: "≥ 7 days",
-      causes,
-      recommendations,
       uncachedResources,
-      insight: `Repeat visits are slow. Caching issues found in: ${causes[0] || "static resources"}.`
+      thresholds: { Good: "≥90%", Warning: "50-89%", Poor: "<50%" }
+    },
+    analysis: status === "pass" ? null : {
+      cause: causes[0] || "Short or missing cache policies",
+      recommendation: recommendations[0] || "Set a long max-age (e.g. 1 year) for static assets."
     }
   };
 };
@@ -847,14 +814,14 @@ const evaluateResourceOptimization = async (page) => {
   const scriptScore = result.totalScripts === 0 ? 100 : (result.minifiedScriptsCount / result.totalScripts) * 100;
   const score = parseFloat(((imgScore + scriptScore) / 2).toFixed(0));
 
-  let status = "good";
-  if (score < 90) status = "needs_improvement";
-  if (score < 50) status = "poor";
+  let status = "pass";
+  if (score < 90) status = "warning";
+  if (score < 50) status = "fail";
 
   const causes = [];
   const recommendations = [];
 
-  if (status !== "good") {
+  if (status !== "pass") {
     if (result.unoptimizedImagesList.length > 0) {
       causes.push(`${result.unoptimizedImagesList.length} images are larger than their display size`);
       recommendations.push("Resize images to match their specific display dimensions.");
@@ -866,27 +833,25 @@ const evaluateResourceOptimization = async (page) => {
   }
 
   return {
-    value: score + "%",
     score: score,
     status,
-    totalImages: result.totalImages,
-    optimizedImagesCount: result.optimizedImagesCount,
-    unoptimizedImagesCount: result.unoptimizedImagesList.length,
-    totalScripts: result.totalScripts,
-    minifiedScriptsCount: result.minifiedScriptsCount,
-    unminifiedScriptsCount: result.unminifiedScriptsList.length,
-    thresholds: {
-      Good: "≥90%",
-      Warning: "50-89%",
-      Poor: "<50%"
-    },
-    analysis: status === "good" ? null : {
+    details: status === "pass" ? "All resources are properly optimized." : "Asset optimization opportunities found.",
+    meta: {
+      value: score + "%",
+      totalImages: result.totalImages,
+      optimizedImagesCount: result.optimizedImagesCount,
+      unoptimizedImagesCount: result.unoptimizedImagesList.length,
+      totalScripts: result.totalScripts,
+      minifiedScriptsCount: result.minifiedScriptsCount,
+      unminifiedScriptsCount: result.unminifiedScriptsList.length,
       target: "Optimized Assets",
-      causes,
-      recommendations,
       unoptimizedImages: result.unoptimizedImagesList,
       unminifiedScripts: result.unminifiedScriptsList,
-      insight: `Resources are heavy. Optimization needed for: ${causes[0] || "assets"}.`
+      thresholds: { Good: "≥90%", Warning: "50-89%", Poor: "<50%" }
+    },
+    analysis: status === "pass" ? null : {
+      cause: causes[0] || "Unoptimized assets",
+      recommendation: recommendations[0] || "Compress and minify your site resources."
     }
   };
 };
@@ -920,14 +885,14 @@ const evaluateRenderBlocking = async (page) => {
   const blockingCount = blockingResources.length;
   const score = blockingCount === 0 ? 100 : Math.max(0, 100 - (blockingCount * 10));
 
-  let status = "good";
-  if (score < 100) status = "needs_improvement";
-  if (score < 50) status = "poor";
+  let status = "pass";
+  if (score < 100) status = "warning";
+  if (score < 50) status = "fail";
 
   const causes = [];
   const recommendations = [];
 
-  if (status !== "good") {
+  if (status !== "pass") {
     causes.push(`${blockingCount} render-blocking resources found`);
     recommendations.push("Defer non-critical JavaScript and inline critical CSS.");
 
@@ -938,21 +903,19 @@ const evaluateRenderBlocking = async (page) => {
   }
 
   return {
-    value: score + "%",
     score: score,
     status,
-    blockingCount,
-    thresholds: {
-      Good: "100%",
-      Warning: "50-99%",
-      Poor: "<50%"
-    },
-    analysis: status === "good" ? null : {
+    details: status === "pass" ? "No render-blocking resources." : `${blockingCount} render-blocking resources detected.`,
+    meta: {
+      value: score + "%",
       target: "0 Blocking Resources",
-      causes,
-      recommendations,
+      blockingCount,
       blockingResources,
-      insight: `First Paint is delayed. Blocking resources: ${blockingCount}.`
+      thresholds: { Good: "100%", Warning: "50-99%", Poor: "<50%" }
+    },
+    analysis: status === "pass" ? null : {
+      cause: causes[0] || "Blocking resources delaying paint",
+      recommendation: recommendations[0] || "Review critical rendering path."
     }
   };
 };
@@ -964,33 +927,31 @@ const evaluateRedirectChains = (response) => {
   const hops = chain.length;
   const score = hops <= 1 ? 100 : 0;
 
-  let status = "good";
-  if (hops > 1) status = "poor";
+  let status = "pass";
+  if (hops > 1) status = "fail";
 
   const causes = [];
   const recommendations = [];
 
-  if (status !== "good") {
+  if (status !== "pass") {
     causes.push(`${hops} redirect hops detected`);
     recommendations.push("Remove unnecessary redirects and point links directly to the final destination.");
   }
 
-
   return {
-    value: score + "%",
     score: score,
     status,
-    hops,
-    redirectDetails,
-    thresholds: {
-      Good: "≤ 1 hop",
-      Poor: "> 1 hop"
-    },
-    analysis: status === "good" ? null : {
+    details: status === "pass" ? "URL redirect structure is efficient." : `Multiple redirect hops detected (${hops}).`,
+    meta: {
+      value: score + "%",
+      hops,
+      redirectDetails,
       target: "≤ 1 hop",
-      causes,
-      recommendations,
-      insight: `Latency increased by ${hops} redirects. Simplify the URL structure.`
+      thresholds: { Good: "≤ 1 hop", Poor: "> 1 hop" }
+    },
+    analysis: status === "pass" ? null : {
+      cause: causes[0] || "Redirect chains detected",
+      recommendation: recommendations[0] || "Simplify URL structure to avoid hops."
     }
   };
 };
@@ -1002,7 +963,6 @@ export default async function technicalMetrics(url, device, page, response, brow
   const audits = data?.lighthouseResult?.audits || {};
   const cruxMetrics = data?.loadingExperience?.metrics || {};
 
-  // Evaluate Metrics
   const lcpLab = evaluateLCPLab(audits);
   const lcpCrux = evaluateLCPCrux(audits, cruxMetrics);
   const clsLab = evaluateCLSLab(audits);
@@ -1023,26 +983,19 @@ export default async function technicalMetrics(url, device, page, response, brow
   const redirect = evaluateRedirectChains(response);
 
   const getScore = (metric) => metric?.score || 0;
-
-  // 1. Core Vitals & Lab Metrics
   const scoreLCP = (getScore(lcpLab) * 0.07) + (getScore(lcpCrux) * 0.08); // 15%
   const scoreINP = (getScore(inpLab) * 0.07) + (getScore(inpCrux) * 0.08); // 15%
   const scoreCLS = (getScore(clsLab) * 0.07) + (getScore(clsCrux) * 0.08); // 15%
   const scoreFCP = (getScore(fcpLab) * 0.03) + (getScore(fcpCrux) * 0.03); // 6%
   const scoreTTFB = (getScore(ttfbLab) * 0.04) + (getScore(ttfbCrux) * 0.04); // 8%
-
-  // 2. Other Lab Metrics
   const scoreTBT = getScore(tbt) * 0.08; // 8%
   const scoreSI = getScore(si) * 0.08;   // 8%
-
-  // 3. Assets & Performance
   const scoreCompression = getScore(compression) * 0.05; // 5%
   const scoreCaching = getScore(caching) * 0.05;         // 5%
   const scoreResourceOpt = getScore(resourceOptimization) * 0.06; // 6%
   const scoreRenderBlocking = getScore(renderBlocking) * 0.05;    // 5%
   const scoreRedirect = getScore(redirect) * 0.04;       // 4%
 
-  // Calculate Overall Score
   const actualPercentage = parseFloat((
     scoreLCP + scoreINP + scoreCLS + scoreFCP + scoreTTFB +
     scoreTBT + scoreSI +

@@ -926,8 +926,12 @@ const checkSocial = ($) => {
 const checkRobotsTxt = async (url) => {
   try {
     const robotsUrl = new URL("/robots.txt", url).href;
-    const response = await fetch(robotsUrl, { signal: AbortSignal.timeout(5000) });
-    const exists = response.status === 200;
+    const response = await fetch(robotsUrl, { 
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
+      signal: AbortSignal.timeout(5000) 
+    });
+    
+    const exists = response.ok;
     const content = exists ? await response.text() : null;
 
     const score = exists ? 1 : 0;
@@ -942,7 +946,7 @@ const checkRobotsTxt = async (url) => {
 
     return evaluateParameter(score, details, {
       content,
-      exists,
+      exists: exists ? 1 : 0,
       why_this_occurred: explanation,
       how_to_fix: recommendation,
     });
@@ -951,18 +955,50 @@ const checkRobotsTxt = async (url) => {
   }
 };
 
-const checkSitemap = async (url) => {
+const checkSitemap = async (url, robotsContent = null) => {
   try {
     const sitemapUrl = new URL("/sitemap.xml", url).href;
-    const response = await fetch(sitemapUrl, { signal: AbortSignal.timeout(5000) });
-    const exists = response.status === 200;
-    const content = exists ? await response.text() : null;
+    const sitemapIndexUrl = new URL("/sitemap_index.xml", url).href;
+    const urlsToTry = [sitemapUrl, sitemapIndexUrl];
+
+    if (robotsContent) {
+      const robotsSitemaps = robotsContent.match(/Sitemap:\s*(\S+)/gi);
+      if (robotsSitemaps) {
+        robotsSitemaps.forEach(m => {
+          const sUrl = m.replace(/Sitemap:\s*/i, '').trim();
+          if (sUrl && !urlsToTry.includes(sUrl)) urlsToTry.push(sUrl);
+        });
+      }
+    }
+
+    let exists = false;
+    let content = null;
+    const headers = { 
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' 
+    };
+
+    for (const target of urlsToTry) {
+      try {
+        const response = await fetch(target, { headers, signal: AbortSignal.timeout(5000) });
+        if (response.ok) {
+          const text = await response.text();
+          // Heuristic: Check if it looks like a sitemap
+          if (text.includes('<urlset') || text.includes('<sitemapindex') || (target.endsWith('.txt') && text.includes('http'))) {
+            exists = true;
+            content = text;
+            break;
+          }
+        }
+      } catch (e) {
+        continue;
+      }
+    }
 
     const score = exists ? 1 : 0;
-    const details = exists ? "Sitemap.xml is present" : "Sitemap.xml not found";
+    const details = exists ? "Sitemap present" : "Sitemap.xml not found";
 
     const explanation = exists
-      ? "A sitemap.xml file was found at the root of your domain."
+      ? "A sitemap file was found and is accessible."
       : "The sitemap.xml file is missing. Sitemaps help search engines find and crawl all of your important pages.";
     const recommendation = exists
       ? "Ensure your sitemap is submitted to Google Search Console and kept up-to-date."
@@ -970,7 +1006,7 @@ const checkSitemap = async (url) => {
 
     return evaluateParameter(score, details, {
       content,
-      exists,
+      exists: exists ? 1 : 0,
       why_this_occurred: explanation,
       how_to_fix: recommendation,
     });
@@ -1032,7 +1068,7 @@ export default async function seoMetrics(url, $, page) {
   const contentQualityMetric = checkContentQuality($);
   const slugMetric = checkSlugs(url);
   const robotsMetric = await checkRobotsTxt(url);
-  const sitemapMetric = await checkSitemap(url);
+  const sitemapMetric = await checkSitemap(url, robotsMetric?.meta?.content);
   const structuredDataMetric = await checkStructuredData(page);
 
   const { ogMetric, twitterMetric, socialLinksMetric } = checkSocial($);

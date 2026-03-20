@@ -16,24 +16,16 @@ app.set('trust proxy', 1);
 
 app.use(helmet());
 
-const allowedOrigins = ["http://localhost:5173", "https://audit-tool-slt.vercel.app"];
-
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  methods: ["GET", "POST"],
-  credentials: true
-}));
+app.use(cors());
 
 app.use(express.json({ limit: "10kb" }));
 
 app.use("/single-audit", singleAuditRoutes);
 app.use("/bulk-audit", bulkAuditRoutes);
+
+app.get("/", (req, res) => {
+  res.send("Server is running");
+});
 
 app.listen(PORT, () => {
   console.log(`✅ Backend running on http://localhost:${PORT}`);

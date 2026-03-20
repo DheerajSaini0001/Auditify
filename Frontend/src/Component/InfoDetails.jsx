@@ -2653,27 +2653,6 @@ export const InfoDetails = {
     },
 
     // AIO Readiness
-    Structured_Data: {
-        title: "Structured Data (JSON-LD)",
-        whatThisParameterIs: "It checks if your page uses a special 'AI-readable' code called JSON-LD that tells bots exactly what your page is about.",
-        whatItCalculates: "It scans every line of code to find 'JSON-LD' scripts that define your site's identity—checking if they are written correctly and include recognized categories like Articles, People, or Products.",
-        whyItMatters: "Without this, AI bots have to guess what your data means. This code acts like a translation layer that ensures AI understands your products, reviews, or articles perfectly.",
-        thresholds: {
-            good: "Valid, error-free code describing multiple sections",
-            needsImprovement: "Code found but has small typing errors or limited variety",
-            poor: "No valid JSON-LD code found in the page header"
-        },
-        actualReasonsForFailure: [
-            "No 'JSON-LD' code blocks found in your site's header",
-            "Small typos in the code (syntax errors) that make it unreadable",
-            "The code is too simple and doesn't tell AI enough about your page"
-        ],
-        howToOvercomeFailure: [
-            "Install a Schema plugin or add JSON-LD code to your page",
-            "Use a 'code validator' to fix tiny commas or bracket errors",
-            "Add more detail, like your Organization name, reviews, or prices"
-        ]
-    },
     Content_Updated_Regularly: {
         title: "Content Freshness",
         whatThisParameterIs: "It checks for signals like 'last updated' tags to see how recently your information was reviewed or added to the site.",

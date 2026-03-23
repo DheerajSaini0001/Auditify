@@ -10,15 +10,23 @@ import {
   FileText,
   Loader2,
   ChevronRight,
-  BarChart2
+  BarChart2,
+  Plus,
+  NotebookPen
 } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useData } from "../context/DataContext";
 import { generatePDF } from "../utils/pdfGenerator";
 
 export default function Sidebar({ darkMode }) {
-  const { data, loading } = useData();
+  const { data, loading, clearData } = useData();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleGoHome = () => {
+    clearData();
+    navigate("/", { replace: true });
+  };
 
   // Define menu items configuration
   const menuItems = [
@@ -105,7 +113,7 @@ export default function Sidebar({ darkMode }) {
       </aside>
 
       {/* Footer / Actions */}
-      <div className={`p-3 border-t ${darkMode ? "border-slate-800 bg-[#0B1120]" : "border-slate-200 bg-white"}`}>
+      <div className={`p-3 border-t space-y-3 ${darkMode ? "border-slate-800 bg-[#0B1120]" : "border-slate-200 bg-white"}`}>
         {data?.sectionScore ? (
           <>
             <button
@@ -121,6 +129,31 @@ export default function Sidebar({ darkMode }) {
             Waiting for analysis...
           </div>
         )}
+
+        {/* Mobile only actions */}
+        <div className="sm:hidden">
+          {data?.fromBulkAudit ? (
+            <button
+              onClick={() => navigate("/bulk-audit")}
+              className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-white shadow-lg transition-all 
+              bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-400 hover:to-indigo-400 active:scale-[0.98]
+              shadow-blue-500/20`}
+            >
+              <NotebookPen className="w-4 h-4" />
+              <span>Back to List</span>
+            </button>
+          ) : (
+            <button
+              onClick={handleGoHome}
+              className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-white shadow-lg transition-all 
+              bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 active:scale-[0.98]
+              shadow-emerald-500/20`}
+            >
+              <Plus className="w-5 h-5" />
+              <span>Start New Audit</span>
+            </button>
+          )}
+        </div>
       </div>
 
     </div>

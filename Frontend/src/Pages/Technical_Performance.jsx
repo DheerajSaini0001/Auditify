@@ -345,21 +345,41 @@ export default function Technical_Performance() {
                   whyItMatters={metricExplanations.Compression.whyItMatters}
                   onInfoClick={() => setSelectedParameterInfo({ title: "Text Compression", icon: FileCode, ...metricExplanations.Compression, metricData: tech.Compression })}
                 >
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className={`p-4 rounded-xl border col-span-2 ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
-                      <div className="flex justify-between items-center">
-                        <p className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Overall Score</p>
-                        <ScoreBadge status={tech.Compression.status} value={tech.Compression.meta?.value} darkMode={darkMode} />
+                  <div className="flex flex-col gap-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className={`p-4 rounded-xl border col-span-2 ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                        <div className="flex justify-between items-center">
+                          <p className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Overall Score</p>
+                          <ScoreBadge status={tech.Compression.status} value={tech.Compression.meta?.value} darkMode={darkMode} />
+                        </div>
+                      </div>
+                      <div className={`p-3 rounded-xl border ${darkMode ? "bg-emerald-900/10 border-emerald-800/30" : "bg-emerald-50 border-emerald-100"}`}>
+                        <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>Compressed</p>
+                        <p className={`text-xl font-black ${darkMode ? "text-emerald-300" : "text-emerald-700"}`}>{tech.Compression.meta?.compressedCount}</p>
+                      </div>
+                      <div className={`p-3 rounded-xl border ${darkMode ? "bg-rose-900/10 border-rose-800/30" : "bg-rose-50 border-rose-100"}`}>
+                        <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>Uncompressed</p>
+                        <p className={`text-xl font-black ${darkMode ? "text-rose-300" : "text-rose-700"}`}>{tech.Compression.meta?.uncompressedCount}</p>
                       </div>
                     </div>
-                    <div className={`p-3 rounded-xl border ${darkMode ? "bg-emerald-900/10 border-emerald-800/30" : "bg-emerald-50 border-emerald-100"}`}>
-                      <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>Compressed</p>
-                      <p className={`text-xl font-black ${darkMode ? "text-emerald-300" : "text-emerald-700"}`}>{tech.Compression.meta?.compressedCount}</p>
-                    </div>
-                    <div className={`p-3 rounded-xl border ${darkMode ? "bg-rose-900/10 border-rose-800/30" : "bg-rose-50 border-rose-100"}`}>
-                      <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>Uncompressed</p>
-                      <p className={`text-xl font-black ${darkMode ? "text-rose-300" : "text-rose-700"}`}>{tech.Compression.meta?.uncompressedCount}</p>
-                    </div>
+
+                    {tech.Compression.meta?.uncompressedResources && tech.Compression.meta.uncompressedResources.length > 0 && (
+                      <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                        <p className={`text-[10px] font-bold uppercase tracking-wider mb-3 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Uncompressed Resources</p>
+                        <div className="flex flex-col gap-2">
+                          {tech.Compression.meta.uncompressedResources.map((item, idx) => (
+                            <div key={idx} className="flex justify-between items-center">
+                              <p className={`text-[10px] truncate max-w-[70%] font-mono ${darkMode ? "text-gray-300" : "text-gray-600"}`} title={item.url}>
+                                {item.fileName || item.url}
+                              </p>
+                              <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${darkMode ? "bg-rose-900/20 text-rose-400" : "bg-rose-100 text-rose-600"}`}>
+                                Encoding: {item.currentEncoding || 'None'}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </OptimizationCard>
               )}
@@ -376,21 +396,41 @@ export default function Technical_Performance() {
                   whyItMatters={metricExplanations.Caching.whyItMatters}
                   onInfoClick={() => setSelectedParameterInfo({ title: "Caching Policy", icon: Database, ...metricExplanations.Caching, metricData: tech.Caching })}
                 >
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className={`p-4 rounded-xl border col-span-2 ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
-                      <div className="flex justify-between items-center">
-                        <p className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Overall Score</p>
-                        <ScoreBadge status={tech.Caching.status} value={tech.Caching.meta?.value} darkMode={darkMode} />
+                  <div className="flex flex-col gap-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className={`p-4 rounded-xl border col-span-2 ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                        <div className="flex justify-between items-center">
+                          <p className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Overall Score</p>
+                          <ScoreBadge status={tech.Caching.status} value={tech.Caching.meta?.value} darkMode={darkMode} />
+                        </div>
+                      </div>
+                      <div className={`p-3 rounded-xl border ${darkMode ? "bg-emerald-900/10 border-emerald-800/30" : "bg-emerald-50 border-emerald-100"}`}>
+                        <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>Cached</p>
+                        <p className={`text-xl font-black ${darkMode ? "text-emerald-300" : "text-emerald-700"}`}>{tech.Caching.meta?.cachedCount}</p>
+                      </div>
+                      <div className={`p-3 rounded-xl border ${darkMode ? "bg-rose-900/10 border-rose-800/30" : "bg-rose-50 border-rose-100"}`}>
+                        <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>Uncached</p>
+                        <p className={`text-xl font-black ${darkMode ? "text-rose-300" : "text-rose-700"}`}>{tech.Caching.meta?.uncachedCount}</p>
                       </div>
                     </div>
-                    <div className={`p-3 rounded-xl border ${darkMode ? "bg-emerald-900/10 border-emerald-800/30" : "bg-emerald-50 border-emerald-100"}`}>
-                      <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>Cached</p>
-                      <p className={`text-xl font-black ${darkMode ? "text-emerald-300" : "text-emerald-700"}`}>{tech.Caching.meta?.cachedCount}</p>
-                    </div>
-                    <div className={`p-3 rounded-xl border ${darkMode ? "bg-rose-900/10 border-rose-800/30" : "bg-rose-50 border-rose-100"}`}>
-                      <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>Uncached</p>
-                      <p className={`text-xl font-black ${darkMode ? "text-rose-300" : "text-rose-700"}`}>{tech.Caching.meta?.uncachedCount}</p>
-                    </div>
+
+                    {tech.Caching.meta?.uncachedResources && tech.Caching.meta.uncachedResources.length > 0 && (
+                      <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                        <p className={`text-[10px] font-bold uppercase tracking-wider mb-3 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Uncached Resources</p>
+                        <div className="flex flex-col gap-2">
+                          {tech.Caching.meta.uncachedResources.map((item, idx) => (
+                            <div key={idx} className="flex justify-between items-center">
+                              <p className={`text-[10px] truncate max-w-[70%] font-mono ${darkMode ? "text-gray-300" : "text-gray-600"}`} title={item.url}>
+                                {item.fileName || item.url}
+                              </p>
+                              <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${darkMode ? "bg-rose-900/20 text-rose-400" : "bg-rose-100 text-rose-600"}`}>
+                                Policy: {item.cachePolicy || 'None'}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </OptimizationCard>
               )}

@@ -626,32 +626,72 @@ const evaluateSI = (audits) => {
 // Compression
 const evaluateCompression = async (page) => {
   const resources = await page.evaluate(async () => {
-    const urls = Array.from(document.querySelectorAll('script[src], link[rel="stylesheet"][href]'))
+    const urls = Array.from(
+      document.querySelectorAll('script[src], link[rel="stylesheet"][href]')
+    )
       .map(el => el.src || el.href)
       .filter(url => url.startsWith('http'));
 
     const sample = urls.slice(0, 10);
-    const results = await Promise.all(sample.map(async (url) => {
-      try {
-        const res = await fetch(url, { method: 'HEAD' });
-        const encoding = res.headers.get('content-encoding');
-        const isCompressed = !!(encoding && (encoding.includes('gzip') || encoding.includes('br') || encoding.includes('deflate')));
-        return { url, isCompressed, actualEncoding: encoding || 'None' };
-      } catch {
-        return { url, isCompressed: true, actualEncoding: 'Error' };
-      }
-    }));
+
+    const results = await Promise.all(
+      sample.map(async (url) => {
+        try {
+          const res = await fetch(url, { method: 'HEAD' });
+
+          const encoding = res.headers.get('content-encoding');
+
+          const isCompressed = !!(
+            encoding &&
+            (encoding.includes('gzip') ||
+              encoding.includes('br') ||
+              encoding.includes('deflate'))
+          );
+
+          return {
+            url,
+            isCompressed,
+            actualEncoding: encoding || 'None'
+          };
+        } catch {
+          return {
+            url,
+            isCompressed: true,
+            actualEncoding: 'Error'
+          };
+        }
+      })
+    );
+
     return results;
   });
 
   const total = resources.length;
   const compressedCount = resources.filter(r => r.isCompressed).length;
-  const uncompressedResources = resources.filter(r => !r.isCompressed).map(r => ({
-    url: r.url,
-    currentEncoding: r.actualEncoding
-  }));
 
-  const score = total === 0 ? 100 : parseFloat(((compressedCount / total) * 100).toFixed(0));
+  // 🔥 Extract file names + uncompressed list
+  const uncompressedResources = resources
+    .filter(r => !r.isCompressed)
+    .map(r => {
+      let fileName = "unknown-file";
+
+      try {
+        const urlObj = new URL(r.url);
+        const path = urlObj.pathname;
+        fileName = path.substring(path.lastIndexOf("/") + 1) || "unknown-file";
+      } catch {}
+
+      return {
+        url: r.url,
+        fileName, // 🔥 NEW
+        currentEncoding: r.actualEncoding
+      };
+    });
+
+  const score =
+    total === 0
+      ? 100
+      : parseFloat(((compressedCount / total) * 100).toFixed(0));
 
   let status = "pass";
   if (score < 100) status = "warning";
@@ -668,6 +708,7 @@ const evaluateCompression = async (page) => {
       causes.push("JavaScript files have no compression");
       recommendations.push("Ensure .js files are compressed.");
     }
+
     if (uncompressedResources.some(u => u.url.includes(".css"))) {
       causes.push("CSS files have no compression");
       recommendations.push("Ensure .css files are compressed.");
@@ -677,58 +718,105 @@ const evaluateCompression = async (page) => {
   return {
     score: score,
     status,
-    details: status === "pass" ? "All text resources are compressed." : `Uncompressed assets found (${uncompressedResources.length}).`,
+    details:
+      status === "pass"
+        ? "All text resources are compressed."
+        : `Uncompressed assets found (${uncompressedResources.length}).`,
     meta: {
       value: score + "%",
-      total: total,
-      compressedCount: compressedCount,
+      total,
+      compressedCount,
       uncompressedCount: uncompressedResources.length,
       target: "Use gzip or brotli compression",
-      uncompressedResources,
-      thresholds: { Good: "100%", Warning: "70-99%", Poor: "<70%" }
+      uncompressedResources, // 🔥 includes fileName
+      thresholds: {
+        Good: "100%",
+        Warning: "70-99%",
+        Poor: "<70%"
+      }
     },
-    analysis: status === "pass" ? null : {
-      cause: causes[0] || "Bandwidth waste due to uncompressed assets",
-      recommendation: recommendations[0] || "Enable Gzip or Brotli compression on your web server."
-    }
+    analysis:
+      status === "pass"
+        ? null
+        : {
+            cause:
+              causes[0] ||
+              "Bandwidth waste due to uncompressed assets",
+            recommendation:
+              recommendations[0] ||
+              "Enable Gzip or Brotli compression on your web server."
+          }
   };
 };
 
 // Caching
 const evaluateCaching = async (page) => {
   const resources = await page.evaluate(async () => {
-    const urls = Array.from(document.querySelectorAll('img[src], script[src], link[rel="stylesheet"][href]'))
+    const urls = Array.from(
+      document.querySelectorAll('img[src], script[src], link[rel="stylesheet"][href]')
+    )
       .map(el => el.src || el.href)
       .filter(url => url.startsWith('http'));
 
     const sample = urls.slice(0, 10);
-    const results = await Promise.all(sample.map(async (url) => {
-      try {
-        const res = await fetch(url, { method: 'HEAD' });
-        const cacheControl = res.headers.get('cache-control');
-        const policy = cacheControl || "None";
-        if (!cacheControl) return { url, isCached: false, policy };
 
-        const maxAgeMatch = cacheControl.match(/max-age=(\d+)/);
-        if (!maxAgeMatch) return { url, isCached: false, policy };
+    const results = await Promise.all(
+      sample.map(async (url) => {
+        try {
+          const res = await fetch(url, { method: 'HEAD' });
 
-        const isCached = parseInt(maxAgeMatch[1], 10) >= 604800; // 7 days
-        return { url, isCached, policy };
-      } catch {
-        return { url, isCached: true, policy: "Error" };
-      }
-    }));
+          const cacheControl = res.headers.get('cache-control');
+          const policy = cacheControl || "None";
+
+          if (!cacheControl) {
+            return { url, isCached: false, policy };
+          }
+
+          const maxAgeMatch = cacheControl.match(/max-age=(\d+)/);
+
+          if (!maxAgeMatch) {
+            return { url, isCached: false, policy };
+          }
+
+          const isCached = parseInt(maxAgeMatch[1], 10) >= 604800; // 7 days
+
+          return { url, isCached, policy };
+
+        } catch {
+          return { url, isCached: true, policy: "Error" };
+        }
+      })
+    );
+
     return results;
   });
 
   const total = resources.length;
   const cachedCount = resources.filter(r => r.isCached).length;
-  const uncachedResources = resources.filter(r => !r.isCached).map(r => ({
-    url: r.url,
-    cachePolicy: r.policy
-  }));
 
-  const score = total === 0 ? 100 : parseFloat(((cachedCount / total) * 100).toFixed(0));
+  // 🔥 UPDATED: fileName extraction
+  const uncachedResources = resources
+    .filter(r => !r.isCached)
+    .map(r => {
+      let fileName = "unknown-file";
+
+      try {
+        const urlObj = new URL(r.url);
+        const path = urlObj.pathname;
+        fileName = path.substring(path.lastIndexOf("/") + 1) || "unknown-file";
+      } catch {}
+
+      return {
+        url: r.url,
+        fileName, // 🔥 NEW
+        cachePolicy: r.policy
+      };
+    });
+
+  const score =
+    total === 0
+      ? 100
+      : parseFloat(((cachedCount / total) * 100).toFixed(0));
 
   let status = "pass";
   if (score < 90) status = "warning";
@@ -748,22 +836,34 @@ const evaluateCaching = async (page) => {
   }
 
   return {
-    score: score,
+    score,
     status,
-    details: status === "pass" ? "Caching policies are optimal." : `Caching issues found in ${uncachedResources.length} resources.`,
+    details:
+      status === "pass"
+        ? "Caching policies are optimal."
+        : `Caching issues found in ${uncachedResources.length} resources.`,
     meta: {
       value: score + "%",
-      total: total,
-      cachedCount: cachedCount,
+      total,
+      cachedCount,
       uncachedCount: uncachedResources.length,
       target: "≥ 7 days",
-      uncachedResources,
-      thresholds: { Good: "≥90%", Warning: "50-89%", Poor: "<50%" }
+      uncachedResources, // 🔥 now includes fileName
+      thresholds: {
+        Good: "≥90%",
+        Warning: "50-89%",
+        Poor: "<50%"
+      }
     },
-    analysis: status === "pass" ? null : {
-      cause: causes[0] || "Short or missing cache policies",
-      recommendation: recommendations[0] || "Set a long max-age (e.g. 1 year) for static assets."
-    }
+    analysis:
+      status === "pass"
+        ? null
+        : {
+            cause: causes[0] || "Short or missing cache policies",
+            recommendation:
+              recommendations[0] ||
+              "Set a long max-age (e.g. 1 year) for static assets."
+          }
   };
 };
 

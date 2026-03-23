@@ -1,4 +1,4 @@
-﻿import React, { useContext, useMemo } from "react";
+import React, { useContext, useMemo } from "react";
 import UrlHeader from "../Component/UrlHeader";
 import CircularProgress from "../Component/CircularProgress";
 import { useData } from "../context/DataContext";
@@ -473,7 +473,7 @@ const ImageAnalysisCard = ({ data, darkMode, onInfo, resolveLink, className = ""
 
             {/* 2. Without Alt (New) */}
             <div className={`p-2 rounded border ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
-              <div className={`text-lg font-bold ${meta.missingAlt?.length > 0 ? "text-red-500" : (darkMode ? "text-white" : "text-gray-900")}`}>
+              <div className={`text-lg font-bold ${meta.missingAlt?.length > 0 ? "text-amber-500" : (darkMode ? "text-white" : "text-gray-900")}`}>
                 {meta.missingAlt?.length || 0}
               </div>
               <div className="text-[10px] uppercase font-bold tracking-wider opacity-60">Without Alt</div>
@@ -494,16 +494,62 @@ const ImageAnalysisCard = ({ data, darkMode, onInfo, resolveLink, className = ""
               </div>
               <div className="text-[10px] uppercase font-bold tracking-wider opacity-60">Heavy (&gt;150KB)</div>
             </div>
+
+            {/* 5. Broken Images */}
+            {meta.broken_images?.length > 0 && (
+              <div className={`p-2 rounded border ${darkMode ? "bg-red-900/20 border-red-500/20" : "bg-red-50 border-red-200"}`}>
+                <div className={`text-lg font-bold text-red-500`}>
+                  {meta.broken_images_count || meta.broken_images?.length || 0}
+                </div>
+                <div className="text-[10px] uppercase font-bold text-red-500 tracking-wider flex justify-center items-center gap-1 opacity-80">
+                  <AlertTriangle size={10} /> Broken
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Issues List (Clickable Links) */}
           {
-            (meta.missingAlt?.length > 0 || meta.missingTitle?.length > 0 || meta.largeImages?.length > 0) && (
+            (meta.missingAlt?.length > 0 || meta.missingTitle?.length > 0 || meta.largeImages?.length > 0 || meta.broken_images?.length > 0) && (
               <div className="space-y-3">
-                {/* 1. Missing Alt Text */}
-                {meta.missingAlt?.length > 0 && (
+                {/* 0. Broken Images */}
+                {meta.broken_images?.length > 0 && (
                   <div className={`text-xs p-3 rounded border border-red-500/20 bg-red-500/5`}>
                     <div className="font-bold text-red-500 mb-2 uppercase flex items-center gap-1">
+                      <AlertTriangle size={10} /> Broken Images ({meta.broken_images_count})
+                    </div>
+                    <div className="space-y-1 max-h-24 overflow-y-auto custom-scrollbar">
+                      {meta.broken_images.map((imgObj, i) => {
+                        const isString = typeof imgObj === "string";
+                        const srcUrl = isString ? imgObj : imgObj.src;
+                        const errorMsg = isString ? "Broken" : (imgObj.error || "Broken");
+                        
+                        return (
+                          <div key={i} className="flex items-center justify-between gap-2 p-1 -mx-1 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors group/link">
+                            <a
+                              href={resolveLink(srcUrl || "")}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 overflow-hidden hover:underline flex-1 truncate"
+                              title={srcUrl}
+                            >
+                              <div className="truncate opacity-70 font-mono text-[10px] group-hover/link:opacity-100 group-hover/link:text-red-500 transition-colors">
+                                {srcUrl}
+                              </div>
+                            </a>
+                            <div className="text-[9px] font-bold text-red-500/80 uppercase whitespace-nowrap shrink-0 px-1 bg-red-500/10 rounded">
+                              {errorMsg}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                {/* 1. Missing Alt Text */}
+                {meta.missingAlt?.length > 0 && (
+                  <div className={`text-xs p-3 rounded border border-amber-500/20 bg-amber-500/5`}>
+                    <div className="font-bold text-amber-500 mb-2 uppercase flex items-center gap-1">
                       <AlertTriangle size={10} /> Missing Alt Text ({meta.missingAlt.length})
                     </div>
                     <div className="space-y-1 max-h-24 overflow-y-auto custom-scrollbar">
@@ -780,9 +826,28 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
         return normalizedText.includes("home") || normalizedText.includes("index") || normalizedText.includes("main");
       }
       const cleanPath = urlPath.replace(/\.[^/.]+$/, "").replace(/\/$/, "");
-      const slug = cleanPath.split('/').pop().toLowerCase().replace(/[^a-z0-9]/g, "");
+      const rawSlug = cleanPath.split('/').pop().toLowerCase();
+      const slug = rawSlug.replace(/[^a-z0-9]/g, "");
       if (!slug) return false;
-      return normalizedText.includes(slug) || slug.includes(normalizedText);
+
+      // 1. Exact Substring match
+      if (normalizedText.includes(slug) || slug.includes(normalizedText)) {
+        return true;
+      }
+
+      // 2. Word Overlap match
+      const textWords = text.toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length > 2);
+      const slugWords = rawSlug.split(/[^a-z0-9]+/).filter(w => w.length > 2);
+
+      let overlap = 0;
+      for (const w of textWords) {
+        if (slugWords.includes(w)) overlap++;
+      }
+
+      // Allow if there is a meaningful overlap (1+ overlapping significant words)
+      if (overlap > 0) return true;
+
+      return false;
     } catch { return false; }
   };
 
@@ -805,7 +870,7 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
   const contextualRatio = allLinks.length > 0 ? contextualLinks.length / allLinks.length : 0;
   const derivedScore = contextualRatio > 0.5 ? 100 : (contextualRatio > 0.3 ? 70 : 0);
   const finalScore = score !== undefined ? (score <= 1 ? score * 100 : score) : derivedScore;
-  const finalStatus = data.status || (finalScore >= 90 ? "pass" : finalScore >= 50 ? "warning" : "fail");
+  const finalStatus = data?.status || (finalScore >= 90 ? "pass" : finalScore >= 50 ? "warning" : "fail");
 
   const isPassed = finalStatus === "pass";
   const statusText = isPassed ? "Good Context" : "Improve Relevance";
@@ -891,6 +956,40 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
             </div>
           </div>
 
+          {/* Broken Contextual Links */}
+          <div className={`text-xs p-4 rounded-xl border ${meta.broken_links?.length > 0 ? "border-red-500/20 bg-red-500/5" : "border-emerald-500/20 bg-emerald-500/5"}`}>
+            <div className={`font-bold mb-2 uppercase flex items-center gap-1 ${meta.broken_links?.length > 0 ? "text-red-500" : "text-emerald-500"}`}>
+              {meta.broken_links?.length > 0 ? <AlertTriangle size={14} className="mt-[-2px]" /> : <CheckCircle size={14} className="mt-[-2px]" />}
+              Broken Contextual Links ({meta.broken_links_count || 0})
+            </div>
+            
+            {meta.broken_links?.length > 0 ? (
+              <>
+                <p className={`mb-3 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                  These contextual links are returning an error (e.g., 404 Not Found) when accessed.
+                </p>
+                <div className="max-h-40 overflow-y-auto custom-scrollbar space-y-1 p-2 bg-black/5 dark:bg-black/20 rounded">
+                  {meta.broken_links.map((linkObj, i) => (
+                    <div key={i} className={`flex justify-between items-center ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"} p-2 rounded border shadow-sm`}>
+                      <div className="flex items-center gap-2 font-mono text-[11px] truncate mr-2">
+                        <span className="font-bold text-red-500 dark:text-red-400 shrink-0 truncate">
+                          {linkObj.status ? `HTTP ${linkObj.status}` : linkObj.error || "Broken"}
+                        </span>
+                      </div>
+                      <a href={resolveLink(linkObj.url || "")} target="_blank" rel="noopener noreferrer" className={`font-mono text-[10px] truncate transition-colors max-w-[70%] text-right ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-700"}`}>
+                        {linkObj.url || "—"}
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <p className={`${darkMode ? "text-emerald-400/80" : "text-emerald-700/80"}`}>
+                Perfect! All your contextual links are valid and completely functional.
+              </p>
+            )}
+          </div>
+
           {/* Why it matters */}
           <div className={`pt-3 border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
             <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>WHY IT MATTERS: </span>
@@ -901,7 +1000,7 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
 
           {/* Analysis & Recs from API */}
           {
-            data.analysis.cause && !isPassed && (
+            data?.analysis && !isPassed && (
               <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-500">
@@ -909,7 +1008,7 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
                     <span>Analysis</span>
                   </div>
                   <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                    {data.analysis.cause}
+                    {data?.analysis?.cause}
                   </p>
                 </div>
                 <div className="space-y-1">
@@ -918,7 +1017,7 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
                     <span>Recommendation</span>
                   </div>
                   <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                    {data.analysis.recommendation}
+                    {data?.analysis?.recommendation}
                   </p>
                 </div>
               </div>
@@ -1034,6 +1133,32 @@ const LinkProfileCard = ({ data, darkMode, onInfo, resolveLink, className = "lg:
             <div className="text-[10px] font-bold uppercase tracking-wider opacity-60">Unique</div>
           </div>
         </div>
+
+        {/* Generic Anchor Texts */}
+        {meta.bad_links?.length > 0 && (
+          <div className={`text-xs p-4 rounded-xl border border-amber-500/20 bg-amber-500/5`}>
+            <div className="font-bold text-amber-500 mb-2 uppercase flex items-center gap-1">
+              <AlertTriangle size={14} className="mt-[-2px]" /> Generic Anchor Text ({meta.bad_links_count})
+            </div>
+            <p className={`mb-3 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+              These links use non-descriptive anchor text like "click here". Replacing them with relevant keywords improves context for search engines.
+            </p>
+            <div className="max-h-40 overflow-y-auto custom-scrollbar space-y-1 p-2 bg-black/5 dark:bg-black/20 rounded">
+              {meta.bad_links.map((link, i) => (
+                <div key={i} className={`flex justify-between items-center ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"} p-2 rounded border shadow-sm`}>
+                  <div className="flex items-center gap-2 font-mono text-[11px] truncate mr-2">
+                    <span className="opacity-50 text-[10px] shrink-0">&lt;a&gt;</span>
+                    <span className="font-bold text-amber-600 dark:text-amber-400 shrink-0 truncate">"{link.text || link}"</span>
+                    <span className="opacity-50 text-[10px] shrink-0">&lt;/a&gt;</span>
+                  </div>
+                  <a href={resolveLink(link.href || "")} target="_blank" rel="noopener noreferrer" className={`font-mono text-[9px] truncate transition-colors max-w-[45%] text-right ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-700"}`}>
+                    {link.href || "—"}
+                  </a>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Link Lists Tabs */}
         <div className={`rounded-xl border overflow-hidden ${darkMode ? "bg-black/20 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
@@ -1489,9 +1614,9 @@ const URLSlugCard = ({ data, darkMode, onInfo }) => {
         )}
         {meta?.issues?.length > 0 ? (
           <div className="space-y-1">
-            <div className="font-semibold text-red-500 text-xs uppercase">Slug Issues:</div>
+            <div className="font-semibold text-amber-500 text-xs uppercase">Slug Issues:</div>
             {meta.issues.map((issue, i) => (
-              <div key={i} className="text-xs opacity-90 flex items-start gap-2 text-red-500">
+              <div key={i} className="text-xs opacity-90 flex items-start gap-2 text-amber-500">
                 <AlertTriangle size={12} className="mt-0.5 flex-shrink-0" />
                 <span>{issue}</span>
               </div>
@@ -1540,7 +1665,7 @@ const RobotsTxtCard = ({ data, darkMode, onInfo }) => {
   const score = data?.score || 0;
   const status = data?.status || "fail";
   const isPassed = status === "pass";
-  const statusText = isPassed ? "Found" : "Missing";
+  const statusText = data?.details || (isPassed ? "Found" : "Missing");
 
   return (
     <SEOCard
@@ -1604,7 +1729,7 @@ const SitemapCard = ({ data, darkMode, onInfo }) => {
   const score = data?.score || 0;
   const status = data?.status || "fail";
   const isPassed = status === "pass";
-  const statusText = isPassed ? "Found" : "Missing";
+  const statusText = data?.details || (isPassed ? "Found" : "Missing");
 
   return (
     <SEOCard
@@ -2294,8 +2419,8 @@ export default function On_Page_SEO() {
             className="md:col-span-2"
           />
         </Section>
-
       </main>
+      
       {/* Methodology Modal */}
       <MetricInfoModal
         isOpen={!!selectedMetricInfo}
@@ -2303,6 +2428,7 @@ export default function On_Page_SEO() {
         info={selectedMetricInfo}
         darkMode={darkMode}
       />
+      
       {/* Parameter Modal */}
       <ParameterInfoModal
         isOpen={!!selectedParameterInfo}

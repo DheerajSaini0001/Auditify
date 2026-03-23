@@ -65,23 +65,24 @@ const checkImages = async ($, base_url) => {
     let withAlt = 0;
     let meaningfulAlt = 0;
     let withTitle = 0;
+
     const missingAlt = [];
     const missingTitle = [];
-    // Expanded meaningless list
+
+    const brokenImages = []; // 🔥 NEW
+
     const meaningless = ["", "image", "logo", "icon", "pic", "picture", "photo", " ", "12345", "-", "graphics", "img", "undefined", "null", "spacer"];
 
-    // 1. Metadata Checks
-    images.forEach(img => {
+    // 🔍 Metadata + Broken Image Check
+    for (const img of images) {
       const el = $(img);
       const src = el.attr("src") || "";
       const alt = el.attr("alt")?.trim() || "";
       const title = el.attr("title")?.trim() || "";
 
-      // Check Alt
+      // ALT CHECK
       if (alt) {
         withAlt++;
-        // Relaxed check: A single word excluded from 'meaningless' is okay, 
-        // but 2+ words is better. Let's say >= 2 words OR a long enough single word not in discard list.
         const words = alt.split(/\s+/);
         if (!meaningless.includes(alt.toLowerCase()) && (words.length >= 2 || alt.length > 5)) {
           meaningfulAlt++;
@@ -90,104 +91,137 @@ const checkImages = async ($, base_url) => {
         missingAlt.push({ src });
       }
 
-      // Check Title
+      // TITLE CHECK
       if (title) {
         withTitle++;
       } else {
         missingTitle.push({ src });
       }
-    });
+    }
 
     const altScore = total > 0 ? (withAlt / total) : 1;
     const meaningfulScore = total > 0 ? (meaningfulAlt / total) : 1;
     const titleScore = total > 0 ? (withTitle / total) : 1;
 
-    // 2. Size Checks (Real Content-Length)
+    // 🔍 SIZE CHECK
     const largeImages = [];
     let sizeScore = 1;
 
-    // Filter valid srcs for checking
     const validSrcs = images
       .map(img => $(img).attr("src"))
       .filter(src => src && !src.startsWith("data:") && !src.startsWith("blob:"));
 
-    // Limit checks to first 15 distinct images to ensure performance
     const uniqueSrcs = [...new Set(validSrcs)].slice(0, 15);
 
     if (uniqueSrcs.length > 0) {
       const sizePromises = uniqueSrcs.map(async (src) => {
         try {
           const fullUrl = new URL(src, base_url).href;
-          const res = await fetch(fullUrl, { method: "HEAD", signal: AbortSignal.timeout(3000) }); // 3s timeout
-          if (res.ok) {
-            const bytes = res.headers.get("content-length");
-            if (bytes) {
-              const kb = parseInt(bytes) / 1024;
-              if (kb > 150) { // 150KB threshold
-                return { src, size: Math.round(kb) };
-              }
+          // ⚡ Supply an explicit User-Agent to bypass standard CDN/Proxy Bot-blockers returning fake 403s
+          const res = await fetch(fullUrl, { 
+            method: "HEAD", 
+            headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" },
+            signal: AbortSignal.timeout(4000) 
+          });
+          
+          const contentType = res.headers.get("content-type");
+          if (!res.ok || !contentType || !contentType.startsWith("image/")) {
+             let errorMsg = "Broken";
+             if (res.status === 403 || res.status === 401) {
+               errorMsg = "Permission Denied";
+             } else if (!res.ok) {
+               errorMsg = `HTTP ${res.status}`;
+             } else if (!contentType) {
+               errorMsg = "No Content-Type";
+             } else {
+               errorMsg = "Not Image Type";
+             }
+             return { action: "broken", src: fullUrl, error: errorMsg };
+          }
+
+          const bytes = res.headers.get("content-length");
+          if (bytes) {
+            const kb = parseInt(bytes) / 1024;
+            if (kb > 150) {
+              return { action: "heavy", src, size: Math.round(kb) };
             }
           }
           return null;
         } catch (e) {
-          return null; // Ignore fetch errors
+          return { action: "broken", src, error: "Network Error/Timeout" };
         }
       });
 
       const results = await Promise.all(sizePromises);
-      const heavyImages = results.filter(Boolean);
+      
+      const heavyImages = results.filter(r => r && r.action === "heavy");
+      const brokenList = results.filter(r => r && r.action === "broken");
+
+      brokenImages.push(...brokenList.map(r => ({ src: r.src, error: r.error })));
 
       if (heavyImages.length > 0) {
-        largeImages.push(...heavyImages);
-        // Score penalty: -0.1 for each heavy image found in sample, max penalty 100%
-        // If 5 images are heavy, score reduces by 0.5.
+        largeImages.push(...heavyImages.map(r => ({ src: r.src, size: r.size })));
         const penalty = heavyImages.length * 0.1;
         sizeScore = Math.max(0, 1 - penalty);
       }
     }
 
-    // Weighted Score: Alt (50%), Meaningful (20%), Title (10%), Size (20%)
-    // Weighted Score: Alt (50%), Meaningful (20%), Title (10%), Size (20%)
-    const weightedScore = (altScore * 0.5) + (meaningfulScore * 0.2) + (titleScore * 0.1) + (sizeScore * 0.2);
-    const score = parseFloat(weightedScore.toFixed(2));
+    // 🎯 SCORE
+    const weightedScore =
+      (altScore * 0.5) +
+      (meaningfulScore * 0.2) +
+      (titleScore * 0.1) +
+      (sizeScore * 0.2);
 
-    const details = score === 1 ? "Images are fully optimized" : "Image optimization opportunities found";
+    let score = parseFloat(weightedScore.toFixed(2));
+    if (score < 1 && score < 0.5) score = 0.5;
 
-    // Simplified Logic for Explanations
+    let details = "Images are fully optimized";
+
+    if (brokenImages.length > 0) {
+      score = 0.5; // ⚠️ WARNING override
+      details = "Broken images found";
+    } else if (score < 1) {
+      details = "Image optimization opportunities found";
+    }
+
+    // 🧠 Explanation
     let explanation = "";
     let recommendation = "";
 
-    if (total === 0) {
-      explanation = "No images were found on this page.";
-      recommendation = "Use relevant images to enhance user engagement where necessary.";
-    } else {
-      const issues = [];
-      if (withAlt < total) issues.push(`${total - withAlt} images missing Alt text`);
-      if (largeImages.length > 0) issues.push(`${largeImages.length} images file size > 150KB`);
-      if (meaningfulAlt < total) issues.push(`${total - meaningfulAlt} images have weak/generic Alt text`);
+    const issues = [];
 
-      if (issues.length > 0) {
-        explanation = `Found optimization opportunities: ${issues.join(", ")}.`;
-        recommendation = "Add descriptive Alt text to all images and compress large files to under 150KB (WebP format recommended).";
-      } else {
-        explanation = "All images have valid Alt text, titles, and are optimized for size.";
-        recommendation = "Continue using descriptive Alt tags and optimized image formats.";
-      }
+    if (withAlt < total) issues.push(`${total - withAlt} images missing Alt text`);
+    if (meaningfulAlt < total) issues.push(`${total - meaningfulAlt} weak Alt text`);
+    if (largeImages.length > 0) issues.push(`${largeImages.length} large images (>150KB)`);
+    if (brokenImages.length > 0) issues.push(`${brokenImages.length} broken images`);
+
+    if (issues.length > 0) {
+      explanation = `Issues found: ${issues.join(", ")}.`;
+      recommendation = "Fix broken images, add descriptive Alt text, and compress large images.";
+    } else {
+      explanation = "All images are optimized and accessible.";
+      recommendation = "Maintain this optimization.";
     }
 
     return evaluateParameter(score, details, {
       total,
       withAlt,
       meaningfulAlt,
-      missingAlt: missingAlt.slice(0, 50),
       withTitle,
+      missingAlt: missingAlt.slice(0, 50),
       missingTitle: missingTitle.slice(0, 50),
       largeImages,
+      broken_images_count: brokenImages.length, // 🔥 NEW
+      broken_images: brokenImages, // 🔥 NEW
       why_this_occurred: explanation,
       how_to_fix: recommendation
     });
+
   } catch (err) {
-    return evaluateParameter(0, "Error checking images", { error: err.message });
+    return evaluateParameter(0, "Error checking images", {
+      error: err.message
+    });
   }
 };
 
@@ -264,9 +298,11 @@ const checkHeadingHierarchy = ($) => {
     lastLevel = currentLevel;
   });
 
-  const valid = issues.length === 0;
-  const score = valid ? 1 : 0;
-  const details = valid ? "Heading hierarchy is logical" : `${issues.length} hierarchy issues found`;
+  let score = 1;
+  if (counts.h1 > 1) score = 0.5; // WARNING
+  if (counts.h1 === 0 && headings.length === 0) score = 0; // High Severity
+  else if (issues.length > 0) score = 0.5; // WARNING
+  const details = score === 1 ? "Proper hierarchy" : (score === 0 ? "No headings at all" : "Heading hierarchy issues found");
 
   return evaluateParameter(score, details, {
     counts,
@@ -279,13 +315,27 @@ const checkLinks = ($, url) => {
   try {
     const links = $("a").toArray();
     const total = links.length;
+
     let internal = 0;
     let external = 0;
     let unique = new Set();
+
     const internalLinksList = [];
     const externalLinksList = [];
-    const genericAnchors = ["click here", "read more", "more", "details", "here"];
+
+    const genericAnchors = [
+      "click here",
+      "click me",
+      "read more",
+      "more",
+      "details",
+      "here",
+      "learn more",
+      "view more"
+    ];
+
     let descriptiveCount = 0;
+    let badLinks = [];
 
     let baseHostname;
     try {
@@ -298,77 +348,81 @@ const checkLinks = ($, url) => {
       const href = $(link).attr("href");
       if (!href) return;
 
-      // Filter obviously non-link schemes to avoid noise if desired, 
-      // but new URL() check below handles protocols well.
-      // We keep raw href in unique set to match previous behavior or consider resolving it.
       unique.add(href);
 
       const originalText = $(link).text().trim();
       const lowerText = originalText.toLowerCase();
-      if (lowerText && !genericAnchors.includes(lowerText)) descriptiveCount++;
+
+      // 🔥 Generic anchor detection
+      if (lowerText) {
+        const isGeneric = genericAnchors.some(g => lowerText === g);
+
+        if (isGeneric) {
+          badLinks.push({ text: originalText, href });
+        } else {
+          descriptiveCount++;
+        }
+      }
 
       const target = ($(link).attr("target") || "_self").trim();
 
       try {
-        // Resolve absolute URL to handle relative paths and base tags implicitly
         const resolvedUrl = new URL(href, url);
 
-        // Only count http/https links
         if (resolvedUrl.protocol === "http:" || resolvedUrl.protocol === "https:") {
-          // Normalize (strip www.)
           const linkHostname = resolvedUrl.hostname.replace(/^www\./, '');
           const baseHost = baseHostname.replace(/^www\./, '');
 
-          // Internal: Same Hostname
           if (linkHostname === baseHost) {
             internal++;
             internalLinksList.push({ href, text: originalText || "[No Text]", target });
-          }
-          // External: Different Hostname
-          else {
+          } else {
             external++;
             externalLinksList.push({ href, text: originalText || "[No Text]", target });
           }
         }
       } catch (e) {
-        // Skip invalid URLs (javascript:..., mailto:..., or malformed)
+        // ignore invalid URLs
       }
     });
 
     const uniqueCount = unique.size;
+
+    // 🔥 Ratio calculation
     const descRatio = total > 0 ? descriptiveCount / total : 1;
-    const score = descRatio > 0.75 ? 1 : 0.5;
-    const details = score === 1 ? "Start links use descriptive text" : "Some links use generic text";
+
+    let score = 1;
+    let details = "Good link profile";
+
+    if (badLinks.length > 0 || descRatio < 0.75) {
+      score = 0.5; // ⚠️ WARNING
+      details = "Generic anchor text found";
+    }
 
     let explanation = "";
     let recommendation = "";
     const issueList = [];
 
-    // Analyze Descriptive Text
-    if (descRatio < 0.75) {
-      issueList.push(`${total - descriptiveCount} links use generic text (e.g., "click here")`);
+    // 🔍 Issues
+    if (badLinks.length > 0) {
+      issueList.push(`${badLinks.length} links use generic text (e.g., "click here")`);
     }
 
-    // Analyze Internal/External Balance
     if (internal === 0 && total > 0) {
       issueList.push("No internal links found (orphan page risk)");
     }
 
-    // Analyze Open Targets
-    const unsafeExternal = externalLinksList.filter(l => l.target !== "_blank").length; // Simplified check, ideally check rel=noopener too
-    if (unsafeExternal > 0) {
-      // Not a hard failure usually, but good to note
-    }
-
     if (total === 0) {
-      explanation = "No navigational or content links were found on this page.";
-      recommendation = "Add internal links to other relevant pages and external links to authoritative sources.";
-    } else if (issueList.length > 0) {
-      explanation = `Link profile analysis found issues: ${issueList.join(", ")}.`;
-      recommendation = "Update generic link text to be descriptive and ensure a healthy mix of internal and external links.";
-    } else {
-      explanation = "The page has a healthy link profile with descriptive anchor text.";
-      recommendation = "Maintain this balance. Ensure external links open in new tabs where appropriate.";
+      explanation = "No links found on this page.";
+      recommendation = "Add internal and external links for better SEO.";
+    } 
+    else if (issueList.length > 0) {
+      explanation = `Link profile issues detected: ${issueList.join(", ")}.`;
+      recommendation = "Replace generic anchor text with descriptive keywords and maintain a balanced link structure.";
+    } 
+    else {
+      explanation = "The page has a strong link profile with descriptive anchor text.";
+      recommendation = "Maintain descriptive links and proper internal linking.";
     }
 
     return evaluateParameter(score, details, {
@@ -376,13 +430,18 @@ const checkLinks = ($, url) => {
       internal,
       external,
       unique: uniqueCount,
+      bad_links_count: badLinks.length,
+      bad_links: badLinks,
       internalLinks: internalLinksList,
       externalLinks: externalLinksList,
       why_this_occurred: explanation,
       how_to_fix: recommendation
     });
+
   } catch (err) {
-    return evaluateParameter(0, "Error checking links", { error: err.message });
+    return evaluateParameter(0, "Error checking links", {
+      error: err.message
+    });
   }
 };
 
@@ -393,186 +452,282 @@ const checkSemanticTags = async ($) => {
     const result = {};
     const foundTags = [];
     const missingTags = [];
-    const potentialReplacements = []; // Store detected class-based alternatives
+    const potentialReplacements = [];
 
     tags.forEach(tag => {
       const count = $(tag).length;
-      result[tag] = count > 0 ? 1 : 0;
+      result[tag] = count;
 
       if (count > 0) {
         foundTags.push(tag);
       } else {
         missingTags.push(tag);
-        // Heuristic Check: Check for IDs or Classes that suggest this tag should exist
-        // e.g. <div class="header"> or <div id="nav">
-        const heuristicSelector = `div[class*="${tag}"], div[id*="${tag}"]`;
+
+        // 🔍 Heuristic detection
+        const heuristicSelector = `
+          div[class*="${tag}"], 
+          div[id*="${tag}"],
+          section[class*="${tag}"],
+          article[class*="${tag}"]
+        `;
         if ($(heuristicSelector).length > 0) {
           potentialReplacements.push(tag);
         }
       }
     });
 
-    // Scoring Logic
-    // Weight core tags higher: Main, Nav, Header, Footer
-    const coreTags = ["main", "nav", "header", "footer"];
-    const optionalTags = ["article", "section", "aside"];
+    const mainCount = result["main"];
+    const hasHeader = result["header"] > 0;
+    const hasNav = result["nav"] > 0;
+    const hasFooter = result["footer"] > 0;
 
-    let coreCount = 0;
-    coreTags.forEach(t => { if (result[t]) coreCount++; });
-
-    let optionalCount = 0;
-    optionalTags.forEach(t => { if (result[t]) optionalCount++; });
-
-    let finalScore = 0;
-
-    // Core is 70% of score, Optional is 30%
-    // 4 core tags = 0.7 points
-    // 3 optional tags = 0.3 points
-
-    const coreScore = (coreCount / coreTags.length) * 0.7;
-    const optionalScore = (optionalCount / optionalTags.length) * 0.3;
-
-    finalScore = parseFloat((coreScore + optionalScore).toFixed(2));
-
-    let details = "";
-    let explanation = "";
-    let recommendation = "";
-
-    if (finalScore === 1) {
-      details = "Excellent Semantic Structure";
-      explanation = "The page effectively uses all key HTML5 semantic elements (header, nav, main, footer, etc.).";
-      recommendation = "Maintain this structure to ensure accessibility and clear document outlines.";
-    } else if (finalScore >= 0.7) {
-      details = "Good Semantic Structure";
-      explanation = `Most core structure tags are present. Missing: ${missingTags.join(", ")}.`;
-
-      if (potentialReplacements.length > 0) {
-        recommendation = `We detected divs that might serve as semantic elements. Try converting <div class="${potentialReplacements[0]}"> to <${potentialReplacements[0]}>.`;
-      } else {
-        recommendation = `Consider adding the missing <${missingTags[0]}> tag to further define your content structure.`;
-      }
-    } else {
-      details = "Weak Semantic Structure";
-      explanation = `The page relies heavily on generic <div> elements. Missing critical tags: ${missingTags.join(", ")}.`;
-
-      if (potentialReplacements.length > 0) {
-        recommendation = `Detected potential ${potentialReplacements.join(", ")} usage in divs. Using native HTML5 tags like <${potentialReplacements[0]}> is better for SEO and accessibility than <div class="${potentialReplacements[0]}">.`;
-      } else {
-        recommendation = "Refactor the layout to use <header>, <nav>, <main>, and <footer> for better accessibility and SEO understanding.";
-      }
+    // ⚠️ WARNING: <main> missing or multiple
+    if (mainCount === 0 || mainCount > 1) {
+      return evaluateParameter(0.5, 
+        mainCount === 0 ? "Main tag missing" : "Multiple main tags found",
+        {
+          ...result,
+          found: foundTags,
+          missing: missingTags,
+          potentialReplacements,
+          why_this_occurred: "<main> should exist once to define primary content.",
+          how_to_fix: mainCount === 0
+            ? "Add a <main> tag wrapping the core content."
+            : "Ensure only one <main> tag is used."
+        }
+      );
     }
 
-    return evaluateParameter(finalScore, details, {
+    // ⚠️ WARNING: missing header/nav/footer
+    if (!hasHeader || !hasNav || !hasFooter) {
+      return evaluateParameter(0.5, "Missing core semantic tags", {
+        ...result,
+        found: foundTags,
+        missing: missingTags,
+        potentialReplacements,
+        why_this_occurred: "Core tags like <header>, <nav>, or <footer> are missing.",
+        how_to_fix: "Add <header>, <nav>, and <footer> for better structure."
+      });
+    }
+
+    // ⚠️ / ❌ Only div structure
+    const totalSemanticUsed = foundTags.length;
+    const onlyMainPresent = totalSemanticUsed === 1 && mainCount === 1;
+
+    if (onlyMainPresent) {
+      const isSevere = potentialReplacements.length === 0;
+
+      return evaluateParameter(
+        isSevere ? 0 : 0.5,
+        isSevere
+          ? "Only div structure (no semantics)"
+          : "Div-based structure detected",
+        {
+          ...result,
+          found: foundTags,
+          missing: missingTags,
+          potentialReplacements,
+          why_this_occurred: "Page relies heavily on <div> instead of semantic tags.",
+          how_to_fix: potentialReplacements.length > 0
+            ? `Replace <div class="${potentialReplacements[0]}"> with <${potentialReplacements[0]}>.`
+            : "Refactor layout using semantic tags like <section>, <article>, etc."
+        }
+      );
+    }
+
+    // 🎯 GOOD
+    return evaluateParameter(1, "Proper semantic structure", {
       ...result,
       found: foundTags,
       missing: missingTags,
-      potentialReplacements, // Explicitly return this for frontend use
-      why_this_occurred: explanation,
-      how_to_fix: recommendation
+      potentialReplacements,
+      why_this_occurred: "All major semantic tags are properly used.",
+      how_to_fix: "Maintain this structure."
     });
+
   } catch (err) {
-    return evaluateParameter(0, "Error checking semantic tags", { error: err.message, importance: "Medium" });
+    return evaluateParameter(0, "Error checking semantic tags", {
+      error: err.message,
+      importance: "Medium"
+    });
   }
 };
 
-const checkContextualLinks = ($, url) => {
+const checkContextualLinks = async ($, url) => {
   try {
     const contentLinks = new Set();
     const menuLinks = new Set();
     const issues = [];
 
-    // 1. Identify "Content" Area 
-    // Heuristic: Look for main, article, or div with many paragraphs
+    // 🔍 Identify Content Area
     const contentArea = $("main, article, .content, #content, .post, .entry").first();
     const scope = contentArea.length > 0 ? contentArea : $("body");
 
-    // 2. Extract Links from Content
+    // 🔗 Extract Contextual Links
     scope.find("a").each((i, el) => {
       const $el = $(el);
       const href = $el.attr("href");
 
-      // STRICT CHECK: Ensure this link is NOT inside a known navigation container
-      // (nav, header, footer, .navbar, .menu, .sidebar)
-      // .closest() checks parent ancestry.
-      if ($el.closest("nav, header, footer, .navbar, .menu, .sidebar, .nav").length > 0) {
-        return; // Skip nav links
-      }
+      if (!href) return;
 
-      // Filter out anchors, javascript, tel, mailto
-      if (href && !href.startsWith("#") && !href.startsWith("javascript") && !href.startsWith("tel") && !href.startsWith("mailto")) {
-        contentLinks.add(href);
-      }
+      if ($el.closest("nav, header, footer, .navbar, .menu, .sidebar, .nav").length > 0) return;
+
+      if (
+        href.startsWith("#") ||
+        href.startsWith("javascript") ||
+        href.startsWith("tel") ||
+        href.startsWith("mailto")
+      ) return;
+
+      contentLinks.add(href);
     });
 
-    // 3. Extract Links from Navigation (Header/Footer/Nav)
+    // 🔗 Extract Menu Links
     $("nav, header, footer, .menu, .nav, .sidebar").find("a").each((i, el) => {
       const href = $(el).attr("href");
       if (href) menuLinks.add(href);
     });
 
-    // 4. Analysis: Do content links point to important pages?
-    // Simplified: Check if content links exist separate from nav links
-    const totalContentLinks = contentLinks.size;
+    const totalContextual = contentLinks.size;
+    const totalMenu = menuLinks.size;
+
+    // 🎯 Ratio
+    const ratio = (totalContextual + totalMenu) > 0
+      ? totalContextual / (totalContextual + totalMenu)
+      : 1;
+
     let score = 1;
 
-    // Check for "Orphaned" important menu items (pages in menu but never linked in content)
-    // This is computationally expesive to match exact URLs, so we'll do simpler counts first.
-
-    if (totalContentLinks === 0) {
-      score = 0;
-      issues.push("No contextual links found in main content area.");
+    // ⚠️ Base checks
+    if (totalContextual === 0) {
+      score = 0.5;
+      issues.push("No contextual links found in main content.");
+    } else if (totalContextual > 100) {
+      score = 0.5;
+      issues.push("Too many contextual links (spam risk).");
+    } else if (ratio < 0.3) {
+      score = 0.5;
+      issues.push("Low contextual linking ratio.");
     }
 
-    // Advanced: Check if key menu items are linked in content
+    // 🔍 Missing important links
     const missingLinks = [];
-    // List of utility keywords to ignore in "Missing" check
-    const ignoredPatterns = ["login", "signin", "sign-in", "register", "signup", "sign-up", "cart", "checkout", "account", "profile", "logout", "contact", "about", "privacy", "terms"];
+    const ignoredPatterns = [
+      "login","signin","sign-in","register","signup","sign-up",
+      "cart","checkout","account","profile","logout",
+      "contact","about","privacy","terms"
+    ];
 
     menuLinks.forEach(link => {
-      // logic to check importance? Assume top-level nav is important.
-      // Only check internal links
       if (link.startsWith("/") || link.includes(url)) {
         if (!contentLinks.has(link)) {
-          // Check if it's a utility page
-          const lowerLink = link.toLowerCase();
-          if (!ignoredPatterns.some(pattern => lowerLink.includes(pattern))) {
+          const lower = link.toLowerCase();
+          if (!ignoredPatterns.some(p => lower.includes(p))) {
             missingLinks.push(link);
           }
         }
       }
     });
 
-    if (score === 1 && missingLinks.length > 5) { // Increased threshold slightly to be less sensitive
-      score = 0.8;
+    if (score === 1 && missingLinks.length > 5) {
+      score = 0.5;
+      issues.push("Important pages not linked contextually.");
     }
 
-    const details = score === 1 ? "Good contextual linking" : score === 0.8 ? "Optimization Opportunity" : "No contextual links found";
+   // 🔥 BROKEN LINK CHECK (IMPROVED)
+const brokenLinks = [];
+const headers = { "User-Agent": "Mozilla/5.0" };
 
-    let explanation = "";
-    let recommendation = "";
+const maxChecks = 25;
+const linksToCheck = Array.from(contentLinks).slice(0, maxChecks);
 
-    if (totalContentLinks === 0) {
-      explanation = "No links were found within the main content body (paragraphs, articles).";
-      recommendation = "Add internal links naturally within your content to guide users to related topics.";
-    } else if (missingLinks.length > 0) {
-      explanation = `Found ${totalContentLinks} links in content, but some key menu items are not referenced in the text.`;
-      recommendation = "Consider linking to your key service or category pages directly from the article text where relevant to boost their authority.";
-    } else {
-      explanation = "The page effectively uses in-text links to reference related content.";
-      recommendation = "Continue using descriptive anchor text for your contextual links.";
+// 🚀 Parallel requests (faster + accurate)
+const requests = linksToCheck.map(async (href) => {
+  try {
+    const fullUrl = new URL(href, url).href;
+
+    const res = await fetch(fullUrl, {
+      method: "GET", // ✅ real page load
+      headers,
+      signal: AbortSignal.timeout(6000) // ⏳ wait properly
+    });
+
+    if (!res.ok) {
+      return {
+        url: fullUrl,
+        status: res.status
+      };
     }
 
+    return null;
+
+  } catch (e) {
+    return {
+      url: href,
+      error: "Request failed / timeout"
+    };
+  }
+});
+
+// ⏳ wait for all links to load
+const results = await Promise.all(requests);
+
+// collect broken links
+results.forEach(r => {
+  if (r) brokenLinks.push(r);
+});
+
+// ⚠️ scoring impact
+if (brokenLinks.length > 0) {
+  score = 0.5;
+  issues.push(`${brokenLinks.length} broken contextual links found.`);
+}
+
+const details = score === 1
+  ? "Good contextual linking"
+  : "Contextual linking issues found";
+
+// 🧠 Explanation
+let explanation = "";
+let recommendation = "";
+
+if (totalContextual === 0) {
+  explanation = "No links found inside the main content area.";
+  recommendation = "Add internal links within content.";
+} 
+else if (brokenLinks.length > 0) {
+  explanation = `Found ${brokenLinks.length} broken links inside content.`;
+  recommendation = "Fix or replace broken links to improve SEO and UX.";
+}
+else if (ratio < 0.3) {
+  explanation = "Most links are in navigation instead of content.";
+  recommendation = "Increase contextual linking.";
+}
+else if (missingLinks.length > 0) {
+  explanation = "Important pages are not linked within content.";
+  recommendation = "Link key pages inside content.";
+} 
+else {
+  explanation = "Links are well distributed inside content.";
+  recommendation = "Maintain contextual linking strategy.";
+}
     return evaluateParameter(score, details, {
-      totalContextual: totalContentLinks,
-      foundLinks: Array.from(contentLinks),
+      totalContextual,
+      totalMenu,
+      contextual_ratio: ratio.toFixed(2),
+      foundLinks: Array.from(contentLinks).slice(0, 50),
       missingLinks: missingLinks.slice(0, 20),
-      issues: issues,
+      broken_links_count: brokenLinks.length, // 🔥 NEW
+      broken_links: brokenLinks, // 🔥 NEW
+      issues,
       why_this_occurred: explanation,
       how_to_fix: recommendation
     });
 
   } catch (err) {
-    return evaluateParameter(0, "Error checking contextual links", { error: err.message });
+    return evaluateParameter(0, "Error checking contextual links", {
+      error: err.message
+    });
   }
 };
 
@@ -588,8 +743,10 @@ const checkContentQuality = ($) => {
   const wordCount = words.length;
 
   // 1. Thin Content Check
-  if (wordCount < 300) {
-    return evaluateParameter(0, "Thin content (<300 words)", { wordCount, repeatedSentences: [] });
+  if (wordCount < 100) {
+    return evaluateParameter(0, "No / very low content (<100 words)", { wordCount, repeatedSentences: [] });
+  } else if (wordCount < 300) {
+    return evaluateParameter(0.5, "Less content (100-300 words)", { wordCount, repeatedSentences: [] });
   }
 
   // 2. Internal Duplication
@@ -615,10 +772,13 @@ const checkContentQuality = ($) => {
   const repetitionRatio = 1 - (uniqueCount / totalSentences);
 
   if (repetitionRatio > 0.10) {
+    if (wordCount >= 1500) {
+       return evaluateParameter(0.5, "Very long content but poor readability", { wordCount, repeatedSentences });
+    }
     return evaluateParameter(0.5, "High sentence repetition detected", { wordCount, repeatedSentences });
   }
 
-  return evaluateParameter(1, "Content is unique and sufficient", { wordCount, repeatedSentences });
+  return evaluateParameter(1, wordCount >= 1500 ? "Very long, structured content" : "Proper content", { wordCount, repeatedSentences });
 };
 
 const checkURLStructure = (url) => {
@@ -644,8 +804,8 @@ const checkURLStructure = (url) => {
       issues.push("URL is too deep (> 3 segments)");
     }
 
-    const score = Math.max(0, 1 - (issues.length * 0.2));
-    const details = issues.length === 0 ? "URL structure matches best practices" : `${issues.length} issues found`;
+    const score = issues.length === 0 ? 1 : 0.5; // WARNING
+    const details = issues.length === 0 ? "Clean SEO URL" : `Poor URL structure: ${issues.join(", ")}`;
 
     if (issues.length > 0) {
       explanation = `The URL structure contains ${issues.length} potential issue(s): ${issues.join(", ")}.`;
@@ -718,15 +878,22 @@ const checkH1 = ($) => {
   let recommendation = "";
 
   if (h1Count === 0) {
-    score = 0;
+    score = 0.5;
     details = "Missing H1 tag";
     explanation = "No <h1> tag was found on the page.";
     recommendation = "Add exactly one <h1> tag that describes the main topic of the page. It's crucial for SEO and accessibility.";
   } else if (h1Count === 1) {
-    score = 1;
-    details = "Exactly one H1 tag found";
+    if (content[0].length === 0) {
+      score = 0.5;
+      details = "H1 tag empty";
+      explanation = "The <h1> tag exists but contains no text.";
+      recommendation = "Add descriptive text to your <h1> tag.";
+    } else {
+      score = 1;
+      details = "Exactly one H1 tag found";
     explanation = "The page correctly contains a single H1 tag.";
     recommendation = "Ensure the H1 text contains your primary keyword and is compelling to users.";
+    }
   } else {
     score = 0.5;
     details = `Multiple H1 tags found (${h1Count})`;
@@ -797,7 +964,7 @@ const checkCanonical = ($, url) => {
   let isSelfReferencing = false;
 
   if (!exists) {
-    score = 0;
+    score = 0.5; // WARNING
     explanation = "No canonical tag was found in the <head> section of the page.";
     recommendation = "Add a <link rel=\"canonical\" href=\"...\" /> tag pointing to the authoritative URL for this page to prevent duplicate content issues.";
   } else if (links.length > 1) {
@@ -846,7 +1013,7 @@ const checkCanonical = ($, url) => {
           explanation = "The canonical tag points to a different URL on the same domain. This indicates this page is a duplicate or variant.";
           recommendation = "Ensure this is intentional (e.g., for tracking parameters or similar content). If this page should be indexed, point the canonical to itself.";
         } else {
-          score = 0.5;
+          score = 0; // ERROR
           details = "Canonical points to external domain";
           explanation = "The canonical tag points to a completely different domain.";
           recommendation = "Verify if this is a cross-domain syndication. If not, correct the canonical link to point to your own domain.";
@@ -881,7 +1048,7 @@ const checkSocial = ($) => {
   };
   const ogRequired = ["og:title", "og:image", "og:url"];
   const ogCount = ogRequired.reduce((acc, key) => acc + (ogTags[key] ? 1 : 0), 0);
-  let ogScore = ogCount === ogRequired.length ? 1 : (ogCount > 0 ? 0.5 : 0);
+  let ogScore = ogCount === ogRequired.length ? 1 : 0.5; // WARNING for missing or incomplete
   const ogMissing = ogRequired.filter(key => !ogTags[key]);
   const ogDetails = ogScore === 1 ? "Open Graph tags are optimized" : ogScore === 0.5 ? `Missing key OG tags: ${ogMissing.join(", ")}` : "No Open Graph tags found";
   const ogMetric = evaluateParameter(ogScore, ogDetails, { tags: ogTags, missing: ogMissing, parameter: "1 if og:title, og:image, og:url exist" });
@@ -898,7 +1065,7 @@ const checkSocial = ($) => {
   };
   const twRequired = ["twitter:card", "twitter:title"];
   const twCount = twRequired.reduce((acc, key) => acc + (twTags[key] ? 1 : 0), 0);
-  let twScore = twCount === twRequired.length ? 1 : (twCount > 0 ? 0.5 : 0);
+  let twScore = twCount === twRequired.length ? 1 : 0.5; // WARNING for missing or incomplete
   const twMissing = twRequired.filter(key => !twTags[key]);
   const twDetails = twScore === 1 ? "Twitter Card tags are optimized" : twScore === 0.5 ? `Missing key Twitter tags: ${twMissing.join(", ")}` : "No Twitter Card tags found";
   const twitterMetric = evaluateParameter(twScore, twDetails, { tags: twTags, missing: twMissing, parameter: "1 if twitter:card and twitter:title exist" });
@@ -916,7 +1083,7 @@ const checkSocial = ($) => {
     }
   });
   const uniqueLinks = [...new Set(foundLinks)];
-  const linkScore = uniqueLinks.length > 0 ? 1 : 0;
+  const linkScore = uniqueLinks.length > 0 ? 1 : 0.5; // WARNING
   const linkDetails = linkScore === 1 ? `${uniqueLinks.length} social profiles found` : "No social media links found";
   const socialLinksMetric = evaluateParameter(linkScore, linkDetails, { links: uniqueLinks, count: uniqueLinks.length, parameter: "1 if at least one social profile link exists" });
 
@@ -926,23 +1093,67 @@ const checkSocial = ($) => {
 const checkRobotsTxt = async (url) => {
   try {
     const robotsUrl = new URL("/robots.txt", url).href;
+
     const response = await fetch(robotsUrl, { 
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
-      signal: AbortSignal.timeout(5000) 
+      headers: { 
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+      },
+      signal: AbortSignal.timeout(6000) 
     });
-    
+
     const exists = response.ok;
     const content = exists ? await response.text() : null;
 
-    const score = exists ? 1 : 0;
-    const details = exists ? "Robots.txt is present" : "Robots.txt not found";
+    let score = 0;
+    let details = "Robots.txt check";
+
+    if (!exists) {
+      score = 0.5;
+      details = "Robots.txt missing";
+    } 
+    else if (!content || content.trim() === "") {
+      score = 0.5;
+      details = "Robots.txt empty";
+    } 
+    else {
+      // Normalize content
+      const normalized = content.replace(/\r\n/g, "\n");
+
+      // 👉 Extract only User-agent: * section
+      const globalBlockMatch = normalized.match(
+        /User-agent:\s*\*([\s\S]*?)(?=User-agent:|$)/i
+      );
+
+      const globalRules = globalBlockMatch ? globalBlockMatch[1] : "";
+
+      // 🚨 Check if full site blocked for all bots
+      const isFullyBlocked = /Disallow:\s*\/\s*$/m.test(globalRules);
+
+      if (isFullyBlocked) {
+        score = 0;
+        details = "Wrong config (site fully blocked)";
+      } 
+      else {
+        // ⚠️ Check for aggressive query blocking (matches "Disallow: /*?" or "Disallow: /*?*")
+        const blocksAllParams = /Disallow:\s*\/\*\?(?:\*|\s*$)/m.test(globalRules);
+
+        if (blocksAllParams) {
+          score = 0.7;
+          details = "Robots.txt OK but query params blocked";
+        } else {
+          score = 1;
+          details = "Proper robots.txt";
+        }
+      }
+    }
 
     const explanation = exists
-      ? "A robots.txt file was found at the root of your domain."
-      : "Robots.txt is missing. Crawling is uncontrolled and search engines may index restricted areas.";
+      ? "Robots.txt file detected and analyzed for crawler access rules."
+      : "Robots.txt is missing. Crawlers may index sensitive or unwanted pages.";
+
     const recommendation = exists
-      ? "Ensure your robots.txt file correctly allows or disallows crawlers as intended."
-      : "Create a robots.txt file at the root of your domain to guide search engine crawlers.";
+      ? "Ensure important pages are allowed and only sensitive or duplicate URLs are disallowed."
+      : "Add a robots.txt file at the root to control crawler behavior.";
 
     return evaluateParameter(score, details, {
       content,
@@ -950,8 +1161,11 @@ const checkRobotsTxt = async (url) => {
       why_this_occurred: explanation,
       how_to_fix: recommendation,
     });
+
   } catch (e) {
-    return evaluateParameter(0, "Robots.txt check failed", { error: e.message });
+    return evaluateParameter(0, "Robots.txt check failed", { 
+      error: e.message 
+    });
   }
 };
 
@@ -959,31 +1173,48 @@ const checkSitemap = async (url, robotsContent = null) => {
   try {
     const sitemapUrl = new URL("/sitemap.xml", url).href;
     const sitemapIndexUrl = new URL("/sitemap_index.xml", url).href;
+
     const urlsToTry = [sitemapUrl, sitemapIndexUrl];
 
+    // 🔍 Extract sitemap URLs from robots.txt
     if (robotsContent) {
       const robotsSitemaps = robotsContent.match(/Sitemap:\s*(\S+)/gi);
       if (robotsSitemaps) {
         robotsSitemaps.forEach(m => {
           const sUrl = m.replace(/Sitemap:\s*/i, '').trim();
-          if (sUrl && !urlsToTry.includes(sUrl)) urlsToTry.push(sUrl);
+          if (sUrl && !urlsToTry.includes(sUrl)) {
+            urlsToTry.push(sUrl);
+          }
         });
       }
     }
 
     let exists = false;
     let content = null;
+
     const headers = { 
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' 
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' 
     };
 
+    // 🔄 Try multiple sitemap URLs
     for (const target of urlsToTry) {
       try {
-        const response = await fetch(target, { headers, signal: AbortSignal.timeout(5000) });
+        const response = await fetch(target, { 
+          headers, 
+          signal: AbortSignal.timeout(5000) 
+        });
+
         if (response.ok) {
           const text = await response.text();
-          // Heuristic: Check if it looks like a sitemap
-          if (text.includes('<urlset') || text.includes('<sitemapindex') || (target.endsWith('.txt') && text.includes('http'))) {
+
+          const lower = text.toLowerCase();
+
+          // Heuristic check
+          if (
+            lower.includes('<urlset') ||
+            lower.includes('<sitemapindex') ||
+            (target.endsWith('.txt') && lower.includes('http'))
+          ) {
             exists = true;
             content = text;
             break;
@@ -994,15 +1225,67 @@ const checkSitemap = async (url, robotsContent = null) => {
       }
     }
 
-    const score = exists ? 1 : 0;
-    const details = exists ? "Sitemap present" : "Sitemap.xml not found";
+    let score = 0;
+    let details = "Sitemap check";
+
+    if (!exists) {
+      // ⚠️ MISSING
+      score = 0.5;
+      details = "sitemap.xml missing";
+    } 
+    else {
+      // ❌ BROKEN / INVALID
+      const isValidStructure =
+        content.includes("<urlset") || content.includes("<sitemapindex");
+
+      if (!isValidStructure) {
+        score = 0;
+        details = "Sitemap broken / invalid";
+      } 
+      else {
+        // ⚠️ OUTDATED (no lastmod OR very old)
+        const lastmodMatches = content.match(/<lastmod>(.*?)<\/lastmod>/gi);
+
+        let isOutdated = false;
+
+        if (!lastmodMatches) {
+          isOutdated = true; // no lastmod at all
+        } else {
+          const now = new Date();
+
+          for (let tag of lastmodMatches) {
+            const dateStr = tag.replace(/<\/?lastmod>/gi, "").trim();
+            const date = new Date(dateStr);
+
+            if (!isNaN(date)) {
+              const diffDays = (now - date) / (1000 * 60 * 60 * 24);
+
+              if (diffDays > 180) { // 6 months
+                isOutdated = true;
+                break;
+              }
+            }
+          }
+        }
+
+        if (isOutdated) {
+          score = 0.5;
+          details = "Sitemap outdated";
+        } else {
+          // ✅ GOOD
+          score = 1;
+          details = "Proper sitemap";
+        }
+      }
+    }
 
     const explanation = exists
-      ? "A sitemap file was found and is accessible."
-      : "The sitemap.xml file is missing. Sitemaps help search engines find and crawl all of your important pages.";
+      ? "A sitemap was found and validated for structure and freshness."
+      : "No sitemap was found. Search engines may miss important pages.";
+
     const recommendation = exists
-      ? "Ensure your sitemap is submitted to Google Search Console and kept up-to-date."
-      : "Generate a sitemap.xml file and submit it to Google Search Console to improve crawlability.";
+      ? "Keep your sitemap updated with <lastmod> and submit it to search engines."
+      : "Create a sitemap.xml and reference it in robots.txt.";
 
     return evaluateParameter(score, details, {
       content,
@@ -1010,8 +1293,11 @@ const checkSitemap = async (url, robotsContent = null) => {
       why_this_occurred: explanation,
       how_to_fix: recommendation,
     });
+
   } catch (e) {
-    return evaluateParameter(0, "Sitemap check failed", { error: e.message });
+    return evaluateParameter(0, "Sitemap check failed", { 
+      error: e.message 
+    });
   }
 };
 
@@ -1028,7 +1314,7 @@ const checkStructuredData = async (page) => {
       return { hasData: scripts.length > 0, types: types.join(', '), content: scripts };
     });
 
-    const score = result.hasData ? 1 : 0;
+    const score = result.hasData ? 1 : 0.5; // WARNING
     const details = result.hasData ? "Structured Data found" : "Structured Data missing";
 
     const explanation = result.hasData

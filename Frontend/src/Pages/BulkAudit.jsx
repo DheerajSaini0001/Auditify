@@ -691,7 +691,7 @@ export default function BulkAudit() {
                                                 {/* Show Score and Grade for completed audits */}
                                                 {page.status === "completed" && page.score !== null && (
                                                     <div className="flex items-center gap-3 ml-4">
-                                                        <div className={`px-3 py-1 rounded-lg font-bold ${page.grade === "A" ? "bg-green-500/20 text-green-500" :
+                                                        <div className={`px-3 py-1 rounded-lg font-bold ${page.grade === "A+" || page.grade === "A" ? "bg-green-500/20 text-green-500" :
                                                             page.grade === "B" ? "bg-blue-500/20 text-blue-500" :
                                                                 page.grade === "C" ? "bg-yellow-500/20 text-yellow-500" :
                                                                     page.grade === "D" ? "bg-orange-500/20 text-orange-500" :

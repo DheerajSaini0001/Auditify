@@ -122,7 +122,7 @@ export default function Dashboard2({ darkMode }) {
 
   // Define grade colors
   const gradeColor = (grade) => {
-    if (["A", "B"].includes(grade)) return "text-emerald-600 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-500/10 dark:border-emerald-500/20";
+    if (["A+", "A", "B"].includes(grade)) return "text-emerald-600 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-500/10 dark:border-emerald-500/20";
     if (["C", "D"].includes(grade)) return "text-amber-600 bg-amber-50 border-amber-200 dark:text-amber-400 dark:bg-amber-500/10 dark:border-amber-500/20";
     return "text-red-600 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-500/10 dark:border-red-500/20";
   };
@@ -211,7 +211,7 @@ export default function Dashboard2({ darkMode }) {
                   <div className="flex flex-col sm:flex-row items-center gap-12 justify-center xl:justify-start">
                     <div className="relative flex-shrink-0 group cursor-default">
                       {/* Subtle Glow Effect */}
-                      <div className={`absolute -inset-4 rounded-full blur-3xl opacity-10 transition-opacity duration-700 group-hover:opacity-20 ${data.grade && ["A", "B"].includes(data.grade) ? "bg-emerald-500" : "bg-amber-500"}`}></div>
+                      <div className={`absolute -inset-4 rounded-full blur-3xl opacity-10 transition-opacity duration-700 group-hover:opacity-20 ${data.grade && ["A+", "A", "B"].includes(data.grade) ? "bg-emerald-500" : "bg-amber-500"}`}></div>
 
                       <CircularProgress value={data.score?.toFixed(0) || 0} size={160} stroke={14} />
                       <div className="absolute inset-0 flex items-center justify-center flex-col gap-1">
@@ -229,7 +229,7 @@ export default function Dashboard2({ darkMode }) {
                       </div>
 
                       <div className={`inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full text-sm font-bold border shadow-sm ${gradeColor(data.grade)}`}>
-                        {["A", "B"].includes(data.grade) ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+                        {["A+", "A", "B"].includes(data.grade) ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
                         Grade {data.grade || "-"}
                       </div>
                     </div>

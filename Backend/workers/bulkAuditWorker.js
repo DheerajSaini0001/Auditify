@@ -22,10 +22,11 @@ const OverAll = (A, B, C, D, E, F, G) => {
     return {
         totalScore: Number(total.toFixed(1)),
         grade:
-            total >= 90 ? "A" :
-                total >= 80 ? "B" :
-                    total >= 70 ? "C" :
-                        total >= 60 ? "D" : "F",
+            total >= 90 ? "A+" :
+                total >= 80 ? "A" :
+                    total >= 70 ? "B" :
+                        total >= 60 ? "C" :
+                            total >= 50 ? "D" : "F",
         sectionScores: [
             { name: "Technical Performance", score: A },
             { name: "On-Page SEO", score: B },
@@ -91,10 +92,11 @@ const OverAll = (A, B, C, D, E, F, G) => {
             };
 
             const score = result?.Percentage || 0;
-            const grade = score >= 90 ? "A" :
-                score >= 80 ? "B" :
-                    score >= 70 ? "C" :
-                        score >= 60 ? "D" : "F";
+            const grade = score >= 90 ? "A+" :
+                score >= 80 ? "A" :
+                    score >= 70 ? "B" :
+                        score >= 60 ? "C" :
+                            score >= 50 ? "D" : "F";
 
             updateData["pages.$.score"] = score;
             updateData["pages.$.grade"] = grade;

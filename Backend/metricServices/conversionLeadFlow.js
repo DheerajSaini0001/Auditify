@@ -507,6 +507,14 @@ function checkReviewsVisible($) {
 // Trust Badges
 function checkTrustBadges($) {
   const keywords = ["secure", "ssl", "verified", "payment", "badge", "trust", "guarantee"];
+
+  // 🔍 Step 1: Detect payment intent from page text
+  const pageText = $("body").text().toLowerCase();
+  const paymentKeywords = ["buy now", "add to cart", "checkout", "payment", "pay now"];
+
+  const hasPayment = paymentKeywords.some(k => pageText.includes(k));
+
+  // 🔍 Step 2: Find trust badge images
   const images = $("img").filter((_, el) => {
     const src = ($(el).attr("src") || "").toLowerCase();
     const alt = ($(el).attr("alt") || "").toLowerCase();
@@ -515,24 +523,45 @@ function checkTrustBadges($) {
 
   const count = images.length;
 
+  // ✅ Step 3: If NO payment → ignore this check
+  if (!hasPayment) {
+    return {
+      score: 100,
+      status: "pass",
+      category: "ux",
+      details: "No payment functionality detected, trust badges not required.",
+      meta: { count: 0, checkedKeywords: keywords },
+      analysis: {
+        impact: "Trust badges are primarily relevant for transaction-based websites."
+      }
+    };
+  }
+
+  // ✅ Step 4: Payment present + badges found
   if (count > 0) {
     return {
       score: 100,
       status: "pass",
-      details: "Trust badges visible.",
+      category: "ux",
+      details: "Trust badges visible on a transaction-enabled page.",
       meta: { count, checkedKeywords: keywords },
-      analysis: null
+      analysis: {
+        impact: "Trust badges help build user confidence during payments."
+      }
     };
   }
 
+  // ⚠️ Step 5: Payment present but no badges → warning (not fail)
   return {
-    score: 0,
-    status: "fail",
-    details: "No trust badges detected.",
+    score: 40,
+    status: "warning",
+    category: "ux",
+    details: "No trust badges detected on a transaction-enabled site.",
     meta: { count: 0, checkedKeywords: keywords },
     analysis: {
-      cause: "No trust-related images (security, SSL, verified) were detected.",
-      recommendation: "Include icons for security or industry certifications to reassure users about data safety."
+      cause: "No trust-related images (SSL, verified, secure) found despite payment functionality.",
+      impact: "Users may hesitate to complete transactions due to lack of trust signals.",
+      recommendation: "Add SSL badges, secure payment icons, or certification seals near checkout or payment sections."
     }
   };
 }

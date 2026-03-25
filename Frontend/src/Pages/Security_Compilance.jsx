@@ -802,6 +802,42 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
                   </div>
                 </div>
               )}
+
+              {metricKey === "Cookie_Consent" && meta?.trackingData && (
+                <div className="space-y-3 mt-3">
+                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 text-rose-500`}>Detected Tracking Activity</h5>
+                  
+                  {meta.trackingData.detectedTrackers?.length > 0 && (
+                    <div className={`p-2 rounded border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
+                      <span className={`text-[10px] uppercase font-bold opacity-70 mb-1 block ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Tracking Scripts Found:</span>
+                      <ul className="space-y-1.5 mt-1 max-h-32 overflow-y-auto custom-scrollbar">
+                        {meta.trackingData.detectedTrackers.map((src, idx) => (
+                          <li key={idx} className={`p-1.5 rounded flex items-start gap-2 border font-mono text-[10px] break-all ${darkMode ? "bg-gray-900/50 border-gray-700 text-gray-300" : "bg-white border-gray-200 text-gray-600"}`}>
+                             <span className="w-1.5 h-1.5 bg-rose-500 rounded-full mt-1 flex-shrink-0"></span>
+                             {src}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {meta.trackingData.cookiesUsed && (
+                    <div className={`p-2 rounded border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
+                      <span className={`text-[10px] uppercase font-bold opacity-70 mb-1 block ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Active Cookies String:</span>
+                      <div className={`p-1.5 rounded font-mono text-[10px] break-all border max-h-24 overflow-y-auto custom-scrollbar ${darkMode ? "bg-gray-900/50 border-gray-700 text-gray-300" : "bg-white border-gray-200 text-gray-600"}`}>
+                          {meta.trackingData.cookieString}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {!meta.trackingData.hasTracking && (
+                     <div className={`p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-emerald-500/5 border-emerald-500/20 text-emerald-300" : "bg-emerald-50 border-emerald-100 text-emerald-700"}`}>
+                       <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full flex-shrink-0"></span>
+                       No tracking scripts or cookies detected.
+                     </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}

@@ -712,12 +712,55 @@ async function checkXSS(url, browser) {
 
 // Cookie Consent
 async function checkCookieConsent(page) {
+
+  // 🔍 STEP 1: Check tracking / cookies usage
+  const trackingData = await page.evaluate(() => {
+    const scripts = Array.from(document.querySelectorAll("script"));
+
+    const trackingKeywords = [
+      "google-analytics",
+      "gtag",
+      "googletagmanager",
+      "facebook",
+      "pixel",
+      "analytics",
+      "track",
+      "hotjar"
+    ];
+
+    let detectedTrackers = [];
+
+    scripts.forEach(script => {
+      const src = (script.src || "").toLowerCase();
+      if (src) {
+        trackingKeywords.forEach(k => {
+          if (src.includes(k) && !detectedTrackers.includes(src)) {
+            detectedTrackers.push(src);
+          }
+        });
+      }
+    });
+
+    const cookiesUsed = document.cookie && document.cookie.length > 0;
+    const cookieString = cookiesUsed ? document.cookie : "";
+
+    return {
+      hasTracking: detectedTrackers.length > 0 || cookiesUsed,
+      detectedTrackers: detectedTrackers,
+      cookiesUsed: cookiesUsed,
+      cookieString: cookieString 
+    };
+  });
+
+  const hasTracking = trackingData.hasTracking;
+
+  // 🔍 STEP 2: Existing banner detection
   const commonSelectors = [
-    "#onetrust-banner-sdk", // OneTrust
-    "#CybotCookiebotDialog", // Cookiebot
-    ".cc-banner", // CookieConsent
-    "#catapult-cookie-bar", // Catapult
-    "#cookie-law-info-bar", // CRL
+    "#onetrust-banner-sdk",
+    "#CybotCookiebotDialog",
+    ".cc-banner",
+    "#catapult-cookie-bar",
+    "#cookie-law-info-bar",
     ".cookie-banner",
     ".privacy-banner",
     "[id*='cookie-notification']",
@@ -735,31 +778,56 @@ async function checkCookieConsent(page) {
 
   const allSelectors = [...commonSelectors, ...genericSelectors];
 
+  let bannerFound = false;
+  let foundSelector = null;
+
   for (const selector of allSelectors) {
     const element = await page.$(selector);
     if (element) {
       const box = await element.boundingBox();
       if (box && box.height > 0 && box.width > 0) {
-        return {
-          score: 100,
-          status: "pass",
-          details: `Cookie consent banner detected (Pattern: ${selector})`,
-          meta: {
-            selector
-          },
-          analysis: null
-        };
+        bannerFound = true;
+        foundSelector = selector;
+        break;
       }
     }
   }
 
+  // 🔥 STEP 3: SMART DECISION LOGIC
+
+  // ❌ No tracking → Not required
+  if (!hasTracking) {
+    return {
+      score: 100,
+      status: "not_applicable",
+      details: "No tracking or cookies detected, consent banner not required.",
+      meta: { trackingData },
+      analysis: null
+    };
+  }
+
+  // ✅ Tracking + Banner found → PASS
+  if (bannerFound) {
+    return {
+      score: 100,
+      status: "pass",
+      details: `Cookie consent banner detected (Pattern: ${foundSelector})`,
+      meta: {
+        selector: foundSelector,
+        trackingData
+      },
+      analysis: null
+    };
+  }
+
+  // ❌ Tracking + No banner → FAIL
   return {
     score: 0,
     status: "fail",
-    details: "No visible cookie consent banner found",
-    meta: {},
+    details: "Tracking detected but no visible cookie consent banner found",
+    meta: { trackingData },
     analysis: {
-      cause: "No element matching common cookie consent patterns was found or visible.",
+      cause: "Tracking scripts or cookies detected but no consent banner present.",
       recommendation: "Implement a visible cookie consent banner compliant with GDPR/CCPA."
     }
   };

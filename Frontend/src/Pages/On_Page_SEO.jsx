@@ -1749,6 +1749,24 @@ const SitemapCard = ({ data, darkMode, onInfo }) => {
       InfoDetails={InfoDetails}
       showAnalysis={false}
     >
+      {data?.details && data.details.toLowerCase().includes("outdated") && (
+        <div className={`p-3 rounded-lg border border-amber-500/30 bg-amber-500/10 mb-4`}>
+          <div className="font-bold text-amber-500 flex items-center gap-2 mb-2">
+            <AlertTriangle size={16} />
+            Sitemap Outdated
+          </div>
+          {meta?.outdatedReason ? (
+            <p className={`text-xs ${darkMode ? "text-amber-400/90" : "text-amber-800/90"} font-medium`}>
+              {meta.outdatedReason}
+            </p>
+          ) : (
+            <p className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+              A sitemap was found, but it appears to be outdated (older than 6 months or missing tags).
+            </p>
+          )}
+        </div>
+      )}
+
       {meta?.content && (
         <div className="space-y-1">
           <div className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>File content (Preview):</div>

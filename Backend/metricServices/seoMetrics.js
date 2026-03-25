@@ -1090,19 +1090,63 @@ const checkSocial = ($) => {
   return { ogMetric, twitterMetric, socialLinksMetric };
 };
 
-const checkRobotsTxt = async (url) => {
+const checkRobotsTxt = async (url, page) => {
   try {
     const robotsUrl = new URL("/robots.txt", url).href;
 
-    const response = await fetch(robotsUrl, { 
-      headers: { 
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-      },
-      signal: AbortSignal.timeout(6000) 
-    });
+    let exists = false;
+    let content = null;
 
-    const exists = response.ok;
-    const content = exists ? await response.text() : null;
+    // 🔥 Attempt to fetch via Puppeteer page to bypass Cloudflare/WAF
+    if (page) {
+      try {
+        const result = await page.evaluate(async (rUrl) => {
+          try {
+            const res = await fetch(rUrl);
+            return { status: res.status, text: await res.text() };
+          } catch (e) {
+            return null;
+          }
+        }, robotsUrl);
+
+        if (result) {
+          if (result.status < 400) {
+            exists = true;
+            content = result.text;
+          } else if (result.text && result.text.includes("User-agent")) {
+            exists = true;
+            content = result.text;
+          }
+        }
+      } catch (e) {
+        // proceed to node-fetch fallback
+      }
+    }
+
+    // 🔥 fallback to direct node-fetch
+    if (!exists) {
+      const response = await fetch(robotsUrl, { 
+        headers: { 
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+        },
+        redirect: "follow", // 🔥 handle redirects
+        signal: AbortSignal.timeout(6000) 
+      });
+
+      const resText = await response.text().catch(() => null);
+
+      // 🔥 Better existence check
+      if (response && response.status < 400) {
+        exists = true;
+        content = resText;
+      }
+
+      // 🔥 fallback (sometimes blocked but content still available)
+      if (!exists && resText && resText.includes("User-agent")) {
+        exists = true;
+        content = resText;
+      }
+    }
 
     let score = 0;
     let details = "Robots.txt check";
@@ -1119,14 +1163,14 @@ const checkRobotsTxt = async (url) => {
       // Normalize content
       const normalized = content.replace(/\r\n/g, "\n");
 
-      // 👉 Extract only User-agent: * section
+      // 👉 Extract User-agent: *
       const globalBlockMatch = normalized.match(
         /User-agent:\s*\*([\s\S]*?)(?=User-agent:|$)/i
       );
 
       const globalRules = globalBlockMatch ? globalBlockMatch[1] : "";
 
-      // 🚨 Check if full site blocked for all bots
+      // 🚨 Full site blocked
       const isFullyBlocked = /Disallow:\s*\/\s*$/m.test(globalRules);
 
       if (isFullyBlocked) {
@@ -1134,7 +1178,7 @@ const checkRobotsTxt = async (url) => {
         details = "Wrong config (site fully blocked)";
       } 
       else {
-        // ⚠️ Check for aggressive query blocking (matches "Disallow: /*?" or "Disallow: /*?*")
+        // ⚠️ Query params blocked
         const blocksAllParams = /Disallow:\s*\/\*\?(?:\*|\s*$)/m.test(globalRules);
 
         if (blocksAllParams) {
@@ -1169,14 +1213,11 @@ const checkRobotsTxt = async (url) => {
   }
 };
 
-const checkSitemap = async (url, robotsContent = null) => {
+const checkSitemap = async (url, robotsContent = null, page) => {
   try {
-    const sitemapUrl = new URL("/sitemap.xml", url).href;
-    const sitemapIndexUrl = new URL("/sitemap_index.xml", url).href;
+    let urlsToTry = [];
 
-    const urlsToTry = [sitemapUrl, sitemapIndexUrl];
-
-    // 🔍 Extract sitemap URLs from robots.txt
+    // 🔍 First, extract sitemap URLs from robots.txt
     if (robotsContent) {
       const robotsSitemaps = robotsContent.match(/Sitemap:\s*(\S+)/gi);
       if (robotsSitemaps) {
@@ -1189,6 +1230,13 @@ const checkSitemap = async (url, robotsContent = null) => {
       }
     }
 
+    // Then add the default fallbacks
+    const sitemapUrl = new URL("/sitemap.xml", url).href;
+    const sitemapIndexUrl = new URL("/sitemap_index.xml", url).href;
+
+    if (!urlsToTry.includes(sitemapUrl)) urlsToTry.push(sitemapUrl);
+    if (!urlsToTry.includes(sitemapIndexUrl)) urlsToTry.push(sitemapIndexUrl);
+
     let exists = false;
     let content = null;
 
@@ -1198,30 +1246,66 @@ const checkSitemap = async (url, robotsContent = null) => {
 
     // 🔄 Try multiple sitemap URLs
     for (const target of urlsToTry) {
-      try {
-        const response = await fetch(target, { 
-          headers, 
-          signal: AbortSignal.timeout(5000) 
-        });
+      if (exists) break;
 
-        if (response.ok) {
-          const text = await response.text();
+      let fetchedUsingPage = false;
 
-          const lower = text.toLowerCase();
+      // 🔥 Attempt via Puppeteer first to bypass Cloudflare
+      if (page) {
+        try {
+          const result = await page.evaluate(async (sUrl) => {
+            try {
+              const res = await fetch(sUrl);
+              return { ok: res.ok, text: await res.text() };
+            } catch (e) {
+              return null;
+            }
+          }, target);
 
-          // Heuristic check
-          if (
-            lower.includes('<urlset') ||
-            lower.includes('<sitemapindex') ||
-            (target.endsWith('.txt') && lower.includes('http'))
-          ) {
-            exists = true;
-            content = text;
-            break;
+          if (result && result.ok) {
+            const lower = result.text.toLowerCase();
+            if (
+              lower.includes('<urlset') ||
+              lower.includes('<sitemapindex') ||
+              (target.endsWith('.txt') && lower.includes('http'))
+            ) {
+              exists = true;
+              content = result.text;
+              fetchedUsingPage = true;
+              break;
+            }
           }
+        } catch (e) {
+          // Fallback to node fetch
         }
-      } catch (e) {
-        continue;
+      }
+
+      if (!exists && !fetchedUsingPage) {
+        try {
+          const response = await fetch(target, { 
+            headers, 
+            signal: AbortSignal.timeout(5000) 
+          });
+
+          if (response.ok) {
+            const text = await response.text();
+
+            const lower = text.toLowerCase();
+
+            // Heuristic check
+            if (
+              lower.includes('<urlset') ||
+              lower.includes('<sitemapindex') ||
+              (target.endsWith('.txt') && lower.includes('http'))
+            ) {
+              exists = true;
+              content = text;
+              break;
+            }
+          }
+        } catch (e) {
+          continue;
+        }
       }
     }
 
@@ -1353,8 +1437,8 @@ export default async function seoMetrics(url, $, page) {
 
   const contentQualityMetric = checkContentQuality($);
   const slugMetric = checkSlugs(url);
-  const robotsMetric = await checkRobotsTxt(url);
-  const sitemapMetric = await checkSitemap(url, robotsMetric?.meta?.content);
+  const robotsMetric = await checkRobotsTxt(url, page);
+  const sitemapMetric = await checkSitemap(url, robotsMetric?.meta?.content, page);
   const structuredDataMetric = await checkStructuredData(page);
 
   const { ogMetric, twitterMetric, socialLinksMetric } = checkSocial($);

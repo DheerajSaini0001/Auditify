@@ -162,7 +162,7 @@ export default function InputForm() {
         <div className="text-center mb-12 space-y-5 animate-in fade-in slide-in-from-bottom-5 duration-700">
 
           <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight">
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500">Website Health</span>
+            Analyze your <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500">Website Health</span>
           </h1>
 
           <p className={`max-w-2xl mx-auto text-lg ${darkMode ? "text-slate-400" : "text-slate-600"}`}>

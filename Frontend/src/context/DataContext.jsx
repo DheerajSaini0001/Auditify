@@ -31,7 +31,7 @@ export const DataProvider = ({ children }) => {
   };
 
   // �🚀 FETCH DATA
-  const fetchData = async (inputValue, device, report) => {
+  const fetchData = async (inputValue, device, report, recaptchaToken) => {
     if (!inputValue) return { success: false, error: "URL is empty" };
 
     if (inputValue.includes(" ") || !inputValue.includes(".")) {
@@ -47,7 +47,7 @@ export const DataProvider = ({ children }) => {
       const res = await fetch(`${API_URL}/single-audit/audit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: inputValue, device: device, report: report }),
+        body: JSON.stringify({ url: inputValue, device: device, report: report, recaptchaToken: recaptchaToken }),
       });
 
       const result = await handleResponse(res);
@@ -106,13 +106,13 @@ export const DataProvider = ({ children }) => {
   };
 
   // 🚀 BULK AUDIT: DISCOVER
-  const discoverUrls = async (url, maxPages) => {
+  const discoverUrls = async (url, maxPages, recaptchaToken) => {
     try {
       const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
       const res = await fetch(`${API_URL}/bulk-audit/discover`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url, maxPages }),
+        body: JSON.stringify({ url, maxPages, recaptchaToken }),
       });
 
       return await handleResponse(res);
@@ -123,13 +123,13 @@ export const DataProvider = ({ children }) => {
   };
 
   // 🚀 BULK AUDIT: START
-  const startBulkAudit = async (url, selectedUrls, device, report) => {
+  const startBulkAudit = async (url, selectedUrls, device, report, recaptchaToken) => {
     try {
       const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
       const res = await fetch(`${API_URL}/bulk-audit/audit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url, selectedUrls, device, report }),
+        body: JSON.stringify({ url, selectedUrls, device, report, recaptchaToken }),
       });
 
       return await handleResponse(res);

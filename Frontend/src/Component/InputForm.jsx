@@ -4,6 +4,8 @@ import { useData } from "../context/DataContext.jsx";
 import { useNavigate } from "react-router-dom";
 import { ThemeContext } from "../context/ThemeContext.jsx";
 import Assets from "../assets/Assets.js";
+import ReCAPTCHA from "react-google-recaptcha";
+import { useRef } from "react";
 
 // Custom Dropdown Component
 const CustomDropdown = ({ value, onChange, options, icon, darkMode, disabled }) => {
@@ -78,10 +80,15 @@ export default function InputForm() {
   const [report, setReport] = useState("All");
   const [error, setError] = useState(null);
 
+  // reCAPTCHA v2 State
+  const recaptchaRef = useRef(null);
+  const [showCaptcha, setShowCaptcha] = useState(false);
+  const [captchaError, setCaptchaError] = useState(false);
+
   const navigate = useNavigate();
 
-  // Handle submit
-  const handleClick = async (e) => {
+  // Handle submit (v2 Click → Trigger Modal)
+  const handleClick = (e) => {
     e.preventDefault();
     setError(null);
 
@@ -90,16 +97,37 @@ export default function InputForm() {
       return;
     }
 
+    // Open verification modal
+    setShowCaptcha(true);
+    setCaptchaError(false);
+  };
+
+  const handleCaptchaChange = (token) => {
+    if (token) {
+      setCaptchaError(false);
+      handleSubmitWithToken(token);
+    }
+  };
+
+  const handleCaptchaExpired = () => {
+    setCaptchaError(true);
+  };
+
+  const handleSubmitWithToken = async (token) => {
+    setShowCaptcha(false);
+    setError(null);
+
     // Auto-prefix protocol if missing
     let urlToFetch = inputValue.trim();
     if (!/^https?:\/\//i.test(urlToFetch)) {
       urlToFetch = `https://${urlToFetch}`;
     }
 
-    const result = await fetchData(urlToFetch, device, report);
+    const result = await fetchData(urlToFetch, device, report, token);
 
     if (!result?.success) {
       setError(result?.error || "An unknown error occurred.");
+      recaptchaRef.current?.reset();
     }
   };
 
@@ -290,6 +318,51 @@ export default function InputForm() {
         </div>
 
       </div>
+
+      {/* reCAPTCHA v2 Modal Overlay */}
+      {showCaptcha && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 backdrop-blur-md transition-all duration-300">
+          <div className={`
+            ${darkMode ? "bg-slate-900 border-slate-700 shadow-emerald-500/10" : "bg-white border-slate-100 shadow-slate-200/50"}
+            border border-solid rounded-[2.5rem] shadow-2xl p-8 flex flex-col items-center gap-6 max-w-sm w-full mx-4 animate-in zoom-in-95 duration-200
+          `}>
+            <div className={`p-5 rounded-full ${darkMode ? "bg-emerald-500/10 text-emerald-400" : "bg-emerald-50 text-emerald-600"}`}>
+              <Monitor className="w-10 h-10" />
+            </div>
+
+            <div className="text-center space-y-2">
+              <h3 className={`text-2xl font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>Verify Security</h3>
+              <p className={`text-sm font-medium leading-relaxed ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
+                Confirm you're human to generate your site health report.
+              </p>
+            </div>
+
+            <div className={`p-2 rounded-2xl border ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
+              <ReCAPTCHA
+                ref={recaptchaRef}
+                sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+                onChange={handleCaptchaChange}
+                onExpired={handleCaptchaExpired}
+                theme={darkMode ? "dark" : "light"}
+              />
+            </div>
+
+            {captchaError && (
+              <div className="flex items-center gap-2 text-rose-500 px-4 py-2 rounded-full bg-rose-500/10 border border-rose-500/20 animate-pulse">
+                <AlertCircle className="w-4 h-4" />
+                <span className="text-xs font-bold uppercase tracking-widest">Verification Expired</span>
+              </div>
+            )}
+
+            <button
+              onClick={() => setShowCaptcha(false)}
+              className={`text-xs font-bold uppercase tracking-[0.2em] ${darkMode ? "text-slate-500 hover:text-white" : "text-slate-400 hover:text-slate-900"} transition-all duration-200 hover:scale-110 active:scale-95`}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

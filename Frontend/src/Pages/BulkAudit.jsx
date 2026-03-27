@@ -1,5 +1,6 @@
-import React, { useState, useContext, useEffect } from "react";
+import React, { useState, useContext, useEffect, useRef } from "react";
 import { Loader2, Monitor, Smartphone, ChevronDown, Settings, AlertCircle, Globe, CheckCircle2, XCircle, Clock, ExternalLink, RefreshCw } from "lucide-react";
+import ReCAPTCHA from "react-google-recaptcha";
 import { useNavigate, useParams } from "react-router-dom";
 import { ThemeContext } from "../context/ThemeContext.jsx";
 import { useData } from "../context/DataContext";
@@ -20,45 +21,52 @@ const CustomDropdown = ({ value, onChange, options, icon, darkMode, disabled }) 
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    const selectedLabel = options.find((opt) => opt.value === value)?.label || value;
-
     return (
-        <div className="relative" ref={dropdownRef}>
-            <div
-                onClick={() => !disabled && setIsOpen(!isOpen)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors border ${darkMode
-                    ? "hover:bg-slate-800 border-transparent hover:border-slate-700"
-                    : "hover:bg-slate-50 border-transparent hover:border-slate-200"
-                    } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+        <div className="relative w-full" ref={dropdownRef}>
+            <button
+                type="button"
+                disabled={disabled}
+                onClick={() => setIsOpen(!isOpen)}
+                className={`
+          flex items-center justify-between w-full px-4 py-3 rounded-xl border transition-all duration-300
+          ${darkMode
+                        ? "bg-slate-800/50 border-slate-700 text-slate-300 hover:border-slate-600 shadow-lg shadow-black/20"
+                        : "bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300 shadow-sm"
+                    }
+          ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
+        `}
             >
-                {icon}
-                <span className={`text-sm font-medium ${darkMode ? "text-slate-300" : "text-slate-700"} truncate`}>
-                    {selectedLabel}
-                </span>
-                <ChevronDown className={`w-3 h-3 transition-transform ${isOpen ? "rotate-180" : ""} ${darkMode ? "text-slate-500" : "text-slate-400"}`} />
-            </div>
+                <div className="flex items-center gap-3">
+                    {icon && <span className={`${darkMode ? "text-emerald-400" : "text-emerald-500"}`}>{icon}</span>}
+                    <span className="font-semibold">{value}</span>
+                </div>
+                <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
+            </button>
 
             {isOpen && (
-                <div className={`absolute top-full mt-2 left-0 w-max min-w-full z-50 rounded-xl shadow-xl border overflow-hidden animate-in fade-in zoom-in-95 duration-200 ${darkMode ? "bg-slate-900 border-slate-700 text-slate-300" : "bg-white border-slate-100 text-slate-700"
-                    }`}>
-                    <div className="max-h-60 overflow-y-auto custom-scrollbar">
-                        {options.map((option) => (
-                            <div
-                                key={option.value}
-                                onClick={() => {
-                                    onChange(option.value);
-                                    setIsOpen(false);
-                                }}
-                                className={`flex items-center gap-3 px-4 py-3 text-sm font-medium cursor-pointer transition-colors ${darkMode
-                                    ? "hover:bg-slate-800 hover:text-white"
-                                    : "hover:bg-slate-50 hover:text-black"
-                                    } ${value === option.value ? (darkMode ? "bg-slate-800 text-white" : "bg-slate-50 text-black") : ""}`}
-                            >
-                                {value === option.value && <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>}
-                                {option.label}
-                            </div>
-                        ))}
-                    </div>
+                <div className={`
+          absolute z-50 w-full mt-2 rounded-xl border p-2 shadow-2xl animate-in zoom-in-95 duration-200
+          ${darkMode ? "bg-slate-900 border-slate-700 shadow-black" : "bg-white border-slate-100 shadow-slate-200"}
+        `}>
+                    {options.map((option) => (
+                        <button
+                            key={option}
+                            type="button"
+                            onClick={() => {
+                                onChange(option);
+                                setIsOpen(false);
+                            }}
+                            className={`
+                w-full text-left px-4 py-2.5 rounded-lg font-medium transition-all
+                ${value === option
+                                    ? (darkMode ? "bg-emerald-500/10 text-emerald-400" : "bg-emerald-50 text-emerald-600")
+                                    : (darkMode ? "text-slate-400 hover:bg-slate-800" : "text-slate-600 hover:bg-slate-50")
+                                }
+              `}
+                        >
+                            {option}
+                        </button>
+                    ))}
                 </div>
             )}
         </div>
@@ -89,6 +97,12 @@ export default function BulkAudit() {
     const [pollingInterval, setPollingInterval] = useState(null);
     const [isRestoring, setIsRestoring] = useState(true);
 
+    // reCAPTCHA State
+    const recaptchaRef = useRef(null);
+    const [showCaptcha, setShowCaptcha] = useState(false);
+    const [captchaError, setCaptchaError] = useState(false);
+    const [captchaAction, setCaptchaAction] = useState(null); // 'discover' | 'audit'
+
     // Restore session / Handle URL ID
     useEffect(() => {
         // Priority 1: URL Param (Direct Link)
@@ -110,7 +124,6 @@ export default function BulkAudit() {
 
     const [error, setError] = useState(null);
 
-    // Poll for bulk audit status
     // Poll for bulk audit status
     useEffect(() => {
         let isMounted = true;
@@ -186,7 +199,7 @@ export default function BulkAudit() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [bulkAuditId]);
 
-    // Step 1: Discover URLs
+    // Step 1: Discover URLs (Trigger CAPTCHA)
     const handleDiscoverUrls = async (e) => {
         e.preventDefault();
         setError(null);
@@ -196,14 +209,37 @@ export default function BulkAudit() {
             return;
         }
 
+        setCaptchaAction('discover');
+        setShowCaptcha(true);
+        setCaptchaError(false);
+    };
+
+    const handleCaptchaChange = (token) => {
+        if (token) {
+            setCaptchaError(false);
+            if (captchaAction === 'discover') {
+                proceedDiscovery(token);
+            } else if (captchaAction === 'audit') {
+                proceedBulkAudit(token);
+            }
+        }
+    };
+
+    const handleCaptchaExpired = () => {
+        setCaptchaError(true);
+    };
+
+    const proceedDiscovery = async (token) => {
+        setShowCaptcha(false);
+        setError(null);
+
         let urlToFetch = inputValue.trim();
         if (!/^https?:\/\//i.test(urlToFetch)) {
             urlToFetch = `https://${urlToFetch}`;
         }
 
         setDiscovering(true);
-
-        const response = await discoverUrls(urlToFetch, maxPages);
+        const response = await discoverUrls(urlToFetch, maxPages, token);
 
         if (response.success) {
             setDiscoveredUrls(response.data.urls);
@@ -218,7 +254,7 @@ export default function BulkAudit() {
         setDiscovering(false);
     };
 
-    // Step 2: Start Audit for Selected URLs
+    // Step 2: Start Audit for Selected URLs (Trigger CAPTCHA)
     const handleStartAudit = async () => {
         setError(null);
 
@@ -227,7 +263,16 @@ export default function BulkAudit() {
             return;
         }
 
-        // Fallback to inputValue if baseUrl is missing (should not happen normally)
+        setCaptchaAction('audit');
+        setShowCaptcha(true);
+        setCaptchaError(false);
+    };
+
+    const proceedBulkAudit = async (token) => {
+        setShowCaptcha(false);
+        setError(null);
+
+        // Fallback to inputValue if baseUrl is missing
         const auditUrl = baseUrl || inputValue;
         if (!auditUrl) {
             setError("Base URL is missing. Please try discovering URLs again.");
@@ -235,8 +280,7 @@ export default function BulkAudit() {
         }
 
         setAuditing(true);
-
-        const response = await startBulkAudit(auditUrl, selectedUrls, device, report);
+        const response = await startBulkAudit(auditUrl, selectedUrls, device, report, token);
 
         if (response.success) {
             setBulkAuditId(response.data.bulkAuditId);
@@ -267,37 +311,19 @@ export default function BulkAudit() {
         }
     };
 
-    // Reset to start over
-    const handleReset = () => {
-        setDiscoveredUrls([]);
-        setSelectedUrls([]);
-        setBulkAuditId(null);
-        sessionStorage.removeItem("activeBulkAuditId");
-        setBulkAuditData(null);
-        setInputValue("");
-        setError(null);
-    };
-
-
-
-    const handleViewReport = (page) => {
-        if (page.status !== "completed") return;
-
+    const viewSingleReport = (page) => {
         const reportData = {
             url: page.url,
-            device: bulkAuditData?.device || device,
-            // Logic: If backend has specific report (e.g. SEO), use it. 
-            // If backend has "All" (e.g. reused), but user selected "SEO", use user selection.
-            report: (bulkAuditData?.report && bulkAuditData.report !== "All") ? bulkAuditData.report : report,
-            status: "completed",
-
+            device: bulkAuditData.device,
+            report: bulkAuditData.report,
+            status: page.status,
             score: page.score,
             grade: page.grade,
+            overallScore: page.score, // added to mirror SingleAuditReport
             timeTaken: page.timeTaken,
-            siteSchema: page.siteSchema,
-            aioCompatibilityBadge: page.aioCompatibilityBadge,
             sectionScore: page.sectionScore,
 
+            // Actual audit data
             technicalPerformance: page.technicalPerformance,
             onPageSEO: page.onPageSEO,
             accessibility: page.accessibility,
@@ -359,26 +385,18 @@ export default function BulkAudit() {
                                 : "bg-white border-slate-200 shadow-xl shadow-slate-200/50 hover:border-slate-300"
                             }
             `}>
-
-                            {/* Main Input */}
-                            <div className="flex-1 w-full relative flex items-center px-4 h-14">
-                                <Globe className={`w-5 h-5 flex-shrink-0 ${darkMode ? "text-slate-500" : "text-slate-400"}`} />
+                            <div className="relative flex-grow flex items-center w-full px-4 mb-4 lg:mb-0">
+                                <Globe className={`w-5 h-5 ${darkMode ? "text-slate-500" : "text-slate-400"}`} />
                                 <input
                                     type="text"
                                     value={inputValue}
                                     onChange={(e) => setInputValue(e.target.value)}
-                                    disabled={discovering}
-                                    placeholder="Enter website URL (e.g. example.com)"
-                                    className={`w-full h-full bg-transparent border-none outline-none text-lg px-4 font-medium placeholder-slate-500 ${darkMode ? "text-white" : "text-slate-900"}`}
+                                    placeholder="Enter website URL (e.g., example.com)"
+                                    className={`w-full py-4 px-4 bg-transparent outline-none font-medium ${darkMode ? "text-white" : "text-slate-900"}`}
                                 />
                             </div>
 
-                            {/* Divider */}
-                            <div className={`hidden lg:block w-px h-8 ${darkMode ? "bg-slate-700" : "bg-slate-200"} mx-2`}></div>
-                            <div className={`lg:hidden w-full h-px ${darkMode ? "bg-slate-700" : "bg-slate-200"} my-2`}></div>
-
-                            {/* Max Pages Input */}
-                            <div className="flex items-center gap-2 px-2">
+                            <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
                                 <input
                                     type="number"
                                     value={maxPages}
@@ -420,295 +438,207 @@ export default function BulkAudit() {
                     </form>
                 )}
 
-                {/* Step 2: URL Selection & Audit Configuration */}
-                {discoveredUrls.length > 0 && !bulkAuditId && (
-                    <div className="w-full max-w-6xl mx-auto mt-10 space-y-6 animate-in fade-in slide-in-from-bottom-5 duration-700">
-
-                        {/* Configuration Panel */}
-                        <div className={`p-6 rounded-2xl border ${darkMode ? "bg-slate-900/90 border-slate-700" : "bg-white border-slate-200"}`}>
-                            <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
-                                <div>
-                                    <h2 className="text-2xl font-bold mb-2">Configure Audit</h2>
-                                    <p className={`text-sm ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
-                                        Found {discoveredUrls.length} pages • {selectedUrls.length} selected
-                                    </p>
-                                </div>
-
-                                <div className="flex items-center gap-3">
-                                    {/* Device Selector */}
-                                    <CustomDropdown
-                                        value={device}
-                                        onChange={setDevice}
-                                        options={[
-                                            { value: "Desktop", label: "Desktop" },
-                                            { value: "Mobile", label: "Mobile" },
-                                        ]}
-                                        icon={device === "Desktop" ? <Monitor className="w-4 h-4 text-blue-500" /> : <Smartphone className="w-4 h-4 text-purple-500" />}
-                                        darkMode={darkMode}
-                                        disabled={auditing}
-                                    />
-
-                                    {/* Report Selector */}
-                                    <CustomDropdown
-                                        value={report}
-                                        onChange={setReport}
-                                        options={[
-                                            { value: "All", label: "Full Audit" },
-                                            { value: "Technical Performance", label: "Technical Performance" },
-                                            { value: "On Page SEO", label: "On Page SEO" },
-                                            { value: "Accessibility", label: "Accessibility" },
-                                            { value: "Security/Compliance", label: "Security & Compliance" },
-                                            { value: "UX & Content Structure", label: "UX & Content" },
-                                            { value: "Conversion & Lead Flow", label: "Conversion & Lead Flow" },
-                                            { value: "AIO (AI-Optimization) Readiness", label: "AIO Readiness" },
-                                        ]}
-                                        icon={<Settings className="w-4 h-4 text-emerald-500" />}
-                                        darkMode={darkMode}
-                                        disabled={auditing}
-                                    />
-
-                                    <button
-                                        onClick={handleStartAudit}
-                                        disabled={auditing || selectedUrls.length === 0}
-                                        className={`
-                      flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-white shadow-lg transition-all 
-                      bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 hover:shadow-emerald-500/25 active:scale-95
-                      disabled:opacity-50 disabled:cursor-not-allowed min-w-[140px]
-                    `}
-                                    >
-                                        {auditing ? <Loader2 className="animate-spin w-5 h-5" /> : "Start Audit"}
-                                    </button>
-                                </div>
+                {/* Step 2: URL Selection & Configuration */}
+                {!isRestoring && !bulkAuditId && discoveredUrls.length > 0 && (
+                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-10 duration-700">
+                        {/* Control Bar */}
+                        <div className={`p-6 rounded-2xl border flex flex-col md:flex-row items-center justify-between gap-6 ${darkMode ? "bg-slate-900/50 border-slate-800" : "bg-white border-slate-100 shadow-xl shadow-slate-200/50"}`}>
+                            <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
+                                <CustomDropdown
+                                    value={device}
+                                    onChange={setDevice}
+                                    options={["Desktop", "Mobile"]}
+                                    icon={device === "Desktop" ? <Monitor className="w-5 h-5" /> : <Smartphone className="w-5 h-5" />}
+                                    darkMode={darkMode}
+                                    disabled={auditing}
+                                />
+                                <CustomDropdown
+                                    value={report}
+                                    onChange={setReport}
+                                    options={["All", "Technical Performance", "On Page SEO", "Accessibility", "Security/Compliance", "UX & Content Structure", "Conversion & Lead Flow", "AIO (AI-Optimization) Readiness"]}
+                                    icon={<Settings className="w-5 h-5" />}
+                                    darkMode={darkMode}
+                                    disabled={auditing}
+                                />
                             </div>
 
-                            {/* Select All / Deselect All */}
-                            <div className="flex items-center justify-between mb-4">
+                            <button
+                                onClick={handleStartAudit}
+                                disabled={auditing || selectedUrls.length === 0}
+                                className={`
+                  flex items-center gap-2 px-8 py-3 rounded-xl font-bold text-white shadow-lg transition-all
+                  bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 hover:shadow-emerald-500/25 active:scale-95
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                `}
+                            >
+                                {auditing ? <Loader2 className="w-5 h-5 animate-spin" /> : <RefreshCw className="w-5 h-5" />}
+                                Start Bulk Audit ({selectedUrls.length} Pages)
+                            </button>
+                        </div>
+
+                        {/* URL Selection List */}
+                        <div className={`rounded-2xl border overflow-hidden ${darkMode ? "bg-slate-900/50 border-slate-800" : "bg-white border-slate-100 shadow-xl"}`}>
+                            <div className={`px-6 py-4 border-b flex items-center justify-between ${darkMode ? "bg-slate-800/30 border-slate-800" : "bg-slate-50 border-slate-100"}`}>
+                                <h3 className={`font-bold flex items-center gap-2 ${darkMode ? "text-slate-300" : "text-slate-700"}`}>
+                                    Discovered URLs
+                                    <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">{discoveredUrls.length}</span>
+                                </h3>
                                 <button
                                     onClick={toggleSelectAll}
-                                    className={`text-sm font-medium transition-colors ${darkMode ? "text-emerald-400 hover:text-emerald-300" : "text-emerald-600 hover:text-emerald-700"
-                                        }`}
+                                    className={`text-sm font-bold transition-colors ${darkMode ? "text-emerald-400 hover:text-emerald-300" : "text-emerald-600 hover:text-emerald-700"}`}
                                 >
                                     {selectedUrls.length === discoveredUrls.length ? "Deselect All" : "Select All"}
                                 </button>
-                                <button
-                                    onClick={handleReset}
-                                    className={`flex items-center gap-2 text-sm font-medium transition-colors ${darkMode ? "text-slate-400 hover:text-slate-300" : "text-slate-600 hover:text-slate-700"
-                                        }`}
-                                >
-                                    <RefreshCw className="w-4 h-4" />
-                                    Start Over
-                                </button>
                             </div>
 
-                            {/* Error Message (Step 2) */}
-                            {error && (
-                                <div className="mb-4 animate-in slide-in-from-top-2 fade-in">
-                                    <div className="flex items-center gap-3 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 backdrop-blur-sm">
-                                        <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                                        <span className="text-sm font-medium">{error}</span>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* URL List with Checkboxes */}
-                            <div className="space-y-2 max-h-[500px] overflow-y-auto custom-scrollbar">
-                                {discoveredUrls.map((url, index) => (
-                                    <label
-                                        key={index}
-                                        className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${selectedUrls.includes(url)
-                                            ? darkMode
-                                                ? "bg-emerald-500/10 border-emerald-500/30"
-                                                : "bg-emerald-50 border-emerald-200"
-                                            : darkMode
-                                                ? "bg-slate-800 border-slate-700 hover:border-slate-600"
-                                                : "bg-slate-50 border-slate-200 hover:border-slate-300"
-                                            }`}
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedUrls.includes(url)}
-                                            onChange={() => toggleUrlSelection(url)}
-                                            className="w-5 h-5 rounded border-2 border-slate-400 text-emerald-500 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-0"
-                                        />
-                                        <span className={`text-sm font-medium flex-1 truncate ${selectedUrls.includes(url)
-                                            ? darkMode ? "text-emerald-300" : "text-emerald-700"
-                                            : darkMode ? "text-slate-300" : "text-slate-700"
-                                            }`}>
-                                            {url}
-                                        </span>
-                                    </label>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Step 3: Audit Progress & Results */}
-                {/* Restoration Loading State */}
-                {/* Restoration / Loading Skeleton */}
-                {(isRestoring || (bulkAuditId && !bulkAuditData)) && (
-                    <div className="w-full max-w-6xl mx-auto mt-10 space-y-6 animate-in fade-in">
-                        {/* Header Skeleton */}
-                        <div className={`p-6 rounded-2xl border ${darkMode ? "bg-slate-900/90 border-slate-700" : "bg-white border-slate-200"}`}>
-                            <div className="flex justify-between items-center mb-6">
-                                <div className="space-y-2">
-                                    <SkeletonLoader className="h-8 w-48" />
-                                    <SkeletonLoader className="h-4 w-64" />
-                                </div>
-                                <SkeletonLoader className="h-10 w-24 rounded-lg" />
-                            </div>
-
-                            {/* Progress Bar Skeleton */}
-                            <div className="mb-6 space-y-2">
-                                <div className="flex justify-between">
-                                    <SkeletonLoader className="h-4 w-20" />
-                                    <SkeletonLoader className="h-4 w-12" />
-                                </div>
-                                <SkeletonLoader className="h-3 w-full rounded-full" />
-                            </div>
-
-                            {/* Stats Grid Skeleton */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <SkeletonLoader className="h-24 rounded-lg" />
-                                <SkeletonLoader className="h-24 rounded-lg" />
-                                <SkeletonLoader className="h-24 rounded-lg" />
-                            </div>
-                        </div>
-
-                        {/* Pages List Skeleton */}
-                        <div className={`p-6 rounded-2xl border ${darkMode ? "bg-slate-900/90 border-slate-700" : "bg-white border-slate-200"}`}>
-                            <SkeletonLoader className="h-8 w-32 mb-6" />
-                            <div className="space-y-3">
-                                <SkeletonLoader className="h-20 w-full rounded-lg" count={5} />
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {bulkAuditData && (
-                    <div className="w-full max-w-6xl mx-auto mt-10 animate-in fade-in slide-in-from-bottom-5 duration-700">
-
-                        {/* Error Message (Polling) */}
-                        {error && (
-                            <div className="mb-6 animate-in slide-in-from-top-2 fade-in">
-                                <div className="flex items-center gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 backdrop-blur-sm shadow-sm">
-                                    <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                                    <span className="font-medium">{error}</span>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Status Header */}
-                        <div className={`p-6 rounded-2xl border mb-6 ${darkMode ? "bg-slate-900/90 border-slate-700" : "bg-white border-slate-200"}`}>
-                            <div className="flex items-center justify-between mb-4">
-                                <div>
-                                    <h2 className="text-2xl font-bold mb-2">Audit Progress</h2>
-                                    <p className={`text-sm ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
-                                        {bulkAuditData.site} • <span className="font-semibold text-emerald-500">{bulkAuditData.report === "All" ? "Full Audit" : bulkAuditData.report}</span>
-                                    </p>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <div className={`px-4 py-2 rounded-lg font-semibold ${bulkAuditData.status === "completed" ? "bg-green-500/20 text-green-500" :
-                                        bulkAuditData.status === "failed" ? "bg-red-500/20 text-red-500" :
-                                            "bg-blue-500/20 text-blue-500"
-                                        }`}>
-                                        {bulkAuditData.status.toUpperCase()}
-                                    </div>
-                                    {bulkAuditData.status === "completed" && (
-                                        <button
-                                            onClick={handleReset}
-                                            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-semibold transition-colors"
-                                        >
-                                            <RefreshCw className="w-4 h-4" />
-                                            New Audit
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Progress Bar */}
-                            {bulkAuditData.totalPages > 0 && (
-                                <div className="mb-4">
-                                    <div className="flex justify-between text-sm mb-2">
-                                        <span className={darkMode ? "text-slate-400" : "text-slate-600"}>
-                                            Progress: {bulkAuditData.completedPages + bulkAuditData.failedPages} / {bulkAuditData.totalPages}
-                                        </span>
-                                        <span className={darkMode ? "text-slate-400" : "text-slate-600"}>
-                                            {Math.round(((bulkAuditData.completedPages + bulkAuditData.failedPages) / bulkAuditData.totalPages) * 100)}%
-                                        </span>
-                                    </div>
-                                    <div className={`w-full h-3 rounded-full overflow-hidden ${darkMode ? "bg-slate-800" : "bg-slate-200"}`}>
+                            <div className="max-h-[500px] overflow-y-auto overflow-x-hidden">
+                                <div className="divide-y divide-slate-800/20">
+                                    {discoveredUrls.map((url, index) => (
                                         <div
-                                            className="h-full bg-gradient-to-r from-emerald-500 to-teal-600 transition-all duration-500"
-                                            style={{ width: `${((bulkAuditData.completedPages + bulkAuditData.failedPages) / bulkAuditData.totalPages) * 100}%` }}
-                                        ></div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Stats */}
-                            <div className="grid grid-cols-3 gap-4">
-                                <div className={`p-4 rounded-lg ${darkMode ? "bg-slate-800" : "bg-slate-100"}`}>
-                                    <div className="text-2xl font-bold text-emerald-500">{bulkAuditData.completedPages}</div>
-                                    <div className={`text-sm ${darkMode ? "text-slate-400" : "text-slate-600"}`}>Completed</div>
-                                </div>
-                                <div className={`p-4 rounded-lg ${darkMode ? "bg-slate-800" : "bg-slate-100"}`}>
-                                    <div className="text-2xl font-bold text-red-500">{bulkAuditData.failedPages}</div>
-                                    <div className={`text-sm ${darkMode ? "text-slate-400" : "text-slate-600"}`}>Failed</div>
-                                </div>
-                                <div className={`p-4 rounded-lg ${darkMode ? "bg-slate-800" : "bg-slate-100"}`}>
-                                    <div className="text-2xl font-bold text-blue-500">{bulkAuditData.totalPages}</div>
-                                    <div className={`text-sm ${darkMode ? "text-slate-400" : "text-slate-600"}`}>Total Pages</div>
+                                            key={index}
+                                            onClick={() => toggleUrlSelection(url)}
+                                            className={`
+                        px-6 py-4 flex items-center gap-4 transition-all cursor-pointer group
+                        ${selectedUrls.includes(url)
+                                                    ? (darkMode ? "bg-emerald-500/5" : "bg-emerald-50/50")
+                                                    : (darkMode ? "hover:bg-slate-800/50" : "hover:bg-slate-50/50")
+                                                }
+                      `}
+                                        >
+                                            <div className={`
+                        w-5 h-5 rounded border-2 flex-shrink-0 flex items-center justify-center transition-all
+                        ${selectedUrls.includes(url)
+                                                    ? "bg-emerald-500 border-emerald-500"
+                                                    : (darkMode ? "border-slate-700 group-hover:border-slate-600" : "border-slate-300 group-hover:border-slate-400")
+                                                }
+                      `}>
+                                                {selectedUrls.includes(url) && <div className="w-1.5 h-3 border-r-2 border-b-2 border-white rotate-45 mb-0.5" />}
+                                            </div>
+                                            <span className={`text-sm font-medium truncate ${selectedUrls.includes(url)
+                                                ? (darkMode ? "text-emerald-400" : "text-emerald-700")
+                                                : (darkMode ? "text-slate-400" : "text-slate-600")
+                                                }`}>{url}</span>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         </div>
+                    </div>
+                )}
 
-                        {/* Pages List */}
-                        {bulkAuditData.pages && bulkAuditData.pages.length > 0 && (
-                            <div className={`p-6 rounded-2xl border ${darkMode ? "bg-slate-900/90 border-slate-700" : "bg-white border-slate-200"}`}>
-                                <h3 className="text-xl font-bold mb-4">Pages</h3>
-                                <div className="space-y-3 max-h-[600px] overflow-y-auto custom-scrollbar">
+                {/* Step 3: Real-time Audit Progress */}
+                {(bulkAuditId || auditing) && (
+                    <div className="space-y-8 animate-in fade-in duration-1000">
+                        {/* Status Summary */}
+                        <div className={`p-8 rounded-3xl border ${darkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-100 shadow-2xl shadow-slate-200/50"}`}>
+                            {!bulkAuditData ? (
+                                <div className="flex flex-col items-center gap-5 py-8">
+                                    <div className="relative">
+                                        <div className="w-20 h-20 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                            <RefreshCw className="w-8 h-8 text-emerald-500 animate-pulse" />
+                                        </div>
+                                    </div>
+                                    <div className="text-center">
+                                        <h3 className="text-2xl font-black mb-2">Preparing Audit</h3>
+                                        <p className={`${darkMode ? "text-slate-400" : "text-slate-500"}`}>Configuring engines and allocating resources...</p>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                                    <div className="space-y-2">
+                                        <p className={`text-xs font-bold uppercase tracking-widest ${darkMode ? "text-slate-500" : "text-slate-400"}`}>Progress</p>
+                                        <div className="flex items-end gap-2">
+                                            <span className="text-4xl font-black">{bulkAuditData.progress}%</span>
+                                            <span className={`text-sm font-bold mb-1.5 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>({bulkAuditData.completedAudits}/{bulkAuditData.totalAudits})</span>
+                                        </div>
+                                        <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-500"
+                                                style={{ width: `${bulkAuditData.progress}%` }}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <p className={`text-xs font-bold uppercase tracking-widest ${darkMode ? "text-slate-500" : "text-slate-400"}`}>Avg. Score</p>
+                                        <div className="flex items-baseline gap-2">
+                                            <span className={`text-4xl font-black ${bulkAuditData.averageScore >= 80 ? "text-emerald-400" : "text-yellow-400"}`}>{bulkAuditData.averageScore}</span>
+                                            <span className="text-sm font-bold text-slate-500">/ 100</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <p className={`text-xs font-bold uppercase tracking-widest ${darkMode ? "text-slate-500" : "text-slate-400"}`}>Audit Mode</p>
+                                        <p className="text-xl font-bold flex items-center gap-2">
+                                            {bulkAuditData.device === "Desktop" ? <Monitor className="w-5 h-5 text-emerald-400" /> : <Smartphone className="w-5 h-5 text-emerald-400" />}
+                                            {bulkAuditData.report}
+                                        </p>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <p className={`text-xs font-bold uppercase tracking-widest ${darkMode ? "text-slate-500" : "text-slate-400"}`}>Status</p>
+                                        <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full font-bold text-xs uppercase tracking-widest bg-emerald-500/10 text-emerald-500 border border-emerald-500/20`}>
+                                            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                            {bulkAuditData.status}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Results List */}
+                        {bulkAuditData && (
+                            <div className="space-y-6">
+                                <div className="flex items-center justify-between px-4">
+                                    <h3 className="text-2xl font-black">Audit Results</h3>
+                                    <div className="flex gap-2">
+                                        {/* Status badges summary */}
+                                        <span className="text-xs font-bold px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                                            {bulkAuditData.pages.filter(p => p.status === "inprogress").length} In Progress
+                                        </span>
+                                        <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                            {bulkAuditData.pages.filter(p => p.status === "completed").length} Done
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {bulkAuditData.pages.map((page, index) => (
                                         <div
                                             key={index}
-                                            onClick={() => handleViewReport(page)}
-                                            className={`p-4 rounded-lg border transition-all ${darkMode ? "bg-slate-800 border-slate-700 hover:border-slate-600" : "bg-slate-50 border-slate-200 hover:border-slate-300"
-                                                } ${page.status === "completed" ? "cursor-pointer hover:shadow-md active:scale-[0.99] hover:bg-emerald-500/5" : ""}`}
+                                            onClick={() => page.status === "completed" && viewSingleReport(page)}
+                                            className={`
+                        p-5 rounded-2xl border transition-all duration-300 flex items-center gap-4 group
+                        ${page.status === "completed" ? "cursor-pointer hover:border-emerald-500/50 hover:shadow-lg hover:shadow-emerald-500/5" : "opacity-60"}
+                        ${darkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-100 shadow-xl shadow-slate-200/30"}
+                      `}
                                         >
-                                            <div className="flex items-center justify-between mb-2">
-                                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                            <div className="flex-grow min-w-0">
+                                                <div className="flex items-center gap-2 mb-1.5">
                                                     {getStatusIcon(page.status)}
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className={`text-sm font-medium truncate ${darkMode ? "text-slate-300" : "text-slate-700"}`}>
-                                                            {page.url}
-                                                        </div>
-                                                        {page.error && (
-                                                            <div className="text-xs text-red-500 mt-1">{page.error}</div>
-                                                        )}
-                                                    </div>
+                                                    <span className={`text-sm font-bold truncate ${darkMode ? "text-slate-200" : "text-slate-700"}`}>{page.url}</span>
                                                 </div>
-
-                                                {/* Show Score and Grade for completed audits */}
-                                                {page.status === "completed" && page.score !== null && (
-                                                    <div className="flex items-center gap-3 ml-4">
-                                                        <div className={`px-3 py-1 rounded-lg font-bold ${page.grade === "A+" || page.grade === "A" ? "bg-green-500/20 text-green-500" :
-                                                            page.grade === "B" ? "bg-blue-500/20 text-blue-500" :
-                                                                page.grade === "C" ? "bg-yellow-500/20 text-yellow-500" :
-                                                                    page.grade === "D" ? "bg-orange-500/20 text-orange-500" :
-                                                                        "bg-red-500/20 text-red-500"
-                                                            }`}>
-                                                            Grade {page.grade}
+                                                <div className="flex items-center gap-4">
+                                                    {page.status === "completed" ? (
+                                                        <div className="flex items-center gap-2">
+                                                            <div className={`text-base font-black ${page.score >= 80 ? "text-emerald-400" : "text-yellow-400"}`}>
+                                                                {page.score}%
+                                                            </div>
+                                                            <div className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${page.score >= 90 ? "bg-emerald-500/20 text-emerald-400" : "bg-yellow-500/20 text-yellow-400"}`}>
+                                                                Grade {page.grade}
+                                                            </div>
                                                         </div>
-                                                        <div className={`text-lg font-bold ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>
-                                                            {page.score}/100
+                                                    ) : (
+                                                        <div className={`text-xs font-bold uppercase tracking-widest ${darkMode ? "text-slate-600" : "text-slate-400"}`}>
+                                                            {page.status === "inprogress" ? "Analyzing..." : "Waiting..."}
                                                         </div>
-                                                    </div>
-                                                )}
+                                                    )}
+                                                </div>
                                             </div>
 
-                                            {/* Show Time Taken if available */}
-                                            {page.timeTaken && (
-                                                <div className="flex items-center justify-between mt-2">
+                                            {page.status === "completed" && (
+                                                <div className="flex flex-col items-end gap-2">
                                                     <div className={`text-xs ${darkMode ? "text-slate-500" : "text-slate-600"}`}>
                                                         ⏱️ Completed in {page.timeTaken}
                                                     </div>
@@ -729,6 +659,53 @@ export default function BulkAudit() {
                 )}
 
             </div>
+
+            {/* reCAPTCHA v2 Modal Overlay */}
+            {showCaptcha && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 backdrop-blur-md transition-all duration-300">
+                    <div className={`
+                    ${darkMode ? "bg-slate-900 border-slate-700 shadow-emerald-500/10" : "bg-white border-slate-100 shadow-slate-200/50"}
+                    border border-solid rounded-[2.5rem] shadow-2xl p-8 flex flex-col items-center gap-6 max-w-sm w-full mx-4 animate-in zoom-in-95 duration-200
+                  `}>
+                        <div className={`p-5 rounded-full ${darkMode ? "bg-emerald-500/10 text-emerald-400" : "bg-emerald-50 text-emerald-600"}`}>
+                            <Monitor className="w-10 h-10" />
+                        </div>
+
+                        <div className="text-center space-y-2">
+                            <h3 className={`text-2xl font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>Verify Security</h3>
+                            <p className={`text-sm font-medium leading-relaxed ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
+                                {captchaAction === 'discover'
+                                    ? "Confirm you're human to discover website URLs."
+                                    : "Confirm you're human to start your bulk audit report."}
+                            </p>
+                        </div>
+
+                        <div className={`p-2 rounded-2xl border ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
+                            <ReCAPTCHA
+                                ref={recaptchaRef}
+                                sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+                                onChange={handleCaptchaChange}
+                                onExpired={handleCaptchaExpired}
+                                theme={darkMode ? "dark" : "light"}
+                            />
+                        </div>
+
+                        {captchaError && (
+                            <div className="flex items-center gap-2 text-rose-500 px-4 py-2 rounded-full bg-rose-500/10 border border-rose-500/20 animate-pulse">
+                                <AlertCircle className="w-4 h-4" />
+                                <span className="text-xs font-bold uppercase tracking-widest">Verification Expired</span>
+                            </div>
+                        )}
+
+                        <button
+                            onClick={() => setShowCaptcha(false)}
+                            className={`text-xs font-bold uppercase tracking-[0.2em] ${darkMode ? "text-slate-500 hover:text-white" : "text-slate-400 hover:text-slate-900"} transition-all duration-200 hover:scale-110 active:scale-95`}
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -1,4 +1,3 @@
-import axios from "axios";
 import * as cheerio from "cheerio";
 import { parseStringPromise } from "xml2js";
 
@@ -85,22 +84,20 @@ async function fetchSitemapUrls(domain) {
 
     for (const sitemapUrl of possibleSitemaps) {
         try {
-            const response = await axios.get(sitemapUrl, {
-                timeout: 10000,
+            const response = await fetch(sitemapUrl, {
+                signal: AbortSignal.timeout(10000),
                 headers: { "User-Agent": "Mozilla/5.0 (compatible; SiteAuditor/1.0)" }
             });
 
-            if (response.status === 200 && response.data) {
+            if (response.ok) {
+                const data = await response.text();
                 // Verify it looks like XML
-                if (typeof response.data === 'string' && (response.data.trim().startsWith('<?xml') || response.data.includes('<urlset') || response.data.includes('<sitemapindex'))) {
-                    const urls = await parseSitemap(response.data, domain);
+                if (typeof data === 'string' && (data.trim().startsWith('<?xml') || data.includes('<urlset') || data.includes('<sitemapindex'))) {
+                    const urls = await parseSitemap(data, domain);
                     urls.forEach(url => sitemapUrls.push(url));
 
                     if (sitemapUrls.length > 0) {
                         console.log(`✅ Found sitemap: ${sitemapUrl}`);
-                        // Don't break immediately, maybe multiple sitemaps? 
-                        // Usually one main index is enough but multiple standard names might exist.
-                        // Code break logic: "Stop after finding first valid sitemap".
                         break;
                     }
                 }
@@ -127,13 +124,14 @@ async function parseSitemap(xmlData, domain) {
                 if (sitemap.loc && sitemap.loc[0]) {
                     try {
                         const subSitemapUrl = sitemap.loc[0];
-                        const response = await axios.get(subSitemapUrl, {
-                            timeout: 10000,
+                        const response = await fetch(subSitemapUrl, {
+                            signal: AbortSignal.timeout(10000),
                             headers: { "User-Agent": "Mozilla/5.0 (compatible; SiteAuditor/1.0)" }
                         });
 
-                        if (response.status === 200) {
-                            const subUrls = await parseSitemap(response.data, domain);
+                        if (response.ok) {
+                            const data = await response.text();
+                            const subUrls = await parseSitemap(data, domain);
                             urls.push(...subUrls);
                         }
                     } catch (error) {
@@ -168,17 +166,18 @@ async function extractInternalLinks(url, domain) {
     const links = new Set();
 
     try {
-        const response = await axios.get(url, {
-            timeout: 10000,
+        const response = await fetch(url, {
+            signal: AbortSignal.timeout(10000),
             headers: {
                 "User-Agent": "Mozilla/5.0 (compatible; SiteAuditor/1.0)",
                 "Accept": "text/html"
             },
-            maxRedirects: 5
+            redirect: "follow"
         });
 
-        if (response.status === 200 && response.data) {
-            const $ = cheerio.load(response.data);
+        if (response.ok) {
+            const html = await response.text();
+            const $ = cheerio.load(html);
 
             // Extract all href attributes
             $("a[href]").each((_, element) => {

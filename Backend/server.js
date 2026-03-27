@@ -3,6 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import singleAuditRoutes from "./routes/singleAuditRoutes.js";
 import bulkAuditRoutes from "./routes/bulkAuditRoutes.js";
+import aiExplainRoutes from "./routes/aiExplainRoutes.js";
 import connectDB from "./config/db.js";
 import dotenv from "dotenv";
 
@@ -18,10 +19,11 @@ app.use(helmet());
 
 app.use(cors());
 
-app.use(express.json({ limit: "10kb" }));
+app.use(express.json({ limit: "2mb" }));
 
 app.use("/single-audit", singleAuditRoutes);
 app.use("/bulk-audit", bulkAuditRoutes);
+app.use("/api/ai", aiExplainRoutes);
 
 app.get("/", (req, res) => {
   res.send("Server is running");

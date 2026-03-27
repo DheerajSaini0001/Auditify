@@ -14,6 +14,7 @@ import {
 import MetricInfoModal from "../Component/MetricInfoModal";
 import ParameterInfoModal from "../Component/ParameterInfoModal";
 import { InfoDetails } from "../Component/InfoDetails";
+import AskAIButton from "../Component/AskAIButton";
 
 const iconMap = {
   Text_Readability: BookOpen,
@@ -559,6 +560,15 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
               </div>
             )}
           </div>
+        )}
+
+        {/* Ask AI Button */}
+        {!isPassed && (
+          <AskAIButton
+            finding={{ type: 'UX & Content Structure', title: title, details: description, severity: isPassed ? 'pass' : isWarning ? 'warning' : 'critical', url: '' }}
+            darkMode={darkMode}
+            meta={meta}
+          />
         )}
       </div>
     </div >

@@ -2,6 +2,7 @@ import React from "react";
 import { ChevronUp, ChevronDown, Info, AlertTriangle, CheckCircle } from "lucide-react";
 import { InfoDetails as DefaultInfoDetails } from "../../Component/InfoDetails";
 import ScoreBadge from "./ScoreBadge";
+import AskAIButton from "../AskAIButton";
 
 /**
  * SEOCard - Flexible reusable wrapper for SEO metric cards
@@ -150,6 +151,15 @@ const SEOCard = ({
                                 </p>
                             </div>
                         </div>
+                    )}
+
+                    {/* Ask AI Button */}
+                    {!isPassed && (
+                        <AskAIButton
+                            finding={{ type: 'On-Page SEO', title: title, details: statusText || '', severity: currentStatus === 'pass' ? 'pass' : currentStatus === 'warning' ? 'warning' : 'critical', url: '' }}
+                            darkMode={darkMode}
+                            meta={meta}
+                        />
                     )}
                 </div>
             </div>

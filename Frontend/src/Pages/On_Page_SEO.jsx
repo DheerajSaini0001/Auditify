@@ -16,7 +16,6 @@ import { InfoDetails } from "../Component/InfoDetails";
 import ScoreBadge from "../Component/reusablecomponent/ScoreBadge";
 import SEOCard from "../Component/reusablecomponent/SEOCard";
 import { AuditShimmer } from "../Component/reusablecomponent/AuditShimmer";
-import AskAIButton from "../Component/AskAIButton";
 
 const getStatusFromScore = (score) => {
   if (score >= 90) return "pass";
@@ -634,39 +633,34 @@ const ImageAnalysisCard = ({ data, darkMode, onInfo, resolveLink, className = ""
           </div>
 
           {/* Analysis Details */}
-          {analysis && !isPassed && (
-            <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-500">
-                  <AlertTriangle size={12} />
-                  <span>Analysis</span>
+          {
+            analysis && !isPassed && (
+              <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
+                {/* Analysis */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-500">
+                    <AlertTriangle size={12} />
+                    <span>Analysis</span>
+                  </div>
+                  <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                    {analysis.cause}
+                  </p>
                 </div>
-                <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                  {analysis.cause}
-                </p>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-500">
-                  <CheckCircle size={12} />
-                  <span>Recommendation</span>
+
+                {/* Recommendation */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-500">
+                    <CheckCircle size={12} />
+                    <span>Recommendation</span>
+                  </div>
+                  <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                    {analysis.recommendation}
+                  </p>
                 </div>
-                <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                  {analysis.recommendation}
-                </p>
               </div>
-            </div>
-          )}
-          
-          {/* Ask AI Button (Always show if not passed) */}
-          {!isPassed && (
-            <div className="pt-2">
-              <AskAIButton
-                finding={{ type: 'On-Page SEO', title: 'Image Optimization', details: analysis?.recommendation || 'Optimize images for better SEO and performance.', severity: status === 'pass' ? 'pass' : status === 'warning' ? 'warning' : 'critical', url: '' }}
-                darkMode={darkMode}
-                meta={meta}
-              />
-            </div>
-          )}
+            )
+          }
+
         </div>
       </div>
     </div>
@@ -1005,39 +999,31 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
           </div>
 
           {/* Analysis & Recs from API */}
-          {data?.analysis && !isPassed && (
-            <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-500">
-                  <AlertTriangle size={12} />
-                  <span>Analysis</span>
+          {
+            data?.analysis && !isPassed && (
+              <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-500">
+                    <AlertTriangle size={12} />
+                    <span>Analysis</span>
+                  </div>
+                  <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                    {data?.analysis?.cause}
+                  </p>
                 </div>
-                <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                  {data?.analysis?.cause}
-                </p>
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-500">
-                  <CheckCircle size={12} />
-                  <span>Recommendation</span>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-500">
+                    <CheckCircle size={12} />
+                    <span>Recommendation</span>
+                  </div>
+                  <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                    {data?.analysis?.recommendation}
+                  </p>
                 </div>
-                <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                  {data?.analysis?.recommendation}
-                </p>
               </div>
-            </div>
-          )}
+            )
+          }
 
-          {/* Ask AI Button (Always show if not passed) */}
-          {!isPassed && (
-            <div className="pt-2">
-              <AskAIButton
-                finding={{ type: 'On-Page SEO', title: 'Contextual Links', details: data?.analysis?.recommendation || 'Improve contextual linking relevance.', severity: finalScore >= 90 ? 'pass' : finalScore >= 50 ? 'warning' : 'critical', url: '' }}
-                darkMode={darkMode}
-                meta={data?.meta}
-              />
-            </div>
-          )}
         </div>
       </div>
     </div>
@@ -1199,8 +1185,8 @@ const LinkProfileCard = ({ data, darkMode, onInfo, resolveLink, className = "lg:
         </div>
 
         {/* Analysis Details */}
-        {data.analysis && !isPassed && (
-          <>
+        {
+          data.analysis && (
             <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-500">
@@ -1221,15 +1207,8 @@ const LinkProfileCard = ({ data, darkMode, onInfo, resolveLink, className = "lg:
                 </p>
               </div>
             </div>
-
-            {/* Ask AI Button */}
-            <AskAIButton
-              finding={{ type: 'On-Page SEO', title: 'Link Profile', details: data?.analysis?.recommendation || '', severity: status === 'pass' ? 'pass' : status === 'warning' ? 'warning' : 'critical', url: '' }}
-              darkMode={darkMode}
-              meta={meta}
-            />
-          </>
-        )}
+          )
+        }
 
       </div>
     </div>
@@ -1356,46 +1335,37 @@ const HeadingHierarchyCard = ({ data, darkMode, onInfo }) => {
 
           {/* Analysis Details */}
           {(meta?.issues?.length > 0 || !isPassed) && (
-            <>
-              <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
-                {/* Analysis */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-500">
-                    <AlertTriangle size={12} />
-                    <span>Analysis</span>
-                  </div>
-                  <div className="space-y-1">
-                    {meta?.issues?.length > 0 ? meta.issues.map((issue, i) => (
-                      <div key={i} className="text-sm opacity-90 flex items-start gap-2">
-                        <span className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>• {issue.finding}</span>
-                      </div>
-                    )) : (
-                      <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                        {data?.analysis?.cause || "Hierarchy is logical and follows SEO best practices."}
-                      </p>
-                    )}
-                  </div>
+            <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
+              {/* Analysis */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-500">
+                  <AlertTriangle size={12} />
+                  <span>Analysis</span>
                 </div>
-
-                {/* Recommendation */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-500">
-                    <CheckCircle size={12} />
-                    <span>Recommendation</span>
-                  </div>
-                  <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                    {data?.analysis?.recommendation || "Ensure headings follow a logical sequence (H1 → H2 → H3) and don't skip levels."}
-                  </p>
+                <div className="space-y-1">
+                  {meta?.issues?.length > 0 ? meta.issues.map((issue, i) => (
+                    <div key={i} className="text-sm opacity-90 flex items-start gap-2">
+                      <span className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>• {issue.finding}</span>
+                    </div>
+                  )) : (
+                    <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                      {data?.analysis?.cause || "Hierarchy is logical and follows SEO best practices."}
+                    </p>
+                  )}
                 </div>
               </div>
 
-              {/* Ask AI Button */}
-              <AskAIButton
-                finding={{ type: 'On-Page SEO', title: 'Heading Hierarchy', details: data?.analysis?.recommendation || '', severity: isPassed ? 'pass' : isWarning ? 'warning' : 'critical', url: '' }}
-                darkMode={darkMode}
-                meta={meta}
-              />
-            </>
+              {/* Recommendation */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-500">
+                  <CheckCircle size={12} />
+                  <span>Recommendation</span>
+                </div>
+                <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                  {data?.analysis?.recommendation || "Ensure headings follow a logical sequence (H1 → H2 → H3) and don't skip levels."}
+                </p>
+              </div>
+            </div>
           )}
 
         </div>

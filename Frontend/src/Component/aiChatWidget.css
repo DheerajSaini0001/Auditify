@@ -1,0 +1,69 @@
+.fixed {
+    position: fixed;
+}
+
+.shadow-2xl {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.animate-bounce-subtle {
+    animation: bounce-subtle 4s infinite ease-in-out;
+}
+
+@keyframes bounce-subtle {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-8px);
+    }
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(155, 155, 155, 0.2);
+    border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(155, 155, 155, 0.4);
+}
+
+.ai-chat-header {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    color: white;
+}
+
+.dark .ai-chat-header {
+    background: #1e293b;
+    border-bottom: 1px solid #334155;
+}
+
+/* Animations */
+.chat-enter {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+}
+
+.chat-enter-active {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    transition: opacity 300ms, transform 300ms;
+}
+
+.ai-message-bubble {
+    border-radius: 18px;
+    border-top-left-radius: 4px;
+}
+
+.user-message-bubble {
+    border-radius: 18px;
+    border-top-right-radius: 4px;
+}

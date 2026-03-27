@@ -16,6 +16,7 @@ import {
 import MetricInfoModal from "../Component/MetricInfoModal";
 import ParameterInfoModal from "../Component/ParameterInfoModal";
 import { InfoDetails } from "../Component/InfoDetails";
+import AskAIButton from "../Component/AskAIButton";
 
 const iconMap = {
   Structured_Data: Database,
@@ -503,6 +504,15 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             Why it matters: <span className="normal-case font-normal opacity-100">{content.whyItMatters || content.why}</span>
           </p>
         </div>
+
+        {/* Ask AI Button */}
+        {!isPassed && (
+          <AskAIButton
+            finding={{ type: 'AIO Readiness', title: title, details: details, severity: isPassed ? 'pass' : 'critical', url: '' }}
+            darkMode={darkMode}
+            meta={meta}
+          />
+        )}
       </div>
     </div>
   );

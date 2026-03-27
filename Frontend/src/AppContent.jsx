@@ -16,6 +16,7 @@ import ReportLayout from "./Pages/ReportLayout.jsx";
 import { ThemeProvider, ThemeContext } from "./context/ThemeContext.jsx";
 
 import MainLayout from "./Component/MainLayout";
+import AIChatWidget from "./Component/AIChatWidget";
 
 function AppContentInner() {
   // ✅ We only need theme for the background class now
@@ -23,34 +24,37 @@ function AppContentInner() {
   const darkMode = theme === "dark";
 
   return (
-    <Routes>
-      <Route element={<MainLayout />}>
-        <Route path="/" element={<Homepage />} />
-        <Route path="/bulk-audit" element={<BulkAudit />} />
-        <Route path="/bulk-audit/:id" element={<BulkAudit />} />
+    <>
+      <Routes>
+        <Route element={<MainLayout />}>
+          <Route path="/" element={<Homepage />} />
+          <Route path="/bulk-audit" element={<BulkAudit />} />
+          <Route path="/bulk-audit/:id" element={<BulkAudit />} />
 
-        {/* Report Layout handles the dashboard view */}
-        <Route
-          path="/report"
-          element={<ReportLayout />}
-        />
-        <Route
-          path="/report/:id"
-          element={<ReportLayout />}
-        />
+          {/* Report Layout handles the dashboard view */}
+          <Route
+            path="/report"
+            element={<ReportLayout />}
+          />
+          <Route
+            path="/report/:id"
+            element={<ReportLayout />}
+          />
 
-        {/* Individual Report Pages */}
-        <Route path="/technical-performance" element={<Technical_Performance />} />
-        <Route path="/on-page-seo" element={<On_Page_SEO />} />
-        <Route path="/accessibility" element={<Accessibility />} />
-        <Route path="/ux-content-structure" element={<UX_Content_Structure />} />
-        <Route path="/security-compliance" element={<Security_Compilance />} />
-        <Route path="/conversion-lead-flow" element={<Conversion_Lead_Flow />} />
-        <Route path="/aio" element={<AIO />} />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="*" element={<NotFound />} />
-      </Route>
-    </Routes>
+          {/* Individual Report Pages */}
+          <Route path="/technical-performance" element={<Technical_Performance />} />
+          <Route path="/on-page-seo" element={<On_Page_SEO />} />
+          <Route path="/accessibility" element={<Accessibility />} />
+          <Route path="/ux-content-structure" element={<UX_Content_Structure />} />
+          <Route path="/security-compliance" element={<Security_Compilance />} />
+          <Route path="/conversion-lead-flow" element={<Conversion_Lead_Flow />} />
+          <Route path="/aio" element={<AIO />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="*" element={<NotFound />} />
+        </Route>
+      </Routes>
+      <AIChatWidget />
+    </>
   );
 }
 

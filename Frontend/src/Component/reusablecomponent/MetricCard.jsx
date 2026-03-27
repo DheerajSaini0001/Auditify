@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Info, ChevronDown, ChevronUp } from "lucide-react";
 import ThresholdBar from "./ThresholdBar";
 import MetricAnalysisDetails from "./MetricAnalysisDetails";
+import AskAIButton from "../AskAIButton";
 
 const MetricCard = ({
     title,
@@ -187,6 +188,15 @@ const MetricCard = ({
                 isOpen={showDetails}
                 onToggle={handleToggle}
             />
+
+            {/* Ask AI Button */}
+            {status !== "pass" && (
+                <AskAIButton
+                    finding={{ type: 'Technical Performance', title: title, details: activeData?.details || '', severity: status === 'pass' ? 'pass' : status === 'warning' ? 'warning' : 'critical', url: '' }}
+                    darkMode={darkMode}
+                    meta={activeData?.meta}
+                />
+            )}
 
         </div>
     );

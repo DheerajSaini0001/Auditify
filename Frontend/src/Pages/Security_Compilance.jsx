@@ -13,6 +13,7 @@ import {
 import MetricInfoModal from "../Component/MetricInfoModal";
 import ParameterInfoModal from "../Component/ParameterInfoModal";
 import { InfoDetails } from "../Component/InfoDetails";
+import AskAIButton from "../Component/AskAIButton";
 
 const iconMap = {
   HTTPS: Lock,
@@ -840,6 +841,15 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
               )}
             </div>
           </div>
+        )}
+
+        {/* Ask AI Button */}
+        {!isPassed && (
+          <AskAIButton
+            finding={{ type: 'Security/Compliance', title: title, details: details, severity: isPassed ? 'pass' : isWarning ? 'warning' : 'critical', url: '' }}
+            darkMode={darkMode}
+            meta={meta}
+          />
         )}
       </div>
     </div>

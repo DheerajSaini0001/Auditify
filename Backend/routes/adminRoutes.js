@@ -1,6 +1,14 @@
 import express from 'express';
 import { param, body, query, validationResult } from 'express-validator';
-import * as adminController from '../controllers/adminController.js';
+import { 
+  getAllUsers, 
+  getUserById, 
+  blockUser, 
+  unblockUser, 
+  deleteUser, 
+  getAuditLogs, 
+  getStats 
+} from '../controllers/adminController.js';
 import { verifyToken, checkRole } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -21,36 +29,36 @@ router.get('/users', [
   query('page').optional().isInt({ min: 1 }),
   query('limit').optional().isInt({ min: 1, max: 100 }),
   validate
-], adminController.getAllUsers);
+], getAllUsers);
 
 router.get('/users/:id', [
   param('id').isMongoId().withMessage('Invalid user ID format'),
   validate
-], adminController.getUserById);
+], getUserById);
 
 router.post('/users/block', [
   body('userId').isMongoId().withMessage('Invalid user ID format'),
   body('reason').not().isEmpty().withMessage('Reason is required'),
   validate
-], adminController.blockUser);
+], blockUser);
 
 router.post('/users/unblock', [
   body('userId').isMongoId().withMessage('Invalid user ID format'),
   validate
-], adminController.unblockUser);
+], unblockUser);
 
 router.delete('/users/:id', [
   param('id').isMongoId().withMessage('Invalid user ID format'),
   validate
-], adminController.deleteUser);
+], deleteUser);
 
 router.get('/audit-logs', [
   query('page').optional().isInt({ min: 1 }),
   query('limit').optional().isInt({ min: 1 }),
   query('ip').optional().isString(),
   validate
-], adminController.getAuditLogs);
+], getAuditLogs);
 
-router.get('/stats', adminController.getStats);
+router.get('/stats', getStats);
 
 export default router;

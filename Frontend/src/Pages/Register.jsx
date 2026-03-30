@@ -1,5 +1,5 @@
 import React, { useState, useRef, useContext } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { useAuth } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext.jsx';
@@ -21,6 +21,7 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const captchaRef = useRef(null);
 
   const handleSubmit = async (e) => {
@@ -41,7 +42,12 @@ const Register = () => {
     const result = await register(name, email, password, captchaToken);
     
     if (result.success) {
-      navigate('/dashboard');
+      const origin = location.state?.from?.pathname || location.state?.from || null;
+      if (origin && origin !== '/register') {
+        navigate(origin);
+      } else {
+        navigate('/dashboard');
+      }
     } else {
       setError(result.error);
       setCaptchaToken(null);
@@ -229,7 +235,11 @@ const Register = () => {
 
         <div className={`mt-8 text-center ${darkMode ? 'text-gray-400' : 'text-slate-500'}`}>
           Already have an account? {' '}
-          <Link to="/login" className={`font-semibold transition-colors ${darkMode ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-600 hover:text-indigo-700'}`}>
+          <Link 
+            to="/login" 
+            state={{ from: location.state?.from }}
+            className={`font-semibold transition-colors ${darkMode ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-600 hover:text-indigo-700'}`}
+          >
             Sign In
           </Link>
         </div>

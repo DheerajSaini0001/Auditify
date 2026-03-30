@@ -1,5 +1,5 @@
 import React, { useState, useRef, useContext } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { useAuth } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext.jsx';
@@ -18,6 +18,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const captchaRef = useRef(null);
 
   const handleSubmit = async (e) => {
@@ -33,7 +34,12 @@ const Login = () => {
     const result = await login(email, password, captchaToken);
 
     if (result.success) {
-      if (result.user.role === 'admin') {
+      // Determine origin page, fallback based on role
+      const origin = location.state?.from?.pathname || location.state?.from || null;
+      
+      if (origin && origin !== '/login') {
+        navigate(origin);
+      } else if (result.user.role === 'admin') {
         navigate('/admin');
       } else {
         navigate('/dashboard');
@@ -155,7 +161,11 @@ const Login = () => {
 
         <div className={`mt-8 text-center ${darkMode ? 'text-gray-400' : 'text-slate-500'}`}>
           Don't have an account? {' '}
-          <Link to="/register" className={`font-semibold transition-colors ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}>
+          <Link 
+            to="/register" 
+            state={{ from: location.state?.from }}
+            className={`font-semibold transition-colors ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
+          >
             Create Account
           </Link>
         </div>

@@ -58,14 +58,14 @@ function AppContentInner() {
           <Route path="/report" element={<ReportLayout />} />
           <Route path="/report/:id" element={<ReportLayout />} />
 
-          {/* Individual Report Pages - Keeping Protected for now as they are detailed, but can be changed if user asks */}
-          <Route path="/technical-performance" element={<ProtectedRoute><Technical_Performance /></ProtectedRoute>} />
-          <Route path="/on-page-seo" element={<ProtectedRoute><On_Page_SEO /></ProtectedRoute>} />
-          <Route path="/accessibility" element={<ProtectedRoute><Accessibility /></ProtectedRoute>} />
-          <Route path="/ux-content-structure" element={<ProtectedRoute><UX_Content_Structure /></ProtectedRoute>} />
-          <Route path="/security-compliance" element={<ProtectedRoute><Security_Compilance /></ProtectedRoute>} />
-          <Route path="/conversion-lead-flow" element={<ProtectedRoute><Conversion_Lead_Flow /></ProtectedRoute>} />
-          <Route path="/aio" element={<ProtectedRoute><AIO /></ProtectedRoute>} />
+          {/* Individual Report Pages - Publicly accessible for viewing the audit */}
+          <Route path="/technical-performance" element={<Technical_Performance />} />
+          <Route path="/on-page-seo" element={<On_Page_SEO />} />
+          <Route path="/accessibility" element={<Accessibility />} />
+          <Route path="/ux-content-structure" element={<UX_Content_Structure />} />
+          <Route path="/security-compliance" element={<Security_Compilance />} />
+          <Route path="/conversion-lead-flow" element={<Conversion_Lead_Flow />} />
+          <Route path="/aio" element={<AIO />} />
 
           {/* Admin Routes */}
           <Route path="/admin" element={

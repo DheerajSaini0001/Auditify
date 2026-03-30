@@ -16,10 +16,12 @@ import {
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useData } from "../context/DataContext";
+import { useAuth } from "../context/AuthContext";
 import { generatePDF } from "../utils/pdfGenerator";
 
 export default function Sidebar({ darkMode }) {
   const { data, loading, clearData } = useData();
+  const { isAuthenticated } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -117,7 +119,13 @@ export default function Sidebar({ darkMode }) {
         {data?.sectionScore ? (
           <>
             <button
-              onClick={() => generatePDF(data)}
+              onClick={() => {
+                if (isAuthenticated) {
+                  generatePDF(data);
+                } else {
+                  navigate("/login", { state: { from: location } });
+                }
+              }}
               className="group w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-500 shadow-md shadow-blue-600/20 transition-all hover:shadow-blue-600/30 active:scale-[0.98]"
             >
               <FileText className="w-4 h-4" />

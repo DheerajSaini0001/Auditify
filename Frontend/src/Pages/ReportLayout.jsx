@@ -10,7 +10,7 @@ import UX_Content_Structure from "./UX_Content_Structure";
 import Conversion_Lead_Flow from "./Conversion_Lead_Flow";
 import AIO from "./AIO";
 import RawData from "./RawData";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import NotFound from "./NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -20,6 +20,7 @@ const ReportLayout = () => {
   const darkMode = theme === "dark";
   const navigate = useNavigate();
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const [isFetching, setIsFetching] = React.useState(false);
 
   useEffect(() => {
@@ -32,9 +33,22 @@ const ReportLayout = () => {
 
         fetchSingleReport(id).then((result) => {
           setIsFetching(false);
-          // If fetch failed (e.g. 404 Not Found), redirect to home
+          // If fetch failed (e.g. 404 Not Found), pass the retry state to Home to trigger auto-run
           if (!result.success) {
-            navigate("/", { replace: true });
+            const fallbackUrl = searchParams.get("url");
+            if (fallbackUrl) {
+              navigate("/", { 
+                replace: true, 
+                state: { 
+                  autoFill: true, 
+                  url: fallbackUrl, 
+                  device: searchParams.get("device") || "Desktop",
+                  report: searchParams.get("report") || "All"
+                } 
+              });
+            } else {
+              navigate("/", { replace: true });
+            }
           }
         });
       }
@@ -49,10 +63,11 @@ const ReportLayout = () => {
 
   // Watch for sudden data loss (e.g. from live poll 404)
   useEffect(() => {
-    if (!data && !isFetching) {
+    // Prevent navigating away during initial load of a direct link
+    if (!data && !isFetching && !id) {
       navigate("/", { replace: true });
     }
-  }, [data, isFetching, navigate]);
+  }, [data, isFetching, navigate, id]);
 
   if (isFetching) {
     return (

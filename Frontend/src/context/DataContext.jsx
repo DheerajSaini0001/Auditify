@@ -1,4 +1,5 @@
 import { createContext, useState, useContext, useEffect, useCallback } from "react";
+import api from "../utils/api";
 
 const DataContext = createContext();
 export const useData = () => useContext(DataContext);
@@ -11,7 +12,7 @@ export const DataProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [intervalId, setIntervalId] = useState(null);
 
-  // �️ HELPER: Standardized Response Handler
+  // ️ HELPER: Standardized Response Handler
   const handleResponse = async (res) => {
     let data;
     try {
@@ -30,8 +31,8 @@ export const DataProvider = ({ children }) => {
     return { success: true, status: res.status, data };
   };
 
-  // �🚀 FETCH DATA
-  const fetchData = async (inputValue, device, report, recaptchaToken) => {
+  // 🚀 FETCH DATA
+  const fetchData = async (inputValue, device, report, captchaToken) => {
     if (!inputValue) return { success: false, error: "URL is empty" };
 
     if (inputValue.includes(" ") || !inputValue.includes(".")) {
@@ -41,29 +42,23 @@ export const DataProvider = ({ children }) => {
     setLoading(true);
 
     try {
-      // Use environment variable for API URL
-      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
       const screenResolution = `${window.screen.width}x${window.screen.height}`;
+      
+      // Determine endpoint: use /api/user/audit if token exists
+      const endpoint = localStorage.getItem('auditify_token') 
+        ? '/api/user/audit' 
+        : '/single-audit/audit';
 
-      const res = await fetch(`${API_URL}/single-audit/audit`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          url: inputValue, 
-          device: device, 
-          report: report, 
-          recaptchaToken: recaptchaToken,
-          screenResolution 
-        }),
+      // Use axios (api) to automatically include token
+      const res = await api.post(endpoint, {
+        url: inputValue,
+        device,
+        report,
+        captchaToken, // Backend now expects captchaToken
+        screenResolution
       });
 
-      const result = await handleResponse(res);
-
-      if (!result.success) {
-        return result;
-      }
-
-      const auditData = result.data;
+      const auditData = res.data;
       setData(auditData);
 
       if (auditData.status !== "completed") {

@@ -1,15 +1,17 @@
 import React, { useContext } from "react";
 import { ThemeContext } from "../context/ThemeContext.jsx";
-import { Menu, X, Sun, Moon, Home, NotebookPen, Plus } from "lucide-react";
+import { Menu, X, Sun, Moon, Home, NotebookPen, Plus, User, LogOut, LayoutDashboard } from "lucide-react";
 import Assets from "../assets/Assets.js";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useData } from "../context/DataContext.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 
 const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
   const { theme, toggleTheme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
 
   const { data, clearData } = useData();
+  const { isAuthenticated, isLoading, logout, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -75,7 +77,6 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
           <div className="flex items-center gap-3">
 
             {/* New Audit or Back to Bulk - Hidden on Home Page */}
-            {/* New Audit or Back to Bulk - Hidden on Home Page */}
             {location.pathname !== "/" && (
               data?.fromBulkAudit ? (
                 <button
@@ -100,7 +101,42 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
               )
             )}
 
-            {/* Theme Toggle */}
+            {/* Auth Actions */}
+            <div className="flex items-center gap-2 min-w-20 lg:min-w-32">
+              {!isLoading && (
+                isAuthenticated ? (
+                  <div className="flex items-center gap-2">
+                    <Link
+                      to={user?.role === "admin" ? "/admin" : "/dashboard"}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-bold transition-all border ${buttonClass}`}
+                    >
+                      <LayoutDashboard className="w-4 h-4 text-emerald-500" />
+                      <span className="hidden md:inline">Dashboard</span>
+                    </Link>
+                    <button
+                      onClick={logout}
+                      className={`p-2 rounded-lg border transition-all duration-200 ${buttonClass}`}
+                      title="Logout"
+                    >
+                      <LogOut className="w-4 h-4 text-rose-500" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Link to="/login">
+                      <button className={`px-4 py-1.5 rounded-lg text-sm font-bold border ${buttonClass}`}>
+                        Login
+                      </button>
+                    </Link>
+                    <Link to="/register" className="hidden sm:block">
+                      <button className="px-4 py-1.5 rounded-lg text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-md shadow-emerald-600/20">
+                        Sign Up
+                      </button>
+                    </Link>
+                  </div>
+                )
+              )}
+            </div>
 
             {/* Theme Toggle */}
             <button

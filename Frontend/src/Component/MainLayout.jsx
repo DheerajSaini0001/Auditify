@@ -14,11 +14,16 @@ export default function MainLayout() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const location = useLocation();
 
-    // Show sidebar only if data exists and we are not on the homepage (optional, but good for UX)
-    // Actually, if data exists, we probably want sidebar even on homepage? 
-    // But usually homepage is for entering new URL.
-    // Let's stick to: Show sidebar if data exists.
-    const showSidebar = !!data && data.report === "All" && location.pathname !== "/bulk-audit" && location.pathname !== "/";
+    const isReportPath = location.pathname.startsWith("/report") || 
+                         location.pathname === "/technical-performance" || 
+                         location.pathname === "/on-page-seo" || 
+                         location.pathname === "/accessibility" || 
+                         location.pathname === "/security-compliance" || 
+                         location.pathname === "/ux-content-structure" || 
+                         location.pathname === "/conversion-lead-flow" || 
+                         location.pathname === "/aio";
+
+    const showSidebar = !!data && data.report === "All" && isReportPath;
 
     return (
         <div className={`min-h-screen flex flex-col ${darkMode ? "bg-gray-900 text-white" : "bg-gray-50 text-black"}`}>

@@ -2,6 +2,7 @@ import { Worker } from "worker_threads";
 import { join } from "path";
 import SingleAuditReport from "../models/singleAuditReport.js";
 import AuditLog from "../models/AuditLog.js";
+import ActivityLog from "../models/ActivityLog.js";
 
 export const startAudit = async (req, res) => {
 
@@ -80,9 +81,24 @@ export const startAudit = async (req, res) => {
       referrer: req.tracking.referrer,
       entryPage: req.tracking.entryPage,
       actions: ["visited", "audit_run"],
-      captchaPassed: true, // If it reached here, reCAPTCHA middleware passed
+      captchaPassed: true,
       status: "pending",
     });
+
+    // Create detailed activity log for RBAC (Section 3.3)
+    if (req.user) {
+      ActivityLog.create({
+        userId: req.user.userId,
+        sessionId: req.tracking?.sessionId || 'N/A',
+        ip: req.tracking?.ip || '0.0.0.0',
+        device: device,
+        browser: req.tracking?.browser || 'Unknown',
+        os: req.tracking?.os || 'Unknown',
+        action: 'AUDIT_RUN',
+        metadata: { url, device, reportId: newReport._id }
+      }).catch(err => console.error("Error saving ActivityLog:", err));
+    }
+
     auditLog.save().catch(err => console.error("Error saving AuditLog:", err));
 
     const startTime = Date.now();

@@ -9,18 +9,21 @@ import UX_Content_Structure from "./Pages/UX_Content_Structure";
 import Conversion_Lead_Flow from "./Pages/Conversion_Lead_Flow";
 import Security_Compilance from "./Pages/Security_Compilance";
 import AIO from "./Pages/AIO";
-import { ThemeProvider } from "./ThemeContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import Navbar from "./Component/Navbar.jsx";
 import Footer from "./Component/Footer.jsx";
+import { AuthProvider } from "./context/AuthContext.jsx";
 import { DataProvider } from "./context/DataContext.jsx";
 import AppContent from "./AppContent.jsx"; 
 function App() {
   return (
-    <ThemeProvider>
-      <DataProvider>
-        <AppContent />
-      </DataProvider>
-    </ThemeProvider>
+    <AuthProvider>
+      <ThemeProvider>
+        <DataProvider>
+          <AppContent />
+        </DataProvider>
+      </ThemeProvider>
+    </AuthProvider>
   );
 }
 

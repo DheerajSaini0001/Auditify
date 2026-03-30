@@ -43,22 +43,33 @@ export const DataProvider = ({ children }) => {
 
     try {
       const screenResolution = `${window.screen.width}x${window.screen.height}`;
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
       
-      // Determine endpoint: use /api/user/audit if token exists
-      const endpoint = localStorage.getItem('auditify_token') 
-        ? '/api/user/audit' 
-        : '/single-audit/audit';
+      const token = localStorage.getItem('auditify_token');
+      const endpoint = token ? '/api/user/audit' : '/single-audit/audit';
 
-      // Use axios (api) to automatically include token
-      const res = await api.post(endpoint, {
-        url: inputValue,
-        device,
-        report,
-        captchaToken, // Backend now expects captchaToken
-        screenResolution
+      const res = await fetch(`${API_URL}${endpoint}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && { "Authorization": `Bearer ${token}` })
+        },
+        body: JSON.stringify({
+          url: inputValue,
+          device,
+          report,
+          captchaToken,
+          screenResolution
+        })
       });
 
-      const auditData = res.data;
+      const result = await handleResponse(res);
+
+      if (!result.success) {
+        return { success: false, error: result.error };
+      }
+
+      const auditData = result.data;
       setData(auditData);
 
       if (auditData.status !== "completed") {

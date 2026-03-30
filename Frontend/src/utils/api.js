@@ -1,31 +1,59 @@
-import axios from 'axios';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:2000';
 
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:2000',
-});
-
-// Request interceptor to add JWT token
-api.interceptors.request.use(config => {
+const createFetchRequest = async (endpoint, options = {}) => {
   const token = localStorage.getItem('auditify_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+  
+  const headers = {
+    'Content-Type': 'application/json',
+    ...options.headers,
+  };
 
-// Response interceptor to handle 401 errors
-api.interceptors.response.use(
-  res => res,
-  err => {
-    if (err.response?.status === 401) {
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const config = {
+    ...options,
+    headers,
+  };
+
+  try {
+    const response = await fetch(`${API_URL}${endpoint}`, config);
+
+    // Handle 401 Unauthorized globally
+    if (response.status === 401) {
       localStorage.removeItem('auditify_token');
-      // Only redirect if we are not already on login/register pages
       if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
         window.location.href = '/login';
       }
+      
+      const errorData = await response.json().catch(() => ({}));
+      return Promise.reject({ response: { status: 401, data: errorData } });
     }
-    return Promise.reject(err);
+
+    let data;
+    try {
+      data = await response.json();
+    } catch (err) {
+      data = null;
+    }
+
+    if (!response.ok) {
+      return Promise.reject({ response: { status: response.status, data } });
+    }
+
+    return { data, status: response.status };
+
+  } catch (error) {
+    return Promise.reject(error);
   }
-);
+};
+
+const api = {
+  get: (endpoint, options) => createFetchRequest(endpoint, { method: 'GET', ...options }),
+  post: (endpoint, body, options) => createFetchRequest(endpoint, { method: 'POST', body: JSON.stringify(body), ...options }),
+  put: (endpoint, body, options) => createFetchRequest(endpoint, { method: 'PUT', body: JSON.stringify(body), ...options }),
+  delete: (endpoint, options) => createFetchRequest(endpoint, { method: 'DELETE', ...options }),
+};
 
 export default api;

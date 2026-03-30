@@ -11,6 +11,7 @@ import UX_Content_Structure from "./Pages/UX_Content_Structure";
 import Conversion_Lead_Flow from "./Pages/Conversion_Lead_Flow";
 import Security_Compilance from "./Pages/Security_Compilance";
 import AIO from "./Pages/AIO";
+import AdminDashboard from "./Pages/AdminDashboard";
 import NotFound from "./Pages/NotFound.jsx";
 import ReportLayout from "./Pages/ReportLayout.jsx";
 import { ThemeProvider, ThemeContext } from "./context/ThemeContext.jsx";
@@ -50,6 +51,7 @@ function AppContentInner() {
           <Route path="/conversion-lead-flow" element={<Conversion_Lead_Flow />} />
           <Route path="/aio" element={<AIO />} />
           <Route path="/about" element={<AboutPage />} />
+          <Route path="/admin" element={<AdminDashboard />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

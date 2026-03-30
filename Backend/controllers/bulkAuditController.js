@@ -2,6 +2,7 @@ import { Worker } from "worker_threads";
 import { join } from "path";
 import BulkAuditReport from "../models/bulkAuditReport.js";
 import SingleAuditReport from "../models/singleAuditReport.js";
+import AuditLog from "../models/AuditLog.js";
 import discoverPages from "../utils/sitemapCrawler.js";
 
 // validate URL and prevent SSRF
@@ -143,8 +144,8 @@ export const auditSelectedUrls = async (req, res) => {
             totalPages: selectedUrls.length
         });
 
-        // Start auditing selected pages in background
-        processSelectedUrls(bulkAudit._id.toString(), selectedUrls, device, report);
+        // Start auditing selected pages in background with tracking info
+        processSelectedUrls(bulkAudit._id.toString(), selectedUrls, device, report, req.tracking);
 
     } catch (error) {
         console.error("Error starting audit:", error);
@@ -155,7 +156,7 @@ export const auditSelectedUrls = async (req, res) => {
 };
 
 // Background process to audit selected URLs
-async function processSelectedUrls(bulkAuditId, selectedUrls, device, report) {
+async function processSelectedUrls(bulkAuditId, selectedUrls, device, report, tracking) {
     try {
         // Audit pages one by one
         for (let i = 0; i < selectedUrls.length; i++) {
@@ -228,8 +229,29 @@ async function processSelectedUrls(bulkAuditId, selectedUrls, device, report) {
                 { $set: { "pages.$.status": "inprogress" } }
             );
 
+            const startTime = Date.now();
+
+            // Create a pending AuditLog entry for this bulk page audit
+            const auditLog = new AuditLog({
+                sessionId: tracking?.sessionId || "bulk-session",
+                ip: tracking?.ip || "unknown",
+                country: tracking?.country || "unknown",
+                city: tracking?.city || "unknown",
+                device: tracking?.device || device,
+                browser: tracking?.browser || "unknown",
+                os: tracking?.os || "unknown",
+                screenResolution: tracking?.screenResolution || "unknown",
+                url: pageUrl,
+                referrer: tracking?.referrer || "bulk-audit",
+                entryPage: tracking?.entryPage || "/bulk-audit",
+                actions: ["visited", "bulk_audit_run"],
+                captchaPassed: true,
+                status: "pending",
+            });
+            auditLog.save().catch(err => console.error("Error saving bulk item AuditLog:", err));
+
             // Start worker for this page
-            await auditSinglePage(bulkAuditId, pageUrl, device, report);
+            await auditSinglePage(bulkAuditId, pageUrl, device, report, auditLog._id, startTime);
 
             // Small delay between audits to prevent overwhelming the server
             await new Promise(resolve => setTimeout(resolve, 2000));
@@ -254,7 +276,7 @@ async function processSelectedUrls(bulkAuditId, selectedUrls, device, report) {
 }
 
 // Audit a single page and save results directly in BulkAudit document
-async function auditSinglePage(bulkAuditId, pageUrl, device, report) {
+async function auditSinglePage(bulkAuditId, pageUrl, device, report, auditLogId) {
     return new Promise(async (resolve) => {
         try {
             const workerPath = join(process.cwd(), "workers", "bulkAuditWorker.js");
@@ -284,10 +306,24 @@ async function auditSinglePage(bulkAuditId, pageUrl, device, report) {
                             $inc: { failedPages: 1 }
                         }
                     );
+
+                    // Update AuditLog
+                    if (auditLogId) {
+                        try {
+                            const duration = Date.now() - startTime;
+                            await AuditLog.findByIdAndUpdate(auditLogId, { 
+                                status: "failed",
+                                auditDuration: duration,
+                                $push: { actions: "failed" }
+                            });
+                        } catch (err) {
+                            console.error("Error updating bulk item AuditLog on error message:", err);
+                        }
+                    }
                 } else if (msg?.success) {
                     console.log(`✅ Page audit completed: ${pageUrl}`);
 
-                    await BulkAuditReport.findOneAndUpdate(
+                    const updatedBulk = await BulkAuditReport.findOneAndUpdate(
                         { _id: bulkAuditId, "pages.url": pageUrl },
                         {
                             $set: {
@@ -295,14 +331,35 @@ async function auditSinglePage(bulkAuditId, pageUrl, device, report) {
                                 "pages.$.completedAt": new Date()
                             },
                             $inc: { completedPages: 1 }
-                        }
+                        },
+                        { new: true }
                     );
+
+                    // Update AuditLog with score and grade
+                    if (auditLogId) {
+                        try {
+                            const pageData = updatedBulk.pages.find(p => p.url === pageUrl);
+                            if (pageData) {
+                                await AuditLog.findByIdAndUpdate(auditLogId, {
+                                    status: "success",
+                                    score: pageData.score,
+                                    grade: pageData.grade,
+                                    auditDuration: duration,
+                                    exitPage: "/bulk-report",
+                                    $push: { actions: "completed" }
+                                });
+                            }
+                        } catch (err) {
+                            console.error("Error updating bulk item AuditLog on success:", err);
+                        }
+                    }
                 }
 
                 resolve();
             });
 
             worker.on("error", async (error) => {
+                const duration = Date.now() - startTime;
                 console.log(`❌ Worker error for ${pageUrl}:`, error.message);
 
                 await BulkAuditReport.findOneAndUpdate(
@@ -316,6 +373,19 @@ async function auditSinglePage(bulkAuditId, pageUrl, device, report) {
                         $inc: { failedPages: 1 }
                     }
                 );
+
+                // Update AuditLog
+                if (auditLogId) {
+                    try {
+                        await AuditLog.findByIdAndUpdate(auditLogId, { 
+                            status: "failed",
+                            auditDuration: duration,
+                            $push: { actions: "failed" }
+                        });
+                    } catch (err) {
+                        console.error("Error updating bulk item AuditLog on worker error:", err);
+                    }
+                }
 
                 resolve();
             });

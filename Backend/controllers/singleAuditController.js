@@ -1,6 +1,7 @@
 import { Worker } from "worker_threads";
 import { join } from "path";
 import SingleAuditReport from "../models/singleAuditReport.js";
+import AuditLog from "../models/AuditLog.js";
 
 export const startAudit = async (req, res) => {
 
@@ -64,6 +65,28 @@ export const startAudit = async (req, res) => {
     });
     await newReport.save();
 
+    // Create a pending AuditLog entry asynchronously
+    const auditLog = new AuditLog({
+      userId: req.user?._id || null, 
+      sessionId: req.tracking.sessionId,
+      ip: req.tracking.ip,
+      country: req.tracking.country,
+      city: req.tracking.city,
+      device: req.tracking.device,
+      browser: req.tracking.browser,
+      os: req.tracking.os,
+      screenResolution: req.body.screenResolution || req.tracking.screenResolution,
+      url: url,
+      referrer: req.tracking.referrer,
+      entryPage: req.tracking.entryPage,
+      actions: ["visited", "audit_run"],
+      captchaPassed: true, // If it reached here, reCAPTCHA middleware passed
+      status: "pending",
+    });
+    auditLog.save().catch(err => console.error("Error saving AuditLog:", err));
+
+    const startTime = Date.now();
+
     res.status(201).json({
       message: "Audit started successfully",
       _id: newReport._id,
@@ -93,15 +116,58 @@ export const startAudit = async (req, res) => {
           error: msg.error,
         });
 
+        // Update AuditLog entry on message error
+        try {
+          const duration = Date.now() - startTime;
+          await AuditLog.findByIdAndUpdate(auditLog._id, { 
+            status: "failed",
+            auditDuration: duration,
+            $push: { actions: "failed" }
+          });
+        } catch (err) {
+          console.error("Error updating AuditLog on message error:", err);
+        }
+
         return;
       }
 
       console.log("✅ Audit Completed Successfully");
+
+      const duration = Date.now() - startTime;
+
+      // Update AuditLog entry
+      try {
+        const finalReport = await SingleAuditReport.findById(newReport._id);
+        if (finalReport) {
+          await AuditLog.findByIdAndUpdate(auditLog._id, {
+            status: "success",
+            score: finalReport.score,
+            grade: finalReport.grade,
+            auditDuration: duration,
+            exitPage: "/report", // Simplified
+            $push: { actions: "completed" }
+          });
+        }
+      } catch (err) {
+        console.error("Error updating AuditLog on success:", err);
+      }
     })
 
     worker.on("error", async () => {
+      const duration = Date.now() - startTime;
       await SingleAuditReport.findByIdAndUpdate(newReport._id, { status: "failed" });
       console.log("❌ Audit Failed");
+
+      // Update AuditLog entry
+      try {
+        await AuditLog.findByIdAndUpdate(auditLog._id, { 
+          status: "failed",
+          auditDuration: duration,
+          $push: { actions: "failed" }
+        });
+      } catch (err) {
+        console.error("Error updating AuditLog on error:", err);
+      }
     });
 
   } catch (error) {

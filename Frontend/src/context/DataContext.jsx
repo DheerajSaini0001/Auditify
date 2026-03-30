@@ -43,11 +43,18 @@ export const DataProvider = ({ children }) => {
     try {
       // Use environment variable for API URL
       const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
+      const screenResolution = `${window.screen.width}x${window.screen.height}`;
 
       const res = await fetch(`${API_URL}/single-audit/audit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: inputValue, device: device, report: report, recaptchaToken: recaptchaToken }),
+        body: JSON.stringify({ 
+          url: inputValue, 
+          device: device, 
+          report: report, 
+          recaptchaToken: recaptchaToken,
+          screenResolution 
+        }),
       });
 
       const result = await handleResponse(res);
@@ -126,10 +133,19 @@ export const DataProvider = ({ children }) => {
   const startBulkAudit = async (url, selectedUrls, device, report, recaptchaToken) => {
     try {
       const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
+      const screenResolution = `${window.screen.width}x${window.screen.height}`;
+
       const res = await fetch(`${API_URL}/bulk-audit/audit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url, selectedUrls, device, report, recaptchaToken }),
+        body: JSON.stringify({ 
+          url, 
+          selectedUrls, 
+          device, 
+          report, 
+          recaptchaToken,
+          screenResolution
+        }),
       });
 
       return await handleResponse(res);

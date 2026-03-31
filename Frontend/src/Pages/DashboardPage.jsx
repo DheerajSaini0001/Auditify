@@ -31,16 +31,18 @@ const DashboardPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Handle Scroll to Hash
+  // Handle Scroll to Hash or Top
   useEffect(() => {
     if (location.hash === '#audit-history') {
       const element = document.getElementById('audit-history');
       if (element) {
-        // Small timeout to ensure the element is rendered and data is loaded
         setTimeout(() => {
           element.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 300);
       }
+    } else {
+      // Scroll to top if no hash (to ensure fresh dashboard view)
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [location]);
 

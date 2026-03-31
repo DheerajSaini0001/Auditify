@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { ThemeContext } from '../context/ThemeContext.jsx';
 import { User, Mail, Lock, Eye, EyeOff, Loader2, CheckCircle, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const RegisterPage = () => {
+  const { theme } = useContext(ThemeContext);
+  const darkMode = theme === "dark";
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -69,27 +72,31 @@ const RegisterPage = () => {
   const strength = passwordStrength(formData.password);
 
   return (
-    <div className="min-h-screen flex flex-col justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className={`min-h-screen flex flex-col justify-center transition-colors duration-300 py-12 px-4 sm:px-6 lg:px-8 ${darkMode ? "bg-[#0a0a0f]" : "bg-gray-50"}`}>
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center mb-8">
           <div className="h-16 w-16 rounded-3xl bg-emerald-600 flex items-center justify-center shadow-2xl shadow-emerald-500/40">
             <span className="text-white text-3xl font-black italic">A</span>
           </div>
         </div>
-        <h2 className="text-center text-4xl font-black text-gray-900 tracking-tight">Join Auditify</h2>
+        <h2 className={`text-center text-4xl font-black tracking-tight ${darkMode ? "text-white" : "text-gray-900"}`}>Join Auditify</h2>
         <p className="mt-3 text-center text-gray-500 font-medium tracking-wide">Start your professional website auditing journey</p>
       </div>
 
       <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-12 px-10 rounded-3xl shadow-xl border border-gray-100">
+        <div className={`py-12 px-10 rounded-3xl shadow-xl border transition-colors ${darkMode ? "bg-[#11111a] border-white/5" : "bg-white border-gray-100"}`}>
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 font-bold"><User className="h-5 w-5" /></div>
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 font-bold"><User className="h-5 w-5" /></div>
               <input
                 name="name"
                 type="text"
                 required
-                className="block w-full pl-12 pr-4 py-3.5 rounded-2xl bg-gray-50 border-gray-100 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 transition-all font-medium placeholder:text-gray-400"
+                className={`block w-full pl-12 pr-4 py-3.5 rounded-2xl transition-all font-medium placeholder:text-gray-500 outline-none border ${
+                  darkMode 
+                    ? "bg-white/5 border-white/5 focus:bg-white/10 focus:border-emerald-500/50 text-white" 
+                    : "bg-gray-50 border-gray-100 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 text-gray-900"
+                }`}
                 placeholder="Full Name"
                 value={formData.name}
                 onChange={handleChange}
@@ -97,12 +104,16 @@ const RegisterPage = () => {
             </div>
 
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 font-bold"><Mail className="h-5 w-5" /></div>
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 font-bold"><Mail className="h-5 w-5" /></div>
               <input
                 name="email"
                 type="email"
                 required
-                className="block w-full pl-12 pr-4 py-3.5 rounded-2xl bg-gray-50 border-gray-100 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 transition-all font-medium placeholder:text-gray-400"
+                className={`block w-full pl-12 pr-4 py-3.5 rounded-2xl transition-all font-medium placeholder:text-gray-500 outline-none border ${
+                  darkMode 
+                    ? "bg-white/5 border-white/5 focus:bg-white/10 focus:border-emerald-500/50 text-white" 
+                    : "bg-gray-50 border-gray-100 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 text-gray-900"
+                }`}
                 placeholder="Email address"
                 value={formData.email}
                 onChange={handleChange}
@@ -110,12 +121,16 @@ const RegisterPage = () => {
             </div>
 
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 font-bold"><Lock className="h-5 w-5" /></div>
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 font-bold"><Lock className="h-5 w-5" /></div>
               <input
                 name="password"
                 type={showPassword ? 'text' : 'password'}
                 required
-                className="block w-full pl-12 pr-12 py-3.5 rounded-2xl bg-gray-50 border-gray-100 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 transition-all font-medium placeholder:text-gray-400"
+                className={`block w-full pl-12 pr-12 py-3.5 rounded-2xl transition-all font-medium placeholder:text-gray-500 outline-none border ${
+                  darkMode 
+                    ? "bg-white/5 border-white/5 focus:bg-white/10 focus:border-emerald-500/50 text-white" 
+                    : "bg-gray-50 border-gray-100 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 text-gray-900"
+                }`}
                 placeholder="Password (8+ chars, 1 Uppercase, 1 Digit)"
                 value={formData.password}
                 onChange={handleChange}
@@ -139,7 +154,7 @@ const RegisterPage = () => {
                             : strength === 3
                             ? 'bg-amber-500'
                             : 'bg-emerald-500'
-                          : 'bg-gray-100'
+                          : darkMode ? "bg-white/10" : 'bg-gray-100'
                       }`}
                     ></div>
                   ))}
@@ -153,12 +168,16 @@ const RegisterPage = () => {
             )}
 
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 font-bold"><Lock className="h-5 w-5" /></div>
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 font-bold"><Lock className="h-5 w-5" /></div>
               <input
                 name="confirmPassword"
                 type={showPassword ? 'text' : 'password'}
                 required
-                className="block w-full pl-12 pr-4 py-3.5 rounded-2xl bg-gray-50 border-gray-100 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 transition-all font-medium placeholder:text-gray-400"
+                className={`block w-full pl-12 pr-4 py-3.5 rounded-2xl transition-all font-medium placeholder:text-gray-500 outline-none border ${
+                  darkMode 
+                    ? "bg-white/5 border-white/5 focus:bg-white/10 focus:border-emerald-500/50 text-white" 
+                    : "bg-gray-50 border-gray-100 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 text-gray-900"
+                }`}
                 placeholder="Confirm Password"
                 value={formData.confirmPassword}
                 onChange={handleChange}
@@ -174,9 +193,9 @@ const RegisterPage = () => {
             </button>
           </form>
 
-          <p className="mt-8 text-center text-sm font-bold text-gray-400">
+          <p className={`mt-8 text-center text-sm font-bold uppercase tracking-tighter ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
             Already have an account?{' '}
-            <Link to="/login" className="text-emerald-600 hover:text-emerald-500 transition-colors ml-1 uppercase tracking-wider">Sign In</Link>
+            <Link to="/login" className="text-emerald-600 hover:text-emerald-500 transition-colors ml-1 tracking-wider">Sign In</Link>
           </p>
         </div>
       </div>

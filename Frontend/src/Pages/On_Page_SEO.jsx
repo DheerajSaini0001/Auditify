@@ -1391,7 +1391,7 @@ const HeadingHierarchyCard = ({ data, darkMode, onInfo }) => {
 
               {/* Ask AI Button */}
               <AskAIButton
-                finding={{ type: 'On-Page SEO', title: 'Heading Hierarchy', details: data?.analysis?.recommendation || '', severity: isPassed ? 'pass' : isWarning ? 'warning' : 'critical', url: '' }}
+                finding={{ type: 'On-Page SEO', title: 'Heading Hierarchy', details: data?.analysis?.recommendation || '', severity: status === 'pass' ? 'pass' : status === 'warning' ? 'warning' : 'critical', url: '' }}
                 darkMode={darkMode}
                 meta={meta}
               />

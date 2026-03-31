@@ -26,13 +26,16 @@ const trackingMiddleware = (req, res, next) => {
   }
 
   // Try to get location from headers (Cloudflare, etc.)
+  // Try to get location from headers (Cloudflare, etc.)
   let country = req.headers["cf-ipcountry"] || req.headers["x-country-code"] || "unknown";
+  let region = req.headers["cf-region-code"] || req.headers["cf-region"] || "unknown"; // State
   let city = req.headers["cf-ipcity"] || "unknown";
 
   // If localhost, set friendly location labels
   if (ip === "127.0.0.1") {
     country = "Localhost";
-    city = "Development";
+    region = "Development-Lab"; // State label for localhost
+    city = "Workstation";
   }
 
   const device = uaResults.device.type || "desktop";
@@ -49,6 +52,7 @@ const trackingMiddleware = (req, res, next) => {
     sessionId,
     ip,
     country,
+    region,
     city,
     device,
     browser,

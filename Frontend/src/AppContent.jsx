@@ -11,9 +11,14 @@ import UX_Content_Structure from "./Pages/UX_Content_Structure";
 import Conversion_Lead_Flow from "./Pages/Conversion_Lead_Flow";
 import Security_Compilance from "./Pages/Security_Compilance";
 import AIO from "./Pages/AIO";
-import Login from "./Pages/Login";
-import Register from "./Pages/Register";
-import UserDashboard from "./Pages/UserDashboard";
+import LoginPage from "./Pages/LoginPage";
+import RegisterPage from "./Pages/RegisterPage";
+import OtpVerifyPage from "./Pages/OtpVerifyPage";
+import ForgotPasswordPage from "./Pages/ForgotPasswordPage";
+import ResetPasswordPage from "./Pages/ResetPasswordPage";
+import AuthCallbackPage from "./Pages/AuthCallbackPage";
+import DashboardPage from "./Pages/DashboardPage";
+import AddWebsitePage from "./Pages/AddWebsitePage";
 import AdminDashboard from "./Pages/AdminDashboard";
 import ReportLayout from "./Pages/ReportLayout.jsx";
 import NotFound from "./Pages/NotFound.jsx";
@@ -32,14 +37,24 @@ function AppContentInner() {
         <Route element={<MainLayout />}>
           {/* Public Routes */}
           <Route path="/" element={<Homepage />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/verify-otp" element={<OtpVerifyPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/auth/callback" element={<AuthCallbackPage />} />
           <Route path="/about" element={<AboutPage />} />
 
           {/* Protected User Routes */}
           <Route path="/dashboard" element={
             <ProtectedRoute>
-              <UserDashboard />
+              <DashboardPage />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/dashboard/add-website" element={
+            <ProtectedRoute>
+              <AddWebsitePage />
             </ProtectedRoute>
           } />
           

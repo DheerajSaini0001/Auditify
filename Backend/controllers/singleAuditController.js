@@ -68,9 +68,9 @@ export const startAudit = async (req, res) => {
 
     // Create a pending AuditLog entry asynchronously
     const auditLog = new AuditLog({
-      userId: req.user?._id || null, 
-      sessionId: req.tracking.sessionId,
-      ip: req.tracking.ip,
+      userId: req.user?.userId || null, 
+      sessionId: req.tracking?.sessionId || 'N/A',
+      ip: req.tracking?.ip || '0.0.0.0',
       country: req.tracking.country,
       city: req.tracking.city,
       device: req.tracking.device,
@@ -78,8 +78,10 @@ export const startAudit = async (req, res) => {
       os: req.tracking.os,
       screenResolution: req.body.screenResolution || req.tracking.screenResolution,
       url: url,
-      referrer: req.tracking.referrer,
-      entryPage: req.tracking.entryPage,
+      reportId: newReport._id,
+      reportType: report,
+      referrer: req.tracking?.referrer || 'direct',
+      entryPage: req.tracking?.entryPage || '/',
       actions: ["visited", "audit_run"],
       captchaPassed: true,
       status: "pending",
@@ -160,7 +162,7 @@ export const startAudit = async (req, res) => {
             score: finalReport.score,
             grade: finalReport.grade,
             auditDuration: duration,
-            exitPage: "/report", // Simplified
+            exitPage: "/report",
             $push: { actions: "completed" }
           });
         }

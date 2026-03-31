@@ -4,6 +4,7 @@ import AuditLog from '../models/AuditLog.js';
 
 export const getAllUsers = async (req, res) => {
   try {
+    console.log(`[Admin] Fetching all users... (Requested by Admin: ${req.user.userId})`);
     const { page = 1, limit = 20, search, role } = req.query;
 
     const query = {};
@@ -19,15 +20,18 @@ export const getAllUsers = async (req, res) => {
       .select('-password')
       .skip((page - 1) * limit)
       .limit(parseInt(limit))
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 }) || [];
 
-    const total = await User.countDocuments(query);
+    const total = await User.countDocuments(query) || 0;
+
+    console.log(`[Admin] Users found: ${users.length} of ${total} total.`);
 
     res.json({
+      success: true,
       users,
       total,
       page: parseInt(page),
-      totalPages: Math.ceil(total / limit),
+      totalPages: Math.ceil(total / limit) || 1,
     });
   } catch (error) {
     res.status(500).json({ error: 'Internal server error', code: 'SERVER_ERROR' });
@@ -125,16 +129,32 @@ export const deleteUser = async (req, res) => {
 
 export const getAuditLogs = async (req, res) => {
   try {
-    const { page = 1, limit = 20, ip, from, to } = req.query;
+    const { 
+      page = 1, 
+      limit = 20, 
+      ip, 
+      status, 
+      device, 
+      captcha, 
+      score 
+    } = req.query;
+
+    console.log(`[Admin Filter Action] Filtering logs with: Status:[${status}] Device:[${device}] Captcha:[${captcha}] Score:[${score}]`);
 
     const query = {};
-    if (ip) {
-      query.ip = { $regex: ip, $options: 'i' };
+    if (ip) query.ip = { $regex: ip, $options: 'i' };
+    if (status) query.status = status;
+    if (device) query.device = device;
+    
+    if (captcha === 'true') {
+      query.captchaPassed = true;
+    } else if (captcha === 'false') {
+      query.captchaPassed = { $ne: true };
     }
-    if (from || to) {
-      query.createdAt = {};
-      if (from) query.createdAt.$gte = new Date(from);
-      if (to) query.createdAt.$lte = new Date(to);
+
+    if (score) {
+      const [min, max] = score.split('-').map(Number);
+      query.score = { $gte: min, $lte: max };
     }
 
     const logs = await AuditLog.find(query)
@@ -144,19 +164,18 @@ export const getAuditLogs = async (req, res) => {
       .sort({ createdAt: -1 });
 
     const total = await AuditLog.countDocuments(query);
-    
-    // Aggregate unique IPs count
     const uniqueIps = await AuditLog.distinct('ip');
 
     res.json({
-      logs,
-      total,
+      success: true,
+      logs: logs || [],
+      total: total || 0,
       uniqueIpsCount: uniqueIps.length,
       page: parseInt(page),
-      totalPages: Math.ceil(total / limit),
+      totalPages: Math.ceil(total / limit) || 1,
     });
   } catch (error) {
-    console.error('getAuditLogs Error:', error);
+    console.error('getAuditLogs Critical Error:', error);
     res.status(500).json({ error: 'Internal server error', code: 'SERVER_ERROR' });
   }
 };
@@ -181,13 +200,16 @@ export const getStats = async (req, res) => {
     // For now, let's just count failed audits status as suspicious signal
     const suspiciousCount = await AuditLog.countDocuments({ status: 'failed' });
 
+    console.log(`[Admin Stats Request] Total Users: ${totalUsers} | Total Audits: ${totalAudits} | Unique IPs: ${uniqueIps.length}`);
+
     res.json({
-      totalUsers,
-      totalAudits,
-      activeToday,
-      blockedUsers,
-      uniqueIpsCount: uniqueIps.length,
-      suspiciousCount
+      success: true,
+      totalUsers: totalUsers || 0,
+      totalAudits: totalAudits || 0,
+      activeToday: activeToday || 0,
+      blockedUsers: blockedUsers || 0,
+      uniqueIpsCount: uniqueIps.length || 0,
+      suspiciousCount: suspiciousCount || 0
     });
   } catch (error) {
     res.status(500).json({ error: 'Internal server error', code: 'SERVER_ERROR' });

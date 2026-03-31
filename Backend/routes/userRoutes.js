@@ -24,7 +24,6 @@ router.post('/audit', [
   body('url').isURL({ require_protocol: true }).withMessage('Valid URL with http/https required'),
   body('device').isIn(['Desktop', 'Mobile']).withMessage('Invalid device type'),
   validate,
-  verifyCaptcha
 ], startAudit);
 
 router.get('/report/:singleAuditId', getReportById);

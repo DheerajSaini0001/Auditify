@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
 import { ThemeContext } from "../context/ThemeContext.jsx";
-import { Menu, X, Sun, Moon, Home, NotebookPen, Plus, User, LogOut, LayoutDashboard } from "lucide-react";
+import { Menu, X, Sun, Moon, Home, NotebookPen, Plus, User, LogOut, LayoutDashboard, ShieldCheck, History, ChevronDown } from "lucide-react";
 import Assets from "../assets/Assets.js";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useData } from "../context/DataContext.jsx";
@@ -12,6 +12,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
 
   const { data, clearData } = useData();
   const { isAuthenticated, isLoading, logout, user } = useAuth();
+  const [profileOpen, setProfileOpen] = React.useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -102,27 +103,98 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
             )}
 
             {/* Auth Actions */}
-            <div className="flex items-center gap-2 min-w-20 lg:min-w-32">
+            <div className="flex items-center gap-2">
               {!isLoading && (
                 isAuthenticated ? (
-                  <div className="flex items-center gap-2">
-                    <Link
-                      to={user?.role === "admin" ? "/admin" : "/dashboard"}
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-bold transition-all border ${buttonClass}`}
-                    >
-                      <LayoutDashboard className="w-4 h-4 text-emerald-500" />
-                      <span className="hidden md:inline">Dashboard</span>
-                    </Link>
+                  <div className="relative">
                     <button
-                      onClick={logout}
-                      className={`p-2 rounded-lg border transition-all duration-200 ${buttonClass}`}
-                      title="Logout"
+                      onClick={() => setProfileOpen(!profileOpen)}
+                      className={`flex items-center gap-2 p-1 pl-2 rounded-full border transition-all duration-300 ${buttonClass}`}
                     >
-                      <LogOut className="w-4 h-4 text-rose-500" />
+                      <div className="hidden sm:flex flex-col items-end mr-1">
+                        <span className="text-[10px] font-bold leading-none truncate max-w-[80px]">{user?.name?.split(' ')[0]}</span>
+                        <span className="text-[8px] font-black uppercase text-blue-500 tracking-tighter">{user?.role}</span>
+                      </div>
+                      
+                      {user?.avatar ? (
+                        <img src={user.avatar} alt="Profile" className="w-8 h-8 rounded-full border border-white/20 shadow-sm" />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-black">
+                          {user?.name?.charAt(0)}
+                        </div>
+                      )}
+                      <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform duration-300 ${profileOpen ? 'rotate-180' : ''}`} />
                     </button>
+
+                    {/* Profile Dropdown */}
+                    {profileOpen && (
+                      <>
+                        <div className="fixed inset-0 z-10" onClick={() => setProfileOpen(false)}></div>
+                        <div className={`absolute right-0 mt-3 w-56 rounded-3xl border shadow-2xl z-20 py-3 overflow-hidden animate-in fade-in zoom-in duration-200 ${
+                          darkMode ? "bg-[#0B1120] border-slate-800" : "bg-white border-slate-100"
+                        }`}>
+                          <div className="px-5 pb-3 mb-2 border-b border-slate-800/10">
+                            <p className="text-[10px] font-black uppercase text-gray-500 tracking-widest mb-1">Signed in as</p>
+                            <p className="font-bold text-sm truncate">{user?.email}</p>
+                          </div>
+
+                          <div className="space-y-1">
+                            <Link to="/dashboard" onClick={() => setProfileOpen(false)} className={`flex items-center gap-3 px-5 py-2.5 text-sm font-bold transition-all ${darkMode ? "hover:bg-white/5" : "hover:bg-slate-50"}`}>
+                              <LayoutDashboard size={16} className="text-emerald-500" /> Dashboard
+                            </Link>
+                            
+                            <Link to="/dashboard" onClick={() => setProfileOpen(false)} className={`flex items-center gap-3 px-5 py-2.5 text-sm font-bold transition-all ${darkMode ? "hover:bg-white/5" : "hover:bg-slate-50"}`}>
+                              <History size={16} className="text-indigo-500" /> Audit History
+                            </Link>
+
+                            {user?.role === 'admin' && (
+                              <Link to="/admin" onClick={() => setProfileOpen(false)} className={`flex items-center gap-3 px-5 py-2.5 text-sm font-bold transition-all ${darkMode ? "hover:bg-white/5" : "hover:bg-slate-50"}`}>
+                                <ShieldCheck size={16} className="text-blue-500" /> Admin Panel
+                              </Link>
+                            )}
+
+                            <div className="my-2 border-t border-slate-800/10"></div>
+                            
+                            <button 
+                              onClick={() => toggleTheme()}
+                              className={`w-full flex items-center justify-between px-5 py-2.5 text-sm font-bold transition-all ${darkMode ? "hover:bg-white/5" : "hover:bg-slate-50"}`}
+                            >
+                              <div className="flex items-center gap-3">
+                                {darkMode ? <Sun size={16} className="text-amber-400" /> : <Moon size={16} className="text-indigo-500" />}
+                                {darkMode ? "Light Mode" : "Dark Mode"}
+                              </div>
+                              <div className={`w-8 h-4 rounded-full relative transition-colors duration-300 ${darkMode ? "bg-amber-400/20" : "bg-slate-200"}`}>
+                                <div className={`absolute top-0.5 w-3 h-3 rounded-full transition-all duration-300 ${darkMode ? "right-0.5 bg-amber-400" : "left-0.5 bg-slate-400"}`}></div>
+                              </div>
+                            </button>
+
+                            <div className="my-2 border-t border-slate-800/10"></div>
+                            
+                            <button 
+                              onClick={() => { logout(); setProfileOpen(false); }}
+                              className={`w-full flex items-center gap-3 px-5 py-2.5 text-sm font-bold text-rose-500 transition-all ${darkMode ? "hover:bg-rose-500/10" : "hover:bg-rose-50"}`}
+                            >
+                              <LogOut size={16} /> Logout
+                            </button>
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
+                    {/* Theme Toggle (Outside for guests) */}
+                    <button
+                      onClick={toggleTheme}
+                      className={`p-2 rounded-lg border transition-all duration-200 ${buttonClass} mr-1`}
+                      aria-label="Toggle Theme"
+                    >
+                      {darkMode ? (
+                        <Sun className="w-5 h-5 text-amber-400 fill-amber-400/20" />
+                      ) : (
+                        <Moon className="w-5 h-5 text-indigo-500 fill-indigo-500/20" />
+                      )}
+                    </button>
                     <Link to="/login">
                       <button className={`px-4 py-1.5 rounded-lg text-sm font-bold border ${buttonClass}`}>
                         Login
@@ -137,20 +209,6 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
                 )
               )}
             </div>
-
-            {/* Theme Toggle */}
-            <button
-              onClick={toggleTheme}
-              className={`p-2 rounded-lg border transition-all duration-200 ${buttonClass}`}
-              aria-label="Toggle Theme"
-            >
-              {darkMode ? (
-                <Sun className="w-5 h-5 text-amber-400 fill-amber-400/20" />
-              ) : (
-                <Moon className="w-5 h-5 text-indigo-500 fill-indigo-500/20" />
-              )}
-            </button>
-
           </div>
         </div>
       </div>

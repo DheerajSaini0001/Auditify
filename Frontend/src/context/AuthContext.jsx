@@ -1,89 +1,78 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
-const AuthContext = createContext({
-  user: null,                  
-  token: null,                 
-  isAuthenticated: false,
-  isLoading: true,             
-  login: async (email, password, captchaToken) => {},
-  register: async (name, email, password, captchaToken) => {},
-  logout: () => {},
-  isAdmin: () => false,        
-});
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:2000';
+const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('auditify_token'));
   const [isLoading, setIsLoading] = useState(true);
 
+  // 5.2 Standard fetch wrapper (apiFetch)
+  const apiFetch = useCallback(async (url, options = {}) => {
+    const currentToken = localStorage.getItem('auditify_token');
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:2000';
+    
+    const res = await fetch(`${API_URL}${url}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(currentToken ? { Authorization: `Bearer ${currentToken}` } : {}),
+        ...options.headers,
+      },
+    });
+
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      data = { message: 'Failed to parse response' };
+    }
+
+    return { ok: res.ok, status: res.status, data };
+  }, []);
+
+  // Validation on mount
   useEffect(() => {
-    const validateToken = async () => {
+    const loadUser = async () => {
       if (!token) {
         setIsLoading(false);
         return;
       }
 
       try {
-        const response = await axios.get(`${API_URL}/api/auth/me`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setUser(response.data.user);
-      } catch (error) {
-        console.error('Token validation failed:', error);
-        localStorage.removeItem('auditify_token');
-        setToken(null);
-        setUser(null);
+        const { ok, data } = await apiFetch('/api/auth/me');
+        if (ok) {
+          setUser(data.user);
+        } else {
+          // Token invalid or expired
+          localStorage.removeItem('auditify_token');
+          setToken(null);
+          setUser(null);
+        }
+      } catch (err) {
+        console.error('Auth check failed:', err);
       } finally {
         setIsLoading(false);
       }
     };
 
-    validateToken();
-  }, [token]);
+    loadUser();
+  }, [token, apiFetch]);
 
-  const login = async (email, password, captchaToken) => {
-    try {
-      const response = await axios.post(`${API_URL}/api/auth/login`, {
-        email,
-        password,
-        captchaToken
-      });
-      const { token: newToken, user: newUser } = response.data;
-      localStorage.setItem('auditify_token', newToken);
-      setToken(newToken);
-      setUser(newUser);
-      return { success: true, user: newUser };
-    } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.error || 'Login failed',
-        code: error.response?.data?.code
-      };
-    }
-  };
-
-  const register = async (name, email, password, captchaToken) => {
-    try {
-      const response = await axios.post(`${API_URL}/api/auth/register`, {
-        name,
-        email,
-        password,
-        captchaToken
-      });
-      const { token: newToken, user: newUser } = response.data;
-      localStorage.setItem('auditify_token', newToken);
-      setToken(newToken);
-      setUser(newUser);
-      return { success: true, user: newUser };
-    } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.error || 'Registration failed',
-        code: error.response?.data?.code
-      };
+  const login = (newToken, userData = null) => {
+    localStorage.setItem('auditify_token', newToken);
+    setToken(newToken);
+    
+    if (userData) {
+      setUser(userData);
+    } else {
+      // Quick decode fallback
+      try {
+          const payload = JSON.parse(atob(newToken.split('.')[1]));
+          setUser({ _id: payload.userId, email: payload.email });
+      } catch (e) {
+          console.error('JWT Decode failed', e);
+      }
     }
   };
 
@@ -91,20 +80,19 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('auditify_token');
     setToken(null);
     setUser(null);
+    window.location.href = '/login'; // Force redirect as per SRS 6.33
   };
 
-  const isAdmin = () => user?.role === 'admin';
-
   return (
-    <AuthContext.Provider value={{
-      user,
-      token,
-      isAuthenticated: !!user,
-      isLoading,
-      login,
-      register,
-      logout,
-      isAdmin,
+    <AuthContext.Provider value={{ 
+        user, 
+        token, 
+        login, 
+        logout, 
+        isLoading, 
+        apiFetch,
+        isAuthenticated: !!user,
+        isAdmin: user?.role === 'admin' // Preserving for admin routes
     }}>
       {children}
     </AuthContext.Provider>

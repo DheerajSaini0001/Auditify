@@ -1,22 +1,23 @@
 import User from '../models/User.js';
 import ActivityLog from '../models/ActivityLog.js';
+import AuditLog from '../models/AuditLog.js';
 
 export const getHistory = async (req, res) => {
   try {
     const { page = 1, limit = 10 } = req.query;
     
-    // Audits are logged as 'AUDIT_RUN' in ActivityLog
-    const audits = await ActivityLog.find({ 
+    // Use AuditLog for granular audit details
+    const audits = await AuditLog.find({ 
       userId: req.user.userId, 
-      action: 'AUDIT_RUN' 
+      status: 'success'
     })
-    .sort({ timestamp: -1 })
+    .sort({ createdAt: -1 })
     .skip((page - 1) * limit)
     .limit(parseInt(limit));
 
-    const total = await ActivityLog.countDocuments({ 
+    const total = await AuditLog.countDocuments({ 
       userId: req.user.userId, 
-      action: 'AUDIT_RUN' 
+      status: 'success'
     });
 
     res.json({

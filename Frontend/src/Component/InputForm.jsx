@@ -3,6 +3,7 @@ import { Loader2, Search, Monitor, Smartphone, ChevronDown, Settings, AlertCircl
 import { useData } from "../context/DataContext.jsx";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ThemeContext } from "../context/ThemeContext.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 import Assets from "../assets/Assets.js";
 import ReCAPTCHA from "react-google-recaptcha";
 import { useRef } from "react";
@@ -73,6 +74,7 @@ const CustomDropdown = ({ value, onChange, options, icon, darkMode, disabled }) 
 export default function InputForm() {
   const { fetchData, data, loading } = useData();
   const { theme } = useContext(ThemeContext);
+  const { user } = useAuth();
   const darkMode = theme === "dark";
 
   const [inputValue, setInputValue] = useState("");
@@ -88,9 +90,34 @@ export default function InputForm() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Auto-fill from lost report recovery
+  // Auto-fill from query params or lost report recovery
   useEffect(() => {
-    if (location.state?.autoFill) {
+    const params = new URLSearchParams(location.search);
+    const queryUrl = params.get("url");
+
+    if (queryUrl) {
+      setInputValue(queryUrl);
+      
+      // Auto-trigger audit logic
+      const runDirectly = async () => {
+        // If logged in, skip captcha and run
+        if (localStorage.getItem('auditify_token')) {
+          let urlToFetch = queryUrl.trim();
+          if (!/^https?:\/\//i.test(urlToFetch)) {
+            urlToFetch = `https://${urlToFetch}`;
+          }
+          await fetchData(urlToFetch, device, report, null);
+        } else {
+          // Guest user: just show captcha modal for the URL
+          setShowCaptcha(true);
+        }
+      };
+
+      runDirectly();
+      
+      // Remove query param from URL to clean up browser history
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (location.state?.autoFill) {
       setInputValue(location.state.url);
       setDevice(location.state.device);
       setReport(location.state.report);
@@ -100,7 +127,7 @@ export default function InputForm() {
       // Clear state to prevent loop if user reloads
       window.history.replaceState({}, document.title);
     }
-  }, [location.state]);
+  }, [location.search, location.state]);
 
   // Handle submit (v2 Click → Trigger Modal)
   const handleClick = (e) => {

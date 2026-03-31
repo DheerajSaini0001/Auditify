@@ -19,6 +19,10 @@ const auditLogSchema = new mongoose.Schema(
       type: String,
       default: "unknown",
     },
+    region: {
+      type: String,
+      default: "unknown", // State / Province
+    },
     city: {
       type: String,
       default: "unknown",
@@ -42,6 +46,15 @@ const auditLogSchema = new mongoose.Schema(
     url: {
       type: String,
       required: true,
+    },
+    reportId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "SingleAuditReport",
+      default: null,
+    },
+    reportType: {
+      type: String,
+      default: "All",
     },
     score: {
       type: Number,

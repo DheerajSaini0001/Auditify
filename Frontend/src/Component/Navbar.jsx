@@ -143,7 +143,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
                               <LayoutDashboard size={16} className="text-emerald-500" /> Dashboard
                             </Link>
                             
-                            <Link to="/dashboard" onClick={() => setProfileOpen(false)} className={`flex items-center gap-3 px-5 py-2.5 text-sm font-bold transition-all ${darkMode ? "hover:bg-white/5" : "hover:bg-slate-50"}`}>
+                            <Link to="/dashboard#audit-history" onClick={() => setProfileOpen(false)} className={`flex items-center gap-3 px-5 py-2.5 text-sm font-bold transition-all ${darkMode ? "hover:bg-white/5" : "hover:bg-slate-50"}`}>
                               <History size={16} className="text-indigo-500" /> Audit History
                             </Link>
 

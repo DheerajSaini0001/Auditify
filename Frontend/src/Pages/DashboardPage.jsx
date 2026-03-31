@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext.jsx';
 import { 
@@ -29,6 +29,20 @@ const DashboardPage = () => {
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Handle Scroll to Hash
+  useEffect(() => {
+    if (location.hash === '#audit-history') {
+      const element = document.getElementById('audit-history');
+      if (element) {
+        // Small timeout to ensure the element is rendered and data is loaded
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 300);
+      }
+    }
+  }, [location]);
 
   const [websites, setWebsites] = useState([]);
   const [history, setHistory] = useState([]);
@@ -294,7 +308,7 @@ const DashboardPage = () => {
         </section>
 
         {/* Audit History section */}
-        <section className="space-y-6">
+        <section id="audit-history" className="space-y-6">
            <h2 className="text-xl font-black flex items-center gap-2">
               <History className="text-indigo-500" size={20} /> Recent Audit Activity
            </h2>

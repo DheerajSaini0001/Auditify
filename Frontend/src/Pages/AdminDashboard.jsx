@@ -259,7 +259,6 @@ const AdminDashboard = () => {
                       <th className="px-8 py-6 text-center">Auth</th>
                       <th className="px-8 py-6 text-center">Verified</th>
                       <th className="px-8 py-6">Status</th>
-                      <th className="px-8 py-6">Last Login</th>
                       <th className="px-8 py-6">Joined</th>
                       <th className="px-8 py-6 text-right">Actions</th>
                     </tr>
@@ -281,8 +280,8 @@ const AdminDashboard = () => {
                               )}
                             </div>
                             <div>
-                              <p className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{u.name}</p>
-                              <p className={`text-sm whitespace-nowrap ${darkMode ? 'text-gray-500' : 'text-slate-500'}`}>{u.email}</p>
+                               <p className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{u.name}</p>
+                               <p className={`text-sm whitespace-nowrap ${darkMode ? 'text-gray-500' : 'text-slate-500'}`}>{u.email}</p>
                             </div>
                           </div>
                         </td>
@@ -307,9 +306,6 @@ const AdminDashboard = () => {
                             <div className={`w-1.5 h-1.5 rounded-full ${u.isBlocked ? 'bg-red-500' : 'bg-emerald-500 animate-pulse'}`}></div>
                             {u.isBlocked ? 'Suspended' : 'Active'}
                           </span>
-                        </td>
-                        <td className={`px-8 py-5 text-[11px] whitespace-nowrap ${darkMode ? 'text-gray-400' : 'text-slate-600'}`}>
-                          {u.lastLogin ? formatTimestamp(u.lastLogin) : 'Never'}
                         </td>
                         <td className={`px-8 py-5 text-[11px] whitespace-nowrap ${darkMode ? 'text-gray-500' : 'text-slate-400'}`}>
                           {formatTimestamp(u.createdAt)}

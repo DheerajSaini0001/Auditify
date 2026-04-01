@@ -23,7 +23,21 @@ const app = express();
 
 app.set('trust proxy', 1);
 
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://static.cloudflareinsights.com", "https://accounts.google.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      imgSrc: ["'self'", "data:", "https://*.googleusercontent.com", "https://www.gstatic.com"],
+      connectSrc: ["'self'", "https://*.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      objectSrc: ["'none'"],
+      upgradeInsecureRequests: [],
+    },
+  },
+  crossOriginOpenerPolicy: { policy: "unsafe-none" } // Required for Google OAuth redirect
+}));
 
 // 4.2.1 Manual CORS Middleware (replaces cors npm package)
 app.use((req, res, next) => {

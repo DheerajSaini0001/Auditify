@@ -21,7 +21,17 @@ const SiteReportSchema = new mongoose.Schema(
     aioReadiness: { type: Object, default: null },
     error: { type: String, default: null },
     screenshot: { type: String, default: null },
-    createdAt: { type: Date, default: Date.now, expires: 60 * 60 * 1 }, // 1 hour expiry
+    createdAt: { type: Date, default: Date.now }, 
+  }
+);
+
+// Partial Unique Index to prevent multiple SUCCESSFUL or IN-PROGRESS audits for the same target
+// This allows re-auditing if current record is 'failed'
+SiteReportSchema.index(
+  { url: 1, device: 1, report: 1 }, 
+  { 
+    unique: true, 
+    partialFilterExpression: { status: { $ne: 'failed' } } 
   }
 );
 

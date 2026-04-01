@@ -85,6 +85,25 @@ const DashboardPage = () => {
     fetchData();
   }, [apiFetch]);
 
+  // Poll for updates if there are pending audits
+  useEffect(() => {
+    const hasPending = history.some(audit => audit.status === 'pending');
+    let interval;
+
+    if (hasPending) {
+      interval = setInterval(() => {
+        // Silently refresh history
+        apiFetch('/api/user/history').then(res => {
+          if (res.ok) setHistory(res.data.audits || []);
+        });
+      }, 5000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [history, apiFetch]);
+
   const handleVerify = async (url) => {
     setVerifying(url);
     const { ok, data } = await apiFetch('/api/websites/verify', {
@@ -318,10 +337,11 @@ const DashboardPage = () => {
            <div className={`rounded-[40px] border shadow-2xl overflow-hidden transition-colors ${darkMode ? "bg-[#16161e]/30 border-white/5" : "bg-white border-slate-100"}`}>
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
-                   <thead className={`border-b text-[10px] uppercase tracking-widest font-black ${darkMode ? "border-white/5 text-gray-500" : "border-slate-100 text-slate-400"}`}>
+                    <thead className={`border-b text-[10px] uppercase tracking-widest font-black ${darkMode ? "border-white/5 text-gray-500" : "border-slate-100 text-slate-400"}`}>
                       <tr>
                          <th className="px-8 py-5">Scan Target</th>
                          <th className="px-8 py-5 text-center">Audit Type</th>
+                         <th className="px-8 py-5 text-center">Status</th>
                          <th className="px-8 py-5 text-center">Score</th>
                          <th className="px-8 py-5">Date</th>
                          <th className="px-8 py-5 text-right">Actions</th>
@@ -329,9 +349,9 @@ const DashboardPage = () => {
                    </thead>
                    <tbody className={`divide-y ${darkMode ? "divide-white/5" : "divide-slate-50"}`}>
                       {loading ? (
-                        [1,2].map(i => <tr key={i}><td colSpan="4" className="px-8 py-8 animate-pulse text-center font-bold text-gray-400 uppercase tracking-tighter">Syncing...</td></tr>)
+                        [1,2].map(i => <tr key={i}><td colSpan="6" className="px-8 py-8 animate-pulse text-center font-bold text-gray-400 uppercase tracking-tighter">Syncing...</td></tr>)
                       ) : history.length === 0 ? (
-                        <tr><td colSpan="4" className="px-8 py-16 text-center text-gray-500 font-bold italic">No scan history found. Run an audit to see results here.</td></tr>
+                        <tr><td colSpan="6" className="px-8 py-16 text-center text-gray-500 font-bold italic">No scan history found. Run an audit to see results here.</td></tr>
                       ) : (
                         history.slice(0, 10).map((audit) => (
                            <tr key={audit._id} className="group hover:bg-blue-500/[0.02] transition-colors">
@@ -350,27 +370,75 @@ const DashboardPage = () => {
                                  </span>
                               </td>
                               <td className="px-8 py-5 text-center">
+                                 <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                                    audit.status === 'success' ? (darkMode ? "bg-emerald-500/10 text-emerald-500" : "bg-emerald-50 text-emerald-600") :
+                                    audit.status === 'pending' ? (darkMode ? "bg-blue-500/10 text-blue-400" : "bg-blue-50 text-blue-600") :
+                                    (darkMode ? "bg-red-500/10 text-red-500" : "bg-red-50 text-red-600")
+                                 }`}>
+                                    {audit.status === 'pending' && <RefreshCw size={10} className="animate-spin" />}
+                                    {audit.status || 'Success'}
+                                 </div>
+                              </td>
+                              <td className="px-8 py-5 text-center">
                                  <div className={`inline-block px-3 py-1 rounded-lg font-black text-xs ${
                                     (audit.score || 0) >= 90 ? "bg-emerald-500/10 text-emerald-500" :
                                     (audit.score || 0) >= 70 ? "bg-amber-500/10 text-amber-500" : "bg-red-500/10 text-red-500"
                                  }`}>
-                                    {audit.score || 'N/A'}
+                                    {audit.status === 'success' ? (audit.score || 0) : '—'}
                                  </div>
                               </td>
                               <td className="px-8 py-5 text-sm font-medium text-gray-500">{formatDate(audit.createdAt)}</td>
                               <td className="px-8 py-5 text-right">
                                  <div className="flex justify-end gap-2 text-gray-400 group-hover:text-blue-500 transition-colors">
                                     <button 
-                                      onClick={() => navigate(`/report/${audit.reportId}`)}
-                                      className="p-2 hover:bg-blue-500/10 rounded-lg" 
-                                      title="View Report"
+                                      onClick={() => {
+                                        if (audit.status === 'failed') {
+                                           toast.error('Audit failed. Please re-run it.');
+                                        } else {
+                                          navigate(`/report/${audit.reportId}`);
+                                        }
+                                      }}
+                                      className="p-2 hover:bg-blue-500/10 rounded-lg transition-all" 
+                                      title={audit.status === 'pending' ? "View Progress" : "View Report"}
                                     >
                                       <ExternalLink size={16} />
                                     </button>
                                     <button 
-                                      onClick={() => toast.success('Preparing Download...')}
-                                      className="p-2 hover:bg-indigo-500/10 rounded-lg" 
+                                      onClick={async () => {
+                                        toast.promise(
+                                          (async () => {
+                                            const token = localStorage.getItem('auditify_token');
+                                            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:2000';
+                                            
+                                            // Backend route attached at /single-audit in server.js
+                                            const response = await fetch(`${API_URL}/single-audit/${audit.reportId}/export/pdf`, {
+                                                headers: {
+                                                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                                                }
+                                            });
+                                            
+                                            if (!response.ok) throw new Error('Failed to generate PDF');
+                                            
+                                            const blob = await response.blob();
+                                            const url = window.URL.createObjectURL(blob);
+                                            const link = document.createElement('a');
+                                            link.href = url;
+                                            link.download = `Auditify-Report-${audit.url.replace(/[^a-z0-9]/gi, '-')}.pdf`;
+                                            document.body.appendChild(link);
+                                            link.click();
+                                            document.body.removeChild(link);
+                                            window.URL.revokeObjectURL(url);
+                                          })(),
+                                          {
+                                            loading: 'Generating professional PDF report...',
+                                            success: 'Report downloaded successfully!',
+                                            error: (err) => err.message,
+                                          }
+                                        );
+                                      }}
+                                      className="p-2 hover:bg-indigo-500/10 rounded-lg disabled:opacity-20 transition-all" 
                                       title="Download PDF"
+                                      disabled={audit.status !== 'success'}
                                     >
                                       <Download size={16} />
                                     </button>

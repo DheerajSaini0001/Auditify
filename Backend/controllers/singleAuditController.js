@@ -35,7 +35,7 @@ export const startAudit = async (req, res) => {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    url = url.trim().toLowerCase();
+    url = url.trim().toLowerCase().replace(/\/$/, "");
     if (!/^https?:\/\//i.test(url)) {
       url = "https://" + url;
     }
@@ -46,25 +46,42 @@ export const startAudit = async (req, res) => {
 
     console.log(`➡️ New Audit Request → ${url} | ${device} | ${report}`);
 
-    const existing = await SingleAuditReport.findOne({ url, device, report }).sort({ createdAt: -1 });
+    // Strict Deduplication: Check if a successful or in-progress audit already exists
+    const existing = await SingleAuditReport.findOne({ 
+      url, 
+      device, 
+      report, 
+      status: { $in: ["inprogress", "completed"] } 
+    }).sort({ createdAt: -1 });
 
-    // if (existing && existing.Status === "completed") {
-    if (existing && existing.status !== "failed") {
-      const diff = (Date.now() - new Date(existing.createdAt)) / (1000 * 60);
-
-      if (diff < 60) {                          // Set 60 Minutes
-        console.log("✅ Already in DB");
-        return res.status(200).json(existing);
-      }
+    if (existing) {
+      console.log(`✅ Reusing existing Audit (${existing.status}) for: ${url}`);
+      return res.status(200).json(existing);
     }
 
-    const newReport = new SingleAuditReport({
-      url,
-      device,
-      report,
-      status: "inprogress",
-    });
-    await newReport.save();
+    // Double-check race condition (buffer for parallel requests)
+    await new Promise(resolve => setTimeout(resolve, 200)); 
+    const raceCheck = await SingleAuditReport.findOne({ url, device, report, status: "inprogress" });
+    if (raceCheck) return res.status(200).json(raceCheck);
+
+    let newReport;
+    try {
+      newReport = new SingleAuditReport({
+        url,
+        device,
+        report,
+        status: "inprogress",
+      });
+      await newReport.save();
+    } catch (dbError) {
+      // Handle race condition: If two requests hit exactly at the same time
+      if (dbError.code === 11000) {
+        console.log(`⚠️ Race condition caught: Audit already exists or is in-progress for: ${url}`);
+        const raceCheck = await SingleAuditReport.findOne({ url, device, report, status: { $ne: "failed" } });
+        if (raceCheck) return res.send(raceCheck);
+      }
+      throw dbError; // Otherwise, re-throw server errors
+    }
 
     // Create a pending AuditLog entry asynchronously
     const auditLog = new AuditLog({

@@ -90,13 +90,17 @@ export default function InputForm() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const isAuditStarting = useRef(false);
+  const processedUrlRef = useRef(null);
+
   // Auto-fill from query params or lost report recovery
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const queryUrl = params.get("url");
 
-    if (queryUrl) {
+    if (queryUrl && queryUrl !== processedUrlRef.current && !isAuditStarting.current) {
       setInputValue(queryUrl);
+      processedUrlRef.current = queryUrl;
       
       // Auto-trigger audit logic
       const runDirectly = async () => {
@@ -106,7 +110,10 @@ export default function InputForm() {
           if (!/^https?:\/\//i.test(urlToFetch)) {
             urlToFetch = `https://${urlToFetch}`;
           }
+          
+          isAuditStarting.current = true;
           await fetchData(urlToFetch, device, report, null);
+          isAuditStarting.current = false;
         } else {
           // Guest user: just show captcha modal for the URL
           setShowCaptcha(true);
@@ -115,8 +122,8 @@ export default function InputForm() {
 
       runDirectly();
       
-      // Remove query param from URL to clean up browser history
-      window.history.replaceState({}, document.title, window.location.pathname);
+      // Remove query param from URL (standard React Router way)
+      navigate(location.pathname, { replace: true });
     } else if (location.state?.autoFill) {
       setInputValue(location.state.url);
       setDevice(location.state.device);
@@ -127,7 +134,7 @@ export default function InputForm() {
       // Clear state to prevent loop if user reloads
       window.history.replaceState({}, document.title);
     }
-  }, [location.search, location.state]);
+  }, [location.search, location.state, navigate, device, report, fetchData]);
 
   // Handle submit (v2 Click → Trigger Modal)
   const handleClick = (e) => {

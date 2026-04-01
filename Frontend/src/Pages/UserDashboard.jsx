@@ -171,6 +171,37 @@ const UserDashboard = () => {
                             <FileText size={18} />
                           </button>
                           <button 
+                            onClick={() => {
+                              if (!audit.metadata?.reportId) return toast.error('Legacy report: PDF unavailable');
+                              
+                              toast.promise(
+                                (async () => {
+                                  const token = localStorage.getItem('auditify_token');
+                                  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:2000';
+                                  const response = await fetch(`${API_URL}/single-audit/${audit.metadata.reportId}/export/pdf`, {
+                                    headers: {
+                                      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                                    }
+                                  });
+                                  if (!response.ok) throw new Error('Failed to generate PDF');
+                                  
+                                  const blob = await response.blob();
+                                  const url = window.URL.createObjectURL(blob);
+                                  const link = document.createElement('a');
+                                  link.href = url;
+                                  link.download = `Auditify-Report-${audit.metadata.url.replace(/[^a-z0-9]/gi, '-')}.pdf`;
+                                  document.body.appendChild(link);
+                                  link.click();
+                                  document.body.removeChild(link);
+                                  window.URL.revokeObjectURL(url);
+                                })(),
+                                {
+                                  loading: 'Generating professional PDF report...',
+                                  success: 'Report downloaded successfully!',
+                                  error: 'Failed to generate PDF',
+                                }
+                              );
+                            }}
                             className={`p-3 rounded-xl transition-all shadow-lg border ${darkMode 
                               ? "bg-white/5 hover:bg-emerald-600 text-gray-400 hover:text-white border-white/5" 
                               : "bg-white hover:bg-emerald-50 text-slate-500 hover:text-emerald-600 border-slate-200"}`}

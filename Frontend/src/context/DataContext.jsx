@@ -33,6 +33,7 @@ export const DataProvider = ({ children }) => {
 
   // 🚀 FETCH DATA
   const fetchData = async (inputValue, device, report, captchaToken) => {
+    if (loading) return { success: false, error: "An audit is already in progress." };
     if (!inputValue) return { success: false, error: "URL is empty" };
 
     if (inputValue.includes(" ") || !inputValue.includes(".")) {

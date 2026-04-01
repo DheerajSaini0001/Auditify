@@ -9,7 +9,7 @@ export const getHistory = async (req, res) => {
     // Use AuditLog for granular audit details
     const audits = await AuditLog.find({ 
       userId: req.user.userId, 
-      status: 'success'
+      status: { $in: ['success', 'pending', 'failed'] }
     })
     .sort({ createdAt: -1 })
     .skip((page - 1) * limit)
@@ -17,7 +17,7 @@ export const getHistory = async (req, res) => {
 
     const total = await AuditLog.countDocuments({ 
       userId: req.user.userId, 
-      status: 'success'
+      status: { $in: ['success', 'pending', 'failed'] }
     });
 
     res.json({

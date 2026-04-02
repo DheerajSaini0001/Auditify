@@ -6,6 +6,8 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { ThemeContext } from "../context/ThemeContext.jsx";
 import { useData } from "../context/DataContext";
 import SkeletonLoader from "../Component/SkeletonLoader";
+import BulkAuditIssues from "../Component/BulkAuditIssues";
+import BulkAuditDrillDown from "../Component/BulkAuditDrillDown";
 
 // Custom Dropdown Component
 const CustomDropdown = ({ value, onChange, options, icon, darkMode, disabled }) => {
@@ -96,6 +98,8 @@ export default function BulkAudit() {
     const [auditing, setAuditing] = useState(false);
     const [bulkAuditId, setBulkAuditId] = useState(null);
     const [bulkAuditData, setBulkAuditData] = useState(null);
+    const [view, setView] = useState("overview"); // 'overview' or 'issues'
+    const [drillDownData, setDrillDownData] = useState(null); // { issue, pages }
     const [pollingInterval, setPollingInterval] = useState(null);
     const [isRestoring, setIsRestoring] = useState(true);
 
@@ -613,8 +617,26 @@ export default function BulkAudit() {
                             )}
                         </div>
 
-                        {/* Results List */}
+                        {/* View Tabs */}
                         {bulkAuditData && (
+                            <div className="flex items-center gap-4 border-b border-slate-800/20 mb-8 pt-4">
+                                <button 
+                                    onClick={() => setView("overview")}
+                                    className={`px-6 py-3 text-sm font-black transition-all border-b-2 ${view === 'overview' ? 'border-emerald-500 text-emerald-500' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+                                >
+                                    Overview
+                                </button>
+                                <button 
+                                    onClick={() => setView("issues")}
+                                    className={`px-6 py-3 text-sm font-black transition-all border-b-2 ${view === 'issues' ? 'border-emerald-500 text-emerald-500' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+                                >
+                                    Issues Summary
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Results List or Issues View */}
+                        {bulkAuditData && view === "overview" && (
                             <div className="space-y-6">
                                 <div className="flex items-center justify-between px-4">
                                     <h3 className="text-2xl font-black">Audit Results</h3>
@@ -679,6 +701,23 @@ export default function BulkAudit() {
                                     ))}
                                 </div>
                             </div>
+                        )}
+
+                        {bulkAuditData && view === "issues" && (
+                            !drillDownData ? (
+                                <BulkAuditIssues 
+                                    pages={bulkAuditData.pages} 
+                                    darkMode={darkMode} 
+                                    onDrillDown={(issue, pages) => setDrillDownData({ issue, pages })}
+                                />
+                            ) : (
+                                <BulkAuditDrillDown 
+                                    issue={drillDownData.issue}
+                                    pages={drillDownData.pages}
+                                    onBack={() => setDrillDownData(null)}
+                                    darkMode={darkMode}
+                                />
+                            )
                         )}
 
                     </div>

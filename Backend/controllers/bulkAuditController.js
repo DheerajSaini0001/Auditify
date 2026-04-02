@@ -46,8 +46,8 @@ export const discoverUrls = async (req, res) => {
             return res.status(400).json({ error: "Invalid or Restricted URL" });
         }
 
-        // Set max pages limit (default: 5, max: 50)
-        maxPages = Math.min(parseInt(maxPages) || 1, 50);
+        // Set max pages limit (default: 5, max: 200)
+        maxPages = Math.min(parseInt(maxPages) || 1, 200);
 
         console.log(`🔍 Discovering URLs for: ${url} | Max: ${maxPages} pages`);
 

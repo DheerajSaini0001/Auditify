@@ -3,6 +3,12 @@ import axios from 'axios';
 const verifyCaptcha = async (req, res, next) => {
   const token = req.body?.captchaToken;
 
+  // Skip CAPTCHA for authenticated users
+  if (req.user) {
+    console.log(`[reCAPTCHA] Skipping for authenticated user: ${req.user.email || req.user.userId}`);
+    return next();
+  }
+
   if (!token) {
     return res.status(400).json({
       error: 'CAPTCHA verification required',

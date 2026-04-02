@@ -132,13 +132,18 @@ export const DataProvider = ({ children }) => {
   };
 
   // 🚀 BULK AUDIT: DISCOVER
-  const discoverUrls = async (url, maxPages, recaptchaToken) => {
+  const discoverUrls = async (url, maxPages, captchaToken) => {
     try {
       const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
+      const token = localStorage.getItem('auditify_token');
+
       const res = await fetch(`${API_URL}/bulk-audit/discover`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url, maxPages, recaptchaToken }),
+        headers: { 
+          "Content-Type": "application/json",
+          ...(token && { "Authorization": `Bearer ${token}` })
+        },
+        body: JSON.stringify({ url, maxPages, captchaToken }),
       });
 
       return await handleResponse(res);
@@ -149,20 +154,24 @@ export const DataProvider = ({ children }) => {
   };
 
   // 🚀 BULK AUDIT: START
-  const startBulkAudit = async (url, selectedUrls, device, report, recaptchaToken) => {
+  const startBulkAudit = async (url, selectedUrls, device, report, captchaToken) => {
     try {
       const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
+      const token = localStorage.getItem('auditify_token');
       const screenResolution = `${window.screen.width}x${window.screen.height}`;
 
       const res = await fetch(`${API_URL}/bulk-audit/audit`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          ...(token && { "Authorization": `Bearer ${token}` })
+        },
         body: JSON.stringify({ 
-          url, 
+          url: url, 
           selectedUrls, 
           device, 
           report, 
-          recaptchaToken,
+          captchaToken,
           screenResolution
         }),
       });

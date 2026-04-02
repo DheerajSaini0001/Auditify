@@ -36,4 +36,19 @@ const checkRole = (...allowedRoles) => (req, res, next) => {
   next();
 };
 
-export { verifyToken, checkRole };
+const tryAuthenticate = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader && authHeader.split(' ')[1]; // 'Bearer <token>'
+
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      req.user = decoded; // { userId, role }
+    } catch (error) {
+      // Ignore token errors for optional authentication
+    }
+  }
+  next();
+};
+
+export { verifyToken, checkRole, tryAuthenticate };

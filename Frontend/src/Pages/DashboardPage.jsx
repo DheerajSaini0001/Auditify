@@ -306,7 +306,7 @@ const DashboardPage = () => {
                           </td>
                           <td className="px-8 py-5 text-center">
                             <button
-                              onClick={() => navigate(`/bulk-audit?url=${site.url}`)}
+                              onClick={() => navigate(`/bulk-audit?url=${site.url}&auto=true`)}
                               className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg font-black text-[9px] uppercase tracking-widest transition-all ${
                                 darkMode 
                                   ? "bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white" 

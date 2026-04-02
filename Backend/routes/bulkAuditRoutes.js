@@ -1,6 +1,7 @@
 import express from "express";
 import { discoverUrls, auditSelectedUrls, getBulkAuditStatus } from "../controllers/bulkAuditController.js";
 import rateLimit from "express-rate-limit";
+import { tryAuthenticate } from "../middleware/auth.js";
 import verifyRecaptcha from "../middleware/verifyCaptcha.js";
 
 const router = express.Router();
@@ -14,10 +15,10 @@ const auditLimiter = rateLimit({
 });
 
 // Discover all URLs from a website
-router.post("/discover", verifyRecaptcha, discoverUrls);
+router.post("/discover", tryAuthenticate, verifyRecaptcha, discoverUrls);
 
 // Start audit for selected URLs
-router.post("/audit", auditLimiter, verifyRecaptcha, auditSelectedUrls);
+router.post("/audit", auditLimiter, tryAuthenticate, verifyRecaptcha, auditSelectedUrls);
 
 // Get Bulk Audit Status
 router.get("/:bulkAuditId", getBulkAuditStatus);

@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
 import { Routes, Route } from "react-router-dom";
 
-import Homepage from "./Pages/Homepage";
+import Homepage from "./Pages/LandingPage";
 import AboutPage from "./Pages/AboutPage";
 import BulkAudit from "./Pages/BulkAudit";
 import Technical_Performance from "./Pages/Technical_Performance";

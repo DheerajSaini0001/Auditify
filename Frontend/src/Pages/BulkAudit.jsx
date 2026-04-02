@@ -2,6 +2,7 @@ import React, { useState, useContext, useEffect, useRef } from "react";
 import { Loader2, Monitor, Smartphone, ChevronDown, Settings, AlertCircle, Globe, CheckCircle2, XCircle, Clock, ExternalLink, RefreshCw } from "lucide-react";
 import ReCAPTCHA from "react-google-recaptcha";
 import { useNavigate, useParams } from "react-router-dom";
+import { useAuth } from "../context/AuthContext.jsx";
 import { ThemeContext } from "../context/ThemeContext.jsx";
 import { useData } from "../context/DataContext";
 import SkeletonLoader from "../Component/SkeletonLoader";
@@ -75,6 +76,7 @@ const CustomDropdown = ({ value, onChange, options, icon, darkMode, disabled }) 
 
 export default function BulkAudit() {
     const { theme } = useContext(ThemeContext);
+    const { isAuthenticated } = useAuth();
     const { setData, discoverUrls, startBulkAudit, getBulkAuditStatus } = useData();
     const darkMode = theme === "dark";
     const navigate = useNavigate();
@@ -103,8 +105,11 @@ export default function BulkAudit() {
     const [captchaError, setCaptchaError] = useState(false);
     const [captchaAction, setCaptchaAction] = useState(null); // 'discover' | 'audit'
 
-    // Restore session / Handle URL ID
+    // Restore session / Handle URL ID / Handle Auto-run from Dashboard
     useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const queryUrl = params.get("url");
+
         // Priority 1: URL Param (Direct Link)
         if (paramId) {
             setBulkAuditId(paramId);
@@ -113,7 +118,18 @@ export default function BulkAudit() {
             return;
         }
 
-        // Priority 2: Session Storage (Restore previous session if no URL param)
+        // Priority 2: Auto-run from Dashboard (via ?url=...&auto=true)
+        if (queryUrl) {
+            setInputValue(queryUrl);
+            // If it's a verified property or explicit auto-run request
+            if (params.get("auto") === "true") {
+                // We show captcha first for security, then it proceeds
+                setCaptchaAction('discover');
+                setShowCaptcha(true);
+            }
+        }
+
+        // Priority 3: Session Storage (Restore previous session if no URL param)
         const savedId = sessionStorage.getItem("activeBulkAuditId");
         if (savedId) {
             setBulkAuditId(savedId);
@@ -209,6 +225,11 @@ export default function BulkAudit() {
             return;
         }
 
+        if (isAuthenticated) {
+            proceedDiscovery(null);
+            return;
+        }
+
         setCaptchaAction('discover');
         setShowCaptcha(true);
         setCaptchaError(false);
@@ -260,6 +281,11 @@ export default function BulkAudit() {
 
         if (selectedUrls.length === 0) {
             setError("Please select at least one URL to audit");
+            return;
+        }
+
+        if (isAuthenticated) {
+            proceedBulkAudit(null);
             return;
         }
 

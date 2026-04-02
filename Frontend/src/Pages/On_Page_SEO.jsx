@@ -1,5 +1,6 @@
 import React, { useContext, useMemo } from "react";
 import UrlHeader from "../Component/UrlHeader";
+import ReportRestrictionWrapper from "../Component/ReportRestrictionWrapper";
 import CircularProgress from "../Component/CircularProgress";
 import { useData } from "../context/DataContext";
 import { ThemeContext } from "../context/ThemeContext";
@@ -2340,7 +2341,9 @@ export default function On_Page_SEO() {
         </div>
 
         {/* Content Mastery */}
-        <Section title="Content Mastery" icon={FileText} darkMode={darkMode} gridClasses="grid-cols-1 md:grid-cols-2">
+        <ReportRestrictionWrapper>
+          <div className="space-y-8">
+            <Section title="Content Mastery" icon={FileText} darkMode={darkMode} gridClasses="grid-cols-1 md:grid-cols-2">
           <TitleTagCard
             data={seo.Title}
             darkMode={darkMode}
@@ -2467,6 +2470,8 @@ export default function On_Page_SEO() {
             className="md:col-span-2"
           />
         </Section>
+          </div>
+        </ReportRestrictionWrapper>
       </main>
       
       {/* Methodology Modal */}

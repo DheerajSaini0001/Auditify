@@ -14,6 +14,8 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import NotFound from "./NotFound";
 import { Loader2 } from "lucide-react";
 
+import ReportRestrictionWrapper from "../Component/ReportRestrictionWrapper.jsx";
+
 const ReportLayout = () => {
   const { data, clearData, fetchSingleReport } = useData();
   const { theme } = useContext(ThemeContext);
@@ -113,7 +115,9 @@ const ReportLayout = () => {
           </section>
 
           <section id="rawdata" className="scroll-mt-24">
-            <RawData darkMode={darkMode} data={data} />
+            <ReportRestrictionWrapper>
+              <RawData darkMode={darkMode} data={data} />
+            </ReportRestrictionWrapper>
           </section>
         </div>
       )}

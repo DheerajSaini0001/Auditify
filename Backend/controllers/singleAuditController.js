@@ -56,6 +56,45 @@ export const startAudit = async (req, res) => {
 
     if (existing) {
       console.log(`✅ Reusing existing Audit (${existing.status}) for: ${url}`);
+      
+      // Save an AuditLog so it appears in User's history even though it was cached
+      const auditLog = new AuditLog({
+        userId: req.user?.userId || null, 
+        sessionId: req.tracking?.sessionId || 'N/A',
+        ip: req.tracking?.ip || '0.0.0.0',
+        country: req.tracking?.country,
+        city: req.tracking?.city,
+        device: req.tracking?.device,
+        browser: req.tracking?.browser,
+        os: req.tracking?.os,
+        screenResolution: req.body.screenResolution || req.tracking?.screenResolution,
+        url: url,
+        reportId: existing._id,
+        reportType: report,
+        referrer: req.tracking?.referrer || 'direct',
+        entryPage: req.tracking?.entryPage || '/',
+        actions: ["visited", "audit_run_cached"],
+        captchaPassed: true,
+        status: existing.status === "completed" ? "success" : existing.status === "failed" ? "failed" : "pending",
+        score: existing.score,
+        grade: existing.grade,
+      });
+
+      if (req.user) {
+        ActivityLog.create({
+          userId: req.user.userId,
+          sessionId: req.tracking?.sessionId || 'N/A',
+          ip: req.tracking?.ip || '0.0.0.0',
+          device: device,
+          browser: req.tracking?.browser || 'Unknown',
+          os: req.tracking?.os || 'Unknown',
+          action: 'AUDIT_RUN_CACHED',
+          metadata: { url, device, reportId: existing._id }
+        }).catch(err => console.error("Error saving cached ActivityLog:", err));
+      }
+
+      auditLog.save().catch(err => console.error("Error saving cached AuditLog:", err));
+
       return res.status(200).json(existing);
     }
 
@@ -154,11 +193,14 @@ export const startAudit = async (req, res) => {
         // Update AuditLog entry on message error
         try {
           const duration = Date.now() - startTime;
-          await AuditLog.findByIdAndUpdate(auditLog._id, { 
-            status: "failed",
-            auditDuration: duration,
-            $push: { actions: "failed" }
-          });
+          await AuditLog.updateMany(
+            { reportId: newReport._id, status: "pending" },
+            { 
+              status: "failed",
+              auditDuration: duration,
+              $push: { actions: "failed" }
+            }
+          );
         } catch (err) {
           console.error("Error updating AuditLog on message error:", err);
         }
@@ -174,14 +216,17 @@ export const startAudit = async (req, res) => {
       try {
         const finalReport = await SingleAuditReport.findById(newReport._id);
         if (finalReport) {
-          await AuditLog.findByIdAndUpdate(auditLog._id, {
-            status: "success",
-            score: finalReport.score,
-            grade: finalReport.grade,
-            auditDuration: duration,
-            exitPage: "/report",
-            $push: { actions: "completed" }
-          });
+          await AuditLog.updateMany(
+            { reportId: newReport._id, status: "pending" },
+            {
+              status: "success",
+              score: finalReport.score,
+              grade: finalReport.grade,
+              auditDuration: duration,
+              exitPage: "/report",
+              $push: { actions: "completed" }
+            }
+          );
         }
       } catch (err) {
         console.error("Error updating AuditLog on success:", err);
@@ -195,11 +240,14 @@ export const startAudit = async (req, res) => {
 
       // Update AuditLog entry
       try {
-        await AuditLog.findByIdAndUpdate(auditLog._id, { 
-          status: "failed",
-          auditDuration: duration,
-          $push: { actions: "failed" }
-        });
+        await AuditLog.updateMany(
+          { reportId: newReport._id, status: "pending" },
+          { 
+            status: "failed",
+            auditDuration: duration,
+            $push: { actions: "failed" }
+          }
+        );
       } catch (err) {
         console.error("Error updating AuditLog on error:", err);
       }

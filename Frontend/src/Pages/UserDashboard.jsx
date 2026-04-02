@@ -130,37 +130,37 @@ const UserDashboard = () => {
                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform ${darkMode ? "bg-blue-500/10 text-blue-400" : "bg-blue-50 text-blue-600"}`}>
                             <ExternalLink size={16} />
                           </div>
-                          <span className={`font-bold truncate max-w-sm ${darkMode ? "text-gray-200" : "text-slate-700"}`}>{audit.metadata?.url}</span>
+                          <span className={`font-bold truncate max-w-sm ${darkMode ? "text-gray-200" : "text-slate-700"}`}>{audit.url}</span>
                         </div>
                       </td>
                       <td className="px-10 py-6">
                         <div className="flex flex-col">
-                          <span className={`font-medium ${darkMode ? "text-gray-300" : "text-slate-700"}`}>{formatDate(audit.timestamp).split(',')[0]}</span>
-                          <span className={`text-[10px] uppercase tracking-tighter ${darkMode ? "text-gray-500" : "text-slate-500"}`}>{formatDate(audit.timestamp).split(',')[1]}</span>
+                          <span className={`font-medium ${darkMode ? "text-gray-300" : "text-slate-700"}`}>{formatDate(audit.createdAt).split(',')[0]}</span>
+                          <span className={`text-[10px] uppercase tracking-tighter ${darkMode ? "text-gray-500" : "text-slate-500"}`}>{formatDate(audit.createdAt).split(',')[1]}</span>
                         </div>
                       </td>
                       <td className="px-10 py-6">
                         <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider shadow-sm ${
-                          audit.metadata?.device === 'Mobile' 
+                          audit.device === 'Mobile' 
                             ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' 
                             : 'bg-blue-500/10 text-blue-500 border border-blue-500/20'
                         }`}>
-                          {audit.metadata?.device || 'Desktop'}
+                          {audit.device || 'Desktop'}
                         </span>
                       </td>
                       <td className="px-10 py-6 text-right">
                         <div className="flex items-center justify-end gap-3">
                           <button 
                             onClick={() => {
-                              if (audit.metadata?.reportId) {
+                              if (audit.reportId) {
                                 const params = new URLSearchParams({
-                                  url: audit.metadata.url || "",
-                                  device: audit.metadata.device || "Desktop",
-                                  report: audit.metadata.report || "All"
+                                  url: audit.url || "",
+                                  device: audit.device || "Desktop",
+                                  report: audit.reportType || "All"
                                 }).toString();
-                                window.open(`/report/${audit.metadata.reportId}?${params}`, '_blank');
+                                window.open(`/report/${audit.reportId}?${params}`, '_blank');
                               } else {
-                                alert("This report was generated before the detailed history tracking was implemented.");
+                                alert("This report details are currently unavailable.");
                               }
                             }}
                             className={`p-3 rounded-xl transition-all shadow-lg border ${darkMode 
@@ -172,13 +172,13 @@ const UserDashboard = () => {
                           </button>
                           <button 
                             onClick={() => {
-                              if (!audit.metadata?.reportId) return toast.error('Legacy report: PDF unavailable');
+                              if (!audit.reportId) return toast.error('PDF unavailable for this audit');
                               
                               toast.promise(
                                 (async () => {
                                   const token = localStorage.getItem('auditify_token');
                                   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:2000';
-                                  const response = await fetch(`${API_URL}/single-audit/${audit.metadata.reportId}/export/pdf`, {
+                                  const response = await fetch(`${API_URL}/single-audit/${audit.reportId}/export/pdf`, {
                                     headers: {
                                       ...(token ? { 'Authorization': `Bearer ${token}` } : {})
                                     }
@@ -189,7 +189,7 @@ const UserDashboard = () => {
                                   const url = window.URL.createObjectURL(blob);
                                   const link = document.createElement('a');
                                   link.href = url;
-                                  link.download = `Auditify-Report-${audit.metadata.url.replace(/[^a-z0-9]/gi, '-')}.pdf`;
+                                  link.download = `Auditify-Report-${audit.url.replace(/[^a-z0-9]/gi, '-')}.pdf`;
                                   document.body.appendChild(link);
                                   link.click();
                                   document.body.removeChild(link);

@@ -1,5 +1,6 @@
 import React, { useContext, useMemo } from "react";
 import UrlHeader from "../Component/UrlHeader";
+import ReportRestrictionWrapper from "../Component/ReportRestrictionWrapper";
 import CircularProgress from "../Component/CircularProgress";
 import { useData } from "../context/DataContext";
 import { ThemeContext } from "../context/ThemeContext";
@@ -1014,7 +1015,9 @@ export default function Security_Compilance() {
           </div>
         </div>
 
-        <Section title="Network & Encryption" icon={Lock} darkMode={darkMode}>
+        <ReportRestrictionWrapper>
+          <div className="space-y-8">
+            <Section title="Network & Encryption" icon={Lock} darkMode={darkMode}>
           {["HTTPS", "SSL", "TLS_Version", "HSTS"].map((key) => (
             metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || Shield })} />
           ))}
@@ -1052,6 +1055,8 @@ export default function Security_Compilance() {
             metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || Shield })} />
           ))}
         </Section>
+          </div>
+        </ReportRestrictionWrapper>
       </main>
 
       <MetricInfoModal

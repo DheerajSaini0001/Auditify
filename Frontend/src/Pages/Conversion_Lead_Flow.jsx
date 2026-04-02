@@ -1,5 +1,6 @@
 import React, { useContext, useMemo } from "react";
 import UrlHeader from "../Component/UrlHeader";
+import ReportRestrictionWrapper from "../Component/ReportRestrictionWrapper";
 import CircularProgress from "../Component/CircularProgress";
 import { useData } from "../context/DataContext";
 import { ThemeContext } from "../context/ThemeContext";
@@ -814,8 +815,11 @@ export default function Conversion_Lead_Flow() {
           </div>
         </div>
 
-        {/* Section 1: Call-to-Action (CTA) Strategy */}
-        <Section title="Call-to-Action (CTA) Strategy" icon={MousePointerClick} darkMode={darkMode}>
+        {/* Gated Detailed Audit Sections */}
+        <ReportRestrictionWrapper>
+          <div className="space-y-8">
+            {/* Section 1: Call-to-Action (CTA) Strategy */}
+            <Section title="Call-to-Action (CTA) Strategy" icon={MousePointerClick} darkMode={darkMode}>
           {["CTA_Presence", "CTA_Clarity", "CTA_Crowding", "CTA_Flow_Alignment", "Submit_Button_Clarity", "Link_Relevance"].map((key) => {
             if (!flow[key]) return null;
             if (key === "Link_Relevance") {
@@ -849,7 +853,8 @@ export default function Conversion_Lead_Flow() {
             flow[key] && <MetricCard key={key} metricKey={key} data={flow[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
           ))}
         </Section>
-
+          </div>
+        </ReportRestrictionWrapper>
       </main>
       {/* Methodology Modal */}
       <MetricInfoModal

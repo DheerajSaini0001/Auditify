@@ -1,5 +1,6 @@
 import React, { useContext } from "react";
 import UrlHeader from "../Component/UrlHeader";
+import ReportRestrictionWrapper from "../Component/ReportRestrictionWrapper";
 import CircularProgress from "../Component/CircularProgress";
 import { useData } from "../context/DataContext";
 import { ThemeContext } from "../context/ThemeContext";
@@ -187,8 +188,9 @@ export default function Technical_Performance() {
 
         {/* Sections - Manual Unrolled Rendering */}
         {data?.technicalPerformance && (
-          <>
-            {/* Core Web Vitals */}
+          <ReportRestrictionWrapper>
+            <div className="space-y-8">
+              {/* Core Web Vitals */}
             <Section
               title="Core Web Vitals"
               subtitle="Field & Lab Data"
@@ -587,8 +589,9 @@ export default function Technical_Performance() {
 
 
             </Section>
-          </>
-        )}
+          </div>
+        </ReportRestrictionWrapper>
+      )}
 
       </main >
 

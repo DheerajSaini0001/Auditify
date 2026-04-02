@@ -44,7 +44,7 @@ const CustomDropdown = ({ value, onChange, options, icon, darkMode, disabled }) 
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className={`absolute top-full mt-2 left-0 w-max min-w-full z-50 rounded-xl shadow-xl border overflow-hidden animate-in fade-in zoom-in-95 duration-200 ${darkMode ? "bg-slate-900 border-slate-700 text-slate-300" : "bg-white border-slate-100 text-slate-700"
+        <div className={`absolute top-full mt-2 left-0 w-max min-w-full z-[110] rounded-xl shadow-xl border overflow-hidden animate-in fade-in zoom-in-95 duration-200 ${darkMode ? "bg-slate-900 border-slate-700 text-slate-300" : "bg-white border-slate-100 text-slate-700"
           }`}>
           <div className="max-h-60 overflow-y-auto custom-scrollbar">
             {options.map((option) => (
@@ -190,10 +190,11 @@ export default function InputForm() {
 
 
   // Styles
-  const containerClass = darkMode
-    ? "min-h-[80vh] flex flex-col items-center justify-center bg-[#0B1120] text-white relative font-sans py-20"
-    : "min-h-[80vh] flex flex-col items-center justify-center bg-slate-50 text-slate-900 relative font-sans py-20";
+  const baseClass ="flex flex-col items-center justify-start min-h-screen relative font-sans px-4 pt-24";
 
+const containerClass = darkMode
+  ? `${baseClass} bg-[#0B1120] text-white`
+  : `${baseClass} bg-slate-50 text-slate-900`; 
   return (
     <div className={containerClass}>
       {/* Background Grid Pattern */}
@@ -215,7 +216,7 @@ export default function InputForm() {
         </div>
 
         {/* Form Section */}
-        <form onSubmit={handleClick} className="w-full max-w-4xl relative animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-100">
+        <form onSubmit={handleClick} className="w-full max-w-4xl relative z-[50] animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-100">
 
           <div className={`
             flex flex-col lg:flex-row items-center p-2 rounded-2xl border transition-all duration-300

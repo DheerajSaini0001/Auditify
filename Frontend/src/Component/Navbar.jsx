@@ -195,7 +195,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
                         <Moon className="w-5 h-5 text-indigo-500 fill-indigo-500/20" />
                       )}
                     </button>
-                    <Link to="/login">
+                    <Link to="/login" state={{ from: location.pathname + location.search }}>
                       <button className={`px-4 py-1.5 rounded-lg text-sm font-bold border ${buttonClass}`}>
                         Login
                       </button>

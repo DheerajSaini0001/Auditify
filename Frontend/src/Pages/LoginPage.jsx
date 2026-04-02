@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext.jsx';
 import { Mail, Lock, Eye, EyeOff, Loader2, ArrowRight } from 'lucide-react';
@@ -13,11 +13,15 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { apiFetch, login, isAuthenticated } = useAuth();
 
   useEffect(() => {
-    if (isAuthenticated) navigate('/dashboard');
-  }, [isAuthenticated, navigate]);
+    if (isAuthenticated) {
+      const destination = location.state?.from || '/dashboard';
+      navigate(destination);
+    }
+  }, [isAuthenticated, navigate, location.state]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -31,7 +35,8 @@ const LoginPage = () => {
     if (ok) {
       toast.success('Logged in successfully!');
       login(data.token, data.user);
-      navigate(data.user.role === 'admin' ? '/admin' : '/dashboard');
+      const destination = location.state?.from || (data.user.role === 'admin' ? '/admin' : '/dashboard');
+      setTimeout(() => navigate(destination), 100);
     } else {
       if (status === 403) {
         // Unverified email

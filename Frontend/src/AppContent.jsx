@@ -28,6 +28,32 @@ import ProtectedRoute from "./Component/ProtectedRoute.jsx";
 import MainLayout from "./Component/MainLayout";
 import AIChatWidget from "./Component/AIChatWidget";
 
+import ReportRestrictionWrapper from "./Component/ReportRestrictionWrapper.jsx";
+import GuestReportPage from "./Component/GuestReportPage.jsx";
+import { useAuth } from "./context/AuthContext.jsx";
+import { useData } from "./context/DataContext.jsx";
+
+/**
+ * Wraps a report route for unauthenticated users:
+ * - If there IS audit data in context → render the real page
+ *   (ReportRestrictionWrapper inside it will show the blurred gate)
+ * - If there is NO data → show GuestReportPage (placeholder + lock card)
+ */
+const GuestRouteWrapper = ({ children }) => {
+  const { isAuthenticated, isLoading } = useAuth();
+  const { data } = useData();
+
+  if (isLoading) return null; // Wait silently for auth resolution
+
+  // Not logged in but data exists → show real page (inner restriction handles gating)
+  if (!isAuthenticated && data) return children;
+
+  // Not logged in and no data → show placeholder gate page
+  if (!isAuthenticated) return <GuestReportPage />;
+
+  return children;
+};
+
 function AppContentInner() {
   const { theme } = useContext(ThemeContext);
 
@@ -46,41 +72,25 @@ function AppContentInner() {
           <Route path="/about" element={<AboutPage />} />
 
           {/* Protected User Routes */}
-          <Route path="/dashboard" element={
-            <ProtectedRoute>
-              <DashboardPage />
-            </ProtectedRoute>
-          } />
+          <Route path="/dashboard" element={<DashboardPage />} />
           
-          <Route path="/dashboard/add-website" element={
-            <ProtectedRoute>
-              <AddWebsitePage />
-            </ProtectedRoute>
-          } />
+          <Route path="/dashboard/add-website" element={<AddWebsitePage />} />
           
-          <Route path="/bulk-audit" element={
-            <ProtectedRoute>
-              <BulkAudit />
-            </ProtectedRoute>
-          } />
+          <Route path="/bulk-audit" element={<BulkAudit />} />
 
-          <Route path="/bulk-audit/:id" element={
-            <ProtectedRoute>
-              <BulkAudit />
-            </ProtectedRoute>
-          } />
+          <Route path="/bulk-audit/:id" element={<BulkAudit />} />
           
           <Route path="/report" element={<ReportLayout />} />
           <Route path="/report/:id" element={<ReportLayout />} />
 
-          {/* Individual Report Pages - Publicly accessible for viewing the audit */}
-          <Route path="/technical-performance" element={<Technical_Performance />} />
-          <Route path="/on-page-seo" element={<On_Page_SEO />} />
-          <Route path="/accessibility" element={<Accessibility />} />
-          <Route path="/ux-content-structure" element={<UX_Content_Structure />} />
-          <Route path="/security-compliance" element={<Security_Compilance />} />
-          <Route path="/conversion-lead-flow" element={<Conversion_Lead_Flow />} />
-          <Route path="/aio" element={<AIO />} />
+          {/* Individual Report Pages - Gated for unauthenticated users */}
+          <Route path="/technical-performance" element={<GuestRouteWrapper><Technical_Performance /></GuestRouteWrapper>} />
+          <Route path="/on-page-seo" element={<GuestRouteWrapper><On_Page_SEO /></GuestRouteWrapper>} />
+          <Route path="/accessibility" element={<GuestRouteWrapper><Accessibility /></GuestRouteWrapper>} />
+          <Route path="/ux-content-structure" element={<GuestRouteWrapper><UX_Content_Structure /></GuestRouteWrapper>} />
+          <Route path="/security-compliance" element={<GuestRouteWrapper><Security_Compilance /></GuestRouteWrapper>} />
+          <Route path="/conversion-lead-flow" element={<GuestRouteWrapper><Conversion_Lead_Flow /></GuestRouteWrapper>} />
+          <Route path="/aio" element={<GuestRouteWrapper><AIO /></GuestRouteWrapper>} />
 
           {/* Admin Routes */}
           <Route path="/admin" element={

@@ -224,107 +224,128 @@ const DashboardPage = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <AnimatePresence mode="popLayout">
-              {loading ? (
-                [1, 2, 3].map(i => (
-                  <div key={i} className={`h-48 rounded-3xl animate-pulse ${darkMode ? "bg-white/5" : "bg-white border border-slate-100"}`}></div>
-                ))
-              ) : websites.length === 0 ? (
-                <div className={`col-span-full py-16 rounded-[40px] border-2 border-dashed flex flex-col items-center justify-center gap-4 ${darkMode ? "border-white/5 bg-white/[0.02]" : "border-slate-200 bg-white"}`}>
-                   <div className="w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
-                      <Globe size={32} />
-                   </div>
-                   <p className="font-bold text-gray-500">No websites added yet.</p>
-                   <Link to="/dashboard/add-website" className="text-blue-500 font-bold underline">Add your first website to start auditing</Link>
-                </div>
-              ) : filteredWebsites.length === 0 ? (
-                <div className={`col-span-full py-12 text-center font-bold ${darkMode ? "text-gray-500" : "text-slate-400"}`}>
-                  No websites matching "{searchQuery}"
-                </div>
-              ) : (
-                filteredWebsites.map((site) => (
-                  <motion.div 
-                    layout
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    key={site._id} 
-                    className={`group p-6 rounded-[32px] border transition-all shadow-xl hover:shadow-2xl ${
-                      darkMode ? "bg-[#11111a] border-white/5 hover:border-blue-500/30" : "bg-white border-slate-100 hover:border-blue-200"
-                    }`}
-                  >
-                    <div className="flex justify-between items-start mb-4">
-                      <img 
-                        src={`https://www.google.com/s2/favicons?domain=${site.url}&sz=64`} 
-                        alt="" 
-                        className="w-10 h-10 rounded-xl shadow-md"
-                        onError={(e) => e.target.src = 'https://www.google.com/s2/favicons?domain=example.com&sz=64'}
-                      />
-                      <div className="flex gap-2">
-                        <button 
-                          onClick={() => handleDelete(site._id, site.url)}
-                          className={`p-2 rounded-lg transition-colors ${darkMode ? "hover:bg-red-500/10 text-gray-600 hover:text-red-500" : "hover:bg-red-50 text-slate-300 hover:text-red-600"}`}
+          <div className={`rounded-[40px] border shadow-2xl overflow-hidden transition-colors ${darkMode ? "bg-[#16161e]/30 border-white/5" : "bg-white border-slate-100"}`}>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className={`border-b text-[10px] uppercase tracking-widest font-black ${darkMode ? "border-white/5 text-gray-500" : "border-slate-100 text-slate-400"}`}>
+                  <tr>
+                    <th className="px-8 py-5">Property</th>
+                    <th className="px-8 py-5 text-center">Status</th>
+                    <th className="px-8 py-5 text-center">Access Level</th>
+                    <th className="px-8 py-5 text-center">Added On</th>
+                    <th className="px-8 py-5 text-center">Bulk Audit</th>
+                    <th className="px-8 py-5 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className={`divide-y ${darkMode ? "divide-white/5" : "divide-slate-50"}`}>
+                  <AnimatePresence mode="popLayout">
+                    {loading ? (
+                      [1, 2, 3].map(i => (
+                        <tr key={i}><td colSpan="6" className="px-8 py-8 animate-pulse text-center font-bold text-gray-400 uppercase tracking-tighter">Syncing...</td></tr>
+                      ))
+                    ) : websites.length === 0 ? (
+                      <tr>
+                        <td colSpan="6" className="px-8 py-16 text-center">
+                          <div className="flex flex-col items-center gap-4">
+                            <div className="w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
+                              <Globe size={32} />
+                            </div>
+                            <p className="font-bold text-gray-500">No websites added yet.</p>
+                            <Link to="/dashboard/add-website" className="text-blue-500 font-bold underline">Add your first website to start auditing</Link>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : filteredWebsites.length === 0 ? (
+                      <tr>
+                        <td colSpan="6" className="px-8 py-12 text-center font-bold text-gray-500">
+                          No websites matching "{searchQuery}"
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredWebsites.map((site) => (
+                        <motion.tr
+                          layout
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          key={site._id}
+                          className="group hover:bg-blue-500/[0.02] transition-colors"
                         >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </div>
-
-                    <h3 className="font-black text-lg truncate mb-1">{site.url.replace(/^https?:\/\//, '')}</h3>
-                    <div className="flex items-center gap-2 mb-6">
-                      {site.verified ? (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-500 text-[10px] font-black uppercase tracking-wider">
-                          <CheckCircle size={10} /> Verified Property
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-500 text-[10px] font-black uppercase tracking-wider">
-                          <AlertCircle size={10} /> Unverified
-                        </span>
-                      )}
-                    </div>
-
-                    {!site.verified && user?.authProvider === 'google' && (
-                      <div className="flex flex-col gap-2">
-                        <button 
-                          onClick={() => handleVerify(site.url)}
-                          disabled={verifying === site.url}
-                          className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] uppercase tracking-widest transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-blue-500/10"
-                        >
-                          {verifying === site.url ? <RefreshCw className="animate-spin" size={14} /> : <ShieldCheck size={14} />}
-                          Verify with GSC
-                        </button>
-                        <button 
-                          onClick={() => navigate(`/?url=${site.url}`)}
-                          className={`w-full py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 border ${
-                            darkMode ? "bg-white/5 border-white/5 text-gray-400 hover:text-white" : "bg-slate-50 border-slate-100 text-slate-500 hover:text-slate-900"
-                          }`}
-                        >
-                          <Activity size={14} className="text-blue-500" />
-                          Quick Audit
-                        </button>
-                      </div>
+                          <td className="px-8 py-5">
+                            <div className="flex items-center gap-4">
+                              <img
+                                src={`https://www.google.com/s2/favicons?domain=${site.url}&sz=64`}
+                                alt=""
+                                className="w-8 h-8 rounded-lg shadow-sm border border-slate-200/50"
+                                onError={(e) => e.target.src = 'https://www.google.com/s2/favicons?domain=example.com&sz=64'}
+                              />
+                              <div className="flex flex-col">
+                                <span className="font-bold text-sm truncate max-w-xs">{site.url.replace(/^https?:\/\//, '')}</span>
+                                <span className={`text-[10px] font-medium opacity-50`}>{site.url}</span>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-8 py-5 text-center">
+                            {site.verified ? (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-500 text-[9px] font-black uppercase tracking-wider">
+                                <CheckCircle size={10} /> Verified
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-500 text-[9px] font-black uppercase tracking-wider">
+                                <AlertCircle size={10} /> Unverified
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-8 py-5 text-center">
+                            <span className="text-xs font-bold text-blue-500 uppercase">
+                              {site.permissionLevel?.replace('site', '') || 'Owner'}
+                            </span>
+                          </td>
+                          <td className="px-8 py-5 text-center text-sm font-medium text-gray-500">
+                            {formatDate(site.verifiedAt)}
+                          </td>
+                          <td className="px-8 py-5 text-center">
+                            <button
+                              onClick={() => navigate(`/bulk-audit?url=${site.url}`)}
+                              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg font-black text-[9px] uppercase tracking-widest transition-all ${
+                                darkMode 
+                                  ? "bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white" 
+                                  : "bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white border border-indigo-100"
+                              }`}
+                            >
+                              <History size={12} />
+                              Run Bulk
+                            </button>
+                          </td>
+                          <td className="px-8 py-5 text-right">
+                            <div className="flex justify-end gap-3 items-center">
+                              <button
+                                onClick={() => navigate(`/?url=${site.url}`)}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${
+                                  site.verified 
+                                    ? "bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-500/10" 
+                                    : "bg-slate-100 text-slate-500 hover:text-slate-900 border border-slate-200"
+                                }`}
+                              >
+                                <Zap size={14} className={site.verified ? "fill-white" : ""} />
+                                {site.verified ? "Analyze" : "Audit"}
+                              </button>
+                              <button
+                                onClick={() => handleDelete(site._id, site.url)}
+                                className={`p-2 rounded-lg transition-colors ${darkMode ? "hover:bg-red-500/10 text-gray-600 hover:text-red-500" : "hover:bg-red-50 text-slate-300 hover:text-red-600"}`}
+                                title="Delete Property"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </motion.tr>
+                      ))
                     )}
-
-                    {site.verified && (
-                      <div className="flex flex-col gap-4">
-                        <button 
-                          onClick={() => navigate(`/?url=${site.url}`)}
-                          className="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-[10px] uppercase tracking-widest transition-all shadow-xl shadow-blue-500/20 active:scale-[0.98] flex items-center justify-center gap-2"
-                        >
-                          <Zap size={14} className="fill-white" />
-                          Analyze Site
-                        </button>
-                        <div className={`p-3 rounded-xl text-[9px] font-bold flex flex-col gap-1 ${darkMode ? "bg-white/5 text-gray-500" : "bg-slate-50 text-slate-500"}`}>
-                           <div className="flex justify-between uppercase"><span>Permission</span> <span className="text-blue-500">{site.permissionLevel?.replace('site', '') || 'Owner'}</span></div>
-                           <div className="flex justify-between uppercase"><span>Verified</span> <span>{formatDate(site.verifiedAt)}</span></div>
-                        </div>
-                      </div>
-                    )}
-                  </motion.div>
-                ))
-              )}
-            </AnimatePresence>
+                  </AnimatePresence>
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
 

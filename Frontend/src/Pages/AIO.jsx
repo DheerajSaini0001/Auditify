@@ -1,5 +1,6 @@
 import React, { useContext, useMemo } from "react";
 import UrlHeader from "../Component/UrlHeader";
+import ReportRestrictionWrapper from "../Component/ReportRestrictionWrapper";
 import CircularProgress from "../Component/CircularProgress";
 import { useData } from "../context/DataContext";
 import { ThemeContext } from "../context/ThemeContext";
@@ -719,7 +720,10 @@ export default function AIO() {
           </div>
         </div>
 
-        <Section title="AI Technical & Crawl Foundation" icon={Database} darkMode={darkMode}>
+        {/* Gated Detailed Audit Sections */}
+        <ReportRestrictionWrapper>
+          <div className="space-y-8">
+            <Section title="AI Technical & Crawl Foundation" icon={Database} darkMode={darkMode}>
           {["Structured_Data", "Duplicate_Content_Detection_Ready", "Internal_Linking_AI_Friendly", "Content_Updated_Regularly"].map((key) => (
             aio[key] && <MetricCard key={key} metricKey={key} data={aio[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
           ))}
@@ -747,7 +751,8 @@ export default function AIO() {
             aio[key] && <MetricCard key={key} metricKey={key} data={aio[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
           ))}
         </Section>
-
+          </div>
+        </ReportRestrictionWrapper>
       </main>
       {/* Methodology Modal */}
       <MetricInfoModal

@@ -6,8 +6,20 @@ export const useData = () => useContext(DataContext);
 
 export const DataProvider = ({ children }) => {
 
-  // ⭐ DATA STATE (In-Memory Only)
-  const [data, setData] = useState(null);
+  // ⭐ DATA STATE (Persist in LocalStorage to handle refresh)
+  const [data, setData] = useState(() => {
+    const saved = localStorage.getItem("auditify_guest_data");
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  // Sync state to localStorage
+  useEffect(() => {
+    if (data) {
+      localStorage.setItem("auditify_guest_data", JSON.stringify(data));
+    } else {
+      localStorage.removeItem("auditify_guest_data");
+    }
+  }, [data]);
 
   const [loading, setLoading] = useState(false);
   const [intervalId, setIntervalId] = useState(null);

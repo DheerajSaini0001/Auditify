@@ -1,5 +1,6 @@
 import React, { useContext, useMemo, useState } from "react";
 import UrlHeader from "../Component/UrlHeader";
+import ReportRestrictionWrapper from "../Component/ReportRestrictionWrapper";
 import CircularProgress from "../Component/CircularProgress";
 import { useData } from "../context/DataContext";
 import { ThemeContext } from "../context/ThemeContext";
@@ -811,7 +812,9 @@ export default function UX_Content_Structure() {
         </div>
 
         {/* Filtered Sections */}
-        {sectionDefinitions.map((section, idx) => {
+        <ReportRestrictionWrapper>
+          <div className="space-y-12">
+            {sectionDefinitions.map((section, idx) => {
           const sectionMetrics = section.keys.filter(k => metrics.includes(k));
           if (sectionMetrics.length === 0) return null;
 
@@ -836,8 +839,9 @@ export default function UX_Content_Structure() {
             </Section>
           );
         })}
-
-      </main>
+        </div>
+      </ReportRestrictionWrapper>
+    </main>
       {/* Methodology Modal */}
       <MetricInfoModal
         isOpen={!!selectedMetricInfo}

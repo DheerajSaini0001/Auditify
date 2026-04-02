@@ -1,5 +1,6 @@
 import React, { useContext, useMemo } from "react";
 import UrlHeader from "../Component/UrlHeader";
+import ReportRestrictionWrapper from "../Component/ReportRestrictionWrapper";
 import CircularProgress from "../Component/CircularProgress";
 import { useData } from "../context/DataContext";
 import { ThemeContext } from "../context/ThemeContext";
@@ -551,8 +552,10 @@ export default function Accessibility() {
           )}
         </div>
 
-        {/* Visual Accessibility Section */}
-        <Section title="Visual & Media" icon={Eye} darkMode={darkMode}>
+        {/* Visual Accessibility Section (Gated) */}
+        <ReportRestrictionWrapper>
+          <div className="space-y-12">
+            <Section title="Visual & Media" icon={Eye} darkMode={darkMode}>
           {["Color_Contrast", "Image_Alt", "Meta_Viewport"].map(k => metric[k] && (
             <MetricCard key={k} metricKey={k} data={metric[k]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[k], icon: iconMap[k] })} />
           ))}
@@ -571,6 +574,8 @@ export default function Accessibility() {
             <MetricCard key={k} metricKey={k} data={metric[k]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[k], icon: iconMap[k] })} />
           ))}
         </Section>
+          </div>
+        </ReportRestrictionWrapper>
       </main>
 
       <MetricInfoModal isOpen={!!selectedMetricInfo} onClose={() => setSelectedMetricInfo(null)} info={selectedMetricInfo} darkMode={darkMode} />

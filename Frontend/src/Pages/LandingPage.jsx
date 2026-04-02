@@ -9,8 +9,6 @@ import Footer from '../Component/Footer';
 import HeroSection from '../Component/Landing/HeroSection';
 import MetricsBanner from '../Component/Landing/MetricsBanner';
 import AuditPillarsSection from '../Component/Landing/AuditPillarsSection';
-import HowItWorksSection from '../Component/Landing/HowItWorksSection';
-import CTASection from '../Component/Landing/CTASection';
 
 const LandingPage = () => {
     const { theme } = useContext(ThemeContext);
@@ -40,14 +38,20 @@ const LandingPage = () => {
     };
 
     return (
-        <div className={`relative w-full overflow-x-hidden ${darkMode ? 'bg-[#0A0F1E] text-white' : 'bg-slate-50 text-slate-900'}`}>
+        <div className={`relative w-full overflow-x-hidden transition-colors duration-500 ${darkMode ? 'bg-[#0A0F1E] text-white' : 'bg-slate-50 text-slate-900'}`}>
             {/* Reading Progress Bar */}
             <motion.div
-                className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-cyan-500 z-[100] origin-left"
+                className="fixed top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-blue-500 z-[100] origin-left shadow-lg shadow-emerald-500/20"
                 style={{ scaleX }}
             />
 
-            <main>
+            <main className="relative">
+                {/* Global Background Glows */}
+                <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-0 overflow-hidden">
+                    <div className="absolute top-[10%] left-[-10%] w-[50%] h-[600px] bg-emerald-500/5 blur-[120px] rounded-full"></div>
+                    <div className="absolute top-[40%] right-[-10%] w-[45%] h-[700px] bg-blue-500/5 blur-[120px] rounded-full"></div>
+                    <div className="absolute top-[80%] left-[5%] w-[40%] h-[600px] bg-purple-500/5 blur-[120px] rounded-full"></div>
+                </div>
                 <HeroSection 
                     onSubmit={handleAuditSubmit} 
                     isLoading={loading} 
@@ -57,16 +61,11 @@ const LandingPage = () => {
                 <MetricsBanner />
                 
                 <AuditPillarsSection />
-                
-                <HowItWorksSection />
-                
-                <CTASection 
-                    onSubmit={handleAuditSubmit} 
-                    isLoading={loading} 
-                />
             </main>
         </div>
     );
 };
 
+
 export default LandingPage;
+

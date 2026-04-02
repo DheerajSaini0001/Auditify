@@ -23,12 +23,13 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
 
   // Styles
   const navbarClass = darkMode
-    ? "bg-[#0B1120]/80 border-b border-slate-800 backdrop-blur-md text-white supports-[backdrop-filter]:bg-[#0B1120]/60"
-    : "bg-white/80 border-b border-slate-200 backdrop-blur-md text-slate-900 supports-[backdrop-filter]:bg-white/60";
+    ? "bg-[#0A0F1E]/60 border-b border-white/5 backdrop-blur-2xl text-white shadow-[0_4px_30px_rgba(0,0,0,0.1)]"
+    : "bg-white/70 border-b border-slate-200 backdrop-blur-2xl text-slate-900 shadow-[0_4px_30px_rgba(0,0,0,0.05)]";
 
   const buttonClass = darkMode
-    ? "bg-slate-800/50 hover:bg-slate-800 border-slate-700/50 text-slate-300 hover:text-white"
-    : "bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-600 hover:text-slate-900";
+    ? "bg-white/5 hover:bg-white/10 border-white/10 text-slate-300 hover:text-white"
+    : "bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-900";
+
 
   return (
     <nav className={`sticky top-0 z-50 transition-all duration-300 ${navbarClass}`}>

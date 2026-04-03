@@ -14,7 +14,6 @@ import MetricInfoModal from "../Component/MetricInfoModal";
 import ParameterInfoModal from "../Component/ParameterInfoModal";
 import { InfoDetails } from "../Component/InfoDetails";
 import AskAIButton from "../Component/AskAIButton";
-import AISummaryBlock from "../Component/AISummaryBlock";
 
 const iconMap = {
   CTA_Presence: MousePointerClick,
@@ -690,7 +689,13 @@ export default function Conversion_Lead_Flow() {
 
             {/* 1. URL Header */}
             <div>
-              <UrlHeader data={data} darkMode={darkMode} />
+              <UrlHeader 
+                data={data} 
+                darkMode={darkMode} 
+                sectionName="Conversion & Lead Flow"
+                sectionData={flow}
+                auditScore={flow.Percentage}
+              />
             </div>
 
             <div className="flex flex-col xl:flex-row min-h-[300px]">
@@ -735,7 +740,13 @@ export default function Conversion_Lead_Flow() {
 
           {/* 1. URL Header */}
           <div>
-            <UrlHeader data={data} darkMode={darkMode} />
+            <UrlHeader 
+              data={data} 
+              darkMode={darkMode} 
+              sectionName="Conversion & Lead Flow"
+              sectionData={flow}
+              auditScore={flow.Percentage}
+            />
           </div>
 
           {/* 2. Card Body */}

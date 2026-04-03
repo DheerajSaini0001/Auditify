@@ -58,7 +58,7 @@ router.post('/explain', async (req, res) => {
 
     try {
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" }); 
 
         const prompt = buildExplanationPrompt(findingType, findingTitle, findingDetails, findingMeta, severity, pageUrl, auditScore);
         const result = await model.generateContent(prompt);
@@ -142,19 +142,34 @@ router.post('/summarize-section', async (req, res) => {
         ${JSON.stringify(sectionData, null, 2)}
         
         STRICT GUIDELINES:
-        1. Write a 3-sentence summary.
-        2. Sentence 1: General health of this category (Strength).
-        3. Sentence 2: The single most critical issue or bottleneck found here.
-        4. Sentence 3: The immediate high-impact action the user should take.
+        1. Return a JSON object with EXACTLY three keys: "strength", "bottleneck", "action".
+        2. "strength": General health of this category.
+        3. "bottleneck": The single most critical issue or bottleneck found.
+        4. "action": The immediate high-impact action to take.
         5. Tone: Professional, authoritative, and encouraging.
-        6. NO Markdown formatting, just plain text.
-        7. Max 100 words.`;
+        6. NO Markdown, just concise sentences.
+        7. Max 100 words total.
+        8. RETURN VALID JSON ONLY.`;
 
         const result = await model.generateContent(prompt);
-        const responseData = await result.response;
-        const text = responseData.text() || "The AI strategist is evaluating your data. Please check back shortly.";
+        let text = result.response.text() || "{}";
         
-        res.json({ text });
+        // Remove markdown backticks if Gemini adds them
+        text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+
+        let jsonResponse;
+        try {
+            jsonResponse = JSON.parse(text);
+        } catch (e) {
+            console.error('JSON Parse Error:', text);
+            jsonResponse = {
+                strength: "Audit data synthesis completed successfully.",
+                bottleneck: "Unable to parse detailed strategist insights.",
+                action: "Review the raw audit metrics for detailed bottlenecks."
+            };
+        }
+        
+        res.json(jsonResponse);
     } catch (error) {
         console.error('❌ SUMMARY AI ERROR:', error);
         res.status(500).json({ error: `AI Connection Error: ${error.message}` });

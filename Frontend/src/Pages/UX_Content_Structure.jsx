@@ -16,7 +16,6 @@ import MetricInfoModal from "../Component/MetricInfoModal";
 import ParameterInfoModal from "../Component/ParameterInfoModal";
 import { InfoDetails } from "../Component/InfoDetails";
 import AskAIButton from "../Component/AskAIButton";
-import AISummaryBlock from "../Component/AISummaryBlock";
 
 const iconMap = {
   Text_Readability: BookOpen,
@@ -628,7 +627,13 @@ export default function UX_Content_Structure() {
 
             {/* 1. URL Header */}
             <div>
-              <UrlHeader data={data} darkMode={darkMode} />
+              <UrlHeader 
+                data={data} 
+                darkMode={darkMode} 
+                sectionName="UX & Content Structure"
+                sectionData={results}
+                auditScore={overallScore}
+              />
             </div>
 
             <div className="flex flex-col xl:flex-row min-h-[300px]">
@@ -731,7 +736,13 @@ export default function UX_Content_Structure() {
 
           {/* 1. URL Header */}
           <div>
-            <UrlHeader data={data} darkMode={darkMode} />
+            <UrlHeader 
+              data={data} 
+              darkMode={darkMode} 
+              sectionName="UX & Content Structure"
+              sectionData={results}
+              auditScore={overallScore}
+            />
           </div>
 
           {/* 2. Card Body */}
@@ -839,15 +850,6 @@ export default function UX_Content_Structure() {
                 })}
               </Section>
             ))}
-
-            {/* AI Summary Block */}
-            <AISummaryBlock
-              sectionName="UX & Content Structure"
-              sectionData={results}
-              auditScore={overallScore}
-              url={data?.url}
-              darkMode={darkMode}
-            />
           </div>
         </ReportRestrictionWrapper>
       </main>

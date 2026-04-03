@@ -17,7 +17,6 @@ import MetricInfoModal from "../Component/MetricInfoModal";
 import ParameterInfoModal from "../Component/ParameterInfoModal";
 import { InfoDetails } from "../Component/InfoDetails";
 import AskAIButton from "../Component/AskAIButton";
-import AISummaryBlock from "../Component/AISummaryBlock";
 
 // Icon Mapping
 const iconMap = {
@@ -425,7 +424,13 @@ export default function Accessibility() {
         <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-8`}>
           <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
             <div>
-              <UrlHeader data={data} darkMode={darkMode} />
+              <UrlHeader 
+                data={data} 
+                darkMode={darkMode} 
+                sectionName="Accessibility"
+                sectionData={metric}
+                auditScore={metric?.Percentage}
+              />
             </div>
 
             <div className="flex flex-col xl:flex-row min-h-[300px]">
@@ -462,7 +467,13 @@ export default function Accessibility() {
         {/* ✅ Unified Master Card */}
         <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
 
-          <UrlHeader data={data} darkMode={darkMode} />
+          <UrlHeader 
+            data={data} 
+            darkMode={darkMode} 
+            sectionName="Accessibility"
+            sectionData={metric}
+            auditScore={metric?.Percentage}
+          />
 
           {loading || !data?.accessibility ? (
             <div className="flex flex-col xl:flex-row min-h-[300px]">
@@ -575,15 +586,6 @@ export default function Accessibility() {
                 <MetricCard key={k} metricKey={k} data={metric[k]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[k], icon: iconMap[k] })} />
               ))}
             </Section>
-
-            {/* AI Summary Block */}
-            <AISummaryBlock
-              sectionName="Accessibility"
-              sectionData={metric}
-              auditScore={metric?.Percentage}
-              url={data?.url}
-              darkMode={darkMode}
-            />
           </div>
         </ReportRestrictionWrapper>
       </main>

@@ -18,7 +18,6 @@ import MetricInfoModal from "../Component/MetricInfoModal";
 import ParameterInfoModal from "../Component/ParameterInfoModal";
 import { InfoDetails } from "../Component/InfoDetails";
 import AskAIButton from "../Component/AskAIButton";
-import AISummaryBlock from "../Component/AISummaryBlock";
 
 const iconMap = {
   Structured_Data: Database,
@@ -571,7 +570,13 @@ export default function AIO() {
 
             {/* 1. URL Header */}
             <div>
-              <UrlHeader data={data} darkMode={darkMode} />
+              <UrlHeader 
+                data={data} 
+                darkMode={darkMode} 
+                sectionName="AIO (AI Optimization)"
+                sectionData={aio}
+                auditScore={aio?.Percentage}
+              />
             </div>
 
             <div className="flex flex-col xl:flex-row min-h-[300px]">
@@ -616,7 +621,13 @@ export default function AIO() {
 
           {/* 1. URL Header */}
           <div>
-            <UrlHeader data={data} darkMode={darkMode} />
+            <UrlHeader 
+              data={data} 
+              darkMode={darkMode} 
+              sectionName="AIO (AI Optimization)"
+              sectionData={aio}
+              auditScore={aio?.Percentage}
+            />
           </div>
 
           {/* 2. Card Body */}
@@ -753,14 +764,6 @@ export default function AIO() {
               ))}
             </Section>
 
-            {/* AI Summary Block */}
-            <AISummaryBlock
-              sectionName="AIO (AI Optimization)"
-              sectionData={aio}
-              auditScore={aio?.Percentage}
-              url={data?.url}
-              darkMode={darkMode}
-            />
           </div>
         </ReportRestrictionWrapper>
       </main>

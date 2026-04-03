@@ -5,10 +5,14 @@ import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
 import { savePostAuthIntent } from "../utils/intentStore";
 
-export default function UrlHeader({ data, darkMode }) {
+import { AISummaryModal } from "./AISummaryModal";
+import { Sparkles } from "lucide-react";
+
+export default function UrlHeader({ data, darkMode, sectionName, sectionData, auditScore }) {
   const currentDevice = data?.device || "Desktop";
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const [showAISummary, setShowAISummary] = React.useState(false);
 
   const handleDownloadPDF = () => {
     // Guest guard — redirect to login
@@ -55,6 +59,21 @@ export default function UrlHeader({ data, darkMode }) {
     );
   };
 
+  const handleGetAISummary = () => {
+    if (!isAuthenticated) {
+      toast("Sign in to unlock AI strategic insights.", {
+        icon: "✨",
+        duration: 4000,
+      });
+      if (data?._id) {
+        savePostAuthIntent(data._id, `/report/${data._id}`);
+      }
+      navigate("/login");
+      return;
+    }
+    setShowAISummary(true);
+  };
+
   return (
     <div className={`relative p-6 md:p-8 border-b ${darkMode ? "border-slate-800 bg-slate-900/50" : "border-slate-100 bg-slate-50/80"}`}>
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
@@ -80,6 +99,17 @@ export default function UrlHeader({ data, darkMode }) {
 
         {/* Right: Metadata Badges */}
         <div className="flex flex-wrap items-center gap-3">
+          {/* AI Summary Button */}
+          {data?.status === "completed" && sectionData && (
+             <button
+              onClick={handleGetAISummary}
+              className={`flex items-center gap-2 px-6 py-2 rounded-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all transition-all`}
+             >
+                <Sparkles className="w-4 h-4" />
+                <span>Get AI Summary</span>
+             </button>
+          )}
+
           {/* Device Badge */}
           <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border transition-colors ${darkMode ? "bg-slate-800/50 border-slate-700/50 text-slate-300" : "bg-slate-100/50 border-slate-200/50 text-slate-600"}`}>
             {currentDevice === "Mobile" ? <Smartphone className="w-4 h-4" /> : <Monitor className="w-4 h-4" />}
@@ -113,6 +143,16 @@ export default function UrlHeader({ data, darkMode }) {
               <span>Download PDF</span>
             </button>
           )}
+
+          <AISummaryModal
+            isOpen={showAISummary}
+            onClose={() => setShowAISummary(false)}
+            sectionName={sectionName}
+            sectionData={sectionData}
+            auditScore={auditScore}
+            url={data?.url}
+            darkMode={darkMode}
+          />
 
           {/* Back to List Button (if from bulk audit) */}
           {data?.fromBulkAudit && (

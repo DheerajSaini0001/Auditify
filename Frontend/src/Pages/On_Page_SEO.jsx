@@ -18,7 +18,6 @@ import ScoreBadge from "../Component/reusablecomponent/ScoreBadge";
 import SEOCard from "../Component/reusablecomponent/SEOCard";
 import { AuditShimmer } from "../Component/reusablecomponent/AuditShimmer";
 import AskAIButton from "../Component/AskAIButton";
-import AISummaryBlock from "../Component/AISummaryBlock";
 
 const getStatusFromScore = (score) => {
   if (score >= 90) return "pass";
@@ -2260,7 +2259,13 @@ export default function On_Page_SEO() {
 
           {/* 1. URL Header */}
           <div>
-            <UrlHeader data={data} darkMode={darkMode} />
+            <UrlHeader 
+              data={data} 
+              darkMode={darkMode} 
+              sectionName="On-Page SEO"
+              sectionData={seo}
+              auditScore={seo?.totalScore}
+            />
           </div>
 
           {/* 2. Card Body */}
@@ -2472,14 +2477,6 @@ export default function On_Page_SEO() {
           />
         </Section>
 
-        {/* AI Summary Block */}
-        <AISummaryBlock
-          sectionName="On-Page SEO"
-          sectionData={seo}
-          auditScore={overallScore}
-          url={data?.url}
-          darkMode={darkMode}
-        />
           </div>
         </ReportRestrictionWrapper>
       </main>

@@ -22,7 +22,6 @@ import { AuditShimmer } from "../Component/reusablecomponent/AuditShimmer";
 import Section from "../Component/reusablecomponent/Section";
 import OptimizationCard from "../Component/reusablecomponent/OptimizationCard";
 import ScoreBadge from "../Component/reusablecomponent/ScoreBadge";
-import AISummaryBlock from "../Component/AISummaryBlock";
 
 const scoreCalculationInfo = InfoDetails.Technical_Performance_Methodology;
 const metricExplanations = InfoDetails;
@@ -85,25 +84,37 @@ export default function Technical_Performance() {
   const mainBg = darkMode ? "bg-gray-900" : "bg-gray-50";
 
   return (
-    <div className={`w-full ${mainBg} transition-colors duration-300`}>
-      <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-8`}>
+    <div className={`w-full min-h-screen ${mainBg} transition-colors duration-300 relative overflow-hidden`}>
+      {/* Background Decorative Elements */}
+      <div className="absolute top-0 left-0 w-full h-[500px] pointer-events-none overflow-hidden">
+        <div className={`absolute -top-24 -left-24 w-96 h-96 rounded-full blur-[120px] opacity-20 ${darkMode ? "bg-blue-600" : "bg-blue-400"}`}></div>
+        <div className={`absolute top-48 -right-24 w-80 h-80 rounded-full blur-[100px] opacity-15 ${darkMode ? "bg-indigo-600" : "bg-indigo-400"}`}></div>
+        <div className={`absolute -bottom-12 left-1/2 -translate-x-1/2 w-full max-w-4xl h-64 rounded-full blur-[150px] opacity-5 ${darkMode ? "bg-purple-600" : "bg-purple-400"}`}></div>
+      </div>
+
+      <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-4"} pb-16 space-y-12 relative z-10`}>
 
         {/* ✅ Unified Master Card */}
-        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
+        <div className={`rounded-[2.5rem] overflow-hidden transition-all duration-500 transform hover:shadow-2xl ${darkMode ? "bg-slate-900/40 backdrop-blur-xl border border-slate-800 shadow-2xl shadow-black/40" : "bg-white/60 backdrop-blur-xl border border-slate-200 shadow-2xl shadow-slate-200/40"}`}>
 
           {/* 1. URL Header */}
           <div>
-            <UrlHeader data={data} darkMode={darkMode} />
+            <UrlHeader 
+              data={data} 
+              darkMode={darkMode} 
+              sectionName="Technical Performance"
+              sectionData={tech}
+              auditScore={overallScore}
+            />
           </div>
 
           {/* 2. Card Body */}
           {loading || !data?.technicalPerformance ? (
             <div className="flex flex-col xl:flex-row min-h-[300px]">
-              {/* Left Panel: Live Preview (Only if not All) */}
               {data?.report !== "All" && (
-                <div className={`w-full xl:w-1/2 p-6 flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/30 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/5 blur-3xl rounded-full pointer-events-none"></div>
-                  <div className="w-full relative z-10 px-2 lg:px-6">
+                <div className={`w-full xl:w-1/2 p-6 flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden backdrop-blur-sm ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-white/40 border-white/20"}`}>
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/10 blur-[100px] rounded-full pointer-events-none animate-pulse duration-[10000ms]"></div>
+                  <div className="w-full relative z-10 px-2 lg:px-6 hover:scale-[1.02] transition-transform duration-500">
                     <LivePreview data={data} loading={loading} variant="plain" />
                   </div>
                 </div>
@@ -121,9 +132,9 @@ export default function Technical_Performance() {
 
               {/* Left Panel: Live Preview (Only if not All) */}
               {data?.report !== "All" && (
-                <div className={`w-full xl:w-[45%] ${data?.report === "All" ? "p-6 lg:p-10" : "p-3 lg:p-4"} flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/5 blur-3xl rounded-full pointer-events-none"></div>
-                  <div className="w-full relative z-10">
+                <div className={`w-full xl:w-[45%] ${data?.report === "All" ? "p-6 lg:p-10" : "p-3 lg:p-4"} flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden backdrop-blur-md ${darkMode ? "bg-slate-950/40 border-slate-800" : "bg-white/40 border-white/20"}`}>
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/10 blur-[100px] rounded-full pointer-events-none animate-pulse duration-[10000ms]"></div>
+                  <div className="w-full relative z-10 hover:scale-[1.02] transition-transform duration-500">
                     <LivePreview data={data} loading={loading} variant="plain" />
                   </div>
                 </div>
@@ -139,15 +150,15 @@ export default function Technical_Performance() {
                     {/* Text Content */}
                     <div className={`flex-1 ${data?.report === "All" ? "space-y-5" : "space-y-4"} text-left order-2 md:order-1`}>
                       <div className={`${data?.report === "All" ? "space-y-2" : "space-y-1.5"}`}>
-                        <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-blue-100/50 text-blue-600 border border-blue-200"}`}>
-                          <Activity className="w-3.5 h-3.5" />
+                        <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider animate-in fade-in slide-in-from-left-4 duration-500 ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20 shadow-[0_0_15px_-3px_rgba(59,130,246,0.3)]" : "bg-blue-100/50 text-blue-600 border border-blue-200"}`}>
+                          <Activity className="w-3.5 h-3.5 animate-pulse" />
                           <span>Performance Audit</span>
                         </div>
-                        <h3 className={`${data?.report === "All" ? "text-3xl lg:text-5xl" : "text-2xl lg:text-4xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
-                          Technical <span className="text-blue-500">Performance</span>
+                        <h3 className={`${data?.report === "All" ? "text-3xl lg:text-5xl" : "text-2xl lg:text-4xl"} font-black tracking-tight animate-in fade-in slide-in-from-left-6 duration-700 delay-75 ${darkMode ? "text-white" : "text-slate-900"}`}>
+                          Technical <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-indigo-500">Performance</span>
                         </h3>
-                        <p className={`text-sm leading-relaxed opacity-70 ${darkMode ? "text-slate-300" : "text-slate-600"}`}>
-                          Core vitals and speed configurations analysis.
+                        <p className={`text-sm leading-relaxed opacity-70 animate-in fade-in slide-in-from-left-8 duration-700 delay-150 ${darkMode ? "text-slate-300" : "text-slate-600"}`}>
+                          Core vitals and speed configurations analysis for a faster user experience.
                         </p>
                       </div>
 
@@ -157,30 +168,26 @@ export default function Technical_Performance() {
                         <div className={`w-px h-4 ${darkMode ? "bg-slate-800" : "bg-slate-200 hidden md:block"}`}></div>
                         <button
                           onClick={() => setSelectedMetricInfo(scoreCalculationInfo)}
-                          className={`flex items-center gap-2 text-sm font-bold transition-all ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-700"}`}
+                          className={`group flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-300 border ${darkMode ? "bg-slate-800/50 border-slate-700 hover:border-blue-500/50 text-blue-400 hover:text-blue-300 shadow-lg shadow-blue-500/5" : "bg-blue-50 border-blue-100 hover:border-blue-300 text-blue-600 shadow-sm"}`}
                         >
-                          <Info size={16} />
-                          <span className="border-b border-transparent hover:border-current">Metric Methodology</span>
+                          <Info size={14} className="transition-transform group-hover:rotate-12" />
+                          <span>Methodology</span>
                         </button>
                       </div>
-
-
-
                     </div>
 
                     {/* Circular Progress */}
-                    <div className="relative flex-shrink-0 group cursor-default order-1 md:order-2">
-                      <div className={`absolute -inset-8 rounded-full blur-3xl opacity-25 transition-opacity duration-700 group-hover:opacity-40 ${overallScore >= 80 ? "bg-emerald-500" : "bg-amber-500"}`}></div>
-                      <CircularProgress value={overallScore} size={data?.report === "All" ? 180 : 150} stroke={14} />
-                      <div className="absolute inset-0 flex items-center justify-center flex-col gap-0.5">
-                        <span className={`${data?.report === "All" ? "text-5xl" : "text-3xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>{overallScore}%</span>
-                        <span className="text-[11px] font-bold uppercase tracking-[0.2em] opacity-50">SCORE</span>
+                    <div className="relative flex-shrink-0 group cursor-default order-1 md:order-2 animate-in zoom-in duration-1000 delay-300">
+                      <div className={`absolute -inset-10 rounded-full blur-[40px] opacity-30 transition-all duration-700 group-hover:opacity-50 group-hover:blur-[60px] ${overallScore >= 80 ? "bg-emerald-500" : overallScore >= 50 ? "bg-amber-500" : "bg-rose-500"}`}></div>
+                      <div className="relative z-10">
+                        <CircularProgress value={overallScore} size={data?.report === "All" ? 200 : 160} stroke={16} />
+                        <div className="absolute inset-0 flex items-center justify-center flex-col gap-0.5">
+                          <span className={`text-4xl ${data?.report === "All" ? "lg:text-6xl" : "lg:text-5xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>{overallScore}%</span>
+                          <span className="text-[11px] font-extrabold uppercase tracking-[0.25em] opacity-40">SCORE</span>
+                        </div>
                       </div>
                     </div>
                   </div>
-
-
-
                 </div>
               </div>
             </div>
@@ -586,19 +593,7 @@ export default function Technical_Performance() {
                   </div>
                 </OptimizationCard>
               )}
-
-
-
             </Section>
-
-            {/* AI Summary Block */}
-            <AISummaryBlock 
-              sectionName="Technical Performance" 
-              sectionData={tech} 
-              auditScore={overallScore} 
-              url={data?.url} 
-              darkMode={darkMode} 
-            />
           </div>
         </ReportRestrictionWrapper>
       )}

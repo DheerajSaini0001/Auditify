@@ -15,6 +15,7 @@ import MetricInfoModal from "../Component/MetricInfoModal";
 import ParameterInfoModal from "../Component/ParameterInfoModal";
 import { InfoDetails } from "../Component/InfoDetails";
 import AskAIButton from "../Component/AskAIButton";
+import AISummaryBlock from "../Component/AISummaryBlock";
 
 const iconMap = {
   HTTPS: Lock,
@@ -1047,14 +1048,23 @@ export default function Security_Compilance() {
           ))}
         </Section>
 
-        <Section title="Compliance & Privacy" icon={Globe2} darkMode={darkMode}>
-          {[
-            "Cookie_Consent", "GDPR_CCPA", "Privacy_Policy",
-            "Data_Collection", "Third_Party_Cookies"
-          ].map((key) => (
-            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || Shield })} />
-          ))}
-        </Section>
+            <Section title="Compliance & Privacy" icon={Globe2} darkMode={darkMode}>
+              {[
+                "Cookie_Consent", "GDPR_CCPA", "Privacy_Policy",
+                "Data_Collection", "Third_Party_Cookies"
+              ].map((key) => (
+                metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || Shield })} />
+              ))}
+            </Section>
+
+            {/* AI Summary Block */}
+            <AISummaryBlock
+              sectionName="Security & Compliance"
+              sectionData={metric}
+              auditScore={metric?.Percentage}
+              url={data?.url}
+              darkMode={darkMode}
+            />
           </div>
         </ReportRestrictionWrapper>
       </main>

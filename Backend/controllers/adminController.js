@@ -45,12 +45,28 @@ export const getUserById = async (req, res) => {
       return res.status(404).json({ error: 'User not found', code: 'USER_NOT_FOUND' });
     }
 
-    // Get recent activity
+    // Get recent activity (login/logout etc)
     const activitySummary = await ActivityLog.find({ userId: user._id })
       .sort({ timestamp: -1 })
       .limit(10);
 
-    res.json({ user, activitySummary });
+    // Get audit history
+    const auditHistory = await AuditLog.find({ userId: user._id })
+      .sort({ createdAt: -1 })
+      .limit(20);
+
+    // Get download history
+    const downloadHistory = await ActivityLog.find({ userId: user._id, action: 'REPORT_DOWNLOAD' })
+      .sort({ timestamp: -1 })
+      .limit(20);
+
+    res.json({ 
+      success: true,
+      user, 
+      activitySummary,
+      auditHistory,
+      downloadHistory
+    });
   } catch (error) {
     res.status(500).json({ error: 'Internal server error', code: 'SERVER_ERROR' });
   }
@@ -136,15 +152,16 @@ export const getAuditLogs = async (req, res) => {
       status, 
       device, 
       captcha, 
-      score 
+      score,
+      country,
+      search // email or url
     } = req.query;
-
-    console.log(`[Admin Filter Action] Filtering logs with: Status:[${status}] Device:[${device}] Captcha:[${captcha}] Score:[${score}]`);
 
     const query = {};
     if (ip) query.ip = { $regex: ip, $options: 'i' };
     if (status) query.status = status;
     if (device) query.device = device;
+    if (country) query.country = { $regex: country, $options: 'i' };
     
     if (captcha === 'true') {
       query.captchaPassed = true;
@@ -157,6 +174,23 @@ export const getAuditLogs = async (req, res) => {
       query.score = { $gte: min, $lte: max };
     }
 
+    if (search) {
+      // Find matching users first
+      const matchingUsers = await User.find({ 
+        $or: [
+          { name: { $regex: search, $options: 'i' } },
+          { email: { $regex: search, $options: 'i' } }
+        ] 
+      }).select('_id');
+      
+      const userIds = matchingUsers.map(u => u._id);
+
+      query.$or = [
+          { url: { $regex: search, $options: 'i' } },
+          { userId: { $in: userIds } }
+      ];
+    }
+
     const logs = await AuditLog.find(query)
       .populate('userId', 'name email')
       .skip((page - 1) * limit)
@@ -164,13 +198,11 @@ export const getAuditLogs = async (req, res) => {
       .sort({ createdAt: -1 });
 
     const total = await AuditLog.countDocuments(query);
-    const uniqueIps = await AuditLog.distinct('ip');
 
     res.json({
       success: true,
       logs: logs || [],
       total: total || 0,
-      uniqueIpsCount: uniqueIps.length,
       page: parseInt(page),
       totalPages: Math.ceil(total / limit) || 1,
     });
@@ -183,35 +215,34 @@ export const getAuditLogs = async (req, res) => {
 export const getStats = async (req, res) => {
   try {
     const totalUsers = await User.countDocuments();
-    const blockedUsers = await User.countDocuments({ isBlocked: true });
     
-    // Total audits from session AuditLog (more accurate for technical monitoring)
+    // Total audits (scans)
     const totalAudits = await AuditLog.countDocuments();
     
-    // Unique IPs count from AuditLog
-    const uniqueIps = await AuditLog.distinct('ip');
+    // Total reports downloaded from ActivityLog
+    const totalDownloads = await ActivityLog.countDocuments({ action: 'REPORT_DOWNLOAD' });
     
+    // Total projects (websites) added across all users
+    const projectAggregation = await User.aggregate([
+      { $project: { numberOfWebsites: { $size: "$websites" } } },
+      { $group: { _id: null, total: { $sum: "$numberOfWebsites" } } }
+    ]);
+    const totalProjects = projectAggregation[0]?.total || 0;
+
     // Active Today (unique users logged in last 24h)
-    const today = new Date();
-    today.setHours(0,0,0,0);
-    const activeToday = await User.countDocuments({ lastLogin: { $gte: today } });
-
-    // Suspicious IPs (e.g. IPs with more than 10 failed audits or high frequency)
-    // For now, let's just count failed audits status as suspicious signal
-    const suspiciousCount = await AuditLog.countDocuments({ status: 'failed' });
-
-    console.log(`[Admin Stats Request] Total Users: ${totalUsers} | Total Audits: ${totalAudits} | Unique IPs: ${uniqueIps.length}`);
+    const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const activeToday = await User.countDocuments({ lastLogin: { $gte: last24h } });
 
     res.json({
       success: true,
       totalUsers: totalUsers || 0,
       totalAudits: totalAudits || 0,
-      activeToday: activeToday || 0,
-      blockedUsers: blockedUsers || 0,
-      uniqueIpsCount: uniqueIps.length || 0,
-      suspiciousCount: suspiciousCount || 0
+      totalDownloads: totalDownloads || 0,
+      totalProjects: totalProjects || 0,
+      activeToday: activeToday || 0
     });
   } catch (error) {
+    console.error('getStats Error:', error);
     res.status(500).json({ error: 'Internal server error', code: 'SERVER_ERROR' });
   }
 };

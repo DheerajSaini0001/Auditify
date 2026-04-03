@@ -17,6 +17,7 @@ import MetricInfoModal from "../Component/MetricInfoModal";
 import ParameterInfoModal from "../Component/ParameterInfoModal";
 import { InfoDetails } from "../Component/InfoDetails";
 import AskAIButton from "../Component/AskAIButton";
+import AISummaryBlock from "../Component/AISummaryBlock";
 
 // Icon Mapping
 const iconMap = {
@@ -570,10 +571,19 @@ export default function Accessibility() {
 
         {/* Roles & Details Section */}
         <Section title="Semantics & Roles" icon={Code} darkMode={darkMode}>
-          {["Label", "Button_Name", "Link_Name", "Aria_Roles", "Landmarks", "Document_Title", "Html_Has_Lang", "List", "Heading_Order", "Aria_Allowed_Attr"].map(k => metric[k] && (
-            <MetricCard key={k} metricKey={k} data={metric[k]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[k], icon: iconMap[k] })} />
-          ))}
-        </Section>
+              {["Label", "Button_Name", "Link_Name", "Aria_Roles", "Landmarks", "Document_Title", "Html_Has_Lang", "List", "Heading_Order", "Aria_Allowed_Attr"].map(k => metric[k] && (
+                <MetricCard key={k} metricKey={k} data={metric[k]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[k], icon: iconMap[k] })} />
+              ))}
+            </Section>
+
+            {/* AI Summary Block */}
+            <AISummaryBlock
+              sectionName="Accessibility"
+              sectionData={metric}
+              auditScore={metric?.Percentage}
+              url={data?.url}
+              darkMode={darkMode}
+            />
           </div>
         </ReportRestrictionWrapper>
       </main>

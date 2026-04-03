@@ -18,6 +18,7 @@ import MetricInfoModal from "../Component/MetricInfoModal";
 import ParameterInfoModal from "../Component/ParameterInfoModal";
 import { InfoDetails } from "../Component/InfoDetails";
 import AskAIButton from "../Component/AskAIButton";
+import AISummaryBlock from "../Component/AISummaryBlock";
 
 const iconMap = {
   Structured_Data: Database,
@@ -735,22 +736,31 @@ export default function AIO() {
           ))}
         </Section>
 
-        <Section title="E-E-A-T & Answer Optimization" icon={HelpCircle} darkMode={darkMode}>
-          {/* Answer Oriented Structure spans full width because it contains detailed Q&A pairs */}
-          {aio["Answer_Oriented_Structure"] && (
-            <div className="md:col-span-2">
-              <MetricCard
-                metricKey="Answer_Oriented_Structure"
-                data={aio["Answer_Oriented_Structure"]}
-                darkMode={darkMode}
-                onInfo={() => setSelectedParameterInfo({ ...educationalContent["Answer_Oriented_Structure"], icon: iconMap["Answer_Oriented_Structure"] || HelpCircle })}
-              />
-            </div>
-          )}
-          {["Content_Chunking", "Lists_Structured_Blocks", "Author_Source_Attribution", "Fact_Vs_Opinion"].map((key) => (
-            aio[key] && <MetricCard key={key} metricKey={key} data={aio[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
-          ))}
-        </Section>
+            <Section title="E-E-A-T & Answer Optimization" icon={HelpCircle} darkMode={darkMode}>
+              {/* Answer Oriented Structure spans full width because it contains detailed Q&A pairs */}
+              {aio["Answer_Oriented_Structure"] && (
+                <div className="md:col-span-2">
+                  <MetricCard
+                    metricKey="Answer_Oriented_Structure"
+                    data={aio["Answer_Oriented_Structure"]}
+                    darkMode={darkMode}
+                    onInfo={() => setSelectedParameterInfo({ ...educationalContent["Answer_Oriented_Structure"], icon: iconMap["Answer_Oriented_Structure"] || HelpCircle })}
+                  />
+                </div>
+              )}
+              {["Content_Chunking", "Lists_Structured_Blocks", "Author_Source_Attribution", "Fact_Vs_Opinion"].map((key) => (
+                aio[key] && <MetricCard key={key} metricKey={key} data={aio[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
+              ))}
+            </Section>
+
+            {/* AI Summary Block */}
+            <AISummaryBlock
+              sectionName="AIO (AI Optimization)"
+              sectionData={aio}
+              auditScore={aio?.Percentage}
+              url={data?.url}
+              darkMode={darkMode}
+            />
           </div>
         </ReportRestrictionWrapper>
       </main>

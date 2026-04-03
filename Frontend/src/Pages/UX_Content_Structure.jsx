@@ -16,6 +16,7 @@ import MetricInfoModal from "../Component/MetricInfoModal";
 import ParameterInfoModal from "../Component/ParameterInfoModal";
 import { InfoDetails } from "../Component/InfoDetails";
 import AskAIButton from "../Component/AskAIButton";
+import AISummaryBlock from "../Component/AISummaryBlock";
 
 const iconMap = {
   Text_Readability: BookOpen,
@@ -814,34 +815,42 @@ export default function UX_Content_Structure() {
         {/* Filtered Sections */}
         <ReportRestrictionWrapper>
           <div className="space-y-12">
-            {sectionDefinitions.map((section, idx) => {
-          const sectionMetrics = section.keys.filter(k => metrics.includes(k));
-          if (sectionMetrics.length === 0) return null;
+            {sectionDefinitions.map((section, idx) => (
+              <Section key={idx} title={section.title} icon={section.icon} darkMode={darkMode}>
+                {section.keys.map((key) => {
+                  const metric = results[key];
+                  if (!metric) return null;
+                  return (
+                    <MetricCard
+                      key={key}
+                      type={key}
+                      title={key.replaceAll("_", " ")}
+                      description={metric.Details || metric.details}
+                      score={getScoreValue(key)}
+                      status={getStatus(key)}
+                      meta={metric.Meta || metric.meta}
+                      analysis={metric.Analysis || metric.analysis}
+                      darkMode={darkMode}
+                      icon={iconMap[key] || Layout}
+                      className={spanMap[key] || ""}
+                      onInfo={() => setSelectedParameterInfo({ ...uxEducationalContent[key], icon: iconMap[key] || Layout })}
+                    />
+                  );
+                })}
+              </Section>
+            ))}
 
-          return (
-            <Section key={idx} title={section.title} icon={section.icon} darkMode={darkMode}>
-              {sectionMetrics.map((key) => (
-                <MetricCard
-                  key={key}
-                  type={key}
-                  title={key.replaceAll("_", " ")}
-                  description={results[key]?.Details ?? results[key]?.details}
-                  score={results[key]?.Score ?? results[key]?.score ?? 0}
-                  status={results[key]?.Status ?? results[key]?.status}
-                  analysis={results[key]?.Analysis ?? results[key]?.analysis}
-                  meta={results[key]?.Meta ?? results[key]?.meta}
-                  darkMode={darkMode}
-                  icon={iconMap[key] || Layout}
-                  className={spanMap[key]}
-                  onInfo={() => setSelectedParameterInfo({ ...uxEducationalContent[key], icon: iconMap[key] || Layout })}
-                />
-              ))}
-            </Section>
-          );
-        })}
-        </div>
-      </ReportRestrictionWrapper>
-    </main>
+            {/* AI Summary Block */}
+            <AISummaryBlock
+              sectionName="UX & Content Structure"
+              sectionData={results}
+              auditScore={overallScore}
+              url={data?.url}
+              darkMode={darkMode}
+            />
+          </div>
+        </ReportRestrictionWrapper>
+      </main>
       {/* Methodology Modal */}
       <MetricInfoModal
         isOpen={!!selectedMetricInfo}

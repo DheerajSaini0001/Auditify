@@ -22,6 +22,7 @@ import { AuditShimmer } from "../Component/reusablecomponent/AuditShimmer";
 import Section from "../Component/reusablecomponent/Section";
 import OptimizationCard from "../Component/reusablecomponent/OptimizationCard";
 import ScoreBadge from "../Component/reusablecomponent/ScoreBadge";
+import AISummaryBlock from "../Component/AISummaryBlock";
 
 const scoreCalculationInfo = InfoDetails.Technical_Performance_Methodology;
 const metricExplanations = InfoDetails;
@@ -589,6 +590,15 @@ export default function Technical_Performance() {
 
 
             </Section>
+
+            {/* AI Summary Block */}
+            <AISummaryBlock 
+              sectionName="Technical Performance" 
+              sectionData={tech} 
+              auditScore={overallScore} 
+              url={data?.url} 
+              darkMode={darkMode} 
+            />
           </div>
         </ReportRestrictionWrapper>
       )}

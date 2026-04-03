@@ -30,7 +30,7 @@ app.use(helmet({
       scriptSrc: ["'self'", "'unsafe-inline'", "https://static.cloudflareinsights.com", "https://accounts.google.com"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       imgSrc: ["'self'", "data:", "https://*.googleusercontent.com", "https://www.gstatic.com"],
-      connectSrc: ["'self'", "https://*.googleapis.com"],
+      connectSrc: ["'self'", "https://*.googleapis.com", "http://localhost:2000", "ws://localhost:2000"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       objectSrc: ["'none'"],
       upgradeInsecureRequests: [],
@@ -63,7 +63,8 @@ app.use((req, res, next) => {
 
 passportConfig(passport);
 
-app.use(express.json({ limit: "10kb" })); // SRS Section 6.1: express.json({ limit: '10kb' })
+app.use(express.json({ limit: "5mb" })); 
+// SRS Section 6.1: express.json({ limit: '10kb' })
 app.use(cookieParser());
 app.use(trackingMiddleware);
 

@@ -119,6 +119,48 @@ Response length: Keep it under 200 words.`;
     }
 });
 
+// 3. NEW Section Summary Endpoint
+router.post('/summarize-section', async (req, res) => {
+    const { sectionName, sectionData, auditScore, url } = req.body;
+    console.log(`[AI Strategist] Summary request for ${sectionName} (${url})`);
+
+    if (!process.env.GEMINI_API_KEY) {
+        console.error('[AI Strategist] Missing GEMINI_API_KEY');
+        return res.status(500).json({ error: 'AI service not configured.' });
+    }
+
+    try {
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" }); 
+
+        const prompt = `You are "Auditify AI Strategist", an expert web consultant.
+        
+        TASK: Summarize the "${sectionName}" section from a website audit of: ${url}
+        Overall Section Score: ${auditScore || 'N/A'}/100
+        
+        DATA FOR THIS SECTION:
+        ${JSON.stringify(sectionData, null, 2)}
+        
+        STRICT GUIDELINES:
+        1. Write a 3-sentence summary.
+        2. Sentence 1: General health of this category (Strength).
+        3. Sentence 2: The single most critical issue or bottleneck found here.
+        4. Sentence 3: The immediate high-impact action the user should take.
+        5. Tone: Professional, authoritative, and encouraging.
+        6. NO Markdown formatting, just plain text.
+        7. Max 100 words.`;
+
+        const result = await model.generateContent(prompt);
+        const responseData = await result.response;
+        const text = responseData.text() || "The AI strategist is evaluating your data. Please check back shortly.";
+        
+        res.json({ text });
+    } catch (error) {
+        console.error('❌ SUMMARY AI ERROR:', error);
+        res.status(500).json({ error: `AI Connection Error: ${error.message}` });
+    }
+});
+
 function buildExplanationPrompt(type, title, details, meta, severity, url, score) {
     const metaString = meta ? JSON.stringify(meta, null, 2) : "None available";
     return `Analyze this audit finding:\nFinding: ${title}\nType: ${type}\nSeverity: ${severity}\nDetails: ${details}\n\nRAW DATA:\n${metaString}\n\nProvide 1) What it is, 2) Why it matters, 3) Detailed fix instructions.`;

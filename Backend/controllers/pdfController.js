@@ -1,4 +1,5 @@
 import SingleAuditReport from "../models/singleAuditReport.js";
+import ActivityLog from "../models/ActivityLog.js";
 import puppeteer from "puppeteer";
 import path from "path";
 
@@ -468,6 +469,26 @@ export const generatePDFReport = async (req, res) => {
       "Content-Disposition",
       `attachment; filename=Auditify-Report-${report.url.replace(/[^a-z0-9]/gi, "-")}.pdf`
     );
+
+    // Activity Log for analytics (Admin Dashboard)
+    if (req.user) {
+      ActivityLog.create({
+        userId: req.user.userId,
+        sessionId: req.tracking?.sessionId || 'DOWNLOAD_SESSION',
+        ip: req.tracking?.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress || '0.0.0.0',
+        device: req.tracking?.device || 'Desktop',
+        browser: req.tracking?.browser || 'Browser',
+        os: req.tracking?.os || 'OS',
+        action: 'REPORT_DOWNLOAD',
+        metadata: { 
+          reportId: id, 
+          url: report.url,
+          reportType: report.report,
+          deviceProfile: report.device
+        }
+      }).catch(err => console.error("[ActivityLog] Failed to log download:", err));
+    }
+
     res.send(Buffer.from(pdfBuffer));
 
   } catch (error) {

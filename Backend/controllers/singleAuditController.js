@@ -44,8 +44,6 @@ export const startAudit = async (req, res) => {
       return res.status(400).json({ error: "Invalid or Restricted URL" });
     }
 
-    console.log(`➡️ New Audit Request → ${url} | ${device} | ${report}`);
-
     // Strict Deduplication: Check if a successful or in-progress audit already exists
     const existing = await SingleAuditReport.findOne({ 
       url, 
@@ -55,7 +53,7 @@ export const startAudit = async (req, res) => {
     }).sort({ createdAt: -1 });
 
     if (existing) {
-      console.log(`✅ Reusing existing Audit (${existing.status}) for: ${url}`);
+      console.log(`♻️ Safeguard: Reusing existing Audit (${existing.status}) for: ${url}`);
       
       // Save an AuditLog so it appears in User's history even though it was cached
       const auditLog = new AuditLog({
@@ -102,6 +100,8 @@ export const startAudit = async (req, res) => {
     await new Promise(resolve => setTimeout(resolve, 200)); 
     const raceCheck = await SingleAuditReport.findOne({ url, device, report, status: "inprogress" });
     if (raceCheck) return res.status(200).json(raceCheck);
+
+    console.log(`➡️ Starting NEW Audit Request → ${url} | ${device} | ${report}`);
 
     let newReport;
     try {

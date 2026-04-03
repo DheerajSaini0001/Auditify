@@ -45,7 +45,7 @@ const OverAll = (A, B, C, D, E, F, G) => {
 
     try {
         if (mongoose.connection.readyState !== 1) {
-            await dbConnect();
+            await dbConnect({ maxPoolSize: 1 });
         }
 
         const { browser: b, page, response, $, screenshot } = await Puppeteer_Cheerio(url, device);
@@ -191,5 +191,7 @@ const OverAll = (A, B, C, D, E, F, G) => {
         if (browser) {
             try { await browser.close(); } catch { }
         }
+        // Always disconnect when worker finishes to free up Atlas connections
+        try { await mongoose.disconnect(); } catch { }
     }
 })();

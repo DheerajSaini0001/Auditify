@@ -78,8 +78,8 @@ const CustomDropdown = ({ value, onChange, options, icon, darkMode, disabled }) 
 
 export default function BulkAudit() {
     const { theme } = useContext(ThemeContext);
-    const { isAuthenticated } = useAuth();
-    const { setData, discoverUrls, startBulkAudit, getBulkAuditStatus } = useData();
+    const { isAuthenticated, isLoading: authLoading } = useAuth();
+    const { setData, discoverUrls, startBulkAudit, autoBulkAudit, getBulkAuditStatus } = useData();
     const darkMode = theme === "dark";
     const navigate = useNavigate();
     const { id: paramId } = useParams(); // Get ID from URL if present
@@ -107,11 +107,15 @@ export default function BulkAudit() {
     const recaptchaRef = useRef(null);
     const [showCaptcha, setShowCaptcha] = useState(false);
     const [captchaError, setCaptchaError] = useState(false);
-    const [captchaAction, setCaptchaAction] = useState(null); // 'discover' | 'audit'
+    const [captchaAction, setCaptchaAction] = useState(null); // 'discover' | 'audit' | 'auto'
+    const [sitemapLinksCount, setSitemapLinksCount] = useState(null);
 
     // Restore session / Handle URL ID / Handle Auto-run from Dashboard
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
+        // Wait for auth to load before making decisions
+        if (authLoading) return;
+
         const queryUrl = params.get("url");
 
         // Priority 1: URL Param (Direct Link)
@@ -122,25 +126,39 @@ export default function BulkAudit() {
             return;
         }
 
-        // Priority 2: Auto-run from Dashboard (via ?url=...&auto=true)
-        if (queryUrl) {
-            setInputValue(queryUrl);
-            // If it's a verified property or explicit auto-run request
-            if (params.get("auto") === "true") {
-                // We show captcha first for security, then it proceeds
-                setCaptchaAction('discover');
-                setShowCaptcha(true);
-            }
-        }
-
         // Priority 3: Session Storage (Restore previous session if no URL param)
         const savedId = sessionStorage.getItem("activeBulkAuditId");
         if (savedId) {
             setBulkAuditId(savedId);
             setAuditing(true);
+            setIsRestoring(false);
+            return;
         }
+
+        // Priority 2: Auto-run logic (via ?url=...&auto=true)
+        if (queryUrl && params.get("auto") === "true") {
+            setInputValue(queryUrl);
+            
+            // Normalize for consistent key
+            let normalizedUrl = queryUrl.trim().toLowerCase();
+            if (!/^https?:\/\//i.test(normalizedUrl)) normalizedUrl = `https://${normalizedUrl}`;
+
+            if (isAuthenticated) {
+                proceedAutoAudit(null, queryUrl);
+            } else {
+                // Check if already verified in this session
+                const isVerified = sessionStorage.getItem(`captcha_verified_${normalizedUrl}`);
+                if (isVerified) {
+                    proceedAutoAudit(null, queryUrl);
+                } else {
+                    setCaptchaAction('auto');
+                    setShowCaptcha(true);
+                }
+            }
+        }
+        
         setIsRestoring(false);
-    }, [paramId]);
+    }, [paramId, isAuthenticated, authLoading]);
 
     const [error, setError] = useState(null);
 
@@ -246,6 +264,8 @@ export default function BulkAudit() {
                 proceedDiscovery(token);
             } else if (captchaAction === 'audit') {
                 proceedBulkAudit(token);
+            } else if (captchaAction === 'auto') {
+                proceedAutoAudit(token);
             }
         }
     };
@@ -268,14 +288,50 @@ export default function BulkAudit() {
 
         if (response.success) {
             setDiscoveredUrls(response.data.urls);
+            setSitemapLinksCount(response.data.totalUrls);
             setBaseUrl(response.data.site);
             setSelectedUrls(response.data.urls); // Select all by default
+
+            // If guest just solved captcha, mark session as verified for this URL
+            if (token) {
+                let normalizedUrl = urlToFetch.trim().toLowerCase();
+                sessionStorage.setItem(`captcha_verified_${normalizedUrl}`, "true");
+            }
 
         } else {
             console.error("Error discovering URLs:", response.error);
             setError(response.error || "Failed to discover URLs");
         }
 
+        setDiscovering(false);
+    };
+
+    // Combined Discovery & Start Audit for Automation
+    const proceedAutoAudit = async (token, directUrl = null) => {
+        setShowCaptcha(false);
+        setError(null);
+
+        let urlToFetch = directUrl || inputValue.trim();
+        if (!/^https?:\/\//i.test(urlToFetch)) {
+            urlToFetch = `https://${urlToFetch}`;
+        }
+
+        setDiscovering(true);
+        const response = await autoBulkAudit(urlToFetch, maxPages, device, report, token);
+
+        if (response.success) {
+            setBulkAuditId(response.data.bulkAuditId);
+            setSitemapLinksCount(response.data.totalPages);
+            sessionStorage.setItem("activeBulkAuditId", response.data.bulkAuditId);
+            
+            if (token) {
+                const normalizedUrl = urlToFetch.trim().toLowerCase();
+                sessionStorage.setItem(`captcha_verified_${normalizedUrl}`, "true");
+            }
+        } else {
+            console.error("Error starting auto-audit:", response.error);
+            setError(response.error || "Failed to start auto-audit");
+        }
         setDiscovering(false);
     };
 
@@ -403,6 +459,15 @@ export default function BulkAudit() {
                     <p className={`max-w-2xl mx-auto text-lg ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
                         Discover all pages, select which ones to audit, and get comprehensive reports.
                     </p>
+
+                    {sitemapLinksCount !== null && (
+                        <div className="flex justify-center mt-6 animate-in fade-in zoom-in-95 duration-500">
+                             <div className={`inline-flex items-center gap-3 px-6 py-2 rounded-full border shadow-lg ${darkMode ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : "bg-emerald-50 border-emerald-100 text-emerald-700"}`}>
+                                <Globe className="w-5 h-5 animate-pulse" />
+                                <span className="font-bold tracking-tight">Found <span className="text-xl px-1">{sitemapLinksCount}</span> links in sitemap.xml</span>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Step 1: URL Discovery Form */}
@@ -741,7 +806,9 @@ export default function BulkAudit() {
                             <p className={`text-sm font-medium leading-relaxed ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
                                 {captchaAction === 'discover'
                                     ? "Confirm you're human to discover website URLs."
-                                    : "Confirm you're human to start your bulk audit report."}
+                                    : captchaAction === 'auto' 
+                                        ? "Confirm you're human to automatically start scanning all pages."
+                                        : "Confirm you're human to start your bulk audit report."}
                             </p>
                         </div>
 

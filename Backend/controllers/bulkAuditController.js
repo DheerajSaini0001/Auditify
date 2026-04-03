@@ -155,16 +155,27 @@ export const auditSelectedUrls = async (req, res) => {
     }
 };
 
-// Background process to audit selected URLs
+// Background process to audit selected URLs with concurrency control
 async function processSelectedUrls(bulkAuditId, selectedUrls, device, report, tracking) {
     try {
-        // Audit pages one by one
-        for (let i = 0; i < selectedUrls.length; i++) {
-            const pageUrl = selectedUrls[i];
+        const CONCURRENCY_LIMIT = 10; // Run max 5 workers at once
+        const total = selectedUrls.length;
+        let currentIndex = 0;
+        const activeAudits = new Set();
 
-            console.log(`🚀 Starting audit ${i + 1}/${selectedUrls.length}: ${pageUrl}`);
+        console.log(`🚀 Starting parallel audit for ${total} URLs (Concurrency: ${CONCURRENCY_LIMIT})`);
 
-            // Check for existing valid report in SiteReport OR previous BulkAudits
+        // Helper to run next available task
+        const runNext = async () => {
+            if (currentIndex >= total) return;
+            
+            const index = currentIndex++;
+            const pageUrl = selectedUrls[index];
+            const startTime = Date.now();
+
+            console.log(`📡 Preparing audit ${index + 1}/${total}: ${pageUrl}`);
+
+            // 1. Check for existing data (reuse)
             let foundData = await SingleAuditReport.findOne({
                 url: pageUrl,
                 device: device,
@@ -191,8 +202,7 @@ async function processSelectedUrls(bulkAuditId, selectedUrls, device, report, tr
             }
 
             if (foundData) {
-                console.log(`♻️ Found existing data for: ${pageUrl}, reusing.`);
-
+                console.log(`♻️ Reusing data for: ${pageUrl}`);
                 const updateData = {
                     "pages.$.status": "completed",
                     "pages.$.completedAt": new Date(),
@@ -214,24 +224,18 @@ async function processSelectedUrls(bulkAuditId, selectedUrls, device, report, tr
 
                 await BulkAuditReport.findOneAndUpdate(
                     { _id: bulkAuditId, "pages.url": pageUrl },
-                    {
-                        $set: updateData,
-                        $inc: { completedPages: 1 }
-                    }
+                    { $set: updateData, $inc: { completedPages: 1 } }
                 );
-
-                continue;
+                
+                return runNext(); // Immediately start next
             }
 
-            // Update page status to inprogress
+            // 2. Start Live Worker Audit
             await BulkAuditReport.findOneAndUpdate(
                 { _id: bulkAuditId, "pages.url": pageUrl },
                 { $set: { "pages.$.status": "inprogress" } }
             );
 
-            const startTime = Date.now();
-
-            // Create a pending AuditLog entry for this bulk page audit
             const auditLog = new AuditLog({
                 sessionId: tracking?.sessionId || "bulk-session",
                 ip: tracking?.ip || "unknown",
@@ -248,16 +252,31 @@ async function processSelectedUrls(bulkAuditId, selectedUrls, device, report, tr
                 captchaPassed: true,
                 status: "pending",
             });
-            auditLog.save().catch(err => console.error("Error saving bulk item AuditLog:", err));
+            await auditLog.save().catch(err => console.error("Error saving bulk item AuditLog:", err));
 
-            // Start worker for this page
-            await auditSinglePage(bulkAuditId, pageUrl, device, report, auditLog._id, startTime);
+            // Start worker and wait for completion
+            const auditPromise = auditSinglePage(bulkAuditId, pageUrl, device, report, auditLog._id, startTime);
+            activeAudits.add(auditPromise);
+            
+            await auditPromise;
+            activeAudits.delete(auditPromise);
 
-            // Small delay between audits to prevent overwhelming the server
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            // Small delay to space out worker starts slightly
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            return runNext(); // Continue to next
+        };
+
+        // Initialize pool
+        const pool = [];
+        const initialCount = Math.min(CONCURRENCY_LIMIT, total);
+        for (let i = 0; i < initialCount; i++) {
+            pool.push(runNext());
         }
 
-        // Mark bulk audit as completed
+        await Promise.all(pool);
+
+        // Final check to mark main report as completed
         await BulkAuditReport.findByIdAndUpdate(bulkAuditId, {
             status: 'completed',
             completedAt: new Date()
@@ -266,8 +285,7 @@ async function processSelectedUrls(bulkAuditId, selectedUrls, device, report, tr
         console.log(`✅ Bulk audit completed: ${bulkAuditId}`);
 
     } catch (error) {
-        console.error("Error in audit process:", error);
-
+        console.error("Error in parallel audit process:", error);
         await BulkAuditReport.findByIdAndUpdate(bulkAuditId, {
             status: 'failed',
             completedAt: new Date()
@@ -276,7 +294,7 @@ async function processSelectedUrls(bulkAuditId, selectedUrls, device, report, tr
 }
 
 // Audit a single page and save results directly in BulkAudit document
-async function auditSinglePage(bulkAuditId, pageUrl, device, report, auditLogId) {
+async function auditSinglePage(bulkAuditId, pageUrl, device, report, auditLogId, startTime) {
     return new Promise(async (resolve) => {
         try {
             const workerPath = join(process.cwd(), "workers", "bulkAuditWorker.js");
@@ -338,7 +356,8 @@ async function auditSinglePage(bulkAuditId, pageUrl, device, report, auditLogId)
                     // Update AuditLog with score and grade
                     if (auditLogId) {
                         try {
-                            const pageData = updatedBulk.pages.find(p => p.url === pageUrl);
+                            const duration = Date.now() - startTime;
+                            const pageData = updatedBulk?.pages?.find(p => p.url === pageUrl);
                             if (pageData) {
                                 await AuditLog.findByIdAndUpdate(auditLogId, {
                                     status: "success",
@@ -425,5 +444,96 @@ export const getBulkAuditStatus = async (req, res) => {
     } catch (error) {
         console.error("Error fetching bulk audit status:", error);
         res.status(500).json({ error: "Internal Server Error" });
+    }
+};
+
+// 🚀 Discover & Start Audit (Combined for automation)
+export const discoverAndAuditUrls = async (req, res) => {
+    try {
+        let { url, maxPages, device, report } = req.body;
+
+        if (!url) {
+            return res.status(400).json({ error: "Site URL is required" });
+        }
+
+        // Normalize URL
+        url = url.trim().toLowerCase();
+        if (!/^https?:\/\//i.test(url)) {
+            url = "https://" + url;
+        }
+
+        if (!isValidUrl(url)) {
+            return res.status(400).json({ error: "Invalid or Restricted URL" });
+        }
+
+        // Defaults
+        maxPages = Math.min(parseInt(maxPages) || 50, 100);
+        device = device || "Desktop";
+        report = report || "All";
+
+        console.log(`🤖 Auto-Bulk Audit for: ${url} | Max: ${maxPages} pages | Device: ${device}`);
+
+        // 0. Safeguard: Check if an identical audit is already in progress (prevent double-triggering)
+        const recentAudit = await BulkAuditReport.findOne({
+            site: url,
+            device: device,
+            status: "inprogress",
+            createdAt: { $gte: new Date(Date.now() - 2 * 60 * 1000) } // Last 2 mins buffer
+        }).sort({ createdAt: -1 });
+
+        if (recentAudit) {
+            console.log(`♻️ Safeguard: Found recent in-progress Bulk Audit for ${url}. Re-routing.`);
+            return res.status(200).json({
+                message: "Audit already in progress",
+                bulkAuditId: recentAudit._id,
+                status: "inprogress",
+                totalPages: recentAudit.totalPages,
+                discoveredUrls: recentAudit.pages.map(p => p.url)
+            });
+        }
+
+        // 1. Discover all pages
+        const discoveredUrls = await discoverPages(url, maxPages);
+
+        if (discoveredUrls.length === 0) {
+            return res.status(404).json({ error: "No URLs found to audit!" });
+        }
+
+        console.log(`✅ Discovered ${discoveredUrls.length} URLs for auto-audit`);
+
+        // 2. Start Audit for ALL discovered URLs
+        const pages = discoveredUrls.map(pageUrl => ({
+            url: pageUrl,
+            report: report,
+            device: device,
+            status: 'pending'
+        }));
+
+        const bulkAudit = await BulkAuditReport.create({
+            site: url,
+            device: device,
+            report: report,
+            status: "inprogress",
+            totalPages: discoveredUrls.length,
+            pages
+        });
+
+        // 3. Send response immediately
+        res.status(201).json({
+            message: "Auto-audit started successfully",
+            bulkAuditId: bulkAudit._id,
+            status: "inprogress",
+            totalPages: discoveredUrls.length,
+            discoveredUrls: discoveredUrls // Added for frontend to show total links
+        });
+
+        // 4. Background process
+        processSelectedUrls(bulkAudit._id.toString(), discoveredUrls, device, report, req.tracking);
+
+    } catch (error) {
+        console.error("Error in auto discover-and-audit:", error);
+        if (!res.headersSent) {
+            res.status(500).json({ error: "Internal Server Error during auto-audit" });
+        }
     }
 };

@@ -1,5 +1,5 @@
 import express from "express";
-import { discoverUrls, auditSelectedUrls, getBulkAuditStatus } from "../controllers/bulkAuditController.js";
+import { discoverUrls, auditSelectedUrls, getBulkAuditStatus, discoverAndAuditUrls } from "../controllers/bulkAuditController.js";
 import rateLimit from "express-rate-limit";
 import { tryAuthenticate } from "../middleware/auth.js";
 import verifyRecaptcha from "../middleware/verifyCaptcha.js";
@@ -22,5 +22,8 @@ router.post("/audit", auditLimiter, tryAuthenticate, verifyRecaptcha, auditSelec
 
 // Get Bulk Audit Status
 router.get("/:bulkAuditId", getBulkAuditStatus);
+
+// Discover and Start Audit combined (Auto flow)
+router.post("/auto-audit", tryAuthenticate, verifyRecaptcha, discoverAndAuditUrls);
 
 export default router;

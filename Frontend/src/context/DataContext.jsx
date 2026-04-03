@@ -183,6 +183,28 @@ export const DataProvider = ({ children }) => {
     }
   };
 
+  // 🚀 BULK AUDIT: AUTO DISCOVER & START
+  const autoBulkAudit = async (url, maxPages, device, report, captchaToken) => {
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
+      const token = localStorage.getItem('auditify_token');
+
+      const res = await fetch(`${API_URL}/bulk-audit/auto-audit`, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          ...(token && { "Authorization": `Bearer ${token}` })
+        },
+        body: JSON.stringify({ url, maxPages, device, report, captchaToken }),
+      });
+
+      return await handleResponse(res);
+
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  };
+
   // 🚀 SINGLE AUDIT: GET BY ID
   const fetchSingleReport = useCallback(async (id) => {
     try {
@@ -232,7 +254,7 @@ export const DataProvider = ({ children }) => {
 
   return (
     <DataContext.Provider
-      value={{ data, setData, loading, fetchData, clearData, discoverUrls, startBulkAudit, getBulkAuditStatus, fetchSingleReport }}
+      value={{ data, setData, loading, fetchData, clearData, discoverUrls, startBulkAudit, autoBulkAudit, getBulkAuditStatus, fetchSingleReport }}
     >
       {children}
     </DataContext.Provider>

@@ -9,7 +9,7 @@ const ActivityLogSchema = new mongoose.Schema({
   os:        { type: String },                   // e.g. 'Windows 11'
   action: {
     type: String,
-    enum: ['LOGIN','LOGOUT','REGISTER','AUDIT_RUN','REPORT_DOWNLOAD',
+    enum: ['LOGIN','LOGOUT','REGISTER','AUDIT_RUN','AUDIT_RUN_CACHED','REPORT_DOWNLOAD',
            'PROFILE_UPDATE','FAILED_LOGIN','BLOCKED','UNBLOCKED'],
     required: true
   },

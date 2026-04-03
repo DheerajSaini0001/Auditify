@@ -1,4 +1,5 @@
 import React, { useState, useRef, useContext, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Monitor, Smartphone, Search, Zap, Loader2, AlertCircle, ChevronDown, Settings, ShieldCheck, ArrowRight, Star } from 'lucide-react';
 import ReCAPTCHA from "react-google-recaptcha";
@@ -94,6 +95,37 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
     const [showCaptcha, setShowCaptcha] = useState(false);
     const [captchaError, setCaptchaError] = useState(false);
     const [localError, setLocalError] = useState(null);
+
+    const navigate = useNavigate();
+    const location = useLocation();
+    const isAutoStarting = useRef(false);
+
+    // Auto-trigger from Dashboard
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const queryUrl = params.get("url");
+
+        if (queryUrl && !isAutoStarting.current) {
+            setUrl(queryUrl);
+            isAutoStarting.current = true;
+            
+            // Remove query param to keep URL clean
+            navigate(location.pathname, { replace: true });
+
+            const runDirectly = async () => {
+                // If logged in, skip captcha and run
+                if (localStorage.getItem('auditify_token')) {
+                    let urlToFetch = queryUrl.trim();
+                    if (!/^https?:\/\//i.test(urlToFetch)) {
+                        urlToFetch = `https://${urlToFetch}`;
+                    }
+                    onSubmit(urlToFetch, device, report, null);
+                }
+            };
+
+            runDirectly();
+        }
+    }, [location.search, onSubmit, navigate, location.pathname]);
 
     const handleInitialSubmit = (e) => {
         e.preventDefault();

@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { motion, useScroll, useSpring } from 'framer-motion';
 import { ThemeContext } from '../context/ThemeContext';
-import { useAuth } from '../context/AuthContext';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useData } from '../context/DataContext';
-import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import Navbar from '../Component/Navbar';
 import Footer from '../Component/Footer';
 import HeroSection from '../Component/Landing/HeroSection';
@@ -26,7 +26,8 @@ const LandingPage = () => {
         restDelta: 0.001
     });
 
-    const handleAuditSubmit = async (url, device, report = "All", token = null) => {
+    const handleAuditSubmit = React.useCallback(async (url, device, report = "All", token = null) => {
+        if (loading) return;
         setError(null);
         
         const result = await fetchData(url, device, report, token);
@@ -35,7 +36,7 @@ const LandingPage = () => {
         } else {
             setError(result?.error || "Audit failed. Please try again.");
         }
-    };
+    }, [fetchData, navigate, loading]);
 
     return (
         <div className={`relative w-full overflow-x-hidden transition-colors duration-500 ${darkMode ? 'bg-[#0A0F1E] text-white' : 'bg-slate-50 text-slate-900'}`}>

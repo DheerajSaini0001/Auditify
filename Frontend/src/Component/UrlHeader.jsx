@@ -3,6 +3,7 @@ import { Globe, ExternalLink, Clock, Smartphone, Monitor, Layers, NotebookPen, D
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
+import { savePostAuthIntent } from "../utils/intentStore";
 
 export default function UrlHeader({ data, darkMode }) {
   const currentDevice = data?.device || "Desktop";
@@ -16,11 +17,15 @@ export default function UrlHeader({ data, darkMode }) {
         icon: "🔒",
         duration: 3000,
       });
+
+      if (data?._id) {
+        savePostAuthIntent(data._id, `/report/${data._id}`);
+      }
       navigate("/login");
       return;
     }
     if (!data?._id) return toast.error("Report ID missing");
-    
+
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:2000';
     toast.promise(
       (async () => {
@@ -97,13 +102,12 @@ export default function UrlHeader({ data, darkMode }) {
 
           {/* Download PDF Button */}
           {data?.status === "completed" && (
-            <button 
+            <button
               onClick={handleDownloadPDF}
-              className={`flex items-center gap-2 px-6 py-2 rounded-xl font-bold text-white shadow-lg transition-all active:scale-95 transform hover:-translate-y-0.5 ${
-                isAuthenticated
+              className={`flex items-center gap-2 px-6 py-2 rounded-xl font-bold text-white shadow-lg transition-all active:scale-95 transform hover:-translate-y-0.5 ${isAuthenticated
                   ? "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-emerald-500/20"
                   : "bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-500 hover:to-slate-600 shadow-slate-500/20"
-              }`}
+                }`}
             >
               {isAuthenticated ? <Download className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
               <span>Download PDF</span>

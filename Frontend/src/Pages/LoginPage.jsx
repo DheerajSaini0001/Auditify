@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext.jsx';
 import { Mail, Lock, Eye, EyeOff, Loader2, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { consumePostAuthIntent, savePostAuthIntent } from '../utils/intentStore';
 
 const LoginPage = () => {
   const { theme } = useContext(ThemeContext);
@@ -14,14 +15,29 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { apiFetch, login, isAuthenticated } = useAuth();
+  const { apiFetch, login, isAuthenticated, user, isLoading: isAuthLoading } = useAuth();
 
+  // Handle automatic redirect if user is ALREADY authenticated (e.g. on mount or state change)
   useEffect(() => {
-    if (isAuthenticated) {
-      const destination = location.state?.from || '/dashboard';
-      navigate(destination);
+    if (isAuthenticated && !isAuthLoading) {
+      console.log("[Login] Authenticated. Consuming intent...");
+      const intent = consumePostAuthIntent();
+      console.log("[Login] Intent found:", intent);
+      console.log("[Login] Location state from:", location.state?.from);
+      
+      // Smart Fallback Selection
+      // 1. If we have guest audit data in memory/storage, the user probably wants to see it
+      const hasGuestData = !!localStorage.getItem("auditify_guest_data");
+      const guestFallback = hasGuestData ? "/report" : "/dashboard";
+      const adminFallback = user?.role === 'admin' ? '/admin' : guestFallback;
+      
+      const destination = intent?.path || location.state?.from || adminFallback;
+      console.log("[Login] Navigating to:", destination);
+      
+      navigate(destination, { replace: true });
     }
-  }, [isAuthenticated, navigate, location.state]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, navigate, user, isAuthLoading]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -35,13 +51,16 @@ const LoginPage = () => {
     if (ok) {
       toast.success('Logged in successfully!');
       login(data.token, data.user);
-      const destination = location.state?.from || (data.user.role === 'admin' ? '/admin' : '/dashboard');
-      setTimeout(() => navigate(destination), 100);
+      // Logic handled by useEffect reactively
     } else {
       if (status === 403) {
-        // Unverified email
         toast.error(data.message);
-        navigate('/verify-otp', { state: { email } });
+        navigate('/verify-otp', { 
+            state: { 
+                email, 
+                from: location.state?.from 
+            } 
+        });
       } else {
         toast.error(data.message || 'Invalid email or password');
       }
@@ -50,6 +69,11 @@ const LoginPage = () => {
   };
 
   const handleGoogleLogin = () => {
+    // Save intent before leaving for Google OAuth
+    const intentPath = location.state?.from || (localStorage.getItem("auditify_guest_data") ? '/report' : null);
+    if (intentPath) {
+       savePostAuthIntent('o_auth', intentPath);
+    }
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:2000';
     window.location.href = `${API_URL}/api/auth/google`;
   };
@@ -143,7 +167,7 @@ const LoginPage = () => {
           
           <p className="mt-10 text-center text-sm font-bold text-gray-500 uppercase tracking-tighter">
             Don't have an account?{' '}
-            <Link to="/register" className="text-blue-600 hover:text-blue-500 transition-colors ml-1 tracking-wider">Register Now</Link>
+            <Link to="/register" state={{ from: location.state?.from }} className="text-blue-600 hover:text-blue-500 transition-colors ml-1 tracking-wider">Register Now</Link>
           </p>
         </div>
       </div>

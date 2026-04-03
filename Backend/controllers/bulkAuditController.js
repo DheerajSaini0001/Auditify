@@ -158,7 +158,7 @@ export const auditSelectedUrls = async (req, res) => {
 // Background process to audit selected URLs with concurrency control
 async function processSelectedUrls(bulkAuditId, selectedUrls, device, report, tracking) {
     try {
-        const CONCURRENCY_LIMIT = 10; // Run max 5 workers at once
+        const CONCURRENCY_LIMIT = 5; // Run max 5 workers at once
         const total = selectedUrls.length;
         let currentIndex = 0;
         const activeAudits = new Set();
@@ -168,7 +168,7 @@ async function processSelectedUrls(bulkAuditId, selectedUrls, device, report, tr
         // Helper to run next available task
         const runNext = async () => {
             if (currentIndex >= total) return;
-            
+
             const index = currentIndex++;
             const pageUrl = selectedUrls[index];
             const startTime = Date.now();
@@ -226,7 +226,7 @@ async function processSelectedUrls(bulkAuditId, selectedUrls, device, report, tr
                     { _id: bulkAuditId, "pages.url": pageUrl },
                     { $set: updateData, $inc: { completedPages: 1 } }
                 );
-                
+
                 return runNext(); // Immediately start next
             }
 
@@ -257,13 +257,13 @@ async function processSelectedUrls(bulkAuditId, selectedUrls, device, report, tr
             // Start worker and wait for completion
             const auditPromise = auditSinglePage(bulkAuditId, pageUrl, device, report, auditLog._id, startTime);
             activeAudits.add(auditPromise);
-            
+
             await auditPromise;
             activeAudits.delete(auditPromise);
 
             // Small delay to space out worker starts slightly
             await new Promise(resolve => setTimeout(resolve, 500));
-            
+
             return runNext(); // Continue to next
         };
 
@@ -329,7 +329,7 @@ async function auditSinglePage(bulkAuditId, pageUrl, device, report, auditLogId,
                     if (auditLogId) {
                         try {
                             const duration = Date.now() - startTime;
-                            await AuditLog.findByIdAndUpdate(auditLogId, { 
+                            await AuditLog.findByIdAndUpdate(auditLogId, {
                                 status: "failed",
                                 auditDuration: duration,
                                 $push: { actions: "failed" }
@@ -396,7 +396,7 @@ async function auditSinglePage(bulkAuditId, pageUrl, device, report, auditLogId,
                 // Update AuditLog
                 if (auditLogId) {
                     try {
-                        await AuditLog.findByIdAndUpdate(auditLogId, { 
+                        await AuditLog.findByIdAndUpdate(auditLogId, {
                             status: "failed",
                             auditDuration: duration,
                             $push: { actions: "failed" }

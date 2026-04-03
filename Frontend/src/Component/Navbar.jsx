@@ -201,7 +201,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
                         Login
                       </button>
                     </Link>
-                    <Link to="/register" className="hidden sm:block">
+                    <Link to="/register" state={{ from: location.pathname + location.search }} className="hidden sm:block">
                       <button className="px-4 py-1.5 rounded-lg text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-md shadow-emerald-600/20">
                         Sign Up
                       </button>

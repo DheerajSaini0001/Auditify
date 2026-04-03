@@ -6,6 +6,8 @@ import {
   CheckCircle, AlertTriangle, XCircle,
 } from "lucide-react";
 import { ThemeContext } from "../context/ThemeContext";
+import { savePostAuthIntent } from "../utils/intentStore";
+import { useData } from "../context/DataContext";
 
 // Map route → page meta
 const ROUTE_META = {
@@ -123,6 +125,23 @@ const GuestReportPage = () => {
   const darkMode = theme === "dark";
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const { data } = useData();
+
+  const auditId = data?._id;
+
+  const handleLogin = () => {
+    if (auditId) {
+      savePostAuthIntent(auditId, `/report/${auditId}`);
+    }
+    navigate("/login");
+  };
+
+  const handleRegister = () => {
+    if (auditId) {
+      savePostAuthIntent(auditId, `/report/${auditId}`);
+    }
+    navigate("/register");
+  };
 
   const meta = ROUTE_META[pathname] || {
     label: "Audit Report",
@@ -265,7 +284,7 @@ const GuestReportPage = () => {
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <button
-                  onClick={() => navigate("/login")}
+                  onClick={handleLogin}
                   className={`flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl font-bold transition-all duration-300 w-full sm:w-auto shadow-lg hover:shadow-xl active:scale-95 ${
                     darkMode
                       ? "bg-slate-800 text-white hover:bg-slate-700 border border-slate-700"
@@ -281,7 +300,7 @@ const GuestReportPage = () => {
                 </span>
 
                 <button
-                  onClick={() => navigate("/register")}
+                  onClick={handleRegister}
                   className="flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl font-bold transition-all duration-300 w-full sm:w-auto shadow-lg hover:shadow-xl active:scale-95 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white"
                 >
                   <UserPlus size={17} />

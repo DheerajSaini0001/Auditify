@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
+import { consumePostAuthIntent } from '../utils/intentStore';
 
 const OtpVerifyPage = () => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -70,7 +71,14 @@ const OtpVerifyPage = () => {
     if (ok) {
         toast.success(data.message);
         login(data.token, data.user);
-        navigate('/dashboard');
+        
+        const intent = consumePostAuthIntent();
+        
+        const hasGuestData = !!localStorage.getItem("auditify_guest_data");
+        const guestFallback = hasGuestData ? "/report" : "/dashboard";
+        
+        const destination = intent?.path || location.state?.from || guestFallback;
+        navigate(destination, { replace: true });
     } else {
         toast.error(data.message || 'Invalid OTP');
         setOtp(['', '', '', '', '', '']);

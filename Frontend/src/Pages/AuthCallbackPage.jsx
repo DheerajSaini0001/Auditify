@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { consumePostAuthIntent } from '../utils/intentStore';
 
 const AuthCallbackPage = () => {
   const navigate = useNavigate();
@@ -17,7 +18,14 @@ const AuthCallbackPage = () => {
     if (token) {
       toast.success('Successfully authenticated with Google!');
       login(token);
-      navigate('/dashboard');
+      
+      const intent = consumePostAuthIntent();
+      
+      const hasGuestData = !!localStorage.getItem("auditify_guest_data");
+      const guestFallback = hasGuestData ? "/report" : "/dashboard";
+      
+      const destination = intent?.path || guestFallback;
+      navigate(destination, { replace: true });
     } else {
       toast.error('Authentication failed. No token found.');
       navigate('/login');

@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext.jsx';
 import { User, Mail, Lock, Eye, EyeOff, Loader2, CheckCircle, XCircle } from 'lucide-react';
@@ -17,6 +17,7 @@ const RegisterPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { apiFetch } = useAuth();
 
   const handleChange = (e) => {
@@ -52,7 +53,13 @@ const RegisterPage = () => {
 
     if (ok) {
       toast.success(data.message);
-      navigate('/verify-otp', { state: { email: formData.email } });
+      // Pass both email (for OTP) and 'from' state (for redirect after verification)
+      navigate('/verify-otp', { 
+        state: { 
+          email: formData.email,
+          from: location.state?.from 
+        } 
+      });
     } else {
       toast.error(data.message || 'Registration failed');
     }
@@ -195,7 +202,7 @@ const RegisterPage = () => {
 
           <p className={`mt-8 text-center text-sm font-bold uppercase tracking-tighter ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
             Already have an account?{' '}
-            <Link to="/login" className="text-emerald-600 hover:text-emerald-500 transition-colors ml-1 tracking-wider">Sign In</Link>
+            <Link to="/login" state={{ from: location.state?.from }} className="text-emerald-600 hover:text-emerald-500 transition-colors ml-1 tracking-wider">Sign In</Link>
           </p>
         </div>
       </div>

@@ -1,8 +1,31 @@
 import { Lock, LogIn, UserPlus } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { savePostAuthIntent } from "../utils/intentStore";
+import { useData } from "../context/DataContext";
 
 export default function LoginPrompt({ darkMode }) {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const { data } = useData();
+
+  // Audit ID can come from URL param or from Context if we just ran an audit
+  const auditId = id || data?._id;
+
+  const handleLogin = () => {
+    console.log("[LoginOverlay] Log In clicked. auditId:", auditId);
+    if (auditId) {
+      savePostAuthIntent(auditId, `/report/${auditId}`);
+    }
+    navigate("/login");
+  };
+
+  const handleRegister = () => {
+    console.log("[LoginOverlay] Sign Up clicked. auditId:", auditId);
+    if (auditId) {
+      savePostAuthIntent(auditId, `/report/${auditId}`);
+    }
+    navigate("/register");
+  };
 
   return (
   <> 
@@ -59,7 +82,7 @@ export default function LoginPrompt({ darkMode }) {
           
           {/* Login */}
           <button
-            onClick={() => navigate("/login")}
+            onClick={handleLogin}
             className={`flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl font-bold transition-all duration-300 w-full sm:w-auto shadow-sm hover:shadow active:scale-95 ${
               darkMode
                 ? "bg-slate-800 text-white hover:bg-slate-700 border border-slate-700"
@@ -80,7 +103,7 @@ export default function LoginPrompt({ darkMode }) {
 
           {/* Register */}
           <button
-            onClick={() => navigate("/register")}
+            onClick={handleRegister}
             className="flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl font-bold transition-all duration-300 w-full sm:w-auto shadow-sm hover:shadow active:scale-95 bg-blue-600 hover:bg-blue-700 text-white"
           >
             <UserPlus size={18} />

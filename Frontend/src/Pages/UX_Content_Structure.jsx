@@ -618,6 +618,9 @@ export default function UX_Content_Structure() {
     }
   }, [loading, data, auditSteps.length]);
 
+  const results = data?.UXOrContentStructure || {};
+  const overallScore = results.Percentage || 0;
+
   if (!data?.UXOrContentStructure) {
     return (
       <div className={`w-full ${darkMode ? "bg-gray-900" : "bg-gray-50"} transition-colors duration-300`}>
@@ -660,8 +663,6 @@ export default function UX_Content_Structure() {
     );
   }
 
-  const results = data.UXOrContentStructure;
-  const overallScore = results.Percentage || 0;
   const mainBg = darkMode ? "bg-gray-900" : "bg-gray-50";
   const textColor = darkMode ? "text-white" : "text-gray-900";
 

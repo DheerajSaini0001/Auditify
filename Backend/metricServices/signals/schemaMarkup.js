@@ -43,9 +43,9 @@ const analyzeSchemaMarkup = ($) => {
     let otherCount = 0;
 
     types.forEach(type => {
-        if (type === 'FAQPage') faqPoints = 40;
-        else if (type === 'HowTo') howToPoints = 30;
-        else if (type === 'Product') productPoints = 20;
+        if (type === 'FAQPage') faqPoints = 50;
+        else if (type === 'HowTo') howToPoints = 40;
+        else if (type === 'Product') productPoints = 15;
         else if (type === 'Article') articlePoints = 10;
         else {
             if (otherCount < 2) {

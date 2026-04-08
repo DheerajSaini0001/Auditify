@@ -92,13 +92,35 @@ const getAEORecommendations = (signals) => {
         });
     }
 
-    if (signals.botAccess.bots.PerplexityBot === "blocked") {
+    // 6. Markdown Headers Recommendation
+    if (signals.markdownHeaders.score < 80) {
+        recommendations.push({
+            priority: "Medium",
+            title: "Improve Header Hierarchy",
+            action: "Ensure your page uses a single H1 and follow-up H2, H3 tags in sequence. This creates a clean Markdown representation that ChatGPT and LLMs use to map your page.",
+            platform: "ChatGPT",
+            impact: 20
+        });
+    }
+
+    // 7. Citations Recommendation
+    if (signals.citations.score < 70) {
+        recommendations.push({
+            priority: "Medium",
+            title: "Add External Factual Sources",
+            action: "Link to reputable 3rd party research or data sources. Use superscript style markers [1] or reference lists. Perplexity and factual AIs prioritize cited data.",
+            platform: "Perplexity",
+            impact: 20
+        });
+    }
+
+    if (signals.botAccess.isNoindexed) {
         recommendations.push({
             priority: "Critical",
-            title: "Allow PerplexityBot in robots.txt",
-            action: "Remove 'Disallow: /' under 'User-agent: PerplexityBot' in robots.txt to restore Perplexity AI crawl access.",
-            platform: "Perplexity",
-            impact: 30
+            title: "Remove Meta 'noindex' Tag",
+            action: "Your page has a meta robots 'noindex' tag. This prevents Google and search-based AI engines from indexing your page entirelly.",
+            platform: "Gemini",
+            impact: 40
         });
     }
 

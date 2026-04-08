@@ -547,6 +547,19 @@ export default function AIO() {
   const { theme } = useContext(ThemeContext);
   const { data, loading } = useData();
   const aio = data?.aioReadiness || {};
+  const aeo = data?.aeo || {};
+  
+  // Calculate Combined AIO Readiness Score (Average of Foundation + Engine Scores)
+  const unifiedAioScore = useMemo(() => {
+    const foundationScore = aio?.Percentage || 0;
+    const engineScore = aeo?.overallScore || 0;
+    
+    // If one is missing, use the other; otherwise average them
+    if (!foundationScore) return engineScore;
+    if (!engineScore) return foundationScore;
+    return Math.round((foundationScore + engineScore) / 2);
+  }, [aio?.Percentage, aeo?.overallScore]);
+
   const [selectedMetricInfo, setSelectedMetricInfo] = React.useState(null);
   const [selectedParameterInfo, setSelectedParameterInfo] = React.useState(null);
   const darkMode = theme === "dark";
@@ -584,13 +597,13 @@ export default function AIO() {
                 darkMode={darkMode} 
                 sectionName="AIO (AI Optimization)"
                 sectionData={aio}
-                auditScore={aio?.Percentage}
+                auditScore={unifiedAioScore}
               />
             </div>
 
             <div className="flex flex-col xl:flex-row min-h-[300px]">
               {/* Left Panel: Live Preview (Only if not All) */}
-              {data.report !== "All" && (
+              {data?.report !== "All" && (
                 <div className={`w-full xl:w-[45%] p-3 lg:p-4 flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-indigo-500/5 blur-3xl rounded-full pointer-events-none"></div>
                   <div className="w-full relative z-10">
@@ -634,7 +647,7 @@ export default function AIO() {
               darkMode={darkMode} 
               sectionName="AIO (AI Optimization)"
               sectionData={aio}
-              auditScore={aio?.Percentage}
+              auditScore={unifiedAioScore}
             />
           </div>
 
@@ -726,10 +739,10 @@ export default function AIO() {
 
                   {/* Circular Progress */}
                   <div className="relative flex-shrink-0 group cursor-default order-1 md:order-2">
-                    <div className={`absolute -inset-8 rounded-full blur-3xl opacity-25 transition-opacity duration-700 group-hover:opacity-40 ${aio?.Percentage >= 80 ? "bg-emerald-500" : "bg-amber-500"}`}></div>
-                    <CircularProgress value={aio?.Percentage || 0} size={data.report === "All" ? 180 : 150} stroke={14} />
+                    <div className={`absolute -inset-8 rounded-full blur-3xl opacity-25 transition-opacity duration-700 group-hover:opacity-40 ${unifiedAioScore >= 80 ? "bg-emerald-500" : "bg-amber-500"}`}></div>
+                    <CircularProgress value={unifiedAioScore} size={data.report === "All" ? 180 : 150} stroke={14} />
                     <div className="absolute inset-0 flex items-center justify-center flex-col gap-0.5">
-                      <span className={`${data.report === "All" ? "text-5xl" : "text-3xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>{aio?.Percentage || 0}%</span>
+                      <span className={`${data.report === "All" ? "text-5xl" : "text-3xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>{unifiedAioScore}%</span>
                       <span className="text-[11px] font-bold uppercase tracking-[0.2em] opacity-50">SCORE</span>
                     </div>
                   </div>

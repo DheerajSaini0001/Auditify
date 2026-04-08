@@ -43,15 +43,26 @@ const AEOPage = ({ auditData, darkMode, onInfo }) => {
                 </div>
             </div>
 
-            {/* Platform Gauges & Summary */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-center">
-                <div className="lg:col-span-1">
-                    <PlatformScoreBar platforms={aeo.platforms} darkMode={darkMode} />
-                </div>
-                <div className={`lg:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6 p-8 rounded-[2rem] border shadow-inner transition-colors duration-500 ${darkMode ? "bg-slate-950/40 border-slate-800" : "bg-gray-50 border-gray-100"}`}>
-                    <AEOScoreGauge score={aeo.platforms.gemini.score} label="Google Gemini" color="#4285F4" size={160} darkMode={darkMode} />
-                    <AEOScoreGauge score={aeo.platforms.chatgpt.score} label="OpenAI ChatGPT" color="#10A37F" size={160} darkMode={darkMode} />
-                    <AEOScoreGauge score={aeo.platforms.perplexity.score} label="Perplexity AI" color="#A259FF" size={160} darkMode={darkMode} />
+            {/* Platform Master Grid (Top Row) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {['gemini', 'chatgpt', 'perplexity'].map((platform) => (
+                    <PlatformScoreBar 
+                        key={platform}
+                        platformKey={platform}
+                        platforms={aeo.platforms} 
+                        darkMode={darkMode} 
+                        singleCard={true}
+                    />
+                ))}
+            </div>
+
+            {/* Visual Overview (Middle Row) */}
+            <div className={`p-12 rounded-[3.5rem] border shadow-2xl transition-all duration-500 overflow-hidden relative ${darkMode ? "bg-slate-950/80 border-slate-800 shadow-black/60" : "bg-white border-gray-100 shadow-slate-200"}`}>
+                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-indigo-500/5 via-transparent to-purple-500/5 pointer-events-none"></div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-12 relative z-10">
+                    <AEOScoreGauge score={aeo.platforms?.gemini?.score || 0} label="Google Gemini" color="#4285F4" size={180} darkMode={darkMode} />
+                    <AEOScoreGauge score={aeo.platforms?.chatgpt?.score || 0} label="OpenAI ChatGPT" color="#10A37F" size={180} darkMode={darkMode} />
+                    <AEOScoreGauge score={aeo.platforms?.perplexity?.score || 0} label="Perplexity AI" color="#A259FF" size={180} darkMode={darkMode} />
                 </div>
             </div>
 
@@ -61,53 +72,63 @@ const AEOPage = ({ auditData, darkMode, onInfo }) => {
                      <div className="h-6 w-1.5 bg-indigo-500 rounded-full shadow-[0_0_10px_rgba(99,102,241,0.5)]"></div>
                      <h2 className={`text-2xl font-bold tracking-tight ${darkMode ? "text-slate-200" : "text-gray-800"}`}>Core Signal Breakdown</h2>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <AEOSignalCard 
-                        signal="answerFirst" 
-                        score={aeo.signals.answerFirst.score} 
-                        data={aeo.signals.answerFirst}
-                        title="Answer-First Policy"
-                        description="Does the page provide a direct, concise summary in the first 100 words?"
-                        darkMode={darkMode}
-                        onInfo={onInfo}
-                        url={auditData.url}
-                    />
-                    <AEOSignalCard 
-                        signal="llmsTxt" 
-                        score={aeo.signals.llmsTxt.score} 
-                        data={aeo.signals.llmsTxt}
-                        title="/llms.txt Standard"
-                        description="Presence of an AI-specific manifest file for crawler guidance."
-                        darkMode={darkMode}
-                        onInfo={onInfo}
-                        url={auditData.url}
-                    />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
                     <AEOSignalCard 
                         signal="aeoSchema" 
-                        score={aeo.signals.schema.score} 
-                        data={aeo.signals.schema}
-                        title="Semantic JSON-LD"
-                        description="Detection of structured data types like FAQPage and HowTo."
-                        darkMode={darkMode}
-                        onInfo={onInfo}
-                        url={auditData.url}
-                    />
-                    <AEOSignalCard 
-                        signal="structuredContent" 
-                        score={aeo.signals.structuredContent.score} 
-                        data={aeo.signals.structuredContent}
-                        title="Structured Clarity"
-                        description="Usage of semantic tables and lists over unstructured prose."
+                        score={aeo.signals?.schema?.score} 
+                        data={aeo.signals?.schema}
+                        title="FAQ & HowTo Schema"
+                        description="Deep evaluation of Schema.org markup prioritized by Gemini (FAQPage/HowTo)."
                         darkMode={darkMode}
                         onInfo={onInfo}
                         url={auditData.url}
                     />
                     <AEOSignalCard 
                         signal="botAccess" 
-                        score={aeo.signals.botAccess.score} 
-                        data={aeo.signals.botAccess}
-                        title="AI Crawler Access"
-                        description="Specific robot permissions for GPTBot, Google-Extended, and PerplexityBot."
+                        score={aeo.signals?.botAccess?.score} 
+                        data={aeo.signals?.botAccess}
+                        title="Search Index Status"
+                        description="Visibility status for Google-Extended and Perplexity crawlers (Index/Noindex)."
+                        darkMode={darkMode}
+                        onInfo={onInfo}
+                        url={auditData.url}
+                    />
+                    <AEOSignalCard 
+                        signal="markdownHeaders" 
+                        score={aeo.signals?.markdownHeaders?.score} 
+                        data={aeo.signals?.markdownHeaders}
+                        title="Markdown Structure"
+                        description="Quality of H1-H3 hierarchy for clean LLM extraction (ChatGPT Priority)."
+                        darkMode={darkMode}
+                        onInfo={onInfo}
+                        url={auditData.url}
+                    />
+                    <AEOSignalCard 
+                        signal="llmsTxt" 
+                        score={aeo.signals?.llmsTxt?.score} 
+                        data={aeo.signals?.llmsTxt}
+                        title="llms.txt Standard"
+                        description="Presence of the /llms.txt manifest file used for OpenAI context mapping."
+                        darkMode={darkMode}
+                        onInfo={onInfo}
+                        url={auditData.url}
+                    />
+                    <AEOSignalCard 
+                        signal="structuredContent" 
+                        score={aeo.signals?.structuredContent?.score} 
+                        data={aeo.signals?.structuredContent}
+                        title="Data Table Density"
+                        description="Heuristic evaluation of tables and data blocks for RAG-based search engines."
+                        darkMode={darkMode}
+                        onInfo={onInfo}
+                        url={auditData.url}
+                    />
+                    <AEOSignalCard 
+                        signal="citations" 
+                        score={aeo.signals?.citations?.score} 
+                        data={aeo.signals?.citations}
+                        title="Citations & Sources"
+                        description="Verification of external links and citation markers (Source Attribution)."
                         darkMode={darkMode}
                         onInfo={onInfo}
                         url={auditData.url}

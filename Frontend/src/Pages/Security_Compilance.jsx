@@ -899,6 +899,8 @@ export default function Security_Compilance() {
     }
   }, [loading, data, auditSteps.length]);
 
+  const metric = data?.securityOrCompliance || {};
+
   if (!data?.securityOrCompliance) {
     return (
       <div className={`w-full ${darkMode ? "bg-gray-900" : "bg-gray-50"} transition-colors duration-300`}>
@@ -936,7 +938,6 @@ export default function Security_Compilance() {
     );
   }
 
-  const metric = data?.securityOrCompliance || {};
   const mainBg = darkMode ? "bg-gray-900" : "bg-gray-50";
 
   const allMetrics = Object.values(metric).filter(val => typeof val === 'object' && val !== null && 'status' in val);

@@ -6,28 +6,33 @@
 
 const aeoWeights = {
     gemini: {
-        schema: 45,
-        botAccess: 45,
-        answerFirst: 5,
+        schema: 50,           // FAQ/HowTo - High weight
+        botAccess: 30,        // Google Search Index Status (Robots + Indexability)
+        answerFirst: 10,
         llmsTxt: 5,
-        structuredContent: 0,
+        structuredContent: 5,
+        citations: 0,
         pageSpeed: 0
     },
     chatgpt: {
-        llmsTxt: 45,
-        structuredContent: 45,
-        answerFirst: 5,
+        llmsTxt: 40,          // llms.txt presence - High weight
+        markdownHeaders: 40,   // Markdown-style headers - High weight
+        answerFirst: 10,
         botAccess: 5,
-        schema: 0,
+        schema: 5,
+        structuredContent: 0,
+        citations: 0,
         pageSpeed: 0
     },
     perplexity: {
-        structuredContent: 35,
-        answerFirst: 35,
-        pageSpeed: 30,
+        structuredContent: 35, // Data Tables - High weight
+        citations: 35,         // Citations/Sources - High weight
+        pageSpeed: 30,         // Page Speed - High weight
+        answerFirst: 0,
         botAccess: 0,
         schema: 0,
-        llmsTxt: 0
+        llmsTxt: 0,
+        markdownHeaders: 0
     }
 };
 

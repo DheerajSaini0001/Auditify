@@ -680,6 +680,8 @@ export default function Conversion_Lead_Flow() {
     }
   }, [loading, data, auditSteps.length]);
 
+  const flow = data?.conversionAndLeadFlow || {};
+
   if (!data?.conversionAndLeadFlow) {
     return (
       <div className={`w-full ${darkMode ? "bg-gray-900" : "bg-gray-50"} transition-colors duration-300`}>
@@ -722,7 +724,6 @@ export default function Conversion_Lead_Flow() {
     );
   }
 
-  const flow = data?.conversionAndLeadFlow || {};
   const mainBg = darkMode ? "bg-gray-900" : "bg-gray-50";
   const textColor = darkMode ? "text-white" : "text-gray-900";
 

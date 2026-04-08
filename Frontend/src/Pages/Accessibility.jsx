@@ -418,6 +418,8 @@ export default function Accessibility() {
   }, [loading, data, auditSteps.length]);
 
 
+  const metric = data?.accessibility || {};
+
   if (!data?.accessibility) {
     return (
       <div className={`w-full ${darkMode ? "bg-gray-900" : "bg-gray-50"} transition-colors duration-300`}>
@@ -455,7 +457,6 @@ export default function Accessibility() {
     );
   }
 
-  const metric = data.accessibility;
   const allMetrics = Object.values(metric).filter(val => typeof val === 'object' && val !== null && 'score' in val);
   const passedCount = allMetrics.filter(m => m.score === 100).length;
   const warningCount = allMetrics.filter(m => m.score === 50).length;

@@ -11,21 +11,21 @@ const analyzeStructuredContent = ($) => {
 
     let score = 0;
     
-    // table points
+    // table points (Heavily weighted for Perplexity)
     if (tableCount >= 1) {
-        score += 40;
+        score += 60;
     }
     
     // list points
     if (listCount >= 3) {
-        score += 40;
+        score += 30;
     } else if (listCount >= 1) {
-        score += 20;
+        score += 15;
     }
     
     // table bonus
-    if (tableCount >= 3) {
-        score += 20;
+    if (tableCount >= 2) {
+        score += 10;
     }
 
     score = Math.min(score, 100);

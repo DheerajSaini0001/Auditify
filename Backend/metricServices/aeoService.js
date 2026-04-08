@@ -6,6 +6,8 @@ import analyzeLlmsTxt from './signals/llmsTxt.js';
 import analyzeSchemaMarkup from './signals/schemaMarkup.js';
 import analyzeStructuredContent from './signals/structuredContent.js';
 import analyzeBotAccess from './signals/botAccess.js';
+import analyzeMarkdownHeaders from './signals/markdownHeaders.js';
+import analyzeCitations from './signals/citations.js';
 
 /**
  * AEO Service Orchestrator
@@ -24,7 +26,9 @@ class AEOService {
             analyzeLlmsTxt(url),
             analyzeSchemaMarkup($),
             analyzeStructuredContent($),
-            analyzeBotAccess(url)
+            analyzeBotAccess(url, $),
+            analyzeMarkdownHeaders($),
+            analyzeCitations($)
         ]);
 
         const signals = {
@@ -33,6 +37,8 @@ class AEOService {
             schema: results[2],
             structuredContent: results[3],
             botAccess: results[4],
+            markdownHeaders: results[5],
+            citations: results[6],
             pageSpeed: { score: performanceScore }
         };
 
@@ -87,31 +93,33 @@ class AEOService {
         }
 
         if (platform === 'gemini') {
-            if (signals.schema.score >= 80) {
-                return "You have excellent JSON-LD Schema (FAQ/HowTo), which Gemini prioritizes for rich answers.";
+            if (signals.schema.score >= 50) {
+                return "High Schema.org coverage (FAQ/HowTo) detected. Gemini leverages this for featured snippets and multi-step answers.";
+            } else if (signals.botAccess.score < 100) {
+                return "Google Search Index status is compromised; ensure Googlebot-Extended is allowed and 'noindex' is removed.";
             } else {
-                return "Missing critical Schema markup like FAQPage or HowTo. Gemini needs structured cues to trust your facts.";
+                return "Improve Gemini visibility by adding FAQPage or HowTo markup to structure your data.";
             }
         }
 
         if (platform === 'chatgpt') {
-            if (!signals.llmsTxt.exists) {
-                return "Missing an llms.txt file. This prevents OpenAI agents from understanding your content's structure efficiently.";
+            if (signals.llmsTxt.exists && signals.markdownHeaders.score >= 80) {
+                return "Optimized for ChatGPT: Clear llms.txt found and clean Markdown-style header hierarchy detected.";
+            } else if (!signals.llmsTxt.exists) {
+                return "Missing llms.txt. ChatGPT agents use this for efficient context mapping.";
+            } else {
+                return "Header hierarchy is weak. Use a clean H1->H2->H3 structure for better Markdown extraction.";
             }
-            if (signals.answerFirst.score < 50) {
-                return "Content structure is too wordy. Missing a TL;DR or concise summary at the top for quick AI extraction.";
-            }
-            return "Presence of llms.txt and clear Markdown-friendly formatting boosts your visibility here.";
         }
 
         if (platform === 'perplexity') {
-            if (signals.structuredContent.tables === 0) {
-                return "Your data is stuck in paragraphs, not tables. Perplexity cannot 'read' your comparison charts efficiently.";
+            if (signals.structuredContent.tables > 0 && signals.citations.score >= 70) {
+                return "Perplexity ready: Strong data tables and verifiable external citations detected for real-time verification.";
+            } else if (signals.structuredContent.tables === 0) {
+                return "Data is unstructured. Add tables to make your facts 'scrapable' for RAG-based search engines.";
+            } else {
+                return "Low citation signals. Perplexity values pages that link to reputable sources and use structured references.";
             }
-            if (signals.botAccess.bots['PerplexityBot'] === 'blocked') {
-                return "Perplexity is currently blocked from crawling your most important data.";
-            }
-            return "Strong structured lists and tables make your data very citation-friendly for real-time search.";
         }
 
         return "Good overall signals detected.";

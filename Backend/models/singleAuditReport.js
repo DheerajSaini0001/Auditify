@@ -19,6 +19,7 @@ const SiteReportSchema = new mongoose.Schema(
     UXOrContentStructure: { type: Object, default: null },
     conversionAndLeadFlow: { type: Object, default: null },
     aioReadiness: { type: Object, default: null },
+    aeo: { type: Object, default: null },
     error: { type: String, default: null },
     screenshot: { type: String, default: null },
     createdAt: { type: Date, default: Date.now }, 

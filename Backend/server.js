@@ -7,6 +7,7 @@ import websiteRoutes from "./routes/websiteRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import aeoRoutes from "./routes/aeoRoutes.js";
 import connectDB from "./config/db.js";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
@@ -86,6 +87,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/websites", websiteRoutes);
+app.use("/api/aeo", aeoRoutes);
 
 // Existing routes (keeping for backward compatibility)
 app.use("/single-audit", singleAuditRoutes);

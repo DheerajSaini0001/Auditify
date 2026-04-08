@@ -10,6 +10,7 @@ import securityCompliance from "../metricServices/securityCompliance.js";
 import uxContentStructure from "../metricServices/uxContentStructure.js";
 import conversionLeadFlow from "../metricServices/conversionLeadFlow.js";
 import aioReadiness from "../metricServices/aioReadiness.js";
+import AEOService from "../metricServices/aeoService.js";
 import Puppeteer_Cheerio from "../utils/puppeteer_cheerio.js";
 import { performance } from "perf_hooks";
 
@@ -76,7 +77,12 @@ const OverAll = (A, B, C, D, E, F, G) => {
           result = await conversionLeadFlow(page, $);
           break;
         case "AIO (AI-Optimization) Readiness":
+          // For single report, we might need to run technical metrics first if not already run
+          const techRes = await technicalMetrics(url, device, page, response, browser);
           result = await aioReadiness(url, page, $);
+          // Run AEO - Passing performance score for Perplexity weighting
+          const aeoResultSingle = await AEOService.runAudit(url, $, null, techRes?.Percentage || 100);
+          result.aeo = aeoResultSingle;
           break;
       }
 
@@ -137,7 +143,12 @@ const OverAll = (A, B, C, D, E, F, G) => {
     await SingleAuditReport.findByIdAndUpdate(currentAuditId, { conversionAndLeadFlow: F_Res });
 
     const G_Res = await aioReadiness(url, page, $);
-    await SingleAuditReport.findByIdAndUpdate(currentAuditId, { aioReadiness: G_Res, aioCompatibilityBadge: G_Res?.AIO_Compatibility_Badge });
+    const aeoRes = await AEOService.runAudit(url, $, null, A_Res?.Percentage || 100);
+    await SingleAuditReport.findByIdAndUpdate(currentAuditId, { 
+      aioReadiness: G_Res, 
+      aioCompatibilityBadge: G_Res?.AIO_Compatibility_Badge,
+      aeo: aeoRes
+    });
 
     // Extract percentages for overall score calculation
     const A = A_Res?.Percentage || 0;

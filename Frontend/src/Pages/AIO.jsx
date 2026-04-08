@@ -18,6 +18,7 @@ import MetricInfoModal from "../Component/MetricInfoModal";
 import ParameterInfoModal from "../Component/ParameterInfoModal";
 import { InfoDetails } from "../Component/InfoDetails";
 import AskAIButton from "../Component/AskAIButton";
+import AEOPage from "./AEOPage";
 
 const iconMap = {
   Structured_Data: Database,
@@ -40,6 +41,11 @@ const iconMap = {
   Author_Source_Attribution: UserCheck,
   Fact_Vs_Opinion: CheckSquare,
   Content_Completeness: BookOpen,
+  answerFirst: MessageSquare,
+  llmsTxt: FileText,
+  aeoSchema: Database,
+  structuredContent: Layers,
+  botAccess: ShieldCheck,
 };
 
 const educationalContent = InfoDetails;
@@ -50,6 +56,7 @@ const AIOShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
 
   return (
     <div className="flex flex-col items-center justify-center py-8 px-4 animate-in fade-in zoom-in duration-500 min-h-[350px]">
+     
       <div className={`w-full max-w-xl rounded-[32px] p-8 flex flex-col items-center text-center transition-all duration-500 ${darkMode ? "bg-slate-800/40 border border-slate-700/50" : "bg-slate-100/60 border border-slate-200/50"}`}>
         {/* Icon Container (Circle) */}
         <div className={`w-20 h-20 rounded-full flex items-center justify-center shadow-xl transition-all duration-500 ${darkMode ? "bg-slate-900 shadow-black/40 text-white" : "bg-[#1e293b] shadow-slate-400/30 text-white"}`}>
@@ -109,6 +116,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
     : "text-rose-500 bg-rose-500/10 border-rose-500/20";
 
   return (
+ 
     <div className={`relative overflow-hidden rounded-xl border ${cardBg} shadow-sm hover:shadow-md transition-shadow group`}>
       <div className="p-5 space-y-4">
         <div className="flex items-start justify-between">
@@ -538,6 +546,7 @@ const Section = ({ title, icon: Icon, children, darkMode }) => (
 export default function AIO() {
   const { theme } = useContext(ThemeContext);
   const { data, loading } = useData();
+  const aio = data?.aioReadiness || {};
   const [selectedMetricInfo, setSelectedMetricInfo] = React.useState(null);
   const [selectedParameterInfo, setSelectedParameterInfo] = React.useState(null);
   const darkMode = theme === "dark";
@@ -603,7 +612,6 @@ export default function AIO() {
     );
   }
 
-  const aio = data?.aioReadiness || {};
   const mainBg = darkMode ? "bg-gray-900" : "bg-gray-50";
   const textColor = darkMode ? "text-white" : "text-gray-900";
 
@@ -735,6 +743,13 @@ export default function AIO() {
         {/* Gated Detailed Audit Sections */}
         <ReportRestrictionWrapper>
           <div className="space-y-8">
+            <div id="aeo-section" className="mt-16 animate-in slide-in-from-bottom-10 duration-1000">
+              <AEOPage 
+                auditData={data} 
+                darkMode={darkMode} 
+                onInfo={(key) => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })}
+              />
+            </div>
             <Section title="AI Technical & Crawl Foundation" icon={Database} darkMode={darkMode}>
           {["Structured_Data", "Duplicate_Content_Detection_Ready", "Internal_Linking_AI_Friendly", "Content_Updated_Regularly"].map((key) => (
             aio[key] && <MetricCard key={key} metricKey={key} data={aio[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
@@ -766,6 +781,7 @@ export default function AIO() {
 
           </div>
         </ReportRestrictionWrapper>
+        
       </main>
       {/* Methodology Modal */}
       <MetricInfoModal

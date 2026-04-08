@@ -277,6 +277,107 @@ export const InfoDetails = {
         ]
     },
 
+    // Answer Engine Optimization (AEO) Signals
+    answerFirst: {
+        title: "Answer-First Policy",
+        whatThisParameterIs: "Answer-First optimization refers to placing a direct, concise answer to the user's likely query in the first 100 words of your content.",
+        whatItCalculates: "We analyze the first section of your page text to detect concise, objective sentences that serve as immediate high-density answer blocks.",
+        whyItMatters: "AI models like ChatGPT focus on the extraction of 'Snippets.' If your answer is buried deep in the text, the AI will likely ignore it in favor of a site that is more direct.",
+        thresholds: {
+            good: "Direct answer in first 2 sentences",
+            poor: "Prose-heavy introduction"
+        },
+        actualReasonsForFailure: [
+            "Introduction is too 'fluffy' or narrative-driven",
+            "Initial text blocks lack direct factual assertions",
+            "Missing a TL;DR summary at the top"
+        ],
+        howToOvercomeFailure: [
+            "Rewrite the first paragraph to directly address the primary topic",
+            "Use clear, factual sentences (e.g., 'X is Y...')",
+            "Add a 'Key Takeaway' block at the very top"
+        ]
+    },
+    llmsTxt: {
+        title: "/llms.txt Standard",
+        whatThisParameterIs: "The /llms.txt file is a new emerging standard for providing compressed, machine-readable instructions to AI crawlers.",
+        whatItCalculates: "We attempt to fetch the '/llms.txt' file from your website's root directory.",
+        whyItMatters: "Standard robots.txt files guide traditional search bots, but llms.txt provides high-context guidance specifically for LLM-based agents, helping them index your clean data correctly.",
+        thresholds: {
+            good: "File exists at /llms.txt",
+            poor: "File missing (404)"
+        },
+        actualReasonsForFailure: [
+            "llms.txt file not found",
+            "Server blocking access to text files in root",
+            "File is empty or misconfigured"
+        ],
+        howToOvercomeFailure: [
+            "Create a plain text file named 'llms.txt'",
+            "Place it in your root directory (e.g., domain.com/llms.txt)",
+            "Include markdown links to your high-value documentation"
+        ]
+    },
+    aeoSchema: {
+        title: "Semantic JSON-LD (FAQ & HowTo)",
+        whatThisParameterIs: "AEO specific Schema focuses on FAQPage and HowTo types, which are the most frequent triggers for AI Answer snippets.",
+        whatItCalculates: "We look for valid JSON-LD code that specifically includes the @type: 'FAQPage' or 'HowTo' properties.",
+        whyItMatters: "Gemini and other answer engines use this structured data to verify facts and present information in step-by-step or Q&A formats.",
+        thresholds: {
+            good: "FAQ or HowTo schema present",
+            poor: "Missing Q&A specific markup"
+        },
+        actualReasonsForFailure: [
+            "Missing @type FAQPage or HowTo",
+            "JSON-LD syntax errors",
+            "Partial implementation (missing answers)"
+        ],
+        howToOvercomeFailure: [
+            "Add FAQPage schema to pages with questions",
+            "Use HowTo schema for instructional content",
+            "Validate with Schema.org validator"
+        ]
+    },
+    structuredContent: {
+        title: "Structured Clarity (Tables & Lists)",
+        whatThisParameterIs: "Structured clarity measures the ratio of machine-parseable elements (tables, ul, ol) versus long blocks of prose.",
+        whatItCalculates: "We calculate the density of <table> and <li> elements per 1000 words of content.",
+        whyItMatters: "Perplexity and ChatGPT 'read' tables much more reliably than paragraphs. Data presented in tables is 3x more likely to be extracted into AI comparison charts.",
+        thresholds: {
+            good: "Multiple tables/lists detected",
+            poor: "Unstructured 'Wall of Text'"
+        },
+        actualReasonsForFailure: [
+            "Data is stuck in images instead of HTML tables",
+            "No bullet points used for key features",
+            "Paragraphs are excessively long"
+        ],
+        howToOvercomeFailure: [
+            "Convert comparison data into HTML <table> elements",
+            "Use list items for feature summaries",
+            "Break up technical data with section breaks"
+        ]
+    },
+    botAccess: {
+        title: "AI Crawler Access",
+        whatThisParameterIs: "AI Crawler Access checks if your robots.txt specifically allows agents like GPTBot, Google-Extended, and PerplexityBot.",
+        whatItCalculates: "We parse your robots.txt file for Disallow directives targeting specific AI user-agents.",
+        whyItMatters: "If you Disallow these bots, you are effectively opting out of being a primary source in AI chat answers. This kills your AI visibility immediately.",
+        thresholds: {
+            good: "All AI bots allowed",
+            poor: "Disallow found for AI bots"
+        },
+        actualReasonsForFailure: [
+            "robots.txt Disallows GPTBot",
+            "robots.txt Disallows Google-Extended",
+            "robots.txt Disallows PerplexityBot"
+        ],
+        howToOvercomeFailure: [
+            "Remove 'Disallow: /' for GPTBot and Google-Extended",
+            "Ensure Google-Extended is Allowed if you want to be in Gemini"
+        ]
+    },
+
     // Methodologies (Technical)
     Technical_Performance_Methodology: {
         icon: Zap,
@@ -2926,75 +3027,79 @@ export const InfoDetails = {
         ]
     },
 
-    // Methodologies (AIO Readiness)
+    // Methodologies (AIO/AEO Readiness)
     AIO_Readiness_Methodologies: {
         icon: Bot,
-        badge: "AIO Readiness",
+        badge: "AIO + AEO Readiness",
         title: "AI Optimization (AIO) Readiness",
         guideLink: "https://developers.google.com/search/docs/appearance/structured-data",
         whatThisMetricIs: (
             <div className="space-y-2">
-                <p>This score measures how easy it is for Artificial Intelligence (like ChatGPT, Perplexity, or Google Gemni) to find, understand, and use your content to answer user questions.</p>
-                <p>We audit 14 critical signals—ranging from hidden "Identity Code" to how well your text answers direct questions—to give you a roadmap for the future of AI-driven search.</p>
+                <p>This score measures how easy it is for Artificial Intelligence (like ChatGPT, Perplexity, or Google Gemini) to find, understand, and use your content to answer user questions.</p>
+                <p>We audit <span className="font-bold text-indigo-400">14 critical AIO signals</span>—ranging from hidden "Identity Code" to content chunking—combined with <span className="font-bold text-indigo-400">Answer Engine Optimization (AEO)</span> specific logic for the top 3 AI platforms.</p>
             </div>
         ),
         whyItMatters: (
             <div className="space-y-4">
-                <p>AI models are now the primary way people discover information. If an AI can't "read" your site easily, it won't recommend you to its users.</p>
+                <p>AI models are now the primary way people discover information. If an AI can't "read" your site easily or if you block their crawlers, you lose 100% visibility in AI-driven search.</p>
 
                 <div>
-                    <span className="font-semibold block mb-1">A high AIO score means:</span>
+                    <span className="font-semibold block mb-1 text-indigo-400">A high AIO/AEO score means:</span>
                     <ul className="list-disc pl-5 space-y-1 text-sm">
-                        <li>Your site appears as a "Primary Source" in AI chat responses</li>
-                        <li>Your brand is categorized as an "Authority" in your industry</li>
-                        <li>Your data is pulled into comparison tables and "Top 10" lists</li>
-                        <li>You get traffic from future-facing search engines (SearchGPT, Perplexity)</li>
+                        <li>Your site appears as a "Primary Source" in Gemini & ChatGPT responses</li>
+                        <li>High citation value in Perplexity's real-time retrieval engine</li>
+                        <li>Your brand is recognized as an "Answer Authority" via Schema markup</li>
+                        <li>Data is extracted cleanly into Comparison Tables and Knowledge Graphs</li>
                     </ul>
                 </div>
 
-                <p className="font-medium">In the age of AI, being readable to machines is just as important as being readable to humans.</p>
+                <p className="font-medium">In the age of AI, human-readability is no longer enough. Machine-readability is what drives future growth.</p>
             </div>
         ),
         whatToDoForAGoodScore: (
             <ul className="list-disc pl-5 space-y-4">
                 <li>
-                    <span className="font-semibold block mb-1">Build a Technical 'Identity' for AI:</span>
+                    <span className="font-semibold block mb-1">Build a Technical 'Identity' for AI (Core AIO):</span>
                     <ul className="list-[circle] pl-5 space-y-1 text-sm">
-                        <li>Use Structured Data (JSON-LD) to clearly define who you are and what you do.</li>
-                        <li>Ensure every page has a "Master Copy" (Canonical) signal to avoid confusing bots.</li>
-                        <li>Keep your content fresh—AI prioritizes information updated in the last 30 days.</li>
+                        <li><span className="font-bold">Structured Data:</span> Use JSON-LD (Organization, FAQ, HowTo) to define your brand entities.</li>
+                        <li><span className="font-bold">Freshness & Canonical:</span> Keep content updated and use canonical redirects to avoid confusing LLMs.</li>
+                        <li><span className="font-bold">Trust (EEAT):</span> Include Author Bios and link to reputable citations (.edu, .gov) to prove factual accuracy.</li>
                     </ul>
                 </li>
                 <li>
-                    <span className="font-semibold block mb-1">Optimize for 'The Best Answer':</span>
+                    <span className="font-semibold block mb-1">Optimize for 'The Best Answer' (Readability):</span>
                     <ul className="list-[circle] pl-5 space-y-1 text-sm">
-                        <li>Frame your headings as questions (e.g., "How to...?") to match how people talk to AI.</li>
-                        <li>Break long "Walls of Text" into small chunks so AI can summarize you accurately.</li>
-                        <li>Use bullet points and tables—AI loves structured data extraction.</li>
+                        <li><span className="font-bold">Chunking:</span> Break "Walls of Text" into small 40-60 word chunks for better AI summarization.</li>
+                        <li><span className="font-bold">Answer-First:</span> Place a 1-sentence TL;DR answer in the first 100 words of the page.</li>
+                        <li><span className="font-bold">Structure:</span> Use semantic H1-H4 headers and HTML Tables—AI loves structured data extraction.</li>
                     </ul>
                 </li>
                 <li>
-                    <span className="font-semibold block mb-1">Prove Your Authority & Trust:</span>
+                    <span className="font-semibold block mb-1">Master Platform Specific Readiness (AEO):</span>
                     <ul className="list-[circle] pl-5 space-y-1 text-sm">
-                        <li>Include a clear "Byline" and Author Bio to prove a real human edited the content.</li>
-                        <li>Link to expert outside sources (like .edu or .gov) to verify your factual claims.</li>
-                        <li>Keep your terminology consistent so AI can build a stable "Knowledge Map" of your brand.</li>
+                        <li><span className="font-bold text-blue-400">Gemini:</span> Focus on Question-based Schema and allow 'Google-Extended' indexing.</li>
+                        <li><span className="font-bold text-emerald-400">ChatGPT:</span> Maintain a valid /llms.txt file and clear Markdown-style hierarchy.</li>
+                        <li><span className="font-bold text-purple-400">Perplexity:</span> Prioritize semantic Data Tables and 90+ Page Speed scores.</li>
                     </ul>
                 </li>
             </ul>
         ),
         howThisScoreIsCalculated: (
-            <div className="space-y-2">
-                <p>Our audit engine automatically tests your page against 14 specific AIO parameters found in the backend. Each test is weighted based on its importance to modern Large Language Models (LLMs).</p>
-                <p>We look for a "Technical Foundation" (Identity Code and Freshness), "AI Readability" (Chunking and Lists), and "Trust Signals" (Author info and Citations).</p>
-                <p>An overall score of 80%+ earns you the "AI-Ready" badge, signaling that your site is fully optimized for the next generation of search.</p>
+            <div className="space-y-4">
+                <p>Our audit engine analyzes <span className="font-bold">14 backend parameters</span> categorized into Identity, Freshness, Readability, and Trust. We then apply platform-specific weighted offsets for the Big 3 AI platforms.</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 p-4 bg-indigo-50/10 rounded-xl border border-indigo-500/20 italic text-[11px]">
+                    <div><span className="font-bold text-blue-400">Gemini</span>: Weights Schema & Search Bot status.</div>
+                    <div><span className="font-bold text-emerald-400">ChatGPT</span>: Weights llms.txt & Markdown structure.</div>
+                    <div><span className="font-bold text-purple-400">Perplexity</span>: Weights Tables, Citations & Speed.</div>
+                </div>
+                <p>An overall score of 80%+ earns you the "AI-Ready" badge, signaling top-tier compatibility with the LLM ecosystem.</p>
             </div>
         ),
         weightage: [
-            { param: "Technical Foundation (Metadata & Freshness)", weight: "28%" },
-            { param: "AI Readability (Chunking & Structure)", weight: "28%" },
-            { param: "Search Intent (Question & Keyword Alignment)", weight: "24%" },
-            { param: "Authority & Trust (Author & Citations)", weight: "20%" }
+            { param: "Identity & Authority (Schema, Citations, EEAT)", weight: "30%" },
+            { param: "Readability & Chunking (Bullet-points, Tables)", weight: "30%" },
+            { param: "AEO Platform Scoring (Gemini, ChatGPT, Perplexity)", weight: "25%" },
+            { param: "Freshness & Search Alignment (Updates, Intents)", weight: "15%" }
         ]
     },
 

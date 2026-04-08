@@ -163,7 +163,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
     const error = externalError || localError;
 
     return (
-        <section className={`relative min-h-[90vh] flex items-center justify-center pt-28 pb-20 overflow-hidden transition-colors duration-500 ${darkMode ? 'bg-[#0A0F1E]' : 'bg-slate-50'}`}>
+        <section className={`relative min-h-[90vh] flex items-center justify-center pt-28 pb-20 transition-colors duration-500 ${darkMode ? 'bg-[#0A0F1E]' : 'bg-slate-50'}`}>
             
             {/* 🌈 Dynamic Background Effects */}
             <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
@@ -248,8 +248,8 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                                 />
                             </div>
 
-                            {/* ⚙️ Compact Actions (Secondary) */}
-                            <div className="flex items-center gap-1.5 px-1.5 w-full lg:w-auto overflow-x-auto no-scrollbar shrink-0">
+                            {/* ⚙️ Compact Actions (Secondary) - Removed overflow-x-auto to prevent dropdown clipping */}
+                            <div className="flex flex-wrap lg:flex-nowrap items-center gap-1.5 px-1.5 w-full lg:w-auto shrink-0">
                                 <CustomDropdown
                                     value={device}
                                     onChange={setDevice}

@@ -35,7 +35,7 @@ const BulkAuditSchema = new mongoose.Schema(
         pages: [PageAuditSchema],
         startedAt: { type: Date, default: Date.now },
         completedAt: { type: Date, default: null },
-        createdAt: { type: Date, default: Date.now, expires: 60 * 60 * 1 }, // 1 hours expiry
+        createdAt: { type: Date, default: Date.now, expires: 10800 }, // 3 hours expiry
     }
 );
 

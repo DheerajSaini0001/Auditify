@@ -22,7 +22,7 @@ const SiteReportSchema = new mongoose.Schema(
     aeo: { type: Object, default: null },
     error: { type: String, default: null },
     screenshot: { type: String, default: null },
-    createdAt: { type: Date, default: Date.now }, 
+    createdAt: { type: Date, default: Date.now, expires: 10800 }, 
   }
 );
 

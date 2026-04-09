@@ -246,6 +246,13 @@ export const DataProvider = ({ children }) => {
     if (intervalId) clearInterval(intervalId);
   };
 
+  // 🔄 RESTART POLLING ON REFRESH
+  useEffect(() => {
+    if (data && data.status === "inprogress" && !intervalId) {
+      startLiveFetch(data._id);
+    }
+  }, [data, intervalId]);
+
   useEffect(() => {
     return () => {
       if (intervalId) clearInterval(intervalId);

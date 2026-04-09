@@ -4,6 +4,7 @@ import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import dotenv from "dotenv";
 import fetch from "node-fetch";
 import { URL } from "url";
+import { waitForChallengeResolution } from "../utils/puppeteer_cheerio.js";
 
 dotenv.config();
 puppeteer.use(StealthPlugin());
@@ -644,6 +645,9 @@ async function checkXSS(url, browser) {
 
     // Navigate with a reasonable timeout
     await page.goto(testUrl.toString(), { waitUntil: "networkidle2", timeout: 30000 });
+
+    // Handle bot verification if it appears during XSS test
+    await waitForChallengeResolution(page, 20000);
 
     // Also check for raw payload reflection combined with execution status
     const content = await page.content();

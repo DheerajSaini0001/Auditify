@@ -52,16 +52,113 @@ async function handlePopups(page) {
   }
 }
 
-// Detects if the page is currently showing a Cloudflare/Browser Challenge
-async function detectChallenge(page) {
-  const title = await page.title();
-  const content = await page.content();
-  return (
-    title.includes("Just a moment...") ||
-    title.includes("Attention Required! | Cloudflare") ||
-    content.includes("cf-browser-verification") ||
-    content.includes("cf-challenge")
-  );
+// Detects if the page is currently showing a Cloudflare/Browser Challenge or other WAF barriers
+export async function detectChallenge(page) {
+  try {
+    const title = await page.title();
+    const content = await page.content();
+    
+    const selectors = [
+      '#challenge-running',
+      '#challenge-form',
+      '.challenge-form',
+      '#cf-bubbles',
+      '#cloudflare-static-wrapper',
+      '#turnstile-wrapper',
+      '#challenge-stage',
+      '#cf-spinner',
+      '.cf-browser-verification',
+      '#hcaptcha-box',
+      'iframe[src*="cloudflare"]',
+      'iframe[src*="hcaptcha"]',
+      'iframe[src*="recaptcha"]',
+      '.g-recaptcha',
+      '#px-captcha', // PerimeterX
+      '#captcha-container',
+      '.distil-captcha' // Distil Networks
+    ];
+
+    const hasSelector = await page.evaluate((selList) => {
+      return selList.some(s => document.querySelector(s));
+    }, selectors);
+
+    const isChallengeTitle = 
+      title.includes("Just a moment...") ||
+      title.includes("Attention Required! | Cloudflare") ||
+      title.includes("Please Wait | Cloudflare") ||
+      title.includes("Cloudflare") ||
+      title.includes("Access Denied") ||
+      title.includes("Checking your browser");
+
+    const isChallengeContent = 
+      content.includes("cf-browser-verification") ||
+      content.includes("cf-challenge") ||
+      content.includes("cf_challenge") ||
+      content.includes("hcaptcha") ||
+      content.includes("g-recaptcha") ||
+      content.includes("ray_id") ||
+      content.includes("verification required") ||
+      content.includes("human verification");
+
+    return isChallengeTitle || isChallengeContent || hasSelector;
+  } catch (e) {
+    return false; // If we can't check, assume it might not be a challenge or page crashed
+  }
+}
+
+// Check if page has some "real" content that suggests we are past the bot wall
+async function hasRealContent(page) {
+  try {
+    return await page.evaluate(() => {
+      const bodyText = document.body.innerText || "";
+      // If we have actual nav, sections, or significant amount of text, it's likely real content
+      const linkCount = document.querySelectorAll('a').length;
+      const paragraphCount = document.querySelectorAll('p').length;
+      
+      return (bodyText.length > 500 && (linkCount > 5 || paragraphCount > 2)) || 
+             document.querySelector('nav') !== null || 
+             document.querySelector('main') !== null || 
+             document.querySelector('header') !== null;
+    });
+  } catch (e) {
+    return false;
+  }
+}
+
+// Function to wait for challenge resolution with polling and verification
+export async function waitForChallengeResolution(page, timeout = 60000) {
+  const startTime = Date.now();
+  console.log("🛡️ Entering challenge detection loop...");
+  
+  while (Date.now() - startTime < timeout) {
+    const isChallenged = await detectChallenge(page);
+    
+    if (!isChallenged) {
+      // If markers are gone, verify we have real content
+      const contentLoaded = await hasRealContent(page);
+      if (contentLoaded) {
+        console.log("✅ Verified: Real content is visible.");
+        // Double check a moment later to ensure no last-minute redirects
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        if (!await detectChallenge(page)) return true;
+      } else {
+        console.log("⏳ No challenge markers, but no real content yet. Waiting...");
+      }
+    } else {
+      console.log("⏳ Bot verification in progress or challenge detected, waiting 3s...");
+    }
+    
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    
+    // Safety check: if the page title changed significantly, maybe we navigated?
+    const currentTitle = await page.title();
+    if (currentTitle && !currentTitle.includes("Cloudflare") && !currentTitle.includes("moment")) {
+       // If title seems normal, try a content check
+       if (await hasRealContent(page)) return true;
+    }
+  }
+  
+  return false;
 }
 
 export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
@@ -79,7 +176,8 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
         "--disable-gpu",
         "--hide-scrollbars",
         "--window-size=1920,1080",
-        "--mute-audio"
+        "--mute-audio",
+        "--disable-blink-features=AutomationControlled" // Further helps stealth
       ]
     };
 
@@ -101,32 +199,46 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
       await page.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36");
     }
 
+    // Advanced evasions
+    await page.evaluateOnNewDocument(() => {
+      Object.defineProperty(navigator, 'webdriver', { get: () => false });
+    });
+
     await page.setExtraHTTPHeaders({
       "Accept-Language": "en-US,en;q=0.9",
       "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
       "Accept-Encoding": "gzip, deflate, br",
       "Referer": "https://www.google.com/",
-      "Upgrade-Insecure-Requests": "1"
+      "Upgrade-Insecure-Requests": "1",
+      "Sec-Fetch-Dest": "document",
+      "Sec-Fetch-Mode": "navigate",
+      "Sec-Fetch-Site": "cross-site",
+      "Sec-Fetch-User": "?1"
     });
 
     const response = await page.goto(url, {
-      waitUntil: "domcontentloaded",
-      timeout: 60000
+      waitUntil: "networkidle2", // Wait for network to settle more before checking challenge
+      timeout: 90000 
     });
 
-    // Continuous Check for Cloudflare/WAF Challenges
-    if (await detectChallenge(page)) {
-      console.log("⚠️ Challenge detected, waiting for resolution...");
-      // Wait longer for Challenges to pass (automatic in many cases with Stealth plugin)
-      await page.waitForNavigation({ waitUntil: "networkidle2", timeout: 45000 }).catch(() => { });
-    } else {
-      // Standard wait for initial network activity to settle
-      try {
-        await page.waitForNetworkIdle({ idleTime: 1000, timeout: 15000 });
-      } catch (e) {
-        // If network idle fails, we continue anyway as the page might have persistent connections
+    // Handle bot verification
+    console.log("🔍 Checking for bot verification page...");
+    const challengeResolved = await waitForChallengeResolution(page, 120000); // Wait up to 2 mins for complex challenges
+    
+    if (!challengeResolved) {
+      const isStillChallenged = await detectChallenge(page);
+      if (isStillChallenged) {
+        throw new Error("Bot verification failed: Stuck on challenge page.");
       }
+      console.warn("⚠️ Challenge resolution uncertain, but no markers found. Proceeding with caution.");
+    } else {
+      console.log("✅ Challenge cleared or not detected.");
     }
+
+    // Standard wait for initial network activity to settle
+    try {
+      await page.waitForNetworkIdle({ idleTime: 1000, timeout: 15000 });
+    } catch (e) { }
 
     // Ensure critical DOM element (body) is present
     await page.waitForSelector("body", { timeout: 30000 });
@@ -147,6 +259,17 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
       : { width: 1920, height: 1080, deviceScaleFactor: 2, isMobile: false, hasTouch: false };
 
     await page.setViewport(viewport);
+
+    // Re-check for challenge one last time before screenshot/data extraction
+    if (await detectChallenge(page)) {
+      console.log("⚠️ Still on challenge page before screenshot, trying one last wait (10s)...");
+      await new Promise(resolve => setTimeout(resolve, 10000));
+      
+      // Final hard check - if still challenged, we really don't want to capture this
+      if (await detectChallenge(page)) {
+         throw new Error("Aborted: Still on bot verification page after final wait.");
+      }
+    }
 
     const screenshot = await page.screenshot({
       encoding: "base64",

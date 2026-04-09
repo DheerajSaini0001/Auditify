@@ -54,7 +54,7 @@ class AEOService {
             platforms.gemini.score = 0;
             platforms.gemini.blocked = true;
         }
-        if (signals.botAccess.bots['GPTBot'] === 'blocked') {
+        if (signals.botAccess.bots['GPTBot'] === 'blocked' && !signals.llmsTxt.exists) {
             platforms.chatgpt.score = 0;
             platforms.chatgpt.blocked = true;
         }
@@ -89,37 +89,44 @@ class AEOService {
     static generatePlatformReason(platform, signals, score) {
         if (score === 0) {
             const botName = platform === 'gemini' ? 'Google-Extended' : (platform === 'chatgpt' ? 'GPTBot' : 'PerplexityBot');
+            if (platform === 'chatgpt' && signals.llmsTxt.exists) {
+                return `⚠️ Configuration Conflict: Even though you have an /llms.txt file, your robots.txt is currently blocking GPTBot, resulting in 0% visibility.`;
+            }
             return `Visibility is 0% because ${botName} is blocked in your robots.txt.`;
         }
 
+        const reasons = [];
+
         if (platform === 'gemini') {
-            if (signals.schema.score >= 50) {
-                return "High Schema.org coverage (FAQ/HowTo) detected. Gemini leverages this for featured snippets and multi-step answers.";
-            } else if (signals.botAccess.score < 100) {
-                return "Google Search Index status is compromised; ensure Googlebot-Extended is allowed and 'noindex' is removed.";
-            } else {
-                return "Improve Gemini visibility by adding FAQPage or HowTo markup to structure your data.";
-            }
+            const issues = [];
+            if (signals.botAccess.bots['Google-Extended'] === 'blocked') issues.push("Google-Extended is blocked in robots.txt.");
+            if (signals.schema.score < 40) issues.push("Missing FAQPage/Product schema.");
+            if (signals.pageSpeed.score < 80) issues.push("page load is too slow.");
+            
+            if (issues.length === 0) return "✅ Why: You have excellent JSON-LD Schema and your site loads in under 2 seconds.";
+            return `⚠️ Why no: ${issues.join(' ')}`;
         }
 
         if (platform === 'chatgpt') {
-            if (signals.llmsTxt.exists && signals.markdownHeaders.score >= 80) {
-                return "Optimized for ChatGPT: Clear llms.txt found and clean Markdown-style header hierarchy detected.";
-            } else if (!signals.llmsTxt.exists) {
-                return "Missing llms.txt. ChatGPT agents use this for efficient context mapping.";
-            } else {
-                return "Header hierarchy is weak. Use a clean H1->H2->H3 structure for better Markdown extraction.";
-            }
+            const issues = [];
+            if (signals.botAccess.bots['GPTBot'] === 'blocked') issues.push("GPTBot is blocked in robots.txt (Critical Visibility Issue).");
+            if (!signals.llmsTxt.exists) issues.push("Missing an llms.txt file.");
+            if (signals.answerFirst.score < 80) issues.push("Content structure is too 'wordy'—missing a TL;DR at the top.");
+            
+            if (issues.length === 0) return "✅ Why: Optimized for ChatGPT: Clear llms.txt found and concise 'Answer-First' summary detected.";
+            return `⚠️ Why no: ${issues.join(' ')}`;
         }
 
         if (platform === 'perplexity') {
-            if (signals.structuredContent.tables > 0 && signals.citations.score >= 70) {
-                return "Perplexity ready: Strong data tables and verifiable external citations detected for real-time verification.";
-            } else if (signals.structuredContent.tables === 0) {
-                return "Data is unstructured. Add tables to make your facts 'scrapable' for RAG-based search engines.";
-            } else {
-                return "Low citation signals. Perplexity values pages that link to reputable sources and use structured references.";
-            }
+            const issues = [];
+            if (signals.botAccess.bots['PerplexityBot'] === 'blocked') issues.push("PerplexityBot is blocked in robots.txt.");
+            if (signals.structuredContent.dataStuckInImages) issues.push("Your data is stuck in images, not Markdown tables.");
+            else if (signals.structuredContent.tables === 0) issues.push("Data is unstructured (missing tables).");
+            
+            if (signals.citations.score < 70) issues.push("Low citation signals.");
+
+            if (issues.length === 0) return "✅ Why: Perplexity ready: Strong data tables and verifiable external citations detected.";
+            return `⚠️ Why no: ${issues.join(' ')} Perplexity cannot 'read' non-structured data easily.`;
         }
 
         return "Good overall signals detected.";

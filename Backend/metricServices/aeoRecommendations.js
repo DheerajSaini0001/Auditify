@@ -61,7 +61,15 @@ const getAEORecommendations = (signals) => {
     }
 
     // 4. Structured Content Recommendation
-    if (signals.structuredContent.score < 60) {
+    if (signals.structuredContent.dataStuckInImages) {
+        recommendations.push({
+            priority: "High",
+            title: "Replace Image Charts with HTML Tables",
+            action: "Your comparison charts or data are'stuck' in images. Perplexity and AI crawlers cannot 'read' images reliably. Re-implement charts as <table> elements for better RAG extraction.",
+            platform: "Perplexity",
+            impact: 40
+        });
+    } else if (signals.structuredContent.score < 60) {
         recommendations.push({
             priority: "High",
             title: "Convert Prose to Tables or Lists",

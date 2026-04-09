@@ -28,7 +28,7 @@ const getStatusDetail = (signal, data, isFailed) => {
     switch (signal) {
         case 'aeoSchema':
             return data?.count === 0 
-                ? "Critical: No JSON-LD schema found. AI engines cannot verify your entity data." 
+                ? "Warning: No JSON-LD schema found. AI engines cannot verify your entity data." 
                 : `Partial: Only ${data?.count} schema types detected. FAQPage or HowTo markup is recommended.`;
         case 'botAccess':
             const blocked = Object.entries(data?.bots || {}).filter(([_, s]) => s === 'blocked').map(([b]) => b);
@@ -83,12 +83,21 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
     if (score >= 100) {
         status = "Passed";
         statusColor = "text-emerald-500 bg-emerald-500/10 border-emerald-500/20";
-    } else if (score > 40 || (signal === 'aeoSchema' && score === 0)) {
-        status = score === 0 && signal === 'aeoSchema' ? "Warning" : "Partial";
+    } else if (score > 40 || ((signal === 'aeoSchema' || signal === 'structuredContent') && score === 0)) {
+        status = score === 0 && (signal === 'aeoSchema' || signal === 'structuredContent') ? "Warning" : "Partial";
         statusColor = "text-amber-500 bg-amber-500/10 border-amber-500/20";
     }
 
-    const isFailed = score < 100;
+    const isFailed = score < 100 && status !== "Warning";
+    const isWarning = status === "Warning" || (score < 100 && score > 40);
+
+    const boxBg = isFailed 
+        ? (darkMode ? "bg-rose-500/5 border-rose-500/20" : "bg-rose-50 border-rose-100")
+        : (isWarning 
+            ? (darkMode ? "bg-amber-500/5 border-amber-500/20" : "bg-amber-50 border-amber-100")
+            : (darkMode ? "bg-emerald-500/5 border-emerald-500/20" : "bg-emerald-50/50 border-emerald-100"));
+
+    const boxText = isFailed ? "text-rose-600" : (isWarning ? "text-amber-600" : "text-emerald-600");
 
     return (
         <div className={`relative overflow-hidden rounded-[2rem] border transition-all duration-500 p-8 flex flex-col gap-6 ${darkMode ? "bg-slate-900 border-slate-800 shadow-xl" : "bg-white border-gray-100 shadow-sm shadow-slate-200 hover:shadow-md"}`}>
@@ -108,7 +117,7 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
                 </div>
                 
                 <div className="flex items-center gap-3">
-                    {isFailed && (
+                    {score < 100 && (
                         <button 
                             onClick={() => setShowDetails(!showDetails)}
                             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${showDetails 
@@ -139,11 +148,9 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
             {/* Status Detail Section */}
             <div className="flex flex-col gap-3">
                 <span className={`text-[10px] font-black uppercase tracking-[0.2em] opacity-40 ${darkMode ? "text-white" : "text-slate-900"}`}>Status Detail</span>
-                <div className={`p-6 rounded-2xl border transition-all duration-500 ${isFailed 
-                    ? (darkMode ? "bg-rose-500/5 border-rose-500/20" : "bg-rose-50 border-rose-100") 
-                    : (darkMode ? "bg-emerald-500/5 border-emerald-500/20" : "bg-emerald-50/50 border-emerald-100")}`}>
-                    <p className={`text-sm md:text-base font-black tracking-tight ${isFailed ? "text-rose-600" : "text-emerald-600"}`}>
-                        {getStatusDetail(signal, data, isFailed)}
+                <div className={`p-6 rounded-2xl border transition-all duration-500 ${boxBg}`}>
+                    <p className={`text-sm md:text-base font-black tracking-tight ${boxText}`}>
+                        {getStatusDetail(signal, data, score < 100)}
                     </p>
                 </div>
             </div>

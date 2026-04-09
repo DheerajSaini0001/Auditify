@@ -20,13 +20,14 @@ const analyzeAnswerFirst = ($) => {
     
     let score = 0;
     // AI models love short 1-2 sentence direct answers
-    if (sentenceCount >= 1 && sentenceCount <= 3) {
+    if (sentenceCount >= 1 && sentenceCount <= 2) {
         score = 100;
-    } else if (sentenceCount > 3 && sentenceCount <= 5) {
-        score = 70;
-    } else if (sentenceCount > 5) {
+    } else if (sentenceCount > 2 && sentenceCount <= 4) {
+        // A bit wordy
+        score = 60;
+    } else if (sentenceCount > 4) {
         // Too wordy
-        score = 40;
+        score = 30;
     } else {
         score = 0;
     }

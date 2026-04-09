@@ -44,12 +44,16 @@ export const startAudit = async (req, res) => {
       return res.status(400).json({ error: "Invalid or Restricted URL" });
     }
 
-    // Strict Deduplication: Check if a successful or in-progress audit already exists
+    // Strict Deduplication: Check if a successful audit already exists or a very recent in-progress one
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
     const existing = await SingleAuditReport.findOne({ 
       url, 
       device, 
       report, 
-      status: { $in: ["inprogress", "completed"] } 
+      $or: [
+        { status: "completed" },
+        { status: "inprogress", createdAt: { $gt: fiveMinutesAgo } }
+      ]
     }).sort({ createdAt: -1 });
 
     if (existing) {
@@ -214,6 +218,7 @@ export const startAudit = async (req, res) => {
 
       // Update AuditLog entry
       try {
+        await SingleAuditReport.findByIdAndUpdate(newReport._id, { status: "completed" });
         const finalReport = await SingleAuditReport.findById(newReport._id);
         if (finalReport) {
           await AuditLog.updateMany(
@@ -229,7 +234,7 @@ export const startAudit = async (req, res) => {
           );
         }
       } catch (err) {
-        console.error("Error updating AuditLog on success:", err);
+        console.error("Error updating status/AuditLog on success:", err);
       }
     })
 

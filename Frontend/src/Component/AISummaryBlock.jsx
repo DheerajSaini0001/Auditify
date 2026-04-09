@@ -70,7 +70,7 @@ const AISummaryBlock = ({ sectionName, sectionData, auditScore, url, darkMode })
             {!loading && !error && (
                 <div className="mt-4 pt-4 border-t border-blue-500/10 flex items-center gap-2">
                     <span className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-blue-500/40' : 'text-blue-400'}`}>
-                        Auditify Intelligence Protocol v2.5.0
+                        DealerPulse Intelligence Protocol v2.5.0
                     </span>
                 </div>
             )}

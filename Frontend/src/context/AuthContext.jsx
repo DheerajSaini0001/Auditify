@@ -4,12 +4,12 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('auditify_token'));
+  const [token, setToken] = useState(localStorage.getItem('dealerpulse_token'));
   const [isLoading, setIsLoading] = useState(true);
 
   // 5.2 Standard fetch wrapper (apiFetch)
   const apiFetch = useCallback(async (url, options = {}) => {
-    const currentToken = localStorage.getItem('auditify_token');
+    const currentToken = localStorage.getItem('dealerpulse_token');
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:2000';
     
     const res = await fetch(`${API_URL}${url}`, {
@@ -45,7 +45,7 @@ export const AuthProvider = ({ children }) => {
           setUser(data.user);
         } else {
           // Token invalid or expired
-          localStorage.removeItem('auditify_token');
+          localStorage.removeItem('dealerpulse_token');
           setToken(null);
           setUser(null);
         }
@@ -60,7 +60,7 @@ export const AuthProvider = ({ children }) => {
   }, [token, apiFetch]);
 
   const login = (newToken, userData = null) => {
-    localStorage.setItem('auditify_token', newToken);
+    localStorage.setItem('dealerpulse_token', newToken);
     setToken(newToken);
     
     if (userData) {
@@ -77,7 +77,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem('auditify_token');
+    localStorage.removeItem('dealerpulse_token');
     setToken(null);
     setUser(null);
     window.location.href = '/login'; // Force redirect as per SRS 6.33

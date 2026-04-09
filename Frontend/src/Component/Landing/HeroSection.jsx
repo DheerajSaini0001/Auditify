@@ -114,7 +114,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
 
             const runDirectly = async () => {
                 // If logged in, skip captcha and run
-                if (localStorage.getItem('auditify_token')) {
+                if (localStorage.getItem('dealerpulse_token')) {
                     let urlToFetch = queryUrl.trim();
                     if (!/^https?:\/\//i.test(urlToFetch)) {
                         urlToFetch = `https://${urlToFetch}`;

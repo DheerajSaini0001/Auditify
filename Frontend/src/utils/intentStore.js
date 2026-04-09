@@ -1,4 +1,4 @@
-const INTENT_KEY = 'auditify_post_auth_intent';
+const INTENT_KEY = 'dealerpulse_post_auth_intent';
 
 /**
  * Saves a navigation intent (e.g., target report ID and path) to localStorage.

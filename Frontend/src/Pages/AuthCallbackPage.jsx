@@ -21,7 +21,7 @@ const AuthCallbackPage = () => {
       
       const intent = consumePostAuthIntent();
       
-      const hasGuestData = !!localStorage.getItem("auditify_guest_data");
+      const hasGuestData = !!localStorage.getItem("dealerpulse_guest_data");
       const guestFallback = hasGuestData ? "/report" : "/dashboard";
       
       const destination = intent?.path || guestFallback;
@@ -36,7 +36,7 @@ const AuthCallbackPage = () => {
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a0a0f] text-white">
       <div className="flex flex-col items-center gap-6 animate-pulse">
         <div className="h-20 w-20 rounded-[32px] bg-blue-600 flex items-center justify-center shadow-2xl shadow-blue-500/40 rotate-12">
-            <span className="text-white text-4xl font-black italic">A</span>
+            <span className="text-white text-4xl font-black italic">D</span>
         </div>
         <div className="flex items-center gap-3">
           <Loader2 className="animate-spin text-blue-500" size={24} />

@@ -71,7 +71,7 @@ app.use(trackingMiddleware);
 
 // 4.2.3 Session + Passport Middleware
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'auditify_secret_2026',
+  secret: process.env.SESSION_SECRET || 'dealerpulse_secret_2026',
   resave: false,
   saveUninitialized: false,
   cookie: { 
@@ -95,7 +95,7 @@ app.use("/bulk-audit", bulkAuditRoutes);
 app.use("/api/ai", aiExplainRoutes);
 
 app.get("/", (req, res) => {
-  res.send("Auditify RBAC Server is running");
+  res.send("Dealerpulse RBAC Server is running");
 });
 
 // Global Error Handler (Section 9)

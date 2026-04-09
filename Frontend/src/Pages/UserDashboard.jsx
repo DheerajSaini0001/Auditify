@@ -176,7 +176,7 @@ const UserDashboard = () => {
                               
                               toast.promise(
                                 (async () => {
-                                  const token = localStorage.getItem('auditify_token');
+                                  const token = localStorage.getItem('dealerpulse_token');
                                   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:2000';
                                   const response = await fetch(`${API_URL}/single-audit/${audit.reportId}/export/pdf`, {
                                     headers: {
@@ -189,7 +189,7 @@ const UserDashboard = () => {
                                   const url = window.URL.createObjectURL(blob);
                                   const link = document.createElement('a');
                                   link.href = url;
-                                  link.download = `Auditify-Report-${audit.url.replace(/[^a-z0-9]/gi, '-')}.pdf`;
+                                  link.download = `DealerPulse-Report-${audit.url.replace(/[^a-z0-9]/gi, '-')}.pdf`;
                                   document.body.appendChild(link);
                                   link.click();
                                   document.body.removeChild(link);

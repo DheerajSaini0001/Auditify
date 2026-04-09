@@ -5,6 +5,7 @@ import { ThemeContext } from '../context/ThemeContext.jsx';
 import { Mail, Lock, Eye, EyeOff, Loader2, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { consumePostAuthIntent, savePostAuthIntent } from '../utils/intentStore';
+import Assets from '../assets/Assets.js';
 
 const LoginPage = () => {
   const { theme } = useContext(ThemeContext);
@@ -27,7 +28,7 @@ const LoginPage = () => {
       
       // Smart Fallback Selection
       // 1. If we have guest audit data in memory/storage, the user probably wants to see it
-      const hasGuestData = !!localStorage.getItem("auditify_guest_data");
+      const hasGuestData = !!localStorage.getItem("dealerpulse_guest_data");
       const guestFallback = hasGuestData ? "/report" : "/dashboard";
       const adminFallback = user?.role === 'admin' ? '/admin' : guestFallback;
       
@@ -70,7 +71,7 @@ const LoginPage = () => {
 
   const handleGoogleLogin = () => {
     // Save intent before leaving for Google OAuth
-    const intentPath = location.state?.from || (localStorage.getItem("auditify_guest_data") ? '/report' : null);
+    const intentPath = location.state?.from || (localStorage.getItem("dealerpulse_guest_data") ? '/report' : null);
     if (intentPath) {
        savePostAuthIntent('o_auth', intentPath);
     }
@@ -82,9 +83,9 @@ const LoginPage = () => {
     <div className={`min-h-screen flex flex-col justify-center transition-colors duration-300 py-12 px-4 sm:px-6 lg:px-8 ${darkMode ? "bg-[#0a0a0f]" : "bg-gray-50"}`}>
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center mb-8">
-          <div className="h-16 w-16 rounded-3xl bg-blue-600 flex items-center justify-center shadow-2xl shadow-blue-500/40">
-            <span className="text-white text-3xl font-black italic">A</span>
-          </div>
+          <Link to="/">
+            <img src={darkMode ? Assets.Logo : Assets.DarkLogo} alt="DealerPulse" className="h-20 w-auto" />
+          </Link>
         </div>
         <h2 className={`text-center text-4xl font-black tracking-tight ${darkMode ? "text-white" : "text-gray-900"}`}>Welcome Back</h2>
         <p className="mt-3 text-center text-gray-500 font-medium tracking-wide">Enter your details to access your account</p>

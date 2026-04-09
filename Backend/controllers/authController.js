@@ -67,11 +67,11 @@ export const register = async (req, res) => {
     // Send OTP email
     await sendEmail({
       to: email.toLowerCase(),
-      subject: `Verify your Auditify account – OTP: ${rawOTP}`,
+      subject: `Verify your Dealerpulse account – OTP: ${rawOTP}`,
       html: `
         <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
           <h2 style="color: #1e3a8a;">Verify your account</h2>
-          <p>Please enter the following 6-digit code to verify your Auditify account. This code is valid for 10 minutes.</p>
+          <p>Please enter the following 6-digit code to verify your Dealerpulse account. This code is valid for 10 minutes.</p>
           <div style="background: #f3f4f6; color: #1e3a8a; font-size: 32px; font-weight: bold; text-align: center; letter-spacing: 5px; padding: 15px; margin: 20px 0; border-radius: 5px; font-family: monospace;">
             ${rawOTP}
           </div>
@@ -186,7 +186,7 @@ export const resendOTP = async (req, res) => {
 
     await sendEmail({
       to: email.toLowerCase(),
-      subject: `Verify your Auditify account – New OTP: ${rawOTP}`,
+      subject: `Verify your Dealerpulse account – New OTP: ${rawOTP}`,
       html: `<h2>Verify your account</h2><p>Your new code is: <b>${rawOTP}</b>. Expired in 10 minutes.</p>`
     });
 
@@ -271,7 +271,7 @@ export const forgotPassword = async (req, res) => {
 
     await sendEmail({
       to: email.toLowerCase(),
-      subject: 'Reset your Auditify password',
+      subject: 'Reset your Dealerpulse password',
       html: `
         <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; text-align: center;">
           <h2>Reset Password</h2>

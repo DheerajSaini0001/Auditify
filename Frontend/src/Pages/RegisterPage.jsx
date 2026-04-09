@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext.jsx';
 import { User, Mail, Lock, Eye, EyeOff, Loader2, CheckCircle, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
+import Assets from '../assets/Assets.js';
 
 const RegisterPage = () => {
   const { theme } = useContext(ThemeContext);
@@ -82,11 +83,11 @@ const RegisterPage = () => {
     <div className={`min-h-screen flex flex-col justify-center transition-colors duration-300 py-12 px-4 sm:px-6 lg:px-8 ${darkMode ? "bg-[#0a0a0f]" : "bg-gray-50"}`}>
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center mb-8">
-          <div className="h-16 w-16 rounded-3xl bg-emerald-600 flex items-center justify-center shadow-2xl shadow-emerald-500/40">
-            <span className="text-white text-3xl font-black italic">A</span>
-          </div>
+          <Link to="/">
+            <img src={darkMode ? Assets.Logo : Assets.DarkLogo} alt="DealerPulse" className="h-20 w-auto" />
+          </Link>
         </div>
-        <h2 className={`text-center text-4xl font-black tracking-tight ${darkMode ? "text-white" : "text-gray-900"}`}>Join Auditify</h2>
+        <h2 className={`text-center text-4xl font-black tracking-tight ${darkMode ? "text-white" : "text-gray-900"}`}>Join Dealerpulse</h2>
         <p className="mt-3 text-center text-gray-500 font-medium tracking-wide">Start your professional website auditing journey</p>
       </div>
 

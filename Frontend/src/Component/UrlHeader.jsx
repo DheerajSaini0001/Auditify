@@ -33,7 +33,7 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:2000';
     toast.promise(
       (async () => {
-        const token = localStorage.getItem('auditify_token');
+        const token = localStorage.getItem('dealerpulse_token');
         const response = await fetch(`${API_URL}/single-audit/${data._id}/export/pdf`, {
           headers: {
             ...(token ? { 'Authorization': `Bearer ${token}` } : {})
@@ -45,7 +45,7 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `Auditify-Report-${data.url?.replace(/[^a-z0-9]/gi, '-')}.pdf`;
+        link.download = `Dealerpulse-Report-${data.url?.replace(/[^a-z0-9]/gi, '-')}.pdf`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

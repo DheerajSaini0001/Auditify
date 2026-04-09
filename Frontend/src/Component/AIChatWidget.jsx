@@ -14,7 +14,7 @@ const AIChatWidget = () => {
     const [isMinimized, setIsMinimized] = useState(false);
     const [input, setInput] = useState('');
     const [messages, setMessages] = useState([
-        { role: 'bot', text: 'Hi! I am your Auditify Assistant. Ask me anything about your current audit results! ✨' }
+        { role: 'bot', text: 'Hi! I am your DealerPulse Assistant. Ask me anything about your current audit results! ✨' }
     ]);
     const [isLoading, setIsLoading] = useState(false);
     
@@ -88,7 +88,7 @@ const AIChatWidget = () => {
                         <Sparkles className="w-4 h-4 text-white" />
                     </div>
                     <div>
-                        <h3 className="text-sm font-bold">Auditify Intelligence</h3>
+                        <h3 className="text-sm font-bold">DealerPulse Intelligence</h3>
                         <div className="flex items-center gap-1.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                             <span className={`text-[10px] uppercase tracking-wider font-bold ${darkMode ? 'text-emerald-400' : 'text-[#ffffffb3]'}`}>AI Online</span>

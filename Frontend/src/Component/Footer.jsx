@@ -20,10 +20,7 @@ export default function Footer() {
           {/* Brand Column */}
           <div className="md:col-span-1 space-y-6">
             <Link to="/" className="flex items-center gap-3">
-              <img src={darkMode ? Assets.Logo : Assets.DarkLogo} alt="Auditify" className="h-8 w-auto" />
-              <span className={`text-xl font-black tracking-tighter ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                Site<span className="text-emerald-500">Audit</span>
-              </span>
+              <img src={darkMode ? Assets.Logo : Assets.DarkLogo} alt="Dealerpulse" className="h-16 w-auto" />
             </Link>
             <p className="text-sm font-medium leading-relaxed">
               Deep-intelligence website auditing. Performance, SEO, Security, and more. All in one place.

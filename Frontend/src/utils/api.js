@@ -1,7 +1,7 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:2000';
 
 const createFetchRequest = async (endpoint, options = {}) => {
-  const token = localStorage.getItem('auditify_token');
+  const token = localStorage.getItem('dealerpulse_token');
   
   const headers = {
     'Content-Type': 'application/json',
@@ -22,7 +22,7 @@ const createFetchRequest = async (endpoint, options = {}) => {
 
     // Handle 401 Unauthorized globally
     if (response.status === 401) {
-      localStorage.removeItem('auditify_token');
+      localStorage.removeItem('dealerpulse_token');
       if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
         window.location.href = '/login';
       }

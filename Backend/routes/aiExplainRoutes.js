@@ -1,4 +1,4 @@
-// Auditify AI Assistant Route
+// DealerPulse AI Assistant Route
 import express from 'express';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
@@ -88,7 +88,7 @@ router.post('/chat', async (req, res) => {
 
         const auditSummary = summarizeAuditData(auditData);
         
-        const systemPrompt = `You are "Auditify AI Assistant", a world-class senior full-stack developer and security researcher.
+        const systemPrompt = `You are "DealerPulse AI Assistant", a world-class senior full-stack developer and security researcher.
 Your goal is to help users understand their latest website audit results and provide actionable, high-quality advice to fix issues.
 
 CONTEXT OF THE CURRENT AUDIT:
@@ -133,7 +133,7 @@ router.post('/summarize-section', async (req, res) => {
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" }); 
 
-        const prompt = `You are "Auditify AI Strategist", an expert web consultant.
+        const prompt = `You are "DealerPulse AI Strategist", an expert web consultant.
         
         TASK: Summarize the "${sectionName}" section from a website audit of: ${url}
         Overall Section Score: ${auditScore || 'N/A'}/100

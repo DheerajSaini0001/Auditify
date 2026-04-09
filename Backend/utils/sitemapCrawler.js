@@ -86,7 +86,7 @@ async function fetchSitemapUrls(domain) {
         try {
             const response = await fetch(sitemapUrl, {
                 signal: AbortSignal.timeout(10000),
-                headers: { "User-Agent": "Mozilla/5.0 (compatible; SiteAuditor/1.0)" }
+                headers: { "User-Agent": "Mozilla/5.0 (compatible; DealerPulseBot/1.0)" }
             });
 
             if (response.ok) {
@@ -126,7 +126,7 @@ async function parseSitemap(xmlData, domain) {
                         const subSitemapUrl = sitemap.loc[0];
                         const response = await fetch(subSitemapUrl, {
                             signal: AbortSignal.timeout(10000),
-                            headers: { "User-Agent": "Mozilla/5.0 (compatible; SiteAuditor/1.0)" }
+                            headers: { "User-Agent": "Mozilla/5.0 (compatible; DealerPulseBot/1.0)" }
                         });
 
                         if (response.ok) {
@@ -169,7 +169,7 @@ async function extractInternalLinks(url, domain) {
         const response = await fetch(url, {
             signal: AbortSignal.timeout(10000),
             headers: {
-                "User-Agent": "Mozilla/5.0 (compatible; SiteAuditor/1.0)",
+                "User-Agent": "Mozilla/5.0 (compatible; DealerPulseBot/1.0)",
                 "Accept": "text/html"
             },
             redirect: "follow"

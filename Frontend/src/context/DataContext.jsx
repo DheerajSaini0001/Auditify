@@ -8,16 +8,16 @@ export const DataProvider = ({ children }) => {
 
   // ⭐ DATA STATE (Persist in LocalStorage to handle refresh)
   const [data, setData] = useState(() => {
-    const saved = localStorage.getItem("auditify_guest_data");
+    const saved = localStorage.getItem("dealerpulse_guest_data");
     return saved ? JSON.parse(saved) : null;
   });
 
   // Sync state to localStorage
   useEffect(() => {
     if (data) {
-      localStorage.setItem("auditify_guest_data", JSON.stringify(data));
+      localStorage.setItem("dealerpulse_guest_data", JSON.stringify(data));
     } else {
-      localStorage.removeItem("auditify_guest_data");
+      localStorage.removeItem("dealerpulse_guest_data");
     }
   }, [data]);
 
@@ -58,7 +58,7 @@ export const DataProvider = ({ children }) => {
       const screenResolution = `${window.screen.width}x${window.screen.height}`;
       const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
       
-      const token = localStorage.getItem('auditify_token');
+      const token = localStorage.getItem('dealerpulse_token');
       const endpoint = token ? '/api/user/audit' : '/single-audit/audit';
 
       const res = await fetch(`${API_URL}${endpoint}`, {
@@ -135,7 +135,7 @@ export const DataProvider = ({ children }) => {
   const discoverUrls = async (url, maxPages, captchaToken) => {
     try {
       const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
-      const token = localStorage.getItem('auditify_token');
+      const token = localStorage.getItem('dealerpulse_token');
 
       const res = await fetch(`${API_URL}/bulk-audit/discover`, {
         method: "POST",
@@ -157,7 +157,7 @@ export const DataProvider = ({ children }) => {
   const startBulkAudit = async (url, selectedUrls, device, report, captchaToken) => {
     try {
       const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
-      const token = localStorage.getItem('auditify_token');
+      const token = localStorage.getItem('dealerpulse_token');
       const screenResolution = `${window.screen.width}x${window.screen.height}`;
 
       const res = await fetch(`${API_URL}/bulk-audit/audit`, {
@@ -187,7 +187,7 @@ export const DataProvider = ({ children }) => {
   const autoBulkAudit = async (url, maxPages, device, report, captchaToken) => {
     try {
       const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
-      const token = localStorage.getItem('auditify_token');
+      const token = localStorage.getItem('dealerpulse_token');
 
       const res = await fetch(`${API_URL}/bulk-audit/auto-audit`, {
         method: "POST",

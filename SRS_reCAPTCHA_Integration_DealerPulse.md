@@ -1,18 +1,18 @@
 # Software Requirements Specification (SRS)
-## Google reCAPTCHA v2 Integration — Auditify (SiteAudit Professional)
+## Google reCAPTCHA v2 Integration — DealerPulse (SiteAudit Professional)
 
 **Document Version:** 1.0.0  
 **Date:** 2026-03-27  
-**Project:** Auditify — Website Health Audit Tool  
+**Project:** DealerPulse — Website Health Audit Tool  
 **Feature:** Google reCAPTCHA v2 on Analyze Button  
-**Repository:** https://github.com/DheerajSaini0001/Auditify  
+**Repository:** https://github.com/DheerajSaini0001/DealerPulse  
 **Prepared For:** AI-assisted implementation (no human interaction required)
 
 ---
 
 ## 1. PURPOSE
 
-This SRS defines the complete specification for integrating Google reCAPTCHA v2 ("I'm not a robot" checkbox) into the Auditify homepage analyze flow. The document is structured for autonomous AI-driven implementation without human intervention.
+This SRS defines the complete specification for integrating Google reCAPTCHA v2 ("I'm not a robot" checkbox) into the DealerPulse homepage analyze flow. The document is structured for autonomous AI-driven implementation without human intervention.
 
 ---
 

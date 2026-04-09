@@ -59,19 +59,11 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
                 <div className={`absolute -inset-1 rounded-full blur-md opacity-40 group-hover:opacity-60 transition duration-500 ${darkMode ? "bg-emerald-500" : "bg-emerald-400"}`}></div>
                 <img
                   src={darkMode ? Assets.Logo : Assets.DarkLogo}
-                  alt="Site Audit Logo"
-                  className="relative h-9 w-auto transition-transform duration-300 group-hover:scale-105"
+                  alt="DealerPulse Logo"
+                  className="relative h-14 w-auto transition-transform duration-300 group-hover:scale-105"
                 />
               </div>
 
-              <div className="flex flex-col items-start leading-none">
-                <span className={`font-bold text-xl tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
-                  Site<span className="text-emerald-500">Audit</span>
-                </span>
-                <span className={`text-[10px] font-medium tracking-wider uppercase ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
-                  Professional
-                </span>
-              </div>
             </button>
           </div>
 

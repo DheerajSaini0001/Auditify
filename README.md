@@ -1,4 +1,4 @@
-# 🚀 Site Audit Tool (Page Speed & SEO Analyzer)
+# 🚀 DealerPulse (Website Health & SEO Audit Engine)
 
 A powerful, production-ready MERN Stack application designed to perform deep technical audits of websites. It evaluates **Technical Performance, SEO, Accessibility, Security, UX, AIO Readiness, and Conversion Flow** using advanced scraping and browser automation tools.
 
@@ -58,8 +58,8 @@ A powerful, production-ready MERN Stack application designed to perform deep tec
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/DheerajSaini0001/Page_Speed_SLT.git
-cd Page_Speed_SLT
+git clone https://github.com/DheerajSaini0001/DealerPulse.git
+cd DealerPulse
 ```
 
 ### 2. Backend Setup
@@ -117,7 +117,7 @@ npm run dev
 ## 📂 Project Structure
 
 ```bash
-Page_Speed_SLT/
+DealerPulse/
 ├── Backend/                 # Express Server & Workers
 │   ├── controllers/         # Audit & Report Logic
 │   ├── models/              # MongoDB Schemas (SiteReport)

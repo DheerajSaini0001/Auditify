@@ -279,7 +279,7 @@ const GuestReportPage = () => {
                 Log in or Sign up to see the Report
               </h2>
               <p className={`text-sm leading-relaxed mb-8 opacity-70 max-w-sm mx-auto ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
-                Try Auditify for <strong>FREE</strong> and get full report details, detailed findings, monitoring, and more!
+                Try DealerPulse for <strong>FREE</strong> and get full report details, detailed findings, monitoring, and more!
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -310,7 +310,7 @@ const GuestReportPage = () => {
 
               <div className={`mt-8 pt-6 border-t border-dashed ${darkMode ? "border-slate-700/60" : "border-slate-200"}`} />
               <p className={`text-[10px] font-bold uppercase tracking-[0.2em] opacity-30 mt-3 ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
-                Join 50,000+ businesses auditing with Auditify
+                Join 50,000+ businesses auditing with DealerPulse
               </p>
             </div>
           </div>

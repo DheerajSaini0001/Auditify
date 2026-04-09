@@ -74,7 +74,7 @@ const OtpVerifyPage = () => {
         
         const intent = consumePostAuthIntent();
         
-        const hasGuestData = !!localStorage.getItem("auditify_guest_data");
+        const hasGuestData = !!localStorage.getItem("dealerpulse_guest_data");
         const guestFallback = hasGuestData ? "/report" : "/dashboard";
         
         const destination = intent?.path || location.state?.from || guestFallback;

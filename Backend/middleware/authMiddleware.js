@@ -32,3 +32,27 @@ export const protect = async (req, res, next) => {
     return res.status(401).json({ success: false, message: 'Token invalid or expired' });
   }
 };
+
+/**
+ * Middleware: isAdmin
+ * Requires user to have 'admin' or 'super_admin' role.
+ */
+export const isAdmin = (req, res, next) => {
+  if (req.user && (req.user.role === 'admin' || req.user.role === 'super_admin')) {
+    next();
+  } else {
+    res.status(403).json({ success: false, message: 'Access denied: Requires Admin role' });
+  }
+};
+
+/**
+ * Middleware: isSuperAdmin
+ * Requires user to have 'super_admin' role.
+ */
+export const isSuperAdmin = (req, res, next) => {
+  if (req.user && req.user.role === 'super_admin') {
+    next();
+  } else {
+    res.status(403).json({ success: false, message: 'Access denied: Requires Super Admin role' });
+  }
+};

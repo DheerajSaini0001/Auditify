@@ -14,7 +14,7 @@ const userSchema = new mongoose.Schema({
   name:            { type: String, required: true, trim: true },
   email:           { type: String, required: true, unique: true, lowercase: true, trim: true },
   password:        { type: String },          // undefined for Google-only accounts
-  role:            { type: String, enum: ['admin', 'user'], default: 'user' }, // Preserving role from existing system
+  role:            { type: String, enum: ['admin', 'user', 'super_admin'], default: 'user' }, // Preserving role from existing system
   isBlocked:       { type: Boolean, default: false }, // Preserving from existing system
   blockReason:     { type: String, default: null },   // Preserving from existing system
   authProvider:    { type: String, enum: ['local', 'google'], default: 'local' },

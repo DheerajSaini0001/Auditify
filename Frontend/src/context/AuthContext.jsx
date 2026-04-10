@@ -60,7 +60,7 @@ export const AuthProvider = ({ children }) => {
     loadUser();
   }, [token, apiFetch]);
 
-  const login = (newToken, userData = null) => {
+  const login = useCallback((newToken, userData = null) => {
     localStorage.setItem('dealerpulse_token', newToken);
     setToken(newToken);
     
@@ -70,12 +70,12 @@ export const AuthProvider = ({ children }) => {
       // Quick decode fallback
       try {
           const payload = JSON.parse(atob(newToken.split('.')[1]));
-          setUser({ _id: payload.userId, email: payload.email });
+          setUser({ _id: payload.userId, email: payload.email, role: payload.role });
       } catch (e) {
           console.error('JWT Decode failed', e);
       }
     }
-  };
+  }, []);
 
   const logout = () => {
     localStorage.removeItem('dealerpulse_token');
@@ -93,7 +93,7 @@ export const AuthProvider = ({ children }) => {
         isLoading, 
         apiFetch,
         isAuthenticated: !!user,
-        isAdmin: user?.role === 'admin' // Preserving for admin routes
+        isAdmin: user?.role === 'admin' || user?.role === 'super_admin'
     }}>
       {children}
     </AuthContext.Provider>

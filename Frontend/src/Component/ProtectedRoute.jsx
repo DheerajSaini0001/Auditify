@@ -27,9 +27,14 @@ const ProtectedRoute = ({ children, requiredRole }) => {
     return <Navigate to="/login" replace />;
   }
 
-  // Multi-role compatibility
-  if (requiredRole && user?.role !== requiredRole) {
-    return <Navigate to="/dashboard" replace />;
+  // Multi-role compatibility: super_admin can access admin routes
+  if (requiredRole) {
+    if (requiredRole === 'admin' && (user?.role !== 'admin' && user?.role !== 'super_admin')) {
+      return <Navigate to="/dashboard" replace />;
+    }
+    if (requiredRole === 'super_admin' && user?.role !== 'super_admin') {
+      return <Navigate to="/dashboard" replace />;
+    }
   }
 
   return children;

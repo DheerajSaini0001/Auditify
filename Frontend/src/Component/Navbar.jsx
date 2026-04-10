@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
 import { ThemeContext } from "../context/ThemeContext.jsx";
-import { Menu, X, Sun, Moon, Home, NotebookPen, Plus, User, LogOut, LayoutDashboard, ShieldCheck, History, ChevronDown } from "lucide-react";
+import { Menu, X, Sun, Moon, Home, NotebookPen, Plus, User, LogOut, LayoutDashboard, ShieldCheck, History, ChevronDown, Settings } from "lucide-react";
 import Assets from "../assets/Assets.js";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useData } from "../context/DataContext.jsx";
@@ -144,6 +144,17 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
                               <Link to="/admin" onClick={() => setProfileOpen(false)} className={`flex items-center gap-3 px-5 py-2.5 text-sm font-bold transition-all ${darkMode ? "hover:bg-white/5" : "hover:bg-slate-50"}`}>
                                 <ShieldCheck size={16} className="text-blue-500" /> Admin Panel
                               </Link>
+                            )}
+
+                            {user?.role === 'super_admin' && (
+                              <>
+                                <Link to="/admin" onClick={() => setProfileOpen(false)} className={`flex items-center gap-3 px-5 py-2.5 text-sm font-bold transition-all ${darkMode ? "hover:bg-white/5" : "hover:bg-slate-50"}`}>
+                                  <ShieldCheck size={16} className="text-blue-500" /> Admin Panel
+                                </Link>
+                                <Link to="/admin/setup" onClick={() => setProfileOpen(false)} className={`flex items-center gap-3 px-5 py-2.5 text-sm font-bold transition-all ${darkMode ? "hover:bg-white/5" : "hover:bg-slate-50"}`}>
+                                  <Settings size={16} className="text-indigo-500" /> System Setup
+                                </Link>
+                              </>
                             )}
 
                             <div className="my-2 border-t border-slate-800/10"></div>

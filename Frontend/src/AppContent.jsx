@@ -20,6 +20,7 @@ import AuthCallbackPage from "./Pages/AuthCallbackPage";
 import DashboardPage from "./Pages/DashboardPage";
 import AddWebsitePage from "./Pages/AddWebsitePage";
 import AdminDashboard from "./Pages/AdminDashboard";
+import AdminConfig from "./Pages/AdminConfig";
 import ReportLayout from "./Pages/ReportLayout.jsx";
 import NotFound from "./Pages/NotFound.jsx";
 import { ThemeProvider, ThemeContext } from "./context/ThemeContext.jsx";
@@ -97,6 +98,12 @@ function AppContentInner() {
           <Route path="/admin" element={
             <ProtectedRoute requiredRole="admin">
               <AdminDashboard />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/setup" element={
+            <ProtectedRoute requiredRole="super_admin">
+              <AdminConfig />
             </ProtectedRoute>
           } />
 

@@ -9,11 +9,25 @@ const AuthCallbackPage = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
 
+  const hasProcessed = React.useRef(false);
+
   useEffect(() => {
-    // 5.4 Read token from hash fragment (#token=...)
+    if (hasProcessed.current) return;
+    hasProcessed.current = true;
+
+    // 5.4 Read token from hash fragment or query params
     const hash = window.location.hash;
-    const params = new URLSearchParams(hash.replace('#', ''));
-    const token = params.get('token');
+    const query = window.location.search;
+    
+    let token = new URLSearchParams(hash.replace('#', '')).get('token');
+    if (!token) {
+      token = new URLSearchParams(query).get('token');
+    }
+
+    console.log('[Auth Callback] Processing URL...');
+    console.log('[Auth Callback] Hash present:', !!hash);
+    console.log('[Auth Callback] Query present:', !!query);
+    console.log('[Auth Callback] Token found:', !!token);
 
     if (token) {
       toast.success('Successfully authenticated with Google!');
@@ -27,6 +41,7 @@ const AuthCallbackPage = () => {
       const destination = intent?.path || guestFallback;
       navigate(destination, { replace: true });
     } else {
+      console.warn('[Auth Callback] No token found in current URL:', window.location.href);
       toast.error('Authentication failed. No token found.');
       navigate('/login');
     }

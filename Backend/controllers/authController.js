@@ -331,7 +331,9 @@ export const googleCallback = (req, res) => {
     { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
   );
   // Redirect with hash fragment to keep it out of logs
-  res.redirect(`${process.env.FRONTEND_URL}/auth/callback#token=${token}`);
+  const redirectUrl = `${process.env.FRONTEND_URL}/auth/callback#token=${token}`;
+  console.log(`[Google OAuth] Redirecting to: ${redirectUrl.split('#')[0]}#token=[REDACTED]`);
+  res.redirect(redirectUrl);
 };
 
 // Get profile

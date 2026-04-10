@@ -87,7 +87,15 @@ async function fetchSitemapUrls(page, domain) {
 
     for (const sitemapUrl of possibleSitemaps) {
         try {
-            await page.goto(sitemapUrl, { waitUntil: "domcontentloaded", timeout: 15000 });
+            await page.goto(sitemapUrl, { waitUntil: "networkidle2", timeout: 20000 });
+            
+            // Handle bot verification
+            const { detectChallenge, waitForChallengeResolution } = await import('./puppeteer_cheerio.js');
+            if (await detectChallenge(page)) {
+                console.log(`🛡️ Sitemap challenge detected for ${sitemapUrl}, attempting bypass...`);
+                await waitForChallengeResolution(page, 30000);
+            }
+
             const data = await page.content();
             
             // Cheerio can extract the text from the raw XML if it's served as text/xml

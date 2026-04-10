@@ -24,15 +24,17 @@ export default async function Puppeteer_Simple(url) {
     });
 
     const response = await page.goto(url, {
-      waitUntil: "domcontentloaded",
-      timeout: 45000
+      waitUntil: "networkidle2",
+      timeout: 60000
     });
 
-    // Check for challenge
-    const content = await page.content();
-    if (content.includes("cf-browser-verification") || content.includes("hcaptcha") || content.includes("ray_id")) {
-       // Wait a bit if it's a challenge, maybe it resolves
-       await new Promise(resolve => setTimeout(resolve, 5000));
+    // Integrated robust challenge handling
+    const { detectChallenge, waitForChallengeResolution } = await import('./puppeteer_cheerio.js');
+    const isChallenged = await detectChallenge(page);
+    
+    if (isChallenged) {
+       console.log("🛡️ Challenge detected in Simple Puppeteer, waiting...");
+       await waitForChallengeResolution(page, 45000);
     }
 
     const html = await page.content();

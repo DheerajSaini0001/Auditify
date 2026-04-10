@@ -77,7 +77,10 @@ export async function detectChallenge(page) {
       '#captcha-container',
       '.distil-captcha',
       '#captchacharacters', // Amazon specific
-      'form[action*="/errors/validateCaptcha"]' // Amazon specific
+      'form[action*="/errors/validateCaptcha"]', // Amazon specific
+      '.ray_id',
+      '.cf-turnstile-wrapper',
+      '#cf-wrapper'
     ];
 
     const hasSelector = await page.evaluate((selList) => {
@@ -91,7 +94,8 @@ export async function detectChallenge(page) {
       title.includes("Cloudflare") ||
       title.includes("Access Denied") ||
       title.includes("Checking your browser") ||
-      title.includes("Robot Check"); // Amazon/Google specific
+      title.includes("Robot Check") ||
+      title.includes("Human Verification");
 
     const isChallengeContent = 
       content.includes("cf-browser-verification") ||
@@ -102,6 +106,9 @@ export async function detectChallenge(page) {
       content.includes("ray_id") ||
       content.includes("verification required") ||
       content.includes("human verification") ||
+      content.includes("Verifying you are human") || // Exact string from user image
+      content.includes("site connection is secure") ||
+      content.includes("Checking if the site connection is secure") ||
       content.includes("Enter the characters you see below") || // Amazon
       content.includes("automated access to Amazon"); // Amazon
 
@@ -151,6 +158,11 @@ export async function waitForChallengeResolution(page, timeout = 60000) {
       }
     } else {
       console.log("⏳ Bot verification in progress or challenge detected, waiting 3s...");
+      
+      // FALLBACK: Simulate a tiny mouse move to "wake up" the challenge if it's passive
+      try {
+          await page.mouse.move(Math.random() * 500, Math.random() * 500);
+      } catch (e) {}
     }
     
     await new Promise(resolve => setTimeout(resolve, 3000));

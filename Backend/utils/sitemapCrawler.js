@@ -1,48 +1,54 @@
 import * as cheerio from "cheerio";
 import { parseStringPromise } from "xml2js";
+import puppeteer from "puppeteer-extra";
+import StealthPlugin from "puppeteer-extra-plugin-stealth";
+
+puppeteer.use(StealthPlugin());
 
 export default async function discoverPages(baseUrl, maxPages = 50) {
     const discoveredUrls = new Set();
     const urlsToVisit = [baseUrl];
     const visitedUrls = new Set();
+    let browser;
 
     try {
-        // Normalize base URL
         const normalizedBase = new URL(baseUrl);
         const domain = normalizedBase.origin;
 
         console.log(`🚀 Starting discovery for: ${domain}`);
 
-        // Step 1: Try to fetch sitemap.xml
-        const sitemapUrls = await fetchSitemapUrls(domain);
+        browser = await puppeteer.launch({
+            headless: true,
+            args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
+        });
+
+        const page = await browser.newPage();
+        await page.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36");
+
+        // Step 1: Try to fetch sitemap.xml using Puppeteer
+        const sitemapUrls = await fetchSitemapUrls(page, domain);
         sitemapUrls.forEach(url => discoveredUrls.add(url));
 
         console.log(`📍 Found ${sitemapUrls.length} URLs from sitemap`);
 
-        // If we have enough URLs from sitemap, return them
         if (discoveredUrls.size >= maxPages) {
+            await browser.close();
             return Array.from(discoveredUrls).slice(0, maxPages);
         }
-
-        // Add sitemap URLs to queue if we need to crawl more (optional, but good for coverage)
-        // For now, we stick to checking from baseUrl if sitemap didn't give enough
 
         // Step 2: Crawl internal links from pages
         while (urlsToVisit.length > 0 && discoveredUrls.size < maxPages) {
             const currentUrl = urlsToVisit.shift();
 
-            // Skip if already visited
             if (visitedUrls.has(currentUrl)) continue;
             visitedUrls.add(currentUrl);
 
             try {
-                const internalLinks = await extractInternalLinks(currentUrl, domain);
+                const internalLinks = await extractInternalLinks(page, currentUrl, domain);
 
                 internalLinks.forEach(link => {
                     if (discoveredUrls.size < maxPages && !discoveredUrls.has(link)) {
                         discoveredUrls.add(link);
-
-                        // Add to queue for further crawling (only if we need more pages)
                         if (discoveredUrls.size < maxPages && !visitedUrls.has(link)) {
                             urlsToVisit.push(link);
                         }
@@ -55,10 +61,10 @@ export default async function discoverPages(baseUrl, maxPages = 50) {
                 console.error(`❌ Error crawling ${currentUrl}:`, error.message);
             }
 
-            // Limit crawling depth/count to prevent infinite loops
             if (visitedUrls.size > maxPages * 2) break;
         }
 
+        await browser.close();
         const finalUrls = Array.from(discoveredUrls).slice(0, maxPages);
         console.log(`✅ Total pages discovered: ${finalUrls.length}`);
 
@@ -66,149 +72,106 @@ export default async function discoverPages(baseUrl, maxPages = 50) {
 
     } catch (error) {
         console.error("Error discovering pages:", error.message);
-        // Return at least the base URL
+        if (browser) await browser.close();
         return [baseUrl];
     }
 }
 
-// Fetches URLs from sitemap.xml
-async function fetchSitemapUrls(domain) {
+async function fetchSitemapUrls(page, domain) {
     const sitemapUrls = [];
     const possibleSitemaps = [
         `${domain}/sitemap.xml`,
         `${domain}/sitemap_index.xml`,
         `${domain}/sitemap-index.xml`,
-        `${domain}/post-sitemap.xml`,
-        `${domain}/page-sitemap.xml`
     ];
 
     for (const sitemapUrl of possibleSitemaps) {
         try {
-            const response = await fetch(sitemapUrl, {
-                signal: AbortSignal.timeout(10000),
-                headers: { "User-Agent": "Mozilla/5.0 (compatible; DealerPulseBot/1.0)" }
-            });
-
-            if (response.ok) {
-                const data = await response.text();
-                // Verify it looks like XML
-                if (typeof data === 'string' && (data.trim().startsWith('<?xml') || data.includes('<urlset') || data.includes('<sitemapindex'))) {
-                    const urls = await parseSitemap(data, domain);
-                    urls.forEach(url => sitemapUrls.push(url));
-
-                    if (sitemapUrls.length > 0) {
-                        console.log(`✅ Found sitemap: ${sitemapUrl}`);
-                        break;
-                    }
-                }
+            await page.goto(sitemapUrl, { waitUntil: "domcontentloaded", timeout: 15000 });
+            const data = await page.content();
+            
+            // Cheerio can extract the text from the raw XML if it's served as text/xml
+            // but Puppeteer might wrap it in HTML tags. 
+            // We'll try to extract the innerText which should be the XML content
+            const content = await page.evaluate(() => document.body.innerText);
+            
+            if (content.includes('<urlset') || content.includes('<sitemapindex')) {
+                const urls = await parseSitemap(page, content, domain);
+                urls.forEach(url => sitemapUrls.push(url));
+                if (sitemapUrls.length > 0) break;
             }
         } catch (error) {
-            // Silently continue to next sitemap
             continue;
         }
     }
 
-    return [...new Set(sitemapUrls)]; // Remove duplicates
+    return [...new Set(sitemapUrls)];
 }
 
-// Parses sitemap XML and extracts URLs
-async function parseSitemap(xmlData, domain) {
+async function parseSitemap(page, xmlData, domain) {
     const urls = [];
-
     try {
-        const result = await parseStringPromise(xmlData);
+        const result = await parseStringPromise(xmlData).catch(() => null);
+        if (!result) return [];
 
-        // Handle sitemap index (contains links to other sitemaps)
         if (result.sitemapindex && result.sitemapindex.sitemap) {
             for (const sitemap of result.sitemapindex.sitemap) {
                 if (sitemap.loc && sitemap.loc[0]) {
                     try {
                         const subSitemapUrl = sitemap.loc[0];
-                        const response = await fetch(subSitemapUrl, {
-                            signal: AbortSignal.timeout(10000),
-                            headers: { "User-Agent": "Mozilla/5.0 (compatible; DealerPulseBot/1.0)" }
-                        });
-
-                        if (response.ok) {
-                            const data = await response.text();
-                            const subUrls = await parseSitemap(data, domain);
-                            urls.push(...subUrls);
-                        }
-                    } catch (error) {
-                        console.error(`Error fetching sub-sitemap:`, error.message);
-                    }
+                        await page.goto(subSitemapUrl, { waitUntil: "domcontentloaded", timeout: 10000 });
+                        const subData = await page.evaluate(() => document.body.innerText);
+                        const subUrls = await parseSitemap(page, subData, domain);
+                        urls.push(...subUrls);
+                    } catch (error) {}
                 }
             }
         }
 
-        // Handle regular sitemap (contains page URLs)
         if (result.urlset && result.urlset.url) {
             for (const url of result.urlset.url) {
                 if (url.loc && url.loc[0]) {
                     const pageUrl = url.loc[0];
-                    // Only include URLs from the same domain
                     if (pageUrl.startsWith(domain)) {
                         urls.push(pageUrl);
                     }
                 }
             }
         }
-
-    } catch (error) {
-        console.error("Error parsing sitemap:", error.message);
-    }
-
+    } catch (error) {}
     return urls;
 }
 
-// Extracts internal links from a page
-async function extractInternalLinks(url, domain) {
+async function extractInternalLinks(page, url, domain) {
     const links = new Set();
-
     try {
-        const response = await fetch(url, {
-            signal: AbortSignal.timeout(10000),
-            headers: {
-                "User-Agent": "Mozilla/5.0 (compatible; DealerPulseBot/1.0)",
-                "Accept": "text/html"
-            },
-            redirect: "follow"
-        });
+        await page.goto(url, { waitUntil: "networkidle2", timeout: 20000 });
+        
+        // Wait for rendering
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        const html = await page.content();
+        const $ = cheerio.load(html);
 
-        if (response.ok) {
-            const html = await response.text();
-            const $ = cheerio.load(html);
-
-            // Extract all href attributes
-            $("a[href]").each((_, element) => {
-                const href = $(element).attr("href");
-                if (!href) return;
-
-                try {
-                    // Resolve relative URLs
-                    const absoluteUrl = new URL(href, url);
-                    // Include query params (search) to handle dynamic pages
-                    const normalizedUrl = absoluteUrl.origin + absoluteUrl.pathname + absoluteUrl.search;
-
-                    // Only include same-domain URLs, exclude files and fragments
-                    // Extended file exclusion list
-                    if (
-                        absoluteUrl.origin === domain &&
-                        !normalizedUrl.match(/\.(pdf|jpg|jpeg|png|gif|svg|zip|mp4|mp3|doc|docx|xls|xlsx|css|js|json|xml|woff|woff2|ttf|eot)$/i) &&
-                        !normalizedUrl.includes("#") &&
-                        normalizedUrl !== url // Don't include self
-                    ) {
-                        links.add(normalizedUrl);
-                    }
-                } catch (error) {
-                    // Invalid URL, skip
+        $("a[href]").each((_, element) => {
+            const href = $(element).attr("href");
+            if (!href) return;
+            try {
+                const absoluteUrl = new URL(href, url);
+                const normalizedUrl = absoluteUrl.origin + absoluteUrl.pathname + absoluteUrl.search;
+                if (
+                    absoluteUrl.origin === domain &&
+                    !normalizedUrl.match(/\.(pdf|jpg|jpeg|png|gif|svg|zip|mp4|mp3|doc|docx|xls|xlsx|css|js|json|xml|woff|woff2|ttf|eot)$/i) &&
+                    !normalizedUrl.includes("#") &&
+                    normalizedUrl !== url
+                ) {
+                    links.add(normalizedUrl);
                 }
-            });
-        }
-
+            } catch (error) {}
+        });
     } catch (error) {
         console.error(`Error extracting links from ${url}:`, error.message);
     }
-
     return Array.from(links);
 }
+

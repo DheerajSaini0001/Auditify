@@ -5,6 +5,7 @@ import { ThemeContext } from '../context/ThemeContext.jsx';
 import { User, Mail, Lock, Eye, EyeOff, Loader2, CheckCircle, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Assets from '../assets/Assets.js';
+import MathCaptcha from '../Component/MathCaptcha';
 
 const RegisterPage = () => {
   const { theme } = useContext(ThemeContext);
@@ -15,6 +16,9 @@ const RegisterPage = () => {
     password: '',
     confirmPassword: '',
   });
+  const [captchaAnswer, setCaptchaAnswer] = useState('');
+  const [captchaId, setCaptchaId] = useState('');
+  const [captchaKey, setCaptchaKey] = useState(0); 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -42,6 +46,11 @@ const RegisterPage = () => {
       return;
     }
 
+    if (!captchaAnswer) {
+      toast.error('Please complete the CAPTCHA');
+      return;
+    }
+
     setLoading(true);
     const { ok, data } = await apiFetch('/api/auth/register', {
       method: 'POST',
@@ -49,6 +58,8 @@ const RegisterPage = () => {
         name: formData.name,
         email: formData.email,
         password: formData.password,
+        captchaAnswer,
+        captchaId
       }),
     });
 
@@ -63,6 +74,8 @@ const RegisterPage = () => {
       });
     } else {
       toast.error(data.message || 'Registration failed');
+      setCaptchaKey(prev => prev + 1);
+      setCaptchaAnswer('');
     }
     setLoading(false);
   };
@@ -191,6 +204,11 @@ const RegisterPage = () => {
                 onChange={handleChange}
               />
             </div>
+
+            <MathCaptcha 
+              key={captchaKey}
+              onAnswerChange={(val, id) => { setCaptchaAnswer(val); setCaptchaId(id); }} 
+            />
 
             <button
               type="submit"

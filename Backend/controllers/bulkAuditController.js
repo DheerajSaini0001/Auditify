@@ -537,3 +537,53 @@ export const discoverAndAuditUrls = async (req, res) => {
         }
     }
 };
+export const getBulkPageReport = async (req, res) => {
+    try {
+        const { bulkAuditId } = req.params;
+        const { url } = req.query;
+
+        if (!bulkAuditId || !url) {
+            return res.status(400).json({ error: "Bulk Audit ID and Page URL are required" });
+        }
+
+        const bulkAudit = await BulkAuditReport.findById(bulkAuditId);
+        if (!bulkAudit) {
+            return res.status(404).json({ error: "Bulk audit not found" });
+        }
+
+        const pageData = bulkAudit.pages.find(p => p.url === url);
+        if (!pageData) {
+            return res.status(404).json({ error: "Page not found in this bulk audit" });
+        }
+
+        // Reshape to look like a SingleAuditReport for the frontend
+        const reportData = {
+            _id: `${bulkAuditId}_${Buffer.from(url).toString('base64')}`, // Virtual ID
+            url: pageData.url,
+            device: bulkAudit.device,
+            report: bulkAudit.report,
+            status: pageData.status,
+            score: pageData.score,
+            grade: pageData.grade,
+            overallScore: pageData.score,
+            timeTaken: pageData.timeTaken,
+            sectionScore: pageData.sectionScore,
+            technicalPerformance: pageData.technicalPerformance,
+            onPageSEO: pageData.onPageSEO,
+            accessibility: pageData.accessibility,
+            securityOrCompliance: pageData.securityOrCompliance,
+            UXOrContentStructure: pageData.UXOrContentStructure,
+            conversionAndLeadFlow: pageData.conversionAndLeadFlow,
+            aioReadiness: pageData.aioReadiness,
+            screenshot: pageData.screenshot,
+            fromBulkAudit: true,
+            parentBulkAuditId: bulkAuditId
+        };
+
+        res.status(200).json(reportData);
+
+    } catch (error) {
+        console.error("Error fetching bulk page report:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+};

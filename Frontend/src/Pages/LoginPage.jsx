@@ -6,12 +6,16 @@ import { Mail, Lock, Eye, EyeOff, Loader2, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { consumePostAuthIntent, savePostAuthIntent } from '../utils/intentStore';
 import Assets from '../assets/Assets.js';
+import MathCaptcha from '../Component/MathCaptcha';
 
 const LoginPage = () => {
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [captchaAnswer, setCaptchaAnswer] = useState('');
+  const [captchaId, setCaptchaId] = useState('');
+  const [captchaKey, setCaptchaKey] = useState(0); // For forcing refresh
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -42,11 +46,17 @@ const LoginPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!captchaAnswer) {
+      toast.error('Please complete the CAPTCHA');
+      return;
+    }
+
     setLoading(true);
 
     const { ok, data, status } = await apiFetch('/api/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, captchaAnswer, captchaId }),
     });
 
     if (ok) {
@@ -64,6 +74,8 @@ const LoginPage = () => {
         });
       } else {
         toast.error(data.message || 'Invalid email or password');
+        setCaptchaKey(prev => prev + 1);
+        setCaptchaAnswer('');
       }
     }
     setLoading(false);
@@ -137,6 +149,11 @@ const LoginPage = () => {
             <div className="flex items-center justify-end">
               <Link to="/forgot-password" name="Forgot password?" className={`text-sm font-bold transition-colors ${darkMode ? "text-gray-500 hover:text-blue-500" : "text-gray-400 hover:text-blue-600"}`}>Forgot password?</Link>
             </div>
+
+            <MathCaptcha 
+              key={captchaKey}
+              onAnswerChange={(val, id) => { setCaptchaAnswer(val); setCaptchaId(id); }} 
+            />
 
             <button
               type="submit"

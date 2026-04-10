@@ -24,6 +24,7 @@ import ReportLayout from "./Pages/ReportLayout.jsx";
 import NotFound from "./Pages/NotFound.jsx";
 import { ThemeProvider, ThemeContext } from "./context/ThemeContext.jsx";
 import ProtectedRoute from "./Component/ProtectedRoute.jsx";
+import { Toaster } from 'react-hot-toast';
 
 import MainLayout from "./Component/MainLayout";
 import AIChatWidget from "./Component/AIChatWidget";
@@ -102,6 +103,7 @@ function AppContentInner() {
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
+      <Toaster position="top-right" reverseOrder={false} />
       <AIChatWidget />
     </>
   );

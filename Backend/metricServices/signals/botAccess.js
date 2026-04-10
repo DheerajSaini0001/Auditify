@@ -1,4 +1,4 @@
-import axios from 'axios';
+import Puppeteer_Simple from '../../utils/puppeteer_simple.js';
 
 /**
  * Signal 5: Bot Accessibility Detection
@@ -20,10 +20,10 @@ const analyzeBotAccess = async (url, $) => {
         };
 
         try {
-            const response = await axios.get(robotsUrl, { timeout: 5000 });
-            const content = response.status === 200 ? response.data : '';
+            const { html: content, status, browser } = await Puppeteer_Simple(robotsUrl);
+            if (browser) await browser.close();
             
-            if (response.status === 200) {
+            if (status === 200 && content) {
                 const lines = content.split(/\r?\n/);
                 let currentAgents = [];
 

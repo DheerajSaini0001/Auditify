@@ -7,17 +7,37 @@ export const useData = () => useContext(DataContext);
 export const DataProvider = ({ children }) => {
 
   // ⭐ DATA STATE (Persist in LocalStorage to handle refresh)
-  const [data, setData] = useState(() => {
-    const saved = localStorage.getItem("dealerpulse_guest_data");
-    return saved ? JSON.parse(saved) : null;
-  });
+  // ⭐ DATA STATE
+  const [data, setData] = useState(null);
 
-  // Sync state to localStorage
+  // 🛡️ HELPER: Safe LocalStorage with Cleanup
+  const safeLocalStorageSet = (key, value) => {
+    try {
+      localStorage.setItem(key, value);
+    } catch (e) {
+      if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+        console.warn("🧹 LocalStorage full, clearing old audit data...");
+        // Clear all audit-related keys except for essential ones
+        Object.keys(localStorage).forEach(k => {
+          if (k.startsWith('dealerpulse_audit_') && k !== key) {
+            localStorage.removeItem(k);
+          }
+        });
+        // Try again for the current data
+        try {
+          localStorage.setItem(key, value);
+        } catch (retryError) {
+          console.error("❌ LocalStorage still full after cleanup", retryError);
+        }
+      }
+    }
+  };
+
+  // Sync data to state, but avoid global collision by using ID-based logic where possible
   useEffect(() => {
-    if (data) {
-      localStorage.setItem("dealerpulse_guest_data", JSON.stringify(data));
-    } else {
-      localStorage.removeItem("dealerpulse_guest_data");
+    if (data && data._id) {
+      safeLocalStorageSet(`dealerpulse_audit_${data._id}`, JSON.stringify(data));
+      localStorage.setItem("dealerpulse_latest_audit_id", data._id);
     }
   }, [data]);
 
@@ -44,7 +64,7 @@ export const DataProvider = ({ children }) => {
   };
 
   // 🚀 FETCH DATA
-  const fetchData = async (inputValue, device, report, captchaToken) => {
+  const fetchData = async (inputValue, device, report, captchaAnswer, captchaId) => {
     if (loading) return { success: false, error: "An audit is already in progress." };
     if (!inputValue) return { success: false, error: "URL is empty" };
 
@@ -63,6 +83,7 @@ export const DataProvider = ({ children }) => {
 
       const res = await fetch(`${API_URL}${endpoint}`, {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
           ...(token && { "Authorization": `Bearer ${token}` })
@@ -71,7 +92,8 @@ export const DataProvider = ({ children }) => {
           url: inputValue,
           device,
           report,
-          captchaToken,
+          captchaAnswer,
+          captchaId, // Added
           screenResolution
         })
       });
@@ -89,7 +111,7 @@ export const DataProvider = ({ children }) => {
         startLiveFetch(auditData._id);
       }
 
-      return { success: true };
+      return { success: true, id: auditData._id };
 
     } catch (err) {
       console.error(err);
@@ -106,7 +128,7 @@ export const DataProvider = ({ children }) => {
     const newInterval = setInterval(async () => {
       try {
         const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
-        const res = await fetch(`${API_URL}/single-audit/${id}`);
+        const res = await fetch(`${API_URL}/single-audit/${id}`, { credentials: 'include' });
 
         // Stop polling if data is lost/deleted (404)
         if (res.status === 404) {
@@ -124,6 +146,9 @@ export const DataProvider = ({ children }) => {
             setIntervalId(null);
           }
           setData(updated);
+          if (updated._id) {
+            safeLocalStorageSet(`dealerpulse_audit_${updated._id}`, JSON.stringify(updated));
+          }
         }
       } catch { }
     }, 3000);
@@ -132,18 +157,19 @@ export const DataProvider = ({ children }) => {
   };
 
   // 🚀 BULK AUDIT: DISCOVER
-  const discoverUrls = async (url, maxPages, captchaToken) => {
+  const discoverUrls = async (url, maxPages, captchaAnswer, captchaId) => {
     try {
       const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
       const token = localStorage.getItem('dealerpulse_token');
 
       const res = await fetch(`${API_URL}/bulk-audit/discover`, {
         method: "POST",
+        credentials: "include",
         headers: { 
           "Content-Type": "application/json",
           ...(token && { "Authorization": `Bearer ${token}` })
         },
-        body: JSON.stringify({ url, maxPages, captchaToken }),
+        body: JSON.stringify({ url, maxPages, captchaAnswer, captchaId }),
       });
 
       return await handleResponse(res);
@@ -154,7 +180,7 @@ export const DataProvider = ({ children }) => {
   };
 
   // 🚀 BULK AUDIT: START
-  const startBulkAudit = async (url, selectedUrls, device, report, captchaToken) => {
+  const startBulkAudit = async (url, selectedUrls, device, report, captchaAnswer, captchaId) => {
     try {
       const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
       const token = localStorage.getItem('dealerpulse_token');
@@ -162,6 +188,7 @@ export const DataProvider = ({ children }) => {
 
       const res = await fetch(`${API_URL}/bulk-audit/audit`, {
         method: "POST",
+        credentials: "include",
         headers: { 
           "Content-Type": "application/json",
           ...(token && { "Authorization": `Bearer ${token}` })
@@ -171,7 +198,8 @@ export const DataProvider = ({ children }) => {
           selectedUrls, 
           device, 
           report, 
-          captchaToken,
+          captchaAnswer,
+          captchaId,
           screenResolution
         }),
       });
@@ -184,18 +212,19 @@ export const DataProvider = ({ children }) => {
   };
 
   // 🚀 BULK AUDIT: AUTO DISCOVER & START
-  const autoBulkAudit = async (url, maxPages, device, report, captchaToken) => {
+  const autoBulkAudit = async (url, maxPages, device, report, captchaAnswer, captchaId) => {
     try {
       const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
       const token = localStorage.getItem('dealerpulse_token');
 
       const res = await fetch(`${API_URL}/bulk-audit/auto-audit`, {
         method: "POST",
+        credentials: "include",
         headers: { 
           "Content-Type": "application/json",
           ...(token && { "Authorization": `Bearer ${token}` })
         },
-        body: JSON.stringify({ url, maxPages, device, report, captchaToken }),
+        body: JSON.stringify({ url, maxPages, device, report, captchaAnswer, captchaId }),
       });
 
       return await handleResponse(res);
@@ -209,11 +238,12 @@ export const DataProvider = ({ children }) => {
   const fetchSingleReport = useCallback(async (id) => {
     try {
       const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
-      const res = await fetch(`${API_URL}/single-audit/${id}`);
+      const res = await fetch(`${API_URL}/single-audit/${id}`, { credentials: 'include' });
 
       const result = await handleResponse(res);
       if (result.success) {
         setData(result.data);
+        safeLocalStorageSet(`dealerpulse_audit_${id}`, JSON.stringify(result.data));
       }
       return result;
     } catch (error) {
@@ -225,7 +255,7 @@ export const DataProvider = ({ children }) => {
   const getBulkAuditStatus = async (bulkAuditId) => {
     try {
       const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
-      const res = await fetch(`${API_URL}/bulk-audit/${bulkAuditId}`);
+      const res = await fetch(`${API_URL}/bulk-audit/${bulkAuditId}`, { credentials: 'include' });
 
       const result = await handleResponse(res);
       if (!result.success) {
@@ -234,6 +264,22 @@ export const DataProvider = ({ children }) => {
       }
       return result;
 
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  };
+
+  const fetchBulkPageReport = async (bulkId, pageUrl) => {
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
+      const res = await fetch(`${API_URL}/bulk-audit/${bulkId}/page?url=${encodeURIComponent(pageUrl)}`, { credentials: 'include' });
+
+      const result = await handleResponse(res);
+      if (result.success) {
+        setData(result.data);
+        safeLocalStorageSet(`dealerpulse_audit_${result.data._id}`, JSON.stringify(result.data));
+      }
+      return result;
     } catch (error) {
       return { success: false, error: error.message };
     }
@@ -259,9 +305,26 @@ export const DataProvider = ({ children }) => {
     };
   }, [intervalId]);
 
+  const getAuditById = async (id) => {
+    // 1. Check current state
+    if (data && data._id === id) return data;
+
+    // 2. Check localStorage
+    const saved = localStorage.getItem(`dealerpulse_audit_${id}`);
+    if (saved) {
+        const parsed = JSON.parse(saved);
+        setData(parsed);
+        return parsed;
+    }
+
+    // 3. Fetch from backend
+    const result = await fetchSingleReport(id);
+    return result.success ? result.data : null;
+  };
+
   return (
     <DataContext.Provider
-      value={{ data, setData, loading, fetchData, clearData, discoverUrls, startBulkAudit, autoBulkAudit, getBulkAuditStatus, fetchSingleReport }}
+      value={{ data, setData, loading, fetchData, clearData, discoverUrls, startBulkAudit, autoBulkAudit, getBulkAuditStatus, fetchSingleReport, getAuditById, fetchBulkPageReport }}
     >
       {children}
     </DataContext.Provider>

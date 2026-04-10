@@ -50,9 +50,22 @@ const OverAll = (A, B, C, D, E, F, G) => {
       await dbConnect({ maxPoolSize: 1 });
     }
 
-    const { browser: b, page, response, $, screenshot } = await Puppeteer_Cheerio(url, device);
+    const { browser: b, page, response, $, screenshot, isBotProtected } = await Puppeteer_Cheerio(url, device);
     browser = b;
-    await SingleAuditReport.findByIdAndUpdate(currentAuditId, { screenshot });
+    await SingleAuditReport.findByIdAndUpdate(currentAuditId, { screenshot, isBotProtected });
+
+    if (isBotProtected) {
+      console.log(`🛡️ Marking report as Bot Protected: ${url}`);
+      await SingleAuditReport.findByIdAndUpdate(currentAuditId, {
+        status: "completed",
+        error: "Bot Protected: This site is using advanced bot detection (CAPTCHA/Cloudflare). Only partial analysis was possible.",
+        score: 0,
+        grade: "F",
+        timeTaken: `${((performance.now() - start) / 1000).toFixed(0)}s`
+      });
+      parentPort.postMessage({ success: true, reportId: currentAuditId });
+      return;
+    }
 
     if (report !== "All") {
       let result;

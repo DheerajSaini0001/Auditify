@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import helmet from "helmet";
 import singleAuditRoutes from "./routes/singleAuditRoutes.js";
 import bulkAuditRoutes from "./routes/bulkAuditRoutes.js";
@@ -14,6 +15,7 @@ import cookieParser from "cookie-parser";
 import session from "express-session";
 import passport from "passport";
 import trackingMiddleware from "./middleware/tracking.js";
+import captchaRoutes from "./routes/captchaRoutes.js";
 import passportConfig from "./config/passport.js";
 
 dotenv.config();
@@ -23,6 +25,18 @@ connectDB();
 const app = express();
 
 app.set('trust proxy', 1);
+
+// Standard CORS Package
+app.use(cors({
+  origin: [
+    process.env.FRONTEND_URL,
+    "http://localhost:5173",
+    "http://localhost:3000"
+  ].filter(Boolean),
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
 
 app.use(helmet({
   contentSecurityPolicy: {
@@ -37,49 +51,35 @@ app.use(helmet({
       upgradeInsecureRequests: [],
     },
   },
-  crossOriginOpenerPolicy: { policy: "unsafe-none" } // Required for Google OAuth redirect
+  crossOriginOpenerPolicy: { policy: "unsafe-none" } 
 }));
-
-// 4.2.1 Manual CORS Middleware (replaces cors npm package)
-app.use((req, res, next) => {
-  const allowedOrigins = [
-    process.env.FRONTEND_URL,
-    "http://localhost:5173",
-    "http://localhost:3000"
-  ].filter(Boolean);
-
-  const origin = req.headers.origin;
-  if (origin && allowedOrigins.includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-  }
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization");
-
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(204);
-  }
-  next();
-});
 
 passportConfig(passport);
 
 app.use(express.json({ limit: "5mb" })); 
-// SRS Section 6.1: express.json({ limit: '10kb' })
 app.use(cookieParser());
 app.use(trackingMiddleware);
 
 // 4.2.3 Session + Passport Middleware
 app.use(session({
   secret: process.env.SESSION_SECRET || 'dealerpulse_secret_2026',
-  resave: false,
-  saveUninitialized: false,
+  resave: true,
+  saveUninitialized: true,
   cookie: { 
-    secure: process.env.NODE_ENV === 'production', 
+    secure: false, // Force false for local testing as per NODE_ENV=production issue
     httpOnly: true, 
+    sameSite: false,
     maxAge: 24 * 60 * 60 * 1000 
   }
 }));
+
+app.use((req, res, next) => {
+  if (req.url.includes('captcha') || req.url.includes('audit')) {
+    const storedCount = req.session?.captchas ? Object.keys(req.session.captchas).length : 0;
+    console.log(`[Session Debug] ${req.method} ${req.url} | ID: ${req.sessionID} | ActiveCaptchas: ${storedCount}`);
+  }
+  next();
+});
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -88,6 +88,7 @@ app.use("/api/user", userRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/websites", websiteRoutes);
 app.use("/api/aeo", aeoRoutes);
+app.use("/api/captcha", captchaRoutes);
 
 // Existing routes (keeping for backward compatibility)
 app.use("/single-audit", singleAuditRoutes);
@@ -98,7 +99,7 @@ app.get("/", (req, res) => {
   res.send("Dealerpulse RBAC Server is running");
 });
 
-// Global Error Handler (Section 9)
+// Global Error Handler
 app.use((err, req, res, next) => {
   console.error('[Unhandled Error]:', err);
   res.status(500).json({ 

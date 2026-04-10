@@ -2,7 +2,7 @@ import React, { useState, useRef, useContext, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Monitor, Smartphone, Search, Zap, Loader2, AlertCircle, ChevronDown, Settings, ShieldCheck, ArrowRight, Star } from 'lucide-react';
-import ReCAPTCHA from "react-google-recaptcha";
+import MathCaptcha from "../../Component/MathCaptcha.jsx";
 import { ThemeContext } from '../../context/ThemeContext.jsx';
 
 const CustomDropdown = ({ value, onChange, options, icon, darkMode, disabled }) => {
@@ -91,9 +91,10 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
     const [device, setDevice] = useState('Desktop');
     const [report, setReport] = useState('All');
     
-    const recaptchaRef = useRef(null);
     const [showCaptcha, setShowCaptcha] = useState(false);
-    const [captchaError, setCaptchaError] = useState(false);
+    const [captchaAnswer, setCaptchaAnswer] = useState('');
+    const [captchaId, setCaptchaId] = useState(''); // Added ID state
+    const [captchaError, setCaptchaError] = useState('');
     const [localError, setLocalError] = useState(null);
 
     const navigate = useNavigate();
@@ -113,14 +114,9 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
             navigate(location.pathname, { replace: true });
 
             const runDirectly = async () => {
-                // If logged in, skip captcha and run
-                if (localStorage.getItem('dealerpulse_token')) {
-                    let urlToFetch = queryUrl.trim();
-                    if (!/^https?:\/\//i.test(urlToFetch)) {
-                        urlToFetch = `https://${urlToFetch}`;
-                    }
-                    onSubmit(urlToFetch, device, report, null);
-                }
+                let urlToFetch = queryUrl.trim();
+                setUrl(urlToFetch);
+                setShowCaptcha(true);
             };
 
             runDirectly();
@@ -138,27 +134,35 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
 
         // Show verification modal
         setShowCaptcha(true);
-        setCaptchaError(false);
+        setCaptchaError('');
+        setCaptchaAnswer('');
+        setCaptchaId('');
     };
 
-    const handleCaptchaChange = (token) => {
-        if (token) {
-            setCaptchaError(false);
-            setShowCaptcha(false);
-            
-            // Final submission with all details
-            let urlToFetch = url.trim();
-            if (!/^https?:\/\//i.test(urlToFetch)) {
-                urlToFetch = `https://${urlToFetch}`;
-            }
-            
-            onSubmit(urlToFetch, device, report, token);
+    const handleSubmitWithCaptcha = () => {
+        if (!captchaAnswer && captchaAnswer !== 0 && captchaAnswer !== '0') {
+            setCaptchaError("Please enter an answer.");
+            return;
         }
+
+        setCaptchaError('');
+        setShowCaptcha(false);
+        
+        let urlToFetch = url.trim();
+        if (!/^https?:\/\//i.test(urlToFetch)) {
+            urlToFetch = `https://${urlToFetch}`;
+        }
+        
+        onSubmit(urlToFetch, device, report, parseInt(captchaAnswer), captchaId);
     };
 
-    const handleCaptchaExpired = () => {
-        setCaptchaError(true);
-    };
+    useEffect(() => {
+        if (externalError && (externalError.includes('CAPTCHA') || externalError.includes('captcha') || externalError.includes('Captcha'))) {
+            setShowCaptcha(true);
+            setCaptchaError(externalError);
+            setCaptchaAnswer('');
+        }
+    }, [externalError]);
 
     const error = externalError || localError;
 
@@ -475,24 +479,16 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                                 <p className={`text-base font-bold leading-relaxed ${darkMode ? 'text-slate-400 font-medium' : 'text-slate-500 font-medium'}`}>To prevent automated abuse, please confirm your identity to generate the report.</p>
                             </div>
                             
-                            <div className={`p-4 rounded-[2rem] border overflow-hidden ${darkMode ? 'bg-white/5 border-white/10' : 'bg-slate-50 border-slate-200 shadow-inner'}`}>
-                                <ReCAPTCHA
-                                    sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
-                                    onChange={handleCaptchaChange}
-                                    onExpired={handleCaptchaExpired}
-                                    theme={darkMode ? "dark" : "light"}
-                                />
-                            </div>
-
-                            {captchaError && (
-                                <motion.div 
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="text-rose-500 text-sm font-black uppercase tracking-widest flex items-center gap-2"
+                            <div className={`p-4 rounded-[2rem] w-full border ${darkMode ? 'bg-white/5 border-white/10' : 'bg-slate-50 border-slate-200'}`}>
+                                <MathCaptcha onAnswerChange={(val, id) => { setCaptchaAnswer(val); setCaptchaId(id); }} error={captchaError} />
+                                <button
+                                    onClick={handleSubmitWithCaptcha}
+                                    disabled={isLoading || !captchaAnswer}
+                                    className="mt-4 w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl transition-all disabled:opacity-50 tracking-tight"
                                 >
-                                    <AlertCircle size={16} /> Verification Error
-                                </motion.div>
-                            )}
+                                    {isLoading ? "Verifying..." : "Verify & Analyze"}
+                                </button>
+                            </div>
 
                             <button 
                                 onClick={() => setShowCaptcha(false)} 

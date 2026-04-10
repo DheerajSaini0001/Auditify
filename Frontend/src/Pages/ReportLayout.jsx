@@ -17,7 +17,7 @@ import { Loader2 } from "lucide-react";
 import ReportRestrictionWrapper from "../Component/ReportRestrictionWrapper.jsx";
 
 const ReportLayout = () => {
-  const { data, clearData, fetchSingleReport } = useData();
+  const { data, clearData, fetchSingleReport, fetchBulkPageReport } = useData();
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
   const navigate = useNavigate();
@@ -26,19 +26,26 @@ const ReportLayout = () => {
   const [isFetching, setIsFetching] = React.useState(false);
 
   useEffect(() => {
-    if (id) {
+    const bulkId = searchParams.get("bulkId");
+    const pageUrl = searchParams.get("url");
+
+    if (id || (bulkId && pageUrl)) {
       // If data is missing OR data exists but ID mismatch -> Fetch
-      if (!data || data._id !== id) {
-        // Clear stale data immediately to prevent flashing old report or wrong state
+      const currentId = id || `${bulkId}_${Buffer.from(pageUrl).toString('base64')}`;
+      
+      if (!data || data._id !== currentId) {
         clearData();
         setIsFetching(true);
 
-        fetchSingleReport(id).then((result) => {
+        const fetchAction = id 
+          ? fetchSingleReport(id) 
+          : fetchBulkPageReport(bulkId, pageUrl);
+
+        fetchAction.then((result) => {
           setIsFetching(false);
-          // If fetch failed (e.g. 404 Not Found), pass the retry state to Home to trigger auto-run
           if (!result.success) {
             const fallbackUrl = searchParams.get("url");
-            if (fallbackUrl) {
+            if (fallbackUrl && !bulkId) { // Only auto-run if NOT a bulk item
               navigate("/", { 
                 replace: true, 
                 state: { 
@@ -55,13 +62,11 @@ const ReportLayout = () => {
         });
       }
     } else {
-      // No ID in URL, and no data in context -> Redirect
-      if (!data) {
+      if (!data && !isFetching) {
         navigate("/", { replace: true });
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, navigate, fetchSingleReport]); // Removing 'data' from deps to avoid loop, we check 'data' inside only
+  }, [id, searchParams, navigate, fetchSingleReport]);
 
   // Watch for sudden data loss (e.g. from live poll 404)
   useEffect(() => {

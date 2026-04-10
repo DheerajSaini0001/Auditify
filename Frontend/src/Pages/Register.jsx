@@ -1,6 +1,5 @@
 import React, { useState, useRef, useContext } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import ReCAPTCHA from 'react-google-recaptcha';
 import { useAuth } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext.jsx';
 import { Mail, Lock, User, UserPlus, AlertCircle, CheckCircle2, ArrowRight, Eye, EyeOff } from 'lucide-react';
@@ -16,13 +15,12 @@ const Register = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const captchaRef = useRef(null);
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -33,13 +31,10 @@ const Register = () => {
       return;
     }
 
-    if (!captchaToken) {
-      setError('Please complete the CAPTCHA');
-      return;
-    }
+
 
     setLoading(true);
-    const result = await register(name, email, password, captchaToken);
+    const result = await register(name, email, password);
     
     if (result.success) {
       const origin = location.state?.from?.pathname || location.state?.from || null;
@@ -50,8 +45,6 @@ const Register = () => {
       }
     } else {
       setError(result.error);
-      setCaptchaToken(null);
-      captchaRef.current?.reset();
     }
     setLoading(false);
   };
@@ -208,14 +201,7 @@ const Register = () => {
             </div>
           </div>
 
-          <div className="flex justify-center py-2">
-            <ReCAPTCHA
-              ref={captchaRef}
-              sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
-              onChange={(token) => setCaptchaToken(token)}
-              theme={darkMode ? "dark" : "light"}
-            />
-          </div>
+
 
           <button 
             type="submit"

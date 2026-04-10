@@ -5,7 +5,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { ThemeContext } from "../context/ThemeContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import Assets from "../assets/Assets.js";
-import ReCAPTCHA from "react-google-recaptcha";
+import MathCaptcha from "./MathCaptcha.jsx";
 import { useRef } from "react";
 
 // Custom Dropdown Component
@@ -82,10 +82,10 @@ export default function InputForm() {
   const [report, setReport] = useState("All");
   const [error, setError] = useState(null);
 
-  // reCAPTCHA v2 State
-  const recaptchaRef = useRef(null);
+  // Math CAPTCHA State
   const [showCaptcha, setShowCaptcha] = useState(false);
-  const [captchaError, setCaptchaError] = useState(false);
+  const [captchaAnswer, setCaptchaAnswer] = useState('');
+  const [captchaError, setCaptchaError] = useState('');
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -148,21 +148,18 @@ export default function InputForm() {
 
     // Open verification modal
     setShowCaptcha(true);
-    setCaptchaError(false);
+    setCaptchaError('');
+    setCaptchaAnswer('');
   };
 
-  const handleCaptchaChange = (token) => {
-    if (token) {
-      setCaptchaError(false);
-      handleSubmitWithToken(token);
+
+
+  const handleSubmitWithCaptcha = async () => {
+    if (!captchaAnswer && captchaAnswer !== 0 && captchaAnswer !== '0') {
+      setCaptchaError("Please enter an answer.");
+      return;
     }
-  };
-
-  const handleCaptchaExpired = () => {
-    setCaptchaError(true);
-  };
-
-  const handleSubmitWithToken = async (token) => {
+    
     setShowCaptcha(false);
     setError(null);
 
@@ -172,11 +169,16 @@ export default function InputForm() {
       urlToFetch = `https://${urlToFetch}`;
     }
 
-    const result = await fetchData(urlToFetch, device, report, token);
+    const result = await fetchData(urlToFetch, device, report, parseInt(captchaAnswer));
 
     if (!result?.success) {
-      setError(result?.error || "An unknown error occurred.");
-      recaptchaRef.current?.reset();
+      if (result?.error?.includes('CAPTCHA')) {
+        setShowCaptcha(true);
+        setCaptchaError(result.error);
+        setCaptchaAnswer('');
+      } else {
+        setError(result?.error || "An unknown error occurred.");
+      }
     }
   };
 
@@ -352,22 +354,16 @@ const containerClass = darkMode
               </p>
             </div>
 
-            <div className={`p-2 rounded-2xl border ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
-              <ReCAPTCHA
-                ref={recaptchaRef}
-                sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
-                onChange={handleCaptchaChange}
-                onExpired={handleCaptchaExpired}
-                theme={darkMode ? "dark" : "light"}
-              />
+            <div className={`p-4 rounded-2xl w-full border ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
+              <MathCaptcha onAnswerChange={setCaptchaAnswer} error={captchaError} />
+              <button
+                onClick={handleSubmitWithCaptcha}
+                disabled={loading || !captchaAnswer}
+                className="mt-4 w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl transition-all disabled:opacity-50"
+              >
+                {loading ? "Verifying..." : "Verify & Run Audit"}
+              </button>
             </div>
-
-            {captchaError && (
-              <div className="flex items-center gap-2 text-rose-500 px-4 py-2 rounded-full bg-rose-500/10 border border-rose-500/20 animate-pulse">
-                <AlertCircle className="w-4 h-4" />
-                <span className="text-xs font-bold uppercase tracking-widest">Verification Expired</span>
-              </div>
-            )}
 
             <button
               onClick={() => setShowCaptcha(false)}

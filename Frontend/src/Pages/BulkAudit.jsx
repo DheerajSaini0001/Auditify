@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect, useRef } from "react";
 import { Loader2, Monitor, Smartphone, ChevronDown, Settings, AlertCircle, Globe, CheckCircle2, XCircle, Clock, ExternalLink, RefreshCw } from "lucide-react";
-import ReCAPTCHA from "react-google-recaptcha";
+import MathCaptcha from "../Component/MathCaptcha.jsx";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { ThemeContext } from "../context/ThemeContext.jsx";
@@ -103,10 +103,11 @@ export default function BulkAudit() {
     const [pollingInterval, setPollingInterval] = useState(null);
     const [isRestoring, setIsRestoring] = useState(true);
 
-    // reCAPTCHA State
-    const recaptchaRef = useRef(null);
+    // Math CAPTCHA State
     const [showCaptcha, setShowCaptcha] = useState(false);
-    const [captchaError, setCaptchaError] = useState(false);
+    const [captchaAnswer, setCaptchaAnswer] = useState('');
+    const [captchaId, setCaptchaId] = useState('');
+    const [captchaError, setCaptchaError] = useState('');
     const [captchaAction, setCaptchaAction] = useState(null); // 'discover' | 'audit' | 'auto'
     const [sitemapLinksCount, setSitemapLinksCount] = useState(null);
 
@@ -254,27 +255,29 @@ export default function BulkAudit() {
 
         setCaptchaAction('discover');
         setShowCaptcha(true);
-        setCaptchaError(false);
+        setCaptchaError('');
+        setCaptchaAnswer('');
     };
 
-    const handleCaptchaChange = (token) => {
-        if (token) {
-            setCaptchaError(false);
-            if (captchaAction === 'discover') {
-                proceedDiscovery(token);
-            } else if (captchaAction === 'audit') {
-                proceedBulkAudit(token);
-            } else if (captchaAction === 'auto') {
-                proceedAutoAudit(token);
-            }
+    const handleSubmitWithCaptcha = () => {
+        if (!captchaAnswer && captchaAnswer !== 0 && captchaAnswer !== '0') {
+            setCaptchaError("Please enter an answer.");
+            return;
+        }
+        
+        let token = parseInt(captchaAnswer);
+        setCaptchaError('');
+
+        if (captchaAction === 'discover') {
+            proceedDiscovery(token, captchaId);
+        } else if (captchaAction === 'audit') {
+            proceedBulkAudit(token, captchaId);
+        } else if (captchaAction === 'auto') {
+            proceedAutoAudit(token, null, captchaId);
         }
     };
 
-    const handleCaptchaExpired = () => {
-        setCaptchaError(true);
-    };
-
-    const proceedDiscovery = async (token) => {
+    const proceedDiscovery = async (token, id = null) => {
         setShowCaptcha(false);
         setError(null);
 
@@ -284,7 +287,7 @@ export default function BulkAudit() {
         }
 
         setDiscovering(true);
-        const response = await discoverUrls(urlToFetch, maxPages, token);
+        const response = await discoverUrls(urlToFetch, maxPages, token, id);
 
         if (response.success) {
             setDiscoveredUrls(response.data.urls);
@@ -300,14 +303,20 @@ export default function BulkAudit() {
 
         } else {
             console.error("Error discovering URLs:", response.error);
-            setError(response.error || "Failed to discover URLs");
+            if (response?.error?.includes('CAPTCHA')) {
+                setShowCaptcha(true);
+                setCaptchaError(response.error);
+                setCaptchaAnswer('');
+            } else {
+                setError(response.error || "Failed to discover URLs");
+            }
         }
 
         setDiscovering(false);
     };
 
     // Combined Discovery & Start Audit for Automation
-    const proceedAutoAudit = async (token, directUrl = null) => {
+    const proceedAutoAudit = async (token, directUrl = null, id = null) => {
         setShowCaptcha(false);
         setError(null);
 
@@ -317,7 +326,7 @@ export default function BulkAudit() {
         }
 
         setDiscovering(true);
-        const response = await autoBulkAudit(urlToFetch, maxPages, device, report, token);
+        const response = await autoBulkAudit(urlToFetch, maxPages, device, report, token, id);
 
         if (response.success) {
             setBulkAuditId(response.data.bulkAuditId);
@@ -330,7 +339,13 @@ export default function BulkAudit() {
             }
         } else {
             console.error("Error starting auto-audit:", response.error);
-            setError(response.error || "Failed to start auto-audit");
+            if (response?.error?.includes('CAPTCHA')) {
+                setShowCaptcha(true);
+                setCaptchaError(response.error);
+                setCaptchaAnswer('');
+            } else {
+                setError(response.error || "Failed to start auto-audit");
+            }
         }
         setDiscovering(false);
     };
@@ -351,10 +366,11 @@ export default function BulkAudit() {
 
         setCaptchaAction('audit');
         setShowCaptcha(true);
-        setCaptchaError(false);
+        setCaptchaError('');
+        setCaptchaAnswer('');
     };
 
-    const proceedBulkAudit = async (token) => {
+    const proceedBulkAudit = async (token, id = null) => {
         setShowCaptcha(false);
         setError(null);
 
@@ -366,7 +382,7 @@ export default function BulkAudit() {
         }
 
         setAuditing(true);
-        const response = await startBulkAudit(auditUrl, selectedUrls, device, report, token);
+        const response = await startBulkAudit(auditUrl, selectedUrls, device, report, token, id);
 
         if (response.success) {
             setBulkAuditId(response.data.bulkAuditId);
@@ -374,7 +390,13 @@ export default function BulkAudit() {
             
         } else {
             console.error("Error starting audit:", response.error);
-            setError(response.error || "Failed to start audit");
+            if (response?.error?.includes('CAPTCHA')) {
+                setShowCaptcha(true);
+                setCaptchaError(response.error);
+                setCaptchaAnswer('');
+            } else {
+                setError(response.error || "Failed to start audit");
+            }
             setAuditing(false);
         }
     };
@@ -423,7 +445,11 @@ export default function BulkAudit() {
         };
 
         setData(reportData);
-        navigate("/report");
+        // Navigate with bulk audit context to keep it unique across tabs
+        const urlParams = new URLSearchParams();
+        urlParams.set("bulkId", bulkAuditId);
+        urlParams.set("url", page.url);
+        navigate(`/report?${urlParams.toString()}`);
     };
 
     const getStatusIcon = (status) => {
@@ -812,22 +838,16 @@ export default function BulkAudit() {
                             </p>
                         </div>
 
-                        <div className={`p-2 rounded-2xl border ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
-                            <ReCAPTCHA
-                                ref={recaptchaRef}
-                                sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
-                                onChange={handleCaptchaChange}
-                                onExpired={handleCaptchaExpired}
-                                theme={darkMode ? "dark" : "light"}
-                            />
+                        <div className={`p-4 rounded-2xl w-full border ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
+                            <MathCaptcha onAnswerChange={(val, id) => { setCaptchaAnswer(val); setCaptchaId(id); }} error={captchaError} />
+                            <button
+                                onClick={handleSubmitWithCaptcha}
+                                disabled={discovering || auditing || !captchaAnswer}
+                                className="mt-4 w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl transition-all disabled:opacity-50"
+                            >
+                                {discovering || auditing ? "Verifying..." : "Verify & Proceed"}
+                            </button>
                         </div>
-
-                        {captchaError && (
-                            <div className="flex items-center gap-2 text-rose-500 px-4 py-2 rounded-full bg-rose-500/10 border border-rose-500/20 animate-pulse">
-                                <AlertCircle className="w-4 h-4" />
-                                <span className="text-xs font-bold uppercase tracking-widest">Verification Expired</span>
-                            </div>
-                        )}
 
                         <button
                             onClick={() => setShowCaptcha(false)}

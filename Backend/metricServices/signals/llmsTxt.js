@@ -1,4 +1,4 @@
-import axios from 'axios';
+import Puppeteer_Simple from '../../utils/puppeteer_simple.js';
 
 /**
  * Signal 2: llms.txt Detection
@@ -10,13 +10,13 @@ const analyzeLlmsTxt = async (url) => {
         const rootUrl = new URL(url).origin;
         const llmsUrl = `${rootUrl}/llms.txt`;
         
-        const response = await axios.get(llmsUrl, { timeout: 5000 });
-        
-        const contentType = response.headers['content-type'] || '';
+        const { html, status, browser } = await Puppeteer_Simple(llmsUrl);
+        if (browser) await browser.close();
         
         let score = 0;
-        if (response.status === 200) {
-            if (contentType.includes('text/')) {
+        if (status === 200) {
+            // Check if it looks like a text file or has content
+            if (html && html.length > 10) {
                 score = 100;
             } else {
                 score = 50;
@@ -26,9 +26,9 @@ const analyzeLlmsTxt = async (url) => {
         return {
             signal: "llmsTxt",
             score: score,
-            exists: response.status === 200,
+            exists: status === 200,
             url: llmsUrl,
-            statusCode: response.status
+            statusCode: status
         };
     } catch (error) {
         return {
@@ -36,7 +36,7 @@ const analyzeLlmsTxt = async (url) => {
             score: 0,
             exists: false,
             url: `${new URL(url).origin}/llms.txt`,
-            statusCode: error.response?.status || 404,
+            statusCode: 404,
             fetchError: true
         };
     }

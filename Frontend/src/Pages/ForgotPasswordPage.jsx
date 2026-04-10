@@ -3,22 +3,28 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Mail, ArrowLeft, Send, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
+import MathCaptcha from '../Component/MathCaptcha';
 
 const ForgotPasswordPage = () => {
   const [email, setEmail] = useState('');
+  const [captchaAnswer, setCaptchaAnswer] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const { apiFetch } = useAuth();
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (!captchaAnswer) {
+        toast.error('Please complete the CAPTCHA');
+        return;
+    }
+
     setLoading(true);
     
     // Always show success to prevent enumeration (SRS 4.4.5 requirement)
     try {
         await apiFetch('/api/auth/forgot-password', {
             method: 'POST',
-            body: JSON.stringify({ email }),
+            body: JSON.stringify({ email, captchaAnswer, captchaId }),
         });
     } catch (err) {
         console.error('Request failed:', err);
@@ -77,6 +83,8 @@ const ForgotPasswordPage = () => {
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
+
+          <MathCaptcha onAnswerChange={(val, id) => { setCaptchaAnswer(val); setCaptchaId(id); }} />
 
           <button
             type="submit"

@@ -20,6 +20,7 @@ const SiteReportSchema = new mongoose.Schema(
     conversionAndLeadFlow: { type: Object, default: null },
     aioReadiness: { type: Object, default: null },
     aeo: { type: Object, default: null },
+    isBotProtected: { type: Boolean, default: false },
     error: { type: String, default: null },
     screenshot: { type: String, default: null },
     createdAt: { type: Date, default: Date.now, expires: 10800 }, 

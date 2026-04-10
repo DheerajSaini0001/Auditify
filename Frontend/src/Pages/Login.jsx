@@ -1,10 +1,11 @@
 import React, { useState, useRef, useContext } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import ReCAPTCHA from 'react-google-recaptcha';
 import { useAuth } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext.jsx';
 import { Mail, Lock, LogIn, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
+import MathCaptcha from '../Component/MathCaptcha';
+import toast from 'react-hot-toast';
 
 const Login = () => {
   const { theme } = useContext(ThemeContext);
@@ -12,26 +13,23 @@ const Login = () => {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [captchaAnswer, setCaptchaAnswer] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const captchaRef = useRef(null);
+
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-
-    if (!captchaToken) {
-      setError('Please complete the CAPTCHA');
+    if (!captchaAnswer) {
+      toast.error('Please complete the CAPTCHA');
       return;
     }
 
     setLoading(true);
-    const result = await login(email, password, captchaToken);
+    const result = await login(email, password, captchaAnswer);
 
     if (result.success) {
       // Determine origin page, fallback based on role
@@ -46,8 +44,6 @@ const Login = () => {
       }
     } else {
       setError(result.error);
-      setCaptchaToken(null);
-      captchaRef.current?.reset();
     }
     setLoading(false);
   };
@@ -132,16 +128,7 @@ const Login = () => {
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
-          </div>
-
-          <div className="flex justify-center py-2">
-            <ReCAPTCHA
-              ref={captchaRef}
-              sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
-              onChange={(token) => setCaptchaToken(token)}
-              theme={darkMode ? "dark" : "light"}
-            />
-          </div>
+          <MathCaptcha onAnswerChange={setCaptchaAnswer} />
 
           <button
             type="submit"

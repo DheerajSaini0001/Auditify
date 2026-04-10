@@ -14,6 +14,7 @@ export const AuthProvider = ({ children }) => {
     
     const res = await fetch(`${API_URL}${url}`, {
       ...options,
+      credentials: 'include', // Add this to send session cookies for CAPTCHA
       headers: {
         'Content-Type': 'application/json',
         ...(currentToken ? { Authorization: `Bearer ${currentToken}` } : {}),

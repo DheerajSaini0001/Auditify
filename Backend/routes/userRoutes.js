@@ -3,7 +3,7 @@ import { body, validationResult } from 'express-validator';
 import * as userController from '../controllers/userController.js';
 import { startAudit, getReportById } from '../controllers/singleAuditController.js';
 import { verifyToken, checkRole } from '../middleware/auth.js';
-import verifyCaptcha from '../middleware/verifyCaptcha.js';
+import captchaValidator from '../middleware/captchaValidator.js';
 
 const router = express.Router();
 
@@ -24,6 +24,7 @@ router.post('/audit', [
   body('url').isURL({ require_protocol: true }).withMessage('Valid URL with http/https required'),
   body('device').isIn(['Desktop', 'Mobile']).withMessage('Invalid device type'),
   validate,
+  captchaValidator,
 ], startAudit);
 
 router.get('/report/:singleAuditId', getReportById);

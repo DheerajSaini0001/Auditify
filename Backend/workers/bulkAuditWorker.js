@@ -48,14 +48,35 @@ const OverAll = (A, B, C, D, E, F, G) => {
             await dbConnect({ maxPoolSize: 1 });
         }
 
-        const { browser: b, page, response, $, screenshot } = await Puppeteer_Cheerio(url, device);
+        const { browser: b, page, response, $, screenshot, isBotProtected } = await Puppeteer_Cheerio(url, device);
         browser = b;
 
-        // Update screenshot in BulkAudit document
+        // Update screenshot and bot status in BulkAudit document
         await BulkAuditReport.findOneAndUpdate(
             { _id: bulkAuditId, "pages.url": pageUrl },
-            { $set: { "pages.$.screenshot": screenshot } }
+            { $set: { "pages.$.screenshot": screenshot, "pages.$.isBotProtected": isBotProtected } }
         );
+
+        if (isBotProtected) {
+            console.log(`🛡️ Marking page as Bot Protected in Bulk Audit: ${pageUrl}`);
+            const timeTaken = ((performance.now() - start) / 1000).toFixed(0);
+            await BulkAuditReport.findOneAndUpdate(
+                { _id: bulkAuditId, "pages.url": pageUrl },
+                {
+                    $set: {
+                        "pages.$.status": "completed",
+                        "pages.$.error": "Bot Protected",
+                        "pages.$.score": 0,
+                        "pages.$.grade": "F",
+                        "pages.$.timeTaken": `${timeTaken}s`,
+                        "pages.$.completedAt": new Date()
+                    },
+                    $inc: { completedPages: 1 }
+                }
+            );
+            parentPort.postMessage({ success: true });
+            return;
+        }
 
         if (report !== "All") {
             let result;

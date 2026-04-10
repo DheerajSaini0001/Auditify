@@ -73,9 +73,11 @@ export async function detectChallenge(page) {
       'iframe[src*="hcaptcha"]',
       'iframe[src*="recaptcha"]',
       '.g-recaptcha',
-      '#px-captcha', // PerimeterX
+      '#px-captcha',
       '#captcha-container',
-      '.distil-captcha' // Distil Networks
+      '.distil-captcha',
+      '#captchacharacters', // Amazon specific
+      'form[action*="/errors/validateCaptcha"]' // Amazon specific
     ];
 
     const hasSelector = await page.evaluate((selList) => {
@@ -88,7 +90,8 @@ export async function detectChallenge(page) {
       title.includes("Please Wait | Cloudflare") ||
       title.includes("Cloudflare") ||
       title.includes("Access Denied") ||
-      title.includes("Checking your browser");
+      title.includes("Checking your browser") ||
+      title.includes("Robot Check"); // Amazon/Google specific
 
     const isChallengeContent = 
       content.includes("cf-browser-verification") ||
@@ -98,7 +101,9 @@ export async function detectChallenge(page) {
       content.includes("g-recaptcha") ||
       content.includes("ray_id") ||
       content.includes("verification required") ||
-      content.includes("human verification");
+      content.includes("human verification") ||
+      content.includes("Enter the characters you see below") || // Amazon
+      content.includes("automated access to Amazon"); // Amazon
 
     return isChallengeTitle || isChallengeContent || hasSelector;
   } catch (e) {
@@ -177,12 +182,47 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
         "--hide-scrollbars",
         "--window-size=1920,1080",
         "--mute-audio",
-        "--disable-blink-features=AutomationControlled" // Further helps stealth
+        "--disable-blink-features=AutomationControlled"
       ]
     };
 
     browser = await puppeteer.launch(launchOptions);
     const page = await browser.newPage();
+
+    // Extra Stealth: Override Webdriver and common bot detection markers
+    await page.evaluateOnNewDocument(() => {
+      Object.defineProperty(navigator, 'webdriver', { get: () => false });
+      Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
+      Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
+      // Mock hardware concurrency
+      Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => 8 });
+    });
+
+    // Consistent headers to match User-Agent
+    const commonHeaders = {
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+      'Accept-Encoding': 'gzip, deflate, br',
+      'Cache-Control': 'max-age=0',
+      'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+      'Sec-Ch-Ua-Mobile': device === "Mobile" ? '?1' : '?0',
+      'Sec-Ch-Ua-Platform': device === "Mobile" ? '"Android"' : '"Windows"',
+      'Sec-Fetch-Dest': 'document',
+      'Sec-Fetch-Mode': 'navigate',
+      'Sec-Fetch-Site': 'none',
+      'Sec-Fetch-User': '?1',
+      'Upgrade-Insecure-Requests': '1',
+      'Referer': 'https://www.google.com/'
+    };
+
+    await page.setExtraHTTPHeaders(commonHeaders);
+
+    // Set User Agent
+    const userAgent = device === "Mobile" 
+      ? "Mozilla/5.0 (Linux; Android 13; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
+      : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+    
+    await page.setUserAgent(userAgent);
 
     if (device === "Mobile") {
       await page.setViewport({
@@ -193,101 +233,68 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
         hasTouch: true,
         isLandscape: false,
       });
-      await page.setUserAgent("Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1");
     } else {
       await page.setViewport({ width: 1920, height: 1080, deviceScaleFactor: 2 });
-      await page.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36");
     }
 
-    // Advanced evasions
-    await page.evaluateOnNewDocument(() => {
-      Object.defineProperty(navigator, 'webdriver', { get: () => false });
-    });
+    // Simulate thinking/loading time before navigation
+    await new Promise(resolve => setTimeout(resolve, Math.floor(Math.random() * 1000) + 1000));
 
-    await page.setExtraHTTPHeaders({
-      "Accept-Language": "en-US,en;q=0.9",
-      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
-      "Accept-Encoding": "gzip, deflate, br",
-      "Referer": "https://www.google.com/",
-      "Upgrade-Insecure-Requests": "1",
-      "Sec-Fetch-Dest": "document",
-      "Sec-Fetch-Mode": "navigate",
-      "Sec-Fetch-Site": "cross-site",
-      "Sec-Fetch-User": "?1"
-    });
+    console.log(`🌐 Navigating to: ${url} (${device})`);
 
     const response = await page.goto(url, {
-      waitUntil: "networkidle2", // Wait for network to settle more before checking challenge
+      waitUntil: "networkidle2",
       timeout: 90000 
     });
 
-    // Handle bot verification
-    console.log("🔍 Checking for bot verification page...");
-    const challengeResolved = await waitForChallengeResolution(page, 120000); // Wait up to 2 mins for complex challenges
-    
-    if (!challengeResolved) {
-      const isStillChallenged = await detectChallenge(page);
-      if (isStillChallenged) {
-        throw new Error("Bot verification failed: Stuck on challenge page.");
-      }
-      console.warn("⚠️ Challenge resolution uncertain, but no markers found. Proceeding with caution.");
-    } else {
-      console.log("✅ Challenge cleared or not detected.");
+    const statusCode = response ? response.status() : "No Response";
+    const pageTitle = await page.title();
+    console.log(`📡 Status: ${statusCode} | Title: ${pageTitle}`);
+
+    if (statusCode === 403 || statusCode === 503 || (pageTitle === "" && statusCode === 200)) {
+        console.warn("⚠️ Likely bot detection detected (Blank page or 403/503).");
     }
 
-    // Standard wait for initial network activity to settle
-    try {
-      await page.waitForNetworkIdle({ idleTime: 1000, timeout: 15000 });
-    } catch (e) { }
+    // Capture screenshot if possible
 
-    // Ensure critical DOM element (body) is present
-    await page.waitForSelector("body", { timeout: 30000 });
+    // Handle bot verification (Cloudflare, etc.)
+    console.log(`🔍 Checking bot verification for: ${url}`);
+    const challengeResolved = await waitForChallengeResolution(page, 60000); // 1 minute timeout for challenge
+    
+    const isBotProtected = await detectChallenge(page);
 
-    // Handle Popups/Consents to clear the view
+    if (isBotProtected) {
+      console.log(`🛡️ Bot Protection Detected: ${url}`);
+      // Even if protected, we take a screenshot and pass the HTML (which will be the challenge page)
+      // but we flag it so the system can mark it as "Bot Protected"
+      const screenshot = await page.screenshot({ encoding: "base64", type: "jpeg", quality: 30 });
+      const htmlData = await page.content();
+      const $ = cheerio.load(htmlData);
+      return { browser, page, response, $, screenshot, isBotProtected: true };
+    }
+
+    // Success: Challenge cleared or not detected
+    console.log(`✅ Page accessible: ${url}`);
+
+    // Simulate real behavior: random scrolling and delays
     await handlePopups(page);
-
-    // Trigger Lazy-loaded content via auto-scroll
     await autoScroll(page);
-
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for any lazy animations
     await page.evaluate(() => window.scrollTo(0, 0));
 
-    // Give SPAs (React/Vue/Next) a final moment to finish state updates/hydration
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    const viewport = device === "Mobile"
-      ? { width: 393, height: 852, deviceScaleFactor: 3, isMobile: true, hasTouch: true }
-      : { width: 1920, height: 1080, deviceScaleFactor: 2, isMobile: false, hasTouch: false };
-
-    await page.setViewport(viewport);
-
-    // Re-check for challenge one last time before screenshot/data extraction
-    if (await detectChallenge(page)) {
-      console.log("⚠️ Still on challenge page before screenshot, trying one last wait (10s)...");
-      await new Promise(resolve => setTimeout(resolve, 10000));
-      
-      // Final hard check - if still challenged, we really don't want to capture this
-      if (await detectChallenge(page)) {
-         throw new Error("Aborted: Still on bot verification page after final wait.");
-      }
-    }
-
+    // Final screenshot of the fully rendered page
     const screenshot = await page.screenshot({
       encoding: "base64",
       type: "jpeg",
       quality: 50,
       fullPage: false,
-      clip: {
-        x: 0,
-        y: 0,
-        width: viewport.width,
-        height: viewport.height
-      }
+      clip: { x: 0, y: 0, width: device === "Mobile" ? 393 : 1920, height: device === "Mobile" ? 852 : 1080 }
     });
 
     const htmlData = await page.content();
     const $ = cheerio.load(htmlData);
 
-    return { browser, page, response, $, screenshot };
+    return { browser, page, response, $, screenshot, isBotProtected: false };
 
   } catch (error) {
     if (browser) await browser.close();
@@ -295,3 +302,4 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
     throw error;
   }
 }
+

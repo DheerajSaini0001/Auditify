@@ -2,8 +2,8 @@ import express from "express";
 import { startAudit, getReportById } from "../controllers/singleAuditController.js";
 import { generatePDFReport } from "../controllers/pdfController.js";
 import rateLimit from "express-rate-limit";
-import verifyRecaptcha from "../middleware/verifyCaptcha.js";
-import { verifyToken } from "../middleware/auth.js";
+import captchaValidator from "../middleware/captchaValidator.js";
+import { verifyToken, tryAuthenticate } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -16,7 +16,7 @@ const auditLimiter = rateLimit({
 });
 
 // Start Audit
-router.post("/audit", auditLimiter, verifyRecaptcha, startAudit);
+router.post("/audit", auditLimiter, tryAuthenticate, captchaValidator, startAudit);
 
 // Export PDF
 router.get("/:id/export/pdf", verifyToken, generatePDFReport);

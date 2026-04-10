@@ -18,6 +18,7 @@ const PageAuditSchema = new mongoose.Schema({
     UXOrContentStructure: { type: Object, default: null },
     conversionAndLeadFlow: { type: Object, default: null },
     aioReadiness: { type: Object, default: null },
+    isBotProtected: { type: Boolean, default: false },
     error: { type: String, default: null },
     screenshot: { type: String, default: null },
     completedAt: { type: Date, default: null },

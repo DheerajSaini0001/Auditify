@@ -2,15 +2,16 @@ import express from 'express';
 import passport from 'passport';
 import * as authController from '../controllers/authController.js';
 import { protect } from '../middleware/authMiddleware.js';
+import captchaValidator from '../middleware/captchaValidator.js';
 
 const router = express.Router();
 
 // 4.8.1 Auth endpoints
-router.post('/register', authController.register);
+router.post('/register', captchaValidator, authController.register);
 router.post('/verify-otp', authController.verifyOTP);
 router.post('/resend-otp', authController.resendOTP);
-router.post('/login', authController.login);
-router.post('/forgot-password', authController.forgotPassword);
+router.post('/login', captchaValidator, authController.login);
+router.post('/forgot-password', captchaValidator, authController.forgotPassword);
 router.post('/reset-password', authController.resetPassword);
 
 // Google OAuth

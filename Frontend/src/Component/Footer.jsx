@@ -10,13 +10,13 @@ export default function Footer() {
 
   return (
     <footer className={`relative overflow-hidden transition-colors duration-500 border-t ${darkMode ? 'bg-[#060B18] border-white/5 text-slate-500' : 'bg-white border-slate-200 text-slate-600'}`}>
-      
+
       {/* Subtle Background Glow */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[80%] h-32 bg-emerald-500/5 blur-[100px] pointer-events-none"></div>
 
       <div className="max-w-7xl mx-auto px-6 py-16">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
-          
+
           {/* Brand Column */}
           <div className="md:col-span-1 space-y-6">
             <Link to="/" className="flex items-center gap-3">
@@ -68,7 +68,7 @@ export default function Footer() {
           <div className="text-[12px] font-black uppercase tracking-widest flex items-center gap-2">
             <span className={darkMode ? 'text-slate-600' : 'text-slate-400'}>&copy; {new Date().getFullYear()}</span>
             <a href="https://www.sltechsoft.com" target="_blank" rel="noopener noreferrer" className={`hover:text-emerald-500 transition-colors ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-              Success Leader Technologies
+              Success Ladder Technologies
             </a>
           </div>
           <div className="flex items-center gap-8 text-[11px] font-black uppercase tracking-widest">

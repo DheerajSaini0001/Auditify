@@ -80,12 +80,19 @@ export async function detectChallenge(page) {
       'form[action*="/errors/validateCaptcha"]', // Amazon specific
       '.ray_id',
       '.cf-turnstile-wrapper',
-      '#cf-wrapper'
+      '#cf-wrapper',
+      '#challenge-error-title'
     ];
 
     const hasSelector = await page.evaluate((selList) => {
       return selList.some(s => document.querySelector(s));
     }, selectors);
+
+    // Turnstile check
+    const hasTurnstile = await page.evaluate(() => {
+      const iframes = Array.from(document.querySelectorAll('iframe'));
+      return iframes.some(iframe => iframe.src.includes('turnstile') || iframe.src.includes('cloudflare'));
+    });
 
     const isChallengeTitle = 
       title.includes("Just a moment...") ||
@@ -95,7 +102,8 @@ export async function detectChallenge(page) {
       title.includes("Access Denied") ||
       title.includes("Checking your browser") ||
       title.includes("Robot Check") ||
-      title.includes("Human Verification");
+      title.includes("Human Verification") ||
+      title.includes("Verify you are human");
 
     const isChallengeContent = 
       content.includes("cf-browser-verification") ||
@@ -106,15 +114,15 @@ export async function detectChallenge(page) {
       content.includes("ray_id") ||
       content.includes("verification required") ||
       content.includes("human verification") ||
-      content.includes("Verifying you are human") || // Exact string from user image
+      content.includes("Verifying you are human") || 
       content.includes("site connection is secure") ||
       content.includes("Checking if the site connection is secure") ||
-      content.includes("Enter the characters you see below") || // Amazon
-      content.includes("automated access to Amazon"); // Amazon
+      content.includes("Enter the characters you see below") || 
+      content.includes("automated access to Amazon");
 
-    return isChallengeTitle || isChallengeContent || hasSelector;
+    return isChallengeTitle || isChallengeContent || hasSelector || hasTurnstile;
   } catch (e) {
-    return false; // If we can't check, assume it might not be a challenge or page crashed
+    return false;
   }
 }
 
@@ -146,35 +154,57 @@ export async function waitForChallengeResolution(page, timeout = 60000) {
     const isChallenged = await detectChallenge(page);
     
     if (!isChallenged) {
-      // If markers are gone, verify we have real content
       const contentLoaded = await hasRealContent(page);
       if (contentLoaded) {
         console.log("✅ Verified: Real content is visible.");
-        // Double check a moment later to ensure no last-minute redirects
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        await new Promise(resolve => setTimeout(resolve, 2000));
         if (!await detectChallenge(page)) return true;
       } else {
         console.log("⏳ No challenge markers, but no real content yet. Waiting...");
       }
     } else {
-      console.log("⏳ Bot verification in progress or challenge detected, waiting 3s...");
+      console.log("⏳ Bot verification detected. Attempting bypass...");
       
-      // FALLBACK: Simulate a tiny mouse move to "wake up" the challenge if it's passive
+      // Try to click Turnstile checkbox if it exists
       try {
-          await page.mouse.move(Math.random() * 500, Math.random() * 500);
+        const frames = page.frames();
+        for (const frame of frames) {
+          if (frame.url().includes('turnstile') || frame.url().includes('cloudflare')) {
+            // Check for the checkbox element inside the frame
+            const checkbox = await frame.$('input[type="checkbox"]');
+            if (checkbox) {
+              console.log("🔗 Found Turnstile checkbox, clicking...");
+              const box = await checkbox.boundingBox();
+              if (box) {
+                await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+                await new Promise(resolve => setTimeout(resolve, 3000));
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("⚠️ Error clicking challenge checkbox:", e.message);
+      }
+
+      // Simulate a human-like mouse movement
+      try {
+        await page.mouse.move(Math.random() * 800, Math.random() * 600, { steps: 10 });
       } catch (e) {}
     }
     
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    await new Promise(resolve => setTimeout(resolve, 4000)); // Polling frequency
     
-    // Safety check: if the page title changed significantly, maybe we navigated?
+    // Safety check for normal title
     const currentTitle = await page.title();
-    if (currentTitle && !currentTitle.includes("Cloudflare") && !currentTitle.includes("moment")) {
-       // If title seems normal, try a content check
-       if (await hasRealContent(page)) return true;
+    if (currentTitle && !currentTitle.includes("Cloudflare") && !currentTitle.includes("Wait") && !currentTitle.includes("Verify")) {
+       if (await hasRealContent(page)) {
+          console.log("✅ Title seems normal and content found. Resolved.");
+          return true;
+       }
     }
   }
   
+  console.error("❌ Challenge resolution timed out.");
   return false;
 }
 
@@ -231,8 +261,8 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
 
     // Set User Agent
     const userAgent = device === "Mobile" 
-      ? "Mozilla/5.0 (Linux; Android 13; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
-      : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+      ? "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Mobile Safari/537.36"
+      : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36";
     
     await page.setUserAgent(userAgent);
 

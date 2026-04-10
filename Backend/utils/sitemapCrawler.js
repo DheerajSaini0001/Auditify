@@ -93,7 +93,7 @@ async function fetchSitemapUrls(page, domain) {
             const { detectChallenge, waitForChallengeResolution } = await import('./puppeteer_cheerio.js');
             if (await detectChallenge(page)) {
                 console.log(`🛡️ Sitemap challenge detected for ${sitemapUrl}, attempting bypass...`);
-                await waitForChallengeResolution(page, 30000);
+                await waitForChallengeResolution(page, 60000); // Increased to 60s for production reliability
             }
 
             const data = await page.content();

@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import configService from '../services/configService.js';
 
 /**
  * Middleware: protect
@@ -14,7 +15,8 @@ export const protect = async (req, res, next) => {
 
   const token = header.split(' ')[1];
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const jwtSecret = configService.getConfig('JWT_SECRET');
+    const decoded = jwt.verify(token, jwtSecret);
     
     // Attach fresh user object (minus password)
     const user = await User.findById(decoded.userId).select('-password');

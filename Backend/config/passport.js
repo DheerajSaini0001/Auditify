@@ -1,16 +1,21 @@
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import User from '../models/User.js';
+import configService from '../services/configService.js';
 
 export default function(passport) {
-  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+  const clientID = configService.getConfig('GOOGLE_CLIENT_ID');
+  const clientSecret = configService.getConfig('GOOGLE_CLIENT_SECRET');
+  const callbackURL = configService.getConfig('GOOGLE_CALLBACK_URL', 'http://localhost:2000/api/auth/google/callback');
+
+  if (!clientID || !clientSecret) {
     console.warn('⚠️ Google OAuth credentials missing. Google login will be disabled.');
     return;
   }
 
   passport.use(new GoogleStrategy({
-    clientID:     process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL:  process.env.GOOGLE_CALLBACK_URL || 'http://localhost:2000/api/auth/google/callback',
+    clientID,
+    clientSecret,
+    callbackURL,
     scope: ['profile', 'email', 'https://www.googleapis.com/auth/webmasters.readonly']
   }, async (accessToken, refreshToken, profile, done) => {
     try {

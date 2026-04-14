@@ -1,4 +1,5 @@
 import axios from 'axios';
+import configService from '../services/configService.js';
 
 const verifyCaptcha = async (req, res, next) => {
   const token = req.body?.captchaToken;
@@ -17,11 +18,11 @@ const verifyCaptcha = async (req, res, next) => {
   }
 
   try {
-    const verifyURL = process.env.RECAPTCHA_VERIFY_URL || 'https://www.google.com/recaptcha/api/siteverify';
+    const verifyURL = configService.getConfig('RECAPTCHA_VERIFY_URL', 'https://www.google.com/recaptcha/api/siteverify');
     
     const response = await axios.post(verifyURL, null, {
       params: {
-        secret: process.env.RECAPTCHA_SECRET_KEY,
+        secret: configService.getConfig('RECAPTCHA_SECRET_KEY'),
         response: token,
       },
     });

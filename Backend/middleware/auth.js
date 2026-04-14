@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import configService from '../services/configService.js';
 
 const verifyToken = (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -12,7 +13,8 @@ const verifyToken = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const jwtSecret = configService.getConfig('JWT_SECRET');
+    const decoded = jwt.verify(token, jwtSecret);
     req.user = decoded; // { userId, role }
     next();
   } catch (error) {
@@ -44,7 +46,8 @@ const tryAuthenticate = (req, res, next) => {
 
   if (token) {
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const jwtSecret = configService.getConfig('JWT_SECRET');
+      const decoded = jwt.verify(token, jwtSecret);
       req.user = decoded; // { userId, role }
     } catch (error) {
       // Ignore token errors for optional authentication

@@ -7,7 +7,11 @@ import {
   unblockUser, 
   deleteUser, 
   getAuditLogs, 
-  getStats 
+  getStats,
+  getConfigs,
+  saveConfig,
+  testConfig,
+  revealConfig
 } from '../controllers/adminController.js';
 import { verifyToken, checkRole } from '../middleware/auth.js';
 
@@ -60,5 +64,11 @@ router.get('/audit-logs', [
 ], getAuditLogs);
 
 router.get('/stats', getStats);
+
+// ── Platform Configuration Routes ──
+router.get('/config', getConfigs);
+router.post('/config', saveConfig);
+router.get('/config/:key/reveal', revealConfig);
+router.post('/config/test', testConfig);
 
 export default router;

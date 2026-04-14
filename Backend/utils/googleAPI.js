@@ -1,13 +1,10 @@
-import dotenv from 'dotenv'
 import fetch from 'node-fetch'
-dotenv.config()
+import configService from '../services/configService.js';
 
-
-const API_KEY = process.env.API_KEY;
 export default async function googleAPI(url, device) {
   try {
+    const API_KEY = configService.getConfig('API_KEY');
     const googleAPI = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${url}&strategy=${device}&key=${API_KEY}`;
-    // console.log(googleAPI);
     const response = await fetch(googleAPI);
     const data = await response.json();
 
@@ -17,6 +14,4 @@ export default async function googleAPI(url, device) {
     console.error("Error fetching Google API data:", error);
     throw error;
   }
-
-
 }

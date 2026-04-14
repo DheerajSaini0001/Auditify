@@ -48,8 +48,8 @@ export default function Footer() {
             <h4 className={`text-xs font-black uppercase tracking-[0.2em] ${darkMode ? 'text-white' : 'text-slate-900'}`}>Company</h4>
             <ul className="space-y-4 text-sm font-bold">
               <li><Link to="/about" className="hover:text-emerald-500 transition-colors">About Us</Link></li>
-              <li><a href="https://sltechsoft.com/service" target="_blank" className="hover:text-emerald-500 transition-colors flex items-center gap-1.5">Services <ExternalLink size={12} /></a></li>
-              <li><a href="https://sltechsoft.com/" target="_blank" className="hover:text-emerald-500 transition-colors">Contact</a></li>
+              <li><Link to="/services" className="hover:text-emerald-500 transition-colors">Services</Link></li>
+              <li><Link to="/contact" className="hover:text-emerald-500 transition-colors">Contact</Link></li>
             </ul>
           </div>
 
@@ -57,7 +57,6 @@ export default function Footer() {
             <h4 className={`text-xs font-black uppercase tracking-[0.2em] ${darkMode ? 'text-white' : 'text-slate-900'}`}>Resources</h4>
             <ul className="space-y-4 text-sm font-bold">
               <li><Link to="/docs" className="hover:text-emerald-500 transition-colors">Documentation</Link></li>
-              <li><Link to="/api" className="hover:text-emerald-500 transition-colors">API Access</Link></li>
               <li><Link to="/help" className="hover:text-emerald-500 transition-colors">Help Center</Link></li>
             </ul>
           </div>

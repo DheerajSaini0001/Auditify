@@ -3,6 +3,7 @@
  * Detects presence of external links, superscript citations, and reference sections.
  * Perplexity prioritizes data that can be cited.
  */
+import configService from "../../services/configService.js";
 
 const analyzeCitations = ($) => {
     let score = 0;
@@ -13,7 +14,7 @@ const analyzeCitations = ($) => {
     let externalCount = 0;
     links.each((i, el) => {
         const href = $(el).attr('href');
-        if (href && !href.includes(process.env.FRONTEND_URL || 'localhost')) {
+        if (href && !href.includes(configService.getConfig('FRONTEND_URL', 'localhost'))) {
             externalCount++;
         }
     });

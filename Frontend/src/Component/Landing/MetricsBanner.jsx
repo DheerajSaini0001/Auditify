@@ -1,72 +1,238 @@
-import React, { useContext, useRef } from 'react';
+import React, { useContext, useRef, useEffect, useState } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { ThemeContext } from '../../context/ThemeContext.jsx';
-import { Activity, Globe2, ShieldCheck, Zap } from 'lucide-react';
+import { Activity, Globe2, ShieldCheck, Zap, TrendingUp, Cpu, Eye, Lock, Layers } from 'lucide-react';
 
-const CountUpMetric = ({ value, label, delay, icon: Icon, darkMode }) => {
+/* ─────────────────────────────────────────
+   Animated number count-up hook
+───────────────────────────────────────── */
+const useCountUp = (target, duration = 1800, isActive = false) => {
+    const [current, setCurrent] = useState(0);
+
+    useEffect(() => {
+        if (!isActive) return;
+        let start = null;
+        const numeric = parseFloat(target);
+        const isDecimal = target.toString().includes('.');
+
+        const step = (timestamp) => {
+            if (!start) start = timestamp;
+            const progress = Math.min((timestamp - start) / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+            const value = eased * numeric;
+            setCurrent(isDecimal ? value.toFixed(1) : Math.floor(value));
+            if (progress < 1) requestAnimationFrame(step);
+            else setCurrent(isDecimal ? numeric.toFixed(1) : numeric);
+        };
+
+        requestAnimationFrame(step);
+    }, [isActive, target, duration]);
+
+    return current;
+};
+
+/* ─────────────────────────────────────────
+   Single Metric Card
+───────────────────────────────────────── */
+const MetricCard = ({ value, suffix, label, sublabel, icon: Icon, accentColor, delay, darkMode }) => {
     const ref = useRef(null);
-    const isInView = useInView(ref, { once: true });
+    const isInView = useInView(ref, { once: true, margin: "-60px" });
+    const counted = useCountUp(value, 1600, isInView);
 
     return (
-        <motion.div 
+        <motion.div
             ref={ref}
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 28 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.8, delay, ease: "easeOut" }}
-            className={`
-                relative flex flex-col items-center lg:items-start gap-4 p-8 rounded-[2.5rem] border transition-all duration-500 overflow-hidden group
-                ${darkMode 
-                    ? "bg-slate-900/40 border-white/5 hover:bg-slate-800/60 hover:border-emerald-500/30" 
-                    : "bg-white border-slate-200 hover:bg-emerald-50 hover:border-emerald-200 shadow-xl shadow-slate-200/50 hover:shadow-emerald-500/5"}
-            `}
+            transition={{ duration: 0.65, delay, ease: [0.22, 1, 0.36, 1] }}
+            className={`relative group flex flex-col justify-between gap-6 p-7 rounded-[2rem] border overflow-hidden transition-all duration-400
+                ${darkMode
+                    ? 'bg-[#0D1525]/70 border-white/6 hover:border-white/12'
+                    : 'bg-white border-slate-100 shadow-sm shadow-slate-100 hover:shadow-md hover:shadow-slate-200/60'}`}
         >
-            {/* Background Glow on Hover */}
-            <div className={`absolute -right-10 -bottom-10 w-32 h-32 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-700 bg-emerald-500`}></div>
+            {/* Ambient corner glow */}
+            <div
+                className="absolute -top-6 -right-6 w-28 h-28 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"
+                style={{ background: `radial-gradient(circle, ${accentColor}30 0%, transparent 70%)`, filter: 'blur(20px)' }}
+            />
 
-            <div className={`
-                w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 rotate-[10deg] group-hover:rotate-0 group-hover:scale-110
-                ${darkMode ? "bg-emerald-500/10 text-emerald-400" : "bg-emerald-50 text-emerald-600"}
-            `}>
-                <Icon size={28} strokeWidth={2.5} />
-            </div>
-            
-            <div className="space-y-1">
-                <div className="flex items-baseline gap-1">
-                    <span className={`text-4xl lg:text-5xl font-black transition-colors duration-500 ${darkMode ? 'text-white' : 'text-slate-900 hover:text-emerald-600'}`}>{value}</span>
-                    <span className="text-xl font-black text-emerald-500">M+</span>
+            {/* Top row: icon + label */}
+            <div className="flex items-start justify-between">
+                <div>
+                    <p className={`text-[10px] font-bold uppercase tracking-[0.22em] mb-1
+                        ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                        {label}
+                    </p>
+                    <p className={`text-[11px] font-medium leading-snug max-w-[140px]
+                        ${darkMode ? 'text-slate-600' : 'text-slate-400'}`}>
+                        {sublabel}
+                    </p>
                 </div>
-                <p className={`text-[10px] font-black uppercase tracking-[0.25em] transition-colors duration-500 ${darkMode ? 'text-slate-500 group-hover:text-slate-300' : 'text-slate-400 group-hover:text-emerald-700'}`}>{label}</p>
+                <div
+                    className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-[-6deg]"
+                    style={{ background: `${accentColor}18`, color: accentColor }}
+                >
+                    <Icon size={20} strokeWidth={2} />
+                </div>
             </div>
+
+            {/* Number */}
+            <div className="flex items-baseline gap-1">
+                <span
+                    className="text-5xl font-black tabular-nums tracking-tight leading-none"
+                    style={{ color: darkMode ? '#f1f5f9' : '#0f172a' }}
+                >
+                    {counted}
+                </span>
+                {suffix && (
+                    <span className="text-2xl font-black" style={{ color: accentColor }}>
+                        {suffix}
+                    </span>
+                )}
+            </div>
+
+            {/* Bottom accent line */}
+            <div
+                className="absolute bottom-0 left-0 h-[2px] w-0 group-hover:w-full transition-all duration-700 rounded-full"
+                style={{ background: `linear-gradient(90deg, ${accentColor}, transparent)` }}
+            />
         </motion.div>
     );
 };
 
+/* ─────────────────────────────────────────
+   Audit type list — displayed as a strip
+───────────────────────────────────────── */
+const AUDIT_DIMS = [
+    { icon: <TrendingUp size={12} />, label: "Technical Performance" },
+    { icon: <Eye size={12} />,        label: "On-Page SEO" },
+    { icon: <Layers size={12} />,     label: "Accessibility" },
+    { icon: <Lock size={12} />,       label: "Security & Compliance" },
+    { icon: <Activity size={12} />,   label: "UX & Content" },
+    { icon: <Globe2 size={12} />,     label: "Conversion & Lead Flow" },
+    { icon: <Cpu size={12} />,        label: "AIO Readiness" },
+];
+
+/* ─────────────────────────────────────────
+   Main Banner
+───────────────────────────────────────── */
 const MetricsBanner = () => {
     const { theme } = useContext(ThemeContext);
     const darkMode = theme === 'dark';
-    
+
     const metrics = [
-        { value: "4.2", label: "Monthly Audits", icon: Activity },
-        { value: "190", label: "Global Nodes", icon: Globe2 },
-        { value: "98", label: "Uptime Score", icon: Zap },
-        { value: "500", label: "Billion Scans", icon: ShieldCheck }
+        {
+            value: "12",
+            suffix: "K+",
+            label: "Audits Run",
+            sublabel: "Websites analysed across all 7 dimensions",
+            icon: Activity,
+            accentColor: "#10b981",
+        },
+        {
+            value: "7",
+            suffix: null,
+            label: "Audit Types",
+            sublabel: "From core SEO to AI-readiness checks",
+            icon: Cpu,
+            accentColor: "#3b82f6",
+        },
+        {
+            value: "98",
+            suffix: "%",
+            label: "Uptime",
+            sublabel: "Always-on infrastructure, zero queuing",
+            icon: Zap,
+            accentColor: "#f59e0b",
+        },
+        {
+            value: "4.9",
+            suffix: "/5",
+            label: "User Rating",
+            sublabel: "Rated by founders, devs & SEO teams",
+            icon: ShieldCheck,
+            accentColor: "#a78bfa",
+        },
     ];
 
+    const sectionRef = useRef(null);
+    const isSectionInView = useInView(sectionRef, { once: true, margin: "-80px" });
+
     return (
-        <section className={`relative pt-12 pb-24 overflow-hidden transition-colors duration-500 ${darkMode ? 'bg-[#0A0F1E]' : 'bg-slate-50'}`}>
-            <div className="container mx-auto px-6 relative z-10 max-w-7xl">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <section
+            ref={sectionRef}
+            className={`relative pt-10 pb-20 overflow-hidden transition-colors duration-500
+                ${darkMode ? 'bg-[#080E1C]' : 'bg-[#F5F7FA]'}`}
+        >
+            {/* Subtle background texture */}
+            <div
+                className="absolute inset-0 pointer-events-none opacity-[0.025]"
+                style={{
+                    backgroundImage: `radial-gradient(circle, ${darkMode ? '#fff' : '#000'} 1px, transparent 1px)`,
+                    backgroundSize: '24px 24px',
+                }}
+            />
+
+            <div className="container mx-auto px-6 relative z-10 max-w-7xl space-y-12">
+
+                {/* Section header */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={isSectionInView ? { opacity: 1, y: 0 } : {}}
+                    transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                    className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6"
+                >
+                    <div className="space-y-2">
+                        <span className={`inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em]
+                            ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                            <span className="w-4 h-px bg-current inline-block" />
+                            Platform at a glance
+                        </span>
+                        <h2 className={`text-3xl lg:text-4xl font-black tracking-tight leading-tight
+                            ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                            Built for teams who take <br className="hidden lg:block" />
+                            <span className="text-transparent bg-clip-text"
+                                style={{ backgroundImage: 'linear-gradient(135deg, #10b981, #06b6d4)' }}>
+                                website quality seriously.
+                            </span>
+                        </h2>
+                    </div>
+
+                    {/* 7 audit type pills — horizontal on desktop */}
+                    <div className="flex flex-wrap gap-2 lg:justify-end">
+                        {AUDIT_DIMS.map((d, i) => (
+                            <motion.span
+                                key={d.label}
+                                initial={{ opacity: 0, scale: 0.88 }}
+                                animate={isSectionInView ? { opacity: 1, scale: 1 } : {}}
+                                transition={{ delay: 0.15 + i * 0.06, duration: 0.4 }}
+                                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold border
+                                    ${darkMode
+                                        ? 'bg-white/4 border-white/8 text-slate-400'
+                                        : 'bg-white border-slate-200 text-slate-500 shadow-sm'}`}
+                            >
+                                <span className="text-emerald-500">{d.icon}</span>
+                                {d.label}
+                            </motion.span>
+                        ))}
+                    </div>
+                </motion.div>
+
+                {/* Metric cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                     {metrics.map((m, i) => (
-                        <CountUpMetric key={i} {...m} delay={i * 0.15} darkMode={darkMode} />
+                        <MetricCard key={i} {...m} delay={i * 0.12} darkMode={darkMode} />
                     ))}
                 </div>
-            </div>
 
-            {/* Decorative Gradient Line */}
-            <div className={`absolute bottom-0 left-0 w-full h-[1px] ${darkMode ? 'bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent' : 'bg-gradient-to-r from-transparent via-emerald-500/10 to-transparent'}`}></div>
+                {/* Bottom thin divider */}
+                <div className={`w-full h-px ${darkMode
+                    ? 'bg-gradient-to-r from-transparent via-white/8 to-transparent'
+                    : 'bg-gradient-to-r from-transparent via-slate-200 to-transparent'}`}
+                />
+            </div>
         </section>
     );
 };
 
 export default MetricsBanner;
-

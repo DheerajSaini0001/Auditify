@@ -1,6 +1,12 @@
 import User from '../models/User.js';
 import ActivityLog from '../models/ActivityLog.js';
 import AuditLog from '../models/AuditLog.js';
+import ConfigAuditLog from '../models/ConfigAuditLog.js';
+import ConfigVersion from '../models/ConfigVersion.js';
+import PlatformConfig from '../models/PlatformConfig.js';
+import { encrypt, decrypt } from '../utils/encrypt.js';
+import configService from '../services/configService.js';
+import axios from 'axios';
 
 export const getAllUsers = async (req, res) => {
   try {
@@ -244,5 +250,189 @@ export const getStats = async (req, res) => {
   } catch (error) {
     console.error('getStats Error:', error);
     res.status(500).json({ error: 'Internal server error', code: 'SERVER_ERROR' });
+  }
+};
+
+// ── Dynamic Platform Configuration System ───────────────────
+
+/**
+ * Fetch all platform configurations.
+ * Masks secret values (e.g., 'sk-****') for UI safety.
+ */
+export const getConfigs = async (req, res) => {
+  try {
+    const configs = await PlatformConfig.find().sort({ group: 1, key: 1 });
+    
+    const maskedConfigs = configs.map(c => {
+      const configObj = c.toObject();
+      if (c.isSecret && configObj.value) {
+        const plainValue = decrypt(configObj.value);
+        if (plainValue && plainValue.length > 6) {
+          configObj.value = `${plainValue.substring(0, 3)}••••${plainValue.substring(plainValue.length - 3)}`;
+        } else {
+          configObj.value = '••••••••';
+        }
+      }
+      return configObj;
+    });
+
+    res.json({ success: true, configs: maskedConfigs });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Failed to fetch configurations' });
+  }
+};
+
+/**
+ * Save or update a platform configuration.
+ * Automatically encrypts if isSecret is true and increments version.
+ */
+export const saveConfig = async (req, res) => {
+  const { key, value, label, group, isSecret, changeReason } = req.body;
+  
+  if (!key || value === undefined) {
+    return res.status(400).json({ success: false, message: 'Key and value are required' });
+  }
+
+  try {
+    const upperKey = key.toUpperCase();
+    const valueToSave = isSecret ? encrypt(value) : value;
+    
+    let config = await PlatformConfig.findOne({ key: upperKey });
+    let isCreate = !config;
+    let newVersion = 1;
+
+    if (config) {
+      // ── Save version snapshot before overwriting ──
+      await ConfigVersion.create({
+        key: config.key,
+        value: config.value,           // stores as currently encrypted in DB
+        version: config.version || 1,
+        isSensitive: config.isSecret,
+        changedBy: req.user.userId,
+        changeReason: changeReason || 'Updated via Admin UI'
+      });
+
+      newVersion = (config.version || 1) + 1;
+      
+      config.value = valueToSave;
+      config.label = label || config.label;
+      config.group = group || config.group;
+      config.isSecret = isSecret !== undefined ? isSecret : config.isSecret;
+      config.version = newVersion;
+      config.updatedBy = req.user.userId;
+      
+      await config.save();
+    } else {
+      config = new PlatformConfig({
+        key: upperKey,
+        value: valueToSave,
+        label: label || key,
+        group: group || 'general',
+        isSecret: isSecret !== undefined ? isSecret : false,
+        version: 1,
+        updatedBy: req.user.userId
+      });
+      await config.save();
+    }
+
+    // ── Audit Log ──
+    await ConfigAuditLog.create({
+      key: upperKey,
+      action: isCreate ? 'CREATE' : 'UPDATE',
+      version: newVersion,
+      updatedBy: req.user.userId,
+      ipAddress: req.headers['x-forwarded-for'] || req.socket.remoteAddress || '0.0.0.0',
+      userAgent: req.headers['user-agent'] || 'unknown',
+      metadata: { action: isCreate ? 'Initial Sync' : 'Manual Update' }
+    });
+
+    // Refresh the in-memory cache
+    await configService.refreshCache();
+
+    res.json({ 
+      success: true, 
+      message: `Configuration for ${upperKey} ${isCreate ? 'created' : 'updated'} to v${newVersion}`,
+      config: {
+        ...config.toObject(),
+        value: isSecret ? '••••••••' : value
+      }
+    });
+  } catch (error) {
+    console.error('saveConfig error:', error);
+    res.status(500).json({ success: false, error: 'Failed to save configuration' });
+  }
+};
+
+/**
+ * Optional: Test a configuration (e.g., verify API key validity).
+ */
+export const testConfig = async (req, res) => {
+  const { key } = req.body;
+  if (!key) return res.status(400).json({ success: false, message: 'Key is required to test' });
+
+  try {
+    const value = await configService.get(key);
+    
+    if (key.toUpperCase() === 'GEMINI_API_KEY') {
+      try {
+        const response = await axios.post(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${value}`, {
+          contents: [{ parts: [{ text: 'hi' }] }]
+        });
+        if (response.data) {
+          return res.json({ success: true, message: 'Gemini API Key is valid!' });
+        }
+      } catch (axErr) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Gemini API key validation failed', 
+          error: axErr.response?.data?.error?.message || axErr.message 
+        });
+      }
+    }
+    
+    res.json({ 
+      success: true, 
+      message: `Value for ${key} retrieved from system. No automated test integration yet for this key.` 
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Test failed', details: error.message });
+  }
+};
+
+/**
+ * Reveal a secret configuration value.
+ * Decrypts and logs the access for auditing.
+ */
+export const revealConfig = async (req, res) => {
+  const { key } = req.params;
+  if (!key) return res.status(400).json({ success: false, message: 'Key is required' });
+
+  try {
+    const config = await PlatformConfig.findOne({ key: key.toUpperCase() });
+    
+    if (!config) {
+      return res.status(404).json({ success: false, message: 'Configuration not found' });
+    }
+
+    if (!config.isSecret) {
+      return res.json({ success: true, value: config.value });
+    }
+
+    const decryptedValue = decrypt(config.value);
+
+    // Audit Log for security compliance using the dedicated ConfigAuditLog model
+    await ConfigAuditLog.create({
+      key: key.toUpperCase(),
+      action: 'REVEAL',
+      updatedBy: req.user.userId,
+      ipAddress: req.headers['x-forwarded-for'] || req.socket.remoteAddress || '0.0.0.0',
+      userAgent: req.headers['user-agent'] || 'unknown',
+      metadata: { timestamp: new Date() },
+    });
+
+    res.json({ success: true, value: decryptedValue });
+  } catch (error) {
+    console.error('revealConfig error:', error);
+    res.status(500).json({ success: false, error: 'Failed to decrypt value. Key might be corrupt or ENCRYPTION_KEY has changed.' });
   }
 };

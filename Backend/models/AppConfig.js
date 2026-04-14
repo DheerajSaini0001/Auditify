@@ -5,10 +5,12 @@ const appConfigSchema = new mongoose.Schema({
     type: String, 
     required: true, 
     unique: true, 
-    trim: true 
+    trim: true,
+    uppercase: true,
+    index: true
   },
   value: { 
-    type: String, 
+    type: String,  // AES-256 encrypted
     required: true 
   },
   isSensitive: {
@@ -18,6 +20,20 @@ const appConfigSchema = new mongoose.Schema({
   description: {
     type: String,
     trim: true
+  },
+  category: {
+    type: String,
+    enum: ['auth', 'email', 'api', 'database', 'security', 'general', 'frontend'],
+    default: 'general'
+  },
+  environment: {
+    type: String,
+    enum: ['all', 'development', 'staging', 'production'],
+    default: 'all'
+  },
+  version: {
+    type: Number,
+    default: 1
   }
 }, { timestamps: true });
 

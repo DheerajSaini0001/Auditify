@@ -1,8 +1,31 @@
 // DealerPulse AI Assistant Route
 import express from 'express';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import configService from '../services/configService.js';
 
 const router = express.Router();
+
+/**
+ * Helper to call Gemini with retry logic for handling 503 (Service Unavailable)
+ * and other transient errors.
+ */
+async function generateWithRetry(model, prompt, retries = 3, delay = 2000) {
+    for (let i = 0; i < retries; i++) {
+        try {
+            const result = await model.generateContent(prompt);
+            return result;
+        } catch (error) {
+            const isTransient = error.message?.includes('503') || error.message?.includes('429');
+            if (isTransient && i < retries - 1) {
+                console.warn(`[AI Retry] Attempt ${i + 1} failed. Retrying in ${delay}ms...`);
+                await new Promise(res => setTimeout(res, delay));
+                delay *= 2; // Exponential backoff
+                continue;
+            }
+            throw error;
+        }
+    }
+}
 
 // Helper to build a readable summary of audit data for the AI
 function summarizeAuditData(data) {
@@ -48,7 +71,7 @@ function summarizeAuditData(data) {
 router.post('/explain', async (req, res) => {
     const { findingType, findingTitle, findingDetails, findingMeta, severity, pageUrl, auditScore } = req.body;
 
-    if (!process.env.GEMINI_API_KEY) {
+    if (!configService.getConfig('GEMINI_API_KEY')) {
         return res.status(500).json({ error: 'AI service not configured.' });
     }
 
@@ -57,11 +80,11 @@ router.post('/explain', async (req, res) => {
     res.setHeader('Connection', 'keep-alive');
 
     try {
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        const genAI = new GoogleGenerativeAI(configService.getConfig('GEMINI_API_KEY'));
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" }); 
 
         const prompt = buildExplanationPrompt(findingType, findingTitle, findingDetails, findingMeta, severity, pageUrl, auditScore);
-        const result = await model.generateContent(prompt);
+        const result = await generateWithRetry(model, prompt);
         const text = result.response.text();
 
         res.write(`data: ${JSON.stringify({ text })}\n\n`);
@@ -78,12 +101,12 @@ router.post('/explain', async (req, res) => {
 router.post('/chat', async (req, res) => {
     const { message, auditData, history } = req.body;
 
-    if (!process.env.GEMINI_API_KEY) {
+    if (!configService.getConfig('GEMINI_API_KEY')) {
         return res.status(500).json({ error: 'AI service not configured.' });
     }
 
     try {
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        const genAI = new GoogleGenerativeAI(configService.getConfig('GEMINI_API_KEY'));
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" }); 
 
         const auditSummary = summarizeAuditData(auditData);
@@ -109,7 +132,7 @@ STRICT GUIDELINES:
 
 Response length: Keep it under 200 words.`;
 
-        const result = await model.generateContent(systemPrompt);
+        const result = await generateWithRetry(model, systemPrompt);
         const text = result.response.text();
 
         res.json({ text });
@@ -124,13 +147,13 @@ router.post('/summarize-section', async (req, res) => {
     const { sectionName, sectionData, auditScore, url } = req.body;
     console.log(`[AI Strategist] Summary request for ${sectionName} (${url})`);
 
-    if (!process.env.GEMINI_API_KEY) {
+    if (!configService.getConfig('GEMINI_API_KEY')) {
         console.error('[AI Strategist] Missing GEMINI_API_KEY');
         return res.status(500).json({ error: 'AI service not configured.' });
     }
 
     try {
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        const genAI = new GoogleGenerativeAI(configService.getConfig('GEMINI_API_KEY'));
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" }); 
 
         const prompt = `You are "DealerPulse AI Strategist", an expert web consultant.
@@ -151,7 +174,7 @@ router.post('/summarize-section', async (req, res) => {
         7. Max 100 words total.
         8. RETURN VALID JSON ONLY.`;
 
-        const result = await model.generateContent(prompt);
+        const result = await generateWithRetry(model, prompt);
         let text = result.response.text() || "{}";
         
         // Remove markdown backticks if Gemini adds them

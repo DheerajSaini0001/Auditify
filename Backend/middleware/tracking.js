@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
 import { UAParser } from "ua-parser-js";
+import configService from "../services/configService.js";
 
 const trackingMiddleware = (req, res, next) => {
   // 1. Session ID Handling
@@ -11,7 +12,7 @@ const trackingMiddleware = (req, res, next) => {
       httpOnly: true,
       sameSite: "lax",
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      secure: process.env.NODE_ENV === "production",
+      secure: configService.getConfig('NODE_ENV', 'development') === "production",
     });
   }
 

@@ -17,7 +17,7 @@ import {
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useData } from "../context/DataContext";
 import { useAuth } from "../context/AuthContext";
-import { generatePDF } from "../utils/pdfGenerator";
+import toast from 'react-hot-toast';
 
 export default function Sidebar({ darkMode }) {
   const { data, loading, clearData } = useData();
@@ -119,9 +119,36 @@ export default function Sidebar({ darkMode }) {
         {data?.sectionScore ? (
           <>
             <button
-              onClick={() => {
+              onClick={async () => {
                 if (isAuthenticated) {
-                  generatePDF(data);
+                  const reportId = data._id;
+                  if (!reportId) return toast.error("Report ID not found");
+                  
+                  const toastId = toast.loading('Preparing professional PDF report...');
+                  try {
+                    const token = localStorage.getItem('dealerpulse_token');
+                    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:2000';
+                    const response = await fetch(`${API_URL}/single-audit/${reportId}/export/pdf`, {
+                      headers: {
+                        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                      }
+                    });
+                    
+                    if (!response.ok) throw new Error('Failed to generate PDF');
+                    
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `DealerPulse-Report-${data.url.replace(/[^a-z0-9]/gi, '-')}.pdf`;
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                    window.URL.revokeObjectURL(url);
+                    toast.success('Report downloaded!', { id: toastId });
+                  } catch (error) {
+                    toast.error('Failed to generate PDF', { id: toastId });
+                  }
                 } else {
                   navigate("/login", { state: { from: location } });
                 }

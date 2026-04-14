@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const ALGORITHM = 'aes-256-cbc';
-const ENCRYPTION_KEY = process.env.CONFIG_ENCRYPTION_KEY || '6f68c6a6f6756860f7815234479e96e7'; // Should be 32 bytes
+const ENCRYPTION_KEY = process.env.CONFIG_ENCRYPTION_KEY || 'e2889933008ccd6ee402d59810f2b6b4b57f6fbc6df52cd6a47bbd96ab33dfd2'; // Should be 32 bytes (64 hex chars)
 const IV_LENGTH = 16;
 
 export const encrypt = (text) => {

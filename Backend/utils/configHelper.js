@@ -1,44 +1,44 @@
-import AppConfig from '../models/AppConfig.js';
-import { decrypt } from './encryption.js';
-import dotenv from 'dotenv';
-dotenv.config();
+import configService from '../services/configService.js';
 
-const cache = new Map();
-const CACHE_TTL = 300000; // 5 minutes
-
-export const getConfig = async (key, fallbackEnv = null) => {
-  // 1. Check Cache
-  if (cache.has(key)) {
-    const cached = cache.get(key);
-    if (Date.now() - cached.timestamp < CACHE_TTL) {
-      return cached.value;
-    }
+/**
+ * Get a configuration value via the centralized ConfigService.
+ * 
+ * Priority: In-memory cache (DB) → .env → null
+ * 
+ * This is a thin wrapper that delegates to configService.getConfig().
+ * Business logic should use this instead of accessing process.env directly.
+ * 
+ * @param {string} key - The configuration key
+ * @param {string} fallbackEnv - Optional alternate env var name to check
+ * @returns {string|null}
+ */
+export const getConfig = (key, fallbackEnv = null) => {
+  // Primary lookup through the config service
+  const value = configService.getConfig(key);
+  if (value !== null) {
+    return value;
   }
 
-  try {
-    // 2. Check Database
-    const config = await AppConfig.findOne({ key });
-    if (config) {
-      const decryptedValue = decrypt(config.value);
-      cache.set(key, { value: decryptedValue, timestamp: Date.now() });
-      return decryptedValue;
-    }
-  } catch (err) {
-    console.error(`Error fetching config for ${key}:`, err.message);
-  }
-
-  // 3. Fallback to Env
-  const envKey = fallbackEnv || key;
-  const envValue = process.env[envKey];
-  
-  if (envValue !== undefined) {
-    return envValue;
+  // If a different env key was specified as fallback, try that too
+  if (fallbackEnv && fallbackEnv !== key) {
+    const envValue = process.env[fallbackEnv];
+    if (envValue !== undefined) return envValue;
   }
 
   return null;
 };
 
+/**
+ * Clear config cache. Delegates to configService.
+ * @param {string} [key] - Specific key to clear, or omit to clear all
+ */
 export const clearConfigCache = (key) => {
-  if (key) cache.delete(key);
-  else cache.clear();
+  if (key) {
+    configService.deleteConfig(key);
+  } else {
+    // Full refresh is async — fire and forget
+    configService.refresh().catch(err => {
+      console.error('[configHelper] Cache refresh failed:', err.message);
+    });
+  }
 };

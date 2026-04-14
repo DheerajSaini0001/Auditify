@@ -7,6 +7,7 @@ import OTP from '../models/OTP.js';
 import PasswordReset from '../models/PasswordReset.js';
 import sendEmail from '../utils/sendEmail.js';
 import generateOTP from '../utils/generateOTP.js';
+import configService from '../services/configService.js';
 
 // 4.4.1 Register user (local auth)
 export const register = async (req, res) => {
@@ -133,8 +134,8 @@ export const verifyOTP = async (req, res) => {
 
     const token = jwt.sign(
       { userId: user._id, email: user.email, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      configService.getConfig('JWT_SECRET'),
+      { expiresIn: configService.getConfig('JWT_EXPIRES_IN', '7d') }
     );
 
     res.status(200).json({
@@ -223,8 +224,8 @@ export const login = async (req, res) => {
 
     const token = jwt.sign(
       { userId: user._id, email: user.email, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      configService.getConfig('JWT_SECRET'),
+      { expiresIn: configService.getConfig('JWT_EXPIRES_IN', '7d') }
     );
 
     res.status(200).json({
@@ -267,7 +268,8 @@ export const forgotPassword = async (req, res) => {
       expiresAt: new Date(Date.now() + 3600000)
     });
 
-    const resetURL = `${process.env.FRONTEND_URL}/reset-password?token=${rawToken}&email=${encodeURIComponent(email.toLowerCase())}`;
+    const frontendUrl = configService.getConfig('FRONTEND_URL', 'http://localhost:5173');
+    const resetURL = `${frontendUrl}/reset-password?token=${rawToken}&email=${encodeURIComponent(email.toLowerCase())}`;
 
     await sendEmail({
       to: email.toLowerCase(),
@@ -327,11 +329,12 @@ export const resetPassword = async (req, res) => {
 export const googleCallback = (req, res) => {
   const token = jwt.sign(
     { userId: req.user._id, email: req.user.email, role: req.user.role },
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+    configService.getConfig('JWT_SECRET'),
+    { expiresIn: configService.getConfig('JWT_EXPIRES_IN', '7d') }
   );
   // Redirect with hash fragment to keep it out of logs
-  const redirectUrl = `${process.env.FRONTEND_URL}/auth/callback#token=${token}`;
+  const frontendUrl = configService.getConfig('FRONTEND_URL', 'http://localhost:5173');
+  const redirectUrl = `${frontendUrl}/auth/callback#token=${token}`;
   console.log(`[Google OAuth] Redirecting to: ${redirectUrl.split('#')[0]}#token=[REDACTED]`);
   res.redirect(redirectUrl);
 };

@@ -5,12 +5,14 @@ import dotenv from "dotenv";
 import fetch from "node-fetch";
 import { URL } from "url";
 import { waitForChallengeResolution } from "../utils/puppeteer_cheerio.js";
+import configService from "../services/configService.js";
 
 dotenv.config();
 puppeteer.use(StealthPlugin());
 
-const safeBrowsingAPI = process.env.SafeBrowsing;
-const VT_KEY = process.env.vt_key;
+// Read at function call time via configService (not module load)
+const getSafeBrowsingKey = () => configService.getConfig('SafeBrowsing');
+const getVTKey = () => configService.getConfig('vt_key');
 
 function Domain(urlString) {
   const u = new URL(urlString);
@@ -363,6 +365,7 @@ async function checkThirdPartyCookies(url, page) {
 
 // Google Safe Browsing
 async function checkGoogleSafeBrowsing(url) {
+  const safeBrowsingAPI = getSafeBrowsingKey();
   if (!safeBrowsingAPI) return { score: 100, status: "pass", details: "Safe Browsing API key missing", meta: {}, analysis: { location: "Configuration" } };
 
   const endpoint = `https://safebrowsing.googleapis.com/v4/threatMatches:find?key=${safeBrowsingAPI}`;
@@ -418,6 +421,7 @@ async function checkGoogleSafeBrowsing(url) {
 
 // VirusTotal
 async function checkVirusTotal(domain) {
+  const VT_KEY = getVTKey();
   if (!VT_KEY) return { score: 100, status: "pass", details: "VirusTotal API key missing (Skipped)", meta: {}, analysis: null };
 
   const endpoint = `https://www.virustotal.com/api/v3/domains/${domain}`;

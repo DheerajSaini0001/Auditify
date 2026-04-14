@@ -12,7 +12,8 @@ import {
   ShieldAlert,
   LayoutDashboard,
   ExternalLink,
-  Bot
+  Bot,
+  Download
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -314,10 +315,11 @@ const AdminDashboard = () => {
                         </td>
                         <td className="px-8 py-5 text-center">
                            <div className={`inline-flex w-10 h-10 rounded-full items-center justify-center font-black text-sm border-2 ${
+                              item.status === 'pending' ? 'border-amber-500/20 text-amber-500 animate-pulse' :
                               item.score >= 80 ? 'border-emerald-500/20 text-emerald-500' :
                               item.score >= 50 ? 'border-amber-500/20 text-amber-500' : 'border-red-500/20 text-red-500'
                            }`}>
-                              {item.score || '-'}
+                              {item.status === 'pending' ? '...' : (item.score !== null ? item.score : '-')}
                            </div>
                         </td>
                         <td className="px-8 py-5 text-right text-sm opacity-50 font-mono">{formatTimestamp(item.createdAt)}</td>
@@ -391,7 +393,12 @@ const AdminDashboard = () => {
                               <p className="font-bold truncate text-sm">{h.url}</p>
                               <div className="flex justify-between items-center mt-2">
                                 <span className="text-[10px] opacity-50">{formatTimestamp(h.createdAt)}</span>
-                                <span className="font-black text-xs text-blue-500">{h.score || 'Fail'}</span>
+                                <span className={`font-black text-xs ${
+                                  h.status === 'pending' ? 'text-amber-500 animate-pulse' : 
+                                  h.status === 'failed' ? 'text-rose-500' : 'text-blue-500'
+                                }`}>
+                                  {h.status === 'pending' ? 'In Progress' : (h.status === 'success' ? `${h.score}%` : 'Fail')}
+                                </span>
                               </div>
                             </div>
                           )) : <p className="text-sm opacity-40">No scans recorded.</p>}
@@ -404,13 +411,21 @@ const AdminDashboard = () => {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           {userDetails.downloadHistory?.length > 0 ? userDetails.downloadHistory.map((d, i) => (
                             <div key={i} className={`p-4 rounded-2xl border ${darkMode ? 'bg-white/5 border-white/5' : 'bg-slate-50 border-slate-100'} flex items-center gap-4`}>
-                              <ExternalLink size={16} className="text-amber-500" />
-                              <div>
-                                <p className="text-sm font-bold truncate">Report Export Requested</p>
-                                <p className="text-[10px] opacity-40">{formatTimestamp(d.timestamp)}</p>
+                              <div className="p-2 rounded-xl bg-amber-500/10 text-amber-500">
+                                <Download size={18} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-bold truncate text-blue-500">{d.metadata?.url || 'Direct Export'}</p>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-slate-500/10 opacity-60">
+                                    {d.metadata?.reportType || 'Standard'} PDF
+                                  </span>
+                                  <span className="text-[10px] opacity-40">•</span>
+                                  <span className="text-[10px] opacity-40 font-mono">{formatTimestamp(d.timestamp)}</span>
+                                </div>
                               </div>
                             </div>
-                          )) : <p className="text-sm opacity-40">No downloads yet.</p>}
+                          )) : <p className="text-sm opacity-40 px-4">No downloads recorded for this user.</p>}
                         </div>
                       </div>
                     </div>

@@ -5,6 +5,14 @@ import * as cheerio from "cheerio";
 // Use stealth plugin to evade common bot detection techniques
 puppeteer.use(StealthPlugin());
 
+// ======================== HELPERS ===========================
+
+/** Random integer between min and max (inclusive) */
+const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+/** Async delay */
+const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+
 async function autoScroll(page) {
   await page.evaluate(async () => {
     await new Promise((resolve) => {
@@ -51,78 +59,104 @@ async function handlePopups(page) {
   }
 }
 
-// Detects if the page is currently showing a Cloudflare/Browser Challenge or other WAF barriers
+// Detects if the page is currently showing a REAL Cloudflare/Browser Challenge or other WAF barrier.
+// Uses a scoring system to avoid false positives on normal Cloudflare CDN-served sites.
+// If the page has real content (nav, header, many links), it's NOT a challenge — override.
 export async function detectChallenge(page) {
   try {
+    // FIRST: If the page has real content, it's NOT a challenge — fast exit
+    const contentCheck = await page.evaluate(() => {
+      const bodyText = document.body?.innerText || "";
+      const linkCount = document.querySelectorAll('a').length;
+      const paragraphCount = document.querySelectorAll('p').length;
+      const hasNav = !!document.querySelector('nav');
+      const hasMain = !!document.querySelector('main');
+      const hasHeader = !!document.querySelector('header');
+      const hasFooter = !!document.querySelector('footer');
+      
+      const structuralElements = [hasNav, hasMain, hasHeader, hasFooter].filter(Boolean).length;
+      
+      // If page has substantial text + links/structure, it's real content
+      return (bodyText.length > 500 && (linkCount > 5 || paragraphCount > 2)) ||
+             structuralElements >= 2;
+    });
+
+    // Real content found = NOT a bot wall, regardless of CDN artifacts in HTML
+    if (contentCheck) return false;
+
     const title = await page.title();
     const content = await page.content();
     
-    const selectors = [
+    // These selectors are strong indicators of an ACTIVE challenge page
+    const strongSelectors = [
       '#challenge-running',
       '#challenge-form',
       '.challenge-form',
       '#cf-bubbles',
-      '#cloudflare-static-wrapper',
-      '#turnstile-wrapper',
       '#challenge-stage',
       '#cf-spinner',
       '.cf-browser-verification',
       '#hcaptcha-box',
-      'iframe[src*="cloudflare"]',
-      'iframe[src*="hcaptcha"]',
-      'iframe[src*="recaptcha"]',
       '.g-recaptcha',
       '#px-captcha',
       '#captcha-container',
       '.distil-captcha',
-      '#captchacharacters', // Amazon specific
-      'form[action*="/errors/validateCaptcha"]', // Amazon specific
-      '.ray_id',
-      '.cf-turnstile-wrapper',
-      '#cf-wrapper',
+      '#captchacharacters',
+      'form[action*="/errors/validateCaptcha"]',
       '#challenge-error-title'
     ];
 
-    const hasSelector = await page.evaluate((selList) => {
+    const hasChallengeSelector = await page.evaluate((selList) => {
       return selList.some(s => document.querySelector(s));
-    }, selectors);
+    }, strongSelectors);
 
-    // Turnstile check
-    const hasTurnstile = await page.evaluate(() => {
+    // Active Turnstile iframe (challenge iframes, not CDN scripts)
+    const hasActiveTurnstile = await page.evaluate(() => {
       const iframes = Array.from(document.querySelectorAll('iframe'));
-      return iframes.some(iframe => iframe.src.includes('turnstile') || iframe.src.includes('cloudflare'));
+      return iframes.some(iframe => 
+        iframe.src.includes('challenges.cloudflare.com') || 
+        iframe.src.includes('hcaptcha.com')
+      );
     });
 
+    // Title-based detection — these are ONLY set on actual challenge pages
     const isChallengeTitle = 
-      title.includes("Just a moment...") ||
+      title === "Just a moment..." ||
       title.includes("Attention Required!") ||
-      title.includes("Please Wait") ||
-      title.includes("Cloudflare") ||
+      title === "Please Wait..." ||
+      title === "Cloudflare" ||
       title.includes("Access Denied") ||
       title.includes("Checking your browser") ||
       title.includes("Robot Check") ||
       title.includes("Human Verification") ||
-      title.includes("Verify you are human") ||
-      title.includes("Verify your identity");
+      title.includes("Verify you are human");
 
-    const isChallengeContent = 
-      content.includes("cf-browser-verification") ||
-      content.includes("cf-challenge") ||
-      content.includes("cf_challenge") ||
-      content.includes("hcaptcha") ||
-      content.includes("g-recaptcha") ||
-      content.includes("ray_id") ||
-      content.includes("verification required") ||
-      content.includes("human verification") ||
-      content.includes("Verifying you are human") || 
-      content.includes("site connection is secure") ||
-      content.includes("Checking if the site connection is secure") ||
-      content.includes("Enter the characters you see below") || 
-      content.includes("automated access to Amazon") ||
-      content.includes("challenge-form") ||
-      content.includes("turnstile");
+    // Strong content signals — things only present on actual challenge/block pages
+    const strongContentSignals = [
+      "cf-browser-verification",
+      "Verifying you are human",
+      "Checking if the site connection is secure",
+      "Enter the characters you see below",
+      "automated access to Amazon",
+    ];
 
-    return isChallengeTitle || isChallengeContent || hasSelector || hasTurnstile;
+    const bodyText = await page.evaluate(() => document.body?.innerText || "");
+    const hasStrongContent = strongContentSignals.some(signal => 
+      bodyText.includes(signal) || content.includes(signal)
+    );
+
+    // Scoring: need strong evidence, not just CDN artifacts
+    let score = 0;
+    if (isChallengeTitle) score += 3;        // Very strong signal
+    if (hasChallengeSelector) score += 2;    // Strong signal
+    if (hasActiveTurnstile) score += 2;      // Strong signal
+    if (hasStrongContent) score += 2;        // Strong signal
+    
+    // Weak signals — these appear on normal Cloudflare sites too
+    if (bodyText.length < 200) score += 1;   // Very little visible text = suspicious
+
+    // Need score >= 2 to flag as challenge (avoids single weak signal false positives)
+    return score >= 2;
   } catch (e) {
     return false;
   }
@@ -148,73 +182,44 @@ async function hasRealContent(page) {
 }
 
 // Function to wait for challenge resolution with polling and verification
-export async function waitForChallengeResolution(page, timeout = 60000) {
+export async function waitForChallengeResolution(page, timeout = 30000) {
   const startTime = Date.now();
-  console.log("🛡️ Entering challenge detection loop...");
-  
+
+  // Quick check — most pages won't have a challenge at all
+  if (!await detectChallenge(page)) return true;
+
   while (Date.now() - startTime < timeout) {
-    const isChallenged = await detectChallenge(page);
-    
-    if (!isChallenged) {
-      const contentLoaded = await hasRealContent(page);
-      if (contentLoaded) {
-        console.log("✅ Verified: Real content is visible.");
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        if (!await detectChallenge(page)) return true;
-      } else {
-        console.log("⏳ No challenge markers, but no real content yet. Waiting...");
-      }
-    } else {
-      console.log("⏳ Bot verification detected. Attempting bypass...");
-      
-      // Try to click Turnstile checkbox if it exists
-      try {
-        const frames = page.frames();
-        for (const frame of frames) {
-          if (frame.url().includes('turnstile') || frame.url().includes('cloudflare') || frame.url().includes('challenges')) {
-            // Check for the checkbox element or just click the center of the frame
-            const checkbox = await frame.$('input[type="checkbox"], .ctp-checkbox-label, #challenge-stage');
-            if (checkbox) {
-              console.log("🔗 Found challenge element, clicking...");
-              const box = await checkbox.boundingBox();
-              if (box) {
-                // Click with a slight offset to be more human-like
-                await page.mouse.click(box.x + box.width / 2 + (Math.random() * 4 - 2), box.y + box.height / 2 + (Math.random() * 4 - 2));
-                await new Promise(resolve => setTimeout(resolve, 3000));
-              }
+    // Try to click Turnstile/challenge checkbox if it exists
+    try {
+      const frames = page.frames();
+      for (const frame of frames) {
+        if (frame.url().includes('challenges') || frame.url().includes('turnstile') || frame.url().includes('hcaptcha')) {
+          const checkbox = await frame.$('input[type="checkbox"], .ctp-checkbox-label, #challenge-stage');
+          if (checkbox) {
+            const box = await checkbox.boundingBox();
+            if (box) {
+              await page.mouse.click(
+                box.x + box.width / 2 + (Math.random() * 4 - 2),
+                box.y + box.height / 2 + (Math.random() * 4 - 2)
+              );
+              await delay(3000);
             }
           }
         }
-      } catch (e) {
-        console.warn("⚠️ Error clicking challenge checkbox:", e.message);
       }
+    } catch (e) {}
 
-      // Simulate a human-like mouse movement
-      try {
-        await page.mouse.move(Math.random() * 800, Math.random() * 600, { steps: 10 });
-      } catch (e) {}
-    }
-    
-    await new Promise(resolve => setTimeout(resolve, 4000)); // Polling frequency
-    
-    // Safety check for normal title
-    const currentTitle = await page.title();
-    const isStillChallenged = 
-      currentTitle.includes("Just a moment") || 
-      currentTitle.includes("Cloudflare") || 
-      currentTitle.includes("Wait") || 
-      currentTitle.includes("Verify") ||
-      currentTitle.includes("Access Denied");
+    // Human-like mouse movement
+    try {
+      await page.mouse.move(randInt(100, 800), randInt(100, 600), { steps: randInt(5, 15) });
+    } catch (e) {}
 
-    if (currentTitle && !isStillChallenged) {
-       if (await hasRealContent(page)) {
-          console.log("✅ Title seems normal and content found. Resolved.");
-          return true;
-       }
-    }
+    await delay(randInt(2000, 4000));
+
+    // Check if challenge is gone
+    if (!await detectChallenge(page)) return true;
   }
-  
-  console.error("❌ Challenge resolution timed out.");
+
   return false;
 }
 
@@ -223,7 +228,7 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
 
   try {
     const launchOptions = {
-      headless: "new", // Modern headless mode is more stealthy
+      headless: true, // Non-headless for maximum stealth — looks like a real browser
       defaultViewport: null,
       args: [
         "--no-sandbox",
@@ -317,56 +322,48 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
       }
     });
 
-    console.log(`🌐 Navigating to: ${url} (${device})`);
+    // Pre-navigation random delay (1-3s) for human-like behavior
+    await delay(randInt(1000, 3000));
 
     // Speed up: Wait for 'load' instead of 'networkidle2' for heavy sites
     let response = await page.goto(url, {
       waitUntil: "load",
       timeout: 60000 
-    }).catch(async (err) => {
-      console.warn(`⚠️ Initial navigation timeout/error: ${err.message}.`);
+    }).catch(async () => {
       return null;
     });
 
     // 🔄 [Production Patch] If site is unreachable (No Response), try one more time without request interception
     if (!response) {
-        console.log("🔄 [Retry] Site unreachable. Trying simple navigation...");
+
         await page.setRequestInterception(false); // Disable interception for retry
         response = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45000 }).catch(() => null);
     }
 
     const statusCode = response ? response.status() : "No Response";
     const pageTitle = await page.title();
-    console.log(`📡 Status: ${statusCode} | Title: ${pageTitle}`);
+
 
     if (statusCode === "No Response") {
-       console.error(`❌ Failed to reach site in production: ${url}`);
        // Return minimal data to prevent crash
        return { browser, page, response: null, $: cheerio.load("<html><body>Failed to reach site</body></html>"), screenshot: null, isBotProtected: true };
     }
 
-    if (statusCode === 403 || statusCode === 503 || (pageTitle === "" && statusCode === 200)) {
-        console.warn("⚠️ Likely bot detection detected (Blank page or 403/503).");
-    }
 
-    // Capture screenshot if possible
 
     // Handle bot verification (Cloudflare, etc.)
-    console.log(`🔍 Checking bot verification for: ${url}`);
-    let challengeResolved = await waitForChallengeResolution(page, 60000); 
+    let challengeResolved = await waitForChallengeResolution(page, 30000); 
     
     let isBotProtected = await detectChallenge(page);
 
     // [Retry Logic] If still protected, try one refresh - often works in production
     if (isBotProtected) {
-       console.log(`🔄 [Retry] Still protected. Refreshing and trying again...`);
-       await page.reload({ waitUntil: "networkidle2", timeout: 60000 });
-       challengeResolved = await waitForChallengeResolution(page, 45000);
+       await page.reload({ waitUntil: "networkidle2", timeout: 30000 });
+       challengeResolved = await waitForChallengeResolution(page, 20000);
        isBotProtected = await detectChallenge(page);
     }
 
     if (isBotProtected) {
-      console.log(`🛡️ Bot Protection Detected (Final): ${url}`);
       const htmlData = await page.content();
       const $ = cheerio.load(htmlData);
       // Return null screenshot so the bot page is NOT shown in the UI
@@ -374,7 +371,12 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
     }
 
     // Success: Challenge cleared or not detected
-    console.log(`✅ Page accessible: ${url}`);
+
+    // Simulate small mouse movement (human-like)
+    await page.mouse.move(randInt(100, 800), randInt(100, 600));
+
+    // Post-load random delay (1-2s)
+    await delay(randInt(1000, 2000));
 
     // Simulate real behavior: random scrolling and delays
     await handlePopups(page);
@@ -398,7 +400,7 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
 
   } catch (error) {
     if (browser) await browser.close();
-    console.error(`Scraping Error [${url}]:`, error.message);
+
     throw error;
   }
 }

@@ -96,14 +96,15 @@ export async function detectChallenge(page) {
 
     const isChallengeTitle = 
       title.includes("Just a moment...") ||
-      title.includes("Attention Required! | Cloudflare") ||
-      title.includes("Please Wait | Cloudflare") ||
+      title.includes("Attention Required!") ||
+      title.includes("Please Wait") ||
       title.includes("Cloudflare") ||
       title.includes("Access Denied") ||
       title.includes("Checking your browser") ||
       title.includes("Robot Check") ||
       title.includes("Human Verification") ||
-      title.includes("Verify you are human");
+      title.includes("Verify you are human") ||
+      title.includes("Verify your identity");
 
     const isChallengeContent = 
       content.includes("cf-browser-verification") ||
@@ -118,7 +119,9 @@ export async function detectChallenge(page) {
       content.includes("site connection is secure") ||
       content.includes("Checking if the site connection is secure") ||
       content.includes("Enter the characters you see below") || 
-      content.includes("automated access to Amazon");
+      content.includes("automated access to Amazon") ||
+      content.includes("challenge-form") ||
+      content.includes("turnstile");
 
     return isChallengeTitle || isChallengeContent || hasSelector || hasTurnstile;
   } catch (e) {
@@ -169,14 +172,15 @@ export async function waitForChallengeResolution(page, timeout = 60000) {
       try {
         const frames = page.frames();
         for (const frame of frames) {
-          if (frame.url().includes('turnstile') || frame.url().includes('cloudflare')) {
-            // Check for the checkbox element inside the frame
-            const checkbox = await frame.$('input[type="checkbox"]');
+          if (frame.url().includes('turnstile') || frame.url().includes('cloudflare') || frame.url().includes('challenges')) {
+            // Check for the checkbox element or just click the center of the frame
+            const checkbox = await frame.$('input[type="checkbox"], .ctp-checkbox-label, #challenge-stage');
             if (checkbox) {
-              console.log("🔗 Found Turnstile checkbox, clicking...");
+              console.log("🔗 Found challenge element, clicking...");
               const box = await checkbox.boundingBox();
               if (box) {
-                await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+                // Click with a slight offset to be more human-like
+                await page.mouse.click(box.x + box.width / 2 + (Math.random() * 4 - 2), box.y + box.height / 2 + (Math.random() * 4 - 2));
                 await new Promise(resolve => setTimeout(resolve, 3000));
               }
             }
@@ -196,7 +200,14 @@ export async function waitForChallengeResolution(page, timeout = 60000) {
     
     // Safety check for normal title
     const currentTitle = await page.title();
-    if (currentTitle && !currentTitle.includes("Cloudflare") && !currentTitle.includes("Wait") && !currentTitle.includes("Verify")) {
+    const isStillChallenged = 
+      currentTitle.includes("Just a moment") || 
+      currentTitle.includes("Cloudflare") || 
+      currentTitle.includes("Wait") || 
+      currentTitle.includes("Verify") ||
+      currentTitle.includes("Access Denied");
+
+    if (currentTitle && !isStillChallenged) {
        if (await hasRealContent(page)) {
           console.log("✅ Title seems normal and content found. Resolved.");
           return true;

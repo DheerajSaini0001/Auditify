@@ -312,18 +312,24 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
 
     // Handle bot verification (Cloudflare, etc.)
     console.log(`🔍 Checking bot verification for: ${url}`);
-    const challengeResolved = await waitForChallengeResolution(page, 60000); // 1 minute timeout for challenge
+    let challengeResolved = await waitForChallengeResolution(page, 60000); 
     
-    const isBotProtected = await detectChallenge(page);
+    let isBotProtected = await detectChallenge(page);
+
+    // [Retry Logic] If still protected, try one refresh - often works in production
+    if (isBotProtected) {
+       console.log(`🔄 [Retry] Still protected. Refreshing and trying again...`);
+       await page.reload({ waitUntil: "networkidle2", timeout: 60000 });
+       challengeResolved = await waitForChallengeResolution(page, 45000);
+       isBotProtected = await detectChallenge(page);
+    }
 
     if (isBotProtected) {
-      console.log(`🛡️ Bot Protection Detected: ${url}`);
-      // Even if protected, we take a screenshot and pass the HTML (which will be the challenge page)
-      // but we flag it so the system can mark it as "Bot Protected"
-      const screenshot = await page.screenshot({ encoding: "base64", type: "jpeg", quality: 30 });
+      console.log(`🛡️ Bot Protection Detected (Final): ${url}`);
       const htmlData = await page.content();
       const $ = cheerio.load(htmlData);
-      return { browser, page, response, $, screenshot, isBotProtected: true };
+      // Return null screenshot so the bot page is NOT shown in the UI
+      return { browser, page, response, $, screenshot: null, isBotProtected: true };
     }
 
     // Success: Challenge cleared or not detected

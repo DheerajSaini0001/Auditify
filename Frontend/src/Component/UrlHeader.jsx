@@ -1,6 +1,6 @@
 import React from "react";
 import { Globe, ExternalLink, Clock, Smartphone, Monitor, Layers, NotebookPen, Download, Lock } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
 import { savePostAuthIntent } from "../utils/intentStore";
@@ -13,6 +13,18 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [showAISummary, setShowAISummary] = React.useState(false);
+  const location = useLocation();
+
+  // Auto-trigger actions after login redirect
+  React.useEffect(() => {
+    if (isAuthenticated && location.state?.action === 'download' && data?.status === "completed") {
+      console.log("[UrlHeader] Auto-triggering download from intent...");
+      // Clear action from state to prevent loops
+      window.history.replaceState({ ...location.state, action: null }, '');
+      handleDownloadPDF();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, location.state, data?.status]);
 
   const handleDownloadPDF = () => {
     // Guest guard — redirect to login
@@ -23,9 +35,9 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
       });
 
       if (data?._id) {
-        savePostAuthIntent(data._id, `/report/${data._id}`);
+        savePostAuthIntent(data._id, `/report/${data._id}`, 'download');
       }
-      navigate("/login");
+      navigate("/login", { state: { from: location.pathname } });
       return;
     }
     if (!data?._id) return toast.error("Report ID missing");
@@ -68,7 +80,7 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
       if (data?._id) {
         savePostAuthIntent(data._id, `/report/${data._id}`);
       }
-      navigate("/login");
+      navigate("/login", { state: { from: location.pathname } });
       return;
     }
     setShowAISummary(true);

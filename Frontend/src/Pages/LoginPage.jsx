@@ -39,7 +39,13 @@ const LoginPage = () => {
       const destination = intent?.path || location.state?.from || adminFallback;
       console.log("[Login] Navigating to:", destination);
       
-      navigate(destination, { replace: true });
+      navigate(destination, { 
+        replace: true,
+        state: { 
+            ...location.state,
+            action: intent?.action 
+        } 
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, navigate, user, isAuthLoading]);

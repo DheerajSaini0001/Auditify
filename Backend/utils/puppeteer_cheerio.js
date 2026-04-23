@@ -5,22 +5,21 @@ import * as cheerio from "cheerio";
 // Use stealth plugin to evade common bot detection techniques
 puppeteer.use(StealthPlugin());
 
-// Intelligent Auto-Scroll to trigger lazy-loaded images and infinite scroll content
 async function autoScroll(page) {
   await page.evaluate(async () => {
     await new Promise((resolve) => {
       let totalHeight = 0;
-      const distance = 100;
+      const distance = 400; // Increased distance from 100 to 400
       const timer = setInterval(() => {
         const scrollHeight = document.body.scrollHeight;
         window.scrollBy(0, distance);
         totalHeight += distance;
 
-        if (totalHeight >= scrollHeight || totalHeight > 10000) { // Limit scroll to avoid infinite loops
+        if (totalHeight >= scrollHeight || totalHeight > 10000) {
           clearInterval(timer);
           resolve();
         }
-      }, 100);
+      }, 50); // Decreased interval from 100ms to 50ms
     });
   });
 }
@@ -224,7 +223,7 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
 
   try {
     const launchOptions = {
-      headless: true,
+      headless: "new", // Modern headless mode is more stealthy
       defaultViewport: null,
       args: [
         "--no-sandbox",
@@ -233,9 +232,13 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
         "--disable-accelerated-2d-canvas",
         "--disable-gpu",
         "--hide-scrollbars",
-        "--window-size=1920,1080",
         "--mute-audio",
-        "--disable-blink-features=AutomationControlled"
+        "--disable-blink-features=AutomationControlled",
+        "--disable-features=IsolateOrigins,site-per-process",
+        "--window-size=1920,1080",
+        "--ignore-certificate-errors",
+        "--no-zygote",
+        "--single-process" // Recommended for production servers with limited memory
       ]
     };
 
@@ -290,19 +293,57 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
       await page.setViewport({ width: 1920, height: 1080, deviceScaleFactor: 2 });
     }
 
-    // Simulate thinking/loading time before navigation
-    await new Promise(resolve => setTimeout(resolve, Math.floor(Math.random() * 1000) + 1000));
+    // ⚡ Optimization: Block non-essential resources to speed up loading
+    await page.setRequestInterception(true);
+    page.on('request', (request) => {
+      const resourceType = request.resourceType();
+      const url = request.url().toLowerCase();
+      
+      // Block ads, trackers, and unnecessary heavy stuff
+      const blockedResources = [
+        'googletagmanager.com', 'google-analytics.com', 'analytics.google.com',
+        'facebook.net', 'popupsmart.com', 'hotjar.com', 'intercom.io',
+        'adsystem.com', 'ads-twitter.com', 'doubleclick.net'
+      ];
+      
+      if (
+        resourceType === 'font' || 
+        resourceType === 'media' ||
+        blockedResources.some(domain => url.includes(domain))
+      ) {
+        request.abort();
+      } else {
+        request.continue();
+      }
+    });
 
     console.log(`🌐 Navigating to: ${url} (${device})`);
 
-    const response = await page.goto(url, {
-      waitUntil: "networkidle2",
-      timeout: 90000 
+    // Speed up: Wait for 'load' instead of 'networkidle2' for heavy sites
+    let response = await page.goto(url, {
+      waitUntil: "load",
+      timeout: 60000 
+    }).catch(async (err) => {
+      console.warn(`⚠️ Initial navigation timeout/error: ${err.message}.`);
+      return null;
     });
+
+    // 🔄 [Production Patch] If site is unreachable (No Response), try one more time without request interception
+    if (!response) {
+        console.log("🔄 [Retry] Site unreachable. Trying simple navigation...");
+        await page.setRequestInterception(false); // Disable interception for retry
+        response = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45000 }).catch(() => null);
+    }
 
     const statusCode = response ? response.status() : "No Response";
     const pageTitle = await page.title();
     console.log(`📡 Status: ${statusCode} | Title: ${pageTitle}`);
+
+    if (statusCode === "No Response") {
+       console.error(`❌ Failed to reach site in production: ${url}`);
+       // Return minimal data to prevent crash
+       return { browser, page, response: null, $: cheerio.load("<html><body>Failed to reach site</body></html>"), screenshot: null, isBotProtected: true };
+    }
 
     if (statusCode === 403 || statusCode === 503 || (pageTitle === "" && statusCode === 200)) {
         console.warn("⚠️ Likely bot detection detected (Blank page or 403/503).");

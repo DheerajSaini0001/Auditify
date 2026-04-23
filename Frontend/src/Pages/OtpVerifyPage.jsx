@@ -78,7 +78,13 @@ const OtpVerifyPage = () => {
         const guestFallback = hasGuestData ? "/report" : "/dashboard";
         
         const destination = intent?.path || location.state?.from || guestFallback;
-        navigate(destination, { replace: true });
+        navigate(destination, { 
+            replace: true,
+            state: { 
+                ...location.state,
+                action: intent?.action 
+            }
+        });
     } else {
         toast.error(data.message || 'Invalid OTP');
         setOtp(['', '', '', '', '', '']);

@@ -39,7 +39,12 @@ const AuthCallbackPage = () => {
       const guestFallback = hasGuestData ? "/report" : "/dashboard";
       
       const destination = intent?.path || guestFallback;
-      navigate(destination, { replace: true });
+      navigate(destination, { 
+          replace: true,
+          state: { 
+              action: intent?.action 
+          }
+      });
     } else {
       console.warn('[Auth Callback] No token found in current URL:', window.location.href);
       toast.error('Authentication failed. No token found.');

@@ -5,13 +5,15 @@ const INTENT_KEY = 'dealerpulse_post_auth_intent';
  * Used to resume complex flows after the user registers or logs in.
  * @param {string} auditId - The MongoDB ID of the audit.
  * @param {string} path - The target path (e.g., /report/664abc123).
+ * @param {string} [action] - Optional action to trigger (e.g., 'download').
  */
-export const savePostAuthIntent = (auditId, path) => {
+export const savePostAuthIntent = (auditId, path, action = null) => {
     try {
-        console.log("[IntentStore] Saving intent:", { auditId, path });
+        console.log("[IntentStore] Saving intent:", { auditId, path, action });
         const item = {
             auditId,
             path,
+            action,
             expires: Date.now() + 30 * 60 * 1000 // 30 minutes
         };
         localStorage.setItem(INTENT_KEY, JSON.stringify(item));
@@ -33,7 +35,7 @@ export const consumePostAuthIntent = () => {
         
         if (!item) return null;
 
-        const { path, expires } = JSON.parse(item);
+        const { path, action, expires } = JSON.parse(item);
         
         // Use a 30-minute window
         if (Date.now() > expires) {
@@ -43,9 +45,12 @@ export const consumePostAuthIntent = () => {
         }
 
         localStorage.removeItem(INTENT_KEY);
-        console.log("[IntentStore] Intent consumed:", path);
-        // Clean the stored path before returning
-        return { path: String(path || '') };
+        console.log("[IntentStore] Intent consumed:", { path, action });
+        
+        return { 
+            path: String(path || ''),
+            action: action || null
+        };
     } catch (e) {
         console.error("[IntentStore] Consume failed:", e);
         return null;

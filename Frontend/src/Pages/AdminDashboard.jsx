@@ -193,7 +193,7 @@ const AdminDashboard = () => {
                     : `${darkMode ? 'text-gray-400 hover:text-white' : 'text-slate-500 hover:text-slate-900'}`
                 }`}
               >
-                {tab === 'users' ? 'Registered Users' : 'My Websites'}
+                {tab === 'users' ? 'Registered Users' : 'Websites Audit Logs'}
               </button>
             ))}
           </div>

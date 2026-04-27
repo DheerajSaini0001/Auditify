@@ -15,7 +15,7 @@ const AskAIButton = ({ finding, auditScore, darkMode, meta }) => {
     setAiExplanation('');
     setError(null);
 
-    const baseUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:2000';
+    const baseUrl = 'https://siteaudit.sltechsoft.com/api';
 
     try {
       const response = await fetch(`${baseUrl}/api/ai/explain`, {

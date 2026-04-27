@@ -41,6 +41,7 @@ import ReportRestrictionWrapper from "./Component/ReportRestrictionWrapper.jsx";
 import GuestReportPage from "./Component/GuestReportPage.jsx";
 import { useAuth } from "./context/AuthContext.jsx";
 import { useData } from "./context/DataContext.jsx";
+import CanonicalTag from "./Component/CanonicalTag.jsx";
 
 /**
  * Wraps a report route for unauthenticated users:
@@ -68,6 +69,7 @@ function AppContentInner() {
 
   return (
     <>
+      <CanonicalTag />
       <Routes>
         <Route element={<MainLayout />}>
           {/* Public Routes */}
@@ -81,7 +83,7 @@ function AppContentInner() {
           <Route path="/about" element={<AboutPage />} />
 
           {/* Footer Pages */}
-          <Route path="/docs" element={<DocsPage />} />
+          <Route path="/documentation" element={<DocsPage />} />
           <Route path="/help" element={<HelpCenterPage />} />
           <Route path="/privacy" element={<PrivacyPolicyPage />} />
           <Route path="/terms" element={<TermsOfServicePage />} />
@@ -91,13 +93,13 @@ function AppContentInner() {
 
           {/* Protected User Routes */}
           <Route path="/dashboard" element={<DashboardPage />} />
-          
+
           <Route path="/dashboard/add-website" element={<AddWebsitePage />} />
-          
+
           <Route path="/bulk-audit" element={<BulkAudit />} />
 
           <Route path="/bulk-audit/:id" element={<BulkAudit />} />
-          
+
           <Route path="/report" element={<ReportLayout />} />
           <Route path="/report/:id" element={<ReportLayout />} />
 

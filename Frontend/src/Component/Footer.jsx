@@ -56,7 +56,7 @@ export default function Footer() {
           <div className="space-y-6">
             <h4 className={`text-xs font-black uppercase tracking-[0.2em] ${darkMode ? 'text-white' : 'text-slate-900'}`}>Resources</h4>
             <ul className="space-y-4 text-sm font-bold">
-              <li><Link to="/docs" className="hover:text-emerald-500 transition-colors">Documentation</Link></li>
+              <li><Link to="/documentation" className="hover:text-emerald-500 transition-colors">Documentation</Link></li>
               <li><Link to="/help" className="hover:text-emerald-500 transition-colors">Help Center</Link></li>
             </ul>
           </div>

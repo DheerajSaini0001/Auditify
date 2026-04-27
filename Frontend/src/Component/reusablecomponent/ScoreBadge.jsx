@@ -5,8 +5,8 @@ const ScoreBadge = ({ status, value, darkMode, className = "" }) => {
         // Handle both "good"/"pass" for success
         if (status === "pass") {
             return darkMode
-                ? "bg-violet-900/20 text-violet-400 border border-violet-800/30"
-                : "bg-violet-50 text-violet-600 border border-violet-100";
+                ? "bg-emerald-900/20 text-emerald-400 border border-emerald-800/30"
+                : "bg-emerald-50 text-emerald-600 border border-emerald-100";
         }
         // Handle "needs_improvement"
         else if (status === "warning") {

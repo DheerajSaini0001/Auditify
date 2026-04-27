@@ -28,7 +28,7 @@ const metricExplanations = InfoDetails;
 
 const AUDIT_STEPS = [
   {
-    icon: <Server className="w-8 h-8 text-violet-500" />,
+    icon: <Server className="w-8 h-8 text-blue-500" />,
     title: "Server & TTFB",
     text: "Analyzing server response times, DNS lookup speeds, and SSL handshake latency..."
   },
@@ -38,7 +38,7 @@ const AUDIT_STEPS = [
     text: "Measuring Largest Contentful Paint (LCP), Cumulative Layout Shift (CLS), and Interaction to Next Paint (INP)..."
   },
   {
-    icon: <Zap className="w-8 h-8 text-purple-500" />,
+    icon: <Zap className="w-8 h-8 text-teal-500" />,
     title: "Render Blocking Resources",
     text: "Identifying JavaScript and CSS files that block the main thread and delay page rendering..."
   },
@@ -58,7 +58,7 @@ const AUDIT_STEPS = [
     text: "Verifying efficient cache policies to speed up repeat visits and reduce server load..."
   },
   {
-    icon: <Globe className="w-8 h-8 text-violet-500" />,
+    icon: <Globe className="w-8 h-8 text-emerald-500" />,
     title: "Third-Party Impact",
     text: "Evaluating the performance cost of external analytics, ads, and tracking scripts..."
   },
@@ -87,7 +87,7 @@ export default function Technical_Performance() {
     <div className={`w-full min-h-screen ${mainBg} transition-colors duration-300 relative overflow-hidden`}>
       {/* Background Decorative Elements */}
       <div className="absolute top-0 left-0 w-full h-[500px] pointer-events-none overflow-hidden">
-        <div className={`absolute -top-24 -left-24 w-96 h-96 rounded-full blur-[120px] opacity-20 ${darkMode ? "bg-violet-600" : "bg-violet-400"}`}></div>
+        <div className={`absolute -top-24 -left-24 w-96 h-96 rounded-full blur-[120px] opacity-20 ${darkMode ? "bg-blue-600" : "bg-blue-400"}`}></div>
         <div className={`absolute top-48 -right-24 w-80 h-80 rounded-full blur-[100px] opacity-15 ${darkMode ? "bg-indigo-600" : "bg-indigo-400"}`}></div>
         <div className={`absolute -bottom-12 left-1/2 -translate-x-1/2 w-full max-w-4xl h-64 rounded-full blur-[150px] opacity-5 ${darkMode ? "bg-purple-600" : "bg-purple-400"}`}></div>
       </div>
@@ -113,7 +113,7 @@ export default function Technical_Performance() {
             <div className="flex flex-col xl:flex-row min-h-[300px]">
               {data?.report !== "All" && (
                 <div className={`w-full xl:w-1/2 p-6 flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden backdrop-blur-sm ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-white/40 border-white/20"}`}>
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-violet-500/10 blur-[100px] rounded-full pointer-events-none animate-pulse duration-[10000ms]"></div>
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/10 blur-[100px] rounded-full pointer-events-none animate-pulse duration-[10000ms]"></div>
                   <div className="w-full relative z-10 px-2 lg:px-6 hover:scale-[1.02] transition-transform duration-500">
                     <LivePreview data={data} loading={loading} variant="plain" />
                   </div>
@@ -133,7 +133,7 @@ export default function Technical_Performance() {
               {/* Left Panel: Live Preview (Only if not All) */}
               {data?.report !== "All" && (
                 <div className={`w-full xl:w-[45%] ${data?.report === "All" ? "p-6 lg:p-10" : "p-3 lg:p-4"} flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden backdrop-blur-md ${darkMode ? "bg-slate-950/40 border-slate-800" : "bg-white/40 border-white/20"}`}>
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-violet-500/10 blur-[100px] rounded-full pointer-events-none animate-pulse duration-[10000ms]"></div>
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/10 blur-[100px] rounded-full pointer-events-none animate-pulse duration-[10000ms]"></div>
                   <div className="w-full relative z-10 hover:scale-[1.02] transition-transform duration-500">
                     <LivePreview data={data} loading={loading} variant="plain" />
                   </div>
@@ -150,12 +150,12 @@ export default function Technical_Performance() {
                     {/* Text Content */}
                     <div className={`flex-1 ${data?.report === "All" ? "space-y-5" : "space-y-4"} text-left order-2 md:order-1`}>
                       <div className={`${data?.report === "All" ? "space-y-2" : "space-y-1.5"}`}>
-                        <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider animate-in fade-in slide-in-from-left-4 duration-500 ${darkMode ? "bg-violet-500/10 text-violet-400 border border-violet-500/20 shadow-[0_0_15px_-3px_rgba(59,130,246,0.3)]" : "bg-violet-100/50 text-violet-600 border border-violet-200"}`}>
+                        <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider animate-in fade-in slide-in-from-left-4 duration-500 ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20 shadow-[0_0_15px_-3px_rgba(59,130,246,0.3)]" : "bg-blue-100/50 text-blue-600 border border-blue-200"}`}>
                           <Activity className="w-3.5 h-3.5 animate-pulse" />
                           <span>Performance Audit</span>
                         </div>
                         <h3 className={`${data?.report === "All" ? "text-3xl lg:text-5xl" : "text-2xl lg:text-4xl"} font-black tracking-tight animate-in fade-in slide-in-from-left-6 duration-700 delay-75 ${darkMode ? "text-white" : "text-slate-900"}`}>
-                          Technical <span className="bg-clip-text text-transparent bg-gradient-to-r from-violet-500 to-indigo-500">Performance</span>
+                          Technical <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-indigo-500">Performance</span>
                         </h3>
                         <p className={`text-sm leading-relaxed opacity-70 animate-in fade-in slide-in-from-left-8 duration-700 delay-150 ${darkMode ? "text-slate-300" : "text-slate-600"}`}>
                           Core vitals and speed configurations analysis for a faster user experience.
@@ -168,7 +168,7 @@ export default function Technical_Performance() {
                         <div className={`w-px h-4 ${darkMode ? "bg-slate-800" : "bg-slate-200 hidden md:block"}`}></div>
                         <button
                           onClick={() => setSelectedMetricInfo(scoreCalculationInfo)}
-                          className={`group flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-300 border ${darkMode ? "bg-slate-800/50 border-slate-700 hover:border-violet-500/50 text-violet-400 hover:text-violet-300 shadow-lg shadow-violet-500/5" : "bg-violet-50 border-violet-100 hover:border-violet-300 text-violet-600 shadow-sm"}`}
+                          className={`group flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-300 border ${darkMode ? "bg-slate-800/50 border-slate-700 hover:border-blue-500/50 text-blue-400 hover:text-blue-300 shadow-lg shadow-blue-500/5" : "bg-blue-50 border-blue-100 hover:border-blue-300 text-blue-600 shadow-sm"}`}
                         >
                           <Info size={14} className="transition-transform group-hover:rotate-12" />
                           <span>Methodology</span>
@@ -178,7 +178,7 @@ export default function Technical_Performance() {
 
                     {/* Circular Progress */}
                     <div className="relative flex-shrink-0 group cursor-default order-1 md:order-2 animate-in zoom-in duration-1000 delay-300">
-                      <div className={`absolute -inset-10 rounded-full blur-[40px] opacity-30 transition-all duration-700 group-hover:opacity-50 group-hover:blur-[60px] ${overallScore >= 80 ? "bg-violet-500" : overallScore >= 50 ? "bg-amber-500" : "bg-rose-500"}`}></div>
+                      <div className={`absolute -inset-10 rounded-full blur-[40px] opacity-30 transition-all duration-700 group-hover:opacity-50 group-hover:blur-[60px] ${overallScore >= 80 ? "bg-emerald-500" : overallScore >= 50 ? "bg-amber-500" : "bg-rose-500"}`}></div>
                       <div className="relative z-10">
                         <CircularProgress value={overallScore} size={data?.report === "All" ? 200 : 160} stroke={16} />
                         <div className="absolute inset-0 flex items-center justify-center flex-col gap-0.5">
@@ -208,13 +208,13 @@ export default function Technical_Performance() {
                 <div className={`flex items-center p-1 rounded-lg border ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}>
                   <button
                     onClick={() => setSelectedSource("lab")}
-                    className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${selectedSource === "lab" ? (darkMode ? "bg-violet-600 text-white shadow-sm" : "bg-violet-50 text-violet-600 shadow-sm") : (darkMode ? "text-slate-400 hover:text-slate-200" : "text-slate-500 hover:text-slate-700")}`}
+                    className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${selectedSource === "lab" ? (darkMode ? "bg-blue-600 text-white shadow-sm" : "bg-blue-50 text-blue-600 shadow-sm") : (darkMode ? "text-slate-400 hover:text-slate-200" : "text-slate-500 hover:text-slate-700")}`}
                   >
                     Lab Data
                   </button>
                   <button
                     onClick={() => setSelectedSource("field")}
-                    className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${selectedSource === "field" ? (darkMode ? "bg-violet-600 text-white shadow-sm" : "bg-violet-50 text-violet-600 shadow-sm") : (darkMode ? "text-slate-400 hover:text-slate-200" : "text-slate-500 hover:text-slate-700")}`}
+                    className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${selectedSource === "field" ? (darkMode ? "bg-blue-600 text-white shadow-sm" : "bg-blue-50 text-blue-600 shadow-sm") : (darkMode ? "text-slate-400 hover:text-slate-200" : "text-slate-500 hover:text-slate-700")}`}
                   >
                     Real User
                   </button>
@@ -363,9 +363,9 @@ export default function Technical_Performance() {
                           <ScoreBadge status={tech.Compression.status} value={tech.Compression.meta?.value} darkMode={darkMode} />
                         </div>
                       </div>
-                      <div className={`p-3 rounded-xl border ${darkMode ? "bg-violet-900/10 border-violet-800/30" : "bg-violet-50 border-violet-100"}`}>
-                        <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-violet-400" : "text-violet-600"}`}>Compressed</p>
-                        <p className={`text-xl font-black ${darkMode ? "text-violet-300" : "text-violet-700"}`}>{tech.Compression.meta?.compressedCount}</p>
+                      <div className={`p-3 rounded-xl border ${darkMode ? "bg-emerald-900/10 border-emerald-800/30" : "bg-emerald-50 border-emerald-100"}`}>
+                        <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>Compressed</p>
+                        <p className={`text-xl font-black ${darkMode ? "text-emerald-300" : "text-emerald-700"}`}>{tech.Compression.meta?.compressedCount}</p>
                       </div>
                       <div className={`p-3 rounded-xl border ${darkMode ? "bg-rose-900/10 border-rose-800/30" : "bg-rose-50 border-rose-100"}`}>
                         <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>Uncompressed</p>
@@ -414,9 +414,9 @@ export default function Technical_Performance() {
                           <ScoreBadge status={tech.Caching.status} value={tech.Caching.meta?.value} darkMode={darkMode} />
                         </div>
                       </div>
-                      <div className={`p-3 rounded-xl border ${darkMode ? "bg-violet-900/10 border-violet-800/30" : "bg-violet-50 border-violet-100"}`}>
-                        <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-violet-400" : "text-violet-600"}`}>Cached</p>
-                        <p className={`text-xl font-black ${darkMode ? "text-violet-300" : "text-violet-700"}`}>{tech.Caching.meta?.cachedCount}</p>
+                      <div className={`p-3 rounded-xl border ${darkMode ? "bg-emerald-900/10 border-emerald-800/30" : "bg-emerald-50 border-emerald-100"}`}>
+                        <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>Cached</p>
+                        <p className={`text-xl font-black ${darkMode ? "text-emerald-300" : "text-emerald-700"}`}>{tech.Caching.meta?.cachedCount}</p>
                       </div>
                       <div className={`p-3 rounded-xl border ${darkMode ? "bg-rose-900/10 border-rose-800/30" : "bg-rose-50 border-rose-100"}`}>
                         <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>Uncached</p>
@@ -477,7 +477,7 @@ export default function Technical_Performance() {
                             {tech.Redirect_Chains.meta.redirectDetails.map((url, idx) => (
                               <div key={idx} className="flex flex-col items-start">
                                 <div className="flex items-center gap-2 w-full">
-                                  <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${idx === tech.Redirect_Chains.meta.redirectDetails.length - 1 ? "bg-violet-500" : "bg-violet-500"}`} />
+                                  <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${idx === tech.Redirect_Chains.meta.redirectDetails.length - 1 ? "bg-emerald-500" : "bg-blue-500"}`} />
                                   <p className={`text-[10px] font-mono truncate flex-grow ${darkMode ? "text-gray-300" : "text-gray-600"}`} title={url}>
                                     {url}
                                   </p>
@@ -522,9 +522,9 @@ export default function Technical_Performance() {
                       <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>Blocking</p>
                       <p className={`text-xl font-black ${darkMode ? "text-rose-300" : "text-rose-700"}`}>{tech.Render_Blocking.meta?.blockingCount}</p>
                     </div>
-                    <div className={`p-3 rounded-xl border ${darkMode ? "bg-blue-900/10 border-blue-800/30" : "bg-violet-50 border-violet-100"}`}>
-                      <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-violet-400" : "text-violet-600"}`}>Target</p>
-                      <p className={`text-xl font-black ${darkMode ? "text-violet-300" : "text-violet-700"}`}>{tech.Render_Blocking.meta?.target}</p>
+                    <div className={`p-3 rounded-xl border ${darkMode ? "bg-blue-900/10 border-blue-800/30" : "bg-blue-50 border-blue-100"}`}>
+                      <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-blue-400" : "text-blue-600"}`}>Target</p>
+                      <p className={`text-xl font-black ${darkMode ? "text-blue-300" : "text-blue-700"}`}>{tech.Render_Blocking.meta?.target}</p>
                     </div>
                   </div>
                 </OptimizationCard>
@@ -555,14 +555,14 @@ export default function Technical_Performance() {
                     <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
                       <div className="flex justify-between items-center mb-3">
                         <p className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Images</p>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${darkMode ? "bg-blue-900/20 text-violet-400" : "bg-violet-50 text-violet-600"}`}>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${darkMode ? "bg-blue-900/20 text-blue-400" : "bg-blue-50 text-blue-600"}`}>
                           {tech.Resource_Optimization.meta?.totalImages || 0} Total
                         </span>
                       </div>
                       <div className="space-y-2">
                         <div className="flex justify-between items-center">
                           <span className={`text-[11px] ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Optimized</span>
-                          <span className={`text-xs font-bold ${darkMode ? "text-violet-400" : "text-violet-600"}`}>{tech.Resource_Optimization.meta?.optimizedImagesCount || 0}</span>
+                          <span className={`text-xs font-bold ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>{tech.Resource_Optimization.meta?.optimizedImagesCount || 0}</span>
                         </div>
                         <div className="flex justify-between items-center">
                           <span className={`text-[11px] ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Heavy/Large</span>
@@ -575,14 +575,14 @@ export default function Technical_Performance() {
                     <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
                       <div className="flex justify-between items-center mb-3">
                         <p className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Scripts</p>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${darkMode ? "bg-blue-900/20 text-violet-400" : "bg-violet-50 text-violet-600"}`}>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${darkMode ? "bg-blue-900/20 text-blue-400" : "bg-blue-50 text-blue-600"}`}>
                           {tech.Resource_Optimization.meta?.totalScripts || 0} Total
                         </span>
                       </div>
                       <div className="space-y-2">
                         <div className="flex justify-between items-center">
                           <span className={`text-[11px] ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Minified</span>
-                          <span className={`text-xs font-bold ${darkMode ? "text-violet-400" : "text-violet-600"}`}>{tech.Resource_Optimization.meta?.minifiedScriptsCount || 0}</span>
+                          <span className={`text-xs font-bold ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>{tech.Resource_Optimization.meta?.minifiedScriptsCount || 0}</span>
                         </div>
                         <div className="flex justify-between items-center">
                           <span className={`text-[11px] ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Unminified</span>

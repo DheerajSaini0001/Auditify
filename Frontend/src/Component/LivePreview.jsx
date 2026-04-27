@@ -43,7 +43,7 @@ const LivePreview = ({ data, showInFullAudit = true, variant = "card" }) => {
                             {isMobile ? "Mobile Viewport" : "Desktop Viewport"}
                         </h3>
                         <div className="flex items-center gap-2">
-                            <span className={`w-1.5 h-1.5 rounded-full ${isScanning ? "bg-amber-500 animate-pulse" : "bg-violet-500"}`}></span>
+                            <span className={`w-1.5 h-1.5 rounded-full ${isScanning ? "bg-amber-500 animate-pulse" : "bg-emerald-500"}`}></span>
                             <span className={`text-xs font-medium ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
                                 {statusText}
                             </span>
@@ -81,12 +81,12 @@ const LivePreview = ({ data, showInFullAudit = true, variant = "card" }) => {
                         {(isScanning && screenshotSrc) && (
                             <div className="absolute inset-0 z-30 pointer-events-none">
                                 {/* Green Tint */}
-                                <div className="absolute inset-0 bg-violet-500/5"></div>
+                                <div className="absolute inset-0 bg-emerald-500/5"></div>
                                 {/* Grid Overlay */}
-                                <div className="w-full h-full bg-[linear-gradient(rgba(139,92,246,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(139,92,246,0.1)_1px,transparent_1px)] bg-[size:20px_20px] opacity-20"></div>
+                                <div className="w-full h-full bg-[linear-gradient(rgba(16,185,129,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(16,185,129,0.1)_1px,transparent_1px)] bg-[size:20px_20px] opacity-20"></div>
 
                                 {/* Scanning Line */}
-                                <div className="absolute top-0 left-0 w-[3px] h-full bg-gradient-to-b from-transparent via-violet-500 to-transparent shadow-[0_0_20px_rgba(139,92,246,0.6)] animate-[scan-x_2s_linear_infinite]"></div>
+                                <div className="absolute top-0 left-0 w-[3px] h-full bg-gradient-to-b from-transparent via-emerald-500 to-transparent shadow-[0_0_20px_rgba(16,185,129,0.6)] animate-[scan-x_2s_linear_infinite]"></div>
                             </div>
                         )}
 
@@ -105,17 +105,17 @@ const LivePreview = ({ data, showInFullAudit = true, variant = "card" }) => {
                                 {/* Scanning Overlay - Inside Placeholder */}
                                 <div className="absolute inset-0 z-0 pointer-events-none">
                                     {/* Green Tint */}
-                                    <div className="absolute inset-0 bg-violet-500/5"></div>
+                                    <div className="absolute inset-0 bg-emerald-500/5"></div>
                                     {/* Grid Overlay */}
-                                    <div className="w-full h-full bg-[linear-gradient(rgba(139,92,246,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(139,92,246,0.1)_1px,transparent_1px)] bg-[size:20px_20px] opacity-20"></div>
+                                    <div className="w-full h-full bg-[linear-gradient(rgba(16,185,129,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(16,185,129,0.1)_1px,transparent_1px)] bg-[size:20px_20px] opacity-20"></div>
 
                                     {/* Scanning Line */}
-                                    <div className="absolute top-0 left-0 w-[3px] h-full bg-gradient-to-b from-transparent via-violet-500 to-transparent shadow-[0_0_20px_rgba(139,92,246,0.6)] animate-[scan-x_2s_linear_infinite]"></div>
+                                    <div className="absolute top-0 left-0 w-[3px] h-full bg-gradient-to-b from-transparent via-emerald-500 to-transparent shadow-[0_0_20px_rgba(16,185,129,0.6)] animate-[scan-x_2s_linear_infinite]"></div>
                                 </div>
 
                                 <div className="relative z-10 mb-3">
-                                    <div className="absolute inset-0 bg-violet-500 blur-xl opacity-20 animate-pulse"></div>
-                                    <div className={`relative p-3 rounded-full border shadow-sm ${darkMode ? "bg-slate-800 border-slate-700 text-violet-400" : "bg-white border-violet-100 text-violet-600"}`}>
+                                    <div className="absolute inset-0 bg-emerald-500 blur-xl opacity-20 animate-pulse"></div>
+                                    <div className={`relative p-3 rounded-full border shadow-sm ${darkMode ? "bg-slate-800 border-slate-700 text-emerald-400" : "bg-white border-emerald-100 text-emerald-600"}`}>
                                         <ScanLine className="w-6 h-6 animate-pulse" strokeWidth={1.5} />
                                     </div>
                                 </div>

@@ -9,7 +9,7 @@ export default function HelpCenterPage() {
   const [search, setSearch] = useState("");
 
   const containerClass = darkMode
-    ? "min-h-screen pb-24 flex flex-col items-center bg-[#020617] text-white relative font-sans"
+    ? "min-h-screen pb-24 flex flex-col items-center bg-[#0B1120] text-white relative font-sans"
     : "min-h-screen pb-24 flex flex-col items-center bg-[#F8FAFC] text-slate-900 relative font-sans";
 
   const faqs = [
@@ -41,7 +41,7 @@ export default function HelpCenterPage() {
       {/* Cool 3D-ish Hero Section */}
       <div className={`relative w-full py-24 px-4 sm:px-8 border-b overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-white border-slate-200"}`}>
         <div className={`absolute top-0 right-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-[120px] pointer-events-none mix-blend-screen`}></div>
-        <div className={`absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-violet-500/20 rounded-full blur-[140px] pointer-events-none mix-blend-screen`}></div>
+        <div className={`absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-blue-500/20 rounded-full blur-[140px] pointer-events-none mix-blend-screen`}></div>
 
         <div className="max-w-4xl mx-auto relative z-10 text-center space-y-8">
           <div className="inline-flex items-center justify-center p-4 rounded-3xl bg-gradient-to-br from-purple-500 to-indigo-600 shadow-2xl shadow-indigo-500/40 mb-4 animate-bounce hover:animate-none transition-all cursor-pointer">
@@ -55,7 +55,7 @@ export default function HelpCenterPage() {
           </p>
 
           <div className="relative max-w-xl mx-auto mt-12 group">
-            <div className={`absolute -inset-1 rounded-2xl blur-lg transition duration-500 group-hover:duration-200 ${darkMode ? "bg-gradient-to-r from-violet-500 to-purple-600 opacity-20 group-hover:opacity-60" : "bg-slate-300 opacity-50"}`}></div>
+            <div className={`absolute -inset-1 rounded-2xl blur-lg transition duration-500 group-hover:duration-200 ${darkMode ? "bg-gradient-to-r from-blue-500 to-purple-600 opacity-20 group-hover:opacity-60" : "bg-slate-300 opacity-50"}`}></div>
             <div className={`relative flex items-center px-6 py-4 rounded-2xl border ${darkMode ? "bg-slate-900 border-slate-700 hover:border-slate-600" : "bg-white border-slate-200 shadow-lg"}`}>
               <Search className="text-slate-400 w-6 h-6 mr-4" />
               <input 

@@ -79,7 +79,7 @@ const ReportLayout = () => {
   if (isFetching) {
     return (
       <div className={`flex h-screen w-full items-center justify-center ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}>
-        <Loader2 className="h-10 w-10 animate-spin text-violet-500" />
+        <Loader2 className="h-10 w-10 animate-spin text-emerald-500" />
       </div>
     );
   }

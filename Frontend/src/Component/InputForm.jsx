@@ -60,7 +60,7 @@ const CustomDropdown = ({ value, onChange, options, icon, darkMode, disabled }) 
                   } ${value === option.value ? (darkMode ? "bg-slate-800 text-white" : "bg-slate-50 text-black") : ""}`}
               >
                 {/* Optional: Add check icon or dot for selected state */}
-                {value === option.value && <div className="w-1.5 h-1.5 rounded-full bg-violet-500"></div>}
+                {value === option.value && <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>}
                 {option.label}
               </div>
             ))}
@@ -195,7 +195,7 @@ export default function InputForm() {
   const baseClass ="flex flex-col items-center justify-start min-h-screen relative font-sans px-4 pt-24";
 
 const containerClass = darkMode
-  ? `${baseClass} bg-[#020617] text-white`
+  ? `${baseClass} bg-[#0B1120] text-white`
   : `${baseClass} bg-slate-50 text-slate-900`; 
   return (
     <div className={containerClass}>
@@ -209,7 +209,7 @@ const containerClass = darkMode
         <div className="text-center mb-12 space-y-5 animate-in fade-in slide-in-from-bottom-5 duration-700">
 
           <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight">
-            Analyze your <span className="bg-clip-text text-transparent bg-gradient-to-r from-violet-400 to-indigo-500">Website Health</span>
+            Analyze your <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500">Website Health</span>
           </h1>
 
           <p className={`max-w-2xl mx-auto text-lg ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
@@ -259,7 +259,7 @@ const containerClass = darkMode
                     { value: "Desktop", label: "Desktop" },
                     { value: "Mobile", label: "Mobile" },
                   ]}
-                  icon={device === "Desktop" ? <Monitor className="w-4 h-4 text-violet-500" /> : <Smartphone className="w-4 h-4 text-purple-500" />}
+                  icon={device === "Desktop" ? <Monitor className="w-4 h-4 text-blue-500" /> : <Smartphone className="w-4 h-4 text-purple-500" />}
                   darkMode={darkMode}
                   disabled={loading}
                 />
@@ -280,7 +280,7 @@ const containerClass = darkMode
                     { value: "Conversion & Lead Flow", label: "Conversion & Lead Flow" },
                     { value: "AIO (AI-Optimization) Readiness", label: "AIO Readiness" },
                   ]}
-                  icon={<Settings className="w-4 h-4 text-violet-500" />}
+                  icon={<Settings className="w-4 h-4 text-emerald-500" />}
                   darkMode={darkMode}
                   disabled={loading}
                 />
@@ -292,7 +292,7 @@ const containerClass = darkMode
                 disabled={loading}
                 className={`
                   hidden lg:flex items-center justify-center gap-2 px-6 py-3 ml-2 rounded-xl font-bold text-white shadow-lg transition-all 
-                  bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-400 hover:to-purple-500 hover:shadow-violet-500/25 active:scale-95
+                  bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 hover:shadow-emerald-500/25 active:scale-95
                   disabled:opacity-70 disabled:cursor-wait min-w-[140px]
                 `}
               >
@@ -308,7 +308,7 @@ const containerClass = darkMode
             disabled={loading}
             className={`
               lg:hidden w-full mt-4 flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-bold text-white shadow-lg transition-all 
-              bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-400 hover:to-purple-500 active:scale-95
+              bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 active:scale-95
               disabled:opacity-70 disabled:cursor-wait
             `}
           >
@@ -340,10 +340,10 @@ const containerClass = darkMode
       {showCaptcha && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 backdrop-blur-md transition-all duration-300">
           <div className={`
-            ${darkMode ? "bg-slate-900 border-slate-700 shadow-violet-500/10" : "bg-white border-slate-100 shadow-slate-200/50"}
+            ${darkMode ? "bg-slate-900 border-slate-700 shadow-emerald-500/10" : "bg-white border-slate-100 shadow-slate-200/50"}
             border border-solid rounded-[2.5rem] shadow-2xl p-8 flex flex-col items-center gap-6 max-w-sm w-full mx-4 animate-in zoom-in-95 duration-200
           `}>
-            <div className={`p-5 rounded-full ${darkMode ? "bg-violet-500/10 text-violet-400" : "bg-violet-50 text-violet-600"}`}>
+            <div className={`p-5 rounded-full ${darkMode ? "bg-emerald-500/10 text-emerald-400" : "bg-emerald-50 text-emerald-600"}`}>
               <Monitor className="w-10 h-10" />
             </div>
 
@@ -359,7 +359,7 @@ const containerClass = darkMode
               <button
                 onClick={handleSubmitWithCaptcha}
                 disabled={loading || !captchaAnswer}
-                className="mt-4 w-full py-3 bg-violet-500 hover:bg-violet-600 text-white font-bold rounded-xl transition-all disabled:opacity-50"
+                className="mt-4 w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl transition-all disabled:opacity-50"
               >
                 {loading ? "Verifying..." : "Verify & Run Audit"}
               </button>

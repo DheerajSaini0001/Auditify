@@ -43,11 +43,11 @@ export default function Sidebar({ darkMode }) {
 
   // Styles
   const sidebarClass = darkMode
-    ? "bg-[#020617] border-r border-slate-800 text-slate-300"
+    ? "bg-[#0B1120] border-r border-slate-800 text-slate-300"
     : "bg-white border-r border-slate-200 text-slate-600";
 
   const headerClass = darkMode
-    ? "border-b border-slate-800 bg-[#020617]"
+    ? "border-b border-slate-800 bg-[#0B1120]"
     : "border-b border-slate-200 bg-white";
 
   const getItemClass = (isActive, isDisabled) => {
@@ -56,8 +56,8 @@ export default function Sidebar({ darkMode }) {
     }
     if (isActive) {
       return darkMode
-        ? "bg-violet-500/10 text-violet-400 border-r-2 border-violet-500"
-        : "bg-violet-50 text-violet-700 border-r-2 border-violet-500";
+        ? "bg-emerald-500/10 text-emerald-400 border-r-2 border-emerald-500"
+        : "bg-emerald-50 text-emerald-700 border-r-2 border-emerald-500";
     }
     return darkMode
       ? "hover:bg-slate-800 hover:text-white"
@@ -69,7 +69,7 @@ export default function Sidebar({ darkMode }) {
 
       {/* Header */}
       <div className={`flex items-center gap-3 p-6 shrink-0 ${headerClass}`}>
-        <div className={`p-2 rounded-lg ${darkMode ? "bg-violet-500/10 text-violet-400" : "bg-violet-50 text-violet-600"}`}>
+        <div className={`p-2 rounded-lg ${darkMode ? "bg-emerald-500/10 text-emerald-400" : "bg-emerald-50 text-emerald-600"}`}>
           <BarChart2 className="w-6 h-6" />
         </div>
         <Link to="/report" replace className="block">
@@ -115,7 +115,7 @@ export default function Sidebar({ darkMode }) {
       </aside>
 
       {/* Footer / Actions */}
-      <div className={`p-3 border-t space-y-3 ${darkMode ? "border-slate-800 bg-[#020617]" : "border-slate-200 bg-white"}`}>
+      <div className={`p-3 border-t space-y-3 ${darkMode ? "border-slate-800 bg-[#0B1120]" : "border-slate-200 bg-white"}`}>
         {data?.sectionScore ? (
           <>
             <button
@@ -153,7 +153,7 @@ export default function Sidebar({ darkMode }) {
                   navigate("/login", { state: { from: location } });
                 }
               }}
-              className="group w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-white bg-violet-600 hover:bg-violet-500 shadow-md shadow-violet-600/20 transition-all hover:shadow-violet-600/30 active:scale-[0.98]"
+              className="group w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-500 shadow-md shadow-blue-600/20 transition-all hover:shadow-blue-600/30 active:scale-[0.98]"
             >
               <FileText className="w-4 h-4" />
               <span>Download Report</span>
@@ -171,8 +171,8 @@ export default function Sidebar({ darkMode }) {
             <button
               onClick={() => navigate("/bulk-audit")}
               className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-white shadow-lg transition-all 
-              bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-400 hover:to-indigo-400 active:scale-[0.98]
-              shadow-violet-500/20`}
+              bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-400 hover:to-indigo-400 active:scale-[0.98]
+              shadow-blue-500/20`}
             >
               <NotebookPen className="w-4 h-4" />
               <span>Back to List</span>
@@ -181,8 +181,8 @@ export default function Sidebar({ darkMode }) {
             <button
               onClick={handleGoHome}
               className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-white shadow-lg transition-all 
-              bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-400 hover:to-purple-400 active:scale-[0.98]
-              shadow-violet-500/20`}
+              bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 active:scale-[0.98]
+              shadow-emerald-500/20`}
             >
               <Plus className="w-5 h-5" />
               <span>Start New Audit</span>

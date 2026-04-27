@@ -6,10 +6,6 @@
 import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 
-// Stealth modules
-import { applyStealthToPage, STEALTH_CHROME_ARGS, PROFILES } from './utils/stealth/stealthLauncher.js';
-import { humanMouseMove, humanDwell, mouseJiggle } from './utils/stealth/humanBehavior.js';
-
 // Apply stealth plugin BEFORE any browser launch
 puppeteer.use(StealthPlugin());
 
@@ -24,6 +20,10 @@ const URLS = [
   'https://statewideautogroup.com.au',
 ];
 
+const USER_AGENT =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+
+const VIEWPORT = { width: 1366, height: 768 };
 const MAX_RETRIES = 2;
 
 // ======================== HELPERS ===========================
@@ -53,26 +53,28 @@ function pickProxy(exclude = null) {
  * Returns { browser, page }.
  */
 async function launchBrowser(proxy = null) {
-  const profile = PROFILES.desktop;
   const args = [
-    ...STEALTH_CHROME_ARGS,
-    `--window-size=${profile.viewport.width},${profile.viewport.height}`,
+    '--disable-blink-features=AutomationControlled',
+    '--no-sandbox',
+    '--disable-setuid-sandbox',
   ];
   if (proxy) args.unshift(`--proxy-server=${proxy}`);
 
   const browser = await puppeteer.launch({
-    headless: true,
+    headless: 'new',
     args,
-    env: {
-      ...process.env,
-      TZ: "America/New_York",
-    },
   });
 
   const page = await browser.newPage();
 
-  // ═══ Apply all stealth patches ═══
-  await applyStealthToPage(page, "desktop");
+  // Realistic fingerprint
+  await page.setUserAgent(USER_AGENT);
+  await page.setViewport(VIEWPORT);
+
+  // Strip the webdriver flag
+  await page.evaluateOnNewDocument(() => {
+    Object.defineProperty(navigator, 'webdriver', { get: () => false });
+  });
 
   return { browser, page };
 }
@@ -110,14 +112,14 @@ async function scrapeUrl(url) {
         timeout: 30000,
       });
 
-      // Human-like bezier mouse movement
-      await humanMouseMove(page, randInt(200, 800), randInt(100, 500));
+      // Simulate small mouse movement (human-like)
+      await page.mouse.move(randInt(100, 600), randInt(100, 400));
 
-      // Post-load dwell (reading time)
-      await humanDwell(page, 1000, 3000);
+      // Post-load random delay (1–2 s)
+      await delay(randInt(1000, 2000));
 
-      // Mouse jiggle for realism
-      await mouseJiggle(page);
+      // Random micro-interaction delay
+      await delay(Math.random() * 2000 + 1000);
 
       // Extract data
       const title = await page.title();

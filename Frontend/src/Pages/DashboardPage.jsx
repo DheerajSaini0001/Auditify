@@ -157,15 +157,15 @@ const DashboardPage = () => {
   );
 
   return (
-    <div className={`min-h-screen pt-24 pb-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300 ${darkMode ? "bg-[#020617] text-white" : "bg-slate-50 text-slate-900"}`}>
+    <div className={`min-h-screen pt-24 pb-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300 ${darkMode ? "bg-[#0a0a0f] text-white" : "bg-slate-50 text-slate-900"}`}>
       <div className="max-w-7xl mx-auto space-y-10">
         
         {/* Header Area */}
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <LayoutDashboard className="text-violet-500" size={20} />
-              <span className="text-violet-500 font-black tracking-widest text-[10px] uppercase">Command Center</span>
+              <LayoutDashboard className="text-blue-500" size={20} />
+              <span className="text-blue-500 font-black tracking-widest text-[10px] uppercase">Command Center</span>
             </div>
             <h1 className="text-4xl font-black tracking-tight">Welcome back, {user?.name?.split(' ')[0]}</h1>
             <p className={`mt-1 text-sm font-medium ${darkMode ? "text-gray-500" : "text-slate-400"}`}>Manage your verified properties and audit history.</p>
@@ -176,11 +176,11 @@ const DashboardPage = () => {
         <section className="space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-black flex items-center gap-2">
-              <Globe className="text-violet-500" size={20} /> Your Websites
+              <Globe className="text-blue-500" size={20} /> Your Websites
             </h2>
             <div className="flex flex-wrap items-center gap-3">
               <div className="relative group min-w-[240px]">
-                <Search className={`absolute left-4 top-1/2 -translate-y-1/2 ${darkMode ? "text-gray-500" : "text-slate-400"} group-focus-within:text-violet-500 transition-colors`} size={16} />
+                <Search className={`absolute left-4 top-1/2 -translate-y-1/2 ${darkMode ? "text-gray-500" : "text-slate-400"} group-focus-within:text-blue-500 transition-colors`} size={16} />
                 <input 
                   type="text" 
                   value={searchInput}
@@ -188,8 +188,8 @@ const DashboardPage = () => {
                   placeholder="Search websites..." 
                   className={`w-full pl-11 pr-10 py-3 rounded-2xl text-sm font-medium outline-none transition-all border ${
                     darkMode 
-                      ? "bg-white/5 border-white/5 focus:bg-white/10 focus:border-violet-500/30 text-white" 
-                      : "bg-white border-slate-200 focus:border-violet-500/30 text-slate-900"
+                      ? "bg-white/5 border-white/5 focus:bg-white/10 focus:border-blue-500/30 text-white" 
+                      : "bg-white border-slate-200 focus:border-blue-500/30 text-slate-900"
                   }`}
                 />
                 {searchInput && (
@@ -206,7 +206,7 @@ const DashboardPage = () => {
                 <button 
                   onClick={handleSync}
                   className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-sm transition-all border ${
-                    darkMode ? "bg-white/5 border-white/5 hover:bg-violet-500/10 text-violet-500" : "bg-white border-slate-200 hover:bg-violet-50 text-violet-600"
+                    darkMode ? "bg-white/5 border-white/5 hover:bg-blue-500/10 text-blue-500" : "bg-white border-slate-200 hover:bg-blue-50 text-blue-600"
                   }`}
                   title="Force Sync with GSC"
                   disabled={syncing}
@@ -217,7 +217,7 @@ const DashboardPage = () => {
               )}
               <Link 
                 to="/dashboard/add-website"
-                className="flex items-center gap-2 px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-2xl font-black text-sm shadow-xl shadow-violet-500/20 transition-all active:scale-95"
+                className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-sm shadow-xl shadow-blue-500/20 transition-all active:scale-95"
               >
                 <Plus size={18} /> Add Website
               </Link>
@@ -247,11 +247,11 @@ const DashboardPage = () => {
                       <tr>
                         <td colSpan="6" className="px-8 py-16 text-center">
                           <div className="flex flex-col items-center gap-4">
-                            <div className="w-16 h-16 rounded-full bg-violet-500/10 flex items-center justify-center text-violet-500">
+                            <div className="w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
                               <Globe size={32} />
                             </div>
                             <p className="font-bold text-gray-500">No websites added yet.</p>
-                            <Link to="/dashboard/add-website" className="text-violet-500 font-bold underline">Add your first website to start auditing</Link>
+                            <Link to="/dashboard/add-website" className="text-blue-500 font-bold underline">Add your first website to start auditing</Link>
                           </div>
                         </td>
                       </tr>
@@ -269,7 +269,7 @@ const DashboardPage = () => {
                           animate={{ opacity: 1 }}
                           exit={{ opacity: 0 }}
                           key={site._id}
-                          className="group hover:bg-violet-500/[0.02] transition-colors"
+                          className="group hover:bg-blue-500/[0.02] transition-colors"
                         >
                           <td className="px-8 py-5">
                             <div className="flex items-center gap-4">
@@ -287,7 +287,7 @@ const DashboardPage = () => {
                           </td>
                           <td className="px-8 py-5 text-center">
                             {site.verified ? (
-                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-violet-500/10 text-violet-500 text-[9px] font-black uppercase tracking-wider">
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-500 text-[9px] font-black uppercase tracking-wider">
                                 <CheckCircle size={10} /> Verified
                               </span>
                             ) : (
@@ -297,7 +297,7 @@ const DashboardPage = () => {
                             )}
                           </td>
                           <td className="px-8 py-5 text-center">
-                            <span className="text-xs font-bold text-violet-500 uppercase">
+                            <span className="text-xs font-bold text-blue-500 uppercase">
                               {site.permissionLevel?.replace('site', '') || 'Owner'}
                             </span>
                           </td>
@@ -323,7 +323,7 @@ const DashboardPage = () => {
                                 onClick={() => navigate(`/?url=${site.url}`)}
                                 className={`flex items-center gap-2 px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${
                                   site.verified 
-                                    ? "bg-violet-600 text-white hover:bg-violet-700 shadow-md shadow-violet-500/10" 
+                                    ? "bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-500/10" 
                                     : "bg-slate-100 text-slate-500 hover:text-slate-900 border border-slate-200"
                                 }`}
                               >
@@ -375,10 +375,10 @@ const DashboardPage = () => {
                         <tr><td colSpan="6" className="px-8 py-16 text-center text-gray-500 font-bold italic">No scan history found. Run an audit to see results here.</td></tr>
                       ) : (
                         history.slice(0, 10).map((audit) => (
-                           <tr key={audit._id} className="group hover:bg-violet-500/[0.02] transition-colors">
+                           <tr key={audit._id} className="group hover:bg-blue-500/[0.02] transition-colors">
                               <td className="px-8 py-5">
                                  <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center text-violet-500 group-hover:scale-110 transition-transform"><FileText size={14} /></div>
+                                    <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform"><FileText size={14} /></div>
                                     <div className="flex flex-col">
                                        <span className="font-bold text-sm truncate max-w-xs">{audit.url?.replace(/^https?:\/\//, '') || 'N/A'}</span>
                                        <span className={`text-[10px] font-medium ${darkMode ? "text-gray-500" : "text-slate-400"}`}>{audit.device}</span>
@@ -392,8 +392,8 @@ const DashboardPage = () => {
                               </td>
                               <td className="px-8 py-5 text-center">
                                  <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
-                                    audit.status === 'success' ? (darkMode ? "bg-violet-500/10 text-violet-500" : "bg-violet-50 text-violet-600") :
-                                    audit.status === 'pending' ? (darkMode ? "bg-violet-500/10 text-violet-400" : "bg-violet-50 text-violet-600") :
+                                    audit.status === 'success' ? (darkMode ? "bg-emerald-500/10 text-emerald-500" : "bg-emerald-50 text-emerald-600") :
+                                    audit.status === 'pending' ? (darkMode ? "bg-blue-500/10 text-blue-400" : "bg-blue-50 text-blue-600") :
                                     (darkMode ? "bg-red-500/10 text-red-500" : "bg-red-50 text-red-600")
                                  }`}>
                                     {audit.status === 'pending' && <RefreshCw size={10} className="animate-spin" />}
@@ -402,7 +402,7 @@ const DashboardPage = () => {
                               </td>
                               <td className="px-8 py-5 text-center">
                                  <div className={`inline-block px-3 py-1 rounded-lg font-black text-xs ${
-                                    (audit.score || 0) >= 90 ? "bg-violet-500/10 text-violet-500" :
+                                    (audit.score || 0) >= 90 ? "bg-emerald-500/10 text-emerald-500" :
                                     (audit.score || 0) >= 70 ? "bg-amber-500/10 text-amber-500" : "bg-red-500/10 text-red-500"
                                  }`}>
                                     {audit.status === 'success' ? (audit.score || 0) : '—'}
@@ -410,7 +410,7 @@ const DashboardPage = () => {
                               </td>
                               <td className="px-8 py-5 text-sm font-medium text-gray-500">{formatDate(audit.createdAt)}</td>
                               <td className="px-8 py-5 text-right">
-                                 <div className="flex justify-end gap-2 text-gray-400 group-hover:text-violet-500 transition-colors">
+                                 <div className="flex justify-end gap-2 text-gray-400 group-hover:text-blue-500 transition-colors">
                                     <button 
                                       onClick={() => {
                                         if (audit.status === 'failed') {
@@ -419,7 +419,7 @@ const DashboardPage = () => {
                                           navigate(`/report/${audit.reportId}`);
                                         }
                                       }}
-                                      className="p-2 hover:bg-violet-500/10 rounded-lg transition-all" 
+                                      className="p-2 hover:bg-blue-500/10 rounded-lg transition-all" 
                                       title={audit.status === 'pending' ? "View Progress" : "View Report"}
                                     >
                                       <ExternalLink size={16} />

@@ -93,7 +93,7 @@ const RegisterPage = () => {
   const strength = passwordStrength(formData.password);
 
   return (
-    <div className={`min-h-screen flex flex-col justify-center transition-colors duration-300 py-12 px-4 sm:px-6 lg:px-8 ${darkMode ? "bg-[#020617]" : "bg-gray-50"}`}>
+    <div className={`min-h-screen flex flex-col justify-center transition-colors duration-300 py-12 px-4 sm:px-6 lg:px-8 ${darkMode ? "bg-[#0a0a0f]" : "bg-gray-50"}`}>
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center mb-8">
           <Link to="/">
@@ -115,8 +115,8 @@ const RegisterPage = () => {
                 required
                 className={`block w-full pl-12 pr-4 py-3.5 rounded-2xl transition-all font-medium placeholder:text-gray-500 outline-none border ${
                   darkMode 
-                    ? "bg-white/5 border-white/5 focus:bg-white/10 focus:border-violet-500/50 text-white" 
-                    : "bg-gray-50 border-gray-100 focus:bg-white focus:border-violet-500 focus:ring-violet-500 text-gray-900"
+                    ? "bg-white/5 border-white/5 focus:bg-white/10 focus:border-emerald-500/50 text-white" 
+                    : "bg-gray-50 border-gray-100 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 text-gray-900"
                 }`}
                 placeholder="Full Name"
                 value={formData.name}
@@ -132,8 +132,8 @@ const RegisterPage = () => {
                 required
                 className={`block w-full pl-12 pr-4 py-3.5 rounded-2xl transition-all font-medium placeholder:text-gray-500 outline-none border ${
                   darkMode 
-                    ? "bg-white/5 border-white/5 focus:bg-white/10 focus:border-violet-500/50 text-white" 
-                    : "bg-gray-50 border-gray-100 focus:bg-white focus:border-violet-500 focus:ring-violet-500 text-gray-900"
+                    ? "bg-white/5 border-white/5 focus:bg-white/10 focus:border-emerald-500/50 text-white" 
+                    : "bg-gray-50 border-gray-100 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 text-gray-900"
                 }`}
                 placeholder="Email address"
                 value={formData.email}
@@ -149,8 +149,8 @@ const RegisterPage = () => {
                 required
                 className={`block w-full pl-12 pr-12 py-3.5 rounded-2xl transition-all font-medium placeholder:text-gray-500 outline-none border ${
                   darkMode 
-                    ? "bg-white/5 border-white/5 focus:bg-white/10 focus:border-violet-500/50 text-white" 
-                    : "bg-gray-50 border-gray-100 focus:bg-white focus:border-violet-500 focus:ring-violet-500 text-gray-900"
+                    ? "bg-white/5 border-white/5 focus:bg-white/10 focus:border-emerald-500/50 text-white" 
+                    : "bg-gray-50 border-gray-100 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 text-gray-900"
                 }`}
                 placeholder="Password (8+ chars, 1 Uppercase, 1 Digit)"
                 value={formData.password}
@@ -174,14 +174,14 @@ const RegisterPage = () => {
                             ? 'bg-red-500'
                             : strength === 3
                             ? 'bg-amber-500'
-                            : 'bg-violet-500'
+                            : 'bg-emerald-500'
                           : darkMode ? "bg-white/10" : 'bg-gray-100'
                       }`}
                     ></div>
                   ))}
                 </div>
                 <p className={`text-[10px] mt-1 font-bold uppercase tracking-wider ${
-                  strength <= 2 ? 'text-red-500' : strength === 3 ? 'text-amber-500' : 'text-violet-500'
+                  strength <= 2 ? 'text-red-500' : strength === 3 ? 'text-amber-500' : 'text-emerald-500'
                 }`}>
                   {strength <= 1 ? 'Too Weak' : strength === 2 ? 'Weak' : strength === 3 ? 'Fair' : 'Strong'}
                 </p>
@@ -196,8 +196,8 @@ const RegisterPage = () => {
                 required
                 className={`block w-full pl-12 pr-4 py-3.5 rounded-2xl transition-all font-medium placeholder:text-gray-500 outline-none border ${
                   darkMode 
-                    ? "bg-white/5 border-white/5 focus:bg-white/10 focus:border-violet-500/50 text-white" 
-                    : "bg-gray-50 border-gray-100 focus:bg-white focus:border-violet-500 focus:ring-violet-500 text-gray-900"
+                    ? "bg-white/5 border-white/5 focus:bg-white/10 focus:border-emerald-500/50 text-white" 
+                    : "bg-gray-50 border-gray-100 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 text-gray-900"
                 }`}
                 placeholder="Confirm Password"
                 value={formData.confirmPassword}
@@ -213,7 +213,7 @@ const RegisterPage = () => {
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-4 px-4 rounded-2xl font-bold text-white bg-violet-600 hover:bg-violet-700 disabled:opacity-50 transition-all shadow-lg shadow-violet-500/25 active:scale-[0.98]"
+              className="group relative w-full flex justify-center py-4 px-4 rounded-2xl font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 transition-all shadow-lg shadow-emerald-500/25 active:scale-[0.98]"
             >
               {loading ? <Loader2 className="animate-spin h-5 w-5" /> : 'Create Account'}
             </button>
@@ -221,7 +221,7 @@ const RegisterPage = () => {
 
           <p className={`mt-8 text-center text-sm font-bold uppercase tracking-tighter ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
             Already have an account?{' '}
-            <Link to="/login" state={{ from: location.state?.from }} className="text-violet-600 hover:text-violet-500 transition-colors ml-1 tracking-wider">Sign In</Link>
+            <Link to="/login" state={{ from: location.state?.from }} className="text-emerald-600 hover:text-emerald-500 transition-colors ml-1 tracking-wider">Sign In</Link>
           </p>
         </div>
       </div>

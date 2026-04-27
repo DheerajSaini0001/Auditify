@@ -113,7 +113,7 @@ const OtpVerifyPage = () => {
         <div className="text-center">
           <h2 className="text-3xl font-extrabold text-gray-900">Verify your email</h2>
           <p className="mt-2 text-sm text-gray-600">
-            We sent a 6-digit code to <span className="font-semibold text-violet-600">{email}</span>
+            We sent a 6-digit code to <span className="font-semibold text-blue-600">{email}</span>
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -127,7 +127,7 @@ const OtpVerifyPage = () => {
                 value={data}
                 onChange={(e) => handleChange(e.target, index)}
                 onKeyDown={(e) => handleKeyDown(e, index)}
-                className="w-12 h-14 text-center text-2xl font-bold border-2 rounded-xl focus:border-violet-500 focus:ring-violet-500 outline-none transition-all"
+                className="w-12 h-14 text-center text-2xl font-bold border-2 rounded-xl focus:border-blue-500 focus:ring-blue-500 outline-none transition-all"
               />
             ))}
           </div>
@@ -135,7 +135,7 @@ const OtpVerifyPage = () => {
           <button
             type="submit"
             disabled={otp.join('').length < 6}
-            className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-violet-600 hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 disabled:opacity-50 transition-all"
+            className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all"
           >
             Verify Account
           </button>
@@ -145,7 +145,7 @@ const OtpVerifyPage = () => {
               type="button"
               onClick={handleResend}
               disabled={resendDisabled}
-              className="text-sm font-medium text-violet-600 hover:text-violet-500 disabled:text-gray-400"
+              className="text-sm font-medium text-blue-600 hover:text-blue-500 disabled:text-gray-400"
             >
               {resendDisabled ? `Resend OTP in ${timer}s` : 'Resend OTP'}
             </button>

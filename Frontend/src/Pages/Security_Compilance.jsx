@@ -81,7 +81,7 @@ const SecurityShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
         </p>
 
         {/* Processing State */}
-        <div className="mt-8 flex items-center gap-2 px-4 py-1.5 rounded-full bg-violet-500/10 text-violet-600 dark:text-violet-400">
+        <div className="mt-8 flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
           <Loader2 className="w-3.5 h-3.5 animate-spin" />
           <span className="text-xs font-bold uppercase tracking-wider">Processing</span>
         </div>
@@ -91,7 +91,7 @@ const SecurityShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
           {steps.map((_, i) => (
             <div
               key={i}
-              className={`h-1.5 rounded-full transition-all duration-500 ${i === currentStep ? "w-6 bg-violet-500" : i < currentStep ? "w-6 bg-violet-500/40" : "w-2 bg-slate-400/30"}`}
+              className={`h-1.5 rounded-full transition-all duration-500 ${i === currentStep ? "w-6 bg-blue-500" : i < currentStep ? "w-6 bg-blue-500/40" : "w-2 bg-slate-400/30"}`}
             />
           ))}
         </div>
@@ -119,7 +119,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
   let statusText = "Failed";
 
   if (isPassed) {
-    statusColor = darkMode ? "text-violet-400 bg-violet-500/10 border-violet-500/20" : "text-violet-600 bg-violet-50 border-violet-100";
+    statusColor = darkMode ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" : "text-emerald-600 bg-emerald-50 border-emerald-100";
     statusText = "Passed";
   } else if (isWarning) {
     statusColor = darkMode ? "text-amber-400 bg-amber-500/10 border-amber-500/20" : "text-amber-600 bg-amber-50 border-amber-100";
@@ -134,7 +134,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
             <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
-              <Icon size={24} className={darkMode ? "text-violet-400" : "text-violet-600"} />
+              <Icon size={24} className={darkMode ? "text-blue-400" : "text-blue-600"} />
             </div>
             <div>
               <h3 className={`font-bold text-lg ${textColor}`}>{title}</h3>
@@ -148,7 +148,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
               <button
                 onClick={() => setShowAnalysis(!showAnalysis)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all duration-300 ${showAnalysis
-                  ? (darkMode ? "bg-violet-500/20 text-violet-400 border border-violet-500/30" : "bg-violet-50 text-violet-700 border border-violet-100")
+                  ? (darkMode ? "bg-blue-500/20 text-blue-400 border border-blue-500/30" : "bg-blue-50 text-blue-700 border border-blue-100")
                   : (darkMode ? "text-gray-400 hover:text-white hover:bg-gray-700 border border-transparent" : "text-gray-400 hover:text-gray-900 hover:bg-gray-100 border border-transparent")
                   }`}
                 title={showAnalysis ? "Hide Detail" : "View Detail"}
@@ -189,11 +189,11 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
               </h4>
               <div className={`h-[1px] flex-grow ${darkMode ? "bg-gray-700/50" : "bg-gray-100"}`}></div>
             </div>
-            <div className={`p-3 rounded-lg border transition-all duration-300 ${isPassed ? (darkMode ? "bg-violet-500/5 border-violet-500/10" : "bg-violet-50/50 border-violet-100") :
+            <div className={`p-3 rounded-lg border transition-all duration-300 ${isPassed ? (darkMode ? "bg-emerald-500/5 border-emerald-500/10" : "bg-emerald-50/50 border-emerald-100") :
               isWarning ? (darkMode ? "bg-amber-500/5 border-amber-500/20" : "bg-amber-50/50 border-amber-100") :
                 (darkMode ? "bg-rose-500/5 border-rose-500/20" : "bg-rose-50/50 border-rose-100")
               }`}>
-              <p className={`text-sm font-semibold leading-relaxed ${isPassed ? "text-violet-600 dark:text-violet-400" :
+              <p className={`text-sm font-semibold leading-relaxed ${isPassed ? "text-emerald-600 dark:text-emerald-400" :
                 isWarning ? "text-amber-600 dark:text-amber-400" :
                   "text-rose-600 dark:text-rose-400"
                 }`}>
@@ -206,7 +206,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"} space-y-1.5`}>
               <div className="flex justify-between items-center">
                 <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Protocol:</span>
-                <code className={`px-1.5 py-0.5 rounded font-mono font-bold ${darkMode ? "bg-violet-500/10 text-violet-400" : "bg-violet-50 text-violet-700"}`}>
+                <code className={`px-1.5 py-0.5 rounded font-mono font-bold ${darkMode ? "bg-blue-500/10 text-blue-400" : "bg-blue-50 text-blue-700"}`}>
                   {meta.protocol}
                 </code>
               </div>
@@ -217,7 +217,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"} space-y-1.5`}>
               <div className="flex justify-between items-center">
                 <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Expires:</span>
-                <code className={`px-1.5 py-0.5 rounded font-mono font-bold ${darkMode ? "bg-violet-500/10 text-violet-400" : "bg-violet-50 text-violet-700"}`}>
+                <code className={`px-1.5 py-0.5 rounded font-mono font-bold ${darkMode ? "bg-emerald-500/10 text-emerald-400" : "bg-emerald-50 text-emerald-700"}`}>
                   {new Date(meta.validTo).toLocaleDateString()}
                 </code>
               </div>
@@ -254,7 +254,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
                 {subdomains && (
                   <div className="flex justify-between text-xs items-center">
                     <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Subdomains:</span>
-                    <span className="text-violet-600 dark:text-violet-400 font-bold text-[10px] uppercase tracking-wider">Included</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-bold text-[10px] uppercase tracking-wider">Included</span>
                   </div>
                 )}
                 {preload && (
@@ -284,7 +284,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
               <div className={`mt-3 p-2 rounded border border-dashed ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"} space-y-2`}>
                 <div className="flex justify-between text-xs items-center mb-1 border-b border-dashed pb-2 border-gray-500/20">
                   <span className={`font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Directives</span>
-                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${darkMode ? "bg-violet-500/20 text-violet-300" : "bg-violet-100 text-violet-700"}`}>{directives.length} Rules</span>
+                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${darkMode ? "bg-blue-500/20 text-blue-300" : "bg-blue-100 text-blue-700"}`}>{directives.length} Rules</span>
                 </div>
                 <div className="max-h-32 overflow-y-auto pr-1 space-y-1.5 custom-scrollbar text-[10px] font-mono leading-relaxed">
                   {directives.map((d, i) => (
@@ -301,7 +301,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"} space-y-1.5`}>
               <div className="flex justify-between items-center">
                 <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>MIME Sniffing:</span>
-                <span className={`font-bold ${meta.value.includes('nosniff') ? "text-violet-500" : "text-rose-500"}`}>
+                <span className={`font-bold ${meta.value.includes('nosniff') ? "text-emerald-500" : "text-rose-500"}`}>
                   {meta.value.includes('nosniff') ? "Disabled (Safe)" : "Enabled (Unsafe)"}
                 </span>
               </div>
@@ -324,7 +324,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Secure (HTTPS only):</span>
-                  <span className="text-violet-500 font-bold">{secureCount}</span>
+                  <span className="text-emerald-500 font-bold">{secureCount}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Insecure (Missing Flag):</span>
@@ -347,7 +347,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>HttpOnly (No JS Access):</span>
-                  <span className="text-violet-500 font-bold">{protectedCount}</span>
+                  <span className="text-emerald-500 font-bold">{protectedCount}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Exposed (Standard):</span>
@@ -365,11 +365,11 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
               <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"} space-y-1.5`}>
                 <div className="flex justify-between items-center">
                   <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>3rd-Party Cookies:</span>
-                  <span className={`font-bold ${total > 0 ? "text-rose-500" : "text-violet-500"}`}>{total}</span>
+                  <span className={`font-bold ${total > 0 ? "text-rose-500" : "text-emerald-500"}`}>{total}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Unique Domains:</span>
-                  <span className={`font-bold ${domainCount > 0 ? "text-rose-500" : "text-violet-500"}`}>{domainCount}</span>
+                  <span className={`font-bold ${domainCount > 0 ? "text-rose-500" : "text-emerald-500"}`}>{domainCount}</span>
                 </div>
               </div>
             );
@@ -379,7 +379,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"}`}>
               <div className="flex justify-between items-center">
                 <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Security Matches:</span>
-                <span className={`font-bold ${meta.matches.length > 0 ? "text-rose-500" : "text-violet-500"}`}>{meta.matches.length} Threats</span>
+                <span className={`font-bold ${meta.matches.length > 0 ? "text-rose-500" : "text-emerald-500"}`}>{meta.matches.length} Threats</span>
               </div>
             </div>
           )}
@@ -389,11 +389,11 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
               <div className="grid grid-cols-2 gap-x-4 gap-y-1">
                 <div className="flex justify-between">
                   <span className="opacity-60">Malicious:</span>
-                  <span className={`font-bold ${meta.stats.malicious > 0 ? "text-rose-500" : "text-violet-500"}`}>{meta.stats.malicious}</span>
+                  <span className={`font-bold ${meta.stats.malicious > 0 ? "text-rose-500" : "text-emerald-500"}`}>{meta.stats.malicious}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="opacity-60">Suspicious:</span>
-                  <span className={`font-bold ${meta.stats.suspicious > 0 ? "text-amber-500" : "text-violet-500"}`}>{meta.stats.suspicious}</span>
+                  <span className={`font-bold ${meta.stats.suspicious > 0 ? "text-amber-500" : "text-emerald-500"}`}>{meta.stats.suspicious}</span>
                 </div>
               </div>
             </div>
@@ -403,13 +403,13 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"} space-y-1.5`}>
               <div className="flex justify-between items-center">
                 <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Safe Browsing:</span>
-                <span className={`font-bold ${meta.googleSafeBrowsing?.status === "pass" ? "text-violet-500" : "text-rose-500"}`}>
+                <span className={`font-bold ${meta.googleSafeBrowsing?.status === "pass" ? "text-emerald-500" : "text-rose-500"}`}>
                   {meta.googleSafeBrowsing?.status === "pass" ? "Clean" : "Flagged"}
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>VirusTotal:</span>
-                <span className={`font-bold ${meta.virusTotal?.status === "pass" ? "text-violet-500" : "text-rose-500"}`}>
+                <span className={`font-bold ${meta.virusTotal?.status === "pass" ? "text-emerald-500" : "text-rose-500"}`}>
                   {meta.virusTotal?.status === "pass" ? "Clean" : "Flagged"}
                 </span>
               </div>
@@ -431,7 +431,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"}`}>
               <div className="flex flex-col gap-1">
                 <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Exposed URL:</span>
-                <div className={`p-1.5 rounded truncate font-mono text-[10px] ${darkMode ? "bg-gray-900/80 text-violet-300" : "bg-violet-50 text-violet-700"}`}>
+                <div className={`p-1.5 rounded truncate font-mono text-[10px] ${darkMode ? "bg-gray-900/80 text-blue-300" : "bg-blue-50 text-blue-700"}`}>
                   {meta.url}
                 </div>
               </div>
@@ -451,7 +451,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"}`}>
               <div className="flex justify-between items-center">
                 <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Insecure Forms:</span>
-                <span className={`font-bold ${meta.insecureForms.length > 0 ? "text-rose-500" : "text-violet-500"}`}>{meta.insecureForms.length} Found</span>
+                <span className={`font-bold ${meta.insecureForms.length > 0 ? "text-rose-500" : "text-emerald-500"}`}>{meta.insecureForms.length} Found</span>
               </div>
             </div>
           )}
@@ -460,7 +460,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"}`}>
               <div className="flex flex-col gap-1">
                 <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Authentication Evidence:</span>
-                <div className={`p-1.5 rounded truncate italic text-[10px] ${darkMode ? "bg-gray-900/80 text-violet-300" : "bg-violet-50 text-violet-700"}`}>
+                <div className={`p-1.5 rounded truncate italic text-[10px] ${darkMode ? "bg-gray-900/80 text-emerald-300" : "bg-emerald-50 text-emerald-700"}`}>
                   {meta.foundKeyword || meta.ssoFound}
                 </div>
               </div>
@@ -471,7 +471,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"}`}>
               <div className="flex flex-col gap-1">
                 <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Compliance Indicator:</span>
-                <div className={`p-1.5 rounded truncate italic text-[10px] ${darkMode ? "bg-gray-900/80 text-violet-300" : "bg-violet-50 text-violet-700"}`}>
+                <div className={`p-1.5 rounded truncate italic text-[10px] ${darkMode ? "bg-gray-900/80 text-emerald-300" : "bg-emerald-50 text-emerald-700"}`}>
                   {meta.foundKeyword || meta.foundSelector}
                 </div>
               </div>
@@ -482,7 +482,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"}`}>
               <div className="flex flex-col gap-1">
                 <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Banner Selector:</span>
-                <div className={`p-1.5 rounded truncate font-mono text-[10px] ${darkMode ? "bg-gray-900/80 text-violet-300" : "bg-violet-50 text-violet-700"}`}>
+                <div className={`p-1.5 rounded truncate font-mono text-[10px] ${darkMode ? "bg-gray-900/80 text-emerald-300" : "bg-emerald-50 text-emerald-700"}`}>
                   {meta.selector}
                 </div>
               </div>
@@ -493,7 +493,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"}`}>
               <div className="flex flex-col gap-1">
                 <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Policy Link:</span>
-                <div className={`p-1.5 rounded truncate font-mono text-[10px] ${darkMode ? "bg-gray-900/80 text-violet-300" : "bg-violet-50 text-violet-700"}`}>
+                <div className={`p-1.5 rounded truncate font-mono text-[10px] ${darkMode ? "bg-gray-900/80 text-blue-300" : "bg-blue-50 text-blue-700"}`}>
                   {meta.foundLink}
                 </div>
               </div>
@@ -504,7 +504,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"}`}>
               <div className="flex flex-col gap-1">
                 <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Disclosure Evidence:</span>
-                <div className={`p-1.5 rounded truncate italic text-[10px] ${darkMode ? "bg-gray-900/80 text-violet-300" : "bg-violet-50 text-violet-700"}`}>
+                <div className={`p-1.5 rounded truncate italic text-[10px] ${darkMode ? "bg-gray-900/80 text-emerald-300" : "bg-emerald-50 text-emerald-700"}`}>
                   {meta.foundLink || meta.foundHeading}
                 </div>
               </div>
@@ -529,7 +529,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
                 </p>
               </div>
               <div>
-                <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 text-violet-500`}>Recommendation</h5>
+                <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 text-blue-500`}>Recommendation</h5>
                 <p className={`text-xs leading-relaxed ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
                   {analysis.recommendation || "No specific recommendation available."}
                 </p>
@@ -682,12 +682,12 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
 
               {metricKey === "Malware_Scan" && meta?.stats && (
                 <div>
-                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 text-violet-500`}>Security Vendor Stats</h5>
+                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 text-blue-500`}>Security Vendor Stats</h5>
                   <div className="grid grid-cols-2 gap-2">
                     {[
                       { label: 'Malicious', val: meta.stats.malicious, color: 'text-rose-500' },
                       { label: 'Suspicious', val: meta.stats.suspicious, color: 'text-amber-500' },
-                      { label: 'Harmless', val: meta.stats.harmless, color: 'text-violet-500' },
+                      { label: 'Harmless', val: meta.stats.harmless, color: 'text-emerald-500' },
                       { label: 'Undetected', val: meta.stats.undetected, color: 'text-gray-400' }
                     ].map(s => (
                       <div key={s.label} className={`p-1.5 rounded flex justify-between items-center ${darkMode ? "bg-gray-800" : "bg-gray-50"}`}>
@@ -702,9 +702,9 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
               {metricKey === "Admin_Panel_Public" && meta?.url && (
                 <div>
                   <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 text-rose-500`}>Exposed URL</h5>
-                  <div className={`mt-1 p-2 rounded border ${darkMode ? "bg-violet-500/5 border-violet-500/20" : "bg-violet-50 border-violet-100"}`}>
-                    <a href={meta.url} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 p-1 text-[10px] font-mono break-all hover:underline ${darkMode ? "text-violet-400" : "text-violet-600"}`}>
-                      <span className="w-1.5 h-1.5 bg-violet-500 rounded-full flex-shrink-0"></span>
+                  <div className={`mt-1 p-2 rounded border ${darkMode ? "bg-blue-500/5 border-blue-500/20" : "bg-blue-50 border-blue-100"}`}>
+                    <a href={meta.url} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 p-1 text-[10px] font-mono break-all hover:underline ${darkMode ? "text-blue-400" : "text-blue-600"}`}>
+                      <span className="w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0"></span>
                       {meta.url}
                     </a>
                   </div>
@@ -739,8 +739,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
 
               {(metricKey === "MFA_Enabled" || metricKey === "GDPR_CCPA") && meta && (meta.foundKeyword || meta.ssoFound) && (
                 <div>
-                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 text-violet-500`}>Evidence Found</h5>
-                  <div className={`p-2 rounded text-[10px] italic ${darkMode ? "bg-gray-800 text-gray-300" : "bg-violet-50 text-violet-700"}`}>
+                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 text-emerald-500`}>Evidence Found</h5>
+                  <div className={`p-2 rounded text-[10px] italic ${darkMode ? "bg-gray-800 text-gray-300" : "bg-emerald-50 text-emerald-700"}`}>
                     "{meta.foundKeyword || meta.ssoFound}"
                   </div>
                 </div>
@@ -748,8 +748,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
 
               {(metricKey === "Privacy_Policy" || metricKey === "Data_Collection") && meta?.foundLink && (
                 <div>
-                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 text-violet-500`}>Detected Link</h5>
-                  <a href={meta.foundLink} target="_blank" rel="noopener noreferrer" className={`block p-2 rounded text-[10px] font-mono break-all hover:underline ${darkMode ? "bg-gray-800 text-violet-400" : "bg-violet-50 text-violet-600"}`}>
+                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 text-emerald-500`}>Detected Link</h5>
+                  <a href={meta.foundLink} target="_blank" rel="noopener noreferrer" className={`block p-2 rounded text-[10px] font-mono break-all hover:underline ${darkMode ? "bg-gray-800 text-blue-400" : "bg-blue-50 text-blue-600"}`}>
                     {meta.foundLink}
                   </a>
                 </div>
@@ -778,7 +778,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
                     {meta.googleSafeBrowsing && (
                       <div className={`p-2 rounded border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"}`}>
                         <div className="text-[10px] opacity-70">Google Safe</div>
-                        <div className={`text-[10px] font-bold ${meta.googleSafeBrowsing.status === 'pass' ? 'text-violet-500' : 'text-rose-500'}`}>
+                        <div className={`text-[10px] font-bold ${meta.googleSafeBrowsing.status === 'pass' ? 'text-emerald-500' : 'text-rose-500'}`}>
                           {meta.googleSafeBrowsing.status === 'pass' ? 'Clean' : 'Flagged'}
                         </div>
                       </div>
@@ -786,7 +786,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
                     {meta.virusTotal && (
                       <div className={`p-2 rounded border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"}`}>
                         <div className="text-[10px] opacity-70">VirusTotal</div>
-                        <div className={`text-[10px] font-bold ${meta.virusTotal.status === 'pass' ? 'text-violet-500' : 'text-rose-500'}`}>
+                        <div className={`text-[10px] font-bold ${meta.virusTotal.status === 'pass' ? 'text-emerald-500' : 'text-rose-500'}`}>
                           {meta.virusTotal.status === 'pass' ? 'Clean' : 'Flagged'}
                         </div>
                       </div>
@@ -797,9 +797,9 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
 
               {metricKey === "Cookie_Consent" && meta?.selector && (
                 <div>
-                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 text-violet-500`}>Detected Selector</h5>
-                  <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-violet-500/5 border-violet-500/20 text-violet-300" : "bg-violet-50 border-violet-100 text-violet-700"}`}>
-                    <span className="w-1.5 h-1.5 bg-violet-500 rounded-full flex-shrink-0"></span>
+                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 text-emerald-500`}>Detected Selector</h5>
+                  <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-emerald-500/5 border-emerald-500/20 text-emerald-300" : "bg-emerald-50 border-emerald-100 text-emerald-700"}`}>
+                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full flex-shrink-0"></span>
                     {meta.selector}
                   </div>
                 </div>
@@ -833,8 +833,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
                   )}
                   
                   {!meta.trackingData.hasTracking && (
-                     <div className={`p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-violet-500/5 border-violet-500/20 text-violet-300" : "bg-violet-50 border-violet-100 text-violet-700"}`}>
-                       <span className="w-1.5 h-1.5 bg-violet-500 rounded-full flex-shrink-0"></span>
+                     <div className={`p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-emerald-500/5 border-emerald-500/20 text-emerald-300" : "bg-emerald-50 border-emerald-100 text-emerald-700"}`}>
+                       <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full flex-shrink-0"></span>
                        No tracking scripts or cookies detected.
                      </div>
                   )}
@@ -860,7 +860,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
 const Section = ({ title, icon: Icon, children, darkMode }) => (
   <div className="space-y-4">
     <div className="flex items-center gap-3 px-2">
-      <div className={`p-2 rounded-lg ${darkMode ? "bg-violet-500/20 text-violet-400" : "bg-violet-100 text-violet-600"}`}>
+      <div className={`p-2 rounded-lg ${darkMode ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-600"}`}>
         <Icon size={20} />
       </div>
       <h2 className={`text-xl font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>
@@ -881,9 +881,9 @@ export default function Security_Compilance() {
   const darkMode = theme === "dark";
 
   const auditSteps = useMemo(() => [
-    { icon: <Lock className="w-8 h-8 text-violet-500" />, title: "SSL & Encryption", text: "Verifying HTTPS redirection, SSL certificate validity, TLS handshake versions, and HSTS enforcement..." },
+    { icon: <Lock className="w-8 h-8 text-blue-500" />, title: "SSL & Encryption", text: "Verifying HTTPS redirection, SSL certificate validity, TLS handshake versions, and HSTS enforcement..." },
     { icon: <Bug className="w-8 h-8 text-rose-500" />, title: "Vulnerability Scan", text: "Simulating SQL Injection and XSS attacks, while cross-referencing with global threat intelligence databases..." },
-    { icon: <ShieldCheck className="w-8 h-8 text-purple-500" />, title: "Security Headers", text: "Auditing Content Security Policy (CSP), anti-clickjacking headers, and secure HttpOnly cookie flags..." },
+    { icon: <ShieldCheck className="w-8 h-8 text-teal-500" />, title: "Security Headers", text: "Auditing Content Security Policy (CSP), anti-clickjacking headers, and secure HttpOnly cookie flags..." },
     { icon: <Globe2 className="w-8 h-8 text-indigo-500" />, title: "Compliance", text: "Evaluating GDPR/CCPA readiness, privacy policy visibility, and auditing third-party cookie tracking..." },
     { icon: <Key className="w-8 h-8 text-amber-500" />, title: "Access Control", text: "Testing for exposed admin panels, weak default credentials, secure form submission, and MFA availability..." },
   ], []);
@@ -905,7 +905,7 @@ export default function Security_Compilance() {
     return (
       <div className={`w-full ${darkMode ? "bg-gray-900" : "bg-gray-50"} transition-colors duration-300`}>
         <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-8`}>
-          <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-violet-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
+          <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
             <div>
               <UrlHeader 
                 data={data} 
@@ -919,7 +919,7 @@ export default function Security_Compilance() {
             <div className="flex flex-col xl:flex-row min-h-[300px]">
               {data?.report !== "All" && (
                 <div className={`w-full xl:w-[45%] p-3 lg:p-4 flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-violet-500/5 blur-3xl rounded-full pointer-events-none"></div>
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/5 blur-3xl rounded-full pointer-events-none"></div>
                   <div className="w-full relative z-10">
                     <LivePreview data={data} loading={loading} variant="plain" />
                   </div>
@@ -948,7 +948,7 @@ export default function Security_Compilance() {
   return (
     <div className={`w-full ${mainBg} transition-colors duration-300`}>
       <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-8`}>
-        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-violet-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
+        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
           <div>
             <UrlHeader 
               data={data} 
@@ -962,7 +962,7 @@ export default function Security_Compilance() {
           <div className={`flex flex-col xl:flex-row ${data.report === "All" ? "" : "min-h-[300px]"}`}>
             {data.report !== "All" && (
               <div className={`w-full xl:w-[45%] ${data.report === "All" ? "p-6 lg:p-10" : "p-3 lg:p-4"} flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-violet-500/5 blur-3xl rounded-full pointer-events-none"></div>
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/5 blur-3xl rounded-full pointer-events-none"></div>
                 <div className="w-full relative z-10">
                   <LivePreview data={data} loading={loading} variant="plain" />
                 </div>
@@ -974,12 +974,12 @@ export default function Security_Compilance() {
                 <div className={`flex flex-col md:flex-row items-center ${data.report === "All" ? "gap-10 md:gap-14 justify-between" : "gap-8 md:gap-12 justify-center"}`}>
                   <div className={`flex-1 ${data.report === "All" ? "space-y-5" : "space-y-4"} text-left order-2 md:order-1`}>
                     <div className={`${data.report === "All" ? "space-y-2" : "space-y-1.5"}`}>
-                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${darkMode ? "bg-violet-500/10 text-violet-400 border border-violet-500/20" : "bg-violet-100/50 text-violet-600 border border-violet-200"}`}>
+                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-blue-100/50 text-blue-600 border border-blue-200"}`}>
                         <ShieldCheck className="w-3.5 h-3.5" />
                         <span>Security Audit</span>
                       </div>
                       <h3 className={`${data.report === "All" ? "text-3xl lg:text-5xl" : "text-2xl lg:text-4xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
-                        Security & <span className="text-violet-500">Compliance</span>
+                        Security & <span className="text-blue-500">Compliance</span>
                       </h3>
                       <p className={`text-sm leading-relaxed opacity-70 ${darkMode ? "text-slate-300" : "text-slate-600"}`}>
                         Comprehensive analysis of your web application's security posture.
@@ -989,7 +989,7 @@ export default function Security_Compilance() {
                     <div className={`flex flex-wrap items-center ${data.report === "All" ? "gap-6" : "gap-5"}`}>
                       <div className={`flex items-center ${data.report === "All" ? "gap-5" : "gap-4"}`}>
                         <div className="flex items-center gap-2">
-                          <CheckCircle size={18} className="text-violet-500" />
+                          <CheckCircle size={18} className="text-emerald-500" />
                           <span className="text-sm font-bold">{passedCount} Passed</span>
                         </div>
                         {warningCount > 0 && (
@@ -1006,7 +1006,7 @@ export default function Security_Compilance() {
                       <div className={`w-px h-4 ${darkMode ? "bg-slate-800" : "bg-slate-200 hidden md:block"}`}></div>
                       <button
                         onClick={() => setSelectedMetricInfo(scoreCalculationInfo)}
-                        className={`flex items-center gap-2 text-sm font-bold transition-all ${darkMode ? "text-violet-400 hover:text-violet-300" : "text-violet-600 hover:text-violet-700"}`}
+                        className={`flex items-center gap-2 text-sm font-bold transition-all ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-700"}`}
                       >
                         <Info size={16} />
                         <span className="border-b border-transparent hover:border-current">Metric Methodology</span>
@@ -1015,7 +1015,7 @@ export default function Security_Compilance() {
                   </div>
 
                   <div className="relative flex-shrink-0 group cursor-default order-1 md:order-2">
-                    <div className={`absolute -inset-8 rounded-full blur-3xl opacity-25 transition-opacity duration-700 group-hover:opacity-40 ${metric?.Percentage >= 80 ? "bg-violet-500" : "bg-amber-500"}`}></div>
+                    <div className={`absolute -inset-8 rounded-full blur-3xl opacity-25 transition-opacity duration-700 group-hover:opacity-40 ${metric?.Percentage >= 80 ? "bg-emerald-500" : "bg-amber-500"}`}></div>
                     <CircularProgress value={metric?.Percentage || 0} size={data.report === "All" ? 180 : 150} stroke={14} />
                     <div className="absolute inset-0 flex items-center justify-center flex-col gap-0.5">
                       <span className={`${data.report === "All" ? "text-5xl" : "text-3xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>{metric?.Percentage || 0}%</span>

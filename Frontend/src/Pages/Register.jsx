@@ -60,7 +60,7 @@ const Register = () => {
   const passwordReqs = validatePassword(password);
 
   return (
-    <div className={`flex items-center justify-center min-h-screen transition-colors duration-300 ${darkMode ? 'bg-[#020617]' : 'bg-slate-50'}`}>
+    <div className={`flex items-center justify-center min-h-screen transition-colors duration-300 ${darkMode ? 'bg-[#0a0a10]' : 'bg-slate-50'}`}>
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className={`absolute top-1/4 right-1/4 w-96 h-96 rounded-full blur-[100px] ${darkMode ? 'bg-indigo-600/10' : 'bg-indigo-400/20'}`} />
         <div className={`absolute bottom-1/4 left-1/4 w-96 h-96 rounded-full blur-[100px] ${darkMode ? 'bg-purple-600/10' : 'bg-purple-400/20'}`} />
@@ -163,13 +163,13 @@ const Register = () => {
             </div>
             
             <div className="flex flex-wrap gap-x-4 gap-y-2 mt-2 px-2 text-[11px]">
-              <span className={`flex items-center gap-1 ${passwordReqs.length ? 'text-violet-500' : (darkMode ? 'text-gray-500' : 'text-slate-400')}`}>
+              <span className={`flex items-center gap-1 ${passwordReqs.length ? 'text-emerald-500' : (darkMode ? 'text-gray-500' : 'text-slate-400')}`}>
                 <CheckCircle2 size={12} /> 8+ Characters
               </span>
-              <span className={`flex items-center gap-1 ${passwordReqs.upper ? 'text-violet-500' : (darkMode ? 'text-gray-500' : 'text-slate-400')}`}>
+              <span className={`flex items-center gap-1 ${passwordReqs.upper ? 'text-emerald-500' : (darkMode ? 'text-gray-500' : 'text-slate-400')}`}>
                 <CheckCircle2 size={12} /> 1 Uppercase
               </span>
-              <span className={`flex items-center gap-1 ${passwordReqs.number ? 'text-violet-500' : (darkMode ? 'text-gray-500' : 'text-slate-400')}`}>
+              <span className={`flex items-center gap-1 ${passwordReqs.number ? 'text-emerald-500' : (darkMode ? 'text-gray-500' : 'text-slate-400')}`}>
                 <CheckCircle2 size={12} /> 1 Number
               </span>
             </div>

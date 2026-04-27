@@ -10,17 +10,17 @@ const PlatformScoreBar = ({ platforms, darkMode, platformKey = null, singleCard 
             key: 'gemini', 
             score: platforms?.gemini?.score || 0, 
             color: '#2563eb', // Professional Indigo-Blue
-            border: 'border-violet-500/20',
-            bg: 'bg-violet-600',
+            border: 'border-blue-500/20',
+            bg: 'bg-blue-600',
             icon: <Target size={18} />
         },
         { 
             name: 'ChatGPT', 
             key: 'chatgpt', 
             score: platforms?.chatgpt?.score || 0, 
-            color: '#7c3aed', // Professional Violet-Purple
-            border: 'border-violet-500/20',
-            bg: 'bg-violet-600',
+            color: '#059669', // Professional Emerald-Green
+            border: 'border-emerald-500/20',
+            bg: 'bg-emerald-600',
             icon: <Cpu size={18} />
         },
         { 
@@ -89,7 +89,7 @@ const PlatformScoreBar = ({ platforms, darkMode, platformKey = null, singleCard 
             </div>
             
             {/* Insight Label */}
-            <div className={`px-3 py-1.5 rounded-lg w-fit text-[10px] font-bold uppercase tracking-widest border transition-colors ${plat.score >= 80 ? "bg-violet-500/5 text-violet-600 border-violet-500/20" : plat.score >= 50 ? "bg-amber-500/5 text-amber-600 border-amber-500/20" : "bg-rose-500/5 text-rose-600 border-rose-500/20"}`}>
+            <div className={`px-3 py-1.5 rounded-lg w-fit text-[10px] font-bold uppercase tracking-widest border transition-colors ${plat.score >= 80 ? "bg-emerald-500/5 text-emerald-600 border-emerald-500/20" : plat.score >= 50 ? "bg-amber-500/5 text-amber-600 border-amber-500/20" : "bg-rose-500/5 text-rose-600 border-rose-500/20"}`}>
                 Engine Rating: {plat.score >= 80 ? 'Optimized' : plat.score >= 50 ? 'Average' : 'Critical'}
             </div>
 
@@ -138,7 +138,7 @@ const PlatformScoreBar = ({ platforms, darkMode, platformKey = null, singleCard 
                                     <span className={`text-xs font-semibold ${darkMode ? "text-slate-200" : "text-slate-700"}`}>
                                         {parameterLabels[param] || param}
                                     </span>
-                                    <span className={`text-[10px] font-bold ${points > 0 ? (darkMode ? "text-violet-400" : "text-violet-600") : "text-slate-500"}`}>
+                                    <span className={`text-[10px] font-bold ${points > 0 ? (darkMode ? "text-blue-400" : "text-blue-600") : "text-slate-500"}`}>
                                         +{points} PTS
                                     </span>
                                 </div>

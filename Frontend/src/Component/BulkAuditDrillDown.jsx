@@ -14,7 +14,7 @@ export default function BulkAuditDrillDown({ issue, pages, onBack, darkMode }) {
                         <ArrowLeft className="w-5 h-5" />
                     </button>
                     <div>
-                        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-violet-500">
+                        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-emerald-500">
                             <span>Issues</span>
                             <span className="text-slate-500">/</span>
                             <span className={darkMode ? "text-slate-300" : "text-slate-700"}>{issue.title}</span>
@@ -28,7 +28,7 @@ export default function BulkAuditDrillDown({ issue, pages, onBack, darkMode }) {
                         <Download className="w-4 h-4" />
                         Export
                     </button>
-                    <button className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold bg-violet-500 text-white shadow-lg shadow-violet-500/20 hover:bg-violet-400 transition-all">
+                    <button className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 hover:bg-emerald-400 transition-all">
                         Create New Issue
                     </button>
                 </div>
@@ -46,7 +46,7 @@ export default function BulkAuditDrillDown({ issue, pages, onBack, darkMode }) {
                 </div>
                 <div className="flex gap-2">
                     {["All URLs", "Indexable", "Non-indexable"].map((tab) => (
-                        <button key={tab} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${tab === 'All URLs' ? 'bg-violet-500 text-white' : (darkMode ? 'bg-slate-800 text-slate-400 hover:text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200')}`}>
+                        <button key={tab} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${tab === 'All URLs' ? 'bg-emerald-500 text-white' : (darkMode ? 'bg-slate-800 text-slate-400 hover:text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200')}`}>
                             {tab}
                         </button>
                     ))}
@@ -98,7 +98,7 @@ export default function BulkAuditDrillDown({ issue, pages, onBack, darkMode }) {
                                         <td className="px-6 py-5">
                                             <div className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-black ${
                                                 httpStatus >= 400 ? 'bg-red-500/10 text-red-500' : 
-                                                httpStatus >= 300 ? 'bg-violet-500/10 text-violet-500' : 'bg-violet-500/10 text-violet-500'
+                                                httpStatus >= 300 ? 'bg-blue-500/10 text-blue-500' : 'bg-emerald-500/10 text-emerald-500'
                                             }`}>
                                                 {httpStatus}
                                             </div>
@@ -111,7 +111,7 @@ export default function BulkAuditDrillDown({ issue, pages, onBack, darkMode }) {
                                         <td className="px-6 py-5">
                                             <div className="flex items-center gap-2">
                                                 {isIndexable ? (
-                                                    <Shield className="w-4 h-4 text-violet-500" />
+                                                    <Shield className="w-4 h-4 text-emerald-500" />
                                                 ) : (
                                                     <ShieldAlert className="w-4 h-4 text-amber-500" />
                                                 )}
@@ -130,7 +130,7 @@ export default function BulkAuditDrillDown({ issue, pages, onBack, darkMode }) {
                                                 href={page.url} 
                                                 target="_blank" 
                                                 rel="noopener noreferrer"
-                                                className={`p-2 rounded-lg inline-flex items-center transition-colors ${darkMode ? "bg-slate-800 text-slate-400 hover:text-violet-400" : "bg-slate-100 text-slate-500 hover:text-violet-600"}`}
+                                                className={`p-2 rounded-lg inline-flex items-center transition-colors ${darkMode ? "bg-slate-800 text-slate-400 hover:text-emerald-400" : "bg-slate-100 text-slate-500 hover:text-emerald-600"}`}
                                             >
                                                 <ExternalLink className="w-4 h-4" />
                                             </a>

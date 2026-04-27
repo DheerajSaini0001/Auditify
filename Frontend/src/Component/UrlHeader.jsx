@@ -115,7 +115,7 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
           {data?.status === "completed" && sectionData && (
              <button
               onClick={handleGetAISummary}
-              className={`flex items-center gap-2 px-6 py-2 rounded-xl font-bold bg-gradient-to-r from-violet-600 to-indigo-700 text-white shadow-lg shadow-violet-500/20 hover:scale-105 active:scale-95 transition-all transition-all`}
+              className={`flex items-center gap-2 px-6 py-2 rounded-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all transition-all`}
              >
                 <Sparkles className="w-4 h-4" />
                 <span>Get AI Summary</span>
@@ -147,7 +147,7 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
             <button
               onClick={handleDownloadPDF}
               className={`flex items-center gap-2 px-6 py-2 rounded-xl font-bold text-white shadow-lg transition-all active:scale-95 transform hover:-translate-y-0.5 ${isAuthenticated
-                  ? "bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 shadow-violet-500/20"
+                  ? "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-emerald-500/20"
                   : "bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-500 hover:to-slate-600 shadow-slate-500/20"
                 }`}
             >
@@ -169,7 +169,7 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
           {/* Back to List Button (if from bulk audit) */}
           {data?.fromBulkAudit && (
             <Link to="/bulk-audit">
-              <button className="flex items-center gap-2 px-6 py-2 rounded-xl font-bold text-white shadow-lg shadow-violet-500/20 bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 transition-all active:scale-95 transform hover:-translate-y-0.5">
+              <button className="flex items-center gap-2 px-6 py-2 rounded-xl font-bold text-white shadow-lg shadow-blue-500/20 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 transition-all active:scale-95 transform hover:-translate-y-0.5">
                 <NotebookPen className="w-4 h-4" />
                 <span>Back to List</span>
               </button>

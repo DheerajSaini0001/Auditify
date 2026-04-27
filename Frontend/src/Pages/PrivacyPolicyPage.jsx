@@ -7,7 +7,7 @@ export default function PrivacyPolicyPage() {
   const darkMode = theme === "dark";
 
   const containerClass = darkMode
-    ? "min-h-screen py-24 px-4 sm:px-8 flex flex-col items-center bg-[#020617] text-white relative font-sans"
+    ? "min-h-screen py-24 px-4 sm:px-8 flex flex-col items-center bg-[#060B14] text-white relative font-sans"
     : "min-h-screen py-24 px-4 sm:px-8 flex flex-col items-center bg-[#F8FAFC] text-slate-900 relative font-sans";
 
   return (
@@ -21,10 +21,10 @@ export default function PrivacyPolicyPage() {
           <div>
             <div className="text-xl font-bold mb-4">Privacy Framework</div>
             <ul className={`space-y-4 text-sm font-semibold ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
-              <li className="text-violet-500 transition-colors">1. Data Architecture</li>
-              <li className="hover:text-violet-500 transition-colors cursor-pointer">2. Retention Cycles</li>
-              <li className="hover:text-violet-500 transition-colors cursor-pointer">3. Sub-processors</li>
-              <li className="hover:text-violet-500 transition-colors cursor-pointer">4. GDPR & Compliance</li>
+              <li className="text-emerald-500 transition-colors">1. Data Architecture</li>
+              <li className="hover:text-emerald-500 transition-colors cursor-pointer">2. Retention Cycles</li>
+              <li className="hover:text-emerald-500 transition-colors cursor-pointer">3. Sub-processors</li>
+              <li className="hover:text-emerald-500 transition-colors cursor-pointer">4. GDPR & Compliance</li>
             </ul>
           </div>
           <div className={`text-xs p-4 rounded-xl border ${darkMode ? "bg-slate-900/50 border-slate-800 text-slate-500" : "bg-white border-slate-200 text-slate-400"}`}>
@@ -50,7 +50,7 @@ export default function PrivacyPolicyPage() {
             
             <section className="space-y-4">
               <div className="flex items-center gap-3 text-2xl font-bold">
-                <DatabaseZap className="text-violet-500" />
+                <DatabaseZap className="text-emerald-500" />
                 <h2>1. The Extraction Mechanics</h2>
               </div>
               <p>When our core engine executes an audit against an URL endpoint, it operates indistinguishably from an standard browser client. We download static assets, parse DOM nodes, and evaluate network watermarks. This downloaded information is highly volatile; it resides strictly in memory arrays during the scraping phase.</p>
@@ -61,11 +61,11 @@ export default function PrivacyPolicyPage() {
 
             <section className="space-y-4">
               <div className="flex items-center gap-3 text-2xl font-bold">
-                <FileKey className="text-violet-500" />
+                <FileKey className="text-blue-500" />
                 <h2>2. Asynchronous Data Expiration</h2>
               </div>
               <p>For unauthenticated, "guest" network streams, any resulting generated PDF reports or direct relational database entries inherit a strictly enforced twenty-four hour TTL (Time To Live). A chron routine aggressively wipes these ghost artifacts.</p>
-              <div className={`p-6 rounded-2xl border-l-4 border-violet-500 ${darkMode ? "bg-violet-500/5 text-violet-100 border-r border-t border-b border-slate-800" : "bg-violet-50 text-slate-800 border-r border-t border-b border-slate-200"}`}>
+              <div className={`p-6 rounded-2xl border-l-4 border-blue-500 ${darkMode ? "bg-blue-500/5 text-blue-100 border-r border-t border-b border-slate-800" : "bg-blue-50 text-slate-800 border-r border-t border-b border-slate-200"}`}>
                 <span className="font-bold">Important:</span> Manual deletions triggered via the authenticated user dashboard dashboard represent irreversible hard-deletes. We maintain zero invisible redundant fallback clusters holding dropped projects.
               </div>
             </section>

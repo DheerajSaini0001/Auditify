@@ -2,10 +2,6 @@ import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import * as cheerio from "cheerio";
 
-// Stealth modules
-import { applyStealthToPage, STEALTH_CHROME_ARGS, PROFILES } from "./stealth/stealthLauncher.js";
-import { humanMouseMove, humanDwell, humanAutoScroll, mouseJiggle } from "./stealth/humanBehavior.js";
-
 // Use stealth plugin to evade common bot detection techniques
 puppeteer.use(StealthPlugin());
 
@@ -213,9 +209,9 @@ export async function waitForChallengeResolution(page, timeout = 30000) {
       }
     } catch (e) {}
 
-    // Human-like mouse movement (bezier curves instead of straight lines)
+    // Human-like mouse movement
     try {
-      await humanMouseMove(page, randInt(100, 800), randInt(100, 600));
+      await page.mouse.move(randInt(100, 800), randInt(100, 600), { steps: randInt(5, 15) });
     } catch (e) {}
 
     await delay(randInt(2000, 4000));
@@ -231,27 +227,76 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
   let browser;
 
   try {
-    const profileKey = device === "Mobile" ? "mobile" : "desktop";
-    const profile = PROFILES[profileKey];
-
     const launchOptions = {
-      headless: true,
+      headless: true, // Non-headless for maximum stealth — looks like a real browser
       defaultViewport: null,
       args: [
-        ...STEALTH_CHROME_ARGS,
-        `--window-size=${profile.viewport.width},${profile.viewport.height}`,
-      ],
-      env: {
-        ...process.env,
-        TZ: "America/New_York", // Timezone must match CDP override
-      },
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-accelerated-2d-canvas",
+        "--disable-gpu",
+        "--hide-scrollbars",
+        "--mute-audio",
+        "--disable-blink-features=AutomationControlled",
+        "--disable-features=IsolateOrigins,site-per-process",
+        "--window-size=1920,1080",
+        "--ignore-certificate-errors",
+        "--no-zygote",
+        "--single-process" // Recommended for production servers with limited memory
+      ]
     };
 
     browser = await puppeteer.launch(launchOptions);
     const page = await browser.newPage();
 
-    // ═══ Apply all stealth patches (fingerprints + headers + viewport) ═══
-    await applyStealthToPage(page, profileKey);
+    // Extra Stealth: Override Webdriver and common bot detection markers
+    await page.evaluateOnNewDocument(() => {
+      Object.defineProperty(navigator, 'webdriver', { get: () => false });
+      Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
+      Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
+      // Mock hardware concurrency
+      Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => 8 });
+    });
+
+    // Consistent headers to match User-Agent
+    const commonHeaders = {
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+      'Accept-Encoding': 'gzip, deflate, br',
+      'Cache-Control': 'max-age=0',
+      'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+      'Sec-Ch-Ua-Mobile': device === "Mobile" ? '?1' : '?0',
+      'Sec-Ch-Ua-Platform': device === "Mobile" ? '"Android"' : '"Windows"',
+      'Sec-Fetch-Dest': 'document',
+      'Sec-Fetch-Mode': 'navigate',
+      'Sec-Fetch-Site': 'none',
+      'Sec-Fetch-User': '?1',
+      'Upgrade-Insecure-Requests': '1',
+      'Referer': 'https://www.google.com/'
+    };
+
+    await page.setExtraHTTPHeaders(commonHeaders);
+
+    // Set User Agent
+    const userAgent = device === "Mobile" 
+      ? "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Mobile Safari/537.36"
+      : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36";
+    
+    await page.setUserAgent(userAgent);
+
+    if (device === "Mobile") {
+      await page.setViewport({
+        width: 393,
+        height: 852,
+        isMobile: true,
+        deviceScaleFactor: 3,
+        hasTouch: true,
+        isLandscape: false,
+      });
+    } else {
+      await page.setViewport({ width: 1920, height: 1080, deviceScaleFactor: 2 });
+    }
 
     // ⚡ Optimization: Block non-essential resources to speed up loading
     await page.setRequestInterception(true);
@@ -277,7 +322,7 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
       }
     });
 
-    // Pre-navigation: human-like dwell before loading
+    // Pre-navigation random delay (1-3s) for human-like behavior
     await delay(randInt(1000, 3000));
 
     // Speed up: Wait for 'load' instead of 'networkidle2' for heavy sites
@@ -304,8 +349,7 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
        return { browser, page, response: null, $: cheerio.load("<html><body>Failed to reach site</body></html>"), screenshot: null, isBotProtected: true };
     }
 
-    // Post-navigation: mouse jiggle to appear human
-    await mouseJiggle(page);
+
 
     // Handle bot verification (Cloudflare, etc.)
     let challengeResolved = await waitForChallengeResolution(page, 30000); 
@@ -328,9 +372,11 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
 
     // Success: Challenge cleared or not detected
 
-    // Simulate realistic browsing: bezier mouse move + dwell
-    await humanMouseMove(page, randInt(200, 900), randInt(100, 600));
-    await humanDwell(page, 1000, 2000);
+    // Simulate small mouse movement (human-like)
+    await page.mouse.move(randInt(100, 800), randInt(100, 600));
+
+    // Post-load random delay (1-2s)
+    await delay(randInt(1000, 2000));
 
     // Simulate real behavior: random scrolling and delays
     await handlePopups(page);
@@ -344,7 +390,7 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
       type: "jpeg",
       quality: 50,
       fullPage: false,
-      clip: { x: 0, y: 0, width: profile.viewport.width, height: profile.viewport.height }
+      clip: { x: 0, y: 0, width: device === "Mobile" ? 393 : 1920, height: device === "Mobile" ? 852 : 1080 }
     });
 
     const htmlData = await page.content();
@@ -358,3 +404,4 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
     throw error;
   }
 }
+

@@ -62,7 +62,7 @@ const ResetPasswordPage = () => {
                     <h2 className="text-3xl font-black text-gray-900 tracking-tight">Invalid Link</h2>
                     <p className="mt-4 text-gray-500 leading-relaxed font-medium">{error}</p>
                     <div className="mt-8 pt-6 border-t border-gray-100">
-                        <Link to="/forgot-password" name="Request New Link" className="inline-flex items-center text-sm font-bold text-violet-600 hover:text-violet-500 transition-colors uppercase tracking-[0.2em] animate-pulse">Request New Link</Link>
+                        <Link to="/forgot-password" name="Request New Link" className="inline-flex items-center text-sm font-bold text-blue-600 hover:text-blue-500 transition-colors uppercase tracking-[0.2em] animate-pulse">Request New Link</Link>
                     </div>
                 </div>
             </div>
@@ -73,13 +73,13 @@ const ResetPasswordPage = () => {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-2xl shadow-xl border border-gray-100 text-center animate-in fade-in zoom-in-95 duration-500">
-                    <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-violet-100 mb-6">
-                        <CheckCircle className="h-10 w-10 text-violet-600" />
+                    <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-emerald-100 mb-6">
+                        <CheckCircle className="h-10 w-10 text-emerald-600" />
                     </div>
                     <h2 className="text-3xl font-black text-gray-900 tracking-tight text-center">Password Updated!</h2>
                     <p className="mt-4 text-gray-500 leading-relaxed font-medium">You can now sign in to your DealerPulse account with your new credentials.</p>
                     <div className="mt-8 pt-6 border-t border-gray-100">
-                        <Link to="/login" className="w-full flex items-center justify-center font-bold text-violet-600 hover:text-violet-500 transition-colors uppercase tracking-[0.2em]">
+                        <Link to="/login" className="w-full flex items-center justify-center font-bold text-emerald-600 hover:text-emerald-500 transition-colors uppercase tracking-[0.2em]">
                             Sign In Now <ArrowRight className="ml-2 h-4 w-4" />
                         </Link>
                     </div>
@@ -92,7 +92,7 @@ const ResetPasswordPage = () => {
         <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-2xl shadow-xl border border-gray-100 animate-in fade-in slide-in-from-bottom-5 duration-700">
                 <div className="text-center">
-                    <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-violet-50 text-violet-600 mb-6"><Lock className="h-8 w-8" /></div>
+                    <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-blue-50 text-blue-600 mb-6"><Lock className="h-8 w-8" /></div>
                     <h2 className="text-3xl font-black text-gray-900 tracking-tight">Set New Password</h2>
                     <p className="mt-2 text-sm text-gray-500 font-medium tracking-wide">Enter a strong password for your security.</p>
                 </div>
@@ -103,7 +103,7 @@ const ResetPasswordPage = () => {
                         <input
                             type={showPassword ? "text" : "password"}
                             required
-                            className="block w-full pl-12 pr-12 py-3.5 rounded-2xl bg-gray-50 border-gray-200 focus:bg-white focus:border-violet-500 focus:ring-violet-500 transition-all font-medium"
+                            className="block w-full pl-12 pr-12 py-3.5 rounded-2xl bg-gray-50 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500 transition-all font-medium"
                             placeholder="New Password"
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
@@ -118,7 +118,7 @@ const ResetPasswordPage = () => {
                         <input
                             type={showPassword ? "text" : "password"}
                             required
-                            className="block w-full pl-12 pr-4 py-3.5 rounded-2xl bg-gray-50 border-gray-200 focus:bg-white focus:border-violet-500 focus:ring-violet-500 transition-all font-medium"
+                            className="block w-full pl-12 pr-4 py-3.5 rounded-2xl bg-gray-50 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500 transition-all font-medium"
                             placeholder="Confirm New Password"
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
@@ -128,7 +128,7 @@ const ResetPasswordPage = () => {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-white bg-violet-600 hover:bg-violet-700 disabled:opacity-50 transition-all shadow-lg shadow-violet-500/25 active:scale-[0.98]"
+                        className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition-all shadow-lg shadow-blue-500/25 active:scale-[0.98]"
                     >
                         {loading ? <Loader2 className="animate-spin h-5 w-5" /> : 'Update Password'}
                     </button>

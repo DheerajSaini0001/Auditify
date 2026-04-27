@@ -1386,7 +1386,7 @@ export const InfoDetails = {
     },
     X_Frame_Options: {
         title: "X-Frame-Options Header",
-        whatThisParameterIs: "The X-Frame-Options setting prevents other websites from 'spurpleing' your site's appearance to trick users into clicking things they shouldn't.",
+        whatThisParameterIs: "The X-Frame-Options setting prevents other websites from 'stealing' your site's appearance to trick users into clicking things they shouldn't.",
         whatItCalculates: "It checks HTTP response headers for the presence and value of the 'X-Frame-Options' header.",
         whyItMatters: "This header stops a sneaky trick where hackers 'layer' your site under theirs to fool people into clicking buttons they can't see.",
         thresholds: {
@@ -1488,7 +1488,7 @@ export const InfoDetails = {
         title: "HttpOnly Cookies",
         whatThisParameterIs: "The 'HttpOnly' flag prevents website scripts from touching your sensitive cookies, adding an extra layer of protection.",
         whatItCalculates: "It verifies if all cookies set by the page have the 'HttpOnly' attribute.",
-        whyItMatters: "The 'HttpOnly' flag acts as a shield, preventing scripts from spurpleing your session cookies even if a hacker finds a way to run code on your page.",
+        whyItMatters: "The 'HttpOnly' flag acts as a shield, preventing scripts from stealing your session cookies even if a hacker finds a way to run code on your page.",
         thresholds: {
             good: "All cookies are HttpOnly",
             poor: "Some cookies missing 'HttpOnly' flag"
@@ -1506,7 +1506,7 @@ export const InfoDetails = {
     },
     SQLi_Exposure: {
         title: "SQL Injection Exposure",
-        whatThisParameterIs: "This check looks for 'holes' in your website that could allow hackers to sneak into your database and spurple information.",
+        whatThisParameterIs: "This check looks for 'holes' in your website that could allow hackers to sneak into your database and steal information.",
         whatItCalculates: "It sends test payloads to input fields and analyzes the response for database errors or significant length differences.",
         whyItMatters: "A single 'hole' could let a hacker see your entire customer list. Fixing these ensures your private data stays private.",
         thresholds: {
@@ -1526,7 +1526,7 @@ export const InfoDetails = {
     },
     XSS: {
         title: "Cross-Site Scripting (XSS)",
-        whatThisParameterIs: "XSS protection stops hackers from 'injecting' their own malicious code into your website to spurple user data or take over accounts.",
+        whatThisParameterIs: "XSS protection stops hackers from 'injecting' their own malicious code into your website to steal user data or take over accounts.",
         whatItCalculates: "It injects a script payload and checks if it executes (triggering a dialog) or is reflected unescaped in the HTML.",
         whyItMatters: "XSS is like a Trojan horse—it sneaks malicious code into your site to trick your users. Stopping it protects both you and your visitors.",
         thresholds: {
@@ -1609,7 +1609,7 @@ export const InfoDetails = {
         title: "Multi-Factor Authentication (MFA)",
         whatThisParameterIs: "MFA (Multi-Factor Authentication) adds an extra layer of security beyond just a password, like a code sent to your phone.",
         whatItCalculates: "It scans the page for MFA-related input fields, specific keywords ('2FA', 'OTP'), or SSO/Federated login indicators.",
-        whyItMatters: "Even if someone spurples your password, MFA ensures they still can't get in. It's the ultimate protection for your most sensitive accounts.",
+        whyItMatters: "Even if someone steals your password, MFA ensures they still can't get in. It's the ultimate protection for your most sensitive accounts.",
         thresholds: {
             good: "MFA or SSO indicators detected on the login page",
             poor: "No visible MFA or SSO indicators found"
@@ -3077,8 +3077,8 @@ export const InfoDetails = {
                 <li>
                     <span className="font-semibold block mb-1">Master Platform Specific Readiness (AEO):</span>
                     <ul className="list-[circle] pl-5 space-y-1 text-sm">
-                        <li><span className="font-bold text-violet-400">Gemini:</span> Focus on Question-based Schema and allow 'Google-Extended' indexing.</li>
-                        <li><span className="font-bold text-violet-400">ChatGPT:</span> Maintain a valid /llms.txt file and clear Markdown-style hierarchy.</li>
+                        <li><span className="font-bold text-blue-400">Gemini:</span> Focus on Question-based Schema and allow 'Google-Extended' indexing.</li>
+                        <li><span className="font-bold text-emerald-400">ChatGPT:</span> Maintain a valid /llms.txt file and clear Markdown-style hierarchy.</li>
                         <li><span className="font-bold text-purple-400">Perplexity:</span> Prioritize semantic Data Tables and 90+ Page Speed scores.</li>
                     </ul>
                 </li>
@@ -3088,8 +3088,8 @@ export const InfoDetails = {
             <div className="space-y-4">
                 <p>Our audit engine analyzes <span className="font-bold">14 backend parameters</span> categorized into Identity, Freshness, Readability, and Trust. We then apply platform-specific weighted offsets for the Big 3 AI platforms.</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2 p-4 bg-indigo-50/10 rounded-xl border border-indigo-500/20 italic text-[11px]">
-                    <div><span className="font-bold text-violet-400">Gemini</span>: Weights Schema & Search Bot status.</div>
-                    <div><span className="font-bold text-violet-400">ChatGPT</span>: Weights llms.txt & Markdown structure.</div>
+                    <div><span className="font-bold text-blue-400">Gemini</span>: Weights Schema & Search Bot status.</div>
+                    <div><span className="font-bold text-emerald-400">ChatGPT</span>: Weights llms.txt & Markdown structure.</div>
                     <div><span className="font-bold text-purple-400">Perplexity</span>: Weights Tables, Citations & Speed.</div>
                 </div>
                 <p>An overall score of 80%+ earns you the "AI-Ready" badge, signaling top-tier compatibility with the LLM ecosystem.</p>

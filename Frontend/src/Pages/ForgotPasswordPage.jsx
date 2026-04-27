@@ -38,15 +38,15 @@ const ForgotPasswordPage = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-2xl shadow-xl border border-gray-100 text-center animate-in fade-in zoom-in-95 duration-500">
-          <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-violet-100 mb-6">
-            <CheckCircle className="h-10 w-10 text-violet-600" />
+          <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-emerald-100 mb-6">
+            <CheckCircle className="h-10 w-10 text-emerald-600" />
           </div>
           <h2 className="text-3xl font-black text-gray-900 tracking-tight">Check your inbox</h2>
           <p className="mt-4 text-gray-500 leading-relaxed">
             If an account exists for <span className="font-semibold text-gray-900">{email}</span>, we've sent a password reset link.
           </p>
           <div className="mt-8 pt-6 border-t border-gray-100">
-            <Link to="/login" className="inline-flex items-center text-sm font-bold text-violet-600 hover:text-violet-500 transition-colors uppercase tracking-[0.2em]">
+            <Link to="/login" className="inline-flex items-center text-sm font-bold text-emerald-600 hover:text-emerald-500 transition-colors uppercase tracking-[0.2em]">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Sign In
             </Link>
@@ -60,7 +60,7 @@ const ForgotPasswordPage = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-2xl shadow-xl border border-gray-100">
         <div className="text-center">
-            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-violet-50 text-violet-600 mb-6">
+            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-blue-50 text-blue-600 mb-6">
                 <Send className="h-8 w-8" />
             </div>
             <h2 className="text-3xl font-black text-gray-900 tracking-tight">Forgot Password?</h2>
@@ -77,7 +77,7 @@ const ForgotPasswordPage = () => {
             <input
               type="email"
               required
-              className="block w-full pl-12 pr-4 py-4 rounded-2xl bg-gray-50 border-gray-200 focus:bg-white focus:border-violet-500 focus:ring-violet-500 outline-none transition-all placeholder:text-gray-400 font-medium"
+              className="block w-full pl-12 pr-4 py-4 rounded-2xl bg-gray-50 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500 outline-none transition-all placeholder:text-gray-400 font-medium"
               placeholder="Email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -89,7 +89,7 @@ const ForgotPasswordPage = () => {
           <button
             type="submit"
             disabled={loading}
-            className="group relative w-full flex justify-center py-4 px-4 rounded-2xl font-bold text-white bg-violet-600 hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 disabled:opacity-50 transition-all shadow-lg shadow-violet-500/20 active:scale-[0.98]"
+            className="group relative w-full flex justify-center py-4 px-4 rounded-2xl font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all shadow-lg shadow-blue-500/20 active:scale-[0.98]"
           >
             {loading ? 'Sending...' : 'Send Reset Link'}
           </button>

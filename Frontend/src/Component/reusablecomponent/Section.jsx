@@ -4,7 +4,7 @@ const Section = ({ title, subtitle, icon: Icon, children, darkMode, action, shou
     <div className="space-y-4">
         <div className="flex items-center justify-between px-2">
             <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${darkMode ? "bg-violet-500/20 text-violet-400" : "bg-violet-100 text-violet-600"}`}>
+                <div className={`p-2 rounded-lg ${darkMode ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-600"}`}>
                     <Icon size={20} />
                 </div>
                 <div>

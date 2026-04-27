@@ -68,7 +68,7 @@ const ConversionShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
         </p>
 
         {/* Processing State */}
-        <div className="mt-8 flex items-center gap-2 px-4 py-1.5 rounded-full bg-violet-500/10 text-violet-600 dark:text-violet-400">
+        <div className="mt-8 flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
           <Loader2 className="w-3.5 h-3.5 animate-spin" />
           <span className="text-xs font-bold uppercase tracking-wider">Processing</span>
         </div>
@@ -78,7 +78,7 @@ const ConversionShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
           {steps.map((_, i) => (
             <div
               key={i}
-              className={`h-1.5 rounded-full transition-all duration-500 ${i === currentStep ? "w-6 bg-violet-500" : i < currentStep ? "w-6 bg-violet-500/40" : "w-2 bg-slate-400/30"}`}
+              className={`h-1.5 rounded-full transition-all duration-500 ${i === currentStep ? "w-6 bg-blue-500" : i < currentStep ? "w-6 bg-blue-500/40" : "w-2 bg-slate-400/30"}`}
             />
           ))}
         </div>
@@ -107,9 +107,9 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
   let statusLabel = "Needs Improvement";
 
   if (isPassed) {
-    statusBg = "bg-violet-500";
-    statusBorder = "border-violet-500";
-    statusText = "text-violet-500";
+    statusBg = "bg-emerald-500";
+    statusBorder = "border-emerald-500";
+    statusText = "text-emerald-500";
     statusLabel = "Optimized";
   } else if (isWarning) {
     statusBg = "bg-amber-500";
@@ -126,7 +126,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
             <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
-              <Icon size={24} className={darkMode ? "text-violet-400" : "text-violet-600"} />
+              <Icon size={24} className={darkMode ? "text-blue-400" : "text-blue-600"} />
             </div>
             <div>
               <h3 className={`font-bold text-lg ${textColor}`}>{title}</h3>
@@ -171,7 +171,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
         </div>
 
         <div className={`mt-4 p-4 rounded-lg flex items-start gap-3 ${darkMode ? "bg-slate-800/50" : "bg-slate-50"}`}>
-          <div className={`mt-0.5 p-1.5 rounded-full flex-shrink-0 ${isPassed ? "bg-violet-500/10 text-violet-500" : isWarning ? "bg-amber-500/10 text-amber-500" : "bg-rose-500/10 text-rose-500"}`}>
+          <div className={`mt-0.5 p-1.5 rounded-full flex-shrink-0 ${isPassed ? "bg-emerald-500/10 text-emerald-500" : isWarning ? "bg-amber-500/10 text-amber-500" : "bg-rose-500/10 text-rose-500"}`}>
             {isPassed ? <CheckCircle size={14} /> : isWarning ? <AlertTriangle size={14} /> : <XCircle size={14} />}
           </div>
           <div>
@@ -579,11 +579,11 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
               {/* Correct CTAs */}
               {meta?.correctCtas && meta.correctCtas.length > 0 && (
                 <div className="flex-1 min-w-[50%]">
-                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-violet-400" : "text-violet-600"}`}>Correctly Linked</h5>
-                  <div className={`mt-1 p-2 rounded border flex flex-col gap-1.5 font-mono text-[10px] max-h-[180px] overflow-y-auto ${darkMode ? "bg-violet-900/10 border-violet-800/30 text-violet-300" : "bg-violet-50 border-violet-200 text-violet-700"}`}>
+                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>Correctly Linked</h5>
+                  <div className={`mt-1 p-2 rounded border flex flex-col gap-1.5 font-mono text-[10px] max-h-[180px] overflow-y-auto ${darkMode ? "bg-emerald-900/10 border-emerald-800/30 text-emerald-300" : "bg-emerald-50 border-emerald-200 text-emerald-700"}`}>
                     {meta.correctCtas.map((cta, idx) => (
                       <div key={idx} className="flex gap-2 items-start">
-                        <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1 bg-violet-500`}></span>
+                        <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1 bg-emerald-500`}></span>
                         <span className="break-all">
                           <span className="font-bold">"{cta.text}"</span> → {cta.href}
                         </span>
@@ -617,7 +617,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
 
             {/* Recommendation */}
             <div>
-              <p className={`font-semibold mb-1 ${darkMode ? "text-violet-400" : "text-violet-600"}`}>Recommendation:</p>
+              <p className={`font-semibold mb-1 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>Recommendation:</p>
               <div className="pl-1 opacity-90">
                 <p>{analysis?.recommendation}</p>
               </div>
@@ -641,7 +641,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
 const Section = ({ title, icon: Icon, children, darkMode }) => (
   <div className="space-y-4">
     <div className="flex items-center gap-3 px-2">
-      <div className={`p-2 rounded-lg ${darkMode ? "bg-violet-500/20 text-violet-400" : "bg-violet-100 text-violet-600"}`}>
+      <div className={`p-2 rounded-lg ${darkMode ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-600"}`}>
         <Icon size={20} />
       </div>
       <h2 className={`text-xl font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>
@@ -662,9 +662,9 @@ export default function Conversion_Lead_Flow() {
   const darkMode = theme === "dark";
 
   const auditSteps = useMemo(() => [
-    { icon: <MousePointerClick className="w-8 h-8 text-violet-500" />, title: "CTA Optimization", text: "Analyzing Call-To-Action (CTA) placement, contrast, and clarity..." },
+    { icon: <MousePointerClick className="w-8 h-8 text-blue-500" />, title: "CTA Optimization", text: "Analyzing Call-To-Action (CTA) placement, contrast, and clarity..." },
     { icon: <FileText className="w-8 h-8 text-purple-500" />, title: "Form Analysis", text: "Evaluating form length, validation feedback, and required field indicators..." },
-    { icon: <ShieldCheck className="w-8 h-8 text-purple-500" />, title: "Trust Signals", text: "Checking for testimonials, reviews, security badges, and client logos..." },
+    { icon: <ShieldCheck className="w-8 h-8 text-teal-500" />, title: "Trust Signals", text: "Checking for testimonials, reviews, security badges, and client logos..." },
     { icon: <Zap className="w-8 h-8 text-indigo-500" />, title: "Lead Generation", text: "Identifying lead magnets, exit intent triggers, and value propositions..." },
     { icon: <Activity className="w-8 h-8 text-amber-500" />, title: "User Flow", text: "Mapping user journey linearity and removing friction points..." },
   ], []);
@@ -687,7 +687,7 @@ export default function Conversion_Lead_Flow() {
       <div className={`w-full ${darkMode ? "bg-gray-900" : "bg-gray-50"} transition-colors duration-300`}>
         <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-8`}>
           {/* ✅ Unified Master Card Loading State */}
-          <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-violet-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
+          <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
 
             {/* 1. URL Header */}
             <div>
@@ -704,7 +704,7 @@ export default function Conversion_Lead_Flow() {
               {/* Left Panel: Live Preview (Only if not All) */}
               {data.report !== "All" && (
                 <div className={`w-full xl:w-[45%] p-3 lg:p-4 flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-violet-500/5 blur-3xl rounded-full pointer-events-none"></div>
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/5 blur-3xl rounded-full pointer-events-none"></div>
                   <div className="w-full relative z-10">
                     <LivePreview data={data} loading={loading} variant="plain" />
                   </div>
@@ -737,7 +737,7 @@ export default function Conversion_Lead_Flow() {
       <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-8`}>
 
         {/* ✅ Unified Master Card */}
-        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-violet-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
+        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
 
           {/* 1. URL Header */}
           <div>
@@ -756,7 +756,7 @@ export default function Conversion_Lead_Flow() {
             {/* Left Panel: Live Preview (Only if not All) */}
             {data.report !== "All" && (
               <div className={`w-full xl:w-[45%] ${data.report === "All" ? "p-6 lg:p-10" : "p-3 lg:p-4"} flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-violet-500/5 blur-3xl rounded-full pointer-events-none"></div>
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/5 blur-3xl rounded-full pointer-events-none"></div>
                 <div className="w-full relative z-10">
                   <LivePreview data={data} loading={loading} variant="plain" />
                 </div>
@@ -773,12 +773,12 @@ export default function Conversion_Lead_Flow() {
                   {/* Text Content */}
                   <div className={`flex-1 ${data.report === "All" ? "space-y-5" : "space-y-4"} text-left order-2 md:order-1`}>
                     <div className={`${data.report === "All" ? "space-y-2" : "space-y-1.5"}`}>
-                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${darkMode ? "bg-violet-500/10 text-violet-400 border border-violet-500/20" : "bg-violet-100/50 text-violet-600 border border-violet-200"}`}>
+                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-blue-100/50 text-blue-600 border border-blue-200"}`}>
                         <Target className="w-3.5 h-3.5" />
                         <span>Conversion Audit</span>
                       </div>
                       <h3 className={`${data.report === "All" ? "text-3xl lg:text-5xl" : "text-2xl lg:text-4xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
-                        Conversion & <span className="text-violet-500">Lead Flow</span>
+                        Conversion & <span className="text-blue-500">Lead Flow</span>
                       </h3>
                       <p className={`text-sm leading-relaxed opacity-70 ${darkMode ? "text-slate-300" : "text-slate-600"}`}>
                         Analysis of your conversion funnels, CTA effectiveness, and user journey optimization.
@@ -789,7 +789,7 @@ export default function Conversion_Lead_Flow() {
                     <div className={`flex flex-wrap items-center ${data.report === "All" ? "gap-6" : "gap-5"}`}>
                       <div className={`flex items-center ${data.report === "All" ? "gap-5" : "gap-4"}`}>
                         <div className="flex items-center gap-2">
-                          <CheckCircle size={18} className="text-violet-500" />
+                          <CheckCircle size={18} className="text-emerald-500" />
                           <span className="text-sm font-bold">{passedCount} Passed</span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -804,7 +804,7 @@ export default function Conversion_Lead_Flow() {
                       <div className={`w-px h-4 ${darkMode ? "bg-slate-800" : "bg-slate-200 hidden md:block"}`}></div>
                       <button
                         onClick={() => setSelectedMetricInfo(scoreCalculationInfo)}
-                        className={`flex items-center gap-2 text-sm font-bold transition-all ${darkMode ? "text-violet-400 hover:text-violet-300" : "text-violet-600 hover:text-violet-700"}`}
+                        className={`flex items-center gap-2 text-sm font-bold transition-all ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-700"}`}
                       >
                         <Info size={16} />
                         <span className="border-b border-transparent hover:border-current">Metric Methodology</span>
@@ -814,7 +814,7 @@ export default function Conversion_Lead_Flow() {
 
                   {/* Circular Progress */}
                   <div className="relative flex-shrink-0 group cursor-default order-1 md:order-2">
-                    <div className={`absolute -inset-8 rounded-full blur-3xl opacity-25 transition-opacity duration-700 group-hover:opacity-40 ${flow?.Percentage >= 80 ? "bg-violet-500" : "bg-amber-500"}`}></div>
+                    <div className={`absolute -inset-8 rounded-full blur-3xl opacity-25 transition-opacity duration-700 group-hover:opacity-40 ${flow?.Percentage >= 80 ? "bg-emerald-500" : "bg-amber-500"}`}></div>
                     <CircularProgress value={flow?.Percentage || 0} size={data.report === "All" ? 180 : 150} stroke={14} />
                     <div className="absolute inset-0 flex items-center justify-center flex-col gap-0.5">
                       <span className={`${data.report === "All" ? "text-5xl" : "text-3xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>{flow?.Percentage || 0}%</span>

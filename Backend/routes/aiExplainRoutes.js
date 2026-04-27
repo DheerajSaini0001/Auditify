@@ -9,7 +9,7 @@ const router = express.Router();
  * Helper to call Gemini with retry logic for handling 503 (Service Unavailable)
  * and other transient errors.
  */
-async function generateWithRetry(model, prompt, retries = 3, delay = 20000) {
+async function generateWithRetry(model, prompt, retries = 3, delay = 2000) {
     for (let i = 0; i < retries; i++) {
         try {
             const result = await model.generateContent(prompt);

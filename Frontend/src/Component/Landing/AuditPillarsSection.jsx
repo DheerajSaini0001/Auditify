@@ -5,17 +5,17 @@ import { ThemeContext } from '../../context/ThemeContext.jsx';
 
 // ─── Color tokens ────────────────────────────────────────────────────────────
 const COLOR_MAP = {
-    emerald: {
-        bg: 'from-emerald-500/10 to-teal-500/5',
-        text: 'text-emerald-500',
-        glow: 'rgba(16, 185, 129, 0.15)',
-        ring: 'ring-emerald-500/20',
+    violet: {
+        bg: 'from-violet-500/10 to-purple-500/5',
+        text: 'text-violet-500',
+        glow: 'rgba(139, 92, 246, 0.15)',
+        ring: 'ring-violet-500/20',
     },
     blue: {
-        bg: 'from-blue-500/10 to-indigo-500/5',
-        text: 'text-blue-500',
+        bg: 'from-violet-500/10 to-indigo-500/5',
+        text: 'text-violet-500',
         glow: 'rgba(59, 130, 246, 0.15)',
-        ring: 'ring-blue-500/20',
+        ring: 'ring-violet-500/20',
     },
     purple: {
         bg: 'from-violet-500/10 to-purple-600/5',
@@ -29,11 +29,11 @@ const COLOR_MAP = {
         glow: 'rgba(244, 63, 94, 0.15)',
         ring: 'ring-rose-500/20',
     },
-    cyan: {
-        bg: 'from-cyan-400/10 to-sky-500/5',
-        text: 'text-cyan-500',
-        glow: 'rgba(6, 182, 212, 0.15)',
-        ring: 'ring-cyan-500/20',
+    indigo: {
+        bg: 'from-indigo-400/10 to-violet-500/5',
+        text: 'text-indigo-500',
+        glow: 'rgba(99, 102, 241, 0.15)',
+        ring: 'ring-indigo-500/20',
     },
     orange: {
         bg: 'from-orange-400/10 to-amber-500/5',
@@ -159,7 +159,7 @@ const PillarCard = ({ icon: Icon, title, tag, description, color, index, darkMod
                              <div className={`w-32 h-4 rounded-full ${darkMode ? 'bg-white/10' : 'bg-slate-200'}`}></div>
                              <div className={`w-48 h-4 rounded-full ${darkMode ? 'bg-white/5' : 'bg-slate-100'}`}></div>
                              <div className="flex gap-4 mt-8">
-                                 <div className={`w-16 h-16 rounded-2xl ${darkMode ? 'bg-emerald-500/20' : 'bg-emerald-100'}`}></div>
+                                 <div className={`w-16 h-16 rounded-2xl ${darkMode ? 'bg-violet-500/20' : 'bg-violet-100'}`}></div>
                                  <div className={`w-24 h-16 rounded-2xl ${darkMode ? 'bg-white/5' : 'bg-slate-100'}`}></div>
                              </div>
                          </div>
@@ -181,7 +181,7 @@ const AuditPillarsSection = () => {
             title: 'Performance',
             tag: 'Core Web Vitals',
             description: 'Deep core web vitals analysis including LCP, FID, and CLS directly from the source to guarantee lightning speed.',
-            color: 'emerald',
+            color: 'violet',
         },
         {
             icon: Search,
@@ -209,7 +209,7 @@ const AuditPillarsSection = () => {
             title: 'UX & Structure',
             tag: 'User Experience',
             description: 'Heatmap-style element distribution, content hierarchy mapping, and touch target scaling analysis.',
-            color: 'cyan',
+            color: 'indigo',
         },
         {
             icon: Cpu,
@@ -231,12 +231,12 @@ const AuditPillarsSection = () => {
     return (
         <section
             id="features"
-            className={`relative py-32 transition-colors duration-500 overflow-hidden ${darkMode ? 'bg-[#080E1C]' : 'bg-[#F5F7FA]'}`}
+            className={`relative py-32 transition-colors duration-500 overflow-hidden ${darkMode ? 'bg-[#020617]' : 'bg-[#F8FAFC]'}`}
         >
             {/* ── Background Aesthetics ── */}
             <div className="absolute inset-0 pointer-events-none select-none overflow-hidden z-0">
                 <div className="absolute top-[-10%] right-[-5%] w-[800px] h-[800px] rounded-full opacity-30"
-                    style={{ background: 'radial-gradient(circle, #10b98120 0%, transparent 60%)', filter: 'blur(80px)' }} />
+                    style={{ background: 'radial-gradient(circle, #8b5cf620 0%, transparent 60%)', filter: 'blur(80px)' }} />
                 <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] rounded-full opacity-20"
                     style={{ background: 'radial-gradient(circle, #3b82f620 0%, transparent 60%)', filter: 'blur(80px)' }} />
                 
@@ -263,10 +263,10 @@ const AuditPillarsSection = () => {
                             viewport={{ once: true }}
                             transition={{ duration: 0.6, ease: "easeOut" }}
                             className={`inline-flex items-center gap-2.5 px-4 py-2 rounded-full border text-[11px] font-bold uppercase tracking-[0.25em] backdrop-blur-md
-                                ${darkMode ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-emerald-50 shadow-sm border-emerald-200 text-emerald-700'}
+                                ${darkMode ? 'bg-violet-500/10 border-violet-500/20 text-violet-400' : 'bg-violet-50 shadow-sm border-violet-200 text-violet-700'}
                             `}
                         >
-                            <Sparkles size={14} className="text-emerald-500" />
+                            <Sparkles size={14} className="text-violet-500" />
                             The Standard for Auditing
                         </motion.div>
 
@@ -284,11 +284,11 @@ const AuditPillarsSection = () => {
                             The Dimensions of{' '}
                             <br className="hidden sm:block" />
                             <span className="relative inline-block pb-2">
-                                <span className="bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-500 bg-clip-text text-transparent">
+                                <span className="bg-gradient-to-r from-violet-400 via-purple-400 to-indigo-400 bg-clip-text text-transparent">
                                     Website Intelligence.
                                 </span>
                                 {/* Decorative underline */}
-                                <div className="absolute bottom-0 left-0 w-full h-[6px] rounded-full bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-500 opacity-50 blur-[2px]" />
+                                <div className="absolute bottom-0 left-0 w-full h-[6px] rounded-full bg-gradient-to-r from-violet-400 via-purple-400 to-indigo-400 opacity-50 blur-[2px]" />
                             </span>
                         </motion.h2>
                     </div>

@@ -98,7 +98,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className={`min-h-screen flex flex-col justify-center transition-colors duration-300 py-12 px-4 sm:px-6 lg:px-8 ${darkMode ? "bg-[#0a0a0f]" : "bg-gray-50"}`}>
+    <div className={`min-h-screen flex flex-col justify-center transition-colors duration-300 py-12 px-4 sm:px-6 lg:px-8 ${darkMode ? "bg-[#020617]" : "bg-gray-50"}`}>
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center mb-8">
           <Link to="/">
@@ -119,8 +119,8 @@ const LoginPage = () => {
                 required
                 className={`block w-full pl-12 pr-4 py-4 rounded-2xl transition-all font-medium placeholder:text-gray-500 outline-none border ${
                   darkMode 
-                    ? "bg-white/5 border-white/5 focus:bg-white/10 focus:border-blue-500/50 text-white" 
-                    : "bg-gray-50 border-gray-100 focus:bg-white focus:border-blue-500 focus:ring-blue-500 text-gray-900"
+                    ? "bg-white/5 border-white/5 focus:bg-white/10 focus:border-violet-500/50 text-white" 
+                    : "bg-gray-50 border-gray-100 focus:bg-white focus:border-violet-500 focus:ring-violet-500 text-gray-900"
                 }`}
                 placeholder="Email address"
                 value={email}
@@ -135,8 +135,8 @@ const LoginPage = () => {
                 required
                 className={`block w-full pl-12 pr-12 py-4 rounded-2xl transition-all font-medium placeholder:text-gray-500 outline-none border ${
                   darkMode 
-                    ? "bg-white/5 border-white/5 focus:bg-white/10 focus:border-blue-500/50 text-white" 
-                    : "bg-gray-50 border-gray-100 focus:bg-white focus:border-blue-500 focus:ring-blue-500 text-gray-900"
+                    ? "bg-white/5 border-white/5 focus:bg-white/10 focus:border-violet-500/50 text-white" 
+                    : "bg-gray-50 border-gray-100 focus:bg-white focus:border-violet-500 focus:ring-violet-500 text-gray-900"
                 }`}
                 placeholder="Password"
                 value={password}
@@ -153,7 +153,7 @@ const LoginPage = () => {
             </div>
 
             <div className="flex items-center justify-end">
-              <Link to="/forgot-password" name="Forgot password?" className={`text-sm font-bold transition-colors ${darkMode ? "text-gray-500 hover:text-blue-500" : "text-gray-400 hover:text-blue-600"}`}>Forgot password?</Link>
+              <Link to="/forgot-password" name="Forgot password?" className={`text-sm font-bold transition-colors ${darkMode ? "text-gray-500 hover:text-violet-500" : "text-gray-400 hover:text-violet-600"}`}>Forgot password?</Link>
             </div>
 
             <MathCaptcha 
@@ -164,7 +164,7 @@ const LoginPage = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition-all shadow-lg shadow-blue-500/25 active:scale-[0.98]"
+              className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-white bg-violet-600 hover:bg-violet-700 disabled:opacity-50 transition-all shadow-lg shadow-violet-500/25 active:scale-[0.98]"
             >
               {loading ? <Loader2 className="animate-spin h-5 w-5" /> : 'Sign In'}
             </button>
@@ -191,7 +191,7 @@ const LoginPage = () => {
           
           <p className="mt-10 text-center text-sm font-bold text-gray-500 uppercase tracking-tighter">
             Don't have an account?{' '}
-            <Link to="/register" state={{ from: location.state?.from }} className="text-blue-600 hover:text-blue-500 transition-colors ml-1 tracking-wider">Register Now</Link>
+            <Link to="/register" state={{ from: location.state?.from }} className="text-violet-600 hover:text-violet-500 transition-colors ml-1 tracking-wider">Register Now</Link>
           </p>
         </div>
       </div>

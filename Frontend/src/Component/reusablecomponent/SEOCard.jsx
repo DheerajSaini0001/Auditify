@@ -9,7 +9,7 @@ import AskAIButton from "../AskAIButton";
  * 
  * @param {string} title - Card title
  * @param {Component} icon - Lucide React icon component
- * @param {string} iconColor - Icon color class (default: "text-blue-400")
+ * @param {string} iconColor - Icon color class (default: "text-violet-400")
  * @param {number} score - Metric score (0.0 - 1.0)
  * @param {string} statusText - Status description text
  * @param {object} meta - Backend meta object
@@ -26,7 +26,7 @@ import AskAIButton from "../AskAIButton";
 const SEOCard = ({
     title,
     icon: Icon,
-    iconColor = "text-blue-400",
+    iconColor = "text-violet-400",
     score, // 0-100 now
     status, // pass, warning, fail
     statusText,
@@ -142,7 +142,7 @@ const SEOCard = ({
 
                             {/* Recommendation */}
                             <div className="space-y-2">
-                                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-500">
+                                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-violet-500">
                                     <CheckCircle size={12} />
                                     <span>Recommendation</span>
                                 </div>

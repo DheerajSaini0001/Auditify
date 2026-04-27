@@ -82,7 +82,7 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
     
     if (score >= 100) {
         status = "Passed";
-        statusColor = "text-emerald-500 bg-emerald-500/10 border-emerald-500/20";
+        statusColor = "text-violet-500 bg-violet-500/10 border-violet-500/20";
     } else if (score > 40 || ((signal === 'aeoSchema' || signal === 'structuredContent') && score === 0)) {
         status = score === 0 && (signal === 'aeoSchema' || signal === 'structuredContent') ? "Warning" : "Partial";
         statusColor = "text-amber-500 bg-amber-500/10 border-amber-500/20";
@@ -95,9 +95,9 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
         ? (darkMode ? "bg-rose-500/5 border-rose-500/20" : "bg-rose-50 border-rose-100")
         : (isWarning 
             ? (darkMode ? "bg-amber-500/5 border-amber-500/20" : "bg-amber-50 border-amber-100")
-            : (darkMode ? "bg-emerald-500/5 border-emerald-500/20" : "bg-emerald-50/50 border-emerald-100"));
+            : (darkMode ? "bg-violet-500/5 border-violet-500/20" : "bg-violet-50/50 border-violet-100"));
 
-    const boxText = isFailed ? "text-rose-600" : (isWarning ? "text-amber-600" : "text-emerald-600");
+    const boxText = isFailed ? "text-rose-600" : (isWarning ? "text-amber-600" : "text-violet-600");
 
     return (
         <div className={`relative overflow-hidden rounded-[2rem] border transition-all duration-500 p-8 flex flex-col gap-6 ${darkMode ? "bg-slate-900 border-slate-800 shadow-xl" : "bg-white border-gray-100 shadow-sm shadow-slate-200 hover:shadow-md"}`}>
@@ -178,7 +178,7 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
                                 <div className="space-y-1.5">
                                     <span className="text-[9px] font-black uppercase tracking-widest opacity-40">Remediation Action</span>
                                     <div className="flex items-center gap-2">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                                        <div className="w-1.5 h-1.5 rounded-full bg-violet-500"></div>
                                         <span className={`text-xs font-black ${darkMode ? "text-white" : "text-slate-900"}`}>
                                             {signal === 'aeoSchema' ? "Inject FAQPage Schema" : 
                                              signal === 'llmsTxt' ? "Initialize /llms.txt" :
@@ -216,8 +216,8 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
             <div className="pt-2 border-t border-slate-800/10 dark:border-slate-100/10">
                 {!isFailed && status === "Passed" ? (
                     <div className="flex items-center gap-3 py-2">
-                        <CheckCircle className="text-emerald-500" size={18} />
-                        <span className="text-xs font-bold text-emerald-600 uppercase tracking-widest">Optimized & Confirmed</span>
+                        <CheckCircle className="text-violet-500" size={18} />
+                        <span className="text-xs font-bold text-violet-600 uppercase tracking-widest">Optimized & Confirmed</span>
                     </div>
                 ) : (
                     <AskAIButton 

@@ -71,7 +71,7 @@ const AIChatWidget = () => {
                 className={`fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 z-50 animate-bounce-subtle ${darkMode ? 'bg-indigo-600 text-white shadow-indigo-500/20' : 'bg-indigo-600 text-white shadow-indigo-200'}`}
             >
                 <MessageSquare className="w-6 h-6" />
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full animate-pulse"></div>
+                <div className="absolute -top-1 -right-1 w-4 h-4 bg-violet-500 border-2 border-white dark:border-slate-900 rounded-full animate-pulse"></div>
             </button>
         );
     }
@@ -90,8 +90,8 @@ const AIChatWidget = () => {
                     <div>
                         <h3 className="text-sm font-bold">DealerPulse Intelligence</h3>
                         <div className="flex items-center gap-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                            <span className={`text-[10px] uppercase tracking-wider font-bold ${darkMode ? 'text-emerald-400' : 'text-[#ffffffb3]'}`}>AI Online</span>
+                            <span className="w-1.5 h-1.5 rounded-full bg-violet-400"></span>
+                            <span className={`text-[10px] uppercase tracking-wider font-bold ${darkMode ? 'text-violet-400' : 'text-[#ffffffb3]'}`}>AI Online</span>
                         </div>
                     </div>
                 </div>

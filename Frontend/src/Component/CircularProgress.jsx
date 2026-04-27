@@ -10,8 +10,8 @@ export default function CircularProgress({ value = 65, size = 120, stroke = 10 }
   let shadowClass = "drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]"; // Red glow
 
   if (value >= 90) {
-    colorClass = "text-green-500";
-    shadowClass = "drop-shadow-[0_0_10px_rgba(34,197,94,0.5)]"; // Green glow
+    colorClass = "text-violet-500";
+    shadowClass = "drop-shadow-[0_0_10px_rgba(139,92,246,0.5)]"; // Violet glow
   } else if (value >= 50) {
     colorClass = "text-yellow-500";
     shadowClass = "drop-shadow-[0_0_10px_rgba(234,179,8,0.5)]"; // Yellow glow

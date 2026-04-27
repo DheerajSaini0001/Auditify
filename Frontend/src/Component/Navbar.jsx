@@ -23,7 +23,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
 
   // Styles
   const navbarClass = darkMode
-    ? "bg-[#0A0F1E]/60 border-b border-white/5 backdrop-blur-2xl text-white shadow-[0_4px_30px_rgba(0,0,0,0.1)]"
+    ? "bg-[#020617]/60 border-b border-white/5 backdrop-blur-2xl text-white shadow-[0_4px_30px_rgba(0,0,0,0.1)]"
     : "bg-white/70 border-b border-slate-200 backdrop-blur-2xl text-slate-900 shadow-[0_4px_30px_rgba(0,0,0,0.05)]";
 
   const buttonClass = darkMode
@@ -56,7 +56,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
               className="flex items-center gap-3 group focus:outline-none"
             >
               <div className="relative">
-                <div className={`absolute -inset-1 rounded-full blur-md opacity-40 group-hover:opacity-60 transition duration-500 ${darkMode ? "bg-emerald-500" : "bg-emerald-400"}`}></div>
+                <div className={`absolute -inset-1 rounded-full blur-md opacity-40 group-hover:opacity-60 transition duration-500 ${darkMode ? "bg-violet-500" : "bg-violet-400"}`}></div>
                 <img
                   src={darkMode ? Assets.Logo : Assets.DarkLogo}
                   alt="DealerPulse Logo"
@@ -76,8 +76,8 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
                 <button
                   onClick={() => navigate("/bulk-audit")}
                   className={`hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-white shadow-lg transition-all 
-                  bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-400 hover:to-indigo-400 hover:scale-[1.02] active:scale-[0.98]
-                  shadow-blue-500/20`}
+                  bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-400 hover:to-indigo-400 hover:scale-[1.02] active:scale-[0.98]
+                  shadow-violet-500/20`}
                 >
                   <NotebookPen className="w-4 h-4" />
                   <span>Back to List</span>
@@ -86,8 +86,8 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
                 <button
                   onClick={handleGoHome}
                   className={`hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-white shadow-lg transition-all 
-                  bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 hover:scale-[1.02] active:scale-[0.98]
-                  shadow-emerald-500/20`}
+                  bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-400 hover:to-purple-400 hover:scale-[1.02] active:scale-[0.98]
+                  shadow-violet-500/20`}
                 >
                   <Plus className="w-5 h-5" />
                   <span>Start New Audit</span>
@@ -106,13 +106,13 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
                     >
                       <div className="hidden sm:flex flex-col items-end mr-1">
                         <span className="text-[10px] font-bold leading-none truncate max-w-[80px]">{user?.name?.split(' ')[0]}</span>
-                        <span className="text-[8px] font-black uppercase text-blue-500 tracking-tighter">{user?.role}</span>
+                        <span className="text-[8px] font-black uppercase text-violet-500 tracking-tighter">{user?.role}</span>
                       </div>
                       
                       {user?.avatar ? (
                         <img src={user.avatar} alt="Profile" className="w-8 h-8 rounded-full border border-white/20 shadow-sm" />
                       ) : (
-                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-black">
+                        <div className="w-8 h-8 rounded-full bg-violet-600 flex items-center justify-center text-white text-xs font-black">
                           {user?.name?.charAt(0)}
                         </div>
                       )}
@@ -124,7 +124,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
                       <>
                         <div className="fixed inset-0 z-10" onClick={() => setProfileOpen(false)}></div>
                         <div className={`absolute right-0 mt-3 w-56 rounded-3xl border shadow-2xl z-20 py-3 overflow-hidden animate-in fade-in zoom-in duration-200 ${
-                          darkMode ? "bg-[#0B1120] border-slate-800" : "bg-white border-slate-100"
+                          darkMode ? "bg-[#020617] border-slate-800" : "bg-white border-slate-100"
                         }`}>
                           <div className="px-5 pb-3 mb-2 border-b border-slate-800/10">
                             <p className="text-[10px] font-black uppercase text-gray-500 tracking-widest mb-1">Signed in as</p>
@@ -133,7 +133,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
 
                           <div className="space-y-1">
                             <Link to="/dashboard" onClick={() => setProfileOpen(false)} className={`flex items-center gap-3 px-5 py-2.5 text-sm font-bold transition-all ${darkMode ? "hover:bg-white/5" : "hover:bg-slate-50"}`}>
-                              <LayoutDashboard size={16} className="text-emerald-500" /> Dashboard
+                              <LayoutDashboard size={16} className="text-violet-500" /> Dashboard
                             </Link>
                             
                             <Link to="/dashboard#audit-history" onClick={() => setProfileOpen(false)} className={`flex items-center gap-3 px-5 py-2.5 text-sm font-bold transition-all ${darkMode ? "hover:bg-white/5" : "hover:bg-slate-50"}`}>
@@ -142,14 +142,14 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
 
                             {user?.role === 'admin' && (
                               <Link to="/admin" onClick={() => setProfileOpen(false)} className={`flex items-center gap-3 px-5 py-2.5 text-sm font-bold transition-all ${darkMode ? "hover:bg-white/5" : "hover:bg-slate-50"}`}>
-                                <ShieldCheck size={16} className="text-blue-500" /> Admin Panel
+                                <ShieldCheck size={16} className="text-violet-500" /> Admin Panel
                               </Link>
                             )}
 
                             {user?.role === 'super_admin' && (
                               <>
                                 <Link to="/admin" onClick={() => setProfileOpen(false)} className={`flex items-center gap-3 px-5 py-2.5 text-sm font-bold transition-all ${darkMode ? "hover:bg-white/5" : "hover:bg-slate-50"}`}>
-                                  <ShieldCheck size={16} className="text-blue-500" /> Admin Panel
+                                  <ShieldCheck size={16} className="text-violet-500" /> Admin Panel
                                 </Link>
                                 <Link to="/admin/setup" onClick={() => setProfileOpen(false)} className={`flex items-center gap-3 px-5 py-2.5 text-sm font-bold transition-all ${darkMode ? "hover:bg-white/5" : "hover:bg-slate-50"}`}>
                                   <Settings size={16} className="text-indigo-500" /> System Setup
@@ -205,7 +205,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
                       </button>
                     </Link>
                     <Link to="/register" state={{ from: location.pathname + location.search }} className="hidden sm:block">
-                      <button className="px-4 py-1.5 rounded-lg text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-md shadow-emerald-600/20">
+                      <button className="px-4 py-1.5 rounded-lg text-sm font-bold text-white bg-violet-600 hover:bg-violet-500 shadow-md shadow-violet-600/20">
                         Sign Up
                       </button>
                     </Link>

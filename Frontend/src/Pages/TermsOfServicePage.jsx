@@ -7,7 +7,7 @@ export default function TermsOfServicePage() {
   const darkMode = theme === "dark";
 
   const containerClass = darkMode
-    ? "min-h-screen py-24 px-4 sm:px-8 flex flex-col items-center bg-[#060B14] text-white relative font-sans"
+    ? "min-h-screen py-24 px-4 sm:px-8 flex flex-col items-center bg-[#020617] text-white relative font-sans"
     : "min-h-screen py-24 px-4 sm:px-8 flex flex-col items-center bg-[#F8FAFC] text-slate-900 relative font-sans";
 
   return (
@@ -38,7 +38,7 @@ export default function TermsOfServicePage() {
 
             <section className="space-y-4">
               <h2 className="text-2xl font-bold flex items-center gap-3">
-                <FileText className="text-blue-500" />
+                <FileText className="text-violet-500" />
                 2. Imperfect Diagnostic Output
               </h2>
               <p>Automated software is, inherently, flawed. Validating WCAG accessibility properties programmatically via DOM assertions can occasionally result in False Positives (flagging an element that is visually accessible but theoretically incorrect in markup).</p>

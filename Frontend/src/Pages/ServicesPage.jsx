@@ -7,7 +7,7 @@ export default function ServicesPage() {
   const darkMode = theme === "dark";
 
   const containerClass = darkMode
-    ? "min-h-screen py-24 px-4 sm:px-8 flex flex-col items-center bg-[#0B1120] text-white relative font-sans"
+    ? "min-h-screen py-24 px-4 sm:px-8 flex flex-col items-center bg-[#020617] text-white relative font-sans"
     : "min-h-screen py-24 px-4 sm:px-8 flex flex-col items-center bg-slate-50 text-slate-900 relative font-sans";
 
   const services = [
@@ -15,7 +15,7 @@ export default function ServicesPage() {
       icon: <Search size={28} />,
       title: "Deep Crawler Auditing",
       desc: "Our primary offering. Headless Chromium clusters analyze DOM layouts, accessibility trees, and network payloads natively to emulate physical devices.",
-      color: "emerald"
+      color: "violet"
     },
     {
       icon: <Layers size={28} />,
@@ -39,7 +39,7 @@ export default function ServicesPage() {
 
   return (
     <div className={containerClass}>
-      <div className={`absolute inset-0 ${darkMode ? 'bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-900/10 via-[#0B1120] to-[#0B1120]' : 'bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-50/80 via-slate-50 to-slate-50'} pointer-events-none`} />
+      <div className={`absolute inset-0 ${darkMode ? 'bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-900/10 via-[#020617] to-[#020617]' : 'bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-50/80 via-slate-50 to-slate-50'} pointer-events-none`} />
 
       <div className="relative z-10 max-w-5xl w-full mx-auto space-y-16">
         
@@ -50,7 +50,7 @@ export default function ServicesPage() {
           </div>
           <h1 className="text-5xl md:text-7xl font-black tracking-tighter leading-tight">
             Comprehensive <br/>
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-blue-400 to-cyan-500">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-violet-400 to-indigo-500">
               Web Intelligence.
             </span>
           </h1>

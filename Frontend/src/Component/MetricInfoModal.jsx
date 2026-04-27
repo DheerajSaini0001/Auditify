@@ -29,8 +29,8 @@ const MetricInfoModal = ({ isOpen, onClose, info, darkMode }) => {
                 {/* Header Section */}
                 <div className="p-8 pb-2 flex items-start gap-5 flex-shrink-0">
                     {/* Header Icon Circle */}
-                    <div className={`w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0 ${darkMode ? "bg-blue-900/20 border border-blue-800/50" : "bg-blue-50 border border-blue-100"}`}>
-                        <HeaderIcon className={`w-8 h-8 ${darkMode ? "text-blue-400" : "text-blue-600"}`} strokeWidth={1.5} />
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0 ${darkMode ? "bg-blue-900/20 border border-blue-800/50" : "bg-violet-50 border border-violet-100"}`}>
+                        <HeaderIcon className={`w-8 h-8 ${darkMode ? "text-violet-400" : "text-violet-600"}`} strokeWidth={1.5} />
                     </div>
 
                     {/* Title & Badge */}
@@ -39,7 +39,7 @@ const MetricInfoModal = ({ isOpen, onClose, info, darkMode }) => {
                             {info.title}
                         </h2>
                         {info.badge && (
-                            <span className={`inline-block text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${darkMode ? "bg-blue-500/10 text-blue-300" : "bg-blue-50 text-blue-600"}`}>
+                            <span className={`inline-block text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${darkMode ? "bg-violet-500/10 text-violet-300" : "bg-violet-50 text-violet-600"}`}>
                                 {info.badge}
                             </span>
                         )}
@@ -59,10 +59,10 @@ const MetricInfoModal = ({ isOpen, onClose, info, darkMode }) => {
 
                     {/* 1. What this metric is (info.whatThisMetricIs) */}
                     {info.whatThisMetricIs && (
-                        <div className={`p-5 rounded-2xl border transition-colors ${darkMode ? "bg-gray-800/40 border-gray-700 hover:border-gray-600" : "bg-white border-gray-100 hover:border-blue-100 hover:shadow-sm"}`}>
+                        <div className={`p-5 rounded-2xl border transition-colors ${darkMode ? "bg-gray-800/40 border-gray-700 hover:border-gray-600" : "bg-white border-gray-100 hover:border-violet-100 hover:shadow-sm"}`}>
                             <div className="flex gap-4">
                                 <div className="flex-shrink-0 mt-0.5">
-                                    <Gauge className="w-6 h-6 text-blue-500" />
+                                    <Gauge className="w-6 h-6 text-violet-500" />
                                 </div>
                                 <div className="flex-1">
                                     <h3 className={`font-bold text-base mb-1.5 ${darkMode ? "text-gray-100" : "text-gray-900"}`}>What this metric is</h3>
@@ -93,10 +93,10 @@ const MetricInfoModal = ({ isOpen, onClose, info, darkMode }) => {
 
                     {/* 3. What to do for a good score (info.whatToDoForAGoodScore) */}
                     {info.whatToDoForAGoodScore && (
-                        <div className={`p-5 rounded-2xl border transition-colors ${darkMode ? "bg-gray-800/40 border-gray-700 hover:border-gray-600" : "bg-white border-gray-100 hover:border-emerald-100 hover:shadow-sm"}`}>
+                        <div className={`p-5 rounded-2xl border transition-colors ${darkMode ? "bg-gray-800/40 border-gray-700 hover:border-gray-600" : "bg-white border-gray-100 hover:border-violet-100 hover:shadow-sm"}`}>
                             <div className="flex gap-4">
                                 <div className="flex-shrink-0 mt-0.5">
-                                    <Wrench className="w-6 h-6 text-emerald-500" />
+                                    <Wrench className="w-6 h-6 text-violet-500" />
                                 </div>
                                 <div className="flex-1">
                                     <h3 className={`font-bold text-base mb-1.5 ${darkMode ? "text-gray-100" : "text-gray-900"}`}>What to do for a good score</h3>
@@ -161,10 +161,10 @@ const MetricInfoModal = ({ isOpen, onClose, info, darkMode }) => {
                                 rel="noopener noreferrer"
                                 className="group cursor-pointer inline-flex items-center gap-2 mb-2"
                             >
-                                <span className={`font-bold text-base ${darkMode ? "text-blue-400 group-hover:text-blue-300" : "text-blue-600 group-hover:text-blue-700"}`}>
+                                <span className={`font-bold text-base ${darkMode ? "text-violet-400 group-hover:text-violet-300" : "text-violet-600 group-hover:text-violet-700"}`}>
                                     Read full guide
                                 </span>
-                                <ArrowUpRight className={`w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${darkMode ? "text-blue-400" : "text-blue-600"}`} />
+                                <ArrowUpRight className={`w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${darkMode ? "text-violet-400" : "text-violet-600"}`} />
                             </a>
                             <p className={`text-xs leading-relaxed ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
                                 Learn how to improve your website's performance in detail. Opens a detailed guide in a new tab.

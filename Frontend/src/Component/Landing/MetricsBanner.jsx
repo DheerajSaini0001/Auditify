@@ -47,7 +47,7 @@ const MetricCard = ({ value, suffix, label, sublabel, icon: Icon, accentColor, d
             transition={{ duration: 0.65, delay, ease: [0.22, 1, 0.36, 1] }}
             className={`relative group flex flex-col justify-between gap-6 p-7 rounded-[2rem] border overflow-hidden transition-all duration-400
                 ${darkMode
-                    ? 'bg-[#0D1525]/70 border-white/6 hover:border-white/12'
+                    ? 'bg-[#020617]/70 border-white/6 hover:border-white/12'
                     : 'bg-white border-slate-100 shadow-sm shadow-slate-100 hover:shadow-md hover:shadow-slate-200/60'}`}
         >
             {/* Ambient corner glow */}
@@ -127,7 +127,7 @@ const MetricsBanner = () => {
             label: "Audits Run",
             sublabel: "Websites analysed across all 7 dimensions",
             icon: Activity,
-            accentColor: "#10b981",
+            accentColor: "#8b5cf6",
         },
         {
             value: "7",
@@ -162,7 +162,7 @@ const MetricsBanner = () => {
         <section
             ref={sectionRef}
             className={`relative pt-10 pb-20 overflow-hidden transition-colors duration-500
-                ${darkMode ? 'bg-[#080E1C]' : 'bg-[#F5F7FA]'}`}
+                ${darkMode ? 'bg-[#020617]' : 'bg-[#F8FAFC]'}`}
         >
             {/* Subtle background texture */}
             <div
@@ -184,7 +184,7 @@ const MetricsBanner = () => {
                 >
                     <div className="space-y-2">
                         <span className={`inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em]
-                            ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                            ${darkMode ? 'text-violet-400' : 'text-violet-600'}`}>
                             <span className="w-4 h-px bg-current inline-block" />
                             Platform at a glance
                         </span>
@@ -192,7 +192,7 @@ const MetricsBanner = () => {
                             ${darkMode ? 'text-white' : 'text-slate-900'}`}>
                             Built for teams who take <br className="hidden lg:block" />
                             <span className="text-transparent bg-clip-text"
-                                style={{ backgroundImage: 'linear-gradient(135deg, #10b981, #06b6d4)' }}>
+                                style={{ backgroundImage: 'linear-gradient(135deg, #8b5cf6, #a78bfa)' }}>
                                 website quality seriously.
                             </span>
                         </h2>
@@ -211,7 +211,7 @@ const MetricsBanner = () => {
                                         ? 'bg-white/4 border-white/8 text-slate-400'
                                         : 'bg-white border-slate-200 text-slate-500 shadow-sm'}`}
                             >
-                                <span className="text-emerald-500">{d.icon}</span>
+                                <span className="text-violet-500">{d.icon}</span>
                                 {d.label}
                             </motion.span>
                         ))}

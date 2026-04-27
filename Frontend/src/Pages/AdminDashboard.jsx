@@ -169,14 +169,14 @@ const AdminDashboard = () => {
   );
 
   return (
-    <div className={`min-h-screen pt-24 pb-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300 ${darkMode ? 'bg-[#0a0a10] text-white' : 'bg-slate-50 text-slate-900'}`}>
+    <div className={`min-h-screen pt-24 pb-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300 ${darkMode ? 'bg-[#020617] text-white' : 'bg-slate-50 text-slate-900'}`}>
       <div className="max-w-[1400px] mx-auto space-y-12">
         
         {/* Header */}
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <h1 className={`text-4xl font-extrabold tracking-tight flex items-center gap-4 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-              <ShieldAlert className="text-blue-500" size={36} />
+              <ShieldAlert className="text-violet-500" size={36} />
               Admin Panel
             </h1>
             <p className={`mt-2 ${darkMode ? 'text-gray-400' : 'text-slate-500'}`}>Real-time platform overview and management.</p>
@@ -189,11 +189,11 @@ const AdminDashboard = () => {
                 onClick={() => { setActiveTab(tab); setPage(1); setSearch(''); }}
                 className={`px-6 py-2 rounded-xl text-sm font-semibold transition-all ${
                   activeTab === tab 
-                    ? 'bg-blue-600 text-white shadow-lg' 
+                    ? 'bg-violet-600 text-white shadow-lg' 
                     : `${darkMode ? 'text-gray-400 hover:text-white' : 'text-slate-500 hover:text-slate-900'}`
                 }`}
               >
-                {tab === 'users' ? 'Registered Users' : 'My Websites'}
+                {tab === 'users' ? 'Registered Users' : 'Website Audit Logs'}
               </button>
             ))}
           </div>
@@ -201,8 +201,8 @@ const AdminDashboard = () => {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard icon={Users} label="Total Users" value={stats.totalUsers} color="bg-blue-600/10 text-blue-500" delay={0.1} />
-          <StatCard icon={Activity} label="Sites Scanned" value={stats.totalAudits} color="bg-emerald-600/10 text-emerald-500" delay={0.2} />
+          <StatCard icon={Users} label="Total Users" value={stats.totalUsers} color="bg-violet-600/10 text-violet-500" delay={0.1} />
+          <StatCard icon={Activity} label="Sites Scanned" value={stats.totalAudits} color="bg-violet-600/10 text-violet-500" delay={0.2} />
           <StatCard icon={ExternalLink} label="Reports Downloaded" value={stats.totalDownloads} color="bg-amber-600/10 text-amber-500" delay={0.3} />
           <StatCard icon={LayoutDashboard} label="Total Projects" value={stats.totalProjects} color="bg-indigo-600/10 text-indigo-500" delay={0.4} />
         </div>
@@ -214,7 +214,7 @@ const AdminDashboard = () => {
                 <input 
                   type="text"
                   placeholder={activeTab === 'users' ? "Search by name or email..." : "Search by URL..."}
-                  className={`w-full pl-12 pr-4 py-3 border border-transparent rounded-xl focus:border-blue-500/50 focus:outline-none transition-all ${
+                  className={`w-full pl-12 pr-4 py-3 border border-transparent rounded-xl focus:border-violet-500/50 focus:outline-none transition-all ${
                     darkMode ? 'bg-white/5 text-white placeholder:text-gray-600' : 'bg-slate-100 text-slate-900 placeholder:text-slate-400'
                   }`}
                   value={search}
@@ -227,7 +227,7 @@ const AdminDashboard = () => {
                   <input 
                     type="text"
                     placeholder="Filter by Country..."
-                    className={`pl-12 pr-4 py-3 border border-transparent rounded-xl focus:border-blue-500/50 focus:outline-none transition-all ${
+                    className={`pl-12 pr-4 py-3 border border-transparent rounded-xl focus:border-violet-500/50 focus:outline-none transition-all ${
                       darkMode ? 'bg-white/5 text-white placeholder:text-gray-600' : 'bg-slate-100 text-slate-900 placeholder:text-slate-400'
                     }`}
                     value={countryFilter}
@@ -273,7 +273,7 @@ const AdminDashboard = () => {
                       <>
                         <td className="px-8 py-5">
                           <div className="flex items-center gap-4">
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold bg-blue-600/10 text-blue-500`}>
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold bg-violet-600/10 text-violet-500`}>
                               {item.avatar ? <img src={item.avatar} alt="" className="w-10 h-10 rounded-full" /> : item.name.charAt(0)}
                             </div>
                             <div>
@@ -283,7 +283,7 @@ const AdminDashboard = () => {
                           </div>
                         </td>
                         <td className="px-8 py-5">
-                          <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${item.isBlocked ? 'bg-red-500/10 text-red-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
+                          <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${item.isBlocked ? 'bg-red-500/10 text-red-500' : 'bg-violet-500/10 text-violet-500'}`}>
                             {item.isBlocked ? 'Suspended' : 'Active'}
                           </span>
                         </td>
@@ -291,7 +291,7 @@ const AdminDashboard = () => {
                         <td className="px-8 py-5 text-right">
                            <div className="flex justify-end gap-2">
                              {item.isBlocked ? (
-                               <button onClick={(e) => handleUnblock(item._id, e)} className="p-2 text-emerald-500 bg-emerald-500/5 hover:bg-emerald-500/10 rounded-lg"><Unlock size={14}/></button>
+                               <button onClick={(e) => handleUnblock(item._id, e)} className="p-2 text-violet-500 bg-violet-500/5 hover:bg-violet-500/10 rounded-lg"><Unlock size={14}/></button>
                              ) : (
                                <button onClick={(e) => handleBlock(item._id, e)} disabled={item.role === 'admin'} className="p-2 text-amber-500 bg-amber-500/5 hover:bg-amber-500/10 rounded-lg disabled:opacity-10"><Lock size={14}/></button>
                              )}
@@ -303,7 +303,7 @@ const AdminDashboard = () => {
                       <>
                         <td className="px-8 py-5">
                            <div className="flex flex-col">
-                              <span className="font-bold text-blue-500 truncate max-w-[300px]">{item.url}</span>
+                              <span className="font-bold text-violet-500 truncate max-w-[300px]">{item.url}</span>
                               <span className="text-[10px] opacity-40 uppercase font-black">{item.device} Audit</span>
                            </div>
                         </td>
@@ -316,7 +316,7 @@ const AdminDashboard = () => {
                         <td className="px-8 py-5 text-center">
                            <div className={`inline-flex w-10 h-10 rounded-full items-center justify-center font-black text-sm border-2 ${
                               item.status === 'pending' ? 'border-amber-500/20 text-amber-500 animate-pulse' :
-                              item.score >= 80 ? 'border-emerald-500/20 text-emerald-500' :
+                              item.score >= 80 ? 'border-violet-500/20 text-violet-500' :
                               item.score >= 50 ? 'border-amber-500/20 text-amber-500' : 'border-red-500/20 text-red-500'
                            }`}>
                               {item.status === 'pending' ? '...' : (item.score !== null ? item.score : '-')}
@@ -352,7 +352,7 @@ const AdminDashboard = () => {
                 <div className="p-8 space-y-8">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-6">
-                      <div className="w-20 h-20 rounded-3xl bg-blue-600 flex items-center justify-center text-3xl font-black text-white shadow-xl">
+                      <div className="w-20 h-20 rounded-3xl bg-violet-600 flex items-center justify-center text-3xl font-black text-white shadow-xl">
                         {selectedUser.name.charAt(0)}
                       </div>
                       <div>
@@ -369,13 +369,13 @@ const AdminDashboard = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                       {/* Projects/Websites */}
                       <div className="space-y-4">
-                        <h4 className="font-black uppercase text-xs tracking-widest text-blue-500">Connected Projects</h4>
+                        <h4 className="font-black uppercase text-xs tracking-widest text-violet-500">Connected Projects</h4>
                         <div className="space-y-2">
                           {selectedUser.websites?.length > 0 ? selectedUser.websites.map((w, i) => (
                             <div key={i} className={`p-4 rounded-2xl border ${darkMode ? 'bg-white/5 border-white/5' : 'bg-slate-50 border-slate-100'}`}>
                               <p className="font-bold truncate">{w.url}</p>
                               <div className="flex items-center gap-2 mt-1">
-                                <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${w.verified ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>
+                                <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${w.verified ? 'bg-violet-500/10 text-violet-500' : 'bg-amber-500/10 text-amber-500'}`}>
                                   {w.verified ? 'Verified' : 'Unverified'}
                                 </span>
                               </div>
@@ -386,7 +386,7 @@ const AdminDashboard = () => {
 
                       {/* Recent Scans */}
                       <div className="space-y-4">
-                        <h4 className="font-black uppercase text-xs tracking-widest text-emerald-500">Recent Audit History</h4>
+                        <h4 className="font-black uppercase text-xs tracking-widest text-violet-500">Recent Audit History</h4>
                         <div className="space-y-2">
                           {userDetails.auditHistory?.length > 0 ? userDetails.auditHistory.map((h, i) => (
                             <div key={i} className={`p-4 rounded-2xl border ${darkMode ? 'bg-white/5 border-white/5' : 'bg-slate-50 border-slate-100'}`}>
@@ -395,7 +395,7 @@ const AdminDashboard = () => {
                                 <span className="text-[10px] opacity-50">{formatTimestamp(h.createdAt)}</span>
                                 <span className={`font-black text-xs ${
                                   h.status === 'pending' ? 'text-amber-500 animate-pulse' : 
-                                  h.status === 'failed' ? 'text-rose-500' : 'text-blue-500'
+                                  h.status === 'failed' ? 'text-rose-500' : 'text-violet-500'
                                 }`}>
                                   {h.status === 'pending' ? 'In Progress' : (h.status === 'success' ? `${h.score}%` : 'Fail')}
                                 </span>
@@ -415,7 +415,7 @@ const AdminDashboard = () => {
                                 <Download size={18} />
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-bold truncate text-blue-500">{d.metadata?.url || 'Direct Export'}</p>
+                                <p className="text-sm font-bold truncate text-violet-500">{d.metadata?.url || 'Direct Export'}</p>
                                 <div className="flex items-center gap-2 mt-1">
                                   <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-slate-500/10 opacity-60">
                                     {d.metadata?.reportType || 'Standard'} PDF

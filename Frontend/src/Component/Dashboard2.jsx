@@ -40,7 +40,7 @@ export default function Dashboard2({ darkMode }) {
 
   const auditSteps = useMemo(() => [
     {
-      icon: <Server className="w-8 h-8 text-blue-500" />,
+      icon: <Server className="w-8 h-8 text-violet-500" />,
       title: "Technical Performance",
       text: "Analyzing server response time, identifying render-blocking resources, and measuring load speeds..."
     },
@@ -50,7 +50,7 @@ export default function Dashboard2({ darkMode }) {
       text: "Crawling meta tags, heading structure, keyword density, and checking for broken links..."
     },
     {
-      icon: <Eye className="w-8 h-8 text-teal-500" />,
+      icon: <Eye className="w-8 h-8 text-purple-500" />,
       title: "Accessibility Check",
       text: "Verifying ARIA labels, contrast ratios, and keyboard navigation support for all users..."
     },
@@ -70,7 +70,7 @@ export default function Dashboard2({ darkMode }) {
       text: "Analyzing call-to-action placement, form accessibility, and user journey friction..."
     },
     {
-      icon: <Bot className="w-8 h-8 text-emerald-500" />,
+      icon: <Bot className="w-8 h-8 text-violet-500" />,
       title: "AIO Intelligence",
       text: "Simulating AI Search bots to ensure your content is optimized for ChatGPT and Gemini..."
     },
@@ -115,14 +115,14 @@ export default function Dashboard2({ darkMode }) {
   };
 
   // Styles
-  const bgClass = darkMode ? "bg-[#0B1120] text-slate-300" : "bg-slate-50 text-slate-600";
+  const bgClass = darkMode ? "bg-[#020617] text-slate-300" : "bg-slate-50 text-slate-600";
   const cardClass = darkMode
     ? "bg-slate-900 border border-slate-800 shadow-xl shadow-black/20"
     : "bg-white border border-slate-200 shadow-xl shadow-slate-200/50";
 
   // Define grade colors
   const gradeColor = (grade) => {
-    if (["A+", "A", "B"].includes(grade)) return "text-emerald-600 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-500/10 dark:border-emerald-500/20";
+    if (["A+", "A", "B"].includes(grade)) return "text-violet-600 bg-violet-50 border-violet-200 dark:text-violet-400 dark:bg-violet-500/10 dark:border-violet-500/20";
     if (["C", "D"].includes(grade)) return "text-amber-600 bg-amber-50 border-amber-200 dark:text-amber-400 dark:bg-amber-500/10 dark:border-amber-500/20";
     return "text-red-600 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-500/10 dark:border-red-500/20";
   };
@@ -144,7 +144,7 @@ export default function Dashboard2({ darkMode }) {
             {/* Left Panel: Live Preview (Widened) */}
             <div className={`w-full xl:w-1/2 p-6 flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/30 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
               {/* Decorative Background Blob */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/5 blur-3xl rounded-full pointer-events-none"></div>
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-violet-500/5 blur-3xl rounded-full pointer-events-none"></div>
 
               <div className="w-full relative z-10 px-2 lg:px-6">
                 <LivePreview data={data} loading={loading} variant="plain" />
@@ -167,7 +167,7 @@ export default function Dashboard2({ darkMode }) {
                       </div>
                       <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 transition-all duration-700 ease-out"
+                          className="h-full bg-gradient-to-r from-violet-500 via-indigo-500 to-purple-500 transition-all duration-700 ease-out"
                           style={{ width: `${(completedSections / 7) * 100}%` }}
                         ></div>
                       </div>
@@ -178,9 +178,9 @@ export default function Dashboard2({ darkMode }) {
 
                       {/* Animated Icon Ring */}
                       <div className="mb-6 relative">
-                        <div className="absolute inset-0 bg-blue-500/20 rounded-full blur-xl animate-pulse"></div>
+                        <div className="absolute inset-0 bg-violet-500/20 rounded-full blur-xl animate-pulse"></div>
                         <div className="relative p-5 bg-white dark:bg-slate-800 rounded-full shadow-lg border border-slate-100 dark:border-slate-700 transition-all duration-300 transform">
-                          {auditSteps[currentStepIndex]?.icon || <Loader2 className="w-8 h-8 animate-spin text-blue-500" />}
+                          {auditSteps[currentStepIndex]?.icon || <Loader2 className="w-8 h-8 animate-spin text-violet-500" />}
                         </div>
                       </div>
 
@@ -196,7 +196,7 @@ export default function Dashboard2({ darkMode }) {
                       {/* Step Indicators */}
                       <div className="flex justify-center gap-2 mt-8">
                         {auditSteps.map((_, i) => (
-                          <div key={i} className={`h-1.5 rounded-full transition-all duration-500 ${i === currentStepIndex ? "w-8 bg-blue-500" : "w-1.5 bg-slate-300 dark:bg-slate-700"}`} />
+                          <div key={i} className={`h-1.5 rounded-full transition-all duration-500 ${i === currentStepIndex ? "w-8 bg-violet-500" : "w-1.5 bg-slate-300 dark:bg-slate-700"}`} />
                         ))}
                       </div>
                     </div>
@@ -211,7 +211,7 @@ export default function Dashboard2({ darkMode }) {
                   <div className="flex flex-col sm:flex-row items-center gap-12 justify-center xl:justify-start">
                     <div className="relative flex-shrink-0 group cursor-default">
                       {/* Subtle Glow Effect */}
-                      <div className={`absolute -inset-4 rounded-full blur-3xl opacity-10 transition-opacity duration-700 group-hover:opacity-20 ${data.grade && ["A+", "A", "B"].includes(data.grade) ? "bg-emerald-500" : "bg-amber-500"}`}></div>
+                      <div className={`absolute -inset-4 rounded-full blur-3xl opacity-10 transition-opacity duration-700 group-hover:opacity-20 ${data.grade && ["A+", "A", "B"].includes(data.grade) ? "bg-violet-500" : "bg-amber-500"}`}></div>
 
                       <CircularProgress value={data.score?.toFixed(0) || 0} size={160} stroke={14} />
                       <div className="absolute inset-0 flex items-center justify-center flex-col gap-1">
@@ -243,11 +243,11 @@ export default function Dashboard2({ darkMode }) {
                     className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 cursor-pointer ${darkMode ? "bg-slate-800/20 border-slate-700/50 hover:bg-slate-800/40 hover:border-slate-600" : "bg-white border-slate-200 hover:border-slate-300 hover:shadow-md"}`}
                   >
                     {/* Hover Gradient Line */}
-                    <div className={`absolute top-0 left-0 w-1 h-full transition-all duration-300 ${data.aioCompatibilityBadge === "High" ? "bg-emerald-500" : "bg-amber-500"}`}></div>
+                    <div className={`absolute top-0 left-0 w-1 h-full transition-all duration-300 ${data.aioCompatibilityBadge === "High" ? "bg-violet-500" : "bg-amber-500"}`}></div>
 
                     <div className="p-5 flex items-center justify-between pl-7">
                       <div className="flex items-center gap-5">
-                        <div className={`p-3.5 rounded-full ${data.aioCompatibilityBadge === "High" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-amber-500/10 text-amber-600 dark:text-amber-400"}`}>
+                        <div className={`p-3.5 rounded-full ${data.aioCompatibilityBadge === "High" ? "bg-violet-500/10 text-violet-600 dark:text-violet-400" : "bg-amber-500/10 text-amber-600 dark:text-amber-400"}`}>
                           <Bot className="w-6 h-6" />
                         </div>
                         <div>
@@ -261,7 +261,7 @@ export default function Dashboard2({ darkMode }) {
                       </div>
 
                       <div className="flex items-center gap-3">
-                        <span className={`text-lg font-bold ${data.aioCompatibilityBadge === "High" ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
+                        <span className={`text-lg font-bold ${data.aioCompatibilityBadge === "High" ? "text-violet-600 dark:text-violet-400" : "text-amber-600 dark:text-amber-400"}`}>
                           {data.aioCompatibilityBadge || "N/A"}
                         </span>
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${darkMode ? "bg-slate-800 group-hover:bg-slate-700" : "bg-slate-100 group-hover:bg-slate-200"}`}>
@@ -300,9 +300,9 @@ export default function Dashboard2({ darkMode }) {
                   let ringColor = "#ef4444"; // red-500
 
                   if (score >= 90) {
-                    statusColor = "text-emerald-500";
+                    statusColor = "text-violet-500";
                     statusText = "Excellent";
-                    ringColor = "#10b981";
+                    ringColor = "#8b5cf6";
                   } else if (score >= 50) {
                     statusColor = "text-amber-500";
                     statusText = "Needs Work";
@@ -321,7 +321,7 @@ export default function Dashboard2({ darkMode }) {
 
                       <div className="mb-6 mt-2 relative">
                         {/* Glowing Background for Score */}
-                        <div className={`absolute inset-0 rounded-full blur-xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 ${score >= 90 ? "bg-emerald-500" : score >= 50 ? "bg-amber-500" : "bg-red-500"}`}></div>
+                        <div className={`absolute inset-0 rounded-full blur-xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 ${score >= 90 ? "bg-violet-500" : score >= 50 ? "bg-amber-500" : "bg-red-500"}`}></div>
                         <CircularProgress value={score} size={110} stroke={8} color={ringColor} />
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
                           <span className={`text-2xl font-black ${darkMode ? "text-white" : "text-slate-900"}`}>

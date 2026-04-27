@@ -69,12 +69,12 @@ const RawData = ({ data, darkMode }) => {
               <div className={`p-8 rounded-2xl flex flex-col transition-all duration-300 hover:-translate-y-1 ${innerCardClass}`}>
                 <div>
                   <div className="flex items-center gap-4 mb-6">
-                    <div className={`p-3.5 rounded-xl shadow-inner ${darkMode ? "bg-blue-500/10 text-blue-400" : "bg-blue-100 text-blue-600"}`}>
+                    <div className={`p-3.5 rounded-xl shadow-inner ${darkMode ? "bg-violet-500/10 text-violet-400" : "bg-violet-100 text-violet-600"}`}>
                       <FileText className="w-8 h-8" strokeWidth={1.5} />
                     </div>
                     <div>
                       <h3 className={`text-xl font-bold ${textPrimary}`}>PDF Report</h3>
-                      <span className={`text-xs font-semibold uppercase tracking-wider ${darkMode ? "text-blue-400" : "text-blue-600"}`}>Document</span>
+                      <span className={`text-xs font-semibold uppercase tracking-wider ${darkMode ? "text-violet-400" : "text-violet-600"}`}>Document</span>
                     </div>
                   </div>
 
@@ -86,7 +86,7 @@ const RawData = ({ data, darkMode }) => {
                 <div className="mt-auto pt-8">
                   <button
                     onClick={() => generatePDF(data)}
-                    className="group w-full flex items-center justify-center gap-3 py-4 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/20 transition-all hover:shadow-blue-600/30 active:scale-[0.98]"
+                    className="group w-full flex items-center justify-center gap-3 py-4 rounded-xl text-sm font-bold text-white bg-violet-600 hover:bg-violet-500 shadow-lg shadow-violet-600/20 transition-all hover:shadow-violet-600/30 active:scale-[0.98]"
                   >
                     <Download className="w-5 h-5 transition-transform group-hover:-translate-y-1" />
                     <span>Download Comprehensive PDF</span>
@@ -148,7 +148,7 @@ const RawData = ({ data, darkMode }) => {
                         <div className="flex gap-1.5 mr-4">
                           <div className="w-3 h-3 rounded-full bg-red-400/80"></div>
                           <div className="w-3 h-3 rounded-full bg-amber-400/80"></div>
-                          <div className="w-3 h-3 rounded-full bg-green-400/80"></div>
+                          <div className="w-3 h-3 rounded-full bg-violet-400/80"></div>
                         </div>
                         <span className={`text-xs font-mono font-medium opacity-70 ${textSecondary}`}>
                           audit_payload_{data._id || "temp"}.json
@@ -157,7 +157,7 @@ const RawData = ({ data, darkMode }) => {
                       <button
                         onClick={handleCopy}
                         className={`flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-lg transition-all ${copied
-                          ? "text-emerald-600 bg-emerald-50 border border-emerald-100"
+                          ? "text-violet-600 bg-violet-50 border border-violet-100"
                           : darkMode ? "text-slate-400 hover:text-white hover:bg-slate-800 border border-transparent hover:border-slate-700" : "text-slate-600 hover:text-black hover:bg-white border border-transparent hover:border-slate-200 hover:shadow-sm"
                           }`}
                       >
@@ -167,7 +167,7 @@ const RawData = ({ data, darkMode }) => {
                     </div>
 
                     {/* Code Area */}
-                    <div className={`p-6 overflow-auto max-h-[600px] custom-scrollbar text-sm font-mono leading-relaxed ${darkMode ? "text-blue-300 bg-[#0B1120]" : "text-indigo-700 bg-slate-50"}`}>
+                    <div className={`p-6 overflow-auto max-h-[600px] custom-scrollbar text-sm font-mono leading-relaxed ${darkMode ? "text-violet-300 bg-[#020617]" : "text-indigo-700 bg-slate-50"}`}>
                       <pre>{jsonString}</pre>
                     </div>
                   </div>

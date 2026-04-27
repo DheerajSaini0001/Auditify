@@ -88,7 +88,7 @@ export const filterRawData = (obj) => {
 
 const getStatusColor = (status, score) => {
     const s = String(status || "").toLowerCase();
-    if (s.includes('pass') || (typeof score === 'number' && score >= 90)) return [34, 197, 94]; // Green
+    if (s.includes('pass') || (typeof score === 'number' && score >= 90)) return [139, 92, 246]; // Violet
     if (s.includes('fail') || (typeof score === 'number' && score < 50)) return [239, 68, 68]; // Red
     if (s.includes('warning') || (typeof score === 'number' && score < 90)) return [249, 115, 22]; // Orange
     return [100, 100, 100]; // Grey
@@ -105,7 +105,7 @@ export const generatePDF = (data) => {
     // --- COLORS ---
     const primaryColor = [41, 128, 185]; // Blue
     const secondaryColor = [44, 62, 80]; // Dark Navy
-    const successColor = [34, 197, 94];
+    const successColor = [139, 92, 246];
     const warningColor = [249, 115, 22];
     const errorColor = [239, 68, 68];
     const textColor = [52, 73, 94];

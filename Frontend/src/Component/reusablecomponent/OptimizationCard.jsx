@@ -30,7 +30,7 @@ const OptimizationCard = ({
             {/* Header */}
             <div className="flex items-start justify-between mb-6">
                 <div className="flex items-start gap-4">
-                    <div className={`p-3 rounded-xl flex-shrink-0 ${darkMode ? "bg-blue-900/20 text-blue-400" : "bg-blue-50 text-blue-600"}`}>
+                    <div className={`p-3 rounded-xl flex-shrink-0 ${darkMode ? "bg-blue-900/20 text-violet-400" : "bg-violet-50 text-violet-600"}`}>
                         <Icon size={24} strokeWidth={2} />
                     </div>
                     <div>
@@ -110,7 +110,7 @@ const getThemeStyles = (darkMode, status) => {
     let statusBadgeColor, statusText;
 
     if (status === "pass") {
-        statusBadgeColor = darkMode ? "bg-emerald-900/30 text-emerald-400 border-emerald-800" : "bg-emerald-50 text-emerald-600 border-emerald-100";
+        statusBadgeColor = darkMode ? "bg-violet-900/30 text-violet-400 border-violet-800" : "bg-violet-50 text-violet-600 border-violet-100";
         statusText = "Passed";
     } else if (status === "warning") {
         statusBadgeColor = darkMode ? "bg-amber-900/30 text-amber-400 border-amber-800" : "bg-amber-50 text-amber-600 border-amber-100";

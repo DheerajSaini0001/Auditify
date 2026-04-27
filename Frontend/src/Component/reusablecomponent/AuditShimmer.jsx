@@ -49,7 +49,7 @@ export const AuditShimmer = ({ darkMode, loading, data, auditSteps = [], metricK
                 </p>
 
                 {/* Processing State */}
-                <div className="mt-8 flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                <div className="mt-8 flex items-center gap-2 px-4 py-1.5 rounded-full bg-violet-500/10 text-violet-600 dark:text-violet-400">
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
                     <span className="text-xs font-bold uppercase tracking-wider">Processing</span>
                 </div>
@@ -60,9 +60,9 @@ export const AuditShimmer = ({ darkMode, loading, data, auditSteps = [], metricK
                         <div
                             key={i}
                             className={`h-1.5 rounded-full transition-all duration-500 ${i === activeStep
-                                ? "w-6 bg-blue-500"
+                                ? "w-6 bg-violet-500"
                                 : i < activeStep
-                                    ? "w-6 bg-blue-500/40"
+                                    ? "w-6 bg-violet-500/40"
                                     : "w-2 bg-slate-400/30"
                                 }`}
                         />

@@ -42,8 +42,8 @@ const MetricCard = ({
     const statusBadgeColor =
         (status === "pass")
             ? darkMode
-                ? "bg-emerald-900/30 text-emerald-400 border-emerald-800"
-                : "bg-emerald-50 text-emerald-600 border-emerald-100"
+                ? "bg-violet-900/30 text-violet-400 border-violet-800"
+                : "bg-violet-50 text-violet-600 border-violet-100"
             : (status === "needs_improvement" || status === "warning")
                 ? darkMode
                     ? "bg-amber-900/30 text-amber-400 border-amber-800"
@@ -62,8 +62,8 @@ const MetricCard = ({
     const valueColor =
         (status === "pass")
             ? darkMode
-                ? "text-emerald-400"
-                : "text-emerald-600"
+                ? "text-violet-400"
+                : "text-violet-600"
             : (status === "warning")
                 ? darkMode
                     ? "text-amber-400"
@@ -83,7 +83,7 @@ const MetricCard = ({
             <div className="flex items-start justify-between mb-6">
                 <div className="flex items-start gap-4">
                     <div
-                        className={`p-3 rounded-xl flex-shrink-0 ${darkMode ? "bg-blue-900/20 text-blue-400" : "bg-blue-50 text-blue-600"
+                        className={`p-3 rounded-xl flex-shrink-0 ${darkMode ? "bg-blue-900/20 text-violet-400" : "bg-violet-50 text-violet-600"
                             }`}
                     >
                         <Icon size={24} strokeWidth={2} />
@@ -100,7 +100,7 @@ const MetricCard = ({
                             </span>
                             <span
                                 className={`text-xs font-bold px-2.5 py-1 rounded-md border uppercase ${(selectedSource === "lab" || !needsData.crux)
-                                    ? (darkMode ? "bg-blue-500/10 text-blue-400 border-blue-500/20" : "bg-blue-50 text-blue-600 border-blue-200")
+                                    ? (darkMode ? "bg-violet-500/10 text-violet-400 border-violet-500/20" : "bg-violet-50 text-violet-600 border-violet-200")
                                     : (darkMode ? "bg-purple-500/10 text-purple-400 border-purple-500/20" : "bg-purple-50 text-purple-600 border-purple-200")
                                     }`}
                             >

@@ -14,15 +14,15 @@ const ROUTE_META = {
   "/technical-performance": {
     label: "Technical Performance",
     badge: "Performance Audit",
-    color: "text-blue-400",
+    color: "text-violet-400",
     accent: "blue",
     score: 74,
   },
   "/on-page-seo": {
     label: "On-Page SEO",
     badge: "SEO Audit",
-    color: "text-emerald-400",
-    accent: "emerald",
+    color: "text-violet-400",
+    accent: "violet",
     score: 80,
   },
   "/accessibility": {
@@ -49,8 +49,8 @@ const ROUTE_META = {
   "/conversion-lead-flow": {
     label: "Conversion & Lead Flow",
     badge: "Conversion Audit",
-    color: "text-cyan-400",
-    accent: "cyan",
+    color: "text-indigo-400",
+    accent: "indigo",
     score: 62,
   },
   "/aio": {
@@ -68,8 +68,8 @@ const FakeScore = ({ score, darkMode, accent }) => {
   const circ = 2 * Math.PI * r;
   const offset = circ - (score / 100) * circ;
   const color = {
-    blue: "#3b82f6", emerald: "#10b981", purple: "#a855f7",
-    rose: "#f43f5e", amber: "#f59e0b", cyan: "#06b6d4", violet: "#8b5cf6",
+    blue: "#3b82f6", violet: "#8b5cf6", purple: "#a855f7",
+    rose: "#f43f5e", amber: "#f59e0b", indigo: "#6366f1",
   }[accent] || "#3b82f6";
 
   return (
@@ -146,7 +146,7 @@ const GuestReportPage = () => {
   const meta = ROUTE_META[pathname] || {
     label: "Audit Report",
     badge: "Audit",
-    color: "text-blue-400",
+    color: "text-violet-400",
     accent: "blue",
     score: 72,
   };
@@ -159,7 +159,7 @@ const GuestReportPage = () => {
         <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${
           darkMode
             ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20"
-            : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"
+            : "bg-gradient-to-br from-violet-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"
         }`}>
 
           {/* Top URL bar — just like UrlHeader */}
@@ -196,7 +196,7 @@ const GuestReportPage = () => {
 
             {/* Left: fake preview area */}
             <div className={`w-full xl:w-[45%] p-6 flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
-              <div className="absolute inset-0 bg-blue-500/5 blur-3xl rounded-full" />
+              <div className="absolute inset-0 bg-violet-500/5 blur-3xl rounded-full" />
               <div className={`relative z-10 w-full h-40 rounded-2xl border flex items-center justify-center ${darkMode ? "bg-slate-800/60 border-slate-700" : "bg-slate-200/40 border-slate-200"}`}>
                 <div className="text-center space-y-2 opacity-30">
                   <Globe size={32} className={darkMode ? "text-slate-400 mx-auto" : "text-slate-400 mx-auto"} />
@@ -214,7 +214,7 @@ const GuestReportPage = () => {
                   <div className="flex-1 space-y-4 text-left order-2 md:order-1">
                     <div>
                       <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider mb-3 ${
-                        darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-blue-100/50 text-blue-600 border border-blue-200"
+                        darkMode ? "bg-violet-500/10 text-violet-400 border border-violet-500/20" : "bg-violet-100/50 text-violet-600 border border-violet-200"
                       }`}>
                         <BarChart2 className="w-3.5 h-3.5" />
                         {meta.badge}
@@ -229,7 +229,7 @@ const GuestReportPage = () => {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-4 pt-1">
-                      <FakeStat icon={CheckCircle} label="Passed" value="—" color="text-emerald-500" darkMode={darkMode} />
+                      <FakeStat icon={CheckCircle} label="Passed" value="—" color="text-violet-500" darkMode={darkMode} />
                       <FakeStat icon={AlertTriangle} label="Warning" value="—" color="text-amber-500" darkMode={darkMode} />
                       <FakeStat icon={XCircle} label="Failed" value="—" color="text-red-500" darkMode={darkMode} />
                     </div>
@@ -267,11 +267,11 @@ const GuestReportPage = () => {
 
               {/* Lock Icon */}
               <div className="mb-6 relative flex justify-center">
-                <div className="absolute inset-0 bg-blue-500/20 rounded-full blur-2xl animate-pulse" />
+                <div className="absolute inset-0 bg-violet-500/20 rounded-full blur-2xl animate-pulse" />
                 <div className={`relative p-6 rounded-full border shadow-inner ${
                   darkMode ? "bg-slate-800 border-slate-700" : "bg-slate-50 border-white"
                 }`}>
-                  <Lock className={`w-10 h-10 ${darkMode ? "text-blue-400" : "text-blue-600"}`} />
+                  <Lock className={`w-10 h-10 ${darkMode ? "text-violet-400" : "text-violet-600"}`} />
                 </div>
               </div>
 
@@ -301,7 +301,7 @@ const GuestReportPage = () => {
 
                 <button
                   onClick={handleRegister}
-                  className="flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl font-bold transition-all duration-300 w-full sm:w-auto shadow-lg hover:shadow-xl active:scale-95 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white"
+                  className="flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl font-bold transition-all duration-300 w-full sm:w-auto shadow-lg hover:shadow-xl active:scale-95 bg-gradient-to-r from-violet-600 to-indigo-700 hover:from-violet-700 hover:to-indigo-800 text-white"
                 >
                   <UserPlus size={17} />
                   Create a FREE account

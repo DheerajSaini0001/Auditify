@@ -28,7 +28,7 @@ export default function NotFound({
     >
       {/* Background Glow Effect */}
       <div
-        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full blur-[120px] opacity-20 pointer-events-none ${darkMode ? "bg-blue-600" : "bg-blue-300"
+        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full blur-[120px] opacity-20 pointer-events-none ${darkMode ? "bg-violet-600" : "bg-violet-300"
           }`}
       />
 
@@ -42,7 +42,7 @@ export default function NotFound({
         <motion.div
           animate={{ y: [0, -15, 0] }}
           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          className={`mb-6 p-5 rounded-full shadow-2xl ${darkMode ? "bg-gray-800 shadow-blue-900/20" : "bg-white shadow-blue-200"
+          className={`mb-6 p-5 rounded-full shadow-2xl ${darkMode ? "bg-gray-800 shadow-blue-900/20" : "bg-white shadow-violet-200"
             }`}
         >
           <AlertTriangle
@@ -53,7 +53,7 @@ export default function NotFound({
 
         {/* Title with Gradient */}
         <h1 className="text-5xl sm:text-7xl font-extrabold tracking-tight mb-2">
-          <span className="bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-violet-500 to-purple-600 bg-clip-text text-transparent">
             {title}
           </span>
         </h1>
@@ -80,8 +80,8 @@ export default function NotFound({
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           className={`group flex items-center gap-3 px-8 py-3.5 rounded-full font-semibold shadow-lg transition-all duration-300 ${darkMode
-            ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-500/25"
-            : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-400/30"
+            ? "bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-violet-500/25"
+            : "bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-violet-400/30"
             }`}
         >
           <Home className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />

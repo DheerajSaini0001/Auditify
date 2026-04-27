@@ -79,7 +79,7 @@ const AIOShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
         </p>
 
         {/* Processing State */}
-        <div className="mt-8 flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
+        <div className="mt-8 flex items-center gap-2 px-4 py-1.5 rounded-full bg-violet-500/10 text-violet-600 dark:text-violet-400">
           <Loader2 className="w-3.5 h-3.5 animate-spin" />
           <span className="text-xs font-bold uppercase tracking-wider">Processing</span>
         </div>
@@ -89,7 +89,7 @@ const AIOShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
           {steps.map((_, i) => (
             <div
               key={i}
-              className={`h-1.5 rounded-full transition-all duration-500 ${i === currentStep ? "w-6 bg-blue-500" : i < currentStep ? "w-6 bg-blue-500/40" : "w-2 bg-slate-400/30"}`}
+              className={`h-1.5 rounded-full transition-all duration-500 ${i === currentStep ? "w-6 bg-violet-500" : i < currentStep ? "w-6 bg-violet-500/40" : "w-2 bg-slate-400/30"}`}
             />
           ))}
         </div>
@@ -112,7 +112,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
   const subTextColor = darkMode ? "text-gray-400" : "text-gray-500";
 
   const statusColor = isPassed
-    ? "text-emerald-500 bg-emerald-500/10 border-emerald-500/20"
+    ? "text-violet-500 bg-violet-500/10 border-violet-500/20"
     : "text-rose-500 bg-rose-500/10 border-rose-500/20";
 
   return (
@@ -185,17 +185,17 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
 
         {/* Status Verdict */}
         <div className={`p-3.5 rounded-xl border flex flex-col gap-2 transition-all duration-300 ${isPassed
-          ? (darkMode ? "bg-emerald-500/5 border-emerald-500/10" : "bg-emerald-50/50 border-emerald-100")
+          ? (darkMode ? "bg-violet-500/5 border-violet-500/10" : "bg-violet-50/50 border-violet-100")
           : (score === 50
             ? (darkMode ? "bg-amber-500/5 border-amber-500/10" : "bg-amber-50/50 border-amber-100")
             : (darkMode ? "bg-rose-500/5 border-rose-500/10" : "bg-rose-50/50 border-rose-100"))}`}>
           <div className="flex items-center gap-2">
-            <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${isPassed ? "bg-emerald-500" : (score === 50 ? "bg-amber-500" : "bg-rose-500")}`}></div>
+            <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${isPassed ? "bg-violet-500" : (score === 50 ? "bg-amber-500" : "bg-rose-500")}`}></div>
             <h4 className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
               Audit Status
             </h4>
           </div>
-          <p className={`text-sm font-bold leading-normal ${isPassed ? "text-emerald-600 dark:text-emerald-400" : (score === 50 ? "text-amber-600 dark:text-amber-400" : "text-rose-600 dark:text-rose-400")}`}>
+          <p className={`text-sm font-bold leading-normal ${isPassed ? "text-violet-600 dark:text-violet-400" : (score === 50 ? "text-amber-600 dark:text-amber-400" : "text-rose-600 dark:text-rose-400")}`}>
             {details}
           </p>
         </div>
@@ -236,11 +236,11 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
               )}
               <div className="grid grid-cols-2 gap-2 px-1">
                 <div className="flex items-center gap-2">
-                  <span className={`w-1.5 h-1.5 rounded-full ${meta?.hasParagraphs ? "bg-emerald-500" : "bg-slate-400"}`}></span>
+                  <span className={`w-1.5 h-1.5 rounded-full ${meta?.hasParagraphs ? "bg-violet-500" : "bg-slate-400"}`}></span>
                   <span className={`text-[10px] font-bold uppercase ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Paragraphs</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={`w-1.5 h-1.5 rounded-full ${meta?.hasLists ? "bg-emerald-500" : "bg-slate-400"}`}></span>
+                  <span className={`w-1.5 h-1.5 rounded-full ${meta?.hasLists ? "bg-violet-500" : "bg-slate-400"}`}></span>
                   <span className={`text-[10px] font-bold uppercase ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Lists</span>
                 </div>
               </div>
@@ -252,7 +252,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             <div className={`p-2.5 rounded-lg border flex flex-col gap-2 ${darkMode ? "bg-slate-900/50 border-slate-800" : "bg-slate-50 border-slate-100"}`}>
               <div className="flex items-center justify-between">
                 <span className={`text-[10px] font-bold uppercase ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Meta Keywords</span>
-                <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${meta?.hasMetaKeywords ? "bg-emerald-500/20 text-emerald-500" : "bg-rose-500/20 text-rose-500"}`}>
+                <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${meta?.hasMetaKeywords ? "bg-violet-500/20 text-violet-500" : "bg-rose-500/20 text-rose-500"}`}>
                   {meta?.hasMetaKeywords ? "PRESENT" : "MISSING"}
                 </span>
               </div>
@@ -277,7 +277,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
               {meta?.daysAgo !== undefined && (
                 <div className="flex items-center gap-2 px-1">
                   <div className={`h-1 flex-grow rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden`}>
-                    <div className={`h-full rounded-full ${meta.daysAgo <= 30 ? "bg-emerald-500" : "bg-amber-500"}`} style={{ width: `${Math.max(10, 100 - (meta.daysAgo / 3.65))}%` }}></div>
+                    <div className={`h-full rounded-full ${meta.daysAgo <= 30 ? "bg-violet-500" : "bg-amber-500"}`} style={{ width: `${Math.max(10, 100 - (meta.daysAgo / 3.65))}%` }}></div>
                   </div>
                   <span className={`text-[9px] font-black uppercase whitespace-nowrap ${darkMode ? "text-slate-400" : "text-slate-600"}`}>{meta.daysAgo}d Ago</span>
                 </div>
@@ -321,7 +321,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
               </div>
               <div className="flex items-center justify-between px-1">
                 <span className={`text-[10px] font-bold uppercase ${darkMode ? "text-slate-500" : "text-slate-400"}`}>Noindex Tag</span>
-                <span className={`text-[10px] font-black ${meta?.hasNoindex ? "text-emerald-500" : "text-slate-400"}`}>
+                <span className={`text-[10px] font-black ${meta?.hasNoindex ? "text-violet-500" : "text-slate-400"}`}>
                   {meta?.hasNoindex ? "ON" : "OFF"}
                 </span>
               </div>
@@ -335,7 +335,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
                 <h5 className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-500" : "text-slate-400"}`}>Keyword Synergy</h5>
                 <div className={`p-2.5 rounded-lg border flex flex-wrap gap-1.5 font-mono text-[10px] ${darkMode ? "bg-slate-900/50 border-slate-800 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
                   {meta?.overlap?.length > 0 ? meta.overlap.map((w, i) => (
-                    <span key={i} className={`px-2 py-0.5 rounded-md ${darkMode ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-emerald-50 text-emerald-700 border border-emerald-100"}`}>{w}</span>
+                    <span key={i} className={`px-2 py-0.5 rounded-md ${darkMode ? "bg-violet-500/10 text-violet-400 border border-violet-500/20" : "bg-violet-50 text-violet-700 border border-violet-100"}`}>{w}</span>
                   )) : "Low Entity Alignment"}
                 </div>
               </div>
@@ -371,7 +371,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
                   <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${meta?.pairs?.length > 4 ? (darkMode ? "bg-indigo-500/20 text-indigo-400" : "bg-indigo-50 text-indigo-600") : "hidden"}`}>
                     +{meta.pairs.length - 4} More Discovered
                   </span>
-                  <span className={`text-[10px] font-black ${meta?.hasFAQ ? "text-emerald-500" : "text-slate-400"}`}>
+                  <span className={`text-[10px] font-black ${meta?.hasFAQ ? "text-violet-500" : "text-slate-400"}`}>
                     {meta?.hasFAQ ? "DETECTED" : "MISSING"}
                   </span>
                 </div>
@@ -429,13 +429,13 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             <div className={`p-2.5 rounded-lg border flex flex-col gap-2 ${darkMode ? "bg-slate-900/50 border-slate-800" : "bg-slate-50 border-slate-100"}`}>
               <div className="flex items-center justify-between">
                 <span className={`text-[10px] font-bold uppercase ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Byline Visibility</span>
-                <span className={`text-[10px] font-black ${meta?.hasByline ? "text-emerald-500" : "text-rose-500"}`}>
+                <span className={`text-[10px] font-black ${meta?.hasByline ? "text-violet-500" : "text-rose-500"}`}>
                   {meta?.hasByline ? "HUMAN DETECTED" : "ANONYMOUS"}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className={`text-[10px] font-bold uppercase ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Author Schema</span>
-                <span className={`text-[10px] font-black ${meta?.hasAuthorSchema ? "text-emerald-500" : "text-rose-500"}`}>
+                <span className={`text-[10px] font-black ${meta?.hasAuthorSchema ? "text-violet-500" : "text-rose-500"}`}>
                   {meta?.hasAuthorSchema ? "ACTIVE" : "MISSING"}
                 </span>
               </div>
@@ -451,7 +451,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
               </div>
               <div className="flex items-center justify-between px-1 mt-0.5">
                 <span className={`text-[10px] font-bold uppercase ${darkMode ? "text-slate-500" : "text-slate-400"}`}>Bibliography Section</span>
-                <span className={`text-[10px] font-black ${meta?.hasReferenceSection ? "text-emerald-500" : "text-slate-400"}`}>
+                <span className={`text-[10px] font-black ${meta?.hasReferenceSection ? "text-violet-500" : "text-slate-400"}`}>
                   {meta?.hasReferenceSection ? "FOUND" : "NOT FOUND"}
                 </span>
               </div>
@@ -468,11 +468,11 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
               <div className="grid grid-cols-2 gap-2 mt-0.5">
                 <div className={`p-2 rounded-lg border text-center ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-100'}`}>
                   <span className={`block text-[8px] font-bold uppercase opacity-50 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Intro</span>
-                  <span className={`text-[10px] font-black ${meta?.hasIntro ? "text-emerald-500" : "text-rose-500"}`}>{meta?.hasIntro ? "YES" : "NO"}</span>
+                  <span className={`text-[10px] font-black ${meta?.hasIntro ? "text-violet-500" : "text-rose-500"}`}>{meta?.hasIntro ? "YES" : "NO"}</span>
                 </div>
                 <div className={`p-2 rounded-lg border text-center ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-100'}`}>
                   <span className={`block text-[8px] font-bold uppercase opacity-50 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Conclusion</span>
-                  <span className={`text-[10px] font-black ${meta?.hasConclusion ? "text-emerald-500" : "text-rose-500"}`}>{meta?.hasConclusion ? "YES" : "NO"}</span>
+                  <span className={`text-[10px] font-black ${meta?.hasConclusion ? "text-violet-500" : "text-rose-500"}`}>{meta?.hasConclusion ? "YES" : "NO"}</span>
                 </div>
               </div>
             </div>
@@ -494,11 +494,11 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
               </div>
             </div>
 
-            <div className={`p-3 rounded-lg border ${darkMode ? "bg-emerald-500/10 border-emerald-500/20" : "bg-emerald-50 border-emerald-100"}`}>
+            <div className={`p-3 rounded-lg border ${darkMode ? "bg-violet-500/10 border-violet-500/20" : "bg-violet-50 border-violet-100"}`}>
               <div className="flex items-start gap-2">
-                <CheckCircle size={14} className="text-emerald-500 mt-0.5" />
+                <CheckCircle size={14} className="text-violet-500 mt-0.5" />
                 <div>
-                  <h4 className="text-[10px] font-bold uppercase tracking-wider text-emerald-500 mb-1">How to Fix</h4>
+                  <h4 className="text-[10px] font-bold uppercase tracking-wider text-violet-500 mb-1">How to Fix</h4>
                   <p className={`text-xs leading-relaxed ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
                     {analysis.recommendation}
                   </p>
@@ -565,9 +565,9 @@ export default function AIO() {
   const darkMode = theme === "dark";
 
   const auditSteps = useMemo(() => [
-    { icon: <Database className="w-8 h-8 text-blue-500" />, title: "Structured Data", text: "Analyzing JSON-LD Schema markup and rich snippets eligibility..." },
+    { icon: <Database className="w-8 h-8 text-violet-500" />, title: "Structured Data", text: "Analyzing JSON-LD Schema markup and rich snippets eligibility..." },
     { icon: <MessageSquare className="w-8 h-8 text-purple-500" />, title: "NLP Readiness", text: "Evaluating content structure and semantic clarity for AI models..." },
-    { icon: <Zap className="w-8 h-8 text-teal-500" />, title: "Crawl Efficiency", text: "Measuring page load speed and API accessibility for AI bots..." },
+    { icon: <Zap className="w-8 h-8 text-purple-500" />, title: "Crawl Efficiency", text: "Measuring page load speed and API accessibility for AI bots..." },
     { icon: <Tag className="w-8 h-8 text-indigo-500" />, title: "Entity Recognition", text: "Scanning for named entities, keywords, and topic clusters..." },
     { icon: <Brain className="w-8 h-8 text-amber-500" />, title: "AI Optimization", text: "Checking for voice search compatibility and answer engine readiness..." },
   ], []);
@@ -690,7 +690,7 @@ export default function AIO() {
                     <div className={`flex flex-wrap items-center ${data.report === "All" ? "gap-6" : "gap-5"}`}>
                       <div className={`flex items-center ${data.report === "All" ? "gap-5" : "gap-4"}`}>
                         <div className="flex items-center gap-2">
-                          <CheckCircle size={18} className="text-emerald-500" />
+                          <CheckCircle size={18} className="text-violet-500" />
                           <span className="text-sm font-bold">{passedCount} Passed</span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -705,14 +705,14 @@ export default function AIO() {
                       <div className={`w-px h-10 mx-2 hidden sm:block ${darkMode ? "bg-slate-700" : "bg-slate-200"}`}></div>
                       <div className="flex items-center gap-3">
                         <div className={`p-2.5 rounded-xl border shadow-sm transition-all duration-500 flex items-center gap-3 ${aio?.AIO_Compatibility_Badge === "Yes"
-                          ? (darkMode ? "bg-emerald-500/10 border-emerald-500/20" : "bg-white border-emerald-100")
+                          ? (darkMode ? "bg-violet-500/10 border-violet-500/20" : "bg-white border-violet-100")
                           : (darkMode ? "bg-rose-500/10 border-rose-500/20" : "bg-white border-rose-100")}`}>
 
                           {/* Icon Container (Card Style) */}
                           <div className={`p-2 rounded-lg ${aio?.AIO_Compatibility_Badge === "Yes"
-                            ? (darkMode ? "bg-emerald-500/20" : "bg-emerald-50")
+                            ? (darkMode ? "bg-violet-500/20" : "bg-violet-50")
                             : (darkMode ? "bg-rose-500/20" : "bg-rose-50")}`}>
-                            <ShieldCheck size={20} className={aio?.AIO_Compatibility_Badge === "Yes" ? "text-emerald-500" : "text-rose-500"} />
+                            <ShieldCheck size={20} className={aio?.AIO_Compatibility_Badge === "Yes" ? "text-violet-500" : "text-rose-500"} />
                           </div>
 
                           {/* Text Area */}
@@ -739,7 +739,7 @@ export default function AIO() {
 
                   {/* Circular Progress */}
                   <div className="relative flex-shrink-0 group cursor-default order-1 md:order-2">
-                    <div className={`absolute -inset-8 rounded-full blur-3xl opacity-25 transition-opacity duration-700 group-hover:opacity-40 ${unifiedAioScore >= 80 ? "bg-emerald-500" : "bg-amber-500"}`}></div>
+                    <div className={`absolute -inset-8 rounded-full blur-3xl opacity-25 transition-opacity duration-700 group-hover:opacity-40 ${unifiedAioScore >= 80 ? "bg-violet-500" : "bg-amber-500"}`}></div>
                     <CircularProgress value={unifiedAioScore} size={data.report === "All" ? 180 : 150} stroke={14} />
                     <div className="absolute inset-0 flex items-center justify-center flex-col gap-0.5">
                       <span className={`${data.report === "All" ? "text-5xl" : "text-3xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>{unifiedAioScore}%</span>

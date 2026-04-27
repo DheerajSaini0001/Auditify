@@ -39,7 +39,7 @@ const UserDashboard = () => {
   };
 
   return (
-    <div className={`min-h-screen pt-32 pb-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300 ${darkMode ? "bg-[#0a0a10] text-white" : "bg-slate-50 text-slate-900"}`}>
+    <div className={`min-h-screen pt-32 pb-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300 ${darkMode ? "bg-[#020617] text-white" : "bg-slate-50 text-slate-900"}`}>
       <div className="max-w-7xl mx-auto space-y-12">
         {/* Header Section */}
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -48,8 +48,8 @@ const UserDashboard = () => {
             animate={{ opacity: 1, x: 0 }}
           >
             <div className="flex items-center gap-3 mb-2">
-               <LayoutDashboard className="text-blue-500" size={24} />
-               <span className="text-blue-500 font-black tracking-widest text-xs uppercase">Personal Overview</span>
+               <LayoutDashboard className="text-violet-500" size={24} />
+               <span className="text-violet-500 font-black tracking-widest text-xs uppercase">Personal Overview</span>
             </div>
             <h1 className={`text-4xl font-extrabold tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
               Welcome, {user?.name}
@@ -63,7 +63,7 @@ const UserDashboard = () => {
             className="flex gap-4"
           >
             <div className={`backdrop-blur-xl border rounded-3xl p-6 flex items-center gap-5 shadow-2xl transition-colors ${darkMode ? "bg-[#16161e]/50 border-white/5" : "bg-white border-slate-200"}`}>
-              <div className="w-14 h-14 rounded-2xl bg-blue-600/10 flex items-center justify-center text-blue-500">
+              <div className="w-14 h-14 rounded-2xl bg-violet-600/10 flex items-center justify-center text-violet-500">
                 <Activity size={28} />
               </div>
               <div>
@@ -127,7 +127,7 @@ const UserDashboard = () => {
                     <tr key={audit._id} className={`transition-all group ${darkMode ? "hover:bg-white/[0.03]" : "hover:bg-slate-50"}`}>
                       <td className="px-10 py-6">
                         <div className="flex items-center gap-4">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform ${darkMode ? "bg-blue-500/10 text-blue-400" : "bg-blue-50 text-blue-600"}`}>
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform ${darkMode ? "bg-violet-500/10 text-violet-400" : "bg-violet-50 text-violet-600"}`}>
                             <ExternalLink size={16} />
                           </div>
                           <span className={`font-bold truncate max-w-sm ${darkMode ? "text-gray-200" : "text-slate-700"}`}>{audit.url}</span>
@@ -143,7 +143,7 @@ const UserDashboard = () => {
                         <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider shadow-sm ${
                           audit.device === 'Mobile' 
                             ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' 
-                            : 'bg-blue-500/10 text-blue-500 border border-blue-500/20'
+                            : 'bg-violet-500/10 text-violet-500 border border-violet-500/20'
                         }`}>
                           {audit.device || 'Desktop'}
                         </span>
@@ -164,8 +164,8 @@ const UserDashboard = () => {
                               }
                             }}
                             className={`p-3 rounded-xl transition-all shadow-lg border ${darkMode 
-                              ? "bg-white/5 hover:bg-blue-600 text-gray-400 hover:text-white border-white/5" 
-                              : "bg-white hover:bg-blue-50 text-slate-500 hover:text-blue-600 border-slate-200"}`}
+                              ? "bg-white/5 hover:bg-violet-600 text-gray-400 hover:text-white border-white/5" 
+                              : "bg-white hover:bg-violet-50 text-slate-500 hover:text-violet-600 border-slate-200"}`}
                             title="View Report"
                           >
                             <FileText size={18} />
@@ -203,8 +203,8 @@ const UserDashboard = () => {
                               );
                             }}
                             className={`p-3 rounded-xl transition-all shadow-lg border ${darkMode 
-                              ? "bg-white/5 hover:bg-emerald-600 text-gray-400 hover:text-white border-white/5" 
-                              : "bg-white hover:bg-emerald-50 text-slate-500 hover:text-emerald-600 border-slate-200"}`}
+                              ? "bg-white/5 hover:bg-violet-600 text-gray-400 hover:text-white border-white/5" 
+                              : "bg-white hover:bg-violet-50 text-slate-500 hover:text-violet-600 border-slate-200"}`}
                             title="Download PDF"
                           >
                             <Download size={18} />

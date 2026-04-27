@@ -3,14 +3,14 @@ import React from 'react';
 const AEORecommendations = ({ recommendations, darkMode }) => {
     if (!recommendations || recommendations.length === 0) {
         return (
-            <div className={`border p-8 rounded-2xl text-center shadow-lg transition-all duration-500 ${darkMode ? "bg-emerald-500/5 border-emerald-500/20 shadow-black/20" : "bg-green-50 border-green-200"}`}>
-                <div className={`mb-4 inline-block p-4 rounded-full ${darkMode ? "bg-emerald-500/20" : "bg-green-100"}`}>
-                    <svg className={`w-8 h-8 ${darkMode ? "text-emerald-400" : "text-green-600"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className={`border p-8 rounded-2xl text-center shadow-lg transition-all duration-500 ${darkMode ? "bg-violet-500/5 border-violet-500/20 shadow-black/20" : "bg-violet-50 border-violet-200"}`}>
+                <div className={`mb-4 inline-block p-4 rounded-full ${darkMode ? "bg-violet-500/20" : "bg-violet-100"}`}>
+                    <svg className={`w-8 h-8 ${darkMode ? "text-violet-400" : "text-violet-600"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                     </svg>
                 </div>
-                <h3 className={`text-xl font-bold ${darkMode ? "text-emerald-400" : "text-green-800"}`}>Perfect AI Optimization!</h3>
-                <p className={`text-sm mt-1 ${darkMode ? "text-emerald-500/70" : "text-green-600"}`}>Your site is perfectly configured for all AI answer engines.</p>
+                <h3 className={`text-xl font-bold ${darkMode ? "text-violet-400" : "text-violet-800"}`}>Perfect AI Optimization!</h3>
+                <p className={`text-sm mt-1 ${darkMode ? "text-violet-500/70" : "text-violet-600"}`}>Your site is perfectly configured for all AI answer engines.</p>
             </div>
         );
     }
@@ -18,7 +18,7 @@ const AEORecommendations = ({ recommendations, darkMode }) => {
     const priorityColors = {
         "Critical": "bg-red-500",
         "High": "bg-orange-500",
-        "Medium": "bg-blue-500",
+        "Medium": "bg-violet-500",
         "Low": "bg-gray-500"
     };
 

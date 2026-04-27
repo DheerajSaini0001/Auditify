@@ -37,7 +37,7 @@ const MathCaptcha = ({ onAnswerChange, error }) => {
           type="button" 
           onClick={fetchCaptcha} 
           disabled={loading}
-          className="text-emerald-500 hover:text-emerald-600 font-semibold text-sm disabled:opacity-50"
+          className="text-violet-500 hover:text-violet-600 font-semibold text-sm disabled:opacity-50"
         >
           Refresh
         </button>
@@ -50,7 +50,7 @@ const MathCaptcha = ({ onAnswerChange, error }) => {
           onAnswerChange(e.target.value, captchaId);
         }}
         placeholder="Enter your answer"
-        className="w-full p-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 transition-all font-medium"
+        className="w-full p-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-violet-500 transition-all font-medium"
       />
       {error && <p className="text-red-500 text-sm">{error}</p>}
     </div>

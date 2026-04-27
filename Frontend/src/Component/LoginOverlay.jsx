@@ -41,7 +41,7 @@ export default function LoginPrompt({ darkMode }) {
         
         {/* Animated Icon */}
         <div className="mb-8 relative flex justify-center">
-          <div className="absolute inset-0 bg-blue-500/20 rounded-full blur-2xl animate-pulse"></div>
+          <div className="absolute inset-0 bg-violet-500/20 rounded-full blur-2xl animate-pulse"></div>
           
           <div
             className={`relative p-6 rounded-full border shadow-inner ${
@@ -52,7 +52,7 @@ export default function LoginPrompt({ darkMode }) {
           >
             <Lock
               className={`w-10 h-10 ${
-                darkMode ? "text-blue-400" : "text-blue-600"
+                darkMode ? "text-violet-400" : "text-violet-600"
               }`}
             />
           </div>
@@ -104,7 +104,7 @@ export default function LoginPrompt({ darkMode }) {
           {/* Register */}
           <button
             onClick={handleRegister}
-            className="flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl font-bold transition-all duration-300 w-full sm:w-auto shadow-sm hover:shadow active:scale-95 bg-blue-600 hover:bg-blue-700 text-white"
+            className="flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl font-bold transition-all duration-300 w-full sm:w-auto shadow-sm hover:shadow active:scale-95 bg-violet-600 hover:bg-violet-700 text-white"
           >
             <UserPlus size={18} />
             Create a FREE account

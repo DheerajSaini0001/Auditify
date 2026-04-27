@@ -17,7 +17,7 @@ const IssueRow = ({ issue, pages, darkMode, onDrillDown }) => {
                 className={`flex items-center justify-between px-6 py-4 cursor-pointer transition-colors ${darkMode ? "hover:bg-slate-800/30" : "hover:bg-slate-50/50"}`}
             >
                 <div className="flex items-center gap-4 flex-1">
-                    <div className={`p-1.5 rounded-lg ${issue.severity === 'error' ? 'bg-red-500/10 text-red-500' : issue.severity === 'warning' ? 'bg-yellow-500/10 text-yellow-500' : 'bg-blue-500/10 text-blue-500'}`}>
+                    <div className={`p-1.5 rounded-lg ${issue.severity === 'error' ? 'bg-red-500/10 text-red-500' : issue.severity === 'warning' ? 'bg-yellow-500/10 text-yellow-500' : 'bg-violet-500/10 text-violet-500'}`}>
                         {issue.severity === 'error' ? <XCircle className="w-4 h-4" /> : issue.severity === 'warning' ? <AlertCircle className="w-4 h-4" /> : <Info className="w-4 h-4" />}
                     </div>
                     <div>
@@ -32,14 +32,14 @@ const IssueRow = ({ issue, pages, darkMode, onDrillDown }) => {
                             e.stopPropagation();
                             onDrillDown(issue, affectedPages);
                         }}
-                        className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border transition-all flex items-center gap-2 ${darkMode ? "bg-slate-800 border-slate-700 text-emerald-400 hover:bg-slate-700" : "bg-slate-50 border-slate-200 text-emerald-600 hover:bg-slate-100"}`}
+                        className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border transition-all flex items-center gap-2 ${darkMode ? "bg-slate-800 border-slate-700 text-violet-400 hover:bg-slate-700" : "bg-slate-50 border-slate-200 text-violet-600 hover:bg-slate-100"}`}
                     >
                         <ListFilter className="w-3 h-3" />
                         View Details
                     </button>
                     
                     <div className="text-right min-w-[70px]">
-                        <span className={`text-sm font-black ${issue.severity === 'error' ? 'text-red-500' : issue.severity === 'warning' ? 'text-yellow-500' : 'text-blue-500'}`}>
+                        <span className={`text-sm font-black ${issue.severity === 'error' ? 'text-red-500' : issue.severity === 'warning' ? 'text-yellow-500' : 'text-violet-500'}`}>
                             {affectedPages.length}
                         </span>
                         <span className={`text-[10px] ml-1 font-bold uppercase tracking-wider ${darkMode ? "text-slate-600" : "text-slate-400"}`}>Pages</span>
@@ -58,7 +58,7 @@ const IssueRow = ({ issue, pages, darkMode, onDrillDown }) => {
                                     href={page.url} 
                                     target="_blank" 
                                     rel="noopener noreferrer"
-                                    className="flex items-center gap-1 text-[10px] font-bold text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    className="flex items-center gap-1 text-[10px] font-bold text-violet-500 opacity-0 group-hover:opacity-100 transition-opacity"
                                 >
                                     Visit <ExternalLink className="w-3 h-3" />
                                 </a>

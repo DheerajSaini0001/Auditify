@@ -16,9 +16,9 @@ const CATEGORIES = [
   { value: 'auth', label: 'Authentication', color: '#8b5cf6' },
   { value: 'email', label: 'Email / SMTP', color: '#f59e0b' },
   { value: 'api', label: 'API Keys', color: '#3b82f6' },
-  { value: 'database', label: 'Database', color: '#10b981' },
+  { value: 'database', label: 'Database', color: '#8b5cf6' },
   { value: 'security', label: 'Security', color: '#ef4444' },
-  { value: 'frontend', label: 'Frontend', color: '#06b6d4' },
+  { value: 'frontend', label: 'Frontend', color: '#a78bfa' },
   { value: 'general', label: 'General', color: '#6b7280' },
 ];
 
@@ -35,7 +35,7 @@ const ACTION_COLORS = {
   DELETE: '#ef4444',
   ROLLBACK: '#f59e0b',
   REVEAL: '#8b5cf6',
-  BULK_IMPORT: '#06b6d4',
+  BULK_IMPORT: '#a78bfa',
   CACHE_REFRESH: '#6b7280',
 };
 
@@ -244,7 +244,7 @@ const AdminConfig = () => {
   const categoryGroups = [...new Set(configs.map(c => c.category || 'general'))];
 
   // ── Styles ──
-  const card = dk ? 'bg-[#0a0a0f] border-white/[0.06]' : 'bg-white border-slate-200 shadow-sm';
+  const card = dk ? 'bg-[#020617] border-white/[0.06]' : 'bg-white border-slate-200 shadow-sm';
   const inputCls = dk
     ? 'bg-transparent border-white/[0.08] text-white placeholder-white/20 focus:border-indigo-500/50 focus:ring-indigo-500/20'
     : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:ring-indigo-500/20 shadow-sm';
@@ -583,7 +583,7 @@ const AdminConfig = () => {
 // ── Sub-Components ──────────────────────────────────────────────────
 
 const StatCard = ({ label, value, icon: Icon, color, dk }) => (
-  <div className={`p-5 rounded-2xl border transition-colors ${dk ? 'bg-[#0a0a0f] border-white/[0.06]' : 'bg-white border-slate-200 shadow-sm'}`}>
+  <div className={`p-5 rounded-2xl border transition-colors ${dk ? 'bg-[#020617] border-white/[0.06]' : 'bg-white border-slate-200 shadow-sm'}`}>
     <div className="flex items-center justify-between">
       <div>
         <p className={`text-[10px] uppercase font-bold tracking-wider mb-1 ${dk ? 'text-white/25' : 'text-slate-400'}`}>{label}</p>
@@ -636,7 +636,7 @@ const ModalOverlay = ({ onClose, dk, children }) => (
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95, y: 20 }}
       transition={{ duration: 0.2 }}
-      className={`relative w-full max-w-lg rounded-2xl border p-6 md:p-8 shadow-2xl max-h-[90vh] overflow-y-auto ${dk ? 'bg-[#0c0c12] border-white/[0.08]' : 'bg-white border-slate-200'}`}
+      className={`relative w-full max-w-lg rounded-2xl border p-6 md:p-8 shadow-2xl max-h-[90vh] overflow-y-auto ${dk ? 'bg-[#020617] border-white/[0.08]' : 'bg-white border-slate-200'}`}
     >
       {children}
     </motion.div>
@@ -768,7 +768,7 @@ const AuditTrail = ({ logs, loading, pagination, onPageChange, dk }) => {
 
   if (logs.length === 0) {
     return (
-      <div className={`rounded-2xl border py-20 text-center ${dk ? 'bg-[#0a0a0f] border-white/[0.06]' : 'bg-white border-slate-200'}`}>
+      <div className={`rounded-2xl border py-20 text-center ${dk ? 'bg-[#020617] border-white/[0.06]' : 'bg-white border-slate-200'}`}>
         <Activity size={40} className={`mx-auto mb-4 ${dk ? 'text-white/10' : 'text-slate-200'}`} />
         <p className={`text-sm font-medium ${dk ? 'text-white/20' : 'text-slate-400'}`}>No audit logs recorded yet</p>
       </div>
@@ -777,7 +777,7 @@ const AuditTrail = ({ logs, loading, pagination, onPageChange, dk }) => {
 
   return (
     <div>
-      <div className={`rounded-2xl border overflow-hidden ${dk ? 'bg-[#0a0a0f] border-white/[0.06]' : 'bg-white border-slate-200 shadow-sm'}`}>
+      <div className={`rounded-2xl border overflow-hidden ${dk ? 'bg-[#020617] border-white/[0.06]' : 'bg-white border-slate-200 shadow-sm'}`}>
         <div className={`divide-y ${dk ? 'divide-white/[0.04]' : 'divide-slate-100'}`}>
           {logs.map(log => (
             <div key={log._id} className={`px-6 py-4 flex items-start gap-4 transition-colors ${dk ? 'hover:bg-white/[0.02]' : 'hover:bg-slate-50'}`}>

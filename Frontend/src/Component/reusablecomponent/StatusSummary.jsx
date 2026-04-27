@@ -37,7 +37,7 @@ const StatusSummary = ({ tech, className = "gap-4" }) => {
     return (
         <div className={`flex items-center ${className}`}>
             <div className="flex items-center gap-2">
-                <CheckCircle size={18} className="text-emerald-500" />
+                <CheckCircle size={18} className="text-violet-500" />
                 <span className="text-sm font-bold">{passedCount} Passed</span>
             </div>
             <div className="flex items-center gap-2">

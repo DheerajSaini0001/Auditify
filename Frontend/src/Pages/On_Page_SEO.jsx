@@ -32,7 +32,7 @@ const scoreCalculationInfo = InfoDetails.On_Page_SEO_Methodology;
 const Section = ({ title, icon: Icon, children, darkMode, gridClasses = "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" }) => (
   <div className="space-y-4">
     <div className="flex items-center gap-3 px-2">
-      <div className={`p-2 rounded-lg ${darkMode ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-600"}`}>
+      <div className={`p-2 rounded-lg ${darkMode ? "bg-violet-500/20 text-violet-400" : "bg-violet-100 text-violet-600"}`}>
         <Icon size={20} />
       </div>
       <h2 className={`text-xl font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>
@@ -64,7 +64,7 @@ const TitleTagCard = ({ data, darkMode, onInfo }) => {
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
             <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
-              <Tag size={24} className={darkMode ? "text-blue-400" : "text-blue-600"} />
+              <Tag size={24} className={darkMode ? "text-violet-400" : "text-violet-600"} />
             </div>
             <div>
               <h3 className={`font-bold text-lg ${darkMode ? "text-gray-100" : "text-gray-900"}`}>Title Tag</h3>
@@ -153,7 +153,7 @@ const TitleTagCard = ({ data, darkMode, onInfo }) => {
 
               {/* Recommendation */}
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-500">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-violet-500">
                   <CheckCircle size={12} />
                   <span>Recommendation</span>
                 </div>
@@ -234,7 +234,7 @@ const CanonicalTagCard = ({ data, darkMode, onInfo }) => {
       getStatusFromScore={getStatusFromScore}
       InfoDetails={InfoDetails}
       headerInfo={meta.isSelfReferencing && (
-        <span className={`text-xs px-2 py-0.5 rounded-full border ${darkMode ? "border-blue-500/30 text-blue-400 bg-blue-500/10" : "border-blue-200 text-blue-600 bg-blue-50"}`}>
+        <span className={`text-xs px-2 py-0.5 rounded-full border ${darkMode ? "border-violet-500/30 text-violet-400 bg-violet-500/10" : "border-violet-200 text-violet-600 bg-violet-50"}`}>
           Self-Referencing
         </span>
       )}
@@ -265,7 +265,7 @@ const URLStructureCard = ({ data, darkMode, onInfo }) => {
     <SEOCard
       title="URL Structure"
       icon={Link}
-      iconColor="text-cyan-400"
+      iconColor="text-indigo-400"
       score={data?.score}
       status={getStatusFromScore(score)}
       statusText={statusText}
@@ -388,7 +388,7 @@ const H1TagCard = ({ data, darkMode, onInfo }) => {
                 </p>
               </div>
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-500">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-violet-500">
                   <CheckCircle size={12} />
                   <span>Recommendation</span>
                 </div>
@@ -564,7 +564,7 @@ const ImageAnalysisCard = ({ data, darkMode, onInfo, resolveLink, className = ""
                           className="flex items-center gap-2 overflow-hidden hover:underline group/link"
                           title={img.src}
                         >
-                          <div className="truncate opacity-70 font-mono text-[10px] group-hover/link:opacity-100 group-hover/link:text-blue-500 transition-colors">
+                          <div className="truncate opacity-70 font-mono text-[10px] group-hover/link:opacity-100 group-hover/link:text-violet-500 transition-colors">
                             {img.src}
                           </div>
                           <Link size={8} className="opacity-0 group-hover/link:opacity-100 transition-opacity" />
@@ -590,7 +590,7 @@ const ImageAnalysisCard = ({ data, darkMode, onInfo, resolveLink, className = ""
                           className="flex items-center gap-2 overflow-hidden hover:underline group/link"
                           title={img.src}
                         >
-                          <div className="truncate opacity-70 font-mono text-[10px] group-hover/link:opacity-100 group-hover/link:text-blue-500 transition-colors">
+                          <div className="truncate opacity-70 font-mono text-[10px] group-hover/link:opacity-100 group-hover/link:text-violet-500 transition-colors">
                             {img.src}
                           </div>
                           <Link size={8} className="opacity-0 group-hover/link:opacity-100 transition-opacity" />
@@ -615,7 +615,7 @@ const ImageAnalysisCard = ({ data, darkMode, onInfo, resolveLink, className = ""
                           rel="noopener noreferrer"
                           className="flex items-center justify-between gap-2 hover:bg-black/5 dark:hover:bg-white/5 p-1 -mx-1 rounded transition-colors group/link"
                         >
-                          <div className="truncate opacity-70 font-mono text-[10px] group-hover/link:text-blue-500">{img.src}</div>
+                          <div className="truncate opacity-70 font-mono text-[10px] group-hover/link:text-violet-500">{img.src}</div>
                           <div className="font-bold whitespace-nowrap">{img.size} KB</div>
                         </a>
                       ))}
@@ -647,7 +647,7 @@ const ImageAnalysisCard = ({ data, darkMode, onInfo, resolveLink, className = ""
                 </p>
               </div>
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-500">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-violet-500">
                   <CheckCircle size={12} />
                   <span>Recommendation</span>
                 </div>
@@ -688,7 +688,7 @@ const SemanticTagsCard = ({ data, darkMode, onInfo, className }) => {
   const renderTagBadge = (tagName, isCritical) => {
     const exists = meta.found?.some(t => t.toLowerCase() === tagName.toLowerCase());
     return (
-      <div key={tagName} className={`flex items-center justify-between px-2 py-1 rounded border transition-colors ${exists ? (darkMode ? "bg-green-500/10 border-green-500/30 text-green-400" : "bg-green-50 border-green-200 text-green-700") : (isCritical ? (darkMode ? "bg-red-500/10 border-red-500/30 text-red-400" : "bg-red-50 border-red-200 text-red-700") : (darkMode ? "bg-gray-800 border-gray-700 text-gray-500" : "bg-gray-50 border-gray-200 text-gray-400"))}`}>
+      <div key={tagName} className={`flex items-center justify-between px-2 py-1 rounded border transition-colors ${exists ? (darkMode ? "bg-violet-500/10 border-violet-500/30 text-violet-400" : "bg-violet-50 border-violet-200 text-violet-700") : (isCritical ? (darkMode ? "bg-red-500/10 border-red-500/30 text-red-400" : "bg-red-50 border-red-200 text-red-700") : (darkMode ? "bg-gray-800 border-gray-700 text-gray-500" : "bg-gray-50 border-gray-200 text-gray-400"))}`}>
         <span className="font-mono text-[10px] font-bold">&lt;{tagName}&gt;</span>
         {exists ? <Check size={10} /> : (isCritical ? <AlertTriangle size={10} /> : <div className="w-[10px]" />)}
       </div>
@@ -702,7 +702,7 @@ const SemanticTagsCard = ({ data, darkMode, onInfo, className }) => {
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
             <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
-              <Box size={24} className={darkMode ? "text-emerald-400" : "text-emerald-600"} />
+              <Box size={24} className={darkMode ? "text-violet-400" : "text-violet-600"} />
             </div>
             <div>
               <h3 className={`font-bold text-lg ${darkMode ? "text-gray-100" : "text-gray-900"}`}>Semantic Structure</h3>
@@ -797,7 +797,7 @@ const SemanticTagsCard = ({ data, darkMode, onInfo, className }) => {
                 </p>
               </div>
               <div className="space-y-1">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-500">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-violet-500">
                   <CheckCircle size={12} />
                   <span>Recommendation</span>
                 </div>
@@ -934,13 +934,13 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Contextual Links */}
             <div className={`rounded-xl border overflow-hidden flex flex-col ${darkMode ? "bg-black/20 border-gray-700" : "bg-gray-50 border-gray-200"}`} style={{ maxHeight: '300px' }}>
-              <div className={`px-4 py-2 border-b text-xs font-bold uppercase tracking-wider sticky top-0 bg-opacity-90 backdrop-blur ${darkMode ? "bg-emerald-900/30 border-gray-700 text-emerald-400" : "bg-emerald-50 border-gray-200 text-emerald-700"}`}>
+              <div className={`px-4 py-2 border-b text-xs font-bold uppercase tracking-wider sticky top-0 bg-opacity-90 backdrop-blur ${darkMode ? "bg-violet-900/30 border-gray-700 text-violet-400" : "bg-violet-50 border-gray-200 text-violet-700"}`}>
                 Contextual Links ({contextualLinks.length})
               </div>
               <div className="overflow-y-auto custom-scrollbar p-1 space-y-1 flex-1">
                 {contextualLinks.length > 0 ? contextualLinks.map((link, i) => (
-                  <a key={i} href={resolveLink(link.href)} target="_blank" rel="noopener noreferrer" className={`block p-2 rounded text-[10px] break-all border group/link transition-all ${darkMode ? "bg-emerald-900/10 border-transparent hover:bg-emerald-900/20" : "bg-white border-transparent hover:border-emerald-200 hover:shadow-sm"}`}>
-                    <div className={`font-bold mb-0.5 ${darkMode ? "text-emerald-300" : "text-emerald-700"}`}>"{link.text}"</div>
+                  <a key={i} href={resolveLink(link.href)} target="_blank" rel="noopener noreferrer" className={`block p-2 rounded text-[10px] break-all border group/link transition-all ${darkMode ? "bg-violet-900/10 border-transparent hover:bg-violet-900/20" : "bg-white border-transparent hover:border-violet-200 hover:shadow-sm"}`}>
+                    <div className={`font-bold mb-0.5 ${darkMode ? "text-violet-300" : "text-violet-700"}`}>"{link.text}"</div>
                     <div className="opacity-50 font-mono text-[9px] truncate group-hover/link:opacity-80 transition-opacity">{link.href}</div>
                   </a>
                 )) : <div className="p-4 text-center opacity-50 text-[10px]">No contextual links found.</div>}
@@ -964,8 +964,8 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
           </div>
 
           {/* Broken Contextual Links */}
-          <div className={`text-xs p-4 rounded-xl border ${meta.broken_links?.length > 0 ? "border-red-500/20 bg-red-500/5" : "border-emerald-500/20 bg-emerald-500/5"}`}>
-            <div className={`font-bold mb-2 uppercase flex items-center gap-1 ${meta.broken_links?.length > 0 ? "text-red-500" : "text-emerald-500"}`}>
+          <div className={`text-xs p-4 rounded-xl border ${meta.broken_links?.length > 0 ? "border-red-500/20 bg-red-500/5" : "border-violet-500/20 bg-violet-500/5"}`}>
+            <div className={`font-bold mb-2 uppercase flex items-center gap-1 ${meta.broken_links?.length > 0 ? "text-red-500" : "text-violet-500"}`}>
               {meta.broken_links?.length > 0 ? <AlertTriangle size={14} className="mt-[-2px]" /> : <CheckCircle size={14} className="mt-[-2px]" />}
               Broken Contextual Links ({meta.broken_links_count || 0})
             </div>
@@ -983,7 +983,7 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
                           {linkObj.status ? `HTTP ${linkObj.status}` : linkObj.error || "Broken"}
                         </span>
                       </div>
-                      <a href={resolveLink(linkObj.url || "")} target="_blank" rel="noopener noreferrer" className={`font-mono text-[10px] truncate transition-colors max-w-[70%] text-right ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-700"}`}>
+                      <a href={resolveLink(linkObj.url || "")} target="_blank" rel="noopener noreferrer" className={`font-mono text-[10px] truncate transition-colors max-w-[70%] text-right ${darkMode ? "text-violet-400 hover:text-violet-300" : "text-violet-600 hover:text-violet-700"}`}>
                         {linkObj.url || "—"}
                       </a>
                     </div>
@@ -991,7 +991,7 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
                 </div>
               </>
             ) : (
-              <p className={`${darkMode ? "text-emerald-400/80" : "text-emerald-700/80"}`}>
+              <p className={`${darkMode ? "text-violet-400/80" : "text-violet-700/80"}`}>
                 Perfect! All your contextual links are valid and completely functional.
               </p>
             )}
@@ -1018,7 +1018,7 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
                 </p>
               </div>
               <div className="space-y-1">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-500">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-violet-500">
                   <CheckCircle size={12} />
                   <span>Recommendation</span>
                 </div>
@@ -1072,7 +1072,7 @@ const LinkProfileCard = ({ data, darkMode, onInfo, resolveLink, className = "lg:
                   {link.target}
                 </span>
               )}
-              <a href={resolveLink(link.href)} target="_blank" rel="noopener noreferrer" className={`font-mono text-[9px] truncate transition-colors flex-1 min-w-0 ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-700"}`}>
+              <a href={resolveLink(link.href)} target="_blank" rel="noopener noreferrer" className={`font-mono text-[9px] truncate transition-colors flex-1 min-w-0 ${darkMode ? "text-violet-400 hover:text-violet-300" : "text-violet-600 hover:text-violet-700"}`}>
                 {link.href}
               </a>
             </div>
@@ -1089,7 +1089,7 @@ const LinkProfileCard = ({ data, darkMode, onInfo, resolveLink, className = "lg:
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
             <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
-              <Link size={24} className={darkMode ? "text-blue-400" : "text-blue-600"} />
+              <Link size={24} className={darkMode ? "text-violet-400" : "text-violet-600"} />
             </div>
             <div>
               <h3 className={`font-bold text-lg ${darkMode ? "text-gray-100" : "text-gray-900"}`}>Link Profile</h3>
@@ -1133,8 +1133,8 @@ const LinkProfileCard = ({ data, darkMode, onInfo, resolveLink, className = "lg:
 
         {/* Stats Grid */}
         <div className="grid grid-cols-3 gap-3">
-          <div title="Links pointing to pages on the same domain" onClick={() => setActiveTab("internal")} className={`cursor-pointer p-3 rounded border text-center transition-all ${activeTab === "internal" ? (darkMode ? "bg-blue-900/20 border-blue-500 ring-1 ring-blue-500" : "bg-blue-50 border-blue-500 ring-1 ring-blue-500") : (darkMode ? "bg-gray-900/50 border-gray-700 hover:border-gray-600" : "bg-gray-50 border-gray-200 hover:border-gray-300")}`}>
-            <div className={`text-2xl font-black ${darkMode ? "text-blue-400" : "text-blue-600"}`}>{meta.internal || 0}</div>
+          <div title="Links pointing to pages on the same domain" onClick={() => setActiveTab("internal")} className={`cursor-pointer p-3 rounded border text-center transition-all ${activeTab === "internal" ? (darkMode ? "bg-blue-900/20 border-violet-500 ring-1 ring-violet-500" : "bg-violet-50 border-violet-500 ring-1 ring-violet-500") : (darkMode ? "bg-gray-900/50 border-gray-700 hover:border-gray-600" : "bg-gray-50 border-gray-200 hover:border-gray-300")}`}>
+            <div className={`text-2xl font-black ${darkMode ? "text-violet-400" : "text-violet-600"}`}>{meta.internal || 0}</div>
             <div className="text-[10px] font-bold uppercase tracking-wider opacity-60">Internal</div>
           </div>
 
@@ -1166,7 +1166,7 @@ const LinkProfileCard = ({ data, darkMode, onInfo, resolveLink, className = "lg:
                     <span className="font-bold text-amber-600 dark:text-amber-400 shrink-0 truncate">"{link.text || link}"</span>
                     <span className="opacity-50 text-[10px] shrink-0">&lt;/a&gt;</span>
                   </div>
-                  <a href={resolveLink(link.href || "")} target="_blank" rel="noopener noreferrer" className={`font-mono text-[9px] truncate transition-colors max-w-[45%] text-right ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-700"}`}>
+                  <a href={resolveLink(link.href || "")} target="_blank" rel="noopener noreferrer" className={`font-mono text-[9px] truncate transition-colors max-w-[45%] text-right ${darkMode ? "text-violet-400 hover:text-violet-300" : "text-violet-600 hover:text-violet-700"}`}>
                     {link.href || "—"}
                   </a>
                 </div>
@@ -1213,7 +1213,7 @@ const LinkProfileCard = ({ data, darkMode, onInfo, resolveLink, className = "lg:
                 </p>
               </div>
               <div className="space-y-1">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-500">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-violet-500">
                   <CheckCircle size={12} />
                   <span>Recommendation</span>
                 </div>
@@ -1256,7 +1256,7 @@ const HeadingHierarchyCard = ({ data, darkMode, onInfo }) => {
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
             <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
-              <List size={24} className={darkMode ? "text-blue-400" : "text-blue-600"} />
+              <List size={24} className={darkMode ? "text-violet-400" : "text-violet-600"} />
             </div>
             <div>
               <h3 className={`font-bold text-lg ${darkMode ? "text-gray-100" : "text-gray-900"}`}>Heading Hierarchy</h3>
@@ -1298,7 +1298,7 @@ const HeadingHierarchyCard = ({ data, darkMode, onInfo }) => {
               {['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].map((tag) => (
                 <div key={tag} className={`p-2 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-50"}`}>
                   <div className="text-[10px] font-bold opacity-60 uppercase">{tag}</div>
-                  <div className={`font-bold text-lg ${meta?.counts?.[tag] > 0 ? (darkMode ? "text-blue-400" : "text-blue-600") : "text-gray-400"}`}>
+                  <div className={`font-bold text-lg ${meta?.counts?.[tag] > 0 ? (darkMode ? "text-violet-400" : "text-violet-600") : "text-gray-400"}`}>
                     {meta?.counts?.[tag] || 0}
                   </div>
                 </div>
@@ -1323,10 +1323,10 @@ const HeadingHierarchyCard = ({ data, darkMode, onInfo }) => {
                     };
                     return (
                       <div key={i} className={`flex items-start gap-3 p-2 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors ${indent[h.tag] || ''}`}>
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase flex-shrink-0 ${h.tag === 'h1' ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" :
-                          h.tag === 'h2' ? "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300" :
-                            h.tag === 'h3' ? "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300" :
-                              h.tag === 'h4' ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300" :
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase flex-shrink-0 ${h.tag === 'h1' ? "bg-violet-100 text-violet-700 dark:bg-blue-900/30 dark:text-violet-300" :
+                          h.tag === 'h2' ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300" :
+                            h.tag === 'h3' ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300" :
+                              h.tag === 'h4' ? "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300" :
                                 h.tag === 'h5' ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300" :
                                   "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300" // H6
                           }`}>
@@ -1380,7 +1380,7 @@ const HeadingHierarchyCard = ({ data, darkMode, onInfo }) => {
 
                 {/* Recommendation */}
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-500">
+                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-violet-500">
                     <CheckCircle size={12} />
                     <span>Recommendation</span>
                   </div>
@@ -1463,7 +1463,7 @@ const ContentQualityCard = ({ data, darkMode, onInfo }) => {
 
           <div className="space-y-3">
             <div className="text-sm font-semibold">
-              Total Words: <span className={darkMode ? "text-blue-400" : "text-blue-600"}>{meta?.wordCount || 0}</span>
+              Total Words: <span className={darkMode ? "text-violet-400" : "text-violet-600"}>{meta?.wordCount || 0}</span>
             </div>
 
             {meta?.repeatedSentences?.length > 0 && (
@@ -1509,7 +1509,7 @@ const ContentQualityCard = ({ data, darkMode, onInfo }) => {
 
               {/* Recommendation */}
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-500">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-violet-500">
                   <CheckCircle size={12} />
                   <span>Recommendation</span>
                 </div>
@@ -1583,11 +1583,11 @@ const VideoAnalysisCard = ({ data, darkMode, onInfo, className = "" }) => {
             </div>
             <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-900/50" : "bg-gray-50"} border ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
               <div className="text-[10px] font-bold uppercase opacity-50 mb-1">Lazy Loaded</div>
-              <div className={`text-lg font-bold ${meta.lazyCount === meta.total ? "text-green-500" : "text-amber-500"}`}>{meta.lazyCount || 0}</div>
+              <div className={`text-lg font-bold ${meta.lazyCount === meta.total ? "text-violet-500" : "text-amber-500"}`}>{meta.lazyCount || 0}</div>
             </div>
             <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-900/50" : "bg-gray-50"} border ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
               <div className="text-[10px] font-bold uppercase opacity-50 mb-1">Schema Markup</div>
-              <div className={`text-lg font-bold ${meta.metaCount > 0 ? "text-green-500" : "text-red-500"}`}>{meta.metaCount || 0}</div>
+              <div className={`text-lg font-bold ${meta.metaCount > 0 ? "text-violet-500" : "text-red-500"}`}>{meta.metaCount || 0}</div>
             </div>
             <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-900/50" : "bg-gray-50"} border ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
               <div className="text-[10px] font-bold uppercase opacity-50 mb-1">Health Score</div>
@@ -1621,7 +1621,7 @@ const URLSlugCard = ({ data, darkMode, onInfo }) => {
     <SEOCard
       title="URL Slug"
       icon={Link}
-      iconColor="text-emerald-400"
+      iconColor="text-violet-400"
       score={score}
       statusText={statusText}
       meta={meta}
@@ -1639,7 +1639,7 @@ const URLSlugCard = ({ data, darkMode, onInfo }) => {
             /{meta.slug}
           </div>
         ) : (
-          <div className={`text-xs font-bold p-1.5 rounded ${darkMode ? "bg-blue-900/20 text-blue-400" : "bg-blue-50 text-blue-700"}`}>
+          <div className={`text-xs font-bold p-1.5 rounded ${darkMode ? "bg-blue-900/20 text-violet-400" : "bg-violet-50 text-violet-700"}`}>
             You are at root URL
           </div>
         )}
@@ -1654,7 +1654,7 @@ const URLSlugCard = ({ data, darkMode, onInfo }) => {
             ))}
           </div>
         ) : (
-          <div className="text-xs opacity-70 flex items-center gap-1 text-green-500">
+          <div className="text-xs opacity-70 flex items-center gap-1 text-violet-500">
             <CheckCircle size={12} />
             <span>Slug format matches SEO best practices.</span>
           </div>
@@ -1674,7 +1674,7 @@ const URLSlugCard = ({ data, darkMode, onInfo }) => {
             </p>
           </div>
           <div className="space-y-2">
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-500">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-violet-500">
               <CheckCircle size={12} />
               <span>Recommendation</span>
             </div>
@@ -1738,7 +1738,7 @@ const RobotsTxtCard = ({ data, darkMode, onInfo }) => {
             </p>
           </div>
           <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-500">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-violet-500">
               <CheckCircle size={12} />
               <span>Recommendation</span>
             </div>
@@ -1766,7 +1766,7 @@ const SitemapCard = ({ data, darkMode, onInfo }) => {
     <SEOCard
       title="XML Sitemap"
       icon={Search}
-      iconColor="text-blue-400"
+      iconColor="text-violet-400"
       score={score}
       status={status}
       statusText={statusText}
@@ -1820,7 +1820,7 @@ const SitemapCard = ({ data, darkMode, onInfo }) => {
             </p>
           </div>
           <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-500">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-violet-500">
               <CheckCircle size={12} />
               <span>Recommendation</span>
             </div>
@@ -1929,7 +1929,7 @@ const OpenGraphCard = ({ data, darkMode, onInfo, className = "" }) => {
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
             <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
-              <Globe size={24} className={darkMode ? "text-blue-400" : "text-blue-600"} />
+              <Globe size={24} className={darkMode ? "text-violet-400" : "text-violet-600"} />
             </div>
             <div>
               <h3 className={`font-bold text-lg ${darkMode ? "text-gray-100" : "text-gray-900"}`}>Open Graph</h3>
@@ -1962,7 +1962,7 @@ const OpenGraphCard = ({ data, darkMode, onInfo, className = "" }) => {
               {Object.entries(meta.tags).map(([key, val], i) => (
                 <div key={i} className={`p-2 rounded border ${darkMode ? "bg-gray-900/40 border-gray-700/50" : "bg-gray-50/50 border-gray-100"}`}>
                   <div className="text-[9px] font-bold uppercase opacity-50 mb-0.5">{key.replace("og:", "")}</div>
-                  <div className={`text-xs font-mono break-all ${val ? (darkMode ? "text-blue-300" : "text-blue-600") : "text-red-500 italic"}`}>
+                  <div className={`text-xs font-mono break-all ${val ? (darkMode ? "text-violet-300" : "text-violet-600") : "text-red-500 italic"}`}>
                     {val || "Missing"}
                   </div>
                 </div>
@@ -1995,7 +1995,7 @@ const TwitterCardCard = ({ data, darkMode, onInfo, className = "" }) => {
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
             <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
-              <Globe size={24} className={darkMode ? "text-cyan-400" : "text-cyan-600"} />
+              <Globe size={24} className={darkMode ? "text-indigo-400" : "text-indigo-600"} />
             </div>
             <div>
               <h3 className={`font-bold text-lg ${darkMode ? "text-gray-100" : "text-gray-900"}`}>Twitter Card</h3>
@@ -2028,7 +2028,7 @@ const TwitterCardCard = ({ data, darkMode, onInfo, className = "" }) => {
               {Object.entries(meta.tags).map(([key, val], i) => (
                 <div key={i} className={`p-2 rounded border ${darkMode ? "bg-gray-900/40 border-gray-700/50" : "bg-gray-50/50 border-gray-100"}`}>
                   <div className="text-[9px] font-bold uppercase opacity-50 mb-0.5">{key.replace("twitter:", "")}</div>
-                  <div className={`text-xs font-mono break-all ${val ? (darkMode ? "text-cyan-300" : "text-cyan-600") : "text-red-500 italic"}`}>
+                  <div className={`text-xs font-mono break-all ${val ? (darkMode ? "text-indigo-300" : "text-indigo-600") : "text-red-500 italic"}`}>
                     {val || "Missing"}
                   </div>
                 </div>
@@ -2056,8 +2056,8 @@ const SocialProfilesCard = ({ data, darkMode, onInfo, className = "" }) => {
 
   const getPlatformInfo = (url) => {
     const u = url.toLowerCase();
-    if (u.includes('facebook.com')) return { name: 'Facebook', color: 'text-blue-500 bg-blue-500/10 border-blue-500/20' };
-    if (u.includes('twitter.com') || u.includes('x.com')) return { name: 'Twitter / X', color: 'text-cyan-500 bg-cyan-500/10 border-cyan-500/20' };
+    if (u.includes('facebook.com')) return { name: 'Facebook', color: 'text-violet-500 bg-violet-500/10 border-violet-500/20' };
+    if (u.includes('twitter.com') || u.includes('x.com')) return { name: 'Twitter / X', color: 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20' };
     if (u.includes('linkedin.com')) return { name: 'LinkedIn', color: 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20' };
     if (u.includes('instagram.com')) return { name: 'Instagram', color: 'text-pink-500 bg-pink-500/10 border-pink-500/20' };
     if (u.includes('youtube.com')) return { name: 'YouTube', color: 'text-red-500 bg-red-500/10 border-red-500/20' };
@@ -2114,7 +2114,7 @@ const SocialProfilesCard = ({ data, darkMode, onInfo, className = "" }) => {
                         <span className={`text-xs font-medium truncate ${darkMode ? "text-gray-300" : "text-gray-700"}`}>{new URL(link).hostname.replace("www.", "")}</span>
                       </div>
                     </div>
-                    <ArrowRight size={14} className="opacity-0 group-hover/link:opacity-100 translate-x-[-10px] group-hover/link:translate-x-0 transition-all text-blue-500" />
+                    <ArrowRight size={14} className="opacity-0 group-hover/link:opacity-100 translate-x-[-10px] group-hover/link:translate-x-0 transition-all text-violet-500" />
                   </a>
                 );
               })
@@ -2146,13 +2146,13 @@ export default function On_Page_SEO() {
   const darkMode = theme === "dark";
 
   const auditSteps = useMemo(() => [
-    { icon: <Search className="w-8 h-8 text-blue-500" />, title: "Metadata Analysis", text: "Scanning Title tags, Meta Descriptions, and URL structure for SEO best practices..." },
+    { icon: <Search className="w-8 h-8 text-violet-500" />, title: "Metadata Analysis", text: "Scanning Title tags, Meta Descriptions, and URL structure for SEO best practices..." },
     { icon: <Layout className="w-8 h-8 text-purple-500" />, title: "Content Structure", text: "Evaluating Heading Hierarchy (H1-H6) and semantic HTML5 tags..." },
-    { icon: <FileCode className="w-8 h-8 text-teal-500" />, title: "Technical SEO", text: "Verifying Canonical tags, Robots.txt, and Sitemap presence..." },
+    { icon: <FileCode className="w-8 h-8 text-purple-500" />, title: "Technical SEO", text: "Verifying Canonical tags, Robots.txt, and Sitemap presence..." },
     { icon: <ImageIcon className="w-8 h-8 text-indigo-500" />, title: "Visual Assets", text: "Checking image Alt text, file sizes, and video optimization..." },
     { icon: <Link className="w-8 h-8 text-amber-500" />, title: "Link Profile", text: "Analyzing internal linking structure, identifying broken links and orphan pages..." },
     { icon: <Copy className="w-8 h-8 text-red-500" />, title: "Content Quality", text: "Detecting duplicate content, thin pages, and keyword consistency..." },
-    { icon: <Globe className="w-8 h-8 text-emerald-500" />, title: "Social Signals", text: "Reviewing Open Graph tags and Twitter Cards for social media optimization..." },
+    { icon: <Globe className="w-8 h-8 text-violet-500" />, title: "Social Signals", text: "Reviewing Open Graph tags and Twitter Cards for social media optimization..." },
   ], []);
 
   const seo = data?.onPageSEO || {};
@@ -2204,7 +2204,7 @@ export default function On_Page_SEO() {
       <div className={`w-full ${darkMode ? "bg-gray-900" : "bg-gray-50"} transition-colors duration-300`}>
         <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-8`}>
           {/* Unified Master Card Loading State */}
-          <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
+          <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-violet-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
 
             {/* 1. URL Header */}
             <div>
@@ -2215,7 +2215,7 @@ export default function On_Page_SEO() {
               {/* Left Panel: Live Preview (Only if not All) */}
               {data?.report !== "All" && (
                 <div className={`w-full xl:w-[45%] p-3 lg:p-4 flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/5 blur-3xl rounded-full pointer-events-none"></div>
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-violet-500/5 blur-3xl rounded-full pointer-events-none"></div>
                   <div className="w-full relative z-10">
                     <LivePreview data={data} loading={loading} variant="plain" />
                   </div>
@@ -2255,7 +2255,7 @@ export default function On_Page_SEO() {
       <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-8`}>
 
         {/* Unified Master Card */}
-        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
+        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-violet-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
 
           {/* 1. URL Header */}
           <div>
@@ -2274,7 +2274,7 @@ export default function On_Page_SEO() {
             {/* Left Panel: Live Preview (Only if not All) */}
             {data.report !== "All" && (
               <div className={`w-full xl:w-[45%] ${data.report === "All" ? "p-6 lg:p-10" : "p-3 lg:p-4"} flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/5 blur-3xl rounded-full pointer-events-none"></div>
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-violet-500/5 blur-3xl rounded-full pointer-events-none"></div>
                 <div className="w-full relative z-10">
                   <LivePreview data={data} loading={loading} variant="plain" />
                 </div>
@@ -2291,12 +2291,12 @@ export default function On_Page_SEO() {
                   {/* Text Content */}
                   <div className={`flex-1 ${data.report === "All" ? "space-y-5" : "space-y-4"} text-left order-2 md:order-1`}>
                     <div className={`${data.report === "All" ? "space-y-2" : "space-y-1.5"}`}>
-                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-blue-100/50 text-blue-600 border border-blue-200"}`}>
+                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${darkMode ? "bg-violet-500/10 text-violet-400 border border-violet-500/20" : "bg-violet-100/50 text-violet-600 border border-violet-200"}`}>
                         <Search className="w-3.5 h-3.5" />
                         <span>SEO Audit</span>
                       </div>
                       <h3 className={`${data.report === "All" ? "text-3xl lg:text-5xl" : "text-2xl lg:text-4xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
-                        On-Page <span className="text-blue-500">SEO</span>
+                        On-Page <span className="text-violet-500">SEO</span>
                       </h3>
                       <p className={`text-sm leading-relaxed opacity-70 ${darkMode ? "text-slate-300" : "text-slate-600"}`}>
                         Deep dive into your content strategy, technical structure, and user experience signals.
@@ -2307,7 +2307,7 @@ export default function On_Page_SEO() {
                     <div className={`flex flex-wrap items-center ${data.report === "All" ? "gap-6" : "gap-5"}`}>
                       <div className={`flex items-center ${data.report === "All" ? "gap-5" : "gap-4"}`}>
                         <div className="flex items-center gap-2">
-                          <CheckCircle size={18} className="text-emerald-500" />
+                          <CheckCircle size={18} className="text-violet-500" />
                           <span className="text-sm font-bold">{metricStats.passed} Passed</span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -2322,7 +2322,7 @@ export default function On_Page_SEO() {
                       <div className={`w-px h-4 ${darkMode ? "bg-slate-800" : "bg-slate-200 hidden md:block"}`}></div>
                       <button
                         onClick={() => setSelectedMetricInfo(scoreCalculationInfo)}
-                        className={`flex items-center gap-2 text-sm font-bold transition-all ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-700"}`}
+                        className={`flex items-center gap-2 text-sm font-bold transition-all ${darkMode ? "text-violet-400 hover:text-violet-300" : "text-violet-600 hover:text-violet-700"}`}
                       >
                         <Info size={16} />
                         <span className="border-b border-transparent hover:border-current">Metric Methodology</span>
@@ -2332,7 +2332,7 @@ export default function On_Page_SEO() {
 
                   {/* Circular Progress */}
                   <div className="relative flex-shrink-0 group cursor-default order-1 md:order-2">
-                    <div className={`absolute -inset-8 rounded-full blur-3xl opacity-25 transition-opacity duration-700 group-hover:opacity-40 ${overallScore >= 80 ? "bg-emerald-500" : "bg-amber-500"}`}></div>
+                    <div className={`absolute -inset-8 rounded-full blur-3xl opacity-25 transition-opacity duration-700 group-hover:opacity-40 ${overallScore >= 80 ? "bg-violet-500" : "bg-amber-500"}`}></div>
                     <CircularProgress value={overallScore} size={data.report === "All" ? 180 : 150} stroke={14} />
                     <div className="absolute inset-0 flex items-center justify-center flex-col gap-0.5">
                       <span className={`${data.report === "All" ? "text-5xl" : "text-3xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>{overallScore}%</span>

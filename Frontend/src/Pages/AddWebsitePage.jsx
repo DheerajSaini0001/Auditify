@@ -33,7 +33,7 @@ const AddWebsitePage = () => {
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full bg-white p-10 rounded-2xl shadow-xl border border-gray-100">
         <div className="mb-10 text-center">
-            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-blue-50 text-blue-600 mb-6">
+            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-violet-50 text-violet-600 mb-6">
                 <Globe className="h-8 w-8" />
             </div>
             <h2 className="text-3xl font-black text-gray-900 tracking-tight">Add Your Website</h2>
@@ -42,13 +42,13 @@ const AddWebsitePage = () => {
 
         <form onSubmit={handleSubmit} className="space-y-8">
           <div className="relative group">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-500 transition-colors">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-violet-500 transition-colors">
               <Globe className="h-5 w-5" />
             </div>
             <input
               type="url"
               required
-              className="block w-full pl-12 pr-4 py-4 rounded-xl bg-gray-50 border-gray-100 focus:bg-white focus:border-blue-500 focus:ring-blue-500 transition-all font-medium placeholder:text-gray-400"
+              className="block w-full pl-12 pr-4 py-4 rounded-xl bg-gray-50 border-gray-100 focus:bg-white focus:border-violet-500 focus:ring-violet-500 transition-all font-medium placeholder:text-gray-400"
               placeholder="https://example.com"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
@@ -66,7 +66,7 @@ const AddWebsitePage = () => {
             <button
                 type="submit"
                 disabled={loading}
-                className="w-full h-14 flex items-center justify-center gap-2 rounded-xl font-black text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition-all shadow-xl shadow-blue-500/20 active:scale-[0.98] uppercase tracking-widest"
+                className="w-full h-14 flex items-center justify-center gap-2 rounded-xl font-black text-white bg-violet-600 hover:bg-violet-700 disabled:opacity-50 transition-all shadow-xl shadow-violet-500/20 active:scale-[0.98] uppercase tracking-widest"
             >
                 {loading ? <Loader2 className="animate-spin h-5 w-5" /> : <><PlusCircle className="h-5 w-5" /> Add Website</>}
             </button>

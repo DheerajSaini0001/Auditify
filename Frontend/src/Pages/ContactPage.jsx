@@ -7,7 +7,7 @@ export default function ContactPage() {
   const darkMode = theme === "dark";
 
   const containerClass = darkMode
-    ? "min-h-screen py-24 px-4 sm:px-8 flex flex-col items-center bg-[#0B1120] text-white relative font-sans"
+    ? "min-h-screen py-24 px-4 sm:px-8 flex flex-col items-center bg-[#020617] text-white relative font-sans"
     : "min-h-screen py-24 px-4 sm:px-8 flex flex-col items-center bg-slate-50 text-slate-900 relative font-sans";
 
   return (
@@ -18,7 +18,7 @@ export default function ContactPage() {
         
         {/* Header */}
         <div className="text-center space-y-6">
-          <div className="mx-auto w-20 h-20 rounded-3xl bg-gradient-to-tr from-cyan-500 to-blue-500 flex items-center justify-center text-white shadow-xl shadow-cyan-500/30">
+          <div className="mx-auto w-20 h-20 rounded-3xl bg-gradient-to-tr from-indigo-500 to-violet-500 flex items-center justify-center text-white shadow-xl shadow-indigo-500/30">
             <MessagesSquare size={32} />
           </div>
           <h1 className="text-5xl md:text-7xl font-black tracking-tighter leading-tight">
@@ -39,12 +39,12 @@ export default function ContactPage() {
             
             <div className="space-y-6">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 border border-emerald-500/20">
+                <div className="w-12 h-12 rounded-xl bg-violet-500/10 flex items-center justify-center text-violet-500 border border-violet-500/20">
                   <Mail size={20} />
                 </div>
                 <div>
                   <div className="font-bold">Email Us</div>
-                  <a href="mailto:support@sltechsoft.com" className={`text-sm ${darkMode ? "text-slate-400 hover:text-emerald-400" : "text-slate-600 hover:text-emerald-600"}`}>support@sltechsoft.com</a>
+                  <a href="mailto:support@sltechsoft.com" className={`text-sm ${darkMode ? "text-slate-400 hover:text-violet-400" : "text-slate-600 hover:text-violet-600"}`}>support@sltechsoft.com</a>
                 </div>
               </div>
 
@@ -70,18 +70,18 @@ export default function ContactPage() {
             </div>
           </div>
 
-          <div className={`flex-1 rounded-3xl p-8 mt-12 md:mt-0 ${darkMode ? "bg-[#060B14] border border-slate-800" : "bg-slate-50 border border-slate-200"}`}>
+          <div className={`flex-1 rounded-3xl p-8 mt-12 md:mt-0 ${darkMode ? "bg-[#020617] border border-slate-800" : "bg-slate-50 border border-slate-200"}`}>
             <h3 className="text-2xl font-bold mb-6">Send a message</h3>
             <form className="space-y-4" onSubmit={e => e.preventDefault()}>
               <div>
                 <label className={`block text-xs font-bold mb-2 uppercase tracking-wide ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Email Address</label>
-                <input type="email" placeholder="you@company.com" className={`w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${darkMode ? "bg-slate-900 border-slate-700 text-white" : "bg-white border-slate-300"}`} />
+                <input type="email" placeholder="you@company.com" className={`w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all ${darkMode ? "bg-slate-900 border-slate-700 text-white" : "bg-white border-slate-300"}`} />
               </div>
               <div>
                 <label className={`block text-xs font-bold mb-2 uppercase tracking-wide ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Message</label>
-                <textarea rows="4" placeholder="How can we assist you?" className={`w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all resize-none ${darkMode ? "bg-slate-900 border-slate-700 text-white" : "bg-white border-slate-300"}`}></textarea>
+                <textarea rows="4" placeholder="How can we assist you?" className={`w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all resize-none ${darkMode ? "bg-slate-900 border-slate-700 text-white" : "bg-white border-slate-300"}`}></textarea>
               </div>
-              <button disabled className="w-full py-4 rounded-xl bg-blue-500 hover:bg-blue-600 transition-colors text-white font-bold opacity-80 cursor-not-allowed">
+              <button disabled className="w-full py-4 rounded-xl bg-violet-500 hover:bg-violet-600 transition-colors text-white font-bold opacity-80 cursor-not-allowed">
                 Transmission Offline (Demo)
               </button>
             </form>

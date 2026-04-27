@@ -66,7 +66,7 @@ const UxShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
         </p>
 
         {/* Processing State */}
-        <div className="mt-8 flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
+        <div className="mt-8 flex items-center gap-2 px-4 py-1.5 rounded-full bg-violet-500/10 text-violet-600 dark:text-violet-400">
           <Loader2 className="w-3.5 h-3.5 animate-spin" />
           <span className="text-xs font-bold uppercase tracking-wider">Processing</span>
         </div>
@@ -76,7 +76,7 @@ const UxShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
           {steps.map((_, i) => (
             <div
               key={i}
-              className={`h-1.5 rounded-full transition-all duration-500 ${i === currentStep ? "w-6 bg-blue-500" : i < currentStep ? "w-6 bg-blue-500/40" : "w-2 bg-slate-400/30"}`}
+              className={`h-1.5 rounded-full transition-all duration-500 ${i === currentStep ? "w-6 bg-violet-500" : i < currentStep ? "w-6 bg-violet-500/40" : "w-2 bg-slate-400/30"}`}
             />
           ))}
         </div>
@@ -106,9 +106,9 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
   let statusLabel = "Needs Improvement";
 
   if (isPassed) {
-    statusBg = "bg-emerald-500";
-    statusBorder = "border-emerald-500";
-    statusTextColor = "text-emerald-500";
+    statusBg = "bg-violet-500";
+    statusBorder = "border-violet-500";
+    statusTextColor = "text-violet-500";
     statusLabel = "Optimized";
   } else if (isWarning) {
     statusBg = "bg-amber-500";
@@ -125,7 +125,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
             <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
-              <Icon size={24} className={darkMode ? "text-blue-400" : "text-blue-600"} />
+              <Icon size={24} className={darkMode ? "text-violet-400" : "text-violet-600"} />
             </div>
             <div>
               <h3 className={`font-bold text-lg ${textColor}`}>{title}</h3>
@@ -170,7 +170,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
         </div>
 
         <div className={`mt-4 p-4 rounded-lg flex items-start gap-3 ${darkMode ? "bg-slate-800/50" : "bg-slate-50"}`}>
-          <div className={`mt-0.5 p-1.5 rounded-full flex-shrink-0 ${isPassed ? "bg-emerald-500/10 text-emerald-500" : isWarning ? "bg-amber-500/10 text-amber-500" : "bg-rose-500/10 text-rose-500"}`}>
+          <div className={`mt-0.5 p-1.5 rounded-full flex-shrink-0 ${isPassed ? "bg-violet-500/10 text-violet-500" : isWarning ? "bg-amber-500/10 text-amber-500" : "bg-rose-500/10 text-rose-500"}`}>
             {isPassed ? <CheckCircle size={14} /> : isWarning ? <AlertTriangle size={14} /> : <XCircle size={14} />}
           </div>
           <div>
@@ -192,7 +192,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h5 className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Page Target</h5>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${darkMode ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-700"}`}>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${darkMode ? "bg-violet-500/20 text-violet-400" : "bg-violet-100 text-violet-700"}`}>
                     {meta.pageType} ({meta.targetMin}-{meta.targetMax})
                   </span>
                 </div>
@@ -256,7 +256,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
                 <div>
                   <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Sequence Logic</h5>
                   <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${meta.isSequential ? "bg-emerald-400" : "bg-rose-400"}`}></span>
+                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${meta.isSequential ? "bg-violet-400" : "bg-rose-400"}`}></span>
                     <span className="break-all">{meta.isSequential ? "Perfect Nesting" : "Non-sequential levels detected"}</span>
                   </div>
                 </div>
@@ -267,7 +267,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
               <div>
                 <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Semantic Clarity</h5>
                 <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
-                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-emerald-400"></span>
+                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-violet-400"></span>
                   <span className="break-all">{meta.labeledCount} of {meta.totalSections} sections correctly labeled</span>
                 </div>
               </div>
@@ -301,7 +301,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
                   ].map((item, i) => (
                     <div key={i} className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
                       <span className={darkMode ? "text-slate-300" : "text-slate-600"}>{item.l}:</span>
-                      <span className={item.v ? "text-emerald-500 font-bold" : "text-rose-500 font-bold"}>{item.v ? "ACTIVE" : "MISSING"}</span>
+                      <span className={item.v ? "text-violet-500 font-bold" : "text-rose-500 font-bold"}>{item.v ? "ACTIVE" : "MISSING"}</span>
                     </div>
                   ))}
                 </div>
@@ -312,7 +312,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
               <div>
                 <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Path Anchors</h5>
                 <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
-                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-blue-400"></span>
+                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-violet-400"></span>
                   <span className="break-all">{meta.isHomepage ? "Homepage (Exempt)" : (status === 'pass' ? "Secondary Path Active" : "No path trail found")}</span>
                 </div>
               </div>
@@ -322,7 +322,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
               <div>
                 <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Local Routing</h5>
                 <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
-                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-blue-400"></span>
+                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-violet-400"></span>
                   <span className="break-all">{meta.anchorLinks} Skip-links | Top-scroll: {meta.backToTop ? "Yes" : "No"}</span>
                 </div>
               </div>
@@ -343,7 +343,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
                 </div>
                 <div className={`p-2 rounded border font-mono text-[10px] flex justify-between ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
                   <span className="opacity-70">Site Footer:</span>
-                  <span className={meta.hasFooter ? "text-emerald-500 font-bold" : "text-rose-500 font-bold"}>{meta.hasFooter ? "ACTIVE" : "MISSING"}</span>
+                  <span className={meta.hasFooter ? "text-violet-500 font-bold" : "text-rose-500 font-bold"}>{meta.hasFooter ? "ACTIVE" : "MISSING"}</span>
                 </div>
               </div>
             )}
@@ -353,7 +353,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
               <div className="space-y-2">
                 <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>State Response</h5>
                 <div className={`p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
-                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${meta.withFeedback === meta.totalInteractive ? "bg-emerald-400" : "bg-amber-400"}`}></span>
+                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${meta.withFeedback === meta.totalInteractive ? "bg-violet-400" : "bg-amber-400"}`}></span>
                   <span className="break-all">{meta.withFeedback} of {meta.totalInteractive} assets react</span>
                 </div>
 
@@ -370,9 +370,9 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
                           </p>
                         </div>
                         <div className="flex items-center gap-0.5 flex-shrink-0">
-                          <div className={`w-0.5 h-0.5 rounded-full ${el.feedback.hoverChanged ? "bg-emerald-500" : "bg-slate-300/20"}`} />
-                          <div className={`w-0.5 h-0.5 rounded-full ${el.feedback.activeChanged ? "bg-emerald-500" : "bg-slate-300/20"}`} />
-                          <div className={`w-0.5 h-0.5 rounded-full ${el.feedback.focusChanged ? "bg-emerald-500" : "bg-slate-300/20"}`} />
+                          <div className={`w-0.5 h-0.5 rounded-full ${el.feedback.hoverChanged ? "bg-violet-500" : "bg-slate-300/20"}`} />
+                          <div className={`w-0.5 h-0.5 rounded-full ${el.feedback.activeChanged ? "bg-violet-500" : "bg-slate-300/20"}`} />
+                          <div className={`w-0.5 h-0.5 rounded-full ${el.feedback.focusChanged ? "bg-violet-500" : "bg-slate-300/20"}`} />
                         </div>
                       </div>
                     ))}
@@ -392,7 +392,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
                   ].map((item, i) => (
                     <div key={i} className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
                       <span className={darkMode ? "text-slate-300" : "text-slate-600"}>{item.l}:</span>
-                      <span className={item.v > 0 ? "text-emerald-500 font-bold" : "text-slate-400"}>{item.v} detected</span>
+                      <span className={item.v > 0 ? "text-violet-500 font-bold" : "text-slate-400"}>{item.v} detected</span>
                     </div>
                   ))}
                 </div>
@@ -404,7 +404,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
                 <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>URL Health</h5>
                 <div className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
                   <span className="opacity-70">Results:</span>
-                  <span className={meta.brokenCount > 0 ? "text-rose-500 font-bold" : "text-emerald-500 font-bold"}>{meta.brokenCount} Broken / {meta.totalChecked} Checked</span>
+                  <span className={meta.brokenCount > 0 ? "text-rose-500 font-bold" : "text-violet-500 font-bold"}>{meta.brokenCount} Broken / {meta.totalChecked} Checked</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
@@ -473,7 +473,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
               <div>
                 <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Viewport Footprint</h5>
                 <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
-                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-blue-400"></span>
+                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-violet-400"></span>
                   <span className="break-all">{meta.height}px height used (Max: {meta.limit}px)</span>
                 </div>
               </div>
@@ -490,7 +490,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
                   ].map((item, i) => (
                     <div key={i} className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
                       <span className={darkMode ? "text-slate-300" : "text-slate-600"}>{item.l}:</span>
-                      <span className={item.v ? "text-rose-500 font-bold" : "text-emerald-500 font-bold"}>{item.v ? "ACTIVE" : "NONE"}</span>
+                      <span className={item.v ? "text-rose-500 font-bold" : "text-violet-500 font-bold"}>{item.v ? "ACTIVE" : "NONE"}</span>
                     </div>
                   ))}
                 </div>
@@ -501,7 +501,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
               <div>
                 <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Grid Engine</h5>
                 <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
-                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-emerald-400"></span>
+                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-violet-400"></span>
                   <span className="break-all">{meta.hasFlexOrGrid ? "Modern Flex/Grid Layout" : "Legacy Structural Pattern"}</span>
                 </div>
               </div>
@@ -543,7 +543,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
             {/* Recommendation */}
             {(analysis?.recommendation || recommendations.length > 0) && (
               <div>
-                <p className={`font-semibold mb-1 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>Recommendation:</p>
+                <p className={`font-semibold mb-1 ${darkMode ? "text-violet-400" : "text-violet-600"}`}>Recommendation:</p>
                 <div className="pl-1 opacity-90">
                   {analysis?.recommendation ? (
                     <p>{analysis.recommendation}</p>
@@ -551,7 +551,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
                     <ul className="space-y-1">
                       {recommendations.map((rec, idx) => (
                         <li key={idx} className="flex items-start gap-2">
-                          <span className="mt-1.5 w-1 h-1 rounded-full bg-emerald-500 flex-shrink-0" />
+                          <span className="mt-1.5 w-1 h-1 rounded-full bg-violet-500 flex-shrink-0" />
                           <span>{rec}</span>
                         </li>
                       ))}
@@ -579,7 +579,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
 const Section = ({ title, icon: Icon, children, darkMode }) => (
   <div className="space-y-4">
     <div className="flex items-center gap-3 px-2">
-      <div className={`p-2 rounded-lg ${darkMode ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-600"}`}>
+      <div className={`p-2 rounded-lg ${darkMode ? "bg-violet-500/20 text-violet-400" : "bg-violet-100 text-violet-600"}`}>
         <Icon size={20} />
       </div>
       <h2 className={`text-xl font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>
@@ -600,9 +600,9 @@ export default function UX_Content_Structure() {
   const darkMode = theme === "dark";
 
   const auditSteps = useMemo(() => [
-    { icon: <BookOpen className="w-8 h-8 text-blue-500" />, title: "Content & Readability", text: "Analyzing language complexity, text flow, and reading ease for optimal engagement..." },
+    { icon: <BookOpen className="w-8 h-8 text-violet-500" />, title: "Content & Readability", text: "Analyzing language complexity, text flow, and reading ease for optimal engagement..." },
     { icon: <ListTree className="w-8 h-8 text-purple-500" />, title: "Visual Hierarchy", text: "Evaluating heading structure and content organization for clear information flow..." },
-    { icon: <Compass className="w-8 h-8 text-teal-500" />, text: "Verifying navigation discoverability, breadcrumbs, and in-page anchor links..." },
+    { icon: <Compass className="w-8 h-8 text-purple-500" />, text: "Verifying navigation discoverability, breadcrumbs, and in-page anchor links..." },
     { icon: <MonitorPlay className="w-8 h-8 text-indigo-500" />, title: "Interactive Experience", text: "Measuring ATF content visibility, click feedback, and layout consistency..." },
     { icon: <Loader2 className="w-8 h-8 text-amber-500" />, title: "Usability Signals", text: "Checking for broken links, loading feedback, and intrusive interstitials..." },
   ], []);
@@ -626,7 +626,7 @@ export default function UX_Content_Structure() {
       <div className={`w-full ${darkMode ? "bg-gray-900" : "bg-gray-50"} transition-colors duration-300`}>
         <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-8`}>
           {/* ✅ Unified Master Card Loading State */}
-          <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
+          <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-violet-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
 
             {/* 1. URL Header */}
             <div>
@@ -643,7 +643,7 @@ export default function UX_Content_Structure() {
               {/* Left Panel: Live Preview (Only if not All) */}
               {data.report !== "All" && (
                 <div className={`w-full xl:w-[45%] p-3 lg:p-4 flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/5 blur-3xl rounded-full pointer-events-none"></div>
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-violet-500/5 blur-3xl rounded-full pointer-events-none"></div>
                   <div className="w-full relative z-10">
                     <LivePreview data={data} loading={loading} variant="plain" />
                   </div>
@@ -733,7 +733,7 @@ export default function UX_Content_Structure() {
       <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-12`}>
 
         {/* ✅ Unified Master Card */}
-        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
+        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-violet-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
 
           {/* 1. URL Header */}
           <div>
@@ -752,7 +752,7 @@ export default function UX_Content_Structure() {
             {/* Left Panel: Live Preview (Only if not All) */}
             {data.report !== "All" && (
               <div className={`w-full xl:w-[45%] ${data.report === "All" ? "p-6 lg:p-10" : "p-3 lg:p-4"} flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/5 blur-3xl rounded-full pointer-events-none"></div>
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-violet-500/5 blur-3xl rounded-full pointer-events-none"></div>
                 <div className="w-full relative z-10">
                   <LivePreview data={data} loading={loading} variant="plain" />
                 </div>
@@ -769,12 +769,12 @@ export default function UX_Content_Structure() {
                   {/* Text Content */}
                   <div className={`flex-1 ${data.report === "All" ? "space-y-5" : "space-y-4"} text-left order-2 md:order-1`}>
                     <div className={`${data.report === "All" ? "space-y-2" : "space-y-1.5"}`}>
-                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-blue-100/50 text-blue-600 border border-blue-200"}`}>
+                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${darkMode ? "bg-violet-500/10 text-violet-400 border border-violet-500/20" : "bg-violet-100/50 text-violet-600 border border-violet-200"}`}>
                         <Layout className="w-3.5 h-3.5" />
                         <span>UX Audit</span>
                       </div>
                       <h3 className={`${data.report === "All" ? "text-3xl lg:text-5xl" : "text-2xl lg:text-4xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
-                        UX & <span className="text-blue-500">Content</span>
+                        UX & <span className="text-violet-500">Content</span>
                       </h3>
                       <p className={`text-sm leading-relaxed opacity-70 ${darkMode ? "text-slate-300" : "text-slate-600"}`}>
                         Detailed performance breakdown of user experience and content organization.
@@ -785,7 +785,7 @@ export default function UX_Content_Structure() {
                     <div className={`flex flex-wrap items-center ${data.report === "All" ? "gap-6" : "gap-5"}`}>
                       <div className={`flex flex-wrap items-center ${data.report === "All" ? "gap-5" : "gap-4"}`}>
                         <div className="flex items-center gap-2">
-                          <CheckCircle size={18} className="text-emerald-500" />
+                          <CheckCircle size={18} className="text-violet-500" />
                           <span className="text-sm font-bold">{passedCount} Passed</span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -800,7 +800,7 @@ export default function UX_Content_Structure() {
                       <div className={`w-px h-4 ${darkMode ? "bg-slate-800" : "bg-slate-200 hidden md:block"}`}></div>
                       <button
                         onClick={() => setSelectedMetricInfo(scoreCalculationInfo)}
-                        className={`flex items-center gap-2 text-sm font-bold transition-all ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-700"}`}
+                        className={`flex items-center gap-2 text-sm font-bold transition-all ${darkMode ? "text-violet-400 hover:text-violet-300" : "text-violet-600 hover:text-violet-700"}`}
                       >
                         <Info size={16} />
                         <span className="border-b border-transparent hover:border-current">Metric Methodology</span>
@@ -810,7 +810,7 @@ export default function UX_Content_Structure() {
 
                   {/* Circular Progress */}
                   <div className="relative flex-shrink-0 group cursor-default order-1 md:order-2">
-                    <div className={`absolute -inset-8 rounded-full blur-3xl opacity-25 transition-opacity duration-700 group-hover:opacity-40 ${overallScore >= 80 ? "bg-emerald-500" : "bg-amber-500"}`}></div>
+                    <div className={`absolute -inset-8 rounded-full blur-3xl opacity-25 transition-opacity duration-700 group-hover:opacity-40 ${overallScore >= 80 ? "bg-violet-500" : "bg-amber-500"}`}></div>
                     <CircularProgress value={overallScore} size={data.report === "All" ? 180 : 150} stroke={14} />
                     <div className="absolute inset-0 flex items-center justify-center flex-col gap-0.5">
                       <span className={`${data.report === "All" ? "text-5xl" : "text-3xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>{overallScore}%</span>

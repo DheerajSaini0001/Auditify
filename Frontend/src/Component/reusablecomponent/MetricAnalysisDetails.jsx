@@ -9,7 +9,7 @@ const MetricAnalysisDetails = ({ analysis, meta, darkMode, isOpen, onToggle }) =
             <div className="space-y-4">
                 {analysis.lcpElement && (
                     <div>
-                        <h5 className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-blue-400" : "text-blue-600"}`}>LCP Element</h5>
+                        <h5 className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-violet-400" : "text-violet-600"}`}>LCP Element</h5>
                         <div className={`text-xs p-2 rounded-md font-mono break-all ${darkMode ? "bg-slate-900/50 text-slate-300 border border-slate-800" : "bg-slate-50 text-slate-600 border border-slate-200"}`}>
                             {analysis.lcpElement}
                         </div>
@@ -36,17 +36,17 @@ const MetricAnalysisDetails = ({ analysis, meta, darkMode, isOpen, onToggle }) =
                 )}
                 {(analysis.recommendations?.length > 0 || analysis.recommendation) && (
                     <div>
-                        <h5 className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>Recommendations</h5>
+                        <h5 className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-violet-400" : "text-violet-600"}`}>Recommendations</h5>
                         <ul className="space-y-2">
                             {analysis.recommendation && (
                                 <li className={`text-xs flex items-start gap-2 ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
-                                    <span className="mt-1.5 w-1 h-1 rounded-full bg-emerald-500 flex-shrink-0" />
+                                    <span className="mt-1.5 w-1 h-1 rounded-full bg-violet-500 flex-shrink-0" />
                                     <span>{analysis.recommendation}</span>
                                 </li>
                             )}
                             {analysis.recommendations?.map((rec, idx) => (
                                 <li key={idx} className={`text-xs flex items-start gap-2 ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
-                                    <span className="mt-1.5 w-1 h-1 rounded-full bg-emerald-500 flex-shrink-0" />
+                                    <span className="mt-1.5 w-1 h-1 rounded-full bg-violet-500 flex-shrink-0" />
                                     <span>{rec}</span>
                                 </li>
                             ))}
@@ -58,7 +58,7 @@ const MetricAnalysisDetails = ({ analysis, meta, darkMode, isOpen, onToggle }) =
                 {meta && (meta.uncompressedResources || meta.uncachedResources || meta.unoptimizedImages ||
                     meta.unminifiedScripts || meta.blockingResources || meta.redirectDetails) && (
                         <div className="pt-2">
-                            <h5 className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-blue-400" : "text-blue-600"}`}>Affected Resources</h5>
+                            <h5 className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-violet-400" : "text-violet-600"}`}>Affected Resources</h5>
                             <div className={`max-h-40 overflow-y-auto space-y-2 rounded-lg p-2 ${darkMode ? "bg-slate-900/30" : "bg-gray-50/50"}`}>
                                 {[
                                     ...(meta.uncompressedResources || []),

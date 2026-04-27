@@ -63,14 +63,14 @@ export function AISummaryModal({ isOpen, onClose, sectionName, sectionData, audi
           {/* Header */}
           <div className={`p-6 flex items-center justify-between border-b ${darkMode ? "border-slate-800" : "border-slate-100"}`}>
             <div className="flex items-center gap-3">
-              <div className={`p-2.5 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/20`}>
+              <div className={`p-2.5 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 shadow-lg shadow-violet-500/20`}>
                 <Sparkles className="w-5 h-5 text-white" />
               </div>
               <div>
                 <h3 className={`text-xl font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
                   AI Strategic Overview
                 </h3>
-                <p className={`text-xs font-bold uppercase tracking-widest ${darkMode ? "text-blue-400" : "text-blue-600"}`}>
+                <p className={`text-xs font-bold uppercase tracking-widest ${darkMode ? "text-violet-400" : "text-violet-600"}`}>
                   Section: {sectionName}
                 </p>
               </div>
@@ -90,8 +90,8 @@ export function AISummaryModal({ isOpen, onClose, sectionName, sectionData, audi
             {loading ? (
               <div className="flex flex-col items-center justify-center py-12 space-y-4">
                 <div className="relative">
-                  <div className="absolute inset-0 blur-2xl bg-blue-500/20 rounded-full animate-pulse"></div>
-                  <Loader2 className="w-10 h-10 animate-spin text-blue-500 relative z-10" />
+                  <div className="absolute inset-0 blur-2xl bg-violet-500/20 rounded-full animate-pulse"></div>
+                  <Loader2 className="w-10 h-10 animate-spin text-violet-500 relative z-10" />
                 </div>
                 <p className={`text-sm font-bold tracking-tight animate-pulse ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
                   Synthesizing audit data with AI Intelligence...
@@ -112,15 +112,15 @@ export function AISummaryModal({ isOpen, onClose, sectionName, sectionData, audi
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     className={`flex gap-4 p-5 rounded-2xl border transition-all ${
-                      darkMode ? "bg-emerald-500/5 border-emerald-500/20 shadow-[0_0_15px_-3px_rgba(16,185,129,0.1)]" : "bg-emerald-50/30 border-emerald-200"
+                      darkMode ? "bg-violet-500/5 border-violet-500/20 shadow-[0_0_15px_-3px_rgba(139,92,246,0.1)]" : "bg-violet-50/30 border-violet-200"
                     }`}
                   >
                     <div className="mt-1 flex-shrink-0">
-                       <Target className="w-6 h-6 text-emerald-500" />
+                       <Target className="w-6 h-6 text-violet-500" />
                     </div>
                     <div>
-                      <h4 className={`text-[10px] font-black uppercase tracking-[0.2em] mb-1.5 ${darkMode ? "text-emerald-400/70" : "text-emerald-600/70"}`}>Performance Strength</h4>
-                      <p className={`text-sm md:text-base font-semibold leading-relaxed ${darkMode ? "text-emerald-50" : "text-emerald-900"}`}>
+                      <h4 className={`text-[10px] font-black uppercase tracking-[0.2em] mb-1.5 ${darkMode ? "text-violet-400/70" : "text-violet-600/70"}`}>Performance Strength</h4>
+                      <p className={`text-sm md:text-base font-semibold leading-relaxed ${darkMode ? "text-violet-50" : "text-violet-900"}`}>
                         {summary.strength}
                       </p>
                     </div>
@@ -156,14 +156,14 @@ export function AISummaryModal({ isOpen, onClose, sectionName, sectionData, audi
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.3 }}
                     className={`flex gap-4 p-5 rounded-2xl border transition-all ${
-                      darkMode ? "bg-blue-500/10 border-blue-500/20 shadow-[0_4px_20px_-5px_rgba(59,130,246,0.3)] scale-[1.02]" : "bg-blue-50 border-blue-200 shadow-md"
+                      darkMode ? "bg-violet-500/10 border-violet-500/20 shadow-[0_4px_20px_-5px_rgba(59,130,246,0.3)] scale-[1.02]" : "bg-violet-50 border-violet-200 shadow-md"
                     }`}
                   >
                     <div className="mt-1 flex-shrink-0">
-                       <Lightbulb className="w-6 h-6 text-blue-500 shadow-glow" />
+                       <Lightbulb className="w-6 h-6 text-violet-500 shadow-glow" />
                     </div>
                     <div>
-                      <h4 className={`text-[10px] font-black uppercase tracking-[0.2em] mb-1.5 ${darkMode ? "text-blue-400" : "text-blue-600 font-bold"}`}>Strategist Recommended Action</h4>
+                      <h4 className={`text-[10px] font-black uppercase tracking-[0.2em] mb-1.5 ${darkMode ? "text-violet-400" : "text-violet-600 font-bold"}`}>Strategist Recommended Action</h4>
                       <p className={`text-sm md:text-base font-bold leading-relaxed ${darkMode ? "text-white" : "text-blue-900"}`}>
                         {summary.action}
                       </p>
@@ -192,7 +192,7 @@ export function AISummaryModal({ isOpen, onClose, sectionName, sectionData, audi
              {!loading && !error && (
                <button
                 onClick={fetchSummary}
-                className="px-6 py-2.5 rounded-xl font-bold text-sm bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/20 hover:scale-105 transition-all"
+                className="px-6 py-2.5 rounded-xl font-bold text-sm bg-gradient-to-r from-violet-500 to-indigo-600 text-white shadow-lg shadow-violet-500/20 hover:scale-105 transition-all"
                >
                   Regenerate
                </button>

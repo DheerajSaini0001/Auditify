@@ -19,7 +19,7 @@ const DirectThresholdBar = ({ metricData, darkMode }) => {
                         {thresholds.Good && (
                             <div className="flex items-center justify-between">
                                 <span className={`text-sm font-semibold ${darkMode ? "text-gray-300" : "text-gray-600"}`}>Good:</span>
-                                <span className="text-sm font-bold text-emerald-500"> {thresholds.Good}</span>
+                                <span className="text-sm font-bold text-violet-500"> {thresholds.Good}</span>
                             </div>
                         )}
                         {thresholds.Warning && (

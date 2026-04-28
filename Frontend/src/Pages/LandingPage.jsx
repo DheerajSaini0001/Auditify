@@ -53,11 +53,13 @@ const LandingPage = () => {
                     <div className="absolute top-[40%] right-[-10%] w-[45%] h-[700px] bg-blue-500/5 blur-[120px] rounded-full"></div>
                     <div className="absolute top-[80%] left-[5%] w-[40%] h-[600px] bg-purple-500/5 blur-[120px] rounded-full"></div>
                 </div>
-                <HeroSection 
-                    onSubmit={handleAuditSubmit} 
-                    isLoading={loading} 
-                    error={error} 
-                />
+                <header>
+                    <HeroSection 
+                        onSubmit={handleAuditSubmit} 
+                        isLoading={loading} 
+                        error={error} 
+                    />
+                </header>
                 
                 <MetricsBanner />
                 

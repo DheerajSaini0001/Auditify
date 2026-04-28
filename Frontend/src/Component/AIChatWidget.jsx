@@ -94,7 +94,7 @@ const AIChatWidget = () => {
                         <h3 className="text-sm font-bold">DealerPulse Intelligence</h3>
                         <div className="flex items-center gap-1.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                            <span className={`text-[10px] uppercase tracking-wider font-bold ${darkMode ? 'text-emerald-400' : 'text-[#ffffffb3]'}`}>AI Online</span>
+                            <span className={`text-[10px] uppercase tracking-wider font-bold ${darkMode ? 'text-emerald-400' : 'text-white'}`}>AI Online</span>
                         </div>
                     </div>
                 </div>

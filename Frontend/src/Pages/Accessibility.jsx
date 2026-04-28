@@ -160,7 +160,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
         {/* 2. Description Section */}
         <div className="space-y-3">
           <div className="text-xs leading-relaxed font-medium">
-            <span className={`font-black uppercase tracking-widest text-[10px] mr-2 ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
+            <span className={`font-black uppercase tracking-widest text-[10px] mr-2 ${darkMode ? "text-slate-500" : "text-slate-600"}`}>
               Description:
             </span>
             <span className={darkMode ? "text-slate-300" : "text-slate-600"}>
@@ -169,7 +169,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
           </div>
 
           <div className="text-xs leading-relaxed font-medium">
-            <span className={`font-black uppercase tracking-widest text-[10px] mr-2 ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
+            <span className={`font-black uppercase tracking-widest text-[10px] mr-2 ${darkMode ? "text-slate-500" : "text-slate-600"}`}>
               Threshold:
             </span>
             <span className={darkMode ? "text-slate-300" : "text-slate-600"}>
@@ -180,7 +180,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
 
         {/* 3. Status Section */}
         <div className="space-y-2">
-          <h4 className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
+          <h4 className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? "text-slate-500" : "text-slate-600"}`}>
             Current Status
           </h4>
           <div className={`p-5 rounded-2xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-slate-100/30 border-slate-200/50"}`}>
@@ -200,7 +200,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
 
         {/* 4. Why It Matters Section */}
         <div className="text-xs leading-relaxed font-medium pb-1">
-          <span className={`font-black uppercase tracking-widest text-[10px] mr-2 ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
+          <span className={`font-black uppercase tracking-widest text-[10px] mr-2 ${darkMode ? "text-slate-500" : "text-slate-600"}`}>
             Why it matters:
           </span>
           <span className={darkMode ? "text-slate-400" : "text-slate-500"}>

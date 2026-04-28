@@ -76,7 +76,7 @@ export default function Sidebar({ darkMode }) {
           <h2 className={`text-lg font-bold leading-none ${darkMode ? "text-white" : "text-slate-900"}`}>
             Audit Report
           </h2>
-          <span className="text-xs font-medium opacity-60">Overview</span>
+          <span className={`text-xs font-bold ${darkMode ? 'text-slate-500' : 'text-slate-600'}`}>Overview</span>
         </Link>
       </div>
 
@@ -160,7 +160,7 @@ export default function Sidebar({ darkMode }) {
             </button>
           </>
         ) : (
-          <div className={`text-xs text-center p-2 opacity-40 ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
+          <div className={`text-xs text-center p-2 font-semibold ${darkMode ? "text-slate-500 opacity-60" : "text-slate-500"}`}>
             Waiting for analysis...
           </div>
         )}

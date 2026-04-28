@@ -56,7 +56,7 @@ const CustomDropdown = ({ value, onChange, options, icon, darkMode, disabled }) 
                 <span className={`flex-shrink-0 transition-colors ${darkMode ? 'text-slate-400 group-hover/drop:text-emerald-400' : 'text-slate-400 group-hover/drop:text-emerald-600'}`}>
                     {React.cloneElement(icon, { size: 14 })}
                 </span>
-                <span className={`text-[10px] font-semibold uppercase tracking-widest truncate max-w-[72px] ${darkMode ? 'text-slate-400 group-hover/drop:text-slate-100' : 'text-slate-500 group-hover/drop:text-slate-800'}`}>
+                <span className={`text-[10px] font-semibold uppercase tracking-widest truncate max-w-[72px] ${darkMode ? 'text-slate-400 group-hover/drop:text-slate-100' : 'text-slate-600 group-hover/drop:text-slate-900'}`}>
                     {selectedLabel}
                 </span>
                 <ChevronDown className={`w-3 h-3 transition-transform duration-300 ${isOpen ? "rotate-180 text-emerald-500" : darkMode ? "text-slate-600" : "text-slate-400"}`} />
@@ -144,7 +144,7 @@ const ScoreRing = ({ score, color, label, delay = 0, darkMode }) => {
                     {score}
                 </span>
             </div>
-            <span className={`mt-3 text-[10px] font-bold uppercase tracking-[0.18em] ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+            <span className={`mt-3 text-[10px] font-bold uppercase tracking-[0.18em] ${darkMode ? 'text-slate-500' : 'text-slate-600'}`}>
                 {label}
             </span>
         </motion.div>
@@ -259,7 +259,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                         <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-[0.22em] border
                             ${darkMode
                                 ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
-                                : 'bg-emerald-50 border-emerald-200 text-emerald-700'}`}
+                                : 'bg-emerald-50 border-emerald-200 text-emerald-800'}`}
                         >
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
                             7-Dimension Website Audit Platform
@@ -292,7 +292,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                         </h1>
 
                         <p className={`text-lg lg:text-xl font-medium leading-relaxed max-w-xl mx-auto lg:mx-0
-                            ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}
+                            ${darkMode ? 'text-slate-400' : 'text-slate-700'}`}
                         >
                             Paste a URL and get a deep, structured report across seven critical dimensions —
                             from raw performance to AI-readiness — in seconds.
@@ -312,7 +312,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                                 className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold border
                                     ${darkMode
                                         ? 'bg-white/4 border-white/8 text-slate-400'
-                                        : 'bg-white border-slate-200 text-slate-500 shadow-sm'}`}
+                                        : 'bg-white border-slate-200 text-slate-600 shadow-sm'}`}
                             >
                                 <span className="text-emerald-500">{a.icon}</span>
                                 {a.label}
@@ -361,7 +361,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                                     className={`flex-1 bg-transparent outline-none text-[15px] font-medium
                                         ${darkMode
                                             ? 'text-white placeholder:text-slate-600'
-                                            : 'text-slate-900 placeholder:text-slate-400'}`}
+                                            : 'text-slate-900 placeholder:text-slate-500'}`}
                                 />
                             </div>
 

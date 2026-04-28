@@ -39,7 +39,7 @@ const CustomDropdown = ({ value, onChange, options, icon, darkMode, disabled }) 
         <span className={`text-sm font-medium ${darkMode ? "text-slate-300" : "text-slate-700"} truncate`}>
           {selectedLabel}
         </span>
-        <ChevronDown className={`w-3 h-3 transition-transform ${isOpen ? "rotate-180" : ""} ${darkMode ? "text-slate-500" : "text-slate-400"}`} />
+        <ChevronDown className={`w-3 h-3 transition-transform ${isOpen ? "rotate-180" : ""} ${darkMode ? "text-slate-500" : "text-slate-600"}`} />
       </div>
 
       {/* Dropdown Menu */}
@@ -230,14 +230,14 @@ const containerClass = darkMode
 
             {/* Main Input */}
             <div className="flex-1 w-full relative flex items-center px-4 h-14">
-              <Search className={`w-5 h-5 flex-shrink-0 ${darkMode ? "text-slate-500" : "text-slate-400"}`} />
+              <Search className={`w-5 h-5 flex-shrink-0 ${darkMode ? "text-slate-500" : "text-slate-600"}`} />
               <input
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 disabled={loading}
                 placeholder="Enter website URL (e.g. example.com)"
-                className={`w-full h-full bg-transparent border-none outline-none text-lg px-4 font-medium placeholder-slate-500 placeholder:text-base ${darkMode ? "text-white" : "text-slate-900"}`}
+                className={`w-full h-full bg-transparent border-none outline-none text-lg px-4 font-medium placeholder-slate-600 placeholder:text-base ${darkMode ? "text-white" : "text-slate-900"}`}
               />
             </div>
 
@@ -349,7 +349,7 @@ const containerClass = darkMode
 
             <div className="text-center space-y-2">
               <h3 className={`text-2xl font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>Verify Security</h3>
-              <p className={`text-sm font-medium leading-relaxed ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
+              <p className={`text-sm font-medium leading-relaxed ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
                 Confirm you're human to generate your site health report.
               </p>
             </div>
@@ -367,7 +367,7 @@ const containerClass = darkMode
 
             <button
               onClick={() => setShowCaptcha(false)}
-              className={`text-xs font-bold uppercase tracking-[0.2em] ${darkMode ? "text-slate-500 hover:text-white" : "text-slate-400 hover:text-slate-900"} transition-all duration-200 hover:scale-110 active:scale-95`}
+              className={`text-xs font-bold uppercase tracking-[0.2em] ${darkMode ? "text-slate-500 hover:text-white" : "text-slate-600 hover:text-slate-900"} transition-all duration-200 hover:scale-110 active:scale-95`}
             >
               Cancel
             </button>

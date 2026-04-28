@@ -111,7 +111,7 @@ const PillarCard = ({ icon: Icon, title, tag, description, color, index, darkMod
                             transition-colors duration-500
                             ${darkMode 
                                 ? 'bg-white/5 border-white/5 text-slate-400 group-hover:border-white/10 group-hover:text-slate-200' 
-                                : 'bg-slate-50 border-slate-200 text-slate-500 group-hover:bg-white group-hover:border-slate-300 group-hover:text-slate-700'}
+                                : 'bg-slate-50 border-slate-200 text-slate-700 group-hover:bg-white group-hover:border-slate-300 group-hover:text-slate-900'}
                         `}>
                             {tag}
                         </span>
@@ -128,7 +128,7 @@ const PillarCard = ({ icon: Icon, title, tag, description, color, index, darkMod
                         {title}
                     </h3>
                     <p className={`text-[15px] leading-relaxed
-                        ${darkMode ? 'text-slate-400 group-hover:text-slate-300' : 'text-slate-500 group-hover:text-slate-600'}
+                        ${darkMode ? 'text-slate-400 group-hover:text-slate-300' : 'text-slate-600 group-hover:text-slate-700'}
                         transition-colors duration-300
                     `}>
                         {description}
@@ -299,7 +299,7 @@ const AuditPillarsSection = () => {
                         viewport={{ once: true }}
                         transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
                         className={`text-lg font-medium lg:max-w-[280px] leading-relaxed
-                            ${darkMode ? 'text-slate-400' : 'text-slate-500'}
+                            ${darkMode ? 'text-slate-400' : 'text-slate-600'}
                         `}
                     >
                         Comprehensive testing across 7 core vectors to ensure absolute peak digital performance.

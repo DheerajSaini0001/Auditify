@@ -9,7 +9,7 @@ export default function Footer() {
   const darkMode = theme === "dark";
 
   return (
-    <footer className={`relative overflow-hidden transition-colors duration-500 border-t ${darkMode ? 'bg-[#060B18] border-white/5 text-slate-500' : 'bg-white border-slate-200 text-slate-600'}`}>
+    <footer className={`relative overflow-hidden transition-colors duration-500 border-t ${darkMode ? 'bg-[#060B18] border-white/5 text-slate-500' : 'bg-white border-slate-200 text-slate-700'}`}>
 
       {/* Subtle Background Glow */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[80%] h-32 bg-emerald-500/5 blur-[100px] pointer-events-none"></div>
@@ -38,7 +38,7 @@ export default function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={label}
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all duration-300 ${darkMode ? 'border-white/10 text-slate-400' : 'border-slate-200 text-slate-500'} ${color}`}
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all duration-300 ${darkMode ? 'border-white/10 text-slate-400' : 'border-slate-200 text-slate-600'} ${color}`}
                 >
                   <Icon size={18} />
                 </a>
@@ -77,7 +77,7 @@ export default function Footer() {
 
         <div className={`pt-8 border-t flex flex-col md:flex-row justify-between items-center gap-6 ${darkMode ? 'border-white/5' : 'border-slate-100'}`}>
           <div className="text-[12px] font-black uppercase tracking-widest flex items-center gap-2">
-            <span className={darkMode ? 'text-slate-600' : 'text-slate-400'}>&copy; {new Date().getFullYear()}</span>
+            <span className={darkMode ? 'text-slate-600' : 'text-slate-500'}>&copy; {new Date().getFullYear()}</span>
             <a href="https://www.sltechsoft.com" target="_blank" rel="noopener noreferrer" className={`hover:text-emerald-500 transition-colors ${darkMode ? 'text-white' : 'text-slate-900'}`}>
               Success Ladder Technologies
             </a>

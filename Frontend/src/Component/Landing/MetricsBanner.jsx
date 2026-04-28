@@ -60,11 +60,11 @@ const MetricCard = ({ value, suffix, label, sublabel, icon: Icon, accentColor, d
             <div className="flex items-start justify-between">
                 <div>
                     <p className={`text-[10px] font-bold uppercase tracking-[0.22em] mb-1
-                        ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                        ${darkMode ? 'text-slate-500' : 'text-slate-600'}`}>
                         {label}
                     </p>
                     <p className={`text-[11px] font-medium leading-snug max-w-[140px]
-                        ${darkMode ? 'text-slate-600' : 'text-slate-400'}`}>
+                        ${darkMode ? 'text-slate-600' : 'text-slate-500'}`}>
                         {sublabel}
                     </p>
                 </div>
@@ -127,7 +127,7 @@ const MetricsBanner = () => {
             label: "Audits Run",
             sublabel: "Websites analysed across all 7 dimensions",
             icon: Activity,
-            accentColor: "#10b981",
+            accentColor: "#059669",
         },
         {
             value: "7",
@@ -184,7 +184,7 @@ const MetricsBanner = () => {
                 >
                     <div className="space-y-2">
                         <span className={`inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em]
-                            ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                            ${darkMode ? 'text-emerald-400' : 'text-emerald-700'}`}>
                             <span className="w-4 h-px bg-current inline-block" />
                             Platform at a glance
                         </span>
@@ -209,7 +209,7 @@ const MetricsBanner = () => {
                                 className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold border
                                     ${darkMode
                                         ? 'bg-white/4 border-white/8 text-slate-400'
-                                        : 'bg-white border-slate-200 text-slate-500 shadow-sm'}`}
+                                        : 'bg-white border-slate-200 text-slate-600 shadow-sm'}`}
                             >
                                 <span className="text-emerald-500">{d.icon}</span>
                                 {d.label}

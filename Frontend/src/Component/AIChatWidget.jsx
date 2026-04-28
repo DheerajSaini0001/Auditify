@@ -68,10 +68,13 @@ const AIChatWidget = () => {
         return (
             <button 
                 onClick={() => setIsOpen(true)}
-                className={`fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 z-50 animate-bounce-subtle ${darkMode ? 'bg-indigo-600 text-white shadow-indigo-500/20' : 'bg-indigo-600 text-white shadow-indigo-200'}`}
+                className={`fixed bottom-6 right-6 h-14 px-6 rounded-full shadow-2xl flex items-center gap-3 transition-all duration-300 hover:scale-105 hover:shadow-indigo-500/40 active:scale-95 z-50 group animate-bounce-subtle ${darkMode ? 'bg-indigo-600 text-white shadow-indigo-500/20' : 'bg-indigo-600 text-white shadow-indigo-200'}`}
             >
-                <MessageSquare className="w-6 h-6" />
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full animate-pulse"></div>
+                <div className="relative flex items-center justify-center">
+                    <MessageSquare className="w-6 h-6 group-hover:rotate-12 transition-transform" />
+                    <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-indigo-600 rounded-full animate-pulse"></div>
+                </div>
+                <span className="font-bold tracking-tight text-sm sm:text-base">Ask AI Assistant</span>
             </button>
         );
     }

@@ -32,7 +32,7 @@ export default function NotFound({
           }`}
       />
 
-      <motion.div
+      <motion.header
         className="relative z-10 flex flex-col items-center max-w-lg text-center"
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -87,7 +87,7 @@ export default function NotFound({
           <Home className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
           <span>{buttonText}</span>
         </motion.button>
-      </motion.div>
+      </motion.header>
     </div>
   );
 }

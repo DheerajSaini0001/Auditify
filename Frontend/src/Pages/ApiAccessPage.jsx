@@ -17,7 +17,7 @@ export default function ApiAccessPage() {
       <div className="relative z-10 max-w-5xl w-full mx-auto space-y-12">
         
         {/* Header */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8 mb-16 border-b pb-12 border-slate-500/20">
+        <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8 mb-16 border-b pb-12 border-slate-500/20">
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-blue-500/10 text-blue-500 text-sm font-black tracking-widest uppercase border border-blue-500/20">
               <Code size={16} /> API Reference
@@ -35,7 +35,7 @@ export default function ApiAccessPage() {
               <span className="flex items-center gap-1 text-purple-500"><TerminalSquare size={14}/> REST JSON</span>
             </div>
           </div>
-        </div>
+        </header>
 
         {/* Auth Section */}
         <div className={`relative overflow-hidden rounded-3xl border transition-all duration-300 ${darkMode ? "bg-[#09101C] border-slate-800" : "bg-white border-slate-200 shadow-2xl shadow-slate-200/50"}`}>

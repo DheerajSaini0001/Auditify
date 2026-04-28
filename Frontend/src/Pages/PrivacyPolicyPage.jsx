@@ -36,7 +36,7 @@ export default function PrivacyPolicyPage() {
         {/* Main Content */}
         <div className="w-full md:w-3/4 space-y-12">
           
-          <div className="mb-16">
+          <header className="mb-16">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-500/10 text-slate-500 text-xs font-black tracking-widest uppercase mb-6">
               Legal
             </div>
@@ -44,7 +44,7 @@ export default function PrivacyPolicyPage() {
             <p className={`text-lg font-medium leading-relaxed ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
               Total transparency regarding how Auditify crawler nodes and backend services handle target domain ingestion and user metadata.
             </p>
-          </div>
+          </header>
 
           <div className={`space-y-16 text-base md:text-lg leading-relaxed ${darkMode ? "text-slate-300" : "text-slate-700"}`}>
             

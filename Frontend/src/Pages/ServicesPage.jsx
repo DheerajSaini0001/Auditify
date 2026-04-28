@@ -44,7 +44,7 @@ export default function ServicesPage() {
       <div className="relative z-10 max-w-5xl w-full mx-auto space-y-16">
         
         {/* Header */}
-        <div className="text-center space-y-6">
+        <header className="text-center space-y-6">
           <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-indigo-500/10 text-indigo-500 text-sm font-black tracking-widest uppercase border border-indigo-500/20 shadow-[0_0_20px_rgba(99,102,241,0.2)]">
             Platform Capabilities
           </div>
@@ -57,7 +57,7 @@ export default function ServicesPage() {
           <p className={`text-lg max-w-2xl mx-auto font-medium ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
             Our SaaS architecture abstracts away the immense complexity of managing headless browser grids and rendering validation trees.
           </p>
-        </div>
+        </header>
 
         {/* Grid */}
         <div className="grid md:grid-cols-2 gap-8">

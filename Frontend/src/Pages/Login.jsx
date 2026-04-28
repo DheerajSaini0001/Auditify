@@ -61,13 +61,13 @@ const Login = () => {
         className={`w-full max-w-md p-8 backdrop-blur-xl border rounded-3xl shadow-2xl z-10 transition-colors ${darkMode ? 'bg-[#16161e]/80 border-white/5' : 'bg-white/90 border-slate-200 shadow-slate-200/50'
           }`}
       >
-        <div className="flex flex-col items-center mb-8">
+        <header className="flex flex-col items-center mb-8">
           <div className="w-16 h-16 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-blue-600/20">
             <LogIn className="text-white w-8 h-8" />
           </div>
           <h1 className={`text-3xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>Welcome Back</h1>
           <p className={darkMode ? 'text-gray-400' : 'text-slate-500'}>Sign in to your DealerPulse account</p>
-        </div>
+        </header>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (

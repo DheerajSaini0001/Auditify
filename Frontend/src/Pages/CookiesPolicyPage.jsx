@@ -18,7 +18,7 @@ export default function CookiesPolicyPage() {
         
         <div className={`overflow-hidden rounded-[2.5rem] border shadow-2xl ${darkMode ? "bg-[#060B14]/80 backdrop-blur-xl border-slate-800 shadow-teal-500/5" : "bg-white border-slate-200 shadow-slate-200"}`}>
           
-          <div className={`p-12 md:p-16 border-b ${darkMode ? "border-slate-800 bg-slate-900/30" : "border-slate-100 bg-slate-50/50"}`}>
+          <header className={`p-12 md:p-16 border-b ${darkMode ? "border-slate-800 bg-slate-900/30" : "border-slate-100 bg-slate-50/50"}`}>
             <div className="w-16 h-16 rounded-2xl bg-teal-500/10 flex items-center justify-center text-teal-500 mb-8 border border-teal-500/20">
               <Cookie size={32} />
             </div>
@@ -26,7 +26,7 @@ export default function CookiesPolicyPage() {
             <p className={`text-lg font-medium leading-relaxed ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
               Detailed explanation regarding how Auditify relies on local browser caches, JWT footprints, and telemetry cookies.
             </p>
-          </div>
+          </header>
 
           <div className="p-12 md:p-16 space-y-12">
             

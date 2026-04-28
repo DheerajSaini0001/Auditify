@@ -20,7 +20,7 @@ const AEOPage = ({ auditData, darkMode, onInfo }) => {
     return (
         <div className={`max-w-7xl mx-auto p-4 md:p-8 space-y-12 rounded-[3rem] shadow-2xl border overflow-hidden mt-8 transition-colors duration-500 ${darkMode ? "bg-slate-900 border-slate-800 shadow-black/40" : "bg-white border-gray-100 shadow-slate-200"}`}>
             {/* Header Section */}
-            <div className={`flex flex-col md:flex-row md:items-center justify-between gap-6 border-b pb-12 ${darkMode ? "border-slate-800" : "border-gray-50"}`}>
+            <header className={`flex flex-col md:flex-row md:items-center justify-between gap-6 border-b pb-12 ${darkMode ? "border-slate-800" : "border-gray-50"}`}>
                 <div className="space-y-2">
                     <div className="flex items-center gap-3">
                          <span className={`text-[10px] uppercase font-black px-2 py-0.5 rounded-full tracking-widest shadow-lg ${darkMode ? "bg-indigo-500 text-white shadow-indigo-900/40" : "bg-indigo-600 text-white shadow-indigo-200"}`}>
@@ -41,7 +41,7 @@ const AEOPage = ({ auditData, darkMode, onInfo }) => {
                         Overall platform readiness across 5 signals.
                      </div>
                 </div>
-            </div>
+            </header>
 
             {/* Platform Master Grid (Top Row) */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

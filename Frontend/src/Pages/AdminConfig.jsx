@@ -254,7 +254,7 @@ const AdminConfig = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* ── Header ── */}
-        <div className="flex flex-col lg:flex-row items-start lg:items-center gap-6 mb-10">
+        <header className="flex flex-col lg:flex-row items-start lg:items-center gap-6 mb-10">
           <div className="flex items-center gap-4 flex-1">
             <div className={`p-4 rounded-2xl border ${dk ? 'bg-indigo-500/10 border-indigo-500/20' : 'bg-indigo-50 border-indigo-100'}`}>
               <ShieldCheck size={28} className="text-indigo-500" />
@@ -291,7 +291,7 @@ const AdminConfig = () => {
               Add Secret
             </button>
           </div>
-        </div>
+        </header>
 
         {/* ── Stats Row ── */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">

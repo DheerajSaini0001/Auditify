@@ -20,7 +20,7 @@ export default function DocsPage() {
       <div className="relative z-10 max-w-5xl w-full mx-auto space-y-16">
         
         {/* Hero Section */}
-        <div className="text-center space-y-6">
+        <header className="text-center space-y-6">
           <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-emerald-500/10 text-emerald-500 text-sm font-black tracking-widest uppercase border border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
             <BookOpen size={16} /> Auditify Documentation
           </div>
@@ -33,7 +33,7 @@ export default function DocsPage() {
           <p className={`text-lg max-w-2xl mx-auto font-medium ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
             Dive deep into how the Auditify crawler traverses, analyzes, and grades your infrastructure. Everything from LCP heuristics to SSL chain validation.
           </p>
-        </div>
+        </header>
 
         {/* Info Grid */}
         <div className="grid md:grid-cols-2 gap-8">

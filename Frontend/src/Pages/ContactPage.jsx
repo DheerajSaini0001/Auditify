@@ -17,7 +17,7 @@ export default function ContactPage() {
       <div className="relative z-10 max-w-5xl w-full mx-auto space-y-16">
         
         {/* Header */}
-        <div className="text-center space-y-6">
+        <header className="text-center space-y-6">
           <div className="mx-auto w-20 h-20 rounded-3xl bg-gradient-to-tr from-cyan-500 to-blue-500 flex items-center justify-center text-white shadow-xl shadow-cyan-500/30">
             <MessagesSquare size={32} />
           </div>
@@ -27,7 +27,7 @@ export default function ContactPage() {
           <p className={`text-lg max-w-2xl mx-auto font-medium ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
             Bypassing the generic chatbot menus. Connect directly with the team orchestrating the engine.
           </p>
-        </div>
+        </header>
 
         <div className={`md:flex gap-12 p-8 md:p-12 rounded-[2.5rem] border ${darkMode ? "bg-slate-900/40 border-slate-800 shadow-2xl" : "bg-white border-slate-200 shadow-2xl shadow-slate-200/50"}`}>
           

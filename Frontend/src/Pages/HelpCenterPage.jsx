@@ -43,7 +43,7 @@ export default function HelpCenterPage() {
         <div className={`absolute top-0 right-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-[120px] pointer-events-none mix-blend-screen`}></div>
         <div className={`absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-blue-500/20 rounded-full blur-[140px] pointer-events-none mix-blend-screen`}></div>
 
-        <div className="max-w-4xl mx-auto relative z-10 text-center space-y-8">
+        <header className="max-w-4xl mx-auto relative z-10 text-center space-y-8">
           <div className="inline-flex items-center justify-center p-4 rounded-3xl bg-gradient-to-br from-purple-500 to-indigo-600 shadow-2xl shadow-indigo-500/40 mb-4 animate-bounce hover:animate-none transition-all cursor-pointer">
             <HeartHandshake className="text-white w-10 h-10" />
           </div>
@@ -67,7 +67,7 @@ export default function HelpCenterPage() {
               />
             </div>
           </div>
-        </div>
+        </header>
       </div>
 
       <div className="relative z-10 max-w-4xl w-full mx-auto px-4 mt-16 space-y-16">

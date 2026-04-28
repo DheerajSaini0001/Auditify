@@ -478,7 +478,7 @@ export default function BulkAudit() {
             <div className="relative z-10 w-full max-w-6xl px-4">
 
                 {/* Header Section */}
-                <div className="text-center mb-10 space-y-5 animate-in fade-in slide-in-from-bottom-5 duration-700">
+                <header className="text-center mb-10 space-y-5 animate-in fade-in slide-in-from-bottom-5 duration-700">
                     <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">
                         Audit <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500">Selected Pages</span>
                     </h1>
@@ -494,7 +494,7 @@ export default function BulkAudit() {
                             </div>
                         </div>
                     )}
-                </div>
+                </header>
 
                 {/* Step 1: URL Discovery Form */}
                 {!isRestoring && !bulkAuditId && discoveredUrls.length === 0 && (

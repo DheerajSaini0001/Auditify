@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useRef, useEffect } from "react";
 import { ThemeContext } from "../context/ThemeContext.jsx";
 import { Menu, X, Sun, Moon, Home, NotebookPen, Plus, User, LogOut, LayoutDashboard, ShieldCheck, History, ChevronDown, Settings } from "lucide-react";
 import Assets from "../assets/Assets.js";
@@ -15,6 +15,25 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
   const [profileOpen, setProfileOpen] = React.useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const profileRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setProfileOpen(false);
+      }
+    };
+
+    if (profileOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [profileOpen]);
 
   const handleGoHome = () => {
     clearData();
@@ -100,7 +119,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
             <div className="flex items-center gap-2">
               {!isLoading && (
                 isAuthenticated ? (
-                  <div className="relative">
+                  <div className="relative" ref={profileRef}>
                     <button
                       onClick={() => setProfileOpen(!profileOpen)}
                       className={`flex items-center gap-2 p-1 pl-2 rounded-full border transition-all duration-300 ${buttonClass}`}
@@ -122,9 +141,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
 
                     {/* Profile Dropdown */}
                     {profileOpen && (
-                      <>
-                        <div className="fixed inset-0 z-10" onClick={() => setProfileOpen(false)}></div>
-                        <div className={`absolute right-0 mt-3 w-56 rounded-3xl border shadow-2xl z-20 py-3 overflow-hidden animate-in fade-in zoom-in duration-200 ${
+                      <div className={`absolute right-0 mt-3 w-56 rounded-3xl border shadow-2xl z-20 py-3 overflow-hidden animate-in fade-in zoom-in duration-200 ${
                           darkMode ? "bg-[#0B1120] border-slate-800" : "bg-white border-slate-100"
                         }`}>
                           <div className="px-5 pb-3 mb-2 border-b border-slate-800/10">
@@ -183,7 +200,6 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
                             </button>
                           </div>
                         </div>
-                      </>
                     )}
                   </div>
                 ) : (

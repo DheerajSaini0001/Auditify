@@ -1,6 +1,4 @@
 import express from "express";
-import path from "path";
-import { fileURLToPath } from "url";
 import cors from "cors";
 import helmet from "helmet";
 import dotenv from "dotenv";
@@ -23,9 +21,6 @@ import connectDB from "./config/db.js";
 import passportConfig from "./config/passport.js";
 import trackingMiddleware from "./middleware/tracking.js";
 import configService from "./services/configService.js";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
@@ -99,36 +94,7 @@ const startServer = async () => {
       preload: true
     },
 
-    noSniff: true,
-
-    crossOriginOpenerPolicy: {
-      policy: "same-origin-allow-popups"
-    },
-
-    crossOriginResourcePolicy: {
-      policy: "cross-origin"
-    }
-  }));
-
-  // ── 5. Static Files & Headers ──
-  const staticPath = path.join(__dirname, "../Frontend/dist");
-  
-  app.use(express.static(staticPath, {
-    setHeaders: (res, path) => {
-      // Security & Performance Headers
-      res.setHeader("Link", "<https://fonts.gstatic.com>; rel=preconnect; crossorigin");
-      
-      // Match user's requirement for immediate expiry (security/freshness)
-      const now = new Date().toUTCString();
-      res.setHeader("Date", now);
-      res.setHeader("Expires", now);
-      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-      
-      // Ensure CSS has correct content type
-      if (path.endsWith(".css")) {
-        res.setHeader("Content-Type", "text/css; charset=utf-8");
-      }
-    }
+    noSniff: true
   }));
 
   // ── 5. Parsers ──
@@ -169,19 +135,9 @@ const startServer = async () => {
   app.use("/bulk-audit", bulkAuditRoutes);
   app.use("/api/ai", aiExplainRoutes);
 
-  // ── 11. Root / Frontend Handler ──
-  app.get("*", (req, res) => {
-    // If it's an API route that didn't match, let it fall through to error handler or 404
-    if (req.path.startsWith("/api") || req.path.startsWith("/single-audit") || req.path.startsWith("/bulk-audit")) {
-      return res.status(404).json({ error: "API route not found" });
-    }
-    
-    // Serve the frontend for all other routes (SPA support)
-    res.sendFile(path.join(__dirname, "../Frontend/dist/index.html"), (err) => {
-      if (err) {
-        res.status(500).send("✅ Server running (Frontend build not found)");
-      }
-    });
+  // ── 10. Health ──
+  app.get("/", (req, res) => {
+    res.send("✅ Server running");
   });
 
   // ── 11. Error Handler ──

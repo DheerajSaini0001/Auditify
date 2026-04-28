@@ -276,6 +276,7 @@ const DashboardPage = () => {
                               <img
                                 src={`https://www.google.com/s2/favicons?domain=${site.url}&sz=64`}
                                 alt=""
+                                title={`${site.url} Favicon`}
                                 className="w-8 h-8 rounded-lg shadow-sm border border-slate-200/50"
                                 onError={(e) => e.target.src = 'https://www.google.com/s2/favicons?domain=example.com&sz=64'}
                               />

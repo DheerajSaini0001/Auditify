@@ -274,7 +274,7 @@ const AdminDashboard = () => {
                         <td className="px-8 py-5">
                           <div className="flex items-center gap-4">
                             <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold bg-blue-600/10 text-blue-500`}>
-                              {item.avatar ? <img src={item.avatar} alt="" className="w-10 h-10 rounded-full" /> : item.name.charAt(0)}
+                              {item.avatar ? <img src={item.avatar} alt="User Avatar" title={item.name} className="w-10 h-10 rounded-full" /> : item.name.charAt(0)}
                             </div>
                             <div>
                                <p className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{item.name}</p>

@@ -60,6 +60,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
                 <img
                   src={darkMode ? Assets.Logo : Assets.DarkLogo}
                   alt="DealerPulse Logo"
+                  title="DealerPulse Logo"
                   className="relative h-14 w-auto transition-transform duration-300 group-hover:scale-105"
                 />
               </div>
@@ -110,7 +111,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
                       </div>
                       
                       {user?.avatar ? (
-                        <img src={user.avatar} alt="Profile" className="w-8 h-8 rounded-full border border-white/20 shadow-sm" />
+                        <img src={user.avatar} alt="Profile" title="User Profile" className="w-8 h-8 rounded-full border border-white/20 shadow-sm" />
                       ) : (
                         <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-black">
                           {user?.name?.charAt(0)}

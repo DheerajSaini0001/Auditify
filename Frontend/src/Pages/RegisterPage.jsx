@@ -97,7 +97,7 @@ const RegisterPage = () => {
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center mb-8">
           <Link to="/">
-            <img src={darkMode ? Assets.Logo : Assets.DarkLogo} alt="DealerPulse" className="h-20 w-auto" />
+            <img src={darkMode ? Assets.Logo : Assets.DarkLogo} alt="DealerPulse" title="DealerPulse" className="h-20 w-auto" />
           </Link>
         </div>
         <h2 className={`text-center text-4xl font-black tracking-tight ${darkMode ? "text-white" : "text-gray-900"}`}>Join Dealerpulse</h2>

@@ -95,6 +95,7 @@ const LivePreview = ({ data, showInFullAudit = true, variant = "card" }) => {
                                 <img
                                     src={screenshotSrc}
                                     alt="Audit Preview"
+                                    title="Audit Preview"
                                     className="w-full min-h-full object-top object-cover"
                                 />
                             </div>

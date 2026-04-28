@@ -102,7 +102,7 @@ const LoginPage = () => {
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center mb-8">
           <Link to="/">
-            <img src={darkMode ? Assets.Logo : Assets.DarkLogo} alt="DealerPulse" className="h-20 w-auto" />
+            <img src={darkMode ? Assets.Logo : Assets.DarkLogo} alt="DealerPulse" title="DealerPulse" className="h-20 w-auto" />
           </Link>
         </div>
         <h2 className={`text-center text-4xl font-black tracking-tight ${darkMode ? "text-white" : "text-gray-900"}`}>Welcome Back</h2>
@@ -183,7 +183,7 @@ const LoginPage = () => {
                   darkMode ? "bg-white/5 border-white/5 text-gray-300 hover:bg-white/10" : "bg-white border-gray-100 text-gray-600 hover:bg-gray-50 hover:border-gray-200"
                 }`}
               >
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="h-5 w-5" />
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" title="Google" className="h-5 w-5" />
                 Google Account
               </button>
             </div>

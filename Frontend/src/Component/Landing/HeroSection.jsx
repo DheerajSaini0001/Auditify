@@ -516,13 +516,13 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                         {/* Mini metric bars */}
                         <div className={`rounded-2xl border p-5 space-y-4 ${darkMode ? 'bg-white/3 border-white/6' : 'bg-slate-50 border-slate-100'}`}>
                             {[
-                                { label: "Accessibility", pct: 78, color: "#a78bfa" },
-                                { label: "Security",      pct: 91, color: "#34d399" },
-                                { label: "AIO Readiness", pct: 63, color: "#f59e0b" },
+                                { label: "Accessibility", pct: 78, color: darkMode ? "#a78bfa" : "#7c3aed" },
+                                { label: "Security",      pct: 91, color: darkMode ? "#34d399" : "#059669" },
+                                { label: "AIO Readiness", pct: 63, color: darkMode ? "#f59e0b" : "#b45309" },
                             ].map((m) => (
                                 <div key={m.label} className="space-y-1.5">
                                     <div className="flex justify-between text-[10px] font-semibold">
-                                        <span className={darkMode ? 'text-slate-500' : 'text-slate-400'}>{m.label}</span>
+                                        <span className={darkMode ? 'text-slate-500' : 'text-slate-600'}>{m.label}</span>
                                         <span style={{ color: m.color }}>{m.pct}</span>
                                     </div>
                                     <div className={`h-1.5 rounded-full overflow-hidden ${darkMode ? 'bg-white/5' : 'bg-slate-200'}`}>

@@ -143,7 +143,7 @@ const MetricsBanner = () => {
             label: "Uptime",
             sublabel: "Always-on infrastructure, zero queuing",
             icon: Zap,
-            accentColor: "#f59e0b",
+            accentColor: darkMode ? "#f59e0b" : "#b45309",
         },
         {
             value: "4.9",
@@ -151,7 +151,7 @@ const MetricsBanner = () => {
             label: "User Rating",
             sublabel: "Rated by founders, devs & SEO teams",
             icon: ShieldCheck,
-            accentColor: "#a78bfa",
+            accentColor: darkMode ? "#a78bfa" : "#7c3aed",
         },
     ];
 

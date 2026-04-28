@@ -30,6 +30,7 @@ import TermsOfServicePage from "./Pages/TermsOfServicePage";
 import CookiesPolicyPage from "./Pages/CookiesPolicyPage";
 import ServicesPage from "./Pages/ServicesPage";
 import ContactPage from "./Pages/ContactPage";
+import DoNotSellInfoPage from "./Pages/DoNotSellInfoPage";
 import { ThemeProvider, ThemeContext } from "./context/ThemeContext.jsx";
 import ProtectedRoute from "./Component/ProtectedRoute.jsx";
 import { Toaster } from 'react-hot-toast';
@@ -90,6 +91,7 @@ function AppContentInner() {
           <Route path="/cookies" element={<CookiesPolicyPage />} />
           <Route path="/services" element={<ServicesPage />} />
           <Route path="/contact" element={<ContactPage />} />
+          <Route path="/do-not-sell" element={<DoNotSellInfoPage />} />
 
           {/* Protected User Routes */}
           <Route path="/dashboard" element={<DashboardPage />} />

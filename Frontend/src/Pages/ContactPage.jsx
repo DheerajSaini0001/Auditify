@@ -1,6 +1,7 @@
 import React, { useContext } from "react";
 import { ThemeContext } from "../context/ThemeContext.jsx";
-import { Mail, MapPin, MessagesSquare, Phone } from "lucide-react";
+import { Mail, MapPin, MessagesSquare, Phone, Twitter, Github, Linkedin, Facebook } from "lucide-react";
+import PageHeader from "../Component/PageHeader";
 
 export default function ContactPage() {
   const { theme } = useContext(ThemeContext);
@@ -17,17 +18,14 @@ export default function ContactPage() {
       <div className="relative z-10 max-w-5xl w-full mx-auto space-y-16">
         
         {/* Header */}
-        <header className="text-center space-y-6">
-          <div className="mx-auto w-20 h-20 rounded-3xl bg-gradient-to-tr from-cyan-500 to-blue-500 flex items-center justify-center text-white shadow-xl shadow-cyan-500/30">
-            <MessagesSquare size={32} />
-          </div>
-          <h1 className="text-5xl md:text-7xl font-black tracking-tighter leading-tight">
-            Get in touch.
-          </h1>
-          <p className={`text-lg max-w-2xl mx-auto font-medium ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
-            Bypassing the generic chatbot menus. Connect directly with the team orchestrating the engine.
-          </p>
-        </header>
+        <PageHeader 
+            variant="iconic"
+            icon={MessagesSquare}
+            title="Get in"
+            titleAccent="touch."
+            subtitle="Bypassing the generic chatbot menus. Connect directly with the team orchestrating the engine."
+            darkMode={darkMode}
+        />
 
         <div className={`md:flex gap-12 p-8 md:p-12 rounded-[2.5rem] border ${darkMode ? "bg-slate-900/40 border-slate-800 shadow-2xl" : "bg-white border-slate-200 shadow-2xl shadow-slate-200/50"}`}>
           
@@ -67,6 +65,28 @@ export default function ContactPage() {
                   <div className={`text-sm ${darkMode ? "text-slate-400" : "text-slate-600"}`}>Success Ladder Technologies, India</div>
                 </div>
               </div>
+            </div>
+
+            <div className={`pt-10 border-t ${darkMode ? "border-slate-800" : "border-slate-100"}`}>
+               <div className={`text-xs font-black uppercase tracking-[0.2em] mb-4 ${darkMode ? "text-slate-500" : "text-slate-400"}`}>Social Infrastructure</div>
+               <div className="flex gap-4">
+                  {[
+                    { Icon: Twitter, href: "https://twitter.com/dealerpulse", color: "hover:text-sky-400 hover:border-sky-400/50 hover:bg-sky-400/5" },
+                    { Icon: Facebook, href: "https://facebook.com/dealerpulse", color: "hover:text-blue-600 hover:border-blue-600/50 hover:bg-blue-600/5" },
+                    { Icon: Github, href: "https://github.com/dealerpulse", color: "hover:text-white hover:border-white/50 hover:bg-white/5" },
+                    { Icon: Linkedin, href: "https://linkedin.com/company/dealerpulse", color: "hover:text-blue-500 hover:border-blue-500/50 hover:bg-blue-500/5" }
+                  ].map(({ Icon, href, color }, i) => (
+                    <a 
+                      key={i} 
+                      href={href} 
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`p-3.5 rounded-2xl border transition-all duration-300 ${darkMode ? 'border-slate-800 bg-slate-900/50 text-slate-400' : 'border-slate-200 bg-white text-slate-500'} ${color}`}
+                    >
+                      <Icon size={20} />
+                    </a>
+                  ))}
+               </div>
             </div>
           </div>
 

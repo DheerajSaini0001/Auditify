@@ -1,6 +1,7 @@
 import React, { useContext } from "react";
 import { ThemeContext } from "../context/ThemeContext.jsx";
 import { CheckCircle2, Target, Zap, BarChart3, ShieldCheck, Users } from "lucide-react";
+import PageHeader from "../Component/PageHeader";
 
 export default function AboutPage() {
   const { theme } = useContext(ThemeContext);
@@ -26,19 +27,12 @@ export default function AboutPage() {
       <div className="relative z-10 max-w-6xl w-full">
 
         {/* Header */}
-        <header className="text-center mb-20 space-y-6 animate-in fade-in slide-in-from-bottom-5 duration-700">
-
-          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight">
-            Empowering the Web, <br />
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500">
-              One Audit at a Time.
-            </span>
-          </h1>
-
-          <p className={`max-w-2xl mx-auto text-lg md:text-xl font-light leading-relaxed ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
-            We provide deep insights into performance, SEO, and accessibility to help businesses build faster, compliant, and more profitable websites.
-          </p>
-        </header>
+        <PageHeader 
+            title="Empowering the Web,"
+            titleAccent="One Audit at a Time."
+            subtitle="We provide deep insights into performance, SEO, and accessibility to help businesses build faster, compliant, and more profitable websites."
+            darkMode={darkMode}
+        />
 
         {/* Content Section */}
         <div className="grid md:grid-cols-2 gap-8 mb-20">

@@ -6,6 +6,7 @@ import { User, Mail, Lock, Eye, EyeOff, Loader2, CheckCircle, XCircle } from 'lu
 import toast from 'react-hot-toast';
 import Assets from '../assets/Assets.js';
 import MathCaptcha from '../Component/MathCaptcha';
+import PageHeader from '../Component/PageHeader';
 
 const RegisterPage = () => {
   const { theme } = useContext(ThemeContext);
@@ -94,15 +95,17 @@ const RegisterPage = () => {
 
   return (
     <div className={`min-h-screen flex flex-col justify-center transition-colors duration-300 py-12 px-4 sm:px-6 lg:px-8 ${darkMode ? "bg-[#0a0a0f]" : "bg-gray-50"}`}>
-      <header className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center mb-8">
+      <PageHeader 
+        logo={
           <Link to="/">
             <img src={darkMode ? Assets.Logo : Assets.DarkLogo} alt="DealerPulse" title="DealerPulse" className="h-20 w-auto" />
           </Link>
-        </div>
-        <h1 className={`text-center text-4xl font-black tracking-tight ${darkMode ? "text-white" : "text-gray-900"}`}>Join Dealerpulse</h1>
-        <p className="mt-3 text-center text-gray-500 font-medium tracking-wide">Start your professional website auditing journey</p>
-      </header>
+        }
+        title="Join"
+        titleAccent="Dealerpulse"
+        subtitle="Start your professional website auditing journey"
+        darkMode={darkMode}
+      />
 
       <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-md">
         <div className={`py-12 px-10 rounded-3xl shadow-xl border transition-colors ${darkMode ? "bg-[#11111a] border-white/5" : "bg-white border-gray-100"}`}>

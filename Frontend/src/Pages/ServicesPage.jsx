@@ -1,6 +1,7 @@
 import React, { useContext } from "react";
 import { ThemeContext } from "../context/ThemeContext.jsx";
 import { Layers, Zap, Search, ShieldCheck } from "lucide-react";
+import PageHeader from "../Component/PageHeader";
 
 export default function ServicesPage() {
   const { theme } = useContext(ThemeContext);
@@ -44,20 +45,13 @@ export default function ServicesPage() {
       <div className="relative z-10 max-w-5xl w-full mx-auto space-y-16">
         
         {/* Header */}
-        <header className="text-center space-y-6">
-          <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-indigo-500/10 text-indigo-500 text-sm font-black tracking-widest uppercase border border-indigo-500/20 shadow-[0_0_20px_rgba(99,102,241,0.2)]">
-            Platform Capabilities
-          </div>
-          <h1 className="text-5xl md:text-7xl font-black tracking-tighter leading-tight">
-            Comprehensive <br/>
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-blue-400 to-cyan-500">
-              Web Intelligence.
-            </span>
-          </h1>
-          <p className={`text-lg max-w-2xl mx-auto font-medium ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
-            Our SaaS architecture abstracts away the immense complexity of managing headless browser grids and rendering validation trees.
-          </p>
-        </header>
+        <PageHeader 
+            badge="Platform Capabilities"
+            title="Comprehensive"
+            titleAccent="Web Intelligence."
+            subtitle="Our SaaS architecture abstracts away the immense complexity of managing headless browser grids and rendering validation trees."
+            darkMode={darkMode}
+        />
 
         {/* Grid */}
         <div className="grid md:grid-cols-2 gap-8">

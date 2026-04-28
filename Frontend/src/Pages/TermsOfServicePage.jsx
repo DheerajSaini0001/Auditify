@@ -2,6 +2,8 @@ import React, { useContext } from "react";
 import { ThemeContext } from "../context/ThemeContext.jsx";
 import { AlertCircle, FileText, Gavel, ServerCrash } from "lucide-react";
 
+import PageHeader from "../Component/PageHeader";
+
 export default function TermsOfServicePage() {
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
@@ -14,15 +16,14 @@ export default function TermsOfServicePage() {
     <div className={containerClass}>
       <div className="relative z-10 max-w-4xl w-full mx-auto space-y-12">
         
-        <header className="text-center space-y-6 mb-16">
-          <div className="mx-auto w-20 h-20 rounded-[2rem] rotate-3 bg-red-500/10 flex items-center justify-center border border-red-500/30 text-red-500">
-            <Gavel size={32} className="-rotate-3" />
-          </div>
-          <h1 className="text-5xl md:text-6xl font-black tracking-tighter">Terms of Service.</h1>
-          <p className={`text-lg font-medium mx-auto max-w-lg ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
-            The legal constraints, limitations of liability, and usage bounds for the Auditify platform.
-          </p>
-        </header>
+        <PageHeader 
+            variant="iconic"
+            icon={Gavel}
+            title="Terms of"
+            titleAccent="Service."
+            subtitle="The legal constraints, limitations of liability, and usage bounds for the Auditify platform."
+            darkMode={darkMode}
+        />
 
         <div className={`p-10 rounded-3xl border transition-all ${darkMode ? "bg-slate-900/40 border-slate-800 shadow-2xl shadow-black" : "bg-white border-slate-200 shadow-2xl shadow-slate-200/50"}`}>
           <div className={`space-y-12 text-base md:text-lg leading-relaxed ${darkMode ? "text-slate-300" : "text-slate-700"}`}>

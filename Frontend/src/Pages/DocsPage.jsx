@@ -2,6 +2,8 @@ import React, { useContext } from "react";
 import { ThemeContext } from "../context/ThemeContext.jsx";
 import { BookOpen, Shield, Zap, Terminal, Activity, Focus, Search, Globe, ChevronRight } from "lucide-react";
 
+import PageHeader from "../Component/PageHeader";
+
 export default function DocsPage() {
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
@@ -20,20 +22,14 @@ export default function DocsPage() {
       <div className="relative z-10 max-w-5xl w-full mx-auto space-y-16">
         
         {/* Hero Section */}
-        <header className="text-center space-y-6">
-          <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-emerald-500/10 text-emerald-500 text-sm font-black tracking-widest uppercase border border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
-            <BookOpen size={16} /> Auditify Documentation
-          </div>
-          <h1 className="text-5xl md:text-7xl font-black tracking-tighter leading-tight">
-            Understand the <br/>
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-500 drop-shadow-sm">
-              Intelligence Engine.
-            </span>
-          </h1>
-          <p className={`text-lg max-w-2xl mx-auto font-medium ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
-            Dive deep into how the Auditify crawler traverses, analyzes, and grades your infrastructure. Everything from LCP heuristics to SSL chain validation.
-          </p>
-        </header>
+        <PageHeader 
+            icon={BookOpen}
+            badge="Auditify Documentation"
+            title="Understand the"
+            titleAccent="Intelligence Engine."
+            subtitle="Dive deep into how the Auditify crawler traverses, analyzes, and grades your infrastructure. Everything from LCP heuristics to SSL chain validation."
+            darkMode={darkMode}
+        />
 
         {/* Info Grid */}
         <div className="grid md:grid-cols-2 gap-8">

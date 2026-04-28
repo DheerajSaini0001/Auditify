@@ -8,6 +8,7 @@ import { useData } from "../context/DataContext";
 import SkeletonLoader from "../Component/SkeletonLoader";
 import BulkAuditIssues from "../Component/BulkAuditIssues";
 import BulkAuditDrillDown from "../Component/BulkAuditDrillDown";
+import PageHeader from "../Component/PageHeader";
 
 // Custom Dropdown Component
 const CustomDropdown = ({ value, onChange, options, icon, darkMode, disabled }) => {
@@ -478,23 +479,21 @@ export default function BulkAudit() {
             <div className="relative z-10 w-full max-w-6xl px-4">
 
                 {/* Header Section */}
-                <header className="text-center mb-10 space-y-5 animate-in fade-in slide-in-from-bottom-5 duration-700">
-                    <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">
-                        Audit <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500">Selected Pages</span>
-                    </h1>
-                    <p className={`max-w-2xl mx-auto text-lg ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
-                        Discover all pages, select which ones to audit, and get comprehensive reports.
-                    </p>
+                <PageHeader 
+                    title="Audit"
+                    titleAccent="Selected Pages"
+                    subtitle="Discover all pages, select which ones to audit, and get comprehensive reports."
+                    darkMode={darkMode}
+                />
 
-                    {sitemapLinksCount !== null && (
-                        <div className="flex justify-center mt-6 animate-in fade-in zoom-in-95 duration-500">
-                             <div className={`inline-flex items-center gap-3 px-6 py-2 rounded-full border shadow-lg ${darkMode ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : "bg-emerald-50 border-emerald-100 text-emerald-700"}`}>
-                                <Globe className="w-5 h-5 animate-pulse" />
-                                <span className="font-bold tracking-tight">Found <span className="text-xl px-1">{sitemapLinksCount}</span> links in sitemap.xml</span>
-                            </div>
+                {sitemapLinksCount !== null && (
+                    <div className="flex justify-center mb-10 -mt-6 animate-in fade-in zoom-in-95 duration-500">
+                         <div className={`inline-flex items-center gap-3 px-6 py-2 rounded-full border shadow-lg ${darkMode ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : "bg-emerald-50 border-emerald-100 text-emerald-700"}`}>
+                            <Globe className="w-5 h-5 animate-pulse" />
+                            <span className="font-bold tracking-tight">Found <span className="text-xl px-1">{sitemapLinksCount}</span> links in sitemap.xml</span>
                         </div>
-                    )}
-                </header>
+                    </div>
+                )}
 
                 {/* Step 1: URL Discovery Form */}
                 {!isRestoring && !bulkAuditId && discoveredUrls.length === 0 && (

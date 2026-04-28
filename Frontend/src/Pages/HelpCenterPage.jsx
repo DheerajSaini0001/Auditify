@@ -1,6 +1,7 @@
 import React, { useContext, useState } from "react";
 import { ThemeContext } from "../context/ThemeContext.jsx";
 import { HeartHandshake, Sparkles, Plus, Minus, Search } from "lucide-react";
+import PageHeader from "../Component/PageHeader";
 
 export default function HelpCenterPage() {
   const { theme } = useContext(ThemeContext);
@@ -43,16 +44,15 @@ export default function HelpCenterPage() {
         <div className={`absolute top-0 right-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-[120px] pointer-events-none mix-blend-screen`}></div>
         <div className={`absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-blue-500/20 rounded-full blur-[140px] pointer-events-none mix-blend-screen`}></div>
 
-        <header className="max-w-4xl mx-auto relative z-10 text-center space-y-8">
-          <div className="inline-flex items-center justify-center p-4 rounded-3xl bg-gradient-to-br from-purple-500 to-indigo-600 shadow-2xl shadow-indigo-500/40 mb-4 animate-bounce hover:animate-none transition-all cursor-pointer">
-            <HeartHandshake className="text-white w-10 h-10" />
-          </div>
-          <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-none">
-            We've got <br/> you covered.
-          </h1>
-          <p className={`text-xl font-medium max-w-xl mx-auto ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
-            Our support matrix is engineered like our auditing tools—fast, transparent, and built for builders.
-          </p>
+        <div className="max-w-4xl mx-auto relative z-10 text-center space-y-8">
+          <PageHeader 
+            icon={HeartHandshake}
+            variant="iconic"
+            title="We've got"
+            titleAccent="you covered."
+            subtitle="Our support matrix is engineered like our auditing tools—fast, transparent, and built for builders."
+            darkMode={darkMode}
+          />
 
           <div className="relative max-w-xl mx-auto mt-12 group">
             <div className={`absolute -inset-1 rounded-2xl blur-lg transition duration-500 group-hover:duration-200 ${darkMode ? "bg-gradient-to-r from-blue-500 to-purple-600 opacity-20 group-hover:opacity-60" : "bg-slate-300 opacity-50"}`}></div>
@@ -67,7 +67,7 @@ export default function HelpCenterPage() {
               />
             </div>
           </div>
-        </header>
+        </div>
       </div>
 
       <div className="relative z-10 max-w-4xl w-full mx-auto px-4 mt-16 space-y-16">

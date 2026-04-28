@@ -55,19 +55,34 @@ const startServer = async () => {
   }));
 
   app.use(helmet({
+    // A Content Security Policy (CSP) is a set of rules that tells the browser which sources are safe to load content from, stopping unauthorized scripts.
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "https://static.cloudflareinsights.com", "https://accounts.google.com"],
+        scriptSrc: ["'self'", "https://static.cloudflareinsights.com", "https://accounts.google.com"],
         styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
         imgSrc: ["'self'", "data:", "https://*.googleusercontent.com", "https://www.gstatic.com"],
         connectSrc: ["'self'", "https://*.googleapis.com", "http://localhost:2000", "ws://localhost:2000"],
         fontSrc: ["'self'", "https://fonts.gstatic.com"],
         objectSrc: ["'none'"],
+        baseUri: ["'self'"],
+        formAction: ["'self'"],
+        frameAncestors: ["'none'"],
         upgradeInsecureRequests: [],
       },
     },
-    crossOriginOpenerPolicy: { policy: "unsafe-none" } 
+    // HSTS is a 'force-secure' command that tells browsers to never use an insecure connection when visiting your website.
+    hsts: {
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true
+    },
+    // The X-Frame-Options setting prevents other websites from 'stealing' your site's appearance to trick users into clicking things they shouldn't.
+    frameguard: {
+      action: 'deny'
+    },
+    crossOriginOpenerPolicy: { policy: "unsafe-none" },
+    noSniff: true
   }));
 
   // Passport — now has access to DB configs (GOOGLE_CLIENT_ID, etc.)

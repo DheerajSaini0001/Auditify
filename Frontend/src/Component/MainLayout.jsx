@@ -14,22 +14,22 @@ export default function MainLayout() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const location = useLocation();
 
-    const isReportPath = location.pathname.startsWith("/report") || 
-                         location.pathname === "/technical-performance" || 
-                         location.pathname === "/on-page-seo" || 
-                         location.pathname === "/accessibility" || 
-                         location.pathname === "/security-compliance" || 
-                         location.pathname === "/ux-content-structure" || 
-                         location.pathname === "/conversion-lead-flow" || 
-                         location.pathname === "/aio";
+    const isReportPath = location.pathname.startsWith("/report") ||
+        location.pathname === "/technical-performance" ||
+        location.pathname === "/on-page-seo" ||
+        location.pathname === "/accessibility" ||
+        location.pathname === "/security-compliance" ||
+        location.pathname === "/ux-content-structure" ||
+        location.pathname === "/conversion-lead-flow" ||
+        location.pathname === "/aio";
 
     const showSidebar = !!data && data.report === "All" && isReportPath;
 
     return (
         <div className={`min-h-screen flex flex-col ${darkMode ? "bg-gray-900 text-white" : "bg-gray-50 text-black"}`}>
             {/* Skip to Main Content Link */}
-            <a 
-                href="#main-content" 
+            <a
+                href="#main-content"
                 className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[999] focus:px-6 focus:py-3 focus:bg-emerald-600 focus:text-white focus:font-bold focus:rounded-xl focus:shadow-2xl focus:ring-4 focus:ring-emerald-500/50 transition-all outline-none"
             >
                 Skip to main content

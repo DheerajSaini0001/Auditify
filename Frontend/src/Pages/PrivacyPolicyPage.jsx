@@ -80,6 +80,17 @@ export default function PrivacyPolicyPage() {
               <p>Consequently, telemetry identifiers linking your external IP and session hashes flow across their edge routing mesh. We explicitly do not syndicate or offload customer analytics blocks to auxiliary marketing exchanges or data brokers.</p>
             </section>
 
+            <div className={`h-px w-full ${darkMode ? "bg-slate-800" : "bg-slate-200"}`}></div>
+
+            <section className="space-y-4">
+              <div className="flex items-center gap-3 text-2xl font-bold">
+                <Lock className="text-emerald-500" />
+                <h2>4. GDPR & CCPA Compliance</h2>
+              </div>
+              <p>Under the General Data Protection Regulation (GDPR) and the California Consumer Privacy Act (CCPA), we are committed to providing you with control over your personal data. We collect only what is necessary to provide our services, such as your email address for account authentication and website URLs for auditing.</p>
+              <p>You have the right to access, rectify, or erase your data at any time through your dashboard settings. We do not sell your personal information to third parties. If you wish to exercise your right to opt-out of data collection or request a complete data export, please contact our support team.</p>
+            </section>
+
           </div>
 
         </div>

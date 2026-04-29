@@ -29,13 +29,15 @@ const ProtectedRoute = ({ children, requiredRole }) => {
 
   // Multi-role compatibility: super_admin can access admin routes
   if (requiredRole) {
-    if (requiredRole === 'admin' && (user?.role !== 'admin' && user?.role !== 'super_admin')) {
+    const role = user?.role;
+    if (requiredRole === 'admin' && (role !== 'admin' && role !== 'super_admin' && role !== 'superadmin')) {
       return <Navigate to="/dashboard" replace />;
     }
-    if (requiredRole === 'super_admin' && user?.role !== 'super_admin') {
+    if (requiredRole === 'super_admin' && role !== 'super_admin' && role !== 'superadmin') {
       return <Navigate to="/dashboard" replace />;
     }
   }
+
 
   return children;
 };

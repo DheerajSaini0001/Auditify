@@ -76,10 +76,16 @@ const OtpVerifyPage = () => {
         const intent = consumePostAuthIntent();
         
         // Role-Based Redirection Strategy
-        const roleFallback = getRedirectPath(data.user?.role);
+        const role = data.user?.role;
+        const roleFallback = getRedirectPath(role);
 
         const from = location.state?.from;
-        const destination = intent?.path || (from && from !== '/' ? from : roleFallback);
+        
+        // Explicitly route super_admin to setup, others follow intent/from or fallback
+        let destination = role === 'super_admin' || role === 'superadmin' 
+            ? '/admin/setup' 
+            : (intent?.path || (from && from !== '/' ? from : roleFallback));
+            
         navigate(destination, { 
             replace: true,
             state: { 

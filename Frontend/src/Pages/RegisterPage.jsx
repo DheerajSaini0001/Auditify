@@ -24,7 +24,24 @@ const RegisterPage = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { apiFetch } = useAuth();
+  const { apiFetch, isAuthenticated, user, isLoading: isAuthLoading } = useAuth();
+
+  // Handle automatic redirect if user is ALREADY authenticated
+  React.useEffect(() => {
+    if (isAuthenticated && !isAuthLoading) {
+      let roleFallback = '/';
+      if (user?.role === 'super_admin') {
+        roleFallback = '/admin/setup';
+      } else if (user?.role === 'admin') {
+        roleFallback = '/admin';
+      } else {
+        roleFallback = '/';
+      }
+
+      const destination = location.state?.from || roleFallback;
+      navigate(destination, { replace: true });
+    }
+  }, [isAuthenticated, isAuthLoading, navigate, user, location.state?.from]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -92,6 +109,14 @@ const RegisterPage = () => {
   };
 
   const strength = passwordStrength(formData.password);
+
+  if (isAuthLoading) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center ${darkMode ? "bg-[#0a0a0f]" : "bg-gray-50"}`}>
+        <Loader2 className="animate-spin text-emerald-600 h-10 w-10" />
+      </div>
+    );
+  }
 
   return (
     <div className={`min-h-screen flex flex-col justify-center transition-colors duration-300 py-12 px-4 sm:px-6 lg:px-8 ${darkMode ? "bg-[#0a0a0f]" : "bg-gray-50"}`}>

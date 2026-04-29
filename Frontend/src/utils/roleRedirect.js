@@ -10,13 +10,8 @@
  * @returns {string} The path to redirect to.
  */
 export const getRedirectPath = (role) => {
-  if (!role) return '/';
-  
-  const normalizedRole = role.toLowerCase();
-  
-  switch (normalizedRole) {
+  switch (role) {
     case 'super_admin':
-    case 'superadmin':
       return '/admin/setup';
     case 'admin':
       return '/admin';
@@ -26,4 +21,3 @@ export const getRedirectPath = (role) => {
       return '/';
   }
 };
-

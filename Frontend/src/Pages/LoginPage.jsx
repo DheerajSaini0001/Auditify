@@ -34,15 +34,13 @@ const LoginPage = () => {
       console.log("[Login] Location state from:", location.state?.from);
       
       // Role-Based Redirection Strategy
-      const role = user?.role;
-      const roleFallback = getRedirectPath(role);
+      const roleFallback = getRedirectPath(user?.role);
+
+      // 1. If there's an intent (e.g. from a specific action), it takes priority
+      // 2. If there's a 'from' location (and it's not the home root), it's next
+      // 3. Otherwise, use role-based fallback
       const from = location.state?.from;
-
-      // Explicitly route super_admin to setup, others follow intent/from or fallback
-      const destination = (role === 'super_admin' || role === 'superadmin')
-        ? '/admin/setup'
-        : (intent?.path || (from && from !== '/' ? from : roleFallback));
-
+      const destination = intent?.path || (from && from !== '/' ? from : roleFallback);
       console.log("[Login] Navigating to:", destination);
       
       navigate(destination, { 

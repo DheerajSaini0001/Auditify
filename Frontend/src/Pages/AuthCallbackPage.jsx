@@ -39,21 +39,15 @@ const AuthCallbackPage = () => {
       
       // Role-Based Redirection for OAuth
       let roleFallback = '/';
-      let role = null;
       try {
         // Decode token to get role immediately
         const payload = JSON.parse(atob(token.split('.')[1]));
-        role = payload.role;
-        roleFallback = getRedirectPath(role);
+        roleFallback = getRedirectPath(payload.role);
       } catch (e) {
         console.error('Failed to decode role for redirection', e);
       }
 
-      // Explicitly route super_admin to setup, others follow intent or fallback
-      const destination = (role === 'super_admin' || role === 'superadmin')
-        ? '/admin/setup'
-        : (intent?.path || roleFallback);
-
+      const destination = intent?.path || roleFallback;
       navigate(destination, { 
           replace: true,
           state: { 

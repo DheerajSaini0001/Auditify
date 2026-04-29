@@ -115,8 +115,10 @@ export const removeWebsite = async (req, res) => {
 
 // 4.5.5 Sync with GSC (Manual or Auto trigger)
 export const syncWebsites = async (req, res) => {
+  console.log(`[Sync GSC] Starting sync for user: ${req.user.email}`);
   try {
     if (req.user.authProvider !== 'google' || !req.user.googleAccessToken) {
+      console.warn(`[Sync GSC] Blocked: authProvider=${req.user.authProvider}, hasAccessToken=${!!req.user.googleAccessToken}`);
       return res.status(400).json({ success: false, message: 'Google login required for sync' });
     }
 
@@ -125,9 +127,14 @@ export const syncWebsites = async (req, res) => {
       req.user
     );
 
-    if (!gscRes.ok) throw new Error('Failed to fetch from GSC');
+    if (!gscRes.ok) {
+      const errorText = await gscRes.text();
+      console.error('[Sync GSC] API Error:', errorText);
+      throw new Error(`GSC API failed: ${gscRes.status} - ${errorText}`);
+    }
 
     const gscData = await gscRes.json();
+    console.log(`[Sync GSC] GSC Data received, entries: ${gscData.siteEntry?.length || 0}`);
     const siteEntries = gscData.siteEntry || [];
 
     let addedCount = 0;
@@ -147,8 +154,12 @@ export const syncWebsites = async (req, res) => {
       }
     }
 
-    if (addedCount > 0) await req.user.save();
+    if (addedCount > 0) {
+        console.log(`[Sync GSC] Saving user with ${addedCount} new websites...`);
+        await req.user.save();
+    }
 
+    console.log(`[Sync GSC] Sync complete for ${req.user.email}. Added: ${addedCount}`);
     res.json({ 
       success: true, 
       message: `Sync complete. ${addedCount} new properties found.`,
@@ -156,7 +167,7 @@ export const syncWebsites = async (req, res) => {
     });
 
   } catch (err) {
-    console.error('[Sync GSC] Error:', err.message);
-    res.status(500).json({ success: false, message: 'Sync failed' });
+    console.error('[Sync GSC] Error:', err.stack || err.message);
+    res.status(500).json({ success: false, message: 'Sync failed: ' + err.message });
   }
 };

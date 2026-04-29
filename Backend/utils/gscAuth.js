@@ -1,4 +1,3 @@
-import fetch from 'node-fetch';
 import configService from '../services/configService.js';
 
 /**
@@ -55,17 +54,42 @@ export const refreshGoogleToken = async (user) => {
  * @returns {Promise<Response>}
  */
 export const fetchGSC = async (url, user) => {
-  let response = await fetch(url, {
-    headers: { Authorization: `Bearer ${user.googleAccessToken}` }
-  });
+  console.log(`[GSC Auth] Fetching ${url} for ${user.email}`);
+  
+  let response;
 
+  if (!user.googleAccessToken) {
+    console.warn(`[GSC Auth] Missing access token for ${user.email}, simulating 401 to trigger refresh.`);
+    response = { 
+      status: 401, 
+      ok: false, 
+      json: async () => ({ error: 'Missing token' }),
+      text: async () => 'Missing token'
+    };
+  } else {
+    try {
+      response = await fetch(url, {
+        headers: { Authorization: `Bearer ${user.googleAccessToken}` }
+      });
+      console.log(`[GSC Auth] Initial fetch status: ${response.status}`);
+    } catch (err) {
+      console.error(`[GSC Auth] Fetch failed:`, err.message);
+      throw err;
+    }
+  }
+
+  // Handle expiration or missing token via refresh
   if (response.status === 401) {
-    console.log(`[GSC Auth] Token 401 for ${user.email}, attempting refresh...`);
+    console.log(`[GSC Auth] Token 401/Missing for ${user.email}, attempting refresh...`);
     const newToken = await refreshGoogleToken(user);
     if (newToken) {
+      console.log(`[GSC Auth] Retrying fetch with new token...`);
       response = await fetch(url, {
         headers: { Authorization: `Bearer ${newToken}` }
       });
+      console.log(`[GSC Auth] Retry status: ${response.status}`);
+    } else {
+        console.error(`[GSC Auth] Refresh failed, could not obtain new token.`);
     }
   }
 

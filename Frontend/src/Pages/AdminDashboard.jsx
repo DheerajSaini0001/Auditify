@@ -247,6 +247,7 @@ const AdminDashboard = () => {
                     <>
                       <th className="px-8 py-6">User / Account</th>
                       <th className="px-8 py-6">Status</th>
+                      <th className="px-8 py-6">Last IP / Location</th>
                       <th className="px-8 py-6">Joined</th>
                       <th className="px-8 py-6 text-right">Actions</th>
                     </>
@@ -286,6 +287,12 @@ const AdminDashboard = () => {
                           <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${item.isBlocked ? 'bg-red-500/10 text-red-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
                             {item.isBlocked ? 'Suspended' : 'Active'}
                           </span>
+                        </td>
+                        <td className="px-8 py-5">
+                          <div className="flex flex-col">
+                             <span className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-slate-700'}`}>{item.lastLoginIp || 'N/A'}</span>
+                             <span className="text-[10px] text-blue-500 font-bold uppercase tracking-wider">{item.lastLoginCountry || 'Unknown'}</span>
+                          </div>
                         </td>
                         <td className="px-8 py-5 text-sm opacity-50">{formatTimestamp(item.createdAt)}</td>
                         <td className="px-8 py-5 text-right">

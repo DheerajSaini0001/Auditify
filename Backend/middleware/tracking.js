@@ -19,10 +19,16 @@ const trackingMiddleware = (req, res, next) => {
   const parser = new UAParser(req.headers["user-agent"]);
   const uaResults = parser.getResult();
 
-  let ip = req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.remoteAddress || "unknown";
+  let ip = req.headers["x-forwarded-for"]?.split(",")[0] || 
+           req.headers["x-real-ip"] || 
+           req.socket.remoteAddress || 
+           "unknown";
   
-  // Normalize localhost IPs
-  if (ip === "::1" || ip === "127.0.0.1" || ip === "::ffff:127.0.0.1") {
+  // Normalize IPv4-mapped IPv6 addresses and localhost
+  if (ip.includes("::ffff:")) {
+    ip = ip.split(":").pop();
+  }
+  if (ip === "::1") {
     ip = "127.0.0.1";
   }
 

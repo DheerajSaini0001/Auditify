@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import User from '../models/User.js';
 import OTP from '../models/OTP.js';
 import PasswordReset from '../models/PasswordReset.js';
+import ActivityLog from '../models/ActivityLog.js';
 import sendEmail from '../utils/sendEmail.js';
 import generateOTP from '../utils/generateOTP.js';
 import configService from '../services/configService.js';
@@ -128,9 +129,27 @@ export const verifyOTP = async (req, res) => {
     await OTP.deleteOne({ _id: doc._id });
     const user = await User.findOneAndUpdate(
       { email: email.toLowerCase() },
-      { isEmailVerified: true },
+      { 
+        isEmailVerified: true,
+        lastLogin: new Date(),
+        lastLoginIp: req.tracking?.ip || '0.0.0.0',
+        lastLoginCountry: req.tracking?.country || 'unknown',
+        $inc: { loginCount: 1 }
+      },
       { new: true }
     );
+
+    // Log Activity
+    ActivityLog.create({
+      userId: user._id,
+      sessionId: req.tracking?.sessionId || 'N/A',
+      ip: req.tracking?.ip || '0.0.0.0',
+      device: req.tracking?.device || 'desktop',
+      browser: req.tracking?.browser || 'unknown',
+      os: req.tracking?.os || 'unknown',
+      action: 'LOGIN',
+      metadata: { method: 'otp_verify' }
+    }).catch(err => console.error('[ActivityLog] Failed to log OTP login:', err.message));
 
     const token = jwt.sign(
       { userId: user._id, email: user.email, role: user.role },
@@ -221,6 +240,25 @@ export const login = async (req, res) => {
     if (!isMatch) {
       return res.status(401).json({ success: false, message: 'Invalid email or password' });
     }
+
+    // Update Login Stats
+    user.lastLogin = new Date();
+    user.lastLoginIp = req.tracking?.ip || '0.0.0.0';
+    user.lastLoginCountry = req.tracking?.country || 'unknown';
+    user.loginCount += 1;
+    await user.save();
+
+    // Log Activity
+    ActivityLog.create({
+      userId: user._id,
+      sessionId: req.tracking?.sessionId || 'N/A',
+      ip: req.tracking?.ip || '0.0.0.0',
+      device: req.tracking?.device || 'desktop',
+      browser: req.tracking?.browser || 'unknown',
+      os: req.tracking?.os || 'unknown',
+      action: 'LOGIN',
+      metadata: { method: 'local_password' }
+    }).catch(err => console.error('[ActivityLog] Failed to log local login:', err.message));
 
     const token = jwt.sign(
       { userId: user._id, email: user.email, role: user.role },
@@ -326,17 +364,44 @@ export const resetPassword = async (req, res) => {
 };
 
 // 4.4.7 Google callback logic
-export const googleCallback = (req, res) => {
-  const token = jwt.sign(
-    { userId: req.user._id, email: req.user.email, role: req.user.role },
-    configService.getConfig('JWT_SECRET'),
-    { expiresIn: configService.getConfig('JWT_EXPIRES_IN', '7d') }
-  );
-  // Redirect with hash fragment to keep it out of logs
-  const frontendUrl = configService.getConfig('FRONTEND_URL', 'http://localhost:5173');
-  const redirectUrl = `${frontendUrl}/auth/callback#token=${token}`;
-  console.log(`[Google OAuth] Redirecting to: ${redirectUrl.split('#')[0]}#token=[REDACTED]`);
-  res.redirect(redirectUrl);
+export const googleCallback = async (req, res) => {
+  try {
+    // Update Login Stats
+    const user = await User.findById(req.user._id);
+    if (user) {
+      user.lastLogin = new Date();
+      user.lastLoginIp = req.tracking?.ip || '0.0.0.0';
+      user.lastLoginCountry = req.tracking?.country || 'unknown';
+      user.loginCount += 1;
+      await user.save();
+
+      // Log Activity
+      ActivityLog.create({
+        userId: user._id,
+        sessionId: req.tracking?.sessionId || 'N/A',
+        ip: req.tracking?.ip || '0.0.0.0',
+        device: req.tracking?.device || 'desktop',
+        browser: req.tracking?.browser || 'unknown',
+        os: req.tracking?.os || 'unknown',
+        action: 'LOGIN',
+        metadata: { method: 'google_oauth' }
+      }).catch(err => console.error('[ActivityLog] Failed to log google login:', err.message));
+    }
+
+    const token = jwt.sign(
+      { userId: req.user._id, email: req.user.email, role: req.user.role },
+      configService.getConfig('JWT_SECRET'),
+      { expiresIn: configService.getConfig('JWT_EXPIRES_IN', '7d') }
+    );
+    // Redirect with hash fragment to keep it out of logs
+    const frontendUrl = configService.getConfig('FRONTEND_URL', 'http://localhost:5173');
+    const redirectUrl = `${frontendUrl}/auth/callback#token=${token}`;
+    console.log(`[Google OAuth] Redirecting to: ${redirectUrl.split('#')[0]}#token=[REDACTED]`);
+    res.redirect(redirectUrl);
+  } catch (err) {
+    console.error('[Google Callback] Error:', err.message);
+    res.redirect(`${configService.getConfig('FRONTEND_URL', 'http://localhost:5173')}/login?error=oauth_failed`);
+  }
 };
 
 // Get profile

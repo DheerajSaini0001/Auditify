@@ -25,6 +25,8 @@ const userSchema = new mongoose.Schema({
   isEmailVerified: { type: Boolean, default: false },
   websites:        [websiteSchema],
   lastLogin:       { type: Date, default: null }, // Preserving from existing system
+  lastLoginIp:     { type: String, default: null },
+  lastLoginCountry:{ type: String, default: null },
   loginCount:      { type: Number, default: 0 },   // Preserving from existing system
   createdAt:       { type: Date, default: Date.now },
   updatedAt:       { type: Date, default: Date.now }

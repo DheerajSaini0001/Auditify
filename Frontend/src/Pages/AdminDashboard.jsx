@@ -177,7 +177,7 @@ const AdminDashboard = () => {
           <div>
             <h1 className={`text-4xl font-extrabold tracking-tight flex items-center gap-4 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
               <ShieldAlert className="text-blue-500" size={36} />
-              Admin Panel
+              Admin Dashboard
             </h1>
             <p className={`mt-2 ${darkMode ? 'text-gray-400' : 'text-slate-500'}`}>Real-time platform overview and management.</p>
           </div>

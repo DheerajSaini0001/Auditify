@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
+import { getRedirectPath } from '../utils/roleRedirect';
 import { consumePostAuthIntent } from '../utils/intentStore';
 
 const OtpVerifyPage = () => {
@@ -75,16 +76,7 @@ const OtpVerifyPage = () => {
         const intent = consumePostAuthIntent();
         
         // Role-Based Redirection Strategy
-        let roleFallback = '/';
-        const role = data.user?.role;
-        
-        if (role === 'super_admin') {
-          roleFallback = '/admin/setup';
-        } else if (role === 'admin') {
-          roleFallback = '/admin';
-        } else {
-          roleFallback = '/'; // Normal user
-        }
+        const roleFallback = getRedirectPath(data.user?.role);
 
         const destination = intent?.path || location.state?.from || roleFallback;
         navigate(destination, { 

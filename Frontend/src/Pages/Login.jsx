@@ -7,6 +7,8 @@ import { motion } from 'framer-motion';
 import MathCaptcha from '../Component/MathCaptcha';
 import toast from 'react-hot-toast';
 
+import { getRedirectPath } from '../utils/roleRedirect';
+
 const Login = () => {
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
@@ -34,13 +36,12 @@ const Login = () => {
     if (result.success) {
       // Determine origin page, fallback based on role
       const origin = location.state?.from?.pathname || location.state?.from || null;
+      const roleFallback = getRedirectPath(result.user.role);
       
       if (origin && origin !== '/login') {
         navigate(origin);
-      } else if (result.user.role === 'admin') {
-        navigate('/admin');
       } else {
-        navigate('/dashboard');
+        navigate(roleFallback);
       }
     } else {
       setError(result.error);

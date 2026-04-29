@@ -260,7 +260,7 @@ const AdminConfig = () => {
               <ShieldCheck size={28} className="text-indigo-500" />
             </div>
             <div>
-              <h1 className="text-3xl font-black tracking-tight">Configuration Vault</h1>
+              <h1 className="text-3xl font-black tracking-tight">Super Admin Dashboard</h1>
               <p className={`text-sm mt-1 ${dk ? 'text-white/30' : 'text-slate-400'}`}>
                 AES-256 encrypted • Hot reload • Version controlled
               </p>

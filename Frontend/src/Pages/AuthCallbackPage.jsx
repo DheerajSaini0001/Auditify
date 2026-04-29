@@ -5,6 +5,8 @@ import { Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { consumePostAuthIntent } from '../utils/intentStore';
 
+import { getRedirectPath } from '../utils/roleRedirect';
+
 const AuthCallbackPage = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -40,15 +42,7 @@ const AuthCallbackPage = () => {
       try {
         // Decode token to get role immediately
         const payload = JSON.parse(atob(token.split('.')[1]));
-        const role = payload.role;
-        
-        if (role === 'super_admin') {
-          roleFallback = '/admin/setup';
-        } else if (role === 'admin') {
-          roleFallback = '/admin';
-        } else {
-          roleFallback = '/';
-        }
+        roleFallback = getRedirectPath(payload.role);
       } catch (e) {
         console.error('Failed to decode role for redirection', e);
       }

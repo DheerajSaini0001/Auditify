@@ -9,6 +9,8 @@ import Assets from '../assets/Assets.js';
 import MathCaptcha from '../Component/MathCaptcha';
 import PageHeader from '../Component/PageHeader';
 
+import { getRedirectPath } from '../utils/roleRedirect';
+
 const LoginPage = () => {
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
@@ -32,14 +34,7 @@ const LoginPage = () => {
       console.log("[Login] Location state from:", location.state?.from);
       
       // Role-Based Redirection Strategy
-      let roleFallback = '/';
-      if (user?.role === 'super_admin') {
-        roleFallback = '/admin/setup';
-      } else if (user?.role === 'admin') {
-        roleFallback = '/admin';
-      } else {
-        roleFallback = '/'; // Normal user (redirect to home as requested)
-      }
+      const roleFallback = getRedirectPath(user?.role);
 
       // 1. If there's an intent (e.g. from a specific action), it takes priority
       // 2. If there's a 'from' location (e.g. tried to access protected route), it's next

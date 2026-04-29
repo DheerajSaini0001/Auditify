@@ -1,4 +1,5 @@
 import User from '../models/User.js';
+import { fetchGSC } from '../utils/gscAuth.js';
 
 // 4.5.1 Add website to user profile
 export const addWebsite = async (req, res) => {
@@ -46,14 +47,14 @@ export const verifyWebsite = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please log in with Google to verify via Search Console' });
     }
 
-    // Call GSC API
-    const gscRes = await fetch(
+    // Call GSC API using helper (handles auto-refresh)
+    const gscRes = await fetchGSC(
       'https://www.googleapis.com/webmasters/v3/sites',
-      { headers: { Authorization: `Bearer ${req.user.googleAccessToken}` } }
+      req.user
     );
 
     if (gscRes.status === 401) {
-      return res.status(401).json({ success: false, message: 'Google access token expired. Please re-login with Google.' });
+      return res.status(401).json({ success: false, message: 'Google session expired. Please re-login with Google.' });
     }
 
     const gscData = await gscRes.json();
@@ -119,9 +120,9 @@ export const syncWebsites = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Google login required for sync' });
     }
 
-    const gscRes = await fetch(
+    const gscRes = await fetchGSC(
       'https://www.googleapis.com/webmasters/v3/sites',
-      { headers: { Authorization: `Bearer ${req.user.googleAccessToken}` } }
+      req.user
     );
 
     if (!gscRes.ok) throw new Error('Failed to fetch from GSC');

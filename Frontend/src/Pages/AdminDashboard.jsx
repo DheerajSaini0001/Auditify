@@ -254,7 +254,7 @@ const AdminDashboard = () => {
                   ) : (
                     <>
                       <th className="px-8 py-6">Audited Website</th>
-                      <th className="px-8 py-6">User / Country</th>
+                      <th className="px-8 py-6">User / Country / IP</th>
                       <th className="px-8 py-6 text-center">Score</th>
                       <th className="px-8 py-6 text-right">Timestamp</th>
                     </>
@@ -316,8 +316,12 @@ const AdminDashboard = () => {
                         </td>
                         <td className="px-8 py-5">
                            <div className="flex flex-col">
-                              <span className="font-medium">{item.userId?.email || 'Anonymous'}</span>
-                              <span className="text-[10px] text-rose-500 font-bold uppercase">{item.country || 'Unknown'}</span>
+                              <span className="font-medium">{item.userId?.email || 'Guest User'}</span>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <span className="text-[10px] text-rose-500 font-bold uppercase">{item.country || 'Unknown'}</span>
+                                <span className="text-[10px] opacity-40 font-bold">•</span>
+                                <span className="text-[10px] text-blue-400 font-bold font-mono">{item.ip || '0.0.0.0'}</span>
+                              </div>
                            </div>
                         </td>
                         <td className="px-8 py-5 text-center">

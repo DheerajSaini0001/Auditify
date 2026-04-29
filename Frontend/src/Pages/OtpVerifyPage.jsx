@@ -74,10 +74,19 @@ const OtpVerifyPage = () => {
         
         const intent = consumePostAuthIntent();
         
-        const latestAuditId = localStorage.getItem("dealerpulse_latest_audit_id");
-        const guestFallback = latestAuditId ? `/report/${latestAuditId}` : "/dashboard";
+        // Role-Based Redirection Strategy
+        let roleFallback = '/';
+        const role = data.user?.role;
         
-        const destination = intent?.path || location.state?.from || guestFallback;
+        if (role === 'super_admin') {
+          roleFallback = '/admin/setup';
+        } else if (role === 'admin') {
+          roleFallback = '/admin';
+        } else {
+          roleFallback = '/'; // Normal user
+        }
+
+        const destination = intent?.path || location.state?.from || roleFallback;
         navigate(destination, { 
             replace: true,
             state: { 

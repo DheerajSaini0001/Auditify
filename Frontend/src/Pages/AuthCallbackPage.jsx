@@ -35,10 +35,25 @@ const AuthCallbackPage = () => {
       
       const intent = consumePostAuthIntent();
       
-      const latestAuditId = localStorage.getItem("dealerpulse_latest_audit_id");
-      const guestFallback = latestAuditId ? `/report/${latestAuditId}` : "/dashboard";
-      
-      const destination = intent?.path || guestFallback;
+      // Role-Based Redirection for OAuth
+      let roleFallback = '/';
+      try {
+        // Decode token to get role immediately
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const role = payload.role;
+        
+        if (role === 'super_admin') {
+          roleFallback = '/admin/setup';
+        } else if (role === 'admin') {
+          roleFallback = '/admin';
+        } else {
+          roleFallback = '/';
+        }
+      } catch (e) {
+        console.error('Failed to decode role for redirection', e);
+      }
+
+      const destination = intent?.path || roleFallback;
       navigate(destination, { 
           replace: true,
           state: { 

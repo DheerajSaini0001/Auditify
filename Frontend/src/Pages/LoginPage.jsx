@@ -31,13 +31,20 @@ const LoginPage = () => {
       console.log("[Login] Intent found:", intent);
       console.log("[Login] Location state from:", location.state?.from);
       
-      // Smart Fallback Selection
-      // 1. If we have guest audit data in memory/storage, the user probably wants to see it
-      const latestAuditId = localStorage.getItem("dealerpulse_latest_audit_id");
-      const guestFallback = latestAuditId ? `/report/${latestAuditId}` : "/dashboard";
-      const adminFallback = user?.role === 'admin' ? '/admin' : guestFallback;
-      
-      const destination = intent?.path || location.state?.from || adminFallback;
+      // Role-Based Redirection Strategy
+      let roleFallback = '/';
+      if (user?.role === 'super_admin') {
+        roleFallback = '/admin/setup';
+      } else if (user?.role === 'admin') {
+        roleFallback = '/admin';
+      } else {
+        roleFallback = '/'; // Normal user (redirect to home as requested)
+      }
+
+      // 1. If there's an intent (e.g. from a specific action), it takes priority
+      // 2. If there's a 'from' location (e.g. tried to access protected route), it's next
+      // 3. Otherwise, use role-based fallback
+      const destination = intent?.path || location.state?.from || roleFallback;
       console.log("[Login] Navigating to:", destination);
       
       navigate(destination, { 

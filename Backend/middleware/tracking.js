@@ -1,8 +1,13 @@
 import { v4 as uuidv4 } from "uuid";
 import { UAParser } from "ua-parser-js";
+import fetch from "node-fetch";
+import NodeCache from "node-cache";
 import configService from "../services/configService.js";
 
-const trackingMiddleware = (req, res, next) => {
+// Cache GeoIP lookups for 24 hours to avoid hitting API limits
+const geoCache = new NodeCache({ stdTTL: 86400 });
+
+const trackingMiddleware = async (req, res, next) => {
   // 1. Session ID Handling
   let sessionId = req.cookies.sessionId;
 
@@ -32,16 +37,46 @@ const trackingMiddleware = (req, res, next) => {
     ip = "127.0.0.1";
   }
 
-  // Try to get location from headers (Cloudflare, etc.)
-  // Try to get location from headers (Cloudflare, etc.)
-  let country = req.headers["cf-ipcountry"] || req.headers["x-country-code"] || "unknown";
-  let region = req.headers["cf-region-code"] || req.headers["cf-region"] || "unknown"; // State
-  let city = req.headers["cf-ipcity"] || "unknown";
+  // 2. Location Detection
+  let country = req.headers["cf-ipcountry"] || req.headers["x-country-code"];
+  let region = req.headers["cf-region-code"] || req.headers["cf-region"]; 
+  let city = req.headers["cf-ipcity"];
+
+  // Fallback for non-Cloudflare environments using GeoIP API
+  if (!country && ip !== "unknown" && ip !== "127.0.0.1") {
+    const cachedGeo = geoCache.get(ip);
+    if (cachedGeo) {
+      country = cachedGeo.country;
+      region = cachedGeo.region;
+      city = cachedGeo.city;
+    } else {
+      try {
+        // Use ip-api.com (Free tier, no key needed for 45 req/min)
+        const response = await fetch(`http://ip-api.com/json/${ip}?fields=status,country,regionName,city`);
+        const data = await response.json();
+        
+        if (data?.status === "success") {
+          country = data.country;
+          region = data.regionName;
+          city = data.city;
+          // Store in cache
+          geoCache.set(ip, { country, region, city });
+        }
+      } catch (err) {
+        console.error(`[GeoIP] Lookup failed for ${ip}:`, err.message);
+      }
+    }
+  }
+
+  // Final defaults if everything fails
+  country = country || "unknown";
+  region = region || "unknown";
+  city = city || "unknown";
 
   // If localhost, set friendly location labels
   if (ip === "127.0.0.1") {
     country = "Localhost";
-    region = "Development-Lab"; // State label for localhost
+    region = "Development-Lab"; 
     city = "Workstation";
   }
 

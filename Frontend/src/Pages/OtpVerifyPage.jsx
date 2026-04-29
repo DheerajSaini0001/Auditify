@@ -78,7 +78,8 @@ const OtpVerifyPage = () => {
         // Role-Based Redirection Strategy
         const roleFallback = getRedirectPath(data.user?.role);
 
-        const destination = intent?.path || location.state?.from || roleFallback;
+        const from = location.state?.from;
+        const destination = intent?.path || (from && from !== '/' ? from : roleFallback);
         navigate(destination, { 
             replace: true,
             state: { 

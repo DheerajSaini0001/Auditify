@@ -37,9 +37,10 @@ const LoginPage = () => {
       const roleFallback = getRedirectPath(user?.role);
 
       // 1. If there's an intent (e.g. from a specific action), it takes priority
-      // 2. If there's a 'from' location (e.g. tried to access protected route), it's next
+      // 2. If there's a 'from' location (and it's not the home root), it's next
       // 3. Otherwise, use role-based fallback
-      const destination = intent?.path || location.state?.from || roleFallback;
+      const from = location.state?.from;
+      const destination = intent?.path || (from && from !== '/' ? from : roleFallback);
       console.log("[Login] Navigating to:", destination);
       
       navigate(destination, { 

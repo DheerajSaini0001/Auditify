@@ -35,14 +35,11 @@ const Login = () => {
 
     if (result.success) {
       // Determine origin page, fallback based on role
-      const origin = location.state?.from?.pathname || location.state?.from || null;
+      const from = location.state?.from?.pathname || location.state?.from || null;
       const roleFallback = getRedirectPath(result.user.role);
       
-      if (origin && origin !== '/login') {
-        navigate(origin);
-      } else {
-        navigate(roleFallback);
-      }
+      const destination = (from && from !== '/' && from !== '/login') ? from : roleFallback;
+      navigate(destination);
     } else {
       setError(result.error);
     }

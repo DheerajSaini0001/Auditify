@@ -6,10 +6,17 @@ import path from "path";
 export const generatePDFReport = async (req, res) => {
   try {
     const { id } = req.params;
-    const report = await SingleAuditReport.findById(id);
+    const query = { _id: id };
+    
+    // Non-admins can only download their own reports
+    if (req.user && req.user.role !== 'admin' && req.user.role !== 'super_admin') {
+      query.userId = req.user.userId;
+    }
+
+    const report = await SingleAuditReport.findOne(query);
 
     if (!report) {
-      return res.status(404).json({ error: "Report not found" });
+      return res.status(404).json({ error: "Report not found or access denied" });
     }
 
     if (report.status !== "completed") {

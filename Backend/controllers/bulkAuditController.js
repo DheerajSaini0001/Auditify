@@ -92,6 +92,7 @@ export const auditSelectedUrls = async (req, res) => {
         const existingAudits = await BulkAuditReport.find({
             site: url,
             device: device,
+            userId: req.user?.userId || null,
             $or: [{ report: report }, { report: "All" }]
         }).sort({ createdAt: -1 });
 
@@ -133,7 +134,8 @@ export const auditSelectedUrls = async (req, res) => {
             report: report,
             status: "inprogress",
             totalPages: selectedUrls.length,
-            pages
+            pages,
+            userId: req.user?.userId || null
         });
 
         // Send immediate response
@@ -145,7 +147,7 @@ export const auditSelectedUrls = async (req, res) => {
         });
 
         // Start auditing selected pages in background with tracking info
-        processSelectedUrls(bulkAudit._id.toString(), selectedUrls, device, report, req.tracking);
+        processSelectedUrls(bulkAudit._id.toString(), selectedUrls, device, report, req.tracking, req.user?.userId);
 
     } catch (error) {
         console.error("Error starting audit:", error);
@@ -156,7 +158,7 @@ export const auditSelectedUrls = async (req, res) => {
 };
 
 // Background process to audit selected URLs with concurrency control
-async function processSelectedUrls(bulkAuditId, selectedUrls, device, report, tracking) {
+async function processSelectedUrls(bulkAuditId, selectedUrls, device, report, tracking, userId) {
     try {
         const CONCURRENCY_LIMIT = 5; // Run max 5 workers at once
         const total = selectedUrls.length;
@@ -180,6 +182,7 @@ async function processSelectedUrls(bulkAuditId, selectedUrls, device, report, tr
                 url: pageUrl,
                 device: device,
                 status: 'completed',
+                userId: userId || null,
                 $or: [{ report: report }, { report: "All" }]
             }).sort({ createdAt: -1 });
 
@@ -187,6 +190,7 @@ async function processSelectedUrls(bulkAuditId, selectedUrls, device, report, tr
                 const previousBulk = await BulkAuditReport.findOne({
                     _id: { $ne: bulkAuditId },
                     device: device,
+                    userId: userId || null,
                     $or: [{ report: report }, { report: "All" }],
                     "pages": {
                         $elemMatch: {
@@ -237,6 +241,7 @@ async function processSelectedUrls(bulkAuditId, selectedUrls, device, report, tr
             );
 
             const auditLog = new AuditLog({
+                userId: userId || null, 
                 sessionId: tracking?.sessionId || "bulk-session",
                 ip: tracking?.ip || "unknown",
                 country: tracking?.country || "unknown",
@@ -305,7 +310,8 @@ async function auditSinglePage(bulkAuditId, pageUrl, device, report, auditLogId,
                     device: device,
                     report: report,
                     bulkAuditId,
-                    pageUrl
+                    pageUrl,
+                    userId
                 },
             });
 
@@ -433,10 +439,17 @@ export const getBulkAuditStatus = async (req, res) => {
     try {
         const { bulkAuditId } = req.params;
 
-        const bulkAudit = await BulkAuditReport.findById(bulkAuditId);
+        const query = { _id: bulkAuditId };
+        
+        // Non-admins can only see their own audits
+        if (req.user && req.user.role !== 'admin' && req.user.role !== 'super_admin') {
+            query.userId = req.user.userId;
+        }
+
+        const bulkAudit = await BulkAuditReport.findOne(query);
 
         if (!bulkAudit) {
-            return res.status(404).json({ error: "Bulk audit not found" });
+            return res.status(404).json({ error: "Bulk audit not found or access denied" });
         }
 
         res.status(200).json(bulkAudit);
@@ -478,6 +491,7 @@ export const discoverAndAuditUrls = async (req, res) => {
             site: url,
             device: device,
             status: "inprogress",
+            userId: req.user?.userId || null,
             createdAt: { $gte: new Date(Date.now() - 2 * 60 * 1000) } // Last 2 mins buffer
         }).sort({ createdAt: -1 });
 
@@ -515,7 +529,8 @@ export const discoverAndAuditUrls = async (req, res) => {
             report: report,
             status: "inprogress",
             totalPages: discoveredUrls.length,
-            pages
+            pages,
+            userId: req.user?.userId || null
         });
 
         // 3. Send response immediately
@@ -528,7 +543,7 @@ export const discoverAndAuditUrls = async (req, res) => {
         });
 
         // 4. Background process
-        processSelectedUrls(bulkAudit._id.toString(), discoveredUrls, device, report, req.tracking);
+        processSelectedUrls(bulkAudit._id.toString(), discoveredUrls, device, report, req.tracking, req.user?.userId);
 
     } catch (error) {
         console.error("Error in auto discover-and-audit:", error);
@@ -546,9 +561,16 @@ export const getBulkPageReport = async (req, res) => {
             return res.status(400).json({ error: "Bulk Audit ID and Page URL are required" });
         }
 
-        const bulkAudit = await BulkAuditReport.findById(bulkAuditId);
+        const query = { _id: bulkAuditId };
+        
+        // Non-admins can only see their own audits
+        if (req.user && req.user.role !== 'admin' && req.user.role !== 'super_admin') {
+            query.userId = req.user.userId;
+        }
+
+        const bulkAudit = await BulkAuditReport.findOne(query);
         if (!bulkAudit) {
-            return res.status(404).json({ error: "Bulk audit not found" });
+            return res.status(404).json({ error: "Bulk audit not found or access denied" });
         }
 
         const pageData = bulkAudit.pages.find(p => p.url === url);

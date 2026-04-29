@@ -27,9 +27,16 @@ export const analyzeAEO = async (req, res) => {
 
 export const getAEOReport = async (req, res) => {
     try {
-        const report = await SingleAuditReport.findById(req.params.id);
+        const query = { _id: req.params.id };
+        
+        // Non-admins can only see their own reports
+        if (req.user && req.user.role !== 'admin' && req.user.role !== 'super_admin') {
+            query.userId = req.user.userId;
+        }
+
+        const report = await SingleAuditReport.findOne(query);
         if (!report) {
-            return res.status(404).json({ error: "Report not found" });
+            return res.status(404).json({ error: "Report not found or access denied" });
         }
 
         // The aeo data is stored inside the report document

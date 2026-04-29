@@ -60,6 +60,7 @@ export const startAudit = async (req, res) => {
       url, 
       device, 
       report, 
+      userId: req.user?.userId || null,
       $or: [
         { status: "completed" },
         { status: "inprogress", createdAt: { $gt: fiveMinutesAgo } }
@@ -116,6 +117,7 @@ export const startAudit = async (req, res) => {
         url,
         device,
         report: "All",
+        userId: req.user?.userId || null,
         status: "completed"
       }).sort({ createdAt: -1 });
  
@@ -137,7 +139,8 @@ export const startAudit = async (req, res) => {
             grade: sectionGrade,
             screenshot: fullAudit.screenshot,
             timeTaken: "0s (cached)",
-            isBotProtected: fullAudit.isBotProtected
+            isBotProtected: fullAudit.isBotProtected,
+            userId: req.user?.userId || null
           });
  
           // Include sub-dependencies
@@ -171,7 +174,7 @@ export const startAudit = async (req, res) => {
 
     // Double-check race condition (buffer for parallel requests)
     await new Promise(resolve => setTimeout(resolve, 200)); 
-    const raceCheck = await SingleAuditReport.findOne({ url, device, report, status: "inprogress" });
+    const raceCheck = await SingleAuditReport.findOne({ url, device, report, status: "inprogress", userId: req.user?.userId || null });
     if (raceCheck) return res.status(200).json(raceCheck);
 
     console.log(`➡️ Starting NEW Audit Request → ${url} | ${device} | ${report}`);
@@ -183,13 +186,14 @@ export const startAudit = async (req, res) => {
         device,
         report,
         status: "inprogress",
+        userId: req.user?.userId || null
       });
       await newReport.save();
     } catch (dbError) {
       // Handle race condition: If two requests hit exactly at the same time
       if (dbError.code === 11000) {
         console.log(`⚠️ Race condition caught: Audit already exists or is in-progress for: ${url}`);
-        const raceCheck = await SingleAuditReport.findOne({ url, device, report, status: { $ne: "failed" } });
+        const raceCheck = await SingleAuditReport.findOne({ url, device, report, status: { $ne: "failed" }, userId: req.user?.userId || null });
         if (raceCheck) return res.send(raceCheck);
       }
       throw dbError; // Otherwise, re-throw server errors
@@ -337,9 +341,16 @@ export const startAudit = async (req, res) => {
 
 export const getReportById = async (req, res) => {
   try {
-    const report = await SingleAuditReport.findById(req.params.singleAuditId);
+    const query = { _id: req.params.singleAuditId };
+    
+    // Non-admins can only see their own reports
+    if (req.user && req.user.role !== 'admin' && req.user.role !== 'super_admin') {
+      query.userId = req.user.userId;
+    }
+
+    const report = await SingleAuditReport.findOne(query);
     if (!report) {
-      return res.status(404).json({ message: "Report not found" });
+      return res.status(404).json({ message: "Report not found or access denied" });
     }
     res.status(200).json(report);
   } catch (error) {

@@ -23,6 +23,7 @@ const SiteReportSchema = new mongoose.Schema(
     isBotProtected: { type: Boolean, default: false },
     error: { type: String, default: null },
     screenshot: { type: String, default: null },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     createdAt: { type: Date, default: Date.now, expires: 10800 }, 
   }
 );

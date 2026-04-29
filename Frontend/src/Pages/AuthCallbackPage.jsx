@@ -63,7 +63,7 @@ const AuthCallbackPage = () => {
     } else {
       console.warn('[Auth Callback] No token found in current URL:', window.location.href);
       toast.error('Authentication failed. No token found.');
-      navigate('/login', { replace: true });
+      navigate('/login');
     }
   }, [navigate, login]);
 

@@ -103,17 +103,8 @@ const LoginPage = () => {
        savePostAuthIntent('o_auth', intentPath);
     }
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:2000';
-    // Use replace to avoid adding the login page to the history stack before Google redirect
-    window.location.replace(`${API_URL}/api/auth/google`);
+    window.location.href = `${API_URL}/api/auth/google`;
   };
-
-  if (isAuthLoading) {
-    return (
-      <div className={`min-h-screen flex items-center justify-center ${darkMode ? "bg-[#0a0a0f]" : "bg-gray-50"}`}>
-        <Loader2 className="animate-spin text-blue-600 h-10 w-10" />
-      </div>
-    );
-  }
 
   return (
     <div className={`min-h-screen flex flex-col justify-center transition-colors duration-300 py-12 px-4 sm:px-6 lg:px-8 ${darkMode ? "bg-[#0a0a0f]" : "bg-gray-50"}`}>

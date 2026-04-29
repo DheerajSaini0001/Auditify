@@ -1,4 +1,9 @@
 const captchaValidator = (req, res, next) => {
+  // Disable CAPTCHA for authenticated users
+  if (req.user) {
+    return next();
+  }
+
   const { captchaAnswer, captchaId } = req.body;
   
   // Try to find answer in the map (new system) or direct property (legacy flow)

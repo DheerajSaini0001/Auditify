@@ -146,20 +146,19 @@ export default function InputForm() {
       return;
     }
 
+    // Skip CAPTCHA for authenticated users
+    if (user) {
+      runAudit(null);
+      return;
+    }
+
     // Open verification modal
     setShowCaptcha(true);
     setCaptchaError('');
     setCaptchaAnswer('');
   };
 
-
-
-  const handleSubmitWithCaptcha = async () => {
-    if (!captchaAnswer && captchaAnswer !== 0 && captchaAnswer !== '0') {
-      setCaptchaError("Please enter an answer.");
-      return;
-    }
-    
+  const runAudit = async (answer) => {
     setShowCaptcha(false);
     setError(null);
 
@@ -169,7 +168,7 @@ export default function InputForm() {
       urlToFetch = `https://${urlToFetch}`;
     }
 
-    const result = await fetchData(urlToFetch, device, report, parseInt(captchaAnswer));
+    const result = await fetchData(urlToFetch, device, report, answer ? parseInt(answer) : null);
 
     if (!result?.success) {
       if (result?.error?.includes('CAPTCHA')) {
@@ -180,6 +179,14 @@ export default function InputForm() {
         setError(result?.error || "An unknown error occurred.");
       }
     }
+  };
+
+  const handleSubmitWithCaptcha = () => {
+    if (!captchaAnswer && captchaAnswer !== 0 && captchaAnswer !== '0') {
+      setCaptchaError("Please enter an answer.");
+      return;
+    }
+    runAudit(captchaAnswer);
   };
 
   // ⭐ FINAL FIX → CLEAN NAVIGATION

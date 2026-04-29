@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import MathCaptcha from "../../Component/MathCaptcha.jsx";
 import { ThemeContext } from '../../context/ThemeContext.jsx';
+import { useAuth } from '../../context/AuthContext.jsx';
 
 /* ─────────────────────────────────────────
    Audit type metadata – shown in the badge strip
@@ -156,6 +157,7 @@ const ScoreRing = ({ score, color, label, delay = 0, darkMode }) => {
 ───────────────────────────────────────── */
 const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
     const { theme } = useContext(ThemeContext);
+    const { user } = useAuth();
     const darkMode = theme === "dark";
 
     const [url, setUrl] = useState('');
@@ -179,7 +181,15 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
             setUrl(queryUrl);
             isAutoStarting.current = true;
             navigate(location.pathname, { replace: true });
-            setShowCaptcha(true);
+            
+            // If logged in, skip captcha and run
+            if (user || localStorage.getItem('dealerpulse_token')) {
+                let urlToFetch = queryUrl.trim();
+                if (!/^https?:\/\//i.test(urlToFetch)) urlToFetch = `https://${urlToFetch}`;
+                onSubmit(urlToFetch, device, report, null);
+            } else {
+                setShowCaptcha(true);
+            }
         }
     }, [location.search, navigate, location.pathname]);
 
@@ -190,6 +200,14 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
             setLocalError("Please enter a URL to get started.");
             return;
         }
+
+        if (user) {
+            let urlToFetch = url.trim();
+            if (!/^https?:\/\//i.test(urlToFetch)) urlToFetch = `https://${urlToFetch}`;
+            onSubmit(urlToFetch, device, report, null);
+            return;
+        }
+
         setShowCaptcha(true);
         setCaptchaError('');
         setCaptchaAnswer('');

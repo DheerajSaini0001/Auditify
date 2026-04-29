@@ -103,7 +103,7 @@ const LoginPage = () => {
        savePostAuthIntent('o_auth', intentPath);
     }
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:2000';
-    window.location.href = `${API_URL}/api/auth/google`;
+    window.location.replace(`${API_URL}/api/auth/google`);
   };
 
   return (

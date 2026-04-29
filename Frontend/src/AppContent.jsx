@@ -33,6 +33,7 @@ import ContactPage from "./Pages/ContactPage";
 import DoNotSellInfoPage from "./Pages/DoNotSellInfoPage";
 import { ThemeProvider, ThemeContext } from "./context/ThemeContext.jsx";
 import ProtectedRoute from "./Component/ProtectedRoute.jsx";
+import PublicRoute from "./Component/PublicRoute.jsx";
 import { Toaster } from 'react-hot-toast';
 
 import MainLayout from "./Component/MainLayout";
@@ -85,11 +86,11 @@ function AppContentInner() {
         <Route element={<MainLayout />}>
           {/* Public Routes */}
           <Route path="/" element={<Homepage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/verify-otp" element={<OtpVerifyPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+          <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+          <Route path="/verify-otp" element={<PublicRoute><OtpVerifyPage /></PublicRoute>} />
+          <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
+          <Route path="/reset-password" element={<PublicRoute><ResetPasswordPage /></PublicRoute>} />
           <Route path="/auth/callback" element={<AuthCallbackPage />} />
           <Route path="/about" element={<AboutPage />} />
 

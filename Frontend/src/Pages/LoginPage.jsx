@@ -33,8 +33,8 @@ const LoginPage = () => {
       
       // Smart Fallback Selection
       // 1. If we have guest audit data in memory/storage, the user probably wants to see it
-      const hasGuestData = !!localStorage.getItem("dealerpulse_guest_data");
-      const guestFallback = hasGuestData ? "/report" : "/dashboard";
+      const latestAuditId = localStorage.getItem("dealerpulse_latest_audit_id");
+      const guestFallback = latestAuditId ? `/report/${latestAuditId}` : "/dashboard";
       const adminFallback = user?.role === 'admin' ? '/admin' : guestFallback;
       
       const destination = intent?.path || location.state?.from || adminFallback;
@@ -90,7 +90,8 @@ const LoginPage = () => {
 
   const handleGoogleLogin = () => {
     // Save intent before leaving for Google OAuth
-    const intentPath = location.state?.from || (localStorage.getItem("dealerpulse_guest_data") ? '/report' : null);
+    const latestAuditId = localStorage.getItem("dealerpulse_latest_audit_id");
+    const intentPath = location.state?.from || (latestAuditId ? `/report/${latestAuditId}` : null);
     if (intentPath) {
        savePostAuthIntent('o_auth', intentPath);
     }

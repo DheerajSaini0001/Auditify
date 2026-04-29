@@ -15,13 +15,13 @@ export default function MainLayout() {
     const location = useLocation();
 
     const isReportPath = location.pathname.startsWith("/report") ||
-        location.pathname === "/technical-performance" ||
-        location.pathname === "/on-page-seo" ||
-        location.pathname === "/accessibility" ||
-        location.pathname === "/security-compliance" ||
-        location.pathname === "/ux-content-structure" ||
-        location.pathname === "/conversion-lead-flow" ||
-        location.pathname === "/aio";
+        location.pathname.startsWith("/technical-performance") ||
+        location.pathname.startsWith("/on-page-seo") ||
+        location.pathname.startsWith("/accessibility") ||
+        location.pathname.startsWith("/security-compliance") ||
+        location.pathname.startsWith("/ux-content-structure") ||
+        location.pathname.startsWith("/conversion-lead-flow") ||
+        location.pathname.startsWith("/aio");
 
     const showSidebar = !!data && data.report === "All" && isReportPath;
 

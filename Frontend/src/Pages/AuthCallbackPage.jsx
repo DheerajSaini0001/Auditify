@@ -35,8 +35,8 @@ const AuthCallbackPage = () => {
       
       const intent = consumePostAuthIntent();
       
-      const hasGuestData = !!localStorage.getItem("dealerpulse_guest_data");
-      const guestFallback = hasGuestData ? "/report" : "/dashboard";
+      const latestAuditId = localStorage.getItem("dealerpulse_latest_audit_id");
+      const guestFallback = latestAuditId ? `/report/${latestAuditId}` : "/dashboard";
       
       const destination = intent?.path || guestFallback;
       navigate(destination, { 

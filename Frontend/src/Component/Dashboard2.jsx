@@ -239,7 +239,7 @@ export default function Dashboard2({ darkMode }) {
 
                   {/* AIO Readiness Card - Production Polished */}
                   <div
-                    onClick={() => navigate('/aio')}
+                    onClick={() => navigate(data?._id ? `/aio/${data._id}` : '/aio')}
                     className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 cursor-pointer ${darkMode ? "bg-slate-800/20 border-slate-700/50 hover:bg-slate-800/40 hover:border-slate-600" : "bg-white border-slate-200 hover:border-slate-300 hover:shadow-md"}`}
                   >
                     {/* Hover Gradient Line */}
@@ -312,7 +312,7 @@ export default function Dashboard2({ darkMode }) {
                   return (
                     <button
                       key={item.name}
-                      onClick={() => navigate(`/${item.Link}`)}
+                      onClick={() => navigate(data?._id ? `/${item.Link}/${data._id}` : `/${item.Link}`)}
                       className={`group relative p-6 rounded-2xl border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl flex flex-col items-center text-center ${darkMode ? "bg-slate-800/30 border-slate-700 hover:bg-slate-800" : "bg-white border-slate-100 hover:border-slate-200"}`}
                     >
                       <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:translate-x-1">

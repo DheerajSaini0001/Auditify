@@ -184,8 +184,8 @@ export default function InputForm() {
 
   // ⭐ FINAL FIX → CLEAN NAVIGATION
   useEffect(() => {
-    if (inputValue && data?.url && !loading) {
-      navigate("/report");
+    if (inputValue && data?._id && !loading) {
+      navigate(`/report/${data._id}`);
       setInputValue("");
     }
   }, [data, loading, navigate]);

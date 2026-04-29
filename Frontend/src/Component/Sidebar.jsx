@@ -72,7 +72,7 @@ export default function Sidebar({ darkMode }) {
         <div className={`p-2 rounded-lg ${darkMode ? "bg-emerald-500/10 text-emerald-400" : "bg-emerald-50 text-emerald-600"}`}>
           <BarChart2 className="w-6 h-6" />
         </div>
-        <Link to="/report" replace className="block">
+        <Link to={data?._id ? `/report/${data._id}` : "/report"} replace className="block">
           <h2 className={`text-lg font-bold leading-none ${darkMode ? "text-white" : "text-slate-900"}`}>
             Audit Report
           </h2>
@@ -84,13 +84,14 @@ export default function Sidebar({ darkMode }) {
       <aside className="flex-1 overflow-y-auto py-4 px-3 space-y-1 custom-scrollbar">
         {menuItems.map((item) => {
           const isAvailable = data?.[item.key];
-          const isActive = location.pathname === item.path;
+          const isActive = location.pathname.startsWith(item.path);
           const Icon = item.icon;
+          const targetPath = data?._id ? `${item.path}/${data._id}` : item.path;
 
           return (
             <Link
               key={item.key}
-              to={item.path}
+              to={targetPath}
               replace
               className={`
                 group flex items-center justify-between p-3 rounded-lg text-sm font-medium transition-all duration-200

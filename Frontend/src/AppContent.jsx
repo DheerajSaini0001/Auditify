@@ -1,5 +1,5 @@
 import React, { useContext } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useParams } from "react-router-dom";
 
 import Homepage from "./Pages/LandingPage";
 import AboutPage from "./Pages/AboutPage";
@@ -52,9 +52,19 @@ import CanonicalTag from "./Component/CanonicalTag.jsx";
  */
 const GuestRouteWrapper = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
-  const { data } = useData();
+  const { data, fetchSingleReport } = useData();
+  const { id } = useParams();
+  const [isFetching, setIsFetching] = React.useState(false);
 
-  if (isLoading) return null; // Wait silently for auth resolution
+  React.useEffect(() => {
+    // If we have an ID in URL but no data (or mismatch), fetch it to restore state on refresh
+    if (id && (!data || data._id !== id)) {
+      setIsFetching(true);
+      fetchSingleReport(id).finally(() => setIsFetching(false));
+    }
+  }, [id, data, fetchSingleReport]);
+
+  if (isLoading || isFetching) return null; // Wait silently for auth resolution
 
   // Not logged in but data exists → show real page (inner restriction handles gating)
   if (!isAuthenticated && data) return children;
@@ -106,13 +116,13 @@ function AppContentInner() {
           <Route path="/report/:id" element={<ReportLayout />} />
 
           {/* Individual Report Pages - Gated for unauthenticated users */}
-          <Route path="/technical-performance" element={<GuestRouteWrapper><Technical_Performance /></GuestRouteWrapper>} />
-          <Route path="/on-page-seo" element={<GuestRouteWrapper><On_Page_SEO /></GuestRouteWrapper>} />
-          <Route path="/accessibility" element={<GuestRouteWrapper><Accessibility /></GuestRouteWrapper>} />
-          <Route path="/ux-content-structure" element={<GuestRouteWrapper><UX_Content_Structure /></GuestRouteWrapper>} />
-          <Route path="/security-compliance" element={<GuestRouteWrapper><Security_Compilance /></GuestRouteWrapper>} />
-          <Route path="/conversion-lead-flow" element={<GuestRouteWrapper><Conversion_Lead_Flow /></GuestRouteWrapper>} />
-          <Route path="/aio" element={<GuestRouteWrapper><AIO /></GuestRouteWrapper>} />
+          <Route path="/technical-performance/:id?" element={<GuestRouteWrapper><Technical_Performance /></GuestRouteWrapper>} />
+          <Route path="/on-page-seo/:id?" element={<GuestRouteWrapper><On_Page_SEO /></GuestRouteWrapper>} />
+          <Route path="/accessibility/:id?" element={<GuestRouteWrapper><Accessibility /></GuestRouteWrapper>} />
+          <Route path="/ux-content-structure/:id?" element={<GuestRouteWrapper><UX_Content_Structure /></GuestRouteWrapper>} />
+          <Route path="/security-compliance/:id?" element={<GuestRouteWrapper><Security_Compilance /></GuestRouteWrapper>} />
+          <Route path="/conversion-lead-flow/:id?" element={<GuestRouteWrapper><Conversion_Lead_Flow /></GuestRouteWrapper>} />
+          <Route path="/aio/:id?" element={<GuestRouteWrapper><AIO /></GuestRouteWrapper>} />
 
           {/* Admin Routes */}
           <Route path="/admin" element={

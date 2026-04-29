@@ -35,7 +35,11 @@ export const refreshGoogleToken = async (user) => {
 
     if (data.access_token) {
       user.googleAccessToken = data.access_token;
-      await user.save();
+      // Update DB directly to avoid VersionError in calling controller if it also saves
+      await user.constructor.updateOne(
+        { _id: user._id },
+        { $set: { googleAccessToken: data.access_token } }
+      );
       console.log(`[GSC Auth] Token refreshed for ${user.email}`);
       return data.access_token;
     } else {

@@ -125,20 +125,36 @@ export const syncWebsites = async (req, res) => {
       req.user
     );
 
-    if (!gscRes.ok) throw new Error('Failed to fetch from GSC');
+    if (gscRes.status === 401) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Google Search Console session expired. Please re-login with Google to sync.' 
+      });
+    }
+
+    if (!gscRes.ok) {
+      const errorText = await gscRes.text().catch(() => 'Unknown error');
+      console.error('[Sync GSC] GSC API Error:', gscRes.status, errorText);
+      throw new Error(`GSC API returned ${gscRes.status}`);
+    }
 
     const gscData = await gscRes.json();
     const siteEntries = gscData.siteEntry || [];
 
+    console.log(`[Sync GSC] API returned ${siteEntries.length} properties for user ${req.user.email}`);
+
     let addedCount = 0;
-    const existingUrls = req.user.websites.map(s => s.url.toLowerCase());
+    // Normalize existing URLs for reliable comparison
+    const existingUrls = req.user.websites.map(s => s.url.toLowerCase().replace(/\/$/, ""));
 
     for (const site of siteEntries) {
       const siteUrl = site.siteUrl.toLowerCase().replace(/\/$/, "");
+      
+      // If it's not already in our list, add it
       if (!existingUrls.includes(siteUrl)) {
         req.user.websites.push({
           url: siteUrl,
-          verified: true, // They are already in GSC, so they are verified
+          verified: true, 
           siteId: site.siteUrl,
           verifiedAt: new Date(),
           permissionLevel: site.permissionLevel
@@ -156,7 +172,11 @@ export const syncWebsites = async (req, res) => {
     });
 
   } catch (err) {
-    console.error('[Sync GSC] Error:', err.message);
-    res.status(500).json({ success: false, message: 'Sync failed' });
+    console.error('[Sync GSC] Critical Error:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Sync failed due to an internal error',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 };

@@ -16,7 +16,7 @@ router.post('/reset-password', authController.resetPassword);
 
 // Google OAuth
 router.get('/google', passport.authenticate('google', { 
-    scope: ['profile', 'email', 'https://www.googleapis.com/auth/webmasters.readonly'],
+    scope: ['profile', 'email', 'https://www.googleapis.com/auth/webmasters'],
     accessType: 'offline', // ensure we get a refresh token
     prompt: 'consent'      // always show consent screen to get refresh token
 }));

@@ -16,7 +16,7 @@ export default function(passport) {
     clientID,
     clientSecret,
     callbackURL,
-    scope: ['profile', 'email', 'https://www.googleapis.com/auth/webmasters.readonly']
+    scope: ['profile', 'email', 'https://www.googleapis.com/auth/webmasters']
   }, async (accessToken, refreshToken, profile, done) => {
     try {
       let user = await User.findOne({ googleId: profile.id });

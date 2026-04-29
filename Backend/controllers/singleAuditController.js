@@ -3,6 +3,16 @@ import { join } from "path";
 import SingleAuditReport from "../models/singleAuditReport.js";
 import AuditLog from "../models/AuditLog.js";
 import ActivityLog from "../models/ActivityLog.js";
+ 
+const reportFieldMap = {
+  "Technical Performance": "technicalPerformance",
+  "On Page SEO": "onPageSEO",
+  "Accessibility": "accessibility",
+  "Security/Compliance": "securityOrCompliance",
+  "UX & Content Structure": "UXOrContentStructure",
+  "Conversion & Lead Flow": "conversionAndLeadFlow",
+  "AIO (AI-Optimization) Readiness": "aioReadiness"
+};
 
 export const startAudit = async (req, res) => {
 
@@ -98,6 +108,65 @@ export const startAudit = async (req, res) => {
       auditLog.save().catch(err => console.error("Error saving cached AuditLog:", err));
 
       return res.status(200).json(existing);
+    }
+ 
+    // ⭐ ENHANCEMENT: Extract section from existing "Full Audit"
+    if (report !== "All") {
+      const fullAudit = await SingleAuditReport.findOne({
+        url,
+        device,
+        report: "All",
+        status: "completed"
+      }).sort({ createdAt: -1 });
+ 
+      if (fullAudit) {
+        const fieldName = reportFieldMap[report];
+        if (fieldName && fullAudit[fieldName]) {
+          console.log(`✨ Section Reuse: Extracting ${report} from existing Full Audit for: ${url}`);
+ 
+          const sectionScore = fullAudit[fieldName].Percentage || 0;
+          const sectionGrade = sectionScore >= 90 ? "A+" : sectionScore >= 80 ? "A" : sectionScore >= 70 ? "B" : sectionScore >= 60 ? "C" : sectionScore >= 50 ? "D" : "F";
+ 
+          const newSectionReport = new SingleAuditReport({
+            url: fullAudit.url,
+            device: fullAudit.device,
+            report: report,
+            status: "completed",
+            [fieldName]: fullAudit[fieldName],
+            score: sectionScore,
+            grade: sectionGrade,
+            screenshot: fullAudit.screenshot,
+            timeTaken: "0s (cached)",
+            isBotProtected: fullAudit.isBotProtected
+          });
+ 
+          // Include sub-dependencies
+          if (report === "On Page SEO") newSectionReport.siteSchema = fullAudit.siteSchema;
+          if (report === "AIO (AI-Optimization) Readiness") {
+            newSectionReport.aioCompatibilityBadge = fullAudit.aioCompatibilityBadge;
+            newSectionReport.aeo = fullAudit.aeo;
+          }
+ 
+          await newSectionReport.save();
+ 
+          // Log the cached audit run
+          const auditLog = new AuditLog({
+            userId: req.user?.userId || null,
+            sessionId: req.tracking?.sessionId || 'N/A',
+            ip: req.tracking?.ip || '0.0.0.0',
+            url: url,
+            reportId: newSectionReport._id,
+            reportType: report,
+            status: "success",
+            score: sectionScore,
+            grade: sectionGrade,
+            actions: ["visited", "audit_section_extracted"],
+          });
+          auditLog.save().catch(err => console.error("Error saving extracted AuditLog:", err));
+ 
+          return res.status(200).json(newSectionReport);
+        }
+      }
     }
 
     // Double-check race condition (buffer for parallel requests)

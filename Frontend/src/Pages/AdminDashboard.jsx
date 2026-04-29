@@ -254,7 +254,9 @@ const AdminDashboard = () => {
                   ) : (
                     <>
                       <th className="px-8 py-6">Audited Website</th>
-                      <th className="px-8 py-6">User / Country / IP</th>
+                      <th className="px-8 py-6">User</th>
+                      <th className="px-8 py-6 text-center">IP Address</th>
+                      <th className="px-8 py-6 text-center">Country</th>
                       <th className="px-8 py-6 text-center">Score</th>
                       <th className="px-8 py-6 text-right">Timestamp</th>
                     </>
@@ -315,14 +317,13 @@ const AdminDashboard = () => {
                            </div>
                         </td>
                         <td className="px-8 py-5">
-                           <div className="flex flex-col">
-                              <span className="font-medium">{item.userId?.email || 'Guest User'}</span>
-                              <div className="flex items-center gap-2 mt-0.5">
-                                <span className="text-[10px] text-rose-500 font-bold uppercase">{item.country || 'Unknown'}</span>
-                                <span className="text-[10px] opacity-40 font-bold">•</span>
-                                <span className="text-[10px] text-blue-400 font-bold font-mono">{item.ip || '0.0.0.0'}</span>
-                              </div>
-                           </div>
+                           <span className="font-medium">{item.userId?.email || 'Guest User'}</span>
+                        </td>
+                        <td className="px-8 py-5 text-center">
+                           <span className="text-[11px] text-blue-400 font-bold font-mono bg-blue-500/5 px-2 py-1 rounded-md">{item.ip || '0.0.0.0'}</span>
+                        </td>
+                        <td className="px-8 py-5 text-center">
+                           <span className="text-[10px] text-rose-500 font-bold uppercase tracking-wider">{item.country || 'Unknown'}</span>
                         </td>
                         <td className="px-8 py-5 text-center">
                            <div className={`inline-flex w-10 h-10 rounded-full items-center justify-center font-black text-sm border-2 ${

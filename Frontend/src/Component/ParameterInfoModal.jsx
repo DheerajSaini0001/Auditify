@@ -68,7 +68,7 @@ const ParameterInfoModal = ({ isOpen, onClose, info, darkMode }) => {
                                     <Gauge className="w-6 h-6 text-blue-500" />
                                 </div>
                                 <div className="flex-1">
-                                    <h3 className={`font-bold text-base mb-1.5 ${darkMode ? "text-gray-100" : "text-gray-900"}`}>What this parameter is</h3>
+                                    <h3 className={`font-bold text-base mb-1.5 ${darkMode ? "text-gray-100" : "text-gray-900"}`}>Description</h3>
                                     <div className={`text-sm leading-relaxed ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
                                         {info.whatThisParameterIs || info.whatThisMetricIs}
                                     </div>
@@ -120,7 +120,7 @@ const ParameterInfoModal = ({ isOpen, onClose, info, darkMode }) => {
                                     <Activity className="w-6 h-6 text-violet-500" />
                                 </div>
                                 <div className="flex-1">
-                                    <h3 className={`font-bold text-base mb-1.5 ${darkMode ? "text-gray-100" : "text-gray-900"}`}>Thresholds</h3>
+                                    <h3 className={`font-bold text-base mb-1.5 ${darkMode ? "text-gray-100" : "text-gray-900"}`}>Threshold</h3>
                                     {typeof info.thresholds === 'object' && info.thresholds !== null ? (
                                         <div className="flex flex-col sm:flex-row gap-2 mt-2">
                                             {info.thresholds.good && (

@@ -147,7 +147,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  onInfo({ key: metricKey, ...content });
+                  onInfo({ ...content, icon: Icon, thresholds: meta?.threshold || content.thresholds });
                 }}
                 className={`p-2 rounded-lg transition-colors ${darkMode ? "hover:bg-gray-800 text-gray-400 hover:text-white" : "hover:bg-gray-100 text-gray-500 hover:text-gray-900"}`}
                 title="View Methodology"
@@ -158,12 +158,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
           </div>
         </div>
 
-        {/* Educational Content */}
-        <div className="space-y-4">
-          <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
-            Description: <span className={`normal-case font-normal opacity-100 text-xs leading-relaxed ${subTextColor}`}>{content.whatThisParameterIs || content.desc}</span>
-          </p>
-        </div>
+
 
         {/* Q&A Insight */}
         {qanda && (
@@ -508,11 +503,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
           </div>
         )}
 
-        <div className={`mt-auto pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
-          <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
-            Why it matters: <span className="normal-case font-normal opacity-100">{content.whyItMatters || content.why}</span>
-          </p>
-        </div>
+
 
         {/* Ask AI Button */}
         {!isPassed && (
@@ -760,18 +751,18 @@ export default function AIO() {
               <AEOPage 
                 auditData={data} 
                 darkMode={darkMode} 
-                onInfo={(key) => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })}
+                onInfo={(info) => setSelectedParameterInfo(info)}
               />
             </div>
             <Section title="AI Technical & Crawl Foundation" icon={Database} darkMode={darkMode}>
           {["Structured_Data", "Duplicate_Content_Detection_Ready", "Internal_Linking_AI_Friendly", "Content_Updated_Regularly"].map((key) => (
-            aio[key] && <MetricCard key={key} metricKey={key} data={aio[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
+            aio[key] && <MetricCard key={key} metricKey={key} data={aio[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
           ))}
         </Section>
 
         <Section title="Intelligence & Semantic Clarity" icon={Brain} darkMode={darkMode}>
           {["Content_NLP_Friendly", "Keywords_Entities_Annotated", "Topical_Focus_Clarity", "Terminology_Consistency", "Content_Completeness"].map((key) => (
-            aio[key] && <MetricCard key={key} metricKey={key} data={aio[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
+            aio[key] && <MetricCard key={key} metricKey={key} data={aio[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
           ))}
         </Section>
 
@@ -788,7 +779,7 @@ export default function AIO() {
                 </div>
               )}
               {["Content_Chunking", "Lists_Structured_Blocks", "Author_Source_Attribution", "Fact_Vs_Opinion"].map((key) => (
-                aio[key] && <MetricCard key={key} metricKey={key} data={aio[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
+                aio[key] && <MetricCard key={key} metricKey={key} data={aio[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
               ))}
             </Section>
 

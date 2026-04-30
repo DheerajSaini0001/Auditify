@@ -147,7 +147,14 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             )}
             {onInfo && (
               <button
-                onClick={(e) => { e.stopPropagation(); onInfo(); }}
+                onClick={(e) => { 
+                  e.stopPropagation(); 
+                  onInfo({ 
+                    ...content, 
+                    icon: Icon, 
+                    thresholds: meta?.threshold || content.thresholds 
+                  }); 
+                }}
                 className={`p-1.5 rounded-full transition-colors ${darkMode ? "text-slate-500 hover:text-white" : "text-slate-400 hover:text-slate-900"}`}
                 title="Methodology"
               >
@@ -157,26 +164,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
           </div>
         </div>
 
-        {/* 2. Description Section */}
-        <div className="space-y-3">
-          <div className="text-xs leading-relaxed font-medium">
-            <span className={`font-black uppercase tracking-widest text-[10px] mr-2 ${darkMode ? "text-slate-500" : "text-slate-600"}`}>
-              Description:
-            </span>
-            <span className={darkMode ? "text-slate-300" : "text-slate-600"}>
-              {content.whatThisParameterIs}
-            </span>
-          </div>
 
-          <div className="text-xs leading-relaxed font-medium">
-            <span className={`font-black uppercase tracking-widest text-[10px] mr-2 ${darkMode ? "text-slate-500" : "text-slate-600"}`}>
-              Threshold:
-            </span>
-            <span className={darkMode ? "text-slate-300" : "text-slate-600"}>
-              {meta?.threshold}
-            </span>
-          </div>
-        </div>
 
         {/* 3. Status Section */}
         <div className="space-y-2">
@@ -198,15 +186,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
         {/* Divider */}
         <div className={`h-px w-full ${darkMode ? "bg-slate-700/50" : "bg-slate-100"}`} />
 
-        {/* 4. Why It Matters Section */}
-        <div className="text-xs leading-relaxed font-medium pb-1">
-          <span className={`font-black uppercase tracking-widest text-[10px] mr-2 ${darkMode ? "text-slate-500" : "text-slate-600"}`}>
-            Why it matters:
-          </span>
-          <span className={darkMode ? "text-slate-400" : "text-slate-500"}>
-            {content.whyItMatters}
-          </span>
-        </div>
+
 
 
 
@@ -570,21 +550,21 @@ export default function Accessibility() {
           <div className="space-y-12">
             <Section title="Visual & Media" icon={Eye} darkMode={darkMode}>
           {["Color_Contrast", "Image_Alt", "Meta_Viewport"].map(k => metric[k] && (
-            <MetricCard key={k} metricKey={k} data={metric[k]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[k], icon: iconMap[k] })} />
+            <MetricCard key={k} metricKey={k} data={metric[k]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
           ))}
         </Section>
 
         {/* Interaction Section */}
         <Section title="Keyboard & Interaction" icon={Keyboard} darkMode={darkMode}>
           {["Focusable_Content", "Focus_Order", "Tab_Index", "Skip_Links", "Interactive_Element_Affordance", "Aria_Hidden_Focus"].map(k => metric[k] && (
-            <MetricCard key={k} metricKey={k} data={metric[k]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[k], icon: iconMap[k] })} />
+            <MetricCard key={k} metricKey={k} data={metric[k]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
           ))}
         </Section>
 
         {/* Roles & Details Section */}
         <Section title="Semantics & Roles" icon={Code} darkMode={darkMode}>
               {["Label", "Button_Name", "Link_Name", "Aria_Roles", "Landmarks", "Document_Title", "Html_Has_Lang", "List", "Heading_Order", "Aria_Allowed_Attr"].map(k => metric[k] && (
-                <MetricCard key={k} metricKey={k} data={metric[k]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[k], icon: iconMap[k] })} />
+                <MetricCard key={k} metricKey={k} data={metric[k]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
               ))}
             </Section>
           </div>

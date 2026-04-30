@@ -152,7 +152,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  onInfo();
+                  onInfo({ ...info, icon: Icon });
                 }}
                 className={`p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
                 title="View Methodology"
@@ -163,11 +163,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
           </div>
         </div>
 
-        <div className="space-y-4">
-          <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
-            Description: <span className={`normal-case font-normal opacity-100 text-xs leading-relaxed ${subTextColor}`}>{info.whatThisParameterIs || "No details available."}</span>
-          </p>
-        </div>
+
 
         <div className={`mt-4 p-4 rounded-lg flex items-start gap-3 ${darkMode ? "bg-slate-800/50" : "bg-slate-50"}`}>
           <div className={`mt-0.5 p-1.5 rounded-full flex-shrink-0 ${isPassed ? "bg-emerald-500/10 text-emerald-500" : isWarning ? "bg-amber-500/10 text-amber-500" : "bg-rose-500/10 text-rose-500"}`}>
@@ -509,11 +505,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
           </div>
         </div>
 
-        <div className={`mt-auto pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
-          <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
-            Why it matters: <span className="normal-case font-normal opacity-100">{info.whyItMatters || "Important for user experience."}</span>
-          </p>
-        </div>
+
 
         {/* Expanded Analysis Content */}
         {isOpen && (
@@ -845,7 +837,7 @@ export default function UX_Content_Structure() {
                       darkMode={darkMode}
                       icon={iconMap[key] || Layout}
                       className={spanMap[key] || ""}
-                      onInfo={() => setSelectedParameterInfo({ ...uxEducationalContent[key], icon: iconMap[key] || Layout })}
+                      onInfo={(info) => setSelectedParameterInfo(info)}
                     />
                   );
                 })}

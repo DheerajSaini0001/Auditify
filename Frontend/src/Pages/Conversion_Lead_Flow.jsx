@@ -153,7 +153,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  onInfo();
+                  onInfo({ ...content, icon: Icon, thresholds: meta?.threshold || content.thresholds });
                 }}
                 className={`p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
                 title="View Methodology"
@@ -164,11 +164,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
           </div>
         </div>
 
-        <div className="space-y-4">
-          <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
-            Description: <span className={`normal-case font-normal opacity-100 text-xs leading-relaxed ${subTextColor}`}>{content.whatThisParameterIs || content.desc}</span>
-          </p>
-        </div>
+
 
         <div className={`mt-4 p-4 rounded-lg flex items-start gap-3 ${darkMode ? "bg-slate-800/50" : "bg-slate-50"}`}>
           <div className={`mt-0.5 p-1.5 rounded-full flex-shrink-0 ${isPassed ? "bg-emerald-500/10 text-emerald-500" : isWarning ? "bg-amber-500/10 text-amber-500" : "bg-rose-500/10 text-rose-500"}`}>
@@ -597,11 +593,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
         )}
 
         <div className="flex-grow" />
-        <div className={`mt-auto pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
-          <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
-            Why it matters: <span className="normal-case font-normal opacity-100">{content.whyItMatters || content.why}</span>
-          </p>
-        </div>
+
 
         {/* Expanded Analysis Content */}
         {isOpen && (
@@ -849,21 +841,21 @@ export default function Conversion_Lead_Flow() {
         {/* Section 2: Lead Capture & Incentives */}
         <Section title="Lead Capture & Incentives" icon={Target} darkMode={darkMode}>
           {["Form_Presence", "Lead_Magnets", "Incentives_Displayed", "Form_Length"].map((key) => (
-            flow[key] && <MetricCard key={key} metricKey={key} data={flow[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
+            flow[key] && <MetricCard key={key} metricKey={key} data={flow[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
           ))}
         </Section>
 
         {/* Section 3: Trust & Social Proof */}
         <Section title="Trust & Social Proof" icon={ShieldCheck} darkMode={darkMode}>
           {["Testimonials", "Reviews", "Trust_Badges", "Client_Logos", "Case_Studies_Accessibility"].map((key) => (
-            flow[key] && <MetricCard key={key} metricKey={key} data={flow[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
+            flow[key] && <MetricCard key={key} metricKey={key} data={flow[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
           ))}
         </Section>
 
         {/* Section 4: Friction Reduction & Validation */}
         <Section title="Friction Reduction & Validation" icon={LayoutTemplate} darkMode={darkMode}>
           {["Required_vs_Optional_Fields", "Inline_Validation", "Friendly_Error_Handling", "Microcopy_Clarity", "MultiStep_Form_Progress", "Progress_Indicators"].map((key) => (
-            flow[key] && <MetricCard key={key} metricKey={key} data={flow[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
+            flow[key] && <MetricCard key={key} metricKey={key} data={flow[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
           ))}
         </Section>
           </div>

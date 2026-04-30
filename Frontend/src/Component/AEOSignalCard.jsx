@@ -130,7 +130,13 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
                     )}
                     {onInfo && (
                         <button 
-                            onClick={() => onInfo(signal)}
+                            onClick={() => onInfo({ 
+                                title, 
+                                whatThisParameterIs: description, 
+                                whyItMatters: getWhyItMatters(signal),
+                                icon: Icon,
+                                thresholds: data?.threshold || "N/A"
+                            })}
                             className={`p-2 rounded-lg transition-colors ${darkMode ? "bg-slate-800 text-slate-500 hover:text-indigo-400" : "bg-slate-50 text-slate-400 hover:text-indigo-600 border border-slate-100"}`}
                         >
                             <Info size={18} />
@@ -139,11 +145,7 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
                 </div>
             </div>
 
-            {/* Description Section */}
-            <div className="flex flex-col gap-3">
-                <span className={`text-[10px] font-black uppercase tracking-[0.2em] opacity-40 ${darkMode ? "text-white" : "text-slate-900"}`}>Description:</span>
-                <p className={`text-sm leading-relaxed font-bold tracking-tight ${darkMode ? "text-slate-400" : "text-slate-500"}`}>{description}</p>
-            </div>
+
 
             {/* Status Detail Section */}
             <div className="flex flex-col gap-3">
@@ -204,13 +206,7 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
                 </div>
             )}
 
-            {/* Why It Matters / Bottom Section */}
-            <div className="flex flex-col gap-3">
-                <span className={`text-[10px] font-black uppercase tracking-[0.2em] opacity-40 ${darkMode ? "text-white" : "text-slate-900"}`}>Why It Matters:</span>
-                <p className={`text-sm leading-relaxed font-bold tracking-tight ${darkMode ? "text-slate-500" : "text-slate-600"}`}>
-                   {getWhyItMatters(signal)}
-                </p>
-            </div>
+
 
             {/* Action Area */}
             <div className="pt-2 border-t border-slate-800/10 dark:border-slate-100/10">

@@ -162,7 +162,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  onInfo();
+                  onInfo({ ...content, icon: Icon, thresholds: meta?.threshold || content.thresholds });
                 }}
                 className={`p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
                 title="View Methodology"
@@ -173,12 +173,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
           </div>
         </div>
 
-        {/* Educational Content */}
-        <div className="space-y-4">
-          <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
-            Description: <span className={`normal-case font-normal opacity-100 text-xs leading-relaxed ${subTextColor}`}>{content.whatThisParameterIs || content.desc}</span>
-          </p>
-        </div>
+
 
         {/* Dynamic Details */}
         <div className="space-y-4">
@@ -511,13 +506,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             </div>
           )}
         </div>
-        <div className={`mt-auto border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
-          <div className="py-3">
-            <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
-              Why it matters: <span className="normal-case font-normal opacity-100">{content.whyItMatters || content.why}</span>
-            </p>
-          </div>
-        </div>
+
 
         {!isPassed && analysis && showAnalysis && (
           <div className={`p-5 border-t animate-in fade-in slide-in-from-top-2 ${darkMode ? "border-gray-700 bg-gray-900/50" : "border-gray-100 bg-slate-50"}`}>
@@ -1032,7 +1021,7 @@ export default function Security_Compilance() {
           <div className="space-y-8">
             <Section title="Network & Encryption" icon={Lock} darkMode={darkMode}>
           {["HTTPS", "SSL", "TLS_Version", "HSTS"].map((key) => (
-            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || Shield })} />
+            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
           ))}
         </Section>
 
@@ -1040,7 +1029,7 @@ export default function Security_Compilance() {
           {[
             "SQLi_Exposure", "XSS", "Google_Safe_Browsing", "Blacklist", "Malware_Scan"
           ].map((key) => (
-            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || Shield })} />
+            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
           ))}
         </Section>
 
@@ -1048,7 +1037,7 @@ export default function Security_Compilance() {
           {[
             "Weak_Default_Credentials", "MFA_Enabled", "Admin_Panel_Public", "Forms_Use_HTTPS"
           ].map((key) => (
-            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || Shield })} />
+            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
           ))}
         </Section>
 
@@ -1056,7 +1045,7 @@ export default function Security_Compilance() {
           {[
             "CSP", "X_Frame_Options", "X_Content_Type_Options", "Cookies_Secure", "Cookies_HttpOnly"
           ].map((key) => (
-            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || Shield })} />
+            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
           ))}
         </Section>
 
@@ -1065,7 +1054,7 @@ export default function Security_Compilance() {
                 "Cookie_Consent", "GDPR_CCPA", "Privacy_Policy",
                 "Data_Collection", "Third_Party_Cookies"
               ].map((key) => (
-                metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || Shield })} />
+                metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
               ))}
             </Section>
           </div>

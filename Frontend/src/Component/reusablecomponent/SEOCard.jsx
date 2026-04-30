@@ -3,6 +3,7 @@ import { ChevronUp, ChevronDown, Info, AlertTriangle, CheckCircle } from "lucide
 import { InfoDetails as DefaultInfoDetails } from "../../Component/InfoDetails";
 import ScoreBadge from "./ScoreBadge";
 import AskAIButton from "../AskAIButton";
+import Tooltip from "./Tooltip";
 
 /**
  * SEOCard - Flexible reusable wrapper for SEO metric cards
@@ -88,43 +89,50 @@ const SEOCard = ({
                             </button>
                         )}
                         {onInfo && (
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onInfo();
-                                }}
-                                className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
+                            <Tooltip
+                                darkMode={darkMode}
+                                content={
+                                    <div className="space-y-4 text-left">
+                                        {metricKey && InfoDetails?.[metricKey] && (
+                                            <>
+                                                <div>
+                                                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-blue-500 mb-1">Description</h4>
+                                                    <p className="text-xs leading-relaxed opacity-90">
+                                                        {InfoDetails[metricKey].whatThisParameterIs || InfoDetails[metricKey].whatThisMetricIs || InfoDetails[metricKey].whatThisParameterIs}
+                                                    </p>
+                                                </div>
+                                                <div className={`h-px w-full ${darkMode ? "bg-slate-800" : "bg-slate-100"}`} />
+                                                <div>
+                                                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-indigo-500 mb-1">Why it matters</h4>
+                                                    <p className="text-xs leading-relaxed opacity-90">
+                                                        {InfoDetails[metricKey].whyItMatters || "No description available."}
+                                                    </p>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                }
                             >
-                                <Info size={18} />
-                            </button>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onInfo();
+                                    }}
+                                    className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
+                                >
+                                    <Info size={18} />
+                                </button>
+                            </Tooltip>
                         )}
                     </div>
                 </div>
 
                 {/* Content Body */}
                 <div className="space-y-4">
-                    {/* Description */}
-                    {metricKey && InfoDetails?.[metricKey] && (
-                        <div>
-                            <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>DESCRIPTION: </span>
-                            <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                                {InfoDetails[metricKey].whatThisParameterIs || InfoDetails[metricKey].whatThisMetricIs || InfoDetails[metricKey].whatThisParameterIs}
-                            </span>
-                        </div>
-                    )}
 
                     {/* Custom Content */}
                     {children}
 
-                    {/* Why it matters */}
-                    {metricKey && InfoDetails?.[metricKey] && (
-                        <div className={`pt-3 border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
-                            <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>WHY IT MATTERS: </span>
-                            <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                                {InfoDetails[metricKey].whyItMatters || "No description available."}
-                            </span>
-                        </div>
-                    )}
 
                     {/* Analysis Details (Only if toggled) */}
                     {showAnalysis && showDetails && currentAnalysis && !isPassed && (

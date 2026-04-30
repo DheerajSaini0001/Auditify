@@ -2,6 +2,7 @@ import React from 'react';
 import { Info, ChevronUp, ChevronDown } from 'lucide-react';
 import DirectThresholdBar from './DirectThresholdBar';
 import MetricAnalysisDetails from './MetricAnalysisDetails';
+import Tooltip from './Tooltip';
 
 const OptimizationCard = ({
     icon: Icon,
@@ -54,24 +55,38 @@ const OptimizationCard = ({
                             {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                         </button>
                     )}
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onInfoClick && onInfoClick();
-                        }}
-                        className={`p-1.5 rounded-full transition-colors ${darkMode ? "text-gray-500 hover:text-gray-300 hover:bg-gray-700" : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"}`}
-                        title="View Methodology"
+                    <Tooltip
+                        darkMode={darkMode}
+                        content={
+                            <div className="space-y-4 text-left">
+                                <div>
+                                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-blue-500 mb-1">Description</h4>
+                                    <p className="text-xs leading-relaxed opacity-90">{description}</p>
+                                </div>
+                                <div className={`h-px w-full ${darkMode ? "bg-slate-800" : "bg-slate-100"}`} />
+                                <div>
+                                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-indigo-500 mb-1">Why it matters</h4>
+                                    <p className="text-xs leading-relaxed opacity-90">{whyItMatters}</p>
+                                </div>
+                            </div>
+                        }
                     >
-                        <Info size={20} />
-                    </button>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onInfoClick && onInfoClick();
+                            }}
+                            className={`p-1.5 rounded-full transition-colors ${darkMode ? "text-gray-500 hover:text-gray-300 hover:bg-gray-700" : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"}`}
+                            title="View Methodology"
+                        >
+                            <Info size={20} />
+                        </button>
+                    </Tooltip>
                 </div>
             </div>
 
             {/* Body */}
             <div className="space-y-6 flex-grow">
-                <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
-                    Description: <span className={`normal-case font-normal opacity-100 text-xs leading-relaxed ${subTextColor}`}>{description}</span>
-                </p>
 
                 {/* Specific Stats Grid (Children) */}
                 {children}
@@ -82,12 +97,6 @@ const OptimizationCard = ({
                 </div>
             </div>
 
-            {/* Footer */}
-            <div className={`mt-auto pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
-                <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
-                    Why it matters: <span className="normal-case font-normal opacity-100">{whyItMatters}</span>
-                </p>
-            </div>
 
             {/* Analysis Details */}
             <MetricAnalysisDetails

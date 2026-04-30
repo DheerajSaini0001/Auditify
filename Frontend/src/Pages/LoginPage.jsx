@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 import { consumePostAuthIntent, savePostAuthIntent } from '../utils/intentStore';
 import Assets from '../assets/Assets.js';
 import MathCaptcha from '../Component/MathCaptcha';
-import PageHeader from '../Component/PageHeader';
+import './LoginPage.css';
 
 import { getRedirectPath } from '../utils/roleRedirect';
 
@@ -18,30 +18,20 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [captchaAnswer, setCaptchaAnswer] = useState('');
   const [captchaId, setCaptchaId] = useState('');
-  const [captchaKey, setCaptchaKey] = useState(0); // For forcing refresh
+  const [captchaKey, setCaptchaKey] = useState(0); 
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { apiFetch, login, isAuthenticated, user, isLoading: isAuthLoading } = useAuth();
 
-  // Handle automatic redirect if user is ALREADY authenticated (e.g. on mount or state change)
   useEffect(() => {
     if (isAuthenticated && !isAuthLoading) {
-      console.log("[Login] Authenticated. Consuming intent...");
       const intent = consumePostAuthIntent();
-      console.log("[Login] Intent found:", intent);
-      console.log("[Login] Location state from:", location.state?.from);
-      
-      // Role-Based Redirection Strategy
       const roleFallback = getRedirectPath(user?.role);
-
-      // 1. If there's an intent (e.g. from a specific action), it takes priority
-      // 2. If there's a 'from' location (and it's not the home root), it's next
-      // 3. Otherwise, use role-based fallback
       const from = location.state?.from;
       const destination = intent?.path || (from && from !== '/' ? from : roleFallback);
-      console.log("[Login] Navigating to:", destination);
       
       navigate(destination, { 
         replace: true,
@@ -51,7 +41,6 @@ const LoginPage = () => {
         } 
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, navigate, user, isAuthLoading]);
 
   const handleSubmit = async (e) => {
@@ -72,7 +61,6 @@ const LoginPage = () => {
     if (ok) {
       toast.success('Logged in successfully!');
       login(data.token, data.user);
-      // Logic handled by useEffect reactively
     } else {
       if (status === 403) {
         toast.error(data.message);
@@ -92,7 +80,6 @@ const LoginPage = () => {
   };
 
   const handleGoogleLogin = () => {
-    // Save intent before leaving for Google OAuth
     const latestAuditId = localStorage.getItem("dealerpulse_latest_audit_id");
     const intentPath = location.state?.from || (latestAuditId ? `/report/${latestAuditId}` : null);
     if (intentPath) {
@@ -103,104 +90,109 @@ const LoginPage = () => {
   };
 
   return (
-    <div className={`min-h-screen flex flex-col justify-center transition-colors duration-300 py-12 px-4 sm:px-6 lg:px-8 ${darkMode ? "bg-[#0a0a0f]" : "bg-gray-50"}`}>
-      <PageHeader 
-        logo={
-          <Link to="/">
-            <img src={darkMode ? Assets.Logo : Assets.DarkLogo} alt="DealerPulse" title="DealerPulse" className="h-20 w-auto" />
-          </Link>
-        }
-        title="Welcome"
-        titleAccent="Back."
-        subtitle="Enter your details to access your account"
-        darkMode={darkMode}
-      />
+    <div className={`login-page-container ${darkMode ? 'dark' : 'light'}`}>
+      <div className="bg-blob bg-blob-1"></div>
+      <div className="bg-blob bg-blob-2"></div>
 
-      <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className={`py-12 px-10 rounded-3xl shadow-xl border transition-colors ${darkMode ? "bg-[#11111a] border-white/5" : "bg-white border-gray-100"}`}>
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 font-bold"><Mail className="h-5 w-5" /></div>
+      <div className={`login-card ${darkMode ? 'dark' : 'light'}`}>
+        <div className="login-header">
+          <Link to="/">
+            <img 
+              src={darkMode ? Assets.Logo : Assets.DarkLogo} 
+              alt="Auditify" 
+              className="login-logo" 
+            />
+          </Link>
+          <h1 className={`login-title ${darkMode ? 'text-white' : 'text-slate-900'}`}>Welcome Back</h1>
+          <p className="login-subtitle">Enter your credentials to access your account</p>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <div className="input-wrapper">
+              <Mail className="input-icon" size={20} />
               <input
                 type="email"
                 required
-                className={`block w-full pl-12 pr-4 py-4 rounded-2xl transition-all font-medium placeholder:text-gray-500 outline-none border ${
-                  darkMode 
-                    ? "bg-white/5 border-white/5 focus:bg-white/10 focus:border-blue-500/50 text-white" 
-                    : "bg-gray-50 border-gray-100 focus:bg-white focus:border-blue-500 focus:ring-blue-500 text-gray-900"
-                }`}
-                placeholder="Email address"
+                className={`login-input ${darkMode ? 'dark' : 'light'}`}
+                placeholder="Email Address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
+          </div>
 
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 font-bold"><Lock className="h-5 w-5" /></div>
+          <div className="form-group">
+            <div className="input-wrapper">
+              <Lock className="input-icon" size={20} />
               <input
                 type={showPassword ? 'text' : 'password'}
                 required
-                className={`block w-full pl-12 pr-12 py-4 rounded-2xl transition-all font-medium placeholder:text-gray-500 outline-none border ${
-                  darkMode 
-                    ? "bg-white/5 border-white/5 focus:bg-white/10 focus:border-blue-500/50 text-white" 
-                    : "bg-gray-50 border-gray-100 focus:bg-white focus:border-blue-500 focus:ring-blue-500 text-gray-900"
-                }`}
+                className={`login-input ${darkMode ? 'dark' : 'light'}`}
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
               <button
                 type="button"
+                className="password-toggle"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
-                title={showPassword ? 'Hide password' : 'Show password'}
               >
-                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
+          </div>
 
-            <div className="flex items-center justify-end">
-              <Link to="/forgot-password" name="Forgot password?" className={`text-sm font-bold transition-colors ${darkMode ? "text-gray-500 hover:text-blue-500" : "text-gray-400 hover:text-blue-600"}`}>Forgot password?</Link>
-            </div>
+          <div className="form-footer">
+            <label className="remember-me">
+              <input 
+                type="checkbox" 
+                checked={rememberMe} 
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span>Remember me</span>
+            </label>
+            <Link to="/forgot-password" className="forgot-password">Forgot password?</Link>
+          </div>
 
+          <div className="captcha-container">
             <MathCaptcha 
               key={captchaKey}
               onAnswerChange={(val, id) => { setCaptchaAnswer(val); setCaptchaId(id); }} 
             />
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition-all shadow-lg shadow-blue-500/25 active:scale-[0.98]"
-            >
-              {loading ? <Loader2 className="animate-spin h-5 w-5" /> : 'Sign In'}
-            </button>
-          </form>
-
-          <div className="mt-8">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center"><div className={`w-full border-t ${darkMode ? "border-white/5" : "border-gray-100"}`}></div></div>
-              <div className={`relative flex justify-center text-xs uppercase tracking-widest font-black px-4 ${darkMode ? "bg-[#11111a] text-gray-600" : "bg-white text-gray-300"}`}>Or continue with</div>
-            </div>
-
-            <div className="mt-8">
-              <button
-                onClick={handleGoogleLogin}
-                className={`w-full flex items-center justify-center gap-3 py-4 border rounded-2xl font-bold transition-all active:scale-[0.98] ${
-                  darkMode ? "bg-white/5 border-white/5 text-gray-300 hover:bg-white/10" : "bg-white border-gray-100 text-gray-600 hover:bg-gray-50 hover:border-gray-200"
-                }`}
-              >
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" title="Google" className="h-5 w-5" />
-                Google Account
-              </button>
-            </div>
           </div>
-          
-          <p className="mt-10 text-center text-sm font-bold text-gray-500 uppercase tracking-tighter">
-            Don't have an account?{' '}
-            <Link to="/register" state={{ from: location.state?.from }} className="text-blue-600 hover:text-blue-500 transition-colors ml-1 tracking-wider">Register Now</Link>
-          </p>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="login-button"
+          >
+            {loading ? <Loader2 className="animate-spin h-5 w-5" /> : (
+              <>
+                <span>Sign In</span>
+                <ArrowRight size={18} />
+              </>
+            )}
+          </button>
+        </form>
+
+        <div className="divider">
+          <span>Or continue with</span>
         </div>
+
+        <button
+          onClick={handleGoogleLogin}
+          className="google-button"
+        >
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="h-5 w-5" />
+          <span>Google Account</span>
+        </button>
+
+        <p className="register-link">
+          Don't have an account? 
+          <Link to="/register" state={{ from: location.state?.from }}>Register Now</Link>
+        </p>
       </div>
     </div>
   );

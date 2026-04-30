@@ -7,8 +7,7 @@ const Tooltip = ({ children, content, darkMode }) => {
     return (
         <div 
             className="relative flex items-center"
-            onMouseEnter={() => setIsVisible(true)}
-            onMouseLeave={() => setIsVisible(false)}
+           
         >
             {children}
             <AnimatePresence>

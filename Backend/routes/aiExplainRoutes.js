@@ -130,7 +130,7 @@ STRICT GUIDELINES:
 4. Use Markdown for formatting (bold, lists, etc).
 5. If recommending a fix, provide a short, modern code example if possible.
 
-Response length: Keep it under 200 words.`;
+Response length: Keep it under 30-40 words.`;
 
         const result = await generateWithRetry(model, systemPrompt);
         const text = result.response.text();
@@ -201,7 +201,21 @@ router.post('/summarize-section', async (req, res) => {
 
 function buildExplanationPrompt(type, title, details, meta, severity, url, score) {
     const metaString = meta ? JSON.stringify(meta, null, 2) : "None available";
-    return `Analyze this audit finding:\nFinding: ${title}\nType: ${type}\nSeverity: ${severity}\nDetails: ${details}\n\nRAW DATA:\n${metaString}\n\nProvide 1) What it is, 2) Why it matters, 3) Detailed fix instructions.`;
+    return `Analyze this audit finding:
+Finding: ${title}
+Type: ${type}
+Severity: ${severity}
+Details: ${details}
+
+RAW DATA:
+${metaString}
+
+Task: Provide a summary explaining the problem and its solution.
+STRICT LENGTH: The total response MUST be between 35-50 words.
+Format:
+Problem: [Concise description]
+Solution: [Concise fix]
+Note: Be direct and avoid filler words. Return plain text only.`;
 }
 
 export default router;

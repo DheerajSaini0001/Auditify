@@ -15,8 +15,8 @@ const AskAIButton = ({ finding, auditScore, darkMode, meta }) => {
     setAiExplanation('');
     setError(null);
 
-    const baseUrl = 'https://siteaudit.sltechsoft.com/api';
-
+    const baseUrl = 'https://siteaudit.sltechsoft.com/api'  || 'http://localhost:2000';
+    
     try {
       const response = await fetch(`${baseUrl}/api/ai/explain`, {
         method: 'POST',

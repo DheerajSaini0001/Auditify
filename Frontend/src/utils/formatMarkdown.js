@@ -7,6 +7,7 @@ export function formatMarkdown(text) {
     .replace(/```([\s\S]+?)```/g, '<pre class="ai-pre"><code>$1</code></pre>')
     .replace(/^(\d+\.) (.+)/gm, '<li>$2</li>')
     .replace(/(<li>.*<\/li>)/gs, '<ol>$1</ol>')
+    .replace(/(Problem:|Solution:)/gi, '<strong class="ai-highlight-key">$1</strong>')
     .replace(/\n\n/g, '</p><p>')
     .replace(/^(.+)$/gm, (m) => m.startsWith('<') ? m : `<p>${m}</p>`);
 }

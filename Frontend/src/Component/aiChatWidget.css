@@ -67,3 +67,9 @@
     border-radius: 18px;
     border-top-right-radius: 4px;
 }
+
+.ai-highlight-key {
+    font-size: 1.15em;
+    font-weight: 700;
+    color: #4f46e5;
+}

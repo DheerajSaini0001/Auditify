@@ -19,6 +19,7 @@
   font-weight: 600; font-size: 14px;
 }
 .ai-explanation-content { padding: 16px; font-size: 14px; line-height: 1.7; }
+.ai-highlight-key { font-size: 1.15em; font-weight: 700; color: #3730A3; }
 .ai-section-title { color: #4F46E5; font-size: 15px; font-weight: 700; margin: 16px 0 6px; }
 .ai-code { background: #EEF2FF; padding: 2px 6px; border-radius: 4px; font-family: monospace; color: #3730A3; }
 .ai-pre { background: #1E1E2E; color: #A6E3A1; padding: 14px; border-radius: 8px;
@@ -29,6 +30,7 @@
 /* Dark Mode Extends */
 .dark-ai-panel { background: #1E1E2E; border: 1px solid #313244; color: #CDD6F4; }
 .dark-ai-panel .ai-section-title { color: #CBA6F7; }
+.dark-ai-panel .ai-highlight-key { color: #B4BEFE; }
 .dark-ai-panel .ai-code { background: #313244; color: #F5C2E7; }
 .dark-ai-panel .ai-explanation-header { background: #11111B; color: #CBA6F7; }
 .dark-ai-btn { background: #CBA6F7; color: #11111B; }

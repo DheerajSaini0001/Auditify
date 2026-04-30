@@ -18,6 +18,7 @@ import ScoreBadge from "../Component/reusablecomponent/ScoreBadge";
 import SEOCard from "../Component/reusablecomponent/SEOCard";
 import { AuditShimmer } from "../Component/reusablecomponent/AuditShimmer";
 import AskAIButton from "../Component/AskAIButton";
+import Tooltip from "../Component/reusablecomponent/Tooltip";
 
 const getStatusFromScore = (score) => {
   if (score >= 90) return "pass";
@@ -110,13 +111,6 @@ const TitleTagCard = ({ data, darkMode, onInfo }) => {
 
         {/* Content Body */}
         <div className="space-y-4">
-          {/* Description */}
-          <div>
-            <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>DESCRIPTION: </span>
-            <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {InfoDetails.Title.whatThisParameterIs}
-            </span>
-          </div>
 
 
           {/* The Title Itself */}
@@ -129,13 +123,6 @@ const TitleTagCard = ({ data, darkMode, onInfo }) => {
             </div>
           </div>
 
-          {/* Why it matters */}
-          <div className={`pt-3 border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
-            <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>WHY IT MATTERS: </span>
-            <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {InfoDetails.Title.whyItMatters}
-            </span>
-          </div>
 
           {/* Analysis Details (Only if toggled) */}
           {showDetails && analysis && !isPassed && (
@@ -343,13 +330,6 @@ const H1TagCard = ({ data, darkMode, onInfo }) => {
 
         {/* Content Body */}
         <div className="space-y-4">
-          {/* Description */}
-          <div>
-            <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>DESCRIPTION: </span>
-            <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {InfoDetails.H1.whatThisParameterIs}
-            </span>
-          </div>
 
           {/* H1 Content Display */}
           <div>
@@ -367,13 +347,6 @@ const H1TagCard = ({ data, darkMode, onInfo }) => {
             </div>
           </div>
 
-          {/* Why it matters */}
-          <div className={`pt-3 border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
-            <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>WHY IT MATTERS: </span>
-            <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {InfoDetails.H1.whyItMatters}
-            </span>
-          </div>
 
           {/* Analysis Details */}
           {analysis && !isPassed && (
@@ -457,13 +430,6 @@ const ImageAnalysisCard = ({ data, darkMode, onInfo, resolveLink, className = ""
 
         {/* Content Body */}
         <div className="space-y-6">
-          {/* Description */}
-          <div >
-            <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>DESCRIPTION: </span>
-            <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {InfoDetails.Image.whatThisParameterIs}
-            </span>
-          </div>
 
           {/* Stats Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-center">
@@ -626,13 +592,6 @@ const ImageAnalysisCard = ({ data, darkMode, onInfo, resolveLink, className = ""
             )
           }
 
-          {/* Why it matters */}
-          <div className={`pt-3 border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
-            <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>WHY IT MATTERS: </span>
-            <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {InfoDetails.Image.whyItMatters}
-            </span>
-          </div>
 
           {/* Analysis Details */}
           {analysis && !isPassed && (
@@ -733,13 +692,6 @@ const SemanticTagsCard = ({ data, darkMode, onInfo, className }) => {
 
         {/* Tag Grid */}
         <div className="space-y-3">
-          {/* Description */}
-          <div className="mb-4">
-            <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>DESCRIPTION: </span>
-            <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {InfoDetails.Semantic_Tags.whatThisParameterIs}
-            </span>
-          </div>
 
           <div className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Core Elements (Key for SEO)</div>
           <div className="grid grid-cols-2 gap-2">
@@ -775,13 +727,6 @@ const SemanticTagsCard = ({ data, darkMode, onInfo, className }) => {
           )
         }
 
-        {/* Why it matters */}
-        <div className={`pt-3 border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
-          <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>WHY IT MATTERS: </span>
-          <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-            {InfoDetails.Semantic_Tags.whyItMatters}
-          </span>
-        </div>
 
         {/* Analysis Details */}
         {
@@ -997,13 +942,6 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
             )}
           </div>
 
-          {/* Why it matters */}
-          <div className={`pt-3 border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
-            <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>WHY IT MATTERS: </span>
-            <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {InfoDetails.Contextual_Linking.whyItMatters}
-            </span>
-          </div>
 
           {/* Analysis & Recs from API */}
           {data?.analysis && !isPassed && (
@@ -1121,16 +1059,6 @@ const LinkProfileCard = ({ data, darkMode, onInfo, resolveLink, className = "lg:
           </div>
         </div>
 
-        {/* Description & Why it matters */}
-        <div className="space-y-3">
-          <div>
-            <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>DESCRIPTION: </span>
-            <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {InfoDetails.Links.whatThisParameterIs}
-            </span>
-          </div>
-        </div>
-
         {/* Stats Grid */}
         <div className="grid grid-cols-3 gap-3">
           <div title="Links pointing to pages on the same domain" onClick={() => setActiveTab("internal")} className={`cursor-pointer p-3 rounded border text-center transition-all ${activeTab === "internal" ? (darkMode ? "bg-blue-900/20 border-blue-500 ring-1 ring-blue-500" : "bg-blue-50 border-blue-500 ring-1 ring-blue-500") : (darkMode ? "bg-gray-900/50 border-gray-700 hover:border-gray-600" : "bg-gray-50 border-gray-200 hover:border-gray-300")}`}>
@@ -1191,13 +1119,6 @@ const LinkProfileCard = ({ data, darkMode, onInfo, resolveLink, className = "lg:
           </div>
         </div>
 
-        {/* Why it matters */}
-        <div className={`pt-3 border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
-          <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>WHY IT MATTERS: </span>
-          <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-            {InfoDetails.Links.whyItMatters}
-          </span>
-        </div>
 
         {/* Analysis Details */}
         {data.analysis && !isPassed && (
@@ -1284,13 +1205,6 @@ const HeadingHierarchyCard = ({ data, darkMode, onInfo }) => {
 
         {/* Content Body */}
         <div className="space-y-4">
-          {/* Description */}
-          <div>
-            <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>DESCRIPTION: </span>
-            <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {InfoDetails.Heading_Hierarchy.whatThisParameterIs}
-            </span>
-          </div>
 
           <div className="space-y-4">
             {/* Heading Counts */}
@@ -1347,13 +1261,6 @@ const HeadingHierarchyCard = ({ data, darkMode, onInfo }) => {
             )}
           </div>
 
-          {/* Why it matters */}
-          <div className={`pt-3 border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
-            <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>WHY IT MATTERS: </span>
-            <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {InfoDetails.Heading_Hierarchy.whyItMatters}
-            </span>
-          </div>
 
           {/* Analysis Details */}
           {(meta?.issues?.length > 0 || !isPassed) && (
@@ -1453,13 +1360,6 @@ const ContentQualityCard = ({ data, darkMode, onInfo }) => {
 
         {/* Content Body */}
         <div className="space-y-4">
-          {/* Description */}
-          <div>
-            <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>DESCRIPTION: </span>
-            <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {InfoDetails.Content_Quality.whatThisParameterIs}
-            </span>
-          </div>
 
           <div className="space-y-3">
             <div className="text-sm font-semibold">
@@ -1485,13 +1385,6 @@ const ContentQualityCard = ({ data, darkMode, onInfo }) => {
             )}
           </div>
 
-          {/* Why it matters */}
-          <div className={`pt-3 border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
-            <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>WHY IT MATTERS: </span>
-            <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {InfoDetails.Content_Quality.whyItMatters}
-            </span>
-          </div>
 
           {/* Analysis Details */}
           {data.analysis && !isPassed && (
@@ -1569,12 +1462,6 @@ const VideoAnalysisCard = ({ data, darkMode, onInfo, className = "" }) => {
         </div>
 
         <div className="space-y-4">
-          <div>
-            <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>DESCRIPTION: </span>
-            <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {InfoDetails.Video?.whatThisParameterIs || "Evaluates how videos are optimized for performance and discovery."}
-            </span>
-          </div>
 
           <div className="grid grid-cols-2 gap-2">
             <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-900/50" : "bg-gray-50"} border ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
@@ -1595,12 +1482,6 @@ const VideoAnalysisCard = ({ data, darkMode, onInfo, className = "" }) => {
             </div>
           </div>
 
-          <div className={`pt-3 border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
-            <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>WHY IT MATTERS: </span>
-            <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {InfoDetails.Video?.whyItMatters || "Optimized videos improve user engagement and can appear in rich search results."}
-            </span>
-          </div>
         </div>
       </div>
     </div>
@@ -1870,12 +1751,6 @@ const StructuredDataCard = ({ data, darkMode, onInfo, className = "" }) => {
         </div>
 
         <div className="space-y-4">
-          <div>
-            <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>DESCRIPTION: </span>
-            <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {InfoDetails.Structured_Data.whatThisParameterIs}
-            </span>
-          </div>
 
           {meta?.types && (
             <div className="space-y-1">
@@ -1899,12 +1774,6 @@ const StructuredDataCard = ({ data, darkMode, onInfo, className = "" }) => {
             </div>
           )}
 
-          <div className={`pt-3 border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
-            <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>WHY IT MATTERS: </span>
-            <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {InfoDetails.Structured_Data.whyItMatters}
-            </span>
-          </div>
         </div>
       </div>
     </div>
@@ -1950,12 +1819,6 @@ const OpenGraphCard = ({ data, darkMode, onInfo, className = "" }) => {
         </div>
 
         <div className="space-y-4">
-          <div>
-            <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>DESCRIPTION: </span>
-            <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {InfoDetails.Open_Graph.whatThisParameterIs}
-            </span>
-          </div>
 
           {meta?.tags && (
             <div className="grid grid-cols-1 gap-2">
@@ -1970,12 +1833,6 @@ const OpenGraphCard = ({ data, darkMode, onInfo, className = "" }) => {
             </div>
           )}
 
-          <div className={`pt-3 border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
-            <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>WHY IT MATTERS: </span>
-            <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {InfoDetails.Open_Graph.whyItMatters}
-            </span>
-          </div>
         </div>
       </div>
     </div>
@@ -2016,12 +1873,6 @@ const TwitterCardCard = ({ data, darkMode, onInfo, className = "" }) => {
         </div>
 
         <div className="space-y-4">
-          <div>
-            <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>DESCRIPTION: </span>
-            <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {InfoDetails.Twitter_Card.whatThisParameterIs}
-            </span>
-          </div>
 
           {meta?.tags && (
             <div className="grid grid-cols-1 gap-2">
@@ -2036,12 +1887,6 @@ const TwitterCardCard = ({ data, darkMode, onInfo, className = "" }) => {
             </div>
           )}
 
-          <div className={`pt-3 border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
-            <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>WHY IT MATTERS: </span>
-            <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {InfoDetails.Twitter_Card.whyItMatters}
-            </span>
-          </div>
         </div>
       </div>
     </div>
@@ -2092,12 +1937,6 @@ const SocialProfilesCard = ({ data, darkMode, onInfo, className = "" }) => {
         </div>
 
         <div className="space-y-4">
-          <div>
-            <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>DESCRIPTION: </span>
-            <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {InfoDetails.Social_Links.whatThisParameterIs}
-            </span>
-          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {meta.links?.length > 0 ? (
@@ -2125,12 +1964,6 @@ const SocialProfilesCard = ({ data, darkMode, onInfo, className = "" }) => {
             )}
           </div>
 
-          <div className={`pt-3 border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
-            <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>WHY IT MATTERS: </span>
-            <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              {InfoDetails.Social_Links.whyItMatters}
-            </span>
-          </div>
         </div>
       </div>
     </div>

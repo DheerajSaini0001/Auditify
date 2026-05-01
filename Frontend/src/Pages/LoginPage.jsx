@@ -6,7 +6,7 @@ import { Mail, Lock, Eye, EyeOff, Loader2, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { consumePostAuthIntent, savePostAuthIntent } from '../utils/intentStore';
 import Assets from '../assets/Assets.js';
-import MathCaptcha from '../Component/MathCaptcha';
+import CaptchaModal from '../Component/CaptchaModal';
 import './LoginPage.css';
 
 import { getRedirectPath } from '../utils/roleRedirect';
@@ -22,6 +22,7 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isCaptchaModalOpen, setIsCaptchaModalOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { apiFetch, login, isAuthenticated, user, isLoading: isAuthLoading } = useAuth();
@@ -43,19 +44,27 @@ const LoginPage = () => {
     }
   }, [isAuthenticated, navigate, user, isAuthLoading]);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
+    setIsCaptchaModalOpen(true);
+  };
 
-    if (!captchaAnswer) {
-      toast.error('Please complete the CAPTCHA');
-      return;
-    }
+  const handleCaptchaVerify = async (verifiedAnswer, verifiedId) => {
+    setCaptchaAnswer(verifiedAnswer);
+    setCaptchaId(verifiedId);
+    setIsCaptchaModalOpen(false);
+    
+    // Now perform the actual login
+    performLogin(verifiedAnswer, verifiedId);
+  };
+
+  const performLogin = async (ans, id) => {
 
     setLoading(true);
 
     const { ok, data, status } = await apiFetch('/api/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password, captchaAnswer, captchaId }),
+      body: JSON.stringify({ email, password, captchaAnswer: ans, captchaId: id }),
     });
 
     if (ok) {
@@ -156,12 +165,6 @@ const LoginPage = () => {
             <Link to="/forgot-password" className="forgot-password">Forgot password?</Link>
           </div>
 
-          <div className="captcha-container">
-            <MathCaptcha 
-              key={captchaKey}
-              onAnswerChange={(val, id) => { setCaptchaAnswer(val); setCaptchaId(id); }} 
-            />
-          </div>
 
           <button
             type="submit"
@@ -194,6 +197,16 @@ const LoginPage = () => {
           <Link to="/register" state={{ from: location.state?.from }}>Register Now</Link>
         </p>
       </div>
+
+      {isCaptchaModalOpen && (
+        <CaptchaModal 
+          isOpen={isCaptchaModalOpen}
+          onClose={() => setIsCaptchaModalOpen(false)}
+          onVerify={handleCaptchaVerify}
+          darkMode={darkMode}
+          apiFetch={apiFetch}
+        />
+      )}
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import express from "express";
-import { generateCaptcha } from "../controllers/captchaController.js";
+import { generateCaptcha, verifyCaptcha } from "../controllers/captchaController.js";
 import rateLimit from "express-rate-limit";
 
 const router = express.Router();
@@ -12,5 +12,6 @@ const captchaLimiter = rateLimit({
 });
 
 router.get("/generate", captchaLimiter, generateCaptcha);
+router.post("/verify", captchaLimiter, verifyCaptcha);
 
 export default router;

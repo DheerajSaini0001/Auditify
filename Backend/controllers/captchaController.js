@@ -25,3 +25,24 @@ export const generateCaptcha = (req, res) => {
     res.json({ question: `${a} ${op} ${b}`, captchaId });
   });
 };
+
+export const verifyCaptcha = (req, res) => {
+  const { captchaAnswer, captchaId } = req.body;
+  
+  let stored;
+  if (captchaId && req.session.captchas) {
+    stored = req.session.captchas[captchaId];
+  } else {
+    stored = req.session.captchaAnswer;
+  }
+
+  if (stored === undefined || stored === null) {
+    return res.status(400).json({ success: false, error: 'CAPTCHA session expired. Please refresh.' });
+  }
+
+  if (parseInt(captchaAnswer) !== stored) {
+    return res.status(400).json({ success: false, error: 'Invalid CAPTCHA. Please try again.' });
+  }
+
+  res.json({ success: true, message: 'CAPTCHA verified' });
+};

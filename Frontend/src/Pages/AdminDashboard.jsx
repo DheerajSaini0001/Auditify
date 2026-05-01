@@ -35,7 +35,7 @@ const AdminDashboard = () => {
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
 
-  const [stats, setStats] = useState({ totalUsers: 0, totalAudits: 0, totalDownloads: 0, totalProjects: 0, activeToday: 0 });
+  const [stats, setStats] = useState({ totalUsers: 0, totalAudits: 0, totalDownloads: 0, totalProjects: 0, activeToday: 0, avgScore: 0 });
   const [users, setUsers] = useState([]);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -293,7 +293,7 @@ const AdminDashboard = () => {
                   <StatCard icon={Users} label="Total Users" value={stats.totalUsers} color="bg-blue-600/10 text-blue-500" trend={12} delay={0.1} />
                   <StatCard icon={Activity} label="Sites Scanned" value={stats.totalAudits} color="bg-emerald-600/10 text-emerald-500" trend={8} delay={0.2} />
                   <StatCard icon={Download} label="Reports Exported" value={stats.totalDownloads} color="bg-amber-600/10 text-amber-500" trend={-3} delay={0.3} />
-                  <StatCard icon={BarChart3} label="Avg Score" value="78%" color="bg-indigo-600/10 text-indigo-500" delay={0.4} />
+                  <StatCard icon={BarChart3} label="Avg Score" value={stats.avgScore ? `${stats.avgScore}%` : '0%'} color="bg-indigo-600/10 text-indigo-500" delay={0.4} />
                 </div>
 
                 {/* Primary Grid Row */}
@@ -779,10 +779,26 @@ const AdminDashboard = () => {
                                <span className="text-xs text-gray-500">Total Audits</span>
                                <span className="font-bold">{userDetails.auditHistory?.length || 0}</span>
                              </div>
-                             <div className="flex justify-between items-center">
-                               <span className="text-xs text-gray-500">Avg. Score</span>
-                               <span className="font-bold text-emerald-500">84%</span>
-                             </div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-xs text-gray-500">Avg. Score</span>
+                                <span className={`font-bold ${
+                                  (() => {
+                                    const scoredAudits = userDetails.auditHistory?.filter(h => h.status === 'success' && typeof h.score === 'number') || [];
+                                    const avg = scoredAudits.length > 0 
+                                      ? Math.round(scoredAudits.reduce((acc, curr) => acc + curr.score, 0) / scoredAudits.length)
+                                      : 0;
+                                    
+                                    return avg >= 80 ? 'text-emerald-500' : avg >= 50 ? 'text-amber-500' : 'text-rose-500';
+                                  })()
+                                }`}>
+                                  {(() => {
+                                    const scoredAudits = userDetails.auditHistory?.filter(h => h.status === 'success' && typeof h.score === 'number') || [];
+                                    return scoredAudits.length > 0 
+                                      ? Math.round(scoredAudits.reduce((acc, curr) => acc + curr.score, 0) / scoredAudits.length) + '%'
+                                      : '0%';
+                                  })()}
+                                </span>
+                              </div>
                              <div className="flex justify-between items-center">
                                <span className="text-xs text-gray-500">Reports PDF</span>
                                <span className="font-bold text-amber-500">{userDetails.downloadHistory?.length || 0}</span>

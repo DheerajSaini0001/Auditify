@@ -235,9 +235,12 @@ export const getStats = async (req, res) => {
     ]);
     const totalProjects = projectAggregation[0]?.total || 0;
 
-    // Active Today (unique users logged in last 24h)
-    const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const activeToday = await User.countDocuments({ lastLogin: { $gte: last24h } });
+    // Average Score across all successful audits
+    const avgScoreAggregation = await AuditLog.aggregate([
+      { $match: { status: 'success', score: { $ne: null } } },
+      { $group: { _id: null, avg: { $avg: "$score" } } }
+    ]);
+    const avgScore = Math.round(avgScoreAggregation[0]?.avg || 0);
 
     res.json({
       success: true,
@@ -245,7 +248,8 @@ export const getStats = async (req, res) => {
       totalAudits: totalAudits || 0,
       totalDownloads: totalDownloads || 0,
       totalProjects: totalProjects || 0,
-      activeToday: activeToday || 0
+      activeToday: activeToday || 0,
+      avgScore: avgScore || 0
     });
   } catch (error) {
     console.error('getStats Error:', error);

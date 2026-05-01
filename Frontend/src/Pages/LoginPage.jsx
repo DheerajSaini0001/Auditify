@@ -205,6 +205,9 @@ const LoginPage = () => {
           onVerify={handleCaptchaVerify}
           darkMode={darkMode}
           apiFetch={apiFetch}
+          title="Security Check"
+          description="Please solve the challenge to securely sign in to your account."
+          buttonText="Verify & Sign In"
         />
       )}
     </div>

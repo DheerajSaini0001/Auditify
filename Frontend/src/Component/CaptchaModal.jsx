@@ -2,7 +2,16 @@ import React, { useState } from 'react';
 import { X, ShieldCheck, Loader2, CheckCircle2 } from 'lucide-react';
 import MathCaptcha from './MathCaptcha';
 
-const CaptchaModal = ({ isOpen, onClose, onVerify, darkMode, apiFetch }) => {
+const CaptchaModal = ({ 
+  isOpen, 
+  onClose, 
+  onVerify, 
+  darkMode, 
+  apiFetch,
+  title = "Security Verification",
+  description = "To protect your account, please solve this quick challenge to continue.",
+  buttonText = "Verify & Continue"
+}) => {
   const [captchaAnswer, setCaptchaAnswer] = useState('');
   const [captchaId, setCaptchaId] = useState('');
   const [verifying, setVerifying] = useState(false);
@@ -28,8 +37,6 @@ const CaptchaModal = ({ isOpen, onClose, onVerify, darkMode, apiFetch }) => {
         }, 1000);
       } else {
         alert(data.error || 'Verification failed. Please try again.');
-        // The MathCaptcha component should probably handle its own refresh on error
-        // but here we can just reset if needed.
       }
     } catch (error) {
       console.error('Verification error:', error);
@@ -56,9 +63,9 @@ const CaptchaModal = ({ isOpen, onClose, onVerify, darkMode, apiFetch }) => {
           <div className={`p-4 rounded-full mb-4 ${darkMode ? 'bg-blue-500/10' : 'bg-blue-50'}`}>
             <ShieldCheck className="w-10 h-10 text-blue-500" />
           </div>
-          <h2 className="text-2xl font-bold mb-2">Security Verification</h2>
+          <h2 className="text-2xl font-bold mb-2">{title}</h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm">
-            To protect your account, please solve this quick challenge before signing in.
+            {description}
           </p>
         </div>
 
@@ -86,13 +93,13 @@ const CaptchaModal = ({ isOpen, onClose, onVerify, darkMode, apiFetch }) => {
                 <span>Verified</span>
               </>
             ) : (
-              <span>Verify & Sign In</span>
+              <span>{buttonText}</span>
             )}
           </button>
         </div>
 
         <p className="mt-6 text-center text-xs text-slate-400 uppercase tracking-widest font-semibold">
-          Secure Login Powered by Auditify
+          Secure Verification Powered by Auditify
         </p>
       </div>
     </div>

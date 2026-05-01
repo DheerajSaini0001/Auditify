@@ -2,11 +2,11 @@ import React, { useState, useContext } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext.jsx';
-import { User, Mail, Lock, Eye, EyeOff, Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { User, Mail, Lock, Eye, EyeOff, Loader2, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Assets from '../assets/Assets.js';
-import MathCaptcha from '../Component/MathCaptcha';
-import PageHeader from '../Component/PageHeader';
+import CaptchaModal from '../Component/CaptchaModal';
+import './RegisterPage.css';
 
 const RegisterPage = () => {
   const { theme } = useContext(ThemeContext);
@@ -22,6 +22,7 @@ const RegisterPage = () => {
   const [captchaKey, setCaptchaKey] = useState(0); 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isCaptchaModalOpen, setIsCaptchaModalOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { apiFetch } = useAuth();
@@ -34,7 +35,7 @@ const RegisterPage = () => {
     return pass.length >= 8 && /[A-Z]/.test(pass) && /[0-9]/.test(pass);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     
     if (formData.password !== formData.confirmPassword) {
@@ -43,15 +44,24 @@ const RegisterPage = () => {
     }
 
     if (!validatePassword(formData.password)) {
-      toast.error('Passsword must be at least 8 characters, include one uppercase and one digit.');
+      toast.error('Password must be at least 8 characters, include one uppercase and one digit.');
       return;
     }
 
-    if (!captchaAnswer) {
-      toast.error('Please complete the CAPTCHA');
-      return;
-    }
+    // Open CAPTCHA modal instead of submitting directly
+    setIsCaptchaModalOpen(true);
+  };
 
+  const handleCaptchaVerify = async (verifiedAnswer, verifiedId) => {
+    setCaptchaAnswer(verifiedAnswer);
+    setCaptchaId(verifiedId);
+    setIsCaptchaModalOpen(false);
+    
+    // Now perform the actual registration
+    performRegistration(verifiedAnswer, verifiedId);
+  };
+
+  const performRegistration = async (ans, id) => {
     setLoading(true);
     const { ok, data } = await apiFetch('/api/auth/register', {
       method: 'POST',
@@ -59,14 +69,13 @@ const RegisterPage = () => {
         name: formData.name,
         email: formData.email,
         password: formData.password,
-        captchaAnswer,
-        captchaId
+        captchaAnswer: ans,
+        captchaId: id
       }),
     });
 
     if (ok) {
       toast.success(data.message);
-      // Pass both email (for OTP) and 'from' state (for redirect after verification)
       navigate('/verify-otp', { 
         state: { 
           email: formData.email,
@@ -94,140 +103,159 @@ const RegisterPage = () => {
   const strength = passwordStrength(formData.password);
 
   return (
-    <div className={`min-h-screen flex flex-col justify-center transition-colors duration-300 py-12 px-4 sm:px-6 lg:px-8 ${darkMode ? "bg-[#0a0a0f]" : "bg-gray-50"}`}>
-      <PageHeader 
-        logo={
-          <Link to="/">
-            <img src={darkMode ? Assets.Logo : Assets.DarkLogo} alt="DealerPulse" title="DealerPulse" className="h-20 w-auto" />
-          </Link>
-        }
-        title="Join"
-        titleAccent="Dealerpulse"
-        subtitle="Start your professional website auditing journey"
-        darkMode={darkMode}
-      />
+    <div className={`register-page-container ${darkMode ? 'dark' : 'light'}`}>
+      <div className="bg-blob bg-blob-1"></div>
+      <div className="bg-blob bg-blob-2"></div>
 
-      <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className={`py-12 px-10 rounded-3xl shadow-xl border transition-colors ${darkMode ? "bg-[#11111a] border-white/5" : "bg-white border-gray-100"}`}>
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 font-bold"><User className="h-5 w-5" /></div>
-              <input
-                name="name"
-                type="text"
-                required
-                className={`block w-full pl-12 pr-4 py-3.5 rounded-2xl transition-all font-medium placeholder:text-gray-500 outline-none border ${
-                  darkMode 
-                    ? "bg-white/5 border-white/5 focus:bg-white/10 focus:border-emerald-500/50 text-white" 
-                    : "bg-gray-50 border-gray-100 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 text-gray-900"
-                }`}
-                placeholder="Full Name"
-                value={formData.name}
-                onChange={handleChange}
-              />
-            </div>
+      <div className={`register-wrapper ${darkMode ? 'dark' : 'light'}`}>
+        {/* Left Side: Branding */}
+        <div className="register-branding">
+          <img 
+            src="/Users/dheeraj/.gemini/antigravity/brain/395eb820-345b-4db5-9b19-dad312edc833/registration_branding_image_1777615204902.png" 
+            alt="Branding" 
+            className="branding-image-bg" 
+          />
+          <div className="branding-overlay"></div>
+          <div className="branding-content">
+            <Link to="/">
+              <img src={Assets.Logo} alt="Auditify" className="h-12 w-auto mb-10 brightness-0 invert" />
+            </Link>
+            <h1 className="branding-title">Start Your Journey with Auditify</h1>
+            <p className="branding-subtitle">
+              Join thousands of professionals who use Auditify to optimize, secure, and scale their web presence with AI-driven insights.
+            </p>
+          </div>
+        </div>
 
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 font-bold"><Mail className="h-5 w-5" /></div>
-              <input
-                name="email"
-                type="email"
-                required
-                className={`block w-full pl-12 pr-4 py-3.5 rounded-2xl transition-all font-medium placeholder:text-gray-500 outline-none border ${
-                  darkMode 
-                    ? "bg-white/5 border-white/5 focus:bg-white/10 focus:border-emerald-500/50 text-white" 
-                    : "bg-gray-50 border-gray-100 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 text-gray-900"
-                }`}
-                placeholder="Email address"
-                value={formData.email}
-                onChange={handleChange}
-              />
-            </div>
+        {/* Right Side: Form */}
+        <div className="register-form-container">
+          <div className="form-header">
+            <h2 className={`form-title ${darkMode ? 'text-white' : 'text-slate-900'}`}>Create Account</h2>
+            <p className="form-subtitle">Fill in the details to get started</p>
+          </div>
 
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 font-bold"><Lock className="h-5 w-5" /></div>
-              <input
-                name="password"
-                type={showPassword ? 'text' : 'password'}
-                required
-                className={`block w-full pl-12 pr-12 py-3.5 rounded-2xl transition-all font-medium placeholder:text-gray-500 outline-none border ${
-                  darkMode 
-                    ? "bg-white/5 border-white/5 focus:bg-white/10 focus:border-emerald-500/50 text-white" 
-                    : "bg-gray-50 border-gray-100 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 text-gray-900"
-                }`}
-                placeholder="Password (8+ chars, 1 Uppercase, 1 Digit)"
-                value={formData.password}
-                onChange={handleChange}
-              />
-              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600">
-                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-              </button>
-            </div>
-
-            {/* Password Strength Indicator */}
-            {formData.password && (
-              <div className="px-2 py-1">
-                <div className="flex gap-1 h-1">
-                  {[1, 2, 3, 4].map((level) => (
-                    <div
-                      key={level}
-                      className={`flex-1 rounded-full transition-all duration-500 ${
-                        strength >= level
-                          ? strength <= 2
-                            ? 'bg-red-500'
-                            : strength === 3
-                            ? 'bg-amber-500'
-                            : 'bg-emerald-500'
-                          : darkMode ? "bg-white/10" : 'bg-gray-100'
-                      }`}
-                    ></div>
-                  ))}
-                </div>
-                <p className={`text-[10px] mt-1 font-bold uppercase tracking-wider ${
-                  strength <= 2 ? 'text-red-500' : strength === 3 ? 'text-amber-500' : 'text-emerald-500'
-                }`}>
-                  {strength <= 1 ? 'Too Weak' : strength === 2 ? 'Weak' : strength === 3 ? 'Fair' : 'Strong'}
-                </p>
+          <form className="register-form" onSubmit={handleSubmit}>
+            <div className="input-group">
+              <label className="input-label">Full Name</label>
+              <div className="input-field-wrapper">
+                <input
+                  name="name"
+                  type="text"
+                  required
+                  className={`register-input ${darkMode ? 'dark' : 'light'}`}
+                  placeholder="Enter your name"
+                  value={formData.name}
+                  onChange={handleChange}
+                />
+                <User className="input-field-icon" size={18} />
               </div>
-            )}
-
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 font-bold"><Lock className="h-5 w-5" /></div>
-              <input
-                name="confirmPassword"
-                type={showPassword ? 'text' : 'password'}
-                required
-                className={`block w-full pl-12 pr-4 py-3.5 rounded-2xl transition-all font-medium placeholder:text-gray-500 outline-none border ${
-                  darkMode 
-                    ? "bg-white/5 border-white/5 focus:bg-white/10 focus:border-emerald-500/50 text-white" 
-                    : "bg-gray-50 border-gray-100 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 text-gray-900"
-                }`}
-                placeholder="Confirm Password"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-              />
             </div>
 
-            <MathCaptcha 
-              key={captchaKey}
-              onAnswerChange={(val, id) => { setCaptchaAnswer(val); setCaptchaId(id); }} 
-            />
+            <div className="input-group">
+              <label className="input-label">Email Address</label>
+              <div className="input-field-wrapper">
+                <input
+                  name="email"
+                  type="email"
+                  required
+                  className={`register-input ${darkMode ? 'dark' : 'light'}`}
+                  placeholder="name@company.com"
+                  value={formData.email}
+                  onChange={handleChange}
+                />
+                <Mail className="input-field-icon" size={18} />
+              </div>
+            </div>
+
+            <div className="input-group">
+              <label className="input-label">Password</label>
+              <div className="input-field-wrapper">
+                <input
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  className={`register-input ${darkMode ? 'dark' : 'light'}`}
+                  placeholder="••••••••"
+                  value={formData.password}
+                  onChange={handleChange}
+                />
+                <Lock className="input-field-icon" size={18} />
+                <button 
+                  type="button" 
+                  onClick={() => setShowPassword(!showPassword)} 
+                  className="absolute right-4 text-gray-400 hover:text-emerald-500 transition-colors"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              
+              {formData.password && (
+                <div className="mt-2 px-1">
+                  <div className="flex gap-1 h-1">
+                    {[1, 2, 3, 4].map((level) => (
+                      <div
+                        key={level}
+                        className={`flex-1 rounded-full transition-all duration-500 ${
+                          strength >= level
+                            ? strength <= 2 ? 'bg-rose-500' : strength === 3 ? 'bg-amber-500' : 'bg-emerald-500'
+                            : darkMode ? "bg-white/10" : 'bg-slate-100'
+                        }`}
+                      ></div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="input-group">
+              <label className="input-label">Confirm Password</label>
+              <div className="input-field-wrapper">
+                <input
+                  name="confirmPassword"
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  className={`register-input ${darkMode ? 'dark' : 'light'}`}
+                  placeholder="••••••••"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                />
+                <Lock className="input-field-icon" size={18} />
+              </div>
+            </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-4 px-4 rounded-2xl font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 transition-all shadow-lg shadow-emerald-500/25 active:scale-[0.98]"
+              className="register-submit-button"
             >
-              {loading ? <Loader2 className="animate-spin h-5 w-5" /> : 'Create Account'}
+              {loading ? <Loader2 className="animate-spin h-5 w-5" /> : (
+                <>
+                  <span>Create Account</span>
+                  <ArrowRight size={18} />
+                </>
+              )}
             </button>
           </form>
 
-          <p className={`mt-8 text-center text-sm font-bold uppercase tracking-tighter ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
-            Already have an account?{' '}
-            <Link to="/login" state={{ from: location.state?.from }} className="text-emerald-600 hover:text-emerald-500 transition-colors ml-1 tracking-wider">Sign In</Link>
+          <p className="login-redirect">
+            Already have an account?
+            <Link to="/login" state={{ from: location.state?.from }}>Sign In</Link>
           </p>
         </div>
       </div>
+
+      {isCaptchaModalOpen && (
+        <CaptchaModal 
+          isOpen={isCaptchaModalOpen}
+          onClose={() => setIsCaptchaModalOpen(false)}
+          onVerify={handleCaptchaVerify}
+          darkMode={darkMode}
+          apiFetch={apiFetch}
+          title="Verify Registration"
+          description="Please solve this challenge to complete your account creation."
+          buttonText="Verify & Create Account"
+        />
+      )}
     </div>
   );
 };

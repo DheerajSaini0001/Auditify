@@ -137,7 +137,7 @@ const startServer = async () => {
 
   // ── 10. Health ──
   app.get("/", (req, res) => {
-    res.send("✅ Server running");
+    res.send("✅ Server running..");
   });
 
   // ── 11. Error Handler ──

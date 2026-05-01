@@ -8,11 +8,13 @@ import MathCaptcha from '../Component/MathCaptcha';
 const ForgotPasswordPage = () => {
   const [email, setEmail] = useState('');
   const [captchaAnswer, setCaptchaAnswer] = useState('');
+  const [captchaId, setCaptchaId] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const { apiFetch } = useAuth();
 
   const handleSubmit = async (e) => {
+    e.preventDefault();
     if (!captchaAnswer) {
         toast.error('Please complete the CAPTCHA');
         return;
@@ -22,10 +24,21 @@ const ForgotPasswordPage = () => {
     
     // Always show success to prevent enumeration (SRS 4.4.5 requirement)
     try {
-        await apiFetch('/api/auth/forgot-password', {
+        const { ok, data } = await apiFetch('/api/auth/forgot-password', {
             method: 'POST',
             body: JSON.stringify({ email, captchaAnswer, captchaId }),
         });
+
+        if (!ok) {
+          // If it's a captcha error, we should probably tell them? 
+          // But SRS says "Always return 200 to prevent email enumeration".
+          // However, captcha error is not about enumeration.
+          if (data.error && data.error.includes('CAPTCHA')) {
+            toast.error(data.error);
+            setLoading(false);
+            return;
+          }
+        }
     } catch (err) {
         console.error('Request failed:', err);
     } finally {

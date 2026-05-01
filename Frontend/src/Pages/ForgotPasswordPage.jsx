@@ -1,38 +1,50 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Mail, ArrowLeft, Send, CheckCircle } from 'lucide-react';
+import { ThemeContext } from '../context/ThemeContext.jsx';
+import { Mail, ArrowLeft, Send, CheckCircle, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import MathCaptcha from '../Component/MathCaptcha';
+import CaptchaModal from '../Component/CaptchaModal';
 
 const ForgotPasswordPage = () => {
+  const { theme } = useContext(ThemeContext);
+  const darkMode = theme === "dark";
   const [email, setEmail] = useState('');
   const [captchaAnswer, setCaptchaAnswer] = useState('');
   const [captchaId, setCaptchaId] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isCaptchaModalOpen, setIsCaptchaModalOpen] = useState(false);
   const { apiFetch } = useAuth();
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    if (!captchaAnswer) {
-        toast.error('Please complete the CAPTCHA');
+    if (!email) {
+        toast.error('Please enter your email address');
         return;
     }
+    setIsCaptchaModalOpen(true);
+  };
 
+  const handleCaptchaVerify = async (ans, id) => {
+    setCaptchaAnswer(ans);
+    setCaptchaId(id);
+    setIsCaptchaModalOpen(false);
+    
+    // Now perform the actual forgot password initiation
+    performForgotPassword(ans, id);
+  };
+
+  const performForgotPassword = async (ans, id) => {
     setLoading(true);
     
-    // Always show success to prevent enumeration (SRS 4.4.5 requirement)
     try {
         const { ok, data } = await apiFetch('/api/auth/forgot-password', {
             method: 'POST',
-            body: JSON.stringify({ email, captchaAnswer, captchaId }),
+            body: JSON.stringify({ email, captchaAnswer: ans, captchaId: id }),
         });
 
         if (!ok) {
-          // If it's a captcha error, we should probably tell them? 
-          // But SRS says "Always return 200 to prevent email enumeration".
-          // However, captcha error is not about enumeration.
           if (data.error && data.error.includes('CAPTCHA')) {
             toast.error(data.error);
             setLoading(false);
@@ -97,14 +109,12 @@ const ForgotPasswordPage = () => {
             />
           </div>
 
-          <MathCaptcha onAnswerChange={(val, id) => { setCaptchaAnswer(val); setCaptchaId(id); }} />
-
           <button
             type="submit"
             disabled={loading}
             className="group relative w-full flex justify-center py-4 px-4 rounded-2xl font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all shadow-lg shadow-blue-500/20 active:scale-[0.98]"
           >
-            {loading ? 'Sending...' : 'Send Reset Link'}
+            {loading ? <Loader2 className="animate-spin h-5 w-5" /> : 'Send Reset Link'}
           </button>
 
           <div className="text-center">
@@ -115,6 +125,19 @@ const ForgotPasswordPage = () => {
           </div>
         </form>
       </div>
+
+      {isCaptchaModalOpen && (
+        <CaptchaModal 
+          isOpen={isCaptchaModalOpen}
+          onClose={() => setIsCaptchaModalOpen(false)}
+          onVerify={handleCaptchaVerify}
+          darkMode={darkMode}
+          apiFetch={apiFetch}
+          title="Security Verification"
+          description="Please solve the challenge to securely reset your password."
+          buttonText="Verify & Send Link"
+        />
+      )}
     </div>
   );
 };

@@ -43,6 +43,7 @@ import GuestReportPage from "./Component/GuestReportPage.jsx";
 import { useAuth } from "./context/AuthContext.jsx";
 import { useData } from "./context/DataContext.jsx";
 import CanonicalTag from "./Component/CanonicalTag.jsx";
+import GuestRoute from "./Component/GuestRoute";
 
 /**
  * Wraps a report route for unauthenticated users:
@@ -83,10 +84,9 @@ function AppContentInner() {
       <CanonicalTag />
       <Routes>
         <Route element={<MainLayout />}>
-          {/* Public Routes */}
           <Route path="/" element={<Homepage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
+          <Route path="/register" element={<GuestRoute><RegisterPage /></GuestRoute>} />
           <Route path="/verify-otp" element={<OtpVerifyPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />

@@ -118,11 +118,11 @@ const RegisterPage = () => {
           <div className="branding-overlay"></div>
           <div className="branding-content">
             <Link to="/">
-              <img src={Assets.Logo} alt="Dealer Pulse" className="h-12 w-auto mb-10 brightness-0 invert" />
+              <img src={Assets.Logo} alt="Auditify" className="h-12 w-auto mb-10 brightness-0 invert" />
             </Link>
-            <h1 className="branding-title">Start Your Journey with Dealer Pulse</h1>
+            <h1 className="branding-title">Start Your Journey with Auditify</h1>
             <p className="branding-subtitle">
-              Join thousands of professionals who use Dealer Pulse to optimize, secure, and scale their web presence with AI-driven insights.
+              Join thousands of professionals who use Auditify to optimize, secure, and scale their web presence with AI-driven insights.
             </p>
           </div>
         </div>

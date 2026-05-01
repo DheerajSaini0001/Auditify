@@ -226,7 +226,7 @@ const AdminConfig = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Dealer Pulse-configs-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `auditify-configs-${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
     toast.success('Config keys exported');

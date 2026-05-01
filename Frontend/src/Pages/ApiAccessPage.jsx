@@ -29,7 +29,7 @@ export default function ApiAccessPage() {
           </div>
           <div className={`p-6 rounded-2xl border backdrop-blur-md ${darkMode ? "bg-blue-500/5 border-blue-500/20" : "bg-white border-slate-200 shadow-xl"}`}>
             <h4 className="font-bold text-sm mb-2 opacity-70 uppercase tracking-widest">Base URL</h4>
-            <div className="text-lg font-mono font-bold text-blue-500">https://api.Dealer Pulse.com/v1</div>
+            <div className="text-lg font-mono font-bold text-blue-500">https://api.auditify.com/v1</div>
             <div className="mt-4 flex gap-4 text-xs font-semibold">
               <span className="flex items-center gap-1 text-emerald-500"><CheckCircle2 size={14}/> 99.9% Uptime</span>
               <span className="flex items-center gap-1 text-purple-500"><TerminalSquare size={14}/> REST JSON</span>
@@ -47,7 +47,7 @@ export default function ApiAccessPage() {
               </div>
               <h2 className="text-3xl font-bold tracking-tight">Authentication</h2>
               <p className={`text-lg leading-relaxed ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
-                Requests to the Dealer Pulse API must be authenticated using a Bearer token. Create API Keys directly inside your developer dashboard. We recommend cycling these keys every 90 days.
+                Requests to the Auditify API must be authenticated using a Bearer token. Create API Keys directly inside your developer dashboard. We recommend cycling these keys every 90 days.
               </p>
             </div>
             <div className={`flex-1 rounded-2xl border overflow-hidden mt-8 md:mt-0 ${darkMode ? "bg-[#0B1221] border-slate-800" : "bg-slate-900 border-slate-800"}`}>
@@ -85,7 +85,7 @@ export default function ApiAccessPage() {
                 <div className="text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded">POST /v1/scan</div>
               </div>
               <div className="p-6 font-mono text-sm leading-8 text-slate-300 overflow-x-auto">
-                <span className="text-blue-400">curl</span> -X POST https://api.Dealer Pulse.com/v1/scan \<br/>
+                <span className="text-blue-400">curl</span> -X POST https://api.auditify.com/v1/scan \<br/>
                 &nbsp;&nbsp;-H <span className="text-emerald-400">"Authorization: Bearer sk_live_..."</span> \<br/>
                 &nbsp;&nbsp;-d <span className="text-yellow-300">'{'{'}"url": "https://example.com"{'}'}'</span>
               </div>

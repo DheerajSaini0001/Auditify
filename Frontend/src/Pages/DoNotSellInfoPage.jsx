@@ -52,8 +52,8 @@ export default function DoNotSellInfoPage() {
                 <ShieldOff className="text-rose-500" />
                 <h2>1. CCPA and Your Privacy Rights</h2>
               </div>
-              <p>The California Consumer Privacy Act (CCPA) grants California residents specific rights regarding their personal information. One of these is the right to opt-out of the "sale" of personal information. Dealer Pulse respects these rights for all users, regardless of their location.</p>
-              <p>While Dealer Pulse does not sell your personal information in the traditional sense (exchanging it for money), the CCPA defines "sale" broadly to include sharing information for other benefits.</p>
+              <p>The California Consumer Privacy Act (CCPA) grants California residents specific rights regarding their personal information. One of these is the right to opt-out of the "sale" of personal information. Auditify respects these rights for all users, regardless of their location.</p>
+              <p>While Auditify does not sell your personal information in the traditional sense (exchanging it for money), the CCPA defines "sale" broadly to include sharing information for other benefits.</p>
             </section>
 
             <div className={`h-px w-full ${darkMode ? "bg-slate-800" : "bg-slate-200"}`}></div>
@@ -79,7 +79,7 @@ export default function DoNotSellInfoPage() {
               <p>If you wish to exercise your right to opt-out of any potential sharing of your information that could be categorized as a "sale" under CCPA, you can do so through the following methods:</p>
               <ul className="list-disc pl-6 space-y-2">
                 <li>Submit a request through our contact form.</li>
-                <li>Email us directly at privacy@Dealer Pulse.ai with the subject "CCPA Opt-Out Request".</li>
+                <li>Email us directly at privacy@auditify.ai with the subject "CCPA Opt-Out Request".</li>
                 <li>Adjust your privacy settings within your user dashboard.</li>
               </ul>
             </section>

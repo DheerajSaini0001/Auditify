@@ -99,7 +99,7 @@ const CaptchaModal = ({
         </div>
 
         <p className="mt-6 text-center text-xs text-slate-400 uppercase tracking-widest font-semibold">
-          Secure Verification Powered by Dealer Pulse
+          Secure Verification Powered by Auditify
         </p>
       </div>
     </div>

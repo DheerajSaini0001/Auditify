@@ -108,7 +108,7 @@ const LoginPage = () => {
           <Link to="/">
             <img 
               src={darkMode ? Assets.Logo : Assets.DarkLogo} 
-              alt="Dealer Pulse" 
+              alt="Auditify" 
               className="login-logo" 
             />
           </Link>

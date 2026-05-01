@@ -24,10 +24,10 @@ export default function DocsPage() {
         {/* Hero Section */}
         <PageHeader 
             icon={BookOpen}
-            badge="Auditify Documentation"
+            badge="Dealer Pulse Documentation"
             title="Understand the"
             titleAccent="Intelligence Engine."
-            subtitle="Dive deep into how the Auditify crawler traverses, analyzes, and grades your infrastructure. Everything from LCP heuristics to SSL chain validation."
+            subtitle="Dive deep into how the Dealer Pulse crawler traverses, analyzes, and grades your infrastructure. Everything from LCP heuristics to SSL chain validation."
             darkMode={darkMode}
         />
 
@@ -43,10 +43,10 @@ export default function DocsPage() {
               </div>
               <h3 className="text-2xl font-bold mb-4">Crawler Mechanics</h3>
               <p className={`leading-relaxed mb-6 ${darkMode ? "text-slate-300" : "text-slate-600"}`}>
-                Auditify deploys an isolated headless Chromium instance to inspect your domain. We spoof a standardized modern mobile User-Agent, throttle the network to simulate 4G, and artificially degrade CPU latency to x4 to strictly emulate real-world mid-tier cellular devices.
+                Dealer Pulse deploys an isolated headless Chromium instance to inspect your domain. We spoof a standardized modern mobile User-Agent, throttle the network to simulate 4G, and artificially degrade CPU latency to x4 to strictly emulate real-world mid-tier cellular devices.
               </p>
               <div className={`font-mono text-xs p-4 rounded-xl ${darkMode ? 'bg-slate-950 border border-slate-800 text-emerald-400' : 'bg-slate-50 border border-slate-200 text-emerald-600'}`}>
-                User-Agent: AuditifyBot/1.0 (Mobile; headless)
+                User-Agent: Dealer Pulse /1.0 (Mobile; headless)
               </div>
             </div>
           </div>

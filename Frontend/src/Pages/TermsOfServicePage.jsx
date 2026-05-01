@@ -21,7 +21,7 @@ export default function TermsOfServicePage() {
             icon={Gavel}
             title="Terms of"
             titleAccent="Service."
-            subtitle="The legal constraints, limitations of liability, and usage bounds for the Auditify platform."
+            subtitle="The legal constraints, limitations of liability, and usage bounds for the Dealer Pulse platform."
             darkMode={darkMode}
         />
 
@@ -33,7 +33,7 @@ export default function TermsOfServicePage() {
                 <AlertCircle className="text-red-500" />
                 1. Prohibition of Abuse
               </h2>
-              <p>Auditify implements a highly resource-intensive scraping phase. Programmatically forcing the engine to audit the same domain structure aggressively every few seconds is functionally equivalent to launching a Denial of Service (Layer 7) sequence.</p>
+              <p>Dealer Pulse implements a highly resource-intensive scraping phase. Programmatically forcing the engine to audit the same domain structure aggressively every few seconds is functionally equivalent to launching a Denial of Service (Layer 7) sequence.</p>
               <p>Circumventing REST rate-limits using randomized proxy ingress arrays or botnets forces an automatic and permanent network ban. You must respect the 429 Too Many Requests response headers.</p>
             </section>
 
@@ -43,7 +43,7 @@ export default function TermsOfServicePage() {
                 2. Imperfect Diagnostic Output
               </h2>
               <p>Automated software is, inherently, flawed. Validating WCAG accessibility properties programmatically via DOM assertions can occasionally result in False Positives (flagging an element that is visually accessible but theoretically incorrect in markup).</p>
-              <p>Auditify accepts zero legal or financial liability if actions taken based on our audit diagnostics induce accidental downtime, layout fractures, or ranking drops on major search consolidators. The score holds no legal guarantee of SEO infallibility.</p>
+              <p>Dealer Pulse accepts zero legal or financial liability if actions taken based on our audit diagnostics induce accidental downtime, layout fractures, or ranking drops on major search consolidators. The score holds no legal guarantee of SEO infallibility.</p>
             </section>
 
             <section className="space-y-4">

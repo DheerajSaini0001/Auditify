@@ -41,7 +41,7 @@ export default function PrivacyPolicyPage() {
             badge="Legal"
             title="Privacy"
             titleAccent="Policy."
-            subtitle="Total transparency regarding how Auditify crawler nodes and backend services handle target domain ingestion and user metadata."
+            subtitle="Total transparency regarding how Dealer Pulse crawler nodes and backend services handle target domain ingestion and user metadata."
             darkMode={darkMode}
           />
 

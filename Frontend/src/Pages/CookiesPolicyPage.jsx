@@ -26,7 +26,7 @@ export default function CookiesPolicyPage() {
                 icon={Cookie}
                 title="Storage"
                 titleAccent="Policies."
-                subtitle="Detailed explanation regarding how Auditify relies on local browser caches, JWT footprints, and telemetry cookies."
+                subtitle="Detailed explanation regarding how Dealer Pulse relies on local browser caches, JWT footprints, and telemetry cookies."
                 darkMode={darkMode}
             />
           </div>
@@ -48,7 +48,7 @@ export default function CookiesPolicyPage() {
             </div>
 
             <div className={`p-6 rounded-2xl text-sm font-medium border ${darkMode ? "bg-teal-500/5 border-teal-500/20 text-teal-400" : "bg-teal-50 border-teal-200 text-teal-700"}`}>
-              By proceeding to operate the Auditify panel, you acknowledge the persistent placement of these critical utility scripts.
+              By proceeding to operate the Dealer Pulse panel, you acknowledge the persistent placement of these critical utility scripts.
             </div>
 
           </div>

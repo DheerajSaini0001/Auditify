@@ -32,7 +32,9 @@ const LoginPage = () => {
       const intent = consumePostAuthIntent();
       const roleFallback = getRedirectPath(user?.role);
       const from = location.state?.from;
-      const destination = intent?.path || (from && from !== '/' ? from : roleFallback);
+      const destination = (user?.role === 'admin' || user?.role === 'super_admin') 
+        ? roleFallback 
+        : (intent?.path || (from && from !== '/' ? from : roleFallback));
       
       navigate(destination, { 
         replace: true,

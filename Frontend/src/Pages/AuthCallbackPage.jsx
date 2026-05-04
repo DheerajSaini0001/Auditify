@@ -47,7 +47,16 @@ const AuthCallbackPage = () => {
         console.error('Failed to decode role for redirection', e);
       }
 
-      const destination = intent?.path || roleFallback;
+      let userRole = 'user';
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        userRole = payload.role;
+      } catch (e) {}
+
+      const destination = (userRole === 'admin' || userRole === 'super_admin') 
+        ? roleFallback 
+        : (intent?.path || roleFallback);
+
       navigate(destination, { 
           replace: true,
           state: { 

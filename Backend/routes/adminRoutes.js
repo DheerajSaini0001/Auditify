@@ -8,6 +8,7 @@ import {
   deleteUser, 
   getAuditLogs, 
   getStats,
+  getOverviewStats,
   getConfigs,
   saveConfig,
   testConfig,
@@ -64,6 +65,7 @@ router.get('/audit-logs', [
 ], getAuditLogs);
 
 router.get('/stats', getStats);
+router.get('/overview-stats', getOverviewStats);
 
 // ── Platform Configuration Routes ──
 router.get('/config', getConfigs);

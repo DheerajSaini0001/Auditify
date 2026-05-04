@@ -230,7 +230,7 @@ export const getStats = async (req, res) => {
     
     // Total projects (websites) added across all users
     const projectAggregation = await User.aggregate([
-      { $project: { numberOfWebsites: { $size: "$websites" } } },
+      { $project: { numberOfWebsites: { $size: { $ifNull: ["$websites", []] } } } },
       { $group: { _id: null, total: { $sum: "$numberOfWebsites" } } }
     ]);
     const totalProjects = projectAggregation[0]?.total || 0;
@@ -241,6 +241,11 @@ export const getStats = async (req, res) => {
       { $group: { _id: null, avg: { $avg: "$score" } } }
     ]);
     const avgScore = Math.round(avgScoreAggregation[0]?.avg || 0);
+
+    // Get today's active users (activeToday)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const activeToday = await User.countDocuments({ lastLogin: { $gte: today } });
 
     res.json({
       success: true,
@@ -254,6 +259,194 @@ export const getStats = async (req, res) => {
   } catch (error) {
     console.error('getStats Error:', error);
     res.status(500).json({ error: 'Internal server error', code: 'SERVER_ERROR' });
+  }
+};
+
+export const getOverviewStats = async (req, res) => {
+  try {
+    const today = new Date();
+    const fourteenDaysAgo = new Date();
+    fourteenDaysAgo.setDate(today.getDate() - 14);
+
+    // 1. Mini Stats
+    const totalUsers = await User.countDocuments();
+    const totalAudits = await AuditLog.countDocuments();
+    const activeToday = await User.countDocuments({ updatedAt: { $gte: new Date().setHours(0,0,0,0) } });
+    
+    const avgScoreResult = await AuditLog.aggregate([
+      { $match: { status: 'success', score: { $ne: null } } },
+      { $group: { _id: null, avg: { $avg: "$score" } } }
+    ]);
+    const avgScore = Math.round(avgScoreResult[0]?.avg || 0);
+
+    const totalDownloads = await ActivityLog.countDocuments({ action: 'REPORT_DOWNLOAD' });
+
+    const guestCountResult = await AuditLog.aggregate([
+      { $match: { userId: null } },
+      { $group: { _id: "$sessionId" } },
+      { $count: "total" }
+    ]);
+    const totalGuests = guestCountResult[0]?.total || 0;
+
+    // 1.6 Avg Audit Processing Time
+    const avgDurationResult = await AuditLog.aggregate([
+      { $match: { status: 'success', auditDuration: { $ne: null } } },
+      { $group: { _id: null, avg: { $avg: "$auditDuration" } } }
+    ]);
+    const avgDuration = Math.round((avgDurationResult[0]?.avg || 0) / 1000); // in seconds
+
+    // 1.7 Failed Audits (%)
+    const totalFailed = await AuditLog.countDocuments({ status: 'failed' });
+    const failedRate = totalAudits > 0 ? Math.round((totalFailed / totalAudits) * 100) : 0;
+
+    // 2. Volume Data (Last 14 days)
+    const volumeData = await AuditLog.aggregate([
+      { $match: { createdAt: { $gte: fourteenDaysAgo } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%m/%d", date: "$createdAt" } },
+          completed: { $sum: { $cond: [{ $eq: ["$status", "success"] }, 1, 0] } },
+          failed: { $sum: { $cond: [{ $eq: ["$status", "failed"] }, 1, 0] } }
+        }
+      },
+      { $sort: { "_id": 1 } }
+    ]);
+
+    // 2.5 Score Trend (Avg Score per day)
+    const scoreTrend = await AuditLog.aggregate([
+      { $match: { createdAt: { $gte: fourteenDaysAgo }, status: 'success' } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%m/%d", date: "$createdAt" } },
+          score: { $avg: "$score" },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { "_id": 1 } },
+      {
+        $project: {
+          _id: 1,
+          score: { $round: ["$score", 0] },
+          count: 1
+        }
+      }
+    ]);
+
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const auditsToday = await AuditLog.countDocuments({ createdAt: { $gte: startOfToday } });
+
+    // 2.7 Country Split
+    const countrySplit = await AuditLog.aggregate([
+      {
+        $group: {
+          _id: "$country",
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { count: -1 } },
+      { $limit: 10 }
+    ]);
+
+    // 3. Score Distribution
+    const distribution = await AuditLog.aggregate([
+      {
+        $group: {
+          _id: null,
+          good: { $sum: { $cond: [{ $and: [{ $eq: ["$status", "success"] }, { $gte: ["$score", 80] }] }, 1, 0] } },
+          average: { $sum: { $cond: [{ $and: [{ $eq: ["$status", "success"] }, { $gte: ["$score", 50] }, { $lt: ["$score", 80] }] }, 1, 0] } },
+          poor: { $sum: { $cond: [{ $and: [{ $eq: ["$status", "success"] }, { $lt: ["$score", 50] }] }, 1, 0] } },
+          failed: { $sum: { $cond: [{ $eq: ["$status", "failed"] }, 1, 0] } }
+        }
+      }
+    ]);
+
+    // 4. Device Split
+    const deviceSplit = await AuditLog.aggregate([
+      {
+        $group: {
+          _id: { $toLower: "$device" },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // 5. Recent Audits
+    const recentAudits = await AuditLog.find()
+      .select('url score createdAt status device')
+      .sort({ createdAt: -1 })
+      .limit(5);
+
+    // 6. Recent Activity (from ActivityLog)
+    const recentActivity = await ActivityLog.find()
+      .populate('userId', 'name email')
+      .sort({ timestamp: -1 })
+      .limit(10);
+
+    // 7. Active Users (All Users with stats)
+    const activeUsers = await User.aggregate([
+      {
+        $lookup: {
+          from: "auditlogs",
+          localField: "_id",
+          foreignField: "userId",
+          as: "audits"
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          email: 1,
+          lastLogin: 1,
+          role: 1,
+          auditsRun: { $size: "$audits" },
+          avgScore: { $avg: "$audits.score" }
+        }
+      },
+      { $sort: { auditsRun: -1, lastLogin: -1 } },
+      { $limit: 10 },
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          email: 1,
+          lastLogin: 1,
+          role: 1,
+          auditsRun: 1,
+          avgScore: { $round: ["$avgScore", 0] }
+        }
+      }
+    ]);
+
+    res.json({
+      success: true,
+      stats: {
+        totalUsers,
+        totalAudits,
+        activeToday,
+        avgScore,
+        totalDownloads,
+        totalGuests,
+        avgDuration,
+        failedRate,
+        auditsToday
+      },
+      volumeData: volumeData.map(v => ({ name: v._id, completed: v.completed, failed: v.failed })),
+      scoreTrend: scoreTrend.map(s => ({ name: s._id, score: s.score, count: s.count })),
+      distribution: distribution[0] || { good: 0, average: 0, poor: 0, failed: 0 },
+      countrySplit: countrySplit.map(c => ({ name: c._id || 'Unknown', count: c.count })),
+      deviceSplit: deviceSplit.map(d => ({ 
+        name: d._id ? d._id.charAt(0).toUpperCase() + d._id.slice(1) : 'Unknown', 
+        count: d.count 
+      })),
+      recentAudits,
+      recentActivity,
+      activeUsers
+    });
+  } catch (error) {
+    console.error('getOverviewStats Error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 };
 

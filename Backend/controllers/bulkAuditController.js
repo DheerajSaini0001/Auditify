@@ -246,7 +246,7 @@ async function processSelectedUrls(bulkAuditId, selectedUrls, device, report, tr
                 ip: tracking?.ip || "unknown",
                 country: tracking?.country || "unknown",
                 city: tracking?.city || "unknown",
-                device: tracking?.device || device,
+                device: device || "Desktop",
                 browser: tracking?.browser || "unknown",
                 os: tracking?.os || "unknown",
                 screenResolution: tracking?.screenResolution || "unknown",

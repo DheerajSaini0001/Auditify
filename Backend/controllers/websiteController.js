@@ -160,90 +160,136 @@ export const removeWebsite = async (req, res) => {
 
 
 /* ===========================
-   5. Sync Websites (BEST VERSION)
+   5. Sync Websites (ROBUST VERSION)
 =========================== */
 export const syncWebsites = async (req, res) => {
   try {
+    // 1. Verify User and Google Connection
+    if (!req.user) {
+      return res.status(401).json({ success: false, message: 'Unauthorized: User not found' });
+    }
+
     if (req.user.authProvider !== 'google' || !req.user.googleAccessToken) {
       return res.status(400).json({
         success: false,
-        message: 'Google login required'
+        message: 'Action required: Please login with Google to sync your Search Console properties.'
       });
     }
 
-    const gscRes = await fetchGSC(
-      'https://www.googleapis.com/webmasters/v3/sites',
-      req.user
-    );
+    // 2. Fetch data from Google Search Console API
+    let gscRes;
+    try {
+      gscRes = await fetchGSC(
+        'https://www.googleapis.com/webmasters/v3/sites',
+        req.user
+      );
+    } catch (fetchErr) {
+      console.error('[GSC Fetch Error]', fetchErr);
+      return res.status(502).json({
+        success: false,
+        message: 'Failed to communicate with Google API. Please try again later.'
+      });
+    }
 
+    // Handle session expiration
     if (gscRes.status === 401) {
       return res.status(401).json({
         success: false,
-        message: 'Session expired. Re-login required.'
+        message: 'Google session expired. Please logout and login again.'
       });
     }
 
+    // Handle other API errors
     if (!gscRes.ok) {
-      const errorText = await gscRes.text();
-      console.error('[GSC API Error]', errorText);
-      throw new Error('GSC API failed');
+      const errorBody = await gscRes.text();
+      console.error('[GSC API Error Response]', errorBody);
+      return res.status(gscRes.status).json({
+        success: false,
+        message: 'Google Search Console API error',
+        details: process.env.NODE_ENV === 'development' ? errorBody : undefined
+      });
     }
 
     const gscData = await gscRes.json();
     const siteEntries = gscData.siteEntry || [];
 
-    console.log(`[GSC Sync] ${siteEntries.length} properties fetched`);
+    console.log(`[GSC Sync] Found ${siteEntries.length} properties for ${req.user.email}`);
 
-    const existingMap = new Map();
-
-    req.user.websites.forEach(site => {
-      existingMap.set(normalize(site.url), site);
-    });
-
+    // 3. Merge Logic (Comparison using Normalized URL)
+    const existingWebsites = req.user.websites.map(s => s.toObject ? s.toObject() : s);
+    const updatedWebsites = [...existingWebsites];
+    
     let added = 0;
     let updated = 0;
 
+    // Define valid permission levels to prevent Mongoose validation errors
+    const validPermissions = ['siteOwner', 'siteFullUser', 'siteRestrictedUser', 'siteUnverifiedUser'];
+
     for (const site of siteEntries) {
       const norm = normalize(site.siteUrl);
+      const existingIdx = updatedWebsites.findIndex(s => normalize(s.url) === norm);
 
-      const existing = existingMap.get(norm);
+      const permission = validPermissions.includes(site.permissionLevel) 
+        ? site.permissionLevel 
+        : 'siteUnverifiedUser';
 
-      if (existing) {
-        // 🔁 Update existing
-        existing.verified = true;
-        existing.siteId = site.siteUrl;
-        existing.permissionLevel = site.permissionLevel;
-        existing.verifiedAt = new Date();
+      if (existingIdx !== -1) {
+        // Update existing website record
+        updatedWebsites[existingIdx] = {
+          ...updatedWebsites[existingIdx],
+          verified: true,
+          siteId: site.siteUrl, // Save ORIGINAL siteUrl as siteId (crucial for performance API)
+          permissionLevel: permission,
+          verifiedAt: new Date()
+        };
         updated++;
       } else {
-        // ➕ Add new
-        req.user.websites.push({
+        // Add new website record
+        updatedWebsites.push({
           url: site.siteUrl,
           verified: true,
           siteId: site.siteUrl,
-          permissionLevel: site.permissionLevel,
-          verifiedAt: new Date()
+          permissionLevel: permission,
+          verifiedAt: new Date(),
+          addedAt: new Date()
         });
         added++;
       }
     }
 
-    if (added || updated) {
-      await req.user.save();
+    // 4. Atomic Update using findByIdAndUpdate
+    // This avoids VersionError and ensures the update is atomic
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user._id,
+      { $set: { websites: updatedWebsites } },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, message: 'User record not found' });
     }
 
     res.json({
       success: true,
-      message: `Sync complete. Added: ${added}, Updated: ${updated}`,
-      websites: req.user.websites
+      message: `Successfully synced ${siteEntries.length} properties. (Added: ${added}, Updated: ${updated})`,
+      websites: updatedUser.websites
     });
 
   } catch (err) {
-    console.error('[Sync GSC]', err);
+    console.error('[Sync Websites Exception]', err);
+    
+    // Distinguish between validation errors and generic errors
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({
+        success: false,
+        message: 'Data validation failed during sync',
+        errors: err.errors
+      });
+    }
 
     res.status(500).json({
       success: false,
-      message: 'Sync failed',
+      message: 'Internal server error during GSC synchronization',
       error: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
   }

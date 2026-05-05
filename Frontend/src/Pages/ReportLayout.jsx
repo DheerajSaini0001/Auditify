@@ -31,7 +31,7 @@ const ReportLayout = () => {
 
     if (id || (bulkId && pageUrl)) {
       // If data is missing OR data exists but ID mismatch -> Fetch
-      const currentId = id || `${bulkId}_${Buffer.from(pageUrl).toString('base64')}`;
+      const currentId = id || `${bulkId}_${window.btoa(pageUrl)}`;
       
       if (!data || data._id !== currentId) {
         clearData();

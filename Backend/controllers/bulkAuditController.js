@@ -88,11 +88,13 @@ export const auditSelectedUrls = async (req, res) => {
 
         console.log(`🚀 Starting audit for ${selectedUrls.length} selected URLs`);
 
+        const userId = req.user?._id || req.user?.id || req.user?.userId || null;
+
         // Check if an identical Bulk Audit already exists
         const existingAudits = await BulkAuditReport.find({
             site: url,
             device: device,
-            userId: req.user?.userId || null,
+            userId: userId,
             $or: [{ report: report }, { report: "All" }]
         }).sort({ createdAt: -1 });
 
@@ -135,7 +137,7 @@ export const auditSelectedUrls = async (req, res) => {
             status: "inprogress",
             totalPages: selectedUrls.length,
             pages,
-            userId: req.user?.userId || null
+            userId: userId
         });
 
         // Send immediate response
@@ -147,7 +149,7 @@ export const auditSelectedUrls = async (req, res) => {
         });
 
         // Start auditing selected pages in background with tracking info
-        processSelectedUrls(bulkAudit._id.toString(), selectedUrls, device, report, req.tracking, req.user?.userId);
+        processSelectedUrls(bulkAudit._id.toString(), userId, selectedUrls, device, report, req.tracking);
 
     } catch (error) {
         console.error("Error starting audit:", error);
@@ -158,7 +160,7 @@ export const auditSelectedUrls = async (req, res) => {
 };
 
 // Background process to audit selected URLs with concurrency control
-async function processSelectedUrls(bulkAuditId, selectedUrls, device, report, tracking, userId) {
+async function processSelectedUrls(bulkAuditId, userId, selectedUrls, device, report, tracking) {
     try {
         const CONCURRENCY_LIMIT = 5; // Run max 5 workers at once
         const total = selectedUrls.length;
@@ -260,7 +262,7 @@ async function processSelectedUrls(bulkAuditId, selectedUrls, device, report, tr
             await auditLog.save().catch(err => console.error("Error saving bulk item AuditLog:", err));
 
             // Start worker and wait for completion
-            const auditPromise = auditSinglePage(bulkAuditId, pageUrl, device, report, auditLog._id, startTime);
+            const auditPromise = auditSinglePage(bulkAuditId, pageUrl, device, report, auditLog._id, startTime, userId);
             activeAudits.add(auditPromise);
 
             await auditPromise;
@@ -299,7 +301,7 @@ async function processSelectedUrls(bulkAuditId, selectedUrls, device, report, tr
 }
 
 // Audit a single page and save results directly in BulkAudit document
-async function auditSinglePage(bulkAuditId, pageUrl, device, report, auditLogId, startTime) {
+async function auditSinglePage(bulkAuditId, pageUrl, device, report, auditLogId, startTime, userId) {
     return new Promise(async (resolve) => {
         try {
             const workerPath = join(process.cwd(), "workers", "bulkAuditWorker.js");
@@ -452,7 +454,27 @@ export const getBulkAuditStatus = async (req, res) => {
             return res.status(404).json({ error: "Bulk audit not found or access denied" });
         }
 
-        res.status(200).json(bulkAudit);
+        // Calculate progress and average score
+        const totalAudits = bulkAudit.pages.length;
+        // Count both completed and failed as "finished" for progress
+        const completedAudits = bulkAudit.pages.filter(p => p.status === 'completed' || p.status === 'failed').length;
+        const progress = totalAudits > 0 ? Math.round((completedAudits / totalAudits) * 100) : 0;
+
+        // Average score only from successful pages
+        const scoredPages = bulkAudit.pages.filter(p => p.status === 'completed' && p.score !== null);
+        const averageScore = scoredPages.length > 0 
+            ? Math.round(scoredPages.reduce((acc, p) => acc + (p.score || 0), 0) / scoredPages.length) 
+            : 0;
+
+        const responseData = {
+            ...bulkAudit.toObject(),
+            completedAudits,
+            totalAudits,
+            progress,
+            averageScore
+        };
+
+        res.status(200).json(responseData);
 
     } catch (error) {
         console.error("Error fetching bulk audit status:", error);
@@ -486,12 +508,14 @@ export const discoverAndAuditUrls = async (req, res) => {
 
         console.log(`🤖 Auto-Bulk Audit for: ${url} | Max: ${maxPages} pages | Device: ${device}`);
 
+        const userId = req.user?._id || req.user?.id || req.user?.userId || null;
+
         // 0. Safeguard: Check if an identical audit is already in progress (prevent double-triggering)
         const recentAudit = await BulkAuditReport.findOne({
             site: url,
             device: device,
             status: "inprogress",
-            userId: req.user?.userId || null,
+            userId: userId,
             createdAt: { $gte: new Date(Date.now() - 2 * 60 * 1000) } // Last 2 mins buffer
         }).sort({ createdAt: -1 });
 
@@ -530,7 +554,7 @@ export const discoverAndAuditUrls = async (req, res) => {
             status: "inprogress",
             totalPages: discoveredUrls.length,
             pages,
-            userId: req.user?.userId || null
+            userId: userId
         });
 
         // 3. Send response immediately
@@ -543,7 +567,7 @@ export const discoverAndAuditUrls = async (req, res) => {
         });
 
         // 4. Background process
-        processSelectedUrls(bulkAudit._id.toString(), discoveredUrls, device, report, req.tracking, req.user?.userId);
+        processSelectedUrls(bulkAudit._id.toString(), userId, discoveredUrls, device, report, req.tracking);
 
     } catch (error) {
         console.error("Error in auto discover-and-audit:", error);

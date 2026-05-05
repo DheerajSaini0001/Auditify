@@ -453,6 +453,21 @@ export default function BulkAudit() {
         navigate(`/report?${urlParams.toString()}`);
     };
 
+    const handleNewAudit = () => {
+        setBulkAuditId(null);
+        setBulkAuditData(null);
+        setDiscoveredUrls([]);
+        setSelectedUrls([]);
+        setInputValue("");
+        setSitemapLinksCount(null);
+        setError(null);
+        sessionStorage.removeItem("activeBulkAuditId");
+        if (pollingInterval) clearInterval(pollingInterval);
+        setPollingInterval(null);
+        setAuditing(false);
+        navigate("/bulk-audit", { replace: true });
+    };
+
     const getStatusIcon = (status) => {
         switch (status) {
             case "completed":
@@ -485,6 +500,25 @@ export default function BulkAudit() {
                     subtitle="Discover all pages, select which ones to audit, and get comprehensive reports."
                     darkMode={darkMode}
                 />
+
+                {(bulkAuditId || discoveredUrls.length > 0) && (
+                    <div className="flex justify-end mb-8 -mt-4 animate-in fade-in slide-in-from-right-4 duration-500">
+                        <button
+                            onClick={handleNewAudit}
+                            className={`
+                                flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm transition-all
+                                ${darkMode 
+                                    ? "bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700 shadow-lg shadow-black/20" 
+                                    : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200 shadow-sm hover:shadow-md"
+                                }
+                                hover:scale-105 active:scale-95
+                            `}
+                        >
+                            <RefreshCw className="w-4 h-4" />
+                            Start New Audit
+                        </button>
+                    </div>
+                )}
 
                 {sitemapLinksCount !== null && (
                     <div className="flex justify-center mb-10 -mt-6 animate-in fade-in zoom-in-95 duration-500">
@@ -698,8 +732,11 @@ export default function BulkAudit() {
 
                                     <div className="space-y-2">
                                         <p className={`text-xs font-bold uppercase tracking-widest ${darkMode ? "text-slate-500" : "text-slate-400"}`}>Status</p>
-                                        <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full font-bold text-xs uppercase tracking-widest bg-emerald-500/10 text-emerald-500 border border-emerald-500/20`}>
-                                            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                        <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full font-bold text-xs uppercase tracking-widest 
+                                            ${bulkAuditData.status === 'completed' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 
+                                              bulkAuditData.status === 'failed' ? 'bg-red-500/10 text-red-500 border-red-500/20' : 
+                                              'bg-blue-500/10 text-blue-500 border-blue-500/20'}`}>
+                                            <div className={`w-2 h-2 rounded-full ${bulkAuditData.status === 'completed' ? 'bg-emerald-500' : bulkAuditData.status === 'failed' ? 'bg-red-500' : 'bg-blue-500 animate-pulse'}`} />
                                             {bulkAuditData.status}
                                         </div>
                                     </div>
@@ -738,6 +775,11 @@ export default function BulkAudit() {
                                         <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                                             {bulkAuditData.pages.filter(p => p.status === "completed").length} Done
                                         </span>
+                                        {bulkAuditData.pages.some(p => p.status === "failed") && (
+                                            <span className="text-xs font-bold px-3 py-1 rounded-full bg-red-500/10 text-red-400 border border-red-500/20">
+                                                {bulkAuditData.pages.filter(p => p.status === "failed").length} Failed
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
 

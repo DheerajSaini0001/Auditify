@@ -18,14 +18,18 @@ import {
   ExternalLink,
   User as UserIcon,
   X,
-  Loader2
+  Loader2,
+  RefreshCw,
+  Info
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 const AuditHistoryPage = () => {
   const { user } = useAuth();
   const { theme } = useContext(ThemeContext);
+  const navigate = useNavigate();
   const darkMode = theme === "dark";
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -100,6 +104,14 @@ const AuditHistoryPage = () => {
       day: 'numeric',
       year: 'numeric'
     });
+  };
+
+  const isExpired = (createdAt) => {
+    const createdDate = new Date(createdAt);
+    const now = new Date();
+    const diffInMs = now - createdDate;
+    const diffInHours = diffInMs / (1000 * 60 * 60);
+    return diffInHours >= 3;
   };
 
   return (
@@ -254,72 +266,99 @@ const AuditHistoryPage = () => {
                           )}
                         </td>
                         <td className="px-8 py-6">
-                          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-sm ${getStatusStyle(audit.status)}`}>
-                            {getStatusIcon(audit.status)}
-                            {audit.status === 'success' ? 'Completed' : audit.status === 'pending' ? 'Processing' : 'Failed'}
-                          </span>
+                          <div className="flex flex-col gap-1.5">
+                            <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-sm ${getStatusStyle(audit.status)}`}>
+                              {getStatusIcon(audit.status)}
+                              {audit.status === 'success' ? 'Completed' : audit.status === 'pending' ? 'Processing' : 'Failed'}
+                            </span>
+                            {audit.status === 'success' && isExpired(audit.createdAt) && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-500/10 text-slate-500 border border-slate-500/20 text-[8px] font-bold uppercase tracking-widest self-start">
+                                <Clock size={8} /> Expired
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-8 py-6 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <button 
-                              onClick={() => {
-                                if (audit.reportId) {
-                                  const params = new URLSearchParams({
-                                    url: audit.url || "",
-                                    device: audit.device || "Desktop",
-                                    report: audit.reportType || "All"
-                                  }).toString();
-                                  window.open(`/report/${audit.reportId}?${params}`, '_blank');
-                                } else {
-                                  toast.error("Report details are currently unavailable.");
-                                }
-                              }}
-                              className={`p-2.5 rounded-xl transition-all shadow-lg border ${darkMode 
-                                ? "bg-slate-800 hover:bg-indigo-600 text-slate-400 hover:text-white border-slate-700" 
-                                : "bg-white hover:bg-indigo-50 text-slate-500 hover:text-indigo-600 border-slate-200"}`}
-                              title="View Report"
-                            >
-                              <FileText size={18} />
-                            </button>
-                            <button 
-                              onClick={() => {
-                                if (!audit.reportId) return toast.error('PDF unavailable for this audit');
-                                
-                                toast.promise(
-                                  (async () => {
-                                    const token = localStorage.getItem('dealerpulse_token');
-                                    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:2000';
-                                    const response = await fetch(`${API_URL}/single-audit/${audit.reportId}/export/pdf`, {
-                                      headers: {
-                                        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-                                      }
-                                    });
-                                    if (!response.ok) throw new Error('Failed to generate PDF');
+                            {audit.status === 'success' && isExpired(audit.createdAt) ? (
+                              <button
+                                onClick={() => {
+                                  const url = encodeURIComponent(audit.url);
+                                  // Ensure device is capitalized for backend validation
+                                  let rawDevice = audit.device || 'Desktop';
+                                  const normalizedDevice = rawDevice.charAt(0).toUpperCase() + rawDevice.slice(1).toLowerCase();
+                                  const device = encodeURIComponent(normalizedDevice);
+                                  const report = encodeURIComponent(audit.reportType || 'All');
+                                  navigate(`/?url=${url}&device=${device}&report=${report}`);
+                                }}
+                                className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black text-[11px] uppercase tracking-widest shadow-lg shadow-indigo-600/20 transition-all active:scale-95"
+                              >
+                                <RefreshCw size={14} />
+                                Run Again
+                              </button>
+                            ) : (
+                              <>
+                                <button 
+                                  onClick={() => {
+                                    if (audit.reportId) {
+                                      const params = new URLSearchParams({
+                                        url: audit.url || "",
+                                        device: audit.device || "Desktop",
+                                        report: audit.reportType || "All"
+                                      }).toString();
+                                      window.open(`/report/${audit.reportId}?${params}`, '_blank');
+                                    } else {
+                                      toast.error("Report details are currently unavailable.");
+                                    }
+                                  }}
+                                  className={`p-2.5 rounded-xl transition-all shadow-lg border ${darkMode 
+                                    ? "bg-slate-800 hover:bg-indigo-600 text-slate-400 hover:text-white border-slate-700" 
+                                    : "bg-white hover:bg-indigo-50 text-slate-500 hover:text-indigo-600 border-slate-200"}`}
+                                  title="View Report"
+                                >
+                                  <FileText size={18} />
+                                </button>
+                                <button 
+                                  onClick={() => {
+                                    if (!audit.reportId) return toast.error('PDF unavailable for this audit');
                                     
-                                    const blob = await response.blob();
-                                    const url = window.URL.createObjectURL(blob);
-                                    const link = document.createElement('a');
-                                    link.href = url;
-                                    link.download = `Auditify-Report-${audit.url.replace(/[^a-z0-9]/gi, '-')}.pdf`;
-                                    document.body.appendChild(link);
-                                    link.click();
-                                    document.body.removeChild(link);
-                                    window.URL.revokeObjectURL(url);
-                                  })(),
-                                  {
-                                    loading: 'Generating PDF report...',
-                                    success: 'Report downloaded!',
-                                    error: 'Failed to generate PDF',
-                                  }
-                                );
-                              }}
-                              className={`p-2.5 rounded-xl transition-all shadow-lg border ${darkMode 
-                                ? "bg-slate-800 hover:bg-emerald-600 text-slate-400 hover:text-white border-slate-700" 
-                                : "bg-white hover:bg-emerald-50 text-slate-500 hover:text-emerald-600 border-slate-200"}`}
-                              title="Download PDF"
-                            >
-                              <Download size={18} />
-                            </button>
+                                    toast.promise(
+                                      (async () => {
+                                        const token = localStorage.getItem('dealerpulse_token');
+                                        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:2000';
+                                        const response = await fetch(`${API_URL}/single-audit/${audit.reportId}/export/pdf`, {
+                                          headers: {
+                                            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                                          }
+                                        });
+                                        if (!response.ok) throw new Error('Failed to generate PDF');
+                                        
+                                        const blob = await response.blob();
+                                        const url = window.URL.createObjectURL(blob);
+                                        const link = document.createElement('a');
+                                        link.href = url;
+                                        link.download = `Auditify-Report-${audit.url.replace(/[^a-z0-9]/gi, '-')}.pdf`;
+                                        document.body.appendChild(link);
+                                        link.click();
+                                        document.body.removeChild(link);
+                                        window.URL.revokeObjectURL(url);
+                                      })(),
+                                      {
+                                        loading: 'Generating PDF report...',
+                                        success: 'Report downloaded!',
+                                        error: 'Failed to generate PDF',
+                                      }
+                                    );
+                                  }}
+                                  className={`p-2.5 rounded-xl transition-all shadow-lg border ${darkMode 
+                                    ? "bg-slate-800 hover:bg-emerald-600 text-slate-400 hover:text-white border-slate-700" 
+                                    : "bg-white hover:bg-emerald-50 text-slate-500 hover:text-emerald-600 border-slate-200"}`}
+                                  title="Download PDF"
+                                >
+                                  <Download size={18} />
+                                </button>
+                              </>
+                            )}
                           </div>
                         </td>
                       </motion.tr>
@@ -380,6 +419,21 @@ const AuditHistoryPage = () => {
               </div>
             </div>
           )}
+        </motion.div>
+
+        {/* Expiration Note */}
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className={`mt-8 p-4 rounded-2xl border flex items-start gap-3 ${
+            darkMode ? "bg-indigo-500/5 border-indigo-500/10 text-slate-400" : "bg-indigo-50 border-indigo-100 text-slate-600"
+          }`}
+        >
+          <Info size={18} className="text-indigo-500 mt-0.5 shrink-0" />
+          <p className="text-sm font-medium leading-relaxed">
+            <span className="font-bold text-indigo-500">Note:</span> Audit reports are automatically cleared from active storage after 3 hours for security and performance reasons. You can always run a fresh audit for any URL using the <strong>Run Again</strong> button.
+          </p>
         </motion.div>
       </div>
     </div>

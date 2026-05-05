@@ -177,8 +177,21 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
     useEffect(() => {
         const params = new URLSearchParams(location.search);
         const queryUrl = params.get("url");
+        const queryDevice = params.get("device");
+        const queryReport = params.get("report");
+
         if (queryUrl && !isAutoStarting.current) {
+            // Normalize device to match backend expectation ('Desktop' or 'Mobile')
+            let deviceToUse = queryDevice || device;
+            if (deviceToUse) {
+                deviceToUse = deviceToUse.charAt(0).toUpperCase() + deviceToUse.slice(1).toLowerCase();
+            }
+            if (deviceToUse !== 'Desktop' && deviceToUse !== 'Mobile') deviceToUse = 'Desktop';
+
             setUrl(queryUrl);
+            setDevice(deviceToUse);
+            if (queryReport) setReport(queryReport);
+            
             isAutoStarting.current = true;
             navigate(location.pathname, { replace: true });
             
@@ -186,12 +199,12 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
             if (user || localStorage.getItem('dealerpulse_token')) {
                 let urlToFetch = queryUrl.trim();
                 if (!/^https?:\/\//i.test(urlToFetch)) urlToFetch = `https://${urlToFetch}`;
-                onSubmit(urlToFetch, device, report, null);
+                onSubmit(urlToFetch, deviceToUse, queryReport || report, null);
             } else {
                 setShowCaptcha(true);
             }
         }
-    }, [location.search, navigate, location.pathname]);
+    }, [location.search, navigate, location.pathname, user]);
 
     const handleInitialSubmit = (e) => {
         e.preventDefault();

@@ -4,21 +4,24 @@ import AuditLog from '../models/AuditLog.js';
 
 export const getHistory = async (req, res) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
+    const { page = 1, limit = 10, search = '' } = req.query;
     
-    // Use AuditLog for granular audit details
-    const audits = await AuditLog.find({ 
+    const query = { 
       userId: req.user.userId, 
       status: { $in: ['success', 'pending', 'failed'] }
-    })
+    };
+
+    if (search) {
+      query.url = { $regex: search, $options: 'i' };
+    }
+
+    // Use AuditLog for granular audit details
+    const audits = await AuditLog.find(query)
     .sort({ createdAt: -1 })
     .skip((page - 1) * limit)
     .limit(parseInt(limit));
 
-    const total = await AuditLog.countDocuments({ 
-      userId: req.user.userId, 
-      status: { $in: ['success', 'pending', 'failed'] }
-    });
+    const total = await AuditLog.countDocuments(query);
 
     res.json({
       audits,

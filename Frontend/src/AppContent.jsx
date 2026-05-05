@@ -31,6 +31,8 @@ import CookiesPolicyPage from "./Pages/CookiesPolicyPage";
 import ServicesPage from "./Pages/ServicesPage";
 import ContactPage from "./Pages/ContactPage";
 import DoNotSellInfoPage from "./Pages/DoNotSellInfoPage";
+import AuditHistoryPage from "./Pages/AuditHistoryPage";
+
 import { ThemeProvider, ThemeContext } from "./context/ThemeContext.jsx";
 import ProtectedRoute from "./Component/ProtectedRoute.jsx";
 import { Toaster } from 'react-hot-toast';
@@ -111,6 +113,9 @@ function AppContentInner() {
           <Route path="/bulk-audit" element={<BulkAudit />} />
 
           <Route path="/bulk-audit/:id" element={<BulkAudit />} />
+
+          <Route path="/audit-history" element={<AuditHistoryPage />} />
+
 
           <Route path="/report" element={<ReportLayout />} />
           <Route path="/report/:id" element={<ReportLayout />} />

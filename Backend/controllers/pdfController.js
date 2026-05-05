@@ -479,7 +479,7 @@ export const generatePDFReport = async (req, res) => {
 
     // Activity Log for analytics (Admin Dashboard)
     if (req.user) {
-      ActivityLog.create({
+      await ActivityLog.create({
         userId: req.user.userId,
         sessionId: req.tracking?.sessionId || 'DOWNLOAD_SESSION',
         ip: req.tracking?.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress || '0.0.0.0',
@@ -493,7 +493,7 @@ export const generatePDFReport = async (req, res) => {
           reportType: report.report,
           deviceProfile: report.device
         }
-      }).catch(err => console.error("[ActivityLog] Failed to log download:", err));
+      });
     }
 
     res.send(Buffer.from(pdfBuffer));

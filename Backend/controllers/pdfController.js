@@ -1,19 +1,51 @@
 import SingleAuditReport from "../models/singleAuditReport.js";
+import BulkAuditReport from "../models/bulkAuditReport.js";
 import ActivityLog from "../models/ActivityLog.js";
 import puppeteer from "puppeteer";
-import path from "path";
 
 export const generatePDFReport = async (req, res) => {
   try {
     const { id } = req.params;
-    const query = { _id: id };
-    
-    // Non-admins can only download their own reports
-    if (req.user && req.user.role !== 'admin' && req.user.role !== 'super_admin') {
-      query.userId = req.user.userId;
-    }
+    let report;
 
-    const report = await SingleAuditReport.findOne(query);
+    // Handle Virtual ID for Bulk Audit Pages (format: bulkAuditId_base64Url)
+    if (id.includes('_')) {
+        const [bulkAuditId, b64Url] = id.split('_');
+        const url = Buffer.from(b64Url, 'base64').toString('utf8');
+        
+        const bulkQuery = { _id: bulkAuditId };
+        if (req.user && req.user.role !== 'admin' && req.user.role !== 'super_admin') {
+            bulkQuery.userId = req.user.userId;
+        }
+
+        const bulkAudit = await BulkAuditReport.findOne(bulkQuery);
+        if (!bulkAudit) {
+            return res.status(404).json({ error: "Bulk audit not found or access denied" });
+        }
+
+        const pageData = bulkAudit.pages.find(p => p.url === url);
+        if (!pageData) {
+            return res.status(404).json({ error: "Page report not found in bulk audit" });
+        }
+
+        if (pageData.status !== "completed") {
+            return res.status(400).json({ error: "Audit is not completed yet" });
+        }
+
+        // Reshape to match PDF generation expectations
+        report = {
+            ...pageData.toObject(),
+            device: bulkAudit.device,
+            report: bulkAudit.report,
+            createdAt: pageData.completedAt || bulkAudit.createdAt
+        };
+    } else {
+        const query = { _id: id };
+        if (req.user && req.user.role !== 'admin' && req.user.role !== 'super_admin') {
+            query.userId = req.user.userId;
+        }
+        report = await SingleAuditReport.findOne(query);
+    }
 
     if (!report) {
       return res.status(404).json({ error: "Report not found or access denied" });

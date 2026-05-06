@@ -22,6 +22,6 @@ router.post("/audit", auditLimiter, tryAuthenticate, captchaValidator, startAudi
 router.get("/:id/export/pdf", verifyToken, generatePDFReport);
 
 // Get Single Audit Status
-router.get("/:singleAuditId", getReportById);
+router.get("/:singleAuditId", tryAuthenticate, getReportById);
 
 export default router;

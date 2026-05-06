@@ -238,7 +238,13 @@ export const DataProvider = ({ children }) => {
   const fetchSingleReport = useCallback(async (id) => {
     try {
       const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
-      const res = await fetch(`${API_URL}/single-audit/${id}`, { credentials: 'include' });
+      const token = localStorage.getItem('dealerpulse_token');
+      const res = await fetch(`${API_URL}/single-audit/${id}`, { 
+        credentials: 'include',
+        headers: {
+          ...(token && { "Authorization": `Bearer ${token}` })
+        }
+      });
 
       const result = await handleResponse(res);
       if (result.success) {
@@ -272,7 +278,13 @@ export const DataProvider = ({ children }) => {
   const fetchBulkPageReport = async (bulkId, pageUrl) => {
     try {
       const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
-      const res = await fetch(`${API_URL}/bulk-audit/${bulkId}/page?url=${encodeURIComponent(pageUrl)}`, { credentials: 'include' });
+      const token = localStorage.getItem('dealerpulse_token');
+      const res = await fetch(`${API_URL}/bulk-audit/${bulkId}/page?url=${encodeURIComponent(pageUrl)}`, { 
+        credentials: 'include',
+        headers: {
+          ...(token && { "Authorization": `Bearer ${token}` })
+        }
+      });
 
       const result = await handleResponse(res);
       if (result.success) {

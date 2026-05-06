@@ -258,6 +258,7 @@ async function processSelectedUrls(bulkAuditId, userId, selectedUrls, device, re
                 actions: ["visited", "bulk_audit_run"],
                 captchaPassed: true,
                 status: "pending",
+                parentBulkAuditId: bulkAuditId
             });
             await auditLog.save().catch(err => console.error("Error saving bulk item AuditLog:", err));
 

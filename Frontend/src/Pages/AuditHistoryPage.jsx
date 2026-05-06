@@ -300,13 +300,19 @@ const AuditHistoryPage = () => {
                               <>
                                 <button 
                                   onClick={() => {
-                                    if (audit.reportId) {
+                                    if (audit.reportId || audit.parentBulkAuditId) {
                                       const params = new URLSearchParams({
                                         url: audit.url || "",
                                         device: audit.device || "Desktop",
                                         report: audit.reportType || "All"
-                                      }).toString();
-                                      window.open(`/report/${audit.reportId}?${params}`, '_blank');
+                                      });
+                                      
+                                      if (audit.parentBulkAuditId) {
+                                        params.set("bulkId", audit.parentBulkAuditId);
+                                        window.open(`/report?${params.toString()}`, '_blank');
+                                      } else {
+                                        window.open(`/report/${audit.reportId}?${params.toString()}`, '_blank');
+                                      }
                                     } else {
                                       toast.error("Report details are currently unavailable.");
                                     }
@@ -320,13 +326,14 @@ const AuditHistoryPage = () => {
                                 </button>
                                 <button 
                                   onClick={() => {
-                                    if (!audit.reportId) return toast.error('PDF unavailable for this audit');
+                                    const rId = audit.reportId || (audit.parentBulkAuditId ? `${audit.parentBulkAuditId}_${window.btoa(audit.url)}` : null);
+                                    if (!rId) return toast.error('PDF unavailable for this audit');
                                     
                                     toast.promise(
                                       (async () => {
                                         const token = localStorage.getItem('dealerpulse_token');
                                         const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:2000';
-                                        const response = await fetch(`${API_URL}/single-audit/${audit.reportId}/export/pdf`, {
+                                        const response = await fetch(`${API_URL}/single-audit/${rId}/export/pdf`, {
                                           headers: {
                                             ...(token ? { 'Authorization': `Bearer ${token}` } : {})
                                           }

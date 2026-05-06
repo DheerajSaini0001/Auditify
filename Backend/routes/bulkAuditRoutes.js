@@ -21,10 +21,10 @@ router.post("/discover", tryAuthenticate, captchaValidator, discoverUrls);
 router.post("/audit", auditLimiter, tryAuthenticate, captchaValidator, auditSelectedUrls);
 
 // Get Bulk Page Report
-router.get("/:bulkAuditId/page", getBulkPageReport);
+router.get("/:bulkAuditId/page", tryAuthenticate, getBulkPageReport);
 
 // Get Bulk Audit Status
-router.get("/:bulkAuditId", getBulkAuditStatus);
+router.get("/:bulkAuditId", tryAuthenticate, getBulkAuditStatus);
 
 // Discover and Start Audit combined (Auto flow)
 router.post("/auto-audit", tryAuthenticate, captchaValidator, discoverAndAuditUrls);

@@ -71,10 +71,12 @@ const ReportLayout = () => {
   // Watch for sudden data loss (e.g. from live poll 404)
   useEffect(() => {
     // Prevent navigating away during initial load of a direct link
-    if (!data && !isFetching && !id) {
+    // We only redirect if there's no data, no fetching is happening, 
+    // AND there's no ID or Bulk ID in the URL.
+    if (!data && !isFetching && !id && !searchParams.get("bulkId")) {
       navigate("/", { replace: true });
     }
-  }, [data, isFetching, navigate, id]);
+  }, [data, isFetching, navigate, id, searchParams]);
 
   if (isFetching) {
     return (

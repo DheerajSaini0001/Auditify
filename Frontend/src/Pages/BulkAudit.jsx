@@ -79,7 +79,7 @@ const CustomDropdown = ({ value, onChange, options, icon, darkMode, disabled }) 
 
 export default function BulkAudit() {
     const { theme } = useContext(ThemeContext);
-    const { isAuthenticated, isLoading: authLoading } = useAuth();
+    const { user, isAuthenticated, isLoading: authLoading } = useAuth();
     const { setData, discoverUrls, startBulkAudit, autoBulkAudit, getBulkAuditStatus } = useData();
     const darkMode = theme === "dark";
     const navigate = useNavigate();
@@ -130,9 +130,21 @@ export default function BulkAudit() {
 
         // Priority 3: Session Storage (Restore previous session if no URL param)
         const savedId = sessionStorage.getItem("activeBulkAuditId");
+        const savedUserId = sessionStorage.getItem("activeBulkAuditUserId");
+
         if (savedId) {
-            setBulkAuditId(savedId);
-            setAuditing(true);
+            // Check if identity changed
+            const currentUserId = isAuthenticated ? user?._id : "guest";
+            if (savedUserId && savedUserId !== currentUserId) {
+                // Clear state from previous user
+                sessionStorage.removeItem("activeBulkAuditId");
+                sessionStorage.removeItem("activeBulkAuditUserId");
+                setBulkAuditId(null);
+                setAuditing(false);
+            } else {
+                setBulkAuditId(savedId);
+                setAuditing(true);
+            }
             setIsRestoring(false);
             return;
         }
@@ -333,6 +345,7 @@ export default function BulkAudit() {
             setBulkAuditId(response.data.bulkAuditId);
             setSitemapLinksCount(response.data.totalPages);
             sessionStorage.setItem("activeBulkAuditId", response.data.bulkAuditId);
+            sessionStorage.setItem("activeBulkAuditUserId", isAuthenticated ? user?._id : "guest");
             
             if (token) {
                 const normalizedUrl = urlToFetch.trim().toLowerCase();
@@ -388,6 +401,7 @@ export default function BulkAudit() {
         if (response.success) {
             setBulkAuditId(response.data.bulkAuditId);
             sessionStorage.setItem("activeBulkAuditId", response.data.bulkAuditId);
+            sessionStorage.setItem("activeBulkAuditUserId", isAuthenticated ? user?._id : "guest");
             
         } else {
             console.error("Error starting audit:", response.error);
@@ -462,6 +476,7 @@ export default function BulkAudit() {
         setSitemapLinksCount(null);
         setError(null);
         sessionStorage.removeItem("activeBulkAuditId");
+        sessionStorage.removeItem("activeBulkAuditUserId");
         if (pollingInterval) clearInterval(pollingInterval);
         setPollingInterval(null);
         setAuditing(false);

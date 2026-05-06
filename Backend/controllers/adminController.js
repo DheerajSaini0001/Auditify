@@ -4,6 +4,7 @@ import AuditLog from '../models/AuditLog.js';
 import ConfigAuditLog from '../models/ConfigAuditLog.js';
 import ConfigVersion from '../models/ConfigVersion.js';
 import PlatformConfig from '../models/PlatformConfig.js';
+import SingleAuditReport from '../models/singleAuditReport.js';
 import { encrypt, decrypt } from '../utils/encrypt.js';
 import configService from '../services/configService.js';
 import axios from 'axios';
@@ -371,6 +372,32 @@ export const getOverviewStats = async (req, res) => {
       }
     ]);
 
+    // 4.5 Pillar Averages (Across all sites)
+    const pillarAveragesResult = await SingleAuditReport.aggregate([
+      { $match: { status: 'completed' } },
+      {
+        $group: {
+          _id: null,
+          technicalPerf: { $avg: "$technicalPerformance.Percentage" },
+          onPageSEO: { $avg: "$onPageSEO.Percentage" },
+          accessibility: { $avg: "$accessibility.Percentage" },
+          security: { $avg: "$securityOrCompliance.Percentage" },
+          uxContent: { $avg: "$UXOrContentStructure.Percentage" },
+          aioReady: { $avg: "$aioReadiness.Percentage" },
+          conversion: { $avg: "$conversionAndLeadFlow.Percentage" }
+        }
+      }
+    ]);
+    const pillarAverages = pillarAveragesResult[0] || {
+      technicalPerf: 0,
+      onPageSEO: 0,
+      accessibility: 0,
+      security: 0,
+      uxContent: 0,
+      aioReady: 0,
+      conversion: 0
+    };
+
     // 5. Recent Audits
     const recentAudits = await AuditLog.find()
       .select('url score createdAt status device')
@@ -430,7 +457,16 @@ export const getOverviewStats = async (req, res) => {
         totalGuests,
         avgDuration,
         failedRate,
-        auditsToday
+        auditsToday,
+        pillarAverages: {
+          technicalPerf: Math.round(pillarAverages.technicalPerf || 0),
+          onPageSEO: Math.round(pillarAverages.onPageSEO || 0),
+          accessibility: Math.round(pillarAverages.accessibility || 0),
+          security: Math.round(pillarAverages.security || 0),
+          uxContent: Math.round(pillarAverages.uxContent || 0),
+          aioReady: Math.round(pillarAverages.aioReady || 0),
+          conversion: Math.round(pillarAverages.conversion || 0)
+        }
       },
       volumeData: volumeData.map(v => ({ name: v._id, completed: v.completed, failed: v.failed })),
       scoreTrend: scoreTrend.map(s => ({ name: s._id, score: s.score, count: s.count })),

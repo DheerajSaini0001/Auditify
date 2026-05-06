@@ -587,6 +587,112 @@ const checkSemanticTags = async ($) => {
   }
 };
 
+const isTextRelatedToUrl = (text, href) => {
+  if (!text || !href) return false;
+  const t = text.toLowerCase().trim();
+  const h = href.toLowerCase();
+
+  // 1. Direct Synonyms / Intents (e.g. Sign in -> /login)
+  const intentMap = {
+  // --- AUTHENTICATION ---
+  "sign in": ["login", "signin", "log-in", "sign-in", "auth", "portal-login", "client-login", "secure-access", "start-session", "account-access", "gateway", "verify-identity"],
+  "sign up": ["register", "signup", "sign-up", "join", "enroll", "create-account", "get-started", "onboarding", "become-a-member", "trial-signup", "free-trial", "open-account"],
+  "logout": ["logout", "signout", "sign-out", "log-out", "exit", "end-session", "terminate-session", "disconnect"],
+  "password management": ["forgot-password", "reset-password", "recover-account", "password-recovery", "change-password", "update-credentials"],
+
+  // --- IDENTITY & REPUTATION ---
+  "about": ["about", "about-us", "our-story", "who-we-are", "company", "mission", "vision", "values", "culture", "background", "history", "heritage", "company-profile", "biography"],
+  "team": ["team", "leadership", "our-people", "executive-team", "management", "board-members", "staff", "meet-the-team", "employees", "founders", "faculty"],
+  "careers": ["careers", "jobs", "hiring", "work-with-us", "opportunities", "openings", "join-the-team", "internships", "vacancies", "employment", "recruitment"],
+  "press": ["press", "media", "newsroom", "press-kit", "media-kit", "brand-assets", "news", "announcements", "public-relations", "press-releases", "coverage"],
+
+  // --- CUSTOMER CONVERSION ---
+  "contact": ["contact", "contact-us", "get-in-touch", "reach-out", "contact-me", "write-to-us", "enquiry", "sales-inquiry", "business-contact", "ask-a-question", "request-info", "inbound"],
+  "pricing": ["pricing", "plans", "subscription", "cost", "rates", "fees", "billing", "compare-plans", "tiers", "enterprise-pricing", "calculator", "estimates", "price-list"],
+  "quote": ["get-quote", "estimate", "quotation", "purchase", "buy", "order-now", "request-quote", "book-demo", "schedule-call"],
+  "services": ["services", "our-services", "what-we-do", "solutions", "features", "capabilities", "expertise", "specializations", "offerings", "platform", "infrastructure"],
+
+  // --- E-COMMERCE & ACCOUNT ---
+  "ecommerce": ["cart", "bag", "basket", "checkout", "shop", "store", "marketplace", "catalog", "collections", "wishlist", "shopping-cart", "pay-online"],
+  "profile": ["profile", "account", "dashboard", "my-account", "settings", "preferences", "me", "user-profile", "personal-info", "security-settings", "manage-account"],
+  "orders": ["orders", "my-orders", "purchase-history", "track-order", "shipments", "receipts", "invoices", "downloads", "my-digital-assets"],
+
+  // --- SUPPORT & RESOURCES ---
+  "support": ["help", "support", "help-center", "customer-care", "service-desk", "ticketing", "knowledge-base", "faq", "faqs", "troubleshooting", "how-to", "tutorial-center"],
+  "resources": ["resources", "whitepapers", "ebooks", "guides", "tutorials", "webinars", "case-studies", "documentation", "learning-center", "academy", "training"],
+  "developer": ["docs", "api", "api-docs", "developers", "dev-portal", "documentation", "sdk", "integrations", "changelog", "github-repo", "sandbox"],
+  "blog": ["blog", "news", "articles", "insights", "magazine", "updates", "editorial", "posts", "latest", "newsletter", "stories"],
+
+  // --- SOCIAL PROOF ---
+  "social proof": ["testimonials", "reviews", "customer-reviews", "ratings", "success-stories", "portfolio", "our-work", "projects", "partners", "clients", "affiliates", "sponsors", "certifications", "awards"],
+
+  // --- LEGAL & COMPLIANCE ---
+  "legal": ["privacy", "privacy-policy", "terms", "terms-of-service", "tos", "terms-and-conditions", "t-and-c", "legal", "disclaimer", "cookie-policy", "gdpr", "compliance", "data-protection"],
+  "security": ["security", "trust-center", "vulnerability", "responsible-disclosure", "security-policy", "encryption", "system-status", "uptime"],
+  "refunds": ["refund-policy", "return-policy", "shipping-policy", "delivery-info", "cancellation-policy"],
+
+  // --- PHYSICAL LOCATION ---
+  "location": ["location", "find-us", "map", "offices", "headquarters", "branches", "store-locator", "directions", "contact-details", "reach-us-at"]
+};
+
+  if (intentMap[t]) {
+    if (intentMap[t].some(keyword => h.includes(keyword))) return true;
+  }
+
+  // 2. Slug match (e.g. "About" in /about-us)
+  const slug = h.split('/').filter(Boolean).pop() || "";
+  if (t.length > 3 && (slug.includes(t) || t.includes(slug))) return true;
+
+  // 3. TLD/Country logic (Australia -> .au)
+  const countryTLDs = {
+  ".au": ["australia", "oz", "aus", "down-under"],
+  ".uk": ["uk", "united-kingdom", "britain", "gb", "great-britain", "england"],
+  ".in": ["india", "bharat", "ind"],
+  ".ca": ["canada", "can"],
+  ".us": ["usa", "united-states", "america", "states"],
+  ".de": ["germany", "deutschland", "de"],
+  ".fr": ["france", "fr"],
+  ".jp": ["japan", "nippon", "jp"],
+  ".cn": ["china", "prc"],
+  ".br": ["brazil", "brasil"],
+  ".mx": ["mexico", "mx"],
+  ".ru": ["russia", "rf"],
+  ".za": ["south-africa", "sa"],
+  ".ae": ["uae", "emirates", "dubai"],
+  ".sg": ["singapore", "sg"],
+  ".nz": ["new-zealand", "nz", "kiwi"],
+  ".es": ["spain", "espana", "es"],
+  ".it": ["italy", "italia", "it"],
+  ".nl": ["netherlands", "holland", "nl"],
+  ".se": ["sweden", "sverige"],
+  ".no": ["norway", "norge"],
+  ".fi": ["finland", "suomi"],
+  ".dk": ["denmark", "danmark"],
+  ".ch": ["switzerland", "swiss"],
+  ".at": ["austria", "osterreich"],
+  ".be": ["belgium", "belgie"],
+  ".ie": ["ireland", "eire"],
+  ".my": ["malaysia", "my"],
+  ".th": ["thailand", "thai"],
+  ".vn": ["vietnam", "vn"],
+  ".id": ["indonesia", "id"],
+  ".pk": ["pakistan", "pk"],
+  ".bd": ["bangladesh", "bd"],
+  ".sa": ["saudi-arabia", "ksa"],
+  ".tr": ["turkey", "turkiye"],
+  ".eg": ["egypt", "eg"],
+  ".ng": ["nigeria", "ng"],
+  ".ar": ["argentina", "arg"],
+  ".cl": ["chile", "cl"]
+};
+
+  for (const [ext, names] of Object.entries(countryTLDs)) {
+    if (h.includes(ext) && names.some(name => t.includes(name))) return true;
+  }
+
+  return false;
+};
+
 const checkContextualLinks = async ($, url) => {
   try {
     const contentLinks = new Set();
@@ -604,8 +710,6 @@ const checkContextualLinks = async ($, url) => {
 
       if (!href) return;
 
-      if ($el.closest("nav, header, footer, .navbar, .menu, .sidebar, .nav").length > 0) return;
-
       if (
         href.startsWith("#") ||
         href.startsWith("javascript") ||
@@ -613,7 +717,22 @@ const checkContextualLinks = async ($, url) => {
         href.startsWith("mailto")
       ) return;
 
-      contentLinks.add(href);
+      const isNav = $el.closest("nav, header, footer, .navbar, .menu, .sidebar, .nav").length > 0;
+      const text = $el.text().trim();
+
+      if (isNav) {
+        // Nav links: only include if text is semantically related to the URL
+        if (isTextRelatedToUrl(text, href)) {
+          contentLinks.add(href);
+        }
+        return;
+      }
+
+      // Non-nav (content area) links:
+      // Include if → has no visible text (icon/image anchor) OR text is related to the URL
+      if (!text || isTextRelatedToUrl(text, href)) {
+        contentLinks.add(href);
+      }
     });
 
     // 🔗 Extract Menu Links
@@ -646,11 +765,7 @@ const checkContextualLinks = async ($, url) => {
 
     // 🔍 Missing important links
     const missingLinks = [];
-    const ignoredPatterns = [
-      "login","signin","sign-in","register","signup","sign-up",
-      "cart","checkout","account","profile","logout",
-      "contact","about","privacy","terms"
-    ];
+    const ignoredPatterns = [];
 
     menuLinks.forEach(link => {
       if (link.startsWith("/") || link.includes(url)) {
@@ -1521,7 +1636,7 @@ export default async function seoMetrics(url, $, page) {
   const videoMetric = checkVideos($);
   const hierarchyMetric = checkHeadingHierarchy($);
   const semanticMetric = await checkSemanticTags($);
-  const contextualMetric = checkContextualLinks($, url);
+  const contextualMetric = await checkContextualLinks($, url);
   const linksMetric = checkLinks($, url);
 
 

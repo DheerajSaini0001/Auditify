@@ -766,41 +766,162 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
   const meta = data?.meta || {};
   const score = data?.score || 0;
 
-  // Logic from renderLinkList
+  // Mirrors backend isTextRelatedToUrl + handles no-text (icon/image) anchors
   const isContextual = (text, href) => {
-    if (!text || !href) return false;
-    const normalizedText = text.toLowerCase().trim().replace(/[^a-z0-9]/g, "");
-    if (!normalizedText) return false;
+    if (!href) return false;
+
+    // No visible anchor text — can't determine intent, treat as Non-Contextual
+    // Note: backend stores "[No Text]" as the literal string when anchor has no text
+    const trimmedText = (text || "").trim();
+    if (!trimmedText || trimmedText === "[No Text]") return false;
+
+    const t = trimmedText.toLowerCase();
+    const h = href.toLowerCase();
+
+    // Extract meaningful words from text (reused across checks)
+    const textWords = t.split(/[^a-z0-9]+/).filter(w => w.length > 2);
+
+    // 1. Intent synonym map (mirrors backend intentMap)
+    const intentMap = {
+      "sign in": ["login", "signin", "log-in", "sign-in", "auth", "portal-login", "client-login", "secure-access", "start-session", "account-access", "gateway", "verify-identity"],
+      "sign up": ["register", "signup", "sign-up", "join", "enroll", "create-account", "get-started", "onboarding", "become-a-member", "trial-signup", "free-trial", "open-account"],
+      "logout": ["logout", "signout", "sign-out", "log-out", "exit", "end-session", "terminate-session", "disconnect"],
+      "password management": ["forgot-password", "reset-password", "recover-account", "password-recovery", "change-password", "update-credentials"],
+      "about": ["about", "about-us", "our-story", "who-we-are", "company", "mission", "vision", "values", "culture", "background", "history", "heritage", "company-profile", "biography"],
+      "team": ["team", "leadership", "our-people", "executive-team", "management", "board-members", "staff", "meet-the-team", "employees", "founders", "faculty"],
+      "careers": ["careers", "jobs", "hiring", "work-with-us", "opportunities", "openings", "join-the-team", "internships", "vacancies", "employment", "recruitment"],
+      "press": ["press", "media", "newsroom", "press-kit", "media-kit", "brand-assets", "news", "announcements", "public-relations", "press-releases", "coverage"],
+      "contact": ["contact", "contact-us", "get-in-touch", "reach-out", "contact-me", "write-to-us", "enquiry", "sales-inquiry", "business-contact", "ask-a-question", "request-info", "inbound"],
+      "pricing": ["pricing", "plans", "subscription", "cost", "rates", "fees", "billing", "compare-plans", "tiers", "enterprise-pricing", "calculator", "estimates", "price-list"],
+      "quote": ["get-quote", "estimate", "quotation", "purchase", "buy", "order-now", "request-quote", "book-demo", "schedule-call"],
+      "services": ["services", "our-services", "what-we-do", "solutions", "features", "capabilities", "expertise", "specializations", "offerings", "platform", "infrastructure"],
+      "ecommerce": ["cart", "bag", "basket", "checkout", "shop", "store", "marketplace", "catalog", "collections", "wishlist", "shopping-cart", "pay-online"],
+      "profile": ["profile", "account", "dashboard", "my-account", "settings", "preferences", "me", "user-profile", "personal-info", "security-settings", "manage-account"],
+      "orders": ["orders", "my-orders", "purchase-history", "track-order", "shipments", "receipts", "invoices", "downloads", "my-digital-assets"],
+      "support": ["help", "support", "help-center", "customer-care", "service-desk", "ticketing", "knowledge-base", "faq", "faqs", "troubleshooting", "how-to", "tutorial-center"],
+      "resources": ["resources", "whitepapers", "ebooks", "guides", "tutorials", "webinars", "case-studies", "documentation", "learning-center", "academy", "training"],
+      "developer": ["docs", "api", "api-docs", "developers", "dev-portal", "documentation", "sdk", "integrations", "changelog", "github-repo", "sandbox"],
+      "blog": ["blog", "news", "articles", "insights", "magazine", "updates", "editorial", "posts", "latest", "newsletter", "stories"],
+      "social proof": ["testimonials", "reviews", "customer-reviews", "ratings", "success-stories", "portfolio", "our-work", "projects", "partners", "clients", "affiliates", "sponsors", "certifications", "awards"],
+      "legal": ["privacy", "privacy-policy", "terms", "terms-of-service", "tos", "terms-and-conditions", "t-and-c", "legal", "disclaimer", "cookie-policy", "gdpr", "compliance", "data-protection"],
+      "security": ["security", "trust-center", "vulnerability", "responsible-disclosure", "security-policy", "encryption", "system-status", "uptime"],
+      "refunds": ["refund-policy", "return-policy", "shipping-policy", "delivery-info", "cancellation-policy"],
+      "location": ["location", "find-us", "map", "offices", "headquarters", "branches", "store-locator", "directions", "contact-details", "reach-us-at"],
+    };
+
+    // ── Check full text against intentMap ──────────────────────────────
+    // If text IS exactly a category label ("Blog", "About", etc.), trust it contextual
+    if (intentMap[t]) return true;
+
+    // Check individual words in text against intentMap (handles plurals: "Blogs" → "blog")
+    for (const word of textWords) {
+      const singular = word.endsWith('s') && word.length > 3 ? word.slice(0, -1) : word;
+      if (intentMap[word]) return true;
+      if (singular !== word && intentMap[singular]) return true;
+      // Also try URL keyword match for multi-word texts (e.g. "Blog section" → blog URL)
+      if (intentMap[word] && intentMap[word].some(kw => h.includes(kw))) return true;
+      if (singular !== word && intentMap[singular] && intentMap[singular].some(kw => h.includes(kw))) return true;
+    }
+
+    // ── Acronym / initials match ─────────────────────────────────────
+    // "Certified Pre-Owned" → initials "cpo" matches /cpo
+    const initials = textWords.map(w => w[0]).join("");
+    if (initials.length >= 2 && h.includes(initials)) return true;
+
+    // ── Country TLD matching (mirrors backend) ────────────────────────
+    // "UAE" → .ae, "Australia" → .au
+    const countryTLDs = {
+      ".au": ["australia", "oz", "aus"],
+      ".uk": ["uk", "united-kingdom", "britain", "gb", "england"],
+      ".in": ["india", "bharat"],
+      ".ca": ["canada"],
+      ".us": ["usa", "united-states", "america"],
+      ".de": ["germany", "deutschland"],
+      ".fr": ["france"],
+      ".jp": ["japan", "nippon"],
+      ".cn": ["china"],
+      ".br": ["brazil", "brasil"],
+      ".mx": ["mexico"],
+      ".ru": ["russia"],
+      ".za": ["south-africa"],
+      ".ae": ["uae", "emirates", "dubai"],
+      ".sg": ["singapore"],
+      ".nz": ["new-zealand", "newzealand", "kiwi"],
+      ".es": ["spain", "espana"],
+      ".it": ["italy", "italia"],
+      ".nl": ["netherlands", "holland"],
+      ".se": ["sweden"],
+      ".no": ["norway"],
+      ".fi": ["finland"],
+      ".dk": ["denmark"],
+      ".ch": ["switzerland", "swiss"],
+      ".at": ["austria"],
+      ".be": ["belgium"],
+      ".ie": ["ireland"],
+      ".my": ["malaysia"],
+      ".th": ["thailand"],
+      ".id": ["indonesia"],
+      ".pk": ["pakistan"],
+      ".sa": ["saudi-arabia", "ksa"],
+      ".tr": ["turkey"],
+      ".eg": ["egypt"],
+      ".ng": ["nigeria"],
+      ".ar": ["argentina"],
+      ".cl": ["chile"],
+    };
+    for (const [ext, names] of Object.entries(countryTLDs)) {
+      if (h.includes(ext) && names.some(name => t.includes(name))) return true;
+    }
+
+    // ── URL path segment matching ─────────────────────────────────────
     try {
-      const urlObj = href.startsWith('http') ? new URL(href) : { pathname: href };
+      const urlObj = href.startsWith('http') ? new URL(href) : { pathname: href, hostname: "" };
       const urlPath = urlObj.pathname || href;
+      const hostname = (urlObj.hostname || "").toLowerCase().replace(/^www\./, "");
+
+      // ── Hostname matching ─────────────────────────────────────────
+      // Strip digits from hostname parts: "bikes24" → "bikes", "insure24" → "insure"
+      const hostParts = hostname.split('.').filter(p => p && p !== 'com' && p !== 'www');
+      for (const part of hostParts) {
+        const partStripped = part.replace(/\d+/g, ""); // "bikes24" → "bikes"
+        if (!partStripped || partStripped.length < 3) continue;
+        for (const w of textWords) {
+          if (w === partStripped) return true;                           // exact match
+          if (w.startsWith(partStripped) || partStripped.startsWith(w)) return true; // prefix
+          if (w.includes(partStripped) || partStripped.includes(w)) return true;     // substring
+        }
+      }
+
       if (urlPath === "/" || urlPath === "") {
-        return normalizedText.includes("home") || normalizedText.includes("index") || normalizedText.includes("main");
-      }
-      const cleanPath = urlPath.replace(/\.[^/.]+$/, "").replace(/\/$/, "");
-      const rawSlug = cleanPath.split('/').pop().toLowerCase();
-      const slug = rawSlug.replace(/[^a-z0-9]/g, "");
-      if (!slug) return false;
-
-      // 1. Exact Substring match
-      if (normalizedText.includes(slug) || slug.includes(normalizedText)) {
-        return true;
+        return t.includes("home") || t.includes("index") || t.includes("main");
       }
 
-      // 2. Word Overlap match
-      const textWords = text.toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length > 2);
-      const slugWords = rawSlug.split(/[^a-z0-9]+/).filter(w => w.length > 2);
+      // All path segments: /research/toyota/rav4/2025 → ["research","toyota","rav4","2025"]
+      const allSegments = urlPath
+        .replace(/\.[^/.]+$/, "")
+        .split('/')
+        .filter(Boolean)
+        .map(s => s.toLowerCase());
 
-      let overlap = 0;
-      for (const w of textWords) {
-        if (slugWords.includes(w)) overlap++;
+      const normalizedText = t.replace(/[^a-z0-9]/g, "");
+
+      for (const seg of allSegments) {
+        const segNorm = seg.replace(/[^a-z0-9]/g, "");
+        if (!segNorm || segNorm.length < 2) continue;
+
+        if (normalizedText.includes(segNorm) || segNorm.includes(normalizedText)) return true;
+
+        const segWords = seg.split(/[^a-z0-9]+/).filter(w => w.length > 2);
+        for (const w of textWords) {
+          if (segWords.includes(w)) return true;
+          if (w.startsWith(segNorm) || segNorm.startsWith(w)) return true;
+          if (segNorm.includes(w) || w.includes(segNorm)) return true;
+        }
       }
 
-      // Allow if there is a meaningful overlap (1+ overlapping significant words)
-      if (overlap > 0) return true;
+    } catch { /* ignore invalid URLs */ }
 
-      return false;
-    } catch { return false; }
+    return false;
   };
 
   // Combine Internal & External Links for analysis

@@ -23,7 +23,7 @@ export default function Footer() {
               <img src={darkMode ? Assets.Logo : Assets.DarkLogo} alt="Dealerpulse" title="Dealerpulse" className="h-16 w-auto" />
             </Link>
             <p className="text-sm font-medium leading-relaxed">
-              Deep-intelligence website auditing. Performance, SEO, Security, and more. All in one place.
+              Deep-intelligence website auditing. Performance, SEO, Security, and more. All in one place at Dealerpulse.
             </p>
             <div className="flex items-center gap-4">
               {[

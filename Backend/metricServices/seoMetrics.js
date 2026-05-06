@@ -18,6 +18,40 @@ const evaluateParameter = (score, details, meta = {}) => {
   };
 };
 
+const stopWords = new Set([
+  "a", "an", "the", "and", "or", "but", "is", "if", "then", "else", "when", "at", "from", "by", "for", "with", "in", "out", "on", "off", "over", "under", "again", "further", "then", "once", "here", "there", "when", "where", "why", "how", "all", "any", "both", "each", "few", "more", "most", "other", "some", "such", "no", "nor", "not", "only", "own", "same", "so", "than", "too", "very", "s", "t", "can", "will", "just", "don", "should", "now", "to", "of", "it", "that", "was", "as", "are", "be", "this", "which", "they", "had", "has", "have", "been", "were", "my", "your", "his", "her", "its", "our", "their", "who", "whom", "whose", "what", "these", "those", "am", "being", "do", "does", "did", "doing", "because", "until", "while", "about", "against", "between", "into", "through", "during", "before", "after", "above", "below", "up", "down",
+  "online", "site", "website", "page", "home", "official", "best", "top", "good", 
+  "better", "great", "excellent", "services", "company", "business", "buy", "shop", 
+  "order", "price", "cost", "free", "quality", "review", "reviews", "product", 
+  "products", "item", "items", "welcome", "contact", "login", "signin", "register", 
+  "signup", "help", "support", "faq", "faqs", "terms", "privacy", "policy", "rights", 
+  "reserved", "click", "read", "view", "details", "info", "information", "get", "started", 
+  "start", "now", "using", "use", "make", "made", "every", "find", "everything", "latest",
+  "available", "offering", "offers", "offer", "providing", "provides", "provide", "become",
+  "truly", "really", "very", "quite", "rather", "extremely", "basically", "actually","like","see","updates","filter"
+]);
+
+const cleanText = (text, includeNgrams = false) => {
+  if (!text) return [];
+  const rawWords = text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter(word => word.length > 2);
+
+  const filteredWords = rawWords.filter(word => !stopWords.has(word) && !(/^\d+$/.test(word) && word.length !== 4));
+  
+  if (!includeNgrams || filteredWords.length < 2) return filteredWords;
+
+  // Extract 2-word phrases (N-grams)
+  const ngrams = [];
+  for (let i = 0; i < filteredWords.length - 1; i++) {
+    ngrams.push(`${filteredWords[i]} ${filteredWords[i+1]}`);
+  }
+  
+  return [...filteredWords, ...ngrams];
+};
+
 const checkSlugs = (url) => {
   try {
     const u = new URL(url);
@@ -731,54 +765,110 @@ else {
   }
 };
 
-const checkContentQuality = ($) => {
-  // Use a clone to avoid modifying the original DOM for other checks
-  const $body = $("body").clone();
 
-  // Remove scripts, styles, and non-visible elements
-  $body.find("script, style, noscript, template, svg, img, video, iframe, link, meta, [hidden], [aria-hidden='true'], header, footer, nav").remove();
 
-  const text = $body.text().replace(/\s+/g, " ").trim();
-  const words = text.split(" ").filter(w => w.length > 0);
-  const wordCount = words.length;
+const checkContentRelevance = ($, title, metaDesc) => {
+  try {
+    const $body = $("body").clone();
+    
+    // For relevance, we check all visible text (including header/nav where branding often lives)
+    // but we still remove non-visible/technical tags
+    $body.find("script, style, noscript, template, svg, img, video, iframe, link, meta, [hidden], [aria-hidden='true']").remove();
+    const visibleText = $body.text().replace(/\s+/g, " ").trim();
+    
+    const stem = (word) => {
+      if (!word || word.length <= 3) return word;
+      if (word.endsWith('ies')) return word.slice(0, -3) + 'y';
+      if (word.endsWith('es')) return word.slice(0, -2);
+      if (word.endsWith('s') && !word.endsWith('ss')) return word.slice(0, -1);
+      return word;
+    };
 
-  // 1. Thin Content Check
-  if (wordCount < 100) {
-    return evaluateParameter(0, "No / very low content (<100 words)", { wordCount, repeatedSentences: [] });
-  } else if (wordCount < 300) {
-    return evaluateParameter(0.5, "Less content (100-300 words)", { wordCount, repeatedSentences: [] });
-  }
+    const titleKws = cleanText(title, false);
+    const metaKws = cleanText(metaDesc, false).filter(kw => !titleKws.includes(kw));
+    const allTargetKeywords = [...new Set([...titleKws, ...metaKws])];
+    const N = allTargetKeywords.length;
 
-  // 2. Internal Duplication
-  const sentences = text.split(/[.!?]+/).map(s => s.trim().toLowerCase()).filter(s => s.length > 20);
-
-  if (sentences.length === 0) {
-    return evaluateParameter(1, "Content quality is good", { wordCount, repeatedSentences: [] });
-  }
-
-  const sentenceCounts = {};
-  sentences.forEach(s => {
-    sentenceCounts[s] = (sentenceCounts[s] || 0) + 1;
-  });
-
-  const repeatedSentences = Object.entries(sentenceCounts)
-    .filter(([_, count]) => count > 1)
-    .map(([text, count]) => ({ text, count }))
-    .sort((a, b) => b.count - a.count);
-
-  const uniqueCount = Object.keys(sentenceCounts).length;
-  const totalSentences = sentences.length;
-
-  const repetitionRatio = 1 - (uniqueCount / totalSentences);
-
-  if (repetitionRatio > 0.10) {
-    if (wordCount >= 1500) {
-       return evaluateParameter(0.5, "Very long content but poor readability", { wordCount, repeatedSentences });
+    if (N === 0) {
+      return { score: "LOW", percentage: 0, matchedKeywords: [], missingKeywords: [], reason: "No significant keywords found.", status: "fail" };
     }
-    return evaluateParameter(0.5, "High sentence repetition detected", { wordCount, repeatedSentences });
-  }
 
-  return evaluateParameter(1, wordCount >= 1500 ? "Very long, structured content" : "Proper content", { wordCount, repeatedSentences });
+    const contentTextClean = visibleText.toLowerCase().replace(/[^a-z0-9\s]/g, " ");
+    const contentWordsRaw = contentTextClean.split(/\s+/).filter(w => w.length > 2);
+    
+    const contentInventory = new Set(contentWordsRaw);
+    const stemmedInventory = new Set(contentWordsRaw.map(w => stem(w)));
+    
+    // Add phrases
+    for (let i = 0; i < contentWordsRaw.length - 1; i++) {
+      const phrase = `${contentWordsRaw[i]} ${contentWordsRaw[i+1]}`;
+      contentInventory.add(phrase);
+      stemmedInventory.add(`${stem(contentWordsRaw[i])} ${stem(contentWordsRaw[i+1])}`);
+    }
+
+    // Advanced match for brands/compound words (like CarDekho matching "Car Dekho")
+    const matchedKws = allTargetKeywords.filter(kw => {
+      if (contentInventory.has(kw)) return true;
+      
+      const stemmedKw = kw.includes(" ") ? kw.split(" ").map(w => stem(w)).join(" ") : stem(kw);
+      if (stemmedInventory.has(stemmedKw)) return true;
+      
+      // Compound check: If keyword is "cardekho" and content has "car" and "dekho" adjacent
+      // (This is already handled by phrases if they are adjacent)
+      
+      // Partial check for brand names (Keyword exists as a substring of a content word)
+      // or a content word exists as a substantial substring of a keyword
+      if (kw.length >= 5) {
+        for (let word of contentWordsRaw) {
+          if (word.length >= 5 && (word.includes(kw) || kw.includes(word))) return true;
+        }
+      }
+      
+      return false;
+    });
+    
+    const M = matchedKws.length;
+    const P = Math.round((M / N) * 100);
+    const missingKws = allTargetKeywords.filter(kw => !matchedKws.includes(kw));
+    const X = missingKws.length;
+
+    // Quality penalties (Stuffing/Repetition) - Use stricter body-only text for this
+    const $mainOnly = $("body").clone();
+    $mainOnly.find("script, style, noscript, template, svg, img, video, iframe, link, meta, [hidden], [aria-hidden='true'], header, footer, nav").remove();
+    const mainText = $mainOnly.text().trim();
+    const mainWords = cleanText(mainText, false);
+    
+    const keywordFrequency = {};
+    mainWords.forEach(word => {
+      keywordFrequency[word] = (keywordFrequency[word] || 0) + 1;
+    });
+    
+    const totalWords = mainWords.length || 1;
+    let stuffingPenalty = 0;
+    Object.keys(keywordFrequency).forEach(kw => {
+      if ((keywordFrequency[kw] / totalWords) * 100 > 7) stuffingPenalty += 10;
+    });
+
+    let finalScore = P - stuffingPenalty;
+    finalScore = Math.max(0, Math.min(100, finalScore));
+
+    let scoreLabel = "LOW";
+    let status = "fail";
+    if (finalScore >= 75) { scoreLabel = "HIGH"; status = "pass"; }
+    else if (finalScore >= 40) { scoreLabel = "MEDIUM"; status = "warning"; }
+
+    return {
+      score: scoreLabel,
+      percentage: P,
+      matchedKeywords: matchedKws,
+      missingKeywords: missingKws,
+      reason: P === 100 ? "Perfect match! Your content perfectly reflects your metadata." : `Match Status: ${P}% Match (${M}/${N}).`,
+      status,
+      details: `Topic Alignment: ${M}/${N} keywords found.`
+    };
+  } catch (err) {
+    return { score: "LOW", percentage: 0, matchedKeywords: [], missingKeywords: [], reason: "Calculation error", status: "fail" };
+  }
 };
 
 const checkURLStructure = (url) => {
@@ -1435,7 +1525,8 @@ export default async function seoMetrics(url, $, page) {
   const linksMetric = checkLinks($, url);
 
 
-  const contentQualityMetric = checkContentQuality($);
+
+  const contentRelevanceMetric = checkContentRelevance($, titleMetric.meta.title, metaDescMetric.meta.description);
   const slugMetric = checkSlugs(url);
   const robotsMetric = await checkRobotsTxt(url, page);
   const sitemapMetric = await checkSitemap(url, robotsMetric?.meta?.content, page);
@@ -1447,7 +1538,8 @@ export default async function seoMetrics(url, $, page) {
     Title: 0.15,
     Meta_Description: 0.08,
     H1: 0.10,
-    Duplicate_Content: 0.12,
+    Content_Relevance: 0.10,
+    Duplicate_Content: 0.02,
     Image: 0.08,
     Canonical: 0.08,
     Contextual_Linking: 0.08,
@@ -1470,7 +1562,7 @@ export default async function seoMetrics(url, $, page) {
     (getScore(titleMetric) * weights.Title) +
     (getScore(metaDescMetric) * weights.Meta_Description) +
     (getScore(h1Metric) * weights.H1) +
-    (getScore(contentQualityMetric) * weights.Duplicate_Content) +
+    (contentRelevanceMetric.percentage * weights.Content_Relevance) +
     (getScore(imageMetric) * weights.Image) +
     (getScore(canonicalMetric) * weights.Canonical) +
     (getScore(contextualMetric) * weights.Contextual_Linking) +
@@ -1500,7 +1592,7 @@ export default async function seoMetrics(url, $, page) {
     Semantic_Tags: semanticMetric,
     Contextual_Linking: contextualMetric,
     Links: linksMetric,
-    Duplicate_Content: contentQualityMetric,
+    Content_Relevance: contentRelevanceMetric,
     URL_Slugs: slugMetric,
     Robots_Txt: robotsMetric,
     Sitemap: sitemapMetric,

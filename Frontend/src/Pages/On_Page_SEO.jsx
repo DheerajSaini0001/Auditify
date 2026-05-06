@@ -1315,32 +1315,36 @@ const HeadingHierarchyCard = ({ data, darkMode, onInfo }) => {
 // ------------------------------------------------------
 // Specialized Content Quality Card
 // ------------------------------------------------------
-const ContentQualityCard = ({ data, darkMode, onInfo }) => {
-  const meta = data?.meta || {};
-  const score = data?.score || 0;
-  const status = data?.status || "fail";
-  const analysis = data?.analysis;
+
+
+const ContentRelevanceCard = ({ data, darkMode, onInfo }) => {
+  const meta = data || {};
+  const percentage = meta.percentage || 0;
+  const status = meta.status || "fail";
   const isPassed = status === "pass";
 
-  const statusText = isPassed ? "High Quality" : (score >= 50 ? "Acceptable Depth" : "Thin Content / Repetition");
+  const statusText = meta.score === "HIGH" ? "Strong Relevance" : (meta.score === "MEDIUM" ? "Moderate Relevance" : "Low Relevance");
 
   return (
-    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group col-span-1 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group col-span-1 md:col-span-2 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
       <div className="p-5 space-y-4">
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
             <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
-              <Copy size={24} className={darkMode ? "text-rose-400" : "text-rose-600"} />
+              <CheckCircle size={24} className={darkMode ? "text-emerald-400" : "text-emerald-600"} />
             </div>
             <div>
-              <h3 className={`font-bold text-lg ${darkMode ? "text-gray-100" : "text-gray-900"}`}>Content Quality</h3>
+              <h3 className={`font-bold text-lg ${darkMode ? "text-gray-100" : "text-gray-900"}`}>Content Relevance</h3>
               <div className={`flex items-center gap-2 mt-1`}>
                 <ScoreBadge
-                  status={getStatusFromScore(score)}
+                  status={status}
                   value={statusText}
                   darkMode={darkMode}
                 />
+                <span className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                  ({percentage}% Match)
+                </span>
               </div>
             </div>
           </div>
@@ -1360,59 +1364,54 @@ const ContentQualityCard = ({ data, darkMode, onInfo }) => {
 
         {/* Content Body */}
         <div className="space-y-4">
-
-          <div className="space-y-3">
-            <div className="text-sm font-semibold">
-              Total Words: <span className={darkMode ? "text-blue-400" : "text-blue-600"}>{meta?.wordCount || 0}</span>
+          <div className="space-y-4">
+            {/* Reason */}
+            <div className={`p-3 rounded-lg border text-sm leading-relaxed ${darkMode ? "bg-gray-900 border-gray-700 text-gray-300" : "bg-blue-50/50 border-blue-100 text-gray-700"}`}>
+              <div className="font-bold text-xs uppercase tracking-wider mb-1 opacity-50">Audit Findings</div>
+              {meta.reason}
             </div>
 
-            {meta?.repeatedSentences?.length > 0 && (
-              <div className="space-y-1">
-                <div className="font-semibold text-red-500 text-xs uppercase tracking-wide">Repetitive Sentences:</div>
-                <div className="max-h-40 overflow-y-auto custom-scrollbar space-y-1">
-                  {meta.repeatedSentences.map((item, i) => (
-                    <div key={i} className="flex justify-between items-start gap-2 p-2 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors border border-transparent hover:border-gray-200 dark:hover:border-gray-700">
-                      <span className="text-xs opacity-90 italic line-clamp-2" title={item.text}>
-                        "{item.text}"
+            {/* Keywords Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Matched Keywords */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-500">
+                  <CheckCircle size={12} />
+                  <span>Matched Keywords ({meta.matchedKeywords?.length || 0})</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {meta.matchedKeywords?.length > 0 ? (
+                    meta.matchedKeywords.map((kw, i) => (
+                      <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-bold ${darkMode ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-emerald-50 text-emerald-700 border border-emerald-100"}`}>
+                        {kw}
                       </span>
-                      <span className="text-xs font-bold text-red-500 whitespace-nowrap bg-red-100 dark:bg-red-900/30 px-1.5 py-0.5 rounded">
-                        x{item.count}
-                      </span>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <span className="text-xs opacity-50 italic">None detected</span>
+                  )}
                 </div>
               </div>
-            )}
-          </div>
 
-
-          {/* Analysis Details */}
-          {data.analysis && !isPassed && (
-            <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
-              {/* Analysis */}
+              {/* Missing Keywords */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-500">
                   <AlertTriangle size={12} />
-                  <span>Analysis</span>
+                  <span>Missing Keywords ({meta.missingKeywords?.length || 0})</span>
                 </div>
-                <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                  {data.analysis.cause}
-                </p>
-              </div>
-
-              {/* Recommendation */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-500">
-                  <CheckCircle size={12} />
-                  <span>Recommendation</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {meta.missingKeywords?.length > 0 ? (
+                    meta.missingKeywords.map((kw, i) => (
+                      <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-bold ${darkMode ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" : "bg-amber-50 text-amber-700 border border-amber-100"}`}>
+                        {kw}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-xs opacity-50 italic">All metadata keywords found</span>
+                  )}
                 </div>
-                <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                  {data.analysis.recommendation}
-                </p>
               </div>
             </div>
-          )}
-
+          </div>
         </div>
       </div>
     </div>
@@ -1984,7 +1983,7 @@ export default function On_Page_SEO() {
     { icon: <FileCode className="w-8 h-8 text-teal-500" />, title: "Technical SEO", text: "Verifying Canonical tags, Robots.txt, and Sitemap presence..." },
     { icon: <ImageIcon className="w-8 h-8 text-indigo-500" />, title: "Visual Assets", text: "Checking image Alt text, file sizes, and video optimization..." },
     { icon: <Link className="w-8 h-8 text-amber-500" />, title: "Link Profile", text: "Analyzing internal linking structure, identifying broken links and orphan pages..." },
-    { icon: <Copy className="w-8 h-8 text-red-500" />, title: "Content Quality", text: "Detecting duplicate content, thin pages, and keyword consistency..." },
+   
     { icon: <Globe className="w-8 h-8 text-emerald-500" />, title: "Social Signals", text: "Reviewing Open Graph tags and Twitter Cards for social media optimization..." },
   ], []);
 
@@ -2009,6 +2008,7 @@ export default function On_Page_SEO() {
       seo.Contextual_Linking,
       seo.Links,
       seo.Duplicate_Content,
+      seo.Content_Relevance,
       seo.Robots_Txt,
       seo.Sitemap,
       seo.Structured_Data,
@@ -2198,10 +2198,10 @@ export default function On_Page_SEO() {
             darkMode={darkMode}
             onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Meta_Description, icon: FileText })}
           />
-          <ContentQualityCard
-            data={seo.Duplicate_Content}
+          <ContentRelevanceCard
+            data={seo.Content_Relevance}
             darkMode={darkMode}
-            onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Content_Quality, icon: Copy })}
+            onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Content_Relevance, icon: CheckCircle })}
           />
           <ContextualAnalysisCard
             data={seo.Contextual_Linking}

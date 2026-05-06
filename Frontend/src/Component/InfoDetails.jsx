@@ -658,6 +658,29 @@ export const InfoDetails = {
             "Ensure content provides depth on the topic"
         ]
     },
+    Content_Relevance: {
+        title: "Content Relevance",
+        whatThisParameterIs: "Content Relevance measures how well your actual page content aligns with the primary topics promised in your Page Title and Meta Description.",
+        whatItCalculates: "We extract core keywords from your title and meta description and check if they are naturally woven into the body text. We prioritize Title alignment and penalize for keyword stuffing or excessive filler content.",
+        whyItMatters: "Search engines prioritize 'Satisfactory Search Intent.' If a user clicks your link because of the title but finds unrelated content, they will bounce immediately, which severely hurts your rankings.",
+        thresholds: {
+            good: "Strong keyword alignment & natural flow",
+            needsImprovement: "Partial keyword match or low density",
+            poor: "Misleading or unrelated content"
+        },
+        actualReasonsForFailure: [
+            "Main content does not discuss keywords found in the Title",
+            "Keyword stuffing (over 5% density for single terms)",
+            "High density of filler/meaningless repeated sentences",
+            "Thin content that lacks topical depth"
+        ],
+        howToOvercomeFailure: [
+            "Ensure the first 100 words clearly address the topic in the Title",
+            "Remove excessive keyword repetition (stuffing)",
+            "Expand on missing keywords that are promised in the Meta Description",
+            "Avoid using 'bait-and-switch' titles that don't match the body text"
+        ]
+    },
     Links: {
         title: "Anchor Text Quality",
         whatThisParameterIs: "Anchor text is the clickable word or phrase in a link. Using descriptive words helps people know where the link will take them.",

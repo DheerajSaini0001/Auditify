@@ -161,13 +161,41 @@ export default function AIChatOverlay() {
       setMessages(prev => [...prev, { role: 'bot', text: result.text }]);
     } catch (err) {
       console.error('[AI Chat Send Error]:', err);
-      setMessages(prev => [
-        ...prev,
-        { role: 'bot', text: `⚠️ **AI Communication Error:** ${err.message}. Please try again.` }
-      ]);
+      const errMsg = err.message || '';
+      const isQuota = errMsg.toLowerCase().includes('429') || errMsg.toLowerCase().includes('quota') || errMsg.toLowerCase().includes('limit');
+      
+      if (isQuota) {
+        setMessages(prev => [
+          ...prev,
+          { 
+            role: 'bot', 
+            text: `⚠️ **AI Daily Quota Limit Reached (429)**\n\nYour Google Gemini API key's free-tier daily cap of **20 requests** has been exceeded.\n\n### 💡 How to Unlock Unlimited Access:\n1. Go to your **[Google AI Studio](https://aistudio.google.com/)** dashboard.\n2. Transition your account or project to **Pay-As-You-Go** billing to get immediate, unlimited, and faster responses.\n3. Alternatively, you can wait for the daily quota reset or configure a premium API key under server settings.`
+          }
+        ]);
+      } else {
+        setMessages(prev => [
+          ...prev,
+          { role: 'bot', text: `⚠️ **AI Communication Error:** ${errMsg}. Please try again.` }
+        ]);
+      }
     } finally {
       setChatLoading(false);
     }
+  };
+
+  const simulateQuotaLimit = () => {
+    // Set strategic summary error state to a realistic 429 quota exception
+    setSummaryError('Synthesis Delay: AI Connection Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent: [429 Too Many Requests] You exceeded your current quota, please check your plan and billing details.');
+    
+    // Add the user message mimicking a question and the quota bot response
+    setMessages(prev => [
+      ...prev,
+      { role: 'user', text: 'How can I fix the critical bottleneck?' },
+      {
+        role: 'bot',
+        text: `⚠️ **AI Daily Quota Limit Reached (429)**\n\nYour Google Gemini API key's free-tier daily cap of **20 requests** has been exceeded.\n\n### 💡 How to Unlock Unlimited Access:\n1. Go to your **[Google AI Studio](https://aistudio.google.com/)** dashboard.\n2. Transition your account or project to **Pay-As-You-Go** billing to get immediate, unlimited, and faster responses.\n3. Alternatively, you can wait for the daily quota reset or configure a premium API key under server settings.`
+      }
+    ]);
   };
 
   const handleClose = () => {
@@ -336,21 +364,44 @@ export default function AIChatOverlay() {
                 </div>
               ) : summaryError ? (
                 /* Fallback on summary error */
-                <div className={`p-4 rounded-xl border flex items-start gap-3 ${
-                  darkMode ? 'bg-rose-500/5 border-rose-500/15 text-rose-400' : 'bg-rose-50 border-rose-100 text-rose-600'
-                }`}>
-                  <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                  <div className="space-y-1">
-                    <h4 className="text-xs font-bold uppercase tracking-wider">Strategic Delay</h4>
-                    <p className="text-xs leading-relaxed opacity-90">{summaryError}</p>
-                    <button
-                      onClick={fetchStrategicSummary}
-                      className="mt-2 text-[10px] font-bold flex items-center gap-1 underline uppercase hover:opacity-85"
-                    >
-                      <RefreshCw className="w-2.5 h-2.5" /> Retry Synthesis
-                    </button>
-                  </div>
-                </div>
+                (() => {
+                  const isQuota = summaryError.toLowerCase().includes('429') || summaryError.toLowerCase().includes('quota') || summaryError.toLowerCase().includes('limit');
+                  if (isQuota) {
+                    return (
+                      <div className={`p-4 rounded-xl border flex items-start gap-3 ${
+                        darkMode ? 'bg-amber-500/5 border-amber-500/15 text-amber-400' : 'bg-amber-50 border-amber-200 text-amber-800'
+                      }`}>
+                        <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5 text-amber-500" />
+                        <div className="space-y-1">
+                          <h4 className="text-xs font-black uppercase tracking-wider">AI Quota Reached</h4>
+                          <p className="text-xs leading-relaxed opacity-90">
+                            Your Gemini API key's daily limit of 20 requests has been reached.
+                          </p>
+                          <div className="text-[10px] font-medium opacity-75 mt-1">
+                            💡 Tip: Configure Pay-As-You-Go in your Google AI Studio account to resolve this.
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div className={`p-4 rounded-xl border flex items-start gap-3 ${
+                      darkMode ? 'bg-rose-500/5 border-rose-500/15 text-rose-400' : 'bg-rose-50 border-rose-100 text-rose-600'
+                    }`}>
+                      <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                      <div className="space-y-1">
+                        <h4 className="text-xs font-bold uppercase tracking-wider">Strategic Delay</h4>
+                        <p className="text-xs leading-relaxed opacity-90">{summaryError}</p>
+                        <button
+                          onClick={fetchStrategicSummary}
+                          className="mt-2 text-[10px] font-bold flex items-center gap-1 underline uppercase hover:opacity-85"
+                        >
+                          <RefreshCw className="w-2.5 h-2.5" /> Retry Synthesis
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })()
               ) : summary ? (
                 /* Strategic Summary Cards */
                 <div className="space-y-4">
@@ -451,6 +502,20 @@ export default function AIChatOverlay() {
                   SitePulse AI Chat Context Active
                 </span>
               </div>
+              
+              <button
+                onClick={simulateQuotaLimit}
+                type="button"
+                className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all duration-200 border flex items-center gap-1.5 active:scale-95 cursor-pointer ${
+                  darkMode
+                    ? 'bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30 text-amber-400'
+                    : 'bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-700'
+                }`}
+                title="Simulate a 429 Quota Exceeded API response across both panels"
+              >
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0 animate-pulse" />
+                Simulate Quota Limit
+              </button>
             </div>
 
             {/* Chat Messages viewport */}

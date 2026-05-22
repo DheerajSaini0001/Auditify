@@ -98,12 +98,41 @@ export function AISummaryModal({ isOpen, onClose, sectionName, sectionData, audi
                 </p>
               </div>
             ) : error ? (
-              <div className={`p-6 rounded-2xl border flex items-center gap-4 ${
-                darkMode ? "bg-rose-500/5 border-rose-500/20 text-rose-400" : "bg-rose-50 border-rose-100 text-rose-600"
-              }`}>
-                <AlertTriangle className="w-6 h-6 flex-shrink-0" />
-                <p className="text-sm font-medium">{error}</p>
-              </div>
+              (() => {
+                const isQuota = error.toLowerCase().includes('429') || error.toLowerCase().includes('quota') || error.toLowerCase().includes('limit');
+                if (isQuota) {
+                  return (
+                    <div className={`p-6 rounded-2xl border flex flex-col gap-3.5 ${
+                      darkMode ? "bg-amber-500/5 border-amber-500/20 text-amber-300 shadow-[0_0_15px_-3px_rgba(245,158,11,0.15)]" : "bg-amber-50 border-amber-200 text-amber-900"
+                    }`}>
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-xl ${darkMode ? "bg-amber-500/20 text-amber-400" : "bg-amber-100 text-amber-700"}`}>
+                          <AlertTriangle className="w-6 h-6 flex-shrink-0" />
+                        </div>
+                        <h4 className="text-sm font-black uppercase tracking-wider">AI Daily Quota Limit Reached</h4>
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-xs md:text-sm leading-relaxed opacity-90 font-medium">
+                          Your Google Gemini API key has exceeded its daily free-tier limit of **20 requests**. 
+                        </p>
+                        <div className={`p-3 rounded-lg border text-[11px] leading-relaxed font-mono ${
+                          darkMode ? "bg-slate-950/40 border-slate-800 text-slate-400" : "bg-slate-100/50 border-slate-200 text-slate-700"
+                        }`}>
+                          💡 **How to solve this**: Transition your project from Free Tier to Pay-As-You-Go in Google AI Studio to unlock unlimited audits and immediate responses.
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+                return (
+                  <div className={`p-6 rounded-2xl border flex items-center gap-4 ${
+                    darkMode ? "bg-rose-500/5 border-rose-500/20 text-rose-400" : "bg-rose-50 border-rose-100 text-rose-600"
+                  }`}>
+                    <AlertTriangle className="w-6 h-6 flex-shrink-0" />
+                    <p className="text-sm font-medium">{error}</p>
+                  </div>
+                );
+              })()
             ) : (
               <div className="space-y-6">
                 {/* 1. Strength Card */}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Loader2 } from 'lucide-react';
+import { Sparkles, Loader2, AlertTriangle } from 'lucide-react';
 import axios from 'axios';
 
 const AISummaryBlock = ({ sectionName, sectionData, auditScore, url, darkMode }) => {
@@ -61,7 +61,23 @@ const AISummaryBlock = ({ sectionName, sectionData, auditScore, url, darkMode })
                         Generating expert strategic analysis...
                     </div>
                 ) : error ? (
-                    <p className="italic opacity-50">{error}</p>
+                    (() => {
+                        const isQuota = error.toLowerCase().includes('429') || error.toLowerCase().includes('quota') || error.toLowerCase().includes('limit');
+                        if (isQuota) {
+                            return (
+                                <div className="space-y-2 mt-1">
+                                    <p className={`font-bold flex items-center gap-2 ${darkMode ? 'text-amber-450' : 'text-amber-800'}`}>
+                                        <AlertTriangle className="w-4 h-4 shrink-0 text-amber-500" />
+                                        AI Quota Limit Exceeded
+                                    </p>
+                                    <p className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-650'}`}>
+                                        Your free-tier Gemini API key has exceeded its daily limit of 20 requests. Please configure Pay-As-You-Go billing in Google AI Studio to unlock unlimited access, or try again tomorrow.
+                                    </p>
+                                </div>
+                            );
+                        }
+                        return <p className="italic opacity-50">{error}</p>;
+                    })()
                 ) : (
                     <p className="font-medium">"{summary}"</p>
                 )}

@@ -1,0 +1,124 @@
+/* Custom Scrollbar for AI Chat Overlay */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(155, 155, 155, 0.15);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(155, 155, 155, 0.35);
+}
+
+/* Subtle bounce animation for loaders */
+.animate-bounce-subtle {
+  animation: bounce-subtle 3s infinite ease-in-out;
+}
+
+@keyframes bounce-subtle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+/* AI strategically styled elements inside chat bubbles */
+.prose {
+  max-width: 100%;
+}
+
+.prose p {
+  margin-bottom: 0.75rem;
+}
+
+.prose p:last-child {
+  margin-bottom: 0;
+}
+
+.prose strong {
+  font-weight: 700;
+}
+
+.prose code {
+  background: rgba(99, 102, 241, 0.1);
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.9em;
+  color: #818cf8;
+}
+
+.prose pre {
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  color: #cbd5e1;
+  padding: 12px;
+  border-radius: 8px;
+  font-family: monospace;
+  font-size: 0.85em;
+  overflow-x: auto;
+  margin: 10px 0;
+}
+
+.prose ul, .prose ol {
+  margin-left: 1.25rem;
+  margin-bottom: 0.75rem;
+  list-style-type: disc;
+}
+
+.prose ol {
+  list-style-type: decimal;
+}
+
+.prose li {
+  margin-bottom: 0.25rem;
+}
+
+/* Problem & Solution block support in overlay */
+.ai-problem-block {
+  background: rgba(239, 68, 68, 0.08);
+  border-left: 4px solid #ef4444;
+  padding: 10px 14px;
+  border-radius: 0 8px 8px 0;
+  margin: 8px 0;
+  text-align: left;
+}
+
+.ai-solution-block {
+  background: rgba(16, 185, 129, 0.08);
+  border-left: 4px solid #10b981;
+  padding: 10px 14px;
+  border-radius: 0 8px 8px 0;
+  margin: 8px 0;
+  text-align: left;
+}
+
+.ai-highlight-key {
+  font-weight: 700;
+}
+
+.ai-section-title {
+  font-size: 1.1em;
+  font-weight: 700;
+  margin: 14px 0 6px;
+  color: #6366f1;
+}
+
+/* Pulse highlight for strategically recommended action */
+.shadow-indigo-500\/5 {
+  box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.15);
+}
+
+/* SVG Shadow-Glow Filter */
+.shadow-glow {
+  filter: drop-shadow(0 0 4px rgba(99, 102, 241, 0.4));
+}

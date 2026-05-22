@@ -1,4 +1,4 @@
-// DealerPulse AI Assistant Route
+// SitePulse AI Assistant Route
 import express from 'express';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import configService from '../services/configService.js';
@@ -99,7 +99,7 @@ router.post('/explain', async (req, res) => {
 
 // 2. NEW Global Chat Endpoint
 router.post('/chat', async (req, res) => {
-    const { message, auditData, history } = req.body;
+    const { message, auditData, history, sectionName, sectionData, auditScore } = req.body;
 
     if (!configService.getConfig('GEMINI_API_KEY')) {
         return res.status(500).json({ error: 'AI service not configured.' });
@@ -109,28 +109,45 @@ router.post('/chat', async (req, res) => {
         const genAI = new GoogleGenerativeAI(configService.getConfig('GEMINI_API_KEY'));
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" }); 
 
-        const auditSummary = summarizeAuditData(auditData);
-        
-        const systemPrompt = `You are "Dealer Pulse AI Assistant", a world-class senior full-stack developer and security researcher.
-Your goal is to help users understand their latest website audit results and provide actionable, high-quality advice to fix issues.
+        let systemPrompt = `You are "SitePulse AI Assistant", a world-class senior full-stack developer and web optimization/SEO expert.
+Your goal is to help users understand their website audit results and provide actionable, high-quality, step-by-step technical advice to fix issues.
 
 CONTEXT OF THE CURRENT AUDIT:
-${auditSummary}
+Website URL: ${auditData?.url || 'N/A'}
+Overall Audit Score: ${auditData?.totalScore || 'N/A'}/100
+`;
 
+        if (sectionName) {
+            systemPrompt += `
+ACTIVE MODULE/SECTION IN FOCUS:
+- Section Name: ${sectionName}
+- Section Score: ${auditScore || 'N/A'}/100
+
+DETAILED MODULE AUDIT DATA (JSON format):
+${sectionData ? JSON.stringify(sectionData, null, 2) : 'No specific section data provided.'}
+`;
+        } else {
+            systemPrompt += `
+FULL AUDIT DATA SUMMARY:
+${summarizeAuditData(auditData)}
+`;
+        }
+
+        systemPrompt += `
 CONVERSATION HISTORY:
-${history ? history.map(h => `${h.role === 'bot' ? 'Assistant' : 'User'}: ${h.text}`).join('\n') : "No previous conversation."}
+${history && history.length > 0 ? history.map(h => `${h.role === 'bot' ? 'Assistant' : 'User'}: ${h.text}`).join('\n') : "No previous conversation."}
 
 USER MESSAGE:
 ${message}
 
 STRICT GUIDELINES:
-1. Always base your answers on the DATA provided above. If the user asks "How is my performance?", refer to the scores in the context.
-2. If the user asks about something NOT in the data, try to be helpful but mention that you don't have that specific data for their site right now.
-3. Be friendly, concise, and professional.
-4. Use Markdown for formatting (bold, lists, etc).
-5. If recommending a fix, provide a short, modern code example if possible.
-
-Response length: Keep it under 30-40 words.`;
+1. Keep ALL responses extremely short, soft, sweet, and simple. Your entire response MUST NOT exceed 80-100 words in total. This is a strict constraint!
+2. Do NOT write detailed multi-step guides, long numbered lists, setup steps (like "Locate", "Edit", "Save", "Verify"), or paragraphs of generic explanation. Keep it friendly and concise.
+3. Provide direct, conversational, and digestible 2-3 sentence answers with a single, clear suggestion.
+4. If explaining how to fix an issue (e.g. meta description length), just show the direct recommended text solution in a single code block and a 1-sentence tip. No multi-step instructions!
+5. If the user message is exactly "INIT_CHAT", generate a highly personalized, context-aware 2-sentence overview of their score (${auditScore || 'N/A'}/100) and highlight the single most critical finding in a warm, encouraging manner.
+6. Let the user drive the conversation step-by-step. Keep it sweet, friendly, and soft. Only provide long detailed codes or step-by-step steps if the user explicitly asks: "give me a detailed step-by-step guide". Otherwise, keep it strictly under 80 words.
+`;
 
         const result = await generateWithRetry(model, systemPrompt);
         const text = result.response.text();
@@ -156,7 +173,7 @@ router.post('/summarize-section', async (req, res) => {
         const genAI = new GoogleGenerativeAI(configService.getConfig('GEMINI_API_KEY'));
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" }); 
 
-        const prompt = `You are "Dealer Pulse AI Strategist", an expert web consultant.
+        const prompt = `You are "SitePulse AI Strategist", an expert web consultant.
         
         TASK: Summarize the "${sectionName}" section from a website audit of: ${url}
         Overall Section Score: ${auditScore || 'N/A'}/100

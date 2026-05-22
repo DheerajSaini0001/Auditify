@@ -39,6 +39,7 @@ import { Toaster } from 'react-hot-toast';
 
 import MainLayout from "./Component/MainLayout";
 import AIChatWidget from "./Component/AIChatWidget";
+import AIChatOverlay from "./Component/AIChatOverlay";
 
 import ReportRestrictionWrapper from "./Component/ReportRestrictionWrapper.jsx";
 import GuestReportPage from "./Component/GuestReportPage.jsx";
@@ -147,6 +148,7 @@ function AppContentInner() {
       </Routes>
       <Toaster position="top-right" reverseOrder={false} />
       <AIChatWidget />
+      <AIChatOverlay />
     </>
   );
 }

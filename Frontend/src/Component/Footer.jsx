@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
 import { ThemeContext } from "../context/ThemeContext.jsx";
 import { Link } from "react-router-dom";
-import { Github, Twitter, Linkedin, ExternalLink, Facebook } from "lucide-react";
+
 import Assets from "../assets/Assets.js";
 
 export default function Footer() {
@@ -25,25 +25,7 @@ export default function Footer() {
             <p className="text-sm font-medium leading-relaxed">
               Deep-intelligence website auditing. Performance, SEO, Security, and more. All in one place at Dealerpulse.
             </p>
-            <div className="flex items-center gap-4">
-              {[
-                { Icon: Twitter, href: "https://twitter.com/dealerpulse", label: "Twitter", color: "hover:text-sky-400 hover:border-sky-400/50 hover:bg-sky-400/5" },
-                { Icon: Facebook, href: "https://facebook.com/dealerpulse", label: "Facebook", color: "hover:text-blue-600 hover:border-blue-600/50 hover:bg-blue-600/5" },
-                { Icon: Github, href: "https://github.com/dealerpulse", label: "GitHub", color: "hover:text-slate-200 hover:border-slate-200/50 hover:bg-slate-200/5" },
-                { Icon: Linkedin, href: "https://linkedin.com/company/dealerpulse", label: "LinkedIn", color: "hover:text-blue-500 hover:border-blue-500/50 hover:bg-blue-500/5" }
-              ].map(({ Icon, href, label, color }, i) => (
-                <a 
-                  key={i} 
-                  href={href} 
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={label}
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all duration-300 ${darkMode ? 'border-white/10 text-slate-400' : 'border-slate-200 text-slate-600'} ${color}`}
-                >
-                  <Icon size={18} />
-                </a>
-              ))}
-            </div>
+         
           </div>
 
           {/* Links Columns */}

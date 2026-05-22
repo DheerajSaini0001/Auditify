@@ -471,34 +471,9 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                         variants={item}
                         className="flex flex-wrap items-center justify-center lg:justify-start gap-6"
                     >
-                        <div className="flex items-center gap-2.5">
-                            <div className="flex -space-x-2">
-                                {[
-                                    'from-emerald-400 to-teal-500',
-                                    'from-blue-400 to-cyan-500',
-                                    'from-violet-400 to-purple-500',
-                                ].map((g, i) => (
-                                    <div key={i} className={`w-8 h-8 rounded-full bg-gradient-to-br ${g} border-2 ${darkMode ? 'border-[#080E1C]' : 'border-[#F5F7FA]'}`} />
-                                ))}
-                            </div>
-                            <span className={`text-xs font-semibold ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
-                                10,000+ sites analysed
-                            </span>
-                        </div>
-
-                        <div className="flex items-center gap-1.5">
-                            <div className="flex text-amber-400">
-                                {[...Array(5)].map((_, i) => <Star key={i} size={13} fill="currentColor" />)}
-                            </div>
-                            <span className={`text-xs font-semibold ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
-                                4.9 / 5 from early users
-                            </span>
-                        </div>
 
                         <span className={`text-xs font-semibold ${darkMode ? 'text-slate-600' : 'text-slate-300'}`}>·</span>
-                        <span className={`text-xs font-semibold ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
-                            No sign-up required
-                        </span>
+                    
                     </motion.div>
                 </motion.div>
 

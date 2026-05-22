@@ -4,15 +4,14 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
 import { savePostAuthIntent } from "../utils/intentStore";
-
-import { AISummaryModal } from "./AISummaryModal";
+import { useData } from "../context/DataContext";
 import { Sparkles } from "lucide-react";
 
 export default function UrlHeader({ data, darkMode, sectionName, sectionData, auditScore }) {
   const currentDevice = data?.device || "Desktop";
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const [showAISummary, setShowAISummary] = React.useState(false);
+  const { setIsAiChatOpen, setAiChatContext } = useData();
   const location = useLocation();
 
   // Auto-trigger actions after login redirect
@@ -83,7 +82,13 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
       navigate("/login", { state: { from: location.pathname } });
       return;
     }
-    setShowAISummary(true);
+    setAiChatContext({
+      sectionName,
+      sectionData,
+      auditScore,
+      url: data?.url
+    });
+    setIsAiChatOpen(true);
   };
 
   return (
@@ -118,7 +123,7 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
               className={`flex items-center gap-2 px-6 py-2 rounded-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all transition-all`}
              >
                 <Sparkles className="w-4 h-4" />
-                <span>Get AI Summary</span>
+                <span>Ask AI</span>
              </button>
           )}
 
@@ -156,15 +161,7 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
             </button>
           )}
 
-          <AISummaryModal
-            isOpen={showAISummary}
-            onClose={() => setShowAISummary(false)}
-            sectionName={sectionName}
-            sectionData={sectionData}
-            auditScore={auditScore}
-            url={data?.url}
-            darkMode={darkMode}
-          />
+
 
           {/* Back to List Button (if from bulk audit) */}
           {data?.fromBulkAudit && (

@@ -10,6 +10,10 @@ export const DataProvider = ({ children }) => {
   // ⭐ DATA STATE
   const [data, setData] = useState(null);
 
+  // 🤖 AI CHAT OVERLAY STATE
+  const [isAiChatOpen, setIsAiChatOpen] = useState(false);
+  const [aiChatContext, setAiChatContext] = useState(null);
+
   // 🛡️ HELPER: Safe LocalStorage with Cleanup
   const safeLocalStorageSet = (key, value) => {
     try {
@@ -336,7 +340,10 @@ export const DataProvider = ({ children }) => {
 
   return (
     <DataContext.Provider
-      value={{ data, setData, loading, fetchData, clearData, discoverUrls, startBulkAudit, autoBulkAudit, getBulkAuditStatus, fetchSingleReport, getAuditById, fetchBulkPageReport }}
+      value={{ 
+        data, setData, loading, fetchData, clearData, discoverUrls, startBulkAudit, autoBulkAudit, getBulkAuditStatus, fetchSingleReport, getAuditById, fetchBulkPageReport,
+        isAiChatOpen, setIsAiChatOpen, aiChatContext, setAiChatContext
+      }}
     >
       {children}
     </DataContext.Provider>

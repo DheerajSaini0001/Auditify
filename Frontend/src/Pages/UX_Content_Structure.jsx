@@ -420,7 +420,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
                       <Unlink size={14} />
                       Identified Broken Links
                     </h5>
-                    <div className="space-y-1.5 max-h-[160px] overflow-y-auto pr-1.5 custom-scrollbar">
+                    <div className="space-y-1.5 max-h-[320px] overflow-y-auto pr-1.5 custom-scrollbar">
                       {meta.brokenLinks.map((link, idx) => (
                         <div key={idx} className={`p-2 rounded-lg border flex items-start justify-between gap-2.5 text-[10px] transition-colors ${darkMode ? "bg-rose-500/5 border-rose-500/20 hover:bg-rose-500/10" : "bg-rose-50 border-rose-100 hover:bg-rose-100"}`}>
                           <div className="flex-1 min-w-0">

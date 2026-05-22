@@ -787,13 +787,21 @@ const checkContextualLinks = async ($, url) => {
 const brokenLinks = [];
 const headers = { "User-Agent": "Mozilla/5.0" };
 
-const maxChecks = 25;
+const maxChecks = 150;
 const linksToCheck = Array.from(contentLinks).slice(0, maxChecks);
 
 // 🚀 Parallel requests (faster + accurate)
 const requests = linksToCheck.map(async (href) => {
   try {
+    if (href.toLowerCase().includes("inventory")) {
+      return null; // Skip check, treat as valid
+    }
+
     const fullUrl = new URL(href, url).href;
+
+    if (fullUrl.toLowerCase().includes("inventory")) {
+      return null; // Skip check, treat as valid
+    }
 
     const res = await fetch(fullUrl, {
       method: "GET", // ✅ real page load

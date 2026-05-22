@@ -590,32 +590,7 @@ const ImageAnalysisCard = ({ data, darkMode, onInfo, resolveLink, className = ""
                 )}
               </div>
             )
-          }
-
-
-          {/* Analysis Details */}
-          {analysis && !isPassed && (
-            <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-500">
-                  <AlertTriangle size={12} />
-                  <span>Analysis</span>
-                </div>
-                <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                  {analysis.cause}
-                </p>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-500">
-                  <CheckCircle size={12} />
-                  <span>Recommendation</span>
-                </div>
-                <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                  {analysis.recommendation}
-                </p>
-              </div>
-            </div>
-          )}
+}
           
           {/* Ask AI Button (Always show if not passed) */}
           {!isPassed && (
@@ -1041,7 +1016,7 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
                 <p className={`mb-3 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
                   These contextual links are returning an error (e.g., 404 Not Found) when accessed.
                 </p>
-                <div className="max-h-40 overflow-y-auto custom-scrollbar space-y-1 p-2 bg-black/5 dark:bg-black/20 rounded">
+                <div className="max-h-80 overflow-y-auto custom-scrollbar space-y-1 p-2 bg-black/5 dark:bg-black/20 rounded">
                   {meta.broken_links.map((linkObj, i) => (
                     <div key={i} className={`flex justify-between items-center ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"} p-2 rounded border shadow-sm`}>
                       <div className="flex items-center gap-2 font-mono text-[11px] truncate mr-2">
@@ -1065,29 +1040,7 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
 
 
           {/* Analysis & Recs from API */}
-          {data?.analysis && !isPassed && (
-            <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-500">
-                  <AlertTriangle size={12} />
-                  <span>Analysis</span>
-                </div>
-                <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                  {data?.analysis?.cause}
-                </p>
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-500">
-                  <CheckCircle size={12} />
-                  <span>Recommendation</span>
-                </div>
-                <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                  {data?.analysis?.recommendation}
-                </p>
-              </div>
-            </div>
-          )}
-
+       
           {/* Ask AI Button (Always show if not passed) */}
           {!isPassed && (
             <div className="pt-2">

@@ -99,14 +99,7 @@ const MetricCard = ({
                             >
                                 {statusText}
                             </span>
-                            <span
-                                className={`text-xs font-bold px-2.5 py-1 rounded-md border uppercase ${(selectedSource === "lab" || !needsData.crux)
-                                    ? (darkMode ? "bg-blue-500/10 text-blue-400 border-blue-500/20" : "bg-blue-50 text-blue-600 border-blue-200")
-                                    : (darkMode ? "bg-purple-500/10 text-purple-400 border-purple-500/20" : "bg-purple-50 text-purple-600 border-purple-200")
-                                    }`}
-                            >
-                                {selectedSource === "lab" ? "LAB" : (needsData.crux ? "REAL USERS" : "LAB")}
-                            </span>
+                           
                         </div>
                     </div>
                 </div>

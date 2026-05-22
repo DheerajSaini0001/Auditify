@@ -212,8 +212,9 @@ ${metaString}
 
 Task: Provide a summary explaining the problem and its solution.
 STRICT LENGTH: The total response MUST be between 35-50 words.
-Format:
+Format (MUST have a blank newline between the two lines):
 Problem: [Concise description]
+
 Solution: [Concise fix]
 Note: Be direct and avoid filler words. Return plain text only.`;
 }

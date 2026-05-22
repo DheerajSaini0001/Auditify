@@ -74,7 +74,7 @@ const AskAIButton = ({ finding, auditScore, darkMode, meta }) => {
           disabled={isLoading}
         >
           <Sparkles className="w-4 h-4" />
-          {isLoading ? 'AI Analyzing...' : 'Ask AI ✨'}
+          {isLoading ? 'AI Analyzing...' : 'AI Summary ✨'}
         </button>
       )}
 

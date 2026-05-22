@@ -181,6 +181,93 @@ async function hasRealContent(page) {
   }
 }
 
+// Safely retrieves all frames attached to the page, checking for page closure
+function getFreshFrames(page) {
+  try {
+    if (!page || page.isClosed()) return [];
+    return page.frames() || [];
+  } catch (e) {
+    return [];
+  }
+}
+
+// Safely checks if a frame is detached
+function isFrameDetached(frame) {
+  try {
+    if (!frame) return true;
+    if (typeof frame.isDetached === "function") {
+      return frame.isDetached();
+    }
+    // Fallback: calling frame.url() throws if frame is detached
+    frame.url();
+    return false;
+  } catch (e) {
+    return true;
+  }
+}
+
+// Safely gets the URL of a frame, returning "" if it fails or is detached
+function getFrameUrl(frame) {
+  try {
+    if (!frame || isFrameDetached(frame)) return "";
+    return frame.url() || "";
+  } catch (e) {
+    return "";
+  }
+}
+
+// Safely waits for a selector in matching frames and performs a human-like click.
+// Uses fresh references and handles detached frame scenarios via try-catch.
+async function safeClickCheckboxInFrame(page, framePatterns, selector, timeout = 3000) {
+  if (!page || page.isClosed()) return false;
+
+  try {
+    // 1. Re-fetch all frames to ensure none are stale
+    const frames = getFreshFrames(page);
+
+    for (const frame of frames) {
+      if (isFrameDetached(frame)) continue;
+
+      const url = getFrameUrl(frame);
+      const isMatch = framePatterns.some(pattern => url.includes(pattern));
+      if (!isMatch) continue;
+
+      // 2. Wrap all operations inside the frame in a try-catch to isolate detached frame errors
+      try {
+        // Wait for the selector to become available in the frame
+        await frame.waitForSelector(selector, { timeout }).catch(() => null);
+
+        // Verify page/frame status before continuing
+        if (page.isClosed() || isFrameDetached(frame)) continue;
+
+        // 3. Query the element with a fresh reference
+        const checkbox = await frame.$(selector);
+        if (!checkbox) continue;
+
+        // 4. Get its bounding box
+        const box = await checkbox.boundingBox();
+        if (box) {
+          // Double-check page/frame status right before click
+          if (page.isClosed() || isFrameDetached(frame)) continue;
+
+          // 5. Click the bounding box with standard random offsets
+          await page.mouse.click(
+            box.x + box.width / 2 + (Math.random() * 4 - 2),
+            box.y + box.height / 2 + (Math.random() * 4 - 2)
+          );
+          return true; // Successfully clicked
+        }
+      } catch (innerErr) {
+        // Log warning and safely skip this frame to prevent crashing other frames
+        console.warn(`⚠️ [Puppeteer Checkbox] Skipped frame/element query due to detachment: ${innerErr.message}`);
+      }
+    }
+  } catch (err) {
+    console.error(`❌ [Puppeteer Checkbox] Error scanning frames: ${err.message}`);
+  }
+  return false;
+}
+
 // Function to wait for challenge resolution with polling and verification
 export async function waitForChallengeResolution(page, timeout = 30000) {
   const startTime = Date.now();
@@ -188,39 +275,37 @@ export async function waitForChallengeResolution(page, timeout = 30000) {
   // Quick check — most pages won't have a challenge at all
   if (!await detectChallenge(page)) return true;
 
+  const patterns = ['challenges', 'turnstile', 'hcaptcha'];
+  const selectors = ['input[type="checkbox"]', '.ctp-checkbox-label', '#challenge-stage'];
+
   while (Date.now() - startTime < timeout) {
-    // Try to click Turnstile/challenge checkbox if it exists
-    try {
-      const frames = page.frames();
-      for (const frame of frames) {
-        if (frame.url().includes('challenges') || frame.url().includes('turnstile') || frame.url().includes('hcaptcha')) {
-          const checkbox = await frame.$('input[type="checkbox"], .ctp-checkbox-label, #challenge-stage');
-          if (checkbox) {
-            const box = await checkbox.boundingBox();
-            if (box) {
-              await page.mouse.click(
-                box.x + box.width / 2 + (Math.random() * 4 - 2),
-                box.y + box.height / 2 + (Math.random() * 4 - 2)
-              );
-              await delay(3000);
-            }
-          }
-        }
+    if (page.isClosed()) return false;
+
+    // Check if challenge is already resolved
+    if (!await detectChallenge(page)) return true;
+
+    // Try clicking each selector inside a matching frame
+    for (const selector of selectors) {
+      if (page.isClosed()) break;
+      const clicked = await safeClickCheckboxInFrame(page, patterns, selector, 2000);
+      if (clicked) {
+        // Wait 3 seconds after successful interaction for verification response to load
+        await delay(3000);
+        break;
       }
-    } catch (e) {}
+    }
 
     // Human-like mouse movement
     try {
-      await page.mouse.move(randInt(100, 800), randInt(100, 600), { steps: randInt(5, 15) });
+      if (!page.isClosed()) {
+        await page.mouse.move(randInt(100, 800), randInt(100, 600), { steps: randInt(5, 15) });
+      }
     } catch (e) {}
 
     await delay(randInt(2000, 4000));
-
-    // Check if challenge is gone
-    if (!await detectChallenge(page)) return true;
   }
 
-  return false;
+  return !await detectChallenge(page);
 }
 
 export default async function Puppeteer_Cheerio(url, device = 'Desktop') {

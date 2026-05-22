@@ -35,3 +35,29 @@
 .dark-ai-panel .ai-explanation-header { background: #11111B; color: #CBA6F7; }
 .dark-ai-btn { background: #CBA6F7; color: #11111B; }
 .dark-ai-btn:hover { background: #B4BEFE; }
+
+/* Problem & Solution Block Styling */
+.ai-problem-block {
+  background: rgba(239, 68, 68, 0.06);
+  border-left: 4px solid #EF4444;
+  padding: 12px 16px;
+  border-radius: 0 8px 8px 0;
+  margin: 12px 0;
+  text-align: left;
+}
+.ai-solution-block {
+  background: rgba(16, 185, 129, 0.06);
+  border-left: 4px solid #10B981;
+  padding: 12px 16px;
+  border-radius: 0 8px 8px 0;
+  margin: 12px 0;
+  text-align: left;
+}
+.dark-ai-panel .ai-problem-block {
+  background: rgba(239, 68, 68, 0.12);
+  border-left-color: #F87171;
+}
+.dark-ai-panel .ai-solution-block {
+  background: rgba(16, 185, 129, 0.12);
+  border-left-color: #34D399;
+}

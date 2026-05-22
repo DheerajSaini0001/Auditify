@@ -89,8 +89,7 @@ const LoginPage = () => {
   };
 
   const handleGoogleLogin = () => {
-    const latestAuditId = localStorage.getItem("dealerpulse_latest_audit_id");
-    const intentPath = location.state?.from || (latestAuditId ? `/report/${latestAuditId}` : null);
+    const intentPath = location.state?.from || null;
     if (intentPath) {
        savePostAuthIntent('o_auth', intentPath);
     }

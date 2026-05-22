@@ -73,7 +73,7 @@ export default function LoginPrompt({ darkMode }) {
             darkMode ? "text-slate-400" : "text-slate-600"
           }`}
         >
-          Try out Dealerpulse for FREE and get full report details, more tests,
+          Try out SitePulse AI for FREE and get full report details, more tests,
           monitoring, locations, and more!
         </p>
 
@@ -119,7 +119,7 @@ export default function LoginPrompt({ darkMode }) {
             darkMode ? "text-slate-500" : "text-slate-400"
           }`}
         >
-          Join 50,000+ businesses auditing with Dealerpulse
+          Join 50,000+ businesses auditing with SitePulse AI
         </p>
       </div>
    </>

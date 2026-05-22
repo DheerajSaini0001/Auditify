@@ -480,19 +480,7 @@ const AdminDashboard = () => {
       
               </div>
 
-              {/* Audit Score Pillars */}
-              <div className={`border rounded-2xl p-6 ${darkMode ? 'bg-[#111111] border-white/5' : 'bg-white border-slate-200 shadow-sm'}`}>
-                <h3 className={`text-[10px] font-bold uppercase tracking-widest mb-6 ${darkMode ? 'text-gray-500' : 'text-slate-400'}`}>Audit Score — 7 SEO Pillars (Avg Across All Sites)</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4">
-                  <CircularProgress score={overviewLoading ? 0 : (overviewData?.stats?.pillarAverages?.technicalPerf || 0)} label="Technical Perf" color="#10b981" darkMode={darkMode} />
-                  <CircularProgress score={overviewLoading ? 0 : (overviewData?.stats?.pillarAverages?.onPageSEO || 0)} label="On-Page SEO" color="#3b82f6" darkMode={darkMode} />
-                  <CircularProgress score={overviewLoading ? 0 : (overviewData?.stats?.pillarAverages?.accessibility || 0)} label="Accessibility" color="#8b5cf6" darkMode={darkMode} />
-                  <CircularProgress score={overviewLoading ? 0 : (overviewData?.stats?.pillarAverages?.security || 0)} label="Security" color="#ef4444" darkMode={darkMode} />
-                  <CircularProgress score={overviewLoading ? 0 : (overviewData?.stats?.pillarAverages?.uxContent || 0)} label="UX & Content" color="#f59e0b" darkMode={darkMode} />
-                  <CircularProgress score={overviewLoading ? 0 : (overviewData?.stats?.pillarAverages?.aioReady || 0)} label="AIO Ready" color="#ec4899" darkMode={darkMode} />
-                  <CircularProgress score={overviewLoading ? 0 : (overviewData?.stats?.pillarAverages?.conversion || 0)} label="Conversion" color="#06b6d4" darkMode={darkMode} />
-                </div>
-              </div>
+             
 
               {/* Charts Row */}
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">

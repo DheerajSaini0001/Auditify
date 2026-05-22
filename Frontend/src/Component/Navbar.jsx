@@ -78,8 +78,8 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
                 <div className={`absolute -inset-1 rounded-full blur-md opacity-40 group-hover:opacity-60 transition duration-500 ${darkMode ? "bg-emerald-500" : "bg-emerald-400"}`}></div>
                 <img
                   src={darkMode ? Assets.Logo : Assets.DarkLogo}
-                  alt="SitePulse AI Logo"
-                  title="SitePulse AI Logo"
+                  alt="DealerPulse Logo"
+                  title="DealerPulse Logo"
                   className="relative h-14 w-auto transition-transform duration-300 group-hover:scale-105"
                 />
               </div>

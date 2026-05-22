@@ -136,7 +136,15 @@ const PillarCard = ({ icon: Icon, title, tag, description, color, index, darkMod
                 </div>
 
                 {/* Corner Arrow (for non-wide cards) */}
-               
+                {!isWide && (
+                    <div className={`absolute bottom-8 right-8 w-10 h-10 rounded-full flex items-center justify-center
+                        opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0
+                        transition-all duration-500 ease-out
+                        ${darkMode ? 'bg-white/10 text-white' : 'bg-slate-900 text-white shadow-lg'}
+                    `}>
+                        <ArrowUpRight size={18} strokeWidth={2} />
+                    </div>
+                )}
             </div>
 
             {/* Custom visual for the wide card on desktop */}
@@ -216,6 +224,7 @@ const AuditPillarsSection = () => {
             tag: 'Lead Opimization',
             description: 'Analyze lead-flow friction points, CTA placements, interactive visibility, and critical form optimizations.',
             color: 'pink',
+            isWide: true // Flags the last item to be wide in the bento grid
         },
     ];
 

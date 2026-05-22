@@ -4,8 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     Monitor, Smartphone, Search, Zap, Loader2, AlertCircle,
     ChevronDown, Settings, ShieldCheck, ArrowRight, Star,
-    BarChart2, Globe, Lock, Eye, TrendingUp, Cpu, Layers,
-    Activity, Globe2
+    BarChart2, Globe, Lock, Eye, TrendingUp, Cpu, Layers
 } from 'lucide-react';
 import MathCaptcha from "../../Component/MathCaptcha.jsx";
 import { ThemeContext } from '../../context/ThemeContext.jsx';
@@ -15,12 +14,12 @@ import { useAuth } from '../../context/AuthContext.jsx';
    Audit type metadata – shown in the badge strip
 ───────────────────────────────────────── */
 const AUDIT_TYPES = [
-    { icon: <TrendingUp size={13} />, label: "Technical Performance" },
-    { icon: <Eye size={13} />,        label: "On-Page SEO" },
-    { icon: <Layers size={13} />,     label: "Accessibility" },
-    { icon: <Lock size={13} />,       label: "Security & Compliance" },
-    { icon: <Activity size={13} />,   label: "UX & Content" },
-    { icon: <Globe2 size={13} />,     label: "Conversion & Lead Flow" },
+    { icon: <TrendingUp size={13} />, label: "Performance" },
+    { icon: <Search size={13} />,     label: "On-Page SEO" },
+    { icon: <Eye size={13} />,        label: "Accessibility" },
+    { icon: <Lock size={13} />,       label: "Security" },
+    { icon: <Layers size={13} />,     label: "UX & Content" },
+    { icon: <TrendingUp size={13} />, label: "Conversion" },
     { icon: <Cpu size={13} />,        label: "AIO Readiness" },
 ];
 
@@ -307,7 +306,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                             <br className="hidden lg:block" />
                             <span className="relative inline-block">
                                 <span className="text-transparent bg-clip-text"
-                                    style={{ backgroundColor: '#10b981' }}>
+                                    style={{ backgroundImage: 'linear-gradient(135deg, #10b981, #06b6d4)' }}>
                                     Fully Audited.
                                 </span>
                                 {/* Underline accent */}

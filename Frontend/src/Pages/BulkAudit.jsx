@@ -153,17 +153,21 @@ export default function BulkAudit() {
         if (queryUrl && params.get("auto") === "true") {
             setInputValue(queryUrl);
             
+            // Read optional pages limit (1 = single audit)
+            const pagesParam = params.get("pages");
+            const pagesLimit = pagesParam ? parseInt(pagesParam) : null;
+
             // Normalize for consistent key
             let normalizedUrl = queryUrl.trim().toLowerCase();
             if (!/^https?:\/\//i.test(normalizedUrl)) normalizedUrl = `https://${normalizedUrl}`;
 
             if (isAuthenticated) {
-                proceedAutoAudit(null, queryUrl);
+                proceedAutoAudit(null, queryUrl, null, pagesLimit);
             } else {
                 // Check if already verified in this session
                 const isVerified = sessionStorage.getItem(`captcha_verified_${normalizedUrl}`);
                 if (isVerified) {
-                    proceedAutoAudit(null, queryUrl);
+                    proceedAutoAudit(null, queryUrl, null, pagesLimit);
                 } else {
                     setCaptchaAction('auto');
                     setShowCaptcha(true);
@@ -329,7 +333,8 @@ export default function BulkAudit() {
     };
 
     // Combined Discovery & Start Audit for Automation
-    const proceedAutoAudit = async (token, directUrl = null, id = null) => {
+    // maxPagesOverride: pass a number to limit discovery (e.g. 1 for single-page audit)
+    const proceedAutoAudit = async (token, directUrl = null, id = null, maxPagesOverride = null) => {
         setShowCaptcha(false);
         setError(null);
 
@@ -338,8 +343,10 @@ export default function BulkAudit() {
             urlToFetch = `https://${urlToFetch}`;
         }
 
+        const effectiveMaxPages = maxPagesOverride !== null ? maxPagesOverride : maxPages;
+
         setDiscovering(true);
-        const response = await autoBulkAudit(urlToFetch, maxPages, device, report, token, id);
+        const response = await autoBulkAudit(urlToFetch, effectiveMaxPages, device, report, token, id);
 
         if (response.success) {
             setBulkAuditId(response.data.bulkAuditId);

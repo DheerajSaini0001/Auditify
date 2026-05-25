@@ -16,7 +16,7 @@ export const getRedirectPath = (role) => {
     case 'admin':
       return '/admin';
     case 'user':
-      return '/';
+      return '/dashboard';
     default:
       return '/';
   }

@@ -6,9 +6,9 @@ import { fetchGSC } from '../utils/gscAuth.js';
 =========================== */
 const normalize = (u) =>
   u.toLowerCase()
-   .replace(/\/$/, "")
-   .replace(/^https?:\/\//, "")
-   .replace(/^sc-domain:/, "");
+    .replace(/\/$/, "")
+    .replace(/^https?:\/\//, "")
+    .replace(/^sc-domain:/, "");
 
 
 /* ===========================
@@ -218,7 +218,7 @@ export const syncWebsites = async (req, res) => {
     // 3. Merge Logic (Comparison using Normalized URL)
     const existingWebsites = req.user.websites.map(s => s.toObject ? s.toObject() : s);
     const updatedWebsites = [...existingWebsites];
-    
+
     let added = 0;
     let updated = 0;
 
@@ -229,8 +229,8 @@ export const syncWebsites = async (req, res) => {
       const norm = normalize(site.siteUrl);
       const existingIdx = updatedWebsites.findIndex(s => normalize(s.url) === norm);
 
-      const permission = validPermissions.includes(site.permissionLevel) 
-        ? site.permissionLevel 
+      const permission = validPermissions.includes(site.permissionLevel)
+        ? site.permissionLevel
         : 'siteUnverifiedUser';
 
       if (existingIdx !== -1) {
@@ -277,7 +277,7 @@ export const syncWebsites = async (req, res) => {
 
   } catch (err) {
     console.error('[Sync Websites Exception]', err);
-    
+
     // Distinguish between validation errors and generic errors
     if (err.name === 'ValidationError') {
       return res.status(400).json({

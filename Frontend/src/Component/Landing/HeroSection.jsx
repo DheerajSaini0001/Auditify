@@ -193,13 +193,15 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
             if (queryReport) setReport(queryReport);
             
             isAutoStarting.current = true;
-            navigate(location.pathname, { replace: true });
             
             // If logged in, skip captcha and run
             if (user || localStorage.getItem('dealerpulse_token')) {
                 let urlToFetch = queryUrl.trim();
                 if (!/^https?:\/\//i.test(urlToFetch)) urlToFetch = `https://${urlToFetch}`;
                 onSubmit(urlToFetch, deviceToUse, queryReport || report, null);
+                
+                // Clear the search query parameters silently from the address bar without disrupting the async React state triggers
+                window.history.replaceState(null, '', window.location.pathname);
             } else {
                 setShowCaptcha(true);
             }
@@ -237,6 +239,9 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         let urlToFetch = url.trim();
         if (!/^https?:\/\//i.test(urlToFetch)) urlToFetch = `https://${urlToFetch}`;
         onSubmit(urlToFetch, device, report, parseInt(captchaAnswer), captchaId);
+        
+        // Clear the search query parameters silently from the address bar
+        window.history.replaceState(null, '', window.location.pathname);
     };
 
     useEffect(() => {

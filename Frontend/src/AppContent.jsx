@@ -87,7 +87,7 @@ function AppContentInner() {
       <CanonicalTag />
       <Routes>
         <Route element={<MainLayout />}>
-          <Route path="/" element={<Homepage />} />
+          <Route path="/" element={<GuestRoute><Homepage /></GuestRoute>} />
           <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
           <Route path="/register" element={<GuestRoute><RegisterPage /></GuestRoute>} />
           <Route path="/verify-otp" element={<GuestRoute><OtpVerifyPage /></GuestRoute>} />
@@ -107,8 +107,11 @@ function AppContentInner() {
           <Route path="/do-not-sell" element={<DoNotSellInfoPage />} />
 
           {/* Protected User Routes */}
-          <Route path="/dashboard" element={<DashboardPage />} />
-
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          } />
           <Route path="/dashboard/add-website" element={<AddWebsitePage />} />
 
           <Route path="/bulk-audit" element={<BulkAudit />} />

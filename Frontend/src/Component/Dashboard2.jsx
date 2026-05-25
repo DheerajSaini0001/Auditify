@@ -130,15 +130,15 @@ export default function Dashboard2({ darkMode }) {
   return (
     <div id="dashboard" className={`w-full font-sans transition-colors duration-300 ${bgClass}`}>
 
-      <div className="max-w-[1440px] mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
+      <div className="max-w-[1440px] mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
 
-        {/* ✅ Unified Master Card */}
+        {/* ✅ Card 1: URL Header Card */}
         <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${cardClass}`}>
+          <UrlHeader data={data} darkMode={darkMode} hideBorder={true} />
+        </div>
 
-          {/* 1. Enhanced Glass Header */}
-          <UrlHeader data={data} darkMode={darkMode} />
-
-          {/* 2. Card Body */}
+        {/* ✅ Card 2: Overview / Preview Card */}
+        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${cardClass}`}>
           <div className="flex flex-col xl:flex-row min-h-[300px]">
 
             {/* Left Panel: Live Preview (Widened) */}

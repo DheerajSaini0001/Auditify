@@ -7,7 +7,7 @@ import { savePostAuthIntent } from "../utils/intentStore";
 import { useData } from "../context/DataContext";
 import { Sparkles } from "lucide-react";
 
-export default function UrlHeader({ data, darkMode, sectionName, sectionData, auditScore }) {
+export default function UrlHeader({ data, darkMode, sectionName, sectionData, auditScore, hideBorder }) {
   const currentDevice = data?.device || "Desktop";
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -92,7 +92,7 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
   };
 
   return (
-    <div className={`relative p-6 md:p-8 border-b ${darkMode ? "border-slate-800 bg-slate-900/50" : "border-slate-100 bg-slate-50/80"}`}>
+    <div className={`relative p-6 md:p-8 ${hideBorder ? "" : "border-b"} ${darkMode ? "border-slate-800 bg-slate-900/50" : "border-slate-100 bg-slate-50/80"}`}>
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
 
         {/* Left: URL Section */}

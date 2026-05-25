@@ -410,18 +410,21 @@ export default function Accessibility() {
   if (!data?.accessibility) {
     return (
       <div className={`w-full ${darkMode ? "bg-gray-900" : "bg-gray-50"} transition-colors duration-300`}>
-        <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-8`}>
+        <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-6`}>
+          {/* ✅ Card 1: URL Header Card */}
           <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
-            <div>
-              <UrlHeader 
-                data={data} 
-                darkMode={darkMode} 
-                sectionName="Accessibility"
-                sectionData={metric}
-                auditScore={metric?.Percentage}
-              />
-            </div>
+            <UrlHeader 
+              data={data} 
+              darkMode={darkMode} 
+              sectionName="Accessibility"
+              sectionData={metric}
+              auditScore={metric?.Percentage}
+              hideBorder={true}
+            />
+          </div>
 
+          {/* ✅ Card 2: Overview / Preview Card */}
+          <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
             <div className="flex flex-col xl:flex-row min-h-[300px]">
               {data?.report !== "All" && (
                 <div className={`w-full xl:w-[45%] p-3 lg:p-4 flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
@@ -451,18 +454,22 @@ export default function Accessibility() {
 
   return (
     <div className={`w-full min-h-screen ${darkMode ? "bg-gray-900" : "bg-gray-50"} transition-colors duration-300`}>
-      <main className="max-w-7xl mx-auto px-6 py-10 space-y-12">
-        {/* ✅ Unified Master Card */}
+      <main className="max-w-7xl mx-auto px-6 py-10 space-y-6">
+        
+        {/* ✅ Card 1: URL Header Card */}
         <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
-
           <UrlHeader 
             data={data} 
             darkMode={darkMode} 
             sectionName="Accessibility"
             sectionData={metric}
             auditScore={metric?.Percentage}
+            hideBorder={true}
           />
+        </div>
 
+        {/* ✅ Card 2: Overview / Preview Card */}
+        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
           {loading || !data?.accessibility ? (
             <div className="flex flex-col xl:flex-row min-h-[300px]">
               {data.report !== "All" && (

@@ -92,23 +92,22 @@ export default function Technical_Performance() {
         <div className={`absolute -bottom-12 left-1/2 -translate-x-1/2 w-full max-w-4xl h-64 rounded-full blur-[150px] opacity-5 ${darkMode ? "bg-purple-600" : "bg-purple-400"}`}></div>
       </div>
 
-      <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-4"} pb-16 space-y-12 relative z-10`}>
+      <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-4"} pb-16 space-y-6 relative z-10`}>
 
-        {/* ✅ Unified Master Card */}
+        {/* ✅ Card 1: URL Header Card */}
         <div className={`rounded-[2.5rem] overflow-hidden transition-all duration-500 transform hover:shadow-2xl ${darkMode ? "bg-slate-900/40 backdrop-blur-xl border border-slate-800 shadow-2xl shadow-black/40" : "bg-white/60 backdrop-blur-xl border border-slate-200 shadow-2xl shadow-slate-200/40"}`}>
+          <UrlHeader 
+            data={data} 
+            darkMode={darkMode} 
+            sectionName="Technical Performance"
+            sectionData={tech}
+            auditScore={overallScore}
+            hideBorder={true}
+          />
+        </div>
 
-          {/* 1. URL Header */}
-          <div>
-            <UrlHeader 
-              data={data} 
-              darkMode={darkMode} 
-              sectionName="Technical Performance"
-              sectionData={tech}
-              auditScore={overallScore}
-            />
-          </div>
-
-          {/* 2. Card Body */}
+        {/* ✅ Card 2: Overview & Score Card */}
+        <div className={`rounded-[2.5rem] overflow-hidden transition-all duration-500 transform hover:shadow-2xl ${darkMode ? "bg-slate-900/40 backdrop-blur-xl border border-slate-800 shadow-2xl shadow-black/40" : "bg-white/60 backdrop-blur-xl border border-slate-200 shadow-2xl shadow-slate-200/40"}`}>
           {loading || !data?.technicalPerformance ? (
             <div className="flex flex-col xl:flex-row min-h-[300px]">
               {data?.report !== "All" && (
@@ -132,7 +131,7 @@ export default function Technical_Performance() {
 
               {/* Left Panel: Live Preview (Only if not All) */}
               {data?.report !== "All" && (
-                <div className={`w-full xl:w-[45%] ${data?.report === "All" ? "p-6 lg:p-10" : "p-3 lg:p-4"} flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden backdrop-blur-md ${darkMode ? "bg-slate-950/40 border-slate-800" : "bg-white/40 border-white/20"}`}>
+                <div className={`w-full xl:w-[45%] ${data?.report === "All" ? "p-6 lg:p-10" : "p-3 lg:p-4"} flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden backdrop-blur-md ${darkMode ? "bg-slate-955/40 border-slate-800" : "bg-white/40 border-white/20"}`}>
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/10 blur-[100px] rounded-full pointer-events-none animate-pulse duration-[10000ms]"></div>
                   <div className="w-full relative z-10 hover:scale-[1.02] transition-transform duration-500">
                     <LivePreview data={data} loading={loading} variant="plain" />

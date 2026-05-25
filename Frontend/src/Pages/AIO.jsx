@@ -582,21 +582,21 @@ export default function AIO() {
   if (loading || !data || data.status === "inprogress") {
     return (
       <div className={`w-full ${darkMode ? "bg-gray-900" : "bg-gray-50"} transition-colors duration-300`}>
-        <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-8`}>
-          {/* ✅ Unified Master Card Loading State */}
+        <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-6`}>
+          {/* ✅ Card 1: URL Header Card */}
           <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-indigo-50/50 via-purple-50/30 to-slate-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
+            <UrlHeader 
+              data={data} 
+              darkMode={darkMode} 
+              sectionName="AIO (AI Optimization)"
+              sectionData={aio}
+              auditScore={unifiedAioScore}
+              hideBorder={true}
+            />
+          </div>
 
-            {/* 1. URL Header */}
-            <div>
-              <UrlHeader 
-                data={data} 
-                darkMode={darkMode} 
-                sectionName="AIO (AI Optimization)"
-                sectionData={aio}
-                auditScore={unifiedAioScore}
-              />
-            </div>
-
+          {/* ✅ Card 2: Overview / Preview Card */}
+          <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-indigo-50/50 via-purple-50/30 to-slate-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
             <div className="flex flex-col xl:flex-row min-h-[300px]">
               {/* Left Panel: Live Preview (Only if not All) */}
               {data?.report !== "All" && (
@@ -631,23 +631,22 @@ export default function AIO() {
 
   return (
     <div className={`w-full ${mainBg} transition-colors duration-300`}>
-      <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-8`}>
+      <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-6`}>
 
-        {/* ✅ Unified Master Card */}
+        {/* ✅ Card 1: URL Header Card */}
         <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-indigo-50/50 via-purple-50/30 to-slate-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
+          <UrlHeader 
+            data={data} 
+            darkMode={darkMode} 
+            sectionName="AIO (AI Optimization)"
+            sectionData={aio}
+            auditScore={unifiedAioScore}
+            hideBorder={true}
+          />
+        </div>
 
-          {/* 1. URL Header */}
-          <div>
-            <UrlHeader 
-              data={data} 
-              darkMode={darkMode} 
-              sectionName="AIO (AI Optimization)"
-              sectionData={aio}
-              auditScore={unifiedAioScore}
-            />
-          </div>
-
-          {/* 2. Card Body */}
+        {/* ✅ Card 2: Overview / Preview Card */}
+        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-indigo-50/50 via-purple-50/30 to-slate-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
           <div className={`flex flex-col xl:flex-row ${data.report === "All" ? "" : "min-h-[300px]"}`}>
 
             {/* Left Panel: Live Preview (Only if not All) */}

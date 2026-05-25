@@ -180,6 +180,21 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
           </div>
         </div>
 
+        {/* Ask AI Button */}
+        {!isPassed && (
+          <AskAIButton
+            finding={{
+              type: 'Conversion & Lead Flow',
+              title: title,
+              details: details || '',
+              severity: isPassed ? 'pass' : isWarning ? 'warning' : 'critical',
+              url: ''
+            }}
+            darkMode={darkMode}
+            meta={meta}
+          />
+        )}
+
         {/* CTA Presence Specific Data */}
         {metricKey === "CTA_Presence" && meta?.selectors && meta.selectors.length > 0 && (
           <div>
@@ -617,14 +632,6 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
           </div>
         )}
 
-        {/* Ask AI Button */}
-        {!isPassed && (
-          <AskAIButton
-            finding={{ type: 'Conversion & Lead Flow', title: title, details: details, severity: isPassed ? 'pass' : isWarning ? 'warning' : 'critical', url: '' }}
-            darkMode={darkMode}
-            meta={meta}
-          />
-        )}
       </div>
     </div>
   );

@@ -197,6 +197,21 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             </div>
           </div>
 
+          {/* Ask AI Button */}
+          {!isPassed && (
+            <AskAIButton
+              finding={{
+                type: 'Security & Compliance',
+                title: title,
+                details: details || '',
+                severity: isPassed ? 'pass' : isWarning ? 'warning' : 'critical',
+                url: ''
+              }}
+              darkMode={darkMode}
+              meta={meta}
+            />
+          )}
+
           {metricKey === "HTTPS" && meta?.protocol && (
             <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"} space-y-1.5`}>
               <div className="flex justify-between items-center">
@@ -833,14 +848,6 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
           </div>
         )}
 
-        {/* Ask AI Button */}
-        {!isPassed && (
-          <AskAIButton
-            finding={{ type: 'Security/Compliance', title: title, details: details, severity: isPassed ? 'pass' : isWarning ? 'warning' : 'critical', url: '' }}
-            darkMode={darkMode}
-            meta={meta}
-          />
-        )}
       </div>
     </div>
   );

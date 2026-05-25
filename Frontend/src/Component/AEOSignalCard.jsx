@@ -4,8 +4,6 @@ import {
     MessageCircle, Database, ShieldCheck, FileText, Layout, 
     Table, Link, Activity 
 } from 'lucide-react';
-import AskAIButton from './AskAIButton';
-
 const iconMap = {
     aeoSchema: Database,
     botAccess: ShieldCheck,
@@ -215,18 +213,7 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
                         <CheckCircle className="text-emerald-500" size={18} />
                         <span className="text-xs font-bold text-emerald-600 uppercase tracking-widest">Optimized & Confirmed</span>
                     </div>
-                ) : (
-                    <AskAIButton 
-                        finding={{
-                            type: 'AEO Readiness',
-                            title: title,
-                            details: data?.reason || description,
-                            severity: score > 50 ? 'warning' : 'critical',
-                            url: url
-                        }}
-                        darkMode={darkMode}
-                    />
-                )}
+                ) : null}
             </div>
         </div>
     );

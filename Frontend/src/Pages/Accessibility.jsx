@@ -183,6 +183,21 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
           </div>
         </div>
 
+        {/* Ask AI Button */}
+        {!isPassed && (
+          <AskAIButton
+            finding={{
+              type: 'Accessibility',
+              title: title,
+              details: details || '',
+              severity: isPassed ? 'pass' : isWarning ? 'warning' : 'critical',
+              url: ''
+            }}
+            darkMode={darkMode}
+            meta={meta}
+          />
+        )}
+
         {/* Divider */}
         <div className={`h-px w-full ${darkMode ? "bg-slate-700/50" : "bg-slate-100"}`} />
 
@@ -346,14 +361,6 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
           </div>
         )}
 
-        {/* Ask AI Button */}
-        {!isPassed && (
-          <AskAIButton
-            finding={{ type: 'Accessibility', title: title, details: details, severity: isPassed ? 'pass' : isWarning ? 'warning' : 'critical', url: '' }}
-            darkMode={darkMode}
-            meta={meta}
-          />
-        )}
       </div>
     </div>
   );

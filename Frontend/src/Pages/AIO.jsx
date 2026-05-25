@@ -195,6 +195,21 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
           </p>
         </div>
 
+        {/* Ask AI Button */}
+        {!isPassed && (
+          <AskAIButton
+            finding={{
+              type: 'AIO (AI Optimization)',
+              title: title,
+              details: details || '',
+              severity: isPassed ? 'pass' : score === 50 ? 'warning' : 'critical',
+              url: ''
+            }}
+            darkMode={darkMode}
+            meta={meta}
+          />
+        )}
+
         {/* Tailored Technical Data for each Parameter */}
         <div className="flex flex-col gap-2.5 mt-2">
 
@@ -503,16 +518,6 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
           </div>
         )}
 
-
-
-        {/* Ask AI Button */}
-        {!isPassed && (
-          <AskAIButton
-            finding={{ type: 'AIO Readiness', title: title, details: details, severity: isPassed ? 'pass' : 'critical', url: '' }}
-            darkMode={darkMode}
-            meta={meta}
-          />
-        )}
       </div>
     </div>
   );

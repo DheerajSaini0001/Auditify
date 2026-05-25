@@ -16,9 +16,8 @@ import ParameterInfoModal from "../Component/ParameterInfoModal";
 import { InfoDetails } from "../Component/InfoDetails";
 import ScoreBadge from "../Component/reusablecomponent/ScoreBadge";
 import SEOCard from "../Component/reusablecomponent/SEOCard";
-import { AuditShimmer } from "../Component/reusablecomponent/AuditShimmer";
-import AskAIButton from "../Component/AskAIButton";
 import Tooltip from "../Component/reusablecomponent/Tooltip";
+import AskAIButton from "../Component/AskAIButton";
 
 const getStatusFromScore = (score) => {
   if (score >= 90) return "pass";
@@ -149,6 +148,21 @@ const TitleTagCard = ({ data, darkMode, onInfo }) => {
                 </p>
               </div>
             </div>
+          )}
+
+          {/* Ask AI Button */}
+          {!isPassed && (
+            <AskAIButton
+              finding={{
+                type: 'On-Page SEO',
+                title: 'Title Tag',
+                details: statusText || '',
+                severity: status === 'pass' ? 'pass' : status === 'warning' ? 'warning' : 'critical',
+                url: ''
+              }}
+              darkMode={darkMode}
+              meta={meta}
+            />
           )}
 
         </div>
@@ -371,6 +385,21 @@ const H1TagCard = ({ data, darkMode, onInfo }) => {
               </div>
             </div>
           )}
+
+          {/* Ask AI Button */}
+          {!isPassed && (
+            <AskAIButton
+              finding={{
+                type: 'On-Page SEO',
+                title: 'H1 Tag',
+                details: statusText || '',
+                severity: status === 'pass' ? 'pass' : status === 'warning' ? 'warning' : 'critical',
+                url: ''
+              }}
+              darkMode={darkMode}
+              meta={meta}
+            />
+          )}
         </div>
       </div>
     </div>
@@ -591,17 +620,22 @@ const ImageAnalysisCard = ({ data, darkMode, onInfo, resolveLink, className = ""
               </div>
             )
 }
-          
-          {/* Ask AI Button (Always show if not passed) */}
+
+          {/* Ask AI Button */}
           {!isPassed && (
-            <div className="pt-2">
-              <AskAIButton
-                finding={{ type: 'On-Page SEO', title: 'Image Optimization', details: analysis?.recommendation || 'Optimize images for better SEO and performance.', severity: status === 'pass' ? 'pass' : status === 'warning' ? 'warning' : 'critical', url: '' }}
-                darkMode={darkMode}
-                meta={meta}
-              />
-            </div>
+            <AskAIButton
+              finding={{
+                type: 'On-Page SEO',
+                title: 'Image Optimization',
+                details: statusText || '',
+                severity: status === 'pass' ? 'pass' : status === 'warning' ? 'warning' : 'critical',
+                url: ''
+              }}
+              darkMode={darkMode}
+              meta={meta}
+            />
           )}
+          
         </div>
       </div>
     </div>
@@ -728,6 +762,21 @@ const SemanticTagsCard = ({ data, darkMode, onInfo, className }) => {
             </div>
           )
         }
+
+        {/* Ask AI Button */}
+        {!isPassed && (
+          <AskAIButton
+            finding={{
+              type: 'On-Page SEO',
+              title: 'Semantic Structure',
+              details: statusText || '',
+              severity: status === 'pass' ? 'pass' : status === 'warning' ? 'warning' : 'critical',
+              url: ''
+            }}
+            darkMode={darkMode}
+            meta={meta}
+          />
+        )}
 
       </div>
     </div>
@@ -1040,17 +1089,22 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
 
 
           {/* Analysis & Recs from API */}
-       
-          {/* Ask AI Button (Always show if not passed) */}
+
+          {/* Ask AI Button */}
           {!isPassed && (
-            <div className="pt-2">
-              <AskAIButton
-                finding={{ type: 'On-Page SEO', title: 'Contextual Links', details: data?.analysis?.recommendation || 'Improve contextual linking relevance.', severity: finalScore >= 90 ? 'pass' : finalScore >= 50 ? 'warning' : 'critical', url: '' }}
-                darkMode={darkMode}
-                meta={data?.meta}
-              />
-            </div>
+            <AskAIButton
+              finding={{
+                type: 'On-Page SEO',
+                title: 'Contextual Links',
+                details: statusText || '',
+                severity: finalStatus === 'pass' ? 'pass' : finalStatus === 'warning' ? 'warning' : 'critical',
+                url: ''
+              }}
+              darkMode={darkMode}
+              meta={meta}
+            />
           )}
+       
         </div>
       </div>
     </div>
@@ -1218,13 +1272,22 @@ const LinkProfileCard = ({ data, darkMode, onInfo, resolveLink, className = "lg:
               </div>
             </div>
 
-            {/* Ask AI Button */}
-            <AskAIButton
-              finding={{ type: 'On-Page SEO', title: 'Link Profile', details: data?.analysis?.recommendation || '', severity: status === 'pass' ? 'pass' : status === 'warning' ? 'warning' : 'critical', url: '' }}
-              darkMode={darkMode}
-              meta={meta}
-            />
           </>
+        )}
+
+        {/* Ask AI Button */}
+        {!isPassed && (
+          <AskAIButton
+            finding={{
+              type: 'On-Page SEO',
+              title: 'Link Profile',
+              details: statusText || '',
+              severity: status === 'pass' ? 'pass' : status === 'warning' ? 'warning' : 'critical',
+              url: ''
+            }}
+            darkMode={darkMode}
+            meta={meta}
+          />
         )}
 
       </div>
@@ -1371,13 +1434,22 @@ const HeadingHierarchyCard = ({ data, darkMode, onInfo }) => {
                 </div>
               </div>
 
-              {/* Ask AI Button */}
-              <AskAIButton
-                finding={{ type: 'On-Page SEO', title: 'Heading Hierarchy', details: data?.analysis?.recommendation || '', severity: status === 'pass' ? 'pass' : status === 'warning' ? 'warning' : 'critical', url: '' }}
-                darkMode={darkMode}
-                meta={meta}
-              />
             </>
+          )}
+
+          {/* Ask AI Button */}
+          {!isPassed && (
+            <AskAIButton
+              finding={{
+                type: 'On-Page SEO',
+                title: 'Heading Hierarchy',
+                details: statusText || '',
+                severity: status === 'pass' ? 'pass' : status === 'warning' ? 'warning' : 'critical',
+                url: ''
+              }}
+              darkMode={darkMode}
+              meta={meta}
+            />
           )}
 
         </div>
@@ -1486,6 +1558,21 @@ const ContentRelevanceCard = ({ data, darkMode, onInfo }) => {
               </div>
             </div>
           </div>
+
+          {/* Ask AI Button */}
+          {!isPassed && (
+            <AskAIButton
+              finding={{
+                type: 'On-Page SEO',
+                title: 'Content Relevance',
+                details: statusText || '',
+                severity: status === 'pass' ? 'pass' : status === 'warning' ? 'warning' : 'critical',
+                url: ''
+              }}
+              darkMode={darkMode}
+              meta={meta}
+            />
+          )}
         </div>
       </div>
     </div>
@@ -1554,6 +1641,21 @@ const VideoAnalysisCard = ({ data, darkMode, onInfo, className = "" }) => {
               <div className="text-lg font-bold">{(score * 100).toFixed(0)}%</div>
             </div>
           </div>
+
+          {/* Ask AI Button */}
+          {!isPassed && (
+            <AskAIButton
+              finding={{
+                type: 'On-Page SEO',
+                title: 'Video Optimization',
+                details: statusText || '',
+                severity: status === 'pass' ? 'pass' : status === 'warning' ? 'warning' : 'critical',
+                url: ''
+              }}
+              darkMode={darkMode}
+              meta={meta}
+            />
+          )}
 
         </div>
       </div>
@@ -1847,6 +1949,21 @@ const StructuredDataCard = ({ data, darkMode, onInfo, className = "" }) => {
             </div>
           )}
 
+          {/* Ask AI Button */}
+          {!isPassed && (
+            <AskAIButton
+              finding={{
+                type: 'On-Page SEO',
+                title: 'Structured Data',
+                details: isPassed ? 'Detected' : 'Missing',
+                severity: status === 'pass' ? 'pass' : status === 'warning' ? 'warning' : 'critical',
+                url: ''
+              }}
+              darkMode={darkMode}
+              meta={meta}
+            />
+          )}
+
         </div>
       </div>
     </div>
@@ -1906,6 +2023,21 @@ const OpenGraphCard = ({ data, darkMode, onInfo, className = "" }) => {
             </div>
           )}
 
+          {/* Ask AI Button */}
+          {!isPassed && (
+            <AskAIButton
+              finding={{
+                type: 'On-Page SEO',
+                title: 'Open Graph',
+                details: isPassed ? 'Optimized' : 'Improvement Needed',
+                severity: status === 'pass' ? 'pass' : status === 'warning' ? 'warning' : 'critical',
+                url: ''
+              }}
+              darkMode={darkMode}
+              meta={meta}
+            />
+          )}
+
         </div>
       </div>
     </div>
@@ -1958,6 +2090,21 @@ const TwitterCardCard = ({ data, darkMode, onInfo, className = "" }) => {
                 </div>
               ))}
             </div>
+          )}
+
+          {/* Ask AI Button */}
+          {!isPassed && (
+            <AskAIButton
+              finding={{
+                type: 'On-Page SEO',
+                title: 'Twitter Card',
+                details: isPassed ? 'Optimized' : 'Improvement Needed',
+                severity: status === 'pass' ? 'pass' : status === 'warning' ? 'warning' : 'critical',
+                url: ''
+              }}
+              darkMode={darkMode}
+              meta={meta}
+            />
           )}
 
         </div>
@@ -2036,6 +2183,21 @@ const SocialProfilesCard = ({ data, darkMode, onInfo, className = "" }) => {
               </div>
             )}
           </div>
+
+          {/* Ask AI Button */}
+          {!isPassed && (
+            <AskAIButton
+              finding={{
+                type: 'On-Page SEO',
+                title: 'Social Profiles',
+                details: `${meta.count || 0} Profiles Detected`,
+                severity: status === 'pass' ? 'pass' : status === 'warning' ? 'warning' : 'critical',
+                url: ''
+              }}
+              darkMode={darkMode}
+              meta={meta}
+            />
+          )}
 
         </div>
       </div>

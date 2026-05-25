@@ -1,4 +1,6 @@
 import React, { createContext, useState, useEffect } from "react";
+import logoDark from "../assets/Logo.png";
+import logoLight from "../assets/logolight.png";
 
 // 1️⃣ Create the context
 export const ThemeContext = createContext();
@@ -26,6 +28,32 @@ export const ThemeProvider = ({ children }) => {
     root.classList.add(theme);
     localStorage.setItem("theme", theme);
   }, [theme]);
+
+  // Sync favicon with the system color scheme (prefers-color-scheme: dark)
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    
+    const updateFavicon = (e) => {
+      const isSystemDark = e.matches;
+      const favicon = document.querySelector("link[rel='icon']");
+      if (favicon) {
+        favicon.href = isSystemDark ? logoLight : logoDark;
+        favicon.type = "image/png";
+      }
+    };
+
+    // Initialize favicon
+    updateFavicon(mediaQuery);
+
+    // Watch for system theme changes
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener("change", updateFavicon);
+      return () => mediaQuery.removeEventListener("change", updateFavicon);
+    } else {
+      mediaQuery.addListener(updateFavicon);
+      return () => mediaQuery.removeListener(updateFavicon);
+    }
+  }, []);
 
   // Sync across tabs
   useEffect(() => {

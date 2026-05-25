@@ -27,6 +27,11 @@ const AIChatWidget = () => {
         scrollToBottom();
     }, [messages, isLoading]);
 
+    // Hide widget completely if there is no active completed audit report loaded
+    if (!data || data.status !== 'completed') {
+        return null;
+    }
+
     const handleSend = async (e) => {
         e.preventDefault();
         if (!input.trim() || isLoading) return;

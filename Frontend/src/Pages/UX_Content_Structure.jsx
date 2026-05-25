@@ -179,6 +179,21 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
           </div>
         </div>
 
+        {/* Ask AI Button */}
+        {!isPassed && (
+          <AskAIButton
+            finding={{
+              type: 'UX & Content Structure',
+              title: title,
+              details: description || '',
+              severity: isPassed ? 'pass' : isWarning ? 'warning' : 'critical',
+              url: ''
+            }}
+            darkMode={darkMode}
+            meta={meta}
+          />
+        )}
+
         {/* Audit Details Area */}
         <div className="space-y-6">
           {/* Inline Meta Attributes */}
@@ -555,14 +570,6 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
           </div>
         )}
 
-        {/* Ask AI Button */}
-        {!isPassed && (
-          <AskAIButton
-            finding={{ type: 'UX & Content Structure', title: title, details: description, severity: isPassed ? 'pass' : isWarning ? 'warning' : 'critical', url: '' }}
-            darkMode={darkMode}
-            meta={meta}
-          />
-        )}
       </div>
     </div >
   );

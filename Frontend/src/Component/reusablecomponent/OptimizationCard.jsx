@@ -3,6 +3,7 @@ import { Info, ChevronUp, ChevronDown } from 'lucide-react';
 import DirectThresholdBar from './DirectThresholdBar';
 import MetricAnalysisDetails from './MetricAnalysisDetails';
 import Tooltip from './Tooltip';
+import AskAIButton from '../AskAIButton';
 
 const OptimizationCard = ({
     icon: Icon,
@@ -106,6 +107,21 @@ const OptimizationCard = ({
                 isOpen={isOpen}
                 onToggle={onToggle}
             />
+
+            {/* Ask AI Button */}
+            {status !== "pass" && (
+                <AskAIButton
+                    finding={{
+                        type: 'Technical Performance',
+                        title: title,
+                        details: needsData?.details || '',
+                        severity: status === 'pass' ? 'pass' : status === 'warning' ? 'warning' : 'critical',
+                        url: ''
+                    }}
+                    darkMode={darkMode}
+                    meta={needsData?.meta}
+                />
+            )}
         </div>
     );
 };

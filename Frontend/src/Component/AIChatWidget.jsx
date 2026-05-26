@@ -1,17 +1,18 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import { ThemeContext } from '../context/ThemeContext';
-import { Sparkles, X, Send, MessageSquare, Loader2, User, Bot, Minimize2 } from 'lucide-react';
+import { Sparkles, X, Send, MessageSquare, Loader2, User, Bot } from 'lucide-react';
 import { formatMarkdown } from '../utils/formatMarkdown.js';
 import './aiChatWidget.css';
 
 const AIChatWidget = () => {
     const { data } = useData();
     const { theme } = useContext(ThemeContext);
+    const location = useLocation();
     const darkMode = theme === 'dark';
     
     const [isOpen, setIsOpen] = useState(false);
-    const [isMinimized, setIsMinimized] = useState(false);
     const [input, setInput] = useState('');
     const [messages, setMessages] = useState([
         { role: 'bot', text: 'Hi! I am your SitePulse AI Assistant. Ask me anything about your current audit results! ✨' }
@@ -27,8 +28,8 @@ const AIChatWidget = () => {
         scrollToBottom();
     }, [messages, isLoading]);
 
-    // Hide widget completely if there is no active completed audit report loaded
-    if (!data || data.status !== 'completed') {
+    // Hide widget on dashboard page or when no completed audit is loaded
+    if (!data || data.status !== 'completed' || location.pathname === '/dashboard') {
         return null;
     }
 

@@ -579,7 +579,7 @@ const DashboardPage = () => {
             className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
           >
             <FileText size={16} />
-            <span>Reports</span>
+            <span>Report History</span>
           </button>
 
           <button
@@ -599,6 +599,41 @@ const DashboardPage = () => {
           >
             <Star size={16} />
             <span>Starred</span>
+          </button>
+
+          {(user?.role === 'admin' || user?.role === 'super_admin') && (
+            <button
+              onClick={() => navigate("/admin")}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
+            >
+              <ShieldCheck size={16} className="text-blue-500 shrink-0" />
+              <span>Admin Panel</span>
+            </button>
+          )}
+
+          {user?.role === 'super_admin' && (
+            <button
+              onClick={() => navigate("/admin/setup")}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
+            >
+              <Settings size={16} className="text-indigo-500 shrink-0" />
+              <span>System Setup</span>
+            </button>
+          )}
+
+          <div className={`my-1.5 border-t transition-colors duration-300 ${darkMode ? 'border-slate-800' : 'border-slate-100'}`}></div>
+
+          <button
+            onClick={() => toggleTheme()}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
+          >
+            <div className="flex items-center gap-3">
+              {darkMode ? <Sun size={16} className="text-amber-400 shrink-0" /> : <Moon size={16} className="text-indigo-500 shrink-0" />}
+              <span>{darkMode ? "Light Mode" : "Dark Mode"}</span>
+            </div>
+            <div className={`w-8 h-4 rounded-full relative transition-colors duration-300 ${darkMode ? "bg-amber-400/20" : "bg-slate-200"}`}>
+              <div className={`absolute top-0.5 w-3 h-3 rounded-full transition-all duration-300 ${darkMode ? "right-0.5 bg-amber-400" : "left-0.5 bg-slate-400"}`}></div>
+            </div>
           </button>
         </nav>
 

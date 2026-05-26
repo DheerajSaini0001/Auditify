@@ -42,7 +42,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
 
   // Styles
   const navbarClass = darkMode
-    ? "bg-[#0A0F1E]/60 border-b border-white/5 backdrop-blur-2xl text-white shadow-[0_4px_30px_rgba(0,0,0,0.1)]"
+    ? "bg-[#03152D] border-b border-white/5 backdrop-blur-2xl text-white shadow-[0_4px_30px_rgba(0,0,0,0.1)]"
     : "bg-white/70 border-b border-slate-200 backdrop-blur-2xl text-slate-900 shadow-[0_4px_30px_rgba(0,0,0,0.05)]";
 
   const buttonClass = darkMode
@@ -150,48 +150,6 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
                           </div>
 
                           <div className="space-y-1">
-                            <Link to="/dashboard" onClick={() => setProfileOpen(false)} className={`flex items-center gap-3 px-5 py-2.5 text-sm font-bold transition-all ${darkMode ? "hover:bg-white/5" : "hover:bg-slate-50"}`}>
-                              <LayoutDashboard size={16} className="text-emerald-500" /> Dashboard
-                            </Link>
-                            
-                            <Link to="/audit-history" onClick={() => setProfileOpen(false)} className={`flex items-center gap-3 px-5 py-2.5 text-sm font-bold transition-all ${darkMode ? "hover:bg-white/5" : "hover:bg-slate-50"}`}>
-                              <History size={16} className="text-indigo-500" /> Audit History
-                            </Link>
-
-                            {user?.role === 'admin' && (
-                              <Link to="/admin" onClick={() => setProfileOpen(false)} className={`flex items-center gap-3 px-5 py-2.5 text-sm font-bold transition-all ${darkMode ? "hover:bg-white/5" : "hover:bg-slate-50"}`}>
-                                <ShieldCheck size={16} className="text-blue-500" /> Admin Panel
-                              </Link>
-                            )}
-
-                            {user?.role === 'super_admin' && (
-                              <>
-                                <Link to="/admin" onClick={() => setProfileOpen(false)} className={`flex items-center gap-3 px-5 py-2.5 text-sm font-bold transition-all ${darkMode ? "hover:bg-white/5" : "hover:bg-slate-50"}`}>
-                                  <ShieldCheck size={16} className="text-blue-500" /> Admin Panel
-                                </Link>
-                                <Link to="/admin/setup" onClick={() => setProfileOpen(false)} className={`flex items-center gap-3 px-5 py-2.5 text-sm font-bold transition-all ${darkMode ? "hover:bg-white/5" : "hover:bg-slate-50"}`}>
-                                  <Settings size={16} className="text-indigo-500" /> System Setup
-                                </Link>
-                              </>
-                            )}
-
-                            <div className="my-2 border-t border-slate-800/10"></div>
-                            
-                            <button 
-                              onClick={() => toggleTheme()}
-                              className={`w-full flex items-center justify-between px-5 py-2.5 text-sm font-bold transition-all ${darkMode ? "hover:bg-white/5" : "hover:bg-slate-50"}`}
-                            >
-                              <div className="flex items-center gap-3">
-                                {darkMode ? <Sun size={16} className="text-amber-400" /> : <Moon size={16} className="text-indigo-500" />}
-                                {darkMode ? "Light Mode" : "Dark Mode"}
-                              </div>
-                              <div className={`w-8 h-4 rounded-full relative transition-colors duration-300 ${darkMode ? "bg-amber-400/20" : "bg-slate-200"}`}>
-                                <div className={`absolute top-0.5 w-3 h-3 rounded-full transition-all duration-300 ${darkMode ? "right-0.5 bg-amber-400" : "left-0.5 bg-slate-400"}`}></div>
-                              </div>
-                            </button>
-
-                            <div className="my-2 border-t border-slate-800/10"></div>
-                            
                             <button 
                               onClick={() => { logout(); setProfileOpen(false); }}
                               className={`w-full flex items-center gap-3 px-5 py-2.5 text-sm font-bold text-rose-500 transition-all ${darkMode ? "hover:bg-rose-500/10" : "hover:bg-rose-50"}`}

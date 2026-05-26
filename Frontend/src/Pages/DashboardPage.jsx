@@ -350,6 +350,81 @@ const DashboardPage = () => {
   const [timeRange, setTimeRange] = useState("Last 30 days");
   const [sortBy, setSortBy] = useState("Newest first");
 
+  // Direct Audit Bar States
+  const [directUrl, setDirectUrl] = useState("");
+  const [protocol, setProtocol] = useState("http + https");
+  const [scope, setScope] = useState("Homepage (Fast)");
+  const [protocolOpen, setProtocolOpen] = useState(false);
+  const [scopeOpen, setScopeOpen] = useState(false);
+  const [directAuditing, setDirectAuditing] = useState(false);
+
+  // New parameters for device and audit type
+  const [directDevice, setDirectDevice] = useState("Desktop");
+  const [directReport, setDirectReport] = useState("All");
+  const [deviceOpen, setDeviceOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+
+  const closeAllDropdowns = () => {
+    setProtocolOpen(false);
+    setScopeOpen(false);
+    setDeviceOpen(false);
+    setReportOpen(false);
+  };
+
+  const reportOptions = [
+    { value: "All", label: "Full Audit" },
+    { value: "Technical Performance", label: "Technical Performance" },
+    { value: "On Page SEO", label: "On Page SEO" },
+    { value: "Accessibility", label: "Accessibility" },
+    { value: "Security/Compliance", label: "Security & Compliance" },
+    { value: "UX & Content Structure", label: "UX & Content" },
+    { value: "Conversion & Lead Flow", label: "Conversion & Lead Flow" },
+    { value: "AIO (AI-Optimization) Readiness", label: "AIO Readiness" }
+  ];
+
+  const handleDirectAudit = async (e) => {
+    if (e) e.preventDefault();
+    if (!directUrl.trim()) {
+      toast.error("Please enter a domain or URL");
+      return;
+    }
+
+    let targetUrl = directUrl.trim();
+    if (!/^https?:\/\//i.test(targetUrl)) {
+      const proto = protocol === "http + https" || protocol === "https://" ? "https://" : "http://";
+      targetUrl = `${proto}${targetUrl}`;
+    }
+
+    if (scope === "Entire site") {
+      navigate(`/bulk-audit?url=${encodeURIComponent(targetUrl)}&auto=true&device=${directDevice}&report=${directReport}`);
+      return;
+    }
+
+    setDirectAuditing(true);
+    toast.loading(`Starting audit for ${targetUrl}...`, { id: 'direct-audit-toast' });
+
+    try {
+      const result = await runAudit(targetUrl, directDevice, directReport, null);
+      toast.dismiss('direct-audit-toast');
+      
+      if (result?.success === false) {
+        toast.error(result.error || 'Audit failed. Please try again.');
+        return;
+      }
+
+      if (result?.id) {
+        toast.success("Audit complete! Opening report...");
+        navigate(`/report/${result.id}`);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.dismiss('direct-audit-toast');
+      toast.error("An unexpected error occurred during the audit.");
+    } finally {
+      setDirectAuditing(false);
+    }
+  };
+
   // Robust helper to get a timestamp from a project record
   const getTimestamp = (proj) => {
     if (proj.addedAt) return new Date(proj.addedAt).getTime();
@@ -599,6 +674,164 @@ const DashboardPage = () => {
       {/* ── MAIN CONTENT AREA ── */}
       <main className="flex-grow flex flex-col min-w-0 p-6 md:p-8 space-y-6 overflow-y-auto">
 
+        {/* ── DIRECT AUDIT MULTI-PART BAR ── */}
+        <div className={`p-1.5 rounded-2xl border flex flex-col xl:flex-row items-stretch gap-1.5 transition-all duration-300 shadow-lg ${darkMode ? 'bg-slate-900/90 border-slate-800 backdrop-blur-md' : 'bg-white border-slate-200'}`}>
+          
+          {/* 1. Protocol Selector Dropdown */}
+          <div className="relative shrink-0 flex-1 xl:flex-none">
+            <button
+              onClick={() => {
+                const state = !protocolOpen;
+                closeAllDropdowns();
+                setProtocolOpen(state);
+              }}
+              className={`w-full h-11 px-4 flex items-center justify-between gap-2 text-xs font-extrabold transition-all duration-300 rounded-xl select-none ${
+                darkMode ? 'bg-slate-850 hover:bg-slate-800 text-slate-200 border-none' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'
+              }`}
+            >
+              <span className="truncate">{protocol}</span>
+              <ChevronDown size={14} className={`opacity-80 shrink-0 transition-transform ${protocolOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {protocolOpen && (
+              <div className={`absolute top-full left-0 mt-1.5 rounded-xl shadow-xl z-50 py-1 w-36 border animate-in fade-in slide-in-from-top-1 duration-150 transition-colors duration-300 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+                {["http + https", "https://", "http://"].map(p => (
+                  <button
+                    key={p}
+                    onClick={() => { setProtocol(p); setProtocolOpen(false); }}
+                    className={`w-full text-left px-4 py-2.5 text-xs font-bold transition-colors duration-250 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-50 text-slate-700'} ${protocol === p ? (darkMode ? 'bg-slate-750 text-white' : 'bg-slate-100 text-slate-900') : ''}`}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* 2. URL Input Box */}
+          <form onSubmit={handleDirectAudit} className="flex-grow flex items-center relative min-w-[200px]">
+            <input
+              type="text"
+              value={directUrl}
+              onChange={(e) => setDirectUrl(e.target.value)}
+              placeholder="Domain or URL"
+              className={`w-full h-11 pl-4 pr-10 rounded-xl text-sm font-medium focus:outline-none focus:border-emerald-500/50 transition-all duration-300 ${
+                darkMode ? 'bg-slate-850 border-none text-slate-100 placeholder-slate-505 focus:shadow-emerald-950/20' : 'bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 focus:shadow-emerald-500/5'
+              }`}
+            />
+          </form>
+
+          {/* 3. Device Selector Dropdown */}
+          <div className="relative shrink-0 flex-1 xl:flex-none">
+            <button
+              onClick={() => {
+                const state = !deviceOpen;
+                closeAllDropdowns();
+                setDeviceOpen(state);
+              }}
+              className={`w-full h-11 px-4 flex items-center justify-between gap-2 text-xs font-extrabold transition-all duration-300 rounded-xl select-none ${
+                darkMode ? 'bg-slate-850 hover:bg-slate-800 text-slate-200 border-none' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'
+              }`}
+            >
+              <span className="truncate">{directDevice}</span>
+              <ChevronDown size={14} className={`opacity-80 shrink-0 transition-transform ${deviceOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {deviceOpen && (
+              <div className={`absolute top-full left-0 mt-1.5 rounded-xl shadow-xl z-50 py-1 w-36 border animate-in fade-in slide-in-from-top-1 duration-150 transition-colors duration-300 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+                {["Desktop", "Mobile"].map(d => (
+                  <button
+                    key={d}
+                    onClick={() => { setDirectDevice(d); setDeviceOpen(false); }}
+                    className={`w-full text-left px-4 py-2.5 text-xs font-bold transition-colors duration-250 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-50 text-slate-700'} ${directDevice === d ? (darkMode ? 'bg-slate-750 text-white' : 'bg-slate-100 text-slate-900') : ''}`}
+                  >
+                    {d}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* 4. Audit Category Selector Dropdown */}
+          <div className="relative shrink-0 flex-1 xl:flex-none">
+            <button
+              onClick={() => {
+                const state = !reportOpen;
+                closeAllDropdowns();
+                setReportOpen(state);
+              }}
+              className={`w-full h-11 px-4 flex items-center justify-between gap-2 text-xs font-extrabold transition-all duration-300 rounded-xl select-none ${
+                darkMode ? 'bg-slate-850 hover:bg-slate-800 text-slate-200 border-none' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'
+              }`}
+            >
+              <span className="truncate">
+                {reportOptions.find(opt => opt.value === directReport)?.label || directReport}
+              </span>
+              <ChevronDown size={14} className={`opacity-80 shrink-0 transition-transform ${reportOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {reportOpen && (
+              <div className={`absolute top-full right-0 mt-1.5 rounded-xl shadow-xl z-50 py-1 w-56 border animate-in fade-in slide-in-from-top-1 duration-150 transition-colors duration-300 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+                {reportOptions.map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => { setDirectReport(opt.value); setReportOpen(false); }}
+                    className={`w-full text-left px-4 py-2 text-xs font-bold transition-colors duration-250 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-50 text-slate-700'} ${directReport === opt.value ? (darkMode ? 'bg-slate-750 text-white' : 'bg-slate-100 text-slate-900') : ''}`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* 5. Scope Selector Dropdown (Subdomains option removed) */}
+          <div className="relative shrink-0 flex-1 xl:flex-none">
+            <button
+              onClick={() => {
+                const state = !scopeOpen;
+                closeAllDropdowns();
+                setScopeOpen(state);
+              }}
+              className={`w-full h-11 px-4 flex items-center justify-between gap-2 text-xs font-extrabold transition-all duration-300 rounded-xl select-none ${
+                darkMode ? 'bg-slate-850 hover:bg-slate-800 text-slate-200 border-none' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'
+              }`}
+            >
+              <span className="truncate">{scope}</span>
+              <ChevronDown size={14} className={`opacity-80 shrink-0 transition-transform ${scopeOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {scopeOpen && (
+              <div className={`absolute top-full right-0 mt-1.5 rounded-xl shadow-xl z-50 py-1 w-44 border animate-in fade-in slide-in-from-top-1 duration-150 transition-colors duration-300 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+                {["Homepage (Fast)", "Entire site"].map(s => (
+                  <button
+                    key={s}
+                    onClick={() => { setScope(s); setScopeOpen(false); }}
+                    className={`w-full text-left px-4 py-2 text-xs font-bold transition-colors duration-250 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-50 text-slate-700'} ${scope === s ? (darkMode ? 'bg-slate-750 text-white' : 'bg-slate-100 text-slate-900') : ''}`}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Audit Submit Button */}
+          <button
+            onClick={handleDirectAudit}
+            disabled={directAuditing}
+            className="h-11 w-11 flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white rounded-xl transition-all shadow-md shadow-emerald-600/10 shrink-0 disabled:opacity-50 flex-grow sm:flex-grow-0"
+            title="Launch Direct Website Audit"
+          >
+            {directAuditing ? (
+              <RefreshCw size={16} className="animate-spin" />
+            ) : (
+              <Search size={16} />
+            )}
+          </button>
+
+        </div>
+
         {/* Section title & Tools bar */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center justify-between gap-3">
@@ -710,6 +943,8 @@ const DashboardPage = () => {
             <span>Synchronizing GSC properties with Google Search Console API...</span>
           </div>
         )}
+
+        {/* Direct Audit Multi-Part Bar moved to the absolute top of the container */}
 
         {/* ── DEBOUNCED API SEARCH BAR ── */}
         <div className={`p-4 border rounded-2xl flex flex-col md:flex-row items-center gap-4 transition-all duration-300 shadow-sm ${darkMode ? 'bg-slate-900 border-slate-800/80' : 'bg-white border-slate-200'}`}>

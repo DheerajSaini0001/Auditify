@@ -18,6 +18,8 @@ import ScoreBadge from "../Component/reusablecomponent/ScoreBadge";
 import SEOCard from "../Component/reusablecomponent/SEOCard";
 import Tooltip from "../Component/reusablecomponent/Tooltip";
 import AskAIButton from "../Component/AskAIButton";
+import { AuditShimmer } from "../Component/reusablecomponent/AuditShimmer";
+
 
 const getStatusFromScore = (score) => {
   if (score >= 90) return "pass";

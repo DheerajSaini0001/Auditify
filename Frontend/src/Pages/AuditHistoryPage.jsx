@@ -574,9 +574,13 @@ const AuditHistoryPage = () => {
                         </td>
                         <td className="px-8 py-6 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            {audit.status === 'success' && isExpired(audit.createdAt) ? (
+                            {audit.status === 'success' && (isExpired(audit.createdAt) || audit.reportExists === false) ? (
                               <button
                                 onClick={() => {
+                                  if (user?.role === 'super_admin' && index === 0) {
+                                    navigate('/admin/setup');
+                                    return;
+                                  }
                                   const url = encodeURIComponent(audit.url);
                                   // Ensure device is capitalized for backend validation
                                   let rawDevice = audit.device || 'Desktop';
@@ -585,7 +589,7 @@ const AuditHistoryPage = () => {
                                   const report = encodeURIComponent(audit.reportType || 'All');
                                   navigate(`/?url=${url}&device=${device}&report=${report}`);
                                 }}
-                                className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black text-[11px] uppercase tracking-widest shadow-lg shadow-indigo-600/20 transition-all active:scale-95"
+                                className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-sm font-black text-[9px] uppercase tracking-widest shadow-lg shadow-indigo-600/20 transition-all active:scale-95"
                               >
                                 <RefreshCw size={14} />
                                 Run Again
@@ -594,6 +598,10 @@ const AuditHistoryPage = () => {
                               <>
                                 <button 
                                   onClick={() => {
+                                    if (user?.role === 'super_admin' && index === 0) {
+                                      navigate('/admin/setup');
+                                      return;
+                                    }
                                     if (audit.reportId || audit.parentBulkAuditId) {
                                       const params = new URLSearchParams({
                                         url: audit.url || "",
@@ -620,6 +628,10 @@ const AuditHistoryPage = () => {
                                 </button>
                                 <button 
                                   onClick={() => {
+                                    if (user?.role === 'super_admin' && index === 0) {
+                                      navigate('/admin/setup');
+                                      return;
+                                    }
                                     const rId = audit.reportId || (audit.parentBulkAuditId ? `${audit.parentBulkAuditId}_${window.btoa(audit.url)}` : null);
                                     if (!rId) return toast.error('PDF unavailable for this audit');
                                     

@@ -91,26 +91,30 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
     setIsAiChatOpen(true);
   };
 
+  const displayUrl = data?.url ? data.url.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '') : "Analyzing...";
+  const formattedUrl = displayUrl.length > 45 ? `${displayUrl.substring(0, 42)}...` : displayUrl;
+
   return (
     <div className={`relative p-6 md:p-8 ${hideBorder ? "" : "border-b"} ${darkMode ? "border-slate-800 bg-slate-900/50" : "border-slate-100 bg-slate-50/80"}`}>
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 min-w-0 w-full">
 
         {/* Left: URL Section */}
-        <div className="space-y-2 w-full lg:w-auto">
+        <div className="space-y-2 w-full lg:max-w-[65%] min-w-0">
           <div className="flex items-center gap-2 opacity-60">
             <Globe className="w-3.5 h-3.5" />
             <span className="text-xs font-bold uppercase tracking-widest">Audit Report For</span>
           </div>
-          <div className="flex items-center gap-3 group">
+          <div className="flex items-center gap-3 group min-w-0 w-full">
             <a
               href={data?.url || "#"}
               target="_blank"
               rel="noopener noreferrer"
               className={`text-2xl md:text-3xl font-extrabold truncate hover:underline underline-offset-4 decoration-2 decoration-transparent hover:decoration-current transition-all ${darkMode ? "text-white" : "text-slate-900"}`}
+              title={data?.url || ""}
             >
-              {data?.url ? data.url.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '') : "Analyzing..."}
+              {formattedUrl}
             </a>
-            <ExternalLink className="w-5 h-5 opacity-40 group-hover:opacity-100 transition-opacity" />
+            <ExternalLink className="w-5 h-5 opacity-40 group-hover:opacity-100 transition-opacity flex-shrink-0" />
           </div>
         </div>
 

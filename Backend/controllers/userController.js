@@ -1,6 +1,8 @@
 import User from '../models/User.js';
 import ActivityLog from '../models/ActivityLog.js';
 import AuditLog from '../models/AuditLog.js';
+import SingleAuditReport from '../models/singleAuditReport.js';
+import BulkAuditReport from '../models/bulkAuditReport.js';
 
 export const getHistory = async (req, res) => {
   try {
@@ -25,8 +27,24 @@ export const getHistory = async (req, res) => {
 
     const total = await AuditLog.countDocuments(query);
 
+    // Check report existence efficiently for current page items
+    const auditsWithExistence = await Promise.all(
+      audits.map(async (audit) => {
+        let reportExists = false;
+        if (audit.reportId) {
+          reportExists = await SingleAuditReport.exists({ _id: audit.reportId });
+        } else if (audit.parentBulkAuditId) {
+          reportExists = await BulkAuditReport.exists({ _id: audit.parentBulkAuditId });
+        }
+        return {
+          ...audit.toObject(),
+          reportExists: !!reportExists,
+        };
+      })
+    );
+
     res.json({
-      audits,
+      audits: auditsWithExistence,
       total,
       page: parseInt(page),
       totalPages: Math.ceil(total / limit),

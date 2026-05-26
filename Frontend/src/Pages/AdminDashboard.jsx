@@ -25,8 +25,8 @@ import {
   MoreVertical,
   Globe,
   Plus,
-  FileText,
   History,
+  FileText,
   Star,
   RefreshCw,
   Clock,
@@ -594,7 +594,7 @@ const AdminDashboard = () => {
                 { id: 'overview', label: 'Overview', icon: LayoutDashboard },
                 { id: 'users', label: 'Users', icon: Users },
                 { id: 'logs', label: 'Audits', icon: Globe },
-                { id: 'User_Logs', label: 'User Logs', icon: Globe },
+                { id: 'User_Logs', label: 'User Logs', icon: History },
               ].map(tab => (
                 <button
                   key={tab.id}
@@ -865,7 +865,7 @@ const AdminDashboard = () => {
               exit={{ opacity: 0, y: -20 }}
               className="space-y-6"
             >
-              <div className={`border rounded-[2.5rem] p-8 shadow-2xl transition-colors ${
+              <div className={`border rounded-[2.5rem] mt-6 p-8 shadow-2xl transition-colors ${
                 darkMode ? 'bg-[#111111] border-white/5' : 'bg-white border-slate-200'
               }`}>
                 <h3 className={`text-xs font-black uppercase tracking-widest mb-8 ${

@@ -575,101 +575,153 @@ const AuditHistoryPage = () => {
                         <td className="px-8 py-6 text-right">
                           <div className="flex items-center justify-end gap-2">
                             {audit.status === 'success' && (isExpired(audit.createdAt) || audit.reportExists === false) ? (
-                              <button
-                                onClick={() => {
-                                  if (user?.role === 'super_admin' && index === 0) {
-                                    navigate('/admin/setup');
-                                    return;
-                                  }
-                                  const url = encodeURIComponent(audit.url);
-                                  // Ensure device is capitalized for backend validation
-                                  let rawDevice = audit.device || 'Desktop';
-                                  const normalizedDevice = rawDevice.charAt(0).toUpperCase() + rawDevice.slice(1).toLowerCase();
-                                  const device = encodeURIComponent(normalizedDevice);
-                                  const report = encodeURIComponent(audit.reportType || 'All');
-                                  navigate(`/dashboard?url=${url}&device=${device}&report=${report}`);
-                                }}
-                                className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-sm font-black text-[9px] uppercase tracking-widest shadow-lg shadow-indigo-600/20 transition-all active:scale-95"
-                              >
-                                <RefreshCw size={14} />
-                                Run Again
-                              </button>
-                            ) : (
-                              <>
-                                <button 
-                                  onClick={() => {
-                                    if (user?.role === 'super_admin' && index === 0) {
-                                      navigate('/admin/setup');
-                                      return;
-                                    }
-                                    if (audit.reportId || audit.parentBulkAuditId) {
-                                      const params = new URLSearchParams({
-                                        url: audit.url || "",
-                                        device: audit.device || "Desktop",
-                                        report: audit.reportType || "All"
-                                      });
-                                      
-                                      if (audit.parentBulkAuditId) {
-                                        params.set("bulkId", audit.parentBulkAuditId);
-                                        window.open(`/report?${params.toString()}`, '_blank');
-                                      } else {
-                                        window.open(`/report/${audit.reportId}?${params.toString()}`, '_blank');
-                                      }
-                                    } else {
-                                      toast.error("Report details are currently unavailable.");
-                                    }
-                                  }}
-                                  className={`p-2.5 rounded-xl transition-all shadow-lg border ${darkMode 
-                                    ? "bg-slate-800 hover:bg-indigo-600 text-slate-400 hover:text-white border-slate-700" 
-                                    : "bg-white hover:bg-indigo-50 text-slate-500 hover:text-indigo-600 border-slate-200"}`}
-                                  title="View Report"
-                                >
-                                  <FileText size={18} />
-                                </button>
-                                <button 
-                                  onClick={() => {
-                                    if (user?.role === 'super_admin' && index === 0) {
-                                      navigate('/admin/setup');
-                                      return;
-                                    }
-                                    const rId = audit.reportId || (audit.parentBulkAuditId ? `${audit.parentBulkAuditId}_${window.btoa(audit.url)}` : null);
-                                    if (!rId) return toast.error('PDF unavailable for this audit');
-                                    
-                                    toast.promise(
-                                      (async () => {
-                                        const token = localStorage.getItem('dealerpulse_token');
-                                        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:2000';
-                                        const response = await fetch(`${API_URL}/single-audit/${rId}/export/pdf`, {
-                                          headers: {
-                                            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-                                          }
-                                        });
-                                        if (!response.ok) throw new Error('Failed to generate PDF');
-                                        
-                                        const blob = await response.blob();
-                                        const url = window.URL.createObjectURL(blob);
-                                        const link = document.createElement('a');
-                                        link.href = url;
-                                        link.download = `Auditify-Report-${audit.url.replace(/[^a-z0-9]/gi, '-')}.pdf`;
-                                        document.body.appendChild(link);
-                                        link.click();
-                                        document.body.removeChild(link);
-                                        window.URL.revokeObjectURL(url);
-                                      })(),
-                                      {
-                                        loading: 'Generating PDF report...',
-                                        success: 'Report downloaded!',
-                                        error: 'Failed to generate PDF',
-                                      }
-                                    );
-                                  }}
-                                  className={`p-2.5 rounded-xl transition-all shadow-lg border ${darkMode 
-                                    ? "bg-slate-800 hover:bg-emerald-600 text-slate-400 hover:text-white border-slate-700" 
-                                    : "bg-white hover:bg-emerald-50 text-slate-500 hover:text-emerald-600 border-slate-200"}`}
-                                  title="Download PDF"
-                                >
-                                  <Download size={18} />
-                                </button>
+                           <button
+  onClick={() => {
+    const url = encodeURIComponent(audit.url);
+
+    // Ensure device is capitalized for backend validation
+    let rawDevice = audit.device || 'Desktop';
+    const normalizedDevice =
+      rawDevice.charAt(0).toUpperCase() +
+      rawDevice.slice(1).toLowerCase();
+
+    const device = encodeURIComponent(normalizedDevice);
+    const report = encodeURIComponent(audit.reportType || 'All');
+
+    // ONLY rerun audit
+    navigate(
+      `/dashboard?url=${url}&device=${device}&report=${report}`
+    );
+  }}
+  className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-sm font-black text-[9px] uppercase tracking-widest shadow-lg shadow-indigo-600/20 transition-all active:scale-95"
+>
+  <RefreshCw size={14} />
+  Run Again
+</button>
+) : (
+  <>
+    <button
+      onClick={() => {
+        // ONLY open report
+        if (audit.reportId || audit.parentBulkAuditId) {
+          const params = new URLSearchParams({
+            url: audit.url || "",
+            device: audit.device || "Desktop",
+            report: audit.reportType || "All"
+          });
+
+          if (audit.parentBulkAuditId) {
+            params.set("bulkId", audit.parentBulkAuditId);
+
+            window.open(
+              `/report?${params.toString()}`,
+              '_blank'
+            );
+          } else {
+            window.open(
+              `/report/${audit.reportId}?${params.toString()}`,
+              '_blank'
+            );
+          }
+        } else {
+          toast.error(
+            "Report details are currently unavailable."
+          );
+        }
+      }}
+      className={`p-2.5 rounded-xl transition-all shadow-lg border ${
+        darkMode
+          ? "bg-slate-800 hover:bg-indigo-600 text-slate-400 hover:text-white border-slate-700"
+          : "bg-white hover:bg-indigo-50 text-slate-500 hover:text-indigo-600 border-slate-200"
+      }`}
+      title="View Report"
+    >
+      <FileText size={18} />
+    </button>
+
+    <button
+      onClick={() => {
+        // ONLY download PDF
+        const rId =
+          audit.reportId ||
+          (audit.parentBulkAuditId
+            ? `${audit.parentBulkAuditId}_${window.btoa(audit.url)}`
+            : null);
+
+        if (!rId) {
+          return toast.error(
+            'PDF unavailable for this audit'
+          );
+        }
+
+        toast.promise(
+          (async () => {
+            const token = localStorage.getItem(
+              'dealerpulse_token'
+            );
+
+            const API_URL =
+              import.meta.env.VITE_API_URL ||
+              'http://localhost:2000';
+
+            const response = await fetch(
+              `${API_URL}/single-audit/${rId}/export/pdf`,
+              {
+                headers: {
+                  ...(token
+                    ? {
+                        Authorization: `Bearer ${token}`
+                      }
+                    : {})
+                }
+              }
+            );
+
+            if (!response.ok) {
+              throw new Error(
+                'Failed to generate PDF'
+              );
+            }
+
+            const blob = await response.blob();
+
+            const url =
+              window.URL.createObjectURL(blob);
+
+            const link =
+              document.createElement('a');
+
+            link.href = url;
+
+            link.download = `Auditify-Report-${audit.url.replace(
+              /[^a-z0-9]/gi,
+              '-'
+            )}.pdf`;
+
+            document.body.appendChild(link);
+
+            link.click();
+
+            document.body.removeChild(link);
+
+            window.URL.revokeObjectURL(url);
+          })(),
+          {
+            loading: 'Generating PDF report...',
+            success: 'Report downloaded!',
+            error: 'Failed to generate PDF',
+          }
+        );
+      }}
+      className={`p-2.5 rounded-xl transition-all shadow-lg border ${
+        darkMode
+          ? "bg-slate-800 hover:bg-emerald-600 text-slate-400 hover:text-white border-slate-700"
+          : "bg-white hover:bg-emerald-50 text-slate-500 hover:text-emerald-600 border-slate-200"
+      }`}
+      title="Download PDF"
+    >
+      <Download size={18} />
+    </button>
                               </>
                             )}
                           </div>

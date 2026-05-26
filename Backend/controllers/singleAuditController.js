@@ -39,7 +39,7 @@ export const startAudit = async (req, res) => {
   };
 
   try {
-    let { url, device, report } = req.body;
+    let { url, device, report, force } = req.body;
 
     if (!url || !device || !report) {
       return res.status(400).json({ error: "Missing required fields" });
@@ -54,18 +54,31 @@ export const startAudit = async (req, res) => {
       return res.status(400).json({ error: "Invalid or Restricted URL" });
     }
 
+    if (force) {
+      console.log(`🗑️ Force run: Deleting existing single audit report for: ${url}`);
+      await SingleAuditReport.deleteMany({
+        url,
+        device,
+        report,
+        userId: req.user?.userId || null
+      });
+    }
+
     // Strict Deduplication: Check if a successful audit already exists or a very recent in-progress one
-    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-    const existing = await SingleAuditReport.findOne({ 
-      url, 
-      device, 
-      report, 
-      userId: req.user?.userId || null,
-      $or: [
-        { status: "completed" },
-        { status: "inprogress", createdAt: { $gt: fiveMinutesAgo } }
-      ]
-    }).sort({ createdAt: -1 });
+    let existing = null;
+    if (!force) {
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+      existing = await SingleAuditReport.findOne({ 
+        url, 
+        device, 
+        report, 
+        userId: req.user?.userId || null,
+        $or: [
+          { status: "completed" },
+          { status: "inprogress", createdAt: { $gt: fiveMinutesAgo } }
+        ]
+      }).sort({ createdAt: -1 });
+    }
 
     if (existing) {
       console.log(`♻️ Safeguard: Reusing existing Audit (${existing.status}) for: ${url}`);

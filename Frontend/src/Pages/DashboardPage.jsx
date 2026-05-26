@@ -209,13 +209,17 @@ const DashboardPage = () => {
         toast.loading(`Starting audit for ${urlToAudit}...`, { id: 'auto-audit-toast' });
         
         try {
-          const result = await runAudit(urlToAudit, queryDevice, queryReport, null);
+          // Don't force delete existing data — let backend decide (cached vs new audit)
+          const result = await runAudit(urlToAudit, queryDevice, queryReport, null, null, false);
           toast.dismiss('auto-audit-toast');
           
           if (result?.success === false) {
             toast.error(result.error || 'Audit failed. Please try again.');
           } else if (result?.id) {
-            toast.success("Audit complete! Opening report...");
+            toast.success("Audit complete!");
+            // Refresh dashboard data to update the card immediately!
+            await fetchData();
+            // Navigate to the report
             navigate(`/report/${result.id}`);
           }
         } catch (err) {
@@ -224,6 +228,8 @@ const DashboardPage = () => {
           toast.error("An unexpected error occurred during the audit.");
         } finally {
           isAutoAuditingRef.current = false;
+          setAuditingProjectId(null); // Clear loading state
+          processedAutoUrlRef.current = null;
         }
       };
 
@@ -233,6 +239,20 @@ const DashboardPage = () => {
       navigate(location.pathname, { replace: true });
     }
   }, [location.search, location.pathname, navigate, runAudit]);
+
+  // Set auditingProjectId when websites are loaded and an auto-audit is active
+  useEffect(() => {
+    if (processedAutoUrlRef.current && websites.length > 0 && !auditingProjectId) {
+      const normQueryUrl = processedAutoUrlRef.current.toLowerCase().replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '');
+      const matchedSite = websites.find(site => {
+        const normSiteUrl = site.url.toLowerCase().replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '');
+        return normSiteUrl === normQueryUrl;
+      });
+      if (matchedSite) {
+        setAuditingProjectId(matchedSite._id);
+      }
+    }
+  }, [websites, auditingProjectId]);
 
   // Handle Search Hotkey (CMD+K or CTRL+K)
   useEffect(() => {
@@ -1232,7 +1252,18 @@ const DashboardPage = () => {
                   </div>
 
                   {scores.isAudited ? (
-                    <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-4 pt-5 animate-in fade-in duration-300">
+                    auditingProjectId === proj._id ? (
+                      <div className="flex flex-col sm:flex-row items-center justify-between p-6 mt-4 rounded-2xl border border-dashed border-emerald-500/30 bg-emerald-500/5 animate-pulse">
+                        <div className="flex items-center gap-4">
+                          <RefreshCw size={24} className="animate-spin text-emerald-500" />
+                          <div className="text-left">
+                            <h4 className={`text-sm font-extrabold transition-colors duration-300 ${darkMode ? 'text-white' : 'text-slate-800'}`}>Auditing in progress...</h4>
+                            <p className={`text-[11px] font-semibold mt-0.5 leading-relaxed transition-colors duration-300 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Re-scanned audit metrics are being compiled by the analysis engine. Please wait.</p>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-4 pt-5 animate-in fade-in duration-300">
 
                       {/* Metric 1: Performance */}
                       <button
@@ -1340,6 +1371,7 @@ const DashboardPage = () => {
                       </button>
 
                     </div>
+                  )
                   ) : (
                     <div className={`mt-5 p-5 rounded-2xl border flex flex-col gap-4 transition-all duration-300 ${darkMode ? 'bg-slate-800/20 border-slate-800/40' : 'bg-slate-50 border-slate-200/60'}`}>
                       {/* Info Row */}

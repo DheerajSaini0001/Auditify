@@ -68,7 +68,7 @@ export const DataProvider = ({ children }) => {
   };
 
   // 🚀 FETCH DATA
-  const fetchData = async (inputValue, device, report, captchaAnswer, captchaId) => {
+  const fetchData = async (inputValue, device, report, captchaAnswer, captchaId, force = false) => {
     if (loading) return { success: false, error: "An audit is already in progress." };
     if (!inputValue) return { success: false, error: "URL is empty" };
 
@@ -98,7 +98,8 @@ export const DataProvider = ({ children }) => {
           report,
           captchaAnswer,
           captchaId, // Added
-          screenResolution
+          screenResolution,
+          force
         })
       });
 

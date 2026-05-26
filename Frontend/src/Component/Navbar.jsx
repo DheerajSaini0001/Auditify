@@ -216,12 +216,12 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
                         <Moon className="w-5 h-5 text-indigo-500 fill-indigo-500/20" />
                       )}
                     </button>
-                    <Link to="/">
+                    <Link to="/login">
                       <button className={`px-4 py-1.5 rounded-lg text-sm font-bold border ${buttonClass}`}>
                         Login
                       </button>
                     </Link>
-                    <Link to="/" className="hidden sm:block">
+                    <Link to="/register" className="hidden sm:block">
                       <button className="px-4 py-1.5 rounded-lg text-sm font-bold text-white bg-emerald-700 hover:bg-emerald-600 shadow-md shadow-emerald-700/20">
                         Sign Up
                       </button>

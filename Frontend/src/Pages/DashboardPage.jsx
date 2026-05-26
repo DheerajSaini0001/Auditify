@@ -284,7 +284,7 @@ const DashboardPage = () => {
 
   const allProjects = filteredWebsites.map((w) => ({
     _id: w._id,
-    url: w.url.replace(/^https?:\/\//, ''),
+    url: w.url.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, ''),
     subtext: `${w.url}/*`,
     verified: w.verified,
     permissionLevel: w.permissionLevel || "owner",
@@ -609,8 +609,22 @@ const DashboardPage = () => {
                           </svg>
                         </div>
                       ) : (
-                        <div className={`w-10 h-10 rounded-xl border flex items-center justify-center font-bold shrink-0 text-sm transition-all duration-300 ${darkMode ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-slate-50 border-slate-100 text-slate-400'}`}>
-                          {proj.url.charAt(0).toUpperCase()}
+                        <div className={`w-10 h-10 rounded-xl border overflow-hidden flex items-center justify-center font-bold shrink-0 text-sm transition-all duration-300 ${darkMode ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-slate-50 border-slate-100 text-slate-400'}`}>
+                          <img 
+                            src={`https://www.google.com/s2/favicons?sz=128&domain=${proj.url}`} 
+                            alt={proj.url} 
+                            className="w-8 h-8 object-contain"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                              const fallbackEl = e.currentTarget.parentElement?.querySelector('.fallback-letter');
+                              if (fallbackEl) {
+                                fallbackEl.classList.remove('hidden');
+                              }
+                            }}
+                          />
+                          <span className="fallback-letter hidden">
+                            {proj.url.charAt(0).toUpperCase()}
+                          </span>
                         </div>
                       )}
 

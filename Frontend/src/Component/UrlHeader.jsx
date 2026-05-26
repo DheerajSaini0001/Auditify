@@ -108,7 +108,7 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
               rel="noopener noreferrer"
               className={`text-2xl md:text-3xl font-extrabold truncate hover:underline underline-offset-4 decoration-2 decoration-transparent hover:decoration-current transition-all ${darkMode ? "text-white" : "text-slate-900"}`}
             >
-              {data?.url || "Analyzing..."}
+              {data?.url ? data.url.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '') : "Analyzing..."}
             </a>
             <ExternalLink className="w-5 h-5 opacity-40 group-hover:opacity-100 transition-opacity" />
           </div>

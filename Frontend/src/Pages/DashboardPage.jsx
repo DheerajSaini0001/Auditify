@@ -92,6 +92,24 @@ const DashboardPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("Overview");
 
+  // Starred websites — persisted to localStorage
+  const [starredIds, setStarredIds] = useState(() => {
+    try {
+      const stored = localStorage.getItem('auditify_starred_ids');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const toggleStar = (id) => {
+    setStarredIds(prev => {
+      const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
+      localStorage.setItem('auditify_starred_ids', JSON.stringify(next));
+      return next;
+    });
+  };
+
   // Backend search with debouncing states
   const [apiSearchInput, setApiSearchInput] = useState("");
   const [apiSearchResults, setApiSearchResults] = useState([]);
@@ -192,6 +210,15 @@ const DashboardPage = () => {
   
   useEffect(() => {
     const params = new URLSearchParams(location.search);
+
+    // Handle ?tab=starred navigation from other pages (e.g. AuditHistoryPage sidebar)
+    const queryTab = params.get("tab");
+    if (queryTab === "starred") {
+      setActiveTab("Starred");
+      navigate(location.pathname, { replace: true });
+      return;
+    }
+
     const queryUrl = params.get("url");
     const queryDevice = params.get("device") || "Desktop";
     const queryReport = params.get("report") || "All";
@@ -569,7 +596,10 @@ const DashboardPage = () => {
     addedAt: w.addedAt || w.verifiedAt
   })) : allProjects;
 
-  const displayProjects = sortProjects(filterByTimeRange(rawProjects));
+  const allDisplayProjects = sortProjects(filterByTimeRange(rawProjects));
+  const displayProjects = activeTab === "Starred"
+    ? allDisplayProjects.filter(proj => starredIds.includes(proj._id))
+    : allDisplayProjects;
 
   // Sidebar content
   const SidebarContent = () => (
@@ -625,23 +655,18 @@ const DashboardPage = () => {
         {/* Menu Links */}
         <nav className="flex flex-col gap-1 mt-2">
           <button
-            onClick={() => navigate("/dashboard")}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-extrabold transition-all duration-300 border-none ${darkMode ? 'bg-emerald-950/40 text-emerald-400' : 'bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 shadow-sm'}`}
+            onClick={() => { setActiveTab("Overview"); setSidebarOpen(false); }}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-extrabold transition-all duration-300 border-none ${
+              activeTab === "Overview"
+                ? (darkMode ? 'bg-emerald-950/40 text-emerald-400' : 'bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 shadow-sm')
+                : (darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50')
+            }`}
           >
             <LayoutDashboard size={16} />
             <span>Projects</span>
           </button>
 
-          <button
-            onClick={() => toast('Portfolios are unlocked in Advanced premium tier!')}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
-          >
-            <div className="flex items-center gap-3">
-              <Activity size={16} />
-              <span>Portfolios</span>
-            </div>
-            <Lock size={12} className="opacity-40" />
-          </button>
+         
 
           <button
             onClick={() => navigate("/audit-history")}
@@ -651,23 +676,24 @@ const DashboardPage = () => {
             <span>Report History</span>
           </button>
 
-          <button
-            onClick={() => toast('Keyword Rank Tracker is unlocking soon!')}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
-          >
-            <div className="flex items-center gap-3">
-              <History size={16} />
-              <span>Keyword Lists</span>
-            </div>
-            <Lock size={12} className="opacity-40" />
-          </button>
 
           <button
-            onClick={() => toast('Feature Starred Projects coming soon!')}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
+            onClick={() => { setActiveTab("Starred"); setSidebarOpen(false); }}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${
+              activeTab === "Starred"
+                ? (darkMode ? 'bg-amber-950/40 text-amber-400' : 'bg-amber-50 text-amber-600 border border-amber-500/20 shadow-sm')
+                : (darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50')
+            }`}
           >
-            <Star size={16} />
+            <Star size={16} className={activeTab === "Starred" ? (darkMode ? 'fill-amber-400 text-amber-400' : 'fill-amber-500 text-amber-500') : ''} />
             <span>Starred</span>
+            {starredIds.length > 0 && (
+              <span className={`ml-auto text-[10px] font-black px-1.5 py-0.5 rounded-full ${
+                activeTab === "Starred"
+                  ? (darkMode ? 'bg-amber-900/50 text-amber-300' : 'bg-amber-100 text-amber-700')
+                  : (darkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500')
+              }`}>{starredIds.length}</span>
+            )}
           </button>
 
           {(user?.role === 'admin' || user?.role === 'super_admin') && (
@@ -706,19 +732,7 @@ const DashboardPage = () => {
           </button>
         </nav>
 
-        {/* Folders list */}
-        <div className={`mt-4 border-t pt-4 transition-colors duration-300 ${darkMode ? 'border-slate-800' : 'border-slate-100'}`}>
-          <div className={`flex items-center justify-between px-2 mb-2 text-[10px] font-black uppercase tracking-wider transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
-            <span>Folders</span>
-            <button
-              onClick={() => toast('Add custom project folder is a Premium feature')}
-              className={`p-0.5 rounded transition-all duration-300 ${darkMode ? 'hover:bg-slate-800 text-slate-400 hover:text-slate-300' : 'hover:bg-slate-100 text-slate-450 hover:text-slate-600'}`}
-            >
-              <Plus size={12} />
-            </button>
-          </div>
-          <p className={`px-2 text-xs font-medium italic transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-slate-450'}`}>No folders</p>
-        </div>
+    
       </div>
 
       {/* Premium promotional block */}
@@ -1021,21 +1035,29 @@ const DashboardPage = () => {
 
         {/* Tab selector Pills */}
         <div className={`flex border-b gap-1 pb-px transition-colors duration-300 ${darkMode ? 'border-slate-800' : 'border-slate-100'}`}>
-          {["Overview"].map(tab => (
+          {["Overview", "Starred"].map(tab => (
             <button
               key={tab}
-              onClick={() => {
-                setActiveTab(tab);
-                if (tab !== "Overview") {
-                  toast(`${tab} views are loading custom Search Console metrics!`);
-                }
-              }}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all border-none ${activeTab === tab
-                  ? (darkMode ? 'bg-emerald-950/40 text-emerald-400' : 'bg-emerald-50 text-emerald-600')
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all border-none flex items-center gap-1.5 ${
+                activeTab === tab
+                  ? tab === "Starred"
+                    ? (darkMode ? 'bg-amber-950/40 text-amber-400' : 'bg-amber-50 text-amber-600')
+                    : (darkMode ? 'bg-emerald-950/40 text-emerald-400' : 'bg-emerald-50 text-emerald-600')
                   : (darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50')
-                }`}
+              }`}
             >
+              {tab === "Starred" && (
+                <Star size={11} className={activeTab === "Starred" ? (darkMode ? 'fill-amber-400' : 'fill-amber-500') : ''} />
+              )}
               {tab}
+              {tab === "Starred" && starredIds.length > 0 && (
+                <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${
+                  activeTab === "Starred"
+                    ? (darkMode ? 'bg-amber-900/60 text-amber-300' : 'bg-amber-100 text-amber-700')
+                    : (darkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-200 text-slate-500')
+                }`}>{starredIds.length}</span>
+              )}
             </button>
           ))}
         </div>
@@ -1120,6 +1142,24 @@ const DashboardPage = () => {
                 </button>
               )}
             </div>
+          ) : activeTab === "Starred" && starredIds.length === 0 ? (
+            <div className={`rounded-2xl p-12 text-center flex flex-col items-center justify-center gap-4 animate-in fade-in duration-300 transition-all duration-300 border ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+              <Star size={40} className={`transition-colors duration-300 ${darkMode ? 'text-slate-600' : 'text-slate-300'}`} />
+              <div>
+                <h3 className={`font-bold text-sm transition-colors duration-300 ${darkMode ? 'text-white' : 'text-slate-800'}`}>
+                  No starred websites yet
+                </h3>
+                <p className={`text-xs mt-1 transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                  Click the ☆ star icon on any project card to bookmark it here.
+                </p>
+              </div>
+              <button
+                onClick={() => setActiveTab("Overview")}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs transition-all duration-300 active:scale-[0.98]"
+              >
+                Browse All Projects
+              </button>
+            </div>
           ) : (
             displayProjects.map((proj, idx) => {
               const scores = getProjectScores(proj.url, idx);
@@ -1195,10 +1235,18 @@ const DashboardPage = () => {
                       </button>
 
                       <button
-                        onClick={() => toast.success('Added to Starred list')}
-                        className={`p-1.5 border rounded-lg text-slate-400 hover:text-amber-500 transition-all duration-300 ${darkMode ? 'bg-slate-900 border-slate-800 hover:bg-slate-800' : 'bg-white border-slate-200 hover:bg-slate-50'}`}
+                        onClick={() => {
+                          toggleStar(proj._id);
+                          toast(starredIds.includes(proj._id) ? 'Removed from Starred' : 'Added to Starred ⭐', { icon: starredIds.includes(proj._id) ? '✕' : '⭐' });
+                        }}
+                        title={starredIds.includes(proj._id) ? 'Remove from Starred' : 'Add to Starred'}
+                        className={`p-1.5 border rounded-lg transition-all duration-300 ${
+                          starredIds.includes(proj._id)
+                            ? (darkMode ? 'bg-amber-950/40 border-amber-800/40 text-amber-400 hover:bg-amber-950/60' : 'bg-amber-50 border-amber-200 text-amber-500 hover:bg-amber-100')
+                            : (darkMode ? 'bg-slate-900 border-slate-800 text-slate-400 hover:text-amber-400 hover:bg-slate-800' : 'bg-white border-slate-200 text-slate-400 hover:text-amber-500 hover:bg-slate-50')
+                        }`}
                       >
-                        <Star size={14} />
+                        <Star size={14} className={starredIds.includes(proj._id) ? 'fill-current' : ''} />
                       </button>
 
                       {/* Triple Dot Action Menu */}

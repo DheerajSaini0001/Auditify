@@ -48,6 +48,16 @@ const AuditHistoryPage = () => {
   const [createDropdownOpen, setCreateDropdownOpen] = useState(false);
   const [searchInput, setSearchInput] = useState("");
 
+  // Read starred IDs from the same localStorage key used by DashboardPage
+  const [starredIds] = useState(() => {
+    try {
+      const stored = localStorage.getItem('auditify_starred_ids');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
   const SidebarContent = () => (
     <div className="flex flex-col h-full justify-between select-none">
       <div className="flex flex-col p-4 gap-4 overflow-y-auto">
@@ -108,16 +118,7 @@ const AuditHistoryPage = () => {
             <span>Projects</span>
           </button>
 
-          <button
-            onClick={() => toast('Portfolios are unlocked in Advanced premium tier!')}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
-          >
-            <div className="flex items-center gap-3">
-              <Activity size={16} />
-              <span>Portfolios</span>
-            </div>
-            <Lock size={12} className="opacity-40" />
-          </button>
+       
 
           <button
             onClick={() => navigate("/audit-history")}
@@ -127,23 +128,19 @@ const AuditHistoryPage = () => {
             <span>Report History</span>
           </button>
 
-          <button
-            onClick={() => toast('Keyword Rank Tracker is unlocking soon!')}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
-          >
-            <div className="flex items-center gap-3">
-              <History size={16} />
-              <span>Keyword Lists</span>
-            </div>
-            <Lock size={12} className="opacity-40" />
-          </button>
+      
 
           <button
-            onClick={() => toast('Feature Starred Projects coming soon!')}
+            onClick={() => navigate('/dashboard?tab=starred')}
             className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
           >
             <Star size={16} />
             <span>Starred</span>
+            {starredIds.length > 0 && (
+              <span className={`ml-auto text-[10px] font-black px-1.5 py-0.5 rounded-full ${darkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
+                {starredIds.length}
+              </span>
+            )}
           </button>
 
           {(user?.role === 'admin' || user?.role === 'super_admin') && (
@@ -182,19 +179,7 @@ const AuditHistoryPage = () => {
           </button>
         </nav>
 
-        {/* Folders list */}
-        <div className={`mt-4 border-t pt-4 transition-colors duration-300 ${darkMode ? 'border-slate-800' : 'border-slate-100'}`}>
-          <div className={`flex items-center justify-between px-2 mb-2 text-[10px] font-black uppercase tracking-wider transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
-            <span>Folders</span>
-            <button
-              onClick={() => toast('Add custom project folder is a Premium feature')}
-              className={`p-0.5 rounded transition-all duration-300 ${darkMode ? 'hover:bg-slate-800 text-slate-400 hover:text-slate-300' : 'hover:bg-slate-100 text-slate-450 hover:text-slate-600'}`}
-            >
-              <Plus size={12} />
-            </button>
-          </div>
-          <p className={`px-2 text-xs font-medium italic transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-slate-450'}`}>No folders</p>
-        </div>
+   
       </div>
 
       {/* Premium promotional block */}

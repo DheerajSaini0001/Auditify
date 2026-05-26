@@ -266,19 +266,7 @@ const AdminDashboard = () => {
           </button>
         </nav>
 
-        {/* Folders list */}
-        <div className={`mt-4 border-t pt-4 transition-colors duration-300 ${darkMode ? 'border-slate-800' : 'border-slate-100'}`}>
-          <div className={`flex items-center justify-between px-2 mb-2 text-[10px] font-black uppercase tracking-wider transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
-            <span>Folders</span>
-            <button
-              onClick={() => toast('Add custom project folder is a Premium feature')}
-              className={`p-0.5 rounded transition-all duration-300 ${darkMode ? 'hover:bg-slate-800 text-slate-400 hover:text-slate-300' : 'hover:bg-slate-100 text-slate-450 hover:text-slate-600'}`}
-            >
-              <Plus size={12} />
-            </button>
-          </div>
-          <p className={`px-2 text-xs font-medium italic transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-slate-450'}`}>No folders</p>
-        </div>
+    
       </div>
 
       {/* Premium promotional block */}

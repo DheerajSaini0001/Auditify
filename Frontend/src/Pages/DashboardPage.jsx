@@ -710,7 +710,7 @@ const DashboardPage = () => {
       <main className="flex-grow flex flex-col min-w-0 p-6 md:p-8 space-y-6 overflow-y-auto">
 
         {/* ── DIRECT AUDIT MULTI-PART BAR ── */}
-        <div className={`p-1.5 rounded-2xl border flex flex-col xl:flex-row items-stretch gap-1.5 transition-all duration-300 shadow-lg ${darkMode ? 'bg-slate-900/90 border-slate-800 backdrop-blur-md' : 'bg-white border-slate-200'}`}>
+        <div className={`p-3 rounded-2xl border flex flex-col xl:flex-row items-stretch gap-1.5 transition-all duration-300 shadow-lg ${darkMode ? 'bg-slate-900/90 border-slate-800 backdrop-blur-md' : 'bg-white border-slate-200'}`}>
           
           {/* 1. Protocol Selector Dropdown */}
           <div className="relative shrink-0 flex-1 xl:flex-none">

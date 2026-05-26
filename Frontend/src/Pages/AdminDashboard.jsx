@@ -594,7 +594,7 @@ const AdminDashboard = () => {
                 { id: 'overview', label: 'Overview', icon: LayoutDashboard },
                 { id: 'users', label: 'Users', icon: Users },
                 { id: 'logs', label: 'Audits', icon: Globe },
-                { id: 'settings', label: 'Config', icon: Settings },
+                { id: 'User_Logs', label: 'User Logs', icon: Globe },
               ].map(tab => (
                 <button
                   key={tab.id}
@@ -850,82 +850,77 @@ const AdminDashboard = () => {
                   </div>
                 </div>
 
-                <div className={`border rounded-2xl p-6 ${darkMode ? 'bg-[#111111] border-white/5' : 'bg-white border-slate-200 shadow-sm'}`}>
-                  <h3 className={`text-[10px] font-bold uppercase tracking-widest mb-6 ${darkMode ? 'text-gray-500' : 'text-slate-400'}`}>Critical Issues Detected</h3>
-                  <div className="space-y-4">
-                    {recentActivity.length === 0 ? (
-                      <div className="text-center py-8 text-xs text-gray-500">No recent activity detected.</div>
-                    ) : recentActivity.map((activity) => (
-                      <div key={activity._id} className={`flex items-start gap-4 p-3 rounded-xl transition-all ${darkMode ? 'hover:bg-white/5' : 'hover:bg-slate-50'}`}>
-                        <div className={`mt-1 w-2 h-2 rounded-full shrink-0 ${
-                          activity.action.includes('FAIL') || activity.action === 'BLOCKED' ? 'bg-rose-500' : 
-                          activity.action.includes('WARN') ? 'bg-amber-500' : 'bg-blue-500'
-                        }`} />
-                        <div>
-                          <p className={`text-xs font-bold ${darkMode ? 'text-white' : 'text-slate-700'}`}>
-                            {activity.userId?.name || 'Guest'} {activity.action.toLowerCase().replace('_', ' ')}
-                          </p>
-                          <p className="text-[10px] text-gray-500 mt-0.5">
-                            {activity.ip} • {new Date(activity.timestamp).toLocaleString()}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                
               </div>
 
-              {/* Active Users Table */}
-              <div className={`border rounded-2xl overflow-hidden ${darkMode ? 'bg-[#111111] border-white/5' : 'bg-white border-slate-200 shadow-sm'}`}>
-                 <div className={`p-6 border-b ${darkMode ? 'border-white/5' : 'border-slate-100'}`}>
-                   <h3 className={`text-[10px] font-bold uppercase tracking-widest ${darkMode ? 'text-gray-500' : 'text-slate-400'}`}>Active Users</h3>
-                 </div>
-                 <div className="overflow-x-auto">
-                   <table className="w-full text-left">
-                     <thead>
-                       <tr className={`text-[10px] uppercase tracking-wider border-b ${darkMode ? 'text-gray-500 border-white/5' : 'text-slate-400 border-slate-100'}`}>
-                         <th className="px-6 py-4 font-bold">User</th>
-                         <th className="px-6 py-4 font-bold">Audits Run</th>
-                         <th className="px-6 py-4 font-bold">Avg Score</th>
-                         <th className="px-6 py-4 font-bold">Last Active</th>
-                         <th className="px-6 py-4 font-bold">Plan</th>
-                       </tr>
-                     </thead>
-                     <tbody className="divide-y divide-white/5">
-                         {activeUsersData.length === 0 ? (
-                           <tr>
-                             <td colSpan="5" className="px-6 py-12 text-center text-xs text-gray-500">No active users recorded.</td>
-                           </tr>
-                         ) : activeUsersData.map((user, i) => (
-                           <tr key={user._id} className={`transition-all cursor-pointer ${darkMode ? 'hover:bg-white/5 border-white/5' : 'hover:bg-slate-50 border-slate-100'}`}>
-                             <td className="px-6 py-4">
-                               <div className="flex items-center gap-3">
-                                 <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-[10px] font-bold text-white uppercase">
-                                   {user.name.split(' ').map(n => n[0]).join('')}
-                                 </div>
-                                 <div className="flex flex-col">
-                                   <span className={`text-xs font-bold ${darkMode ? 'text-white' : 'text-slate-700'}`}>{user.name}</span>
-                                   <span className="text-[9px] text-gray-500">{user.email}</span>
-                                 </div>
-                               </div>
-                             </td>
-                             <td className={`px-6 py-4 text-xs font-bold ${darkMode ? 'text-white' : 'text-slate-700'}`}>{user.auditsRun}</td>
-                             <td className={`px-6 py-4 text-xs font-bold ${
-                               user.avgScore >= 80 ? 'text-emerald-500' : user.avgScore >= 50 ? 'text-amber-500' : 'text-rose-500'
-                             }`}>{user.avgScore}%</td>
-                             <td className="px-6 py-4 text-xs text-gray-500">
-                               {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}
-                             </td>
-                             <td className="px-6 py-4">
-                               <span className={`px-2 py-1 rounded text-[9px] font-bold ${user.role === 'admin' ? 'bg-purple-500/10 text-purple-500' : 'bg-blue-500/10 text-blue-500'}`}>
-                                 {user.role === 'admin' ? 'Admin' : 'Pro'}
-                               </span>
-                             </td>
-                           </tr>
-                         ))}
-                      </tbody>
-                   </table>
-                 </div>
+             
+            </motion.div>
+          )}
+
+          {activeTab === 'User_Logs' && (
+            <motion.div
+              key="User_Logs"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-6"
+            >
+              <div className={`border rounded-[2.5rem] p-8 shadow-2xl transition-colors ${
+                darkMode ? 'bg-[#111111] border-white/5' : 'bg-white border-slate-200'
+              }`}>
+                <h3 className={`text-xs font-black uppercase tracking-widest mb-8 ${
+                  darkMode ? 'text-slate-400' : 'text-slate-500'
+                }`}>
+                  Critical Issues Detected
+                </h3>
+
+                <div className="space-y-8 pl-2">
+                  {recentActivity.length === 0 ? (
+                    <div className="text-center py-12 text-sm text-gray-500">
+                      No user activity logs recorded yet.
+                    </div>
+                  ) : (
+                    recentActivity.map((activity) => {
+                      const formattedDate = new Date(activity.timestamp).toLocaleString('en-GB', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                      });
+
+                      const displayName = activity.userId?.name || 'Guest';
+                      const displayAction = activity.action.toLowerCase().replace('_', ' ');
+
+                      return (
+                        <div key={activity._id} className="flex items-start gap-5 group">
+                          {/* Bullet Dot */}
+                          <div className="mt-1.5 flex-shrink-0">
+                            <span className="relative flex h-3 w-3">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500 shadow-md shadow-blue-500/50"></span>
+                            </span>
+                          </div>
+
+                          {/* Content */}
+                          <div className="flex flex-col gap-1">
+                            <h4 className={`text-base font-extrabold leading-tight transition-colors ${
+                              darkMode ? 'text-slate-100 group-hover:text-blue-400' : 'text-slate-800 group-hover:text-blue-600'
+                            }`}>
+                              {displayName} {displayAction}
+                            </h4>
+                            <p className={`text-xs font-semibold ${
+                              darkMode ? 'text-slate-500' : 'text-slate-400'
+                            }`}>
+                              {activity.ip} • {formattedDate}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
               </div>
             </motion.div>
           )}

@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useContext, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import { ThemeContext } from '../context/ThemeContext.jsx';
 import { 
   Search, Eye, EyeOff, MoreVertical, Plus, RefreshCw, Lock, Unlock,
   Save, X, Trash2, Settings, ShieldCheck, Terminal, History,
   RotateCcw, Download, Upload, Filter, Clock, User, Activity,
-  ChevronDown, AlertTriangle, CheckCircle2, Database, Zap, Globe
+  ChevronDown, AlertTriangle, CheckCircle2, Database, Zap, Globe,
+  LayoutDashboard, FileText, Star, Sun, Moon, Menu
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -45,8 +48,185 @@ const getEnvColor = (env) => ENVIRONMENTS.find(e => e.value === env)?.color || '
 
 // ── Main Component ──────────────────────────────────────────────────
 const AdminConfig = () => {
-  const { theme } = useContext(ThemeContext);
+  const { theme, toggleTheme } = useContext(ThemeContext);
   const dk = theme === 'dark';
+  const darkMode = dk;
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [createDropdownOpen, setCreateDropdownOpen] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
+
+  const SidebarContent = () => (
+    <div className="flex flex-col h-full justify-between select-none">
+      <div className="flex flex-col p-4 gap-4 overflow-y-auto">
+        {/* Create Project Button */}
+        <div className="relative">
+          <button
+            onClick={() => setCreateDropdownOpen(!createDropdownOpen)}
+            className="w-full flex items-center justify-between px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm transition-all shadow-md shadow-emerald-600/10 active:scale-[0.98]"
+          >
+            <div className="flex items-center gap-2">
+              <Plus size={16} />
+              <span>Create Project</span>
+            </div>
+            <ChevronDown size={14} className="opacity-80" />
+          </button>
+
+          {createDropdownOpen && (
+            <div className={`absolute top-full left-0 right-0 mt-1.5 rounded-xl shadow-xl z-50 py-1 animate-in fade-in slide-in-from-top-1 duration-150 border transition-all duration-300 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+              <button
+                onClick={() => { setCreateDropdownOpen(false); navigate("/dashboard/add-website"); }}
+                className={`w-full text-left px-4 py-2 text-xs font-bold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-50'}`}
+              >
+                Add Google Search Console Site
+              </button>
+              <button
+                onClick={() => { setCreateDropdownOpen(false); navigate("/bulk-audit"); }}
+                className={`w-full text-left px-4 py-2 text-xs font-bold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-50'}`}
+              >
+                Quick Manual Audit Page
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Search project box */}
+        <div className="relative">
+          <Search className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors duration-300 ${darkMode ? 'text-slate-400' : 'text-slate-455'}`} size={14} />
+          <input
+            id="project-search-input"
+            type="text"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Search projects..."
+            className={`w-full pl-9 pr-8 py-2 border rounded-xl text-xs font-medium focus:outline-none focus:border-emerald-500/50 transition-colors duration-300 ${darkMode ? 'bg-slate-850 border-slate-700 text-slate-100 placeholder-slate-500' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'}`}
+          />
+          <span className={`absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] font-black border px-1 py-0.5 rounded leading-none transition-colors duration-300 ${darkMode ? 'text-slate-400 bg-slate-800/80 border-slate-700/50' : 'text-slate-505 bg-slate-200/50 border-slate-300/30'}`}>
+            ⌘K
+          </span>
+        </div>
+
+        {/* Menu Links */}
+        <nav className="flex flex-col gap-1 mt-2">
+          <button
+            onClick={() => navigate("/dashboard")}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-505 hover:text-slate-800 hover:bg-slate-50'}`}
+          >
+            <LayoutDashboard size={16} />
+            <span>Projects</span>
+          </button>
+
+          <button
+            onClick={() => toast('Portfolios are unlocked in Advanced premium tier!')}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-505 hover:text-slate-800 hover:bg-slate-50'}`}
+          >
+            <div className="flex items-center gap-3">
+              <Activity size={16} />
+              <span>Portfolios</span>
+            </div>
+            <Lock size={12} className="opacity-40" />
+          </button>
+
+          <button
+            onClick={() => navigate("/audit-history")}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-505 hover:text-slate-800 hover:bg-slate-50'}`}
+          >
+            <FileText size={16} />
+            <span>Report History</span>
+          </button>
+
+          <button
+            onClick={() => toast('Keyword Rank Tracker is unlocking soon!')}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-505 hover:text-slate-800 hover:bg-slate-50'}`}
+          >
+            <div className="flex items-center gap-3">
+              <History size={16} />
+              <span>Keyword Lists</span>
+            </div>
+            <Lock size={12} className="opacity-40" />
+          </button>
+
+          <button
+            onClick={() => toast('Feature Starred Projects coming soon!')}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-550 hover:text-slate-800 hover:bg-slate-50'}`}
+          >
+            <Star size={16} />
+            <span>Starred</span>
+          </button>
+
+          {(user?.role === 'admin' || user?.role === 'super_admin') && (
+            <button
+              onClick={() => navigate("/admin")}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-505 hover:text-slate-800 hover:bg-slate-50'}`}
+            >
+              <ShieldCheck size={16} className="text-blue-500 shrink-0" />
+              <span>Admin Panel</span>
+            </button>
+          )}
+
+          {user?.role === 'super_admin' && (
+            <button
+              onClick={() => navigate("/admin/setup")}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-extrabold transition-all duration-300 border-none ${darkMode ? 'bg-emerald-950/40 text-emerald-400' : 'bg-emerald-50 text-emerald-700 border border-emerald-500/20 shadow-sm'}`}
+            >
+              <Settings size={16} className="text-indigo-500 shrink-0" />
+              <span>System Setup</span>
+            </button>
+          )}
+
+          <div className={`my-1.5 border-t transition-colors duration-300 ${darkMode ? 'border-slate-800' : 'border-slate-100'}`}></div>
+
+          <button
+            onClick={() => toggleTheme()}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-505 hover:text-slate-800 hover:bg-slate-50'}`}
+          >
+            <div className="flex items-center gap-3">
+              {darkMode ? <Sun size={16} className="text-amber-400 shrink-0" /> : <Moon size={16} className="text-indigo-500 shrink-0" />}
+              <span>{darkMode ? "Light Mode" : "Dark Mode"}</span>
+            </div>
+            <div className={`w-8 h-4 rounded-full relative transition-colors duration-300 ${darkMode ? "bg-amber-400/20" : "bg-slate-200"}`}>
+              <div className={`absolute top-0.5 w-3 h-3 rounded-full transition-all duration-300 ${darkMode ? "right-0.5 bg-amber-400" : "left-0.5 bg-slate-400"}`}></div>
+            </div>
+          </button>
+        </nav>
+
+        {/* Folders list */}
+        <div className={`mt-4 border-t pt-4 transition-colors duration-300 ${darkMode ? 'border-slate-800' : 'border-slate-100'}`}>
+          <div className={`flex items-center justify-between px-2 mb-2 text-[10px] font-black uppercase tracking-wider transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+            <span>Folders</span>
+            <button
+              onClick={() => toast('Add custom project folder is a Premium feature')}
+              className={`p-0.5 rounded transition-all duration-300 ${darkMode ? 'hover:bg-slate-800 text-slate-400 hover:text-slate-300' : 'hover:bg-slate-100 text-slate-455 hover:text-slate-600'}`}
+            >
+              <Plus size={12} />
+            </button>
+          </div>
+          <p className={`px-2 text-xs font-medium italic transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-slate-455'}`}>No folders</p>
+        </div>
+      </div>
+
+      {/* Premium promotional block */}
+      <div className={`p-4 border-t transition-colors duration-300 ${darkMode ? 'border-slate-800' : 'border-slate-100'}`}>
+        <div className={`p-4 rounded-2xl border flex flex-col gap-3 transition-colors duration-300 ${darkMode ? 'bg-emerald-950/20 border-emerald-900/30' : 'bg-emerald-500/10 border-emerald-500/20 shadow-emerald-500/5'}`}>
+          <div className={`flex items-center gap-2 transition-colors duration-300 ${darkMode ? 'text-emerald-400' : 'text-emerald-800'}`}>
+            <Lock size={14} className={`transition-colors duration-300 ${darkMode ? 'fill-emerald-400/20 text-emerald-400' : 'fill-emerald-600/20 text-emerald-700'}`} />
+            <span className="text-[11px] font-black uppercase tracking-wider">Unlock Advanced</span>
+          </div>
+          <p className={`text-[10px] font-semibold leading-relaxed transition-colors duration-300 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+            Get deeper insights, historical data, and AI-powered recommendations.
+          </p>
+          <button
+            onClick={() => toast.success('Premium checkout is launching soon!')}
+            className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-md shadow-emerald-600/10 transition-all active:scale-[0.98]"
+          >
+            Upgrade Now
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 
   // ── State ──
   const [activeTab, setActiveTab] = useState('configs');
@@ -250,17 +430,60 @@ const AdminConfig = () => {
     : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:ring-indigo-500/20 shadow-sm';
 
   return (
-    <div className={`min-h-screen pt-24 pb-16 transition-colors duration-300 ${dk ? 'bg-[#000000] text-white' : 'bg-slate-50 text-slate-900'}`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className={`w-full min-h-[calc(100vh-4rem)] flex flex-col md:flex-row font-sans transition-colors duration-300 ${darkMode ? 'bg-slate-950 text-slate-50 dark' : 'bg-slate-50 text-slate-900'}`}>
+
+      {/* ── DESKTOP SIDEBAR ── */}
+      <aside className={`hidden md:flex flex-col w-60 shrink-0 border-r justify-between transition-colors duration-300 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}>
+        <SidebarContent />
+      </aside>
+
+      {/* ── MOBILE SIDEBAR DRAWER ── */}
+      <aside className={`
+        fixed inset-y-0 left-0 z-50 w-64 border-r flex flex-col justify-between pt-1 transform transition-transform duration-300 ease-in-out md:hidden
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        transition-colors duration-300 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}
+      `}>
+        <div className={`flex justify-between items-center p-4 border-b transition-colors duration-300 ${darkMode ? 'border-slate-800' : 'border-slate-100'}`}>
+          <span className="text-xs font-black uppercase tracking-widest text-slate-500">Menu Options</span>
+          <button onClick={() => setSidebarOpen(false)} className={`p-1 rounded-lg transition-colors ${darkMode ? 'hover:bg-slate-800 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>
+            <X size={16} />
+          </button>
+        </div>
+        <div className="flex-grow overflow-y-auto">
+          <SidebarContent />
+        </div>
+      </aside>
+
+      {/* ── MOBILE SIDEBAR OVERLAY ── */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* ── MAIN CONTENT AREA ── */}
+      <main className="flex-grow flex flex-col min-w-0 p-6 md:p-8 space-y-6 overflow-y-auto">
+        <div className="max-w-7xl mx-auto w-full">
 
         {/* ── Header ── */}
         <header className="flex flex-col lg:flex-row items-start lg:items-center gap-6 mb-10">
-          <div className="flex items-center gap-4 flex-1">
+          <div className="flex items-center gap-4 flex-1 w-full">
             <div className={`p-4 rounded-2xl border ${dk ? 'bg-indigo-500/10 border-indigo-500/20' : 'bg-indigo-50 border-indigo-100'}`}>
               <ShieldCheck size={28} className="text-indigo-500" />
             </div>
-            <div>
-              <h1 className="text-3xl font-black tracking-tight">Super Admin Dashboard</h1>
+            <div className="flex-grow">
+              <div className="flex items-center justify-between lg:justify-start w-full gap-4">
+                <h1 className="text-3xl font-black tracking-tight">Super Admin Dashboard</h1>
+                {/* Mobile Sidebar Toggle Button */}
+                <button
+                  onClick={() => setSidebarOpen(true)}
+                  className={`md:hidden flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-xs font-bold transition-all duration-300 ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                >
+                  <Menu size={14} />
+                  <span>Menu</span>
+                </button>
+              </div>
               <p className={`text-sm mt-1 ${dk ? 'text-white/30' : 'text-slate-400'}`}>
                 AES-256 encrypted • Hot reload • Version controlled
               </p>
@@ -294,17 +517,11 @@ const AdminConfig = () => {
         </header>
 
         {/* ── Stats Row ── */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
           <StatCard label="Total Configs" value={configs.length} icon={Database} color="#6366f1" dk={dk} />
           <StatCard label="Sensitive" value={sensitiveCount} icon={Lock} color="#ef4444" dk={dk} />
           <StatCard label="Categories" value={categoryGroups.length} icon={Filter} color="#f59e0b" dk={dk} />
-          <StatCard
-            label="Cache Status"
-            value={stats.initialized ? 'Active' : 'Degraded'}
-            icon={stats.initialized ? Zap : AlertTriangle}
-            color={stats.initialized ? '#22c55e' : '#ef4444'}
-            dk={dk}
-          />
+  
         </div>
 
         {/* ── Tab Navigation ── */}
@@ -575,7 +792,8 @@ const AdminConfig = () => {
           )}
         </AnimatePresence>
 
-      </div>
+        </div>
+      </main>
     </div>
   );
 };

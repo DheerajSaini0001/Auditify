@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext.jsx';
 import { useData } from '../context/DataContext.jsx';
@@ -80,6 +80,7 @@ const DashboardPage = () => {
   const { theme, toggleTheme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
   const navigate = useNavigate();
+  const location = useLocation();
   const { fetchData: runAudit } = useData();
 
   const [websites, setWebsites] = useState([]);
@@ -184,6 +185,54 @@ const DashboardPage = () => {
       handleSync();
     }
   }, [apiFetch]);
+
+  // Auto-fill and auto-run audit from query parameters (e.g. from Audit History page)
+  const isAutoAuditingRef = useRef(false);
+  const processedAutoUrlRef = useRef(null);
+  
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const queryUrl = params.get("url");
+    const queryDevice = params.get("device") || "Desktop";
+    const queryReport = params.get("report") || "All";
+
+    if (queryUrl && queryUrl !== processedAutoUrlRef.current && !isAutoAuditingRef.current) {
+      processedAutoUrlRef.current = queryUrl;
+      
+      const triggerAutoAudit = async () => {
+        let urlToAudit = queryUrl.trim();
+        if (!/^https?:\/\//i.test(urlToAudit)) {
+          urlToAudit = `https://${urlToAudit}`;
+        }
+        
+        isAutoAuditingRef.current = true;
+        toast.loading(`Starting audit for ${urlToAudit}...`, { id: 'auto-audit-toast' });
+        
+        try {
+          const result = await runAudit(urlToAudit, queryDevice, queryReport, null);
+          toast.dismiss('auto-audit-toast');
+          
+          if (result?.success === false) {
+            toast.error(result.error || 'Audit failed. Please try again.');
+          } else if (result?.id) {
+            toast.success("Audit complete! Opening report...");
+            navigate(`/report/${result.id}`);
+          }
+        } catch (err) {
+          console.error(err);
+          toast.dismiss('auto-audit-toast');
+          toast.error("An unexpected error occurred during the audit.");
+        } finally {
+          isAutoAuditingRef.current = false;
+        }
+      };
+
+      triggerAutoAudit();
+      
+      // Clean query params from URL
+      navigate(location.pathname, { replace: true });
+    }
+  }, [location.search, location.pathname, navigate, runAudit]);
 
   // Handle Search Hotkey (CMD+K or CTRL+K)
   useEffect(() => {

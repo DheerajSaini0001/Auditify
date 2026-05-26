@@ -342,17 +342,90 @@ const DashboardPage = () => {
     subtext: `${w.url}/*`,
     verified: w.verified,
     permissionLevel: w.permissionLevel || "owner",
-    isDemo: false
+    isDemo: false,
+    addedAt: w.addedAt || w.verifiedAt
   }));
 
-  const displayProjects = isApiSearching ? apiSearchResults.map((w) => ({
+  // State for sorting and filtering
+  const [timeRange, setTimeRange] = useState("Last 30 days");
+  const [sortBy, setSortBy] = useState("Newest first");
+
+  // Robust helper to get a timestamp from a project record
+  const getTimestamp = (proj) => {
+    if (proj.addedAt) return new Date(proj.addedAt).getTime();
+    if (proj._id) {
+      try {
+        const timestamp = parseInt(proj._id.substring(0, 8), 16) * 1000;
+        if (!isNaN(timestamp)) return timestamp;
+      } catch (e) {}
+    }
+    return 0;
+  };
+
+  // Helper to calculate project average score across all audited dimensions
+  const getAverageScore = (proj) => {
+    const scores = getProjectScores(proj.url);
+    if (!scores.isAudited) return 0;
+    const metrics = [
+      scores.performance,
+      scores.seo,
+      scores.accessibility,
+      scores.security,
+      scores.onPage,
+      scores.conversion,
+      scores.aiReadiness
+    ];
+    const validMetrics = metrics.filter(m => m !== undefined && m !== null);
+    if (validMetrics.length === 0) return 0;
+    const total = validMetrics.reduce((sum, val) => sum + val, 0);
+    return Math.round(total / validMetrics.length);
+  };
+
+  // Filter projects by GSC sync/verification timestamps
+  const filterByTimeRange = (projects) => {
+    const now = Date.now();
+    let limitMs = 0;
+    if (timeRange === "Last 7 days") {
+      limitMs = 7 * 24 * 60 * 60 * 1000;
+    } else if (timeRange === "Last 30 days") {
+      limitMs = 30 * 24 * 60 * 60 * 1000;
+    } else if (timeRange === "Last 90 days") {
+      limitMs = 90 * 24 * 60 * 60 * 1000;
+    } else {
+      return projects;
+    }
+    return projects.filter(proj => {
+      const ts = getTimestamp(proj);
+      return now - ts <= limitMs;
+    });
+  };
+
+  // Sort projects by selected option
+  const sortProjects = (projects) => {
+    const list = [...projects];
+    if (sortBy === "Newest first") {
+      return list.sort((a, b) => getTimestamp(b) - getTimestamp(a));
+    }
+    if (sortBy === "Alphabetical") {
+      return list.sort((a, b) => a.url.localeCompare(b.url));
+    }
+    if (sortBy === "By health score") {
+      return list.sort((a, b) => getAverageScore(b) - getAverageScore(a));
+    }
+    return list;
+  };
+
+  const rawProjects = isApiSearching ? apiSearchResults.map((w) => ({
     _id: w._id,
     url: w.url.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, ''),
     subtext: `${w.url}/*`,
     verified: w.verified,
     permissionLevel: w.permissionLevel || "owner",
-    isDemo: false
+    isDemo: false,
+    addedAt: w.addedAt || w.verifiedAt
   })) : allProjects;
+
+  const displayProjects = sortProjects(filterByTimeRange(rawProjects));
 
   // Sidebar content
   const SidebarContent = () => (
@@ -553,14 +626,20 @@ const DashboardPage = () => {
                 className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-xs font-bold transition-all duration-300 ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800 hover:text-white' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900'}`}
               >
                 <History size={14} />
-                <span>Last 30 days</span>
+                <span>{timeRange}</span>
                 <ChevronDown size={12} />
               </button>
               {timeDropdownOpen && (
                 <div className={`absolute right-0 mt-1 border rounded-lg shadow-xl z-50 py-1 w-40 animate-in fade-in slide-in-from-top-1 duration-150 transition-colors duration-300 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
-                  <button onClick={() => setTimeDropdownOpen(false)} className={`w-full text-left px-4 py-1.5 text-xs font-bold transition-colors duration-250 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-50 text-slate-700'}`}>Last 7 days</button>
-                  <button onClick={() => setTimeDropdownOpen(false)} className={`w-full text-left px-4 py-1.5 text-xs font-bold transition-colors duration-250 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-50 text-slate-700'}`}>Last 30 days</button>
-                  <button onClick={() => setTimeDropdownOpen(false)} className={`w-full text-left px-4 py-1.5 text-xs font-bold transition-colors duration-250 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-50 text-slate-700'}`}>Last 90 days</button>
+                  {["Last 7 days", "Last 30 days", "Last 90 days"].map(range => (
+                    <button
+                      key={range}
+                      onClick={() => { setTimeRange(range); setTimeDropdownOpen(false); }}
+                      className={`w-full text-left px-4 py-1.5 text-xs font-bold transition-colors duration-250 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-50 text-slate-700'} ${timeRange === range ? (darkMode ? 'bg-slate-700 text-white' : 'bg-slate-100 text-slate-900') : ''}`}
+                    >
+                      {range}
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
@@ -572,14 +651,20 @@ const DashboardPage = () => {
                 className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-xs font-bold transition-all duration-300 ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800 hover:text-white' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900'}`}
               >
                 <Settings size={14} />
-                <span>Newest first</span>
+                <span>{sortBy}</span>
                 <ChevronDown size={12} />
               </button>
               {sortDropdownOpen && (
                 <div className={`absolute right-0 mt-1 border rounded-lg shadow-xl z-50 py-1 w-40 animate-in fade-in slide-in-from-top-1 duration-150 transition-colors duration-300 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
-                  <button onClick={() => setSortDropdownOpen(false)} className={`w-full text-left px-4 py-1.5 text-xs font-bold transition-colors duration-250 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-50 text-slate-700'}`}>Newest first</button>
-                  <button onClick={() => setSortDropdownOpen(false)} className={`w-full text-left px-4 py-1.5 text-xs font-bold transition-colors duration-250 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-50 text-slate-700'}`}>Alphabetical</button>
-                  <button onClick={() => setSortDropdownOpen(false)} className={`w-full text-left px-4 py-1.5 text-xs font-bold transition-colors duration-250 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-50 text-slate-700'}`}>By health score</button>
+                  {["Newest first", "Alphabetical", "By health score"].map(option => (
+                    <button
+                      key={option}
+                      onClick={() => { setSortBy(option); setSortDropdownOpen(false); }}
+                      className={`w-full text-left px-4 py-1.5 text-xs font-bold transition-colors duration-250 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-50 text-slate-700'} ${sortBy === option ? (darkMode ? 'bg-slate-700 text-white' : 'bg-slate-100 text-slate-900') : ''}`}
+                    >
+                      {option}
+                    </button>
+                  ))}
                 </div>
               )}
             </div>

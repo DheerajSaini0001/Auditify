@@ -726,40 +726,79 @@ const AuditHistoryPage = () => {
               </p>
               
               <div className="flex items-center gap-2">
-                <button 
+                {/* Prev button */}
+                <button
                   onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                   disabled={currentPage === 1}
                   className={`p-2 rounded-xl transition-all ${
-                    currentPage === 1 
-                      ? "opacity-30 cursor-not-allowed" 
+                    currentPage === 1
+                      ? "opacity-30 cursor-not-allowed"
                       : darkMode ? "hover:bg-slate-800 text-white" : "hover:bg-white text-slate-600 shadow-sm border border-slate-200"
                   }`}
                 >
                   <ChevronLeft size={20} />
                 </button>
-                
+
+                {/* Smart page buttons with ellipsis */}
                 <div className="flex items-center gap-1">
-                  {[...Array(totalPages)].map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setCurrentPage(i + 1)}
-                      className={`w-10 h-10 rounded-xl text-sm font-bold transition-all ${
-                        currentPage === i + 1
-                          ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
-                          : darkMode ? "hover:bg-slate-800 text-slate-400" : "hover:bg-white text-slate-600 border border-transparent hover:border-slate-200"
-                      }`}
-                    >
-                      {i + 1}
-                    </button>
-                  ))}
+                  {(() => {
+                    const delta = 2; // pages shown each side of current
+                    const pages = [];
+                    const rangeStart = Math.max(2, currentPage - delta);
+                    const rangeEnd   = Math.min(totalPages - 1, currentPage + delta);
+
+                    // Always show page 1
+                    pages.push(1);
+
+                    // Left ellipsis
+                    if (rangeStart > 2) pages.push('left-ellipsis');
+
+                    // Middle window
+                    for (let p = rangeStart; p <= rangeEnd; p++) pages.push(p);
+
+                    // Right ellipsis
+                    if (rangeEnd < totalPages - 1) pages.push('right-ellipsis');
+
+                    // Always show last page
+                    if (totalPages > 1) pages.push(totalPages);
+
+                    return pages.map((page, idx) => {
+                      if (page === 'left-ellipsis' || page === 'right-ellipsis') {
+                        return (
+                          <span
+                            key={page}
+                            className={`w-10 h-10 flex items-center justify-center text-sm font-bold select-none ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}
+                          >
+                            …
+                          </span>
+                        );
+                      }
+                      return (
+                        <button
+                          key={page}
+                          onClick={() => setCurrentPage(page)}
+                          className={`w-10 h-10 rounded-xl text-sm font-bold transition-all ${
+                            currentPage === page
+                              ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
+                              : darkMode
+                                ? "hover:bg-slate-800 text-slate-400"
+                                : "hover:bg-white text-slate-600 border border-transparent hover:border-slate-200"
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      );
+                    });
+                  })()}
                 </div>
 
-                <button 
+                {/* Next button */}
+                <button
                   onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                   disabled={currentPage === totalPages}
                   className={`p-2 rounded-xl transition-all ${
-                    currentPage === totalPages 
-                      ? "opacity-30 cursor-not-allowed" 
+                    currentPage === totalPages
+                      ? "opacity-30 cursor-not-allowed"
                       : darkMode ? "hover:bg-slate-800 text-white" : "hover:bg-white text-slate-600 shadow-sm border border-slate-200"
                   }`}
                 >

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext.jsx';
@@ -90,6 +90,12 @@ const DashboardPage = () => {
   const [searchInput, setSearchInput] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("Overview");
+
+  // Backend search with debouncing states
+  const [apiSearchInput, setApiSearchInput] = useState("");
+  const [apiSearchResults, setApiSearchResults] = useState([]);
+  const [apiSearchLoading, setApiSearchLoading] = useState(false);
+  const [isApiSearching, setIsApiSearching] = useState(false);
 
   // Dropdown States
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
@@ -194,6 +200,54 @@ const DashboardPage = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  // Cache ref to prevent duplicate server queries
+  const searchCache = useRef({});
+
+  // Debounced API search effect
+  useEffect(() => {
+    if (apiSearchInput.trim() === "") {
+      setApiSearchResults([]);
+      setIsApiSearching(false);
+      setApiSearchLoading(false);
+      return;
+    }
+
+    setIsApiSearching(true);
+
+    const query = apiSearchInput.trim().toLowerCase();
+
+    // If query matches cache, return immediately to eliminate latency and server fetches
+    if (searchCache.current[query]) {
+      setApiSearchResults(searchCache.current[query]);
+      setApiSearchLoading(false);
+      return;
+    }
+
+    setApiSearchLoading(true);
+
+    const handler = setTimeout(async () => {
+      try {
+        const res = await apiFetch(`/api/websites?q=${encodeURIComponent(query)}`);
+        if (res.ok && res.data) {
+          const results = res.data.websites || [];
+          searchCache.current[query] = results;
+          setApiSearchResults(results);
+        } else {
+          setApiSearchResults([]);
+        }
+      } catch (err) {
+        console.error("API search failed:", err);
+        setApiSearchResults([]);
+      } finally {
+        setApiSearchLoading(false);
+      }
+    }, 500);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [apiSearchInput, apiFetch]);
+
   const handleSync = async () => {
     setSyncing(true);
     const { ok, data } = await apiFetch('/api/websites/sync', { method: 'POST' });
@@ -290,6 +344,15 @@ const DashboardPage = () => {
     permissionLevel: w.permissionLevel || "owner",
     isDemo: false
   }));
+
+  const displayProjects = isApiSearching ? apiSearchResults.map((w) => ({
+    _id: w._id,
+    url: w.url.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, ''),
+    subtext: `${w.url}/*`,
+    verified: w.verified,
+    permissionLevel: w.permissionLevel || "owner",
+    isDemo: false
+  })) : allProjects;
 
   // Sidebar content
   const SidebarContent = () => (
@@ -563,6 +626,44 @@ const DashboardPage = () => {
           </div>
         )}
 
+        {/* ── DEBOUNCED API SEARCH BAR ── */}
+        <div className={`p-4 border rounded-2xl flex flex-col md:flex-row items-center gap-4 transition-all duration-300 shadow-sm ${darkMode ? 'bg-slate-900 border-slate-800/80' : 'bg-white border-slate-200'}`}>
+          <div className="relative flex-grow w-full">
+            <Search className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-300 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`} size={16} />
+            <input
+              type="text"
+              value={apiSearchInput}
+              onChange={(e) => setApiSearchInput(e.target.value)}
+              placeholder="Search website projects..."
+              className={`w-full pl-11 pr-12 py-2.5 border rounded-xl text-sm font-medium focus:outline-none focus:border-emerald-500/50 transition-all duration-300 shadow-sm ${
+                darkMode 
+                  ? 'bg-slate-850 border-slate-700 text-slate-100 placeholder-slate-500 focus:shadow-emerald-950/20' 
+                  : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400 focus:shadow-emerald-500/5'
+              }`}
+            />
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+              {apiSearchLoading ? (
+                <RefreshCw size={14} className="animate-spin text-emerald-500" />
+              ) : isApiSearching ? (
+                <button 
+                  onClick={() => {
+                    setApiSearchInput("");
+                    setApiSearchResults([]);
+                    setIsApiSearching(false);
+                  }}
+                  className={`p-0.5 rounded hover:bg-slate-200 transition-colors ${darkMode ? 'hover:bg-slate-800 text-slate-400 hover:text-white' : 'hover:bg-slate-200 text-slate-500 hover:text-slate-800'}`}
+                >
+                  <X size={14} />
+                </button>
+              ) : (
+                <span className={`text-[10px] font-black border px-1.5 py-0.5 rounded leading-none transition-colors duration-300 ${darkMode ? 'text-slate-500 bg-slate-800/80 border-slate-700/50' : 'text-slate-450 bg-slate-200/50 border-slate-350/30'}`}>
+                  Debounced
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* ── PROJECTS LIST ── */}
         <div className="space-y-6">
           {loading ? (
@@ -570,22 +671,33 @@ const DashboardPage = () => {
               <RefreshCw size={32} className="animate-spin text-emerald-500" />
               <p className={`text-xs font-bold uppercase tracking-wider animate-pulse transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Syncing latest database records...</p>
             </div>
-          ) : allProjects.length === 0 ? (
+          ) : (isApiSearching && apiSearchLoading) ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-3">
+              <RefreshCw size={32} className="animate-spin text-emerald-500" />
+              <p className={`text-xs font-bold uppercase tracking-wider animate-pulse transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Searching projects on server...</p>
+            </div>
+          ) : displayProjects.length === 0 ? (
             <div className={`rounded-2xl p-12 text-center flex flex-col items-center justify-center gap-4 animate-in fade-in duration-300 transition-all duration-300 border ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
               <Globe size={40} className={`transition-colors duration-300 ${darkMode ? 'text-slate-600' : 'text-slate-300'}`} />
               <div>
-                <h3 className={`font-bold text-sm transition-colors duration-300 ${darkMode ? 'text-white' : 'text-slate-800'}`}>No properties added yet</h3>
-                <p className={`text-xs mt-1 transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Connect your websites with Google Search Console or start a manual audit.</p>
+                <h3 className={`font-bold text-sm transition-colors duration-300 ${darkMode ? 'text-white' : 'text-slate-800'}`}>
+                  {isApiSearching ? 'No matching projects found' : 'No properties added yet'}
+                </h3>
+                <p className={`text-xs mt-1 transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                  {isApiSearching ? `No added properties match your search for "${apiSearchInput}".` : 'Connect your websites with Google Search Console or start a manual audit.'}
+                </p>
               </div>
-              <button
-                onClick={() => navigate("/dashboard/add-website")}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs transition-all duration-300 active:scale-[0.98]"
-              >
-                Add Website
-              </button>
+              {!isApiSearching && (
+                <button
+                  onClick={() => navigate("/dashboard/add-website")}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs transition-all duration-300 active:scale-[0.98]"
+                >
+                  Add Website
+                </button>
+              )}
             </div>
           ) : (
-            allProjects.map((proj, idx) => {
+            displayProjects.map((proj, idx) => {
               const scores = getProjectScores(proj.url, idx);
 
               return (
@@ -879,6 +991,8 @@ const DashboardPage = () => {
             })
           )}
         </div>
+
+        {/* Debounced search bar deleted from bottom to keep layout perfectly neat */}
 
       </main>
 

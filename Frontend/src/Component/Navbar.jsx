@@ -37,7 +37,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
 
   const handleGoHome = () => {
     clearData();
-    navigate("/", { replace: true });
+    navigate("/dashboard", { replace: true });
   };
 
   // Styles

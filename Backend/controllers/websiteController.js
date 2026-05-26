@@ -136,7 +136,18 @@ export const verifyWebsite = async (req, res) => {
    3. Get Websites
 =========================== */
 export const getWebsites = async (req, res) => {
-  res.json({ success: true, websites: req.user.websites });
+  try {
+    const { q } = req.query;
+    let websites = req.user.websites;
+    if (q) {
+      const query = q.toLowerCase();
+      websites = websites.filter(site => site.url.toLowerCase().includes(query));
+    }
+    res.json({ success: true, websites });
+  } catch (err) {
+    console.error('[Get Websites]', err);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
 };
 
 

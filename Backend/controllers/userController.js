@@ -11,8 +11,10 @@ export const getHistory = async (req, res) => {
       status: { $in: ['success', 'pending', 'failed'] }
     };
 
-    if (search) {
-      query.url = { $regex: search, $options: 'i' };
+    if (search && typeof search === 'string') {
+      // Escape special regex characters safely (excluding slashes to prevent PCRE compilation errors)
+      const escapedSearch = search.replace(/[-\\^$*+?.()|[\]{}]/g, '\\$&');
+      query.url = { $regex: escapedSearch, $options: 'i' };
     }
 
     // Use AuditLog for granular audit details

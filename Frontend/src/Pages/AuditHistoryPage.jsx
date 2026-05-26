@@ -114,6 +114,61 @@ const AuditHistoryPage = () => {
     return diffInHours >= 3;
   };
 
+  const getAuditTypeBadge = (type) => {
+    const reportType = type || 'All';
+    switch (reportType) {
+      case 'All':
+        return {
+          label: 'Full Audit',
+          style: 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20 dark:text-indigo-400 dark:bg-indigo-500/20 dark:border-indigo-500/30'
+        };
+      case 'Technical Performance':
+        return {
+          label: 'Tech Performance',
+          style: 'bg-blue-500/10 text-blue-500 border-blue-500/20 dark:text-blue-400 dark:bg-blue-500/20 dark:border-blue-500/30'
+        };
+      case 'On Page SEO':
+        return {
+          label: 'On-Page SEO',
+          style: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 dark:text-emerald-400 dark:bg-emerald-500/20 dark:border-emerald-500/30'
+        };
+      case 'Accessibility':
+        return {
+          label: 'Accessibility',
+          style: 'bg-purple-500/10 text-purple-500 border-purple-500/20 dark:text-purple-400 dark:bg-purple-500/20 dark:border-purple-500/30'
+        };
+      case 'Security/Compliance':
+      case 'Security':
+        return {
+          label: 'Security & Comp.',
+          style: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 dark:text-emerald-400 dark:bg-emerald-500/20 dark:border-emerald-500/30'
+        };
+      case 'UX & Content Structure':
+      case 'UX':
+        return {
+          label: 'UX & Content',
+          style: 'bg-orange-500/10 text-orange-500 border-orange-500/20 dark:text-orange-400 dark:bg-orange-500/20 dark:border-orange-500/30'
+        };
+      case 'Conversion & Lead Flow':
+      case 'Conversion':
+        return {
+          label: 'Conversion & Lead',
+          style: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20 dark:text-yellow-400 dark:bg-yellow-500/20 dark:border-yellow-500/30'
+        };
+      case 'AIO (AI-Optimization) Readiness':
+      case 'AIO':
+        return {
+          label: 'AIO Readiness',
+          style: 'bg-teal-500/10 text-teal-500 border-teal-500/20 dark:text-teal-400 dark:bg-teal-500/20 dark:border-teal-500/30'
+        };
+      default:
+        return {
+          label: reportType,
+          style: 'bg-slate-500/10 text-slate-500 border-slate-500/20 dark:text-slate-400 dark:bg-slate-500/20 dark:border-slate-500/30'
+        };
+    }
+  };
+
   return (
     <div className={`min-h-screen pt-28 pb-16 px-4 sm:px-6 lg:px-8 transition-colors duration-300 ${darkMode ? "bg-[#0f172a] text-slate-200" : "bg-slate-50 text-slate-900"}`}>
       <div className="max-w-7xl mx-auto">
@@ -183,24 +238,24 @@ const AuditHistoryPage = () => {
                 <tr className={`border-b transition-colors ${darkMode ? "border-slate-800 bg-slate-900/80" : "border-slate-100 bg-slate-50/50"}`}>
                   <th className="px-8 py-6 text-xs font-bold uppercase tracking-widest text-slate-500">Date</th>
                   <th className="px-8 py-6 text-xs font-bold uppercase tracking-widest text-slate-500">Website URL & Device</th>
+                  <th className="px-8 py-6 text-xs font-bold uppercase tracking-widest text-slate-500">Audit Type</th>
                   <th className="px-8 py-6 text-xs font-bold uppercase tracking-widest text-slate-500">Performance Score</th>
                   <th className="px-8 py-6 text-xs font-bold uppercase tracking-widest text-slate-500">Status</th>
                   <th className="px-8 py-6 text-xs font-bold uppercase tracking-widest text-slate-500 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className={`divide-y transition-colors ${darkMode ? "divide-slate-800" : "divide-slate-100"}`}>
-                <AnimatePresence mode='wait'>
                   {loading ? (
                     [...Array(5)].map((_, i) => (
                       <tr key={i} className="animate-pulse">
-                        <td colSpan="5" className="px-8 py-6">
+                        <td colSpan="6" className="px-8 py-6">
                           <div className={`h-12 rounded-2xl ${darkMode ? "bg-slate-800" : "bg-slate-100"}`} />
                         </td>
                       </tr>
                     ))
                   ) : audits.length === 0 ? (
                     <tr>
-                      <td colSpan="5" className="px-8 py-24 text-center">
+                      <td colSpan="6" className="px-8 py-24 text-center">
                         <div className="flex flex-col items-center gap-4">
                           <div className={`w-16 h-16 rounded-full flex items-center justify-center ${darkMode ? "bg-slate-800 text-slate-600" : "bg-slate-100 text-slate-400"}`}>
                             <Globe size={32} />
@@ -241,6 +296,16 @@ const AuditHistoryPage = () => {
                               {audit.device || 'Desktop'} Profile
                             </span>
                           </div>
+                        </td>
+                        <td className="px-8 py-6">
+                          {(() => {
+                            const badge = getAuditTypeBadge(audit.reportType);
+                            return (
+                              <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider border shadow-sm ${badge.style}`}>
+                                {badge.label}
+                              </span>
+                            );
+                          })()}
                         </td>
                         <td className="px-8 py-6">
                           {audit.status === 'success' ? (
@@ -371,7 +436,6 @@ const AuditHistoryPage = () => {
                       </motion.tr>
                     ))
                   )}
-                </AnimatePresence>
               </tbody>
             </table>
           </div>

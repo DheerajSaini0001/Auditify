@@ -117,17 +117,6 @@ export const DataProvider = ({ children }) => {
       setData(auditData);
 
       if (auditData.status !== "completed") {
-        // Trigger parallel, non-blocking screenshot capture
-        const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
-        fetch(`${API_URL}/api/screenshot`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token && { "Authorization": `Bearer ${token}` })
-          },
-          body: JSON.stringify({ url: auditData.url, auditId: auditData._id })
-        }).catch(err => console.error("Error triggering screenshot in parallel:", err));
-
         startLiveFetch(auditData._id);
       }
 

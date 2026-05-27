@@ -84,6 +84,59 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
 
   const isAuditComplete = completedSections === sectionMappings.length;
 
+  const [countdown, setCountdown] = React.useState(20);
+
+  React.useEffect(() => {
+    if (data?.status === "waiting_for_render") {
+      const timer = setInterval(() => {
+        setCountdown((prev) => (prev > 0 ? prev - 1 : 0));
+      }, 1000);
+      return () => clearInterval(timer);
+    } else {
+      setCountdown(20);
+    }
+  }, [data?.status]);
+
+  const stageInfo = useMemo(() => {
+    let progress = 0;
+    let message = "Initializing...";
+    
+    switch (data?.status) {
+      case "launching":
+        progress = 15;
+        message = "🚀 Launching browser...";
+        break;
+      case "navigating":
+        progress = 35;
+        message = "⏳ Navigating to target URL...";
+        break;
+      case "waiting_for_render":
+        progress = 55;
+        message = "⏳ Waiting for website to fully load... (~20s)";
+        break;
+      case "screenshot_ready":
+        progress = 75;
+        message = "✅ Website loaded successfully — crawling this page";
+        break;
+      case "extracting_data":
+        progress = 90;
+        message = "🧠 Extracting audit data...";
+        break;
+      case "completed":
+        progress = 100;
+        message = "✅ Audit completed successfully!";
+        break;
+      case "failed":
+        progress = 100;
+        message = data?.error || "❌ Audit failed";
+        break;
+      default:
+        progress = Math.round((completedSections / 7) * 100) || 10;
+        message = "⏳ Auditing in progress...";
+    }
+    return { progress, message };
+  }, [data?.status, data?.error, completedSections]);
+
   // Rotating Audit Steps (Timer-based for visual engagement)
   const [currentStepIndex, setCurrentStepIndex] = React.useState(0);
 
@@ -145,51 +198,93 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
             <div className="flex-1 p-8 lg:p-12 flex flex-col justify-center">
 
               {(loading || !isAuditComplete) ? (
-                /* Loading State: Rotating Content */
+                /* Loading State: Dynamic status & countdown */
                 <div className="flex flex-col justify-center h-full min-h-[300px] animate-in fade-in duration-500">
                   <div className="w-full max-w-lg mx-auto space-y-8">
 
                     {/* Progress Bar */}
                     <div className="w-full space-y-2">
-                      <div className="flex justify-between text-xs font-bold uppercase tracking-widest opacity-50">
-                        <span>Analyzing...</span>
-                        <span>{Math.round((completedSections / 7) * 100)}% Complete</span>
+                      <div className="flex justify-between text-xs font-bold uppercase tracking-widest opacity-70">
+                        <span className="text-emerald-500 font-extrabold">{stageInfo.message}</span>
+                        <span>{stageInfo.progress}%</span>
                       </div>
-                      <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                      <div className="h-2 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 transition-all duration-700 ease-out"
-                          style={{ width: `${(completedSections / 7) * 100}%` }}
+                          className="h-full bg-gradient-to-r from-emerald-500 via-teal-500 to-blue-500 transition-all duration-700 ease-out"
+                          style={{ width: `${stageInfo.progress}%` }}
                         ></div>
                       </div>
                     </div>
 
-                    {/* Audit Progress Card (Carousel) */}
-                    <div className="relative overflow-hidden rounded-2xl border bg-slate-50/50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700/50 p-8 text-center transition-all duration-500 flex flex-col items-center">
-
-                      {/* Animated Icon Ring */}
-                      <div className="mb-6 relative">
-                        <div className="absolute inset-0 bg-blue-500/20 rounded-full blur-xl animate-pulse"></div>
-                        <div className="relative p-5 bg-white dark:bg-slate-800 rounded-full shadow-lg border border-slate-100 dark:border-slate-700 transition-all duration-300 transform">
-                          {auditSteps[currentStepIndex]?.icon || <Loader2 className="w-8 h-8 animate-spin text-blue-500" />}
+                    {/* Custom Loading Card based on State */}
+                    {data?.status === "waiting_for_render" ? (
+                      /* Countdown Stage */
+                      <div className="relative overflow-hidden rounded-2xl border bg-slate-50/50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700/50 p-8 text-center transition-all duration-500 flex flex-col items-center">
+                        <div className="mb-6 relative">
+                          <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-xl animate-pulse"></div>
+                          <div className="relative w-20 h-20 bg-white dark:bg-slate-800 rounded-full shadow-lg border border-slate-100 dark:border-slate-700 flex items-center justify-center">
+                            <span className="text-3xl font-black text-emerald-500 animate-pulse">{countdown}s</span>
+                          </div>
+                        </div>
+                        <div className="space-y-3 max-w-md">
+                          <h3 className={`text-xl font-bold ${darkMode ? "text-white" : "text-slate-900"}`}>
+                            Dynamic Page Rendering
+                          </h3>
+                          <p className={`text-sm leading-relaxed ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
+                            Waiting for single-page applications, dynamic javascript elements, and client-rendered visual modules to fully materialize in headless browser.
+                          </p>
                         </div>
                       </div>
-
-                      <div key={currentStepIndex} className="animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-3 max-w-md">
-                        <h3 className={`text-xl font-bold ${darkMode ? "text-white" : "text-slate-900"}`}>
-                          {auditSteps[currentStepIndex]?.title}
-                        </h3>
-                        <p className={`text-sm leading-relaxed ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
-                          {auditSteps[currentStepIndex]?.text}
-                        </p>
+                    ) : (data?.status === "screenshot_ready" || data?.status === "extracting_data") ? (
+                      /* Screenshot Ready Banner / Verified Stage */
+                      <div className="relative overflow-hidden rounded-2xl border bg-slate-50/50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700/50 p-8 text-center transition-all duration-500 flex flex-col items-center">
+                        <div className="mb-6 relative">
+                          <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-xl animate-pulse"></div>
+                          <div className="relative w-20 h-20 bg-white dark:bg-slate-800 rounded-full shadow-lg border border-slate-100 dark:border-slate-700 flex items-center justify-center text-emerald-500 animate-pulse">
+                            <CheckCircle2 className="w-10 h-10" strokeWidth={2.5} />
+                          </div>
+                        </div>
+                        <div className="space-y-4 max-w-md">
+                          <h3 className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400">
+                            Visual Scan Verified
+                          </h3>
+                          <div className="p-3 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 rounded-xl font-semibold text-sm border border-emerald-500/20 shadow-sm animate-pulse">
+                            ✅ Website loaded successfully — crawling this page
+                          </div>
+                          <p className={`text-xs md:text-sm leading-relaxed ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
+                            The live rendering matches the expected viewport layout. Data parsing and optimization auditing are executing in background.
+                          </p>
+                        </div>
                       </div>
+                    ) : (
+                      /* Default Carousel Stage */
+                      <div className="relative overflow-hidden rounded-2xl border bg-slate-50/50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700/50 p-8 text-center transition-all duration-500 flex flex-col items-center">
+                        
+                        {/* Animated Icon Ring */}
+                        <div className="mb-6 relative">
+                          <div className="absolute inset-0 bg-blue-500/20 rounded-full blur-xl animate-pulse"></div>
+                          <div className="relative p-5 bg-white dark:bg-slate-800 rounded-full shadow-lg border border-slate-100 dark:border-slate-700 transition-all duration-300 transform">
+                            {auditSteps[currentStepIndex]?.icon || <Loader2 className="w-8 h-8 animate-spin text-blue-500" />}
+                          </div>
+                        </div>
 
-                      {/* Step Indicators */}
-                      <div className="flex justify-center gap-2 mt-8">
-                        {auditSteps.map((_, i) => (
-                          <div key={i} className={`h-1.5 rounded-full transition-all duration-500 ${i === currentStepIndex ? "w-8 bg-blue-500" : "w-1.5 bg-slate-300 dark:bg-slate-700"}`} />
-                        ))}
+                        <div key={currentStepIndex} className="animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-3 max-w-md">
+                          <h3 className={`text-xl font-bold ${darkMode ? "text-white" : "text-slate-900"}`}>
+                            {auditSteps[currentStepIndex]?.title}
+                          </h3>
+                          <p className={`text-sm leading-relaxed ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
+                            {auditSteps[currentStepIndex]?.text}
+                          </p>
+                        </div>
+
+                        {/* Step Indicators */}
+                        <div className="flex justify-center gap-2 mt-8">
+                          {auditSteps.map((_, i) => (
+                            <div key={i} className={`h-1.5 rounded-full transition-all duration-500 ${i === currentStepIndex ? "w-8 bg-blue-500" : "w-1.5 bg-slate-300 dark:bg-slate-700"}`} />
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                   </div>
                 </div>

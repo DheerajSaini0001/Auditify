@@ -16,6 +16,65 @@ import { performance } from "perf_hooks";
 
 const { url, device, report, auditId } = workerData;
 
+// [NEW] — Worker-level unhandled rejection safety net
+// Catches any fire-and-forget promise rejections from third-party metric
+// libraries (axe-core, AEO, etc.) that don't properly chain .catch()
+// Without this, a single unhandled rejection crashes the entire worker thread.
+process.on('unhandledRejection', (reason) => {
+  const msg = reason?.message || (typeof reason === 'string' ? reason : '');
+  const lmsg = msg.toLowerCase();
+  const isPageError = (
+    lmsg.includes('detached') ||
+    lmsg.includes('session closed') ||
+    lmsg.includes('target closed') ||
+    lmsg.includes('context was destroyed') ||
+    lmsg.includes('frame is not ready') ||
+    lmsg.includes('page/frame is not ready') ||
+    !reason // undefined rejection
+  );
+  if (isPageError) {
+    // Expected during page teardown — suppress silently
+  } else {
+    console.warn(`⚠️ [Worker] Unhandled promise rejection (non-fatal):`, reason);
+  }
+});
+
+
+// [NEW] — Centralized detached frame error detector (mirrors puppeteer_cheerio.js)
+function isDetachedFrameError(error) {
+  if (!error) return true; // undefined/null rejection — treat as page teardown
+  if (!error.message) return false;
+  const msg = error.message.toLowerCase();
+  return (
+    msg.includes('detached frame') ||
+    msg.includes('attempted to use detached') ||
+    msg.includes('session closed') ||
+    msg.includes('target closed') ||
+    msg.includes('execution context was destroyed') ||
+    msg.includes('context was destroyed') ||
+    msg.includes('cannot find context with specified id') ||
+    msg.includes('frame was detached') ||
+    msg.includes('page/frame is not ready') ||  // axe-core specific
+    msg.includes('frame is not ready')
+  );
+}
+
+// [NEW] — Safe metric wrapper
+// Runs a metric service function. If a detached frame error occurs mid-metric,
+// logs a warning and returns null instead of crashing the entire audit.
+async function safeMetric(name, fn) {
+  try {
+    return await fn();
+  } catch (err) {
+    if (isDetachedFrameError(err)) {
+      console.warn(`⚠️ [Worker] ${name} skipped due to detached frame during page evaluation — continuing audit with partial data.`);
+      return null;
+    }
+    // Unexpected error — re-throw so the outer catch can handle it
+    throw err;
+  }
+}
+
 const OverAll = (A, B, C, D, E, F, G) => {
   A ||= 0; B ||= 0; C ||= 0; D ||= 0; E ||= 0; F ||= 0; G ||= 0;
   const total = (A + B + C + D + E + F + G) / 7;
@@ -50,9 +109,24 @@ const OverAll = (A, B, C, D, E, F, G) => {
       await dbConnect({ maxPoolSize: 1 });
     }
 
-    const { browser: b, page, response, $, screenshot, isBotProtected } = await Puppeteer_Cheerio(url, device);
+    const { browser: b, page, response, $, screenshot, isBotProtected } = await Puppeteer_Cheerio(url, device, currentAuditId);
     browser = b;
     await SingleAuditReport.findByIdAndUpdate(currentAuditId, { screenshot, isBotProtected });
+
+    // [NEW] — Guard: if page is null (Puppeteer_Cheerio returned a partial result due to
+    // a top-level detached frame), complete audit gracefully with zero scores
+    if (!page) {
+      console.warn(`⚠️ [Worker] page is null after Puppeteer_Cheerio — frame detached during crawl. Completing audit with partial data.`);
+      await SingleAuditReport.findByIdAndUpdate(currentAuditId, {
+        status: "completed",
+        error: "Audit completed with partial data — page context was lost due to a frame detachment event.",
+        score: 0,
+        grade: "F",
+        timeTaken: `${((performance.now() - start) / 1000).toFixed(0)}s`
+      });
+      parentPort.postMessage({ success: true, reportId: currentAuditId });
+      return;
+    }
 
     if (isBotProtected) {
       console.log(`🛡️ Marking report as Bot Protected: ${url}`);
@@ -70,32 +144,31 @@ const OverAll = (A, B, C, D, E, F, G) => {
     if (report !== "All") {
       let result;
 
+      // [NEW] — Each metric wrapped in safeMetric() to catch detached frame errors
       switch (report) {
         case "Technical Performance":
-          result = await technicalMetrics(url, device, page, response, browser);
+          result = await safeMetric("Technical Performance", () => technicalMetrics(url, device, page, response, browser));
           break;
         case "On Page SEO":
-          result = await seoMetrics(url, $, page);
+          result = await safeMetric("On Page SEO", () => seoMetrics(url, $, page));
           break;
         case "Accessibility":
-          result = await accessibilityMetrics(page, $);
+          result = await safeMetric("Accessibility", () => accessibilityMetrics(page, $));
           break;
         case "Security/Compliance":
-          result = await securityCompliance(url, page, response, browser);
+          result = await safeMetric("Security/Compliance", () => securityCompliance(url, page, response, browser));
           break;
         case "UX & Content Structure":
-          result = await uxContentStructure(device, page);
+          result = await safeMetric("UX & Content Structure", () => uxContentStructure(device, page));
           break;
         case "Conversion & Lead Flow":
-          result = await conversionLeadFlow(page, $);
+          result = await safeMetric("Conversion & Lead Flow", () => conversionLeadFlow(page, $));
           break;
         case "AIO (AI-Optimization) Readiness":
-          // For single report, we might need to run technical metrics first if not already run
-          const techRes = await technicalMetrics(url, device, page, response, browser);
-          result = await aioReadiness(url, page, $);
-          // Run AEO - Passing performance score for Perplexity weighting
-          const aeoResultSingle = await AEOService.runAudit(url, $, null, techRes?.Percentage || 100);
-          result.aeo = aeoResultSingle;
+          const techRes = await safeMetric("Technical Performance (AIO pre-req)", () => technicalMetrics(url, device, page, response, browser));
+          result = await safeMetric("AIO Readiness", () => aioReadiness(url, page, $));
+          const aeoResultSingle = await safeMetric("AEO (AIO)", () => AEOService.runAudit(url, $, null, techRes?.Percentage || 100));
+          if (result) result.aeo = aeoResultSingle;
           break;
       }
 
@@ -118,7 +191,7 @@ const OverAll = (A, B, C, D, E, F, G) => {
       if (report === "Technical Performance") updateData.technicalPerformance = result;
       if (report === "On Page SEO") {
         updateData.onPageSEO = result;
-        updateData.siteSchema = result.Schema;
+        updateData.siteSchema = result?.Schema;
       }
       if (report === "Accessibility") updateData.accessibility = result;
       if (report === "Security/Compliance") updateData.securityOrCompliance = result;
@@ -137,28 +210,30 @@ const OverAll = (A, B, C, D, E, F, G) => {
       return;
     }
 
-    const A_Res = await technicalMetrics(url, device, page, response, browser);
+    // [NEW] — Full audit ("All"): each metric individually wrapped in safeMetric()
+    // A detached frame in any one metric is non-fatal — audit continues with 0 for that section
+    const A_Res = await safeMetric("Technical Performance", () => technicalMetrics(url, device, page, response, browser));
     await SingleAuditReport.findByIdAndUpdate(currentAuditId, { technicalPerformance: A_Res });
 
-    const B_Res = await seoMetrics(url, $, page);
+    const B_Res = await safeMetric("On Page SEO", () => seoMetrics(url, $, page));
     await SingleAuditReport.findByIdAndUpdate(currentAuditId, { onPageSEO: B_Res, siteSchema: B_Res?.Schema });
 
-    const C_Res = await accessibilityMetrics(page, $);
+    const C_Res = await safeMetric("Accessibility", () => accessibilityMetrics(page, $));
     await SingleAuditReport.findByIdAndUpdate(currentAuditId, { accessibility: C_Res });
 
-    const D_Res = await securityCompliance(url, page, response, browser);
+    const D_Res = await safeMetric("Security/Compliance", () => securityCompliance(url, page, response, browser));
     await SingleAuditReport.findByIdAndUpdate(currentAuditId, { securityOrCompliance: D_Res });
 
-    const E_Res = await uxContentStructure(device, page);
+    const E_Res = await safeMetric("UX & Content Structure", () => uxContentStructure(device, page));
     await SingleAuditReport.findByIdAndUpdate(currentAuditId, { UXOrContentStructure: E_Res });
 
-    const F_Res = await conversionLeadFlow(page, $);
+    const F_Res = await safeMetric("Conversion & Lead Flow", () => conversionLeadFlow(page, $));
     await SingleAuditReport.findByIdAndUpdate(currentAuditId, { conversionAndLeadFlow: F_Res });
 
-    const G_Res = await aioReadiness(url, page, $);
-    const aeoRes = await AEOService.runAudit(url, $, null, A_Res?.Percentage || 100);
-    await SingleAuditReport.findByIdAndUpdate(currentAuditId, { 
-      aioReadiness: G_Res, 
+    const G_Res = await safeMetric("AIO Readiness", () => aioReadiness(url, page, $));
+    const aeoRes = await safeMetric("AEO", () => AEOService.runAudit(url, $, null, A_Res?.Percentage || 100));
+    await SingleAuditReport.findByIdAndUpdate(currentAuditId, {
+      aioReadiness: G_Res,
       aioCompatibilityBadge: G_Res?.AIO_Compatibility_Badge,
       aeo: aeoRes
     });

@@ -9,7 +9,7 @@ import {
   Activity, Zap, Layout, Image as ImageIcon,
   Server, Database, FileCode, Globe,
   ArrowRightLeft, Clock, Gauge, AlertTriangle,
-  Info, ChevronDown
+  Info, ChevronDown, Sparkles, Briefcase
 } from "lucide-react";
 import MetricInfoModal from "../Component/MetricInfoModal";
 import ParameterInfoModal from "../Component/ParameterInfoModal";
@@ -545,7 +545,7 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
 
                   {tech.Resource_Optimization && (
                     <OptimizationCard
-                      icon={Image}
+                      icon={ImageIcon}
                       title="Resource Optimization"
                       metricData={tech.Resource_Optimization}
                       darkMode={darkMode}
@@ -553,7 +553,7 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                       onToggle={() => toggleDetails('resourceOptimization')}
                       description={metricExplanations.Resource_Optimization.whatThisParameterIs}
                       whyItMatters={metricExplanations.Resource_Optimization.whyItMatters}
-                      onInfoClick={() => setSelectedParameterInfo({ title: "Resource Optimization", icon: Image, ...metricExplanations.Resource_Optimization, metricData: tech.Resource_Optimization })}
+                      onInfoClick={() => setSelectedParameterInfo({ title: "Resource Optimization", icon: ImageIcon, ...metricExplanations.Resource_Optimization, metricData: tech.Resource_Optimization })}
                     >
                       <div className="flex flex-col gap-4">
                         <div className="grid grid-cols-2 gap-4">

@@ -817,8 +817,18 @@ export default async function accessibilityMetrics(page) {
   const list = checkList(axeResults);
   const headingOrder = checkHeadingOrder(axeResults);
 
-  const skipLinks = await checkSkipLinks(page);
-  const landMarks = await checkLandmarks(page);
+  let skipLinks, landMarks;
+  try {
+    skipLinks = await checkSkipLinks(page);
+  } catch (skipErr) {
+    skipLinks = { score: 0, status: "fail", details: "Skip link check skipped — page context unavailable.", meta: {}, analysis: null };
+  }
+  try {
+    landMarks = await checkLandmarks(page);
+  } catch (landmarkErr) {
+    landMarks = { score: 0, status: "fail", details: "Landmark check skipped — page context unavailable.", meta: {}, analysis: null };
+  }
+
 
   const weights = {
     Color_Contrast: 10,

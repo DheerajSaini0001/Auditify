@@ -274,7 +274,7 @@ export const startAudit = async (req, res) => {
 
     worker.on("message", async (msg) => {
       if (msg?.error) {
-        console.log("❌ Audit Failed");
+        console.log(`❌ Audit Failed: ${msg.error}`);
 
         await SingleAuditReport.findByIdAndUpdate(newReport._id, {
           status: "failed",
@@ -325,10 +325,10 @@ export const startAudit = async (req, res) => {
       }
     })
 
-    worker.on("error", async () => {
+    worker.on("error", async (err) => {
       const duration = Date.now() - startTime;
       await SingleAuditReport.findByIdAndUpdate(newReport._id, { status: "failed" });
-      console.log("❌ Audit Failed");
+      console.log(`❌ Audit Failed with worker error:`, err);
 
       // Update AuditLog entry
       try {
@@ -383,11 +383,54 @@ export const getReportStatusById = async (req, res) => {
     }
 
     // Highly optimized status-only projection
-    const report = await SingleAuditReport.findOne(query).select("_id status");
+    const report = await SingleAuditReport.findOne(query).select("_id status screenshotUrl error");
     if (!report) {
       return res.status(404).json({ message: "Report not found or access denied" });
     }
-    res.status(200).json({ _id: report._id, status: report.status });
+
+    let progress = 0;
+    let message = "";
+    switch (report.status) {
+      case "launching":
+        progress = 15;
+        message = "🚀 Launching browser...";
+        break;
+      case "navigating":
+        progress = 35;
+        message = "⏳ Navigating to URL...";
+        break;
+      case "waiting_for_render":
+        progress = 55;
+        message = "⏳ Waiting for website to fully load... (~20s)";
+        break;
+      case "screenshot_ready":
+        progress = 75;
+        message = "✅ Website loaded successfully — crawling this page";
+        break;
+      case "extracting_data":
+        progress = 90;
+        message = "🧠 Extracting audit data...";
+        break;
+      case "completed":
+        progress = 100;
+        message = "✅ Audit completed successfully!";
+        break;
+      case "failed":
+        progress = 100;
+        message = report.error || "❌ Audit failed";
+        break;
+      default:
+        progress = 0;
+        message = "Initializing...";
+    }
+
+    res.status(200).json({ 
+      _id: report._id, 
+      status: report.status, 
+      screenshotUrl: report.screenshotUrl, 
+      progress, 
+      message 
+    });
   } catch (error) {
     console.error("Error fetching report status:", error);
     res.status(500).json({ message: "Internal Server Error" });

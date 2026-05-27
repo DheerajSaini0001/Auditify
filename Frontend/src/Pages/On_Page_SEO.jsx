@@ -2208,12 +2208,9 @@ const SocialProfilesCard = ({ data, darkMode, onInfo, className = "" }) => {
 };
 
 // ------------------------------------------------------
-export default function On_Page_SEO() {
-  const { data, loading } = useData();
-  const { theme } = useContext(ThemeContext);
+const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading, darkMode }) {
   const [selectedMetricInfo, setSelectedMetricInfo] = React.useState(null);
   const [selectedParameterInfo, setSelectedParameterInfo] = React.useState(null);
-  const darkMode = theme === "dark";
 
   const auditSteps = useMemo(() => [
     { icon: <Search className="w-8 h-8 text-blue-500" />, title: "Metadata Analysis", text: "Scanning Title tags, Meta Descriptions, and URL structure for SEO best practices..." },
@@ -2221,14 +2218,12 @@ export default function On_Page_SEO() {
     { icon: <FileCode className="w-8 h-8 text-teal-500" />, title: "Technical SEO", text: "Verifying Canonical tags, Robots.txt, and Sitemap presence..." },
     { icon: <ImageIcon className="w-8 h-8 text-indigo-500" />, title: "Visual Assets", text: "Checking image Alt text, file sizes, and video optimization..." },
     { icon: <Link className="w-8 h-8 text-amber-500" />, title: "Link Profile", text: "Analyzing internal linking structure, identifying broken links and orphan pages..." },
-   
     { icon: <Globe className="w-8 h-8 text-emerald-500" />, title: "Social Signals", text: "Reviewing Open Graph tags and Twitter Cards for social media optimization..." },
   ], []);
 
   const seo = data?.onPageSEO || {};
   const overallScore = seo.Percentage || 0;
   const mainBg = darkMode ? "bg-gray-900" : "bg-gray-50";
-  const textColor = darkMode ? "text-white" : "text-gray-900";
 
   // Calculate metrics stats using useMemo for performance
   const metricStats = useMemo(() => {
@@ -2270,6 +2265,16 @@ export default function On_Page_SEO() {
     return { passed, warning, failed, total: metrics.length };
   }, [seo]);
 
+  // Helper to resolve relative links against the base URL
+  const resolveLink = (href) => {
+    if (!href) return "#";
+    try {
+      return new URL(href, data.url).href;
+    } catch (e) {
+      return href;
+    }
+  };
+
   if (!data?.onPageSEO) {
     return (
       <div className={`w-full ${darkMode ? "bg-gray-900" : "bg-gray-50"} transition-colors duration-300`}>
@@ -2281,7 +2286,7 @@ export default function On_Page_SEO() {
 
           {/* ✅ Card 2: Overview / Preview Card */}
           <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
-            <div className="flex flex-col xl:flex-row min-h-[300px]">
+            <div className={`flex flex-col xl:flex-row ${data?.report === "All" ? "" : "min-h-[300px]"}`}>
               {/* Left Panel: Live Preview (Only if not All) */}
               {data?.report !== "All" && (
                 <div className={`w-full xl:w-[45%] p-3 lg:p-4 flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
@@ -2291,12 +2296,9 @@ export default function On_Page_SEO() {
                   </div>
                 </div>
               )}
-
-              {/* Right/Full Panel: Audit Steps */}
-              <div className="flex-1 flex items-center justify-center">
-                <div className="w-full">
-                  <AuditShimmer darkMode={darkMode} loading={loading} data={data?.onPageSEO} auditSteps={auditSteps} />
-                </div>
+              {/* Right Panel: Shimmer */}
+              <div className="flex-1 flex flex-col justify-center">
+                <AuditShimmer darkMode={darkMode} loading={loading} data={data?.onPageSEO} auditSteps={auditSteps} />
               </div>
             </div>
           </div>
@@ -2304,21 +2306,6 @@ export default function On_Page_SEO() {
       </div>
     );
   }
-
-
-
-  // Helper to resolve relative links against the base URL
-  const resolveLink = (href) => {
-    if (!href) return "#";
-    try {
-      return new URL(href, data.url).href;
-    } catch (e) {
-      return href;
-    }
-  };
-
-
-
 
   return (
     <div className={`w-full ${mainBg} transition-colors duration-300`}>
@@ -2567,4 +2554,15 @@ export default function On_Page_SEO() {
       />
     </div>
   );
+});
+
+export default function On_Page_SEO({ data: propData, loading: propLoading, darkMode: propDarkMode }) {
+  const contextData = useData();
+  const { theme } = useContext(ThemeContext);
+
+  const data = propData !== undefined ? propData : contextData.data;
+  const loading = propLoading !== undefined ? propLoading : contextData.loading;
+  const darkMode = propDarkMode !== undefined ? propDarkMode : (theme === "dark");
+
+  return <On_Page_SEO_Inner data={data} loading={loading} darkMode={darkMode} />;
 }

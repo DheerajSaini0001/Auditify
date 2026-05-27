@@ -64,15 +64,12 @@ const AUDIT_STEPS = [
   },
 ];
 
-export default function Technical_Performance() {
-  const { theme } = useContext(ThemeContext);
-  const { data, loading } = useData();
+const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => {
   const [selectedMetricInfo, setSelectedMetricInfo] = React.useState(null);
   const [selectedParameterInfo, setSelectedParameterInfo] = React.useState(null);
   const [selectedSource, setSelectedSource] = React.useState("lab");
   const [expandedDetails, setExpandedDetails] = React.useState({});
   const toggleDetails = (metric) => setExpandedDetails(prev => ({ ...prev, [metric]: !prev[metric] }));
-  const darkMode = theme === "dark";
 
   const isCoreExpanded = expandedDetails.LCP || expandedDetails.INP || expandedDetails.CLS || expandedDetails.FCP || expandedDetails.TTFB;
   const isLabExpanded = expandedDetails.TBT || expandedDetails.SI;
@@ -106,24 +103,21 @@ export default function Technical_Performance() {
           />
         </div>
 
-        {/* ✅ Card 2: Overview & Score Card */}
         <div className={`rounded-[2.5rem] overflow-hidden transition-all duration-500 transform hover:shadow-2xl ${darkMode ? "bg-slate-900/40 backdrop-blur-xl border border-slate-800 shadow-2xl shadow-black/40" : "bg-white/60 backdrop-blur-xl border border-slate-200 shadow-2xl shadow-slate-200/40"}`}>
           {loading || !data?.technicalPerformance ? (
-            <div className="flex flex-col xl:flex-row min-h-[300px]">
+            <div className={`flex flex-col xl:flex-row ${data?.report === "All" ? "" : "min-h-[300px]"}`}>
+              {/* Left Panel: Live Preview (Only if not All) */}
               {data?.report !== "All" && (
-                <div className={`w-full xl:w-1/2 p-6 flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden backdrop-blur-sm ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-white/40 border-white/20"}`}>
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/10 blur-[100px] rounded-full pointer-events-none animate-pulse duration-[10000ms]"></div>
-                  <div className="w-full relative z-10 px-2 lg:px-6 hover:scale-[1.02] transition-transform duration-500">
+                <div className={`w-full xl:w-[45%] p-3 lg:p-4 flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden backdrop-blur-md ${darkMode ? "bg-slate-955/40 border-slate-800" : "bg-white/40 border-white/20"}`}>
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/10 blur-[100px] rounded-full pointer-events-none"></div>
+                  <div className="w-full relative z-10 hover:scale-[1.02] transition-transform duration-500">
                     <LivePreview data={data} loading={loading} variant="plain" />
                   </div>
                 </div>
               )}
-
-              {/* Right/Full Panel: Audit Steps */}
-              <div className="flex-1 flex items-center justify-center">
-                <div className="w-full">
-                  <AuditShimmer darkMode={darkMode} loading={loading} data={data} auditSteps={AUDIT_STEPS} />
-                </div>
+              {/* Right Panel: Shimmer */}
+              <div className="flex-1 flex flex-col justify-center">
+                <AuditShimmer darkMode={darkMode} loading={loading} data={data} auditSteps={AUDIT_STEPS} />
               </div>
             </div>
           ) : (
@@ -324,281 +318,302 @@ export default function Technical_Performance() {
               )}
 
               {tech.SI && (
-                <MetricCard
-                  key="SI"
-                  title="Speed Index"
-                  icon={Gauge}
-                  metricData={tech.SI}
-                  selectedSource="lab"
+                <MetricCard 
+                  title="Speed Index (SI)"
+                  description={tech.SI.details || "Measures visual loading progression rates during screen paint."}
+                  score={tech.SI.score || 0}
+                  status={tech.SI.status || "fail"}
+                  analysis={tech.SI.analysis}
+                  meta={tech.SI.meta}
                   darkMode={darkMode}
-                  isOpen={!!expandedDetails.SI}
-                  onToggle={() => toggleDetails('SI')}
-                  description={metricExplanations.SI.whatThisParameterIs}
-                  whyItMatters={metricExplanations.SI.whyItMatters}
-                  onInfoClick={() => setSelectedParameterInfo({ title: "Speed Index", icon: Gauge, ...metricExplanations.SI, metricData: tech.SI })}
+                  icon={Activity}
+                  type="SI"
+                  className={expandedDetails.SI ? "md:col-span-2" : ""}
+                  onInfo={setSelectedParameterInfo}
                 />
               )}
             </Section>
 
-            {/* Assets & Optimization */}
-            <Section title="Assets & Optimization" subtitle="Optimization checks" icon={Server} darkMode={darkMode} shouldAlignStart={isAssetsExpanded}>
-              {tech.Compression && (
-                <OptimizationCard
-                  icon={FileCode}
-                  title="Text Compression"
-                  metricData={tech.Compression}
-                  darkMode={darkMode}
-                  isOpen={expandedDetails.compression}
-                  onToggle={() => toggleDetails('compression')}
-                  description={metricExplanations.Compression.whatThisParameterIs}
-                  whyItMatters={metricExplanations.Compression.whyItMatters}
-                  onInfoClick={() => setSelectedParameterInfo({ title: "Text Compression", icon: FileCode, ...metricExplanations.Compression, metricData: tech.Compression })}
-                >
-                  <div className="flex flex-col gap-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className={`p-4 rounded-xl border col-span-2 ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
-                        <div className="flex justify-between items-center">
-                          <p className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Overall Score</p>
-                          <ScoreBadge status={tech.Compression.status} value={tech.Compression.meta?.value} darkMode={darkMode} />
-                        </div>
-                      </div>
-                      <div className={`p-3 rounded-xl border ${darkMode ? "bg-emerald-900/10 border-emerald-800/30" : "bg-emerald-50 border-emerald-100"}`}>
-                        <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>Compressed</p>
-                        <p className={`text-xl font-black ${darkMode ? "text-emerald-300" : "text-emerald-700"}`}>{tech.Compression.meta?.compressedCount}</p>
-                      </div>
-                      <div className={`p-3 rounded-xl border ${darkMode ? "bg-rose-900/10 border-rose-800/30" : "bg-rose-50 border-rose-100"}`}>
-                        <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>Uncompressed</p>
-                        <p className={`text-xl font-black ${darkMode ? "text-rose-300" : "text-rose-700"}`}>{tech.Compression.meta?.uncompressedCount}</p>
-                      </div>
-                    </div>
-
-                    {tech.Compression.meta?.uncompressedResources && tech.Compression.meta.uncompressedResources.length > 0 && (
-                      <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
-                        <p className={`text-[10px] font-bold uppercase tracking-wider mb-3 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Uncompressed Resources</p>
-                        <div className="flex flex-col gap-2">
-                          {tech.Compression.meta.uncompressedResources.map((item, idx) => (
-                            <div key={idx} className="flex justify-between items-center">
-                              <p className={`text-[10px] truncate max-w-[70%] font-mono ${darkMode ? "text-gray-300" : "text-gray-600"}`} title={item.url}>
-                                {item.fileName || item.url}
-                              </p>
-                              <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${darkMode ? "bg-rose-900/20 text-rose-400" : "bg-rose-100 text-rose-600"}`}>
-                                Encoding: {item.currentEncoding || 'None'}
-                              </span>
+            {/* Category 3: Asset & Optimizations (Gated) */}
+            <ReportRestrictionWrapper>
+              <div className="space-y-12">
+                <Section title="Asset Distribution & Code Delivery Optimizations" icon={Sparkles} darkMode={darkMode}>
+                  {tech.Compression && (
+                    <OptimizationCard
+                      icon={Briefcase}
+                      title="Asset Compression Status"
+                      metricData={tech.Compression}
+                      darkMode={darkMode}
+                      isOpen={expandedDetails.compression}
+                      onToggle={() => toggleDetails('compression')}
+                      description={metricExplanations.Compression.whatThisParameterIs}
+                      whyItMatters={metricExplanations.Compression.whyItMatters}
+                      onInfoClick={() => setSelectedParameterInfo({ title: "Asset Compression Status", icon: Briefcase, ...metricExplanations.Compression, metricData: tech.Compression })}
+                    >
+                      <div className="flex flex-col gap-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className={`p-4 rounded-xl border col-span-2 ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                            <div className="flex justify-between items-center">
+                              <p className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Overall Score</p>
+                              <ScoreBadge status={tech.Compression.status} value={tech.Compression.meta?.value} darkMode={darkMode} />
                             </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </OptimizationCard>
-              )}
-
-              {tech.Caching && (
-                <OptimizationCard
-                  icon={Database}
-                  title="Caching Policy"
-                  metricData={tech.Caching}
-                  darkMode={darkMode}
-                  isOpen={expandedDetails.caching}
-                  onToggle={() => toggleDetails('caching')}
-                  description={metricExplanations.Caching.whatThisParameterIs}
-                  whyItMatters={metricExplanations.Caching.whyItMatters}
-                  onInfoClick={() => setSelectedParameterInfo({ title: "Caching Policy", icon: Database, ...metricExplanations.Caching, metricData: tech.Caching })}
-                >
-                  <div className="flex flex-col gap-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className={`p-4 rounded-xl border col-span-2 ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
-                        <div className="flex justify-between items-center">
-                          <p className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Overall Score</p>
-                          <ScoreBadge status={tech.Caching.status} value={tech.Caching.meta?.value} darkMode={darkMode} />
-                        </div>
-                      </div>
-                      <div className={`p-3 rounded-xl border ${darkMode ? "bg-emerald-900/10 border-emerald-800/30" : "bg-emerald-50 border-emerald-100"}`}>
-                        <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>Cached</p>
-                        <p className={`text-xl font-black ${darkMode ? "text-emerald-300" : "text-emerald-700"}`}>{tech.Caching.meta?.cachedCount}</p>
-                      </div>
-                      <div className={`p-3 rounded-xl border ${darkMode ? "bg-rose-900/10 border-rose-800/30" : "bg-rose-50 border-rose-100"}`}>
-                        <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>Uncached</p>
-                        <p className={`text-xl font-black ${darkMode ? "text-rose-300" : "text-rose-700"}`}>{tech.Caching.meta?.uncachedCount}</p>
-                      </div>
-                    </div>
-
-                    {tech.Caching.meta?.uncachedResources && tech.Caching.meta.uncachedResources.length > 0 && (
-                      <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
-                        <p className={`text-[10px] font-bold uppercase tracking-wider mb-3 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Uncached Resources</p>
-                        <div className="flex flex-col gap-2">
-                          {tech.Caching.meta.uncachedResources.map((item, idx) => (
-                            <div key={idx} className="flex justify-between items-center">
-                              <p className={`text-[10px] truncate max-w-[70%] font-mono ${darkMode ? "text-gray-300" : "text-gray-600"}`} title={item.url}>
-                                {item.fileName || item.url}
-                              </p>
-                              <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${darkMode ? "bg-rose-900/20 text-rose-400" : "bg-rose-100 text-rose-600"}`}>
-                                Policy: {item.cachePolicy || 'None'}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </OptimizationCard>
-              )}
-
-
-              {tech.Redirect_Chains && (
-                <OptimizationCard
-                  icon={ArrowRightLeft}
-                  title="Redirect Chains"
-                  metricData={tech.Redirect_Chains}
-                  darkMode={darkMode}
-                  isOpen={expandedDetails.redirectChains}
-                  onToggle={() => toggleDetails('redirectChains')}
-                  description={metricExplanations.Redirect_Chains.whatThisParameterIs}
-                  whyItMatters={metricExplanations.Redirect_Chains.whyItMatters}
-                  onInfoClick={() => setSelectedParameterInfo({ title: "Redirect Chains", icon: ArrowRightLeft, ...metricExplanations.Redirect_Chains, metricData: tech.Redirect_Chains })}
-                  displayValue={`${tech.Redirect_Chains.meta?.hops} hops`}
-                >
-                  <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <p className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Total Hops</p>
-                        <ScoreBadge
-                          status={tech.Redirect_Chains.status}
-                          value={tech.Redirect_Chains.meta?.hops}
-                          darkMode={darkMode}
-                        />
-                      </div>
-
-                      {tech.Redirect_Chains.meta?.redirectDetails && tech.Redirect_Chains.meta.redirectDetails.length > 0 && (
-                        <div className="pt-3 border-t border-dashed border-gray-200 dark:border-gray-700">
-                          <p className={`text-[10px] font-bold uppercase tracking-wider mb-3 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Redirect Path</p>
-                          <div className="flex flex-col gap-2">
-                            {tech.Redirect_Chains.meta.redirectDetails.map((url, idx) => (
-                              <div key={idx} className="flex flex-col items-start">
-                                <div className="flex items-center gap-2 w-full">
-                                  <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${idx === tech.Redirect_Chains.meta.redirectDetails.length - 1 ? "bg-emerald-500" : "bg-blue-500"}`} />
-                                  <p className={`text-[10px] font-mono truncate flex-grow ${darkMode ? "text-gray-300" : "text-gray-600"}`} title={url}>
-                                    {url}
-                                  </p>
-                                </div>
-                                {idx < tech.Redirect_Chains.meta.redirectDetails.length - 1 && (
-                                  <div className="ml-0.5 flex flex-col items-center gap-0.5 py-1">
-                                    <div className="w-[1px] h-2 bg-gray-300 dark:bg-gray-600" />
-                                    <ChevronDown size={10} className={darkMode ? "text-gray-500" : "text-gray-400"} />
-                                  </div>
-                                )}
-                              </div>
-                            ))}
+                          </div>
+                          <div className={`p-3 rounded-xl border ${darkMode ? "bg-emerald-900/10 border-emerald-800/30" : "bg-emerald-50 border-emerald-100"}`}>
+                            <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>Compressed</p>
+                            <p className={`text-xl font-black ${darkMode ? "text-emerald-300" : "text-emerald-700"}`}>{tech.Compression.meta?.compressedCount}</p>
+                          </div>
+                          <div className={`p-3 rounded-xl border ${darkMode ? "bg-rose-900/10 border-rose-800/30" : "bg-rose-50 border-rose-100"}`}>
+                            <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>Uncompressed</p>
+                            <p className={`text-xl font-black ${darkMode ? "text-rose-300" : "text-rose-700"}`}>{tech.Compression.meta?.uncompressedCount}</p>
                           </div>
                         </div>
-                      )}
-                    </div>
-                  </div>
-                </OptimizationCard>
-              )}
 
-              {tech.Render_Blocking && (
-                <OptimizationCard
-                  icon={AlertTriangle}
-                  title="Render-Blocking"
-                  metricData={tech.Render_Blocking}
-                  darkMode={darkMode}
-                  isOpen={expandedDetails.renderBlocking}
-                  onToggle={() => toggleDetails('renderBlocking')}
-                  description={metricExplanations.Render_Blocking.whatThisParameterIs}
-                  whyItMatters={metricExplanations.Render_Blocking.whyItMatters}
-                  onInfoClick={() => setSelectedParameterInfo({ title: "Render-Blocking", icon: AlertTriangle, ...metricExplanations.Render_Blocking, metricData: tech.Render_Blocking })}
-                  displayValue={tech.Render_Blocking.meta?.blockingResources?.length === 0 ? "None" : `${tech.Render_Blocking.meta?.blockingResources?.length || 0} items`}
-                >
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className={`p-4 rounded-xl border col-span-2 ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
-                      <div className="flex justify-between items-center">
-                        <p className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Overall Score</p>
-                        <ScoreBadge status={tech.Render_Blocking.status} value={tech.Render_Blocking.meta?.value} darkMode={darkMode} />
+                        {tech.Compression.meta?.uncompressedResources && tech.Compression.meta.uncompressedResources.length > 0 && (
+                          <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                            <p className={`text-[10px] font-bold uppercase tracking-wider mb-3 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Uncompressed Resources</p>
+                            <div className="flex flex-col gap-2">
+                              {tech.Compression.meta.uncompressedResources.map((item, idx) => (
+                                <div key={idx} className="flex justify-between items-center">
+                                  <p className={`text-[10px] truncate max-w-[70%] font-mono ${darkMode ? "text-gray-300" : "text-gray-600"}`} title={item.url}>
+                                    {item.fileName || item.url}
+                                  </p>
+                                  <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${darkMode ? "bg-rose-900/20 text-rose-400" : "bg-rose-100 text-rose-600"}`}>
+                                    Encoding: {item.currentEncoding || 'None'}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                    <div className={`p-3 rounded-xl border ${darkMode ? "bg-rose-900/10 border-rose-800/30" : "bg-rose-50 border-rose-100"}`}>
-                      <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>Blocking</p>
-                      <p className={`text-xl font-black ${darkMode ? "text-rose-300" : "text-rose-700"}`}>{tech.Render_Blocking.meta?.blockingCount}</p>
-                    </div>
-                    <div className={`p-3 rounded-xl border ${darkMode ? "bg-blue-900/10 border-blue-800/30" : "bg-blue-50 border-blue-100"}`}>
-                      <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-blue-400" : "text-blue-600"}`}>Target</p>
-                      <p className={`text-xl font-black ${darkMode ? "text-blue-300" : "text-blue-700"}`}>{tech.Render_Blocking.meta?.target}</p>
-                    </div>
-                  </div>
-                </OptimizationCard>
-              )}
+                    </OptimizationCard>
+                  )}
 
-              {tech.Resource_Optimization && (
-                <OptimizationCard
-                  fullWidth={true}
-                  icon={ImageIcon}
-                  title="Resource Optimization"
-                  metricData={tech.Resource_Optimization}
-                  darkMode={darkMode}
-                  isOpen={expandedDetails.resourceOptimization}
-                  onToggle={() => toggleDetails('resourceOptimization')}
-                  description={metricExplanations.Resource_Optimization.whatThisParameterIs}
-                  whyItMatters={metricExplanations.Resource_Optimization.whyItMatters}
-                  onInfoClick={() => setSelectedParameterInfo({ title: "Resource Optimization", icon: ImageIcon, ...metricExplanations.Resource_Optimization, metricData: tech.Resource_Optimization })}
-                  displayValue={(tech.Resource_Optimization.status === "good" || tech.Resource_Optimization.status === "pass") ? "Optimized" : "Needs Work"}
-                >
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className={`p-4 rounded-xl border sm:col-span-2 ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
-                      <div className="flex justify-between items-center">
-                        <p className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Overall Score</p>
-                        <ScoreBadge status={tech.Resource_Optimization.status} value={tech.Resource_Optimization.meta?.value} darkMode={darkMode} />
-                      </div>
-                    </div>
-                    {/* Images Stats Group */}
-                    <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
-                      <div className="flex justify-between items-center mb-3">
-                        <p className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Images</p>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${darkMode ? "bg-blue-900/20 text-blue-400" : "bg-blue-50 text-blue-600"}`}>
-                          {tech.Resource_Optimization.meta?.totalImages || 0} Total
-                        </span>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className={`text-[11px] ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Optimized</span>
-                          <span className={`text-xs font-bold ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>{tech.Resource_Optimization.meta?.optimizedImagesCount || 0}</span>
+                  {tech.Caching && (
+                    <OptimizationCard
+                      icon={Database}
+                      title="Caching Policy"
+                      metricData={tech.Caching}
+                      darkMode={darkMode}
+                      isOpen={expandedDetails.caching}
+                      onToggle={() => toggleDetails('caching')}
+                      description={metricExplanations.Caching.whatThisParameterIs}
+                      whyItMatters={metricExplanations.Caching.whyItMatters}
+                      onInfoClick={() => setSelectedParameterInfo({ title: "Caching Policy", icon: Database, ...metricExplanations.Caching, metricData: tech.Caching })}
+                    >
+                      <div className="flex flex-col gap-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className={`p-4 rounded-xl border col-span-2 ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                            <div className="flex justify-between items-center">
+                              <p className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Overall Score</p>
+                              <ScoreBadge status={tech.Caching.status} value={tech.Caching.meta?.value} darkMode={darkMode} />
+                            </div>
+                          </div>
+                          <div className={`p-3 rounded-xl border ${darkMode ? "bg-emerald-900/10 border-emerald-800/30" : "bg-emerald-50 border-emerald-100"}`}>
+                            <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>Cached</p>
+                            <p className={`text-xl font-black ${darkMode ? "text-emerald-300" : "text-emerald-700"}`}>{tech.Caching.meta?.cachedCount}</p>
+                          </div>
+                          <div className={`p-3 rounded-xl border ${darkMode ? "bg-rose-900/10 border-rose-800/30" : "bg-rose-50 border-rose-100"}`}>
+                            <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>Uncached</p>
+                            <p className={`text-xl font-black ${darkMode ? "text-rose-300" : "text-rose-700"}`}>{tech.Caching.meta?.uncachedCount}</p>
+                          </div>
                         </div>
-                        <div className="flex justify-between items-center">
-                          <span className={`text-[11px] ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Heavy/Large</span>
-                          <span className={`text-xs font-bold ${darkMode ? "text-rose-400" : "text-rose-600"}`}>{tech.Resource_Optimization.meta?.unoptimizedImagesCount || 0}</span>
-                        </div>
-                      </div>
-                    </div>
 
-                    {/* Scripts Stats Group */}
-                    <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
-                      <div className="flex justify-between items-center mb-3">
-                        <p className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Scripts</p>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${darkMode ? "bg-blue-900/20 text-blue-400" : "bg-blue-50 text-blue-600"}`}>
-                          {tech.Resource_Optimization.meta?.totalScripts || 0} Total
-                        </span>
+                        {tech.Caching.meta?.uncachedResources && tech.Caching.meta.uncachedResources.length > 0 && (
+                          <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                            <p className={`text-[10px] font-bold uppercase tracking-wider mb-3 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Uncached Resources</p>
+                            <div className="flex flex-col gap-2">
+                              {tech.Caching.meta.uncachedResources.map((item, idx) => (
+                                <div key={idx} className="flex justify-between items-center">
+                                  <p className={`text-[10px] truncate max-w-[70%] font-mono ${darkMode ? "text-gray-300" : "text-gray-600"}`} title={item.url}>
+                                    {item.fileName || item.url}
+                                  </p>
+                                  <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${darkMode ? "bg-rose-900/20 text-rose-400" : "bg-rose-100 text-rose-600"}`}>
+                                    Policy: {item.cachePolicy || 'None'}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className={`text-[11px] ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Minified</span>
-                          <span className={`text-xs font-bold ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>{tech.Resource_Optimization.meta?.minifiedScriptsCount || 0}</span>
+                    </OptimizationCard>
+                  )}
+
+                  {tech.Redirect_Chains && (
+                    <OptimizationCard
+                      icon={ArrowRightLeft}
+                      title="Redirect Chains"
+                      metricData={tech.Redirect_Chains}
+                      darkMode={darkMode}
+                      isOpen={expandedDetails.redirectChains}
+                      onToggle={() => toggleDetails('redirectChains')}
+                      description={metricExplanations.Redirect_Chains.whatThisParameterIs}
+                      whyItMatters={metricExplanations.Redirect_Chains.whyItMatters}
+                      onInfoClick={() => setSelectedParameterInfo({ title: "Redirect Chains", icon: ArrowRightLeft, ...metricExplanations.Redirect_Chains, metricData: tech.Redirect_Chains })}
+                      displayValue={`${tech.Redirect_Chains.meta?.hops} hops`}
+                    >
+                      <div className="flex flex-col gap-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className={`p-4 rounded-xl border col-span-2 ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                            <div className="flex justify-between items-center">
+                              <p className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Overall Score</p>
+                              <ScoreBadge status={tech.Redirect_Chains.status} value={tech.Redirect_Chains.meta?.value} darkMode={darkMode} />
+                            </div>
+                          </div>
+                          <div className={`p-3 rounded-xl border ${darkMode ? "bg-emerald-900/10 border-emerald-800/30" : "bg-emerald-50 border-emerald-100"}`}>
+                            <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>Total Redirects</p>
+                            <p className={`text-xl font-black ${darkMode ? "text-emerald-300" : "text-emerald-700"}`}>{tech.Redirect_Chains.meta?.redirectsCount}</p>
+                          </div>
+                          <div className={`p-3 rounded-xl border ${darkMode ? "bg-rose-900/10 border-rose-800/30" : "bg-rose-50 border-rose-100"}`}>
+                            <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>Redirect Duration</p>
+                            <p className={`text-xl font-black ${darkMode ? "text-rose-300" : "text-rose-700"}`}>{tech.Redirect_Chains.meta?.redirectTime}ms</p>
+                          </div>
                         </div>
-                        <div className="flex justify-between items-center">
-                          <span className={`text-[11px] ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Unminified</span>
-                          <span className={`text-xs font-bold ${darkMode ? "text-rose-400" : "text-rose-600"}`}>{tech.Resource_Optimization.meta?.unminifiedScriptsCount || 0}</span>
+
+                        {tech.Redirect_Chains.meta?.redirectChains && tech.Redirect_Chains.meta.redirectChains.length > 0 && (
+                          <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                            <p className={`text-[10px] font-bold uppercase tracking-wider mb-3 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Redirect Chains</p>
+                            <div className="flex flex-col gap-2">
+                              {tech.Redirect_Chains.meta.redirectChains.map((item, idx) => (
+                                <div key={idx} className="flex justify-between items-center">
+                                  <p className={`text-[10px] truncate max-w-[70%] font-mono ${darkMode ? "text-gray-300" : "text-gray-600"}`} title={item.url}>
+                                    {item.fileName || item.url}
+                                  </p>
+                                  <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${darkMode ? "bg-rose-900/20 text-rose-400" : "bg-rose-100 text-rose-600"}`}>
+                                    Chain Type: {item.redirectType || '302'}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </OptimizationCard>
+                  )}
+
+                  {tech.Render_Blocking && (
+                    <OptimizationCard
+                      icon={Server}
+                      title="Render Blocking"
+                      metricData={tech.Render_Blocking}
+                      darkMode={darkMode}
+                      isOpen={expandedDetails.renderBlocking}
+                      onToggle={() => toggleDetails('renderBlocking')}
+                      description={metricExplanations.Render_Blocking.whatThisParameterIs}
+                      whyItMatters={metricExplanations.Render_Blocking.whyItMatters}
+                      onInfoClick={() => setSelectedParameterInfo({ title: "Render Blocking", icon: Server, ...metricExplanations.Render_Blocking, metricData: tech.Render_Blocking })}
+                    >
+                      <div className="flex flex-col gap-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className={`p-4 rounded-xl border col-span-2 ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                            <div className="flex justify-between items-center">
+                              <p className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Overall Score</p>
+                              <ScoreBadge status={tech.Render_Blocking.status} value={tech.Render_Blocking.meta?.value} darkMode={darkMode} />
+                            </div>
+                          </div>
+                          <div className={`p-3 rounded-xl border ${darkMode ? "bg-emerald-900/10 border-emerald-800/30" : "bg-emerald-50 border-emerald-100"}`}>
+                            <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>Scripts</p>
+                            <p className={`text-xl font-black ${darkMode ? "text-emerald-300" : "text-emerald-700"}`}>{tech.Render_Blocking.meta?.renderBlockingCount}</p>
+                          </div>
+                          <div className={`p-3 rounded-xl border ${darkMode ? "bg-rose-900/10 border-rose-800/30" : "bg-rose-50 border-rose-100"}`}>
+                            <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>Total Size</p>
+                            <p className={`text-xl font-black ${darkMode ? "text-rose-300" : "text-rose-700"}`}>{tech.Render_Blocking.meta?.renderBlockingTime}ms</p>
+                          </div>
+                        </div>
+
+                        {tech.Render_Blocking.meta?.renderBlockingResources && tech.Render_Blocking.meta.renderBlockingResources.length > 0 && (
+                          <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                            <p className={`text-[10px] font-bold uppercase tracking-wider mb-3 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Blocking Resources</p>
+                            <div className="flex flex-col gap-2">
+                              {tech.Render_Blocking.meta.renderBlockingResources.map((item, idx) => (
+                                <div key={idx} className="flex justify-between items-center">
+                                  <p className={`text-[10px] truncate max-w-[70%] font-mono ${darkMode ? "text-gray-300" : "text-gray-600"}`} title={item.url}>
+                                    {item.fileName || item.url}
+                                  </p>
+                                  <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${darkMode ? "bg-rose-900/20 text-rose-400" : "bg-rose-100 text-rose-600"}`}>
+                                    Size: {((item.savingBytes || 0) / 1024).toFixed(1)} KB
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </OptimizationCard>
+                  )}
+
+                  {tech.Resource_Optimization && (
+                    <OptimizationCard
+                      icon={Image}
+                      title="Resource Optimization"
+                      metricData={tech.Resource_Optimization}
+                      darkMode={darkMode}
+                      isOpen={expandedDetails.resourceOptimization}
+                      onToggle={() => toggleDetails('resourceOptimization')}
+                      description={metricExplanations.Resource_Optimization.whatThisParameterIs}
+                      whyItMatters={metricExplanations.Resource_Optimization.whyItMatters}
+                      onInfoClick={() => setSelectedParameterInfo({ title: "Resource Optimization", icon: Image, ...metricExplanations.Resource_Optimization, metricData: tech.Resource_Optimization })}
+                    >
+                      <div className="flex flex-col gap-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className={`p-4 rounded-xl border col-span-2 ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                            <div className="flex justify-between items-center">
+                              <p className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Overall Score</p>
+                              <ScoreBadge status={tech.Resource_Optimization.status} value={tech.Resource_Optimization.meta?.value} darkMode={darkMode} />
+                            </div>
+                          </div>
+                          {/* Images Stats Group */}
+                          <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                            <div className="flex justify-between items-center mb-3">
+                              <p className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Images</p>
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${darkMode ? "bg-emerald-900/20 text-emerald-400" : "bg-emerald-50 text-emerald-600"}`}>
+                                {tech.Resource_Optimization.meta?.totalImages || 0} Total
+                              </span>
+                            </div>
+                            <div className="space-y-2">
+                              <div className="flex justify-between items-center">
+                                <span className={`text-[11px] ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Optimized</span>
+                                <span className={`text-xs font-bold ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>{tech.Resource_Optimization.meta?.optimizedImagesCount || 0}</span>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className={`text-[11px] ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Heavy/Large</span>
+                                <span className={`text-xs font-bold ${darkMode ? "text-rose-400" : "text-rose-600"}`}>{tech.Resource_Optimization.meta?.unoptimizedImagesCount || 0}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Scripts Stats Group */}
+                          <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                            <div className="flex justify-between items-center mb-3">
+                              <p className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Scripts</p>
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${darkMode ? "bg-blue-900/20 text-blue-400" : "bg-blue-50 text-blue-600"}`}>
+                                {tech.Resource_Optimization.meta?.totalScripts || 0} Total
+                              </span>
+                            </div>
+                            <div className="space-y-2">
+                              <div className="flex justify-between items-center">
+                                <span className={`text-[11px] ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Minified</span>
+                                <span className={`text-xs font-bold ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>{tech.Resource_Optimization.meta?.minifiedScriptsCount || 0}</span>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className={`text-[11px] ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Unminified</span>
+                                <span className={`text-xs font-bold ${darkMode ? "text-rose-400" : "text-rose-600"}`}>{tech.Resource_Optimization.meta?.unminifiedScriptsCount || 0}</span>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                </OptimizationCard>
-              )}
-            </Section>
+                    </OptimizationCard>
+                  )}
+                </Section>
+              </div>
+            </ReportRestrictionWrapper>
           </div>
         </ReportRestrictionWrapper>
       )}
 
       </main >
-
 
       {/* Methodology Modal */}
       <MetricInfoModal
@@ -616,4 +631,15 @@ export default function Technical_Performance() {
       />
     </div>
   );
+});
+
+export default function Technical_Performance({ data: propData, loading: propLoading, darkMode: propDarkMode }) {
+  const contextData = useData();
+  const { theme } = React.useContext(ThemeContext);
+
+  const data = propData !== undefined ? propData : contextData.data;
+  const loading = propLoading !== undefined ? propLoading : contextData.loading;
+  const darkMode = propDarkMode !== undefined ? propDarkMode : (theme === "dark");
+
+  return <Technical_Performance_Inner data={data} loading={loading} darkMode={darkMode} />;
 }

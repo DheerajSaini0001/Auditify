@@ -386,24 +386,28 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
     // ⚡ Optimization: Block non-essential resources to speed up loading
     await page.setRequestInterception(true);
     page.on('request', (request) => {
-      const resourceType = request.resourceType();
-      const url = request.url().toLowerCase();
-      
-      // Block ads, trackers, and unnecessary heavy stuff
-      const blockedResources = [
-        'googletagmanager.com', 'google-analytics.com', 'analytics.google.com',
-        'facebook.net', 'popupsmart.com', 'hotjar.com', 'intercom.io',
-        'adsystem.com', 'ads-twitter.com', 'doubleclick.net'
-      ];
-      
-      if (
-        resourceType === 'font' || 
-        resourceType === 'media' ||
-        blockedResources.some(domain => url.includes(domain))
-      ) {
-        request.abort();
-      } else {
-        request.continue();
+      try {
+        const resourceType = request.resourceType();
+        const url = request.url().toLowerCase();
+        
+        // Block ads, trackers, and unnecessary heavy stuff
+        const blockedResources = [
+          'googletagmanager.com', 'google-analytics.com', 'analytics.google.com',
+          'facebook.net', 'popupsmart.com', 'hotjar.com', 'intercom.io',
+          'adsystem.com', 'ads-twitter.com', 'doubleclick.net'
+        ];
+        
+        if (
+          resourceType === 'font' || 
+          resourceType === 'media' ||
+          blockedResources.some(domain => url.includes(domain))
+        ) {
+          request.abort().catch(() => {});
+        } else {
+          request.continue().catch(() => {});
+        }
+      } catch (err) {
+        // Safe fallback in case interception is disabled in-flight
       }
     });
 
@@ -420,7 +424,7 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop') {
 
     // 🔄 [Production Patch] If site is unreachable (No Response), try one more time without request interception
     if (!response) {
-
+        try { page.removeAllListeners('request'); } catch (_) {}
         await page.setRequestInterception(false); // Disable interception for retry
         response = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45000 }).catch(() => null);
     }

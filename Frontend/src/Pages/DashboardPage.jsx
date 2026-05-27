@@ -36,6 +36,8 @@ import {
   Moon
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useProjectsCache } from '../hooks/useProjectsCache';
+import { useAuditPolling } from '../hooks/useAuditPolling';
 
 // Custom absolute-centered Circular Progress
 const CircularProgress = ({ score, size = 66, strokeWidth = 4, color = "#3b82f6", darkMode = false }) => {
@@ -83,10 +85,15 @@ const DashboardPage = () => {
   const location = useLocation();
   const { fetchData: runAudit } = useData();
 
-  const [websites, setWebsites] = useState([]);
-  const [history, setHistory] = useState([]);
-  const [detailedScores, setDetailedScores] = useState({});
-  const [loading, setLoading] = useState(true);
+  const {
+    websites,
+    detailedScores,
+    loading,
+    refresh,
+    invalidateCache,
+    updateProjectScore
+  } = useProjectsCache(apiFetch);
+
   const [syncing, setSyncing] = useState(false);
   const [searchInput, setSearchInput] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -127,82 +134,44 @@ const DashboardPage = () => {
   // Single audit: track which project is currently being audited
   const [auditingProjectId, setAuditingProjectId] = useState(null);
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      // 1. Fetch user verified websites
-      const sitesRes = await apiFetch('/api/websites');
-      const websitesList = sitesRes.ok ? (sitesRes.data.websites || []) : [];
-      setWebsites(websitesList);
-
-      // 2. Fetch user audit history — fetch up to 100 to avoid missing recent audits
-      const historyRes = await apiFetch('/api/user/history?limit=100');
-      const historyList = historyRes.ok ? (historyRes.data.audits || []) : [];
-      setHistory(historyList);
-
-      // 3. For each website, find the most recent successful audit in history
-      // Normalize helper: strip protocol, www, trailing slash, and lowercase
-      const normalizeUrl = (u) =>
-        u.toLowerCase()
+  // Derive list of in-progress audits from detailedScores
+  const inProgressAudits = Object.entries(detailedScores)
+    .filter(([_, data]) => data.status === 'in_progress')
+    .map(([normUrl, data]) => {
+      const matchingProj = websites.find(w => {
+        const pNorm = w.url.toLowerCase()
           .replace(/^https?:\/\//, '')
           .replace(/^www\./, '')
           .replace(/\/$/, '');
-
-      // Build a map: normalizedUrl → reportId (most recent successful audit)
-      const uniqueUrlAudits = {};
-      historyList.forEach(audit => {
-        const hasReport = audit.reportId || audit._id;
-        if (audit.status === 'success' && hasReport) {
-          const normUrl = normalizeUrl(audit.url);
-          // Keep only the first (most recent, since sorted desc by createdAt)
-          if (!uniqueUrlAudits[normUrl]) {
-            uniqueUrlAudits[normUrl] = audit.reportId || audit._id;
-          }
-        }
+        return pNorm === normUrl;
       });
+      return {
+        auditId: data.auditId,
+        projectId: matchingProj?._id,
+        url: matchingProj?.url || normUrl
+      };
+    })
+    .filter(item => item.auditId);
 
-      // 4. Fetch detailed scores for each matched URL
-      const scoresMap = {};
-      await Promise.all(
-        Object.keys(uniqueUrlAudits).map(async (normUrl) => {
-          const reportId = uniqueUrlAudits[normUrl];
-          try {
-            const reportRes = await apiFetch(`/api/user/report/${reportId}`);
-            if (reportRes.ok && reportRes.data) {
-              const r = reportRes.data;
-              scoresMap[normUrl] = {
-                performance: r.technicalPerformance?.Percentage ?? Math.round(r.score) ?? 0,
-                seo: r.onPageSEO?.Percentage ?? Math.round(r.score) ?? 0,
-                accessibility: r.accessibility?.Percentage ?? Math.round(r.score) ?? 0,
-                security: r.securityOrCompliance?.Percentage ?? Math.round(r.score) ?? 0,
-                onPage: r.UXOrContentStructure?.Percentage ?? Math.round(r.score) ?? 0,
-                conversion: r.conversionAndLeadFlow?.Percentage ?? Math.round(r.score) ?? 0,
-                aiReadiness: r.aioReadiness?.Percentage ?? Math.round(r.score) ?? 0,
-                rating: r.grade || (r.score >= 90 ? "Excellent" : r.score >= 80 ? "Very Good" : r.score >= 70 ? "Good" : "Needs Improvement"),
-                auditId: r._id
-              };
-            }
-          } catch (e) {
-            console.error(`Failed to fetch report for ${normUrl}:`, e);
-          }
-        })
-      );
-      setDetailedScores(scoresMap);
-    } catch (err) {
-      console.error('Data fetch failed:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Wire smart audit polling
+  useAuditPolling(inProgressAudits, apiFetch, updateProjectScore);
 
   useEffect(() => {
-    fetchData();
+    // Invalidate cache if redirected from AddWebsitePage with invalidation state
+    if (location.state?.invalidateCache) {
+      invalidateCache();
+      refresh(true);
+      // Clean location state to avoid double invalidation on subsequent renders
+      navigate(location.pathname, { replace: true, state: {} });
+    } else {
+      refresh();
+    }
 
     // Auto GSC Sync on mount for Google Account users
     if (user?.authProvider === 'google' && user?.googleAccessToken) {
       handleSync();
     }
-  }, [apiFetch]);
+  }, [refresh, location.state]);
 
   // Auto-fill and auto-run audit from query parameters (e.g. from Audit History page)
   const isAutoAuditingRef = useRef(false);
@@ -245,7 +214,7 @@ const DashboardPage = () => {
           } else if (result?.id) {
             toast.success("Audit complete!");
             // Refresh dashboard data to update the card immediately!
-            await fetchData();
+            await refresh(true);
             // Navigate to the report
             navigate(`/report/${result.id}`);
           }
@@ -349,7 +318,8 @@ const DashboardPage = () => {
     const { ok, data } = await apiFetch('/api/websites/sync', { method: 'POST' });
     if (ok) {
       toast.success(data.message || 'Properties synchronized successfully');
-      setWebsites(data.websites || []);
+      invalidateCache();
+      refresh(true);
     } else {
       toast.error(data.message || 'Synchronization failed');
     }
@@ -362,7 +332,8 @@ const DashboardPage = () => {
     const { ok } = await apiFetch(`/api/websites/${id}`, { method: 'DELETE' });
     if (ok) {
       toast.success('Website removed');
-      fetchData();
+      invalidateCache();
+      refresh(true);
     } else {
       toast.error('Failed to remove website');
     }
@@ -407,10 +378,13 @@ const DashboardPage = () => {
 
     // Return exact scores synchronized from database audit logs if present
     if (detailedScores[normUrl]) {
-      return { ...detailedScores[normUrl], isAudited: true };
+      return {
+        ...detailedScores[normUrl],
+        isAudited: detailedScores[normUrl].status === 'completed'
+      };
     }
 
-    return { isAudited: false };
+    return { isAudited: false, status: 'not_started' };
   };
 
   // Helper for metric dot rating
@@ -1022,7 +996,7 @@ const DashboardPage = () => {
 
             {/* Manual Sync Button */}
             <button
-              onClick={fetchData}
+              onClick={() => refresh(true)}
               disabled={loading}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all duration-300 active:scale-[0.98] disabled:opacity-50"
               title="Force Sync with Backend"
@@ -1226,6 +1200,44 @@ const DashboardPage = () => {
                         Basic
                       </span>
 
+                      {/* Live Audit Status Badges */}
+                      {(scores.status === 'in_progress' || auditingProjectId === proj._id) && (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border bg-amber-500/10 text-amber-500 border-amber-500/20 shadow-sm">
+                          <RefreshCw size={10} className="animate-spin" />
+                          In Progress
+                        </span>
+                      )}
+                      {scores.status === 'completed' && (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-sm">
+                          <CheckCircle size={10} />
+                          Completed
+                        </span>
+                      )}
+                      {scores.status === 'failed' && (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border bg-rose-500/10 text-rose-500 border-rose-500/20 shadow-sm">
+                          <AlertCircle size={10} />
+                          Audit Failed
+                        </span>
+                      )}
+                      {scores.status === 'connection_lost' && (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border bg-slate-500/10 text-slate-500 border-slate-500/20 shadow-sm animate-pulse">
+                          <AlertCircle size={10} />
+                          Connection Lost
+                        </span>
+                      )}
+
+                      {/* View Report Button (Only shown next to Completed) */}
+                      {scores.status === 'completed' && (
+                        <button
+                          onClick={() => navigate(`/report/${scores.auditId}`)}
+                          className={`flex items-center gap-1 px-2.5 py-1 border rounded-lg text-[10px] font-black transition-all duration-300 ${darkMode ? 'bg-slate-800 border-slate-700 text-emerald-400 hover:bg-slate-700 hover:text-white' : 'bg-white border-slate-200 text-emerald-705 hover:bg-emerald-50 hover:border-emerald-200'}`}
+                          title="Open full report page"
+                        >
+                          <ExternalLink size={11} />
+                          <span>View Audit</span>
+                        </button>
+                      )}
+
                       <button
                         onClick={() => toast('Configure project sharing settings')}
                         className={`flex items-center gap-1.5 px-2.5 py-1 border rounded-lg text-[10px] font-black transition-all duration-300 ${darkMode ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-white' : 'bg-slate-50 border-slate-200/50 text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
@@ -1295,23 +1307,11 @@ const DashboardPage = () => {
                           </div>
                         )}
                       </div>
-
                     </div>
                   </div>
 
-                  {scores.isAudited ? (
-                    auditingProjectId === proj._id ? (
-                      <div className="flex flex-col sm:flex-row items-center justify-between p-6 mt-4 rounded-2xl border border-dashed border-emerald-500/30 bg-emerald-500/5 animate-pulse">
-                        <div className="flex items-center gap-4">
-                          <RefreshCw size={24} className="animate-spin text-emerald-500" />
-                          <div className="text-left">
-                            <h4 className={`text-sm font-extrabold transition-colors duration-300 ${darkMode ? 'text-white' : 'text-slate-800'}`}>Auditing in progress...</h4>
-                            <p className={`text-[11px] font-semibold mt-0.5 leading-relaxed transition-colors duration-300 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Re-scanned audit metrics are being compiled by the analysis engine. Please wait.</p>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-4 pt-5 animate-in fade-in duration-300">
+                    {scores.status === 'completed' ? (
+                    <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-4 pt-5 animate-in fade-in duration-300">
 
                       {/* Metric 1: Performance */}
                       <button
@@ -1419,7 +1419,50 @@ const DashboardPage = () => {
                       </button>
 
                     </div>
-                  )
+                  ) : (scores.status === 'in_progress' || auditingProjectId === proj._id) ? (
+                    <div className="flex flex-col sm:flex-row items-center justify-between p-6 mt-4 rounded-2xl border border-dashed border-amber-500/30 bg-amber-500/5 animate-pulse">
+                      <div className="flex items-center gap-4">
+                        <RefreshCw size={24} className="animate-spin text-amber-500" />
+                        <div className="text-left">
+                          <h4 className={`text-sm font-extrabold transition-colors duration-300 ${darkMode ? 'text-white' : 'text-slate-800'}`}>Auditing in progress...</h4>
+                          <p className={`text-[11px] font-semibold mt-0.5 leading-relaxed transition-colors duration-300 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Re-scanned audit metrics are being compiled by the analysis engine. Please wait.</p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : scores.status === 'failed' ? (
+                    <div className={`mt-5 p-5 rounded-2xl border flex flex-col gap-4 transition-all duration-300 bg-rose-500/5 border-rose-500/20`}>
+                      {/* Info Row */}
+                      <div className="flex items-center gap-3.5">
+                        <div className={`p-3 rounded-xl flex items-center justify-center shrink-0 bg-rose-500/10`}>
+                          <AlertCircle size={20} className="text-rose-500" />
+                        </div>
+                        <div className="text-left">
+                          <h4 className={`text-[13px] font-extrabold transition-colors duration-300 ${darkMode ? 'text-white' : 'text-slate-800'}`}>Audit Failed</h4>
+                          <p className={`text-[11px] font-semibold mt-0.5 leading-relaxed transition-colors duration-300 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>The crawler or analysis engine encountered an error. Click below to try running it again.</p>
+                        </div>
+                      </div>
+
+                      {/* Action Buttons Row */}
+                      <div className={`flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1 border-t border-rose-500/10`}>
+                        <button
+                          onClick={() => handleSingleAudit(proj._id, proj.url)}
+                          className={`flex items-center justify-center gap-2 flex-1 px-4 py-2.5 rounded-xl text-xs font-bold transition-all duration-300 active:scale-[0.98] border ${darkMode ? 'bg-slate-800 border-slate-700 text-rose-455 hover:bg-slate-700 hover:border-rose-700/50' : 'bg-white border-slate-200 text-rose-700 hover:bg-rose-50 hover:border-rose-200'}`}
+                        >
+                          <Zap size={13} className="text-rose-500" />
+                          <div className="text-left font-extrabold">Re-Run Audit</div>
+                        </button>
+                      </div>
+                    </div>
+                  ) : scores.status === 'connection_lost' ? (
+                    <div className="flex flex-col sm:flex-row items-center justify-between p-6 mt-4 rounded-2xl border border-dashed border-slate-500/30 bg-slate-500/5 animate-pulse">
+                      <div className="flex items-center gap-4">
+                        <AlertCircle size={24} className="text-slate-500 animate-bounce" />
+                        <div className="text-left">
+                          <h4 className={`text-sm font-extrabold transition-colors duration-300 ${darkMode ? 'text-white' : 'text-slate-800'}`}>Connection Lost</h4>
+                          <p className={`text-[11px] font-semibold mt-0.5 leading-relaxed transition-colors duration-300 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Network error during status check. Retrying to connect in 5 seconds...</p>
+                        </div>
+                      </div>
+                    </div>
                   ) : (
                     <div className={`mt-5 p-5 rounded-2xl border flex flex-col gap-4 transition-all duration-300 ${darkMode ? 'bg-slate-800/20 border-slate-800/40' : 'bg-slate-50 border-slate-200/60'}`}>
                       {/* Info Row */}
@@ -1439,12 +1482,12 @@ const DashboardPage = () => {
                         <button
                           onClick={() => handleSingleAudit(proj._id, proj.url)}
                           disabled={!!auditingProjectId}
-                          className={`flex items-center justify-center gap-2 flex-1 px-4 py-2.5 rounded-xl text-xs font-bold transition-all duration-300 active:scale-[0.98] border disabled:opacity-60 disabled:cursor-wait ${darkMode ? 'bg-slate-800 border-slate-700 text-emerald-400 hover:bg-slate-700 hover:border-emerald-700/50' : 'bg-white border-slate-200 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-200'}`}
+                          className={`flex items-center justify-center gap-2 flex-1 px-4 py-2.5 rounded-xl text-xs font-bold transition-all duration-300 active:scale-[0.98] border disabled:opacity-60 disabled:cursor-wait ${darkMode ? 'bg-slate-800 border-slate-700 text-emerald-400 hover:bg-slate-700 hover:border-emerald-700/50' : 'bg-white border-slate-200 text-emerald-705 hover:bg-emerald-50 hover:border-emerald-200'}`}
                         >
                           {auditingProjectId === proj._id ? (
                             <RefreshCw size={13} className="animate-spin" />
                           ) : (
-                            <Zap size={13} className={darkMode ? 'text-emerald-400' : 'text-emerald-600'} />
+                            <Zap size={13} className={darkMode ? 'text-emerald-400' : 'text-emerald-650'} />
                           )}
                           <div className="text-left">
                             <div className="font-extrabold">

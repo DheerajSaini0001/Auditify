@@ -18,12 +18,8 @@ import LivePreview from "./LivePreview";
 import UrlHeader from "./UrlHeader";
 import { useData } from "../context/DataContext";
 
-// ✅ Custom Shimmer (Modernized)
-// ✅ Custom Shimmer (Modernized) - Removed as we are replacing it with rotating content
-// const ShimmerBlock = ... 
-
-export default function Dashboard2({ darkMode }) {
-  const { data, loading, clearData } = useData();
+// Presentational component wrapped in React.memo
+const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, clearData, darkMode }) {
   const navigate = useNavigate();
 
   const sectionMappings = useMemo(() => [
@@ -37,7 +33,6 @@ export default function Dashboard2({ darkMode }) {
   ], []);
 
   // Rotating Audit Steps (Process for all 7 Metrics)
-
   const auditSteps = useMemo(() => [
     {
       icon: <Server className="w-8 h-8 text-blue-500" />,
@@ -108,11 +103,6 @@ export default function Dashboard2({ darkMode }) {
     value: data?.[section.key]?.Percentage || 0,
     Link: section.link,
   })), [data, sectionMappings]);
-
-  const handleCheckOther = () => {
-    clearData();
-    navigate("/", { replace: true });
-  };
 
   // Styles
   const bgClass = darkMode ? "bg-[#0B1120] text-slate-300" : "bg-slate-50 text-slate-600";
@@ -347,4 +337,14 @@ export default function Dashboard2({ darkMode }) {
       </div>
     </div >
   );
+});
+
+export default function Dashboard2({ data: propData, loading: propLoading, clearData: propClearData, darkMode }) {
+  const contextData = useData();
+
+  const data = propData !== undefined ? propData : contextData.data;
+  const loading = propLoading !== undefined ? propLoading : contextData.loading;
+  const clearData = propClearData !== undefined ? propClearData : contextData.clearData;
+
+  return <Dashboard2_Inner data={data} loading={loading} clearData={clearData} darkMode={darkMode} />;
 }

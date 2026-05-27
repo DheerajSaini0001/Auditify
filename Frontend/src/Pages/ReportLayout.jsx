@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from "react";
+import React, { useContext, useEffect, useMemo } from "react";
 import { useData } from "../context/DataContext";
 import { ThemeContext } from "../context/ThemeContext";
 import Dashboard2 from "../Component/Dashboard2";
@@ -17,13 +17,14 @@ import { Loader2 } from "lucide-react";
 import ReportRestrictionWrapper from "../Component/ReportRestrictionWrapper.jsx";
 
 const ReportLayout = () => {
-  const { data, clearData, fetchSingleReport, fetchBulkPageReport } = useData();
+  const { data, clearData, fetchSingleReport, fetchBulkPageReport, pollingState } = useData();
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
   const navigate = useNavigate();
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const [isFetching, setIsFetching] = React.useState(false);
+  const [isReloading, setIsReloading] = React.useState(false);
 
   useEffect(() => {
     const bulkId = searchParams.get("bulkId");
@@ -78,6 +79,17 @@ const ReportLayout = () => {
     }
   }, [data, isFetching, navigate, id, searchParams]);
 
+  const handleRefresh = async () => {
+    if (!id) return;
+    setIsReloading(true);
+    await fetchSingleReport(id);
+    setIsReloading(false);
+  };
+
+  // Derived loading state checks
+  const stableData = data;
+  const stableLoading = isFetching || isReloading;
+
   if (isFetching) {
     return (
       <div className={`flex h-screen w-full items-center justify-center ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}>
@@ -91,8 +103,6 @@ const ReportLayout = () => {
     return null;
   }
 
-
-  // ✅ Responsive Error State
   // ✅ Responsive Error State
   if (data.status === "failed") {
     return (
@@ -112,18 +122,19 @@ const ReportLayout = () => {
 
   return (
     <div className={`w-full ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}>
+      
       {/* =================================================
           SCENARIO 1: DASHBOARD VIEW ("All")
       ================================================== */}
       {data && data.report === "All" && (
         <div className="flex flex-col w-full space-y-0">
           <section id="dashboard" className="scroll-mt-24">
-            <Dashboard2 darkMode={darkMode} />
+            <Dashboard2 darkMode={darkMode} data={stableData} loading={stableLoading} />
           </section>
 
           <section id="rawdata" className="scroll-mt-24">
             <ReportRestrictionWrapper>
-              <RawData darkMode={darkMode} data={data} />
+              <RawData darkMode={darkMode} data={stableData} />
             </ReportRestrictionWrapper>
           </section>
         </div>
@@ -142,25 +153,25 @@ const ReportLayout = () => {
             {/* Report Components */}
             <div className="w-full">
               {data.report === "Technical Performance" && (
-                <Technical_Performance darkMode={darkMode} />
+                <Technical_Performance darkMode={darkMode} data={stableData} loading={stableLoading} />
               )}
               {data.report === "On Page SEO" && (
-                <On_Page_SEO darkMode={darkMode} />
+                <On_Page_SEO darkMode={darkMode} data={stableData} loading={stableLoading} />
               )}
               {data.report === "Accessibility" && (
-                <Accessibility darkMode={darkMode} />
+                <Accessibility darkMode={darkMode} data={stableData} loading={stableLoading} />
               )}
               {data.report === "Security/Compliance" && (
-                <Security_Compilance darkMode={darkMode} />
+                <Security_Compilance darkMode={darkMode} data={stableData} loading={stableLoading} />
               )}
               {data.report === "UX & Content Structure" && (
-                <UX_Content_Structure darkMode={darkMode} />
+                <UX_Content_Structure darkMode={darkMode} data={stableData} loading={stableLoading} />
               )}
               {data.report === "Conversion & Lead Flow" && (
-                <Conversion_Lead_Flow darkMode={darkMode} />
+                <Conversion_Lead_Flow darkMode={darkMode} data={stableData} loading={stableLoading} />
               )}
               {data.report === "AIO (AI-Optimization) Readiness" && (
-                <AIO darkMode={darkMode} />
+                <AIO darkMode={darkMode} data={stableData} loading={stableLoading} />
               )}
             </div>
           </main>

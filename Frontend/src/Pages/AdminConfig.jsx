@@ -118,16 +118,7 @@ const AdminConfig = () => {
             <span>Projects</span>
           </button>
 
-          <button
-            onClick={() => toast('Portfolios are unlocked in Advanced premium tier!')}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-505 hover:text-slate-800 hover:bg-slate-50'}`}
-          >
-            <div className="flex items-center gap-3">
-              <Activity size={16} />
-              <span>Portfolios</span>
-            </div>
-            <Lock size={12} className="opacity-40" />
-          </button>
+         
 
           <button
             onClick={() => navigate("/audit-history")}
@@ -137,16 +128,7 @@ const AdminConfig = () => {
             <span>Report History</span>
           </button>
 
-          <button
-            onClick={() => toast('Keyword Rank Tracker is unlocking soon!')}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-505 hover:text-slate-800 hover:bg-slate-50'}`}
-          >
-            <div className="flex items-center gap-3">
-              <History size={16} />
-              <span>Keyword Lists</span>
-            </div>
-            <Lock size={12} className="opacity-40" />
-          </button>
+          
 
           <button
             onClick={() => toast('Feature Starred Projects coming soon!')}

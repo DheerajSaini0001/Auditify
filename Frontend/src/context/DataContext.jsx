@@ -1,5 +1,6 @@
 import { createContext, useState, useContext, useEffect, useCallback } from "react";
 import api from "../utils/api";
+import toast from "react-hot-toast";
 
 const DataContext = createContext();
 export const useData = () => useContext(DataContext);
@@ -9,6 +10,9 @@ export const DataProvider = ({ children }) => {
   // ⭐ DATA STATE (Persist in LocalStorage to handle refresh)
   // ⭐ DATA STATE
   const [data, setData] = useState(null);
+  
+  // 🔄 ISOLATED POLLING STATE
+  const [pollingState, setPollingState] = useState({}); // { [auditId]: "inprogress" | "completed" | "failed" }
 
   // 🤖 AI CHAT OVERLAY STATE
   const [isAiChatOpen, setIsAiChatOpen] = useState(false);
@@ -113,6 +117,17 @@ export const DataProvider = ({ children }) => {
       setData(auditData);
 
       if (auditData.status !== "completed") {
+        // Trigger parallel, non-blocking screenshot capture
+        const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
+        fetch(`${API_URL}/api/screenshot`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token && { "Authorization": `Bearer ${token}` })
+          },
+          body: JSON.stringify({ url: auditData.url, auditId: auditData._id })
+        }).catch(err => console.error("Error triggering screenshot in parallel:", err));
+
         startLiveFetch(auditData._id);
       }
 
@@ -126,36 +141,37 @@ export const DataProvider = ({ children }) => {
     }
   };
 
-  // 🔄 LIVE UPDATES
+  // 🔄 LIVE UPDATES (Status-Only)
   const startLiveFetch = (id) => {
     if (intervalId) clearInterval(intervalId);
 
+    setPollingState(prev => ({ ...prev, [id]: "inprogress" }));
+
     const newInterval = setInterval(async () => {
       try {
-        const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
-        const res = await fetch(`${API_URL}/single-audit/${id}`, { credentials: 'include' });
+        const result = await fetchSingleReport(id);
 
-        // Stop polling if data is lost/deleted (404)
-        if (res.status === 404) {
-          clearInterval(newInterval);
-          setIntervalId(null);
-          setData(null); // Triggers redirect in ReportLayout
-          return;
-        }
+        if (result && result.success && result.data) {
+          const newStatus = result.data.status;
+          setPollingState(prev => ({ ...prev, [id]: newStatus }));
 
-        // For live poll, we just silently fail/ignore errors mostly, but we should parse safely
-        if (res.ok) {
-          const updated = await res.json();
-          if (updated.status === "completed") {
+          if (newStatus === "completed" || newStatus === "failed") {
             clearInterval(newInterval);
             setIntervalId(null);
+
+            if (newStatus === "completed") {
+              toast.success("Audit complete!");
+            } else if (newStatus === "failed") {
+              toast.error("Audit run failed.");
+            }
           }
-          setData(updated);
-          if (updated._id) {
-            safeLocalStorageSet(`dealerpulse_audit_${updated._id}`, JSON.stringify(updated));
-          }
+        } else {
+          clearInterval(newInterval);
+          setIntervalId(null);
         }
-      } catch { }
+      } catch (err) {
+        console.error("Error polling audit:", err);
+      }
     }, 3000);
 
     setIntervalId(newInterval);
@@ -343,7 +359,8 @@ export const DataProvider = ({ children }) => {
     <DataContext.Provider
       value={{ 
         data, setData, loading, fetchData, clearData, discoverUrls, startBulkAudit, autoBulkAudit, getBulkAuditStatus, fetchSingleReport, getAuditById, fetchBulkPageReport,
-        isAiChatOpen, setIsAiChatOpen, aiChatContext, setAiChatContext
+        isAiChatOpen, setIsAiChatOpen, aiChatContext, setAiChatContext,
+        pollingState, setPollingState
       }}
     >
       {children}

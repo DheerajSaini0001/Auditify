@@ -1,5 +1,5 @@
 import express from "express";
-import { startAudit, getReportById } from "../controllers/singleAuditController.js";
+import { startAudit, getReportById, getReportStatusById } from "../controllers/singleAuditController.js";
 import { generatePDFReport } from "../controllers/pdfController.js";
 import rateLimit from "express-rate-limit";
 import captchaValidator from "../middleware/captchaValidator.js";
@@ -22,6 +22,9 @@ router.post("/audit", auditLimiter, tryAuthenticate, captchaValidator, startAudi
 router.get("/:id/export/pdf", verifyToken, generatePDFReport);
 
 // Get Single Audit Status
+router.get("/:singleAuditId/status", tryAuthenticate, getReportStatusById);
+
+// Get Single Audit Details
 router.get("/:singleAuditId", tryAuthenticate, getReportById);
 
 export default router;

@@ -6,8 +6,18 @@ const LivePreview = ({ data, showInFullAudit = true, variant = "card" }) => {
     const { theme } = useContext(ThemeContext);
     const darkMode = theme === "dark";
 
-    // Use strictly data.Screenshot (base64) as per user instruction
-    const screenshotSrc = data?.screenshot ? `data:image/jpeg;base64,${data.screenshot}` : null;
+    // Use data.screenshot (base64) OR data.screenshotUrl OR saved url
+    let screenshotSrc = null;
+    if (data?.screenshot) {
+        if (data.screenshot.startsWith("http://") || data.screenshot.startsWith("https://") || data.screenshot.startsWith("data:")) {
+            screenshotSrc = data.screenshot;
+        } else {
+            screenshotSrc = `data:image/jpeg;base64,${data.screenshot}`;
+        }
+    } else if (data?.screenshotUrl) {
+        const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
+        screenshotSrc = data.screenshotUrl.startsWith("http") ? data.screenshotUrl : `${API_URL}${data.screenshotUrl}`;
+    }
 
     // Logic to hide if in Full Audit mode and explicitly told to hide
     const isFullAudit = data?.report === "All";

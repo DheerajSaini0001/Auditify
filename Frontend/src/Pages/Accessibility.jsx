@@ -381,12 +381,9 @@ const Section = ({ title, icon: Icon, children, darkMode }) => (
 );
 
 // Accessibility Dashboard
-export default function Accessibility() {
-  const { theme } = useContext(ThemeContext);
-  const { data, loading } = useData();
+const Accessibility_Inner = React.memo(function Accessibility_Inner({ data, loading, darkMode }) {
   const [selectedMetricInfo, setSelectedMetricInfo] = React.useState(null);
   const [selectedParameterInfo, setSelectedParameterInfo] = React.useState(null);
-  const darkMode = theme === "dark";
 
   const auditSteps = useMemo(() => [
     { icon: <Eye className="w-8 h-8 text-blue-500" />, title: "Visual & Media Analysis", text: "Checking Color Contrast, Image Alt Text, and Viewport scaling..." },
@@ -403,7 +400,6 @@ export default function Accessibility() {
       return () => clearInterval(interval);
     }
   }, [loading, data, auditSteps.length]);
-
 
   const metric = data?.accessibility || {};
 
@@ -425,7 +421,8 @@ export default function Accessibility() {
 
           {/* ✅ Card 2: Overview / Preview Card */}
           <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
-            <div className="flex flex-col xl:flex-row min-h-[300px]">
+            <div className={`flex flex-col xl:flex-row ${data?.report === "All" ? "" : "min-h-[300px]"}`}>
+              {/* Left Panel: Live Preview (Only if not All) */}
               {data?.report !== "All" && (
                 <div className={`w-full xl:w-[45%] p-3 lg:p-4 flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/5 blur-3xl rounded-full pointer-events-none"></div>
@@ -434,11 +431,9 @@ export default function Accessibility() {
                   </div>
                 </div>
               )}
-
-              <div className="flex-1 flex items-center justify-center">
-                <div className="w-full">
-                  <AccessibilityShimmer darkMode={darkMode} steps={auditSteps} currentStep={activeStep} />
-                </div>
+              {/* Right Panel: Shimmer */}
+              <div className="flex-1 flex flex-col justify-center">
+                <AccessibilityShimmer darkMode={darkMode} steps={auditSteps} currentStep={activeStep} />
               </div>
             </div>
           </div>
@@ -471,16 +466,18 @@ export default function Accessibility() {
         {/* ✅ Card 2: Overview / Preview Card */}
         <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
           {loading || !data?.accessibility ? (
-            <div className="flex flex-col xl:flex-row min-h-[300px]">
-              {data.report !== "All" && (
-                <div className={`w-full xl:w-[45%] p-6 flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/30 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
+            <div className={`flex flex-col xl:flex-row ${data?.report === "All" ? "" : "min-h-[300px]"}`}>
+              {/* Left Panel: Live Preview (Only if not All) */}
+              {data?.report !== "All" && (
+                <div className={`w-full xl:w-[45%] p-3 lg:p-4 flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/5 blur-3xl rounded-full pointer-events-none"></div>
-                  <div className="w-full relative z-10 px-2 lg:px-6">
+                  <div className="w-full relative z-10">
                     <LivePreview data={data} loading={loading} variant="plain" />
                   </div>
                 </div>
               )}
-              <div className="flex-1 flex items-center justify-center">
+              {/* Right Panel: Shimmer */}
+              <div className="flex-1 flex flex-col justify-center">
                 <AccessibilityShimmer darkMode={darkMode} steps={auditSteps} currentStep={activeStep} />
               </div>
             </div>
@@ -589,4 +586,15 @@ export default function Accessibility() {
       <ParameterInfoModal isOpen={!!selectedParameterInfo} onClose={() => setSelectedParameterInfo(null)} info={selectedParameterInfo} darkMode={darkMode} />
     </div>
   );
+});
+
+export default function Accessibility({ data: propData, loading: propLoading, darkMode: propDarkMode }) {
+  const contextData = useData();
+  const { theme } = useContext(ThemeContext);
+
+  const data = propData !== undefined ? propData : contextData.data;
+  const loading = propLoading !== undefined ? propLoading : contextData.loading;
+  const darkMode = propDarkMode !== undefined ? propDarkMode : (theme === "dark");
+
+  return <Accessibility_Inner data={data} loading={loading} darkMode={darkMode} />;
 }

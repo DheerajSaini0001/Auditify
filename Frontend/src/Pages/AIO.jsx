@@ -539,9 +539,7 @@ const Section = ({ title, icon: Icon, children, darkMode }) => (
   </div>
 );
 
-export default function AIO() {
-  const { theme } = useContext(ThemeContext);
-  const { data, loading } = useData();
+const AIO_Inner = React.memo(({ data, loading, darkMode }) => {
   const aio = data?.aioReadiness || {};
   const aeo = data?.aeo || {};
   
@@ -558,7 +556,6 @@ export default function AIO() {
 
   const [selectedMetricInfo, setSelectedMetricInfo] = React.useState(null);
   const [selectedParameterInfo, setSelectedParameterInfo] = React.useState(null);
-  const darkMode = theme === "dark";
 
   const auditSteps = useMemo(() => [
     { icon: <Database className="w-8 h-8 text-blue-500" />, title: "Structured Data", text: "Analyzing JSON-LD Schema markup and rich snippets eligibility..." },
@@ -597,7 +594,7 @@ export default function AIO() {
 
           {/* ✅ Card 2: Overview / Preview Card */}
           <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-indigo-50/50 via-purple-50/30 to-slate-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
-            <div className="flex flex-col xl:flex-row min-h-[300px]">
+            <div className={`flex flex-col xl:flex-row ${data?.report === "All" ? "" : "min-h-[300px]"}`}>
               {/* Left Panel: Live Preview (Only if not All) */}
               {data?.report !== "All" && (
                 <div className={`w-full xl:w-[45%] p-3 lg:p-4 flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
@@ -607,12 +604,9 @@ export default function AIO() {
                   </div>
                 </div>
               )}
-
-              {/* Right/Full Panel: Audit Steps */}
-              <div className="flex-1 flex items-center justify-center">
-                <div className="w-full">
-                  <AIOShimmer darkMode={darkMode} steps={auditSteps} currentStep={activeStep} />
-                </div>
+              {/* Right Panel: Shimmer */}
+              <div className="flex-1 flex flex-col justify-center">
+                <AIOShimmer darkMode={darkMode} steps={auditSteps} currentStep={activeStep} />
               </div>
             </div>
           </div>
@@ -622,7 +616,6 @@ export default function AIO() {
   }
 
   const mainBg = darkMode ? "bg-gray-900" : "bg-gray-50";
-  const textColor = darkMode ? "text-white" : "text-gray-900";
 
   const allMetrics = Object.values(aio).filter(val => typeof val === 'object' && val !== null && 'score' in val);
   const passedCount = allMetrics.filter(m => m.status === "pass").length;
@@ -745,6 +738,7 @@ export default function AIO() {
 
               </div>
             </div>
+
           </div>
         </div>
 
@@ -807,4 +801,15 @@ export default function AIO() {
       />
     </div>
   );
+});
+
+export default function AIO({ data: propData, loading: propLoading, darkMode: propDarkMode }) {
+  const contextData = useData();
+  const { theme } = useContext(ThemeContext);
+
+  const data = propData !== undefined ? propData : contextData.data;
+  const loading = propLoading !== undefined ? propLoading : contextData.loading;
+  const darkMode = propDarkMode !== undefined ? propDarkMode : (theme === "dark");
+
+  return <AIO_Inner data={data} loading={loading} darkMode={darkMode} />;
 }

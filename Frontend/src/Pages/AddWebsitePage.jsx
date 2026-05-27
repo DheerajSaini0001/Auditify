@@ -27,7 +27,7 @@ const AddWebsitePage = () => {
 
       if (ok) {
         toast.success(data.message || 'Website added successfully!');
-        navigate('/dashboard');
+        navigate('/dashboard', { state: { invalidateCache: true } });
       } else {
         toast.error(data.message || 'Failed to add website');
       }

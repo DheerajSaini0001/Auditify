@@ -3,6 +3,7 @@ import { join } from "path";
 import SingleAuditReport from "../models/singleAuditReport.js";
 import AuditLog from "../models/AuditLog.js";
 import ActivityLog from "../models/ActivityLog.js";
+import Puppeteer_Cheerio from "../utils/puppeteer_cheerio.js";
  
 const reportFieldMap = {
   "Technical Performance": "technicalPerformance",
@@ -369,5 +370,106 @@ export const getReportById = async (req, res) => {
   } catch (error) {
     console.error("Error fetching report:", error);
     res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const getReportStatusById = async (req, res) => {
+  try {
+    const query = { _id: req.params.singleAuditId };
+    
+    // Non-admins can only see their own reports
+    if (req.user && req.user.role !== 'admin' && req.user.role !== 'super_admin') {
+      query.userId = req.user.userId;
+    }
+
+    // Highly optimized status-only projection
+    const report = await SingleAuditReport.findOne(query).select("_id status");
+    if (!report) {
+      return res.status(404).json({ message: "Report not found or access denied" });
+    }
+    res.status(200).json({ _id: report._id, status: report.status });
+  } catch (error) {
+    console.error("Error fetching report status:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const captureScreenshot = async (req, res) => {
+  try {
+    const { url, auditId } = req.body;
+    if (!url || !auditId) {
+      return res.status(400).json({ error: "Missing url or auditId" });
+    }
+
+    const report = await SingleAuditReport.findById(auditId);
+    if (!report) {
+      return res.status(404).json({ error: "Audit report not found" });
+    }
+
+    const device = report.device || "Desktop";
+
+    console.log(`📸 Taking parallel screenshot for ${url} on ${device}...`);
+    let result;
+    try {
+      result = await Puppeteer_Cheerio(url, device);
+    } catch (scrapingError) {
+      console.error("Puppeteer capture failed:", scrapingError);
+      await SingleAuditReport.findByIdAndUpdate(auditId, {
+        screenshot: null,
+        screenshotUrl: null
+      });
+      return res.status(200).json({ screenshotUrl: null, error: "timeout" });
+    }
+
+    const { screenshot, isBotProtected, browser } = result;
+
+    if (browser) {
+      try { await browser.close(); } catch (_) {}
+    }
+
+    if (!screenshot) {
+      console.warn("Screenshot capture returned empty.");
+      await SingleAuditReport.findByIdAndUpdate(auditId, {
+        screenshot: null,
+        screenshotUrl: null,
+        isBotProtected: isBotProtected || false
+      });
+      return res.status(200).json({ screenshotUrl: null, error: "empty" });
+    }
+
+    // Dynamic self-hosted URL
+    const screenshotUrl = `/api/screenshot/view/${auditId}`;
+
+    await SingleAuditReport.findByIdAndUpdate(auditId, {
+      screenshot,
+      screenshotUrl,
+      isBotProtected: isBotProtected || false
+    });
+
+    console.log(`📸 Screenshot captured successfully and saved for ${url}`);
+    return res.status(200).json({ screenshotUrl });
+
+  } catch (error) {
+    console.error("Screenshot Endpoint Error:", error);
+    return res.status(200).json({ screenshotUrl: null, error: error.message });
+  }
+};
+
+export const getScreenshotImage = async (req, res) => {
+  try {
+    const report = await SingleAuditReport.findById(req.params.auditId).select("screenshot");
+    if (!report || !report.screenshot) {
+      return res.status(404).send("Screenshot not found");
+    }
+    const imgBuffer = Buffer.from(report.screenshot, "base64");
+    res.writeHead(200, {
+      "Content-Type": "image/jpeg",
+      "Content-Length": imgBuffer.length,
+      "Cache-Control": "public, max-age=86400"
+    });
+    res.end(imgBuffer);
+  } catch (err) {
+    console.error("Error serving screenshot:", err);
+    res.status(500).send("Internal Server Error");
   }
 };

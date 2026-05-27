@@ -96,3 +96,6 @@ Thumbs.db
 *.swp
 *.swo
 chrome-cache/
+sessions/
+bypass_screenshot.jpg
+

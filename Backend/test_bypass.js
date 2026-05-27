@@ -1,7 +1,7 @@
 import Puppeteer_Cheerio from './utils/puppeteer_cheerio.js';
 
 async function test() {
-  const url = 'https://www.fusz.com/';
+  const url = 'https://www.rontonkinkia.com/';
   console.log(`Starting test for ${url}...`);
   try {
     const result = await Puppeteer_Cheerio(url);

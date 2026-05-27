@@ -2,6 +2,8 @@ import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import * as cheerio from "cheerio";
 import SingleAuditReport from "../models/singleAuditReport.js";
+import fs from "fs";
+import path from "path";
 
 // Use stealth plugin to evade common bot detection techniques
 // [EXISTING STEALTH CONFIG — DO NOT MODIFY]
@@ -114,6 +116,72 @@ const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
 /** Async delay */
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/** Random delay between min and max ms */
+const randomDelay = (min = 10000, max = 30000) => delay(randInt(min, max));
+
+/** Simulate human mouse movement to coordinates */
+async function humanMove(page, x, y) {
+  try {
+    if (!page || page.isClosed()) return;
+    await page.mouse.move(x, y, { steps: randInt(15, 30) });
+    await randomDelay(100, 300);
+  } catch (e) {
+    if (!isDetachedFrameError(e)) logger.warn(`[Human Behavior] mouse.move failed: ${e.message}`);
+  }
+}
+
+/** Simulate human typing */
+async function humanType(page, selector, text) {
+  try {
+    if (!page || page.isClosed()) return;
+    await page.click(selector);
+    for (const char of text) {
+      if (page.isClosed()) break;
+      await page.keyboard.type(char, { delay: randInt(40, 160) });
+    }
+  } catch (e) {
+    if (!isDetachedFrameError(e)) logger.warn(`[Human Behavior] typing failed: ${e.message}`);
+  }
+}
+
+/** Load cookies from local session file */
+async function loadCookies(page, host) {
+  try {
+    const sessionDir = path.join(process.cwd(), 'sessions');
+    const cookiePath = path.join(sessionDir, `${host}_cookies.json`);
+    if (fs.existsSync(cookiePath)) {
+      const fileContent = fs.readFileSync(cookiePath, 'utf8');
+      if (fileContent && fileContent.trim()) {
+        const cookies = JSON.parse(fileContent);
+        if (Array.isArray(cookies) && cookies.length > 0) {
+          await page.setCookie(...cookies);
+          logger.debug(`[Cookies] Loaded ${cookies.length} cookies for ${host}`);
+        }
+      }
+    }
+  } catch (e) {
+    logger.warn(`[Cookies] Failed to load cookies for ${host}: ${e.message}`);
+  }
+}
+
+/** Save cookies to local session file */
+async function saveCookies(page, host) {
+  try {
+    if (!page || page.isClosed()) return;
+    const cookies = await page.cookies();
+    if (!cookies || cookies.length === 0) return;
+    const sessionDir = path.join(process.cwd(), 'sessions');
+    if (!fs.existsSync(sessionDir)) {
+      fs.mkdirSync(sessionDir, { recursive: true });
+    }
+    const cookiePath = path.join(sessionDir, `${host}_cookies.json`);
+    fs.writeFileSync(cookiePath, JSON.stringify(cookies, null, 2), 'utf8');
+    logger.debug(`[Cookies] Saved ${cookies.length} cookies for ${host}`);
+  } catch (e) {
+    logger.warn(`[Cookies] Failed to save cookies for ${host}: ${e.message}`);
+  }
+}
 
 // [FIX] — autoScroll wrapped with detached frame protection
 async function autoScroll(page) {
@@ -459,15 +527,8 @@ export async function waitForChallengeResolution(page, timeout = 30000) {
       }
     }
 
-    // [FIX] — wrapped mouse.move with detached frame protection
-    try {
-      if (!page.isClosed()) {
-        await page.mouse.move(randInt(100, 800), randInt(100, 600), { steps: randInt(5, 15) });
-      }
-    } catch (e) {
-      if (!isDetachedFrameError(e)) throw e;
-      logger.debug('[Frame] mouse.move skipped in challenge loop — frame detached');
-    }
+    // Simulate realistic human mouse movements when challenges are pending
+    await humanMove(page, randInt(100, 800), randInt(100, 600));
 
     await delay(randInt(2000, 4000));
   }
@@ -488,11 +549,21 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', auditId
   };
 
   try {
+    // Support config overrides via environment variables for maximum flexibility
+    const headlessMode = process.env.PUPPETEER_HEADLESS !== undefined
+      ? (process.env.PUPPETEER_HEADLESS === 'true' ? true : (process.env.PUPPETEER_HEADLESS === 'false' ? false : process.env.PUPPETEER_HEADLESS))
+      : 'new'; // 'new' is highly stealthy, headless: true is fallback
+
+    const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || undefined;
+    const userDataDir = process.env.PUPPETEER_USER_DATA_DIR || undefined;
+
     // [EXISTING STEALTH CONFIG — DO NOT MODIFY]
     // [EXISTING PUPPETEER LAUNCH OPTIONS — DO NOT MODIFY]
     const launchOptions = {
-      headless: true,
+      headless: headlessMode,
       defaultViewport: null,
+      executablePath,
+      userDataDir,
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
@@ -506,8 +577,11 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', auditId
         "--window-size=1920,1080",
         "--ignore-certificate-errors",
         "--no-zygote",
-        "--single-process"
-      ]
+        "--single-process",
+        "--disable-infobars",
+        "--no-first-run"
+      ],
+      ignoreDefaultArgs: ["--enable-automation"] // removes "Chrome is controlled by automation" banner
     };
 
     await updateStatus("launching");
@@ -539,13 +613,32 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', auditId
       logger.debug('[Frame] Frame detached:', frameUrl);
     });
 
+    const platformToSpoof = device === "Mobile" ? "Linux armv8l" : "Win32";
+
     // [EXISTING STEALTH CONFIG — DO NOT MODIFY]
-    await page.evaluateOnNewDocument(() => {
-      Object.defineProperty(navigator, 'webdriver', { get: () => false });
-      Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
+    await page.evaluateOnNewDocument((plat) => {
+      // Overwrite navigator properties with a clean spoof
+      Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
       Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
+      Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
+      Object.defineProperty(navigator, 'platform', { get: () => plat });
       Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => 8 });
-    });
+
+      // Emulate chrome runtime object
+      window.chrome = {
+        runtime: {},
+        loadTimes: function() {},
+        csi: function() {},
+        app: {},
+      };
+
+      // Mock permissions API for notification state querying
+      const originalQuery = window.navigator.permissions.query;
+      window.navigator.permissions.query = (parameters) =>
+        parameters.name === 'notifications'
+          ? Promise.resolve({ state: Notification.permission })
+          : originalQuery(parameters);
+    }, platformToSpoof);
 
     // [EXISTING — DO NOT MODIFY]
     const commonHeaders = {
@@ -619,6 +712,14 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', auditId
 
     await updateStatus("navigating");
 
+    // Extract host for session cookie management
+    let host = 'default';
+    try {
+      host = new URL(url).hostname;
+    } catch (_) {}
+
+    await loadCookies(page, host);
+
     let response = await page.goto(url, {
       waitUntil: "networkidle2",
       timeout: 60000
@@ -667,15 +768,11 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', auditId
       return { browser, page, response, $, screenshot: null, isBotProtected: true };
     }
 
-    // [FIX] — wrapped mouse.move with detached frame protection
-    try {
-      if (!page.isClosed()) {
-        await page.mouse.move(randInt(100, 800), randInt(100, 600));
-      }
-    } catch (e) {
-      if (!isDetachedFrameError(e)) throw e;
-      logger.debug('[Frame] mouse.move skipped — frame detached');
-    }
+    // Save session cookies upon successful WAF bypass
+    await saveCookies(page, host);
+
+    // Simulate human-like mouse movement after loading the page successfully
+    await humanMove(page, randInt(100, 800), randInt(100, 600));
 
     await delay(randInt(1000, 2000));
 

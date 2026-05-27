@@ -3,11 +3,19 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Loader2 } from 'lucide-react';
 import { getRedirectPath } from '../utils/roleRedirect';
+import { consumePostAuthIntent } from '../utils/intentStore';
 
 /**
  * Component: GuestRoute
  * Prevents authenticated users from accessing guest-only routes like /login or /register.
- * Redirects them to the dashboard or their previous intended destination.
+ *
+ * Redirect priority for already-authenticated users:
+ *  1. localStorage intent (set by LoginOverlay/GuestReportPage — survives browser refresh & OAuth)
+ *  2. location.state?.from  (set via React Router state when navigating to /login)
+ *  3. Role-based default (/dashboard for users, /admin for admins)
+ *
+ * This is the SINGLE place that handles post-auth redirect. LoginPage no longer
+ * navigates on its own — it just calls login() and lets GuestRoute take over.
  */
 const GuestRoute = ({ children }) => {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -26,12 +34,19 @@ const GuestRoute = ({ children }) => {
   }
 
   if (isAuthenticated) {
-    // If user is already logged in, redirect them away from guest pages
-    // Default to role-based dashboard, or fallback to /dashboard
+    // Consume localStorage intent (set by LoginOverlay / GuestReportPage).
+    // This is the authoritative redirect — it takes precedence over everything else.
+    const intent = consumePostAuthIntent();
+
     const defaultDest = getRedirectPath(user?.role) || '/dashboard';
-    const from = location.state?.from || defaultDest;
-    
-    return <Navigate to={from} replace />;
+    const stateFrom = location.state?.from;
+
+    // Priority: localStorage intent > router state.from > role-based default
+    const destination = intent?.path || (stateFrom && stateFrom !== '/' ? stateFrom : defaultDest);
+
+    console.log('[GuestRoute] Authenticated. Redirecting to:', destination, '| intent:', intent, '| stateFrom:', stateFrom);
+
+    return <Navigate to={destination} replace state={{ action: intent?.action }} />;
   }
 
   return children;

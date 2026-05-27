@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
-import { getRedirectPath } from '../utils/roleRedirect';
-import { consumePostAuthIntent } from '../utils/intentStore';
+// Note: post-auth redirect is handled by GuestRoute which wraps /verify-otp.
 
 const OtpVerifyPage = () => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -71,22 +70,9 @@ const OtpVerifyPage = () => {
 
     if (ok) {
         toast.success(data.message);
+        // Just call login() — GuestRoute wraps this page and will handle the
+        // redirect to the correct destination (localStorage intent → state.from → dashboard).
         login(data.token, data.user);
-        
-        const intent = consumePostAuthIntent();
-        
-        // Role-Based Redirection Strategy
-        const roleFallback = getRedirectPath(data.user?.role);
-
-        const from = location.state?.from;
-        const destination = intent?.path || (from && from !== '/' ? from : roleFallback);
-        navigate(destination, { 
-            replace: true,
-            state: { 
-                ...location.state,
-                action: intent?.action 
-            }
-        });
     } else {
         toast.error(data.message || 'Invalid OTP');
         setOtp(['', '', '', '', '', '']);

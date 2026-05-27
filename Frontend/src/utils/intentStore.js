@@ -9,7 +9,6 @@ const INTENT_KEY = 'dealerpulse_post_auth_intent';
  */
 export const savePostAuthIntent = (auditId, path, action = null) => {
     try {
-        console.log("[IntentStore] Saving intent:", { auditId, path, action });
         const item = {
             auditId,
             path,
@@ -17,9 +16,34 @@ export const savePostAuthIntent = (auditId, path, action = null) => {
             expires: Date.now() + 30 * 60 * 1000 // 30 minutes
         };
         localStorage.setItem(INTENT_KEY, JSON.stringify(item));
-        console.log("[IntentStore] Saved to localStorage.");
+        console.log('[IntentStore] Saved intent:', { auditId, path, action });
     } catch (e) {
-        console.error("[IntentStore] Save failed:", e);
+        console.error('[IntentStore] Save failed:', e);
+    }
+};
+
+/**
+ * Peeks at (reads without removing) the saved navigation intent.
+ * Handles expiration automatically — returns null if expired.
+ * @returns {object|null} The intent object or null if none/expired.
+ */
+export const peekPostAuthIntent = () => {
+    try {
+        const item = localStorage.getItem(INTENT_KEY);
+        if (!item) return null;
+
+        const { path, action, expires } = JSON.parse(item);
+
+        if (Date.now() > expires) {
+            localStorage.removeItem(INTENT_KEY);
+            console.warn('[IntentStore] Intent expired during peek.');
+            return null;
+        }
+
+        return { path: String(path || ''), action: action || null };
+    } catch (e) {
+        console.error('[IntentStore] Peek failed:', e);
+        return null;
     }
 };
 
@@ -31,28 +55,27 @@ export const savePostAuthIntent = (auditId, path, action = null) => {
 export const consumePostAuthIntent = () => {
     try {
         const item = localStorage.getItem(INTENT_KEY);
-        console.log("[IntentStore] Raw item from localStorage:", item);
+        console.log('[IntentStore] Raw item from localStorage:', item);
         
         if (!item) return null;
 
         const { path, action, expires } = JSON.parse(item);
         
-        // Use a 30-minute window
         if (Date.now() > expires) {
-            console.warn("[IntentStore] Intent expired.");
+            console.warn('[IntentStore] Intent expired.');
             localStorage.removeItem(INTENT_KEY);
             return null;
         }
 
         localStorage.removeItem(INTENT_KEY);
-        console.log("[IntentStore] Intent consumed:", { path, action });
+        console.log('[IntentStore] Intent consumed:', { path, action });
         
         return { 
             path: String(path || ''),
             action: action || null
         };
     } catch (e) {
-        console.error("[IntentStore] Consume failed:", e);
+        console.error('[IntentStore] Consume failed:', e);
         return null;
     }
 };

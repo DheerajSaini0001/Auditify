@@ -1,5 +1,5 @@
 import React, { useContext } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import {
   Lock, UserPlus, LogIn, BarChart2, Search, Shield,
   Zap, Eye, Globe, Monitor, Layers, ExternalLink,
@@ -126,24 +126,32 @@ const GuestReportPage = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { data } = useData();
+  const { id: paramId } = useParams();
 
-  const auditId = data?._id;
+  // Audit ID: prefer context data (most reliable), fall back to URL param
+  const auditId = data?._id || paramId;
+  // The intended post-auth destination (always the report page if we have an ID)
+  const intendedPath = auditId ? `/report/${auditId}` : null;
 
   const handleLogin = () => {
     if (auditId) {
+      // Save to localStorage (survives browser refresh & Google OAuth redirect)
       savePostAuthIntent(auditId, `/report/${auditId}`);
     }
-    navigate("/login");
+    // Also pass via router state so LoginPage can use it directly (no localStorage needed)
+    navigate("/login", { state: { from: intendedPath } });
   };
 
   const handleRegister = () => {
     if (auditId) {
       savePostAuthIntent(auditId, `/report/${auditId}`);
     }
-    navigate("/register");
+    navigate("/register", { state: { from: intendedPath } });
   };
 
-  const meta = ROUTE_META[pathname] || {
+  // Strip the /:id suffix from pathname so ROUTE_META lookup works with or without an ID in the URL
+  const basePathname = paramId ? pathname.replace(`/${paramId}`, '') : pathname;
+  const meta = ROUTE_META[basePathname] || {
     label: "Audit Report",
     badge: "Audit",
     color: "text-blue-400",

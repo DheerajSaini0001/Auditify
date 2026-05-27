@@ -10,13 +10,17 @@ export default function LoginPrompt({ darkMode }) {
 
   // Audit ID can come from URL param or from Context if we just ran an audit
   const auditId = id || data?._id;
+  // The intended post-auth destination
+  const intendedPath = auditId ? `/report/${auditId}` : null;
 
   const handleLogin = () => {
     console.log("[LoginOverlay] Log In clicked. auditId:", auditId);
     if (auditId) {
+      // Save to localStorage so the intent survives browser refresh & Google OAuth redirect
       savePostAuthIntent(auditId, `/report/${auditId}`);
     }
-    navigate("/login");
+    // Also pass via router state so LoginPage can use it without reading localStorage
+    navigate("/login", { state: { from: intendedPath } });
   };
 
   const handleRegister = () => {
@@ -24,7 +28,7 @@ export default function LoginPrompt({ darkMode }) {
     if (auditId) {
       savePostAuthIntent(auditId, `/report/${auditId}`);
     }
-    navigate("/register");
+    navigate("/register", { state: { from: intendedPath } });
   };
 
   return (

@@ -1,15 +1,15 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useContext } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext.jsx';
 import { Mail, Lock, Eye, EyeOff, Loader2, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { consumePostAuthIntent, savePostAuthIntent } from '../utils/intentStore';
+import { savePostAuthIntent } from '../utils/intentStore';
 import Assets from '../assets/Assets.js';
 import CaptchaModal from '../Component/CaptchaModal';
 import './LoginPage.css';
 
-import { getRedirectPath } from '../utils/roleRedirect';
+// Note: post-auth redirect is handled by GuestRoute which wraps this page.
 
 const LoginPage = () => {
   const { theme } = useContext(ThemeContext);
@@ -25,24 +25,13 @@ const LoginPage = () => {
   const [isCaptchaModalOpen, setIsCaptchaModalOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { apiFetch, login, isAuthenticated, user, isLoading: isAuthLoading } = useAuth();
+  const { apiFetch, login } = useAuth();
 
-  useEffect(() => {
-    if (isAuthenticated && !isAuthLoading) {
-      const intent = consumePostAuthIntent();
-      const roleFallback = getRedirectPath(user?.role);
-      const from = location.state?.from;
-      const destination = intent?.path || (from && from !== '/' ? from : roleFallback);
-      
-      navigate(destination, { 
-        replace: true,
-        state: { 
-            ...location.state,
-            action: intent?.action 
-        } 
-      });
-    }
-  }, [isAuthenticated, navigate, user, isAuthLoading]);
+  // NOTE: Post-login navigation is handled by GuestRoute (which wraps /login).
+  // GuestRoute re-renders when isAuthenticated becomes true and redirects to the
+  // correct destination (localStorage intent → state.from → role-based default).
+  // Adding a navigate() here would cause a double-navigation race condition.
+
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -89,10 +78,16 @@ const LoginPage = () => {
   };
 
   const handleGoogleLogin = () => {
-    const intentPath = location.state?.from || null;
-    if (intentPath) {
-       savePostAuthIntent('o_auth', intentPath);
+    // Check for pending intent from router state first (set by LoginOverlay/GuestReportPage)
+    const stateFrom = location.state?.from;
+    if (stateFrom) {
+      // stateFrom is a path like /report/:id — we need to extract the auditId if possible
+      // But we don't need the auditId specifically; intentStore just needs a path
+      savePostAuthIntent('o_auth', stateFrom);
     }
+    // If no state.from but there's already a stored intent (e.g. from a previous navigation
+    // where localStorage was set but state was cleared by a refresh), don't overwrite it —
+    // the stored intent will be consumed by AuthCallbackPage after OAuth completes.
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:2000';
     window.location.href = `${API_URL}/api/auth/google`;
   };

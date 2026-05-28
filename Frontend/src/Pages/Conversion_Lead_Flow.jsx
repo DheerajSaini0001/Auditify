@@ -683,9 +683,9 @@ const Conversion_Lead_Flow_Inner = React.memo(({ data, loading, darkMode }) => {
       <div className={`w-full ${darkMode ? "bg-gray-900" : "bg-gray-50"} transition-colors duration-300`}>
         <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-6`}>
           <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
-            <UrlHeader 
-              data={data} 
-              darkMode={darkMode} 
+            <UrlHeader
+              data={data}
+              darkMode={darkMode}
               sectionName="Conversion & Lead Flow"
               sectionData={flow}
               auditScore={flow.Percentage}
@@ -728,9 +728,9 @@ const Conversion_Lead_Flow_Inner = React.memo(({ data, loading, darkMode }) => {
       <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-6`}>
 
         <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
-          <UrlHeader 
-            data={data} 
-            darkMode={darkMode} 
+          <UrlHeader
+            data={data}
+            darkMode={darkMode}
             sectionName="Conversion & Lead Flow"
             sectionData={flow}
             auditScore={flow.Percentage}
@@ -773,17 +773,17 @@ const Conversion_Lead_Flow_Inner = React.memo(({ data, loading, darkMode }) => {
                       <div className={`flex items-center gap-5 px-5 py-3 rounded-2xl border ${darkMode ? "bg-slate-950/40 border-slate-850" : "bg-white border-slate-250 shadow-sm"}`}>
                         <div className="flex items-center gap-2">
                           <CheckCircle size={18} className="text-emerald-500" />
-                          <span className="text-sm font-bold">{passedCount} Optimized</span>
+                          <span className={`text-xs font-bold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{passedCount} Optimized</span>
                         </div>
                         <div className={`w-px h-4 ${darkMode ? "bg-slate-800" : "bg-slate-200 hidden md:block"}`}></div>
                         <div className="flex items-center gap-2">
                           <AlertTriangle size={18} className="text-amber-500" />
-                          <span className="text-sm font-bold">{warningCount} Warning</span>
+                          <span className={`text-xs font-bold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{warningCount} Warning</span>
                         </div>
                         <div className={`w-px h-4 ${darkMode ? "bg-slate-800" : "bg-slate-200 hidden md:block"}`}></div>
                         <div className="flex items-center gap-2">
                           <XCircle size={18} className="text-rose-500" />
-                          <span className="text-sm font-bold">{failedCount} Failed</span>
+                          <span className={`text-xs font-bold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{failedCount} Failed</span>
                         </div>
                       </div>
                       <button
@@ -813,36 +813,36 @@ const Conversion_Lead_Flow_Inner = React.memo(({ data, loading, darkMode }) => {
         <ReportRestrictionWrapper>
           <div className="space-y-8">
             <Section title="Call-to-Action (CTA) Strategy" icon={MousePointerClick} darkMode={darkMode}>
-          {["CTA_Presence", "CTA_Clarity", "CTA_Crowding", "CTA_Flow_Alignment", "Submit_Button_Clarity", "Link_Relevance"].map((key) => {
-            if (!flow[key]) return null;
-            if (key === "Link_Relevance") {
-              return (
-                <div key={key} className="col-span-1 md:col-span-2">
-                  <MetricCard metricKey={key} data={flow[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
-                </div>
-              );
-            }
-            return <MetricCard key={key} metricKey={key} data={flow[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />;
-          })}
-        </Section>
+              {["CTA_Presence", "CTA_Clarity", "CTA_Crowding", "CTA_Flow_Alignment", "Submit_Button_Clarity", "Link_Relevance"].map((key) => {
+                if (!flow[key]) return null;
+                if (key === "Link_Relevance") {
+                  return (
+                    <div key={key} className="col-span-1 md:col-span-2">
+                      <MetricCard metricKey={key} data={flow[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
+                    </div>
+                  );
+                }
+                return <MetricCard key={key} metricKey={key} data={flow[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />;
+              })}
+            </Section>
 
-        <Section title="Lead Capture & Incentives" icon={Target} darkMode={darkMode}>
-          {["Form_Presence", "Lead_Magnets", "Incentives_Displayed", "Form_Length"].map((key) => (
-            flow[key] && <MetricCard key={key} metricKey={key} data={flow[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
-          ))}
-        </Section>
+            <Section title="Lead Capture & Incentives" icon={Target} darkMode={darkMode}>
+              {["Form_Presence", "Lead_Magnets", "Incentives_Displayed", "Form_Length"].map((key) => (
+                flow[key] && <MetricCard key={key} metricKey={key} data={flow[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
+              ))}
+            </Section>
 
-        <Section title="Trust & Social Proof" icon={ShieldCheck} darkMode={darkMode}>
-          {["Testimonials", "Reviews", "Trust_Badges", "Client_Logos", "Case_Studies_Accessibility"].map((key) => (
-            flow[key] && <MetricCard key={key} metricKey={key} data={flow[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
-          ))}
-        </Section>
+            <Section title="Trust & Social Proof" icon={ShieldCheck} darkMode={darkMode}>
+              {["Testimonials", "Reviews", "Trust_Badges", "Client_Logos", "Case_Studies_Accessibility"].map((key) => (
+                flow[key] && <MetricCard key={key} metricKey={key} data={flow[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
+              ))}
+            </Section>
 
-        <Section title="Friction Reduction & Validation" icon={LayoutTemplate} darkMode={darkMode}>
-          {["Required_vs_Optional_Fields", "Inline_Validation", "Friendly_Error_Handling", "Microcopy_Clarity", "MultiStep_Form_Progress", "Progress_Indicators"].map((key) => (
-            flow[key] && <MetricCard key={key} metricKey={key} data={flow[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
-          ))}
-        </Section>
+            <Section title="Friction Reduction & Validation" icon={LayoutTemplate} darkMode={darkMode}>
+              {["Required_vs_Optional_Fields", "Inline_Validation", "Friendly_Error_Handling", "Microcopy_Clarity", "MultiStep_Form_Progress", "Progress_Indicators"].map((key) => (
+                flow[key] && <MetricCard key={key} metricKey={key} data={flow[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
+              ))}
+            </Section>
           </div>
         </ReportRestrictionWrapper>
       </main>

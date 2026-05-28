@@ -56,7 +56,7 @@ const AIOShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
 
   return (
     <div className="flex flex-col items-center justify-center py-8 px-4 animate-in fade-in zoom-in duration-500 min-h-[350px]">
-     
+
       <div className={`w-full max-w-xl rounded-[32px] p-8 flex flex-col items-center text-center transition-all duration-500 ${darkMode ? "bg-slate-800/40 border border-slate-700/50" : "bg-slate-100/60 border border-slate-200/50"}`}>
         {/* Icon Container (Circle) */}
         <div className={`w-20 h-20 rounded-full flex items-center justify-center shadow-xl transition-all duration-500 ${darkMode ? "bg-slate-900 shadow-black/40 text-white" : "bg-[#1e293b] shadow-slate-400/30 text-white"}`}>
@@ -116,7 +116,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
     : "text-rose-500 bg-rose-500/10 border-rose-500/20";
 
   return (
- 
+
     <div className={`relative overflow-hidden rounded-xl border ${cardBg} shadow-sm hover:shadow-md transition-shadow group`}>
       <div className="p-5 space-y-4">
         <div className="flex items-start justify-between">
@@ -542,12 +542,12 @@ const Section = ({ title, icon: Icon, children, darkMode }) => (
 const AIO_Inner = React.memo(({ data, loading, darkMode }) => {
   const aio = data?.aioReadiness || {};
   const aeo = data?.aeo || {};
-  
+
   // Calculate Combined AIO Readiness Score (Average of Foundation + Engine Scores)
   const unifiedAioScore = useMemo(() => {
     const foundationScore = aio?.Percentage || 0;
     const engineScore = aeo?.overallScore || 0;
-    
+
     // If one is missing, use the other; otherwise average them
     if (!foundationScore) return engineScore;
     if (!engineScore) return foundationScore;
@@ -582,9 +582,9 @@ const AIO_Inner = React.memo(({ data, loading, darkMode }) => {
         <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-6`}>
           {/* ✅ Card 1: URL Header Card */}
           <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-indigo-50/50 via-purple-50/30 to-slate-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
-            <UrlHeader 
-              data={data} 
-              darkMode={darkMode} 
+            <UrlHeader
+              data={data}
+              darkMode={darkMode}
               sectionName="AIO (AI Optimization)"
               sectionData={aio}
               auditScore={unifiedAioScore}
@@ -628,9 +628,9 @@ const AIO_Inner = React.memo(({ data, loading, darkMode }) => {
 
         {/* ✅ Card 1: URL Header Card */}
         <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-indigo-50/50 via-purple-50/30 to-slate-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
-          <UrlHeader 
-            data={data} 
-            darkMode={darkMode} 
+          <UrlHeader
+            data={data}
+            darkMode={darkMode}
             sectionName="AIO (AI Optimization)"
             sectionData={aio}
             auditScore={unifiedAioScore}
@@ -679,15 +679,15 @@ const AIO_Inner = React.memo(({ data, loading, darkMode }) => {
                       <div className={`flex items-center ${data.report === "All" ? "gap-5" : "gap-4"}`}>
                         <div className="flex items-center gap-2">
                           <CheckCircle size={18} className="text-emerald-500" />
-                          <span className="text-sm font-bold">{passedCount} Passed</span>
+                          <span className={`text-xs font-bold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{passedCount} Passed</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <AlertTriangle size={18} className="text-amber-500" />
-                          <span className="text-sm font-bold">{warningCount} Warnings</span>
+                          <span className={`text-xs font-bold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{warningCount} Warnings</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <XCircle size={18} className="text-rose-500" />
-                          <span className="text-sm font-bold">{failedCount} Failed</span>
+                          <span className={`text-xs font-bold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{failedCount} Failed</span>
                         </div>
                       </div>
                       <div className={`w-px h-10 mx-2 hidden sm:block ${darkMode ? "bg-slate-700" : "bg-slate-200"}`}></div>
@@ -746,23 +746,23 @@ const AIO_Inner = React.memo(({ data, loading, darkMode }) => {
         <ReportRestrictionWrapper>
           <div className="space-y-8">
             <div id="aeo-section" className="mt-16 animate-in slide-in-from-bottom-10 duration-1000">
-              <AEOPage 
-                auditData={data} 
-                darkMode={darkMode} 
+              <AEOPage
+                auditData={data}
+                darkMode={darkMode}
                 onInfo={(info) => setSelectedParameterInfo(info)}
               />
             </div>
             <Section title="AI Technical & Crawl Foundation" icon={Database} darkMode={darkMode}>
-          {["Structured_Data", "Duplicate_Content_Detection_Ready", "Internal_Linking_AI_Friendly", "Content_Updated_Regularly"].map((key) => (
-            aio[key] && <MetricCard key={key} metricKey={key} data={aio[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
-          ))}
-        </Section>
+              {["Structured_Data", "Duplicate_Content_Detection_Ready", "Internal_Linking_AI_Friendly", "Content_Updated_Regularly"].map((key) => (
+                aio[key] && <MetricCard key={key} metricKey={key} data={aio[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
+              ))}
+            </Section>
 
-        <Section title="Intelligence & Semantic Clarity" icon={Brain} darkMode={darkMode}>
-          {["Content_NLP_Friendly", "Keywords_Entities_Annotated", "Topical_Focus_Clarity", "Terminology_Consistency", "Content_Completeness"].map((key) => (
-            aio[key] && <MetricCard key={key} metricKey={key} data={aio[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
-          ))}
-        </Section>
+            <Section title="Intelligence & Semantic Clarity" icon={Brain} darkMode={darkMode}>
+              {["Content_NLP_Friendly", "Keywords_Entities_Annotated", "Topical_Focus_Clarity", "Terminology_Consistency", "Content_Completeness"].map((key) => (
+                aio[key] && <MetricCard key={key} metricKey={key} data={aio[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
+              ))}
+            </Section>
 
             <Section title="E-E-A-T & Answer Optimization" icon={HelpCircle} darkMode={darkMode}>
               {/* Answer Oriented Structure spans full width because it contains detailed Q&A pairs */}
@@ -783,7 +783,7 @@ const AIO_Inner = React.memo(({ data, loading, darkMode }) => {
 
           </div>
         </ReportRestrictionWrapper>
-        
+
       </main>
       {/* Methodology Modal */}
       <MetricInfoModal

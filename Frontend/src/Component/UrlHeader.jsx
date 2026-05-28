@@ -101,8 +101,8 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
         {/* Left: URL Section */}
         <div className="space-y-2 w-full lg:max-w-[65%] min-w-0">
           <div className="flex items-center gap-2 opacity-60">
-            <Globe className="w-3.5 h-3.5" />
-            <span className="text-xs font-bold uppercase tracking-widest">Audit Report For</span>
+            <Globe className={`w-3.5 h-3.5 ${darkMode ? "text-slate-200" : "text-slate-500"}`}   />
+            <span className={`text-xs font-bold uppercase tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>Audit Report For</span>
           </div>
           <div className="flex items-center gap-3 group min-w-0 w-full">
             <a

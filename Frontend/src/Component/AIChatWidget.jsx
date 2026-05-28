@@ -11,14 +11,14 @@ const AIChatWidget = () => {
     const { theme } = useContext(ThemeContext);
     const location = useLocation();
     const darkMode = theme === 'dark';
-    
+
     const [isOpen, setIsOpen] = useState(false);
     const [input, setInput] = useState('');
     const [messages, setMessages] = useState([
         { role: 'bot', text: 'Hi! I am your Site Audit AI Assistant. Ask me anything about your current audit results! ✨' }
     ]);
     const [isLoading, setIsLoading] = useState(false);
-    
+
     const messagesEndRef = useRef(null);
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -185,11 +185,11 @@ const AIChatWidget = () => {
             console.error("Assistant Init Error:", error);
             // Dynamic fallback message if AI fails or rate limits are reached
             setMessages([
-                { 
-                    role: 'bot', 
-                    text: activeSection.sectionName 
-                      ? `Hi! I've loaded your **${activeSection.sectionName}** report (Score: **${activeSection.auditScore || 'N/A'}/100**). Ask me anything about these results! ✨`
-                      : 'Hi! I am your Site Audit AI Assistant. Ask me anything about your current audit results! ✨' 
+                {
+                    role: 'bot',
+                    text: activeSection.sectionName
+                        ? `Hi! I've loaded your **${activeSection.sectionName}** report (Score: **${activeSection.auditScore || 'N/A'}/100**). Ask me anything about these results! ✨`
+                        : 'Hi! I am your Site Audit AI Assistant. Ask me anything about your current audit results! ✨'
                 }
             ]);
         } finally {
@@ -214,7 +214,7 @@ const AIChatWidget = () => {
         setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
         setIsLoading(true);
 
-        const baseUrl =  'https://siteaudit.sltechsoft.com/api'  || 'http://localhost:2000';
+        const baseUrl = 'https://siteaudit.sltechsoft.com/api' || 'http://localhost:2000';
         const activeSection = getActiveSectionDetails();
         const trimmedData = getTrimmerPayload();
 
@@ -249,7 +249,7 @@ const AIChatWidget = () => {
 
     if (!isOpen) {
         return (
-            <button 
+            <button
                 onClick={handleOpenWidget}
                 className={`fixed bottom-6 right-6 h-14 px-6 rounded-full shadow-2xl flex items-center gap-3 transition-all duration-300 hover:scale-105 hover:shadow-indigo-500/40 active:scale-95 z-50 group animate-bounce-subtle ${darkMode ? 'bg-indigo-600 text-white shadow-indigo-500/20' : 'bg-indigo-600 text-white shadow-indigo-200'}`}
             >
@@ -266,7 +266,7 @@ const AIChatWidget = () => {
         <div className={`fixed bottom-6 right-6 w-[350px] sm:w-[400px] h-[500px] max-h-[80vh] flex flex-col rounded-2xl shadow-2xl z-50 transition-all duration-300 transform origin-bottom-right border ${darkMode ? 'bg-[#0F172A] border-slate-700 shadow-indigo-500/10' : 'bg-white border-slate-200'}`}>
             {/* Subtle Inner Glow for Dark Mode */}
             {darkMode && <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent"></div>}
-            
+
             {/* Header */}
             <div className={`p-4 rounded-t-2xl flex items-center justify-between border-b ${darkMode ? 'bg-gradient-to-r from-[#1E293B] to-[#0F172A] border-slate-700 text-white' : 'bg-indigo-600 text-white border-transparent'}`}>
                 <div className="flex items-center gap-3">
@@ -274,7 +274,7 @@ const AIChatWidget = () => {
                         <Sparkles className="w-4 h-4 text-white" />
                     </div>
                     <div>
-                        <h3 className="text-sm font-bold">Site Audit AI Intelligence</h3>
+                        <h3 className={`text-xs font-bold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>Site Audit AI Intelligence</h3>
                         <div className="flex items-center gap-1.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                             <span className={`text-[10px] uppercase tracking-wider font-bold ${darkMode ? 'text-emerald-400' : 'text-white'}`}>AI Online</span>
@@ -282,8 +282,8 @@ const AIChatWidget = () => {
                     </div>
                 </div>
                 <div className="flex items-center gap-1">
-                    <button 
-                        onClick={() => setMessages([{ role: 'bot', text: 'Hi! I am your Site Audit AI Assistant. Ask me anything about your current audit results! ✨' }])} 
+                    <button
+                        onClick={() => setMessages([{ role: 'bot', text: 'Hi! I am your Site Audit AI Assistant. Ask me anything about your current audit results! ✨' }])}
                         className={`p-1.5 rounded-lg transition-colors ${darkMode ? 'hover:bg-slate-700 text-white' : 'hover:bg-white/10 text-white'}`}
                         title="Clear Chat"
                     >
@@ -305,11 +305,10 @@ const AIChatWidget = () => {
                             <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center border ${msg.role === 'user' ? (darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-indigo-100 border-indigo-200 text-indigo-600') : (darkMode ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-indigo-600 border-indigo-500 text-white')}`}>
                                 {msg.role === 'user' ? <User size={14} /> : <Bot size={14} />}
                             </div>
-                            <div className={`p-3 rounded-2xl text-xs leading-relaxed break-all whitespace-pre-wrap overflow-hidden ${
-                                msg.role === 'user' 
-                                ? (darkMode ? 'bg-indigo-600 text-white rounded-tr-none shadow-lg' : 'bg-white shadow-sm border border-slate-100 rounded-tr-none text-slate-700') 
-                                : (darkMode ? 'bg-slate-800 text-white border border-slate-700 rounded-tl-none shadow-sm' : 'bg-white shadow-sm border border-slate-100 rounded-tl-none text-slate-700')
-                            }`}>
+                            <div className={`p-3 rounded-2xl text-xs leading-relaxed break-all whitespace-pre-wrap overflow-hidden ${msg.role === 'user'
+                                    ? (darkMode ? 'bg-indigo-600 text-white rounded-tr-none shadow-lg' : 'bg-white shadow-sm border border-slate-100 rounded-tr-none text-slate-700')
+                                    : (darkMode ? 'bg-slate-800 text-white border border-slate-700 rounded-tl-none shadow-sm' : 'bg-white shadow-sm border border-slate-100 rounded-tl-none text-slate-700')
+                                }`}>
                                 <div dangerouslySetInnerHTML={{ __html: formatMarkdown(msg.text) }} />
                             </div>
                         </div>
@@ -342,8 +341,8 @@ const AIChatWidget = () => {
                         className={`flex-1 bg-transparent border-none focus:ring-0 text-xs py-2 px-1 ${darkMode ? 'text-white placeholder-slate-400' : 'text-slate-800'}`}
                         disabled={isLoading}
                     />
-                    <button 
-                        type="submit" 
+                    <button
+                        type="submit"
                         disabled={!input.trim() || isLoading}
                         className={`p-2 rounded-xl transition-all duration-300 ${input.trim() && !isLoading ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-200 text-slate-400 dark:bg-slate-700'}`}
                     >

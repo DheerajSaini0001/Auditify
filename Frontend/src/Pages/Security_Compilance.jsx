@@ -812,15 +812,15 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
               {metricKey === "Cookie_Consent" && meta?.trackingData && (
                 <div className="space-y-3 mt-3">
                   <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 text-rose-500`}>Detected Tracking Activity</h5>
-                  
+
                   {meta.trackingData.detectedTrackers?.length > 0 && (
                     <div className={`p-2 rounded border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
                       <span className={`text-[10px] uppercase font-bold opacity-70 mb-1 block ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Tracking Scripts Found:</span>
                       <ul className="space-y-1.5 mt-1 max-h-32 overflow-y-auto custom-scrollbar">
                         {meta.trackingData.detectedTrackers.map((src, idx) => (
                           <li key={idx} className={`p-1.5 rounded flex items-start gap-2 border font-mono text-[10px] break-all ${darkMode ? "bg-gray-900/50 border-gray-700 text-gray-300" : "bg-white border-gray-200 text-gray-600"}`}>
-                             <span className="w-1.5 h-1.5 bg-rose-500 rounded-full mt-1 flex-shrink-0"></span>
-                             {src}
+                            <span className="w-1.5 h-1.5 bg-rose-500 rounded-full mt-1 flex-shrink-0"></span>
+                            {src}
                           </li>
                         ))}
                       </ul>
@@ -831,16 +831,16 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
                     <div className={`p-2 rounded border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
                       <span className={`text-[10px] uppercase font-bold opacity-70 mb-1 block ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Active Cookies String:</span>
                       <div className={`p-1.5 rounded font-mono text-[10px] break-all border max-h-24 overflow-y-auto custom-scrollbar ${darkMode ? "bg-gray-900/50 border-gray-700 text-gray-300" : "bg-white border-gray-200 text-gray-600"}`}>
-                          {meta.trackingData.cookieString}
+                        {meta.trackingData.cookieString}
                       </div>
                     </div>
                   )}
-                  
+
                   {!meta.trackingData.hasTracking && (
-                     <div className={`p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-emerald-500/5 border-emerald-500/20 text-emerald-300" : "bg-emerald-50 border-emerald-100 text-emerald-700"}`}>
-                       <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full flex-shrink-0"></span>
-                       No tracking scripts or cookies detected.
-                     </div>
+                    <div className={`p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-emerald-500/5 border-emerald-500/20 text-emerald-300" : "bg-emerald-50 border-emerald-100 text-emerald-700"}`}>
+                      <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full flex-shrink-0"></span>
+                      No tracking scripts or cookies detected.
+                    </div>
                   )}
                 </div>
               )}
@@ -900,9 +900,9 @@ const Security_Compilance_Inner = React.memo(function Security_Compilance_Inner(
         <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-6`}>
           {/* ✅ Card 1: URL Header Card */}
           <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
-            <UrlHeader 
-              data={data} 
-              darkMode={darkMode} 
+            <UrlHeader
+              data={data}
+              darkMode={darkMode}
               sectionName="Security & Compliance"
               sectionData={metric}
               auditScore={metric?.Percentage}
@@ -946,9 +946,9 @@ const Security_Compilance_Inner = React.memo(function Security_Compilance_Inner(
 
         {/* ✅ Card 1: URL Header Card */}
         <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
-          <UrlHeader 
-            data={data} 
-            darkMode={darkMode} 
+          <UrlHeader
+            data={data}
+            darkMode={darkMode}
             sectionName="Security & Compliance"
             sectionData={metric}
             auditScore={metric?.Percentage}
@@ -989,17 +989,17 @@ const Security_Compilance_Inner = React.memo(function Security_Compilance_Inner(
                       <div className={`flex items-center ${data.report === "All" ? "gap-5" : "gap-4"}`}>
                         <div className="flex items-center gap-2">
                           <CheckCircle size={18} className="text-emerald-500" />
-                          <span className="text-sm font-bold">{passedCount} Passed</span>
+                          <span className={`text-xs font-bold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{passedCount} Passed</span>
                         </div>
                         {warningCount > 0 && (
                           <div className="flex items-center gap-2">
                             <AlertTriangle size={18} className="text-amber-500" />
-                            <span className="text-sm font-bold">{warningCount} Warning</span>
+                            <span className={`text-xs font-bold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{warningCount} Warning</span>
                           </div>
                         )}
                         <div className="flex items-center gap-2">
                           <XCircle size={18} className="text-rose-500" />
-                          <span className="text-sm font-bold">{failedCount} Failed</span>
+                          <span className={`text-xs font-bold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{failedCount} Failed</span>
                         </div>
                       </div>
                       <div className={`w-px h-4 ${darkMode ? "bg-slate-800" : "bg-slate-200 hidden md:block"}`}></div>
@@ -1030,34 +1030,34 @@ const Security_Compilance_Inner = React.memo(function Security_Compilance_Inner(
         <ReportRestrictionWrapper>
           <div className="space-y-8">
             <Section title="Network & Encryption" icon={Lock} darkMode={darkMode}>
-          {["HTTPS", "SSL", "TLS_Version", "HSTS"].map((key) => (
-            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
-          ))}
-        </Section>
+              {["HTTPS", "SSL", "TLS_Version", "HSTS"].map((key) => (
+                metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
+              ))}
+            </Section>
 
-        <Section title="Vulnerability Detection" icon={Bug} darkMode={darkMode}>
-          {[
-            "SQLi_Exposure", "XSS", "Google_Safe_Browsing", "Blacklist", "Malware_Scan"
-          ].map((key) => (
-            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
-          ))}
-        </Section>
+            <Section title="Vulnerability Detection" icon={Bug} darkMode={darkMode}>
+              {[
+                "SQLi_Exposure", "XSS", "Google_Safe_Browsing", "Blacklist", "Malware_Scan"
+              ].map((key) => (
+                metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
+              ))}
+            </Section>
 
-        <Section title="Access Control & Authentication" icon={Key} darkMode={darkMode}>
-          {[
-            "Weak_Default_Credentials", "MFA_Enabled", "Admin_Panel_Public", "Forms_Use_HTTPS"
-          ].map((key) => (
-            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
-          ))}
-        </Section>
+            <Section title="Access Control & Authentication" icon={Key} darkMode={darkMode}>
+              {[
+                "Weak_Default_Credentials", "MFA_Enabled", "Admin_Panel_Public", "Forms_Use_HTTPS"
+              ].map((key) => (
+                metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
+              ))}
+            </Section>
 
-        <Section title="Security Headers & Cookies" icon={ShieldCheck} darkMode={darkMode}>
-          {[
-            "CSP", "X_Frame_Options", "X_Content_Type_Options", "Cookies_Secure", "Cookies_HttpOnly"
-          ].map((key) => (
-            metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
-          ))}
-        </Section>
+            <Section title="Security Headers & Cookies" icon={ShieldCheck} darkMode={darkMode}>
+              {[
+                "CSP", "X_Frame_Options", "X_Content_Type_Options", "Cookies_Secure", "Cookies_HttpOnly"
+              ].map((key) => (
+                metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
+              ))}
+            </Section>
 
             <Section title="Compliance & Privacy" icon={Globe2} darkMode={darkMode}>
               {[

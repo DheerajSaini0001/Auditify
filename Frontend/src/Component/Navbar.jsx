@@ -47,7 +47,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
 
 
   return (
-   <nav className={` top-0 w-full z-50 transition-all duration-300 ${navbarClass}`}>
+   <nav className={`sticky top-0 w-full z-50 transition-all duration-300 ${navbarClass}`}>
       <div className="w-full px-4 sm:px-6 lg:px-8 bg-[#1B1464]/90">
         <div className={`flex items-center justify-between h-16 `}>
 

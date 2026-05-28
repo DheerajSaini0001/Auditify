@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { ThemeContext } from '../../context/ThemeContext';
 
 const StatusSummary = ({ tech, className = "gap-4" }) => {
+    const { theme } = useContext(ThemeContext);
+    const darkMode = theme === "dark";
     let passedCount = 0;
     let failedCount = 0;
     let warningCount = 0;
@@ -38,15 +41,15 @@ const StatusSummary = ({ tech, className = "gap-4" }) => {
         <div className={`flex items-center ${className}`}>
             <div className="flex items-center gap-2">
                 <CheckCircle size={18} className="text-emerald-500" />
-                <span className="text-sm font-bold">{passedCount} Passed</span>
+                <span className={`text-xs font-bold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{passedCount} Passed</span>
             </div>
             <div className="flex items-center gap-2">
                 <XCircle size={18} className="text-rose-500" />
-                <span className="text-sm font-bold">{failedCount} Failed</span>
+                <span className={`text-sm font-bold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{failedCount} Failed</span>
             </div>
             <div className="flex items-center gap-2">
                 <AlertTriangle size={18} className="text-amber-500" />
-                <span className="text-sm font-bold">{warningCount} Warning</span>
+                <span className={`text-sm font-bold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{warningCount} Warning</span>
             </div>
         </div>
     );

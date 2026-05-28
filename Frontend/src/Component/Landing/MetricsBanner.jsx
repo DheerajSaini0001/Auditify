@@ -47,14 +47,10 @@ const MetricCard = ({ value, suffix, label, sublabel, icon: Icon, accentColor, d
             transition={{ duration: 0.65, delay, ease: [0.22, 1, 0.36, 1] }}
             className={`relative group flex flex-col justify-between gap-6 p-7 rounded-[2rem] border overflow-hidden transition-all duration-400
                 ${darkMode
-                    ? 'bg-[#0D1525]/70 border-white/6 hover:border-white/12'
+                    ? 'bg-[#0D1030]/70 border-white/6 hover:border-white/12'
                     : 'bg-white border-slate-100 shadow-sm shadow-slate-100 hover:shadow-md hover:shadow-slate-200/60'}`}
         >
-            {/* Ambient corner glow */}
-            <div
-                className="absolute -top-6 -right-6 w-28 h-28 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"
-                style={{ background: `radial-gradient(circle, ${accentColor}30 0%, transparent 70%)`, filter: 'blur(20px)' }}
-            />
+
 
             {/* Top row: icon + label */}
             <div className="flex items-start justify-between">
@@ -94,7 +90,7 @@ const MetricCard = ({ value, suffix, label, sublabel, icon: Icon, accentColor, d
             {/* Bottom accent line */}
             <div
                 className="absolute bottom-0 left-0 h-[2px] w-0 group-hover:w-full transition-all duration-700 rounded-full"
-                style={{ background: `linear-gradient(90deg, ${accentColor}, transparent)` }}
+                style={{ backgroundColor: accentColor }}
             />
         </motion.div>
     );
@@ -125,33 +121,33 @@ const MetricsBanner = () => {
             value: "12",
             suffix: "K+",
             label: "Audits Run",
-            sublabel: "Websites analysed across all 7 dimensions",
+            sublabel: "Websites analyzed across all 7 automotive dimensions",
             icon: Activity,
-            accentColor: "#059669",
+            accentColor: "#ea580c",
         },
         {
             value: "7",
             suffix: null,
             label: "Audit Types",
-            sublabel: "From core SEO to AI-readiness checks",
+            sublabel: "From local map pack SEO to AI search rankings",
             icon: Cpu,
             accentColor: "#3b82f6",
         },
         {
             value: "98",
             suffix: "%",
-            label: "Uptime",
-            sublabel: "Always-on infrastructure, zero queuing",
+            label: "Risk Removed",
+            sublabel: "Average reduction in ADA lawsuit vulnerability",
             icon: Zap,
-            accentColor: darkMode ? "#f59e0b" : "#b45309",
+            accentColor: darkMode ? "#FF8C42" : "#ea580c",
         },
         {
             value: "4.9",
             suffix: "/5",
-            label: "User Rating",
-            sublabel: "Rated by founders, devs & SEO teams",
+            label: "Dealer Rating",
+            sublabel: "Rated by general managers & marketing directors",
             icon: ShieldCheck,
-            accentColor: darkMode ? "#a78bfa" : "#7c3aed",
+            accentColor: darkMode ? "#818cf8" : "#4f46e5",
         },
     ];
 
@@ -162,16 +158,9 @@ const MetricsBanner = () => {
         <section
             ref={sectionRef}
             className={`relative pt-10 pb-20 overflow-hidden transition-colors duration-500
-                ${darkMode ? 'bg-[#080E1C]' : 'bg-[#F5F7FA]'}`}
+                ${darkMode ? 'bg-[#0A0520]' : 'bg-[#F5F7FA]'}`}
         >
-            {/* Subtle background texture */}
-            <div
-                className="absolute inset-0 pointer-events-none opacity-[0.025]"
-                style={{
-                    backgroundImage: `radial-gradient(circle, ${darkMode ? '#fff' : '#000'} 1px, transparent 1px)`,
-                    backgroundSize: '24px 24px',
-                }}
-            />
+
 
             <div className="container mx-auto px-6 relative z-10 max-w-7xl space-y-12">
 
@@ -184,16 +173,15 @@ const MetricsBanner = () => {
                 >
                     <div className="space-y-2">
                         <span className={`inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em]
-                            ${darkMode ? 'text-emerald-400' : 'text-emerald-700'}`}>
+                            ${darkMode ? 'text-orange-400' : 'text-orange-700'}`}>
                             <span className="w-4 h-px bg-current inline-block" />
-                            Platform at a glance
+                            DealerPulse at a Glance
                         </span>
                         <h2 className={`text-3xl lg:text-4xl font-black tracking-tight leading-tight
                             ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                            Built for teams who take <br className="hidden lg:block" />
-                            <span className="text-transparent bg-clip-text"
-                                style={{ backgroundImage: 'linear-gradient(135deg, #10b981, #06b6d4)' }}>
-                                website quality seriously.
+                            Built for dealers who take <br className="hidden lg:block" />
+                            <span className="text-[#ea580c]">
+                                website performance seriously.
                             </span>
                         </h2>
                     </div>
@@ -211,7 +199,7 @@ const MetricsBanner = () => {
                                         ? 'bg-white/4 border-white/8 text-slate-400'
                                         : 'bg-white border-slate-200 text-slate-600 shadow-sm'}`}
                             >
-                                <span className="text-emerald-500">{d.icon}</span>
+                                <span className="text-orange-500">{d.icon}</span>
                                 {d.label}
                             </motion.span>
                         ))}
@@ -226,10 +214,7 @@ const MetricsBanner = () => {
                 </div>
 
                 {/* Bottom thin divider */}
-                <div className={`w-full h-px ${darkMode
-                    ? 'bg-gradient-to-r from-transparent via-white/8 to-transparent'
-                    : 'bg-gradient-to-r from-transparent via-slate-200 to-transparent'}`}
-                />
+                <div className={`w-full h-px ${darkMode ? 'bg-white/8' : 'bg-slate-200'}`} />
             </div>
         </section>
     );

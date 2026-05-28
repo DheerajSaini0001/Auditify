@@ -41,19 +41,15 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
   };
 
   // Styles
-  const navbarClass = darkMode
-    ? "bg-[#03152D] border-b border-white/5 backdrop-blur-2xl text-white shadow-[0_4px_30px_rgba(0,0,0,0.1)]"
-    : "bg-white/70 border-b border-slate-200 backdrop-blur-2xl text-slate-900 shadow-[0_4px_30px_rgba(0,0,0,0.05)]";
+  const navbarClass = "bg-[#1B1464]/90 border-b border-white/10  text-white shadow-[0_4px_20px_rgba(0,0,0,0.25)]";
 
-  const buttonClass = darkMode
-    ? "bg-white/5 hover:bg-white/10 border-white/10 text-slate-300 hover:text-white"
-    : "bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-900";
+  const buttonClass = "bg-white/5 hover:bg-white/10 border-white/10 text-slate-300 hover:text-white";
 
 
   return (
-    <nav className={`sticky top-0 z-50 transition-all duration-300 ${navbarClass}`}>
-      <div className="w-full px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+   <nav className={` top-0 w-full z-50 transition-all duration-300 ${navbarClass}`}>
+      <div className="w-full px-4 sm:px-6 lg:px-8 bg-[#1B1464]/90">
+        <div className={`flex items-center justify-between h-16 `}>
 
           {/* Left Section: Mobile Menu & Logo */}
           <div className="flex items-center gap-4">

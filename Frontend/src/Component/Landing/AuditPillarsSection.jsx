@@ -5,47 +5,54 @@ import { ThemeContext } from '../../context/ThemeContext.jsx';
 
 // ─── Color tokens ────────────────────────────────────────────────────────────
 const COLOR_MAP = {
-    emerald: {
-        bg: 'from-emerald-500/10 to-teal-500/5',
-        text: 'text-emerald-500',
-        glow: 'rgba(16, 185, 129, 0.15)',
-        ring: 'ring-emerald-500/20',
+    orange: {
+        bg: 'bg-orange-500/5',
+        text: 'text-orange-500',
+        glow: 'rgba(255, 71, 19, 0.15)',
+        ring: 'ring-orange-500/20',
+        shadow: 'group-hover:shadow-orange-500/10',
     },
     blue: {
-        bg: 'from-blue-500/10 to-indigo-500/5',
+        bg: 'bg-blue-500/5',
         text: 'text-blue-500',
         glow: 'rgba(59, 130, 246, 0.15)',
         ring: 'ring-blue-500/20',
+        shadow: 'group-hover:shadow-blue-500/10',
     },
     purple: {
-        bg: 'from-violet-500/10 to-purple-600/5',
+        bg: 'bg-violet-500/5',
         text: 'text-violet-500',
         glow: 'rgba(139, 92, 246, 0.15)',
         ring: 'ring-violet-500/20',
+        shadow: 'group-hover:shadow-violet-500/10',
     },
     red: {
-        bg: 'from-rose-500/10 to-red-600/5',
+        bg: 'bg-rose-500/5',
         text: 'text-rose-500',
         glow: 'rgba(244, 63, 94, 0.15)',
         ring: 'ring-rose-500/20',
+        shadow: 'group-hover:shadow-rose-500/10',
     },
     cyan: {
-        bg: 'from-cyan-400/10 to-sky-500/5',
+        bg: 'bg-cyan-500/5',
         text: 'text-cyan-500',
         glow: 'rgba(6, 182, 212, 0.15)',
         ring: 'ring-cyan-500/20',
+        shadow: 'group-hover:shadow-cyan-500/10',
     },
-    orange: {
-        bg: 'from-orange-400/10 to-amber-500/5',
-        text: 'text-orange-500',
-        glow: 'rgba(249, 115, 22, 0.15)',
-         ring: 'ring-orange-500/20',
+    amber: {
+        bg: 'bg-amber-500/5',
+        text: 'text-amber-500',
+        glow: 'rgba(245, 158, 11, 0.15)',
+        ring: 'ring-amber-500/20',
+        shadow: 'group-hover:shadow-amber-500/10',
     },
-    pink: {
-        bg: 'from-pink-500/10 to-rose-500/5',
-        text: 'text-pink-500',
-        glow: 'rgba(236, 72, 153, 0.15)',
-        ring: 'ring-pink-500/20',
+    indigo: {
+        bg: 'bg-indigo-500/5',
+        text: 'text-indigo-500',
+        glow: 'rgba(99, 102, 241, 0.15)',
+        ring: 'ring-indigo-500/20',
+        shadow: 'group-hover:shadow-indigo-500/10',
     },
 };
 
@@ -79,19 +86,14 @@ const PillarCard = ({ icon: Icon, title, tag, description, color, index, darkMod
                 ${darkMode 
                     ? 'bg-slate-900/40 border border-white/5 hover:border-white/10 shadow-2xl shadow-black/20' 
                     : 'bg-white/60 hover:bg-white border border-slate-200/60 hover:border-slate-300 shadow-xl shadow-slate-200/20'}
+                ${c.shadow}
                 ${isWide ? 'md:col-span-2 lg:col-span-2 lg:flex lg:items-center' : 'flex flex-col'}
             `}
         >
             {/* Subtle Sub-background Fill on Hover */}
-            <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 bg-gradient-to-br ${c.bg} pointer-events-none`} />
+            <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 ${c.bg} pointer-events-none`} />
 
-            {/* Premium Mouse Tracking Glow Effect */}
-            <div
-                className="pointer-events-none absolute -inset-px opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-0"
-                style={{
-                    background: isHovered ? `radial-gradient(600px circle at ${mousePosition.x}px ${mousePosition.y}px, ${c.glow}, transparent 40%)` : 'none',
-                }}
-            />
+
 
             {/* Content Container */}
             <div className={`relative z-10 p-8 sm:p-10 ${isWide ? 'lg:w-1/2 lg:pr-4' : 'flex-1 flex flex-col'}`}>
@@ -151,15 +153,14 @@ const PillarCard = ({ icon: Icon, title, tag, description, color, index, darkMod
             {isWide && (
                 <div className="hidden lg:flex relative z-10 flex-1 p-8 items-center justify-center">
                     <div className={`absolute inset-0 ml-10 rounded-tl-3xl border-t border-l ${darkMode ? 'border-white/10 bg-white/[0.02]' : 'border-slate-200 bg-slate-50/50'} overflow-hidden`}>
-                         <div className="absolute top-0 right-0 w-64 h-64 opacity-20 pointer-events-none"
-                            style={{ background: `radial-gradient(circle, ${c.glow}, transparent 70%)`, filter: 'blur(40px)' }} />
+
                          
                          {/* Abstract UI placeholder */}
                          <div className="w-full h-full p-8 space-y-4">
                              <div className={`w-32 h-4 rounded-full ${darkMode ? 'bg-white/10' : 'bg-slate-200'}`}></div>
                              <div className={`w-48 h-4 rounded-full ${darkMode ? 'bg-white/5' : 'bg-slate-100'}`}></div>
                              <div className="flex gap-4 mt-8">
-                                 <div className={`w-16 h-16 rounded-2xl ${darkMode ? 'bg-emerald-500/20' : 'bg-emerald-100'}`}></div>
+                                 <div className={`w-16 h-16 rounded-2xl ${darkMode ? 'bg-orange-500/20' : 'bg-orange-100'}`}></div>
                                  <div className={`w-24 h-16 rounded-2xl ${darkMode ? 'bg-white/5' : 'bg-slate-100'}`}></div>
                              </div>
                          </div>
@@ -178,52 +179,52 @@ const AuditPillarsSection = () => {
     const pillars = [
         {
             icon: Zap,
-            title: 'Performance',
+            title: 'Mobile Speed & Core Web Vitals',
             tag: 'Core Web Vitals',
-            description: 'Deep core web vitals analysis including LCP, FID, and CLS directly from the source to guarantee lightning speed.',
-            color: 'emerald',
+            description: 'Deep core web vitals audit of LCP, FID, and CLS performance to guarantee lightning-fast vehicle search results (SRP) and detail page (VDP) loads.',
+            color: 'orange',
         },
         {
             icon: Search,
-            title: 'On-Page SEO',
-            tag: 'Search Visibility',
-            description: 'Meta coverage, internal linking architecture, schema validation, and precision keyword density mapping.',
+            title: 'Hyperlocal Dealership SEO',
+            tag: 'Dealer SEO',
+            description: 'Scan schema markups, inventory feed indexing, location pages, and key terms like "used SUV near me" to dominate local Google search.',
             color: 'blue',
         },
         {
             icon: Accessibility,
-            title: 'Accessibility',
-            tag: 'WCAG 2.1',
-            description: 'Determine WCAG compliance levels using advanced axe-core intelligence to ensure universal access.',
+            title: 'ADA & WCAG Compliance Shield',
+            tag: 'ADA Compliance',
+            description: 'Validate WCAG 2.1 levels using axe-core to ensure universal site access and protect your dealership from aggressive accessibility lawsuit risks.',
             color: 'purple',
         },
         {
             icon: ShieldCheck,
-            title: 'Security',
-            tag: 'Vulnerability',
-            description: 'WAF detection, SSL validation, HTTP header hardening, and comprehensive vulnerability scanning.',
+            title: 'WAF & Security Auditing',
+            tag: 'WAF & Security',
+            description: 'Identify malicious inventory scraping, SSL health, WAF shielding, and HTTP header hardening to secure buyer transaction data.',
             color: 'red',
         },
         {
             icon: LayoutDashboard,
-            title: 'UX & Structure',
-            tag: 'User Experience',
-            description: 'Heatmap-style element distribution, content hierarchy mapping, and touch target scaling analysis.',
+            title: 'VDP & SRP Layout Friction',
+            tag: 'Inventory UX',
+            description: 'Map touch target accessibility, inventory navigation, and element spacing on mobile to streamline the dealer browse experience.',
             color: 'cyan',
         },
         {
             icon: Cpu,
-            title: 'AIO Readiness',
-            tag: 'AI Optimization',
-            description: 'Ensure your content is perfectly structured for the LLM-search era with advanced AEO readiness scoring.',
-            color: 'orange',
+            title: 'AI Search & Conversational SEO',
+            tag: 'AI-Search Ready',
+            description: 'Score your structured vehicle inventory data for conversational AI engines like ChatGPT Search, Gemini, and Apple Intelligence.',
+            color: 'amber',
         },
         {
             icon: Target,
-            title: 'Conversion Flow',
-            tag: 'Lead Opimization',
-            description: 'Analyze lead-flow friction points, CTA placements, interactive visibility, and critical form optimizations.',
-            color: 'pink',
+            title: 'Lead-Flow Friction Analysis',
+            tag: 'Conversion Flow',
+            description: 'Verify trade-in forms, finance pre-approval apps, and CRM webhook configurations to guarantee every website click leads to a real showroom sale.',
+            color: 'indigo',
             isWide: true // Flags the last item to be wide in the bento grid
         },
     ];
@@ -231,25 +232,9 @@ const AuditPillarsSection = () => {
     return (
         <section
             id="features"
-            className={`relative py-32 transition-colors duration-500 overflow-hidden ${darkMode ? 'bg-[#080E1C]' : 'bg-[#F5F7FA]'}`}
+            className={`relative py-32 transition-colors duration-500 overflow-hidden ${darkMode ? 'bg-[#0A0520]' : 'bg-[#F5F7FA]'}`}
         >
-            {/* ── Background Aesthetics ── */}
-            <div className="absolute inset-0 pointer-events-none select-none overflow-hidden z-0">
-                <div className="absolute top-[-10%] right-[-5%] w-[800px] h-[800px] rounded-full opacity-30"
-                    style={{ background: 'radial-gradient(circle, #10b98120 0%, transparent 60%)', filter: 'blur(80px)' }} />
-                <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] rounded-full opacity-20"
-                    style={{ background: 'radial-gradient(circle, #3b82f620 0%, transparent 60%)', filter: 'blur(80px)' }} />
-                
-                {/* Tech Grid Pattern */}
-                <div className="absolute inset-0"
-                    style={{
-                        backgroundImage: `linear-gradient(${darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)'} 1px, transparent 1px), linear-gradient(90deg, ${darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)'} 1px, transparent 1px)`,
-                        backgroundSize: '40px 40px',
-                        maskImage: 'radial-gradient(circle at center, black, transparent 80%)',
-                        WebkitMaskImage: 'radial-gradient(circle at center, black, transparent 80%)'
-                    }}
-                />
-            </div>
+
 
             <div className="container mx-auto px-6 relative z-10 max-w-7xl">
 
@@ -263,11 +248,11 @@ const AuditPillarsSection = () => {
                             viewport={{ once: true }}
                             transition={{ duration: 0.6, ease: "easeOut" }}
                             className={`inline-flex items-center gap-2.5 px-4 py-2 rounded-full border text-[11px] font-bold uppercase tracking-[0.25em] backdrop-blur-md
-                                ${darkMode ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-emerald-50 shadow-sm border-emerald-200 text-emerald-700'}
+                                ${darkMode ? 'bg-[#ea580c]/10 border-[#ea580c]/20 text-orange-400' : 'bg-orange-50 shadow-sm border-orange-200 text-orange-700'}
                             `}
                         >
-                            <Sparkles size={14} className="text-emerald-500" />
-                            The Standard for Auditing
+                            <Sparkles size={14} className="text-[#ea580c]" />
+                            Powered by DealerSales.co
                         </motion.div>
 
                         {/* Animated Headline */}
@@ -284,11 +269,11 @@ const AuditPillarsSection = () => {
                             The Dimensions of{' '}
                             <br className="hidden sm:block" />
                             <span className="relative inline-block pb-2">
-                                <span className="bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-500 bg-clip-text text-transparent">
-                                    Website Intelligence.
+                                <span className="text-[#ea580c]">
+                                    Dealership Intelligence.
                                 </span>
                                 {/* Decorative underline */}
-                                <div className="absolute bottom-0 left-0 w-full h-[6px] rounded-full bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-500 opacity-50 blur-[2px]" />
+                                <div className="absolute bottom-0 left-0 w-full h-[6px] rounded-full bg-[#ea580c] opacity-50 blur-[2px]" />
                             </span>
                         </motion.h2>
                     </div>
@@ -302,7 +287,7 @@ const AuditPillarsSection = () => {
                             ${darkMode ? 'text-slate-400' : 'text-slate-600'}
                         `}
                     >
-                        Comprehensive testing across 7 core vectors to ensure absolute peak digital performance.
+                        Comprehensive scanning across 7 critical dealer channels to guarantee peak showroom and inventory visibility.
                     </motion.p>
                 </div>
 

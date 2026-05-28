@@ -1,10 +1,10 @@
 import Logo from "./DealerPulseLogo.png";
 import ReactLogo from "./react.svg";
-import DarkLogo from "./DarkLogoDealer_Pulse.png"; 
+import DarkLogo from "./DealerPulseLogo.png"; 
 import Bg from "./bg.jpg"; 
 import DarkBg from "./darkbg.png"; 
 import DealerPulseLogo from "./DealerPulseLogo.png"; 
-import LightLogo from "./DarkLogoDealer_Pulse.png";
+import LightLogo from "./DealerPulseLogo.png";
 
 // Export them together as "Assets"
 const Assets = {

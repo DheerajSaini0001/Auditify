@@ -2318,7 +2318,7 @@ const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading,
             darkMode={darkMode} 
             sectionName="On-Page SEO"
             sectionData={seo}
-            auditScore={seo?.totalScore}
+            auditScore={overallScore}
             hideBorder={true}
           />
         </div>

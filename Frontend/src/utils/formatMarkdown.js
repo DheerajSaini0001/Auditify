@@ -1,8 +1,11 @@
 export function formatMarkdown(text) {
   if (!text) return '';
   
+  // Escape raw HTML angle brackets so they display as literal text inside the chat bubbles
+  let escaped = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
   // Normalize inline "Problem: ... Solution: ..." to separate lines
-  let formatted = text.replace(/(Problem:[\s\S]*?)(Solution:)/gi, '$1\n\n$2');
+  let formatted = escaped.replace(/(Problem:[\s\S]*?)(Solution:)/gi, '$1\n\n$2');
   
   // Replace standard Markdown elements
   formatted = formatted

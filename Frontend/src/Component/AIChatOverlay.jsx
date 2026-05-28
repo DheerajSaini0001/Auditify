@@ -117,7 +117,7 @@ export default function AIChatOverlay() {
       setMessages([
         {
           role: 'bot',
-          text: `👋 Hi! I am your SitePulse AI Intelligence Assistant.\n\nI have successfully loaded your **${aiChatContext.sectionName}** report (Score: **${aiChatContext.auditScore || 'N/A'}/100**).\n\nAsk me anything about your current audit findings! What issue would you like to investigate or fix first?`
+          text: `👋 Hi! I am your Site Audit AI Intelligence Assistant.\n\nI have successfully loaded your **${aiChatContext.sectionName}** report (Score: **${aiChatContext.auditScore || 'N/A'}/100**).\n\nAsk me anything about your current audit findings! What issue would you like to investigate or fix first?`
         }
       ]);
     } finally {
@@ -499,7 +499,7 @@ export default function AIChatOverlay() {
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
                 <span className={`text-[10px] uppercase font-black tracking-widest opacity-60`}>
-                  SitePulse AI Chat Context Active
+                  Site Audit AI Chat Context Active
                 </span>
               </div>
               
@@ -533,7 +533,7 @@ export default function AIChatOverlay() {
                       darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-100 text-slate-800'
                     }`}>
                       <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />
-                      <span>SitePulse AI is analyzing detailed module JSON data...</span>
+                      <span>Site Audit AI is analyzing detailed module JSON data...</span>
                     </div>
                   </div>
                 </div>

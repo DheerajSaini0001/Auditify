@@ -59,7 +59,12 @@ const AskAIButton = ({ finding, auditScore, darkMode, meta }) => {
         }
       }
     } catch (err) {
-      setError(err.message || 'Error communicating with AI service. Please try again.');
+      const errMsg = (err.message || '').toLowerCase();
+      const isQuota = errMsg.includes('429') || 
+                      errMsg.includes('quota') || 
+                      errMsg.includes('limit') || 
+                      errMsg.includes('rate');
+      setError(isQuota ? 'Limit is over' : 'Limit is over');
     } finally {
       setIsLoading(false);
     }
@@ -90,7 +95,7 @@ const AskAIButton = ({ finding, auditScore, darkMode, meta }) => {
             {error && <div className="text-red-500 font-medium mb-3 bg-red-500/10 p-3 rounded-lg border border-red-500/20">{error}</div>}
             {isLoading && !aiExplanation && <div className="ai-skeleton">Analyzing issue and generating fixes...</div>}
             
-            <div dangerouslySetInnerHTML={{ __html: formatMarkdown(aiExplanation) }} />
+            <div dangerouslySetInnerHTML={{ __html: formatMarkdown(aiExplanation === 'Error generating explanation.' ? 'Limit is over' : aiExplanation) }} />
           </div>
         </div>
       )}

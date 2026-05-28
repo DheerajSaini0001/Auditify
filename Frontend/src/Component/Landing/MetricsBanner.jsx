@@ -2,201 +2,148 @@ import React, { useContext, useRef, useEffect, useState } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { ThemeContext } from '../../context/ThemeContext.jsx';
 import { Activity, Globe2, ShieldCheck, Zap, TrendingUp, Cpu, Eye, Lock, Layers } from 'lucide-react';
+import metricsBg from '../../assets/metrics_bg.png';
 
-/* ─────────────────────────────────────────
-   Animated number count-up hook
-───────────────────────────────────────── */
-const useCountUp = (target, duration = 1800, isActive = false) => {
+const useCountUp = (target, duration = 1600, isActive = false) => {
     const [current, setCurrent] = useState(0);
-
     useEffect(() => {
         if (!isActive) return;
         let start = null;
         const numeric = parseFloat(target);
         const isDecimal = target.toString().includes('.');
-
         const step = (timestamp) => {
             if (!start) start = timestamp;
             const progress = Math.min((timestamp - start) / duration, 1);
-            const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+            const eased = 1 - Math.pow(1 - progress, 3);
             const value = eased * numeric;
             setCurrent(isDecimal ? value.toFixed(1) : Math.floor(value));
             if (progress < 1) requestAnimationFrame(step);
             else setCurrent(isDecimal ? numeric.toFixed(1) : numeric);
         };
-
         requestAnimationFrame(step);
     }, [isActive, target, duration]);
-
     return current;
 };
 
-/* ─────────────────────────────────────────
-   Single Metric Card
-───────────────────────────────────────── */
 const MetricCard = ({ value, suffix, label, sublabel, icon: Icon, accentColor, delay, darkMode }) => {
     const ref = useRef(null);
-    const isInView = useInView(ref, { once: true, margin: "-60px" });
+    const isInView = useInView(ref, { once: true, margin: '-60px' });
     const counted = useCountUp(value, 1600, isInView);
 
     return (
         <motion.div
             ref={ref}
-            initial={{ opacity: 0, y: 28 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.65, delay, ease: [0.22, 1, 0.36, 1] }}
-            className={`relative group flex flex-col justify-between gap-6 p-7 rounded-[2rem] border overflow-hidden transition-all duration-400
+            transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
+            className={`relative flex flex-col gap-4 p-6 rounded-2xl border
                 ${darkMode
-                    ? 'bg-[#0D1030]/70 border-white/6 hover:border-white/12'
-                    : 'bg-white border-slate-100 shadow-sm shadow-slate-100 hover:shadow-md hover:shadow-slate-200/60'}`}
+                    ? 'bg-white/[0.03] border-white/8 hover:border-white/14'
+                    : 'bg-white border-slate-200 hover:border-slate-300 shadow-sm'}
+                transition-colors duration-300`}
         >
-
-
-            {/* Top row: icon + label */}
-            <div className="flex items-start justify-between">
-                <div>
-                    <p className={`text-[10px] font-bold uppercase tracking-[0.22em] mb-1
-                        ${darkMode ? 'text-slate-500' : 'text-slate-600'}`}>
-                        {label}
-                    </p>
-                    <p className={`text-[11px] font-medium leading-snug max-w-[140px]
-                        ${darkMode ? 'text-slate-600' : 'text-slate-500'}`}>
-                        {sublabel}
-                    </p>
-                </div>
-                <div
-                    className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-[-6deg]"
-                    style={{ background: `${accentColor}18`, color: accentColor }}
-                >
-                    <Icon size={20} strokeWidth={2} />
+            {/* Top row */}
+            <div className="flex items-center justify-between">
+                <p className={`text-xs font-bold uppercase tracking-[0.2em]
+                    ${darkMode ? 'text-white' : 'text-slate-500'}`}>
+                    {label}
+                </p>
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+                    style={{ background: `${accentColor}15`, color: accentColor }}>
+                    <Icon size={17} strokeWidth={2} />
                 </div>
             </div>
 
             {/* Number */}
-            <div className="flex items-baseline gap-1">
-                <span
-                    className="text-5xl font-black tabular-nums tracking-tight leading-none"
-                    style={{ color: darkMode ? '#f1f5f9' : '#0f172a' }}
-                >
+            <div className="flex items-baseline gap-0.5">
+                <span className={`text-5xl font-black tabular-nums tracking-tight
+                    ${darkMode ? 'text-white' : 'text-slate-900'}`}>
                     {counted}
                 </span>
                 {suffix && (
-                    <span className="text-2xl font-black" style={{ color: accentColor }}>
-                        {suffix}
-                    </span>
+                    <span className="text-2xl font-black" style={{ color: accentColor }}>{suffix}</span>
                 )}
             </div>
 
-            {/* Bottom accent line */}
-            <div
-                className="absolute bottom-0 left-0 h-[2px] w-0 group-hover:w-full transition-all duration-700 rounded-full"
-                style={{ backgroundColor: accentColor }}
-            />
+            {/* Sublabel */}
+            <p className={`text-sm leading-relaxed
+                ${darkMode ? 'text-white/90' : 'text-slate-600'}`}>
+                {sublabel}
+            </p>
         </motion.div>
     );
 };
 
-/* ─────────────────────────────────────────
-   Audit type list — displayed as a strip
-───────────────────────────────────────── */
 const AUDIT_DIMS = [
-    { icon: <TrendingUp size={12} />, label: "Technical Performance" },
-    { icon: <Eye size={12} />,        label: "On-Page SEO" },
-    { icon: <Layers size={12} />,     label: "Accessibility" },
-    { icon: <Lock size={12} />,       label: "Security & Compliance" },
-    { icon: <Activity size={12} />,   label: "UX & Content" },
-    { icon: <Globe2 size={12} />,     label: "Conversion & Lead Flow" },
-    { icon: <Cpu size={12} />,        label: "AIO Readiness" },
+    { icon: <TrendingUp size={11} />, label: 'Technical Performance' },
+    { icon: <Eye size={11} />,        label: 'On-Page SEO' },
+    { icon: <Layers size={11} />,     label: 'Accessibility' },
+    { icon: <Lock size={11} />,       label: 'Security' },
+    { icon: <Activity size={11} />,   label: 'UX & Content' },
+    { icon: <Globe2 size={11} />,     label: 'Lead Flow' },
+    { icon: <Cpu size={11} />,        label: 'AIO Readiness' },
 ];
 
-/* ─────────────────────────────────────────
-   Main Banner
-───────────────────────────────────────── */
 const MetricsBanner = () => {
     const { theme } = useContext(ThemeContext);
     const darkMode = theme === 'dark';
 
     const metrics = [
-        {
-            value: "12",
-            suffix: "K+",
-            label: "Audits Run",
-            sublabel: "Websites analyzed across all 7 automotive dimensions",
-            icon: Activity,
-            accentColor: "#ea580c",
-        },
-        {
-            value: "7",
-            suffix: null,
-            label: "Audit Types",
-            sublabel: "From local map pack SEO to AI search rankings",
-            icon: Cpu,
-            accentColor: "#3b82f6",
-        },
-        {
-            value: "98",
-            suffix: "%",
-            label: "Risk Removed",
-            sublabel: "Average reduction in ADA lawsuit vulnerability",
-            icon: Zap,
-            accentColor: darkMode ? "#FF8C42" : "#ea580c",
-        },
-        {
-            value: "4.9",
-            suffix: "/5",
-            label: "Dealer Rating",
-            sublabel: "Rated by general managers & marketing directors",
-            icon: ShieldCheck,
-            accentColor: darkMode ? "#818cf8" : "#4f46e5",
-        },
+        { value: '12', suffix: 'K+', label: 'Audits Run', sublabel: 'Websites analyzed across all 7 automotive dimensions', icon: Activity, accentColor: '#ea580c' },
+        { value: '7', suffix: null, label: 'Audit Types', sublabel: 'From local map pack SEO to AI search rankings', icon: Cpu, accentColor: '#3b82f6' },
+        { value: '98', suffix: '%', label: 'Risk Removed', sublabel: 'Average reduction in ADA lawsuit vulnerability', icon: Zap, accentColor: '#f97316' },
+        { value: '4.9', suffix: '/5', label: 'Dealer Rating', sublabel: 'Rated by general managers & marketing directors', icon: ShieldCheck, accentColor: '#6366f1' },
     ];
 
     const sectionRef = useRef(null);
-    const isSectionInView = useInView(sectionRef, { once: true, margin: "-80px" });
+    const isInView = useInView(sectionRef, { once: true, margin: '-80px' });
 
     return (
         <section
             ref={sectionRef}
-            className={`relative pt-10 pb-20 overflow-hidden transition-colors duration-500
-                ${darkMode ? 'bg-[#0A0520]' : 'bg-[#F5F7FA]'}`}
+            className="relative py-20 transition-colors duration-500 bg-transparent overflow-hidden"
         >
+            {/* Background Image */}
+            <div 
+                className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat bg-fixed"
+                style={{ backgroundImage: `url(${metricsBg})` }}
+            />
+            {/* Bluish overlay to ensure text remains readable in both themes */}
+            <div className={`absolute inset-0 z-0 transition-colors duration-500 ${darkMode ? 'bg-blue-900/90' : 'bg-blue-100/85'}`} />
 
+            <div className="container mx-auto px-6 max-w-7xl space-y-12 relative z-10">
 
-            <div className="container mx-auto px-6 relative z-10 max-w-7xl space-y-12">
-
-                {/* Section header */}
+                {/* Header */}
                 <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={isSectionInView ? { opacity: 1, y: 0 } : {}}
-                    transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                    className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6"
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={isInView ? { opacity: 1, y: 0 } : {}}
+                    transition={{ duration: 0.5 }}
+                    className="flex flex-col lg:flex-row lg:items-end justify-between gap-8"
                 >
-                    <div className="space-y-2">
-                        <span className={`inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em]
-                            ${darkMode ? 'text-orange-400' : 'text-orange-700'}`}>
-                            <span className="w-4 h-px bg-current inline-block" />
+                    <div className="space-y-3">
+                        <p className={`text-xs font-bold uppercase tracking-[0.25em]
+                            ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
                             DealerPulse at a Glance
-                        </span>
+                        </p>
                         <h2 className={`text-3xl lg:text-4xl font-black tracking-tight leading-tight
-                            ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                            Built for dealers who take <br className="hidden lg:block" />
-                            <span className="text-[#ea580c]">
-                                website performance seriously.
-                            </span>
+                            ${darkMode ? 'text-white' : 'text-slate-900'}`}
+                            style={{ fontFamily: "'Syne', sans-serif" }}>
+                            Built for dealers who take{' '}
+                            <span style={{ color: '#ea580c' }}>website performance seriously.</span>
                         </h2>
                     </div>
 
-                    {/* 7 audit type pills — horizontal on desktop */}
-                    <div className="flex flex-wrap gap-2 lg:justify-end">
+                    {/* Pills */}
+                    <div className="flex flex-wrap gap-2 lg:justify-end lg:max-w-xs">
                         {AUDIT_DIMS.map((d, i) => (
                             <motion.span
                                 key={d.label}
-                                initial={{ opacity: 0, scale: 0.88 }}
-                                animate={isSectionInView ? { opacity: 1, scale: 1 } : {}}
-                                transition={{ delay: 0.15 + i * 0.06, duration: 0.4 }}
-                                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold border
+                                initial={{ opacity: 0 }}
+                                animate={isInView ? { opacity: 1 } : {}}
+                                transition={{ delay: 0.1 + i * 0.05 }}
+                                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border
                                     ${darkMode
-                                        ? 'bg-white/4 border-white/8 text-slate-400'
+                                        ? 'bg-white/4 border-white/8 text-white'
                                         : 'bg-white border-slate-200 text-slate-600 shadow-sm'}`}
                             >
                                 <span className="text-orange-500">{d.icon}</span>
@@ -206,14 +153,14 @@ const MetricsBanner = () => {
                     </div>
                 </motion.div>
 
-                {/* Metric cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                {/* Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {metrics.map((m, i) => (
-                        <MetricCard key={i} {...m} delay={i * 0.12} darkMode={darkMode} />
+                        <MetricCard key={i} {...m} delay={i * 0.08} darkMode={darkMode} />
                     ))}
                 </div>
 
-                {/* Bottom thin divider */}
+                {/* Divider */}
                 <div className={`w-full h-px ${darkMode ? 'bg-white/8' : 'bg-slate-200'}`} />
             </div>
         </section>

@@ -142,7 +142,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
                         }`}>
                           <div className="px-5 pb-3 mb-2 border-b border-slate-800/10">
                             <p className="text-[10px] font-black uppercase text-gray-500 tracking-widest mb-1">Signed in as</p>
-                            <p className="font-bold text-sm truncate">{user?.email}</p>
+                            <p className={`font-bold text-sm truncate ${darkMode ? "text-white" : "text-slate-500"}`}>{user?.email}</p>
                           </div>
 
                           <div className="space-y-1">

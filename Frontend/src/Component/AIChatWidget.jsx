@@ -251,11 +251,11 @@ const AIChatWidget = () => {
         return (
             <button
                 onClick={handleOpenWidget}
-                className={`fixed bottom-6 right-6 h-14 px-6 rounded-full shadow-2xl flex items-center gap-3 transition-all duration-300 hover:scale-105 hover:shadow-indigo-500/40 active:scale-95 z-50 group animate-bounce-subtle ${darkMode ? 'bg-indigo-600 text-white shadow-indigo-500/20' : 'bg-indigo-600 text-white shadow-indigo-200'}`}
+                className={`fixed bottom-6 right-6 h-14 px-6 rounded-full shadow-2xl flex items-center gap-3 transition-all duration-300 hover:scale-105 hover:shadow-orange-350-500/40 active:scale-95 z-50 group animate-bounce-subtle ${darkMode ? 'bg-orange-600 text-white shadow-orange-350/20' : 'bg-orange-600 text-white shadow-orange-200'}`}
             >
                 <div className="relative flex items-center justify-center">
                     <MessageSquare className="w-6 h-6 group-hover:rotate-12 transition-transform" />
-                    <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-indigo-600 rounded-full animate-pulse"></div>
+                    <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-blue-500 border-2 border-orange-600 rounded-full animate-pulse"></div>
                 </div>
                 <span className="font-bold tracking-tight text-sm sm:text-base">Ask AI Assistant</span>
             </button>
@@ -263,14 +263,14 @@ const AIChatWidget = () => {
     }
 
     return (
-        <div className={`fixed bottom-6 right-6 w-[350px] sm:w-[400px] h-[500px] max-h-[80vh] flex flex-col rounded-2xl shadow-2xl z-50 transition-all duration-300 transform origin-bottom-right border ${darkMode ? 'bg-[#0F172A] border-slate-700 shadow-indigo-500/10' : 'bg-white border-slate-200'}`}>
+        <div className={`fixed bottom-6 right-6 w-[350px] sm:w-[400px] h-[500px] max-h-[80vh] flex flex-col rounded-2xl shadow-2xl z-50 transition-all duration-300 transform origin-bottom-right border ${darkMode ? 'bg-[#0F172A] border-slate-700 shadow-blue-500/10' : 'bg-white border-slate-200'}`}>
             {/* Subtle Inner Glow for Dark Mode */}
-            {darkMode && <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent"></div>}
+            {darkMode && <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-500/50 to-transparent"></div>}
 
             {/* Header */}
-            <div className={`p-4 rounded-t-2xl flex items-center justify-between border-b ${darkMode ? 'bg-gradient-to-r from-[#1E293B] to-[#0F172A] border-slate-700 text-white' : 'bg-indigo-600 text-white border-transparent'}`}>
+            <div className={`p-4 rounded-t-2xl flex items-center justify-between border-b ${darkMode ? 'bg-gradient-to-r from-[#1E293B] to-[#0F172A] border-slate-700 text-white' : 'bg-blue-700 text-white border-transparent'}`}>
                 <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30">
+                    <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center border border-blue-500/30">
                         <Sparkles className="w-4 h-4 text-white" />
                     </div>
                     <div>
@@ -302,12 +302,12 @@ const AIChatWidget = () => {
                 {messages.map((msg, idx) => (
                     <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                         <div className={`max-w-[85%] flex gap-2 min-w-0 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                            <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center border ${msg.role === 'user' ? (darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-indigo-100 border-indigo-200 text-indigo-600') : (darkMode ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-indigo-600 border-indigo-500 text-white')}`}>
+                            <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center border ${msg.role === 'user' ? (darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-blue-100 border-blue-200 text-blue-700') : (darkMode ? 'bg-blue-700 border-blue-600 text-white' : 'bg-blue-700 border-blue-600 text-white')}`}>
                                 {msg.role === 'user' ? <User size={14} /> : <Bot size={14} />}
                             </div>
                             <div className={`p-3 rounded-2xl text-xs leading-relaxed break-all whitespace-pre-wrap overflow-hidden ${msg.role === 'user'
-                                    ? (darkMode ? 'bg-indigo-600 text-white rounded-tr-none shadow-lg' : 'bg-white shadow-sm border border-slate-100 rounded-tr-none text-slate-700')
-                                    : (darkMode ? 'bg-slate-800 text-white border border-slate-700 rounded-tl-none shadow-sm' : 'bg-white shadow-sm border border-slate-100 rounded-tl-none text-slate-700')
+                                ? (darkMode ? 'bg-blue-700 text-white rounded-tr-none shadow-lg' : 'bg-white shadow-sm border border-slate-100 rounded-tr-none text-slate-700')
+                                : (darkMode ? 'bg-slate-800 text-white border border-slate-700 rounded-tl-none shadow-sm' : 'bg-white shadow-sm border border-slate-100 rounded-tl-none text-slate-700')
                                 }`}>
                                 <div dangerouslySetInnerHTML={{ __html: formatMarkdown(msg.text) }} />
                             </div>
@@ -317,11 +317,11 @@ const AIChatWidget = () => {
                 {isLoading && (
                     <div className="flex justify-start">
                         <div className="max-w-[85%] flex gap-2 min-w-0">
-                            <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center border ${darkMode ? 'bg-indigo-600 border-indigo-500' : 'bg-indigo-600 border-indigo-500 text-white'}`}>
+                            <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center border ${darkMode ? 'bg-blue-700 border-blue-600' : 'bg-blue-700 border-blue-600 text-white'}`}>
                                 <Bot size={14} />
                             </div>
                             <div className={`p-3 rounded-2xl text-xs flex items-center gap-2 break-all whitespace-pre-wrap overflow-hidden ${darkMode ? 'bg-slate-800 text-white border border-slate-700' : 'bg-white shadow-sm border border-slate-100'}`}>
-                                <Loader2 className="w-3 h-3 animate-spin text-indigo-400" />
+                                <Loader2 className="w-3 h-3 animate-spin text-blue-500" />
                                 Analyzing results...
                             </div>
                         </div>
@@ -344,7 +344,7 @@ const AIChatWidget = () => {
                     <button
                         type="submit"
                         disabled={!input.trim() || isLoading}
-                        className={`p-2 rounded-xl transition-all duration-300 ${input.trim() && !isLoading ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-200 text-slate-400 dark:bg-slate-700'}`}
+                        className={`p-2 rounded-xl transition-all duration-300 ${input.trim() && !isLoading ? 'bg-orange-600 text-white shadow-lg' : 'bg-slate-200 text-slate-400 dark:bg-slate-700'}`}
                     >
                         <Send className="w-4 h-4" />
                     </button>

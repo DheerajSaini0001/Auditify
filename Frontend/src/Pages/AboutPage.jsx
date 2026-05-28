@@ -27,11 +27,11 @@ export default function AboutPage() {
       <div className="relative z-10 max-w-6xl w-full">
 
         {/* Header */}
-        <PageHeader 
-            title="Empowering the Web,"
-            titleAccent="One Audit at a Time."
-            subtitle="We provide deep insights into performance, SEO, and accessibility to help businesses build faster, compliant, and more profitable websites."
-            darkMode={darkMode}
+        <PageHeader
+          title="Empowering the Web,"
+          titleAccent="One Audit at a Time."
+          subtitle="We provide deep insights into performance, SEO, and accessibility to help businesses build faster, compliant, and more profitable websites."
+          darkMode={darkMode}
         />
 
         {/* Content Section */}
@@ -84,7 +84,7 @@ export default function AboutPage() {
               desc: "Identifying vulnerabilities and security headers to keep your users safe."
             },
             {
-              icon: <Users className="w-6 h-6 text-orange-500" />,
+              icon: <Users className="w-6 h-6 text-orange-350" />,
               title: "User Centric",
               desc: "Improving the actual experience of your visitors, not just search bots."
             }
@@ -272,7 +272,7 @@ export default function AboutPage() {
             {/* UX */}
             <div className={`p-6 rounded-3xl border ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-white border-slate-200 shadow-lg'}`}>
               <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 rounded-lg bg-orange-500/10 text-orange-500"><BarChart3 className="w-5 h-5" /></div>
+                <div className="p-2 rounded-lg bg-orange-350/10 text-orange-350"><BarChart3 className="w-5 h-5" /></div>
                 <h3 className="text-lg font-bold">5. UX & Structure</h3>
               </div>
               <div className="space-y-3">

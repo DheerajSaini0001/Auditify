@@ -5,11 +5,11 @@ import { ThemeContext } from '../../context/ThemeContext.jsx';
 
 const COLOR_MAP = {
     orange: { text: 'text-orange-400', accent: '#f97316', bg: '#f9731610' },
-    blue:   { text: 'text-blue-400',   accent: '#3b82f6', bg: '#3b82f610' },
+    blue: { text: 'text-blue-400', accent: '#3b82f6', bg: '#3b82f610' },
     purple: { text: 'text-violet-400', accent: '#8b5cf6', bg: '#8b5cf610' },
-    red:    { text: 'text-rose-400',   accent: '#f43f5e', bg: '#f43f5e10' },
-    cyan:   { text: 'text-cyan-400',   accent: '#06b6d4', bg: '#06b6d410' },
-    amber:  { text: 'text-amber-400',  accent: '#f59e0b', bg: '#f59e0b10' },
+    red: { text: 'text-rose-400', accent: '#f43f5e', bg: '#f43f5e10' },
+    cyan: { text: 'text-cyan-400', accent: '#06b6d4', bg: '#06b6d410' },
+    amber: { text: 'text-amber-400', accent: '#f59e0b', bg: '#f59e0b10' },
     indigo: { text: 'text-indigo-400', accent: '#6366f1', bg: '#6366f110' },
 };
 
@@ -65,8 +65,8 @@ const PillarCard = ({ icon: Icon, title, tag, description, color, index, darkMod
                     ${darkMode ? 'lg:border-l border-white/6' : 'lg:border-l border-slate-100'}`}>
                     {[
                         { label: 'Form Completion Rate', value: '94%', bar: 94 },
-                        { label: 'CRM Webhook Health',   value: '100%', bar: 100 },
-                        { label: 'Lead Response Time',   value: '< 2min', bar: 78 },
+                        { label: 'CRM Webhook Health', value: '100%', bar: 100 },
+                        { label: 'Lead Response Time', value: '< 2min', bar: 78 },
                     ].map((stat) => (
                         <div key={stat.label} className="space-y-1.5">
                             <div className="flex justify-between items-center">
@@ -96,13 +96,13 @@ const AuditPillarsSection = () => {
     const darkMode = theme === 'dark';
 
     const pillars = [
-        { icon: Zap,           title: 'Website Performance',     tag: 'Speed & Loading',         description: 'We check how fast your website loads on mobile and desktop, including page speed, layout stability, and user interaction performance.', color: 'orange' },
-        { icon: Search,        title: 'SEO Optimization',         tag: 'Search Visibility',        description: 'We analyze your SEO setup including page titles, keywords, indexing, schema markup, and search visibility to help rank better on Google.', color: 'blue' },
-        { icon: Accessibility, title: 'Accessibility Check',      tag: 'WCAG Compliance',          description: 'We test your website for accessibility issues to make sure it can be used by everyone, including people with disabilities.', color: 'purple' },
-        { icon: ShieldCheck,   title: 'Website Security',         tag: 'Security Audit',           description: 'We scan for SSL issues, security risks, unsafe headers, firewall problems, and suspicious activity to keep your website secure.', color: 'red' },
-        { icon: LayoutDashboard, title: 'User Experience',        tag: 'Layout & Navigation',      description: 'We review your website design, navigation, spacing, mobile responsiveness, and button accessibility for easy browsing.', color: 'cyan' },
-        { icon: Cpu,           title: 'AI Search Optimization',   tag: 'AI & Smart Search',        description: 'We check whether your content and structure are optimized for AI-based search platforms like ChatGPT, Gemini, and voice search.', color: 'amber' },
-        { icon: Target,        title: 'Conversion Tracking',      tag: 'Conversion Flow',          description: 'We test contact forms, integrations, tracking systems, and lead flows to make sure users can submit inquiries without issues.', color: 'indigo', isWide: true },
+        { icon: Zap, title: 'Website Performance', tag: 'Speed & Loading', description: 'We check how fast your website loads on mobile and desktop, including page speed, layout stability, and user interaction performance.', color: 'orange' },
+        { icon: Search, title: 'SEO Optimization', tag: 'Search Visibility', description: 'We analyze your SEO setup including page titles, keywords, indexing, schema markup, and search visibility to help rank better on Google.', color: 'blue' },
+        { icon: Accessibility, title: 'Accessibility Check', tag: 'WCAG Compliance', description: 'We test your website for accessibility issues to make sure it can be used by everyone, including people with disabilities.', color: 'purple' },
+        { icon: ShieldCheck, title: 'Website Security', tag: 'Security Audit', description: 'We scan for SSL issues, security risks, unsafe headers, firewall problems, and suspicious activity to keep your website secure.', color: 'red' },
+        { icon: LayoutDashboard, title: 'User Experience', tag: 'Layout & Navigation', description: 'We review your website design, navigation, spacing, mobile responsiveness, and button accessibility for easy browsing.', color: 'cyan' },
+        { icon: Cpu, title: 'AI Search Optimization', tag: 'AI & Smart Search', description: 'We check whether your content and structure are optimized for AI-based search platforms like ChatGPT, Gemini, and voice search.', color: 'amber' },
+        { icon: Target, title: 'Conversion Tracking', tag: 'Conversion Flow', description: 'We test contact forms, integrations, tracking systems, and lead flows to make sure users can submit inquiries without issues.', color: 'indigo', isWide: true },
     ];
 
     return (
@@ -120,9 +120,9 @@ const AuditPillarsSection = () => {
                             whileInView={{ opacity: 1 }}
                             viewport={{ once: true }}
                             className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-[9px] font-bold uppercase tracking-[0.25em]
-                                ${darkMode ? 'bg-orange-500/8 border-orange-500/15 text-orange-400' : 'bg-orange-50 border-orange-200 text-orange-600'}`}
+                                ${darkMode ? 'bg-orange-350/8 border-orange-350/15 text-orange-400' : 'bg-orange-50 border-orange-200 text-orange-600'}`}
                         >
-                            <Sparkles size={11} className="text-orange-500" />
+                            <Sparkles size={11} className="text-orange-350" />
                             Powered by DealerSales.co
                         </motion.div>
 

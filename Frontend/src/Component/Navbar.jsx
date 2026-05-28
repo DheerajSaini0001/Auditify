@@ -47,7 +47,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
 
 
   return (
-   <nav className={`sticky top-0 w-full z-50 transition-all duration-300 ${navbarClass}`}>
+    <nav className={`sticky top-0 w-full z-50 transition-all duration-300 ${navbarClass}`}>
       <div className="w-full px-4 sm:px-6 lg:px-8 bg-[#1B1464]/90">
         <div className={`flex items-center justify-between h-16 `}>
 
@@ -92,8 +92,8 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
                 <button
                   onClick={() => navigate("/bulk-audit")}
                   className={`hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-white shadow-lg transition-all 
-                  bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-400 hover:to-indigo-400 hover:scale-[1.02] active:scale-[0.98]
-                  shadow-blue-500/20`}
+                  bg-orange-600 hover:bg-orange-350 hover:scale-[1.02] active:scale-[0.98]
+                  shadow-orange-350/20`}
                 >
                   <NotebookPen className="w-4 h-4" />
                   <span>Back to List</span>
@@ -102,8 +102,8 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
                 <button
                   onClick={handleGoHome}
                   className={`hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-white shadow-lg transition-all 
-                  bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 hover:scale-[1.02] active:scale-[0.98]
-                  shadow-emerald-500/20`}
+                  bg-orange-600 hover:bg-orange-350 hover:scale-[1.02] active:scale-[0.98]
+                  shadow-orange-350/20`}
                 >
                   <Plus className="w-5 h-5" />
                   <span>Start New Audit</span>
@@ -124,7 +124,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
                         <span className="text-[10px] font-bold leading-none truncate max-w-[80px]">{user?.name?.split(' ')[0]}</span>
                         <span className="text-[8px] font-black uppercase text-blue-500 tracking-tighter">{user?.role}</span>
                       </div>
-                      
+
                       {user?.avatar ? (
                         <img src={user.avatar} alt="Profile" title="User Profile" className="w-8 h-8 rounded-full border border-white/20 shadow-sm" />
                       ) : (
@@ -137,23 +137,22 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
 
                     {/* Profile Dropdown */}
                     {profileOpen && (
-                      <div className={`absolute right-0 mt-3 w-56 rounded-3xl border shadow-2xl z-20 py-3 overflow-hidden animate-in fade-in zoom-in duration-200 ${
-                          darkMode ? "bg-[#0B1120] border-slate-800" : "bg-white border-slate-100"
+                      <div className={`absolute right-0 mt-3 w-56 rounded-3xl border shadow-2xl z-20 py-3 overflow-hidden animate-in fade-in zoom-in duration-200 ${darkMode ? "bg-[#0B1120] border-slate-800" : "bg-white border-slate-100"
                         }`}>
-                          <div className="px-5 pb-3 mb-2 border-b border-slate-800/10">
-                            <p className="text-[10px] font-black uppercase text-gray-500 tracking-widest mb-1">Signed in as</p>
-                            <p className={`font-bold text-sm truncate ${darkMode ? "text-white" : "text-slate-500"}`}>{user?.email}</p>
-                          </div>
-
-                          <div className="space-y-1">
-                            <button 
-                              onClick={() => { logout(); setProfileOpen(false); }}
-                              className={`w-full flex items-center gap-3 px-5 py-2.5 text-sm font-bold text-rose-500 transition-all ${darkMode ? "hover:bg-rose-500/10" : "hover:bg-rose-50"}`}
-                            >
-                              <LogOut size={16} /> Logout
-                            </button>
-                          </div>
+                        <div className="px-5 pb-3 mb-2 border-b border-slate-800/10">
+                          <p className="text-[10px] font-black uppercase text-gray-500 tracking-widest mb-1">Signed in as</p>
+                          <p className={`font-bold text-sm truncate ${darkMode ? "text-white" : "text-slate-500"}`}>{user?.email}</p>
                         </div>
+
+                        <div className="space-y-1">
+                          <button
+                            onClick={() => { logout(); setProfileOpen(false); }}
+                            className={`w-full flex items-center gap-3 px-5 py-2.5 text-sm font-bold text-rose-500 transition-all ${darkMode ? "hover:bg-rose-500/10" : "hover:bg-rose-50"}`}
+                          >
+                            <LogOut size={16} /> Logout
+                          </button>
+                        </div>
+                      </div>
                     )}
                   </div>
                 ) : (
@@ -176,7 +175,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
                       </button>
                     </Link>
                     <Link to="/register" className="hidden sm:block">
-                      <button className="px-4 py-1.5 rounded-lg text-sm font-bold text-white bg-emerald-700 hover:bg-emerald-600 shadow-md shadow-emerald-700/20">
+                      <button className="px-4 py-1.5 rounded-lg text-sm font-bold text-white bg-orange-600 hover:bg-orange-350 shadow-md shadow-orange-600/20">
                         Sign Up
                       </button>
                     </Link>

@@ -176,7 +176,7 @@ const DashboardPage = () => {
   // Auto-fill and auto-run audit from query parameters (e.g. from Audit History page)
   const isAutoAuditingRef = useRef(false);
   const processedAutoUrlRef = useRef(null);
-  
+
   useEffect(() => {
     const params = new URLSearchParams(location.search);
 
@@ -194,21 +194,21 @@ const DashboardPage = () => {
 
     if (queryUrl && queryUrl !== processedAutoUrlRef.current && !isAutoAuditingRef.current) {
       processedAutoUrlRef.current = queryUrl;
-      
+
       const triggerAutoAudit = async () => {
         let urlToAudit = queryUrl.trim();
         if (!/^https?:\/\//i.test(urlToAudit)) {
           urlToAudit = `https://${urlToAudit}`;
         }
-        
+
         isAutoAuditingRef.current = true;
         toast.loading(`Starting audit for ${urlToAudit}...`, { id: 'auto-audit-toast' });
-        
+
         try {
           // Don't force delete existing data — let backend decide (cached vs new audit)
           const result = await runAudit(urlToAudit, queryDevice, queryReport, null, null, false);
           toast.dismiss('auto-audit-toast');
-          
+
           if (result?.success === false) {
             toast.error(result.error || 'Audit failed. Please try again.');
           } else if (result?.id) {
@@ -230,7 +230,7 @@ const DashboardPage = () => {
       };
 
       triggerAutoAudit();
-      
+
       // Clean query params from URL
       navigate(location.pathname, { replace: true });
     }
@@ -398,7 +398,7 @@ const DashboardPage = () => {
       if (type === 'aiReadiness') return { label: "Good", dotColor: "bg-teal-500" };
       return { label: "Good", dotColor: "bg-purple-500" };
     }
-    return { label: "Needs Improvement", dotColor: "bg-orange-500" };
+    return { label: "Needs Improvement", dotColor: "bg-orange-350" };
   };
 
   // Filter GSC + local properties
@@ -476,7 +476,7 @@ const DashboardPage = () => {
     try {
       const result = await runAudit(targetUrl, directDevice, directReport, null);
       toast.dismiss('direct-audit-toast');
-      
+
       if (result?.success === false) {
         toast.error(result.error || 'Audit failed. Please try again.');
         return;
@@ -502,7 +502,7 @@ const DashboardPage = () => {
       try {
         const timestamp = parseInt(proj._id.substring(0, 8), 16) * 1000;
         if (!isNaN(timestamp)) return timestamp;
-      } catch (e) {}
+      } catch (e) { }
     }
     return 0;
   };
@@ -583,7 +583,7 @@ const DashboardPage = () => {
         <div className="relative">
           <button
             onClick={() => setCreateDropdownOpen(!createDropdownOpen)}
-            className="w-full flex items-center justify-between px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm transition-all shadow-md shadow-emerald-600/10 active:scale-[0.98]"
+            className="w-full flex items-center justify-between px-4 py-2.5 bg-orange-600 hover:bg-orange-350 text-white rounded-xl font-bold text-sm transition-all shadow-md shadow-orange-600/10 active:scale-[0.98]"
           >
             <div className="flex items-center gap-2">
               <Plus size={16} />
@@ -630,17 +630,16 @@ const DashboardPage = () => {
         <nav className="flex flex-col gap-1 mt-2">
           <button
             onClick={() => { setActiveTab("Overview"); setSidebarOpen(false); }}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-extrabold transition-all duration-300 border-none ${
-              activeTab === "Overview"
-                ? (darkMode ? 'bg-emerald-950/40 text-emerald-400' : 'bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 shadow-sm')
-                : (darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50')
-            }`}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-extrabold transition-all duration-300 border-none ${activeTab === "Overview"
+              ? (darkMode ? 'bg-emerald-950/40 text-emerald-400' : 'bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 shadow-sm')
+              : (darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50')
+              }`}
           >
             <LayoutDashboard size={16} />
             <span>Projects</span>
           </button>
 
-         
+
 
           <button
             onClick={() => navigate("/audit-history")}
@@ -653,20 +652,18 @@ const DashboardPage = () => {
 
           <button
             onClick={() => { setActiveTab("Starred"); setSidebarOpen(false); }}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${
-              activeTab === "Starred"
-                ? (darkMode ? 'bg-amber-950/40 text-amber-400' : 'bg-amber-50 text-amber-600 border border-amber-500/20 shadow-sm')
-                : (darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50')
-            }`}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${activeTab === "Starred"
+              ? (darkMode ? 'bg-amber-950/40 text-amber-400' : 'bg-amber-50 text-amber-600 border border-amber-500/20 shadow-sm')
+              : (darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50')
+              }`}
           >
             <Star size={16} className={activeTab === "Starred" ? (darkMode ? 'fill-amber-400 text-amber-400' : 'fill-amber-500 text-amber-500') : ''} />
             <span>Starred</span>
             {starredIds.length > 0 && (
-              <span className={`ml-auto text-[10px] font-black px-1.5 py-0.5 rounded-full ${
-                activeTab === "Starred"
-                  ? (darkMode ? 'bg-amber-900/50 text-amber-300' : 'bg-amber-100 text-amber-700')
-                  : (darkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500')
-              }`}>{starredIds.length}</span>
+              <span className={`ml-auto text-[10px] font-black px-1.5 py-0.5 rounded-full ${activeTab === "Starred"
+                ? (darkMode ? 'bg-amber-900/50 text-amber-300' : 'bg-amber-100 text-amber-700')
+                : (darkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500')
+                }`}>{starredIds.length}</span>
             )}
           </button>
 
@@ -706,7 +703,7 @@ const DashboardPage = () => {
           </button>
         </nav>
 
-    
+
       </div>
 
       {/* Premium promotional block */}
@@ -721,7 +718,7 @@ const DashboardPage = () => {
           </p>
           <button
             onClick={() => toast.success('Premium checkout is launching soon!')}
-            className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-md shadow-emerald-600/10 transition-all active:scale-[0.98]"
+            className="w-full py-2 bg-orange-600 hover:bg-orange-350 text-white rounded-xl font-bold text-xs shadow-md shadow-orange-600/10 transition-all active:scale-[0.98]"
           >
             Upgrade Now
           </button>
@@ -768,7 +765,7 @@ const DashboardPage = () => {
 
         {/* ── DIRECT AUDIT MULTI-PART BAR ── */}
         <div className={`p-3 rounded-2xl border flex flex-col xl:flex-row items-stretch gap-1.5 transition-all duration-300 shadow-lg ${darkMode ? 'bg-slate-900/90 border-slate-800 backdrop-blur-md' : 'bg-white border-slate-200'}`}>
-          
+
           {/* 1. Protocol Selector Dropdown */}
           <div className="relative shrink-0 flex-1 xl:flex-none">
             <button
@@ -777,9 +774,8 @@ const DashboardPage = () => {
                 closeAllDropdowns();
                 setProtocolOpen(state);
               }}
-              className={`w-full h-11 px-4 flex items-center justify-between gap-2 text-xs font-extrabold transition-all duration-300 rounded-xl select-none ${
-                darkMode ? 'bg-slate-850 hover:bg-slate-800 text-slate-200 border-none' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'
-              }`}
+              className={`w-full h-11 px-4 flex items-center justify-between gap-2 text-xs font-extrabold transition-all duration-300 rounded-xl select-none ${darkMode ? 'bg-slate-850 hover:bg-slate-800 text-slate-200 border-none' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'
+                }`}
             >
               <span className="truncate">{protocol}</span>
               <ChevronDown size={14} className={`opacity-80 shrink-0 transition-transform ${protocolOpen ? 'rotate-180' : ''}`} />
@@ -807,9 +803,8 @@ const DashboardPage = () => {
               value={directUrl}
               onChange={(e) => setDirectUrl(e.target.value)}
               placeholder="Domain or URL"
-              className={`w-full h-11 pl-4 pr-10 rounded-xl text-sm font-medium focus:outline-none focus:border-emerald-500/50 transition-all duration-300 ${
-                darkMode ? 'bg-slate-850 border-none text-slate-100 placeholder-slate-505 focus:shadow-emerald-950/20' : 'bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 focus:shadow-emerald-500/5'
-              }`}
+              className={`w-full h-11 pl-4 pr-10 rounded-xl text-sm font-medium focus:outline-none focus:border-emerald-500/50 transition-all duration-300 ${darkMode ? 'bg-slate-850 border-none text-slate-100 placeholder-slate-505 focus:shadow-emerald-950/20' : 'bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 focus:shadow-emerald-500/5'
+                }`}
             />
           </form>
 
@@ -821,9 +816,8 @@ const DashboardPage = () => {
                 closeAllDropdowns();
                 setDeviceOpen(state);
               }}
-              className={`w-full h-11 px-4 flex items-center justify-between gap-2 text-xs font-extrabold transition-all duration-300 rounded-xl select-none ${
-                darkMode ? 'bg-slate-850 hover:bg-slate-800 text-slate-200 border-none' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'
-              }`}
+              className={`w-full h-11 px-4 flex items-center justify-between gap-2 text-xs font-extrabold transition-all duration-300 rounded-xl select-none ${darkMode ? 'bg-slate-850 hover:bg-slate-800 text-slate-200 border-none' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'
+                }`}
             >
               <span className="truncate">{directDevice}</span>
               <ChevronDown size={14} className={`opacity-80 shrink-0 transition-transform ${deviceOpen ? 'rotate-180' : ''}`} />
@@ -852,9 +846,8 @@ const DashboardPage = () => {
                 closeAllDropdowns();
                 setReportOpen(state);
               }}
-              className={`w-full h-11 px-4 flex items-center justify-between gap-2 text-xs font-extrabold transition-all duration-300 rounded-xl select-none ${
-                darkMode ? 'bg-slate-850 hover:bg-slate-800 text-slate-200 border-none' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'
-              }`}
+              className={`w-full h-11 px-4 flex items-center justify-between gap-2 text-xs font-extrabold transition-all duration-300 rounded-xl select-none ${darkMode ? 'bg-slate-850 hover:bg-slate-800 text-slate-200 border-none' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'
+                }`}
             >
               <span className="truncate">
                 {reportOptions.find(opt => opt.value === directReport)?.label || directReport}
@@ -885,9 +878,8 @@ const DashboardPage = () => {
                 closeAllDropdowns();
                 setScopeOpen(state);
               }}
-              className={`w-full h-11 px-4 flex items-center justify-between gap-2 text-xs font-extrabold transition-all duration-300 rounded-xl select-none ${
-                darkMode ? 'bg-slate-850 hover:bg-slate-800 text-slate-200 border-none' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'
-              }`}
+              className={`w-full h-11 px-4 flex items-center justify-between gap-2 text-xs font-extrabold transition-all duration-300 rounded-xl select-none ${darkMode ? 'bg-slate-850 hover:bg-slate-800 text-slate-200 border-none' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'
+                }`}
             >
               <span className="truncate">{scope}</span>
               <ChevronDown size={14} className={`opacity-80 shrink-0 transition-transform ${scopeOpen ? 'rotate-180' : ''}`} />
@@ -1013,24 +1005,22 @@ const DashboardPage = () => {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all border-none flex items-center gap-1.5 ${
-                activeTab === tab
-                  ? tab === "Starred"
-                    ? (darkMode ? 'bg-amber-950/40 text-amber-400' : 'bg-amber-50 text-amber-600')
-                    : (darkMode ? 'bg-emerald-950/40 text-emerald-400' : 'bg-emerald-50 text-emerald-600')
-                  : (darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50')
-              }`}
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all border-none flex items-center gap-1.5 ${activeTab === tab
+                ? tab === "Starred"
+                  ? (darkMode ? 'bg-amber-950/40 text-amber-400' : 'bg-amber-50 text-amber-600')
+                  : (darkMode ? 'bg-emerald-950/40 text-emerald-400' : 'bg-emerald-50 text-emerald-600')
+                : (darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50')
+                }`}
             >
               {tab === "Starred" && (
                 <Star size={11} className={activeTab === "Starred" ? (darkMode ? 'fill-amber-400' : 'fill-amber-500') : ''} />
               )}
               {tab}
               {tab === "Starred" && starredIds.length > 0 && (
-                <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${
-                  activeTab === "Starred"
-                    ? (darkMode ? 'bg-amber-900/60 text-amber-300' : 'bg-amber-100 text-amber-700')
-                    : (darkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-200 text-slate-500')
-                }`}>{starredIds.length}</span>
+                <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${activeTab === "Starred"
+                  ? (darkMode ? 'bg-amber-900/60 text-amber-300' : 'bg-amber-100 text-amber-700')
+                  : (darkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-200 text-slate-500')
+                  }`}>{starredIds.length}</span>
               )}
             </button>
           ))}
@@ -1055,17 +1045,16 @@ const DashboardPage = () => {
               value={apiSearchInput}
               onChange={(e) => setApiSearchInput(e.target.value)}
               placeholder="Search website projects..."
-              className={`w-full pl-11 pr-12 py-2.5 border rounded-xl text-sm font-medium focus:outline-none focus:border-emerald-500/50 transition-all duration-300 shadow-sm ${
-                darkMode 
-                  ? 'bg-slate-850 border-slate-700 text-slate-100 placeholder-slate-500 focus:shadow-emerald-950/20' 
-                  : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400 focus:shadow-emerald-500/5'
-              }`}
+              className={`w-full pl-11 pr-12 py-2.5 border rounded-xl text-sm font-medium focus:outline-none focus:border-emerald-500/50 transition-all duration-300 shadow-sm ${darkMode
+                ? 'bg-slate-850 border-slate-700 text-slate-100 placeholder-slate-500 focus:shadow-emerald-950/20'
+                : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400 focus:shadow-emerald-500/5'
+                }`}
             />
             <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
               {apiSearchLoading ? (
                 <RefreshCw size={14} className="animate-spin text-emerald-500" />
               ) : isApiSearching ? (
-                <button 
+                <button
                   onClick={() => {
                     setApiSearchInput("");
                     setApiSearchResults([]);
@@ -1160,9 +1149,9 @@ const DashboardPage = () => {
                         </div>
                       ) : (
                         <div className={`w-10 h-10 rounded-xl border overflow-hidden flex items-center justify-center font-bold shrink-0 text-sm transition-all duration-300 ${darkMode ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-slate-50 border-slate-100 text-slate-400'}`}>
-                          <img 
-                            src={`https://www.google.com/s2/favicons?sz=128&domain=${proj.url}`} 
-                            alt={proj.url} 
+                          <img
+                            src={`https://www.google.com/s2/favicons?sz=128&domain=${proj.url}`}
+                            alt={proj.url}
                             className="w-8 h-8 object-contain"
                             onError={(e) => {
                               e.currentTarget.style.display = 'none';
@@ -1252,11 +1241,10 @@ const DashboardPage = () => {
                           toast(starredIds.includes(proj._id) ? 'Removed from Starred' : 'Added to Starred ⭐', { icon: starredIds.includes(proj._id) ? '✕' : '⭐' });
                         }}
                         title={starredIds.includes(proj._id) ? 'Remove from Starred' : 'Add to Starred'}
-                        className={`p-1.5 border rounded-lg transition-all duration-300 ${
-                          starredIds.includes(proj._id)
-                            ? (darkMode ? 'bg-amber-950/40 border-amber-800/40 text-amber-400 hover:bg-amber-950/60' : 'bg-amber-50 border-amber-200 text-amber-500 hover:bg-amber-100')
-                            : (darkMode ? 'bg-slate-900 border-slate-800 text-slate-400 hover:text-amber-400 hover:bg-slate-800' : 'bg-white border-slate-200 text-slate-400 hover:text-amber-500 hover:bg-slate-50')
-                        }`}
+                        className={`p-1.5 border rounded-lg transition-all duration-300 ${starredIds.includes(proj._id)
+                          ? (darkMode ? 'bg-amber-950/40 border-amber-800/40 text-amber-400 hover:bg-amber-950/60' : 'bg-amber-50 border-amber-200 text-amber-500 hover:bg-amber-100')
+                          : (darkMode ? 'bg-slate-900 border-slate-800 text-slate-400 hover:text-amber-400 hover:bg-slate-800' : 'bg-white border-slate-200 text-slate-400 hover:text-amber-500 hover:bg-slate-50')
+                          }`}
                       >
                         <Star size={14} className={starredIds.includes(proj._id) ? 'fill-current' : ''} />
                       </button>
@@ -1310,7 +1298,7 @@ const DashboardPage = () => {
                     </div>
                   </div>
 
-                    {scores.status === 'completed' ? (
+                  {scores.status === 'completed' ? (
                     <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-4 pt-5 animate-in fade-in duration-300">
 
                       {/* Metric 1: Performance */}

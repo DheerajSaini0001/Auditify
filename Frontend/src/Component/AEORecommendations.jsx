@@ -17,7 +17,7 @@ const AEORecommendations = ({ recommendations, darkMode }) => {
 
     const priorityColors = {
         "Critical": "bg-red-500",
-        "High": "bg-orange-500",
+        "High": "bg-orange-350",
         "Medium": "bg-blue-500",
         "Low": "bg-gray-500"
     };
@@ -36,21 +36,21 @@ const AEORecommendations = ({ recommendations, darkMode }) => {
                             {rec.priority}
                         </div>
                         <div className="pt-2 mb-4">
-                             <div className="flex items-center gap-2 mb-2">
+                            <div className="flex items-center gap-2 mb-2">
                                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-black text-white bg-opacity-80 shadow-sm ${priorityColors[rec.priority]}`}>
                                     -{rec.impact}%
                                 </span>
                                 <h4 className={`font-bold leading-tight ${darkMode ? "text-slate-100" : "text-gray-800"}`}>{rec.title}</h4>
-                             </div>
-                             <p className={`text-[10px] font-mono flex items-center gap-1 uppercase tracking-tighter ${darkMode ? "text-slate-500" : "text-gray-400"}`}>
+                            </div>
+                            <p className={`text-[10px] font-mono flex items-center gap-1 uppercase tracking-tighter ${darkMode ? "text-slate-500" : "text-gray-400"}`}>
                                 platform: <span className={`${darkMode ? "text-indigo-400" : "text-gray-600"}`}>{rec.platform}</span>
-                             </p>
+                            </p>
                         </div>
                         <p className={`text-sm leading-relaxed mb-6 min-h-[60px] ${darkMode ? "text-slate-400" : "text-gray-600"}`}>{rec.action}</p>
-                        <button 
+                        <button
                             onClick={() => handleCopy(rec.action)}
-                            className={`w-full py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all duration-300 border ${darkMode 
-                                ? "bg-slate-900/50 hover:bg-indigo-500 text-slate-300 hover:text-white border-slate-700 hover:border-indigo-500" 
+                            className={`w-full py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all duration-300 border ${darkMode
+                                ? "bg-slate-900/50 hover:bg-indigo-500 text-slate-300 hover:text-white border-slate-700 hover:border-indigo-500"
                                 : "bg-gray-50 hover:bg-gray-800 text-gray-700 hover:text-white border-gray-100 hover:border-gray-800"}`}
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

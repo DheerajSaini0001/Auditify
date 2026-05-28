@@ -76,12 +76,12 @@ const MetricCard = ({ value, suffix, label, sublabel, icon: Icon, accentColor, d
 
 const AUDIT_DIMS = [
     { icon: <TrendingUp size={11} />, label: 'Technical Performance' },
-    { icon: <Eye size={11} />,        label: 'On-Page SEO' },
-    { icon: <Layers size={11} />,     label: 'Accessibility' },
-    { icon: <Lock size={11} />,       label: 'Security' },
-    { icon: <Activity size={11} />,   label: 'UX & Content' },
-    { icon: <Globe2 size={11} />,     label: 'Lead Flow' },
-    { icon: <Cpu size={11} />,        label: 'AIO Readiness' },
+    { icon: <Eye size={11} />, label: 'On-Page SEO' },
+    { icon: <Layers size={11} />, label: 'Accessibility' },
+    { icon: <Lock size={11} />, label: 'Security' },
+    { icon: <Activity size={11} />, label: 'UX & Content' },
+    { icon: <Globe2 size={11} />, label: 'Lead Flow' },
+    { icon: <Cpu size={11} />, label: 'AIO Readiness' },
 ];
 
 const MetricsBanner = () => {
@@ -104,7 +104,7 @@ const MetricsBanner = () => {
             className="relative py-20 transition-colors duration-500 bg-transparent overflow-hidden"
         >
             {/* Background Image */}
-            <div 
+            <div
                 className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat bg-fixed"
                 style={{ backgroundImage: `url(${metricsBg})` }}
             />
@@ -146,7 +146,7 @@ const MetricsBanner = () => {
                                         ? 'bg-white/4 border-white/8 text-white'
                                         : 'bg-white border-slate-200 text-slate-600 shadow-sm'}`}
                             >
-                                <span className="text-orange-500">{d.icon}</span>
+                                <span className="text-orange-350">{d.icon}</span>
                                 {d.label}
                             </motion.span>
                         ))}

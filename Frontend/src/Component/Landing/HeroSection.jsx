@@ -15,12 +15,12 @@ import { useAuth } from '../../context/AuthContext.jsx';
 ───────────────────────────────────────── */
 const AUDIT_TYPES = [
     { icon: <TrendingUp size={13} />, label: "Speed & Vitals" },
-    { icon: <Search size={13} />,     label: "Dealer SEO" },
-    { icon: <Eye size={13} />,        label: "ADA Compliance" },
-    { icon: <Lock size={13} />,       label: "Security Shield" },
-    { icon: <Layers size={13} />,     label: "Inventory UX" },
+    { icon: <Search size={13} />, label: "Dealer SEO" },
+    { icon: <Eye size={13} />, label: "ADA Compliance" },
+    { icon: <Lock size={13} />, label: "Security Shield" },
+    { icon: <Layers size={13} />, label: "Inventory UX" },
     { icon: <TrendingUp size={13} />, label: "Lead Flow" },
-    { icon: <Cpu size={13} />,        label: "AI Search" },
+    { icon: <Cpu size={13} />, label: "AI Search" },
 ];
 
 /* ─────────────────────────────────────────
@@ -71,8 +71,8 @@ const CustomDropdown = ({ value, onChange, options, icon, darkMode, disabled }) 
                         exit={{ opacity: 0, scale: 0.95, y: 10 }}
                         transition={{ type: "spring", damping: 20, stiffness: 300 }}
                         className={`absolute top-full mt-3 right-0 w-64 z-[1000] rounded-[1.5rem] shadow-2xl border overflow-hidden backdrop-blur-2xl p-2 
-                            ${darkMode 
-                                ? "bg-slate-900/90 border-white/10 shadow-black/40" 
+                            ${darkMode
+                                ? "bg-slate-900/90 border-white/10 shadow-black/40"
                                 : "bg-white/90 border-slate-200/60 shadow-slate-200/50"
                             }
                         `}
@@ -92,9 +92,9 @@ const CustomDropdown = ({ value, onChange, options, icon, darkMode, disabled }) 
                                 >
                                     <span className="truncate pr-2">{opt.label}</span>
                                     {value === opt.value && (
-                                        <motion.div 
+                                        <motion.div
                                             layoutId="active-dot"
-                                            className="w-1.5 h-1.5 rounded-full bg-[#ea580c]" 
+                                            className="w-1.5 h-1.5 rounded-full bg-[#ea580c]"
                                         />
                                     )}
                                 </button>
@@ -189,15 +189,15 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
             setUrl(queryUrl);
             setDevice(deviceToUse);
             if (queryReport) setReport(queryReport);
-            
+
             isAutoStarting.current = true;
-            
+
             // If logged in, skip captcha and run
             if (user || localStorage.getItem('dealerpulse_token')) {
                 let urlToFetch = queryUrl.trim();
                 if (!/^https?:\/\//i.test(urlToFetch)) urlToFetch = `https://${urlToFetch}`;
                 onSubmit(urlToFetch, deviceToUse, queryReport || report, null);
-                
+
                 // Clear the search query parameters silently from the address bar without disrupting the async React state triggers
                 window.history.replaceState(null, '', window.location.pathname);
             } else {
@@ -237,7 +237,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         let urlToFetch = url.trim();
         if (!/^https?:\/\//i.test(urlToFetch)) urlToFetch = `https://${urlToFetch}`;
         onSubmit(urlToFetch, device, report, parseInt(captchaAnswer), captchaId);
-        
+
         // Clear the search query parameters silently from the address bar
         window.history.replaceState(null, '', window.location.pathname);
     };
@@ -358,7 +358,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                                     onChange={setDevice}
                                     options={[
                                         { value: "Desktop", label: "Desktop" },
-                                        { value: "Mobile",  label: "Mobile" },
+                                        { value: "Mobile", label: "Mobile" },
                                     ]}
                                     icon={device === "Desktop" ? <Monitor /> : <Smartphone />}
                                     darkMode={true}
@@ -368,13 +368,13 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                                     value={report}
                                     onChange={setReport}
                                     options={[
-                                        { value: "All",                           label: "Full Dealer Audit (All 7)" },
-                                        { value: "Technical Performance",         label: "Speed & Core Web Vitals" },
-                                        { value: "On Page SEO",                   label: "Dealership SEO" },
-                                        { value: "Accessibility",                 label: "ADA & WCAG Compliance" },
-                                        { value: "Security/Compliance",           label: "WAF & Security Shield" },
-                                        { value: "UX & Content Structure",        label: "Inventory UX & VDP Layout" },
-                                        { value: "Conversion & Lead Flow",        label: "Lead Flow & Forms Friction" },
+                                        { value: "All", label: "Full Dealer Audit (All 7)" },
+                                        { value: "Technical Performance", label: "Speed & Core Web Vitals" },
+                                        { value: "On Page SEO", label: "Dealership SEO" },
+                                        { value: "Accessibility", label: "ADA & WCAG Compliance" },
+                                        { value: "Security/Compliance", label: "WAF & Security Shield" },
+                                        { value: "UX & Content Structure", label: "Inventory UX & VDP Layout" },
+                                        { value: "Conversion & Lead Flow", label: "Lead Flow & Forms Friction" },
                                         { value: "AIO (AI-Optimization) Readiness", label: "AIO (AI-Search) Readiness" },
                                     ]}
                                     icon={<Settings />}
@@ -426,7 +426,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                     >
 
                         <span className="text-xs font-semibold text-blue-300/30">·</span>
-                    
+
                     </motion.div>
                 </motion.div>
 
@@ -454,22 +454,22 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                                 <div className="h-5 w-28 rounded-lg bg-white/10" />
                                 <div className="h-3.5 w-52 rounded-lg bg-white/5" />
                             </div>
-                            <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-orange-500/10">
+                            <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-orange-350/10">
                                 <BarChart2 className="text-[#ea580c]" size={20} />
                             </div>
                         </div>
 
                         {/* Score rings */}
                         <div className="grid grid-cols-2 gap-4">
-                            <ScoreRing score={94} color="#ea580c" label="SEO Score"     delay={0.5} darkMode={true} />
-                            <ScoreRing score={88} color="#3b82f6" label="Performance"   delay={0.7} darkMode={true} />
+                            <ScoreRing score={94} color="#ea580c" label="SEO Score" delay={0.5} darkMode={true} />
+                            <ScoreRing score={88} color="#3b82f6" label="Performance" delay={0.7} darkMode={true} />
                         </div>
 
                         {/* Mini metric bars */}
                         <div className="rounded-2xl border p-5 space-y-4 bg-white/3 border-white/6">
                             {[
                                 { label: "Accessibility", pct: 78, color: "#a78bfa" },
-                                { label: "Security",      pct: 91, color: "#ea580c" },
+                                { label: "Security", pct: 91, color: "#ea580c" },
                                 { label: "AIO Readiness", pct: 63, color: "#f59e0b" },
                             ].map((m) => (
                                 <div key={m.label} className="space-y-1.5">
@@ -491,9 +491,9 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                         </div>
 
                         {/* Footer badge */}
-                        <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-orange-500/8 border border-orange-500/15">
+                        <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-orange-350/8 border border-orange-350/15">
                             <Zap size={15} className="text-[#ea580c] flex-shrink-0" />
-                            <span className="text-[11px] font-semibold text-orange-300">
+                            <span className="text-[11px] font-semibold text-orange-350">
                                 7 audit dimensions · Real-time analysis · Dealer-focused insights
                             </span>
                         </div>

@@ -17,9 +17,12 @@ import CircularProgress from "./CircularProgress";
 import LivePreview from "./LivePreview";
 import UrlHeader from "./UrlHeader";
 import { useData } from "../context/DataContext";
+import { useAuth } from "../context/AuthContext";
+import AEOPage from "../Pages/AEOPage";
+import { Lock } from "lucide-react";
 
 // Presentational component wrapped in React.memo
-const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, clearData, darkMode }) {
+const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, clearData, darkMode, isAuthenticated }) {
   const navigate = useNavigate();
 
   const sectionMappings = useMemo(() => [
@@ -182,10 +185,10 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
 
         {/* ✅ Card 2: Overview / Preview Card */}
         <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${cardClass}`}>
-          <div className="flex flex-col xl:flex-row min-h-[300px]">
+          <div className={isAuthenticated ? "flex flex-col xl:flex-row min-h-[300px]" : "flex flex-col min-h-[300px]"}>
 
             {/* Left Panel: Live Preview (Widened) */}
-            <div className={`w-full xl:w-1/2 p-6 flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/30 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
+            <div className={`w-full ${isAuthenticated ? "xl:w-1/2 border-b xl:border-b-0 xl:border-r" : "max-w-5xl mx-auto"} p-6 flex items-center justify-center relative overflow-hidden ${darkMode ? "bg-slate-900/30 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
               {/* Decorative Background Blob */}
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/5 blur-3xl rounded-full pointer-events-none"></div>
 
@@ -194,10 +197,11 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
               </div>
             </div>
 
-            {/* Right Panel: Metrics & Score */}
-            <div className="flex-1 p-8 lg:p-12 flex flex-col justify-center">
+            {/* Right Panel: Metrics & Score (Only for Authenticated) */}
+            {isAuthenticated && (
+              <div className="flex-1 p-8 lg:p-12 flex flex-col justify-center">
 
-              {(loading || !isAuditComplete) ? (
+                {(loading || !isAuditComplete) ? (
                 /* Loading State: Dynamic status & countdown */
                 <div className="flex flex-col justify-center h-full min-h-[300px] animate-in fade-in duration-500">
                   <div className="w-full max-w-lg mx-auto space-y-8">
@@ -359,12 +363,55 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
                 </div>
               )}
             </div>
+            )}
           </div>
         </div>
 
+        {/* ✅ Guest View: AEO Page + Locked Cards */}
+        {!isAuthenticated && (
+          <div className="space-y-8 animate-in fade-in duration-700">
+            {/* AEO Component handles its own loading */}
+            <div className="mt-8">
+              <AEOPage auditData={data} darkMode={darkMode} onInfo={() => {}} />
+            </div>
 
-        {/* ✅ Detailed Metrics Grid & Charts (Only when loaded) */}
-        {!loading && isAuditComplete && (
+            {/* 6 Locked Blurred Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+              {['Technical Performance', 'On-Page SEO', 'Accessibility', 'Security/Compliance', 'UX & Content Structure', 'Conversion & Lead Flow'].map((name, i) => (
+                <div key={i} onClick={() => navigate("/register")} className={`relative overflow-hidden rounded-2xl border p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:-translate-y-1 hover:shadow-xl ${darkMode ? 'bg-slate-900/80 border-slate-700' : 'bg-white border-slate-200'}`}>
+                  {/* Blur content underneath */}
+                  <div className="opacity-30 flex flex-col items-center z-0 filter blur-[4px]">
+                    <div className="w-16 h-16 rounded-full bg-slate-300 dark:bg-slate-700 mb-4"></div>
+                    <div className="h-4 w-32 bg-slate-300 dark:bg-slate-700 rounded mb-2"></div>
+                    <div className="h-3 w-24 bg-slate-300 dark:bg-slate-700 rounded"></div>
+                  </div>
+                  
+                  {/* Lock overlay */}
+                  <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/20 dark:bg-slate-900/40 backdrop-blur-[6px]">
+                    <div className="w-12 h-12 rounded-full bg-slate-800 dark:bg-white flex items-center justify-center mb-4 shadow-xl">
+                      <Lock className="w-5 h-5 text-white dark:text-slate-900" />
+                    </div>
+                    <h4 className={`font-bold text-lg mb-1 ${darkMode ? 'text-white' : 'text-slate-900'}`}>{name}</h4>
+                    <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">Sign up to unlock this report</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* CTA Banner */}
+            <div 
+              onClick={() => navigate("/register")}
+              className="mt-12 text-center bg-gradient-to-r from-emerald-500 to-teal-600 rounded-3xl p-10 shadow-2xl shadow-emerald-500/20 text-white cursor-pointer hover:scale-[1.01] transition-transform"
+            >
+              <h2 className="text-2xl md:text-3xl font-black mb-3">Sign up free to unlock your full audit report</h2>
+              <p className="opacity-90 font-medium text-lg">Get instant access to all 6 technical reports, competitive analysis, and AI recommendations.</p>
+            </div>
+          </div>
+        )}
+
+
+        {/* ✅ Detailed Metrics Grid & Charts (Only when loaded & Authenticated) */}
+        {isAuthenticated && !loading && isAuditComplete && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
             {/* Category Breakdown - Production Ready */}
@@ -436,10 +483,12 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
 
 export default function Dashboard2({ data: propData, loading: propLoading, clearData: propClearData, darkMode }) {
   const contextData = useData();
+  const authData = useAuth();
 
   const data = propData !== undefined ? propData : contextData.data;
   const loading = propLoading !== undefined ? propLoading : contextData.loading;
   const clearData = propClearData !== undefined ? propClearData : contextData.clearData;
+  const isAuthenticated = authData?.isAuthenticated;
 
-  return <Dashboard2_Inner data={data} loading={loading} clearData={clearData} darkMode={darkMode} />;
+  return <Dashboard2_Inner data={data} loading={loading} clearData={clearData} darkMode={darkMode} isAuthenticated={isAuthenticated} />;
 }

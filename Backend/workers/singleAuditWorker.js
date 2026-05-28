@@ -210,6 +210,15 @@ const OverAll = (A, B, C, D, E, F, G) => {
       return;
     }
 
+    // [NEW] — Run AIO & AEO FIRST so guests get results instantly
+    const G_Res = await safeMetric("AIO Readiness", () => aioReadiness(url, page, $));
+    const aeoRes = await safeMetric("AEO", () => AEOService.runAudit(url, $, null, 100)); // Using 100 as placeholder for fast AEO return
+    await SingleAuditReport.findByIdAndUpdate(currentAuditId, {
+      aioReadiness: G_Res,
+      aioCompatibilityBadge: G_Res?.AIO_Compatibility_Badge,
+      aeo: aeoRes
+    });
+
     // [NEW] — Full audit ("All"): each metric individually wrapped in safeMetric()
     // A detached frame in any one metric is non-fatal — audit continues with 0 for that section
     const A_Res = await safeMetric("Technical Performance", () => technicalMetrics(url, device, page, response, browser));
@@ -229,14 +238,6 @@ const OverAll = (A, B, C, D, E, F, G) => {
 
     const F_Res = await safeMetric("Conversion & Lead Flow", () => conversionLeadFlow(page, $));
     await SingleAuditReport.findByIdAndUpdate(currentAuditId, { conversionAndLeadFlow: F_Res });
-
-    const G_Res = await safeMetric("AIO Readiness", () => aioReadiness(url, page, $));
-    const aeoRes = await safeMetric("AEO", () => AEOService.runAudit(url, $, null, A_Res?.Percentage || 100));
-    await SingleAuditReport.findByIdAndUpdate(currentAuditId, {
-      aioReadiness: G_Res,
-      aioCompatibilityBadge: G_Res?.AIO_Compatibility_Badge,
-      aeo: aeoRes
-    });
 
     // Extract percentages for overall score calculation
     const A = A_Res?.Percentage || 0;

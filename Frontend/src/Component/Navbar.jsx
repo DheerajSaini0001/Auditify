@@ -15,7 +15,16 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
   const [profileOpen, setProfileOpen] = React.useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const [isScrolled, setIsScrolled] = React.useState(false);
   const profileRef = useRef(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -40,15 +49,25 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
     navigate("/dashboard", { replace: true });
   };
 
-  // Styles
-  const navbarClass = "bg-[#0030c6]  text-white shadow-[0_4px_20px_rgba(0,0,0,0.25)]";
+  // Styles dynamically based on scroll and theme
+  const isTop = !isScrolled;
 
-  const buttonClass = "bg-white/5 hover:bg-white/10 border-white/10 text-slate-300 hover:text-white";
+  const navbarClass = isTop
+    ? "bg-transparent text-white"
+    : (darkMode ? "bg-[#0B1120] text-white shadow-lg border-b border-slate-800" : "bg-white text-slate-900 shadow-md border-b border-slate-200");
+
+  const innerBgClass = isTop
+    ? "bg-[#1B1464]"
+    : "bg-transparent";
+
+  const buttonClass = isTop
+    ? "bg-white/5 hover:bg-white/10 border-white/10 text-slate-300 hover:text-white"
+    : (darkMode ? "bg-white/5 hover:bg-white/10 border-white/10 text-slate-300 hover:text-white" : "bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-600 hover:text-slate-900");
 
 
   return (
     <nav className={`sticky top-0 w-full z-50 transition-all duration-300 ${navbarClass}`}>
-      <div className="w-full py-1 px-4 sm:px-6 lg:px-8 bg-[#1B1464]/90">
+      <div className={`w-full py-1 px-4 sm:px-6 lg:px-8 transition-colors duration-300 ${innerBgClass}`}>
         <div className={`flex items-center justify-between h-16 `}>
 
           {/* Left Section: Mobile Menu & Logo */}
@@ -71,12 +90,12 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
               className="flex items-center gap-3 group focus:outline-none"
             >
               <div className="relative">
-                <div className={`absolute opacity-0 rounded-full   ${darkMode ? "bg-emerald-500" : "bg-emerald-400"}`}></div>
+                <div className={`absolute opacity-0 rounded-full ${darkMode ? "bg-emerald-500" : "bg-emerald-400"}`}></div>
                 <img
-                  src={darkMode ? Assets.Logo : Assets.DarkLogo}
+                  src={isTop ? Assets.Logo : (darkMode ? Assets.Logo : Assets.DarkLogo)}
                   alt="DealerPulse Logo"
                   title="DealerPulse Logo"
-                  className="relative h-14 w-auto  -hover:scale-105"
+                  className="relative h-14 w-auto -hover:scale-105 transition-all duration-300"
                 />
               </div>
 

@@ -110,43 +110,101 @@ const CustomDropdown = ({ value, onChange, options, icon, darkMode, disabled }) 
 /* ─────────────────────────────────────────
    Animated Score Circle
 ───────────────────────────────────────── */
-const ScoreRing = ({ score, color, label, delay = 0, darkMode }) => {
-    const r = 38;
+const ScoreRing = ({ score, color, label, delay = 0 }) => {
+    const r = 36;
     const circ = 2 * Math.PI * r;
     const offset = circ - (score / 100) * circ;
+    const [currentScore, setCurrentScore] = useState(0);
+
+    useEffect(() => {
+        let startTime;
+        let animationFrame;
+        const duration = 1500; // 1.5s
+        const delayMs = delay * 1000;
+
+        const updateScore = (timestamp) => {
+            if (!startTime) startTime = timestamp;
+            const elapsed = timestamp - startTime;
+            
+            if (elapsed < delayMs) {
+                animationFrame = requestAnimationFrame(updateScore);
+                return;
+            }
+
+            const activeElapsed = elapsed - delayMs;
+            const progress = Math.min(activeElapsed / duration, 1);
+            const easeOutProgress = 1 - Math.pow(1 - progress, 3);
+            
+            setCurrentScore(Math.floor(easeOutProgress * score));
+
+            if (progress < 1) {
+                animationFrame = requestAnimationFrame(updateScore);
+            }
+        };
+
+        animationFrame = requestAnimationFrame(updateScore);
+        return () => cancelAnimationFrame(animationFrame);
+    }, [score, delay]);
 
     return (
-        <motion.div
-            whileHover={{ scale: 1.04, y: -2 }}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className={`relative flex flex-col items-center justify-center p-6 rounded-3xl border overflow-hidden
-                ${darkMode ? 'bg-[#0D1525]/80 border-white/5' : 'bg-white border-slate-100 shadow-lg shadow-slate-100'}`}
-        >
-
-
-            <div className="relative">
-                <svg width="88" height="88" viewBox="0 0 88 88" className="-rotate-90">
-                    <circle cx="44" cy="44" r={r} strokeWidth="7" fill="none"
-                        stroke={darkMode ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"} />
+        <div className="relative flex flex-col items-center justify-center">
+            <div className="relative mb-4">
+                <svg width="88" height="88" viewBox="0 0 88 88" className="-rotate-90 drop-shadow-md">
+                    <circle cx="44" cy="44" r={r} strokeWidth="8" fill="none" stroke="rgba(255,255,255,0.05)" />
                     <motion.circle
-                        cx="44" cy="44" r={r} strokeWidth="7" fill="none"
-                        strokeLinecap="round"
-                        strokeDasharray={circ}
+                        cx="44" cy="44" r={r} strokeWidth="8" fill="none"
+                        strokeLinecap="round" strokeDasharray={circ}
                         initial={{ strokeDashoffset: circ }}
                         animate={{ strokeDashoffset: offset }}
-                        transition={{ duration: 1.8, delay, ease: "easeOut" }}
+                        transition={{ duration: 1.5, delay, ease: "easeOut" }}
                         stroke={color}
                     />
                 </svg>
-                <span className="absolute inset-0 flex items-center justify-center text-2xl font-black"
-                    style={{ color }}>
-                    {score}
+                <span className="absolute inset-0 flex items-center justify-center text-[28px] font-black tracking-tight drop-shadow-sm" style={{ color }}>
+                    {currentScore}
                 </span>
             </div>
-            <span className={`mt-3 text-[10px] font-bold uppercase tracking-[0.18em] ${darkMode ? 'text-slate-500' : 'text-slate-600'}`}>
+            <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/50">
                 {label}
             </span>
-        </motion.div>
+        </div>
+    );
+};
+
+/* ─────────────────────────────────────────
+   Typing URL Component
+───────────────────────────────────────── */
+const TypingURL = () => {
+    const urls = ["YourWebsite.com", "AcmeMotors.com", "AutoDealer.net"];
+    const [currentUrl, setCurrentUrl] = useState('');
+    const [urlIndex, setUrlIndex] = useState(0);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    useEffect(() => {
+        let timeout;
+        const targetUrl = urls[urlIndex];
+        
+        if (!isDeleting) {
+            if (currentUrl.length < targetUrl.length) {
+                timeout = setTimeout(() => setCurrentUrl(targetUrl.slice(0, currentUrl.length + 1)), 80 + Math.random() * 50);
+            } else {
+                timeout = setTimeout(() => setIsDeleting(true), 2500);
+            }
+        } else {
+            if (currentUrl.length > 0) {
+                timeout = setTimeout(() => setCurrentUrl(targetUrl.slice(0, currentUrl.length - 1)), 40);
+            } else {
+                setIsDeleting(false);
+                setUrlIndex((prev) => (prev + 1) % urls.length);
+            }
+        }
+        return () => clearTimeout(timeout);
+    }, [currentUrl, isDeleting, urlIndex, urls]);
+
+    return (
+        <span className="text-white/90 text-[13px] font-medium tracking-wide">
+            {currentUrl}<span className="animate-pulse opacity-70">|</span>
+        </span>
     );
 };
 
@@ -435,59 +493,64 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                     initial={{ opacity: 0, x: 50, y: 10 }}
                     animate={{ opacity: 1, x: 0, y: 0 }}
                     transition={{ duration: 0.9, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                    className="flex-1 hidden lg:block relative"
+                    className="flex-1 hidden lg:block relative w-full max-w-lg mx-auto"
                 >
+                    <div className="relative z-10 rounded-[1.5rem] border border-white/5 p-6 space-y-6 bg-[#0B0D1B] shadow-[0_40px_100px_rgba(0,0,0,0.5)] overflow-hidden">
+                        {/* Subtle inner glow */}
+                        <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none" />
 
-
-                    <div className={`relative flex flex-col gap-4 p-6 rounded-2xl border
-                ${darkMode
-                    ? 'bg-white/[0.03] border-white/8 hover:border-white/14'
-                    : 'bg-white border-slate-200 hover:border-slate-300 shadow-sm'}
-                transition-colors duration-300`}>
                         {/* Browser chrome */}
-                        <div className="flex items-center gap-2 mb-1">
-                            {['bg-rose-400/50', 'bg-amber-400/50', 'bg-emerald-400/50'].map((c, i) => (
-                                <div key={i} className={`w-3 h-3 rounded-full ${c}`} />
-                            ))}
-
-                            <div className="ml-3 h-5 w-44 rounded-lg bg-white/6 pl-2 flex items-center" >YourWebsite.com</div>
-                            
+                        <div className="flex items-center gap-4 pl-1">
+                            <div className="flex items-center gap-2">
+                                <div className="w-2.5 h-2.5 rounded-full bg-[#E35460]" />
+                                <div className="w-2.5 h-2.5 rounded-full bg-[#EAB308]" />
+                                <div className="w-2.5 h-2.5 rounded-full bg-[#16A34A]" />
+                            </div>
+                            <div className="h-7 w-52 rounded-[0.4rem] bg-[#121426] flex items-center px-4 shadow-inner shadow-black/20 border border-white/5">
+                                <TypingURL />
+                            </div>
                         </div>
 
-                        {/* Header row */}
+                        {/* Header row (skeleton lines) */}
                         <div className="flex items-center justify-between pt-1">
-                            <div className="space-y-2">
-                                <div className="h-5 w-28 rounded-lg bg-white/10" />
-                                <div className="h-3.5 w-52 rounded-lg bg-white/5" />
+                            <div className="space-y-2.5">
+                                <div className="h-4 w-32 rounded bg-[#121426]" />
+                                <div className="h-2.5 w-48 rounded bg-[#121426]/60" />
                             </div>
-                            <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-orange-350/10">
-                                <BarChart2 className="text-[#ea580c]" size={20} />
+                            <div className="flex gap-1 items-end h-5 mr-1 opacity-80">
+                                <div className="w-[3px] h-3 bg-[#E1701A] rounded-[1px]" />
+                                <div className="w-[3px] h-5 bg-[#E1701A] rounded-[1px]" />
+                                <div className="w-[3px] h-4 bg-[#E1701A] rounded-[1px]" />
                             </div>
                         </div>
 
                         {/* Score rings */}
                         <div className="grid grid-cols-2 gap-4">
-                            <ScoreRing score={94} color="#ea580c" label="SEO Score" delay={0.5} darkMode={true} />
-                            <ScoreRing score={88} color="#3b82f6" label="Performance" delay={0.7} darkMode={true} />
+                            <div className="rounded-[1.25rem] bg-[#121426] py-7 flex flex-col items-center justify-center shadow-lg shadow-black/20">
+                                <ScoreRing score={94} color="#E1701A" label="SEO SCORE" delay={0.5} />
+                            </div>
+                            <div className="rounded-[1.25rem] bg-[#121426] py-7 flex flex-col items-center justify-center shadow-lg shadow-black/20">
+                                <ScoreRing score={88} color="#4D77FF" label="AI Optimization" delay={0.7} />
+                            </div>
                         </div>
 
                         {/* Mini metric bars */}
-                        <div className="rounded-2xl border p-5 space-y-4 bg-white/3 border-white/6">
+                        <div className="rounded-[1.25rem] border border-white/[0.03] p-5 pb-6 space-y-4 bg-[#121426] shadow-lg shadow-black/20">
                             {[
-                                { label: "Accessibility", pct: 78, color: "#a78bfa" },
-                                { label: "Security", pct: 91, color: "#ea580c" },
-                                { label: "AIO Readiness", pct: 63, color: "#f59e0b" },
-                            ].map((m) => (
-                                <div key={m.label} className="space-y-1.5">
-                                    <div className="flex justify-between text-[10px] font-semibold">
-                                        <span className="text-slate-500">{m.label}</span>
+                                { label: "Accessibility", pct: 78, color: "#A855F7" },
+                                { label: "Security", pct: 91, color: "#E1701A" },
+                                { label: "AIO Readiness", pct: 63, color: "#EAB308" },
+                            ].map((m, i) => (
+                                <div key={m.label} className="space-y-2">
+                                    <div className="flex justify-between text-[11px] font-bold tracking-wide">
+                                        <span className="text-white/40">{m.label}</span>
                                         <span style={{ color: m.color }}>{m.pct}</span>
                                     </div>
-                                    <div className="h-1.5 rounded-full overflow-hidden bg-white/5">
+                                    <div className="h-1.5 rounded-full overflow-hidden bg-[#0B0D1B]">
                                         <motion.div
                                             initial={{ width: 0 }}
                                             animate={{ width: `${m.pct}%` }}
-                                            transition={{ duration: 1.2, delay: 0.8, ease: "easeOut" }}
+                                            transition={{ duration: 1.2, delay: 0.8 + (i * 0.15), ease: "easeOut" }}
                                             className="h-full rounded-full"
                                             style={{ background: m.color }}
                                         />
@@ -497,10 +560,14 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                         </div>
 
                         {/* Footer badge */}
-                        <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-orange-350/8 border border-orange-350/15">
-                            <Zap size={15} className="text-[#ea580c] flex-shrink-0" />
-                            <span className="text-[11px] font-semibold text-orange-350">
-                                7 audit dimensions · Real-time analysis · Dealer-focused insights
+                        <div className="flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-full border border-white/10 bg-transparent">
+                            <span className="text-[#E1701A] text-[13px] drop-shadow-[0_0_8px_rgba(225,112,26,0.6)]">⚡</span>
+                            <span className="text-[10px] font-semibold text-white/90 tracking-wider flex gap-2">
+                                <span>7 audit dimensions</span>
+                                <span className="text-white/30">•</span>
+                                <span>Real-time analysis</span>
+                                <span className="text-white/30">•</span>
+                                <span>Dealer-focused insights</span>
                             </span>
                         </div>
                     </div>

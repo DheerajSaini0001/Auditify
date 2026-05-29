@@ -7,16 +7,29 @@ import LivePreview from '../Component/LivePreview';
 import { useAuth } from '../context/AuthContext';
 import { Lock } from 'lucide-react';
 
-const AEOPage = ({ auditData, darkMode, onInfo }) => {
+const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
     const aeo = auditData?.aeo;
     const { isAuthenticated } = useAuth();
 
     if (!aeo) {
         return (
-            <div className={`flex flex-col items-center justify-center min-h-[400px] border border-dashed rounded-3xl p-12 ${darkMode ? "bg-slate-900 border-slate-800" : "bg-gray-50 border-gray-200"}`}>
-                <div className={`animate-spin rounded-full h-12 w-12 border-b-2 mb-6 ${darkMode ? "border-indigo-400" : "border-indigo-600"}`}></div>
-                <h3 className={`text-xl fontsemibold ${darkMode ? "text-slate-200" : "text-gray-700"}`}>AEO Engine Analyzing...</h3>
-                <p className={`text-sm mt-2 text-center max-w-sm ${darkMode ? "text-slate-500" : "text-gray-400"}`}>Generating Answer Engine Optimization scores across Gemini, ChatGPT, and Perplexity AI.</p>
+            <div className="max-w-7xl mx-auto space-y-24 mt-12 transition-colors duration-500">
+                <div className={`flex flex-col xl:flex-row items-center ${hideScreenshot ? "justify-center" : "gap-16 py-4"}`}>
+                    {!hideScreenshot && (
+                        <div className="w-full xl:w-[45%] flex items-center justify-center">
+                            <div className="w-full relative">
+                                <LivePreview data={auditData} variant="plain" />
+                            </div>
+                        </div>
+                    )}
+                    <div className={`w-full ${hideScreenshot ? "max-w-3xl" : "xl:w-[55%]"} flex flex-col items-center justify-center`}>
+                        <div className={`flex flex-col items-center justify-center w-full min-h-[400px] border border-dashed rounded-3xl p-12 ${darkMode ? "bg-slate-900 border-slate-800" : "bg-gray-50 border-gray-200"}`}>
+                            <div className={`animate-spin rounded-full h-12 w-12 border-b-2 mb-6 ${darkMode ? "border-indigo-400" : "border-indigo-600"}`}></div>
+                            <h3 className={`text-xl fontsemibold ${darkMode ? "text-slate-200" : "text-gray-700"}`}>AEO Engine Analyzing...</h3>
+                            <p className={`text-sm mt-2 text-center max-w-sm ${darkMode ? "text-slate-500" : "text-gray-400"}`}>Generating Answer Engine Optimization scores across Gemini, ChatGPT, and Perplexity AI.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         );
     }
@@ -24,16 +37,18 @@ const AEOPage = ({ auditData, darkMode, onInfo }) => {
     return (
         <div className="max-w-7xl mx-auto space-y-24 mt-12 transition-colors duration-500">
             {/* Visual Overview (Top Row) */}
-            <div className="flex flex-col xl:flex-row items-center gap-16 py-4">
+            <div className={`flex flex-col xl:flex-row items-center ${hideScreenshot ? "justify-center" : "gap-16 py-4"}`}>
                 {/* Left Column: LivePreview */}
-                <div className="w-full xl:w-[45%] flex items-center justify-center">
-                    <div className="w-full relative">
-                        <LivePreview data={auditData} variant="plain" />
+                {!hideScreenshot && (
+                    <div className="w-full xl:w-[45%] flex items-center justify-center">
+                        <div className="w-full relative">
+                            <LivePreview data={auditData} variant="plain" />
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {/* Right Column: AEO Score Section */}
-                <div className="w-full xl:w-[55%] flex flex-col items-center justify-center">
+                <div className={`w-full ${hideScreenshot ? "max-w-3xl" : "xl:w-[55%]"} flex flex-col items-center justify-center`}>
                     <h2 className={`text-[1.35rem] fontsemibold mb-10 tracking-tight ${darkMode ? "text-slate-100" : "text-gray-900"}`}>
                         AI Engine Visibility
                     </h2>

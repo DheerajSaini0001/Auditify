@@ -731,6 +731,7 @@ const AIO_Inner = React.memo(({ data, loading, darkMode }) => {
             auditData={data}
             darkMode={darkMode}
             onInfo={(info) => setSelectedParameterInfo(info)}
+            hideScreenshot={data?.report === "All"}
           />
         </div>
 

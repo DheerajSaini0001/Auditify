@@ -576,42 +576,15 @@ const AIO_Inner = React.memo(({ data, loading, darkMode }) => {
     }
   }, [loading, data, auditSteps.length]);
 
-  if (loading || !data || data.status === "inprogress") {
-    return (
-      <div className={`w-full ${darkMode ? "bg-gray-900" : "bg-gray-50"} transition-colors duration-300`}>
-        <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-6`}>
-          {/* ✅ Card 1: URL Header Card */}
-          <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-indigo-50/50 via-purple-50/30 to-slate-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
-            <UrlHeader
-              data={data}
-              darkMode={darkMode}
-              sectionName="AIO (AI Optimization)"
-              sectionData={aio}
-              auditScore={unifiedAioScore}
-              hideBorder={true}
-            />
-          </div>
-
-          {/* ✅ Card 2: Overview / Preview Card */}
-          <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-indigo-50/50 via-purple-50/30 to-slate-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
-            <div className={`flex flex-col xl:flex-row ${data?.report === "All" ? "" : "min-h-[300px]"}`}>
-              {/* Right Panel: Shimmer */}
-              <div className="flex-1 flex flex-col justify-center">
-                <AIOShimmer darkMode={darkMode} steps={auditSteps} currentStep={activeStep} />
-              </div>
-            </div>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  const mainBg = darkMode ? "bg-gray-900" : "bg-gray-50";
+  const hasAioData = aio && Object.keys(aio).length > 0;
+  const isAioLoading = loading || !data || data.status === "inprogress" || !hasAioData;
 
   const allMetrics = Object.values(aio).filter(val => typeof val === 'object' && val !== null && 'score' in val);
   const passedCount = allMetrics.filter(m => m.status === "pass").length;
   const warningCount = allMetrics.filter(m => m.status === "warning").length;
   const failedCount = allMetrics.filter(m => m.status === "fail").length;
+
+  const mainBg = darkMode ? "bg-gray-900" : "bg-gray-50";
 
   return (
     <div className={`w-full ${mainBg} transition-colors duration-300`}>
@@ -631,98 +604,104 @@ const AIO_Inner = React.memo(({ data, loading, darkMode }) => {
 
         {/* ✅ Card 2: Overview / Preview Card */}
         <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-indigo-50/50 via-purple-50/30 to-slate-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
-          <div className={`flex flex-col xl:flex-row ${data.report === "All" ? "" : "min-h-[300px]"}`}>
-
-            {/* Left Panel removed as it is now in AEOPage */}
-
-            {/* Right Panel: Metrics & Score */}
-            <div className={`flex-1 ${data.report === "All" ? "px-6 pb-4 pt-2 lg:px-10 lg:pt-2" : "px-6 pb-4 pt-4 lg:px-12 lg:pt-6"} flex flex-col justify-center`}>
-              <div className={`w-full ${data.report === "All" ? "" : "max-w-2xl mx-auto"} ${data.report === "All" ? "space-y-10" : "space-y-8"}`}>
-
-                {/* Top Content Area */}
-                <div className={`flex flex-col md:flex-row items-center ${data.report === "All" ? "gap-10 md:gap-14 justify-between" : "gap-8 md:gap-12 justify-center"}`}>
-
-                  {/* Text Content */}
-                  <div className={`flex-1 ${data.report === "All" ? "space-y-5" : "space-y-4"} text-left order-2 md:order-1`}>
-                    <div className={`${data.report === "All" ? "space-y-2" : "space-y-1.5"}`}>
-                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] fontsemibold uppercase tracking-wider ${darkMode ? "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20" : "bg-indigo-100/50 text-indigo-600 border border-indigo-200"}`}>
-                        <Brain className="w-3.5 h-3.5" />
-                        <span>AIO Readiness Report</span>
-                      </div>
-                      <h3 className={`${data.report === "All" ? "text-3xl lg:text-5xl" : "text-2xl lg:text-4xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
-                        AIO <span className="text-indigo-500">Readiness</span>
-                      </h3>
-                      <p className={`text-sm leading-relaxed opacity-70 ${darkMode ? "text-slate-300" : "text-slate-600"}`}>
-                        Evaluation of your website's readiness for Artificial Intelligence optimization and crawlers.
-                      </p>
-                    </div>
-
-                    {/* Stats & Tools */}
-                    <div className={`flex flex-wrap items-center ${data.report === "All" ? "gap-6" : "gap-5"}`}>
-                      <div className={`flex items-center ${data.report === "All" ? "gap-5" : "gap-4"}`}>
-                        <div className="flex items-center gap-2">
-                          <CheckCircle size={18} className="text-emerald-500" />
-                          <span className={`text-xs fontsemibold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{passedCount} Passed</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <AlertTriangle size={18} className="text-amber-500" />
-                          <span className={`text-xs fontsemibold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{warningCount} Warnings</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <XCircle size={18} className="text-rose-500" />
-                          <span className={`text-xs fontsemibold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{failedCount} Failed</span>
-                        </div>
-                      </div>
-                      <div className={`w-px h-10 mx-2 hidden sm:block ${darkMode ? "bg-slate-700" : "bg-slate-200"}`}></div>
-                      <div className="flex items-center gap-3">
-                        <div className={`p-2.5 rounded-xl border shadow-sm transition-all duration-500 flex items-center gap-3 ${aio?.AIO_Compatibility_Badge === "Yes"
-                          ? (darkMode ? "bg-emerald-500/10 border-emerald-500/20" : "bg-white border-emerald-100")
-                          : (darkMode ? "bg-rose-500/10 border-rose-500/20" : "bg-white border-rose-100")}`}>
-
-                          {/* Icon Container (Card Style) */}
-                          <div className={`p-2 rounded-lg ${aio?.AIO_Compatibility_Badge === "Yes"
-                            ? (darkMode ? "bg-emerald-500/20" : "bg-emerald-50")
-                            : (darkMode ? "bg-rose-500/20" : "bg-rose-50")}`}>
-                            <ShieldCheck size={20} className={aio?.AIO_Compatibility_Badge === "Yes" ? "text-emerald-500" : "text-rose-500"} />
-                          </div>
-
-                          {/* Text Area */}
-                          <div className="flex flex-col">
-                            <span className={`text-[10px] fontsemibold uppercase tracking-widest opacity-60 ${darkMode ? "text-white" : "text-slate-900"}`}>
-                              AIO Compatibility
-                            </span>
-                            <span className={`text-sm font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
-                              {aio?.AIO_Compatibility_Badge === "Yes" ? "Compatible" : "Not Optimized"}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className={`w-px h-4 ${darkMode ? "bg-slate-800" : "bg-slate-200 hidden md:block"}`}></div>
-                      <button
-                        onClick={() => setSelectedMetricInfo(scoreCalculationInfo)}
-                        className={`flex items-center gap-2 text-sm fontsemibold transition-all ${darkMode ? "text-indigo-400 hover:text-indigo-300" : "text-indigo-600 hover:text-indigo-700"}`}
-                      >
-                        <Info size={16} />
-                        <span className="border-b border-transparent hover:border-current">Metric Methodology</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Circular Progress */}
-                  <div className="relative flex-shrink-0 group cursor-default order-1 md:order-2">
-                    <div className={`absolute -inset-8 rounded-full blur-3xl opacity-25 transition-opacity duration-700 group-hover:opacity-40 ${unifiedAioScore >= 80 ? "bg-emerald-500" : "bg-amber-500"}`}></div>
-                    <CircularProgress value={unifiedAioScore} size={data.report === "All" ? 180 : 150} stroke={14} />
-                    <div className="absolute inset-0 flex items-center justify-center flex-col gap-0.5">
-                      <span className={`${data.report === "All" ? "text-5xl" : "text-3xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>{unifiedAioScore}%</span>
-                      <span className="text-[11px] fontsemibold uppercase tracking-[0.2em] opacity-50">SCORE</span>
-                    </div>
-                  </div>
-                </div>
-
+          {isAioLoading ? (
+            <div className={`flex flex-col xl:flex-row ${data?.report === "All" ? "" : "min-h-[300px]"}`}>
+              {/* Right Panel: Shimmer */}
+              <div className="flex-1 flex flex-col justify-center">
+                <AIOShimmer darkMode={darkMode} steps={auditSteps} currentStep={activeStep} />
               </div>
             </div>
+          ) : (
+            <div className={`flex flex-col xl:flex-row ${data?.report === "All" ? "" : "min-h-[300px]"}`}>
+              {/* Right Panel: Metrics & Score */}
+              <div className={`flex-1 ${data?.report === "All" ? "px-6 pb-4 pt-2 lg:px-10 lg:pt-2" : "px-6 pb-4 pt-4 lg:px-12 lg:pt-6"} flex flex-col justify-center`}>
+                <div className={`w-full ${data?.report === "All" ? "" : "max-w-2xl mx-auto"} ${data?.report === "All" ? "space-y-10" : "space-y-8"}`}>
 
-          </div>
+                  {/* Top Content Area */}
+                  <div className={`flex flex-col md:flex-row items-center ${data?.report === "All" ? "gap-10 md:gap-14 justify-between" : "gap-8 md:gap-12 justify-center"}`}>
+
+                    {/* Text Content */}
+                    <div className={`flex-1 ${data?.report === "All" ? "space-y-5" : "space-y-4"} text-left order-2 md:order-1`}>
+                      <div className={`${data?.report === "All" ? "space-y-2" : "space-y-1.5"}`}>
+                        <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] fontsemibold uppercase tracking-wider ${darkMode ? "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20" : "bg-indigo-100/50 text-indigo-600 border border-indigo-200"}`}>
+                          <Brain className="w-3.5 h-3.5" />
+                          <span>AIO Readiness Report</span>
+                        </div>
+                        <h3 className={`${data?.report === "All" ? "text-3xl lg:text-5xl" : "text-2xl lg:text-4xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
+                          AIO <span className="text-indigo-500">Readiness</span>
+                        </h3>
+                        <p className={`text-sm leading-relaxed opacity-70 ${darkMode ? "text-slate-300" : "text-slate-600"}`}>
+                          Evaluation of your website's readiness for Artificial Intelligence optimization and crawlers.
+                        </p>
+                      </div>
+
+                      {/* Stats & Tools */}
+                      <div className={`flex flex-wrap items-center ${data?.report === "All" ? "gap-6" : "gap-5"}`}>
+                        <div className={`flex items-center ${data?.report === "All" ? "gap-5" : "gap-4"}`}>
+                          <div className="flex items-center gap-2">
+                            <CheckCircle size={18} className="text-emerald-500" />
+                            <span className={`text-xs fontsemibold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{passedCount} Passed</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <AlertTriangle size={18} className="text-amber-500" />
+                            <span className={`text-xs fontsemibold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{warningCount} Warnings</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <XCircle size={18} className="text-rose-500" />
+                            <span className={`text-xs fontsemibold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{failedCount} Failed</span>
+                          </div>
+                        </div>
+                        <div className={`w-px h-10 mx-2 hidden sm:block ${darkMode ? "bg-slate-700" : "bg-slate-200"}`}></div>
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2.5 rounded-xl border shadow-sm transition-all duration-500 flex items-center gap-3 ${aio?.AIO_Compatibility_Badge === "Yes"
+                            ? (darkMode ? "bg-emerald-500/10 border-emerald-500/20" : "bg-white border-emerald-100")
+                            : (darkMode ? "bg-rose-500/10 border-rose-500/20" : "bg-white border-rose-100")}`}>
+
+                            {/* Icon Container (Card Style) */}
+                            <div className={`p-2 rounded-lg ${aio?.AIO_Compatibility_Badge === "Yes"
+                              ? (darkMode ? "bg-emerald-500/20" : "bg-emerald-50")
+                              : (darkMode ? "bg-rose-500/20" : "bg-rose-50")}`}>
+                              <ShieldCheck size={20} className={aio?.AIO_Compatibility_Badge === "Yes" ? "text-emerald-500" : "text-rose-500"} />
+                            </div>
+
+                            {/* Text Area */}
+                            <div className="flex flex-col">
+                              <span className={`text-[10px] fontsemibold uppercase tracking-widest opacity-60 ${darkMode ? "text-white" : "text-slate-900"}`}>
+                                AIO Compatibility
+                              </span>
+                              <span className={`text-sm font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
+                                {aio?.AIO_Compatibility_Badge === "Yes" ? "Compatible" : "Not Optimized"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className={`w-px h-4 ${darkMode ? "bg-slate-800" : "bg-slate-200 hidden md:block"}`}></div>
+                        <button
+                          onClick={() => setSelectedMetricInfo(scoreCalculationInfo)}
+                          className={`flex items-center gap-2 text-sm fontsemibold transition-all ${darkMode ? "text-indigo-400 hover:text-indigo-300" : "text-indigo-600 hover:text-indigo-700"}`}
+                        >
+                          <Info size={16} />
+                          <span className="border-b border-transparent hover:border-current">Metric Methodology</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Circular Progress */}
+                    <div className="relative flex-shrink-0 group cursor-default order-1 md:order-2">
+                      <div className={`absolute -inset-8 rounded-full blur-3xl opacity-25 transition-opacity duration-700 group-hover:opacity-40 ${unifiedAioScore >= 80 ? "bg-emerald-500" : "bg-amber-500"}`}></div>
+                      <CircularProgress value={unifiedAioScore} size={data?.report === "All" ? 180 : 150} stroke={14} />
+                      <div className="absolute inset-0 flex items-center justify-center flex-col gap-0.5">
+                        <span className={`${data?.report === "All" ? "text-5xl" : "text-3xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>{unifiedAioScore}%</span>
+                        <span className="text-[11px] fontsemibold uppercase tracking-[0.2em] opacity-50">SCORE</span>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+            </div>
+          )}
         </div>
 
         {/* AEO Page Section (Contains own gating logic) */}
@@ -736,39 +715,41 @@ const AIO_Inner = React.memo(({ data, loading, darkMode }) => {
         </div>
 
         {/* Gated Detailed Audit Sections */}
-        <ReportRestrictionWrapper>
-          <div className="space-y-8 mt-8">
-            <Section title="AI Technical & Crawl Foundation" icon={Database} darkMode={darkMode}>
-              {["Structured_Data", "Duplicate_Content_Detection_Ready", "Internal_Linking_AI_Friendly", "Content_Updated_Regularly"].map((key) => (
-                aio[key] && <MetricCard key={key} metricKey={key} data={aio[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
-              ))}
-            </Section>
+        {hasAioData && (
+          <ReportRestrictionWrapper>
+            <div className="space-y-8 mt-8">
+              <Section title="AI Technical & Crawl Foundation" icon={Database} darkMode={darkMode}>
+                {["Structured_Data", "Duplicate_Content_Detection_Ready", "Internal_Linking_AI_Friendly", "Content_Updated_Regularly"].map((key) => (
+                  aio[key] && <MetricCard key={key} metricKey={key} data={aio[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
+                ))}
+              </Section>
 
-            <Section title="Intelligence & Semantic Clarity" icon={Brain} darkMode={darkMode}>
-              {["Content_NLP_Friendly", "Keywords_Entities_Annotated", "Topical_Focus_Clarity", "Terminology_Consistency", "Content_Completeness"].map((key) => (
-                aio[key] && <MetricCard key={key} metricKey={key} data={aio[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
-              ))}
-            </Section>
+              <Section title="Intelligence & Semantic Clarity" icon={Brain} darkMode={darkMode}>
+                {["Content_NLP_Friendly", "Keywords_Entities_Annotated", "Topical_Focus_Clarity", "Terminology_Consistency", "Content_Completeness"].map((key) => (
+                  aio[key] && <MetricCard key={key} metricKey={key} data={aio[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
+                ))}
+              </Section>
 
-            <Section title="E-E-A-T & Answer Optimization" icon={HelpCircle} darkMode={darkMode}>
-              {/* Answer Oriented Structure spans full width because it contains detailed Q&A pairs */}
-              {aio["Answer_Oriented_Structure"] && (
-                <div className="md:col-span-2">
-                  <MetricCard
-                    metricKey="Answer_Oriented_Structure"
-                    data={aio["Answer_Oriented_Structure"]}
-                    darkMode={darkMode}
-                    onInfo={() => setSelectedParameterInfo({ ...educationalContent["Answer_Oriented_Structure"], icon: iconMap["Answer_Oriented_Structure"] || HelpCircle })}
-                  />
-                </div>
-              )}
-              {["Content_Chunking", "Lists_Structured_Blocks", "Author_Source_Attribution", "Fact_Vs_Opinion"].map((key) => (
-                aio[key] && <MetricCard key={key} metricKey={key} data={aio[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
-              ))}
-            </Section>
+              <Section title="E-E-A-T & Answer Optimization" icon={HelpCircle} darkMode={darkMode}>
+                {/* Answer Oriented Structure spans full width because it contains detailed Q&A pairs */}
+                {aio["Answer_Oriented_Structure"] && (
+                  <div className="md:col-span-2">
+                    <MetricCard
+                      metricKey="Answer_Oriented_Structure"
+                      data={aio["Answer_Oriented_Structure"]}
+                      darkMode={darkMode}
+                      onInfo={() => setSelectedParameterInfo({ ...educationalContent["Answer_Oriented_Structure"], icon: iconMap["Answer_Oriented_Structure"] || HelpCircle })}
+                    />
+                  </div>
+                )}
+                {["Content_Chunking", "Lists_Structured_Blocks", "Author_Source_Attribution", "Fact_Vs_Opinion"].map((key) => (
+                  aio[key] && <MetricCard key={key} metricKey={key} data={aio[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
+                ))}
+              </Section>
 
-          </div>
-        </ReportRestrictionWrapper>
+            </div>
+          </ReportRestrictionWrapper>
+        )}
 
       </main>
       {/* Methodology Modal */}

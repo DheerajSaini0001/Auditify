@@ -4,11 +4,13 @@ import { useData } from '../context/DataContext';
 import { ThemeContext } from '../context/ThemeContext';
 import { Sparkles, X, Send, MessageSquare, Loader2, User, Bot } from 'lucide-react';
 import { formatMarkdown } from '../utils/formatMarkdown.js';
+import { useAuth } from '../context/AuthContext';
 import './aiChatWidget.css';
 
 const AIChatWidget = () => {
     const { data } = useData();
     const { theme } = useContext(ThemeContext);
+    const { isAuthenticated } = useAuth();
     const location = useLocation();
     const darkMode = theme === 'dark';
 
@@ -37,8 +39,8 @@ const AIChatWidget = () => {
         setIsLoading(false);
     }, [data?._id]);
 
-    // Hide widget on dashboard page or when no completed audit is loaded
-    if (!data || data.status !== 'completed' || location.pathname === '/dashboard') {
+    // Hide widget on dashboard page, when no completed audit is loaded, or if not authenticated
+    if (!isAuthenticated || !data || data.status !== 'completed' || location.pathname === '/dashboard') {
         return null;
     }
 

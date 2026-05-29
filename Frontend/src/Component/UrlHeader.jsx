@@ -119,7 +119,7 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
         </div>
 
         {/* Middle: Average Score */}
-        {data?.score !== undefined && (
+        {typeof data?.score === 'number' && (
           <div className="flex items-center justify-center w-full lg:flex-1 min-w-0 order-3 lg:order-2 mt-4 lg:mt-0">
             <div className={`flex items-center gap-3 px-5 py-2 rounded-2xl border shadow-sm transition-all ${darkMode ? "bg-slate-800/50 border-slate-700/50" : "bg-white border-slate-200/50"}`}>
               <div className={`text-2xl font-black ${

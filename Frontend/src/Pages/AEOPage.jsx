@@ -64,10 +64,8 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
             <header className={`flex flex-col md:flex-row md:items-end justify-between gap-8 pb-4 border-b border-transparent`}>
                 <div className="space-y-4">
                     <div className="flex items-center gap-4">
-                        <span className="text-[11px] uppercase fontsemibold px-3 py-1 rounded-full tracking-widest bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.5)]">
-                            PILLAR 6 EXTENSION
-                        </span>
-                        <h1 className="text-4xl md:text-[2.75rem] font-black tracking-tight text-white leading-none">
+                      
+                        <h1 className={`text-4xl md:text-[2.75rem] font-black tracking-tight ${darkMode ? "text-white" : "text-gray-900"} leading-none`}>
                             Answer Engine <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Optimization</span>
                         </h1>
                     </div>

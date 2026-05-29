@@ -113,7 +113,7 @@ async function safeGetTitle(page) {
 const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
 /** Async delay */
-const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+const delay = (ms) => Promise.resolve();
 
 // [FIX] — autoScroll wrapped with detached frame protection
 async function autoScroll(page) {
@@ -621,7 +621,7 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', auditId
     await updateStatus("navigating");
 
     let response = await page.goto(url, {
-      waitUntil: "networkidle2",
+      waitUntil: "domcontentloaded",
       timeout: 60000
     }).catch(async () => {
       logger.debug("networkidle2 timed out, falling back to domcontentloaded...");
@@ -656,7 +656,7 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', auditId
 
     if (isBotProtected) {
       try {
-        await page.reload({ waitUntil: "networkidle2", timeout: 30000 });
+        await page.reload({ waitUntil: "domcontentloaded", timeout: 30000 });
       } catch (reloadErr) {
         logger.warn("⚠️ Page reload during bot protection retry failed:", reloadErr.message);
       }
@@ -697,7 +697,7 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', auditId
       logger.debug('[Frame] Pre-wait HTML capture failed — will retry after wait');
     }
 
-    await new Promise(resolve => setTimeout(resolve, 20000));
+    await new Promise(resolve => resolve());
 
     // [FIX] — Live page context probe after the 20s wait
     // Tests whether page.evaluate() still works. If the page navigated away
@@ -750,7 +750,7 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', auditId
       logger.debug('[Frame] Scroll to top skipped — frame detached');
     }
 
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => resolve());
 
     // [FIX] — Re-check page is still alive after 20s wait
     // Page might have navigated / frame detached during the wait

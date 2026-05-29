@@ -33,11 +33,11 @@ export default async function Puppeteer_Simple(url) {
     });
 
     // Random delay before navigation to mimic human behavior
-    await new Promise(resolve => setTimeout(resolve, Math.floor(Math.random() * 1500) + 500));
+    await new Promise(resolve => resolve());
 
     console.log(`🔍 [Simple] Navigating to: ${url}`);
     const response = await page.goto(url, {
-      waitUntil: "networkidle2",
+      waitUntil: "domcontentloaded",
       timeout: 60000
     });
 

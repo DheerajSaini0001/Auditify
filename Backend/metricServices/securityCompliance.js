@@ -649,7 +649,7 @@ async function checkXSS(url, browser) {
     testUrl.searchParams.set("xss_test", payload);
 
     // Navigate with a reasonable timeout
-    await page.goto(testUrl.toString(), { waitUntil: "networkidle2", timeout: 30000 });
+    await page.goto(testUrl.toString(), { waitUntil: "domcontentloaded", timeout: 30000 });
 
     // Handle bot verification if it appears during XSS test
     await waitForChallengeResolution(page, 20000);
@@ -1148,7 +1148,7 @@ async function checkWeakDefaultCredentials(page) {
       await passField.type(cred.p);
 
       // Wait for navigation or failure message
-      const navigationPromise = page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 5000 }).catch(() => null);
+      const navigationPromise = page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 5000 }).catch(() => null);
       await submitBtn.click();
       await navigationPromise;
 

@@ -87,7 +87,7 @@ async function fetchSitemapUrls(page, domain) {
 
     for (const sitemapUrl of possibleSitemaps) {
         try {
-            await page.goto(sitemapUrl, { waitUntil: "networkidle2", timeout: 20000 });
+            await page.goto(sitemapUrl, { waitUntil: "domcontentloaded", timeout: 20000 });
             
             // Handle bot verification
             const { detectChallenge, waitForChallengeResolution } = await import('./puppeteer_cheerio.js');
@@ -153,10 +153,10 @@ async function parseSitemap(page, xmlData, domain) {
 async function extractInternalLinks(page, url, domain) {
     const links = new Set();
     try {
-        await page.goto(url, { waitUntil: "networkidle2", timeout: 20000 });
+        await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20000 });
         
         // Wait for rendering
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => resolve());
         
         const html = await page.content();
         const $ = cheerio.load(html);

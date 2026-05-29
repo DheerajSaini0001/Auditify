@@ -99,7 +99,7 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 min-w-0 w-full">
 
         {/* Left: URL Section */}
-        <div className="space-y-2 w-full lg:max-w-[65%] min-w-0">
+        <div className="space-y-2 w-full lg:flex-1 min-w-0">
           <div className="flex items-center gap-2 opacity-60">
             <Globe className={`w-3.5 h-3.5 ${darkMode ? "text-slate-200" : "text-slate-500"}`} />
             <span className={`text-xs fontsemibold uppercase tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>Audit Report For</span>
@@ -118,8 +118,26 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
           </div>
         </div>
 
+        {/* Middle: Average Score */}
+        {data?.score !== undefined && (
+          <div className="flex items-center justify-center w-full lg:flex-1 min-w-0 order-3 lg:order-2 mt-4 lg:mt-0">
+            <div className={`flex items-center gap-3 px-5 py-2 rounded-2xl border shadow-sm transition-all ${darkMode ? "bg-slate-800/50 border-slate-700/50" : "bg-white border-slate-200/50"}`}>
+              <div className={`text-2xl font-black ${
+                data.score >= 90 ? "text-emerald-500" : 
+                data.score >= 50 ? "text-amber-500" : "text-red-500"
+              }`}>
+                {data.score.toFixed(0)}%
+              </div>
+              <div className="flex flex-col">
+                <span className={`text-[10px] font-bold uppercase tracking-widest ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Overall</span>
+                <span className={`text-xs font-medium ${darkMode ? "text-slate-300" : "text-slate-700"}`}>Average</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Right: Metadata Badges */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 w-full lg:flex-1 lg:justify-end order-2 lg:order-3">
           {/* AI Summary Button */}
           {data?.status === "completed" && sectionData && (
             <button

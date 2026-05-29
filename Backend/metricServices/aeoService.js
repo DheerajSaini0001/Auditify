@@ -24,7 +24,7 @@ class AEOService {
         const results = await Promise.all([
             analyzeAnswerFirst($),
             analyzeLlmsTxt(url),
-            analyzeSchemaMarkup($),
+            analyzeSchemaMarkup($, url),
             analyzeStructuredContent($),
             analyzeBotAccess(url, $),
             analyzeMarkdownHeaders($),

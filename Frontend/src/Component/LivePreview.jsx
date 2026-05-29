@@ -75,10 +75,10 @@ const LivePreview = ({ data, showInFullAudit = true, variant = "card" }) => {
             {/* Main Viewport Window */}
             <div className="flex-1 flex items-center justify-center w-full relative">
                 <div className={`
-                    relative overflow-hidden transition-all duration-500 shadow-xl
+                    relative overflow-hidden transition-all duration-500 shadow-xl rounded-xl
                     ${isMobile
                         ? "w-[220px] aspect-[393/852] border-4"
-                        : "w-full aspect-[16/9] border"
+                        : "w-full max-w-[480px] aspect-[16/9] border-2"
                     }
                     ${darkMode
                         ? "bg-slate-900 border-slate-700"

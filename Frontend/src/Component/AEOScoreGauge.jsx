@@ -1,21 +1,21 @@
 import React from 'react';
 
-const AEOScoreGauge = ({ score, label, color, size = 120, darkMode }) => {
-    const radius = size * 0.4;
+const AEOScoreGauge = ({ score, title, subtitle, color, size = 160, darkMode }) => {
+    const radius = size * 0.42;
     const circumference = 2 * Math.PI * radius;
     const offset = circumference - (score / 100) * circumference;
 
     return (
-        <div className="flex flex-col items-center justify-center p-4">
-            <div className="relative" style={{ width: size, height: size }}>
+        <div className="flex flex-col w-full max-w-[160px] mx-auto">
+            <div className="relative mx-auto" style={{ width: size, height: size }}>
                 <svg className="transform -rotate-90" width={size} height={size}>
                     {/* Background Circle */}
                     <circle
                         cx={size / 2}
                         cy={size / 2}
                         r={radius}
-                        stroke={darkMode ? "#1e293b" : "#e2e8f0"}
-                        strokeWidth="8"
+                        stroke={darkMode ? "#0a0a0a" : "#f1f5f9"}
+                        strokeWidth="10"
                         fill="transparent"
                     />
                     {/* Foreground Circle */}
@@ -24,7 +24,7 @@ const AEOScoreGauge = ({ score, label, color, size = 120, darkMode }) => {
                         cy={size / 2}
                         r={radius}
                         stroke={color}
-                        strokeWidth="8"
+                        strokeWidth="10"
                         strokeDasharray={circumference}
                         strokeDashoffset={offset}
                         strokeLinecap="round"
@@ -33,10 +33,13 @@ const AEOScoreGauge = ({ score, label, color, size = 120, darkMode }) => {
                     />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-black tracking-tighter" style={{ color }}>{score}%</span>
+                    <span className="text-[2rem] font-black tracking-tighter" style={{ color }}>{score}%</span>
                 </div>
             </div>
-            <span className={`mt-2 text-sm font-bold uppercase tracking-widest ${darkMode ? "text-slate-400" : "text-gray-700"}`}>{label}</span>
+            <div className={`mt-6 flex flex-col text-[13px] font-bold tracking-[0.15em] ml-2 ${darkMode ? "text-slate-400" : "text-gray-700"}`}>
+                <span>{title}</span>
+                <span>{subtitle}</span>
+            </div>
         </div>
     );
 };

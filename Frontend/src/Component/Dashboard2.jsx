@@ -183,9 +183,10 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
           <UrlHeader data={data} darkMode={darkMode} hideBorder={true} />
         </div>
 
-        {/* ✅ Card 2: Overview / Preview Card */}
+        {/* ✅ Card 2: Overview / Preview Card (Only for Authenticated Users now) */}
+        {isAuthenticated && (
         <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${cardClass}`}>
-          <div className={isAuthenticated ? "flex flex-col xl:flex-row min-h-[300px]" : "flex flex-col min-h-[300px]"}>
+          <div className="flex flex-col xl:flex-row min-h-[300px]">
 
             {/* Left Panel: Live Preview (Widened) */}
             <div className={`w-full ${isAuthenticated ? "xl:w-1/2 border-b xl:border-b-0 xl:border-r" : "max-w-5xl mx-auto"} p-6 flex items-center justify-center relative overflow-hidden ${darkMode ? "bg-slate-900/30 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
@@ -366,6 +367,7 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
             )}
           </div>
         </div>
+        )}
 
         {/* ✅ Guest View: AEO Page + Locked Cards */}
         {!isAuthenticated && (

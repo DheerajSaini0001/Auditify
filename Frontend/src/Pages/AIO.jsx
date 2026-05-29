@@ -595,15 +595,6 @@ const AIO_Inner = React.memo(({ data, loading, darkMode }) => {
           {/* ✅ Card 2: Overview / Preview Card */}
           <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-indigo-50/50 via-purple-50/30 to-slate-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
             <div className={`flex flex-col xl:flex-row ${data?.report === "All" ? "" : "min-h-[300px]"}`}>
-              {/* Left Panel: Live Preview (Only if not All) */}
-              {data?.report !== "All" && (
-                <div className={`w-full xl:w-[45%] p-3 lg:p-4 flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-indigo-500/5 blur-3xl rounded-full pointer-events-none"></div>
-                  <div className="w-full relative z-10">
-                    <LivePreview data={data} loading={loading} variant="plain" />
-                  </div>
-                </div>
-              )}
               {/* Right Panel: Shimmer */}
               <div className="flex-1 flex flex-col justify-center">
                 <AIOShimmer darkMode={darkMode} steps={auditSteps} currentStep={activeStep} />
@@ -642,15 +633,7 @@ const AIO_Inner = React.memo(({ data, loading, darkMode }) => {
         <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-indigo-50/50 via-purple-50/30 to-slate-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
           <div className={`flex flex-col xl:flex-row ${data.report === "All" ? "" : "min-h-[300px]"}`}>
 
-            {/* Left Panel: Live Preview (Only if not All) */}
-            {data.report !== "All" && (
-              <div className={`w-full xl:w-[45%] ${data.report === "All" ? "p-6 lg:p-10" : "p-3 lg:p-4"} flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-indigo-500/5 blur-3xl rounded-full pointer-events-none"></div>
-                <div className="w-full relative z-10">
-                  <LivePreview data={data} loading={loading} variant="plain" />
-                </div>
-              </div>
-            )}
+            {/* Left Panel removed as it is now in AEOPage */}
 
             {/* Right Panel: Metrics & Score */}
             <div className={`flex-1 ${data.report === "All" ? "px-6 pb-4 pt-2 lg:px-10 lg:pt-2" : "px-6 pb-4 pt-4 lg:px-12 lg:pt-6"} flex flex-col justify-center`}>
@@ -742,16 +725,18 @@ const AIO_Inner = React.memo(({ data, loading, darkMode }) => {
           </div>
         </div>
 
+        {/* AEO Page Section (Contains own gating logic) */}
+        <div id="aeo-section" className="mt-16 animate-in slide-in-from-bottom-10 duration-1000">
+          <AEOPage
+            auditData={data}
+            darkMode={darkMode}
+            onInfo={(info) => setSelectedParameterInfo(info)}
+          />
+        </div>
+
         {/* Gated Detailed Audit Sections */}
         <ReportRestrictionWrapper>
-          <div className="space-y-8">
-            <div id="aeo-section" className="mt-16 animate-in slide-in-from-bottom-10 duration-1000">
-              <AEOPage
-                auditData={data}
-                darkMode={darkMode}
-                onInfo={(info) => setSelectedParameterInfo(info)}
-              />
-            </div>
+          <div className="space-y-8 mt-8">
             <Section title="AI Technical & Crawl Foundation" icon={Database} darkMode={darkMode}>
               {["Structured_Data", "Duplicate_Content_Detection_Ready", "Internal_Linking_AI_Friendly", "Content_Updated_Regularly"].map((key) => (
                 aio[key] && <MetricCard key={key} metricKey={key} data={aio[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />

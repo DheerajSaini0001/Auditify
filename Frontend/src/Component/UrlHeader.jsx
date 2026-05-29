@@ -101,15 +101,15 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
         {/* Left: URL Section */}
         <div className="space-y-2 w-full lg:max-w-[65%] min-w-0">
           <div className="flex items-center gap-2 opacity-60">
-            <Globe className={`w-3.5 h-3.5 ${darkMode ? "text-slate-200" : "text-slate-500"}`}   />
-            <span className={`text-xs font-bold uppercase tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>Audit Report For</span>
+            <Globe className={`w-3.5 h-3.5 ${darkMode ? "text-slate-200" : "text-slate-500"}`} />
+            <span className={`text-xs fontsemibold uppercase tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>Audit Report For</span>
           </div>
           <div className="flex items-center gap-3 group min-w-0 w-full">
             <a
               href={data?.url || "#"}
               target="_blank"
               rel="noopener noreferrer"
-              className={`text-2xl md:text-3xl font-extrabold truncate hover:underline underline-offset-4 decoration-2 decoration-transparent hover:decoration-current transition-all ${darkMode ? "text-white" : "text-slate-900"}`}
+              className={`text-2xl md:text-3xl fontsemibold truncate hover:underline underline-offset-4 decoration-2 decoration-transparent hover:decoration-current transition-all ${darkMode ? "text-white" : "text-slate-900"}`}
               title={data?.url || ""}
             >
               {formattedUrl}
@@ -122,30 +122,30 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
         <div className="flex flex-wrap items-center gap-3">
           {/* AI Summary Button */}
           {data?.status === "completed" && sectionData && (
-             <button
+            <button
               onClick={handleGetAISummary}
-              className={`flex items-center gap-2 px-6 py-2 rounded-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all transition-all`}
-             >
-                <Sparkles className="w-4 h-4" />
-                <span>Ask AI</span>
-             </button>
+              className={`flex items-center gap-2 px-6 py-2 rounded-xl fontsemibold bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all transition-all`}
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>Ask AI</span>
+            </button>
           )}
 
           {/* Device Badge */}
-          <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border transition-colors ${darkMode ? "bg-slate-800/50 border-slate-700/50 text-slate-300" : "bg-slate-100/50 border-slate-200/50 text-slate-600"}`}>
+          <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font- border transition-colors ${darkMode ? "bg-slate-800/50 border-slate-700/50 text-slate-300" : "bg-slate-100/50 border-slate-200/50 text-slate-600"}`}>
             {currentDevice === "Mobile" ? <Smartphone className="w-4 h-4" /> : <Monitor className="w-4 h-4" />}
             <span>{currentDevice}</span>
           </div>
 
           {/* Report Type Badge */}
-          <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border transition-colors ${darkMode ? "bg-slate-800/50 border-slate-700/50 text-slate-300" : "bg-slate-100/50 border-slate-200/50 text-slate-600"}`}>
+          <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font- border transition-colors ${darkMode ? "bg-slate-800/50 border-slate-700/50 text-slate-300" : "bg-slate-100/50 border-slate-200/50 text-slate-600"}`}>
             <Layers className="w-4 h-4" />
             <span>{data?.report === "All" ? "Full Audit" : (data?.report || "Full Audit")}</span>
           </div>
 
           {/* Time Badge (if available) */}
           {data?.timeTaken && (
-            <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border transition-colors ${darkMode ? "bg-slate-800/50 border-slate-700/50 text-slate-300" : "bg-slate-100/50 border-slate-200/50 text-slate-600"}`}>
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font- border transition-colors ${darkMode ? "bg-slate-800/50 border-slate-700/50 text-slate-300" : "bg-slate-100/50 border-slate-200/50 text-slate-600"}`}>
               <Clock className="w-4 h-4" />
               <span>{data.timeTaken}</span>
             </div>
@@ -155,9 +155,9 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
           {data?.status === "completed" && (
             <button
               onClick={handleDownloadPDF}
-              className={`flex items-center gap-2 px-6 py-2 rounded-xl font-bold text-white shadow-lg transition-all active:scale-95 transform hover:-translate-y-0.5 ${isAuthenticated
-                  ? "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-emerald-500/20"
-                  : "bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-500 hover:to-slate-600 shadow-slate-500/20"
+              className={`flex items-center gap-2 px-6 py-2 rounded-xl fontsemibold text-white shadow-lg transition-all active:scale-95 transform hover:-translate-y-0.5 ${isAuthenticated
+                ? "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-emerald-500/20"
+                : "bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-500 hover:to-slate-600 shadow-slate-500/20"
                 }`}
             >
               {isAuthenticated ? <Download className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
@@ -170,7 +170,7 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
           {/* Back to List Button (if from bulk audit) */}
           {data?.fromBulkAudit && (
             <Link to="/bulk-audit">
-              <button className="flex items-center gap-2 px-6 py-2 rounded-xl font-bold text-white shadow-lg shadow-blue-500/20 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 transition-all active:scale-95 transform hover:-translate-y-0.5">
+              <button className="flex items-center gap-2 px-6 py-2 rounded-xl fontsemibold text-white shadow-lg shadow-blue-500/20 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 transition-all active:scale-95 transform hover:-translate-y-0.5">
                 <NotebookPen className="w-4 h-4" />
                 <span>Back to List</span>
               </button>

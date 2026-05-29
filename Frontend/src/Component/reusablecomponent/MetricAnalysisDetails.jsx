@@ -9,7 +9,7 @@ const MetricAnalysisDetails = ({ analysis, meta, darkMode, isOpen, onToggle }) =
             <div className="space-y-4">
                 {analysis.lcpElement && (
                     <div>
-                        <h5 className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-blue-400" : "text-blue-600"}`}>LCP Element</h5>
+                        <h5 className={`text-[10px] fontsemibold uppercase tracking-wider mb-2 ${darkMode ? "text-blue-400" : "text-blue-600"}`}>LCP Element</h5>
                         <div className={`text-xs p-2 rounded-md font-mono break-all ${darkMode ? "bg-slate-900/50 text-slate-300 border border-slate-800" : "bg-slate-50 text-slate-600 border border-slate-200"}`}>
                             {analysis.lcpElement}
                         </div>
@@ -17,7 +17,7 @@ const MetricAnalysisDetails = ({ analysis, meta, darkMode, isOpen, onToggle }) =
                 )}
                 {(analysis.causes?.length > 0 || analysis.cause) && (
                     <div>
-                        <h5 className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>Causes</h5>
+                        <h5 className={`text-[10px] fontsemibold uppercase tracking-wider mb-2 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>Causes</h5>
                         <ul className="space-y-2">
                             {analysis.cause && (
                                 <li className={`text-xs flex items-start gap-2 ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
@@ -36,7 +36,7 @@ const MetricAnalysisDetails = ({ analysis, meta, darkMode, isOpen, onToggle }) =
                 )}
                 {(analysis.recommendations?.length > 0 || analysis.recommendation) && (
                     <div>
-                        <h5 className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>Recommendations</h5>
+                        <h5 className={`text-[10px] fontsemibold uppercase tracking-wider mb-2 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>Recommendations</h5>
                         <ul className="space-y-2">
                             {analysis.recommendation && (
                                 <li className={`text-xs flex items-start gap-2 ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
@@ -58,7 +58,7 @@ const MetricAnalysisDetails = ({ analysis, meta, darkMode, isOpen, onToggle }) =
                 {meta && (meta.uncompressedResources || meta.uncachedResources || meta.unoptimizedImages ||
                     meta.unminifiedScripts || meta.blockingResources || meta.redirectDetails) && (
                         <div className="pt-2">
-                            <h5 className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${darkMode ? "text-blue-400" : "text-blue-600"}`}>Affected Resources</h5>
+                            <h5 className={`text-[10px] fontsemibold uppercase tracking-wider mb-2 ${darkMode ? "text-blue-400" : "text-blue-600"}`}>Affected Resources</h5>
                             <div className={`max-h-40 overflow-y-auto space-y-2 rounded-lg p-2 ${darkMode ? "bg-slate-900/30" : "bg-gray-50/50"}`}>
                                 {[
                                     ...(meta.uncompressedResources || []),
@@ -75,7 +75,7 @@ const MetricAnalysisDetails = ({ analysis, meta, darkMode, isOpen, onToggle }) =
                                             <div className="flex justify-between items-center mb-1">
                                                 <p className={`font-mono truncate flex-grow ${darkMode ? "text-gray-300" : "text-gray-700"}`} title={url}>{url}</p>
                                                 {item?.type && (
-                                                    <span className={`ml-2 px-1.5 py-0.5 rounded text-[8px] font-bold uppercase ${item.type === 'Image' ? (darkMode ? "bg-purple-900/30 text-purple-400" : "bg-purple-50 text-purple-600") : (darkMode ? "bg-amber-900/30 text-amber-400" : "bg-amber-50 text-amber-600")}`}>
+                                                    <span className={`ml-2 px-1.5 py-0.5 rounded text-[8px] fontsemibold uppercase ${item.type === 'Image' ? (darkMode ? "bg-purple-900/30 text-purple-400" : "bg-purple-50 text-purple-600") : (darkMode ? "bg-amber-900/30 text-amber-400" : "bg-amber-50 text-amber-600")}`}>
                                                         {item.type}
                                                     </span>
                                                 )}

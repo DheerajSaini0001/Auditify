@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { 
-    Brain, Info, ChevronDown, ChevronUp, AlertCircle, CheckCircle, 
-    MessageCircle, Database, ShieldCheck, FileText, Layout, 
-    Table, Link, Activity 
+import {
+    Brain, Info, ChevronDown, ChevronUp, AlertCircle, CheckCircle,
+    MessageCircle, Database, ShieldCheck, FileText, Layout,
+    Table, Link, Activity
 } from 'lucide-react';
 const iconMap = {
     aeoSchema: Database,
@@ -20,22 +20,22 @@ const getStatusDetail = (signal, data, isFailed) => {
     if (data?.reasons && Array.isArray(data.reasons) && data.reasons.length > 0) {
         return data.reasons[0];
     }
-    
+
     if (!isFailed) return "Your page is perfectly optimized for this Answer Engine signal.";
 
     switch (signal) {
         case 'aeoSchema':
-            return data?.count === 0 
-                ? "Warning: No JSON-LD schema found. AI engines cannot verify your entity data." 
+            return data?.count === 0
+                ? "Warning: No JSON-LD schema found. AI engines cannot verify your entity data."
                 : `Partial: Only ${data?.count} schema types detected. FAQPage or HowTo markup is recommended.`;
         case 'botAccess':
             const blocked = Object.entries(data?.bots || {}).filter(([_, s]) => s === 'blocked').map(([b]) => b);
-            return blocked.length > 0 
-                ? `Blocked: ${blocked.join(', ')} are restricted in robots.txt.` 
+            return blocked.length > 0
+                ? `Blocked: ${blocked.join(', ')} are restricted in robots.txt.`
                 : "Accessibility: Bot access is allowed but indexing signals are weak.";
         case 'llmsTxt':
-            return data?.exists 
-                ? "Invalid: /llms.txt found but lacks standard context headers." 
+            return data?.exists
+                ? "Invalid: /llms.txt found but lacks standard context headers."
                 : "Missing: No /llms.txt manifest found for OpenAI context mapping.";
         case 'markdownHeaders':
             return `Unoptimized: Heading hierarchy issues detected (Score: ${data?.score}%). Proper H1->H2 flow is required.`;
@@ -74,10 +74,10 @@ const getWhyItMatters = (signal) => {
 const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onInfo, url }) => {
     const [showDetails, setShowDetails] = useState(false);
     const Icon = iconMap[signal] || Database;
-    
+
     let status = "Failed";
     let statusColor = "text-rose-500 bg-rose-500/10 border-rose-500/20";
-    
+
     if (score >= 100) {
         status = "Passed";
         statusColor = "text-emerald-500 bg-emerald-500/10 border-emerald-500/20";
@@ -89,9 +89,9 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
     const isFailed = score < 100 && status !== "Warning";
     const isWarning = status === "Warning" || (score < 100 && score > 40);
 
-    const boxBg = isFailed 
+    const boxBg = isFailed
         ? (darkMode ? "bg-rose-500/5 border-rose-500/20" : "bg-rose-50 border-rose-100")
-        : (isWarning 
+        : (isWarning
             ? (darkMode ? "bg-amber-500/5 border-amber-500/20" : "bg-amber-50 border-amber-100")
             : (darkMode ? "bg-emerald-500/5 border-emerald-500/20" : "bg-emerald-50/50 border-emerald-100"));
 
@@ -99,7 +99,7 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
 
     return (
         <div className={`relative overflow-hidden rounded-[2rem] border transition-all duration-500 p-8 flex flex-col gap-6 ${darkMode ? "bg-slate-900 border-slate-800 shadow-xl" : "bg-white border-gray-100 shadow-sm shadow-slate-200 hover:shadow-md"}`}>
-            
+
             {/* Header Area */}
             <div className="flex items-start justify-between">
                 <div className="flex items-center gap-5">
@@ -113,12 +113,12 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
                         </div>
                     </div>
                 </div>
-                
+
                 <div className="flex items-center gap-3">
                     {score < 100 && (
-                        <button 
+                        <button
                             onClick={() => setShowDetails(!showDetails)}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${showDetails 
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${showDetails
                                 ? (darkMode ? "bg-slate-700 text-white" : "bg-slate-200 text-slate-800 shadow-sm")
                                 : (darkMode ? "bg-slate-800/50 text-slate-400 hover:text-white" : "bg-transparent text-slate-400 hover:text-indigo-600")}`}
                         >
@@ -127,10 +127,10 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
                         </button>
                     )}
                     {onInfo && (
-                        <button 
-                            onClick={() => onInfo({ 
-                                title, 
-                                whatThisParameterIs: description, 
+                        <button
+                            onClick={() => onInfo({
+                                title,
+                                whatThisParameterIs: description,
                                 whyItMatters: getWhyItMatters(signal),
                                 icon: Icon,
                                 thresholds: data?.threshold || "N/A"
@@ -167,11 +167,11 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
                                     <div className="flex items-center gap-2">
                                         <div className="w-1.5 h-1.5 rounded-full bg-rose-500"></div>
                                         <span className={`text-xs font-black ${darkMode ? "text-white" : "text-slate-900"}`}>
-                                             {signal === 'aeoSchema' ? (data?.count === 0 ? 'Zero Markup' : (data?.types?.length > 2 ? 'Multi-Type' : 'Partial Types')) :
-                                              signal === 'llmsTxt' ? (data?.exists ? 'Header Issue' : 'File Missing') :
-                                              signal === 'markdownHeaders' ? `Score: ${data?.score}%` :
-                                              signal === 'structuredContent' ? `${data?.tables + data?.lists} Entities` :
-                                              `${score}% Ready`}
+                                            {signal === 'aeoSchema' ? (data?.count === 0 ? 'Zero Markup' : (data?.types?.length > 2 ? 'Multi-Type' : 'Partial Types')) :
+                                                signal === 'llmsTxt' ? (data?.exists ? 'Header Issue' : 'File Missing') :
+                                                    signal === 'markdownHeaders' ? `Score: ${data?.score}%` :
+                                                        signal === 'structuredContent' ? `${data?.tables + data?.lists} Entities` :
+                                                            `${score}% Ready`}
                                         </span>
                                     </div>
                                 </div>
@@ -180,10 +180,10 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
                                     <div className="flex items-center gap-2">
                                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
                                         <span className={`text-xs font-black ${darkMode ? "text-white" : "text-slate-900"}`}>
-                                            {signal === 'aeoSchema' ? "Inject FAQPage Schema" : 
-                                             signal === 'llmsTxt' ? "Initialize /llms.txt" :
-                                             signal === 'markdownHeaders' ? "Fix Heading Hierarchy" :
-                                             "Refactor Structural Logic"}
+                                            {signal === 'aeoSchema' ? "Inject FAQPage Schema" :
+                                                signal === 'llmsTxt' ? "Initialize /llms.txt" :
+                                                    signal === 'markdownHeaders' ? "Fix Heading Hierarchy" :
+                                                        "Refactor Structural Logic"}
                                         </span>
                                     </div>
                                 </div>
@@ -196,7 +196,7 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
                                 <Brain size={14} className="text-indigo-500" />
                                 <span className="text-[10px] font-black uppercase tracking-widest text-indigo-500">AEO Engine Impact</span>
                             </div>
-                            <p className={`text-[11px] leading-snug font-bold ${darkMode ? "text-slate-300" : "text-slate-700"}`}>
+                            <p className={`text-[11px] leading-snug fontsemibold ${darkMode ? "text-slate-300" : "text-slate-700"}`}>
                                 Failing this signal reduces AI selection probability by ~70% across premium engines.
                             </p>
                         </div>
@@ -211,7 +211,7 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
                 {!isFailed && status === "Passed" ? (
                     <div className="flex items-center gap-3 py-2">
                         <CheckCircle className="text-emerald-500" size={18} />
-                        <span className="text-xs font-bold text-emerald-600 uppercase tracking-widest">Optimized & Confirmed</span>
+                        <span className="text-xs fontsemibold text-emerald-600 uppercase tracking-widest">Optimized & Confirmed</span>
                     </div>
                 ) : null}
             </div>

@@ -56,7 +56,7 @@ const RawData = ({ data, darkMode }) => {
             {/* Section Header */}
             <div className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-4">
               <div>
-                <h2 className={`text-3xl font-bold tracking-tight mb-3 ${textPrimary}`}>Export & Data Payload</h2>
+                <h2 className={`text-3xl fontsemibold tracking-tight mb-3 ${textPrimary}`}>Export & Data Payload</h2>
                 <p className={`text-base ${textSecondary} max-w-2xl`}>
                   Download the comprehensive audit report or inspect the unfiltered JSON data returned by the analysis engine.
                 </p>
@@ -73,8 +73,8 @@ const RawData = ({ data, darkMode }) => {
                       <FileText className="w-8 h-8" strokeWidth={1.5} />
                     </div>
                     <div>
-                      <h3 className={`text-xl font-bold ${textPrimary}`}>PDF Report</h3>
-                      <span className={`text-xs font-semibold uppercase tracking-wider ${darkMode ? "text-blue-400" : "text-blue-600"}`}>Document</span>
+                      <h3 className={`text-xl fontsemibold ${textPrimary}`}>PDF Report</h3>
+                      <span className={`text-xs font- uppercase tracking-wider ${darkMode ? "text-blue-400" : "text-blue-600"}`}>Document</span>
                     </div>
                   </div>
 
@@ -86,7 +86,7 @@ const RawData = ({ data, darkMode }) => {
                 <div className="mt-auto pt-8">
                   <button
                     onClick={() => generatePDF(data)}
-                    className="group w-full flex items-center justify-center gap-3 py-4 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/20 transition-all hover:shadow-blue-600/30 active:scale-[0.98]"
+                    className="group w-full flex items-center justify-center gap-3 py-4 rounded-xl text-sm fontsemibold text-white bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/20 transition-all hover:shadow-blue-600/30 active:scale-[0.98]"
                   >
                     <Download className="w-5 h-5 transition-transform group-hover:-translate-y-1" />
                     <span>Download Comprehensive PDF</span>
@@ -103,8 +103,8 @@ const RawData = ({ data, darkMode }) => {
                       <Database className="w-8 h-8" strokeWidth={1.5} />
                     </div>
                     <div>
-                      <h3 className={`text-xl font-bold ${textPrimary}`}>Raw JSON Data</h3>
-                      <span className={`text-xs font-semibold uppercase tracking-wider ${darkMode ? "text-purple-400" : "text-purple-600"}`}>Developer API</span>
+                      <h3 className={`text-xl fontsemibold ${textPrimary}`}>Raw JSON Data</h3>
+                      <span className={`text-xs font- uppercase tracking-wider ${darkMode ? "text-purple-400" : "text-purple-600"}`}>Developer API</span>
                     </div>
                   </div>
 
@@ -116,7 +116,7 @@ const RawData = ({ data, darkMode }) => {
                 <div className="mt-auto pt-8">
                   <button
                     onClick={() => setShowRaw(!showRaw)}
-                    className={`w-full flex items-center justify-center gap-2 py-4 rounded-xl text-sm font-bold border transition-all active:scale-[0.98] ${darkMode
+                    className={`w-full flex items-center justify-center gap-2 py-4 rounded-xl text-sm fontsemibold border transition-all active:scale-[0.98] ${darkMode
                       ? "border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white"
                       : "border-slate-300 text-slate-700 hover:bg-white hover:border-slate-400 hover:text-black shadow-sm"
                       }`}
@@ -156,7 +156,7 @@ const RawData = ({ data, darkMode }) => {
                       </div>
                       <button
                         onClick={handleCopy}
-                        className={`flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-lg transition-all ${copied
+                        className={`flex items-center gap-2 text-xs fontsemibold px-4 py-2 rounded-lg transition-all ${copied
                           ? "text-emerald-600 bg-emerald-50 border border-emerald-100"
                           : darkMode ? "text-slate-400 hover:text-white hover:bg-slate-800 border border-transparent hover:border-slate-700" : "text-slate-600 hover:text-black hover:bg-white border border-transparent hover:border-slate-200 hover:shadow-sm"
                           }`}

@@ -37,7 +37,7 @@ export const AuditShimmer = ({ darkMode, loading, data, auditSteps = [], metricK
                 </div>
 
                 {/* Title */}
-                <h2 className={`mt-6 text-2xl font-bold tracking-tight transition-all duration-500 ${darkMode ? "text-white" : "text-slate-900"
+                <h2 className={`mt-6 text-2xl fontsemibold tracking-tight transition-all duration-500 ${darkMode ? "text-white" : "text-slate-900"
                     }`}>
                     {step.title}
                 </h2>
@@ -51,7 +51,7 @@ export const AuditShimmer = ({ darkMode, loading, data, auditSteps = [], metricK
                 {/* Processing State */}
                 <div className="mt-8 flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span className="text-xs font-bold uppercase tracking-wider">Processing</span>
+                    <span className="text-xs fontsemibold uppercase tracking-wider">Processing</span>
                 </div>
 
                 {/* Progress Indicators */}

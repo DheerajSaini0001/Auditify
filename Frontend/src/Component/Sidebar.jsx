@@ -73,10 +73,10 @@ export default function Sidebar({ darkMode }) {
           <BarChart2 className="w-6 h-6" />
         </div>
         <Link to={data?._id ? `/report/${data._id}` : "/report"} replace className="block">
-          <h2 className={`text-lg font-bold leading-none ${darkMode ? "text-white" : "text-slate-900"}`}>
+          <h2 className={`text-lg fontsemibold leading-none ${darkMode ? "text-white" : "text-slate-900"}`}>
             Audit Report
           </h2>
-          <span className={`text-xs font-bold ${darkMode ? 'text-slate-500' : 'text-slate-600'}`}>Overview</span>
+          <span className={`text-xs fontsemibold ${darkMode ? 'text-slate-500' : 'text-slate-600'}`}>Overview</span>
         </Link>
       </div>
 
@@ -124,7 +124,7 @@ export default function Sidebar({ darkMode }) {
                 if (isAuthenticated) {
                   const reportId = data._id;
                   if (!reportId) return toast.error("Report ID not found");
-                  
+
                   const toastId = toast.loading('Preparing professional PDF report...');
                   try {
                     const token = localStorage.getItem('dealerpulse_token');
@@ -134,9 +134,9 @@ export default function Sidebar({ darkMode }) {
                         ...(token ? { 'Authorization': `Bearer ${token}` } : {})
                       }
                     });
-                    
+
                     if (!response.ok) throw new Error('Failed to generate PDF');
-                    
+
                     const blob = await response.blob();
                     const url = window.URL.createObjectURL(blob);
                     const link = document.createElement('a');
@@ -154,14 +154,14 @@ export default function Sidebar({ darkMode }) {
                   navigate("/login", { state: { from: location } });
                 }
               }}
-              className="group w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-500 shadow-md shadow-blue-600/20 transition-all hover:shadow-blue-600/30 active:scale-[0.98]"
+              className="group w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm fontsemibold text-white bg-blue-600 hover:bg-blue-500 shadow-md shadow-blue-600/20 transition-all hover:shadow-blue-600/30 active:scale-[0.98]"
             >
               <FileText className="w-4 h-4" />
               <span>Download Report</span>
             </button>
           </>
         ) : (
-          <div className={`text-xs text-center p-2 font-semibold ${darkMode ? "text-slate-500 opacity-60" : "text-slate-500"}`}>
+          <div className={`text-xs text-center p-2 font- ${darkMode ? "text-slate-500 opacity-60" : "text-slate-500"}`}>
             Waiting for analysis...
           </div>
         )}
@@ -171,7 +171,7 @@ export default function Sidebar({ darkMode }) {
           {data?.fromBulkAudit ? (
             <button
               onClick={() => navigate("/bulk-audit")}
-              className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-white shadow-lg transition-all 
+              className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm fontsemibold text-white shadow-lg transition-all 
               bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-400 hover:to-indigo-400 active:scale-[0.98]
               shadow-blue-500/20`}
             >
@@ -181,7 +181,7 @@ export default function Sidebar({ darkMode }) {
           ) : (
             <button
               onClick={handleGoHome}
-              className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-white shadow-lg transition-all 
+              className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm fontsemibold text-white shadow-lg transition-all 
               bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 active:scale-[0.98]
               shadow-emerald-500/20`}
             >

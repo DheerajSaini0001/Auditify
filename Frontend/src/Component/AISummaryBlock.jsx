@@ -37,18 +37,17 @@ const AISummaryBlock = ({ sectionName, sectionData, auditScore, url, darkMode })
     }, [sectionName, url, JSON.stringify(sectionData)]);
 
     return (
-        <div className={`mt-8 p-6 rounded-2xl border-2 transition-all ${
-            darkMode 
-              ? 'bg-blue-600/5 border-blue-500/20' 
-              : 'bg-blue-50 border-blue-200'
-        }`}>
+        <div className={`mt-8 p-6 rounded-2xl border-2 transition-all ${darkMode
+                ? 'bg-blue-600/5 border-blue-500/20'
+                : 'bg-blue-50 border-blue-200'
+            }`}>
             <div className="flex items-center gap-3 mb-4">
                 <div className={`p-2 rounded-xl ${darkMode ? 'bg-blue-600/20 text-blue-400' : 'bg-blue-600 text-white'}`}>
                     <Sparkles className="w-5 h-5" />
                 </div>
                 <h3 className={`text-lg font-black tracking-tight ${darkMode ? 'text-white' : 'text-blue-900'}`}>
-                    AI Actionable Summary 
-                    <span className={`ml-2 text-xs font-bold px-2 py-0.5 rounded-full ${darkMode ? 'bg-blue-500/10 text-blue-500' : 'bg-blue-600/10 text-blue-600'}`}>
+                    AI Actionable Summary
+                    <span className={`ml-2 text-xs fontsemibold px-2 py-0.5 rounded-full ${darkMode ? 'bg-blue-500/10 text-blue-500' : 'bg-blue-600/10 text-blue-600'}`}>
                         {sectionName}
                     </span>
                 </h3>
@@ -66,7 +65,7 @@ const AISummaryBlock = ({ sectionName, sectionData, auditScore, url, darkMode })
                         if (isQuota) {
                             return (
                                 <div className="space-y-2 mt-1">
-                                    <p className={`font-bold flex items-center gap-2 ${darkMode ? 'text-amber-450' : 'text-amber-800'}`}>
+                                    <p className={`fontsemibold flex items-center gap-2 ${darkMode ? 'text-amber-450' : 'text-amber-800'}`}>
                                         <AlertTriangle className="w-4 h-4 shrink-0 text-amber-500" />
                                         AI Quota Limit Exceeded
                                     </p>

@@ -65,7 +65,7 @@ export default function AIChatOverlay() {
     try {
       setSummaryLoading(true);
       setSummaryError(null);
-      
+
       const { sectionName, sectionData, auditScore, url } = aiChatContext;
       const apiUrl = getApiUrl('/api/ai/summarize-section');
 
@@ -130,7 +130,7 @@ export default function AIChatOverlay() {
     if (!activeText.trim() || chatLoading) return;
 
     if (!textToSend) setInput('');
-    
+
     // Add user message to UI
     setMessages(prev => [...prev, { role: 'user', text: activeText }]);
     setChatLoading(true);
@@ -163,12 +163,12 @@ export default function AIChatOverlay() {
       console.error('[AI Chat Send Error]:', err);
       const errMsg = err.message || '';
       const isQuota = errMsg.toLowerCase().includes('429') || errMsg.toLowerCase().includes('quota') || errMsg.toLowerCase().includes('limit');
-      
+
       if (isQuota) {
         setMessages(prev => [
           ...prev,
-          { 
-            role: 'bot', 
+          {
+            role: 'bot',
             text: `⚠️ **AI Daily Quota Limit Reached (429)**\n\nYour Google Gemini API key's free-tier daily cap of **20 requests** has been exceeded.\n\n### 💡 How to Unlock Unlimited Access:\n1. Go to your **[Google AI Studio](https://aistudio.google.com/)** dashboard.\n2. Transition your account or project to **Pay-As-You-Go** billing to get immediate, unlimited, and faster responses.\n3. Alternatively, you can wait for the daily quota reset or configure a premium API key under server settings.`
           }
         ]);
@@ -186,7 +186,7 @@ export default function AIChatOverlay() {
   const simulateQuotaLimit = () => {
     // Set strategic summary error state to a realistic 429 quota exception
     setSummaryError('Synthesis Delay: AI Connection Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent: [429 Too Many Requests] You exceeded your current quota, please check your plan and billing details.');
-    
+
     // Add the user message mimicking a question and the quota bot response
     setMessages(prev => [
       ...prev,
@@ -222,9 +222,9 @@ export default function AIChatOverlay() {
   const strokeDashoffset = circumference - (scoreNum / 100) * circumference;
 
   // Gauge color based on score
-  const gaugeColor = scoreNum >= 90 
+  const gaugeColor = scoreNum >= 90
     ? '#10B981' // emerald
-    : scoreNum >= 50 
+    : scoreNum >= 50
       ? '#F59E0B' // amber
       : '#EF4444'; // rose
 
@@ -253,11 +253,10 @@ export default function AIChatOverlay() {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 15 }}
           transition={{ duration: 0.35, ease: 'easeOut' }}
-          className={`relative w-full h-full md:h-[90vh] md:max-w-7xl flex flex-col md:flex-row md:rounded-3xl overflow-hidden border shadow-2xl ${
-            darkMode 
-              ? 'bg-slate-900/90 border-slate-800 text-white shadow-black/80' 
-              : 'bg-white border-slate-200 text-slate-800 shadow-slate-200/50'
-          }`}
+          className={`relative w-full h-full md:h-[90vh] md:max-w-7xl flex flex-col md:flex-row md:rounded-3xl overflow-hidden border shadow-2xl ${darkMode
+            ? 'bg-slate-900/90 border-slate-800 text-white shadow-black/80'
+            : 'bg-white border-slate-200 text-slate-800 shadow-slate-200/50'
+            }`}
         >
           {/* Header Close Button for Mobile Stack */}
           <button
@@ -271,11 +270,10 @@ export default function AIChatOverlay() {
           {/* ========================================== */}
           {/* LEFT PANEL: Module Overview & Synthesis    */}
           {/* ========================================== */}
-          <div className={`w-full md:w-[38%] flex flex-col p-6 md:p-8 border-b md:border-b-0 md:border-r overflow-y-auto custom-scrollbar ${
-            darkMode 
-              ? 'bg-slate-950/40 border-slate-800/70' 
-              : 'bg-slate-50/50 border-slate-200/70'
-          }`}>
+          <div className={`w-full md:w-[38%] flex flex-col p-6 md:p-8 border-b md:border-b-0 md:border-r overflow-y-auto custom-scrollbar ${darkMode
+            ? 'bg-slate-950/40 border-slate-800/70'
+            : 'bg-slate-50/50 border-slate-200/70'
+            }`}>
             {/* Page Header */}
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2.5 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/20 text-white">
@@ -292,9 +290,8 @@ export default function AIChatOverlay() {
             </div>
 
             {/* Score & URL Overview Card */}
-            <div className={`p-5 rounded-2xl border flex items-center gap-5 mb-6 ${
-              darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-100 shadow-sm'
-            }`}>
+            <div className={`p-5 rounded-2xl border flex items-center gap-5 mb-6 ${darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-100 shadow-sm'
+              }`}>
               {/* Circular Gauge */}
               <div className="relative w-24 h-24 flex-shrink-0 flex items-center justify-center">
                 <svg className="w-full h-full transform -rotate-90">
@@ -333,15 +330,15 @@ export default function AIChatOverlay() {
               {/* Target Info */}
               <div className="flex-grow overflow-hidden space-y-2">
                 <div className="space-y-0.5">
-                  <span className="text-[9px] font-bold uppercase tracking-wider opacity-40 flex items-center gap-1">
+                  <span className="text-[9px] fontsemibold uppercase tracking-wider opacity-40 flex items-center gap-1">
                     <Globe className="w-2.5 h-2.5" /> Target URL
                   </span>
-                  <p className="text-xs font-bold truncate opacity-90 block hover:underline cursor-pointer" title={url}>
+                  <p className="text-xs fontsemibold truncate opacity-90 block hover:underline cursor-pointer" title={url}>
                     {url || 'N/A'}
                   </p>
                 </div>
                 {data?.device && (
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold border leading-none bg-slate-500/5 border-slate-500/10 opacity-70">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] fontsemibold border leading-none bg-slate-500/5 border-slate-500/10 opacity-70">
                     <Layers className="w-3 h-3" />
                     <span>{data.device} Mode</span>
                   </div>
@@ -368,9 +365,8 @@ export default function AIChatOverlay() {
                   const isQuota = summaryError.toLowerCase().includes('429') || summaryError.toLowerCase().includes('quota') || summaryError.toLowerCase().includes('limit');
                   if (isQuota) {
                     return (
-                      <div className={`p-4 rounded-xl border flex items-start gap-3 ${
-                        darkMode ? 'bg-amber-500/5 border-amber-500/15 text-amber-400' : 'bg-amber-50 border-amber-200 text-amber-800'
-                      }`}>
+                      <div className={`p-4 rounded-xl border flex items-start gap-3 ${darkMode ? 'bg-amber-500/5 border-amber-500/15 text-amber-400' : 'bg-amber-50 border-amber-200 text-amber-800'
+                        }`}>
                         <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5 text-amber-500" />
                         <div className="space-y-1">
                           <h4 className="text-xs font-black uppercase tracking-wider">AI Quota Reached</h4>
@@ -385,16 +381,15 @@ export default function AIChatOverlay() {
                     );
                   }
                   return (
-                    <div className={`p-4 rounded-xl border flex items-start gap-3 ${
-                      darkMode ? 'bg-rose-500/5 border-rose-500/15 text-rose-400' : 'bg-rose-50 border-rose-100 text-rose-600'
-                    }`}>
+                    <div className={`p-4 rounded-xl border flex items-start gap-3 ${darkMode ? 'bg-rose-500/5 border-rose-500/15 text-rose-400' : 'bg-rose-50 border-rose-100 text-rose-600'
+                      }`}>
                       <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
                       <div className="space-y-1">
-                        <h4 className="text-xs font-bold uppercase tracking-wider">Strategic Delay</h4>
+                        <h4 className="text-xs fontsemibold uppercase tracking-wider">Strategic Delay</h4>
                         <p className="text-xs leading-relaxed opacity-90">{summaryError}</p>
                         <button
                           onClick={fetchStrategicSummary}
-                          className="mt-2 text-[10px] font-bold flex items-center gap-1 underline uppercase hover:opacity-85"
+                          className="mt-2 text-[10px] fontsemibold flex items-center gap-1 underline uppercase hover:opacity-85"
                         >
                           <RefreshCw className="w-2.5 h-2.5" /> Retry Synthesis
                         </button>
@@ -407,17 +402,16 @@ export default function AIChatOverlay() {
                 <div className="space-y-4">
                   {/* Strength Card */}
                   {summary.strength && (
-                    <div className={`flex gap-3.5 p-4 rounded-xl border transition-all hover:scale-[1.01] ${
-                      darkMode 
-                        ? 'bg-emerald-500/5 border-emerald-500/15 text-emerald-50' 
-                        : 'bg-emerald-50/20 border-emerald-100 text-emerald-950 shadow-sm'
-                    }`}>
+                    <div className={`flex gap-3.5 p-4 rounded-xl border transition-all hover:scale-[1.01] ${darkMode
+                      ? 'bg-emerald-500/5 border-emerald-500/15 text-emerald-50'
+                      : 'bg-emerald-50/20 border-emerald-100 text-emerald-950 shadow-sm'
+                      }`}>
                       <Target className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
                       <div>
                         <h4 className="text-[9px] font-black uppercase tracking-wider text-emerald-500/80 mb-0.5">
                           Health Strength
                         </h4>
-                        <p className="text-xs font-semibold leading-relaxed">
+                        <p className="text-xs font- leading-relaxed">
                           {summary.strength}
                         </p>
                       </div>
@@ -426,17 +420,16 @@ export default function AIChatOverlay() {
 
                   {/* Bottleneck Card */}
                   {summary.bottleneck && (
-                    <div className={`flex gap-3.5 p-4 rounded-xl border transition-all hover:scale-[1.01] ${
-                      darkMode 
-                        ? 'bg-amber-500/5 border-amber-500/15 text-amber-50' 
-                        : 'bg-amber-50/20 border-amber-100 text-amber-950 shadow-sm'
-                    }`}>
+                    <div className={`flex gap-3.5 p-4 rounded-xl border transition-all hover:scale-[1.01] ${darkMode
+                      ? 'bg-amber-500/5 border-amber-500/15 text-amber-50'
+                      : 'bg-amber-50/20 border-amber-100 text-amber-950 shadow-sm'
+                      }`}>
                       <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
                       <div>
                         <h4 className="text-[9px] font-black uppercase tracking-wider text-amber-500/80 mb-0.5">
                           Critical Bottleneck
                         </h4>
-                        <p className="text-xs font-semibold leading-relaxed">
+                        <p className="text-xs font- leading-relaxed">
                           {summary.bottleneck}
                         </p>
                       </div>
@@ -445,19 +438,17 @@ export default function AIChatOverlay() {
 
                   {/* Action Card */}
                   {summary.action && (
-                    <div className={`flex gap-3.5 p-4 rounded-xl border transition-all hover:scale-[1.02] shadow-lg ${
-                      darkMode 
-                        ? 'bg-indigo-500/10 border-indigo-500/25 text-white shadow-indigo-500/5' 
-                        : 'bg-indigo-50 border-indigo-150 text-indigo-950 shadow-indigo-100/30'
-                    }`}>
+                    <div className={`flex gap-3.5 p-4 rounded-xl border transition-all hover:scale-[1.02] shadow-lg ${darkMode
+                      ? 'bg-indigo-500/10 border-indigo-500/25 text-white shadow-indigo-500/5'
+                      : 'bg-indigo-50 border-indigo-150 text-indigo-950 shadow-indigo-100/30'
+                      }`}>
                       <Lightbulb className="w-5 h-5 text-indigo-500 shrink-0 mt-0.5 animate-pulse" />
                       <div>
-                        <h4 className={`text-[9px] font-black uppercase tracking-wider mb-0.5 ${
-                          darkMode ? 'text-indigo-400' : 'text-indigo-600'
-                        }`}>
+                        <h4 className={`text-[9px] font-black uppercase tracking-wider mb-0.5 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'
+                          }`}>
                           Priority Strategist Action
                         </h4>
-                        <p className="text-xs font-bold leading-relaxed">
+                        <p className="text-xs fontsemibold leading-relaxed">
                           {summary.action}
                         </p>
                       </div>
@@ -466,7 +457,7 @@ export default function AIChatOverlay() {
                 </div>
               ) : null}
             </div>
-            
+
             {/* Version Badge Footer */}
             <div className="pt-6 mt-6 border-t border-slate-800/10 dark:border-slate-800/50 flex justify-between items-center text-[8px] font-black tracking-widest opacity-35 leading-none">
               <span>INTELLIGENCE CAPABLE v3.1</span>
@@ -478,39 +469,36 @@ export default function AIChatOverlay() {
           {/* RIGHT PANEL: Conversational AI Chat        */}
           {/* ========================================== */}
           <div className="flex-1 flex flex-col h-full overflow-hidden relative">
-            
+
             {/* Overlay Header close button on Desktop */}
             <button
               onClick={handleClose}
-              className={`absolute top-4 right-4 z-50 p-2 rounded-xl transition-all duration-200 active:scale-95 hidden md:block border ${
-                darkMode 
-                  ? 'bg-slate-800/50 border-slate-700 hover:bg-slate-800 text-slate-300' 
-                  : 'bg-slate-100/80 border-slate-200 hover:bg-slate-200 text-slate-600'
-              }`}
+              className={`absolute top-4 right-4 z-50 p-2 rounded-xl transition-all duration-200 active:scale-95 hidden md:block border ${darkMode
+                ? 'bg-slate-800/50 border-slate-700 hover:bg-slate-800 text-slate-300'
+                : 'bg-slate-100/80 border-slate-200 hover:bg-slate-200 text-slate-600'
+                }`}
               title="Minimize Overlay"
             >
               <X className="w-5 h-5" />
             </button>
 
             {/* Conversation Header */}
-            <div className={`px-6 py-4 flex items-center justify-between border-b ${
-              darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-100 shadow-sm'
-            }`}>
+            <div className={`px-6 py-4 flex items-center justify-between border-b ${darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-100 shadow-sm'
+              }`}>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
                 <span className={`text-[10px] uppercase font-black tracking-widest opacity-60`}>
                   Site Audit AI Chat Context Active
                 </span>
               </div>
-              
+
               <button
                 onClick={simulateQuotaLimit}
                 type="button"
-                className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all duration-200 border flex items-center gap-1.5 active:scale-95 cursor-pointer ${
-                  darkMode
-                    ? 'bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30 text-amber-400'
-                    : 'bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-700'
-                }`}
+                className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all duration-200 border flex items-center gap-1.5 active:scale-95 cursor-pointer ${darkMode
+                  ? 'bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30 text-amber-400'
+                  : 'bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-700'
+                  }`}
                 title="Simulate a 429 Quota Exceeded API response across both panels"
               >
                 <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0 animate-pulse" />
@@ -519,9 +507,8 @@ export default function AIChatOverlay() {
             </div>
 
             {/* Chat Messages viewport */}
-            <div className={`flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar ${
-              darkMode ? 'bg-slate-900/20' : 'bg-slate-50/50'
-            }`}>
+            <div className={`flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar ${darkMode ? 'bg-slate-900/20' : 'bg-slate-50/50'
+              }`}>
               {/* If empty and greeting is loading, show loading skeleton */}
               {messages.length === 0 && chatLoading && (
                 <div className="flex justify-start">
@@ -529,9 +516,8 @@ export default function AIChatOverlay() {
                     <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center border bg-indigo-600 border-indigo-500 text-white animate-bounce-subtle">
                       <Bot size={16} />
                     </div>
-                    <div className={`p-4 rounded-2xl rounded-tl-none text-sm flex items-center gap-3 border shadow-sm ${
-                      darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-100 text-slate-800'
-                    }`}>
+                    <div className={`p-4 rounded-2xl rounded-tl-none text-sm flex items-center gap-3 border shadow-sm ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-100 text-slate-800'
+                      }`}>
                       <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />
                       <span>Site Audit AI is analyzing detailed module JSON data...</span>
                     </div>
@@ -543,23 +529,21 @@ export default function AIChatOverlay() {
               {messages.map((msg, index) => (
                 <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[85%] flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                    <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center border ${
-                      msg.role === 'user' 
-                        ? (darkMode ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-600') 
-                        : 'bg-indigo-600 border-indigo-500 text-white'
-                    }`}>
+                    <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center border ${msg.role === 'user'
+                      ? (darkMode ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-600')
+                      : 'bg-indigo-600 border-indigo-500 text-white'
+                      }`}>
                       {msg.role === 'user' ? <User size={15} /> : <Bot size={15} />}
                     </div>
-                    
-                    <div className={`p-4 rounded-2xl text-sm leading-relaxed border ${
-                      msg.role === 'user'
-                        ? (darkMode 
-                            ? 'bg-indigo-600 border-indigo-500 text-white rounded-tr-none shadow-lg shadow-indigo-600/10' 
-                            : 'bg-white border-slate-100 text-slate-800 rounded-tr-none shadow-sm')
-                        : (darkMode 
-                            ? 'bg-slate-800 border-slate-700/80 text-slate-100 rounded-tl-none' 
-                            : 'bg-white border-slate-100 text-slate-800 rounded-tl-none shadow-sm')
-                    }`}>
+
+                    <div className={`p-4 rounded-2xl text-sm leading-relaxed border ${msg.role === 'user'
+                      ? (darkMode
+                        ? 'bg-indigo-600 border-indigo-500 text-white rounded-tr-none shadow-lg shadow-indigo-600/10'
+                        : 'bg-white border-slate-100 text-slate-800 rounded-tr-none shadow-sm')
+                      : (darkMode
+                        ? 'bg-slate-800 border-slate-700/80 text-slate-100 rounded-tl-none'
+                        : 'bg-white border-slate-100 text-slate-800 rounded-tl-none shadow-sm')
+                      }`}>
                       <div className="prose prose-sm dark:prose-invert" dangerouslySetInnerHTML={{ __html: formatMarkdown(msg.text) }} />
                     </div>
                   </div>
@@ -573,23 +557,21 @@ export default function AIChatOverlay() {
                     <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center border bg-indigo-600 border-indigo-500 text-white">
                       <Bot size={15} />
                     </div>
-                    <div className={`p-4 rounded-2xl rounded-tl-none text-sm flex items-center gap-3 border shadow-sm ${
-                      darkMode ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-white border-slate-100 text-slate-800'
-                    }`}>
+                    <div className={`p-4 rounded-2xl rounded-tl-none text-sm flex items-center gap-3 border shadow-sm ${darkMode ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-white border-slate-100 text-slate-800'
+                      }`}>
                       <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />
                       <span>Assistant is thinking...</span>
                     </div>
                   </div>
                 </div>
               )}
-              
+
               <div ref={messagesEndRef} />
             </div>
 
             {/* suggestion template pills container */}
-            <div className={`px-6 py-3 border-t flex flex-wrap gap-2 ${
-              darkMode ? 'bg-slate-900/40 border-slate-850' : 'bg-slate-50 border-slate-100'
-            }`}>
+            <div className={`px-6 py-3 border-t flex flex-wrap gap-2 ${darkMode ? 'bg-slate-900/40 border-slate-850' : 'bg-slate-50 border-slate-100'
+              }`}>
               <span className="text-[9px] font-black uppercase tracking-wider opacity-45 flex items-center gap-1 mr-1 shrink-0 h-6">
                 <HelpCircle className="w-3 h-3" /> Quick Context Queries:
               </span>
@@ -598,11 +580,10 @@ export default function AIChatOverlay() {
                   key={i}
                   onClick={() => handlePillClick(prompt)}
                   disabled={chatLoading}
-                  className={`px-3 py-1 rounded-full text-xs font-bold border transition-all duration-200 active:scale-95 leading-none shrink-0 ${
-                    darkMode 
-                      ? 'bg-slate-850 border-slate-700 hover:border-indigo-500 text-slate-300 hover:text-white' 
-                      : 'bg-white border-slate-200 hover:border-indigo-500 text-slate-600 hover:text-indigo-600 shadow-sm'
-                  }`}
+                  className={`px-3 py-1 rounded-full text-xs fontsemibold border transition-all duration-200 active:scale-95 leading-none shrink-0 ${darkMode
+                    ? 'bg-slate-850 border-slate-700 hover:border-indigo-500 text-slate-300 hover:text-white'
+                    : 'bg-white border-slate-200 hover:border-indigo-500 text-slate-600 hover:text-indigo-600 shadow-sm'
+                    }`}
                 >
                   {prompt}
                 </button>
@@ -610,34 +591,31 @@ export default function AIChatOverlay() {
             </div>
 
             {/* Chat Input Container */}
-            <form 
-              onSubmit={(e) => { e.preventDefault(); handleSend(); }} 
-              className={`p-6 border-t flex items-center gap-3 ${
-                darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'
-              }`}
+            <form
+              onSubmit={(e) => { e.preventDefault(); handleSend(); }}
+              className={`p-6 border-t flex items-center gap-3 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'
+                }`}
             >
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder={`Ask AI anything about this ${sectionName} audit...`}
-                className={`flex-1 bg-transparent rounded-xl border border-transparent focus:ring-0 text-sm py-3 px-4 transition-all ${
-                  darkMode 
-                    ? 'text-white bg-slate-950/60 border-slate-800 focus:border-slate-700' 
-                    : 'text-slate-800 bg-slate-50 border-slate-200 focus:border-slate-350'
-                }`}
+                className={`flex-1 bg-transparent rounded-xl border border-transparent focus:ring-0 text-sm py-3 px-4 transition-all ${darkMode
+                  ? 'text-white bg-slate-950/60 border-slate-800 focus:border-slate-700'
+                  : 'text-slate-800 bg-slate-50 border-slate-200 focus:border-slate-350'
+                  }`}
                 disabled={chatLoading}
               />
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 disabled={!input.trim() || chatLoading}
-                className={`p-3.5 rounded-xl transition-all duration-200 flex items-center justify-center shrink-0 active:scale-95 border ${
-                  input.trim() && !chatLoading
-                    ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-500/20 hover:bg-indigo-550'
-                    : (darkMode 
-                        ? 'bg-slate-800 border-slate-750 text-slate-500' 
-                        : 'bg-slate-100 border-slate-200 text-slate-400')
-                }`}
+                className={`p-3.5 rounded-xl transition-all duration-200 flex items-center justify-center shrink-0 active:scale-95 border ${input.trim() && !chatLoading
+                  ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-500/20 hover:bg-indigo-550'
+                  : (darkMode
+                    ? 'bg-slate-800 border-slate-750 text-slate-500'
+                    : 'bg-slate-100 border-slate-200 text-slate-400')
+                  }`}
               >
                 <Send className="w-4 h-4" />
               </button>

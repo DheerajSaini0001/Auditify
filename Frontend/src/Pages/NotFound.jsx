@@ -33,20 +33,20 @@ export default function NotFound({
       />
 
       <div className="relative z-10 flex flex-col items-center max-w-lg text-center">
-        <PageHeader 
-            icon={AlertTriangle}
-            variant="iconic"
-            title={title}
-            subtitle={description}
-            darkMode={darkMode}
+        <PageHeader
+          icon={AlertTriangle}
+          variant="iconic"
+          title={title}
+          subtitle={description}
+          darkMode={darkMode}
         />
 
         {/* CTAs */}
         <motion.button
-            onClick={handleHome}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className={`group flex items-center gap-3 px-8 py-3.5 rounded-full font-semibold shadow-lg transition-all duration-300 mt-8 ${darkMode
+          onClick={handleHome}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className={`group flex items-center gap-3 px-8 py-3.5 rounded-full font- shadow-lg transition-all duration-300 mt-8 ${darkMode
             ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-500/25"
             : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-400/30"
             }`}

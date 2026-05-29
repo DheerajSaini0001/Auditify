@@ -43,14 +43,14 @@ export default function ServicesPage() {
       <div className={`absolute inset-0 ${darkMode ? 'bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-900/10 via-[#0B1120] to-[#0B1120]' : 'bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-50/80 via-slate-50 to-slate-50'} pointer-events-none`} />
 
       <div className="relative z-10 max-w-5xl w-full mx-auto space-y-16">
-        
+
         {/* Header */}
-        <PageHeader 
-            badge="Platform Capabilities"
-            title="Comprehensive"
-            titleAccent="Web Intelligence."
-            subtitle="Our SaaS architecture abstracts away the immense complexity of managing headless browser grids and rendering validation trees."
-            darkMode={darkMode}
+        <PageHeader
+          badge="Platform Capabilities"
+          title="Comprehensive"
+          titleAccent="Web Intelligence."
+          subtitle="Our SaaS architecture abstracts away the immense complexity of managing headless browser grids and rendering validation trees."
+          darkMode={darkMode}
         />
 
         {/* Grid */}
@@ -62,7 +62,7 @@ export default function ServicesPage() {
                 <div className={`w-14 h-14 rounded-2xl bg-${item.color}-500/10 flex items-center justify-center text-${item.color}-500 mb-6 border border-${item.color}-500/20`}>
                   {item.icon}
                 </div>
-                <h3 className="text-2xl font-bold mb-4">{item.title}</h3>
+                <h3 className="text-2xl fontsemibold mb-4">{item.title}</h3>
                 <p className={`leading-relaxed ${darkMode ? "text-slate-300" : "text-slate-600"}`}>
                   {item.desc}
                 </p>

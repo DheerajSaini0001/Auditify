@@ -37,7 +37,7 @@ const PillarCard = ({ icon: Icon, title, tag, description, color, index, darkMod
                         style={{ background: c.bg, color: c.accent }}>
                         <Icon size={20} strokeWidth={2} />
                     </div>
-                    <span className={`text-[9px] font-bold uppercase tracking-[0.2em] px-3 py-1 rounded-full border
+                    <span className={`text-[9px] fontsemibold uppercase tracking-[0.2em] px-3 py-1 rounded-full border
                         ${darkMode
                             ? 'bg-white/4 border-white/8 text-slate-500'
                             : 'bg-slate-50 border-slate-200 text-slate-500'}`}>
@@ -47,7 +47,7 @@ const PillarCard = ({ icon: Icon, title, tag, description, color, index, darkMod
 
                 {/* Text */}
                 <div className="space-y-2">
-                    <h3 className={`text-lg font-bold leading-snug
+                    <h3 className={`text-lg fontsemibold leading-snug
                         ${darkMode ? 'text-white' : 'text-slate-900'}`}
                         style={{ fontFamily: "'Syne', sans-serif" }}>
                         {title}
@@ -71,7 +71,7 @@ const PillarCard = ({ icon: Icon, title, tag, description, color, index, darkMod
                         <div key={stat.label} className="space-y-1.5">
                             <div className="flex justify-between items-center">
                                 <span className={`text-xs ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>{stat.label}</span>
-                                <span className={`text-xs font-bold ${c.text}`}>{stat.value}</span>
+                                <span className={`text-xs fontsemibold ${c.text}`}>{stat.value}</span>
                             </div>
                             <div className={`h-1 rounded-full w-full ${darkMode ? 'bg-white/6' : 'bg-slate-100'}`}>
                                 <motion.div
@@ -119,7 +119,7 @@ const AuditPillarsSection = () => {
                             initial={{ opacity: 0 }}
                             whileInView={{ opacity: 1 }}
                             viewport={{ once: true }}
-                            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-[9px] font-bold uppercase tracking-[0.25em]
+                            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-[9px] fontsemibold uppercase tracking-[0.25em]
                                 ${darkMode ? 'bg-orange-350/8 border-orange-350/15 text-orange-400' : 'bg-orange-50 border-orange-200 text-orange-600'}`}
                         >
                             <Sparkles size={11} className="text-orange-350" />

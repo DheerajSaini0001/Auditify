@@ -9,7 +9,7 @@ const AEORecommendations = ({ recommendations, darkMode }) => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                     </svg>
                 </div>
-                <h3 className={`text-xl font-bold ${darkMode ? "text-emerald-400" : "text-green-800"}`}>Perfect AI Optimization!</h3>
+                <h3 className={`text-xl fontsemibold ${darkMode ? "text-emerald-400" : "text-green-800"}`}>Perfect AI Optimization!</h3>
                 <p className={`text-sm mt-1 ${darkMode ? "text-emerald-500/70" : "text-green-600"}`}>Your site is perfectly configured for all AI answer engines.</p>
             </div>
         );
@@ -40,7 +40,7 @@ const AEORecommendations = ({ recommendations, darkMode }) => {
                                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-black text-white bg-opacity-80 shadow-sm ${priorityColors[rec.priority]}`}>
                                     -{rec.impact}%
                                 </span>
-                                <h4 className={`font-bold leading-tight ${darkMode ? "text-slate-100" : "text-gray-800"}`}>{rec.title}</h4>
+                                <h4 className={`fontsemibold leading-tight ${darkMode ? "text-slate-100" : "text-gray-800"}`}>{rec.title}</h4>
                             </div>
                             <p className={`text-[10px] font-mono flex items-center gap-1 uppercase tracking-tighter ${darkMode ? "text-slate-500" : "text-gray-400"}`}>
                                 platform: <span className={`${darkMode ? "text-indigo-400" : "text-gray-600"}`}>{rec.platform}</span>

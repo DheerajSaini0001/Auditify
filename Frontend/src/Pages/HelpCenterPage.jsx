@@ -38,14 +38,14 @@ export default function HelpCenterPage() {
 
   return (
     <div className={containerClass}>
-      
+
       {/* Cool 3D-ish Hero Section */}
       <div className={`relative w-full py-24 px-4 sm:px-8 border-b overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-white border-slate-200"}`}>
         <div className={`absolute top-0 right-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-[120px] pointer-events-none mix-blend-screen`}></div>
         <div className={`absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-blue-500/20 rounded-full blur-[140px] pointer-events-none mix-blend-screen`}></div>
 
         <div className="max-w-4xl mx-auto relative z-10 text-center space-y-8">
-          <PageHeader 
+          <PageHeader
             icon={HeartHandshake}
             variant="iconic"
             title="We've got"
@@ -58,9 +58,9 @@ export default function HelpCenterPage() {
             <div className={`absolute -inset-1 rounded-2xl blur-lg transition duration-500 group-hover:duration-200 ${darkMode ? "bg-gradient-to-r from-blue-500 to-purple-600 opacity-20 group-hover:opacity-60" : "bg-slate-300 opacity-50"}`}></div>
             <div className={`relative flex items-center px-6 py-4 rounded-2xl border ${darkMode ? "bg-slate-900 border-slate-700 hover:border-slate-600" : "bg-white border-slate-200 shadow-lg"}`}>
               <Search className="text-slate-400 w-6 h-6 mr-4" />
-              <input 
-                type="text" 
-                placeholder="Search troubleshooting guides..." 
+              <input
+                type="text"
+                placeholder="Search troubleshooting guides..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className={`w-full bg-transparent focus:outline-none text-lg ${darkMode ? "text-white placeholder:text-slate-600" : "text-slate-900 placeholder:text-slate-400"}`}
@@ -71,31 +71,30 @@ export default function HelpCenterPage() {
       </div>
 
       <div className="relative z-10 max-w-4xl w-full mx-auto px-4 mt-16 space-y-16">
-        
+
         <div>
           <div className="flex items-center gap-3 mb-8">
             <Sparkles className="text-indigo-500" />
-            <h2 className="text-3xl font-bold tracking-tight">Frequent Friction Points</h2>
+            <h2 className="text-3xl fontsemibold tracking-tight">Frequent Friction Points</h2>
           </div>
 
           <div className="grid gap-4">
             {faqs.map((faq) => (
-              <div 
-                key={faq.id} 
+              <div
+                key={faq.id}
                 onClick={() => setOpenFaq(openFaq === faq.id ? null : faq.id)}
-                className={`group cursor-pointer rounded-3xl border transition-all duration-300 overflow-hidden ${
-                  darkMode 
-                    ? `bg-slate-900/30 border-slate-800 ${openFaq === faq.id ? 'border-indigo-500/50 bg-slate-800/80' : 'hover:border-slate-700'}` 
+                className={`group cursor-pointer rounded-3xl border transition-all duration-300 overflow-hidden ${darkMode
+                    ? `bg-slate-900/30 border-slate-800 ${openFaq === faq.id ? 'border-indigo-500/50 bg-slate-800/80' : 'hover:border-slate-700'}`
                     : `bg-white border-slate-200 ${openFaq === faq.id ? 'border-indigo-400/50 shadow-xl shadow-indigo-500/10' : 'hover:border-slate-300 shadow-sm'}`
-                }`}
+                  }`}
               >
                 <div className="flex items-center justify-between p-6 md:p-8">
-                  <h3 className={`text-xl font-bold transition-colors ${openFaq === faq.id ? 'text-indigo-500' : ''}`}>{faq.q}</h3>
+                  <h3 className={`text-xl fontsemibold transition-colors ${openFaq === faq.id ? 'text-indigo-500' : ''}`}>{faq.q}</h3>
                   <div className={`p-2 rounded-full transition-transform duration-300 ${openFaq === faq.id ? 'rotate-90 bg-indigo-500 text-white' : (darkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500')}`}>
                     {openFaq === faq.id ? <Minus size={20} /> : <Plus size={20} />}
                   </div>
                 </div>
-                <div 
+                <div
                   className={`grid transition-all duration-300 ease-in-out ${openFaq === faq.id ? 'grid-rows-[1fr] opacity-100 pb-8 px-6 md:px-8' : 'grid-rows-[0fr] opacity-0 px-6 md:px-8'}`}
                 >
                   <div className="overflow-hidden">

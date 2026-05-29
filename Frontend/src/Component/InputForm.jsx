@@ -101,7 +101,7 @@ export default function InputForm() {
     if (queryUrl && queryUrl !== processedUrlRef.current && !isAuditStarting.current) {
       setInputValue(queryUrl);
       processedUrlRef.current = queryUrl;
-      
+
       // Auto-trigger audit logic
       const runDirectly = async () => {
         // If logged in, skip captcha and run
@@ -110,7 +110,7 @@ export default function InputForm() {
           if (!/^https?:\/\//i.test(urlToFetch)) {
             urlToFetch = `https://${urlToFetch}`;
           }
-          
+
           isAuditStarting.current = true;
           await fetchData(urlToFetch, device, report, null);
           isAuditStarting.current = false;
@@ -121,7 +121,7 @@ export default function InputForm() {
       };
 
       runDirectly();
-      
+
       // Remove query param from URL (standard React Router way)
       navigate(location.pathname, { replace: true });
     } else if (location.state?.autoFill) {
@@ -130,7 +130,7 @@ export default function InputForm() {
       setReport(location.state.report);
       setError("This specific audit record is no longer available. Re-run it now.");
       setShowCaptcha(true);
-      
+
       // Clear state to prevent loop if user reloads
       window.history.replaceState({}, document.title);
     }
@@ -199,11 +199,11 @@ export default function InputForm() {
 
 
   // Styles
-  const baseClass ="flex flex-col items-center justify-start min-h-screen relative font-sans px-4 pt-24";
+  const baseClass = "flex flex-col items-center justify-start min-h-screen relative font-sans px-4 pt-24";
 
-const containerClass = darkMode
-  ? `${baseClass} bg-[#0B1120] text-white`
-  : `${baseClass} bg-slate-50 text-slate-900`; 
+  const containerClass = darkMode
+    ? `${baseClass} bg-[#0B1120] text-white`
+    : `${baseClass} bg-slate-50 text-slate-900`;
   return (
     <div className={containerClass}>
       {/* Background Grid Pattern */}
@@ -215,7 +215,7 @@ const containerClass = darkMode
         {/* Header Section */}
         <div className="text-center mb-12 space-y-5 animate-in fade-in slide-in-from-bottom-5 duration-700">
 
-          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight">
+          <h1 className="text-4xl md:text-6xl fontsemibold tracking-tight">
             Analyze your <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500">Website Health</span>
           </h1>
 
@@ -298,7 +298,7 @@ const containerClass = darkMode
                 type="submit"
                 disabled={loading}
                 className={`
-                  hidden lg:flex items-center justify-center gap-2 px-6 py-3 ml-2 rounded-xl font-bold text-white shadow-lg transition-all 
+                  hidden lg:flex items-center justify-center gap-2 px-6 py-3 ml-2 rounded-xl fontsemibold text-white shadow-lg transition-all 
                   bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 hover:shadow-emerald-500/25 active:scale-95
                   disabled:opacity-70 disabled:cursor-wait min-w-[140px]
                 `}
@@ -314,7 +314,7 @@ const containerClass = darkMode
             type="submit"
             disabled={loading}
             className={`
-              lg:hidden w-full mt-4 flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-bold text-white shadow-lg transition-all 
+              lg:hidden w-full mt-4 flex items-center justify-center gap-2 px-6 py-4 rounded-xl fontsemibold text-white shadow-lg transition-all 
               bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 active:scale-95
               disabled:opacity-70 disabled:cursor-wait
             `}
@@ -366,7 +366,7 @@ const containerClass = darkMode
               <button
                 onClick={handleSubmitWithCaptcha}
                 disabled={loading || !captchaAnswer}
-                className="mt-4 w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl transition-all disabled:opacity-50"
+                className="mt-4 w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white fontsemibold rounded-xl transition-all disabled:opacity-50"
               >
                 {loading ? "Verifying..." : "Verify & Run Audit"}
               </button>
@@ -374,7 +374,7 @@ const containerClass = darkMode
 
             <button
               onClick={() => setShowCaptcha(false)}
-              className={`text-xs font-bold uppercase tracking-[0.2em] ${darkMode ? "text-slate-500 hover:text-white" : "text-slate-600 hover:text-slate-900"} transition-all duration-200 hover:scale-110 active:scale-95`}
+              className={`text-xs fontsemibold uppercase tracking-[0.2em] ${darkMode ? "text-slate-500 hover:text-white" : "text-slate-600 hover:text-slate-900"} transition-all duration-200 hover:scale-110 active:scale-95`}
             >
               Cancel
             </button>

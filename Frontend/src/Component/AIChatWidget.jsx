@@ -257,7 +257,7 @@ const AIChatWidget = () => {
                     <MessageSquare className="w-6 h-6 group-hover:rotate-12 transition-transform" />
                     <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-blue-500 border-2 border-orange-600 rounded-full animate-pulse"></div>
                 </div>
-                <span className="font-bold tracking-tight text-sm sm:text-base">Ask AI Assistant</span>
+                <span className="fontsemibold tracking-tight text-sm sm:text-base">Ask AI Assistant</span>
             </button>
         );
     }
@@ -274,10 +274,10 @@ const AIChatWidget = () => {
                         <Sparkles className="w-4 h-4 text-white" />
                     </div>
                     <div>
-                        <h3 className={`text-xs font-bold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>Site Audit AI Intelligence</h3>
+                        <h3 className={`text-xs fontsemibold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>Site Audit AI Intelligence</h3>
                         <div className="flex items-center gap-1.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                            <span className={`text-[10px] uppercase tracking-wider font-bold ${darkMode ? 'text-emerald-400' : 'text-white'}`}>AI Online</span>
+                            <span className={`text-[10px] uppercase tracking-wider fontsemibold ${darkMode ? 'text-emerald-400' : 'text-white'}`}>AI Online</span>
                         </div>
                     </div>
                 </div>

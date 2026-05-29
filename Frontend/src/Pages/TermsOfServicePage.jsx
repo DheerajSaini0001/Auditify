@@ -15,21 +15,21 @@ export default function TermsOfServicePage() {
   return (
     <div className={containerClass}>
       <div className="relative z-10 max-w-4xl w-full mx-auto space-y-12">
-        
-        <PageHeader 
-            variant="iconic"
-            icon={Gavel}
-            title="Terms of"
-            titleAccent="Service."
-            subtitle="The legal constraints, limitations of liability, and usage bounds for the Dealer Pulse platform."
-            darkMode={darkMode}
+
+        <PageHeader
+          variant="iconic"
+          icon={Gavel}
+          title="Terms of"
+          titleAccent="Service."
+          subtitle="The legal constraints, limitations of liability, and usage bounds for the Dealer Pulse platform."
+          darkMode={darkMode}
         />
 
         <div className={`p-10 rounded-3xl border transition-all ${darkMode ? "bg-slate-900/40 border-slate-800 shadow-2xl shadow-black" : "bg-white border-slate-200 shadow-2xl shadow-slate-200/50"}`}>
           <div className={`space-y-12 text-base md:text-lg leading-relaxed ${darkMode ? "text-slate-300" : "text-slate-700"}`}>
-            
+
             <section className="space-y-4">
-              <h2 className="text-2xl font-bold flex items-center gap-3">
+              <h2 className="text-2xl fontsemibold flex items-center gap-3">
                 <AlertCircle className="text-red-500" />
                 1. Prohibition of Abuse
               </h2>
@@ -38,7 +38,7 @@ export default function TermsOfServicePage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-bold flex items-center gap-3">
+              <h2 className="text-2xl fontsemibold flex items-center gap-3">
                 <FileText className="text-blue-500" />
                 2. Imperfect Diagnostic Output
               </h2>
@@ -47,7 +47,7 @@ export default function TermsOfServicePage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-bold flex items-center gap-3">
+              <h2 className="text-2xl fontsemibold flex items-center gap-3">
                 <ServerCrash className="text-purple-500" />
                 3. Service Level Modifications
               </h2>

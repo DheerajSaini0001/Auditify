@@ -2,15 +2,15 @@ import React, { useState, useEffect, useContext, useCallback } from 'react';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext.jsx';
-import { 
-  Search, 
-  ChevronLeft, 
-  ChevronRight, 
-  Calendar, 
-  Globe, 
-  Activity, 
-  CheckCircle2, 
-  Clock, 
+import {
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  Calendar,
+  Globe,
+  Activity,
+  CheckCircle2,
+  Clock,
   AlertCircle,
   MoreVertical,
   FileText,
@@ -43,7 +43,7 @@ const AuditHistoryPage = () => {
   const { theme, toggleTheme } = useContext(ThemeContext);
   const navigate = useNavigate();
   const darkMode = theme === "dark";
-  
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [createDropdownOpen, setCreateDropdownOpen] = useState(false);
   const [searchInput, setSearchInput] = useState("");
@@ -65,7 +65,7 @@ const AuditHistoryPage = () => {
         <div className="relative">
           <button
             onClick={() => setCreateDropdownOpen(!createDropdownOpen)}
-            className="w-full flex items-center justify-between px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm transition-all shadow-md shadow-emerald-600/10 active:scale-[0.98]"
+            className="w-full flex items-center justify-between px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl fontsemibold text-sm transition-all shadow-md shadow-emerald-600/10 active:scale-[0.98]"
           >
             <div className="flex items-center gap-2">
               <Plus size={16} />
@@ -78,13 +78,13 @@ const AuditHistoryPage = () => {
             <div className={`absolute top-full left-0 right-0 mt-1.5 rounded-xl shadow-xl z-50 py-1 animate-in fade-in slide-in-from-top-1 duration-150 border transition-all duration-300 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
               <button
                 onClick={() => { setCreateDropdownOpen(false); navigate("/dashboard/add-website"); }}
-                className={`w-full text-left px-4 py-2 text-xs font-bold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                className={`w-full text-left px-4 py-2 text-xs fontsemibold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-50'}`}
               >
                 Add Google Search Console Site
               </button>
               <button
                 onClick={() => { setCreateDropdownOpen(false); navigate("/bulk-audit"); }}
-                className={`w-full text-left px-4 py-2 text-xs font-bold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                className={`w-full text-left px-4 py-2 text-xs fontsemibold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-50'}`}
               >
                 Quick Manual Audit Page
               </button>
@@ -112,27 +112,27 @@ const AuditHistoryPage = () => {
         <nav className="flex flex-col gap-1 mt-2">
           <button
             onClick={() => navigate("/dashboard")}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs fontsemibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
           >
             <LayoutDashboard size={16} />
             <span>Projects</span>
           </button>
 
-       
+
 
           <button
             onClick={() => navigate("/audit-history")}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-extrabold transition-all duration-300 border-none ${darkMode ? 'bg-emerald-950/40 text-emerald-400' : 'bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 shadow-sm'}`}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs fontsemibold transition-all duration-300 border-none ${darkMode ? 'bg-emerald-950/40 text-emerald-400' : 'bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 shadow-sm'}`}
           >
             <FileText size={16} />
             <span>Report History</span>
           </button>
 
-      
+
 
           <button
             onClick={() => navigate('/dashboard?tab=starred')}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs fontsemibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
           >
             <Star size={16} />
             <span>Starred</span>
@@ -146,7 +146,7 @@ const AuditHistoryPage = () => {
           {(user?.role === 'admin' || user?.role === 'super_admin') && (
             <button
               onClick={() => navigate("/admin")}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs fontsemibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
             >
               <ShieldCheck size={16} className="text-blue-500 shrink-0" />
               <span>Admin Panel</span>
@@ -156,7 +156,7 @@ const AuditHistoryPage = () => {
           {user?.role === 'super_admin' && (
             <button
               onClick={() => navigate("/admin/setup")}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs fontsemibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
             >
               <Settings size={16} className="text-indigo-500 shrink-0" />
               <span>System Setup</span>
@@ -167,7 +167,7 @@ const AuditHistoryPage = () => {
 
           <button
             onClick={() => toggleTheme()}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs fontsemibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
           >
             <div className="flex items-center gap-3">
               {darkMode ? <Sun size={16} className="text-amber-400 shrink-0" /> : <Moon size={16} className="text-indigo-500 shrink-0" />}
@@ -179,7 +179,7 @@ const AuditHistoryPage = () => {
           </button>
         </nav>
 
-   
+
       </div>
 
       {/* Premium promotional block */}
@@ -189,12 +189,12 @@ const AuditHistoryPage = () => {
             <Lock size={14} className={`transition-colors duration-300 ${darkMode ? 'fill-emerald-400/20 text-emerald-400' : 'fill-emerald-600/20 text-emerald-700'}`} />
             <span className="text-[11px] font-black uppercase tracking-wider">Unlock Advanced</span>
           </div>
-          <p className={`text-[10px] font-semibold leading-relaxed transition-colors duration-300 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+          <p className={`text-[10px] font- leading-relaxed transition-colors duration-300 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
             Get deeper insights, historical data, and AI-powered recommendations.
           </p>
           <button
             onClick={() => toast.success('Premium checkout is launching soon!')}
-            className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-md shadow-emerald-600/10 transition-all active:scale-[0.98]"
+            className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl fontsemibold text-xs shadow-md shadow-emerald-600/10 transition-all active:scale-[0.98]"
           >
             Upgrade Now
           </button>
@@ -291,51 +291,51 @@ const AuditHistoryPage = () => {
       case 'All':
         return {
           label: 'Full Audit',
-          
+
         };
       case 'Technical Performance':
         return {
           label: 'Tech Performance',
-          
+
         };
       case 'On Page SEO':
         return {
           label: 'On-Page SEO',
-          
+
         };
       case 'Accessibility':
         return {
           label: 'Accessibility',
-          
+
         };
       case 'Security/Compliance':
       case 'Security':
         return {
           label: 'Security & Comp.',
-          
+
         };
       case 'UX & Content Structure':
       case 'UX':
         return {
           label: 'UX & Content',
-          
+
         };
       case 'Conversion & Lead Flow':
       case 'Conversion':
         return {
           label: 'Conversion & Lead',
-          
+
         };
       case 'AIO (AI-Optimization) Readiness':
       case 'AIO':
         return {
           label: 'AIO Readiness',
-          
+
         };
       default:
         return {
           label: reportType,
-          
+
         };
     }
   };
@@ -376,10 +376,10 @@ const AuditHistoryPage = () => {
       {/* ── MAIN CONTENT AREA ── */}
       <main className="flex-grow flex flex-col min-w-0 p-6 md:p-8 space-y-6 overflow-y-auto">
         <div className="max-w-7xl mx-auto w-full">
-          
+
           {/* Header section with Search & User Profile */}
           <div className="mb-10 space-y-8">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               className="flex flex-col md:flex-row md:items-center justify-between gap-6"
@@ -394,13 +394,13 @@ const AuditHistoryPage = () => {
                   </span>
                 </div>
                 <div className="flex items-center justify-between md:justify-start gap-4">
-                  <h1 className={`text-4xl font-extrabold tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
+                  <h1 className={`text-4xl fontsemibold tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
                     Audit <span className="text-indigo-600">History</span>
                   </h1>
                   {/* Mobile Sidebar Toggle Button */}
                   <button
                     onClick={() => setSidebarOpen(true)}
-                    className={`md:hidden flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-xs font-bold transition-all duration-300 ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                    className={`md:hidden flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-xs fontsemibold transition-all duration-300 ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
                   >
                     <Menu size={14} />
                     <span>Menu</span>
@@ -410,55 +410,53 @@ const AuditHistoryPage = () => {
                   Your complete performance tracking database.
                 </p>
               </div>
-            
-            <div className="relative w-full md:w-96 group">
-              <div className={`absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors ${darkMode ? "text-slate-500 group-focus-within:text-indigo-400" : "text-slate-400 group-focus-within:text-indigo-600"}`}>
-                {loading ? <Loader2 size={20} className="animate-spin" /> : <Search size={20} />}
-              </div>
-              <input
-                type="text"
-                placeholder="Search by URL..."
-                className={`block w-full pl-12 pr-12 py-4 rounded-2xl border-none outline-none transition-all shadow-xl font-medium ${
-                  darkMode 
-                    ? "bg-slate-800/50 text-white placeholder-slate-500 focus:ring-2 focus:ring-indigo-500/50" 
-                    : "bg-white text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500/30"
-                }`}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              {searchTerm && (
-                <button 
-                  onClick={() => setSearchTerm('')}
-                  className={`absolute inset-y-0 right-0 pr-4 flex items-center transition-colors ${darkMode ? "text-slate-500 hover:text-white" : "text-slate-400 hover:text-slate-900"}`}
-                >
-                  <X size={18} />
-                </button>
-              )}
-            </div>
-          </motion.div>
-        </div>
 
-        {/* Data Table */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className={`relative overflow-hidden rounded-[2.5rem] shadow-2xl border transition-colors ${
-            darkMode ? "bg-slate-900/50 border-slate-800" : "bg-white border-slate-200"
-          }`}
-        >
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className={`border-b transition-colors ${darkMode ? "border-slate-800 bg-slate-900/80" : "border-slate-100 bg-slate-50/50"}`}>
-                  <th className="px-8 py-6 text-xs font-bold uppercase tracking-widest text-slate-500">Date</th>
-                  <th className="px-8 py-6 text-xs font-bold uppercase tracking-widest text-slate-500">Website URL & Device</th>
-                  <th className="px-8 py-6 text-xs font-bold uppercase tracking-widest text-slate-500">Audit Type</th>
-                  <th className="px-8 py-6 text-xs font-bold uppercase tracking-widest text-slate-500">Performance Score</th>
-                  <th className="px-8 py-6 text-xs font-bold uppercase tracking-widest text-slate-500">Status</th>
-                  <th className="px-8 py-6 text-xs font-bold uppercase tracking-widest text-slate-500 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className={`divide-y transition-colors ${darkMode ? "divide-slate-800" : "divide-slate-100"}`}>
+              <div className="relative w-full md:w-96 group">
+                <div className={`absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors ${darkMode ? "text-slate-500 group-focus-within:text-indigo-400" : "text-slate-400 group-focus-within:text-indigo-600"}`}>
+                  {loading ? <Loader2 size={20} className="animate-spin" /> : <Search size={20} />}
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search by URL..."
+                  className={`block w-full pl-12 pr-12 py-4 rounded-2xl border-none outline-none transition-all shadow-xl font-medium ${darkMode
+                    ? "bg-slate-800/50 text-white placeholder-slate-500 focus:ring-2 focus:ring-indigo-500/50"
+                    : "bg-white text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500/30"
+                    }`}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className={`absolute inset-y-0 right-0 pr-4 flex items-center transition-colors ${darkMode ? "text-slate-500 hover:text-white" : "text-slate-400 hover:text-slate-900"}`}
+                  >
+                    <X size={18} />
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Data Table */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`relative overflow-hidden rounded-[2.5rem] shadow-2xl border transition-colors ${darkMode ? "bg-slate-900/50 border-slate-800" : "bg-white border-slate-200"
+              }`}
+          >
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className={`border-b transition-colors ${darkMode ? "border-slate-800 bg-slate-900/80" : "border-slate-100 bg-slate-50/50"}`}>
+                    <th className="px-8 py-6 text-xs fontsemibold uppercase tracking-widest text-slate-500">Date</th>
+                    <th className="px-8 py-6 text-xs fontsemibold uppercase tracking-widest text-slate-500">Website URL & Device</th>
+                    <th className="px-8 py-6 text-xs fontsemibold uppercase tracking-widest text-slate-500">Audit Type</th>
+                    <th className="px-8 py-6 text-xs fontsemibold uppercase tracking-widest text-slate-500">Performance Score</th>
+                    <th className="px-8 py-6 text-xs fontsemibold uppercase tracking-widest text-slate-500">Status</th>
+                    <th className="px-8 py-6 text-xs fontsemibold uppercase tracking-widest text-slate-500 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className={`divide-y transition-colors ${darkMode ? "divide-slate-800" : "divide-slate-100"}`}>
                   {loading ? (
                     [...Array(5)].map((_, i) => (
                       <tr key={i} className="animate-pulse">
@@ -480,7 +478,7 @@ const AuditHistoryPage = () => {
                     </tr>
                   ) : (
                     audits.map((audit, index) => (
-                      <motion.tr 
+                      <motion.tr
                         key={audit._id}
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
@@ -493,7 +491,7 @@ const AuditHistoryPage = () => {
                             <div className={`p-2 rounded-lg ${darkMode ? "bg-slate-800 text-slate-400" : "bg-slate-100 text-slate-500"}`}>
                               <Calendar size={16} />
                             </div>
-                            <span className="font-semibold text-sm">
+                            <span className="font- text-sm">
                               {formatDate(audit.createdAt)}
                             </span>
                           </div>
@@ -502,7 +500,7 @@ const AuditHistoryPage = () => {
                           <div className="flex flex-col">
                             <div className="flex items-center gap-2 mb-1">
                               <Globe size={14} className="text-indigo-500" />
-                              <span className={`font-bold text-sm truncate max-w-[250px] ${darkMode ? "text-slate-200" : "text-slate-800"}`}>
+                              <span className={`fontsemibold text-sm truncate max-w-[250px] ${darkMode ? "text-slate-200" : "text-slate-800"}`}>
                                 {audit.url}
                               </span>
                             </div>
@@ -515,7 +513,7 @@ const AuditHistoryPage = () => {
                           {(() => {
                             const badge = getAuditTypeBadge(audit.reportType);
                             return (
-                              <span className={`inline-flex items-center px-3 py-1.5  text-[10px] font-bold uppercase  ${badge.style}`}>
+                              <span className={`inline-flex items-center px-3 py-1.5  text-[10px] fontsemibold uppercase  ${badge.style}`}>
                                 {badge.label}
                               </span>
                             );
@@ -525,13 +523,12 @@ const AuditHistoryPage = () => {
                           {audit.status === 'success' ? (
                             <div className="flex items-center gap-4">
                               <div className="flex-1 h-2 w-24 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                                <motion.div 
+                                <motion.div
                                   initial={{ width: 0 }}
                                   animate={{ width: `${audit.score}%` }}
                                   transition={{ duration: 1, delay: index * 0.1 }}
-                                  className={`h-full rounded-full ${
-                                    audit.score >= 90 ? 'bg-emerald-500' : audit.score >= 70 ? 'bg-amber-500' : 'bg-rose-500'
-                                  }`}
+                                  className={`h-full rounded-full ${audit.score >= 90 ? 'bg-emerald-500' : audit.score >= 70 ? 'bg-amber-500' : 'bg-rose-500'
+                                    }`}
                                 />
                               </div>
                               <span className={`font-black text-lg min-w-[2.5rem] ${getScoreColor(audit.score)}`}>
@@ -539,7 +536,7 @@ const AuditHistoryPage = () => {
                               </span>
                             </div>
                           ) : (
-                            <span className={`text-xs font-bold uppercase ${darkMode ? "text-slate-600" : "text-slate-300"}`}>
+                            <span className={`text-xs fontsemibold uppercase ${darkMode ? "text-slate-600" : "text-slate-300"}`}>
                               Data Pending
                             </span>
                           )}
@@ -551,7 +548,7 @@ const AuditHistoryPage = () => {
                               {audit.status === 'success' ? 'Completed' : audit.status === 'pending' ? 'Processing' : 'Failed'}
                             </span>
                             {audit.status === 'success' && isExpired(audit.createdAt) && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-500/10 text-slate-500 border border-slate-500/20 text-[8px] font-bold uppercase tracking-widest self-start">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-500/10 text-slate-500 border border-slate-500/20 text-[8px] fontsemibold uppercase tracking-widest self-start">
                                 <Clock size={8} /> Expired
                               </span>
                             )}
@@ -560,153 +557,151 @@ const AuditHistoryPage = () => {
                         <td className="px-8 py-6 text-right">
                           <div className="flex items-center justify-end gap-2">
                             {audit.status === 'success' && (isExpired(audit.createdAt) || audit.reportExists === false) ? (
-                           <button
-  onClick={() => {
-    const url = encodeURIComponent(audit.url);
+                              <button
+                                onClick={() => {
+                                  const url = encodeURIComponent(audit.url);
 
-    // Ensure device is capitalized for backend validation
-    let rawDevice = audit.device || 'Desktop';
-    const normalizedDevice =
-      rawDevice.charAt(0).toUpperCase() +
-      rawDevice.slice(1).toLowerCase();
+                                  // Ensure device is capitalized for backend validation
+                                  let rawDevice = audit.device || 'Desktop';
+                                  const normalizedDevice =
+                                    rawDevice.charAt(0).toUpperCase() +
+                                    rawDevice.slice(1).toLowerCase();
 
-    const device = encodeURIComponent(normalizedDevice);
-    const report = encodeURIComponent(audit.reportType || 'All');
+                                  const device = encodeURIComponent(normalizedDevice);
+                                  const report = encodeURIComponent(audit.reportType || 'All');
 
-    // ONLY rerun audit
-    navigate(
-      `/dashboard?url=${url}&device=${device}&report=${report}`
-    );
-  }}
-  className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-sm font-black text-[9px] uppercase tracking-widest shadow-lg shadow-indigo-600/20 transition-all active:scale-95"
->
-  <RefreshCw size={14} />
-  Run Again
-</button>
-) : (
-  <>
-    <button
-      onClick={() => {
-        // ONLY open report
-        if (audit.reportId || audit.parentBulkAuditId) {
-          const params = new URLSearchParams({
-            url: audit.url || "",
-            device: audit.device || "Desktop",
-            report: audit.reportType || "All"
-          });
+                                  // ONLY rerun audit
+                                  navigate(
+                                    `/dashboard?url=${url}&device=${device}&report=${report}`
+                                  );
+                                }}
+                                className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-sm font-black text-[9px] uppercase tracking-widest shadow-lg shadow-indigo-600/20 transition-all active:scale-95"
+                              >
+                                <RefreshCw size={14} />
+                                Run Again
+                              </button>
+                            ) : (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    // ONLY open report
+                                    if (audit.reportId || audit.parentBulkAuditId) {
+                                      const params = new URLSearchParams({
+                                        url: audit.url || "",
+                                        device: audit.device || "Desktop",
+                                        report: audit.reportType || "All"
+                                      });
 
-          if (audit.parentBulkAuditId) {
-            params.set("bulkId", audit.parentBulkAuditId);
+                                      if (audit.parentBulkAuditId) {
+                                        params.set("bulkId", audit.parentBulkAuditId);
 
-            window.open(
-              `/report?${params.toString()}`,
-              '_blank'
-            );
-          } else {
-            window.open(
-              `/report/${audit.reportId}?${params.toString()}`,
-              '_blank'
-            );
-          }
-        } else {
-          toast.error(
-            "Report details are currently unavailable."
-          );
-        }
-      }}
-      className={`p-2.5 rounded-xl transition-all shadow-lg border ${
-        darkMode
-          ? "bg-slate-800 hover:bg-indigo-600 text-slate-400 hover:text-white border-slate-700"
-          : "bg-white hover:bg-indigo-50 text-slate-500 hover:text-indigo-600 border-slate-200"
-      }`}
-      title="View Report"
-    >
-      <FileText size={18} />
-    </button>
+                                        window.open(
+                                          `/report?${params.toString()}`,
+                                          '_blank'
+                                        );
+                                      } else {
+                                        window.open(
+                                          `/report/${audit.reportId}?${params.toString()}`,
+                                          '_blank'
+                                        );
+                                      }
+                                    } else {
+                                      toast.error(
+                                        "Report details are currently unavailable."
+                                      );
+                                    }
+                                  }}
+                                  className={`p-2.5 rounded-xl transition-all shadow-lg border ${darkMode
+                                    ? "bg-slate-800 hover:bg-indigo-600 text-slate-400 hover:text-white border-slate-700"
+                                    : "bg-white hover:bg-indigo-50 text-slate-500 hover:text-indigo-600 border-slate-200"
+                                    }`}
+                                  title="View Report"
+                                >
+                                  <FileText size={18} />
+                                </button>
 
-    <button
-      onClick={() => {
-        // ONLY download PDF
-        const rId =
-          audit.reportId ||
-          (audit.parentBulkAuditId
-            ? `${audit.parentBulkAuditId}_${window.btoa(audit.url)}`
-            : null);
+                                <button
+                                  onClick={() => {
+                                    // ONLY download PDF
+                                    const rId =
+                                      audit.reportId ||
+                                      (audit.parentBulkAuditId
+                                        ? `${audit.parentBulkAuditId}_${window.btoa(audit.url)}`
+                                        : null);
 
-        if (!rId) {
-          return toast.error(
-            'PDF unavailable for this audit'
-          );
-        }
+                                    if (!rId) {
+                                      return toast.error(
+                                        'PDF unavailable for this audit'
+                                      );
+                                    }
 
-        toast.promise(
-          (async () => {
-            const token = localStorage.getItem(
-              'dealerpulse_token'
-            );
+                                    toast.promise(
+                                      (async () => {
+                                        const token = localStorage.getItem(
+                                          'dealerpulse_token'
+                                        );
 
-            const API_URL =
-              import.meta.env.VITE_API_URL ||
-              'http://localhost:2000';
+                                        const API_URL =
+                                          import.meta.env.VITE_API_URL ||
+                                          'http://localhost:2000';
 
-            const response = await fetch(
-              `${API_URL}/single-audit/${rId}/export/pdf`,
-              {
-                headers: {
-                  ...(token
-                    ? {
-                        Authorization: `Bearer ${token}`
-                      }
-                    : {})
-                }
-              }
-            );
+                                        const response = await fetch(
+                                          `${API_URL}/single-audit/${rId}/export/pdf`,
+                                          {
+                                            headers: {
+                                              ...(token
+                                                ? {
+                                                  Authorization: `Bearer ${token}`
+                                                }
+                                                : {})
+                                            }
+                                          }
+                                        );
 
-            if (!response.ok) {
-              throw new Error(
-                'Failed to generate PDF'
-              );
-            }
+                                        if (!response.ok) {
+                                          throw new Error(
+                                            'Failed to generate PDF'
+                                          );
+                                        }
 
-            const blob = await response.blob();
+                                        const blob = await response.blob();
 
-            const url =
-              window.URL.createObjectURL(blob);
+                                        const url =
+                                          window.URL.createObjectURL(blob);
 
-            const link =
-              document.createElement('a');
+                                        const link =
+                                          document.createElement('a');
 
-            link.href = url;
+                                        link.href = url;
 
-            link.download = `Auditify-Report-${audit.url.replace(
-              /[^a-z0-9]/gi,
-              '-'
-            )}.pdf`;
+                                        link.download = `Auditify-Report-${audit.url.replace(
+                                          /[^a-z0-9]/gi,
+                                          '-'
+                                        )}.pdf`;
 
-            document.body.appendChild(link);
+                                        document.body.appendChild(link);
 
-            link.click();
+                                        link.click();
 
-            document.body.removeChild(link);
+                                        document.body.removeChild(link);
 
-            window.URL.revokeObjectURL(url);
-          })(),
-          {
-            loading: 'Generating PDF report...',
-            success: 'Report downloaded!',
-            error: 'Failed to generate PDF',
-          }
-        );
-      }}
-      className={`p-2.5 rounded-xl transition-all shadow-lg border ${
-        darkMode
-          ? "bg-slate-800 hover:bg-emerald-600 text-slate-400 hover:text-white border-slate-700"
-          : "bg-white hover:bg-emerald-50 text-slate-500 hover:text-emerald-600 border-slate-200"
-      }`}
-      title="Download PDF"
-    >
-      <Download size={18} />
-    </button>
+                                        window.URL.revokeObjectURL(url);
+                                      })(),
+                                      {
+                                        loading: 'Generating PDF report...',
+                                        success: 'Report downloaded!',
+                                        error: 'Failed to generate PDF',
+                                      }
+                                    );
+                                  }}
+                                  className={`p-2.5 rounded-xl transition-all shadow-lg border ${darkMode
+                                    ? "bg-slate-800 hover:bg-emerald-600 text-slate-400 hover:text-white border-slate-700"
+                                    : "bg-white hover:bg-emerald-50 text-slate-500 hover:text-emerald-600 border-slate-200"
+                                    }`}
+                                  title="Download PDF"
+                                >
+                                  <Download size={18} />
+                                </button>
                               </>
                             )}
                           </div>
@@ -714,115 +709,111 @@ const AuditHistoryPage = () => {
                       </motion.tr>
                     ))
                   )}
-              </tbody>
-            </table>
-          </div>
+                </tbody>
+              </table>
+            </div>
 
-          {/* Pagination */}
-          {!loading && audits.length > 0 && (
-            <div className={`px-8 py-6 flex items-center justify-between border-t transition-colors ${darkMode ? "border-slate-800 bg-slate-900/50" : "border-slate-100 bg-slate-50/50"}`}>
-              <p className={`text-sm font-medium ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
-                Showing <span className={darkMode ? "text-white" : "text-slate-900"}>{(currentPage - 1) * itemsPerPage + 1}</span> to <span className={darkMode ? "text-white" : "text-slate-900"}>{Math.min(currentPage * itemsPerPage, totalAudits)}</span> of <span className={darkMode ? "text-white" : "text-slate-900"}>{totalAudits}</span> audits
-              </p>
-              
-              <div className="flex items-center gap-2">
-                {/* Prev button */}
-                <button
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
-                  className={`p-2 rounded-xl transition-all ${
-                    currentPage === 1
+            {/* Pagination */}
+            {!loading && audits.length > 0 && (
+              <div className={`px-8 py-6 flex items-center justify-between border-t transition-colors ${darkMode ? "border-slate-800 bg-slate-900/50" : "border-slate-100 bg-slate-50/50"}`}>
+                <p className={`text-sm font-medium ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
+                  Showing <span className={darkMode ? "text-white" : "text-slate-900"}>{(currentPage - 1) * itemsPerPage + 1}</span> to <span className={darkMode ? "text-white" : "text-slate-900"}>{Math.min(currentPage * itemsPerPage, totalAudits)}</span> of <span className={darkMode ? "text-white" : "text-slate-900"}>{totalAudits}</span> audits
+                </p>
+
+                <div className="flex items-center gap-2">
+                  {/* Prev button */}
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className={`p-2 rounded-xl transition-all ${currentPage === 1
                       ? "opacity-30 cursor-not-allowed"
                       : darkMode ? "hover:bg-slate-800 text-white" : "hover:bg-white text-slate-600 shadow-sm border border-slate-200"
-                  }`}
-                >
-                  <ChevronLeft size={20} />
-                </button>
+                      }`}
+                  >
+                    <ChevronLeft size={20} />
+                  </button>
 
-                {/* Smart page buttons with ellipsis */}
-                <div className="flex items-center gap-1">
-                  {(() => {
-                    const delta = 2; // pages shown each side of current
-                    const pages = [];
-                    const rangeStart = Math.max(2, currentPage - delta);
-                    const rangeEnd   = Math.min(totalPages - 1, currentPage + delta);
+                  {/* Smart page buttons with ellipsis */}
+                  <div className="flex items-center gap-1">
+                    {(() => {
+                      const delta = 2; // pages shown each side of current
+                      const pages = [];
+                      const rangeStart = Math.max(2, currentPage - delta);
+                      const rangeEnd = Math.min(totalPages - 1, currentPage + delta);
 
-                    // Always show page 1
-                    pages.push(1);
+                      // Always show page 1
+                      pages.push(1);
 
-                    // Left ellipsis
-                    if (rangeStart > 2) pages.push('left-ellipsis');
+                      // Left ellipsis
+                      if (rangeStart > 2) pages.push('left-ellipsis');
 
-                    // Middle window
-                    for (let p = rangeStart; p <= rangeEnd; p++) pages.push(p);
+                      // Middle window
+                      for (let p = rangeStart; p <= rangeEnd; p++) pages.push(p);
 
-                    // Right ellipsis
-                    if (rangeEnd < totalPages - 1) pages.push('right-ellipsis');
+                      // Right ellipsis
+                      if (rangeEnd < totalPages - 1) pages.push('right-ellipsis');
 
-                    // Always show last page
-                    if (totalPages > 1) pages.push(totalPages);
+                      // Always show last page
+                      if (totalPages > 1) pages.push(totalPages);
 
-                    return pages.map((page, idx) => {
-                      if (page === 'left-ellipsis' || page === 'right-ellipsis') {
+                      return pages.map((page, idx) => {
+                        if (page === 'left-ellipsis' || page === 'right-ellipsis') {
+                          return (
+                            <span
+                              key={page}
+                              className={`w-10 h-10 flex items-center justify-center text-sm fontsemibold select-none ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}
+                            >
+                              …
+                            </span>
+                          );
+                        }
                         return (
-                          <span
+                          <button
                             key={page}
-                            className={`w-10 h-10 flex items-center justify-center text-sm font-bold select-none ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}
-                          >
-                            …
-                          </span>
-                        );
-                      }
-                      return (
-                        <button
-                          key={page}
-                          onClick={() => setCurrentPage(page)}
-                          className={`w-10 h-10 rounded-xl text-sm font-bold transition-all ${
-                            currentPage === page
+                            onClick={() => setCurrentPage(page)}
+                            className={`w-10 h-10 rounded-xl text-sm fontsemibold transition-all ${currentPage === page
                               ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
                               : darkMode
                                 ? "hover:bg-slate-800 text-slate-400"
                                 : "hover:bg-white text-slate-600 border border-transparent hover:border-slate-200"
-                          }`}
-                        >
-                          {page}
-                        </button>
-                      );
-                    });
-                  })()}
-                </div>
+                              }`}
+                          >
+                            {page}
+                          </button>
+                        );
+                      });
+                    })()}
+                  </div>
 
-                {/* Next button */}
-                <button
-                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                  className={`p-2 rounded-xl transition-all ${
-                    currentPage === totalPages
+                  {/* Next button */}
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className={`p-2 rounded-xl transition-all ${currentPage === totalPages
                       ? "opacity-30 cursor-not-allowed"
                       : darkMode ? "hover:bg-slate-800 text-white" : "hover:bg-white text-slate-600 shadow-sm border border-slate-200"
-                  }`}
-                >
-                  <ChevronRight size={20} />
-                </button>
+                      }`}
+                  >
+                    <ChevronRight size={20} />
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
-        </motion.div>
+            )}
+          </motion.div>
 
-        {/* Expiration Note */}
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className={`mt-8 p-4 rounded-2xl border flex items-start gap-3 ${
-            darkMode ? "bg-indigo-500/5 border-indigo-500/10 text-slate-400" : "bg-indigo-50 border-indigo-100 text-slate-600"
-          }`}
-        >
-          <Info size={18} className="text-indigo-500 mt-0.5 shrink-0" />
-          <p className="text-sm font-medium leading-relaxed">
-            <span className="font-bold text-indigo-500">Note:</span> Audit reports are automatically cleared from active storage after 3 hours for security and performance reasons. You can always run a fresh audit for any URL using the <strong>Run Again</strong> button.
-          </p>
-        </motion.div>
+          {/* Expiration Note */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className={`mt-8 p-4 rounded-2xl border flex items-start gap-3 ${darkMode ? "bg-indigo-500/5 border-indigo-500/10 text-slate-400" : "bg-indigo-50 border-indigo-100 text-slate-600"
+              }`}
+          >
+            <Info size={18} className="text-indigo-500 mt-0.5 shrink-0" />
+            <p className="text-sm font-medium leading-relaxed">
+              <span className="fontsemibold text-indigo-500">Note:</span> Audit reports are automatically cleared from active storage after 3 hours for security and performance reasons. You can always run a fresh audit for any URL using the <strong>Run Again</strong> button.
+            </p>
+          </motion.div>
         </div>
       </main>
     </div>

@@ -36,7 +36,7 @@ const AEOScoreGauge = ({ score, title, subtitle, color, size = 160, darkMode }) 
                     <span className="text-[2rem] font-black tracking-tighter" style={{ color }}>{score}%</span>
                 </div>
             </div>
-            <div className={`mt-6 flex flex-col text-[13px] font-bold tracking-[0.15em] ml-2 ${darkMode ? "text-slate-400" : "text-gray-700"}`}>
+            <div className={`mt-6 flex flex-col text-[13px] fontsemibold tracking-[0.15em] ml-2 ${darkMode ? "text-slate-400" : "text-gray-700"}`}>
                 <span>{title}</span>
                 <span>{subtitle}</span>
             </div>

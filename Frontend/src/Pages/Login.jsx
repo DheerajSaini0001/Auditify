@@ -37,7 +37,7 @@ const Login = () => {
       // Determine origin page, fallback based on role
       const from = location.state?.from?.pathname || location.state?.from || null;
       const roleFallback = getRedirectPath(result.user.role);
-      
+
       const destination = (from && from !== '/' && from !== '/login') ? from : roleFallback;
       navigate(destination);
     } else {
@@ -63,7 +63,7 @@ const Login = () => {
           <div className="w-16 h-16 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-blue-600/20">
             <LogIn className="text-white w-8 h-8" />
           </div>
-          <h1 className={`text-3xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>Welcome Back</h1>
+          <h1 className={`text-3xl fontsemibold mb-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>Welcome Back</h1>
           <p className={darkMode ? 'text-gray-400' : 'text-slate-500'}>Sign in to your Dealer Pulse account</p>
         </header>
 
@@ -73,8 +73,8 @@ const Login = () => {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               className={`flex items-center gap-3 p-4 rounded-2xl text-sm ${darkMode
-                  ? 'bg-red-500/10 border border-red-500/20 text-red-400'
-                  : 'bg-red-50 border border-red-200 text-red-600'
+                ? 'bg-red-500/10 border border-red-500/20 text-red-400'
+                : 'bg-red-50 border border-red-200 text-red-600'
                 }`}
             >
               <AlertCircle size={18} />
@@ -90,8 +90,8 @@ const Login = () => {
                 type="email"
                 required
                 className={`w-full pl-12 pr-4 py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all ${darkMode
-                    ? 'bg-[#1e1e26] border-white/5 text-white placeholder:text-gray-600'
-                    : 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400'
+                  ? 'bg-[#1e1e26] border-white/5 text-white placeholder:text-gray-600'
+                  : 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400'
                   }`}
                 placeholder="name@example.com"
                 value={email}
@@ -111,8 +111,8 @@ const Login = () => {
                 type={showPassword ? 'text' : 'password'}
                 required
                 className={`w-full pl-12 pr-12 py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all ${darkMode
-                    ? 'bg-[#1e1e26] border-white/5 text-white placeholder:text-gray-600'
-                    : 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400'
+                  ? 'bg-[#1e1e26] border-white/5 text-white placeholder:text-gray-600'
+                  : 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400'
                   }`}
                 placeholder="••••••••"
                 value={password}
@@ -126,30 +126,30 @@ const Login = () => {
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
-          <MathCaptcha onAnswerChange={setCaptchaAnswer} />
+            <MathCaptcha onAnswerChange={setCaptchaAnswer} />
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold rounded-2xl shadow-lg shadow-blue-600/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 group"
-          >
-            {loading ? (
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            ) : (
-              <>
-                <span>Sign In</span>
-                <LogIn size={18} className="translate-x-0 group-hover:translate-x-1 transition-transform" />
-              </>
-            )}
-          </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font- rounded-2xl shadow-lg shadow-blue-600/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 group"
+            >
+              {loading ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <>
+                  <span>Sign In</span>
+                  <LogIn size={18} className="translate-x-0 group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
+            </button>
         </form>
 
         <div className={`mt-8 text-center ${darkMode ? 'text-gray-400' : 'text-slate-500'}`}>
           Don't have an account? {' '}
-          <Link 
-            to="/register" 
+          <Link
+            to="/register"
             state={{ from: location.state?.from }}
-            className={`font-semibold transition-colors ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
+            className={`font- transition-colors ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
           >
             Create Account
           </Link>

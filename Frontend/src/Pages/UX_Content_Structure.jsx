@@ -56,7 +56,7 @@ const UxShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
         </div>
 
         {/* Title */}
-        <h2 className={`mt-6 text-2xl font-bold tracking-tight transition-all duration-500 ${darkMode ? "text-white" : "text-slate-900"}`}>
+        <h2 className={`mt-6 text-2xl fontsemibold tracking-tight transition-all duration-500 ${darkMode ? "text-white" : "text-slate-900"}`}>
           {step.title}
         </h2>
 
@@ -68,7 +68,7 @@ const UxShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
         {/* Processing State */}
         <div className="mt-8 flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
           <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          <span className="text-xs font-bold uppercase tracking-wider">Processing</span>
+          <span className="text-xs fontsemibold uppercase tracking-wider">Processing</span>
         </div>
 
         {/* Progress Indicators */}
@@ -128,7 +128,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
               <Icon size={24} className={darkMode ? "text-blue-400" : "text-blue-600"} />
             </div>
             <div>
-              <h3 className={`font-bold text-lg ${textColor}`}>{title}</h3>
+              <h3 className={`fontsemibold text-lg ${textColor}`}>{title}</h3>
               <p className={`text-xs font-medium mt-1 px-2 py-0.5 rounded-full w-fit border ${statusColor}`}>
                 {statusLabel}
               </p>
@@ -141,7 +141,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
                   e.stopPropagation();
                   setIsOpen(!isOpen);
                 }}
-                className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded transition-colors ${isOpen ? (darkMode ? "bg-slate-700 text-slate-200" : "bg-slate-200 text-slate-800") : (darkMode ? "text-gray-400 hover:text-white hover:bg-gray-800" : "text-gray-500 hover:text-gray-900 hover:bg-gray-100")}`}
+                className={`text-[10px] fontsemibold uppercase tracking-wider px-2 py-1 rounded transition-colors ${isOpen ? (darkMode ? "bg-slate-700 text-slate-200" : "bg-slate-200 text-slate-800") : (darkMode ? "text-gray-400 hover:text-white hover:bg-gray-800" : "text-gray-500 hover:text-gray-900 hover:bg-gray-100")}`}
                 title="Toggle Analysis"
               >
                 {isOpen ? "Hide Detail" : "View Detail"}
@@ -170,7 +170,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
             {isPassed ? <CheckCircle size={14} /> : isWarning ? <AlertTriangle size={14} /> : <XCircle size={14} />}
           </div>
           <div>
-            <h4 className={`text-xs font-bold uppercase tracking-wide mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
+            <h4 className={`text-xs fontsemibold uppercase tracking-wide mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
               Key Insight
             </h4>
             <p className={`text-sm font-medium leading-relaxed ${darkMode ? "text-slate-200" : "text-slate-700"}`}>
@@ -202,13 +202,13 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
             {type === "Text_Readability" && meta?.overallStats && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h5 className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Page Target</h5>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${darkMode ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-700"}`}>
+                  <h5 className={`text-xs fontsemibold uppercase tracking-wider ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Page Target</h5>
+                  <span className={`text-[10px] fontsemibold px-2 py-0.5 rounded ${darkMode ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-700"}`}>
                     {meta.pageType} ({meta.targetMin}-{meta.targetMax})
                   </span>
                 </div>
                 <div>
-                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Readability Index</h5>
+                  <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Readability Index</h5>
                   <div className={`mt-1 p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
                     <span>Complexity Score:</span>
                     <span>{meta.overallStats.score?.toFixed(1)} / 100</span>
@@ -217,18 +217,18 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
                 <div className="grid grid-cols-2 gap-2">
                   <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
                     <p className="opacity-70 mb-1">Sentences</p>
-                    <p className="font-bold">{meta.overallStats.sentenceCount} found</p>
+                    <p className="fontsemibold">{meta.overallStats.sentenceCount} found</p>
                   </div>
                   <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
                     <p className="opacity-70 mb-1">Avg Length</p>
-                    <p className="font-bold">{meta.overallStats.ASL?.toFixed(1)} words</p>
+                    <p className="fontsemibold">{meta.overallStats.ASL?.toFixed(1)} words</p>
                   </div>
                 </div>
 
                 {/* Problematic Sentences */}
                 {meta.problematicContent?.length > 0 && (
                   <div className="mt-4 pt-4 border-t border-dashed border-slate-700/50">
-                    <h5 className={`text-[11px] font-bold uppercase tracking-wider mb-3 flex items-center gap-2 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>
+                    <h5 className={`text-[11px] fontsemibold uppercase tracking-wider mb-3 flex items-center gap-2 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>
                       <AlertTriangle size={14} />
                       Hard-to-Read Content
                     </h5>
@@ -238,13 +238,13 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
                           <p className={`text-[11px] leading-relaxed italic mb-1.5 ${darkMode ? "text-slate-200" : "text-slate-700"}`}>
                             "{item.text}"
                           </p>
-                          <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-tight ${darkMode ? "bg-rose-500/20 text-rose-300" : "bg-rose-100 text-rose-700"}`}>
+                          <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] fontsemibold uppercase tracking-tight ${darkMode ? "bg-rose-500/20 text-rose-300" : "bg-rose-100 text-rose-700"}`}>
                             <Info size={10} />
                             {item.reason}
                           </div>
 
                           {/* Score Badge */}
-                          <div className={`absolute top-2 right-2 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded ${item.score < 30 ? "bg-rose-500 text-white" : "bg-amber-500 text-white"}`}>
+                          <div className={`absolute top-2 right-2 text-[9px] font-mono fontsemibold px-1.5 py-0.5 rounded ${item.score < 30 ? "bg-rose-500 text-white" : "bg-amber-500 text-white"}`}>
                             Score: {Math.round(item.score)}
                           </div>
                         </div>
@@ -258,14 +258,14 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
             {type === "UX_Content_Hierarchy_Clarity" && meta && (
               <div className="space-y-3">
                 <div>
-                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Heading Distro</h5>
+                  <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Heading Distro</h5>
                   <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
                     <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-indigo-400"></span>
                     <span className="break-all">{meta.h1Count} H1 found | {meta.totalHeadings} total tags</span>
                   </div>
                 </div>
                 <div>
-                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Sequence Logic</h5>
+                  <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Sequence Logic</h5>
                   <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
                     <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${meta.isSequential ? "bg-emerald-400" : "bg-rose-400"}`}></span>
                     <span className="break-all">{meta.isSequential ? "Perfect Nesting" : "Non-sequential levels detected"}</span>
@@ -276,7 +276,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
 
             {type === "Section_Labeling_Clarity" && meta && (
               <div>
-                <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Semantic Clarity</h5>
+                <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Semantic Clarity</h5>
                 <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
                   <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-emerald-400"></span>
                   <span className="break-all">{meta.labeledCount} of {meta.totalSections} sections correctly labeled</span>
@@ -287,7 +287,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
             {type === "Content_Density_Balance" && meta && (
               <div className="space-y-3">
                 <div>
-                  <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Visual Load</h5>
+                  <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Visual Load</h5>
                   <div className={`mt-1 p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
                     <span>Density Score:</span>
                     <span>{meta.densityScore?.toFixed(2)} pts</span>
@@ -295,7 +295,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
                 </div>
                 <div className={`p-2 rounded border font-mono text-[10px] flex justify-between ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
                   <span className="opacity-70">Text Volume:</span>
-                  <span className="font-bold">{meta.charCount?.toLocaleString()} chars</span>
+                  <span className="fontsemibold">{meta.charCount?.toLocaleString()} chars</span>
                 </div>
               </div>
             )}
@@ -303,7 +303,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
             {/* 2. Navigation & Flow Section */}
             {type === "Navigation_Discoverability" && meta && (
               <div>
-                <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Discovery Assets</h5>
+                <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Discovery Assets</h5>
                 <div className="grid grid-cols-1 gap-1.5 mt-2">
                   {[
                     { l: "Global Nav", v: meta.hasNavMenu },
@@ -312,7 +312,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
                   ].map((item, i) => (
                     <div key={i} className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
                       <span className={darkMode ? "text-slate-300" : "text-slate-600"}>{item.l}:</span>
-                      <span className={item.v ? "text-emerald-500 font-bold" : "text-rose-500 font-bold"}>{item.v ? "ACTIVE" : "MISSING"}</span>
+                      <span className={item.v ? "text-emerald-500 fontsemibold" : "text-rose-500 fontsemibold"}>{item.v ? "ACTIVE" : "MISSING"}</span>
                     </div>
                   ))}
                 </div>
@@ -321,7 +321,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
 
             {type === "Breadcrumbs" && meta && (
               <div>
-                <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Path Anchors</h5>
+                <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Path Anchors</h5>
                 <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
                   <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-blue-400"></span>
                   <span className="break-all">{meta.isHomepage ? "Homepage (Exempt)" : (status === 'pass' ? "Secondary Path Active" : "No path trail found")}</span>
@@ -331,7 +331,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
 
             {type === "In_Page_Navigation" && meta && (
               <div>
-                <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Local Routing</h5>
+                <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Local Routing</h5>
                 <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
                   <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-blue-400"></span>
                   <span className="break-all">{meta.anchorLinks} Skip-links | Top-scroll: {meta.backToTop ? "Yes" : "No"}</span>
@@ -341,20 +341,20 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
 
             {type === "Page_to_Page_Flow" && meta && (
               <div className="space-y-2">
-                <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Traversal Map</h5>
+                <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Traversal Map</h5>
                 <div className="grid grid-cols-2 gap-2">
                   <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
                     <p className="opacity-70 mb-1">Next Steps</p>
-                    <p className="font-bold">{meta.nextStepCTAs} Buttons Found</p>
+                    <p className="fontsemibold">{meta.nextStepCTAs} Buttons Found</p>
                   </div>
                   <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
                     <p className="opacity-70 mb-1">Inter-linking</p>
-                    <p className="font-bold">{meta.internalLinks} Internal links</p>
+                    <p className="fontsemibold">{meta.internalLinks} Internal links</p>
                   </div>
                 </div>
                 <div className={`p-2 rounded border font-mono text-[10px] flex justify-between ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
                   <span className="opacity-70">Site Footer:</span>
-                  <span className={meta.hasFooter ? "text-emerald-500 font-bold" : "text-rose-500 font-bold"}>{meta.hasFooter ? "ACTIVE" : "MISSING"}</span>
+                  <span className={meta.hasFooter ? "text-emerald-500 fontsemibold" : "text-rose-500 fontsemibold"}>{meta.hasFooter ? "ACTIVE" : "MISSING"}</span>
                 </div>
               </div>
             )}
@@ -362,7 +362,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
             {/* 3. Interactive Experience Section */}
             {type === "Interactive_Click_Feedback" && meta && (
               <div className="space-y-2">
-                <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>State Response</h5>
+                <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>State Response</h5>
                 <div className={`p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${meta.withFeedback === meta.totalInteractive ? "bg-emerald-400" : "bg-amber-400"}`}></span>
                   <span className="break-all">{meta.withFeedback} of {meta.totalInteractive} assets react</span>
@@ -373,7 +373,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
                     {meta.elements.map((el, idx) => (
                       <div key={idx} className={`flex items-center justify-between gap-2 p-1 rounded border text-[9px] ${darkMode ? "bg-slate-800/30 border-slate-700/50" : "bg-slate-50 border-slate-200/50"}`}>
                         <div className="flex items-center gap-1.5 min-w-0">
-                          <span className={`font-bold opacity-60 uppercase scale-90 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
+                          <span className={`fontsemibold opacity-60 uppercase scale-90 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
                             {el.tag}
                           </span>
                           <p className={`font-medium truncate ${darkMode ? "text-slate-200" : "text-slate-700"}`}>
@@ -394,7 +394,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
 
             {type === "Loading_Feedback" && meta?.summary && (
               <div>
-                <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Async Signals</h5>
+                <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Async Signals</h5>
                 <div className="grid grid-cols-1 gap-1.5 mt-2">
                   {[
                     { l: "Spinners", v: meta.summary.spinners },
@@ -403,7 +403,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
                   ].map((item, i) => (
                     <div key={i} className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
                       <span className={darkMode ? "text-slate-300" : "text-slate-600"}>{item.l}:</span>
-                      <span className={item.v > 0 ? "text-emerald-500 font-bold" : "text-slate-400"}>{item.v} detected</span>
+                      <span className={item.v > 0 ? "text-emerald-500 fontsemibold" : "text-slate-400"}>{item.v} detected</span>
                     </div>
                   ))}
                 </div>
@@ -412,26 +412,26 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
 
             {type === "Broken_Links" && meta && (
               <div className="space-y-3">
-                <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>URL Health</h5>
+                <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>URL Health</h5>
                 <div className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
                   <span className="opacity-70">Results:</span>
-                  <span className={meta.brokenCount > 0 ? "text-rose-500 font-bold" : "text-emerald-500 font-bold"}>{meta.brokenCount} Broken / {meta.totalChecked} Checked</span>
+                  <span className={meta.brokenCount > 0 ? "text-rose-500 fontsemibold" : "text-emerald-500 fontsemibold"}>{meta.brokenCount} Broken / {meta.totalChecked} Checked</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
                     <p className="opacity-70 mb-1">Internal</p>
-                    <p className="font-bold">{meta.totalInternal} links</p>
+                    <p className="fontsemibold">{meta.totalInternal} links</p>
                   </div>
                   <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
                     <p className="opacity-70 mb-1">External</p>
-                    <p className="font-bold">{meta.totalExternal} links</p>
+                    <p className="fontsemibold">{meta.totalExternal} links</p>
                   </div>
                 </div>
 
                 {/* Broken Links List */}
                 {meta.brokenLinks?.length > 0 && (
                   <div className="mt-4 pt-4 border-t border-dashed border-slate-700/50">
-                    <h5 className={`text-[11px] font-bold uppercase tracking-wider mb-3 flex items-center gap-2 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>
+                    <h5 className={`text-[11px] fontsemibold uppercase tracking-wider mb-3 flex items-center gap-2 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>
                       <Unlink size={14} />
                       Identified Broken Links
                     </h5>
@@ -439,12 +439,12 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
                       {meta.brokenLinks.map((link, idx) => (
                         <div key={idx} className={`p-2 rounded-lg border flex items-start justify-between gap-2.5 text-[10px] transition-colors ${darkMode ? "bg-rose-500/5 border-rose-500/20 hover:bg-rose-500/10" : "bg-rose-50 border-rose-100 hover:bg-rose-100"}`}>
                           <div className="flex-1 min-w-0">
-                            <p className={`font-bold truncate text-[10px] mb-0.5 ${darkMode ? "text-slate-200" : "text-slate-800"}`}>
+                            <p className={`fontsemibold truncate text-[10px] mb-0.5 ${darkMode ? "text-slate-200" : "text-slate-800"}`}>
                               {link.text || 'Anchor Link'}
                             </p>
                             <p className="truncate opacity-60 font-mono text-[8px]">{link.url}</p>
                           </div>
-                          <div className={`flex-shrink-0 px-1.5 py-0.5 rounded font-bold uppercase tracking-tighter text-[9px] ${darkMode ? "bg-rose-500/20 text-rose-400" : "bg-rose-100 text-rose-700"}`}>
+                          <div className={`flex-shrink-0 px-1.5 py-0.5 rounded fontsemibold uppercase tracking-tighter text-[9px] ${darkMode ? "bg-rose-500/20 text-rose-400" : "bg-rose-100 text-rose-700"}`}>
                             {link.status}
                           </div>
                         </div>
@@ -458,23 +458,23 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
             {/* 4. Mobile Layout & Stability Section */}
             {type === "Above_the_Fold_Content" && meta && (
               <div className="space-y-3">
-                <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Initial Exposure</h5>
+                <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Initial Exposure</h5>
                 <div className="grid grid-cols-2 gap-2">
                   <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
                     <p className="opacity-70 mb-1">ATF Score</p>
-                    <p className="font-bold text-indigo-500">{meta.atfScore}%</p>
+                    <p className="fontsemibold text-indigo-500">{meta.atfScore}%</p>
                   </div>
                   <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
                     <p className="opacity-70 mb-1">Viewport</p>
-                    <p className="font-bold">{meta.viewportHeight}px</p>
+                    <p className="fontsemibold">{meta.viewportHeight}px</p>
                   </div>
                   <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
                     <p className="opacity-70 mb-1">Visible Assets</p>
-                    <p className="font-bold">{meta.importantVisible}</p>
+                    <p className="fontsemibold">{meta.importantVisible}</p>
                   </div>
                   <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
                     <p className="opacity-70 mb-1">Total Assets</p>
-                    <p className="font-bold">{meta.totalImportant}</p>
+                    <p className="fontsemibold">{meta.totalImportant}</p>
                   </div>
                 </div>
               </div>
@@ -482,7 +482,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
 
             {type === "Sticky_Header_Usage" && meta && (
               <div>
-                <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Viewport Footprint</h5>
+                <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Viewport Footprint</h5>
                 <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
                   <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-blue-400"></span>
                   <span className="break-all">{meta.height}px height used (Max: {meta.limit}px)</span>
@@ -492,7 +492,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
 
             {type === "Intrusive_Interstitials" && meta && (
               <div>
-                <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Obstruction Level</h5>
+                <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Obstruction Level</h5>
                 <div className="grid grid-cols-1 gap-1.5 mt-2">
                   {[
                     { l: "Full Overlay", v: meta.hasOverlay },
@@ -501,7 +501,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
                   ].map((item, i) => (
                     <div key={i} className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
                       <span className={darkMode ? "text-slate-300" : "text-slate-600"}>{item.l}:</span>
-                      <span className={item.v ? "text-rose-500 font-bold" : "text-emerald-500 font-bold"}>{item.v ? "ACTIVE" : "NONE"}</span>
+                      <span className={item.v ? "text-rose-500 fontsemibold" : "text-emerald-500 fontsemibold"}>{item.v ? "ACTIVE" : "NONE"}</span>
                     </div>
                   ))}
                 </div>
@@ -510,7 +510,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
 
             {type === "Layout_Consistency" && meta && (
               <div>
-                <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Grid Engine</h5>
+                <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Grid Engine</h5>
                 <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
                   <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-emerald-400"></span>
                   <span className="break-all">{meta.hasFlexOrGrid ? "Modern Flex/Grid Layout" : "Legacy Structural Pattern"}</span>
@@ -529,7 +529,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
             {/* Cause */}
             {(analysis?.cause || reasons.length > 0) && (
               <div className="mb-4">
-                <p className={`font-semibold mb-1 ${darkMode ? "text-slate-200" : "text-slate-700"}`}>Cause:</p>
+                <p className={`font- mb-1 ${darkMode ? "text-slate-200" : "text-slate-700"}`}>Cause:</p>
                 <div className="pl-1 opacity-90">
                   {analysis?.cause ? (
                     <p>{analysis.cause}</p>
@@ -550,7 +550,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
             {/* Recommendation */}
             {(analysis?.recommendation || recommendations.length > 0) && (
               <div>
-                <p className={`font-semibold mb-1 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>Recommendation:</p>
+                <p className={`font- mb-1 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>Recommendation:</p>
                 <div className="pl-1 opacity-90">
                   {analysis?.recommendation ? (
                     <p>{analysis.recommendation}</p>
@@ -581,7 +581,7 @@ const Section = ({ title, icon: Icon, children, darkMode }) => (
       <div className={`p-2 rounded-lg ${darkMode ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-600"}`}>
         <Icon size={20} />
       </div>
-      <h2 className={`text-xl font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>
+      <h2 className={`text-xl fontsemibold ${darkMode ? "text-white" : "text-gray-900"}`}>
         {title}
       </h2>
     </div>
@@ -761,7 +761,7 @@ const UX_Content_Structure_Inner = React.memo(({ data, loading, darkMode }) => {
                   {/* Text Content */}
                   <div className={`flex-1 ${data.report === "All" ? "space-y-5" : "space-y-4"} text-left order-2 md:order-1`}>
                     <div className={`${data.report === "All" ? "space-y-2" : "space-y-1.5"}`}>
-                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-blue-100/50 text-blue-600 border border-blue-200"}`}>
+                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] fontsemibold uppercase tracking-wider ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-blue-100/50 text-blue-600 border border-blue-200"}`}>
                         <Layout className="w-3.5 h-3.5" />
                         <span>UX Audit</span>
                       </div>
@@ -778,21 +778,21 @@ const UX_Content_Structure_Inner = React.memo(({ data, loading, darkMode }) => {
                       <div className={`flex flex-wrap items-center ${data.report === "All" ? "gap-5" : "gap-4"}`}>
                         <div className="flex items-center gap-2">
                           <CheckCircle size={18} className="text-emerald-500" />
-                          <span className={`text-xs font-bold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{passedCount} Passed</span>
+                          <span className={`text-xs fontsemibold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{passedCount} Passed</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <AlertTriangle size={18} className="text-amber-500" />
-                          <span className={`text-xs font-bold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{warningCount} Warning</span>
+                          <span className={`text-xs fontsemibold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{warningCount} Warning</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <XCircle size={18} className="text-rose-500" />
-                          <span className={`text-xs font-bold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{failedCount} Failed</span>
+                          <span className={`text-xs fontsemibold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{failedCount} Failed</span>
                         </div>
                       </div>
                       <div className={`w-px h-4 ${darkMode ? "bg-slate-800" : "bg-slate-200 hidden md:block"}`}></div>
                       <button
                         onClick={() => setSelectedMetricInfo(scoreCalculationInfo)}
-                        className={`flex items-center gap-2 text-sm font-bold transition-all ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-700"}`}
+                        className={`flex items-center gap-2 text-sm fontsemibold transition-all ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-700"}`}
                       >
                         <Info size={16} />
                         <span className="border-b border-transparent hover:border-current">Metric Methodology</span>
@@ -806,7 +806,7 @@ const UX_Content_Structure_Inner = React.memo(({ data, loading, darkMode }) => {
                     <CircularProgress value={overallScore} size={data.report === "All" ? 180 : 150} stroke={14} />
                     <div className="absolute inset-0 flex items-center justify-center flex-col gap-0.5">
                       <span className={`${data.report === "All" ? "text-5xl" : "text-3xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>{overallScore}%</span>
-                      <span className="text-[11px] font-bold uppercase tracking-[0.2em] opacity-50">SCORE</span>
+                      <span className="text-[11px] fontsemibold uppercase tracking-[0.2em] opacity-50">SCORE</span>
                     </div>
                   </div>
                 </div>

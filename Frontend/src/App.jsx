@@ -15,6 +15,8 @@ import Footer from "./Component/Footer.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { DataProvider } from "./context/DataContext.jsx";
 import AppContent from "./AppContent.jsx"; 
+
+
 function App() {
   return (
     <AuthProvider>
@@ -28,3 +30,4 @@ function App() {
 }
 
 export default App;
+

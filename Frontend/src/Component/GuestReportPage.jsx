@@ -99,7 +99,7 @@ const FakeScore = ({ score, darkMode, accent }) => {
         <span className={`text-3xl font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
           {score}%
         </span>
-        <span className="text-[10px] font-bold uppercase tracking-widest opacity-40">SCORE</span>
+        <span className="text-[10px] fontsemibold uppercase tracking-widest opacity-40">SCORE</span>
       </div>
     </div>
   );
@@ -109,7 +109,7 @@ const FakeScore = ({ score, darkMode, accent }) => {
 const FakeStat = ({ icon: Icon, label, value, color, darkMode }) => (
   <div className={`flex items-center gap-2 text-sm ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
     <Icon size={14} className={color} />
-    <span className="font-bold">{value}</span>
+    <span className="fontsemibold">{value}</span>
     <span className="opacity-60">{label}</span>
   </div>
 );
@@ -164,11 +164,10 @@ const GuestReportPage = () => {
 
       {/* ── URL HEADER CARD ── */}
       <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-0 pb-8`}>
-        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${
-          darkMode
-            ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20"
-            : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"
-        }`}>
+        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode
+          ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20"
+          : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"
+          }`}>
 
           {/* Top URL bar — just like UrlHeader */}
           <div className={`relative p-6 md:p-8 border-b ${darkMode ? "border-slate-800 bg-slate-900/50" : "border-slate-100 bg-slate-50/80"}`}>
@@ -176,10 +175,10 @@ const GuestReportPage = () => {
               <div className="space-y-2">
                 <div className="flex items-center gap-2 opacity-50">
                   <Globe className="w-3.5 h-3.5" />
-                  <span className="text-xs font-bold uppercase tracking-widest">Audit Report For</span>
+                  <span className="text-xs fontsemibold uppercase tracking-widest">Audit Report For</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className={`text-2xl md:text-3xl font-extrabold ${darkMode ? "text-white/40" : "text-slate-400"} italic`}>
+                  <span className={`text-2xl md:text-3xl fontsemibold ${darkMode ? "text-white/40" : "text-slate-400"} italic`}>
                     Run an audit to see your report...
                   </span>
                   <ExternalLink className="w-5 h-5 opacity-20" />
@@ -187,11 +186,11 @@ const GuestReportPage = () => {
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
-                <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border ${darkMode ? "bg-slate-800/50 border-slate-700/50 text-slate-400" : "bg-slate-100/50 border-slate-200/50 text-slate-500"}`}>
+                <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font- border ${darkMode ? "bg-slate-800/50 border-slate-700/50 text-slate-400" : "bg-slate-100/50 border-slate-200/50 text-slate-500"}`}>
                   <Monitor className="w-4 h-4" />
                   <span>Desktop</span>
                 </div>
-                <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border ${darkMode ? "bg-slate-800/50 border-slate-700/50 text-slate-400" : "bg-slate-100/50 border-slate-200/50 text-slate-500"}`}>
+                <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font- border ${darkMode ? "bg-slate-800/50 border-slate-700/50 text-slate-400" : "bg-slate-100/50 border-slate-200/50 text-slate-500"}`}>
                   <Layers className="w-4 h-4" />
                   <span>{meta.label}</span>
                 </div>
@@ -208,7 +207,7 @@ const GuestReportPage = () => {
               <div className={`relative z-10 w-full h-40 rounded-2xl border flex items-center justify-center ${darkMode ? "bg-slate-800/60 border-slate-700" : "bg-slate-200/40 border-slate-200"}`}>
                 <div className="text-center space-y-2 opacity-30">
                   <Globe size={32} className={darkMode ? "text-slate-400 mx-auto" : "text-slate-400 mx-auto"} />
-                  <p className="text-xs font-bold uppercase tracking-widest">Preview Unavailable</p>
+                  <p className="text-xs fontsemibold uppercase tracking-widest">Preview Unavailable</p>
                 </div>
               </div>
             </div>
@@ -221,9 +220,8 @@ const GuestReportPage = () => {
                   {/* Text */}
                   <div className="flex-1 space-y-4 text-left order-2 md:order-1">
                     <div>
-                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider mb-3 ${
-                        darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-blue-100/50 text-blue-600 border border-blue-200"
-                      }`}>
+                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] fontsemibold uppercase tracking-wider mb-3 ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-blue-100/50 text-blue-600 border border-blue-200"
+                        }`}>
                         <BarChart2 className="w-3.5 h-3.5" />
                         {meta.badge}
                       </div>
@@ -264,21 +262,18 @@ const GuestReportPage = () => {
           </div>
 
           {/* Lock Overlay */}
-          <div className={`absolute inset-0 z-10 flex items-center justify-center p-4 rounded-3xl backdrop-blur-sm ${
-            darkMode ? "bg-slate-950/60" : "bg-slate-50/70"
-          }`}>
-            <div className={`max-w-xl w-full p-10 rounded-[2.5rem] text-center shadow-2xl border transition-all duration-300 ${
-              darkMode
-                ? "bg-slate-900 border-slate-800 shadow-black/40"
-                : "bg-white border-slate-200 shadow-slate-200/50"
+          <div className={`absolute inset-0 z-10 flex items-center justify-center p-4 rounded-3xl backdrop-blur-sm ${darkMode ? "bg-slate-950/60" : "bg-slate-50/70"
             }`}>
+            <div className={`max-w-xl w-full p-10 rounded-[2.5rem] text-center shadow-2xl border transition-all duration-300 ${darkMode
+              ? "bg-slate-900 border-slate-800 shadow-black/40"
+              : "bg-white border-slate-200 shadow-slate-200/50"
+              }`}>
 
               {/* Lock Icon */}
               <div className="mb-6 relative flex justify-center">
                 <div className="absolute inset-0 bg-blue-500/20 rounded-full blur-2xl animate-pulse" />
-                <div className={`relative p-6 rounded-full border shadow-inner ${
-                  darkMode ? "bg-slate-800 border-slate-700" : "bg-slate-50 border-white"
-                }`}>
+                <div className={`relative p-6 rounded-full border shadow-inner ${darkMode ? "bg-slate-800 border-slate-700" : "bg-slate-50 border-white"
+                  }`}>
                   <Lock className={`w-10 h-10 ${darkMode ? "text-blue-400" : "text-blue-600"}`} />
                 </div>
               </div>
@@ -293,23 +288,22 @@ const GuestReportPage = () => {
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <button
                   onClick={handleLogin}
-                  className={`flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl font-bold transition-all duration-300 w-full sm:w-auto shadow-lg hover:shadow-xl active:scale-95 ${
-                    darkMode
-                      ? "bg-slate-800 text-white hover:bg-slate-700 border border-slate-700"
-                      : "bg-slate-800 text-white hover:bg-slate-900"
-                  }`}
+                  className={`flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl fontsemibold transition-all duration-300 w-full sm:w-auto shadow-lg hover:shadow-xl active:scale-95 ${darkMode
+                    ? "bg-slate-800 text-white hover:bg-slate-700 border border-slate-700"
+                    : "bg-slate-800 text-white hover:bg-slate-900"
+                    }`}
                 >
                   <LogIn size={17} />
                   Log in
                 </button>
 
-                <span className={`text-sm font-bold uppercase tracking-widest opacity-40 ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
+                <span className={`text-sm fontsemibold uppercase tracking-widest opacity-40 ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
                   or
                 </span>
 
                 <button
                   onClick={handleRegister}
-                  className="flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl font-bold transition-all duration-300 w-full sm:w-auto shadow-lg hover:shadow-xl active:scale-95 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white"
+                  className="flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl fontsemibold transition-all duration-300 w-full sm:w-auto shadow-lg hover:shadow-xl active:scale-95 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white"
                 >
                   <UserPlus size={17} />
                   Create a FREE account
@@ -317,7 +311,7 @@ const GuestReportPage = () => {
               </div>
 
               <div className={`mt-8 pt-6 border-t border-dashed ${darkMode ? "border-slate-700/60" : "border-slate-200"}`} />
-              <p className={`text-[10px] font-bold uppercase tracking-[0.2em] opacity-30 mt-3 ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
+              <p className={`text-[10px] fontsemibold uppercase tracking-[0.2em] opacity-30 mt-3 ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
                 Join 50,000+ businesses auditing with Dealer Pulse
               </p>
             </div>

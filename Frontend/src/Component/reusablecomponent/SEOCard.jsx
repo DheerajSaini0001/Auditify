@@ -59,7 +59,7 @@ const SEOCard = ({
                             <Icon size={24} className={darkMode ? iconColor : iconColor.replace('400', '600')} />
                         </div>
                         <div>
-                            <h3 className={`font-bold text-lg ${darkMode ? "text-gray-100" : "text-gray-900"}`}>{title}</h3>
+                            <h3 className={`fontsemibold text-lg ${darkMode ? "text-gray-100" : "text-gray-900"}`}>{title}</h3>
                             <div className={`flex items-center gap-2 mt-1`}>
                                 <ScoreBadge
                                     status={currentStatus}
@@ -79,7 +79,7 @@ const SEOCard = ({
                         {showAnalysis && currentAnalysis && !isPassed && (
                             <button
                                 onClick={() => setShowDetails(!showDetails)}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${darkMode
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs fontsemibold transition-all ${darkMode
                                     ? "bg-slate-700 hover:bg-slate-600 text-slate-300"
                                     : "bg-slate-100 hover:bg-slate-200 text-slate-600"
                                     }`}
@@ -96,14 +96,14 @@ const SEOCard = ({
                                         {metricKey && InfoDetails?.[metricKey] && (
                                             <>
                                                 <div>
-                                                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-blue-500 mb-1">Description</h4>
+                                                    <h4 className="text-[10px] fontsemibold uppercase tracking-widest text-blue-500 mb-1">Description</h4>
                                                     <p className="text-xs leading-relaxed opacity-90">
                                                         {InfoDetails[metricKey].whatThisParameterIs || InfoDetails[metricKey].whatThisMetricIs || InfoDetails[metricKey].whatThisParameterIs}
                                                     </p>
                                                 </div>
                                                 <div className={`h-px w-full ${darkMode ? "bg-slate-800" : "bg-slate-100"}`} />
                                                 <div>
-                                                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-indigo-500 mb-1">Why it matters</h4>
+                                                    <h4 className="text-[10px] fontsemibold uppercase tracking-widest text-indigo-500 mb-1">Why it matters</h4>
                                                     <p className="text-xs leading-relaxed opacity-90">
                                                         {InfoDetails[metricKey].whyItMatters || "No description available."}
                                                     </p>
@@ -139,7 +139,7 @@ const SEOCard = ({
                         <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
                             {/* Analysis */}
                             <div className="space-y-2">
-                                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-500">
+                                <div className="flex items-center gap-2 text-xs fontsemibold uppercase tracking-wider text-amber-500">
                                     <AlertTriangle size={12} />
                                     <span>Analysis</span>
                                 </div>
@@ -150,7 +150,7 @@ const SEOCard = ({
 
                             {/* Recommendation */}
                             <div className="space-y-2">
-                                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-500">
+                                <div className="flex items-center gap-2 text-xs fontsemibold uppercase tracking-wider text-blue-500">
                                     <CheckCircle size={12} />
                                     <span>Recommendation</span>
                                 </div>

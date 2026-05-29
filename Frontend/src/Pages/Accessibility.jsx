@@ -61,7 +61,7 @@ const AccessibilityShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
         </div>
 
         {/* Title */}
-        <h2 className={`mt-6 text-2xl font-bold tracking-tight transition-all duration-500 ${darkMode ? "text-white" : "text-slate-900"}`}>
+        <h2 className={`mt-6 text-2xl fontsemibold tracking-tight transition-all duration-500 ${darkMode ? "text-white" : "text-slate-900"}`}>
           {step.title}
         </h2>
 
@@ -73,7 +73,7 @@ const AccessibilityShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
         {/* Processing State */}
         <div className="mt-8 flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
           <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          <span className="text-xs font-bold uppercase tracking-wider">Processing</span>
+          <span className="text-xs fontsemibold uppercase tracking-wider">Processing</span>
         </div>
 
         {/* Progress Indicators */}
@@ -124,11 +124,11 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             </div>
 
             <div className="space-y-1.5 flex-1 min-w-0">
-              <h3 className={`font-bold text-lg tracking-tight ${darkMode ? "text-white" : "text-slate-900"} truncate`}>
+              <h3 className={`fontsemibold text-lg tracking-tight ${darkMode ? "text-white" : "text-slate-900"} truncate`}>
                 {title}
               </h3>
               <div className="flex items-center gap-3">
-                <div className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${darkMode ? `bg-${statusType}-500/10 text-${statusType}-400` : themeColors.bg}`}>
+                <div className={`px-2.5 py-0.5 rounded-md text-[10px] fontsemibold uppercase tracking-wider ${darkMode ? `bg-${statusType}-500/10 text-${statusType}-400` : themeColors.bg}`}>
                   {statusLabel}
                 </div>
               </div>
@@ -139,7 +139,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             {(!isPassed || meta?.failedNodes || meta?.present || meta?.missing) && (
               <button
                 onClick={(e) => { e.stopPropagation(); setShowDetails(!showDetails); }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${darkMode ? "bg-slate-700/50 text-slate-300 hover:bg-slate-700" : "bg-slate-50 text-slate-600 hover:bg-slate-100"}`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] fontsemibold uppercase tracking-wider transition-all ${darkMode ? "bg-slate-700/50 text-slate-300 hover:bg-slate-700" : "bg-slate-50 text-slate-600 hover:bg-slate-100"}`}
               >
                 {showDetails ? "Hide Details" : "View Details"}
                 {showDetails ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
@@ -147,13 +147,13 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             )}
             {onInfo && (
               <button
-                onClick={(e) => { 
-                  e.stopPropagation(); 
-                  onInfo({ 
-                    ...content, 
-                    icon: Icon, 
-                    thresholds: meta?.threshold || content.thresholds 
-                  }); 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onInfo({
+                    ...content,
+                    icon: Icon,
+                    thresholds: meta?.threshold || content.thresholds
+                  });
                 }}
                 className={`p-1.5 rounded-full transition-colors ${darkMode ? "text-slate-500 hover:text-white" : "text-slate-400 hover:text-slate-900"}`}
                 title="Methodology"
@@ -172,11 +172,11 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             Current Status
           </h4>
           <div className={`p-5 rounded-2xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-slate-100/30 border-slate-200/50"}`}>
-            <p className={`text-base font-bold ${isPassed ? "text-emerald-500" : "text-rose-500"}`}>
+            <p className={`text-base fontsemibold ${isPassed ? "text-emerald-500" : "text-rose-500"}`}>
               {details || "Audit Passed"}
             </p>
             {meta?.count !== undefined && !isPassed && (
-              <p className="mt-1 text-[11px] font-bold uppercase tracking-tight opacity-40">
+              <p className="mt-1 text-[11px] fontsemibold uppercase tracking-tight opacity-40">
                 {meta.count} elements affected
               </p>
             )}
@@ -230,7 +230,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
                   )}
 
                   {meta.helpUrl && (
-                    <a href={meta.helpUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-blue-500 hover:text-blue-400 transition-colors">
+                    <a href={meta.helpUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[10px] fontsemibold uppercase tracking-wider text-blue-500 hover:text-blue-400 transition-colors">
                       Why is this an issue? <ExternalLink size={10} />
                     </a>
                   )}
@@ -248,7 +248,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
                     </span>
                     <div className="flex flex-wrap gap-2">
                       {meta.present.map((item, idx) => (
-                        <div key={idx} className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border ${darkMode ? "bg-emerald-500/5 border-emerald-500/20 text-emerald-400" : "bg-emerald-50 border-emerald-100 text-emerald-700"}`}>
+                        <div key={idx} className={`px-2.5 py-1 rounded-lg text-[10px] fontsemibold border ${darkMode ? "bg-emerald-500/5 border-emerald-500/20 text-emerald-400" : "bg-emerald-50 border-emerald-100 text-emerald-700"}`}>
                           {item}
                         </div>
                       ))}
@@ -262,7 +262,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
                     </span>
                     <div className="flex flex-wrap gap-2">
                       {meta.missing.map((item, idx) => (
-                        <div key={idx} className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border ${darkMode ? "bg-rose-500/5 border-rose-500/20 text-rose-400" : "bg-rose-50 border-rose-100 text-rose-700"}`}>
+                        <div key={idx} className={`px-2.5 py-1 rounded-lg text-[10px] fontsemibold border ${darkMode ? "bg-rose-500/5 border-rose-500/20 text-rose-400" : "bg-rose-50 border-rose-100 text-rose-700"}`}>
                           {item}
                         </div>
                       ))}
@@ -277,7 +277,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
               {analysis?.cause && (
                 <div className="space-y-1">
                   <span className="text-[9px] font-black uppercase tracking-widest text-blue-500">Root Cause:</span>
-                  <p className={`text-xs font-semibold leading-relaxed ${darkMode ? "text-slate-300" : "text-slate-700"}`}>{analysis.cause}</p>
+                  <p className={`text-xs font- leading-relaxed ${darkMode ? "text-slate-300" : "text-slate-700"}`}>{analysis.cause}</p>
                 </div>
               )}
               {analysis?.recommendation && (
@@ -285,7 +285,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
                   <span className="text-[9px] font-black uppercase tracking-widest text-blue-500">Fix Action Plan:</span>
                   <div className="flex gap-2 items-start">
                     <ShieldCheck size={14} className="mt-0.5 text-blue-500 shrink-0" />
-                    <p className={`text-xs font-bold leading-relaxed ${darkMode ? "text-slate-200" : "text-slate-800"}`}>{analysis.recommendation}</p>
+                    <p className={`text-xs fontsemibold leading-relaxed ${darkMode ? "text-slate-200" : "text-slate-800"}`}>{analysis.recommendation}</p>
                   </div>
                 </div>
               )}
@@ -297,7 +297,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Affected Elements & Issues</span>
                   {meta.help && (
-                    <span className="text-[10px] font-bold text-blue-500/60 italic">"{meta.help}"</span>
+                    <span className="text-[10px] fontsemibold text-blue-500/60 italic">"{meta.help}"</span>
                   )}
                 </div>
                 <div className="space-y-4 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
@@ -310,14 +310,14 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
                           <AlertTriangle size={12} className="text-amber-500 shrink-0" />
                           <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Issue Detected</span>
                         </div>
-                        <p className={`text-xs font-bold leading-relaxed ${darkMode ? "text-slate-200" : "text-slate-800"}`}>
+                        <p className={`text-xs fontsemibold leading-relaxed ${darkMode ? "text-slate-200" : "text-slate-800"}`}>
                           {node.failureSummary.replace("Fix any of the following:", "").trim()}
                         </p>
                       </div>
 
                       {/* Selector with Copy */}
                       <div className="space-y-1.5 relative group/selector">
-                        <span className="text-[9px] font-bold uppercase opacity-40 tracking-wider">Target Element</span>
+                        <span className="text-[9px] fontsemibold uppercase opacity-40 tracking-wider">Target Element</span>
                         <div className={`p-2 pr-8 rounded-lg font-mono text-[10px] break-all border ${darkMode ? "bg-slate-950/50 border-slate-800 text-blue-400" : "bg-slate-50 border-slate-200 text-blue-600"}`}>
                           {Array.isArray(node.target) ? node.target.join(" ") : node.target}
                         </div>
@@ -335,7 +335,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
                       {/* HTML Snippet */}
                       {node.html && (
                         <div className="space-y-1.5 group/html">
-                          <span className="text-[9px] font-bold uppercase opacity-40 tracking-wider">Source HTML</span>
+                          <span className="text-[9px] fontsemibold uppercase opacity-40 tracking-wider">Source HTML</span>
                           <div className="relative">
                             <div className="p-3 rounded-lg bg-slate-950 overflow-hidden border border-slate-800">
                               <code className="text-[10px] font-mono text-slate-400 block whitespace-pre-wrap leading-tight">{node.html}</code>
@@ -372,7 +372,7 @@ const Section = ({ title, icon: Icon, children, darkMode }) => (
       <div className={`p-2.5 rounded-xl ${darkMode ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-600 shadow-sm"}`}>
         <Icon size={20} />
       </div>
-      <h2 className={`text-xl font-bold tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>{title}</h2>
+      <h2 className={`text-xl fontsemibold tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>{title}</h2>
     </div>
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {children}
@@ -409,9 +409,9 @@ const Accessibility_Inner = React.memo(function Accessibility_Inner({ data, load
         <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-6`}>
           {/* ✅ Card 1: URL Header Card */}
           <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
-            <UrlHeader 
-              data={data} 
-              darkMode={darkMode} 
+            <UrlHeader
+              data={data}
+              darkMode={darkMode}
               sectionName="Accessibility"
               sectionData={metric}
               auditScore={metric?.Percentage}
@@ -450,12 +450,12 @@ const Accessibility_Inner = React.memo(function Accessibility_Inner({ data, load
   return (
     <div className={`w-full min-h-screen ${darkMode ? "bg-gray-900" : "bg-gray-50"} transition-colors duration-300`}>
       <main className="max-w-7xl mx-auto px-6 py-10 space-y-6">
-        
+
         {/* ✅ Card 1: URL Header Card */}
         <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
-          <UrlHeader 
-            data={data} 
-            darkMode={darkMode} 
+          <UrlHeader
+            data={data}
+            darkMode={darkMode}
             sectionName="Accessibility"
             sectionData={metric}
             auditScore={metric?.Percentage}
@@ -502,7 +502,7 @@ const Accessibility_Inner = React.memo(function Accessibility_Inner({ data, load
                     {/* Text Content */}
                     <div className={`flex-1 ${data.report === "All" ? "space-y-5" : "space-y-4"} text-left order-2 md:order-1`}>
                       <div className={`${data.report === "All" ? "space-y-2" : "space-y-1.5"}`}>
-                        <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-blue-100/50 text-blue-600 border border-blue-200"}`}>
+                        <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] fontsemibold uppercase tracking-wider ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-blue-100/50 text-blue-600 border border-blue-200"}`}>
                           <ShieldCheck className="w-3.5 h-3.5" />
                           <span>WCAG 2.1 Audit</span>
                         </div>
@@ -518,21 +518,21 @@ const Accessibility_Inner = React.memo(function Accessibility_Inner({ data, load
                         <div className={`flex items-center ${data.report === "All" ? "gap-5" : "gap-4"}`}>
                           <div className="flex items-center gap-2">
                             <CheckCircle size={18} className="text-emerald-500" />
-                            <span className={`text-xs font-bold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{passedCount} Passed</span>
+                            <span className={`text-xs fontsemibold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{passedCount} Passed</span>
                           </div>
                           <div className="flex items-center gap-2">
                             <AlertTriangle size={18} className="text-amber-500" />
-                            <span className={`text-xs font-bold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{warningCount} Warning</span>
+                            <span className={`text-xs fontsemibold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{warningCount} Warning</span>
                           </div>
                           <div className="flex items-center gap-2">
                             <XCircle size={18} className="text-rose-500" />
-                            <span className={`text-xs font-bold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{failedCount} Failed</span>
+                            <span className={`text-xs fontsemibold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{failedCount} Failed</span>
                           </div>
                         </div>
                         <div className={`w-px h-4 ${darkMode ? "bg-slate-800" : "bg-slate-200 hidden md:block"}`}></div>
                         <button
                           onClick={() => setSelectedMetricInfo(scoreCalculationInfo)}
-                          className={`flex items-center gap-2 text-sm font-bold transition-all ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-700"}`}
+                          className={`flex items-center gap-2 text-sm fontsemibold transition-all ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-700"}`}
                         >
                           <Info size={16} />
                           <span className="border-b border-transparent hover:border-current">Metric Methodology</span>
@@ -546,7 +546,7 @@ const Accessibility_Inner = React.memo(function Accessibility_Inner({ data, load
                       <CircularProgress value={metric?.Percentage || 0} size={data.report === "All" ? 180 : 150} stroke={14} />
                       <div className="absolute inset-0 flex items-center justify-center flex-col gap-0.5">
                         <span className={`${data.report === "All" ? "text-5xl" : "text-3xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>{metric?.Percentage || 0}%</span>
-                        <span className="text-[11px] font-bold uppercase tracking-[0.2em] opacity-50">SCORE</span>
+                        <span className="text-[11px] fontsemibold uppercase tracking-[0.2em] opacity-50">SCORE</span>
                       </div>
                     </div>
                   </div>
@@ -560,20 +560,20 @@ const Accessibility_Inner = React.memo(function Accessibility_Inner({ data, load
         <ReportRestrictionWrapper>
           <div className="space-y-12">
             <Section title="Visual & Media" icon={Eye} darkMode={darkMode}>
-          {["Color_Contrast", "Image_Alt", "Meta_Viewport"].map(k => metric[k] && (
-            <MetricCard key={k} metricKey={k} data={metric[k]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
-          ))}
-        </Section>
+              {["Color_Contrast", "Image_Alt", "Meta_Viewport"].map(k => metric[k] && (
+                <MetricCard key={k} metricKey={k} data={metric[k]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
+              ))}
+            </Section>
 
-        {/* Interaction Section */}
-        <Section title="Keyboard & Interaction" icon={Keyboard} darkMode={darkMode}>
-          {["Focusable_Content", "Focus_Order", "Tab_Index", "Skip_Links", "Interactive_Element_Affordance", "Aria_Hidden_Focus"].map(k => metric[k] && (
-            <MetricCard key={k} metricKey={k} data={metric[k]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
-          ))}
-        </Section>
+            {/* Interaction Section */}
+            <Section title="Keyboard & Interaction" icon={Keyboard} darkMode={darkMode}>
+              {["Focusable_Content", "Focus_Order", "Tab_Index", "Skip_Links", "Interactive_Element_Affordance", "Aria_Hidden_Focus"].map(k => metric[k] && (
+                <MetricCard key={k} metricKey={k} data={metric[k]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
+              ))}
+            </Section>
 
-        {/* Roles & Details Section */}
-        <Section title="Semantics & Roles" icon={Code} darkMode={darkMode}>
+            {/* Roles & Details Section */}
+            <Section title="Semantics & Roles" icon={Code} darkMode={darkMode}>
               {["Label", "Button_Name", "Link_Name", "Aria_Roles", "Landmarks", "Document_Title", "Html_Has_Lang", "List", "Heading_Order", "Aria_Allowed_Attr"].map(k => metric[k] && (
                 <MetricCard key={k} metricKey={k} data={metric[k]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
               ))}

@@ -389,19 +389,19 @@ export const InfoDetails = {
         whatToDoForAGoodScore: (
             <ul className="list-disc pl-5 space-y-2">
                 <li>
-                    <span className="font-semibold">Master Core Web Vitals (45% of score):</span> Prioritize LCP (load speed), INP (responsiveness), and CLS (visual stability) as they are heavily weighted.
+                    <span className="font-">Master Core Web Vitals (45% of score):</span> Prioritize LCP (load speed), INP (responsiveness), and CLS (visual stability) as they are heavily weighted.
                 </li>
                 <li>
-                    <span className="font-semibold">Optimize Server Response (TTFB):</span> Ensure the server responds in under 800ms using caching and database optimization to build a strong foundation.
+                    <span className="font-">Optimize Server Response (TTFB):</span> Ensure the server responds in under 800ms using caching and database optimization to build a strong foundation.
                 </li>
                 <li>
-                    <span className="font-semibold">Minimize Main Thread Blocking (TBT):</span> Break up long JavaScript tasks and defer non-critical scripts to keep the page interactive.
+                    <span className="font-">Minimize Main Thread Blocking (TBT):</span> Break up long JavaScript tasks and defer non-critical scripts to keep the page interactive.
                 </li>
                 <li>
-                    <span className="font-semibold">Maximize Asset Optimization:</span> Compress text resources (Gzip/Brotli), cache static assets for &gt;7 days, and resize/compress images.
+                    <span className="font-">Maximize Asset Optimization:</span> Compress text resources (Gzip/Brotli), cache static assets for &gt;7 days, and resize/compress images.
                 </li>
                 <li>
-                    <span className="font-semibold">Clear the Render Path:</span> Eliminate render-blocking resources and remove unnecessary redirect chains to speed up the first paint.
+                    <span className="font-">Clear the Render Path:</span> Eliminate render-blocking resources and remove unnecessary redirect chains to speed up the first paint.
                 </li>
             </ul>
         ),
@@ -861,19 +861,19 @@ export const InfoDetails = {
         whatToDoForAGoodScore: (
             <ul className="list-disc pl-5 space-y-2">
                 <li>
-                    <span className="font-semibold">Prioritize High-Weight Content Signals:</span> Focus on unique Page Titles (15%), compelling H1 tags (10%), and high-quality, non-duplicate content (12%).
+                    <span className="font-">Prioritize High-Weight Content Signals:</span> Focus on unique Page Titles (15%), compelling H1 tags (10%), and high-quality, non-duplicate content (12%).
                 </li>
                 <li>
-                    <span className="font-semibold">Build Strong Internal Connectivity:</span> Ensure contextual links (8%) point to key pages and your URL structure (3%) is clean and descriptive.
+                    <span className="font-">Build Strong Internal Connectivity:</span> Ensure contextual links (8%) point to key pages and your URL structure (3%) is clean and descriptive.
                 </li>
                 <li>
-                    <span className="font-semibold">Technical Authority:</span> Implement correct Canonical tags (8%) to prevent duplication and valid Structured Data (6%) for rich snippets.
+                    <span className="font-">Technical Authority:</span> Implement correct Canonical tags (8%) to prevent duplication and valid Structured Data (6%) for rich snippets.
                 </li>
                 <li>
-                    <span className="font-semibold">Optimize Media & Structure:</span> Ensure all images have Alt text (8%) and follow a logical Heading Hierarchy (3%).
+                    <span className="font-">Optimize Media & Structure:</span> Ensure all images have Alt text (8%) and follow a logical Heading Hierarchy (3%).
                 </li>
                 <li>
-                    <span className="font-semibold">Ensure Crawlability:</span> Maintain a valid Sitemap (5%) and Robots.txt (4%) to help search engines index your site effectively.
+                    <span className="font-">Ensure Crawlability:</span> Maintain a valid Sitemap (5%) and Robots.txt (4%) to help search engines index your site effectively.
                 </li>
             </ul>
         ),
@@ -1309,25 +1309,25 @@ export const InfoDetails = {
         whatToDoForAGoodScore: (
             <ul className="list-disc pl-5 space-y-2">
                 <li>
-                    <span className="font-semibold">Ensure meaningful text alternatives:</span> Give all images descriptive alt text and ensure buttons and links have discernible names describing their purpose.
+                    <span className="font-">Ensure meaningful text alternatives:</span> Give all images descriptive alt text and ensure buttons and links have discernible names describing their purpose.
                 </li>
                 <li>
-                    <span className="font-semibold">Guarantee keyboard operability:</span> Verify that all interactive elements are focusable, have a visible focus indicators, and follow a logical tab order.
+                    <span className="font-">Guarantee keyboard operability:</span> Verify that all interactive elements are focusable, have a visible focus indicators, and follow a logical tab order.
                 </li>
                 <li>
-                    <span className="font-semibold">Maintain sufficient color contrast:</span> Ensure text and interactive elements stand out clearly against their backgrounds (aim for a 4.5:1 ratio).
+                    <span className="font-">Maintain sufficient color contrast:</span> Ensure text and interactive elements stand out clearly against their backgrounds (aim for a 4.5:1 ratio).
                 </li>
                 <li>
-                    <span className="font-semibold">Label all form inputs:</span> Every input field must have a visible label or accessible name to be usable by assistive technologies.
+                    <span className="font-">Label all form inputs:</span> Every input field must have a visible label or accessible name to be usable by assistive technologies.
                 </li>
                 <li>
-                    <span className="font-semibold">Structure content logically:</span> Use proper heading hierarchy (H1–H6), landmarks (main, nav), and lists to help screen readers navigate efficiently.
+                    <span className="font-">Structure content logically:</span> Use proper heading hierarchy (H1–H6), landmarks (main, nav), and lists to help screen readers navigate efficiently.
                 </li>
                 <li>
-                    <span className="font-semibold">Define page context:</span> Set a unique document title and correct HTML language attribute to help users orient themselves immediately.
+                    <span className="font-">Define page context:</span> Set a unique document title and correct HTML language attribute to help users orient themselves immediately.
                 </li>
                 <li>
-                    <span className="font-semibold">Use ARIA with care:</span> Only use ARIA roles and attributes when native HTML cannot achieve the desired result, and ensure they are valid.
+                    <span className="font-">Use ARIA with care:</span> Only use ARIA roles and attributes when native HTML cannot achieve the desired result, and ensure they are valid.
                 </li>
             </ul>
         ),
@@ -1826,7 +1826,7 @@ export const InfoDetails = {
                 <p>In today's world, security is the 'entrance fee' for doing business online. If visitors don't feel safe on your site, they won't stay, they won't buy, and they certainly won't return.</p>
 
                 <div>
-                    <span className="font-semibold block mb-1">A secure website gives you and your users:</span>
+                    <span className="font- block mb-1">A secure website gives you and your users:</span>
                     <ul className="list-disc pl-5 space-y-1 text-sm">
                         <li><strong>Peace of Mind:</strong> Knowing that sensitive data (like passwords and credit cards) is locked behind industrial-strength encryption.</li>
                         <li><strong>Instant Trust:</strong> Showing the 'Secure' padlock that tells visitors their connection is private and authentic.</li>
@@ -1842,25 +1842,25 @@ export const InfoDetails = {
         whatToDoForAGoodScore: (
             <ul className="list-disc pl-5 space-y-2">
                 <li>
-                    <span className="font-semibold">Secure your site with HTTPS and valid SSL:</span> Ensure your site uses HTTPS, has a valid SSL certificate (not nearing expiry), and supports modern encryption protocols (TLS 1.2+).
+                    <span className="font-">Secure your site with HTTPS and valid SSL:</span> Ensure your site uses HTTPS, has a valid SSL certificate (not nearing expiry), and supports modern encryption protocols (TLS 1.2+).
                 </li>
                 <li>
-                    <span className="font-semibold">Identify and Patch Critical Vulnerabilities:</span> Use tools to scan for and fix issues like SQL Injection, Cross-Site Scripting (XSS), and exposed database errors.
+                    <span className="font-">Identify and Patch Critical Vulnerabilities:</span> Use tools to scan for and fix issues like SQL Injection, Cross-Site Scripting (XSS), and exposed database errors.
                 </li>
                 <li>
-                    <span className="font-semibold">Harden Security Headers:</span> Implement robust headers like Content Security Policy (CSP), HSTS, X-Frame-Options, and X-Content-Type-Options to stop code injection and clickjacking.
+                    <span className="font-">Harden Security Headers:</span> Implement robust headers like Content Security Policy (CSP), HSTS, X-Frame-Options, and X-Content-Type-Options to stop code injection and clickjacking.
                 </li>
                 <li>
-                    <span className="font-semibold">Monitor Malware and Domain Reputation:</span> Regularly check against Google Safe Browsing and global blacklists to ensure your site hasn't been compromised or flagged as malicious.
+                    <span className="font-">Monitor Malware and Domain Reputation:</span> Regularly check against Google Safe Browsing and global blacklists to ensure your site hasn't been compromised or flagged as malicious.
                 </li>
                 <li>
-                    <span className="font-semibold">Protect Administrative Access:</span> Ensure administrative panels are not publicly accessible and that all login systems avoid weak or default credentials.
+                    <span className="font-">Protect Administrative Access:</span> Ensure administrative panels are not publicly accessible and that all login systems avoid weak or default credentials.
                 </li>
                 <li>
-                    <span className="font-semibold">Secure Cookies and Authentication:</span> Sensitive cookies must have 'Secure' and 'HttpOnly' flags, and multi-factor authentication (MFA) should be supported where possible.
+                    <span className="font-">Secure Cookies and Authentication:</span> Sensitive cookies must have 'Secure' and 'HttpOnly' flags, and multi-factor authentication (MFA) should be supported where possible.
                 </li>
                 <li>
-                    <span className="font-semibold">Ensure Compliance and Privacy:</span> Maintain a visible Privacy Policy, display clear Cookie Consent banners, and adhere to global data protection laws like GDPR and CCPA.
+                    <span className="font-">Ensure Compliance and Privacy:</span> Maintain a visible Privacy Policy, display clear Cookie Consent banners, and adhere to global data protection laws like GDPR and CCPA.
                 </li>
             </ul>
         ),
@@ -2211,7 +2211,7 @@ export const InfoDetails = {
                 <p>Even the fastest website will fail if users struggle to read your content, find your menu, or trust your professional appearance.</p>
 
                 <div>
-                    <span className="font-semibold block mb-1">Poor content experience leads to:</span>
+                    <span className="font- block mb-1">Poor content experience leads to:</span>
                     <ul className="list-disc pl-5 space-y-1 text-sm">
                         <li>Immediate exits due to 'Information Overload'</li>
                         <li>Loss of brand trust because of broken links or messy layouts</li>
@@ -2226,34 +2226,34 @@ export const InfoDetails = {
         whatToDoForAGoodScore: (
             <ul className="list-disc pl-5 space-y-2">
                 <li>
-                    <span className="font-semibold">Prioritize the 'Above-the-Fold' experience:</span> Move your most important headlines and 'Call to Action' buttons to the very top (ATF Content).
+                    <span className="font-">Prioritize the 'Above-the-Fold' experience:</span> Move your most important headlines and 'Call to Action' buttons to the very top (ATF Content).
                 </li>
                 <li>
-                    <span className="font-semibold">Remove interaction blockers:</span> Eliminate full-screen overlays and aggressive pop-ups that stand between the user and your content (Intrusive Interstitials).
+                    <span className="font-">Remove interaction blockers:</span> Eliminate full-screen overlays and aggressive pop-ups that stand between the user and your content (Intrusive Interstitials).
                 </li>
                 <li>
-                    <span className="font-semibold">Build trust with reliability:</span> Ensure every link on your page works perfectly and follow a logical heading order (Broken Links & Hierarchy).
+                    <span className="font-">Build trust with reliability:</span> Ensure every link on your page works perfectly and follow a logical heading order (Broken Links & Hierarchy).
                 </li>
                 <li>
-                    <span className="font-semibold">Write for your audience:</span> Use simple, clear sentences and vocabulary that matches your readers' expectations (Text Readability).
+                    <span className="font-">Write for your audience:</span> Use simple, clear sentences and vocabulary that matches your readers' expectations (Text Readability).
                 </li>
                 <li>
-                    <span className="font-semibold">Make your menu easy to find:</span> Always provide a visible menu button, search bar, and breadcrumbs for deeper pages (Nav Discoverability & Breadcrumbs).
+                    <span className="font-">Make your menu easy to find:</span> Always provide a visible menu button, search bar, and breadcrumbs for deeper pages (Nav Discoverability & Breadcrumbs).
                 </li>
                 <li>
-                    <span className="font-semibold">Provide immediate visual cues:</span> Ensure buttons 'glow' or change color when touched and show loading signs during waits (Click Feedback & Loading Feedback).
+                    <span className="font-">Provide immediate visual cues:</span> Ensure buttons 'glow' or change color when touched and show loading signs during waits (Click Feedback & Loading Feedback).
                 </li>
                 <li>
-                    <span className="font-semibold">Organize with clear signposts:</span> Use descriptive section titles and a consistent layout system to help users skim your page (Section Labeling & Layout Consistency).
+                    <span className="font-">Organize with clear signposts:</span> Use descriptive section titles and a consistent layout system to help users skim your page (Section Labeling & Layout Consistency).
                 </li>
                 <li>
-                    <span className="font-semibold">Optimize content density:</span> Balance your text with white space to avoid 'wall-of-text' fatigue (Content Density).
+                    <span className="font-">Optimize content density:</span> Balance your text with white space to avoid 'wall-of-text' fatigue (Content Density).
                 </li>
                 <li>
-                    <span className="font-semibold">Guide the user journey:</span> Use a helpful footer and navigation shortcuts like 'Back to Top' buttons on long pages (Flow & In-Page Nav).
+                    <span className="font-">Guide the user journey:</span> Use a helpful footer and navigation shortcuts like 'Back to Top' buttons on long pages (Flow & In-Page Nav).
                 </li>
                 <li>
-                    <span className="font-semibold">Keep headers compact:</span> Ensure your top menu doesn't take up too much vertical space on mobile devices (Sticky Header).
+                    <span className="font-">Keep headers compact:</span> Ensure your top menu doesn't take up too much vertical space on mobile devices (Sticky Header).
                 </li>
             </ul>
         ),
@@ -2724,7 +2724,7 @@ export const InfoDetails = {
         whatToDoForAGoodScore: (
             <ul className="list-disc pl-5 space-y-4">
                 <li>
-                    <span className="font-semibold block mb-1">Make your buttons impossible to miss:</span>
+                    <span className="font- block mb-1">Make your buttons impossible to miss:</span>
                     <ul className="list-[circle] pl-5 space-y-1 text-sm">
                         <li>Design buttons to look clickable, using standard classes like <strong>.btn</strong> or <strong>.cta</strong>.</li>
                         <li>Use exciting words on buttons (e.g. "Get Started", "Join Now") instead of just "Submit".</li>
@@ -2733,7 +2733,7 @@ export const InfoDetails = {
                     </ul>
                 </li>
                 <li>
-                    <span className="font-semibold block mb-1">Make forms easy to finish:</span>
+                    <span className="font- block mb-1">Make forms easy to finish:</span>
                     <ul className="list-[circle] pl-5 space-y-1 text-sm">
                         <li>Include at least one clear signup or contact form using standard HTML tags.</li>
                         <li>Short forms convert better. Try to ask for fewer than 7 things.</li>
@@ -2743,7 +2743,7 @@ export const InfoDetails = {
                     </ul>
                 </li>
                 <li>
-                    <span className="font-semibold block mb-1">Show that you can be trusted:</span>
+                    <span className="font- block mb-1">Show that you can be trusted:</span>
                     <ul className="list-[circle] pl-5 space-y-1 text-sm">
                         <li>Add a section titled <strong>"Testimonials"</strong> or <strong>"Reviews"</strong> to show social proof.</li>
                         <li>Display security badges (like SSL icons) to reassure visitors your site is safe.</li>
@@ -2752,7 +2752,7 @@ export const InfoDetails = {
                     </ul>
                 </li>
                 <li>
-                    <span className="font-semibold block mb-1">Remove roadblocks:</span>
+                    <span className="font- block mb-1">Remove roadblocks:</span>
                     <ul className="list-[circle] pl-5 space-y-1 text-sm">
                         <li>Add helpful hints inside form boxes (placeholders) to guide typing.</li>
                         <li>If your form is long, use a progress bar to show how much is left.</li>
@@ -3059,7 +3059,7 @@ export const InfoDetails = {
         whatThisMetricIs: (
             <div className="space-y-2">
                 <p>This score measures how easy it is for Artificial Intelligence (like ChatGPT, Perplexity, or Google Gemini) to find, understand, and use your content to answer user questions.</p>
-                <p>We audit <span className="font-bold text-indigo-400">14 critical AIO signals</span>—ranging from hidden "Identity Code" to content chunking—combined with <span className="font-bold text-indigo-400">Answer Engine Optimization (AEO)</span> specific logic for the top 3 AI platforms.</p>
+                <p>We audit <span className="fontsemibold text-indigo-400">14 critical AIO signals</span>—ranging from hidden "Identity Code" to content chunking—combined with <span className="fontsemibold text-indigo-400">Answer Engine Optimization (AEO)</span> specific logic for the top 3 AI platforms.</p>
             </div>
         ),
         whyItMatters: (
@@ -3067,7 +3067,7 @@ export const InfoDetails = {
                 <p>AI models are now the primary way people discover information. If an AI can't "read" your site easily or if you block their crawlers, you lose 100% visibility in AI-driven search.</p>
 
                 <div>
-                    <span className="font-semibold block mb-1 text-indigo-400">A high AIO/AEO score means:</span>
+                    <span className="font- block mb-1 text-indigo-400">A high AIO/AEO score means:</span>
                     <ul className="list-disc pl-5 space-y-1 text-sm">
                         <li>Your site appears as a "Primary Source" in Gemini & ChatGPT responses</li>
                         <li>High citation value in Perplexity's real-time retrieval engine</li>
@@ -3082,38 +3082,38 @@ export const InfoDetails = {
         whatToDoForAGoodScore: (
             <ul className="list-disc pl-5 space-y-4">
                 <li>
-                    <span className="font-semibold block mb-1">Build a Technical 'Identity' for AI (Core AIO):</span>
+                    <span className="font- block mb-1">Build a Technical 'Identity' for AI (Core AIO):</span>
                     <ul className="list-[circle] pl-5 space-y-1 text-sm">
-                        <li><span className="font-bold">Structured Data:</span> Use JSON-LD (Organization, FAQ, HowTo) to define your brand entities.</li>
-                        <li><span className="font-bold">Freshness & Canonical:</span> Keep content updated and use canonical redirects to avoid confusing LLMs.</li>
-                        <li><span className="font-bold">Trust (EEAT):</span> Include Author Bios and link to reputable citations (.edu, .gov) to prove factual accuracy.</li>
+                        <li><span className="fontsemibold">Structured Data:</span> Use JSON-LD (Organization, FAQ, HowTo) to define your brand entities.</li>
+                        <li><span className="fontsemibold">Freshness & Canonical:</span> Keep content updated and use canonical redirects to avoid confusing LLMs.</li>
+                        <li><span className="fontsemibold">Trust (EEAT):</span> Include Author Bios and link to reputable citations (.edu, .gov) to prove factual accuracy.</li>
                     </ul>
                 </li>
                 <li>
-                    <span className="font-semibold block mb-1">Optimize for 'The Best Answer' (Readability):</span>
+                    <span className="font- block mb-1">Optimize for 'The Best Answer' (Readability):</span>
                     <ul className="list-[circle] pl-5 space-y-1 text-sm">
-                        <li><span className="font-bold">Chunking:</span> Break "Walls of Text" into small 40-60 word chunks for better AI summarization.</li>
-                        <li><span className="font-bold">Answer-First:</span> Place a 1-sentence TL;DR answer in the first 100 words of the page.</li>
-                        <li><span className="font-bold">Structure:</span> Use semantic H1-H4 headers and HTML Tables—AI loves structured data extraction.</li>
+                        <li><span className="fontsemibold">Chunking:</span> Break "Walls of Text" into small 40-60 word chunks for better AI summarization.</li>
+                        <li><span className="fontsemibold">Answer-First:</span> Place a 1-sentence TL;DR answer in the first 100 words of the page.</li>
+                        <li><span className="fontsemibold">Structure:</span> Use semantic H1-H4 headers and HTML Tables—AI loves structured data extraction.</li>
                     </ul>
                 </li>
                 <li>
-                    <span className="font-semibold block mb-1">Master Platform Specific Readiness (AEO):</span>
+                    <span className="font- block mb-1">Master Platform Specific Readiness (AEO):</span>
                     <ul className="list-[circle] pl-5 space-y-1 text-sm">
-                        <li><span className="font-bold text-blue-400">Gemini:</span> Focus on Question-based Schema and allow 'Google-Extended' indexing.</li>
-                        <li><span className="font-bold text-emerald-400">ChatGPT:</span> Maintain a valid /llms.txt file and clear Markdown-style hierarchy.</li>
-                        <li><span className="font-bold text-purple-400">Perplexity:</span> Prioritize semantic Data Tables and 90+ Page Speed scores.</li>
+                        <li><span className="fontsemibold text-blue-400">Gemini:</span> Focus on Question-based Schema and allow 'Google-Extended' indexing.</li>
+                        <li><span className="fontsemibold text-emerald-400">ChatGPT:</span> Maintain a valid /llms.txt file and clear Markdown-style hierarchy.</li>
+                        <li><span className="fontsemibold text-purple-400">Perplexity:</span> Prioritize semantic Data Tables and 90+ Page Speed scores.</li>
                     </ul>
                 </li>
             </ul>
         ),
         howThisScoreIsCalculated: (
             <div className="space-y-4">
-                <p>Our audit engine analyzes <span className="font-bold">14 backend parameters</span> categorized into Identity, Freshness, Readability, and Trust. We then apply platform-specific weighted offsets for the Big 3 AI platforms.</p>
+                <p>Our audit engine analyzes <span className="fontsemibold">14 backend parameters</span> categorized into Identity, Freshness, Readability, and Trust. We then apply platform-specific weighted offsets for the Big 3 AI platforms.</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2 p-4 bg-indigo-50/10 rounded-xl border border-indigo-500/20 italic text-[11px]">
-                    <div><span className="font-bold text-blue-400">Gemini</span>: Weights Schema & Search Bot status.</div>
-                    <div><span className="font-bold text-emerald-400">ChatGPT</span>: Weights llms.txt & Markdown structure.</div>
-                    <div><span className="font-bold text-purple-400">Perplexity</span>: Weights Tables, Citations & Speed.</div>
+                    <div><span className="fontsemibold text-blue-400">Gemini</span>: Weights Schema & Search Bot status.</div>
+                    <div><span className="fontsemibold text-emerald-400">ChatGPT</span>: Weights llms.txt & Markdown structure.</div>
+                    <div><span className="fontsemibold text-purple-400">Perplexity</span>: Weights Tables, Citations & Speed.</div>
                 </div>
                 <p>An overall score of 80%+ earns you the "AI-Ready" badge, signaling top-tier compatibility with the LLM ecosystem.</p>
             </div>

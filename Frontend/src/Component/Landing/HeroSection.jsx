@@ -57,7 +57,7 @@ const CustomDropdown = ({ value, onChange, options, icon, darkMode, disabled }) 
                 <span className={`flex-shrink-0 transition-colors ${darkMode ? 'text-slate-400 group-hover/drop:text-[#ea580c]' : 'text-slate-400 group-hover/drop:text-[#ea580c]'}`}>
                     {React.cloneElement(icon, { size: 14 })}
                 </span>
-                <span className={`text-[10px] font-semibold uppercase tracking-widest truncate max-w-[72px] ${darkMode ? 'text-slate-400 group-hover/drop:text-slate-100' : 'text-slate-600 group-hover/drop:text-slate-900'}`}>
+                <span className={`text-[10px] font- uppercase tracking-widest truncate max-w-[72px] ${darkMode ? 'text-slate-400 group-hover/drop:text-slate-100' : 'text-slate-600 group-hover/drop:text-slate-900'}`}>
                     {selectedLabel}
                 </span>
                 <ChevronDown className={`w-3 h-3 transition-transform duration-300 ${isOpen ? "rotate-180 text-[#ea580c]" : darkMode ? "text-slate-600" : "text-slate-400"}`} />
@@ -84,7 +84,7 @@ const CustomDropdown = ({ value, onChange, options, icon, darkMode, disabled }) 
                                     type="button"
                                     onClick={() => { onChange(opt.value); setIsOpen(false); }}
                                     className={`
-                                        w-full flex items-center justify-between px-4 py-3 text-[11px] font-bold tracking-wide rounded-xl transition-all duration-200
+                                        w-full flex items-center justify-between px-4 py-3 text-[11px] fontsemibold tracking-wide rounded-xl transition-all duration-200
                                         ${value === opt.value
                                             ? (darkMode ? "bg-[#ea580c]/20 text-orange-400" : "bg-[#ea580c]/10 text-[#ea580c]")
                                             : (darkMode ? "text-slate-400 hover:bg-white/5 hover:text-white" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900")}
@@ -125,7 +125,7 @@ const ScoreRing = ({ score, color, label, delay = 0 }) => {
         const updateScore = (timestamp) => {
             if (!startTime) startTime = timestamp;
             const elapsed = timestamp - startTime;
-            
+
             if (elapsed < delayMs) {
                 animationFrame = requestAnimationFrame(updateScore);
                 return;
@@ -134,7 +134,7 @@ const ScoreRing = ({ score, color, label, delay = 0 }) => {
             const activeElapsed = elapsed - delayMs;
             const progress = Math.min(activeElapsed / duration, 1);
             const easeOutProgress = 1 - Math.pow(1 - progress, 3);
-            
+
             setCurrentScore(Math.floor(easeOutProgress * score));
 
             if (progress < 1) {
@@ -164,7 +164,7 @@ const ScoreRing = ({ score, color, label, delay = 0 }) => {
                     {currentScore}
                 </span>
             </div>
-            <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/50">
+            <span className="text-[11px] fontsemibold uppercase tracking-[0.18em] text-white/50">
                 {label}
             </span>
         </div>
@@ -183,7 +183,7 @@ const TypingURL = () => {
     useEffect(() => {
         let timeout;
         const targetUrl = urls[urlIndex];
-        
+
         if (!isDeleting) {
             if (currentUrl.length < targetUrl.length) {
                 timeout = setTimeout(() => setCurrentUrl(targetUrl.slice(0, currentUrl.length + 1)), 80 + Math.random() * 50);
@@ -331,7 +331,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                 >
                     {/* Badge */}
                     <motion.div variants={item} className="flex justify-center lg:justify-start">
-                        <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-[0.22em] border bg-[#ea580c]/15 border-[#ea580c]/30 text-orange-200">
+                        <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] fontsemibold uppercase tracking-[0.22em] border bg-[#ea580c]/15 border-[#ea580c]/30 text-orange-200">
                             <span className="w-1.5 h-1.5 rounded-full bg-[#ea580c] animate-pulse inline-block" />
                             Dealer Website Audit Platform
                         </span>
@@ -339,7 +339,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
 
                     {/* Headline */}
                     <motion.div variants={item} className="space-y-4">
-                        <h1 className="text-5xl lg:text-[4.5rem] font-black leading-[1.05] tracking-[-0.03em] text-white">
+                        <h2 className="text-2xl lg:text-[4.5rem] font-black leading-[1.05] tracking-[-0.03em] text-white">
                             Your Dealership,{" "}
                             <br className="hidden lg:block" />
                             <span className="relative inline-block">
@@ -351,7 +351,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                                     <path d="M0 5 Q75 1 150 4 T300 3" stroke="#ea580c" strokeWidth="3" strokeLinecap="round" fill="none" />
                                 </svg>
                             </span>
-                        </h1>
+                        </h2>
 
                         <p className="text-lg lg:text-xl font-medium leading-relaxed max-w-xl mx-auto lg:mx-0 text-blue-200/70">
                             Turn clicks into showroom sales. Scan your website in seconds across seven critical automotive performance dimensions — from Core Web Vitals to AI-Search readiness.
@@ -368,7 +368,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                                 initial={{ opacity: 0, scale: 0.85 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ delay: 0.4 + i * 0.06 }}
-                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold border bg-white/5 border-white/10 text-blue-200/80"
+                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font- border bg-white/5 border-white/10 text-blue-200/80"
                             >
                                 <span className="text-orange-400">{a.icon}</span>
                                 {a.label}
@@ -443,7 +443,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                                 <button
                                     type="submit"
                                     disabled={isLoading || !url.trim()}
-                                    className={`ml-auto flex items-center gap-2 px-6 h-12 rounded-xl font-bold text-[14px] tracking-tight shrink-0
+                                    className={`ml-auto flex items-center gap-2 px-6 h-12 rounded-xl fontsemibold text-[14px] tracking-tight shrink-0
                                         transition-all duration-200 active:scale-[0.97]
                                         ${isLoading || !url.trim()
                                             ? 'bg-slate-800 text-slate-600 cursor-not-allowed'
@@ -483,7 +483,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                         className="flex flex-wrap items-center justify-center lg:justify-start gap-6"
                     >
 
-                        <span className="text-xs font-semibold text-blue-300/30">·</span>
+                        <span className="text-xs font- text-blue-300/30">·</span>
 
                     </motion.div>
                 </motion.div>
@@ -542,7 +542,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                                 { label: "AIO Readiness", pct: 63, color: "#EAB308" },
                             ].map((m, i) => (
                                 <div key={m.label} className="space-y-2">
-                                    <div className="flex justify-between text-[11px] font-bold tracking-wide">
+                                    <div className="flex justify-between text-[11px] fontsemibold tracking-wide">
                                         <span className="text-white/40">{m.label}</span>
                                         <span style={{ color: m.color }}>{m.pct}</span>
                                     </div>
@@ -562,7 +562,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                         {/* Footer badge */}
                         <div className="flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-full border border-white/10 bg-transparent">
                             <span className="text-[#E1701A] text-[13px] drop-shadow-[0_0_8px_rgba(225,112,26,0.6)]">⚡</span>
-                            <span className="text-[10px] font-semibold text-white/90 tracking-wider flex gap-2">
+                            <span className="text-[10px] font- text-white/90 tracking-wider flex gap-2">
                                 <span>7 audit dimensions</span>
                                 <span className="text-white/30">•</span>
                                 <span>Real-time analysis</span>
@@ -616,7 +616,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                                 <button
                                     onClick={handleSubmitWithCaptcha}
                                     disabled={isLoading || !captchaAnswer}
-                                    className="w-full py-3 bg-[#ea580c] hover:bg-[#c2410c] text-white font-semibold rounded-xl
+                                    className="w-full py-3 bg-[#ea580c] hover:bg-[#c2410c] text-white font- rounded-xl
                                         transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-orange-600/20 active:scale-[0.98]"
                                 >
                                     {isLoading ? "Verifying…" : "Verify & Start Audit"}
@@ -625,7 +625,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
 
                             <button
                                 onClick={() => setShowCaptcha(false)}
-                                className={`text-[11px] font-semibold uppercase tracking-widest transition-colors
+                                className={`text-[11px] font- uppercase tracking-widest transition-colors
                                     ${darkMode ? 'text-slate-600 hover:text-slate-300' : 'text-slate-400 hover:text-slate-700'}`}
                             >
                                 Cancel

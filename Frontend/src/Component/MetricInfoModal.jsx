@@ -35,11 +35,11 @@ const MetricInfoModal = ({ isOpen, onClose, info, darkMode }) => {
 
                     {/* Title & Badge */}
                     <div className="flex-1 pt-1.5">
-                        <h2 className={`text-2xl font-bold leading-tight mb-2 ${darkMode ? "text-white" : "text-gray-900"}`}>
+                        <h2 className={`text-2xl fontsemibold leading-tight mb-2 ${darkMode ? "text-white" : "text-gray-900"}`}>
                             {info.title}
                         </h2>
                         {info.badge && (
-                            <span className={`inline-block text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${darkMode ? "bg-blue-500/10 text-blue-300" : "bg-blue-50 text-blue-600"}`}>
+                            <span className={`inline-block text-[10px] fontsemibold px-3 py-1 rounded-full uppercase tracking-wider ${darkMode ? "bg-blue-500/10 text-blue-300" : "bg-blue-50 text-blue-600"}`}>
                                 {info.badge}
                             </span>
                         )}
@@ -65,7 +65,7 @@ const MetricInfoModal = ({ isOpen, onClose, info, darkMode }) => {
                                     <Gauge className="w-6 h-6 text-blue-500" />
                                 </div>
                                 <div className="flex-1">
-                                    <h3 className={`font-bold text-base mb-1.5 ${darkMode ? "text-gray-100" : "text-gray-900"}`}>What this metric is</h3>
+                                    <h3 className={`fontsemibold text-base mb-1.5 ${darkMode ? "text-gray-100" : "text-gray-900"}`}>What this metric is</h3>
                                     <div className={`text-sm leading-relaxed ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
                                         {info.whatThisMetricIs}
                                     </div>
@@ -82,7 +82,7 @@ const MetricInfoModal = ({ isOpen, onClose, info, darkMode }) => {
                                     <Star className="w-6 h-6 text-amber-500" fill="currentColor" fillOpacity={0.2} />
                                 </div>
                                 <div className="flex-1">
-                                    <h3 className={`font-bold text-base mb-1.5 ${darkMode ? "text-gray-100" : "text-gray-900"}`}>Why it matters</h3>
+                                    <h3 className={`fontsemibold text-base mb-1.5 ${darkMode ? "text-gray-100" : "text-gray-900"}`}>Why it matters</h3>
                                     <div className={`text-sm leading-relaxed ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
                                         {info.whyItMatters}
                                     </div>
@@ -99,7 +99,7 @@ const MetricInfoModal = ({ isOpen, onClose, info, darkMode }) => {
                                     <Wrench className="w-6 h-6 text-emerald-500" />
                                 </div>
                                 <div className="flex-1">
-                                    <h3 className={`font-bold text-base mb-1.5 ${darkMode ? "text-gray-100" : "text-gray-900"}`}>What to do for a good score</h3>
+                                    <h3 className={`fontsemibold text-base mb-1.5 ${darkMode ? "text-gray-100" : "text-gray-900"}`}>What to do for a good score</h3>
                                     <div className={`text-sm leading-relaxed ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
                                         {info.whatToDoForAGoodScore}
                                     </div>
@@ -116,7 +116,7 @@ const MetricInfoModal = ({ isOpen, onClose, info, darkMode }) => {
                                     <ClipboardCheck className="w-6 h-6 text-indigo-500" />
                                 </div>
                                 <div className="flex-1">
-                                    <h3 className={`font-bold text-base mb-1.5 ${darkMode ? "text-gray-100" : "text-gray-900"}`}>How this score is calculated</h3>
+                                    <h3 className={`fontsemibold text-base mb-1.5 ${darkMode ? "text-gray-100" : "text-gray-900"}`}>How this score is calculated</h3>
                                     {info.howThisScoreIsCalculated && (
                                         <div className={`text-sm leading-relaxed ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
                                             {info.howThisScoreIsCalculated}
@@ -126,7 +126,7 @@ const MetricInfoModal = ({ isOpen, onClose, info, darkMode }) => {
                                     {/* Weightage Breakdown */}
                                     {info.weightage && (
                                         <div className={`mt-4 pt-4 border-t border-dashed ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
-                                            <h4 className={`text-xs font-bold uppercase tracking-wider mb-3 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+                                            <h4 className={`text-xs fontsemibold uppercase tracking-wider mb-3 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
                                                 Weight Distribution
                                             </h4>
                                             <div className="space-y-3">
@@ -134,7 +134,7 @@ const MetricInfoModal = ({ isOpen, onClose, info, darkMode }) => {
                                                     <div key={i}>
                                                         <div className="flex justify-between text-xs mb-1.5">
                                                             <span className={`font-medium ${darkMode ? "text-gray-300" : "text-gray-700"}`}>{item.param}</span>
-                                                            <span className={`font-bold font-mono ${darkMode ? "text-indigo-400" : "text-indigo-600"}`}>{item.weight}</span>
+                                                            <span className={`fontsemibold font-mono ${darkMode ? "text-indigo-400" : "text-indigo-600"}`}>{item.weight}</span>
                                                         </div>
                                                         <div className={`h-1.5 w-full rounded-full overflow-hidden ${darkMode ? "bg-gray-900" : "bg-gray-100"}`}>
                                                             <div
@@ -161,7 +161,7 @@ const MetricInfoModal = ({ isOpen, onClose, info, darkMode }) => {
                                 rel="noopener noreferrer"
                                 className="group cursor-pointer inline-flex items-center gap-2 mb-2"
                             >
-                                <span className={`font-bold text-base ${darkMode ? "text-blue-400 group-hover:text-blue-300" : "text-blue-600 group-hover:text-blue-700"}`}>
+                                <span className={`fontsemibold text-base ${darkMode ? "text-blue-400 group-hover:text-blue-300" : "text-blue-600 group-hover:text-blue-700"}`}>
                                     Read full guide
                                 </span>
                                 <ArrowUpRight className={`w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${darkMode ? "text-blue-400" : "text-blue-600"}`} />

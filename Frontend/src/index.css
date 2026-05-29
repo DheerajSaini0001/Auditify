@@ -5,6 +5,8 @@ html {
 @import "tailwindcss";
 
 @theme {
+  --font-sans: 'Sterling', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-sterling: 'Sterling', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
   --animate-shimmer: shimmer 1.5s infinite linear;
 
   @keyframes shimmer {

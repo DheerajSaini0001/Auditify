@@ -7,8 +7,8 @@ const MathCaptcha = ({ onAnswerChange, error }) => {
   const [loading, setLoading] = useState(false);
 
   const fetchCaptcha = useCallback(async () => {
-    setLoading(true); 
-    setAnswer(''); 
+    setLoading(true);
+    setAnswer('');
     onAnswerChange('', '');
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:2000'}/api/captcha/generate`, { credentials: 'include' });
@@ -21,23 +21,23 @@ const MathCaptcha = ({ onAnswerChange, error }) => {
     setLoading(false);
   }, []); // Remove onAnswerChange from here!
 
-  useEffect(() => { 
-    fetchCaptcha(); 
+  useEffect(() => {
+    fetchCaptcha();
   }, [fetchCaptcha]);
-  
+
   return (
     <div className="flex flex-col gap-3 w-full">
       <div className="flex justify-between items-center bg-slate-100 dark:bg-slate-800 p-3 rounded-lg">
         {loading ? (
-          <span className="font-bold text-lg text-slate-400">Loading...</span>
+          <span className="fontsemibold text-lg text-slate-400">Loading...</span>
         ) : (
-          <span className="font-bold text-lg dark:text-white">What is {question}?</span>
+          <span className="fontsemibold text-lg dark:text-white">What is {question}?</span>
         )}
-        <button 
-          type="button" 
-          onClick={fetchCaptcha} 
+        <button
+          type="button"
+          onClick={fetchCaptcha}
           disabled={loading}
-          className="text-emerald-500 hover:text-emerald-600 font-semibold text-sm disabled:opacity-50"
+          className="text-emerald-500 hover:text-emerald-600 font- text-sm disabled:opacity-50"
         >
           Refresh
         </button>

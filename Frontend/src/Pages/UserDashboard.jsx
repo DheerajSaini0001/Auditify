@@ -43,21 +43,21 @@ const UserDashboard = () => {
       <div className="max-w-7xl mx-auto space-y-12">
         {/* Header Section */}
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
           >
             <div className="flex items-center gap-3 mb-2">
-               <LayoutDashboard className="text-blue-500" size={24} />
-               <span className="text-blue-500 font-black tracking-widest text-xs uppercase">Personal Overview</span>
+              <LayoutDashboard className="text-blue-500" size={24} />
+              <span className="text-blue-500 font-black tracking-widest text-xs uppercase">Personal Overview</span>
             </div>
-            <h1 className={`text-4xl font-extrabold tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
+            <h1 className={`text-4xl fontsemibold tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
               Welcome, {user?.name}
             </h1>
             <p className={`mt-2 text-lg ${darkMode ? "text-gray-400" : "text-slate-500"}`}>Your audit performance and history at a glance.</p>
           </motion.div>
-          
-          <motion.div 
+
+          <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             className="flex gap-4"
@@ -75,7 +75,7 @@ const UserDashboard = () => {
         </header>
 
         {/* Recent History Table */}
-        <motion.section 
+        <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className={`backdrop-blur-2xl border rounded-[40px] overflow-hidden shadow-2xl transition-colors ${darkMode ? "bg-[#16161e]/30 border-white/5" : "bg-white border-slate-200"}`}
@@ -86,7 +86,7 @@ const UserDashboard = () => {
                 <History size={24} />
               </div>
               <div>
-                <h2 className={`text-xl font-bold ${darkMode ? "text-white" : "text-slate-900"}`}>Recent Audits</h2>
+                <h2 className={`text-xl fontsemibold ${darkMode ? "text-white" : "text-slate-900"}`}>Recent Audits</h2>
                 <p className={`text-xs ${darkMode ? "text-gray-500" : "text-slate-500"}`}>Your latest 10 security and performance inspections</p>
               </div>
             </div>
@@ -130,7 +130,7 @@ const UserDashboard = () => {
                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform ${darkMode ? "bg-blue-500/10 text-blue-400" : "bg-blue-50 text-blue-600"}`}>
                             <ExternalLink size={16} />
                           </div>
-                          <span className={`font-bold truncate max-w-sm ${darkMode ? "text-gray-200" : "text-slate-700"}`}>{audit.url}</span>
+                          <span className={`fontsemibold truncate max-w-sm ${darkMode ? "text-gray-200" : "text-slate-700"}`}>{audit.url}</span>
                         </div>
                       </td>
                       <td className="px-10 py-6">
@@ -140,17 +140,16 @@ const UserDashboard = () => {
                         </div>
                       </td>
                       <td className="px-10 py-6">
-                        <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider shadow-sm ${
-                          audit.device === 'Mobile' 
-                            ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' 
-                            : 'bg-blue-500/10 text-blue-500 border border-blue-500/20'
-                        }`}>
+                        <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider shadow-sm ${audit.device === 'Mobile'
+                          ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20'
+                          : 'bg-blue-500/10 text-blue-500 border border-blue-500/20'
+                          }`}>
                           {audit.device || 'Desktop'}
                         </span>
                       </td>
                       <td className="px-10 py-6 text-right">
                         <div className="flex items-center justify-end gap-3">
-                          <button 
+                          <button
                             onClick={() => {
                               if (audit.reportId) {
                                 const params = new URLSearchParams({
@@ -163,17 +162,17 @@ const UserDashboard = () => {
                                 alert("This report details are currently unavailable.");
                               }
                             }}
-                            className={`p-3 rounded-xl transition-all shadow-lg border ${darkMode 
-                              ? "bg-white/5 hover:bg-blue-600 text-gray-400 hover:text-white border-white/5" 
+                            className={`p-3 rounded-xl transition-all shadow-lg border ${darkMode
+                              ? "bg-white/5 hover:bg-blue-600 text-gray-400 hover:text-white border-white/5"
                               : "bg-white hover:bg-blue-50 text-slate-500 hover:text-blue-600 border-slate-200"}`}
                             title="View Report"
                           >
                             <FileText size={18} />
                           </button>
-                          <button 
+                          <button
                             onClick={() => {
                               if (!audit.reportId) return toast.error('PDF unavailable for this audit');
-                              
+
                               toast.promise(
                                 (async () => {
                                   const token = localStorage.getItem('dealerpulse_token');
@@ -184,7 +183,7 @@ const UserDashboard = () => {
                                     }
                                   });
                                   if (!response.ok) throw new Error('Failed to generate PDF');
-                                  
+
                                   const blob = await response.blob();
                                   const url = window.URL.createObjectURL(blob);
                                   const link = document.createElement('a');
@@ -202,8 +201,8 @@ const UserDashboard = () => {
                                 }
                               );
                             }}
-                            className={`p-3 rounded-xl transition-all shadow-lg border ${darkMode 
-                              ? "bg-white/5 hover:bg-emerald-600 text-gray-400 hover:text-white border-white/5" 
+                            className={`p-3 rounded-xl transition-all shadow-lg border ${darkMode
+                              ? "bg-white/5 hover:bg-emerald-600 text-gray-400 hover:text-white border-white/5"
                               : "bg-white hover:bg-emerald-50 text-slate-500 hover:text-emerald-600 border-slate-200"}`}
                             title="Download PDF"
                           >

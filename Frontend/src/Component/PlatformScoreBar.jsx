@@ -5,28 +5,28 @@ const PlatformScoreBar = ({ platforms, darkMode, platformKey = null, singleCard 
     const [expandedPlatform, setExpandedPlatform] = useState(null);
 
     const fullPlatformData = [
-        { 
-            name: 'Gemini', 
-            key: 'gemini', 
-            score: platforms?.gemini?.score || 0, 
+        {
+            name: 'Gemini',
+            key: 'gemini',
+            score: platforms?.gemini?.score || 0,
             color: '#2563eb', // Professional Indigo-Blue
             border: 'border-blue-500/20',
             bg: 'bg-blue-600',
             icon: <Target size={18} />
         },
-        { 
-            name: 'ChatGPT', 
-            key: 'chatgpt', 
-            score: platforms?.chatgpt?.score || 0, 
+        {
+            name: 'ChatGPT',
+            key: 'chatgpt',
+            score: platforms?.chatgpt?.score || 0,
             color: '#059669', // Professional Emerald-Green
             border: 'border-emerald-500/20',
             bg: 'bg-emerald-600',
             icon: <Cpu size={18} />
         },
-        { 
-            name: 'Perplexity', 
-            key: 'perplexity', 
-            score: platforms?.perplexity?.score || 0, 
+        {
+            name: 'Perplexity',
+            key: 'perplexity',
+            score: platforms?.perplexity?.score || 0,
             color: '#7c3aed', // Professional Violet
             border: 'border-purple-500/20',
             bg: 'bg-purple-600',
@@ -34,7 +34,7 @@ const PlatformScoreBar = ({ platforms, darkMode, platformKey = null, singleCard 
         },
     ];
 
-    const platformData = singleCard && platformKey 
+    const platformData = singleCard && platformKey
         ? fullPlatformData.filter(p => p.key === platformKey)
         : fullPlatformData;
 
@@ -57,25 +57,25 @@ const PlatformScoreBar = ({ platforms, darkMode, platformKey = null, singleCard 
 
     const renderPlatformCard = (plat, idx) => (
         <div key={idx} className={`relative p-8 rounded-2xl border transition-all duration-300 flex flex-col gap-6 ${darkMode ? "bg-slate-900 border-slate-800 shadow-xl" : "bg-white border-slate-100 shadow-sm hover:shadow-md"}`}>
-            
+
             {/* Header: Pro Identity */}
             <div className="flex items-start justify-between">
                 <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-2">
                         <span style={{ color: plat.color }}>{plat.icon}</span>
-                        <span className={`text-[11px] font-bold uppercase tracking-wider ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
+                        <span className={`text-[11px] fontsemibold uppercase tracking-wider ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
                             {plat.name} Analysis
                         </span>
                     </div>
                     <h5 className={`text-2xl font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>{plat.name}</h5>
                 </div>
-                
+
                 <div className="text-right">
                     <div className="flex items-baseline justify-end gap-1">
-                        <span className={`text-4xl font-extrabold tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
+                        <span className={`text-4xl fontsemibold tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
                             {plat.score}
                         </span>
-                        <span className="text-xs font-bold opacity-30">%</span>
+                        <span className="text-xs fontsemibold opacity-30">%</span>
                     </div>
                 </div>
             </div>
@@ -87,37 +87,37 @@ const PlatformScoreBar = ({ platforms, darkMode, platformKey = null, singleCard 
                     className="h-full rounded-full transition-all duration-1000 ease-out shadow-sm"
                 />
             </div>
-            
+
             {/* Insight Label */}
-            <div className={`px-3 py-1.5 rounded-lg w-fit text-[10px] font-bold uppercase tracking-widest border transition-colors ${plat.score >= 80 ? "bg-emerald-500/5 text-emerald-600 border-emerald-500/20" : plat.score >= 50 ? "bg-amber-500/5 text-amber-600 border-amber-500/20" : "bg-rose-500/5 text-rose-600 border-rose-500/20"}`}>
+            <div className={`px-3 py-1.5 rounded-lg w-fit text-[10px] fontsemibold uppercase tracking-widest border transition-colors ${plat.score >= 80 ? "bg-emerald-500/5 text-emerald-600 border-emerald-500/20" : plat.score >= 50 ? "bg-amber-500/5 text-amber-600 border-amber-500/20" : "bg-rose-500/5 text-rose-600 border-rose-500/20"}`}>
                 Engine Rating: {plat.score >= 80 ? 'Optimized' : plat.score >= 50 ? 'Average' : 'Critical'}
             </div>
 
             {/* Strategic Summary Box */}
-            <div className={`p-5 rounded-xl border-l-4 ${plat.score < 50 
-                ? (darkMode ? "bg-rose-500/5 border-rose-500/40" : "bg-rose-50/50 border-rose-500/30") 
+            <div className={`p-5 rounded-xl border-l-4 ${plat.score < 50
+                ? (darkMode ? "bg-rose-500/5 border-rose-500/40" : "bg-rose-50/50 border-rose-500/30")
                 : (darkMode ? "bg-slate-800/40 border-slate-700" : "bg-slate-50 border-slate-200")}`}>
-                
+
                 <div className="flex items-center gap-2 mb-3">
                     <Shield size={14} className={plat.score < 50 ? "text-rose-500" : "text-slate-400"} />
-                    <span className={`text-[10px] font-extrabold uppercase tracking-widest ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
+                    <span className={`text-[10px] fontsemibold uppercase tracking-widest ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
                         Strategic Diagnostic
                     </span>
                 </div>
-                
-                <p className={`text-sm font-semibold leading-relaxed ${darkMode ? "text-slate-300" : "text-slate-700"}`}>
+
+                <p className={`text-sm font- leading-relaxed ${darkMode ? "text-slate-300" : "text-slate-700"}`}>
                     {platforms[plat.key].reason}
                 </p>
             </div>
 
             {/* Minimal Toggle */}
-            <button 
+            <button
                 onClick={() => setExpandedPlatform(expandedPlatform === plat.key ? null : plat.key)}
-                className={`flex items-center justify-between w-full p-4 rounded-xl border transition-all ${expandedPlatform === plat.key 
-                    ? (darkMode ? "bg-slate-800 border-slate-700 text-white" : "bg-slate-100 border-slate-200 text-slate-900") 
+                className={`flex items-center justify-between w-full p-4 rounded-xl border transition-all ${expandedPlatform === plat.key
+                    ? (darkMode ? "bg-slate-800 border-slate-700 text-white" : "bg-slate-100 border-slate-200 text-slate-900")
                     : (darkMode ? "bg-transparent border-slate-800 text-slate-400 hover:text-white" : "bg-transparent border-slate-100 text-slate-500 hover:text-slate-900")}`}
             >
-                <span className="text-[10px] font-bold uppercase tracking-widest">Technical Breakdown</span>
+                <span className="text-[10px] fontsemibold uppercase tracking-widest">Technical Breakdown</span>
                 <ChevronRight size={14} className={`transition-transform duration-300 ${expandedPlatform === plat.key ? 'rotate-90' : ''}`} />
             </button>
 
@@ -126,30 +126,30 @@ const PlatformScoreBar = ({ platforms, darkMode, platformKey = null, singleCard 
                 <div className={`p-6 rounded-xl space-y-6 animate-in slide-in-from-top-2 duration-300 ${darkMode ? "bg-slate-950/50 border border-slate-800" : "bg-white border border-slate-200 shadow-inner"}`}>
                     <div className="flex items-center gap-2 opacity-40">
                         <BarChart3 size={12} />
-                        <span className="text-[9px] font-bold uppercase tracking-[0.2em]">Signal Distribution</span>
+                        <span className="text-[9px] fontsemibold uppercase tracking-[0.2em]">Signal Distribution</span>
                     </div>
 
                     <div className="grid grid-cols-1 gap-6">
                         {Object.entries(platforms[plat.key].breakdown)
                             .filter(([param]) => platformRelevance[plat.key]?.includes(param))
                             .map(([param, points]) => (
-                            <div key={param} className="space-y-2">
-                                <div className="flex items-center justify-between pointer-events-none">
-                                    <span className={`text-xs font-semibold ${darkMode ? "text-slate-200" : "text-slate-700"}`}>
-                                        {parameterLabels[param] || param}
-                                    </span>
-                                    <span className={`text-[10px] font-bold ${points > 0 ? (darkMode ? "text-blue-400" : "text-blue-600") : "text-slate-500"}`}>
-                                        +{points} PTS
-                                    </span>
+                                <div key={param} className="space-y-2">
+                                    <div className="flex items-center justify-between pointer-events-none">
+                                        <span className={`text-xs font- ${darkMode ? "text-slate-200" : "text-slate-700"}`}>
+                                            {parameterLabels[param] || param}
+                                        </span>
+                                        <span className={`text-[10px] fontsemibold ${points > 0 ? (darkMode ? "text-blue-400" : "text-blue-600") : "text-slate-500"}`}>
+                                            +{points} PTS
+                                        </span>
+                                    </div>
+                                    <div className={`h-1.5 rounded-full ${darkMode ? "bg-slate-800" : "bg-slate-100"}`}>
+                                        <div
+                                            className="h-full rounded-full transition-all duration-700"
+                                            style={{ width: `${(points / 40) * 100}%`, backgroundColor: plat.color }}
+                                        ></div>
+                                    </div>
                                 </div>
-                                <div className={`h-1.5 rounded-full ${darkMode ? "bg-slate-800" : "bg-slate-100"}`}>
-                                    <div 
-                                        className="h-full rounded-full transition-all duration-700" 
-                                        style={{ width: `${(points / 40) * 100}%`, backgroundColor: plat.color }}
-                                    ></div>
-                                </div>
-                            </div>
-                        ))}
+                            ))}
                     </div>
                 </div>
             )}
@@ -165,7 +165,7 @@ const PlatformScoreBar = ({ platforms, darkMode, platformKey = null, singleCard 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {platformData.map((plat, idx) => renderPlatformCard(plat, idx))}
             </div>
-            
+
             <div className={`p-6 rounded-2xl border flex flex-col sm:flex-row items-center gap-6 ${darkMode ? "bg-slate-900/50 border-slate-800" : "bg-slate-50 border-slate-100"}`}>
                 <div className={`p-3 rounded-xl ${darkMode ? "bg-slate-800 text-slate-400" : "bg-white text-slate-500 shadow-sm"}`}>
                     <Activity size={24} />

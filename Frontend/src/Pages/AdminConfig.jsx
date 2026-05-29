@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import { ThemeContext } from '../context/ThemeContext.jsx';
-import { 
+import {
   Search, Eye, EyeOff, MoreVertical, Plus, RefreshCw, Lock, Unlock,
   Save, X, Trash2, Settings, ShieldCheck, Terminal, History,
   RotateCcw, Download, Upload, Filter, Clock, User, Activity,
@@ -73,7 +73,7 @@ const AdminConfig = () => {
         <div className="relative">
           <button
             onClick={() => setCreateDropdownOpen(!createDropdownOpen)}
-            className="w-full flex items-center justify-between px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm transition-all shadow-md shadow-emerald-600/10 active:scale-[0.98]"
+            className="w-full flex items-center justify-between px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl fontsemibold text-sm transition-all shadow-md shadow-emerald-600/10 active:scale-[0.98]"
           >
             <div className="flex items-center gap-2">
               <Plus size={16} />
@@ -86,13 +86,13 @@ const AdminConfig = () => {
             <div className={`absolute top-full left-0 right-0 mt-1.5 rounded-xl shadow-xl z-50 py-1 animate-in fade-in slide-in-from-top-1 duration-150 border transition-all duration-300 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
               <button
                 onClick={() => { setCreateDropdownOpen(false); navigate("/dashboard/add-website"); }}
-                className={`w-full text-left px-4 py-2 text-xs font-bold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                className={`w-full text-left px-4 py-2 text-xs fontsemibold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-50'}`}
               >
                 Add Google Search Console Site
               </button>
               <button
                 onClick={() => { setCreateDropdownOpen(false); navigate("/bulk-audit"); }}
-                className={`w-full text-left px-4 py-2 text-xs font-bold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                className={`w-full text-left px-4 py-2 text-xs fontsemibold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-50'}`}
               >
                 Quick Manual Audit Page
               </button>
@@ -120,32 +120,32 @@ const AdminConfig = () => {
         <nav className="flex flex-col gap-1 mt-2">
           <button
             onClick={() => navigate("/dashboard")}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-505 hover:text-slate-800 hover:bg-slate-50'}`}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs fontsemibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-505 hover:text-slate-800 hover:bg-slate-50'}`}
           >
             <LayoutDashboard size={16} />
             <span>Projects</span>
           </button>
 
-         
+
 
           <button
             onClick={() => navigate("/audit-history")}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-505 hover:text-slate-800 hover:bg-slate-50'}`}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs fontsemibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-505 hover:text-slate-800 hover:bg-slate-50'}`}
           >
             <FileText size={16} />
             <span>Report History</span>
           </button>
 
-          
+
 
           <button
             onClick={() => navigate('/dashboard?tab=starred')}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-550 hover:text-slate-800 hover:bg-slate-50'}`}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs fontsemibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-550 hover:text-slate-800 hover:bg-slate-50'}`}
           >
             <Star size={16} />
             <span>Starred</span>
             {starredIds.length > 0 && (
-              <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full font-bold ${darkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-600'}`}>
+              <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full fontsemibold ${darkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-600'}`}>
                 {starredIds.length}
               </span>
             )}
@@ -154,7 +154,7 @@ const AdminConfig = () => {
           {(user?.role === 'admin' || user?.role === 'super_admin') && (
             <button
               onClick={() => navigate("/admin")}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-505 hover:text-slate-800 hover:bg-slate-50'}`}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs fontsemibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-505 hover:text-slate-800 hover:bg-slate-50'}`}
             >
               <ShieldCheck size={16} className="text-blue-500 shrink-0" />
               <span>Admin Panel</span>
@@ -164,7 +164,7 @@ const AdminConfig = () => {
           {user?.role === 'super_admin' && (
             <button
               onClick={() => navigate("/admin/setup")}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-extrabold transition-all duration-300 border-none ${darkMode ? 'bg-emerald-950/40 text-emerald-400' : 'bg-emerald-50 text-emerald-700 border border-emerald-500/20 shadow-sm'}`}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs fontsemibold transition-all duration-300 border-none ${darkMode ? 'bg-emerald-950/40 text-emerald-400' : 'bg-emerald-50 text-emerald-700 border border-emerald-500/20 shadow-sm'}`}
             >
               <Settings size={16} className="text-indigo-500 shrink-0" />
               <span>System Setup</span>
@@ -175,7 +175,7 @@ const AdminConfig = () => {
 
           <button
             onClick={() => toggleTheme()}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-505 hover:text-slate-800 hover:bg-slate-50'}`}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs fontsemibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-505 hover:text-slate-800 hover:bg-slate-50'}`}
           >
             <div className="flex items-center gap-3">
               {darkMode ? <Sun size={16} className="text-amber-400 shrink-0" /> : <Moon size={16} className="text-indigo-500 shrink-0" />}
@@ -209,12 +209,12 @@ const AdminConfig = () => {
             <Lock size={14} className={`transition-colors duration-300 ${darkMode ? 'fill-emerald-400/20 text-emerald-400' : 'fill-emerald-600/20 text-emerald-700'}`} />
             <span className="text-[11px] font-black uppercase tracking-wider">Unlock Advanced</span>
           </div>
-          <p className={`text-[10px] font-semibold leading-relaxed transition-colors duration-300 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+          <p className={`text-[10px] font- leading-relaxed transition-colors duration-300 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
             Get deeper insights, historical data, and AI-powered recommendations.
           </p>
           <button
             onClick={() => toast.success('Premium checkout is launching soon!')}
-            className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-md shadow-emerald-600/10 transition-all active:scale-[0.98]"
+            className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl fontsemibold text-xs shadow-md shadow-emerald-600/10 transition-all active:scale-[0.98]"
           >
             Upgrade Now
           </button>
@@ -461,331 +461,330 @@ const AdminConfig = () => {
       <main className="flex-grow flex flex-col min-w-0 p-6 md:p-8 space-y-6 overflow-y-auto">
         <div className="max-w-7xl mx-auto w-full">
 
-        {/* ── Header ── */}
-        <header className="flex flex-col lg:flex-row items-start lg:items-center gap-6 mb-10">
-          <div className="flex items-center gap-4 flex-1 w-full">
-            <div className={`p-4 rounded-2xl border ${dk ? 'bg-indigo-500/10 border-indigo-500/20' : 'bg-indigo-50 border-indigo-100'}`}>
-              <ShieldCheck size={28} className="text-indigo-500" />
-            </div>
-            <div className="flex-grow">
-              <div className="flex items-center justify-between lg:justify-start w-full gap-4">
-                <h1 className="text-3xl font-black tracking-tight">Super Admin Dashboard</h1>
-                {/* Mobile Sidebar Toggle Button */}
-                <button
-                  onClick={() => setSidebarOpen(true)}
-                  className={`md:hidden flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-xs font-bold transition-all duration-300 ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
-                >
-                  <Menu size={14} />
-                  <span>Menu</span>
-                </button>
+          {/* ── Header ── */}
+          <header className="flex flex-col lg:flex-row items-start lg:items-center gap-6 mb-10">
+            <div className="flex items-center gap-4 flex-1 w-full">
+              <div className={`p-4 rounded-2xl border ${dk ? 'bg-indigo-500/10 border-indigo-500/20' : 'bg-indigo-50 border-indigo-100'}`}>
+                <ShieldCheck size={28} className="text-indigo-500" />
               </div>
-              <p className={`text-sm mt-1 ${dk ? 'text-white/30' : 'text-slate-400'}`}>
-                AES-256 encrypted • Hot reload • Version controlled
-              </p>
+              <div className="flex-grow">
+                <div className="flex items-center justify-between lg:justify-start w-full gap-4">
+                  <h1 className="text-3xl font-black tracking-tight">Super Admin Dashboard</h1>
+                  {/* Mobile Sidebar Toggle Button */}
+                  <button
+                    onClick={() => setSidebarOpen(true)}
+                    className={`md:hidden flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-xs fontsemibold transition-all duration-300 ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                  >
+                    <Menu size={14} />
+                    <span>Menu</span>
+                  </button>
+                </div>
+                <p className={`text-sm mt-1 ${dk ? 'text-white/30' : 'text-slate-400'}`}>
+                  AES-256 encrypted • Hot reload • Version controlled
+                </p>
+              </div>
             </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleRefreshCache}
+                disabled={refreshing}
+                className={`flex items-center gap-2 px-5 py-3 rounded-xl border text-xs fontsemibold uppercase tracking-wider transition-all ${dk ? 'border-white/10 hover:bg-white/5 text-white/50 hover:text-white' : 'border-slate-200 hover:bg-slate-100 text-slate-500'}`}
+              >
+                <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
+                Sync Cache
+              </button>
+              <button
+                onClick={handleExport}
+                className={`flex items-center gap-2 px-5 py-3 rounded-xl border text-xs fontsemibold uppercase tracking-wider transition-all ${dk ? 'border-white/10 hover:bg-white/5 text-white/50 hover:text-white' : 'border-slate-200 hover:bg-slate-100 text-slate-500'}`}
+              >
+                <Download size={14} />
+                Export
+              </button>
+              <button
+                onClick={() => handleOpenModal()}
+                className={`flex items-center gap-2 px-6 py-3 rounded-xl fontsemibold text-xs uppercase tracking-wider transition-all active:scale-95 ${dk ? 'bg-indigo-600 hover:bg-indigo-500 text-white border border-indigo-500/50' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/20'}`}
+              >
+                <Plus size={14} strokeWidth={3} />
+                Add Secret
+              </button>
+            </div>
+          </header>
+
+          {/* ── Stats Row ── */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+            <StatCard label="Total Configs" value={configs.length} icon={Database} color="#6366f1" dk={dk} />
+            <StatCard label="Sensitive" value={sensitiveCount} icon={Lock} color="#ef4444" dk={dk} />
+            <StatCard label="Categories" value={categoryGroups.length} icon={Filter} color="#f59e0b" dk={dk} />
+
           </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleRefreshCache}
-              disabled={refreshing}
-              className={`flex items-center gap-2 px-5 py-3 rounded-xl border text-xs font-bold uppercase tracking-wider transition-all ${dk ? 'border-white/10 hover:bg-white/5 text-white/50 hover:text-white' : 'border-slate-200 hover:bg-slate-100 text-slate-500'}`}
-            >
-              <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
-              Sync Cache
-            </button>
-            <button
-              onClick={handleExport}
-              className={`flex items-center gap-2 px-5 py-3 rounded-xl border text-xs font-bold uppercase tracking-wider transition-all ${dk ? 'border-white/10 hover:bg-white/5 text-white/50 hover:text-white' : 'border-slate-200 hover:bg-slate-100 text-slate-500'}`}
-            >
-              <Download size={14} />
-              Export
-            </button>
-            <button
-              onClick={() => handleOpenModal()}
-              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all active:scale-95 ${dk ? 'bg-indigo-600 hover:bg-indigo-500 text-white border border-indigo-500/50' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/20'}`}
-            >
-              <Plus size={14} strokeWidth={3} />
-              Add Secret
-            </button>
-          </div>
-        </header>
-
-        {/* ── Stats Row ── */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-          <StatCard label="Total Configs" value={configs.length} icon={Database} color="#6366f1" dk={dk} />
-          <StatCard label="Sensitive" value={sensitiveCount} icon={Lock} color="#ef4444" dk={dk} />
-          <StatCard label="Categories" value={categoryGroups.length} icon={Filter} color="#f59e0b" dk={dk} />
-  
-        </div>
-
-        {/* ── Tab Navigation ── */}
-        <div className={`flex items-center gap-1 p-1.5 rounded-2xl border mb-8 w-fit ${dk ? 'bg-white/[0.02] border-white/[0.06]' : 'bg-slate-100 border-slate-200'}`}>
-          {[
-            { id: 'configs', label: 'Configurations', icon: Settings },
-            { id: 'audit', label: 'Audit Trail', icon: Activity },
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
-                activeTab === tab.id
+          {/* ── Tab Navigation ── */}
+          <div className={`flex items-center gap-1 p-1.5 rounded-2xl border mb-8 w-fit ${dk ? 'bg-white/[0.02] border-white/[0.06]' : 'bg-slate-100 border-slate-200'}`}>
+            {[
+              { id: 'configs', label: 'Configurations', icon: Settings },
+              { id: 'audit', label: 'Audit Trail', icon: Activity },
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs fontsemibold uppercase tracking-wider transition-all ${activeTab === tab.id
                   ? (dk ? 'bg-white/10 text-white' : 'bg-white text-slate-900 shadow-sm')
                   : (dk ? 'text-white/30 hover:text-white/60' : 'text-slate-400 hover:text-slate-600')
-              }`}
-            >
-              <tab.icon size={14} />
-              {tab.label}
-            </button>
-          ))}
-        </div>
+                  }`}
+              >
+                <tab.icon size={14} />
+                {tab.label}
+              </button>
+            ))}
+          </div>
 
-        {/* ── Tab Content ── */}
-        <AnimatePresence mode="wait">
-          {activeTab === 'configs' ? (
-            <motion.div key="configs" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-              {/* Filters */}
-              <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 mb-6">
-                <div className="relative flex-1">
-                  <Search className={`absolute left-4 top-1/2 -translate-y-1/2 ${dk ? 'text-white/20' : 'text-slate-400'}`} size={16} />
-                  <input
-                    type="text"
-                    placeholder="Search by key name..."
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    className={`w-full pl-11 pr-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 transition-all ${inputCls}`}
-                  />
-                </div>
-                <SelectFilter
-                  value={categoryFilter}
-                  onChange={setCategoryFilter}
-                  options={CATEGORIES}
-                  dk={dk}
-                />
-                <SelectFilter
-                  value={envFilter}
-                  onChange={setEnvFilter}
-                  options={ENVIRONMENTS}
-                  dk={dk}
-                />
-              </div>
-
-              {/* Config List */}
-              {loading ? (
-                <div className="flex items-center justify-center py-20">
-                  <RefreshCw size={24} className="animate-spin text-indigo-500" />
-                </div>
-              ) : filtered.length === 0 ? (
-                <div className={`rounded-2xl border py-20 text-center ${card}`}>
-                  <Database size={40} className={`mx-auto mb-4 ${dk ? 'text-white/10' : 'text-slate-200'}`} />
-                  <p className={`text-sm font-medium ${dk ? 'text-white/20' : 'text-slate-400'}`}>No configurations found</p>
-                </div>
-              ) : (
-                <div className={`rounded-2xl border overflow-hidden ${card}`}>
-                  <div className={`divide-y ${dk ? 'divide-white/[0.04]' : 'divide-slate-100'}`}>
-                    {filtered.map((config, idx) => (
-                      <ConfigRow
-                        key={config.key}
-                        config={config}
-                        idx={idx}
-                        total={filtered.length}
-                        dk={dk}
-                        revealedValue={revealedValues[config.key]}
-                        onReveal={() => handleReveal(config.key)}
-                        openMenu={openMenu}
-                        setOpenMenu={setOpenMenu}
-                        onEdit={() => handleOpenModal(config)}
-                        onDelete={() => handleDelete(config.key)}
-                        onHistory={() => handleViewHistory(config.key)}
-                      />
-                    ))}
+          {/* ── Tab Content ── */}
+          <AnimatePresence mode="wait">
+            {activeTab === 'configs' ? (
+              <motion.div key="configs" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+                {/* Filters */}
+                <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 mb-6">
+                  <div className="relative flex-1">
+                    <Search className={`absolute left-4 top-1/2 -translate-y-1/2 ${dk ? 'text-white/20' : 'text-slate-400'}`} size={16} />
+                    <input
+                      type="text"
+                      placeholder="Search by key name..."
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      className={`w-full pl-11 pr-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 transition-all ${inputCls}`}
+                    />
                   </div>
+                  <SelectFilter
+                    value={categoryFilter}
+                    onChange={setCategoryFilter}
+                    options={CATEGORIES}
+                    dk={dk}
+                  />
+                  <SelectFilter
+                    value={envFilter}
+                    onChange={setEnvFilter}
+                    options={ENVIRONMENTS}
+                    dk={dk}
+                  />
                 </div>
-              )}
-            </motion.div>
-          ) : (
-            <motion.div key="audit" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-              <AuditTrail
-                logs={logs}
-                loading={logsLoading}
-                pagination={logsPagination}
-                onPageChange={fetchLogs}
-                dk={dk}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
 
-        {/* ── Create / Edit Modal ── */}
-        <AnimatePresence>
-          {modalOpen && (
-            <ModalOverlay onClose={() => setModalOpen(false)} dk={dk}>
-              <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-3">
-                  <div className={`p-3 rounded-xl ${dk ? 'bg-indigo-500/10 text-indigo-400' : 'bg-indigo-50 text-indigo-600'}`}>
-                    {isEditing ? <Settings size={22} /> : <Plus size={22} />}
+                {/* Config List */}
+                {loading ? (
+                  <div className="flex items-center justify-center py-20">
+                    <RefreshCw size={24} className="animate-spin text-indigo-500" />
                   </div>
-                  <div>
-                    <h2 className="text-xl font-black tracking-tight">{isEditing ? 'Update Configuration' : 'Create Configuration'}</h2>
-                    <p className={`text-xs mt-0.5 ${dk ? 'text-white/30' : 'text-slate-400'}`}>Values are AES-256 encrypted before storage</p>
+                ) : filtered.length === 0 ? (
+                  <div className={`rounded-2xl border py-20 text-center ${card}`}>
+                    <Database size={40} className={`mx-auto mb-4 ${dk ? 'text-white/10' : 'text-slate-200'}`} />
+                    <p className={`text-sm font-medium ${dk ? 'text-white/20' : 'text-slate-400'}`}>No configurations found</p>
                   </div>
-                </div>
-                <button onClick={() => setModalOpen(false)} className={`p-2.5 rounded-xl transition-colors ${dk ? 'hover:bg-white/5' : 'hover:bg-slate-100'}`}>
-                  <X size={20} className="opacity-40" />
-                </button>
-              </div>
-
-              <form onSubmit={handleSave} className="space-y-5">
-                <FormField label="Variable Key" dk={dk}>
-                  <input
-                    disabled={isEditing}
-                    type="text"
-                    placeholder="e.g. JWT_SECRET"
-                    className={`w-full px-4 py-3 rounded-xl border text-sm font-mono focus:outline-none focus:ring-2 transition-all ${inputCls} ${isEditing ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    value={modalData.key}
-                    onChange={e => setModalData({ ...modalData, key: e.target.value.toUpperCase().replace(/\s/g, '_') })}
-                  />
-                </FormField>
-
-                <FormField label="Value" dk={dk}>
-                  <textarea
-                    rows={3}
-                    placeholder="Enter value..."
-                    className={`w-full px-4 py-3 rounded-xl border text-sm font-mono focus:outline-none focus:ring-2 transition-all resize-none ${inputCls}`}
-                    value={modalData.value}
-                    onChange={e => setModalData({ ...modalData, value: e.target.value })}
-                  />
-                </FormField>
-
-                <FormField label="Description (optional)" dk={dk}>
-                  <input
-                    type="text"
-                    placeholder="What this config is used for..."
-                    className={`w-full px-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 transition-all ${inputCls}`}
-                    value={modalData.description}
-                    onChange={e => setModalData({ ...modalData, description: e.target.value })}
-                  />
-                </FormField>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField label="Category" dk={dk}>
-                    <select
-                      className={`w-full px-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 transition-all ${inputCls}`}
-                      value={modalData.category}
-                      onChange={e => setModalData({ ...modalData, category: e.target.value })}
-                    >
-                      {CATEGORIES.filter(c => c.value !== 'all').map(c => (
-                        <option key={c.value} value={c.value}>{c.label}</option>
+                ) : (
+                  <div className={`rounded-2xl border overflow-hidden ${card}`}>
+                    <div className={`divide-y ${dk ? 'divide-white/[0.04]' : 'divide-slate-100'}`}>
+                      {filtered.map((config, idx) => (
+                        <ConfigRow
+                          key={config.key}
+                          config={config}
+                          idx={idx}
+                          total={filtered.length}
+                          dk={dk}
+                          revealedValue={revealedValues[config.key]}
+                          onReveal={() => handleReveal(config.key)}
+                          openMenu={openMenu}
+                          setOpenMenu={setOpenMenu}
+                          onEdit={() => handleOpenModal(config)}
+                          onDelete={() => handleDelete(config.key)}
+                          onHistory={() => handleViewHistory(config.key)}
+                        />
                       ))}
-                    </select>
-                  </FormField>
-
-                  <FormField label="Environment" dk={dk}>
-                    <select
-                      className={`w-full px-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 transition-all ${inputCls}`}
-                      value={modalData.environment}
-                      onChange={e => setModalData({ ...modalData, environment: e.target.value })}
-                    >
-                      {ENVIRONMENTS.map(e => (
-                        <option key={e.value} value={e.value}>{e.label}</option>
-                      ))}
-                    </select>
-                  </FormField>
-                </div>
-
-                {/* Sensitive Toggle */}
-                <div className={`flex items-center justify-between py-4 px-4 rounded-xl border ${dk ? 'border-white/[0.06] bg-white/[0.02]' : 'border-slate-100 bg-slate-50'}`}>
-                  <div>
-                    <p className="font-bold text-sm">Sensitive Value</p>
-                    <p className={`text-xs mt-0.5 ${dk ? 'text-white/30' : 'text-slate-400'}`}>Masked in API responses & audit logs</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setModalData({ ...modalData, isSensitive: !modalData.isSensitive })}
-                    className={`w-12 h-7 rounded-full p-1 transition-colors duration-300 ${modalData.isSensitive ? 'bg-indigo-600' : (dk ? 'bg-white/10' : 'bg-slate-300')}`}
-                  >
-                    <div className={`w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-300 flex items-center justify-center ${modalData.isSensitive ? 'translate-x-5' : 'translate-x-0'}`}>
-                      {modalData.isSensitive ? <Lock size={10} className="text-indigo-600" /> : <Unlock size={10} className="text-slate-400" />}
                     </div>
+                  </div>
+                )}
+              </motion.div>
+            ) : (
+              <motion.div key="audit" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+                <AuditTrail
+                  logs={logs}
+                  loading={logsLoading}
+                  pagination={logsPagination}
+                  onPageChange={fetchLogs}
+                  dk={dk}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* ── Create / Edit Modal ── */}
+          <AnimatePresence>
+            {modalOpen && (
+              <ModalOverlay onClose={() => setModalOpen(false)} dk={dk}>
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-3 rounded-xl ${dk ? 'bg-indigo-500/10 text-indigo-400' : 'bg-indigo-50 text-indigo-600'}`}>
+                      {isEditing ? <Settings size={22} /> : <Plus size={22} />}
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-black tracking-tight">{isEditing ? 'Update Configuration' : 'Create Configuration'}</h2>
+                      <p className={`text-xs mt-0.5 ${dk ? 'text-white/30' : 'text-slate-400'}`}>Values are AES-256 encrypted before storage</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setModalOpen(false)} className={`p-2.5 rounded-xl transition-colors ${dk ? 'hover:bg-white/5' : 'hover:bg-slate-100'}`}>
+                    <X size={20} className="opacity-40" />
                   </button>
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className={`w-full py-4 rounded-xl font-bold text-sm uppercase tracking-wider transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3 ${dk ? 'bg-indigo-600 hover:bg-indigo-500 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg'}`}
-                >
-                  {saving ? <RefreshCw className="animate-spin" size={16} /> : <Save size={16} />}
-                  {isEditing ? 'Update Configuration' : 'Create Configuration'}
-                </button>
-              </form>
-            </ModalOverlay>
-          )}
-        </AnimatePresence>
+                <form onSubmit={handleSave} className="space-y-5">
+                  <FormField label="Variable Key" dk={dk}>
+                    <input
+                      disabled={isEditing}
+                      type="text"
+                      placeholder="e.g. JWT_SECRET"
+                      className={`w-full px-4 py-3 rounded-xl border text-sm font-mono focus:outline-none focus:ring-2 transition-all ${inputCls} ${isEditing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      value={modalData.key}
+                      onChange={e => setModalData({ ...modalData, key: e.target.value.toUpperCase().replace(/\s/g, '_') })}
+                    />
+                  </FormField>
 
-        {/* ── History / Rollback Modal ── */}
-        <AnimatePresence>
-          {historyModalOpen && (
-            <ModalOverlay onClose={() => setHistoryModalOpen(false)} dk={dk}>
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <div className={`p-3 rounded-xl ${dk ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-50 text-amber-600'}`}>
-                    <History size={22} />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-black tracking-tight">Version History</h2>
-                    <p className={`text-xs font-mono mt-0.5 ${dk ? 'text-white/40' : 'text-slate-400'}`}>{historyKey}</p>
-                  </div>
-                </div>
-                <button onClick={() => setHistoryModalOpen(false)} className={`p-2.5 rounded-xl transition-colors ${dk ? 'hover:bg-white/5' : 'hover:bg-slate-100'}`}>
-                  <X size={20} className="opacity-40" />
-                </button>
-              </div>
+                  <FormField label="Value" dk={dk}>
+                    <textarea
+                      rows={3}
+                      placeholder="Enter value..."
+                      className={`w-full px-4 py-3 rounded-xl border text-sm font-mono focus:outline-none focus:ring-2 transition-all resize-none ${inputCls}`}
+                      value={modalData.value}
+                      onChange={e => setModalData({ ...modalData, value: e.target.value })}
+                    />
+                  </FormField>
 
-              {historyLoading ? (
-                <div className="flex justify-center py-12">
-                  <RefreshCw size={24} className="animate-spin text-indigo-500" />
-                </div>
-              ) : versions.length === 0 ? (
-                <div className="text-center py-12">
-                  <History size={32} className={`mx-auto mb-3 ${dk ? 'text-white/10' : 'text-slate-200'}`} />
-                  <p className={`text-sm ${dk ? 'text-white/30' : 'text-slate-400'}`}>No previous versions recorded yet</p>
-                </div>
-              ) : (
-                <div className="space-y-3 max-h-96 overflow-y-auto pr-1 custom-scrollbar">
-                  {versions.map(v => (
-                    <div key={v._id} className={`flex items-center justify-between p-4 rounded-xl border transition-colors ${dk ? 'border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04]' : 'border-slate-100 bg-slate-50 hover:bg-slate-100'}`}>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className={`text-xs font-black px-2 py-0.5 rounded-md ${dk ? 'bg-indigo-500/20 text-indigo-400' : 'bg-indigo-100 text-indigo-700'}`}>v{v.version}</span>
-                          {v.isSensitive && <Lock size={10} className="text-amber-500" />}
-                          <span className={`text-xs ${dk ? 'text-white/20' : 'text-slate-400'}`}>
-                            {new Date(v.createdAt).toLocaleString()}
-                          </span>
-                        </div>
-                        <p className={`text-xs font-mono truncate ${dk ? 'text-white/40' : 'text-slate-500'}`}>
-                          {v.value}
-                        </p>
-                        {v.changedBy && (
-                          <p className={`text-[10px] mt-1 ${dk ? 'text-white/15' : 'text-slate-300'}`}>
-                            by {v.changedBy.name || v.changedBy.email}
-                          </p>
-                        )}
-                      </div>
-                      <button
-                        onClick={() => handleRollback(historyKey, v.version)}
-                        className={`ml-4 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all active:scale-95 ${dk ? 'bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/20' : 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200'}`}
+                  <FormField label="Description (optional)" dk={dk}>
+                    <input
+                      type="text"
+                      placeholder="What this config is used for..."
+                      className={`w-full px-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 transition-all ${inputCls}`}
+                      value={modalData.description}
+                      onChange={e => setModalData({ ...modalData, description: e.target.value })}
+                    />
+                  </FormField>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField label="Category" dk={dk}>
+                      <select
+                        className={`w-full px-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 transition-all ${inputCls}`}
+                        value={modalData.category}
+                        onChange={e => setModalData({ ...modalData, category: e.target.value })}
                       >
-                        <RotateCcw size={12} />
-                        Restore
-                      </button>
+                        {CATEGORIES.filter(c => c.value !== 'all').map(c => (
+                          <option key={c.value} value={c.value}>{c.label}</option>
+                        ))}
+                      </select>
+                    </FormField>
+
+                    <FormField label="Environment" dk={dk}>
+                      <select
+                        className={`w-full px-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 transition-all ${inputCls}`}
+                        value={modalData.environment}
+                        onChange={e => setModalData({ ...modalData, environment: e.target.value })}
+                      >
+                        {ENVIRONMENTS.map(e => (
+                          <option key={e.value} value={e.value}>{e.label}</option>
+                        ))}
+                      </select>
+                    </FormField>
+                  </div>
+
+                  {/* Sensitive Toggle */}
+                  <div className={`flex items-center justify-between py-4 px-4 rounded-xl border ${dk ? 'border-white/[0.06] bg-white/[0.02]' : 'border-slate-100 bg-slate-50'}`}>
+                    <div>
+                      <p className="fontsemibold text-sm">Sensitive Value</p>
+                      <p className={`text-xs mt-0.5 ${dk ? 'text-white/30' : 'text-slate-400'}`}>Masked in API responses & audit logs</p>
                     </div>
-                  ))}
+                    <button
+                      type="button"
+                      onClick={() => setModalData({ ...modalData, isSensitive: !modalData.isSensitive })}
+                      className={`w-12 h-7 rounded-full p-1 transition-colors duration-300 ${modalData.isSensitive ? 'bg-indigo-600' : (dk ? 'bg-white/10' : 'bg-slate-300')}`}
+                    >
+                      <div className={`w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-300 flex items-center justify-center ${modalData.isSensitive ? 'translate-x-5' : 'translate-x-0'}`}>
+                        {modalData.isSensitive ? <Lock size={10} className="text-indigo-600" /> : <Unlock size={10} className="text-slate-400" />}
+                      </div>
+                    </button>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className={`w-full py-4 rounded-xl fontsemibold text-sm uppercase tracking-wider transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3 ${dk ? 'bg-indigo-600 hover:bg-indigo-500 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg'}`}
+                  >
+                    {saving ? <RefreshCw className="animate-spin" size={16} /> : <Save size={16} />}
+                    {isEditing ? 'Update Configuration' : 'Create Configuration'}
+                  </button>
+                </form>
+              </ModalOverlay>
+            )}
+          </AnimatePresence>
+
+          {/* ── History / Rollback Modal ── */}
+          <AnimatePresence>
+            {historyModalOpen && (
+              <ModalOverlay onClose={() => setHistoryModalOpen(false)} dk={dk}>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-3 rounded-xl ${dk ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-50 text-amber-600'}`}>
+                      <History size={22} />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-black tracking-tight">Version History</h2>
+                      <p className={`text-xs font-mono mt-0.5 ${dk ? 'text-white/40' : 'text-slate-400'}`}>{historyKey}</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setHistoryModalOpen(false)} className={`p-2.5 rounded-xl transition-colors ${dk ? 'hover:bg-white/5' : 'hover:bg-slate-100'}`}>
+                    <X size={20} className="opacity-40" />
+                  </button>
                 </div>
-              )}
-            </ModalOverlay>
-          )}
-        </AnimatePresence>
+
+                {historyLoading ? (
+                  <div className="flex justify-center py-12">
+                    <RefreshCw size={24} className="animate-spin text-indigo-500" />
+                  </div>
+                ) : versions.length === 0 ? (
+                  <div className="text-center py-12">
+                    <History size={32} className={`mx-auto mb-3 ${dk ? 'text-white/10' : 'text-slate-200'}`} />
+                    <p className={`text-sm ${dk ? 'text-white/30' : 'text-slate-400'}`}>No previous versions recorded yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3 max-h-96 overflow-y-auto pr-1 custom-scrollbar">
+                    {versions.map(v => (
+                      <div key={v._id} className={`flex items-center justify-between p-4 rounded-xl border transition-colors ${dk ? 'border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04]' : 'border-slate-100 bg-slate-50 hover:bg-slate-100'}`}>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className={`text-xs font-black px-2 py-0.5 rounded-md ${dk ? 'bg-indigo-500/20 text-indigo-400' : 'bg-indigo-100 text-indigo-700'}`}>v{v.version}</span>
+                            {v.isSensitive && <Lock size={10} className="text-amber-500" />}
+                            <span className={`text-xs ${dk ? 'text-white/20' : 'text-slate-400'}`}>
+                              {new Date(v.createdAt).toLocaleString()}
+                            </span>
+                          </div>
+                          <p className={`text-xs font-mono truncate ${dk ? 'text-white/40' : 'text-slate-500'}`}>
+                            {v.value}
+                          </p>
+                          {v.changedBy && (
+                            <p className={`text-[10px] mt-1 ${dk ? 'text-white/15' : 'text-slate-300'}`}>
+                              by {v.changedBy.name || v.changedBy.email}
+                            </p>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => handleRollback(historyKey, v.version)}
+                          className={`ml-4 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs fontsemibold uppercase tracking-wider transition-all active:scale-95 ${dk ? 'bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/20' : 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200'}`}
+                        >
+                          <RotateCcw size={12} />
+                          Restore
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </ModalOverlay>
+            )}
+          </AnimatePresence>
 
         </div>
       </main>
@@ -799,7 +798,7 @@ const StatCard = ({ label, value, icon: Icon, color, dk }) => (
   <div className={`p-5 rounded-2xl border transition-colors ${dk ? 'bg-[#0a0a0f] border-white/[0.06]' : 'bg-white border-slate-200 shadow-sm'}`}>
     <div className="flex items-center justify-between">
       <div>
-        <p className={`text-[10px] uppercase font-bold tracking-wider mb-1 ${dk ? 'text-white/25' : 'text-slate-400'}`}>{label}</p>
+        <p className={`text-[10px] uppercase fontsemibold tracking-wider mb-1 ${dk ? 'text-white/25' : 'text-slate-400'}`}>{label}</p>
         <p className="text-2xl font-black" style={{ color }}>{value}</p>
       </div>
       <div className={`p-3 rounded-xl ${dk ? 'bg-white/[0.03]' : 'bg-slate-50'}`}>
@@ -814,11 +813,10 @@ const SelectFilter = ({ value, onChange, options, dk }) => (
     <select
       value={value}
       onChange={e => onChange(e.target.value)}
-      className={`appearance-none pl-4 pr-10 py-3 rounded-xl border text-xs font-bold uppercase tracking-wider cursor-pointer focus:outline-none focus:ring-2 transition-all ${
-        dk
-          ? 'bg-transparent border-white/[0.08] text-white/60 focus:border-indigo-500/50 focus:ring-indigo-500/20'
-          : 'bg-white border-slate-200 text-slate-600 focus:border-indigo-500 focus:ring-indigo-500/20 shadow-sm'
-      }`}
+      className={`appearance-none pl-4 pr-10 py-3 rounded-xl border text-xs fontsemibold uppercase tracking-wider cursor-pointer focus:outline-none focus:ring-2 transition-all ${dk
+        ? 'bg-transparent border-white/[0.08] text-white/60 focus:border-indigo-500/50 focus:ring-indigo-500/20'
+        : 'bg-white border-slate-200 text-slate-600 focus:border-indigo-500 focus:ring-indigo-500/20 shadow-sm'
+        }`}
     >
       {options.map(o => (
         <option key={o.value} value={o.value} className={dk ? 'bg-[#111]' : 'bg-white'}>{o.label}</option>
@@ -830,7 +828,7 @@ const SelectFilter = ({ value, onChange, options, dk }) => (
 
 const FormField = ({ label, children, dk }) => (
   <div>
-    <label className={`text-[10px] uppercase font-bold tracking-wider mb-2 block ${dk ? 'text-white/30' : 'text-slate-400'}`}>{label}</label>
+    <label className={`text-[10px] uppercase fontsemibold tracking-wider mb-2 block ${dk ? 'text-white/30' : 'text-slate-400'}`}>{label}</label>
     {children}
   </div>
 );
@@ -869,25 +867,25 @@ const ConfigRow = ({ config, idx, total, dk, revealedValue, onReveal, openMenu, 
         <div className="flex items-center gap-3 md:w-[240px] min-w-0">
           <div className="w-1 h-8 rounded-full flex-shrink-0" style={{ backgroundColor: catColor }} />
           <div className="min-w-0">
-            <h3 className={`font-bold text-sm font-mono truncate transition-colors ${dk ? 'group-hover:text-indigo-400' : 'group-hover:text-indigo-600'}`}>
+            <h3 className={`fontsemibold text-sm font-mono truncate transition-colors ${dk ? 'group-hover:text-indigo-400' : 'group-hover:text-indigo-600'}`}>
               {config.key}
             </h3>
             <div className="flex items-center gap-1.5 mt-1.5">
               <span
-                className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md"
+                className="text-[9px] fontsemibold uppercase tracking-wider px-1.5 py-0.5 rounded-md"
                 style={{ backgroundColor: catColor + '18', color: catColor }}
               >
                 {getCategoryLabel(config.category)}
               </span>
               {config.environment !== 'all' && (
                 <span
-                  className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md"
+                  className="text-[9px] fontsemibold uppercase tracking-wider px-1.5 py-0.5 rounded-md"
                   style={{ backgroundColor: getEnvColor(config.environment) + '18', color: getEnvColor(config.environment) }}
                 >
                   {config.environment}
                 </span>
               )}
-              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${dk ? 'bg-white/5 text-white/25' : 'bg-slate-100 text-slate-400'}`}>
+              <span className={`text-[9px] fontsemibold px-1.5 py-0.5 rounded-md ${dk ? 'bg-white/5 text-white/25' : 'bg-slate-100 text-slate-400'}`}>
                 v{config.version}
               </span>
             </div>
@@ -903,11 +901,10 @@ const ConfigRow = ({ config, idx, total, dk, revealedValue, onReveal, openMenu, 
           >
             {isRevealed ? <EyeOff size={15} /> : <Eye size={15} />}
           </button>
-          <div className={`flex-1 px-3 py-2 rounded-lg border font-mono text-xs truncate ${
-            dk
-              ? `border-white/[0.05] ${isRevealed ? 'bg-indigo-500/5 text-indigo-300 border-indigo-500/20' : 'bg-white/[0.02] text-white/25'}`
-              : `${isRevealed ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-slate-50 text-slate-400 border-slate-100'}`
-          }`}>
+          <div className={`flex-1 px-3 py-2 rounded-lg border font-mono text-xs truncate ${dk
+            ? `border-white/[0.05] ${isRevealed ? 'bg-indigo-500/5 text-indigo-300 border-indigo-500/20' : 'bg-white/[0.02] text-white/25'}`
+            : `${isRevealed ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-slate-50 text-slate-400 border-slate-100'}`
+            }`}>
             {displayValue}
           </div>
           {config.isSensitive && <Lock size={12} className="text-amber-500/60 flex-shrink-0" />}
@@ -916,7 +913,7 @@ const ConfigRow = ({ config, idx, total, dk, revealedValue, onReveal, openMenu, 
         {/* Meta + Actions */}
         <div className="flex items-center gap-4 md:w-[200px] justify-end">
           <div className="text-right">
-            <p className={`text-[10px] font-bold whitespace-nowrap ${dk ? 'text-white/20' : 'text-slate-300'}`}>
+            <p className={`text-[10px] fontsemibold whitespace-nowrap ${dk ? 'text-white/20' : 'text-slate-300'}`}>
               {config.updatedAt ? new Date(config.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}
             </p>
             {config.description && (
@@ -963,7 +960,7 @@ const ConfigRow = ({ config, idx, total, dk, revealedValue, onReveal, openMenu, 
 const MenuButton = ({ icon: Icon, label, color, onClick, dk }) => (
   <button
     onClick={onClick}
-    className={`w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-2.5 text-xs font-bold tracking-wide transition-colors ${dk ? 'hover:bg-white/5 text-white/50 hover:text-white' : 'hover:bg-slate-50 text-slate-600'}`}
+    className={`w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-2.5 text-xs fontsemibold tracking-wide transition-colors ${dk ? 'hover:bg-white/5 text-white/50 hover:text-white' : 'hover:bg-slate-50 text-slate-600'}`}
   >
     <Icon size={14} style={{ color }} />
     {label}
@@ -1011,9 +1008,9 @@ const AuditTrail = ({ logs, loading, pagination, onPageChange, dk }) => {
                   >
                     {log.action}
                   </span>
-                  <span className={`text-sm font-mono font-bold ${dk ? 'text-white/80' : 'text-slate-700'}`}>{log.key}</span>
+                  <span className={`text-sm font-mono fontsemibold ${dk ? 'text-white/80' : 'text-slate-700'}`}>{log.key}</span>
                   {log.version && (
-                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${dk ? 'bg-white/5 text-white/20' : 'bg-slate-100 text-slate-400'}`}>
+                    <span className={`text-[9px] fontsemibold px-1.5 py-0.5 rounded ${dk ? 'bg-white/5 text-white/20' : 'bg-slate-100 text-slate-400'}`}>
                       v{log.version}
                     </span>
                   )}
@@ -1055,11 +1052,10 @@ const AuditTrail = ({ logs, loading, pagination, onPageChange, dk }) => {
               <button
                 key={page}
                 onClick={() => onPageChange(page)}
-                className={`w-9 h-9 rounded-lg text-xs font-bold transition-all ${
-                  pagination.page === page
-                    ? 'bg-indigo-600 text-white'
-                    : (dk ? 'bg-white/5 text-white/40 hover:bg-white/10' : 'bg-slate-100 text-slate-500 hover:bg-slate-200')
-                }`}
+                className={`w-9 h-9 rounded-lg text-xs fontsemibold transition-all ${pagination.page === page
+                  ? 'bg-indigo-600 text-white'
+                  : (dk ? 'bg-white/5 text-white/40 hover:bg-white/10' : 'bg-slate-100 text-slate-500 hover:bg-slate-200')
+                  }`}
               >
                 {page}
               </button>

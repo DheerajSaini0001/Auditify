@@ -36,9 +36,9 @@ const OptimizationCard = ({
                         <Icon size={24} strokeWidth={2} />
                     </div>
                     <div>
-                        <h3 className={`font-bold text-lg leading-tight mb-1 ${textColor}`}>{title}</h3>
+                        <h3 className={`fontsemibold text-lg leading-tight mb-1 ${textColor}`}>{title}</h3>
                         <div className="flex items-center gap-2 flex-wrap">
-                            <span className={`text-xs font-bold px-2.5 py-1 rounded-md border ${statusBadgeColor}`}>{statusText}</span>
+                            <span className={`text-xs fontsemibold px-2.5 py-1 rounded-md border ${statusBadgeColor}`}>{statusText}</span>
                         </div>
                     </div>
                 </div>
@@ -47,7 +47,7 @@ const OptimizationCard = ({
                     {needsData?.analysis && (
                         <button
                             onClick={onToggle}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${darkMode
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs fontsemibold transition-all ${darkMode
                                 ? "bg-slate-700 hover:bg-slate-600 text-slate-300"
                                 : "bg-slate-100 hover:bg-slate-200 text-slate-600"
                                 }`}
@@ -61,12 +61,12 @@ const OptimizationCard = ({
                         content={
                             <div className="space-y-4 text-left">
                                 <div>
-                                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-blue-500 mb-1">Description</h4>
+                                    <h4 className="text-[10px] fontsemibold uppercase tracking-widest text-blue-500 mb-1">Description</h4>
                                     <p className="text-xs leading-relaxed opacity-90">{description}</p>
                                 </div>
                                 <div className={`h-px w-full ${darkMode ? "bg-slate-800" : "bg-slate-100"}`} />
                                 <div>
-                                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-indigo-500 mb-1">Why it matters</h4>
+                                    <h4 className="text-[10px] fontsemibold uppercase tracking-widest text-indigo-500 mb-1">Why it matters</h4>
                                     <p className="text-xs leading-relaxed opacity-90">{whyItMatters}</p>
                                 </div>
                             </div>

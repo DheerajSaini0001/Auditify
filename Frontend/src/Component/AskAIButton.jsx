@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { formatMarkdown } from '../utils/formatMarkdown.js';
 import './aiAssistant.css';
 import { Sparkles, X } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const AskAIButton = ({ finding, auditScore, darkMode, meta }) => {
+  const { isAuthenticated } = useAuth();
   const [aiExplanation, setAiExplanation] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -69,6 +71,10 @@ const AskAIButton = ({ finding, auditScore, darkMode, meta }) => {
       setIsLoading(false);
     }
   };
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="mt-4 w-full">

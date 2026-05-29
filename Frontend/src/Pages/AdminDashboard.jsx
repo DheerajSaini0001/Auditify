@@ -144,34 +144,34 @@ const AdminDashboard = () => {
       <div className="flex flex-col p-4 gap-4 overflow-y-auto">
         {/* Create Project Button */}
         <div className="relative">
-          <button
-            onClick={() => setCreateDropdownOpen(!createDropdownOpen)}
-            className="w-full flex items-center justify-between px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl fontsemibold text-sm transition-all shadow-md shadow-emerald-600/10 active:scale-[0.98]"
-          >
-            <div className="flex items-center gap-2">
-              <Plus size={16} />
-              <span>Create Project</span>
-            </div>
-            <ChevronDown size={14} className="opacity-80" />
-          </button>
-
-          {createDropdownOpen && (
-            <div className={`absolute top-full left-0 right-0 mt-1.5 rounded-xl shadow-xl z-50 py-1 animate-in fade-in slide-in-from-top-1 duration-150 border transition-all duration-300 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
-              <button
-                onClick={() => { setCreateDropdownOpen(false); navigate("/dashboard/add-website"); }}
-                className={`w-full text-left px-4 py-2 text-xs fontsemibold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-50'}`}
-              >
-                Add Google Search Console Site
-              </button>
-              <button
-                onClick={() => { setCreateDropdownOpen(false); navigate("/bulk-audit"); }}
-                className={`w-full text-left px-4 py-2 text-xs fontsemibold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-50'}`}
-              >
-                Quick Manual Audit Page
-              </button>
-            </div>
-          )}
-        </div>
+                <button
+                  onClick={() => setCreateDropdownOpen(!createDropdownOpen)}
+                  className="w-full flex items-center justify-between px-4 py-2.5 bg-orange-600 hover:bg-orange-350 text-white rounded-xl fontsemibold text-sm transition-all shadow-md shadow-orange-600/10 active:scale-[0.98]"
+                >
+                  <div className="flex items-center gap-2">
+                    <Plus size={16} />
+                    <span>Create Project</span>
+                  </div>
+                  <ChevronDown size={14} className="opacity-80" />
+                </button>
+      
+                {createDropdownOpen && (
+                  <div className={`absolute top-full left-0 right-0 mt-1.5 rounded-xl shadow-xl z-50 py-1 animate-in fade-in slide-in-from-top-1 duration-150 border transition-all duration-300 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+                    <button
+                      onClick={() => { setCreateDropdownOpen(false); navigate("/dashboard/add-website"); }}
+                      className={`w-full text-left px-4 py-2 text-xs fontsemibold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                    >
+                      Add Google Search Console Site
+                    </button>
+                    <button
+                      onClick={() => { setCreateDropdownOpen(false); navigate("/bulk-audit"); }}
+                      className={`w-full text-left px-4 py-2 text-xs fontsemibold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                    >
+                      Quick Manual Audit Page
+                    </button>
+                  </div>
+                )}
+              </div>
 
         {/* Search project box */}
         <div className="relative">
@@ -514,7 +514,7 @@ const AdminDashboard = () => {
     <div className={`w-full min-h-[calc(100vh-4rem)] flex flex-col md:flex-row font-sans transition-colors duration-300 ${darkMode ? 'bg-slate-950 text-slate-50 dark' : 'bg-slate-50 text-slate-900'}`}>
 
       {/* ── DESKTOP SIDEBAR ── */}
-      <aside className={`hidden md:flex flex-col w-60 shrink-0 border-r justify-between transition-colors duration-300 sticky top-16 h-[calc(100vh-4rem)] ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}>
+      <aside className={`hidden md:flex flex-col w-60 shrink-0 border-r justify-between transition-colors duration-300 sticky top-0 h-[calc(100vh-4rem)] ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}>
         <SidebarContent />
       </aside>
 

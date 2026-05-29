@@ -577,7 +577,7 @@ const DashboardPage = () => {
 
   // Sidebar content
   const SidebarContent = () => (
-    <div className="flex flex-col h-full justify-between select-none">
+    <div className="flex flex-col h-full  justify-between select-none">
       <div className="flex flex-col p-4 gap-4 overflow-y-auto">
         {/* Create Project Button */}
         <div className="relative">
@@ -731,7 +731,7 @@ const DashboardPage = () => {
     <div className={`w-full min-h-[calc(100vh-4rem)] flex flex-col md:flex-row font-sans transition-colors duration-300 ${darkMode ? 'bg-slate-950 text-slate-50 dark' : 'bg-slate-50 text-slate-900'}`}>
 
       {/* ── DESKTOP SIDEBAR ── */}
-      <aside className={`hidden md:flex flex-col w-60 shrink-0 border-r justify-between transition-colors duration-300 sticky top-16 h-[calc(100vh-4rem)] ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}>
+      <aside className={`hidden md:flex flex-col w-60 shrink-0 border-r justify-between transition-colors duration-300 sticky top-0 h-[calc(100vh-4rem)] ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}>
         <SidebarContent />
       </aside>
 

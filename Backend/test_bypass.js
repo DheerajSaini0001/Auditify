@@ -4,7 +4,9 @@ async function test() {
   const url = 'https://www.fusz.com/';
   console.log(`Starting test for ${url}...`);
   try {
+    const { detectChallenge } = await import('./utils/puppeteer_cheerio.js');
     const result = await Puppeteer_Cheerio(url);
+    console.log('detectChallenge:', await detectChallenge(result.page));
     console.log('Test complete!');
     console.log('Is Bot Protected:', result.isBotProtected);
     

@@ -41,6 +41,7 @@ function checkHTTPS(url) {
 
 // SSL (Secure Sockets Layer) Connection
 function checkSSLConnection(response) {
+  if (!response) return { score: 0, status: "fail", details: "No response available for SSL check", meta: {}, analysis: { cause: "No response received.", recommendation: "Check server connectivity." } };
   if (!response.ok()) {
     return {
       score: 0,

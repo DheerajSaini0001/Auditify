@@ -326,11 +326,11 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                     >
                         <motion.div
                             animate={focused
-                                ? { boxShadow: '0 0 0 2px rgba(234,88,12,0.35), 0 20px 60px -10px rgba(0,0,0,0.6)' }
-                                : { boxShadow: '0 20px 60px -10px rgba(0,0,0,0.5)' }
+                                ? { boxShadow: '0 0 0 2px rgba(234,88,12,0.35), 0 40px 100px rgba(0,0,0,0.6)' }
+                                : { boxShadow: '0 40px 100px rgba(0,0,0,0.5)' }
                             }
                             transition={{ duration: 0.3 }}
-                            className="relative z-50 rounded-2xl border overflow-visible bg-[#0D1030]/80 border-white/10 backdrop-blur-xl"
+                            className="relative z-10 rounded-[2.5rem] border p-7 space-y-5 bg-[#0D1030]/70 border-white/8 backdrop-blur-2xl"
                         >
                             {/* Input row */}
                             <div className="flex items-center px-4 h-14 gap-3">
@@ -352,7 +352,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                             </div>
 
                             {/* Divider + Options row */}
-                            <div className={`flex flex-wrap lg:flex-nowrap items-center gap-2 px-3 pb-3 pt-1`}>
+                            <div className="flex flex-wrap lg:flex-nowrap items-center gap-3">
                                 <CustomDropdown
                                     value={device}
                                     onChange={setDevice}
@@ -385,18 +385,18 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                                 <button
                                     type="submit"
                                     disabled={isLoading || !url.trim()}
-                                    className={`ml-auto flex items-center gap-2 px-5 h-10 rounded-xl font-semibold text-[13px] tracking-tight shrink-0
+                                    className={`ml-auto flex items-center gap-2 px-6 h-12 rounded-xl font-bold text-[14px] tracking-tight shrink-0
                                         transition-all duration-200 active:scale-[0.97]
                                         ${isLoading || !url.trim()
                                             ? 'bg-slate-800 text-slate-600 cursor-not-allowed'
                                             : 'bg-[#ea580c] hover:bg-[#c2410c] text-white shadow-lg shadow-orange-600/25'}`}
                                 >
                                     {isLoading ? (
-                                        <Loader2 className="animate-spin w-4 h-4" />
+                                        <Loader2 className="animate-spin w-5 h-5" />
                                     ) : (
                                         <>
                                             Run Audit
-                                            <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
+                                            <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
                                         </>
                                     )}
                                 </button>
@@ -439,13 +439,19 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                 >
 
 
-                    <div className="relative z-10 rounded-[2.5rem] border p-7 space-y-5 bg-[#0D1030]/70 border-white/8 backdrop-blur-2xl shadow-[0_40px_100px_rgba(0,0,0,0.5)]">
+                    <div className={`relative flex flex-col gap-4 p-6 rounded-2xl border
+                ${darkMode
+                    ? 'bg-white/[0.03] border-white/8 hover:border-white/14'
+                    : 'bg-white border-slate-200 hover:border-slate-300 shadow-sm'}
+                transition-colors duration-300`}>
                         {/* Browser chrome */}
                         <div className="flex items-center gap-2 mb-1">
                             {['bg-rose-400/50', 'bg-amber-400/50', 'bg-emerald-400/50'].map((c, i) => (
                                 <div key={i} className={`w-3 h-3 rounded-full ${c}`} />
                             ))}
-                            <div className="ml-3 h-5 w-44 rounded-lg bg-white/6" />
+
+                            <div className="ml-3 h-5 w-44 rounded-lg bg-white/6 pl-2 flex items-center" >YourWebsite.com</div>
+                            
                         </div>
 
                         {/* Header row */}

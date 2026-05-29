@@ -41,14 +41,14 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
   };
 
   // Styles
-  const navbarClass = "bg-[#1B1464]/90 border-b border-white/10  text-white shadow-[0_4px_20px_rgba(0,0,0,0.25)]";
+  const navbarClass = "bg-[#0030c6]  text-white shadow-[0_4px_20px_rgba(0,0,0,0.25)]";
 
   const buttonClass = "bg-white/5 hover:bg-white/10 border-white/10 text-slate-300 hover:text-white";
 
 
   return (
     <nav className={`sticky top-0 w-full z-50 transition-all duration-300 ${navbarClass}`}>
-      <div className="w-full px-4 sm:px-6 lg:px-8 bg-[#1B1464]/90">
+      <div className="w-full py-1 px-4 sm:px-6 lg:px-8 bg-[#1B1464]/90">
         <div className={`flex items-center justify-between h-16 `}>
 
           {/* Left Section: Mobile Menu & Logo */}
@@ -71,12 +71,12 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
               className="flex items-center gap-3 group focus:outline-none"
             >
               <div className="relative">
-                <div className={`absolute -inset-1 rounded-full blur-md opacity-40 group-hover:opacity-60 transition duration-500 ${darkMode ? "bg-emerald-500" : "bg-emerald-400"}`}></div>
+                <div className={`absolute opacity-0 rounded-full   ${darkMode ? "bg-emerald-500" : "bg-emerald-400"}`}></div>
                 <img
                   src={darkMode ? Assets.Logo : Assets.DarkLogo}
                   alt="DealerPulse Logo"
                   title="DealerPulse Logo"
-                  className="relative h-14 w-auto transition-transform duration-300 group-hover:scale-105"
+                  className="relative h-14 w-auto  -hover:scale-105"
                 />
               </div>
 

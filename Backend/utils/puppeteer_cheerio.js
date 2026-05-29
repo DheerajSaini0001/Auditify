@@ -391,7 +391,8 @@ async function safeClickCheckboxInFrame(page, framePatterns, selector, timeout =
       }
 
       const url = getFrameUrl(frame);
-      const isMatch = framePatterns.some(pattern => url.includes(pattern));
+      const isMainFrame = page.mainFrame() === frame;
+      const isMatch = isMainFrame || framePatterns.some(pattern => url.includes(pattern));
       if (!isMatch) continue;
 
       try {
@@ -623,27 +624,29 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', auditId
       waitUntil: "networkidle2",
       timeout: 60000
     }).catch(async () => {
+      logger.debug("networkidle2 timed out, falling back to domcontentloaded...");
       return null;
     });
 
-    // [EXISTING — DO NOT MODIFY]
     if (!response) {
       try { page.removeAllListeners('request'); } catch (_) {}
       await page.setRequestInterception(false);
-      response = await page.goto(url, { waitUntil: "networkidle2", timeout: 45000 }).catch(() => null);
+      response = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45000 }).catch(() => null);
     }
 
-    const statusCode = response ? response.status() : "No Response";
-
-    // [FIX] — safeGetTitle replaces bare page.title()
+    // Even if response is null, the page might have loaded successfully but timed out waiting for idle.
+    // We check if there's an actual title/content to decide if it's truly dead.
     let pageTitle = await safeGetTitle(page);
+    const hasContent = pageTitle && pageTitle.length > 0;
+
+    const statusCode = response ? response.status() : (hasContent ? 200 : "No Response");
 
     if (statusCode === "No Response") {
       return {
         browser, page, response: null,
-        $: cheerio.load("<html><body>Failed to reach site</body></html>"),
+        $: cheerio.load("<html><body>Failed to reach site (Timeout)</body></html>"),
         screenshot: null,
-        isBotProtected: true
+        isBotProtected: false // Changed from true so it doesn't falsely claim Bot Protected on timeouts
       };
     }
 

@@ -1022,6 +1022,18 @@ const evaluateRenderBlocking = async (page) => {
 
 // Redirect Chains
 const evaluateRedirectChains = (response) => {
+  if (!response) {
+    return {
+      score: 100,
+      status: "pass",
+      details: "No response available to evaluate redirects.",
+      meta: { chainLength: 0 },
+      analysis: {
+        cause: "Page timed out before networkidle2.",
+        recommendation: "Ensure server is fast."
+      }
+    };
+  }
   const chain = response.request().redirectChain();
   const redirectDetails = chain.map(req => req.url()).concat(response.url());
   const hops = chain.length;

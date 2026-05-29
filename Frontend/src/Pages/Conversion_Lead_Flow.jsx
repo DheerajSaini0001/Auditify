@@ -769,31 +769,32 @@ const Conversion_Lead_Flow_Inner = React.memo(({ data, loading, darkMode }) => {
                       Optimize your checkout paths, signup structures, value arguments, and Call-to-Actions to maximize page ROI.
                     </p>
 
-                    <div className="flex flex-wrap items-center gap-4 pt-2">
-                      <div className={`flex items-center gap-5 px-5 py-3 rounded-2xl border ${darkMode ? "bg-slate-950/40 border-slate-850" : "bg-white border-slate-250 shadow-sm"}`}>
-                        <div className="flex items-center gap-2">
-                          <CheckCircle size={18} className="text-emerald-500" />
-                          <span className={`text-xs fontsemibold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{passedCount} Optimized</span>
-                        </div>
-                        <div className={`w-px h-4 ${darkMode ? "bg-slate-800" : "bg-slate-200 hidden md:block"}`}></div>
-                        <div className="flex items-center gap-2">
-                          <AlertTriangle size={18} className="text-amber-500" />
-                          <span className={`text-xs fontsemibold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{warningCount} Warning</span>
-                        </div>
-                        <div className={`w-px h-4 ${darkMode ? "bg-slate-800" : "bg-slate-200 hidden md:block"}`}></div>
-                        <div className="flex items-center gap-2">
-                          <XCircle size={18} className="text-rose-500" />
-                          <span className={`text-xs fontsemibold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{failedCount} Failed</span>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => setSelectedMetricInfo(scoreCalculationInfo)}
-                        className={`flex items-center gap-2 text-sm fontsemibold transition-all ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-700"}`}
-                      >
-                        <Info size={16} />
-                        <span className="border-b border-transparent hover:border-current">Metric Methodology</span>
-                      </button>
-                    </div>
+                    <div className={`flex flex-wrap items-center ${data.report === "All" ? "gap-6" : "gap-5"}`}>
+                                         <div className={`flex items-center ${data.report === "All" ? "gap-5" : "gap-4"}`}>
+                                           <div className="flex items-center gap-2">
+                                             <CheckCircle size={18} className="text-emerald-500" />
+                                             <span className={`text-xs fontsemibold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{passedCount} Passed</span>
+                                           </div>
+                                           {warningCount > 0 && (
+                                             <div className="flex items-center gap-2">
+                                               <AlertTriangle size={18} className="text-amber-500" />
+                                               <span className={`text-xs fontsemibold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{warningCount} Warning</span>
+                                             </div>
+                                           )}
+                                           <div className="flex items-center gap-2">
+                                             <XCircle size={18} className="text-rose-500" />
+                                             <span className={`text-xs fontsemibold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{failedCount} Failed</span>
+                                           </div>
+                                         </div>
+                                         <div className={`w-px h-4 ${darkMode ? "bg-slate-800" : "bg-slate-200 hidden md:block"}`}></div>
+                                         <button
+                                           onClick={() => setSelectedMetricInfo(scoreCalculationInfo)}
+                                           className={`flex items-center gap-2 text-sm fontsemibold transition-all ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-700"}`}
+                                         >
+                                           <Info size={16} />
+                                           <span className="border-b border-transparent hover:border-current">Metric Methodology</span>
+                                         </button>
+                                       </div>
                   </div>
 
                   <div className="relative flex-shrink-0 group cursor-default order-1 md:order-2">

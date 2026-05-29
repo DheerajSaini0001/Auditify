@@ -83,16 +83,12 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
   return (
     <div className={`w-full min-h-screen ${mainBg} transition-colors duration-300 relative overflow-hidden`}>
       {/* Background Decorative Elements */}
-      <div className="absolute top-0 left-0 w-full h-[500px] pointer-events-none overflow-hidden">
-        <div className={`absolute -top-24 -left-24 w-96 h-96 rounded-full blur-[120px] opacity-20 ${darkMode ? "bg-blue-600" : "bg-blue-400"}`}></div>
-        <div className={`absolute top-48 -right-24 w-80 h-80 rounded-full blur-[100px] opacity-15 ${darkMode ? "bg-indigo-600" : "bg-indigo-400"}`}></div>
-        <div className={`absolute -bottom-12 left-1/2 -translate-x-1/2 w-full max-w-4xl h-64 rounded-full blur-[150px] opacity-5 ${darkMode ? "bg-purple-600" : "bg-purple-400"}`}></div>
-      </div>
+     
 
       <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-4"} pb-16 space-y-6 relative z-10`}>
 
         {/* ✅ Card 1: URL Header Card */}
-        <div className={`rounded-[2.5rem] overflow-hidden transition-all duration-500 transform hover:shadow-2xl ${darkMode ? "bg-slate-900/40 backdrop-blur-xl border border-slate-800 shadow-2xl shadow-black/40" : "bg-white/60 backdrop-blur-xl border border-slate-200 shadow-2xl shadow-slate-200/40"}`}>
+        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
           <UrlHeader
             data={data}
             darkMode={darkMode}
@@ -103,8 +99,9 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
           />
         </div>
 
-        <div className={`rounded-[2.5rem] overflow-hidden transition-all duration-500 transform hover:shadow-2xl ${darkMode ? "bg-slate-900/40 backdrop-blur-xl border border-slate-800 shadow-2xl shadow-black/40" : "bg-white/60 backdrop-blur-xl border border-slate-200 shadow-2xl shadow-slate-200/40"}`}>
-          {loading || !data?.technicalPerformance ? (
+        {/* ✅ Card 2: Overview / Preview Card */}
+        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
+            {loading || !data?.technicalPerformance ? (
             <div className={`flex flex-col xl:flex-row ${data?.report === "All" ? "" : "min-h-[300px]"}`}>
               {/* Left Panel: Live Preview (Only if not All) */}
               {data?.report !== "All" && (
@@ -170,14 +167,12 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                     </div>
 
                     {/* Circular Progress */}
-                    <div className="relative flex-shrink-0 group cursor-default order-1 md:order-2 animate-in zoom-in duration-1000 delay-300">
-                      <div className={`absolute -inset-10 rounded-full blur-[40px] opacity-30 transition-all duration-700 group-hover:opacity-50 group-hover:blur-[60px] ${overallScore >= 80 ? "bg-emerald-500" : overallScore >= 50 ? "bg-amber-500" : "bg-rose-500"}`}></div>
-                      <div className="relative z-10">
-                        <CircularProgress value={overallScore} size={data?.report === "All" ? 200 : 160} stroke={16} />
-                        <div className="absolute inset-0 flex items-center justify-center flex-col gap-0.5">
-                          <span className={`text-4xl ${data?.report === "All" ? "lg:text-6xl" : "lg:text-5xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>{overallScore}%</span>
-                          <span className="text-[11px] fontsemibold uppercase tracking-[0.25em] opacity-40">SCORE</span>
-                        </div>
+                    <div className="relative flex-shrink-0 group cursor-default order-1 md:order-2">
+                      <div className={`absolute -inset-8 rounded-full blur-3xl opacity-25 transition-opacity duration-700 group-hover:opacity-40 ${overallScore >= 80 ? "bg-emerald-500" : overallScore >= 50 ? "bg-amber-500" : "bg-rose-500"}`}></div>
+                      <CircularProgress value={overallScore} size={data?.report === "All" ? 180 : 150} stroke={14} />
+                      <div className="absolute inset-0 flex items-center justify-center flex-col gap-0.5">
+                        <span className={`${data?.report === "All" ? "text-5xl" : "text-3xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>{overallScore}%</span>
+                        <span className="text-[11px] fontsemibold uppercase tracking-[0.2em] opacity-50">SCORE</span>
                       </div>
                     </div>
                   </div>

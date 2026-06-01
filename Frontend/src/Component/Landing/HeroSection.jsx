@@ -341,16 +341,16 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
 
                     {/* Headline */}
                     <motion.div variants={item} className="space-y-4">
-                        <h2 className="text-2xl lg:text-[4.5rem] font-black leading-[1.05] tracking-[-0.03em] text-white">
+                        <h2 className="text-xl lg:text-[3.5rem] font-extrabold leading-[1.05] tracking-[-0.03em] text-white">
                             Your Dealership,{" "}
                             <br className="hidden lg:block" />
                             <span className="relative inline-block">
-                                <span className="text-[#EA580B]">
+                                <span className="text-xl lg:text-[3.5rem] font-extrabold leading-[1.05] tracking-[-0.03em] text-[#EA580B]">
                                     Fully Audited.
                                 </span>
                                 {/* Underline accent */}
                                 <svg className="absolute -bottom-1 left-0 w-full" height="6" viewBox="0 0 300 6" fill="none" preserveAspectRatio="none">
-                                    <path d="M0 5 Q75 1 150 4 T300 3" stroke="#ea580c" strokeWidth="3" strokeLinecap="round" fill="none" />
+                                    <path d="M0 5 Q75 1 150 4 T300 3" stroke="#ea580c" strokeWidth="2" strokeLinecap="round" fill="none" vectorEffect="non-scaling-stroke" />
                                 </svg>
                             </span>
                         </h2>

@@ -86,6 +86,84 @@ class AEOService {
         };
     }
 
+    static async runAuditStream(url, $, htmlBody, performanceScore = 100, onSignalComplete) {
+        if (!$) {
+            $ = cheerio.load(htmlBody);
+        }
+
+        const runAndEmit = async (signalKey, fn) => {
+            try {
+                const result = await fn();
+                if (onSignalComplete) onSignalComplete(signalKey, result);
+                return result;
+            } catch (err) {
+                console.error(`Error in AEO signal ${signalKey}:`, err);
+                const errorResult = { score: 0, error: err.message };
+                if (onSignalComplete) onSignalComplete(signalKey, errorResult);
+                return errorResult;
+            }
+        };
+
+        const results = await Promise.all([
+            runAndEmit('answerFirst', () => analyzeAnswerFirst($)),
+            runAndEmit('llmsTxt', () => analyzeLlmsTxt(url)),
+            runAndEmit('schema', () => analyzeSchemaMarkup($, url)),
+            runAndEmit('structuredContent', () => analyzeStructuredContent($)),
+            runAndEmit('botAccess', () => analyzeBotAccess(url, $)),
+            runAndEmit('markdownHeaders', () => analyzeMarkdownHeaders($)),
+            runAndEmit('citations', () => analyzeCitations($))
+        ]);
+
+        const signals = {
+            answerFirst: results[0],
+            llmsTxt: results[1],
+            schema: results[2],
+            structuredContent: results[3],
+            botAccess: results[4],
+            markdownHeaders: results[5],
+            citations: results[6],
+            pageSpeed: { score: performanceScore }
+        };
+
+        const platforms = {
+            gemini: this.computePlatformScore('gemini', signals, aeoWeights.gemini),
+            chatgpt: this.computePlatformScore('chatgpt', signals, aeoWeights.chatgpt),
+            perplexity: this.computePlatformScore('perplexity', signals, aeoWeights.perplexity)
+        };
+
+        if (signals.botAccess.bots?.['Google-Extended'] === 'blocked') {
+            platforms.gemini.score = 0;
+            platforms.gemini.blocked = true;
+        }
+        if (signals.botAccess.bots?.['GPTBot'] === 'blocked' && !signals.llmsTxt.exists) {
+            platforms.chatgpt.score = 0;
+            platforms.chatgpt.blocked = true;
+        }
+        if (signals.botAccess.bots?.['PerplexityBot'] === 'blocked') {
+            platforms.perplexity.score = 0;
+            platforms.perplexity.blocked = true;
+        }
+
+        platforms.gemini.reason = this.generatePlatformReason('gemini', signals, platforms.gemini.score);
+        platforms.chatgpt.reason = this.generatePlatformReason('chatgpt', signals, platforms.chatgpt.score);
+        platforms.perplexity.reason = this.generatePlatformReason('perplexity', signals, platforms.perplexity.score);
+
+        const overallScore = Math.round(
+            (platforms.gemini.score + platforms.chatgpt.score + platforms.perplexity.score) / 3
+        );
+
+        const recommendations = getAEORecommendations(signals);
+
+        return {
+            url,
+            overallScore,
+            platforms,
+            signals,
+            recommendations,
+            auditedAt: new Date().toISOString()
+        };
+    }
+
     static generatePlatformReason(platform, signals, score) {
         if (score === 0) {
             const botName = platform === 'gemini' ? 'Google-Extended' : (platform === 'chatgpt' ? 'GPTBot' : 'PerplexityBot');

@@ -157,10 +157,10 @@ const ScoreRing = ({ score, color, label, delay = 0 }) => {
                         initial={{ strokeDashoffset: circ }}
                         animate={{ strokeDashoffset: offset }}
                         transition={{ duration: 1.5, delay, ease: "easeOut" }}
-                        stroke={color}
+                        stroke="#20C45F"
                     />
                 </svg>
-                <span className="absolute inset-0 flex items-center justify-center text-[28px] font-black tracking-tight drop-shadow-sm" style={{ color }}>
+                <span className="absolute inset-0 flex items-center justify-center text-[28px] font-black tracking-tight drop-shadow-sm " >
                     {currentScore}
                 </span>
             </div>
@@ -428,13 +428,13 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                                     value={report}
                                     onChange={setReport}
                                     options={[
-                                        { value: "All", label: "Full Dealer Audit (All 7)" },
-                                        { value: "Technical Performance", label: "Speed & Core Web Vitals" },
-                                        { value: "On Page SEO", label: "Dealership SEO" },
-                                        { value: "Accessibility", label: "ADA & WCAG Compliance" },
-                                        { value: "Security/Compliance", label: "WAF & Security Shield" },
-                                        { value: "UX & Content Structure", label: "Inventory UX & VDP Layout" },
-                                        { value: "Conversion & Lead Flow", label: "Lead Flow & Forms Friction" },
+                                        { value: "All", label: "Full  Audit (All 7)" },
+                                        { value: "Technical Performance", label: "Technical Performance" },
+                                        { value: "On Page SEO", label: "On Page SEO" },
+                                        { value: "Accessibility", label: "Accessibility" },
+                                        { value: "Security/Compliance", label: "Security/Compliance" },
+                                        { value: "UX & Content Structure", label: "UX & Content Structure" },
+                                        { value: "Conversion & Lead Flow", label: "Conversion & Lead Flow" },
                                         { value: "AIO (AI-Optimization) Readiness", label: "AIO (AI-Search) Readiness" },
                                     ]}
                                     icon={<Settings />}

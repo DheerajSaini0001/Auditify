@@ -73,3 +73,57 @@ export const batchAEO = async (req, res) => {
         res.status(500).json({ error: "Batch AEO Audit Failed" });
     }
 };
+
+export const streamAEO = async (req, res) => {
+    let browser;
+    try {
+        const { url, device = "desktop", reportId } = req.body;
+
+        if (!url) {
+            return res.status(400).json({ error: "URL is required" });
+        }
+
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+
+        const sendEvent = (type, data) => {
+            res.write(`data: ${JSON.stringify({ type, data })}\n\n`);
+        };
+
+        sendEvent("status", { message: "Initializing browser..." });
+        const pc = await Puppeteer_Cheerio(url, device);
+        browser = pc.browser;
+        const $ = pc.$;
+
+        sendEvent("status", { message: "Executing signals..." });
+
+        const results = await AEOService.runAuditStream(
+            url, 
+            $, 
+            null, 
+            100, 
+            (signalName, signalResult) => {
+                sendEvent("signal", { name: signalName, data: signalResult });
+            }
+        );
+
+        sendEvent("complete", results);
+
+        if (reportId) {
+            try {
+                await SingleAuditReport.findByIdAndUpdate(reportId, { aeo: results });
+            } catch (err) {
+                console.error("Error saving AEO results to DB:", err);
+            }
+        }
+
+        res.end();
+    } catch (error) {
+        console.error("AEO Stream Error:", error);
+        res.write(`data: ${JSON.stringify({ type: "error", error: error.message })}\n\n`);
+        res.end();
+    } finally {
+        if (browser) await browser.close();
+    }
+};

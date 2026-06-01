@@ -403,7 +403,7 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
             {/* CTA Banner */}
             <div
               onClick={() => navigate("/register")}
-              className="mt-12 text-center bg-gradient-to-r from-orange-350 to-orange-600 rounded-3xl p-10 shadow-2xl shadow-orange-350/20 text-white cursor-pointer hover:scale-[1.01] transition-transform"
+              className="mt-12 text-center bg-[#EA580B] rounded-3xl p-10 shadow-2xl shadow-orange-350/20 text-white cursor-pointer hover:scale-[1.01] transition-transform"
             >
               <h2 className="text-2xl md:text-3xl font-black mb-3">Sign up free to unlock your full audit report</h2>
               <p className="opacity-90 font-medium text-lg">Get instant access to all 6 technical reports, competitive analysis, and AI recommendations.</p>

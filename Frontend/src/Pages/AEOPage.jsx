@@ -7,11 +7,93 @@ import LivePreview from '../Component/LivePreview';
 import { useAuth } from '../context/AuthContext';
 import { Lock } from 'lucide-react';
 
-const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
-    const aeo = auditData?.aeo;
-    const { isAuthenticated } = useAuth();
+const SignalSkeleton = ({ darkMode, title }) => (
+    <div className={`relative overflow-hidden rounded-[2rem] border p-8 flex flex-col gap-6 ${darkMode ? "bg-slate-900/50 border-slate-800" : "bg-gray-50 border-gray-200"}`}>
+        <div className="flex items-center gap-5">
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center animate-pulse ${darkMode ? "bg-slate-800" : "bg-slate-200"}`}></div>
+            <div className="flex flex-col gap-2">
+                <div className={`h-6 w-48 rounded animate-pulse ${darkMode ? "bg-slate-800" : "bg-slate-200"}`}></div>
+                <div className={`h-4 w-16 rounded-full animate-pulse ${darkMode ? "bg-slate-800" : "bg-slate-200"}`}></div>
+            </div>
+        </div>
+        <div className={`h-24 w-full rounded-2xl animate-pulse ${darkMode ? "bg-slate-800" : "bg-slate-200"}`}></div>
+    </div>
+);
 
-    if (!aeo) {
+const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
+    const { isAuthenticated } = useAuth();
+    
+    const [streamedAeo, setStreamedAeo] = React.useState(null);
+    const [streamStatus, setStreamStatus] = React.useState("Initializing AEO Engine...");
+    const [isStreaming, setIsStreaming] = React.useState(false);
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    
+    React.useEffect(() => {
+        if (!auditData?.aeo && auditData?.url && !isStreaming && !streamedAeo) {
+            setIsStreaming(true);
+            let active = true;
+            
+            const startStream = async () => {
+                try {
+                    const response = await fetch(`${baseUrl}/api/aeo/stream`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ url: auditData.url, device: auditData.device || "desktop", reportId: auditData._id })
+                    });
+                    
+                    if (!response.body) return;
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    
+                    let signals = {};
+                    setStreamedAeo({ signals });
+
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done || !active) break;
+                        
+                        const chunkStr = decoder.decode(value);
+                        const lines = chunkStr.split('\n');
+                        
+                        for (const line of lines) {
+                            if (line.startsWith('data: ')) {
+                                const dataStr = line.replace('data: ', '').trim();
+                                if (!dataStr) continue;
+                                try {
+                                    const { type, data, error } = JSON.parse(dataStr);
+                                    if (type === 'error') {
+                                        setStreamStatus("Error: " + error);
+                                        break;
+                                    } else if (type === 'status') {
+                                        setStreamStatus(data.message);
+                                    } else if (type === 'signal') {
+                                        signals = { ...signals, [data.name]: data.data };
+                                        setStreamedAeo(prev => ({ ...prev, signals }));
+                                    } else if (type === 'complete') {
+                                        setStreamedAeo(data);
+                                        setIsStreaming(false);
+                                    }
+                                } catch (e) {
+                                    console.error("Error parsing stream:", e);
+                                }
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error("Stream error", e);
+                    setStreamStatus("Failed to load AEO data.");
+                    setIsStreaming(false);
+                }
+            };
+            startStream();
+            return () => { active = false; };
+        }
+    }, [auditData, isStreaming, streamedAeo, baseUrl]);
+
+    const aeo = auditData?.aeo || streamedAeo;
+    const isComplete = aeo && aeo.overallScore !== undefined;
+
+    if (!aeo || (!isComplete && Object.keys(aeo?.signals || {}).length === 0)) {
         return (
             <div className="max-w-7xl mx-auto space-y-24 mt-12 transition-colors duration-500">
                 <div className={`flex flex-col xl:flex-row items-center ${hideScreenshot ? "justify-center" : "gap-16 py-4"}`}>
@@ -24,9 +106,19 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
                     )}
                     <div className={`w-full ${hideScreenshot ? "max-w-3xl" : "xl:w-[55%]"} flex flex-col items-center justify-center`}>
                         <div className={`flex flex-col items-center justify-center w-full min-h-[400px] border border-dashed rounded-3xl p-12 ${darkMode ? "bg-slate-900 border-slate-800" : "bg-gray-50 border-gray-200"}`}>
+                            {auditData?.aioReadiness?.Percentage !== undefined && (
+                                <div className="mb-8 flex flex-col items-center">
+                                    <div className="text-[3.5rem] font-black text-emerald-500 leading-none tracking-tighter mb-2">
+                                        {auditData.aioReadiness.Percentage}%
+                                    </div>
+                                    <div className="text-[10px] uppercase fontsemibold tracking-widest text-slate-500 mb-6">
+                                        Initial AIO Score
+                                    </div>
+                                </div>
+                            )}
                             <div className={`animate-spin rounded-full h-12 w-12 border-b-2 mb-6 ${darkMode ? "border-indigo-400" : "border-indigo-600"}`}></div>
                             <h3 className={`text-xl fontsemibold ${darkMode ? "text-slate-200" : "text-gray-700"}`}>AEO Engine Analyzing...</h3>
-                            <p className={`text-sm mt-2 text-center max-w-sm ${darkMode ? "text-slate-500" : "text-gray-400"}`}>Generating Answer Engine Optimization scores across Gemini, ChatGPT, and Perplexity AI.</p>
+                            <p className={`text-sm mt-2 text-center max-w-sm ${darkMode ? "text-slate-500" : "text-gray-400"}`}>{streamStatus || "Generating Answer Engine Optimization scores across Gemini, ChatGPT, and Perplexity AI."}</p>
                         </div>
                     </div>
                 </div>
@@ -36,7 +128,8 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
 
     return (
         <div className="max-w-7xl mx-auto space-y-24 mt-12 transition-colors duration-500">
-            {/* Visual Overview (Top Row) */}
+          
+                 {/* Visual Overview (Top Row) */}
             <div className={`flex flex-col xl:flex-row items-center ${hideScreenshot ? "justify-center" : "gap-16 py-4"}`}>
                 {/* Left Column: LivePreview */}
                 {!hideScreenshot && (
@@ -53,13 +146,21 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
                         AI Engine Visibility
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-3xl">
-                        <AEOScoreGauge score={aeo.platforms?.gemini?.score || 0} title="GOOGLE" subtitle="GEMINI" color="#4285F4" size={160} darkMode={darkMode} />
-                        <AEOScoreGauge score={aeo.platforms?.chatgpt?.score || 0} title="OPENAI" subtitle="CHATGPT" color="#10A37F" size={160} darkMode={darkMode} />
-                        <AEOScoreGauge score={aeo.platforms?.perplexity?.score || 0} title="PERPLEXITY" subtitle="AI" color="#A259FF" size={160} darkMode={darkMode} />
+                        {isComplete ? (
+                            <>
+                                <AEOScoreGauge score={aeo.platforms?.gemini?.score || 0} title="GOOGLE" subtitle="GEMINI" color="#4285F4" size={160} darkMode={darkMode} />
+                                <AEOScoreGauge score={aeo.platforms?.chatgpt?.score || 0} title="OPENAI" subtitle="CHATGPT" color="#10A37F" size={160} darkMode={darkMode} />
+                                <AEOScoreGauge score={aeo.platforms?.perplexity?.score || 0} title="PERPLEXITY" subtitle="AI" color="#A259FF" size={160} darkMode={darkMode} />
+                            </>
+                        ) : (
+                            <div className="col-span-3 flex flex-col items-center justify-center py-12">
+                                <div className={`animate-spin rounded-full h-12 w-12 border-b-2 mb-6 ${darkMode ? "border-indigo-400" : "border-indigo-600"}`}></div>
+                                <h3 className={`text-xl fontsemibold ${darkMode ? "text-slate-200" : "text-gray-700"}`}>{streamStatus}</h3>
+                            </div>
+                        )}
                     </div>
                 </div>
-            </div>
-
+            </div> 
             {/* Header Section (Middle Row) */}
             <header className={`flex flex-col md:flex-row md:items-end justify-between gap-8 pb-4 border-b border-transparent`}>
                 <div className="space-y-4">
@@ -74,7 +175,7 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
 
                 <div className="flex items-center gap-6">
                     <div className="text-right">
-                        <div className="text-[3.5rem] font-black leading-none text-blue-600 tracking-tighter">{aeo.overallScore}%</div>
+                        <div className="text-[3.5rem] font-black leading-none text-blue-600 tracking-tighter">{isComplete ? `${aeo.overallScore}%` : '...'}</div>
                         <div className="text-[10px] uppercase fontsemibold tracking-[0.2em] mt-1 text-slate-600">AEO Mastery</div>
                     </div>
                     <div className="h-16 w-[1px] bg-slate-800"></div>
@@ -85,17 +186,21 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
             </header>
 
             {/* Platform Master Grid (Bottom Row) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {['gemini', 'chatgpt', 'perplexity'].map((platform) => (
-                    <PlatformScoreBar
-                        key={platform}
-                        platformKey={platform}
-                        platforms={aeo.platforms}
-                        darkMode={darkMode}
-                        singleCard={true}
-                    />
-                ))}
-            </div>
+            {isComplete && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {['gemini', 'chatgpt', 'perplexity'].map((platform) => (
+                        <PlatformScoreBar
+                            key={platform}
+                            platformKey={platform}
+                            platforms={aeo.platforms}
+                            darkMode={darkMode}
+                            singleCard={true}
+                        />
+                    ))}
+                </div>
+            )}
+
+     
 
             {/* Gated Sections */}
             {!isAuthenticated ? (
@@ -126,73 +231,92 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
                             <h2 className={`text-2xl fontsemibold tracking-tight ${darkMode ? "text-slate-200" : "text-gray-800"}`}>Core Signal Breakdown</h2>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
-                            <AEOSignalCard
-                                signal="aeoSchema"
-                                score={aeo.signals?.schema?.score}
-                                data={aeo.signals?.schema}
-                                title="FAQ & HowTo Schema"
-                                description="Deep evaluation of Schema.org markup prioritized by Gemini (FAQPage/HowTo)."
-                                darkMode={darkMode}
-                                onInfo={onInfo}
-                                url={auditData.url}
-                            />
-                            <AEOSignalCard
-                                signal="botAccess"
-                                score={aeo.signals?.botAccess?.score}
-                                data={aeo.signals?.botAccess}
-                                title="Search Index Status"
-                                description="Visibility status for Google-Extended and Perplexity crawlers (Index/Noindex)."
-                                darkMode={darkMode}
-                                onInfo={onInfo}
-                                url={auditData.url}
-                            />
-                            <AEOSignalCard
-                                signal="markdownHeaders"
-                                score={aeo.signals?.markdownHeaders?.score}
-                                data={aeo.signals?.markdownHeaders}
-                                title="Markdown Structure"
-                                description="Quality of H1-H3 hierarchy for clean LLM extraction (ChatGPT Priority)."
-                                darkMode={darkMode}
-                                onInfo={onInfo}
-                                url={auditData.url}
-                            />
-                            <AEOSignalCard
-                                signal="llmsTxt"
-                                score={aeo.signals?.llmsTxt?.score}
-                                data={aeo.signals?.llmsTxt}
-                                title="llms.txt Standard"
-                                description="Presence of the /llms.txt manifest file used for OpenAI context mapping."
-                                darkMode={darkMode}
-                                onInfo={onInfo}
-                                url={auditData.url}
-                            />
-                            <AEOSignalCard
-                                signal="structuredContent"
-                                score={aeo.signals?.structuredContent?.score}
-                                data={aeo.signals?.structuredContent}
-                                title="Data Table Density"
-                                description="Heuristic evaluation of tables and data blocks for RAG-based search engines."
-                                darkMode={darkMode}
-                                onInfo={onInfo}
-                                url={auditData.url}
-                            />
-                            <AEOSignalCard
-                                signal="citations"
-                                score={aeo.signals?.citations?.score}
-                                data={aeo.signals?.citations}
-                                title="Citations & Sources"
-                                description="Verification of external links and citation markers (Source Attribution)."
-                                darkMode={darkMode}
-                                onInfo={onInfo}
-                                url={auditData.url}
-                            />
+                            {aeo.signals?.schema ? (
+                                <AEOSignalCard
+                                    signal="aeoSchema"
+                                    score={aeo.signals.schema.score}
+                                    data={aeo.signals.schema}
+                                    title="FAQ & HowTo Schema"
+                                    description="Deep evaluation of Schema.org markup prioritized by Gemini (FAQPage/HowTo)."
+                                    darkMode={darkMode}
+                                    onInfo={onInfo}
+                                    url={auditData.url}
+                                />
+                            ) : <SignalSkeleton darkMode={darkMode} title="FAQ & HowTo Schema" />}
+                            
+                            {aeo.signals?.botAccess ? (
+                                <AEOSignalCard
+                                    signal="botAccess"
+                                    score={aeo.signals.botAccess.score}
+                                    data={aeo.signals.botAccess}
+                                    title="Search Index Status"
+                                    description="Visibility status for Google-Extended and Perplexity crawlers (Index/Noindex)."
+                                    darkMode={darkMode}
+                                    onInfo={onInfo}
+                                    url={auditData.url}
+                                />
+                            ) : <SignalSkeleton darkMode={darkMode} title="Search Index Status" />}
+                            
+                            {aeo.signals?.markdownHeaders ? (
+                                <AEOSignalCard
+                                    signal="markdownHeaders"
+                                    score={aeo.signals.markdownHeaders.score}
+                                    data={aeo.signals.markdownHeaders}
+                                    title="Markdown Structure"
+                                    description="Quality of H1-H3 hierarchy for clean LLM extraction (ChatGPT Priority)."
+                                    darkMode={darkMode}
+                                    onInfo={onInfo}
+                                    url={auditData.url}
+                                />
+                            ) : <SignalSkeleton darkMode={darkMode} title="Markdown Structure" />}
+                            
+                            {aeo.signals?.llmsTxt ? (
+                                <AEOSignalCard
+                                    signal="llmsTxt"
+                                    score={aeo.signals.llmsTxt.score}
+                                    data={aeo.signals.llmsTxt}
+                                    title="llms.txt Standard"
+                                    description="Presence of the /llms.txt manifest file used for OpenAI context mapping."
+                                    darkMode={darkMode}
+                                    onInfo={onInfo}
+                                    url={auditData.url}
+                                />
+                            ) : <SignalSkeleton darkMode={darkMode} title="llms.txt Standard" />}
+                            
+                            {aeo.signals?.structuredContent ? (
+                                <AEOSignalCard
+                                    signal="structuredContent"
+                                    score={aeo.signals.structuredContent.score}
+                                    data={aeo.signals.structuredContent}
+                                    title="Data Table Density"
+                                    description="Heuristic evaluation of tables and data blocks for RAG-based search engines."
+                                    darkMode={darkMode}
+                                    onInfo={onInfo}
+                                    url={auditData.url}
+                                />
+                            ) : <SignalSkeleton darkMode={darkMode} title="Data Table Density" />}
+                            
+                            {aeo.signals?.citations ? (
+                                <AEOSignalCard
+                                    signal="citations"
+                                    score={aeo.signals.citations.score}
+                                    data={aeo.signals.citations}
+                                    title="Citations & Sources"
+                                    description="Verification of external links and citation markers (Source Attribution)."
+                                    darkMode={darkMode}
+                                    onInfo={onInfo}
+                                    url={auditData.url}
+                                />
+                            ) : <SignalSkeleton darkMode={darkMode} title="Citations & Sources" />}
                         </div>
                     </div>
 
                     {/* Actionable Recommendations */}
-                    <div className={`pt-12 border-t ${darkMode ? "border-slate-800" : "border-gray-50"}`}>
-                        <AEORecommendations recommendations={aeo.recommendations} darkMode={darkMode} />
-                    </div>
+                    {isComplete && (
+                        <div className={`pt-12 border-t ${darkMode ? "border-slate-800" : "border-gray-50"}`}>
+                            <AEORecommendations recommendations={aeo.recommendations} darkMode={darkMode} />
+                        </div>
+                    )}
                 </>
             )}
         </div>

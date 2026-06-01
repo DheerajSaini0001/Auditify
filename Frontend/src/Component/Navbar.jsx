@@ -5,6 +5,7 @@ import Assets from "../assets/Assets.js";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useData } from "../context/DataContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
+import { savePostAuthIntent } from "../utils/intentStore";
 
 const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
   const { theme, toggleTheme } = useContext(ThemeContext);
@@ -47,6 +48,30 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
   const handleGoHome = () => {
     clearData();
     navigate("/dashboard", { replace: true });
+  };
+
+  const handleLogin = () => {
+    if (data?._id) {
+      savePostAuthIntent(data._id, `/report/${data._id}`);
+      navigate("/login", { state: { from: `/report/${data._id}` } });
+    } else if (location.pathname.startsWith("/report")) {
+      savePostAuthIntent("temp", location.pathname);
+      navigate("/login", { state: { from: location.pathname } });
+    } else {
+      navigate("/login");
+    }
+  };
+
+  const handleRegister = () => {
+    if (data?._id) {
+      savePostAuthIntent(data._id, `/report/${data._id}`);
+      navigate("/register", { state: { from: `/report/${data._id}` } });
+    } else if (location.pathname.startsWith("/report")) {
+      savePostAuthIntent("temp", location.pathname);
+      navigate("/register", { state: { from: location.pathname } });
+    } else {
+      navigate("/register");
+    }
   };
 
   // Styles dynamically based on scroll and theme
@@ -188,16 +213,12 @@ const innerBgClass = isTop
                         <Moon className="w-5 h-5 text-indigo-500 fill-indigo-500/20" />
                       )}
                     </button>
-                    <Link to="/login">
-                      <button className={`px-4 py-1.5 rounded-lg text-sm fontsemibold border ${buttonClass}`}>
-                        Login
-                      </button>
-                    </Link>
-                    <Link to="/register" className="hidden sm:block">
-                      <button className="px-4 py-1.5 rounded-lg text-sm fontsemibold text-white bg-orange-600 hover:bg-orange-350 shadow-md shadow-orange-600/20">
-                        Sign Up
-                      </button>
-                    </Link>
+                    <button onClick={handleLogin} className={`px-4 py-1.5 rounded-lg text-sm fontsemibold border ${buttonClass}`}>
+                      Login
+                    </button>
+                    <button onClick={handleRegister} className="hidden sm:block px-4 py-1.5 rounded-lg text-sm fontsemibold text-white bg-orange-600 hover:bg-orange-350 shadow-md shadow-orange-600/20">
+                      Sign Up
+                    </button>
                   </div>
                 )
               )}

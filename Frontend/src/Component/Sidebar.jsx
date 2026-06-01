@@ -18,6 +18,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useData } from "../context/DataContext";
 import { useAuth } from "../context/AuthContext";
 import toast from 'react-hot-toast';
+import { savePostAuthIntent } from "../utils/intentStore";
 
 export default function Sidebar({ darkMode }) {
   const { data, loading, clearData } = useData();
@@ -151,7 +152,10 @@ export default function Sidebar({ darkMode }) {
                     toast.error('Failed to generate PDF', { id: toastId });
                   }
                 } else {
-                  navigate("/login", { state: { from: location } });
+                  if (data?._id) {
+                    savePostAuthIntent(data._id, `/report/${data._id}`);
+                  }
+                  navigate("/login", { state: { from: location.pathname } });
                 }
               }}
               className="group w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm fontsemibold text-white bg-blue-600 hover:bg-blue-500 shadow-md shadow-blue-600/20 transition-all hover:shadow-blue-600/30 active:scale-[0.98]"

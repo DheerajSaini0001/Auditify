@@ -79,6 +79,28 @@ const ReportLayout = () => {
     }
   }, [data, isFetching, navigate, id, searchParams]);
 
+  // Live polling for continuous updates
+  useEffect(() => {
+    const bulkId = searchParams.get("bulkId");
+    const pageUrl = searchParams.get("url");
+    let intervalId;
+
+    if (id || (bulkId && pageUrl)) {
+      intervalId = setInterval(() => {
+        if (id) {
+          fetchSingleReport(id);
+        } else if (bulkId && pageUrl) {
+          fetchBulkPageReport(bulkId, pageUrl);
+        }
+      }, 3000);
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, searchParams]);
+
   const handleRefresh = async () => {
     if (!id) return;
     setIsReloading(true);

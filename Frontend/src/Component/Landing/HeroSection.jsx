@@ -47,20 +47,20 @@ const CustomDropdown = ({ value, onChange, options, icon, darkMode, disabled }) 
                 disabled={disabled}
                 onClick={() => !disabled && setIsOpen(!isOpen)}
                 className={`
-                    flex items-center gap-2 px-3 h-10 rounded-xl cursor-pointer transition-all duration-200 group/drop border
+                    flex items-center gap-2 px-3 h-10 rounded-xl cursor-pointer transition-all duration-200 group/drop border text-white
                     ${darkMode
                         ? "bg-white/5 border-white/8 hover:bg-white/10 hover:border-[#ea580c]/20"
                         : "bg-slate-50 border-slate-200 hover:bg-white hover:border-[#ea580c]/40"}
-                    ${disabled ? "opacity-40 cursor-not-allowed" : "active:scale-[0.97]"}
+                    ${disabled ? "opacity-100 cursor-not-allowed" : "active:scale-[0.97]"}
                 `}
             >
-                <span className={`flex-shrink-0 transition-colors ${darkMode ? 'text-slate-400 group-hover/drop:text-[#ea580c]' : 'text-slate-400 group-hover/drop:text-[#ea580c]'}`}>
+                <span className={`flex-shrink-0 transition-colors ${darkMode ? 'text-slate-white group-hover/drop:text-white' : 'text-white group-hover/drop:text-white'}`}>
                     {React.cloneElement(icon, { size: 14 })}
                 </span>
-                <span className={`text-[10px] font- uppercase tracking-widest truncate max-w-[72px] ${darkMode ? 'text-slate-400 group-hover/drop:text-slate-100' : 'text-slate-600 group-hover/drop:text-slate-900'}`}>
+                <span className={`text-[10px] font- uppercase tracking-widest truncate max-w-[72px] ${darkMode ? 'text-white group-hover/drop:text-white' : 'text-white group-hover/drop:text-white'}`}>
                     {selectedLabel}
                 </span>
-                <ChevronDown className={`w-3 h-3 transition-transform duration-300 ${isOpen ? "rotate-180 text-[#ea580c]" : darkMode ? "text-slate-600" : "text-slate-400"}`} />
+                <ChevronDown className={`w-3 h-3 transition-transform duration-300 ${isOpen ? "rotate-180 text-white" : darkMode ? "text-white" : "text-white"}`} />
             </button>
 
             <AnimatePresence>
@@ -164,7 +164,7 @@ const ScoreRing = ({ score, color, label, delay = 0 }) => {
                     {currentScore}
                 </span>
             </div>
-            <span className="text-[11px] fontsemibold uppercase tracking-[0.18em] text-white/50">
+            <span className="text-[11px] fontsemibold uppercase tracking-[0.18em] text-white">
                 {label}
             </span>
         </div>
@@ -202,7 +202,7 @@ const TypingURL = () => {
     }, [currentUrl, isDeleting, urlIndex, urls]);
 
     return (
-        <span className="text-white/90 text-[13px] font-medium tracking-wide">
+        <span className="text-white text-[13px] font-medium tracking-wide">
             {currentUrl}<span className="animate-pulse opacity-70">|</span>
         </span>
     );
@@ -316,7 +316,9 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
 
     return (
         <section className={`relative min-h-[92vh] flex items-center justify-center pt-28 pb-24 transition-colors duration-500 z-[40]`}
-            style={{ background: '#1B1464' }}
+           style={{
+  background: 'linear-gradient(to right, #1E3A8A, #1E47C3)',
+}}
         >
 
 
@@ -343,7 +345,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                             Your Dealership,{" "}
                             <br className="hidden lg:block" />
                             <span className="relative inline-block">
-                                <span className="text-[#ea580c]">
+                                <span className="text-[#EA580B]">
                                     Fully Audited.
                                 </span>
                                 {/* Underline accent */}
@@ -353,7 +355,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                             </span>
                         </h2>
 
-                        <p className="text-lg lg:text-xl font-medium leading-relaxed max-w-xl mx-auto lg:mx-0 text-blue-200/70">
+                        <p className="text-lg lg:text-xl font-medium leading-relaxed max-w-xl mx-auto lg:mx-0 text-white">
                             Turn clicks into showroom sales. Scan your website in seconds across seven critical automotive performance dimensions — from Core Web Vitals to AI-Search readiness.
                         </p>
                     </motion.div>
@@ -368,7 +370,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                                 initial={{ opacity: 0, scale: 0.85 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ delay: 0.4 + i * 0.06 }}
-                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font- border bg-white/5 border-white/10 text-blue-200/80"
+                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font- border bg-white/5 border-white/10 text-white"
                             >
                                 <span className="text-orange-400">{a.icon}</span>
                                 {a.label}
@@ -388,12 +390,12 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                                 : { boxShadow: '0 40px 100px rgba(0,0,0,0.5)' }
                             }
                             transition={{ duration: 0.3 }}
-                            className="relative z-10 rounded-[2.5rem] border p-7 space-y-5 bg-[#0D1030]/70 border-white/8 backdrop-blur-2xl"
+                            className="relative z-10 rounded-[2.5rem] border p-7 space-y-5 bg-[#566ACB]/70 border-white/8 backdrop-blur-2xl"
                         >
                             {/* Input row */}
                             <div className="flex items-center px-4 h-14 gap-3">
                                 <Globe className={`flex-shrink-0 w-4 h-4 transition-colors duration-300
-                                    ${focused ? 'text-[#ea580c]' : 'text-slate-500'}`}
+                                    ${focused ? 'text-white' : 'text-white'}`}
                                 />
                                 <input
                                     type="text"
@@ -405,12 +407,12 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                                     onBlur={() => setFocused(false)}
                                     placeholder="Enter your website URL — e.g. yoursite.com"
                                     disabled={isLoading}
-                                    className="flex-1 bg-transparent outline-none text-[15px] font-medium text-white placeholder:text-slate-500"
+                                    className="flex-1 bg-transparent outline-none text-[15px] font-medium text-white placeholder:text-gray-400"
                                 />
                             </div>
 
                             {/* Divider + Options row */}
-                            <div className="flex flex-wrap lg:flex-nowrap items-center gap-3">
+                            <div className="flex flex-wrap lg:flex-nowrap items-center gap-3 text-white">
                                 <CustomDropdown
                                     value={device}
                                     onChange={setDevice}
@@ -443,11 +445,13 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                                 <button
                                     type="submit"
                                     disabled={isLoading || !url.trim()}
-                                    className={`ml-auto flex items-center gap-2 px-6 h-12 rounded-xl fontsemibold text-[14px] tracking-tight shrink-0
-                                        transition-all duration-200 active:scale-[0.97]
-                                        ${isLoading || !url.trim()
-                                            ? 'bg-slate-800 text-slate-600 cursor-not-allowed'
-                                            : 'bg-[#ea580c] hover:bg-[#c2410c] text-white shadow-lg shadow-orange-600/25'}`}
+             className={`ml-auto flex items-center gap-2 px-6 h-12 rounded-xl font-semibold text-[14px] tracking-tight shrink-0 border
+transition-all duration-300 active:scale-95
+${
+  isLoading || !url.trim()
+    ? "bg-slate-800 border-slate-700 text-slate-500 cursor-not-allowed"
+    : "bg-[#EA580B] border-[#EA580B] text-white hover:bg-[#C2410C] hover:border-[#C2410C] shadow-lg shadow-orange-600/25 hover:shadow-orange-500/40 hover:-translate-y-0.5"
+}`}
                                 >
                                     {isLoading ? (
                                         <Loader2 className="animate-spin w-5 h-5" />
@@ -483,7 +487,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                         className="flex flex-wrap items-center justify-center lg:justify-start gap-6"
                     >
 
-                        <span className="text-xs font- text-blue-300/30">·</span>
+                        <span className="text-xs font- text-white">·</span>
 
                     </motion.div>
                 </motion.div>
@@ -495,7 +499,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                     transition={{ duration: 0.9, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
                     className="flex-1 hidden lg:block relative w-full max-w-lg mx-auto"
                 >
-                    <div className="relative z-10 rounded-[1.5rem] border border-white/5 p-6 space-y-6 bg-[#0B0D1B] shadow-[0_40px_100px_rgba(0,0,0,0.5)] overflow-hidden">
+                    <div className="relative z-10 rounded-[1.5rem] border border-white/5 p-6 space-y-6 bg-[#3D58C1] shadow-[0_40px_100px_rgba(0,0,0,0.5)] overflow-hidden">
                         {/* Subtle inner glow */}
                         <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none" />
 
@@ -506,7 +510,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                                 <div className="w-2.5 h-2.5 rounded-full bg-[#EAB308]" />
                                 <div className="w-2.5 h-2.5 rounded-full bg-[#16A34A]" />
                             </div>
-                            <div className="h-7 w-52 rounded-[0.4rem] bg-[#121426] flex items-center px-4 shadow-inner shadow-black/20 border border-white/5">
+                            <div className="h-7 w-52 rounded-[0.4rem] bg-[#566ACB] flex items-center px-4 shadow-inner shadow-black/20 border border-white/5">
                                 <TypingURL />
                             </div>
                         </div>
@@ -514,8 +518,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                         {/* Header row (skeleton lines) */}
                         <div className="flex items-center justify-between pt-1">
                             <div className="space-y-2.5">
-                                <div className="h-4 w-32 rounded bg-[#121426]" />
-                                <div className="h-2.5 w-48 rounded bg-[#121426]/60" />
+                            
                             </div>
                             <div className="flex gap-1 items-end h-5 mr-1 opacity-80">
                                 <div className="w-[3px] h-3 bg-[#E1701A] rounded-[1px]" />
@@ -526,16 +529,16 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
 
                         {/* Score rings */}
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="rounded-[1.25rem] bg-[#121426] py-7 flex flex-col items-center justify-center shadow-lg shadow-black/20">
+                            <div className="rounded-[1.25rem] bg-[#566ACB] py-7 flex flex-col items-center justify-center shadow-lg shadow-black/20">
                                 <ScoreRing score={94} color="#E1701A" label="SEO SCORE" delay={0.5} />
                             </div>
-                            <div className="rounded-[1.25rem] bg-[#121426] py-7 flex flex-col items-center justify-center shadow-lg shadow-black/20">
+                            <div className="rounded-[1.25rem] bg-[#566ACB] py-7 flex flex-col items-center justify-center shadow-lg shadow-black/20">
                                 <ScoreRing score={88} color="#4D77FF" label="AI Optimization" delay={0.7} />
                             </div>
                         </div>
 
                         {/* Mini metric bars */}
-                        <div className="rounded-[1.25rem] border border-white/[0.03] p-5 pb-6 space-y-4 bg-[#121426] shadow-lg shadow-black/20">
+                        <div className="rounded-[1.25rem] border border-white/[0.03] p-5 pb-6 space-y-4 bg-[#566ACB] shadow-lg shadow-black/20">
                             {[
                                 { label: "Accessibility", pct: 78, color: "#A855F7" },
                                 { label: "Security", pct: 91, color: "#E1701A" },
@@ -543,7 +546,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                             ].map((m, i) => (
                                 <div key={m.label} className="space-y-2">
                                     <div className="flex justify-between text-[11px] fontsemibold tracking-wide">
-                                        <span className="text-white/40">{m.label}</span>
+                                        <span className="text-white">{m.label}</span>
                                         <span style={{ color: m.color }}>{m.pct}</span>
                                     </div>
                                     <div className="h-1.5 rounded-full overflow-hidden bg-[#0B0D1B]">
@@ -562,11 +565,11 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                         {/* Footer badge */}
                         <div className="flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-full border border-white/10 bg-transparent">
                             <span className="text-[#E1701A] text-[13px] drop-shadow-[0_0_8px_rgba(225,112,26,0.6)]">⚡</span>
-                            <span className="text-[10px] font- text-white/90 tracking-wider flex gap-2">
+                            <span className="text-[10px] font- text-white tracking-wider flex gap-2">
                                 <span>7 audit dimensions</span>
-                                <span className="text-white/30">•</span>
+                                <span className="text-white">•</span>
                                 <span>Real-time analysis</span>
-                                <span className="text-white/30">•</span>
+                                <span className="text-white">•</span>
                                 <span>Dealer-focused insights</span>
                             </span>
                         </div>

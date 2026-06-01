@@ -56,9 +56,9 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
     ? "bg-transparent text-white"
     : (darkMode ? "bg-[#0B1120] text-white shadow-lg border-b border-slate-800" : "bg-white text-slate-900 shadow-md border-b border-slate-200");
 
-  const innerBgClass = isTop
-    ? "bg-[#1B1464]"
-    : "bg-transparent";
+const innerBgClass = isTop
+  ? "bg-gradient-to-r from-[#1E3A8A] to-[#1E47C3]"
+  : "bg-transparent";
 
   const buttonClass = isTop
     ? "bg-white/5 hover:bg-white/10 border-white/10 text-slate-300 hover:text-white"

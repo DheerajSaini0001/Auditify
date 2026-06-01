@@ -6,6 +6,8 @@ import PlatformScoreBar from '../Component/PlatformScoreBar';
 import LivePreview from '../Component/LivePreview';
 import { useAuth } from '../context/AuthContext';
 import { Lock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { savePostAuthIntent } from '../utils/intentStore';
 
 const SignalSkeleton = ({ darkMode, title }) => (
     <div className={`relative overflow-hidden rounded-[2rem] border p-8 flex flex-col gap-6 ${darkMode ? "bg-slate-900/50 border-slate-800" : "bg-gray-50 border-gray-200"}`}>
@@ -22,6 +24,17 @@ const SignalSkeleton = ({ darkMode, title }) => (
 
 const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
     const { isAuthenticated } = useAuth();
+    const navigate = useNavigate();
+
+    const auditId = auditData?._id;
+    const intendedPath = auditId ? `/report/${auditId}` : null;
+
+    const handleLogin = () => {
+      if (auditId) {
+        savePostAuthIntent(auditId, `/report/${auditId}`);
+      }
+      navigate("/login", { state: { from: intendedPath } });
+    };
     
     const [streamedAeo, setStreamedAeo] = React.useState(null);
     const [streamStatus, setStreamStatus] = React.useState("Initializing AEO Engine...");
@@ -217,7 +230,7 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
                         <p className={`text-base mb-8 ${darkMode ? "text-slate-400" : "text-gray-500"}`}>
                             Get deep dive analysis into your Core Signal Breakdown and a personalized Action Plan for generative AI search.
                         </p>
-                        <button onClick={() => window.location.href = '/register'} className="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white fontsemibold rounded-full transition-colors shadow-lg shadow-indigo-500/30">
+                        <button onClick={handleLogin} className="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white fontsemibold rounded-full transition-colors shadow-lg shadow-indigo-500/30">
                             Login to unlock full AEO insights
                         </button>
                     </div>

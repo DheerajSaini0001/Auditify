@@ -20,6 +20,7 @@ import { useData } from "../context/DataContext";
 import { useAuth } from "../context/AuthContext";
 import AEOPage from "../Pages/AEOPage";
 import { Lock } from "lucide-react";
+import { savePostAuthIntent } from "../utils/intentStore";
 
 // Presentational component wrapped in React.memo
 const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, clearData, darkMode, isAuthenticated }) {
@@ -84,6 +85,23 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
       data[section.key].Percentage !== null
     ).length;
   }, [data, sectionMappings]);
+
+  const auditId = data?._id;
+  const intendedPath = auditId ? `/report/${auditId}` : null;
+
+  const handleLogin = () => {
+    if (auditId) {
+      savePostAuthIntent(auditId, `/report/${auditId}`);
+    }
+    navigate("/login", { state: { from: intendedPath } });
+  };
+
+  const handleRegister = () => {
+    if (auditId) {
+      savePostAuthIntent(auditId, `/report/${auditId}`);
+    }
+    navigate("/register", { state: { from: intendedPath } });
+  };
 
   const isAuditComplete = completedSections === sectionMappings.length;
 
@@ -380,7 +398,7 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
             {/* 6 Locked Blurred Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
               {['Technical Performance', 'On-Page SEO', 'Accessibility', 'Security/Compliance', 'UX & Content Structure', 'Conversion & Lead Flow'].map((name, i) => (
-                <div key={i} onClick={() => navigate("/register")} className={`relative overflow-hidden rounded-2xl border p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:-translate-y-1 hover:shadow-xl ${darkMode ? 'bg-slate-900/80 border-slate-700' : 'bg-white border-slate-200'}`}>
+                <div key={i} onClick={handleLogin} className={`relative overflow-hidden rounded-2xl border p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:-translate-y-1 hover:shadow-xl ${darkMode ? 'bg-slate-900/80 border-slate-700' : 'bg-white border-slate-200'}`}>
                   {/* Blur content underneath */}
                   <div className="opacity-30 flex flex-col items-center z-0 filter blur-[4px]">
                     <div className="w-16 h-16 rounded-full bg-slate-300 dark:bg-slate-700 mb-4"></div>
@@ -401,13 +419,7 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
             </div>
 
             {/* CTA Banner */}
-            <div
-              onClick={() => navigate("/register")}
-              className="mt-12 text-center bg-[#EA580B] rounded-3xl p-10 shadow-2xl shadow-orange-350/20 text-white cursor-pointer hover:scale-[1.01] transition-transform"
-            >
-              <h2 className="text-2xl md:text-3xl font-black mb-3">Sign up free to unlock your full audit report</h2>
-              <p className="opacity-90 font-medium text-lg">Get instant access to all 6 technical reports, competitive analysis, and AI recommendations.</p>
-            </div>
+         
           </div>
         )}
 

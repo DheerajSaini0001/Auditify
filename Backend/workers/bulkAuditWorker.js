@@ -12,6 +12,7 @@ import conversionLeadFlow from "../metricServices/conversionLeadFlow.js";
 import aioReadiness from "../metricServices/aioReadiness.js";
 import Puppeteer_Cheerio from "../utils/puppeteer_cheerio.js";
 import { performance } from "perf_hooks";
+import logger from "../utils/logger.js";
 
 const { url, device, report, bulkAuditId, pageUrl } = workerData;
 
@@ -58,7 +59,7 @@ const OverAll = (A, B, C, D, E, F, G) => {
         );
 
         if (isBotProtected) {
-            console.log(`🛡️ Marking page as Bot Protected in Bulk Audit: ${pageUrl}`);
+            logger.info(`🛡️ Marking page as Bot Protected in Bulk Audit: ${pageUrl}`);
             const timeTaken = ((performance.now() - start) / 1000).toFixed(0);
             await BulkAuditReport.findOneAndUpdate(
                 { _id: bulkAuditId, "pages.url": pageUrl },
@@ -150,7 +151,7 @@ const OverAll = (A, B, C, D, E, F, G) => {
                 { $set: updateData }
             );
 
-            console.log(`🧠 Bulk Worker Completed for URL: ${pageUrl}`);
+            logger.info(`🧠 Bulk Worker Completed for URL: ${pageUrl}`);
 
             parentPort.postMessage({ success: true });
             return;
@@ -200,12 +201,12 @@ const OverAll = (A, B, C, D, E, F, G) => {
             }
         );
 
-        console.log(`🧠 Bulk Worker Completed for URL: ${pageUrl}`);
+        logger.info(`🧠 Bulk Worker Completed for URL: ${pageUrl}`);
 
         parentPort.postMessage({ success: true });
 
     } catch (err) {
-        console.error(`Error in bulk audit worker for ${pageUrl}:`, err);
+        logger.error(`Error in bulk audit worker for ${pageUrl}`, err);
         parentPort.postMessage({ error: err.message });
 
     } finally {

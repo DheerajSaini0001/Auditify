@@ -1,5 +1,6 @@
 import User from '../models/User.js';
 import { fetchGSC } from '../utils/gscAuth.js';
+import logger from '../utils/logger.js';
 
 /* ===========================
    🔧 Common URL Normalizer
@@ -52,7 +53,7 @@ export const addWebsite = async (req, res) => {
     });
 
   } catch (err) {
-    console.error('[Add Website]', err);
+    logger.error('[Add Website]', err);
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
@@ -126,7 +127,7 @@ export const verifyWebsite = async (req, res) => {
     });
 
   } catch (err) {
-    console.error('[Verify GSC]', err);
+    logger.error('[Verify GSC]', err);
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
@@ -145,7 +146,7 @@ export const getWebsites = async (req, res) => {
     }
     res.json({ success: true, websites });
   } catch (err) {
-    console.error('[Get Websites]', err);
+    logger.error('[Get Websites]', err);
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
@@ -164,7 +165,7 @@ export const removeWebsite = async (req, res) => {
     res.json({ success: true, message: 'Website removed' });
 
   } catch (err) {
-    console.error('[Remove Website]', err);
+    logger.error('[Remove Website]', err);
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
@@ -195,7 +196,7 @@ export const syncWebsites = async (req, res) => {
         req.user
       );
     } catch (fetchErr) {
-      console.error('[GSC Fetch Error]', fetchErr);
+      logger.error('[GSC Fetch Error]', fetchErr);
       return res.status(502).json({
         success: false,
         message: 'Failed to communicate with Google API. Please try again later.'
@@ -213,7 +214,7 @@ export const syncWebsites = async (req, res) => {
     // Handle other API errors
     if (!gscRes.ok) {
       const errorBody = await gscRes.text();
-      console.error('[GSC API Error Response]', errorBody);
+      logger.error('[GSC API Error Response]', new Error(errorBody));
       return res.status(gscRes.status).json({
         success: false,
         message: 'Google Search Console API error',
@@ -224,7 +225,7 @@ export const syncWebsites = async (req, res) => {
     const gscData = await gscRes.json();
     const siteEntries = gscData.siteEntry || [];
 
-    console.log(`[GSC Sync] Found ${siteEntries.length} properties for ${req.user.email}`);
+    logger.info(`[GSC Sync] Found ${siteEntries.length} properties for ${req.user.email}`);
 
     // 3. Merge Logic (Comparison using Normalized URL)
     const existingWebsites = req.user.websites.map(s => s.toObject ? s.toObject() : s);
@@ -287,7 +288,7 @@ export const syncWebsites = async (req, res) => {
     });
 
   } catch (err) {
-    console.error('[Sync Websites Exception]', err);
+    logger.error('[Sync Websites Exception]', err);
 
     // Distinguish between validation errors and generic errors
     if (err.name === 'ValidationError') {

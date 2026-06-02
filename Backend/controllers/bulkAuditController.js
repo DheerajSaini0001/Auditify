@@ -4,6 +4,7 @@ import BulkAuditReport from "../models/bulkAuditReport.js";
 import SingleAuditReport from "../models/singleAuditReport.js";
 import AuditLog from "../models/AuditLog.js";
 import discoverPages from "../utils/sitemapCrawler.js";
+import logger from "../utils/logger.js";
 
 // validate URL and prevent SSRF
 const isValidUrl = (string) => {
@@ -49,12 +50,12 @@ export const discoverUrls = async (req, res) => {
         // Set max pages limit (default: 5, max: 200)
         maxPages = Math.min(parseInt(maxPages) || 1, 200);
 
-        console.log(`🔍 Discovering URLs for: ${url} | Max: ${maxPages} pages`);
+        logger.info(`🔍 Discovering URLs for: ${url} | Max: ${maxPages} pages`);
 
         // Discover all pages
         const discoveredUrls = await discoverPages(url, maxPages);
 
-        console.log(`✅ Discovered ${discoveredUrls.length} URLs`);
+        logger.info(`✅ Discovered ${discoveredUrls.length} URLs`);
 
         res.status(200).json({
             url,
@@ -63,7 +64,7 @@ export const discoverUrls = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Error discovering URLs:", error);
+        logger.error("Error discovering URLs", error);
         res.status(500).json({ error: "Failed to discover URLs. Please try again." });
     }
 };
@@ -86,7 +87,7 @@ export const auditSelectedUrls = async (req, res) => {
             return res.status(400).json({ error: "Maximum 50 URLs can be audited at once" });
         }
 
-        console.log(`🚀 Starting audit for ${selectedUrls.length} selected URLs`);
+        logger.info(`🚀 Starting audit for ${selectedUrls.length} selected URLs`);
 
         const userId = req.user?._id || req.user?.id || req.user?.userId || null;
 
@@ -111,7 +112,7 @@ export const auditSelectedUrls = async (req, res) => {
             if (auditUrls.length === requestUrls.length &&
                 auditUrls.every((value, index) => value === requestUrls[index])) {
 
-                console.log(`♻️ Found existing Bulk Audit: ${audit._id}, reusing.`);
+                logger.info(`♻️ Found existing Bulk Audit: ${audit._id}, reusing.`);
                 return res.status(200).json({
                     message: "Existing audit found",
                     bulkAuditId: audit._id,
@@ -152,7 +153,7 @@ export const auditSelectedUrls = async (req, res) => {
         processSelectedUrls(bulkAudit._id.toString(), userId, selectedUrls, device, report, req.tracking);
 
     } catch (error) {
-        console.error("Error starting audit:", error);
+        logger.error("Error starting audit", error);
         if (!res.headersSent) {
             res.status(500).json({ error: "Internal Server Error" });
         }
@@ -167,7 +168,7 @@ async function processSelectedUrls(bulkAuditId, userId, selectedUrls, device, re
         let currentIndex = 0;
         const activeAudits = new Set();
 
-        console.log(`🚀 Starting parallel audit for ${total} URLs (Concurrency: ${CONCURRENCY_LIMIT})`);
+        logger.info(`🚀 Starting parallel audit for ${total} URLs (Concurrency: ${CONCURRENCY_LIMIT})`);
 
         // Helper to run next available task
         const runNext = async () => {
@@ -177,7 +178,7 @@ async function processSelectedUrls(bulkAuditId, userId, selectedUrls, device, re
             const pageUrl = selectedUrls[index];
             const startTime = Date.now();
 
-            console.log(`📡 Preparing audit ${index + 1}/${total}: ${pageUrl}`);
+            logger.info(`📡 Preparing audit ${index + 1}/${total}: ${pageUrl}`);
 
             // 1. Check for existing data (reuse)
             let foundData = await SingleAuditReport.findOne({
@@ -208,7 +209,7 @@ async function processSelectedUrls(bulkAuditId, userId, selectedUrls, device, re
             }
 
             if (foundData) {
-                console.log(`♻️ Reusing data for: ${pageUrl}`);
+                logger.info(`♻️ Reusing data for: ${pageUrl}`);
                 const updateData = {
                     "pages.$.status": "completed",
                     "pages.$.completedAt": new Date(),
@@ -260,7 +261,7 @@ async function processSelectedUrls(bulkAuditId, userId, selectedUrls, device, re
                 status: "pending",
                 parentBulkAuditId: bulkAuditId
             });
-            await auditLog.save().catch(err => console.error("Error saving bulk item AuditLog:", err));
+            await auditLog.save().catch(err => logger.error("Error saving bulk item AuditLog", err));
 
             // Start worker and wait for completion
             const auditPromise = auditSinglePage(bulkAuditId, pageUrl, device, report, auditLog._id, startTime, userId);
@@ -290,10 +291,10 @@ async function processSelectedUrls(bulkAuditId, userId, selectedUrls, device, re
             completedAt: new Date()
         });
 
-        console.log(`✅ Bulk audit completed: ${bulkAuditId}`);
+        logger.info(`✅ Bulk audit completed: ${bulkAuditId}`);
 
     } catch (error) {
-        console.error("Error in parallel audit process:", error);
+        logger.error("Error in parallel audit process", error);
         await BulkAuditReport.findByIdAndUpdate(bulkAuditId, {
             status: 'failed',
             completedAt: new Date()
@@ -320,7 +321,7 @@ async function auditSinglePage(bulkAuditId, pageUrl, device, report, auditLogId,
 
             worker.on("message", async (msg) => {
                 if (msg?.error) {
-                    console.log(`❌ Page audit failed: ${pageUrl}`);
+                    logger.error(`❌ Page audit failed: ${pageUrl}`);
 
                     await BulkAuditReport.findOneAndUpdate(
                         { _id: bulkAuditId, "pages.url": pageUrl },
@@ -344,11 +345,11 @@ async function auditSinglePage(bulkAuditId, pageUrl, device, report, auditLogId,
                                 $push: { actions: "failed" }
                             });
                         } catch (err) {
-                            console.error("Error updating bulk item AuditLog on error message:", err);
+                            logger.error("Error updating bulk item AuditLog on error message", err);
                         }
                     }
                 } else if (msg?.success) {
-                    console.log(`✅ Page audit completed: ${pageUrl}`);
+                    logger.info(`✅ Page audit completed: ${pageUrl}`);
 
                     const updatedBulk = await BulkAuditReport.findOneAndUpdate(
                         { _id: bulkAuditId, "pages.url": pageUrl },
@@ -378,7 +379,7 @@ async function auditSinglePage(bulkAuditId, pageUrl, device, report, auditLogId,
                                 });
                             }
                         } catch (err) {
-                            console.error("Error updating bulk item AuditLog on success:", err);
+                            logger.error("Error updating bulk item AuditLog on success", err);
                         }
                     }
                 }
@@ -388,7 +389,7 @@ async function auditSinglePage(bulkAuditId, pageUrl, device, report, auditLogId,
 
             worker.on("error", async (error) => {
                 const duration = Date.now() - startTime;
-                console.log(`❌ Worker error for ${pageUrl}:`, error.message);
+                logger.error(`❌ Worker error for ${pageUrl}`, error);
 
                 await BulkAuditReport.findOneAndUpdate(
                     { _id: bulkAuditId, "pages.url": pageUrl },
@@ -411,7 +412,7 @@ async function auditSinglePage(bulkAuditId, pageUrl, device, report, auditLogId,
                             $push: { actions: "failed" }
                         });
                     } catch (err) {
-                        console.error("Error updating bulk item AuditLog on worker error:", err);
+                        logger.error("Error updating bulk item AuditLog on worker error", err);
                     }
                 }
 
@@ -419,7 +420,7 @@ async function auditSinglePage(bulkAuditId, pageUrl, device, report, auditLogId,
             });
 
         } catch (error) {
-            console.error(`Error auditing page ${pageUrl}:`, error);
+            logger.error(`Error auditing page ${pageUrl}`, error);
 
             await BulkAuditReport.findOneAndUpdate(
                 { _id: bulkAuditId, "pages.url": pageUrl },
@@ -478,7 +479,7 @@ export const getBulkAuditStatus = async (req, res) => {
         res.status(200).json(responseData);
 
     } catch (error) {
-        console.error("Error fetching bulk audit status:", error);
+        logger.error("Error fetching bulk audit status", error);
         res.status(500).json({ error: "Internal Server Error" });
     }
 };
@@ -507,7 +508,7 @@ export const discoverAndAuditUrls = async (req, res) => {
         device = device || "Desktop";
         report = report || "All";
 
-        console.log(`🤖 Auto-Bulk Audit for: ${url} | Max: ${maxPages} pages | Device: ${device}`);
+        logger.info(`🤖 Auto-Bulk Audit for: ${url} | Max: ${maxPages} pages | Device: ${device}`);
 
         const userId = req.user?._id || req.user?.id || req.user?.userId || null;
 
@@ -521,7 +522,7 @@ export const discoverAndAuditUrls = async (req, res) => {
         }).sort({ createdAt: -1 });
 
         if (recentAudit) {
-            console.log(`♻️ Safeguard: Found recent in-progress Bulk Audit for ${url}. Re-routing.`);
+            logger.info(`♻️ Safeguard: Found recent in-progress Bulk Audit for ${url}. Re-routing.`);
             return res.status(200).json({
                 message: "Audit already in progress",
                 bulkAuditId: recentAudit._id,
@@ -538,7 +539,7 @@ export const discoverAndAuditUrls = async (req, res) => {
             return res.status(404).json({ error: "No URLs found to audit!" });
         }
 
-        console.log(`✅ Discovered ${discoveredUrls.length} URLs for auto-audit`);
+        logger.info(`✅ Discovered ${discoveredUrls.length} URLs for auto-audit`);
 
         // 2. Start Audit for ALL discovered URLs
         const pages = discoveredUrls.map(pageUrl => ({
@@ -571,7 +572,7 @@ export const discoverAndAuditUrls = async (req, res) => {
         processSelectedUrls(bulkAudit._id.toString(), userId, discoveredUrls, device, report, req.tracking);
 
     } catch (error) {
-        console.error("Error in auto discover-and-audit:", error);
+        logger.error("Error in auto discover-and-audit", error);
         if (!res.headersSent) {
             res.status(500).json({ error: "Internal Server Error during auto-audit" });
         }
@@ -630,7 +631,7 @@ export const getBulkPageReport = async (req, res) => {
         res.status(200).json(reportData);
 
     } catch (error) {
-        console.error("Error fetching bulk page report:", error);
+        logger.error("Error fetching bulk page report", error);
         res.status(500).json({ error: "Internal Server Error" });
     }
 };

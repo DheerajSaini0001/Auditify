@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
+import logger from "../utils/logger.js";
 
 export const generateCaptcha = (req, res) => {
   const num1 = Math.floor(Math.random() * 20) + 1;
@@ -21,7 +22,7 @@ export const generateCaptcha = (req, res) => {
   }
 
   req.session.save((err) => {
-    if (err) console.error("Session save error:", err);
+    if (err) logger.error("Session save error", err);
     res.json({ question: `${a} ${op} ${b}`, captchaId });
   });
 };

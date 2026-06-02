@@ -9,6 +9,7 @@ import ActivityLog from '../models/ActivityLog.js';
 import sendEmail from '../utils/sendEmail.js';
 import generateOTP from '../utils/generateOTP.js';
 import configService from '../services/configService.js';
+import logger from '../utils/logger.js';
 
 // 4.4.1 Register user (local auth)
 export const register = async (req, res) => {
@@ -40,7 +41,7 @@ export const register = async (req, res) => {
       } else {
         // If not verified, we can allow re-registration (overwrite or update)
         await User.deleteOne({ _id: existingUser._id });
-        console.log(`[Registration] Overwriting unverified account for ${email.toLowerCase()}`);
+        logger.info(`[Registration] Overwriting unverified account for ${email.toLowerCase()}`);
       }
     }
 
@@ -89,7 +90,7 @@ export const register = async (req, res) => {
     });
 
   } catch (err) {
-    console.error('[Registration] Failed:', err.message);
+    logger.error('[Registration] Failed', new Error(err.message));
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
@@ -149,7 +150,7 @@ export const verifyOTP = async (req, res) => {
       os: req.tracking?.os || 'unknown',
       action: 'LOGIN',
       metadata: { method: 'otp_verify' }
-    }).catch(err => console.error('[ActivityLog] Failed to log OTP login:', err.message));
+    }).catch(err => logger.error('[ActivityLog] Failed to log OTP login', err));
 
     const token = jwt.sign(
       { userId: user._id, email: user.email, role: user.role },
@@ -173,7 +174,7 @@ export const verifyOTP = async (req, res) => {
     });
 
   } catch (err) {
-    console.error('[Verification] Failed:', err.message);
+    logger.error('[Verification] Failed', new Error(err.message));
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
@@ -258,7 +259,7 @@ export const login = async (req, res) => {
       os: req.tracking?.os || 'unknown',
       action: 'LOGIN',
       metadata: { method: 'local_password' }
-    }).catch(err => console.error('[ActivityLog] Failed to log local login:', err.message));
+    }).catch(err => logger.error('[ActivityLog] Failed to log local login', err));
 
     const token = jwt.sign(
       { userId: user._id, email: user.email, role: user.role },
@@ -323,7 +324,7 @@ export const forgotPassword = async (req, res) => {
     });
 
   } catch (err) {
-    console.error('[Forgot Password] error:', err.message);
+    logger.error('[Forgot Password] error', new Error(err.message));
   }
 };
 
@@ -385,7 +386,7 @@ export const googleCallback = async (req, res) => {
         os: req.tracking?.os || 'unknown',
         action: 'LOGIN',
         metadata: { method: 'google_oauth' }
-      }).catch(err => console.error('[ActivityLog] Failed to log google login:', err.message));
+      }).catch(err => logger.error('[ActivityLog] Failed to log google login', err));
     }
 
     const token = jwt.sign(
@@ -396,10 +397,10 @@ export const googleCallback = async (req, res) => {
     // Redirect with hash fragment to keep it out of logs
     const frontendUrl = configService.getConfig('FRONTEND_URL', 'http://localhost:5173');
     const redirectUrl = `${frontendUrl}/auth/callback#token=${token}`;
-    console.log(`[Google OAuth] Redirecting to: ${redirectUrl.split('#')[0]}#token=[REDACTED]`);
+    logger.info(`[Google OAuth] Redirecting to: ${redirectUrl.split('#')[0]}#token=[REDACTED]`);
     res.redirect(redirectUrl);
   } catch (err) {
-    console.error('[Google Callback] Error:', err.message);
+    logger.error('[Google Callback] Error', new Error(err.message));
     res.redirect(`${configService.getConfig('FRONTEND_URL', 'http://localhost:5173')}/login?error=oauth_failed`);
   }
 };

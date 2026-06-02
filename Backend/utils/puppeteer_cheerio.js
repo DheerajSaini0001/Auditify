@@ -35,7 +35,8 @@ function isDetachedFrameError(error) {
     msg.includes('cannot find context with specified id') ||
     msg.includes('frame was detached') ||
     msg.includes('frame operation timeout') ||
-    msg.includes('navigating')
+    msg.includes('navigating') ||
+    msg.includes('same javascript world')
   );
 }
 
@@ -402,12 +403,12 @@ async function safeClickCheckboxInFrame(page, framePatterns, selector, timeout =
 
         if (page.isClosed() || !isFrameAlive(frame) || (page._detachedFrames && page._detachedFrames.has(frame))) continue;
 
-        const checkbox = await safeFrameOperation(frame, async (f) => {
-          return await f.$(selector);
+        const box = await safeFrameOperation(frame, async (f) => {
+          const checkbox = await f.$(selector);
+          if (!checkbox) return null;
+          return await checkbox.boundingBox();
         });
-        if (!checkbox) continue;
 
-        const box = await checkbox.boundingBox();
         if (box) {
           if (page.isClosed() || !isFrameAlive(frame) || (page._detachedFrames && page._detachedFrames.has(frame))) continue;
 

@@ -13,6 +13,7 @@ import aioReadiness from "../metricServices/aioReadiness.js";
 import AEOService from "../metricServices/aeoService.js";
 import Puppeteer_Cheerio from "../utils/puppeteer_cheerio.js";
 import { performance } from "perf_hooks";
+import logger from "../utils/logger.js";
 
 const { url, device, report, auditId } = workerData;
 
@@ -35,7 +36,7 @@ process.on('unhandledRejection', (reason) => {
   if (isPageError) {
     // Expected during page teardown — suppress silently
   } else {
-    console.warn(`⚠️ [Worker] Unhandled promise rejection (non-fatal):`, reason);
+    logger.warn(`[Worker] Unhandled promise rejection (non-fatal)`, reason);
   }
 });
 
@@ -67,7 +68,7 @@ async function safeMetric(name, fn) {
     return await fn();
   } catch (err) {
     if (isDetachedFrameError(err)) {
-      console.warn(`⚠️ [Worker] ${name} skipped due to detached frame during page evaluation — continuing audit with partial data.`);
+      logger.warn(`[Worker] ${name} skipped due to detached frame during page evaluation — continuing audit with partial data.`);
       return null;
     }
     // Unexpected error — re-throw so the outer catch can handle it
@@ -116,7 +117,7 @@ const OverAll = (A, B, C, D, E, F, G) => {
     // [NEW] — Guard: if page is null (Puppeteer_Cheerio returned a partial result due to
     // a top-level detached frame), complete audit gracefully with zero scores
     if (!page) {
-      console.warn(`⚠️ [Worker] page is null after Puppeteer_Cheerio — frame detached during crawl. Completing audit with partial data.`);
+      logger.warn(`[Worker] page is null after Puppeteer_Cheerio — frame detached during crawl. Completing audit with partial data.`);
       await SingleAuditReport.findByIdAndUpdate(currentAuditId, {
         status: "completed",
         error: "Audit completed with partial data — page context was lost due to a frame detachment event.",
@@ -129,7 +130,7 @@ const OverAll = (A, B, C, D, E, F, G) => {
     }
 
     if (isBotProtected) {
-      console.log(`🛡️ Marking report as Bot Protected: ${url}`);
+      logger.info(`🛡️ Marking report as Bot Protected: ${url}`);
       await SingleAuditReport.findByIdAndUpdate(currentAuditId, {
         status: "completed",
         error: "Bot Protected: This site is using advanced bot detection (CAPTCHA/Cloudflare). Only partial analysis was possible.",
@@ -204,7 +205,7 @@ const OverAll = (A, B, C, D, E, F, G) => {
 
       await SingleAuditReport.findByIdAndUpdate(currentAuditId, updateData);
 
-      console.log(`🧠 Worker Completed for URL: ${url}`);
+      logger.info(`🧠 Worker Completed for URL: ${url}`);
 
       parentPort.postMessage({ success: true, reportId: currentAuditId });
       return;
@@ -260,7 +261,7 @@ const OverAll = (A, B, C, D, E, F, G) => {
       sectionScore: overall.sectionScores,
     });
 
-    console.log(`🧠 Worker Completed for URL: ${url}`);
+    logger.info(`🧠 Worker Completed for URL: ${url}`);
 
     parentPort.postMessage({ success: true, reportId: currentAuditId });
 

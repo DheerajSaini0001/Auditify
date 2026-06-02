@@ -3,6 +3,7 @@ import { UAParser } from "ua-parser-js";
 import fetch from "node-fetch";
 import NodeCache from "node-cache";
 import configService from "../services/configService.js";
+import logger from "../utils/logger.js";
 
 // Cache GeoIP lookups for 24 hours to avoid hitting API limits
 const geoCache = new NodeCache({ stdTTL: 86400 });
@@ -63,7 +64,7 @@ const trackingMiddleware = async (req, res, next) => {
           geoCache.set(ip, { country, region, city });
         }
       } catch (err) {
-        console.error(`[GeoIP] Lookup failed for ${ip}:`, err.message);
+        logger.error(`[GeoIP] Lookup failed for ${ip}`, new Error(err.message));
       }
     }
   }

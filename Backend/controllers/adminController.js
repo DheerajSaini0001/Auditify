@@ -8,10 +8,11 @@ import SingleAuditReport from '../models/singleAuditReport.js';
 import { encrypt, decrypt } from '../utils/encrypt.js';
 import configService from '../services/configService.js';
 import axios from 'axios';
+import logger from '../utils/logger.js';
 
 export const getAllUsers = async (req, res) => {
   try {
-    console.log(`[Admin] Fetching all users... (Requested by Admin: ${req.user.userId})`);
+    logger.info(`[Admin] Fetching all users... (Requested by Admin: ${req.user.userId})`);
     const { page = 1, limit = 20, search, role } = req.query;
 
     const query = {};
@@ -31,7 +32,7 @@ export const getAllUsers = async (req, res) => {
 
     const total = await User.countDocuments(query) || 0;
 
-    console.log(`[Admin] Users found: ${users.length} of ${total} total.`);
+    logger.info(`[Admin] Users found: ${users.length} of ${total} total.`);
 
     res.json({
       success: true,
@@ -214,7 +215,7 @@ export const getAuditLogs = async (req, res) => {
       totalPages: Math.ceil(total / limit) || 1,
     });
   } catch (error) {
-    console.error('getAuditLogs Critical Error:', error);
+    logger.error('getAuditLogs Critical Error', error);
     res.status(500).json({ error: 'Internal server error', code: 'SERVER_ERROR' });
   }
 };
@@ -258,7 +259,7 @@ export const getStats = async (req, res) => {
       avgScore: avgScore || 0
     });
   } catch (error) {
-    console.error('getStats Error:', error);
+    logger.error('getStats Error', error);
     res.status(500).json({ error: 'Internal server error', code: 'SERVER_ERROR' });
   }
 };
@@ -481,7 +482,7 @@ export const getOverviewStats = async (req, res) => {
       activeUsers
     });
   } catch (error) {
-    console.error('getOverviewStats Error:', error);
+    logger.error('getOverviewStats Error', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
@@ -591,7 +592,7 @@ export const saveConfig = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('saveConfig error:', error);
+    logger.error('saveConfig error', error);
     res.status(500).json({ success: false, error: 'Failed to save configuration' });
   }
 };
@@ -665,7 +666,7 @@ export const revealConfig = async (req, res) => {
 
     res.json({ success: true, value: decryptedValue });
   } catch (error) {
-    console.error('revealConfig error:', error);
+    logger.error('revealConfig error', error);
     res.status(500).json({ success: false, error: 'Failed to decrypt value. Key might be corrupt or ENCRYPTION_KEY has changed.' });
   }
 };

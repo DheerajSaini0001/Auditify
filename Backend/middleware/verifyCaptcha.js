@@ -1,12 +1,13 @@
 import axios from 'axios';
 import configService from '../services/configService.js';
+import logger from '../utils/logger.js';
 
 const verifyCaptcha = async (req, res, next) => {
   const token = req.body?.captchaToken;
 
   // Skip CAPTCHA for authenticated users
   if (req.user) {
-    console.log(`[reCAPTCHA] Skipping for authenticated user: ${req.user.email || req.user.userId}`);
+    logger.debug(`[reCAPTCHA] Skipping for authenticated user: ${req.user.email || req.user.userId}`);
     return next();
   }
 
@@ -38,7 +39,7 @@ const verifyCaptcha = async (req, res, next) => {
 
     next();
   } catch (err) {
-    console.error('[reCAPTCHA] Verification error:', err.message);
+    logger.error('[reCAPTCHA] Verification error', new Error(err.message));
     return res.status(500).json({
       error: 'Internal server error',
       code: 'SERVER_ERROR'

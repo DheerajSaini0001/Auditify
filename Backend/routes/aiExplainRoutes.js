@@ -2,6 +2,7 @@
 import express from 'express';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import configService from '../services/configService.js';
+import logger from '../utils/logger.js';
 
 const router = express.Router();
 
@@ -17,7 +18,7 @@ async function generateWithRetry(model, prompt, retries = 3, delay = 2000) {
         } catch (error) {
             const isTransient = error.message?.includes('503') || error.message?.includes('429');
             if (isTransient && i < retries - 1) {
-                console.warn(`[AI Retry] Attempt ${i + 1} failed. Retrying in ${delay}ms...`);
+                logger.warn(`[AI Retry] Attempt ${i + 1} failed. Retrying in ${delay}ms...`);
                 await new Promise(res => setTimeout(res, delay));
                 delay *= 2; // Exponential backoff
                 continue;
@@ -99,13 +100,12 @@ function summarizeAuditData(data) {
 // 1. Existing Explain endpoint (updated previously)
 router.post('/explain', async (req, res) => {
     const { findingType, findingTitle, findingDetails, findingMeta, severity, pageUrl, auditScore } = req.body;
-    console.log("[AI Explain] Request payload findingTitle:", findingTitle);
-    console.log("[AI Explain] Request payload findingMeta keys:", findingMeta ? Object.keys(findingMeta) : "None");
+    logger.debug("[AI Explain] Request payload findingTitle:", findingTitle);
+    logger.debug("[AI Explain] Request payload findingMeta keys:", findingMeta ? Object.keys(findingMeta) : "None");
     if (findingMeta?.failedNodes) {
-        console.log("[AI Explain] failedNodes count:", findingMeta.failedNodes.length);
-        console.log("[AI Explain] First failedNode sample:", JSON.stringify(findingMeta.failedNodes[0], null, 2));
+        logger.debug("[AI Explain] failedNodes count:", findingMeta.failedNodes.length);
     } else {
-        console.log("[AI Explain] WARNING: No failedNodes found in findingMeta!");
+        logger.debug("[AI Explain] WARNING: No failedNodes found in findingMeta!");
     }
 
     if (!configService.getConfig('GEMINI_API_KEY')) {
@@ -128,7 +128,7 @@ router.post('/explain', async (req, res) => {
         res.write('data: [DONE]\n\n');
         res.end();
     } catch (error) {
-        console.error('AI Error:', error);
+        logger.error('AI Error', error);
         const errStr = (error?.message || String(error) || '').toLowerCase();
         const isQuota = errStr.includes('429') || 
                         errStr.includes('quota') || 
@@ -220,7 +220,7 @@ STRICT RULES for contrast issues:
 
         res.json({ text });
     } catch (error) {
-        console.error('❌ CHAT AI ERROR:', error);
+        logger.error('❌ CHAT AI ERROR', error);
         const isQuota = error.message?.includes('429') || error.message?.includes('Quota') || error.message?.includes('limit') || error.message?.includes('rate');
         const errMsg = isQuota ? 'Limit is over' : `AI Connection Error: ${error.message}`;
         res.status(500).json({ error: errMsg });
@@ -230,10 +230,10 @@ STRICT RULES for contrast issues:
 // 3. NEW Section Summary Endpoint
 router.post('/summarize-section', async (req, res) => {
     const { sectionName, sectionData, auditScore, url } = req.body;
-    console.log(`[AI Strategist] Summary request for ${sectionName} (${url})`);
+    logger.info(`[AI Strategist] Summary request for ${sectionName} (${url})`);
 
     if (!configService.getConfig('GEMINI_API_KEY')) {
-        console.error('[AI Strategist] Missing GEMINI_API_KEY');
+        logger.error('[AI Strategist] Missing GEMINI_API_KEY');
         return res.status(500).json({ error: 'AI service not configured.' });
     }
 
@@ -269,7 +269,7 @@ router.post('/summarize-section', async (req, res) => {
         try {
             jsonResponse = JSON.parse(text);
         } catch (e) {
-            console.error('JSON Parse Error:', text);
+            logger.error('JSON Parse Error', new Error(text));
             jsonResponse = {
                 strength: "Audit data synthesis completed successfully.",
                 bottleneck: "Unable to parse detailed strategist insights.",
@@ -279,7 +279,7 @@ router.post('/summarize-section', async (req, res) => {
 
         res.json(jsonResponse);
     } catch (error) {
-        console.error('❌ SUMMARY AI ERROR:', error);
+        logger.error('❌ SUMMARY AI ERROR', error);
         const isQuota = error.message?.includes('429') || error.message?.includes('Quota') || error.message?.includes('limit') || error.message?.includes('rate');
         const errMsg = isQuota ? 'Limit is over' : `AI Connection Error: ${error.message}`;
         res.status(500).json({ error: errMsg });

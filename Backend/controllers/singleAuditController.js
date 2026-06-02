@@ -4,6 +4,7 @@ import SingleAuditReport from "../models/singleAuditReport.js";
 import AuditLog from "../models/AuditLog.js";
 import ActivityLog from "../models/ActivityLog.js";
 import Puppeteer_Cheerio from "../utils/puppeteer_cheerio.js";
+import logger from "../utils/logger.js";
  
 const reportFieldMap = {
   "Technical Performance": "technicalPerformance",
@@ -56,7 +57,7 @@ export const startAudit = async (req, res) => {
     }
 
     if (force) {
-      console.log(`🗑️ Force run: Deleting existing single audit report for: ${url}`);
+      logger.info(`🗑️ Force run: Deleting existing single audit report for: ${url}`);
       await SingleAuditReport.deleteMany({
         url,
         device,
@@ -82,7 +83,7 @@ export const startAudit = async (req, res) => {
     }
 
     if (existing) {
-      console.log(`♻️ Safeguard: Reusing existing Audit (${existing.status}) for: ${url}`);
+      logger.info(`♻️ Safeguard: Reusing existing Audit (${existing.status}) for: ${url}`);
       
       // Save an AuditLog so it appears in User's history even though it was cached
       const auditLog = new AuditLog({
@@ -117,10 +118,10 @@ export const startAudit = async (req, res) => {
           os: req.tracking?.os || 'Unknown',
           action: 'AUDIT_RUN_CACHED',
           metadata: { url, device, reportId: existing._id }
-        }).catch(err => console.error("Error saving cached ActivityLog:", err));
+        }).catch(err => logger.error("Error saving cached ActivityLog", err));
       }
 
-      auditLog.save().catch(err => console.error("Error saving cached AuditLog:", err));
+      auditLog.save().catch(err => logger.error("Error saving cached AuditLog", err));
 
       return res.status(200).json(existing);
     }
@@ -138,7 +139,7 @@ export const startAudit = async (req, res) => {
       if (fullAudit) {
         const fieldName = reportFieldMap[report];
         if (fieldName && fullAudit[fieldName]) {
-          console.log(`✨ Section Reuse: Extracting ${report} from existing Full Audit for: ${url}`);
+          logger.info(`✨ Section Reuse: Extracting ${report} from existing Full Audit for: ${url}`);
  
           const sectionScore = fullAudit[fieldName].Percentage || 0;
           const sectionGrade = sectionScore >= 90 ? "A+" : sectionScore >= 80 ? "A" : sectionScore >= 70 ? "B" : sectionScore >= 60 ? "C" : sectionScore >= 50 ? "D" : "F";
@@ -179,7 +180,7 @@ export const startAudit = async (req, res) => {
             grade: sectionGrade,
             actions: ["visited", "audit_section_extracted"],
           });
-          auditLog.save().catch(err => console.error("Error saving extracted AuditLog:", err));
+          auditLog.save().catch(err => logger.error("Error saving extracted AuditLog", err));
  
           return res.status(200).json(newSectionReport);
         }
@@ -191,7 +192,7 @@ export const startAudit = async (req, res) => {
     const raceCheck = await SingleAuditReport.findOne({ url, device, report, status: "inprogress", userId: req.user?.userId || null });
     if (raceCheck) return res.status(200).json(raceCheck);
 
-    console.log(`➡️ Starting NEW Audit Request → ${url} | ${device} | ${report}`);
+    logger.info(`➡️ Starting NEW Audit Request → ${url} | ${device} | ${report}`);
 
     let newReport;
     try {
@@ -206,7 +207,7 @@ export const startAudit = async (req, res) => {
     } catch (dbError) {
       // Handle race condition: If two requests hit exactly at the same time
       if (dbError.code === 11000) {
-        console.log(`⚠️ Race condition caught: Audit already exists or is in-progress for: ${url}`);
+        logger.warn(`⚠️ Race condition caught: Audit already exists or is in-progress for: ${url}`);
         const raceCheck = await SingleAuditReport.findOne({ url, device, report, status: { $ne: "failed" }, userId: req.user?.userId || null });
         if (raceCheck) return res.send(raceCheck);
       }
@@ -245,10 +246,10 @@ export const startAudit = async (req, res) => {
         os: req.tracking?.os || 'Unknown',
         action: 'AUDIT_RUN',
         metadata: { url, device, reportId: newReport._id }
-      }).catch(err => console.error("Error saving ActivityLog:", err));
+      }).catch(err => logger.error("Error saving ActivityLog", err));
     }
 
-    auditLog.save().catch(err => console.error("Error saving AuditLog:", err));
+    auditLog.save().catch(err => logger.error("Error saving AuditLog", err));
 
     const startTime = Date.now();
 
@@ -274,7 +275,7 @@ export const startAudit = async (req, res) => {
 
     worker.on("message", async (msg) => {
       if (msg?.error) {
-        console.log(`❌ Audit Failed: ${msg.error}`);
+        logger.error(`❌ Audit Failed: ${msg.error}`);
 
         await SingleAuditReport.findByIdAndUpdate(newReport._id, {
           status: "failed",
@@ -293,13 +294,13 @@ export const startAudit = async (req, res) => {
             }
           );
         } catch (err) {
-          console.error("Error updating AuditLog on message error:", err);
+          logger.error("Error updating AuditLog on message error", err);
         }
 
         return;
       }
 
-      console.log("✅ Audit Completed Successfully");
+      logger.info("✅ Audit Completed Successfully");
 
       const duration = Date.now() - startTime;
 
@@ -321,14 +322,14 @@ export const startAudit = async (req, res) => {
           );
         }
       } catch (err) {
-        console.error("Error updating status/AuditLog on success:", err);
+        logger.error("Error updating status/AuditLog on success", err);
       }
     })
 
     worker.on("error", async (err) => {
       const duration = Date.now() - startTime;
       await SingleAuditReport.findByIdAndUpdate(newReport._id, { status: "failed" });
-      console.log(`❌ Audit Failed with worker error:`, err);
+      logger.error(`❌ Audit Failed with worker error`, err);
 
       // Update AuditLog entry
       try {
@@ -341,13 +342,13 @@ export const startAudit = async (req, res) => {
           }
         );
       } catch (err) {
-        console.error("Error updating AuditLog on error:", err);
+        logger.error("Error updating AuditLog on error", err);
       }
     });
 
   } catch (error) {
     if (!res.headersSent) {
-      console.error("Audit Controller Error:", error);
+      logger.error("Audit Controller Error", error);
       res.status(500).json({ error: "Internal Server Error", details: error.message });
     }
   }
@@ -368,7 +369,7 @@ export const getReportById = async (req, res) => {
     }
     res.status(200).json(report);
   } catch (error) {
-    console.error("Error fetching report:", error);
+    logger.error("Error fetching report", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
@@ -432,7 +433,7 @@ export const getReportStatusById = async (req, res) => {
       message 
     });
   } catch (error) {
-    console.error("Error fetching report status:", error);
+    logger.error("Error fetching report status", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
@@ -451,12 +452,12 @@ export const captureScreenshot = async (req, res) => {
 
     const device = report.device || "Desktop";
 
-    console.log(`📸 Taking parallel screenshot for ${url} on ${device}...`);
+    logger.info(`📸 Taking parallel screenshot for ${url} on ${device}...`);
     let result;
     try {
       result = await Puppeteer_Cheerio(url, device);
     } catch (scrapingError) {
-      console.error("Puppeteer capture failed:", scrapingError);
+      logger.error("Puppeteer capture failed", scrapingError);
       await SingleAuditReport.findByIdAndUpdate(auditId, {
         screenshot: null,
         screenshotUrl: null
@@ -471,7 +472,7 @@ export const captureScreenshot = async (req, res) => {
     }
 
     if (!screenshot) {
-      console.warn("Screenshot capture returned empty.");
+      logger.warn("Screenshot capture returned empty.");
       await SingleAuditReport.findByIdAndUpdate(auditId, {
         screenshot: null,
         screenshotUrl: null,
@@ -489,11 +490,11 @@ export const captureScreenshot = async (req, res) => {
       isBotProtected: isBotProtected || false
     });
 
-    console.log(`📸 Screenshot captured successfully and saved for ${url}`);
+    logger.info(`📸 Screenshot captured successfully and saved for ${url}`);
     return res.status(200).json({ screenshotUrl });
 
   } catch (error) {
-    console.error("Screenshot Endpoint Error:", error);
+    logger.error("Screenshot Endpoint Error", error);
     return res.status(200).json({ screenshotUrl: null, error: error.message });
   }
 };
@@ -512,7 +513,7 @@ export const getScreenshotImage = async (req, res) => {
     });
     res.end(imgBuffer);
   } catch (err) {
-    console.error("Error serving screenshot:", err);
+    logger.error("Error serving screenshot", err);
     res.status(500).send("Internal Server Error");
   }
 };

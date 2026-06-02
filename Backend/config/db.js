@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import logger from "../utils/logger.js";
 
 const dbConnect = async (options = {}) => {
   try {
@@ -9,9 +10,9 @@ const dbConnect = async (options = {}) => {
     };
     
     await mongoose.connect(process.env.MONGO_URI, { ...defaultOptions, ...options });
-    console.log("✅ MongoDB Connected");
+    logger.info("✅ MongoDB Connected");
   } catch (err) {
-    console.error("MongoDB Error:", err);
+    logger.error("MongoDB Error", err);
   }
 };
 

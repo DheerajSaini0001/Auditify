@@ -4,6 +4,7 @@ import helmet from "helmet";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import session from "express-session";
+import logger from "./utils/logger.js";
 import passport from "passport";
 
 import singleAuditRoutes from "./routes/singleAuditRoutes.js";
@@ -146,7 +147,7 @@ const startServer = async () => {
 
   // ── 11. Error Handler ──
   app.use((err, req, res, next) => {
-    console.error("[ERROR]:", err);
+    logger.error(`${req.method} ${req.originalUrl} — Unhandled Error`, err);
     res.status(500).json({
       error: "Internal Server Error"
     });
@@ -154,10 +155,10 @@ const startServer = async () => {
 
   // ── 12. Start Server ──
   app.listen(parseInt(PORT), () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
+    logger.info(`🚀 Server running on http://localhost:${PORT}`);
   });
 };
 
 startServer().catch(err => {
-  console.error("❌ Startup Error:", err);
+  logger.error("❌ Startup Error", err);
 });

@@ -1,4 +1,5 @@
 import AxePuppeteer from "@axe-core/puppeteer";
+import logger from "../utils/logger.js";
 
 function evaluateRule(results, ruleId) {
   if (!results || !results.violations) {
@@ -795,7 +796,7 @@ export default async function accessibilityMetrics(page) {
   try {
     axeResults = await new AxePuppeteer(page).analyze();
   } catch (err) {
-    console.error("Axe analysis failed:", err.message);
+    logger.error("Axe analysis failed", new Error(err.message));
     axeResults = { violations: [] };
   }
 

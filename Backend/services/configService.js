@@ -2,6 +2,7 @@ import NodeCache from 'node-cache';
 import PlatformConfig from '../models/PlatformConfig.js';
 import { encrypt, decrypt } from '../utils/encrypt.js';
 import dotenv from 'dotenv';
+import logger from '../utils/logger.js';
 
 dotenv.config();
 
@@ -18,7 +19,7 @@ class ConfigService {
    * Initializer: On startup, check for default keys and sync from process.env if missing in DB.
    */
   async initialize() {
-    console.log('🚀 [ConfigService] Initializing Dynamic Platform Configuration...');
+    logger.info('[ConfigService] Initializing Dynamic Platform Configuration...');
 
     const defaultKeys = [
       // ── API Keys & Third Party ──
@@ -76,16 +77,16 @@ class ConfigService {
             isSecret: config.isSecret,
             updatedBy: null // System initialized
           });
-          console.log(`✅ [ConfigService] Synced "${config.key}" from .env to Database`);
+          logger.info(`[ConfigService] Synced "${config.key}" from .env to Database`);
         }
       }
 
       await this.refreshCache();
       this.isInitialized = true;
       this.lastRefresh = new Date();
-      console.log('✅ [ConfigService] System initialized and cache primed.');
+      logger.info('[ConfigService] System initialized and cache primed.');
     } catch (error) {
-      console.error('❌ [ConfigService] Initialization failed:', error.message);
+      logger.error('[ConfigService] Initialization failed', new Error(error.message));
       this.isInitialized = false;
     }
   }
@@ -171,10 +172,10 @@ class ConfigService {
         cache.set(config.key, value);
       });
 
-      console.log(`♻️ [ConfigService] Cache refreshed. ${configs.length} items loaded.`);
+      logger.info(`[ConfigService] Cache refreshed. ${configs.length} items loaded.`);
       return true;
     } catch (error) {
-      console.error('❌ [ConfigService] Cache refresh failed:', error.message);
+      logger.error('[ConfigService] Cache refresh failed', new Error(error.message));
       return false;
     }
   }

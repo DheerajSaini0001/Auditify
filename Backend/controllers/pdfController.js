@@ -2,6 +2,7 @@ import SingleAuditReport from "../models/singleAuditReport.js";
 import BulkAuditReport from "../models/bulkAuditReport.js";
 import ActivityLog from "../models/ActivityLog.js";
 import puppeteer from "puppeteer";
+import logger from "../utils/logger.js";
 
 export const generatePDFReport = async (req, res) => {
   try {
@@ -531,7 +532,7 @@ export const generatePDFReport = async (req, res) => {
     res.send(Buffer.from(pdfBuffer));
 
   } catch (error) {
-    console.error("PDF generation error:", error);
+    logger.error("PDF generation error", error);
     res.status(500).json({ error: "Failed to generate PDF report" });
   }
 };

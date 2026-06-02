@@ -8,6 +8,7 @@ import analyzeStructuredContent from './signals/structuredContent.js';
 import analyzeBotAccess from './signals/botAccess.js';
 import analyzeMarkdownHeaders from './signals/markdownHeaders.js';
 import analyzeCitations from './signals/citations.js';
+import logger from '../utils/logger.js';
 
 /**
  * AEO Service Orchestrator
@@ -97,7 +98,7 @@ class AEOService {
                 if (onSignalComplete) onSignalComplete(signalKey, result);
                 return result;
             } catch (err) {
-                console.error(`Error in AEO signal ${signalKey}:`, err);
+                logger.error(`Error in AEO signal ${signalKey}`, err);
                 const errorResult = { score: 0, error: err.message };
                 if (onSignalComplete) onSignalComplete(signalKey, errorResult);
                 return errorResult;

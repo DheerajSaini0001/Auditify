@@ -1,6 +1,4 @@
 securityCompliance.mjs
-import puppeteer from "puppeteer-extra";
-import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import dotenv from "dotenv";
 import fetch from "node-fetch";
 import { URL } from "url";
@@ -8,7 +6,6 @@ import { waitForChallengeResolution } from "../utils/puppeteer_cheerio.js";
 import configService from "../services/configService.js";
 
 dotenv.config();
-puppeteer.use(StealthPlugin());
 
 // Read at function call time via configService (not module load)
 const getSafeBrowsingKey = () => configService.getConfig('SafeBrowsing');
@@ -40,7 +37,7 @@ function checkHTTPS(url) {
 }
 
 // SSL (Secure Sockets Layer) Connection
-function checkSSLConnection(response) {
+async function checkSSLConnection(response) {
   if (!response) return { score: 0, status: "fail", details: "No response available for SSL check", meta: {}, analysis: { cause: "No response received.", recommendation: "Check server connectivity." } };
   if (!response.ok()) {
     return {
@@ -56,8 +53,8 @@ function checkSSLConnection(response) {
       }
     };
   }
-  const securityDetails = response.securityDetails();
-  const validTo = securityDetails ? new Date(securityDetails.validTo() * 1000).toISOString() : null;
+  const securityDetails = await response.securityDetails();
+  const validTo = securityDetails && securityDetails.validTo ? new Date(securityDetails.validTo * 1000).toISOString() : null;
 
   if (validTo) {
     const expiryDate = new Date(validTo);
@@ -92,10 +89,10 @@ function checkSSLConnection(response) {
 }
 
 // TLS(Transport Layer Security) Version
-function checkTLSVersion(response) {
+async function checkTLSVersion(response) {
   if (!response) return { score: 0, status: "fail", details: "No response available", meta: {}, analysis: { cause: "No response to check TLS version", recommendation: "Ensure server is reachable" } };
 
-  const securityDetails = response.securityDetails();
+  const securityDetails = await response.securityDetails();
   if (!securityDetails) {
     return {
       score: 0,
@@ -109,7 +106,7 @@ function checkTLSVersion(response) {
     };
   }
 
-  const tls = securityDetails.protocol(); // e.g., "TLS 1.3"
+  const tls = securityDetails.protocol; // e.g., "TLS 1.3"
   const isStrongTls = tls.includes('1.2') || tls.includes('1.3');
 
   return {
@@ -252,7 +249,7 @@ function checkXContentTypeOptions(response) {
 
 // Cookies - Secure Flag
 async function checkCookiesSecureFlag(page) {
-  const cookies = await page.cookies();
+  const cookies = await page.context().cookies();
 
   if (!cookies.length) {
     return {
@@ -290,7 +287,7 @@ async function checkCookiesSecureFlag(page) {
 
 // Cookies - HttpOnly Flag
 async function checkCookiesHttpOnlyFlag(page) {
-  const cookies = await page.cookies();
+  const cookies = await page.context().cookies();
 
   if (!cookies.length) {
     return {
@@ -329,7 +326,7 @@ async function checkCookiesHttpOnlyFlag(page) {
 // Cookies - Third Party Cookies
 async function checkThirdPartyCookies(url, page) {
   const pageHostname = new URL(url).hostname;
-  const cookies = await page.cookies();
+  const cookies = await page.context().cookies();
 
   const thirdPartyCookies = cookies.filter(cookie => {
     const cookieDomain = cookie.domain.startsWith('.') ? cookie.domain.slice(1) : cookie.domain;
@@ -1360,8 +1357,8 @@ export default async function securityCompliance(url, page, response, browser) {
 
   const domain = Domain(url);
   const httpsResult = checkHTTPS(url);
-  const sslResult = checkSSLConnection(response);
-  const tlsVersionResult = checkTLSVersion(response);
+  const sslResult = await checkSSLConnection(response);
+  const tlsVersionResult = await checkTLSVersion(response);
   const hstsResult = checkHSTS(response);
 
   const xFrameOptionsResult = checkXFrameOptions(response);

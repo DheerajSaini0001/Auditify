@@ -16,6 +16,33 @@ import logger from "../utils/logger.js";
 
 const { url, device, report, bulkAuditId, pageUrl } = workerData;
 
+// [NEW] — Worker-level unhandled rejection & uncaught exception safety net
+// Catches any fire-and-forget promise rejections or asynchronous exceptions from
+// third-party metric libraries or playwright-extra (e.g. cdpSession) that occur during page teardown.
+// Without this, a late cdpSession or axe-core error crashes the worker thread.
+function handleWorkerSafetyError(error) {
+  const msg = error?.message || (typeof error === 'string' ? error : '');
+  const lmsg = msg.toLowerCase();
+  const isPageError = (
+    lmsg.includes('detached') ||
+    lmsg.includes('session closed') ||
+    lmsg.includes('target closed') ||
+    lmsg.includes('context was destroyed') ||
+    lmsg.includes('frame is not ready') ||
+    lmsg.includes('page/frame is not ready') ||
+    lmsg.includes('cdpsession') ||
+    !error // undefined/null error
+  );
+  if (isPageError) {
+    // Expected during page teardown — suppress silently
+  } else {
+    logger.warn(`[Worker] Uncaught safety exception/promise rejection (non-fatal):`, error);
+  }
+}
+
+process.on('unhandledRejection', handleWorkerSafetyError);
+process.on('uncaughtException', handleWorkerSafetyError);
+
 const OverAll = (A, B, C, D, E, F, G) => {
     A ||= 0; B ||= 0; C ||= 0; D ||= 0; E ||= 0; F ||= 0; G ||= 0;
     const total = (A + B + C + D + E + F + G) / 7;

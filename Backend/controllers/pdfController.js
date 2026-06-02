@@ -1,7 +1,7 @@
 import SingleAuditReport from "../models/singleAuditReport.js";
 import BulkAuditReport from "../models/bulkAuditReport.js";
 import ActivityLog from "../models/ActivityLog.js";
-import puppeteer from "puppeteer";
+import { chromium } from "playwright";
 import logger from "../utils/logger.js";
 
 export const generatePDFReport = async (req, res) => {
@@ -56,12 +56,13 @@ export const generatePDFReport = async (req, res) => {
       return res.status(400).json({ error: "Audit is not completed yet" });
     }
 
-    const browser = await puppeteer.launch({
-      headless: "new",
+    const browser = await chromium.launch({
+      headless: true,
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
 
-    const page = await browser.newPage();
+    const context = await browser.newContext();
+    const page = await context.newPage();
 
     const sections = [
         { key: 'technicalPerformance', title: 'Technical Performance' },
@@ -489,7 +490,7 @@ export const generatePDFReport = async (req, res) => {
     </html>
     `;
 
-    await page.setContent(htmlContent, { waitUntil: "networkidle0" });
+    await page.setContent(htmlContent, { waitUntil: "networkidle" });
 
     const pdfBuffer = await page.pdf({
       format: "A4",

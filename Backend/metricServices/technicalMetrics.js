@@ -1022,7 +1022,13 @@ const evaluateRenderBlocking = async (page) => {
 
 // Redirect Chains
 const evaluateRedirectChains = (response) => {
-  const chain = response.request().redirectChain();
+  const chain = [];
+  let currentRequest = response.request();
+  while (currentRequest.redirectedFrom()) {
+    const prev = currentRequest.redirectedFrom();
+    chain.unshift(prev);
+    currentRequest = prev;
+  }
   const redirectDetails = chain.map(req => req.url()).concat(response.url());
   const hops = chain.length;
   const score = hops <= 1 ? 100 : 0;

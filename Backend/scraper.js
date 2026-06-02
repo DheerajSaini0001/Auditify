@@ -3,11 +3,11 @@
 //  Run: node scraper.js
 // ============================================================
 
-import puppeteer from 'puppeteer-extra';
+import { chromium } from 'playwright-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 
 // Apply stealth plugin BEFORE any browser launch
-puppeteer.use(StealthPlugin());
+chromium.use(StealthPlugin());
 
 // ======================== CONFIG ============================
 
@@ -60,19 +60,19 @@ async function launchBrowser(proxy = null) {
   ];
   if (proxy) args.unshift(`--proxy-server=${proxy}`);
 
-  const browser = await puppeteer.launch({
-    headless: 'new',
+  const browser = await chromium.launch({
+    headless: true,
     args,
   });
 
-  const page = await browser.newPage();
-
-  // Realistic fingerprint
-  await page.setUserAgent(USER_AGENT);
-  await page.setViewport(VIEWPORT);
+  const context = await browser.newContext({
+    userAgent: USER_AGENT,
+    viewport: VIEWPORT
+  });
+  const page = await context.newPage();
 
   // Strip the webdriver flag
-  await page.evaluateOnNewDocument(() => {
+  await page.addInitScript(() => {
     Object.defineProperty(navigator, 'webdriver', { get: () => false });
   });
 

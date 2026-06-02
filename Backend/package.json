@@ -4,8 +4,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon server.js",
-    "build": "PUPPETEER_CACHE_DIR=./chrome-cache npx -y puppeteer browsers install chrome",
-    "postinstall": "PUPPETEER_CACHE_DIR=./chrome-cache npx -y puppeteer browsers install chrome",
+    "build": "npx playwright install chromium --with-deps",
+    "postinstall": "npx playwright install chromium --with-deps",
     "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -15,7 +15,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@axe-core/puppeteer": "^4.10.2",
+    "@axe-core/playwright": "^4.9.1",
     "@google/generative-ai": "^0.24.1",
     "axe-core": "^4.10.3",
     "axios": "^1.14.0",
@@ -44,8 +44,8 @@
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "perf_hooks": "^0.0.1",
-    "puppeteer": "^24.20.0",
-    "puppeteer-extra": "^3.3.6",
+    "playwright": "^1.44.0",
+    "playwright-extra": "^4.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
     "ua-parser-js": "^2.0.9",
     "uuid": "^13.0.0",

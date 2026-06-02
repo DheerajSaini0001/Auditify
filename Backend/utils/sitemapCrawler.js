@@ -1,9 +1,9 @@
 import * as cheerio from "cheerio";
 import { parseStringPromise } from "xml2js";
-import puppeteer from "puppeteer-extra";
+import { chromium } from "playwright-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 
-puppeteer.use(StealthPlugin());
+chromium.use(StealthPlugin());
 
 export default async function discoverPages(baseUrl, maxPages = 50) {
     const discoveredUrls = new Set();
@@ -17,13 +17,15 @@ export default async function discoverPages(baseUrl, maxPages = 50) {
 
         console.log(`🚀 Starting discovery for: ${domain}`);
 
-        browser = await puppeteer.launch({
+        browser = await chromium.launch({
             headless: true,
             args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
         });
 
-        const page = await browser.newPage();
-        await page.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36");
+        const context = await browser.newContext({
+            userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+        });
+        const page = await context.newPage();
 
         // Step 1: Try to fetch sitemap.xml using Puppeteer
         const sitemapUrls = await fetchSitemapUrls(page, domain);

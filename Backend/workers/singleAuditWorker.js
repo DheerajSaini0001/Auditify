@@ -17,12 +17,12 @@ import logger from "../utils/logger.js";
 
 const { url, device, report, auditId } = workerData;
 
-// [NEW] — Worker-level unhandled rejection safety net
-// Catches any fire-and-forget promise rejections from third-party metric
-// libraries (axe-core, AEO, etc.) that don't properly chain .catch()
-// Without this, a single unhandled rejection crashes the entire worker thread.
-process.on('unhandledRejection', (reason) => {
-  const msg = reason?.message || (typeof reason === 'string' ? reason : '');
+// [NEW] — Worker-level unhandled rejection & uncaught exception safety net
+// Catches any fire-and-forget promise rejections or asynchronous exceptions from
+// third-party metric libraries or playwright-extra (e.g. cdpSession) that occur during page teardown.
+// Without this, a late cdpSession or axe-core error crashes the worker thread.
+function handleWorkerSafetyError(error) {
+  const msg = error?.message || (typeof error === 'string' ? error : '');
   const lmsg = msg.toLowerCase();
   const isPageError = (
     lmsg.includes('detached') ||
@@ -31,14 +31,18 @@ process.on('unhandledRejection', (reason) => {
     lmsg.includes('context was destroyed') ||
     lmsg.includes('frame is not ready') ||
     lmsg.includes('page/frame is not ready') ||
-    !reason // undefined rejection
+    lmsg.includes('cdpsession') ||
+    !error // undefined/null error
   );
   if (isPageError) {
     // Expected during page teardown — suppress silently
   } else {
-    logger.warn(`[Worker] Unhandled promise rejection (non-fatal)`, reason);
+    logger.warn(`[Worker] Uncaught safety exception/promise rejection (non-fatal):`, error);
   }
-});
+}
+
+process.on('unhandledRejection', handleWorkerSafetyError);
+process.on('uncaughtException', handleWorkerSafetyError);
 
 
 // [NEW] — Centralized detached frame error detector (mirrors puppeteer_cheerio.js)

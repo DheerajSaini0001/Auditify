@@ -1,16 +1,16 @@
-import puppeteer from "puppeteer-extra";
+import { chromium } from "playwright-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 
-puppeteer.use(StealthPlugin());
+chromium.use(StealthPlugin());
 
 /**
- * Lightweight Puppeteer fetcher for discovery and simple tasks
+ * Lightweight Playwright fetcher for discovery and simple tasks
  * Bypasses basic WAF and challenge pages without the overhead of full auditing
  */
 export default async function Puppeteer_Simple(url) {
   let browser;
   try {
-    browser = await puppeteer.launch({
+    browser = await chromium.launch({
       headless: true,
       args: [
         "--no-sandbox", 
@@ -19,18 +19,16 @@ export default async function Puppeteer_Simple(url) {
         "--disable-blink-features=AutomationControlled"
       ]
     });
-    const page = await browser.newPage();
     
-    // Set standard viewport
-    await page.setViewport({ width: 1280, height: 800 });
-    
-    // Modern User Agent
-    await page.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36");
-    
-    await page.setExtraHTTPHeaders({
-      "Accept-Language": "en-US,en;q=0.9",
-      "Referer": "https://www.google.com/"
+    const context = await browser.newContext({
+      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+      viewport: { width: 1280, height: 800 },
+      extraHTTPHeaders: {
+        "Accept-Language": "en-US,en;q=0.9",
+        "Referer": "https://www.google.com/"
+      }
     });
+    const page = await context.newPage();
 
     // Random delay before navigation to mimic human behavior
     await new Promise(resolve => resolve());

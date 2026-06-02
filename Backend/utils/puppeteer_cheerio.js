@@ -1,11 +1,11 @@
-import puppeteer from "puppeteer-extra";
+import { chromium } from "playwright-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import * as cheerio from "cheerio";
 import SingleAuditReport from "../models/singleAuditReport.js";
 
 // Use stealth plugin to evade common bot detection techniques
 // [EXISTING STEALTH CONFIG — DO NOT MODIFY]
-puppeteer.use(StealthPlugin());
+chromium.use(StealthPlugin());
 
 // ======================== HELPERS ===========================
 
@@ -424,7 +424,7 @@ async function safeClickCheckboxInFrame(page, framePatterns, selector, timeout =
           logger.debug('[Frame] Challenge iframe detached after resolution — expected behavior, continuing...');
           continue;
         }
-        logger.warn(`⚠️ [Puppeteer Checkbox] Skipped frame/element query due to unexpected error: ${innerErr.message}`);
+        logger.warn(`⚠️ [Playwright Checkbox] Skipped frame/element query due to unexpected error: ${innerErr.message}`);
       }
     }
   } catch (err) {
@@ -432,7 +432,7 @@ async function safeClickCheckboxInFrame(page, framePatterns, selector, timeout =
     if (isDetachedFrameError(err)) {
       logger.debug('[Frame] Error scanning frames due to detachment (expected):', err.message);
     } else {
-      logger.error(`❌ [Puppeteer Checkbox] Error scanning frames: ${err.message}`);
+      logger.error(`❌ [Playwright Checkbox] Error scanning frames: ${err.message}`);
     }
   }
   return false;
@@ -494,7 +494,6 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', auditId
     // [EXISTING PUPPETEER LAUNCH OPTIONS — DO NOT MODIFY]
     const launchOptions = {
       headless: true,
-      defaultViewport: null,
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
@@ -507,15 +506,57 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', auditId
         "--disable-features=IsolateOrigins,site-per-process",
         "--window-size=1920,1080",
         "--ignore-certificate-errors",
-        "--no-zygote",
-        "--single-process"
+        "--no-zygote"
       ]
     };
 
     await updateStatus("launching");
 
-    browser = await puppeteer.launch(launchOptions);
-    const page = await browser.newPage();
+    browser = await chromium.launch(launchOptions);
+
+    // [EXISTING — DO NOT MODIFY]
+    const commonHeaders = {
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+      'Accept-Encoding': 'gzip, deflate, br',
+      'Cache-Control': 'max-age=0',
+      'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+      'Sec-Ch-Ua-Mobile': device === "Mobile" ? '?1' : '?0',
+      'Sec-Ch-Ua-Platform': device === "Mobile" ? '"Android"' : '"Windows"',
+      'Sec-Fetch-Dest': 'document',
+      'Sec-Fetch-Mode': 'navigate',
+      'Sec-Fetch-Site': 'none',
+      'Sec-Fetch-User': '?1',
+      'Upgrade-Insecure-Requests': '1',
+      'Referer': 'https://www.google.com/'
+    };
+
+    // [EXISTING — DO NOT MODIFY]
+    const userAgent = device === "Mobile"
+      ? "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Mobile Safari/537.36"
+      : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36";
+
+    const contextOptions = {
+      userAgent,
+      viewport: device === "Mobile"
+        ? { width: 393, height: 852 }
+        : { width: 1920, height: 1080 },
+      extraHTTPHeaders: commonHeaders,
+      ignoreHTTPSErrors: true,
+      locale: 'en-US',
+      timezoneId: 'America/New_York'
+    };
+
+    if (device === "Mobile") {
+      contextOptions.hasTouch = true;
+      contextOptions.isMobile = true;
+      contextOptions.deviceScaleFactor = 3;
+    } else {
+      contextOptions.deviceScaleFactor = 2;
+    }
+
+    const context = await browser.newContext(contextOptions);
+    const page = await context.newPage();
 
     // [FIX] — Filter Chrome's internal frame warnings from browser console
     page.on('console', (msg) => {
@@ -542,7 +583,7 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', auditId
     });
 
     // [EXISTING STEALTH CONFIG — DO NOT MODIFY]
-    await page.evaluateOnNewDocument(() => {
+    await page.addInitScript(() => {
       Object.defineProperty(navigator, 'webdriver', { get: () => false });
       Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
       Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
@@ -550,49 +591,9 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', auditId
     });
 
     // [EXISTING — DO NOT MODIFY]
-    const commonHeaders = {
-      'Accept-Language': 'en-US,en;q=0.9',
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-      'Accept-Encoding': 'gzip, deflate, br',
-      'Cache-Control': 'max-age=0',
-      'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
-      'Sec-Ch-Ua-Mobile': device === "Mobile" ? '?1' : '?0',
-      'Sec-Ch-Ua-Platform': device === "Mobile" ? '"Android"' : '"Windows"',
-      'Sec-Fetch-Dest': 'document',
-      'Sec-Fetch-Mode': 'navigate',
-      'Sec-Fetch-Site': 'none',
-      'Sec-Fetch-User': '?1',
-      'Upgrade-Insecure-Requests': '1',
-      'Referer': 'https://www.google.com/'
-    };
-
-    await page.setExtraHTTPHeaders(commonHeaders);
-
-    // [EXISTING — DO NOT MODIFY]
-    const userAgent = device === "Mobile"
-      ? "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Mobile Safari/537.36"
-      : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36";
-
-    await page.setUserAgent(userAgent);
-
-    // [EXISTING — DO NOT MODIFY]
-    if (device === "Mobile") {
-      await page.setViewport({
-        width: 393,
-        height: 852,
-        isMobile: true,
-        deviceScaleFactor: 3,
-        hasTouch: true,
-        isLandscape: false,
-      });
-    } else {
-      await page.setViewport({ width: 1920, height: 1080, deviceScaleFactor: 2 });
-    }
-
-    // [EXISTING — DO NOT MODIFY]
-    await page.setRequestInterception(true);
-    page.on('request', (request) => {
+    await page.route('**/*', (route) => {
       try {
+        const request = route.request();
         const resourceType = request.resourceType();
         const reqUrl = request.url().toLowerCase();
 
@@ -607,12 +608,12 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', auditId
           resourceType === 'media' ||
           blockedResources.some(domain => reqUrl.includes(domain))
         ) {
-          request.abort().catch(() => {});
+          route.abort().catch(() => {});
         } else {
-          request.continue().catch(() => {});
+          route.continue().catch(() => {});
         }
       } catch (err) {
-        // Safe fallback
+        route.continue().catch(() => {});
       }
     });
 
@@ -625,13 +626,12 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', auditId
       waitUntil: "domcontentloaded",
       timeout: 60000
     }).catch(async () => {
-      logger.debug("networkidle2 timed out, falling back to domcontentloaded...");
+      logger.debug("networkidle timed out, falling back to domcontentloaded...");
       return null;
     });
 
     if (!response) {
-      try { page.removeAllListeners('request'); } catch (_) {}
-      await page.setRequestInterception(false);
+      try { await page.unroute('**/*'); } catch (_) {}
       response = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45000 }).catch(() => null);
     }
 
@@ -768,9 +768,7 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', auditId
     // [EXISTING] — screenshot after 20s wait
     let screenshot = null;
     try {
-      if (!page.isClosed()) {
-        screenshot = await page.screenshot({
-          encoding: "base64",
+        const screenshotBuffer = await page.screenshot({
           type: "jpeg",
           quality: 50,
           fullPage: false,
@@ -780,7 +778,7 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', auditId
             height: device === "Mobile" ? 852 : 1080
           }
         });
-      }
+        screenshot = screenshotBuffer.toString("base64");
     } catch (screenshotError) {
       // [FIX] — use centralized checker — screenshot failure is NON-FATAL
       // Audit must continue even if screenshot fails

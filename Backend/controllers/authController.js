@@ -128,9 +128,15 @@ export const verifyOTP = async (req, res) => {
 
     // Successful Verification
     await OTP.deleteOne({ _id: doc._id });
+
+    const existing = await User.findOne({ email: email.toLowerCase() });
+    if (existing && existing.isBlocked) {
+      return res.status(403).json({ success: false, message: 'Your account has been blocked. Please contact support.' });
+    }
+
     const user = await User.findOneAndUpdate(
       { email: email.toLowerCase() },
-      { 
+      {
         isEmailVerified: true,
         lastLogin: new Date(),
         lastLoginIp: req.tracking?.ip || '0.0.0.0',
@@ -153,7 +159,7 @@ export const verifyOTP = async (req, res) => {
     }).catch(err => logger.error('[ActivityLog] Failed to log OTP login', err));
 
     const token = jwt.sign(
-      { userId: user._id, email: user.email, role: user.role },
+      { userId: user._id, email: user.email, role: user.role, tv: user.tokenVersion },
       configService.getConfig('JWT_SECRET'),
       { expiresIn: configService.getConfig('JWT_EXPIRES_IN', '7d') }
     );
@@ -202,6 +208,7 @@ export const resendOTP = async (req, res) => {
     await OTP.create({
       email: email.toLowerCase(),
       otp: hashedOTP,
+      purpose: 'email_verify',
       expiresAt: new Date(Date.now() + 600000)
     });
 
@@ -227,6 +234,10 @@ export const login = async (req, res) => {
 
     if (!user) {
       return res.status(401).json({ success: false, message: 'Invalid email or password' });
+    }
+
+    if (user.isBlocked) {
+      return res.status(403).json({ success: false, message: 'Your account has been blocked. Please contact support.' });
     }
 
     if (user.authProvider === 'google' && !user.password) {
@@ -262,7 +273,7 @@ export const login = async (req, res) => {
     }).catch(err => logger.error('[ActivityLog] Failed to log local login', err));
 
     const token = jwt.sign(
-      { userId: user._id, email: user.email, role: user.role },
+      { userId: user._id, email: user.email, role: user.role, tv: user.tokenVersion },
       configService.getConfig('JWT_SECRET'),
       { expiresIn: configService.getConfig('JWT_EXPIRES_IN', '7d') }
     );
@@ -350,8 +361,13 @@ export const resetPassword = async (req, res) => {
     }
 
     const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      return res.status(400).json({ success: false, message: 'Reset link is invalid or expired.' });
+    }
     user.password = newPassword;
     user.isEmailVerified = true;
+    // Invalidate every existing session/JWT issued before this reset.
+    user.tokenVersion = (user.tokenVersion || 0) + 1;
     await user.save();
 
     doc.used = true;
@@ -369,6 +385,9 @@ export const googleCallback = async (req, res) => {
   try {
     // Update Login Stats
     const user = await User.findById(req.user._id);
+    if (user && user.isBlocked) {
+      return res.redirect(`${configService.getConfig('FRONTEND_URL', 'http://localhost:5173')}/login?error=account_blocked`);
+    }
     if (user) {
       user.lastLogin = new Date();
       user.lastLoginIp = req.tracking?.ip || '0.0.0.0';
@@ -390,7 +409,7 @@ export const googleCallback = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { userId: req.user._id, email: req.user.email, role: req.user.role },
+      { userId: req.user._id, email: req.user.email, role: req.user.role, tv: user?.tokenVersion ?? 0 },
       configService.getConfig('JWT_SECRET'),
       { expiresIn: configService.getConfig('JWT_EXPIRES_IN', '7d') }
     );

@@ -16,7 +16,6 @@ export const savePostAuthIntent = (auditId, path, action = null) => {
             expires: Date.now() + 30 * 60 * 1000 // 30 minutes
         };
         localStorage.setItem(INTENT_KEY, JSON.stringify(item));
-        console.log('[IntentStore] Saved intent:', { auditId, path, action });
     } catch (e) {
         console.error('[IntentStore] Save failed:', e);
     }
@@ -55,22 +54,19 @@ export const peekPostAuthIntent = () => {
 export const consumePostAuthIntent = () => {
     try {
         const item = localStorage.getItem(INTENT_KEY);
-        console.log('[IntentStore] Raw item from localStorage:', item);
-        
+
         if (!item) return null;
 
         const { path, action, expires } = JSON.parse(item);
-        
+
         if (Date.now() > expires) {
-            console.warn('[IntentStore] Intent expired.');
             localStorage.removeItem(INTENT_KEY);
             return null;
         }
 
         localStorage.removeItem(INTENT_KEY);
-        console.log('[IntentStore] Intent consumed:', { path, action });
-        
-        return { 
+
+        return {
             path: String(path || ''),
             action: action || null
         };

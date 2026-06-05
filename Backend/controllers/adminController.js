@@ -90,6 +90,8 @@ export const blockUser = async (req, res) => {
 
     user.isBlocked = true;
     user.blockReason = reason;
+    // Revoke all existing JWTs/sessions for this user immediately.
+    user.tokenVersion = (user.tokenVersion || 0) + 1;
     await user.save();
 
     // Log action

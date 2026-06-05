@@ -11,7 +11,7 @@ const getAEORecommendations = (signals) => {
         recommendations.push({
             priority: signals.answerFirst.score === 0 ? "Critical" : "Medium",
             title: signals.answerFirst.score === 40 ? "Simplify Your Summary" : "Add Direct Answer Block",
-            action: signals.answerFirst.score === 40 
+            action: signals.answerFirst.score === 40
                 ? "Your intro is too wordy (>5 sentences). Scale it down to a 1-2 sentence direct answer ('TL;DR') to improve AI extraction and voice search compatibility."
                 : "Add a 1-2 sentence direct answer (TL;DR) within the first 100 words of your content. AI models prioritize these 'Instant Answer' blocks for search snippets.",
             platform: "All",
@@ -45,16 +45,16 @@ const getAEORecommendations = (signals) => {
     if (signals.schema.score === 0) {
         recommendations.push({
             priority: "High",
-            title: "Implement JSON-LD Schema",
-            action: "Add a <script type='application/ld+json'> block. Preferred types: FAQPage for Q&A content, HowTo for guides, Product for product pages.",
+            title: "Implement Organization/LocalBusiness Schema",
+            action: "Add a <script type='application/ld+json'> block of type Organization or LocalBusiness to verify your digital brand identity and establish domain authority.",
             platform: "Gemini",
             impact: 20
         });
     } else if (signals.schema.score < 100) {
         recommendations.push({
             priority: "Medium",
-            title: "Upgrade Schema to FAQPage or HowTo",
-            action: "Your page has schema but not the highest-value types. Add FAQPage schema for your most common questions. This is the single biggest Gemini signal.",
+            title: "Link Schema to Authority Sources",
+            action: "Your schema is missing high-trust authority references. Add sameAs links pointing to sources like Wikipedia, Wikidata, or LinkedIn Company to maximize authority verification.",
             platform: "Gemini",
             impact: 15
         });
@@ -80,7 +80,7 @@ const getAEORecommendations = (signals) => {
     }
 
     // 5. Bot Access Recommendations
-    if (signals.botAccess.bots.GPTBot === "blocked") {
+    if (signals?.botAccess?.bots?.GPTBot === "blocked") {
         recommendations.push({
             priority: "Critical",
             title: "Allow GPTBot in robots.txt",
@@ -90,7 +90,7 @@ const getAEORecommendations = (signals) => {
         });
     }
 
-    if (signals.botAccess.bots["Google-Extended"] === "blocked") {
+    if (!signals?.botAccess?.bots?.["Google-Extended"] || signals?.botAccess?.bots?.["Google-Extended"] === "blocked") {
         recommendations.push({
             priority: "Critical",
             title: "Allow Google-Extended in robots.txt",
@@ -101,7 +101,7 @@ const getAEORecommendations = (signals) => {
     }
 
     // 6. Markdown Headers Recommendation
-    if (signals.markdownHeaders.score < 80) {
+    if (signals?.markdownHeaders?.score < 80) {
         recommendations.push({
             priority: "Medium",
             title: "Improve Header Hierarchy",
@@ -112,7 +112,7 @@ const getAEORecommendations = (signals) => {
     }
 
     // 7. Citations Recommendation
-    if (signals.citations.score < 70) {
+    if (signals?.citations?.score < 70) {
         recommendations.push({
             priority: "Medium",
             title: "Add External Factual Sources",
@@ -122,7 +122,7 @@ const getAEORecommendations = (signals) => {
         });
     }
 
-    if (signals.botAccess.isNoindexed) {
+    if (signals?.botAccess?.isNoindexed) {
         recommendations.push({
             priority: "Critical",
             title: "Remove Meta 'noindex' Tag",

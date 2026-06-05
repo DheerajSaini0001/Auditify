@@ -1,18 +1,14 @@
 import express from 'express';
 import { param, body, query, validationResult } from 'express-validator';
-import { 
-  getAllUsers, 
-  getUserById, 
-  blockUser, 
-  unblockUser, 
-  deleteUser, 
-  getAuditLogs, 
+import {
+  getAllUsers,
+  getUserById,
+  blockUser,
+  unblockUser,
+  deleteUser,
+  getAuditLogs,
   getStats,
-  getOverviewStats,
-  getConfigs,
-  saveConfig,
-  testConfig,
-  revealConfig
+  getOverviewStats
 } from '../controllers/adminController.js';
 import { verifyToken, checkRole } from '../middleware/auth.js';
 
@@ -67,10 +63,9 @@ router.get('/audit-logs', [
 router.get('/stats', getStats);
 router.get('/overview-stats', getOverviewStats);
 
-// ── Platform Configuration Routes ──
-router.get('/config', getConfigs);
-router.post('/config', saveConfig);
-router.get('/config/:key/reveal', revealConfig);
-router.post('/config/test', testConfig);
+// NOTE: Platform configuration routes live ONLY in adminConfigRoutes.js, guarded by
+// isSuperAdmin. They were removed from here because this router is mounted at /api/admin
+// and only requires the 'admin' role — keeping /config here let a plain admin read/overwrite
+// super-admin-only secrets (e.g. JWT_SECRET) via route shadowing.
 
 export default router;

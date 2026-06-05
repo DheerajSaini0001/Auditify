@@ -10,6 +10,8 @@ const otpSchema = new mongoose.Schema({
 
 // MongoDB TTL auto-delete
 otpSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+// Lookups are always by email (+purpose); index to avoid full collection scans
+otpSchema.index({ email: 1, createdAt: -1 });
 
 const OTP = mongoose.model('OTP', otpSchema);
 export default OTP;

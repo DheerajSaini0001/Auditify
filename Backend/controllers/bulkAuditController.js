@@ -5,28 +5,8 @@ import SingleAuditReport from "../models/singleAuditReport.js";
 import AuditLog from "../models/AuditLog.js";
 import discoverPages from "../utils/sitemapCrawler.js";
 import logger from "../utils/logger.js";
-
-// validate URL and prevent SSRF
-const isValidUrl = (string) => {
-    try {
-        const url = new URL(string);
-        // Block localhost, private IPs, and non-http/https protocols
-        if (url.protocol !== "http:" && url.protocol !== "https:") return false;
-        if (
-            url.hostname === "localhost" ||
-            url.hostname === "127.0.0.1" ||
-            url.hostname === "::1" ||
-            url.hostname.startsWith("192.168.") ||
-            url.hostname.startsWith("10.") ||
-            url.hostname.startsWith("172.")
-        ) {
-            return false;
-        }
-        return true;
-    } catch (_) {
-        return false;
-    }
-};
+import { isSafeUrl } from "../utils/urlGuard.js";
+import { acquire, release } from "../utils/workerPool.js";
 
 // Discover URLs from a website
 export const discoverUrls = async (req, res) => {
@@ -43,7 +23,7 @@ export const discoverUrls = async (req, res) => {
             url = "https://" + url;
         }
 
-        if (!isValidUrl(url)) {
+        if (!(await isSafeUrl(url))) {
             return res.status(400).json({ error: "Invalid or Restricted URL" });
         }
 
@@ -225,8 +205,8 @@ async function processSelectedUrls(bulkAuditId, userId, selectedUrls, device, re
                     "pages.$.securityOrCompliance": foundData.securityOrCompliance,
                     "pages.$.UXOrContentStructure": foundData.UXOrContentStructure,
                     "pages.$.conversionAndLeadFlow": foundData.conversionAndLeadFlow,
-                    "pages.$.aioReadiness": foundData.aioReadiness,
-                    "pages.$.screenshot": foundData.screenshot
+                    "pages.$.aioReadiness": foundData.aioReadiness
+                    // screenshot intentionally not embedded — see bulkAuditWorker note (16MB BSON limit)
                 };
 
                 await BulkAuditReport.findOneAndUpdate(
@@ -304,7 +284,13 @@ async function processSelectedUrls(bulkAuditId, userId, selectedUrls, device, re
 
 // Audit a single page and save results directly in BulkAudit document
 async function auditSinglePage(bulkAuditId, pageUrl, device, report, auditLogId, startTime, userId) {
+    // Wait for a global browser slot before spawning (prevents OOM under load).
+    await acquire();
+
     return new Promise(async (resolve) => {
+        let settled = false;
+        const finish = () => { if (!settled) { settled = true; resolve(); } };
+
         try {
             const workerPath = join(process.cwd(), "workers", "bulkAuditWorker.js");
 
@@ -317,6 +303,25 @@ async function auditSinglePage(bulkAuditId, pageUrl, device, report, auditLogId,
                     pageUrl,
                     userId
                 },
+            });
+
+            // Release the global slot and guarantee resolution when the worker exits,
+            // even if it never posted a message (OOM kill / timeout process.exit).
+            worker.on("exit", async (code) => {
+                release();
+                if (!settled) {
+                    try {
+                        // Only fail the page if it isn't already completed (the worker may have
+                        // posted success just before exiting). $elemMatch targets the same page.
+                        await BulkAuditReport.findOneAndUpdate(
+                            { _id: bulkAuditId, pages: { $elemMatch: { url: pageUrl, status: { $ne: "completed" } } } },
+                            { $set: { "pages.$.status": "failed", "pages.$.error": `Worker exited (code ${code})`, "pages.$.completedAt": new Date() }, $inc: { failedPages: 1 } }
+                        );
+                    } catch (err) {
+                        logger.error("Error updating bulk page on worker exit", err);
+                    }
+                    finish();
+                }
             });
 
             worker.on("message", async (msg) => {
@@ -384,7 +389,7 @@ async function auditSinglePage(bulkAuditId, pageUrl, device, report, auditLogId,
                     }
                 }
 
-                resolve();
+                finish();
             });
 
             worker.on("error", async (error) => {
@@ -416,10 +421,12 @@ async function auditSinglePage(bulkAuditId, pageUrl, device, report, auditLogId,
                     }
                 }
 
-                resolve();
+                finish();
             });
 
         } catch (error) {
+            // Worker failed to spawn — release the slot we acquired (no "exit" will fire).
+            release();
             logger.error(`Error auditing page ${pageUrl}`, error);
 
             await BulkAuditReport.findOneAndUpdate(
@@ -434,7 +441,7 @@ async function auditSinglePage(bulkAuditId, pageUrl, device, report, auditLogId,
                 }
             );
 
-            resolve();
+            finish();
         }
     });
 }
@@ -450,7 +457,13 @@ export const getBulkAuditStatus = async (req, res) => {
             query.userId = req.user.userId;
         }
 
-        const bulkAudit = await BulkAuditReport.findOne(query);
+        // Status polling only needs lightweight per-page fields — exclude the heavy
+        // metric blobs/screenshots so each poll doesn't load/serialize multiple MB.
+        const bulkAudit = await BulkAuditReport.findOne(query).select(
+            "-pages.technicalPerformance -pages.onPageSEO -pages.accessibility " +
+            "-pages.securityOrCompliance -pages.UXOrContentStructure -pages.conversionAndLeadFlow " +
+            "-pages.aioReadiness -pages.screenshot -pages.siteSchema"
+        );
 
         if (!bulkAudit) {
             return res.status(404).json({ error: "Bulk audit not found or access denied" });
@@ -499,7 +512,7 @@ export const discoverAndAuditUrls = async (req, res) => {
             url = "https://" + url;
         }
 
-        if (!isValidUrl(url)) {
+        if (!(await isSafeUrl(url))) {
             return res.status(400).json({ error: "Invalid or Restricted URL" });
         }
 

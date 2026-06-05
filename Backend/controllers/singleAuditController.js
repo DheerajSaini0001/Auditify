@@ -5,7 +5,9 @@ import AuditLog from "../models/AuditLog.js";
 import ActivityLog from "../models/ActivityLog.js";
 import Puppeteer_Cheerio from "../utils/puppeteer_cheerio.js";
 import logger from "../utils/logger.js";
- 
+import { isSafeUrl } from "../utils/urlGuard.js";
+import { acquire, release } from "../utils/workerPool.js";
+
 const reportFieldMap = {
   "Technical Performance": "technicalPerformance",
   "On Page SEO": "onPageSEO",
@@ -17,28 +19,6 @@ const reportFieldMap = {
 };
 
 export const startAudit = async (req, res) => {
-
-  // validate URL and prevent SSRF
-  const isValidUrl = (string) => {
-    try {
-      const url = new URL(string);
-      // Block localhost, private IPs, and non-http/https protocols
-      if (url.protocol !== "http:" && url.protocol !== "https:") return false;
-      if (
-        url.hostname === "localhost" ||
-        url.hostname === "127.0.0.1" ||
-        url.hostname === "::1" ||
-        url.hostname.startsWith("192.168.") ||
-        url.hostname.startsWith("10.") ||
-        url.hostname.startsWith("172.")
-      ) {
-        return false;
-      }
-      return true;
-    } catch (_) {
-      return false;
-    }
-  };
 
   try {
     let { url, device, report, force } = req.body;
@@ -52,7 +32,8 @@ export const startAudit = async (req, res) => {
       url = "https://" + url;
     }
 
-    if (!isValidUrl(url)) {
+    // SSRF guard: rejects non-http(s) and hosts resolving to private/metadata IPs
+    if (!(await isSafeUrl(url))) {
       return res.status(400).json({ error: "Invalid or Restricted URL" });
     }
 
@@ -205,13 +186,30 @@ export const startAudit = async (req, res) => {
       });
       await newReport.save();
     } catch (dbError) {
-      // Handle race condition: If two requests hit exactly at the same time
+      // Handle duplicate-key: a concurrent in-progress audit, or a stale index/record.
       if (dbError.code === 11000) {
-        logger.warn(`⚠️ Race condition caught: Audit already exists or is in-progress for: ${url}`);
-        const raceCheck = await SingleAuditReport.findOne({ url, device, report, status: { $ne: "failed" }, userId: req.user?.userId || null });
-        if (raceCheck) return res.send(raceCheck);
+        logger.warn(`⚠️ Duplicate audit insert for ${url} — resolving gracefully`);
+        const uid = req.user?.userId || null;
+
+        // 1. Prefer returning an existing reusable (in-progress or completed) audit.
+        const reusable = await SingleAuditReport.findOne({
+          url, device, report, userId: uid, status: { $in: ["inprogress", "completed"] }
+        }).sort({ createdAt: -1 });
+        if (reusable) return res.status(200).json(reusable);
+
+        // 2. Otherwise a stale 'failed' record (or an outdated full-unique index) is
+        // blocking the insert. Clear failed records and retry the insert once.
+        try {
+          await SingleAuditReport.deleteMany({ url, device, report, userId: uid, status: "failed" });
+          newReport = new SingleAuditReport({ url, device, report, status: "inprogress", userId: uid });
+          await newReport.save();
+        } catch (retryErr) {
+          logger.error("Audit insert retry failed", retryErr);
+          return res.status(409).json({ error: "An audit for this URL is already running. Please wait or refresh." });
+        }
+      } else {
+        throw dbError; // Otherwise, re-throw server errors
       }
-      throw dbError; // Otherwise, re-throw server errors
     }
 
     // Create a pending AuditLog entry asynchronously
@@ -264,16 +262,35 @@ export const startAudit = async (req, res) => {
 
     const workerPath = join(process.cwd(), "workers", "singleAuditWorker.js");
 
-    const worker = new Worker(workerPath, {
-      workerData: {
-        url,
-        device,
-        report,
-        auditId: newReport._id.toString(),
-      },
-    });
+    // Wait for a global browser slot before spawning (prevents OOM under load).
+    await acquire();
+
+    let worker;
+    try {
+      worker = new Worker(workerPath, {
+        workerData: {
+          url,
+          device,
+          report,
+          auditId: newReport._id.toString(),
+        },
+      });
+    } catch (spawnErr) {
+      release(); // no "exit" event will fire
+      logger.error("Failed to spawn audit worker", spawnErr);
+      await SingleAuditReport.findByIdAndUpdate(newReport._id, {
+        status: "failed",
+        error: "Failed to start audit worker",
+      });
+      return; // response already sent (201)
+    }
+
+    // Track whether the worker reported a terminal result so a silent exit
+    // (e.g. OOM kill) doesn't leave the report stuck "inprogress" forever.
+    let settled = false;
 
     worker.on("message", async (msg) => {
+      settled = true;
       if (msg?.error) {
         logger.error(`❌ Audit Failed: ${msg.error}`);
 
@@ -327,6 +344,7 @@ export const startAudit = async (req, res) => {
     })
 
     worker.on("error", async (err) => {
+      settled = true;
       const duration = Date.now() - startTime;
       await SingleAuditReport.findByIdAndUpdate(newReport._id, { status: "failed" });
       logger.error(`❌ Audit Failed with worker error`, err);
@@ -335,7 +353,7 @@ export const startAudit = async (req, res) => {
       try {
         await AuditLog.updateMany(
           { reportId: newReport._id, status: "pending" },
-          { 
+          {
             status: "failed",
             auditDuration: duration,
             $push: { actions: "failed" }
@@ -343,6 +361,37 @@ export const startAudit = async (req, res) => {
         );
       } catch (err) {
         logger.error("Error updating AuditLog on error", err);
+      }
+    });
+
+    // Safety net: if the worker exits without ever posting a result, fail the report
+    // so the client stops polling a perpetually "inprogress" audit.
+    worker.on("exit", async (code) => {
+      release(); // free the global browser slot
+      if (settled) return;
+      try {
+        // The worker may have finished writing "completed" just before being killed
+        // (e.g. the watchdog firing on a near-done audit). Don't clobber a good report —
+        // only fail it if it's genuinely still in progress.
+        const current = await SingleAuditReport.findById(newReport._id).select("status");
+        if (current && current.status === "completed") {
+          await AuditLog.updateMany(
+            { reportId: newReport._id, status: "pending" },
+            { status: "success", auditDuration: Date.now() - startTime, $push: { actions: "completed" } }
+          );
+          return;
+        }
+        logger.error(`❌ Audit worker exited (code ${code}) before reporting a result`);
+        await SingleAuditReport.findByIdAndUpdate(newReport._id, {
+          status: "failed",
+          error: `Audit worker stopped unexpectedly (code ${code})`,
+        });
+        await AuditLog.updateMany(
+          { reportId: newReport._id, status: "pending" },
+          { status: "failed", auditDuration: Date.now() - startTime, $push: { actions: "failed" } }
+        );
+      } catch (err) {
+        logger.error("Error updating report on worker exit", err);
       }
     });
 
@@ -443,6 +492,11 @@ export const captureScreenshot = async (req, res) => {
     const { url, auditId } = req.body;
     if (!url || !auditId) {
       return res.status(400).json({ error: "Missing url or auditId" });
+    }
+
+    // SSRF guard — this endpoint fetches an arbitrary user-supplied URL
+    if (!(await isSafeUrl(url))) {
+      return res.status(400).json({ error: "Invalid or Restricted URL" });
     }
 
     const report = await SingleAuditReport.findById(auditId);

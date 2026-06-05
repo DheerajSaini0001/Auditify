@@ -5,6 +5,7 @@
  */
 
 const analyzeMarkdownHeaders = ($) => {
+    console.log('\x1b[33m[AEO:markdownHeaders]\x1b[0m ▶ Analyzing heading hierarchy...');
     const headers = [];
     $('h1, h2, h3, h4, h5, h6').each((i, el) => {
         headers.push({
@@ -62,9 +63,12 @@ const analyzeMarkdownHeaders = ($) => {
         score = Math.min(score + 10, 100);
     }
 
+    const finalScore = Math.min(score, 100);
+    console.log(`\x1b[33m[AEO:markdownHeaders]\x1b[0m ✔ H1: ${h1s.length}, H2: ${h2s.length}, H3: ${h3s.length}, skips: ${hasSkips} → score: ${finalScore}`);
+    if (reasons.length > 0) console.log(`\x1b[33m[AEO:markdownHeaders]\x1b[0m ⚠ Issues: ${reasons.join(' | ')}`);
     return {
         signal: "markdownHeaders",
-        score: Math.min(score, 100),
+        score: finalScore,
         counts: { 
             h1: h1s.length, 
             h2: h2s.length, 

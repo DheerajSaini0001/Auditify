@@ -114,7 +114,7 @@ async function safeGetTitle(page) {
 const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
 /** Async delay */
-const delay = (ms) => Promise.resolve();
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // [FIX] — autoScroll wrapped with detached frame protection
 async function autoScroll(page) {
@@ -493,7 +493,7 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', auditId
     // [EXISTING STEALTH CONFIG — DO NOT MODIFY]
     // [EXISTING PUPPETEER LAUNCH OPTIONS — DO NOT MODIFY]
     const launchOptions = {
-      headless: true,
+      headless: false,
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
@@ -698,7 +698,15 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', auditId
       logger.debug('[Frame] Pre-wait HTML capture failed — will retry after wait');
     }
 
-    await new Promise(resolve => resolve());
+    // Real render wait: let JS-driven content settle. Wait for network idle (capped),
+    // then a short fixed delay. Previously this was a no-op, so SPA/JS sites were
+    // scraped/screenshotted blank.
+    try {
+      if (typeof page.waitForLoadState === 'function') {
+        await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
+      }
+    } catch (_) {}
+    await delay(3000);
 
     // [FIX] — Live page context probe after the 20s wait
     // Tests whether page.evaluate() still works. If the page navigated away
@@ -751,7 +759,7 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', auditId
       logger.debug('[Frame] Scroll to top skipped — frame detached');
     }
 
-    await new Promise(resolve => resolve());
+    await delay(1000); // short settle after scroll-to-top
 
     // [FIX] — Re-check page is still alive after 20s wait
     // Page might have navigated / frame detached during the wait

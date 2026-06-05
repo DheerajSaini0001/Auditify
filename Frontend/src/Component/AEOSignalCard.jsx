@@ -11,13 +11,19 @@ const iconMap = {
     llmsTxt: FileText,
     structuredContent: Table,
     citations: Link,
-    answerFirst: MessageCircle
+    answerFirst: MessageCircle,
+    semanticTags: Layout
 };
 
 const getStatusDetail = (signal, data, isFailed) => {
-    // Prioritize signal-specific reasons if provided
-    if (data?.reason) return data.reason;
-    if (data?.reasons && Array.isArray(data.reasons) && data.reasons.length > 0) {
+    // IMPORTANT: only ever return a STRING. Some signals (e.g. `schema`) send `details`
+    // as an OBJECT, and returning an object as a React child crashes the page.
+    if (typeof data?.details === 'string') return data.details;
+    // The schema signal puts its human-readable text in `message`.
+    if (typeof data?.message === 'string') return data.message;
+    if (typeof data?.reason === 'string') return data.reason;
+    if (typeof data?.details?.reason === 'string') return data.details.reason;
+    if (Array.isArray(data?.reasons) && data.reasons.length > 0 && typeof data.reasons[0] === 'string') {
         return data.reasons[0];
     }
 
@@ -34,6 +40,11 @@ const getStatusDetail = (signal, data, isFailed) => {
                 ? `Blocked: ${blocked.join(', ')} are restricted in robots.txt.`
                 : "Accessibility: Bot access is allowed but indexing signals are weak.";
         case 'llmsTxt':
+            // Fallback only if backend sends no details
+            if (data?.status === 'empty') return "Empty: /llms.txt file exists but has no meaningful content.";
+            if (data?.status === 'unverifiable') return "Unverifiable: Page content too thin to cross-verify llms.txt. File checked on its own structure.";
+            if (data?.status === 'poor_match') return `Mismatch: /llms.txt doesn't reflect your actual site (${data?.matchScore ?? 0}% overlap).`;
+            if (data?.status === 'partial_match') return `Partial: llms.txt partially matches site content (${data?.matchScore ?? 0}% overlap).`;
             return data?.exists
                 ? "Invalid: /llms.txt found but lacks standard context headers."
                 : "Missing: No /llms.txt manifest found for OpenAI context mapping.";
@@ -45,6 +56,8 @@ const getStatusDetail = (signal, data, isFailed) => {
             return `Timing Issue: Direct answer found in sentence ${data?.sentenceCount || 0}. AI models prefer answers in the first 1-2 sentences.`;
         case 'citations':
             return "Trust Gap: Low external citation signals. Perplexity and search engines value verifiable sources.";
+        case 'semanticTags':
+            return "Layout Semantics: Page relies too heavily on generic divs without native HTML5 semantic tags.";
         default:
             return "Signal requires optimization for better AI indexing and extraction.";
     }
@@ -66,6 +79,8 @@ const getWhyItMatters = (signal) => {
             return "AI models are trained to find the 'Nugget' of info immediately. Pushing the answer down increases the risk of being ignored.";
         case 'citations':
             return "Citations build authority. RAG-based search engines (like Perplexity) prioritize content that links to reputable external sources.";
+        case 'semanticTags':
+            return "HTML5 semantic structure (header, main, nav, footer, section) helps LLM crawlers parse and map page sections with high accuracy.";
         default:
             return "This signal is a key weighted parameter in establishing your AEO Mastery score and engine visibility.";
     }
@@ -85,6 +100,14 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
         status = score === 0 && (signal === 'aeoSchema' || signal === 'structuredContent') ? "Warning" : "Partial";
         statusColor = "text-amber-500 bg-amber-500/10 border-amber-500/20";
     }
+
+    // 🔍 DEV: Log signal data on every render
+    console.log(
+        `%c[AEO:${signal}]%c score=${score} | status=${status} | backendStatus=${data?.status ?? 'N/A'}`,
+        'color:#6366f1;font-weight:bold',
+        'color:inherit',
+        data
+    );
 
     const isFailed = score < 100 && status !== "Warning";
     const isWarning = status === "Warning" || (score < 100 && score > 40);
@@ -168,10 +191,18 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
                                         <div className="w-1.5 h-1.5 rounded-full bg-rose-500"></div>
                                         <span className={`text-xs font-black ${darkMode ? "text-white" : "text-slate-900"}`}>
                                             {signal === 'aeoSchema' ? (data?.count === 0 ? 'Zero Markup' : (data?.types?.length > 2 ? 'Multi-Type' : 'Partial Types')) :
-                                                signal === 'llmsTxt' ? (data?.exists ? 'Header Issue' : 'File Missing') :
+                                                signal === 'llmsTxt' ? (
+                                                    data?.status === 'missing' ? 'File Missing' :
+                                                    data?.status === 'empty' ? 'File Empty' :
+                                                    data?.status === 'unverifiable' ? 'Unverifiable' :
+                                                    data?.status === 'poor_match' ? `Poor Match (${data?.matchScore ?? 0}%)` :
+                                                    data?.status === 'partial_match' ? `Partial Match (${data?.matchScore ?? 0}%)` :
+                                                    data?.status === 'good_match' ? 'Well Matched' : 'Present'
+                                                ) :
                                                     signal === 'markdownHeaders' ? `Score: ${data?.score}%` :
                                                         signal === 'structuredContent' ? `${data?.tables + data?.lists} Entities` :
-                                                            `${score}% Ready`}
+                                                            signal === 'semanticTags' ? `${data?.meta?.found?.length || 0} Core Elements` :
+                                                                `${score}% Ready`}
                                         </span>
                                     </div>
                                 </div>
@@ -183,7 +214,8 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
                                             {signal === 'aeoSchema' ? "Inject FAQPage Schema" :
                                                 signal === 'llmsTxt' ? "Initialize /llms.txt" :
                                                     signal === 'markdownHeaders' ? "Fix Heading Hierarchy" :
-                                                        "Refactor Structural Logic"}
+                                                        signal === 'semanticTags' ? "Add HTML5 Semantic Elements" :
+                                                            "Refactor Structural Logic"}
                                         </span>
                                     </div>
                                 </div>

@@ -155,8 +155,12 @@ class ConfigService {
    * Note: This might return null if the cache isn't primed yet.
    */
   getConfig(key, defaultValue = null) {
-    const value = cache.get(key.toUpperCase());
-    return value !== undefined ? value : (process.env[key] || defaultValue);
+    const upperKey = key.toUpperCase();
+    const value = cache.get(upperKey);
+    if (value !== undefined) return value;
+    // Env fallback: try the original casing AND the uppercased key, since callers
+    // (and worker threads with an un-primed cache) may use either.
+    return process.env[key] ?? process.env[upperKey] ?? defaultValue;
   }
 
   /**

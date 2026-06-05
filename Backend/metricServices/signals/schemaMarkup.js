@@ -4,6 +4,7 @@
  */
 
 const analyzeSchemaMarkup = ($, url = '') => {
+    console.log(`\x1b[90m[AEO:schemaMarkup]\x1b[0m ▶ Analyzing JSON-LD schema blocks...`);
     const schemaBlocks = [];
     $('script[type="application/ld+json"]').each((_, el) => {
         try {
@@ -30,6 +31,7 @@ const analyzeSchemaMarkup = ($, url = '') => {
 
     const hasFAQSchema = schemaBlocks.some(t => /faqpage/i.test(t));
     const hasHowToSchema = schemaBlocks.some(t => /howto/i.test(t));
+    console.log(`\x1b[90m[AEO:schemaMarkup]\x1b[0m ✔ Schema types found: [${schemaBlocks.join(', ') || 'none'}]`);
 
     const bodyText = $('body').text();
     const h1Text = $('h1').first().text().trim();
@@ -96,41 +98,150 @@ const analyzeSchemaMarkup = ($, url = '') => {
         /about.?us|privacy|terms|sitemap|careers|cookie/i.test(url);
 
     let schemaScore = 0;
-    let schemaStatus = '';
+    
+    // Extract Organization/LocalBusiness schemas recursively
+    const orgOrLocalBusinessSchemas = [];
+    $('script[type="application/ld+json"]').each((_, el) => {
+        try {
+            const parsed = JSON.parse($(el).html());
+            const extractOrgOrLocalBusiness = (obj) => {
+                if (Array.isArray(obj)) {
+                    obj.forEach(extractOrgOrLocalBusiness);
+                } else if (obj && typeof obj === 'object') {
+                    let isOrgOrLocalBusiness = false;
+                    if (obj['@type']) {
+                        const types = Array.isArray(obj['@type']) ? obj['@type'] : [obj['@type']];
+                        isOrgOrLocalBusiness = types.some(t => typeof t === 'string' && /organization|localbusiness/i.test(t));
+                    }
+                    if (isOrgOrLocalBusiness) {
+                        orgOrLocalBusinessSchemas.push(obj);
+                    }
+                    // Traverse properties recursively
+                    for (const key in obj) {
+                        if (Object.prototype.hasOwnProperty.call(obj, key) && key !== '@type') {
+                            extractOrgOrLocalBusiness(obj[key]);
+                        }
+                    }
+                }
+            };
+            extractOrgOrLocalBusiness(parsed);
+        } catch (e) {}
+    });
+
+    const hasOrgOrLocalBusinessSchema = orgOrLocalBusinessSchemas.length > 0;
+    const sameAsUrls = [];
+    
+    orgOrLocalBusinessSchemas.forEach(schemaObj => {
+        if (schemaObj.sameAs) {
+            const rawUrls = Array.isArray(schemaObj.sameAs) ? schemaObj.sameAs : [schemaObj.sameAs];
+            rawUrls.forEach(item => {
+                if (typeof item === 'string') {
+                    const trimmed = item.trim();
+                    if (/^https?:\/\//i.test(trimmed) && !sameAsUrls.includes(trimmed)) {
+                        sameAsUrls.push(trimmed);
+                    }
+                }
+            });
+        }
+    });
+
+    const getAuthoritySource = (url) => {
+        try {
+            const parsedUrl = new URL(url);
+            const hostname = parsedUrl.hostname.toLowerCase();
+            const pathname = parsedUrl.pathname.toLowerCase();
+            
+            if (hostname.includes('wikidata.org')) {
+                return 'wikidata';
+            }
+            if (hostname.includes('wikipedia.org')) {
+                return 'wikipedia';
+            }
+            if (hostname.includes('crunchbase.com')) {
+                return 'crunchbase';
+            }
+            if (hostname.includes('linkedin.com') && pathname.startsWith('/company')) {
+                return 'linkedin';
+            }
+            if (
+                hostname.includes('companieshouse.gov.uk') || 
+                hostname.includes('company-information.service.gov.uk')
+            ) {
+                return 'companies_house';
+            }
+            if (
+                hostname.includes('g.page') ||
+                hostname.includes('maps.app.goo.gl') ||
+                (hostname.includes('google.com') && (pathname.startsWith('/maps') || hostname.startsWith('maps.') || pathname.startsWith('/business')))
+            ) {
+                return 'google_business_profile';
+            }
+        } catch (e) {
+            const lowerUrl = url.toLowerCase();
+            if (lowerUrl.includes('wikidata.org')) return 'wikidata';
+            if (lowerUrl.includes('wikipedia.org')) return 'wikipedia';
+            if (lowerUrl.includes('crunchbase.com')) return 'crunchbase';
+            if (lowerUrl.includes('linkedin.com/company')) return 'linkedin';
+            if (lowerUrl.includes('companieshouse.gov.uk') || lowerUrl.includes('company-information.service.gov.uk')) return 'companies_house';
+            if (lowerUrl.includes('g.page') || lowerUrl.includes('maps.app.goo.gl') || lowerUrl.includes('google.com/maps') || lowerUrl.includes('maps.google.com') || lowerUrl.includes('google.com/business')) return 'google_business_profile';
+        }
+        return null;
+    };
+
+    const authoritySources = [];
+    sameAsUrls.forEach(url => {
+        const source = getAuthoritySource(url);
+        if (source && !authoritySources.includes(source)) {
+            authoritySources.push(source);
+        }
+    });
+    console.log(`\x1b[90m[AEO:schemaMarkup]\x1b[0m ✔ OrgSchema: ${hasOrgOrLocalBusinessSchema}, sameAs: [${sameAsUrls.join(', ') || 'none'}], authoritySources: [${authoritySources.join(', ') || 'none'}]`);
+
+    if (hasOrgOrLocalBusinessSchema) {
+        schemaScore = 40;
+        if (sameAsUrls.length > 0) {
+            schemaScore += 30;
+            const uniqueSourcesCount = authoritySources.length;
+            if (uniqueSourcesCount >= 1) {
+                schemaScore += 15;
+            }
+            if (uniqueSourcesCount >= 2) {
+                schemaScore += 15;
+            }
+        }
+    }
+
+    if (schemaScore > 100) {
+        schemaScore = 100;
+    }
+
+    let schemaStatus = 'fail';
     let schemaMessage = '';
     let schemaRecommendation = null;
 
-    if (isContactPage || isUtilityPage) {
-        schemaScore = 100;
-        schemaStatus = 'pass';
-        schemaMessage = 'Contact or utility page — FAQ/HowTo schema not applicable. Full score awarded.';
-        schemaRecommendation = null;
-    } else if (hasFAQSchema && hasHowToSchema) {
-        schemaScore = 100;
-        schemaStatus = 'pass';
-        schemaMessage = 'FAQPage and HowTo schema both present and correctly implemented.';
-    } else if (hasFAQSchema || hasHowToSchema) {
-        schemaScore = 75;
-        schemaStatus = 'pass';
-        schemaMessage = `${hasFAQSchema ? 'FAQPage' : 'HowTo'} schema found.`;
-    } else if (faqNeeded || howToNeeded) {
-        schemaScore = 20;
+    if (schemaScore === 0) {
         schemaStatus = 'fail';
-        schemaMessage = reason;
-        schemaRecommendation = faqNeeded
-            ? 'Add FAQPage schema to your FAQ section.'
-            : 'Add HowTo schema with numbered steps.';
-    } else if (isProductOrServicePage || isListingPage) {
-        schemaScore = 100;
-        schemaStatus = 'pass';
-        schemaMessage = 'FAQ/HowTo schema is not required for this page type. Full score awarded.';
-    } else {
-        schemaScore = 50;
+        schemaMessage = 'No Organization or LocalBusiness schema detected.';
+        schemaRecommendation = 'Add an Organization or LocalBusiness JSON-LD schema to establish your digital identity.';
+    } else if (schemaScore === 40) {
         schemaStatus = 'warning';
-        schemaMessage = 'No FAQ or HowTo content detected.';
-        schemaRecommendation = 'Consider adding an FAQ section to improve AEO score.';
+        schemaMessage = 'Organization/LocalBusiness schema is present, but missing sameAs references.';
+        schemaRecommendation = 'Add a sameAs array to your schema with links to your official profiles (e.g., Wikipedia, LinkedIn, Wikidata) to prove authenticity.';
+    } else if (schemaScore === 70) {
+        schemaStatus = 'warning';
+        schemaMessage = 'Organization/LocalBusiness schema and sameAs are present, but missing strong authority sources.';
+        schemaRecommendation = 'Add links to strong authority sources (such as Wikipedia, Wikidata, Google Business Profile, LinkedIn Company, Crunchbase, or Companies House) to sameAs.';
+    } else if (schemaScore === 85) {
+        schemaStatus = 'warning';
+        schemaMessage = 'Organization/LocalBusiness schema has sameAs and one strong authority source.';
+        schemaRecommendation = 'Add an additional strong authority source from a different domain (e.g. Wikidata, Wikipedia, or LinkedIn Company) to maximize your score.';
+    } else {
+        schemaStatus = 'pass';
+        schemaMessage = 'Excellent schema markup: Organization/LocalBusiness schema present with multiple strong authority source references.';
+        schemaRecommendation = null;
     }
 
+    console.log(`\x1b[90m[AEO:schemaMarkup]\x1b[0m ✔ status: ${schemaStatus}, score: ${schemaScore} — ${schemaMessage}`);
     return {
         signal: "schema",
         score: schemaScore,
@@ -146,7 +257,11 @@ const analyzeSchemaMarkup = ($, url = '') => {
             isListingPage,
             faqNeeded,
             howToNeeded,
-            reason
+            reason,
+            hasOrgOrLocalBusinessSchema,
+            sameAsUrls,
+            authoritySources,
+            orgSchemaScore: schemaScore
         }
     };
 };

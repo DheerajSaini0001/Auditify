@@ -7,6 +7,7 @@ import Puppeteer_Simple from '../../utils/puppeteer_simple.js';
  */
 
 const analyzeBotAccess = async (url, $) => {
+    console.log(`\x1b[32m[AEO:botAccess]\x1b[0m ▶ Fetching robots.txt for: ${url}`);
     try {
         const rootUrl = new URL(url).origin;
         const robotsUrl = `${rootUrl}/robots.txt`;
@@ -24,6 +25,7 @@ const analyzeBotAccess = async (url, $) => {
             if (browser) await browser.close();
             
             if (status === 200 && content) {
+                console.log(`\x1b[32m[AEO:botAccess]\x1b[0m ✔ robots.txt fetched (${content.length} chars)`);
                 const lines = content.split(/\r?\n/);
                 let currentAgents = [];
 
@@ -51,9 +53,12 @@ const analyzeBotAccess = async (url, $) => {
                 }
                 const allowedCount = Object.values(results).filter(v => v === "allowed").length;
                 robotsScore = Math.round((allowedCount / 3) * 100);
+                console.log(`\x1b[32m[AEO:botAccess]\x1b[0m ✔ Bot status: GPTBot=${results.GPTBot}, Google-Extended=${results['Google-Extended']}, PerplexityBot=${results.PerplexityBot}`);
+            } else {
+                console.log(`\x1b[32m[AEO:botAccess]\x1b[0m ⚠ robots.txt not found or empty (status: ${status})`);
             }
         } catch (e) {
-            // robots.txt missing or failed, assume allowed or handle as error elsewhere
+            console.log(`\x1b[32m[AEO:botAccess]\x1b[0m ⚠ robots.txt fetch error: ${e.message}`);
         }
 
         // Meta Robots check
@@ -64,10 +69,12 @@ const analyzeBotAccess = async (url, $) => {
             if (metaRobots.toLowerCase().includes('noindex')) {
                 metaScore = 0;
                 isNoindexed = true;
+                console.log(`\x1b[32m[AEO:botAccess]\x1b[0m ❌ meta noindex detected!`);
             }
         }
 
         const finalScore = Math.min(robotsScore, metaScore);
+        console.log(`\x1b[32m[AEO:botAccess]\x1b[0m ✔ robotsScore: ${robotsScore}, metaScore: ${metaScore} → finalScore: ${finalScore}`);
 
         return {
             signal: "botAccess",
@@ -79,13 +86,17 @@ const analyzeBotAccess = async (url, $) => {
         };
 
     } catch (error) {
+        console.log(`\x1b[32m[AEO:botAccess]\x1b[0m ❌ Fatal error: ${error.message} - returning neutral/unknown result`);
+        // Don't claim a perfect 100 on a fetch failure — that falsely reports bots as
+        // allowed. Return a neutral/unknown state so the AEO score isn't inflated.
         return {
             signal: "botAccess",
-            score: 100,
+            score: 50,
+            error: true,
             bots: {
-                GPTBot: "allowed",
-                "Google-Extended": "allowed",
-                PerplexityBot: "allowed"
+                GPTBot: "unknown",
+                "Google-Extended": "unknown",
+                PerplexityBot: "unknown"
             }
         };
     }

@@ -6,6 +6,7 @@
 import configService from "../../services/configService.js";
 
 const analyzeCitations = ($) => {
+    console.log('\x1b[35m[AEO:citations]\x1b[0m ▶ Scanning for external citations...');
     let score = 0;
     const sources = [];
     
@@ -37,9 +38,11 @@ const analyzeCitations = ($) => {
     
     if (hasReferences) score += 30;
 
+    const finalScore = Math.min(score, 100);
+    console.log(`\x1b[35m[AEO:citations]\x1b[0m ✔ externalLinks: ${externalCount}, markers: ${superscriptCitations + bracketCitations}, refSection: ${hasReferences} → score: ${finalScore}`);
     return {
         signal: "citations",
-        score: Math.min(score, 100),
+        score: finalScore,
         externalSources: externalCount,
         citationMarkers: superscriptCitations + bracketCitations,
         hasReferenceSection: hasReferences

@@ -8,6 +8,8 @@ const passwordResetSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 passwordResetSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+// Lookups are by email (+token); index to avoid full collection scans
+passwordResetSchema.index({ email: 1, token: 1 });
 
 const PasswordReset = mongoose.model('PasswordReset', passwordResetSchema);
 export default PasswordReset;

@@ -931,11 +931,10 @@ export default async function conversionLeadFlow(page, $) {
   for (const [key, metric] of Object.entries(metricsMap)) {
     const weight = weights[key] || 1;
     totalWeight += weight;
-    if (metric.score === 100) {
-      earnedScore += weight;
-    } else if (metric.score === 50) {
-      earnedScore += weight * 0.5;
-    }
+    // Proportional credit. Previously only exact 100/50 scored, so partial scores
+    // (e.g. checkTrustBadges returning 40) silently contributed 0.
+    const s = Math.max(0, Math.min(100, Number(metric?.score) || 0));
+    earnedScore += weight * (s / 100);
   }
 
   const actualPercentage = totalWeight > 0 ? parseFloat(((earnedScore / totalWeight) * 100).toFixed(0)) : 0;

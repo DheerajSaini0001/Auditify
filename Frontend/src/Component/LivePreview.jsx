@@ -1,6 +1,7 @@
 import React, { useContext } from "react";
 import { ThemeContext } from "../context/ThemeContext";
 import { Monitor, Smartphone, ScanLine, Laptop, Wifi } from "lucide-react";
+import { API_URL } from "../config";
 
 const LivePreview = ({ data, showInFullAudit = true, variant = "card" }) => {
     const { theme } = useContext(ThemeContext);
@@ -15,7 +16,6 @@ const LivePreview = ({ data, showInFullAudit = true, variant = "card" }) => {
             screenshotSrc = `data:image/jpeg;base64,${data.screenshot}`;
         }
     } else if (data?.screenshotUrl) {
-        const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
         screenshotSrc = data.screenshotUrl.startsWith("http") ? data.screenshotUrl : `${API_URL}${data.screenshotUrl}`;
     }
 
@@ -28,8 +28,12 @@ const LivePreview = ({ data, showInFullAudit = true, variant = "card" }) => {
     // We now always render the placeholder if no screenshot is present.
 
     const isMobile = data?.device === "Mobile";
-    const statusText = data?.status === "inprogress" ? "Running Visual Scan..." : "Live Preview Ready";
-    const isScanning = data?.status === "inprogress";
+    // A finished audit (completed/failed) must stop showing the perpetual "Rendering" state.
+    const isFinished = data?.status === "completed" || data?.status === "failed";
+    const isScanning = !isFinished && (data?.status === "inprogress" || !screenshotSrc);
+    const statusText = isFinished
+        ? (screenshotSrc ? "Live Preview Ready" : "Preview Unavailable")
+        : "Running Visual Scan...";
 
     // Variant "card" now implies the inner styling, but we remove the outer border/shadow 
     // because the parent Dashboard container already handles the main "box".
@@ -113,29 +117,33 @@ const LivePreview = ({ data, showInFullAudit = true, variant = "card" }) => {
                             /* Reverted to Clean Centered State (Green Theme) */
                             <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 overflow-hidden">
 
-                                {/* Scanning Overlay - Inside Placeholder */}
-                                <div className="absolute inset-0 z-0 pointer-events-none">
-                                    {/* Green Tint */}
-                                    <div className="absolute inset-0 bg-emerald-500/5"></div>
-                                    {/* Grid Overlay */}
-                                    <div className="w-full h-full bg-[linear-gradient(rgba(16,185,129,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(16,185,129,0.1)_1px,transparent_1px)] bg-[size:20px_20px] opacity-20"></div>
+                                {/* Scanning Overlay - only while still scanning (not on a finished audit) */}
+                                {!isFinished && (
+                                    <div className="absolute inset-0 z-0 pointer-events-none">
+                                        {/* Green Tint */}
+                                        <div className="absolute inset-0 bg-emerald-500/5"></div>
+                                        {/* Grid Overlay */}
+                                        <div className="w-full h-full bg-[linear-gradient(rgba(16,185,129,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(16,185,129,0.1)_1px,transparent_1px)] bg-[size:20px_20px] opacity-20"></div>
 
-                                    {/* Scanning Line */}
-                                    <div className="absolute top-0 left-0 w-[3px] h-full bg-gradient-to-b from-transparent via-emerald-500 to-transparent shadow-[0_0_20px_rgba(16,185,129,0.6)] animate-[scan-x_2s_linear_infinite]"></div>
-                                </div>
+                                        {/* Scanning Line */}
+                                        <div className="absolute top-0 left-0 w-[3px] h-full bg-gradient-to-b from-transparent via-emerald-500 to-transparent shadow-[0_0_20px_rgba(16,185,129,0.6)] animate-[scan-x_2s_linear_infinite]"></div>
+                                    </div>
+                                )}
 
                                 <div className="relative z-10 mb-3">
-                                    <div className="absolute inset-0 bg-emerald-500 blur-xl opacity-20 animate-pulse"></div>
-                                    <div className={`relative p-3 rounded-full border shadow-sm ${darkMode ? "bg-slate-800 border-slate-700 text-emerald-400" : "bg-white border-emerald-100 text-emerald-600"}`}>
-                                        <ScanLine className="w-6 h-6 animate-pulse" strokeWidth={1.5} />
+                                    {!isFinished && <div className="absolute inset-0 bg-emerald-500 blur-xl opacity-20 animate-pulse"></div>}
+                                    <div className={`relative p-3 rounded-full border shadow-sm ${isFinished
+                                        ? (darkMode ? "bg-slate-800 border-slate-700 text-slate-400" : "bg-white border-slate-200 text-slate-400")
+                                        : (darkMode ? "bg-slate-800 border-slate-700 text-emerald-400" : "bg-white border-emerald-100 text-emerald-600")}`}>
+                                        <ScanLine className={`w-6 h-6 ${isFinished ? "" : "animate-pulse"}`} strokeWidth={1.5} />
                                     </div>
                                 </div>
                                 <div className="space-y-0.5 relative z-10">
                                     <h3 className={`text-xs fontsemibold uppercase tracking-wider ${darkMode ? "text-slate-300" : "text-slate-700"}`}>
-                                        Rendering
+                                        {isFinished ? "Preview Unavailable" : "Rendering"}
                                     </h3>
                                     <p className={`text-[10px] ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
-                                        Capturing visuals...
+                                        {isFinished ? "Screenshot could not be captured" : "Capturing visuals..."}
                                     </p>
                                 </div>
                             </div>

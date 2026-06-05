@@ -29,13 +29,16 @@ const SiteReportSchema = new mongoose.Schema(
   }
 );
 
-// Partial Unique Index to prevent multiple SUCCESSFUL or IN-PROGRESS audits for the same target
-// This allows re-auditing if current record is 'failed'
+// Partial Unique Index to prevent two concurrent IN-PROGRESS audits for the same
+// target BY THE SAME USER (the creation race). Only 'inprogress' is constrained, so:
+//   - a 'failed' record never blocks a re-audit
+//   - a 'completed' record never blocks a new audit (the controller reuses it via dedup)
+//   - different users can audit the same URL simultaneously (userId is part of the key)
 SiteReportSchema.index(
-  { url: 1, device: 1, report: 1 }, 
-  { 
-    unique: true, 
-    partialFilterExpression: { status: { $ne: 'failed' } } 
+  { url: 1, device: 1, report: 1, userId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { status: 'inprogress' }
   }
 );
 

@@ -44,8 +44,6 @@ const GuestRoute = ({ children }) => {
     // Priority: localStorage intent > router state.from > role-based default
     const destination = intent?.path || (stateFrom && stateFrom !== '/' ? stateFrom : defaultDest);
 
-    console.log('[GuestRoute] Authenticated. Redirecting to:', destination, '| intent:', intent, '| stateFrom:', stateFrom);
-
     return <Navigate to={destination} replace state={{ action: intent?.action }} />;
   }
 

@@ -1,3 +1,5 @@
+import pLimit from 'p-limit';
+
 // Helper to standardized return object
 const evaluateParameter = (score, details, meta = {}) => {
   const status = score === 1 ? "pass" : score >= 0.5 ? "warning" : "fail";
@@ -480,7 +482,7 @@ const checkLinks = ($, url) => {
 };
 
 
-const checkSemanticTags = async ($) => {
+export const checkSemanticTags = async ($) => {
   try {
     const tags = ["main", "nav", "article", "section", "header", "footer", "aside"];
     const result = {};
@@ -783,50 +785,52 @@ const checkContextualLinks = async ($, url) => {
       issues.push("Important pages not linked contextually.");
     }
 
-   // 🔥 BROKEN LINK CHECK (IMPROVED)
+   // 🔥 BROKEN LINK CHECK (concurrency pool + HEAD→GET + 5s timeout)
 const brokenLinks = [];
-const headers = { "User-Agent": "Mozilla/5.0" };
+const headers = { "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)" };
 
 const maxChecks = 150;
 const linksToCheck = Array.from(contentLinks).slice(0, maxChecks);
 
-// 🚀 Parallel requests (faster + accurate)
-const requests = linksToCheck.map(async (href) => {
+// Single fetch with a hard 5s timeout via AbortController.
+const fetchWithTimeout = async (target, method) => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 5000); // 5s timeout
   try {
-    if (href.toLowerCase().includes("inventory")) {
-      return null; // Skip check, treat as valid
-    }
+    return await fetch(target, { method, headers, redirect: "follow", signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+};
+
+// Concurrency pool: up to 100 simultaneous requests (was an unbounded Promise.all).
+const linkLimit = pLimit(100);
+
+const requests = linksToCheck.map((href) => linkLimit(async () => {
+  try {
+    if (href.toLowerCase().includes("inventory")) return null; // Skip, treat as valid
 
     const fullUrl = new URL(href, url).href;
+    if (fullUrl.toLowerCase().includes("inventory")) return null;
 
-    if (fullUrl.toLowerCase().includes("inventory")) {
-      return null; // Skip check, treat as valid
+    // 1. Try HEAD first (no body — faster, less bandwidth)
+    let res = await fetchWithTimeout(fullUrl, "HEAD");
+
+    // 2. If the server doesn't support HEAD (405/501) or it errored, retry with GET
+    if (res.status === 405 || res.status === 501 || res.status >= 400) {
+      res = await fetchWithTimeout(fullUrl, "GET");
     }
 
-    const res = await fetch(fullUrl, {
-      method: "GET", // ✅ real page load
-      headers,
-      signal: AbortSignal.timeout(6000) // ⏳ wait properly
-    });
+    // Ignore false positives (auth / rate-limit / bot-protection)
+    if ([403, 429, 999, 406, 405].includes(res.status)) return null;
 
-    if (!res.ok) {
-      return {
-        url: fullUrl,
-        status: res.status
-      };
-    }
-
-    return null;
-
+    return res.ok ? null : { url: fullUrl, status: res.status };
   } catch (e) {
-    return {
-      url: href,
-      error: "Request failed / timeout"
-    };
+    return { url: href, error: e.name === "AbortError" ? "Timeout" : "Request failed" };
   }
-});
+}));
 
-// ⏳ wait for all links to load
+// ⏳ wait for all links to resolve
 const results = await Promise.all(requests);
 
 // collect broken links
@@ -1305,7 +1309,13 @@ const checkSocial = ($) => {
 
 const checkRobotsTxt = async (url, page) => {
   try {
-    const robotsUrl = new URL("/robots.txt", url).href;
+    // Build from the page's ACTUAL (post-redirect) origin so the in-page fetch is same-origin
+    // and uses the REAL browser (which already cleared any bot challenge during navigation).
+    // Building from the original `url` caused CORS-blocked fetches → a false "missing" whenever
+    // the site redirects (e.g. example.com → www.example.com, or http → https).
+    let robotsBase = url;
+    try { if (page) robotsBase = page.url(); } catch (_) {}
+    const robotsUrl = new URL("/robots.txt", robotsBase).href;
 
     let exists = false;
     let content = null;
@@ -1338,12 +1348,14 @@ const checkRobotsTxt = async (url, page) => {
 
     // 🔥 fallback to direct node-fetch
     if (!exists) {
-      const response = await fetch(robotsUrl, { 
-        headers: { 
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+      const response = await fetch(robotsUrl, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+          "Accept": "text/plain, text/html, */*",
+          "Accept-Language": "en-US,en;q=0.9"
         },
         redirect: "follow", // 🔥 handle redirects
-        signal: AbortSignal.timeout(6000) 
+        signal: AbortSignal.timeout(8000)
       });
 
       const resText = await response.text().catch(() => null);
@@ -1443,18 +1455,25 @@ const checkSitemap = async (url, robotsContent = null, page) => {
       }
     }
 
-    // Then add the default fallbacks
-    const sitemapUrl = new URL("/sitemap.xml", url).href;
-    const sitemapIndexUrl = new URL("/sitemap_index.xml", url).href;
+    // Default fallbacks — built from the page's ACTUAL (post-redirect) origin so the in-page
+    // fetch is same-origin (no CORS) and uses the real, bot-cleared browser.
+    let sitemapBase = url;
+    try { if (page) sitemapBase = page.url(); } catch (_) {}
+    const sitemapUrl = new URL("/sitemap.xml", sitemapBase).href;
+    const sitemapIndexUrl = new URL("/sitemap_index.xml", sitemapBase).href;
+    const sitemapIndexAltUrl = new URL("/sitemap-index.xml", sitemapBase).href;
 
     if (!urlsToTry.includes(sitemapUrl)) urlsToTry.push(sitemapUrl);
     if (!urlsToTry.includes(sitemapIndexUrl)) urlsToTry.push(sitemapIndexUrl);
+    if (!urlsToTry.includes(sitemapIndexAltUrl)) urlsToTry.push(sitemapIndexAltUrl);
 
     let exists = false;
     let content = null;
 
-    const headers = { 
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' 
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+      'Accept': 'application/xml, text/xml, text/plain, */*',
+      'Accept-Language': 'en-US,en;q=0.9'
     };
 
     // 🔄 Try multiple sitemap URLs
@@ -1661,8 +1680,9 @@ export default async function seoMetrics(url, $, page) {
     Title: 0.15,
     Meta_Description: 0.08,
     H1: 0.10,
-    Content_Relevance: 0.10,
-    Duplicate_Content: 0.02,
+    // Was 0.10 + an orphan Duplicate_Content: 0.02 that no metric ever applied, so the
+    // applied weights summed to 0.98 and SEO capped at 98%. Folded the 0.02 in here.
+    Content_Relevance: 0.12,
     Image: 0.08,
     Canonical: 0.08,
     Contextual_Linking: 0.08,

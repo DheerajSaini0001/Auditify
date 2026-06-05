@@ -1022,6 +1022,18 @@ const evaluateRenderBlocking = async (page) => {
 
 // Redirect Chains
 const evaluateRedirectChains = (response) => {
+  // No navigation response (timeout / bot-protected site) — can't evaluate redirects.
+  // Return a neutral pass so we don't crash or unfairly penalize the technical score.
+  if (!response || typeof response.request !== "function") {
+    return {
+      score: 100,
+      status: "pass",
+      details: "Redirect chain could not be evaluated (no navigation response).",
+      meta: { value: "100%", hops: 0, redirectDetails: [], target: "≤ 1 hop", thresholds: { Good: "≤ 1 hop", Poor: "> 1 hop" } },
+      analysis: null,
+    };
+  }
+
   const chain = [];
   let currentRequest = response.request();
   while (currentRequest.redirectedFrom()) {
@@ -1089,11 +1101,22 @@ export default async function technicalMetrics(url, device, page, response, brow
   const redirect = evaluateRedirectChains(response);
 
   const getScore = (metric) => metric?.score || 0;
-  const scoreLCP = (getScore(lcpLab) * 0.07) + (getScore(lcpCrux) * 0.08); // 15%
-  const scoreINP = (getScore(inpLab) * 0.07) + (getScore(inpCrux) * 0.08); // 15%
-  const scoreCLS = (getScore(clsLab) * 0.07) + (getScore(clsCrux) * 0.08); // 15%
-  const scoreFCP = (getScore(fcpLab) * 0.03) + (getScore(fcpCrux) * 0.03); // 6%
-  const scoreTTFB = (getScore(ttfbLab) * 0.04) + (getScore(ttfbCrux) * 0.04); // 8%
+
+  // Most sites lack CrUX real-user field data, so the crux sub-metrics come back null.
+  // Counting that as 0 (while still charging its weight) unfairly capped Technical ~69%.
+  // When field data is missing, redistribute the crux weight onto the corresponding lab metric.
+  const pairScore = (lab, crux, labW, cruxW) => {
+    const hasCrux = crux != null && crux.score != null;
+    return hasCrux
+      ? getScore(lab) * labW + getScore(crux) * cruxW
+      : getScore(lab) * (labW + cruxW);
+  };
+
+  const scoreLCP = pairScore(lcpLab, lcpCrux, 0.07, 0.08); // 15%
+  const scoreINP = pairScore(inpLab, inpCrux, 0.07, 0.08); // 15%
+  const scoreCLS = pairScore(clsLab, clsCrux, 0.07, 0.08); // 15%
+  const scoreFCP = pairScore(fcpLab, fcpCrux, 0.03, 0.03); // 6%
+  const scoreTTFB = pairScore(ttfbLab, ttfbCrux, 0.04, 0.04); // 8%
   const scoreTBT = getScore(tbt) * 0.08; // 8%
   const scoreSI = getScore(si) * 0.08;   // 8%
   const scoreCompression = getScore(compression) * 0.05; // 5%

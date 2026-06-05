@@ -14,18 +14,21 @@ import Navbar from "./Component/Navbar.jsx";
 import Footer from "./Component/Footer.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { DataProvider } from "./context/DataContext.jsx";
-import AppContent from "./AppContent.jsx"; 
+import AppContent from "./AppContent.jsx";
+import ErrorBoundary from "./Component/ErrorBoundary.jsx";
 
 
 function App() {
   return (
-    <AuthProvider>
-      <ThemeProvider>
-        <DataProvider>
-          <AppContent />
-        </DataProvider>
-      </ThemeProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <ThemeProvider>
+          <DataProvider>
+            <AppContent />
+          </DataProvider>
+        </ThemeProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

@@ -4,6 +4,7 @@
  */
 
 const analyzeAnswerFirst = ($) => {
+    console.log('\x1b[36m[AEO:answerFirst]\x1b[0m ▶ Running answer-first detection...');
     // Clone body to avoid mutating original
     const bodyCopy = $('body').clone();
     
@@ -12,7 +13,7 @@ const analyzeAnswerFirst = ($) => {
     
     // Extract text and split into words
     const text = bodyCopy.text().trim();
-    const first100Words = text.split(/\s+/).slice(0, 100).join(' ');
+    const first100Words = text.split(/\s+/).slice(0, 200).join(' ');
     
     // Simple sentence count logic
     const sentences = first100Words.match(/[^.!?]+[.!?]+/g) || [];
@@ -32,6 +33,7 @@ const analyzeAnswerFirst = ($) => {
         score = 0;
     }
 
+    console.log(`\x1b[36m[AEO:answerFirst]\x1b[0m ✔ sentences in first 200 words: ${sentenceCount} → score: ${score}`);
     return {
         signal: "answerFirst",
         score: score,

@@ -2296,9 +2296,9 @@ const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading,
                   </div>
                 </div>
               )}
-              {/* Right Panel: Shimmer */}
+              {/* Right Panel: Shimmer (or "unavailable" once the audit is finished) */}
               <div className="flex-1 flex flex-col justify-center">
-                <AuditShimmer darkMode={darkMode} loading={loading} data={data?.onPageSEO} auditSteps={auditSteps} />
+                <AuditShimmer darkMode={darkMode} loading={loading} data={data?.onPageSEO} auditSteps={auditSteps} isFinished={data?.status === "completed" || data?.status === "failed"} />
               </div>
             </div>
           </div>

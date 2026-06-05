@@ -112,13 +112,29 @@ function AppContentInner() {
               <DashboardPage />
             </ProtectedRoute>
           } />
-          <Route path="/dashboard/add-website" element={<AddWebsitePage />} />
+          <Route path="/dashboard/add-website" element={
+            <ProtectedRoute>
+              <AddWebsitePage />
+            </ProtectedRoute>
+          } />
 
-          <Route path="/bulk-audit" element={<BulkAudit />} />
+          <Route path="/bulk-audit" element={
+            <ProtectedRoute>
+              <BulkAudit />
+            </ProtectedRoute>
+          } />
 
-          <Route path="/bulk-audit/:id" element={<BulkAudit />} />
+          <Route path="/bulk-audit/:id" element={
+            <ProtectedRoute>
+              <BulkAudit />
+            </ProtectedRoute>
+          } />
 
-          <Route path="/audit-history" element={<AuditHistoryPage />} />
+          <Route path="/audit-history" element={
+            <ProtectedRoute>
+              <AuditHistoryPage />
+            </ProtectedRoute>
+          } />
 
 
           <Route path="/report" element={<ReportLayout />} />

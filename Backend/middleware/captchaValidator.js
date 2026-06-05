@@ -14,8 +14,6 @@ const captchaValidator = (req, res, next) => {
     stored = req.session.captchaAnswer;
   }
 
-  console.log(`[Captcha Debug] ID: ${captchaId || 'N/A'}, Stored: ${stored}, Received: ${captchaAnswer}, SessionID: ${req.sessionID}`);
-
   if (stored === undefined || stored === null) {
     return res.status(400).json({ success: false, error: 'CAPTCHA session expired. Please refresh.' });
   }

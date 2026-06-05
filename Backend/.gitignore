@@ -4,6 +4,16 @@ node_modules/
 # Environment variables
 .env
 
+# Privileged/admin & debug scripts — must NOT ship to production (security risk)
+make_admin.js
+make_super_admin.js
+check_users.js
+check_db.js
+check_db_device.js
+check_audits.js
+test_bypass.js
+bypass_screenshot.jpg
+
 # Logs
 npm-debug.log*
 yarn-debug.log*

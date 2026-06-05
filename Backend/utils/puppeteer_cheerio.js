@@ -493,7 +493,7 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', auditId
     // [EXISTING STEALTH CONFIG — DO NOT MODIFY]
     // [EXISTING PUPPETEER LAUNCH OPTIONS — DO NOT MODIFY]
     const launchOptions = {
-      headless: false,
+      headless: true,
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",

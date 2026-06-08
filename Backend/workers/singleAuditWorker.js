@@ -224,25 +224,42 @@ const OverAll = (A, B, C, D, E, F, G) => {
       aeo: aeoRes
     });
 
-    // [NEW] — Full audit ("All"): each metric individually wrapped in safeMetric()
-    // A detached frame in any one metric is non-fatal — audit continues with 0 for that section
-    const A_Res = await safeMetric("Technical Performance", () => technicalMetrics(url, device, page, response, browser));
-    await SingleAuditReport.findByIdAndUpdate(currentAuditId, { technicalPerformance: A_Res });
-
-    const B_Res = await safeMetric("On Page SEO", () => seoMetrics(url, $, page));
-    await SingleAuditReport.findByIdAndUpdate(currentAuditId, { onPageSEO: B_Res, siteSchema: B_Res?.Schema });
-
-    const C_Res = await safeMetric("Accessibility", () => accessibilityMetrics(page, $));
-    await SingleAuditReport.findByIdAndUpdate(currentAuditId, { accessibility: C_Res });
-
-    const D_Res = await safeMetric("Security/Compliance", () => securityCompliance(url, page, response, browser));
-    await SingleAuditReport.findByIdAndUpdate(currentAuditId, { securityOrCompliance: D_Res });
-
-    const E_Res = await safeMetric("UX & Content Structure", () => uxContentStructure(device, page));
-    await SingleAuditReport.findByIdAndUpdate(currentAuditId, { UXOrContentStructure: E_Res });
-
-    const F_Res = await safeMetric("Conversion & Lead Flow", () => conversionLeadFlow(page, $));
-    await SingleAuditReport.findByIdAndUpdate(currentAuditId, { conversionAndLeadFlow: F_Res });
+    // [CHANGE] — Full audit ("All"): run ALL metrics in PARALLEL.
+    // Each is still wrapped in safeMetric() (a detached frame in one is non-fatal)
+    // and still writes its own section as soon as it finishes, so the UI fills in
+    // progressively. Promise.all runs them concurrently instead of one-by-one.
+    const [A_Res, B_Res, C_Res, D_Res, E_Res, F_Res] = await Promise.all([
+      (async () => {
+        const r = await safeMetric("Technical Performance", () => technicalMetrics(url, device, page, response, browser));
+        await SingleAuditReport.findByIdAndUpdate(currentAuditId, { technicalPerformance: r });
+        return r;
+      })(),
+      (async () => {
+        const r = await safeMetric("On Page SEO", () => seoMetrics(url, $, page));
+        await SingleAuditReport.findByIdAndUpdate(currentAuditId, { onPageSEO: r, siteSchema: r?.Schema });
+        return r;
+      })(),
+      (async () => {
+        const r = await safeMetric("Accessibility", () => accessibilityMetrics(page, $));
+        await SingleAuditReport.findByIdAndUpdate(currentAuditId, { accessibility: r });
+        return r;
+      })(),
+      (async () => {
+        const r = await safeMetric("Security/Compliance", () => securityCompliance(url, page, response, browser));
+        await SingleAuditReport.findByIdAndUpdate(currentAuditId, { securityOrCompliance: r });
+        return r;
+      })(),
+      (async () => {
+        const r = await safeMetric("UX & Content Structure", () => uxContentStructure(device, page));
+        await SingleAuditReport.findByIdAndUpdate(currentAuditId, { UXOrContentStructure: r });
+        return r;
+      })(),
+      (async () => {
+        const r = await safeMetric("Conversion & Lead Flow", () => conversionLeadFlow(page, $));
+        await SingleAuditReport.findByIdAndUpdate(currentAuditId, { conversionAndLeadFlow: r });
+        return r;
+      })(),
+    ]);
 
     // Extract percentages for overall score calculation
     const A = A_Res?.Percentage || 0;

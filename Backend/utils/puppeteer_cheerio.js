@@ -147,6 +147,38 @@ async function autoScroll(page) {
   }
 }
 
+// [FIX] — Wait for all images to finish loading via their onload event.
+// Navigation uses "domcontentloaded", which fires BEFORE images load, so the
+// screenshot was captured with blank/half-loaded images. This waits for each
+// <img> onload (or error/timeout) so the preview renders with images present.
+async function waitForImagesLoaded(page, timeoutMs = 12000) {
+  try {
+    if (!page || page.isClosed()) return;
+    await page.evaluate(async (maxWait) => {
+      const imgs = Array.from(document.images || []);
+      await Promise.race([
+        Promise.all(imgs.map((img) => {
+          // Already loaded (cached or complete)
+          if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+          return new Promise((resolve) => {
+            img.addEventListener('load', resolve, { once: true });
+            img.addEventListener('error', resolve, { once: true });
+          });
+        })),
+        // Hard cap so a single stuck image can't hang the audit
+        new Promise((resolve) => setTimeout(resolve, maxWait)),
+      ]);
+    }, timeoutMs);
+  } catch (error) {
+    if (isDetachedFrameError(error)) {
+      logger.debug('[Frame] waitForImagesLoaded skipped — frame detached');
+      return;
+    }
+    // Non-critical — never fail the audit because of image waiting
+    logger.debug('[Frame] waitForImagesLoaded non-fatal error:', error.message);
+  }
+}
+
 // [FIX] — handlePopups wrapped with detached frame protection
 async function handlePopups(page) {
   try {
@@ -698,7 +730,16 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', auditId
       logger.debug('[Frame] Pre-wait HTML capture failed — will retry after wait');
     }
 
-    await new Promise(resolve => resolve());
+    // [FIX] — Wait for the page 'load' (onload) event so images/resources finish
+    // loading before we capture content. domcontentloaded fired too early.
+    try {
+      if (!page.isClosed()) {
+        await page.waitForLoadState('load', { timeout: 15000 });
+      }
+    } catch (e) {
+      // load may never fire on heavy pages — proceed; image wait below covers it
+      logger.debug('[Frame] waitForLoadState(load) timed out — continuing');
+    }
 
     // [FIX] — Live page context probe after the 20s wait
     // Tests whether page.evaluate() still works. If the page navigated away
@@ -751,7 +792,9 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', auditId
       logger.debug('[Frame] Scroll to top skipped — frame detached');
     }
 
-    await new Promise(resolve => resolve());
+    // [FIX] — Wait for images (incl. lazy-loaded ones triggered by autoScroll)
+    // to finish via their onload event before taking the screenshot.
+    await waitForImagesLoaded(page, 12000);
 
     // [FIX] — Re-check page is still alive after 20s wait
     // Page might have navigated / frame detached during the wait

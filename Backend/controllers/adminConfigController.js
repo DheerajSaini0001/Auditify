@@ -93,10 +93,7 @@ export const updateConfig = async (req, res) => {
     let config = await PlatformConfig.findOne({ key: key.toUpperCase() });
     const isCreate = !config;
     const oldValue = config ? decrypt(config.value) : null;
-    // Only secrets are encrypted at rest. Non-secret values must be stored as
-    // plaintext, otherwise the read path (which only decrypts secrets) serves ciphertext.
-    const effectiveSensitive = isSensitive !== undefined ? isSensitive : (config ? config.isSecret : true);
-    const encryptedValue = effectiveSensitive ? encrypt(value) : value;
+    const encryptedValue = encrypt(value);
     const newVersion = config ? (config.version || 0) + 1 : 1;
 
     if (config) {
@@ -363,8 +360,7 @@ export const bulkImport = async (req, res) => {
 
         const upperKey = item.key.toUpperCase();
         let config = await PlatformConfig.findOne({ key: upperKey });
-        const effectiveSensitive = item.isSensitive !== undefined ? item.isSensitive : (config ? config.isSecret : true);
-        const encryptedValue = effectiveSensitive ? encrypt(item.value) : item.value;
+        const encryptedValue = encrypt(item.value);
         const newVersion = config ? (config.version || 0) + 1 : 1;
 
         if (config) {

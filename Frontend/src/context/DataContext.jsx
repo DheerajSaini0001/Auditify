@@ -1,7 +1,6 @@
 import { createContext, useState, useContext, useEffect, useCallback } from "react";
 import api from "../utils/api";
 import toast from "react-hot-toast";
-import { API_URL } from "../config";
 
 const DataContext = createContext();
 export const useData = () => useContext(DataContext);
@@ -85,6 +84,7 @@ export const DataProvider = ({ children }) => {
 
     try {
       const screenResolution = `${window.screen.width}x${window.screen.height}`;
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
       
       const token = localStorage.getItem('dealerpulse_token');
       const endpoint = token ? '/api/user/audit' : '/single-audit/audit';
@@ -169,6 +169,7 @@ export const DataProvider = ({ children }) => {
   // 🚀 BULK AUDIT: DISCOVER
   const discoverUrls = async (url, maxPages, captchaAnswer, captchaId) => {
     try {
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
       const token = localStorage.getItem('dealerpulse_token');
 
       const res = await fetch(`${API_URL}/bulk-audit/discover`, {
@@ -191,6 +192,7 @@ export const DataProvider = ({ children }) => {
   // 🚀 BULK AUDIT: START
   const startBulkAudit = async (url, selectedUrls, device, report, captchaAnswer, captchaId) => {
     try {
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
       const token = localStorage.getItem('dealerpulse_token');
       const screenResolution = `${window.screen.width}x${window.screen.height}`;
 
@@ -222,6 +224,7 @@ export const DataProvider = ({ children }) => {
   // 🚀 BULK AUDIT: AUTO DISCOVER & START
   const autoBulkAudit = async (url, maxPages, device, report, captchaAnswer, captchaId) => {
     try {
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
       const token = localStorage.getItem('dealerpulse_token');
 
       const res = await fetch(`${API_URL}/bulk-audit/auto-audit`, {
@@ -244,6 +247,7 @@ export const DataProvider = ({ children }) => {
   // 🚀 SINGLE AUDIT: GET BY ID
   const fetchSingleReport = useCallback(async (id) => {
     try {
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
       const token = localStorage.getItem('dealerpulse_token');
       const res = await fetch(`${API_URL}/single-audit/${id}`, { 
         credentials: 'include',
@@ -266,6 +270,7 @@ export const DataProvider = ({ children }) => {
   // 🚀 BULK AUDIT: COMPLETED STATUS
   const getBulkAuditStatus = async (bulkAuditId) => {
     try {
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
       const res = await fetch(`${API_URL}/bulk-audit/${bulkAuditId}`, { credentials: 'include' });
 
       const result = await handleResponse(res);
@@ -282,6 +287,7 @@ export const DataProvider = ({ children }) => {
 
   const fetchBulkPageReport = async (bulkId, pageUrl) => {
     try {
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
       const token = localStorage.getItem('dealerpulse_token');
       const res = await fetch(`${API_URL}/bulk-audit/${bulkId}/page?url=${encodeURIComponent(pageUrl)}`, { 
         credentials: 'include',

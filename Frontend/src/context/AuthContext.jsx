@@ -1,6 +1,4 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { API_URL } from '../config';
-import { resetProjectsCache } from '../hooks/useProjectsCache';
 
 const AuthContext = createContext();
 
@@ -12,7 +10,8 @@ export const AuthProvider = ({ children }) => {
   // 5.2 Standard fetch wrapper (apiFetch)
   const apiFetch = useCallback(async (url, options = {}) => {
     const currentToken = localStorage.getItem('dealerpulse_token');
-
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:2000';
+    
     const res = await fetch(`${API_URL}${url}`, {
       ...options,
       credentials: 'include', // Add this to send session cookies for CAPTCHA
@@ -79,14 +78,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const logout = () => {
-    // Clear ALL per-user client state so the next user on a shared browser can't
-    // see the previous user's audits/projects.
-    try {
-      Object.keys(localStorage)
-        .filter((k) => k.startsWith('dealerpulse_') || k.startsWith('auditify_'))
-        .forEach((k) => localStorage.removeItem(k));
-    } catch (_) {}
-    resetProjectsCache(); // clear the module-level in-memory projects cache
+    localStorage.removeItem('dealerpulse_token');
     setToken(null);
     setUser(null);
     window.location.href = '/login'; // Force redirect as per SRS 6.33

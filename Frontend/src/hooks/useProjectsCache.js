@@ -9,18 +9,6 @@ let projectsCache = {
 
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-// Standalone reset for use outside React (e.g. on logout) — clears the module singleton.
-export const resetProjectsCache = () => {
-  projectsCache = { websites: null, detailedScores: null, lastFetched: null };
-};
-
-// Returns a finite 0–100 number. `value ?? Math.round(undefined)` yields NaN (NaN is
-// not nullish), which then renders as "NaN" / breaks charts — guard against it.
-const pct = (value, score) => {
-  const n = value ?? Math.round(Number(score));
-  return Number.isFinite(n) ? n : 0;
-};
-
 export const useProjectsCache = (apiFetch) => {
   const [websites, setWebsites] = useState(projectsCache.websites || []);
   const [detailedScores, setDetailedScores] = useState(projectsCache.detailedScores || {});
@@ -90,13 +78,13 @@ export const useProjectsCache = (apiFetch) => {
                 const r = reportRes.data;
                 scoresMap[normUrl] = {
                   status: 'completed',
-                  performance: pct(r.technicalPerformance?.Percentage, r.score),
-                  seo: pct(r.onPageSEO?.Percentage, r.score),
-                  accessibility: pct(r.accessibility?.Percentage, r.score),
-                  security: pct(r.securityOrCompliance?.Percentage, r.score),
-                  onPage: pct(r.UXOrContentStructure?.Percentage, r.score),
-                  conversion: pct(r.conversionAndLeadFlow?.Percentage, r.score),
-                  aiReadiness: pct(r.aioReadiness?.Percentage, r.score),
+                  performance: r.technicalPerformance?.Percentage ?? Math.round(r.score) ?? 0,
+                  seo: r.onPageSEO?.Percentage ?? Math.round(r.score) ?? 0,
+                  accessibility: r.accessibility?.Percentage ?? Math.round(r.score) ?? 0,
+                  security: r.securityOrCompliance?.Percentage ?? Math.round(r.score) ?? 0,
+                  onPage: r.UXOrContentStructure?.Percentage ?? Math.round(r.score) ?? 0,
+                  conversion: r.conversionAndLeadFlow?.Percentage ?? Math.round(r.score) ?? 0,
+                  aiReadiness: r.aioReadiness?.Percentage ?? Math.round(r.score) ?? 0,
                   rating: r.grade || (r.score >= 90 ? "Excellent" : r.score >= 80 ? "Very Good" : r.score >= 70 ? "Good" : "Needs Improvement"),
                   auditId: r._id
                 };

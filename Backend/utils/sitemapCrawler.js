@@ -38,15 +38,8 @@ export default async function discoverPages(baseUrl, maxPages = 50) {
             return Array.from(discoveredUrls).slice(0, maxPages);
         }
 
-        // Step 2: Crawl internal links from pages (bounded by a wall-clock budget so a
-        // large/looping site can't tie up a request + browser for many minutes)
-        const MAX_CRAWL_MS = 90000;
-        const crawlStart = Date.now();
+        // Step 2: Crawl internal links from pages
         while (urlsToVisit.length > 0 && discoveredUrls.size < maxPages) {
-            if (Date.now() - crawlStart > MAX_CRAWL_MS) {
-                console.warn(`⏱️ Crawl time budget (${MAX_CRAWL_MS}ms) reached — stopping discovery with ${discoveredUrls.size} URLs`);
-                break;
-            }
             const currentUrl = urlsToVisit.shift();
 
             if (visitedUrls.has(currentUrl)) continue;
@@ -163,10 +156,10 @@ async function extractInternalLinks(page, url, domain) {
     const links = new Set();
     try {
         await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20000 });
-
-        // Wait for rendering (previously a no-op, so links injected by JS were missed)
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-
+        
+        // Wait for rendering
+        await new Promise(resolve => resolve());
+        
         const html = await page.content();
         const $ = cheerio.load(html);
 

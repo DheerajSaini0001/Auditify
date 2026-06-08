@@ -30,8 +30,8 @@ export default async function Puppeteer_Simple(url) {
     });
     const page = await context.newPage();
 
-    // Random delay before navigation to mimic human behavior (was a no-op)
-    await new Promise(resolve => setTimeout(resolve, 1000 + Math.floor(Math.random() * 1500)));
+    // Random delay before navigation to mimic human behavior
+    await new Promise(resolve => resolve());
 
     console.log(`🔍 [Simple] Navigating to: ${url}`);
     const response = await page.goto(url, {

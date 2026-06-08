@@ -804,10 +804,11 @@ export default async function aioReadiness(url, page, $) {
   for (const [key, metric] of Object.entries(metricsMap)) {
     const weight = weights[key] || 1;
     totalWeight += weight;
-    // Proportional credit. Previously only exact 100/50 scored, so partial scores
-    // (e.g. 40/70/80) silently contributed 0, understating the result.
-    const s = Math.max(0, Math.min(100, Number(metric?.score) || 0));
-    earnedScore += weight * (s / 100);
+    if (metric.score === 100) {
+      earnedScore += weight;
+    } else if (metric.score === 50) {
+      earnedScore += weight * 0.5;
+    }
   }
 
   const actualPercentage = totalWeight > 0 ? parseFloat(((earnedScore / totalWeight) * 100).toFixed(0)) : 0;

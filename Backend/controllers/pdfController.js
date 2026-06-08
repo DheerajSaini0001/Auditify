@@ -5,7 +5,6 @@ import { chromium } from "playwright";
 import logger from "../utils/logger.js";
 
 export const generatePDFReport = async (req, res) => {
-  let browser = null;
   try {
     const { id } = req.params;
     let report;
@@ -57,7 +56,7 @@ export const generatePDFReport = async (req, res) => {
       return res.status(400).json({ error: "Audit is not completed yet" });
     }
 
-    browser = await chromium.launch({
+    const browser = await chromium.launch({
       headless: true,
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
@@ -505,7 +504,6 @@ export const generatePDFReport = async (req, res) => {
     });
 
     await browser.close();
-    browser = null;
 
     res.contentType("application/pdf");
     res.setHeader(
@@ -536,13 +534,6 @@ export const generatePDFReport = async (req, res) => {
 
   } catch (error) {
     logger.error("PDF generation error", error);
-    if (!res.headersSent) {
-      res.status(500).json({ error: "Failed to generate PDF report" });
-    }
-  } finally {
-    // Never leak a Chromium if anything between launch and close threw.
-    if (browser) {
-      try { await browser.close(); } catch (_) {}
-    }
+    res.status(500).json({ error: "Failed to generate PDF report" });
   }
 };

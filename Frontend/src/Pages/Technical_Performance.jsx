@@ -112,9 +112,9 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                   </div>
                 </div>
               )}
-              {/* Right Panel: Shimmer (or "unavailable" once the audit is finished) */}
+              {/* Right Panel: Shimmer */}
               <div className="flex-1 flex flex-col justify-center">
-                <AuditShimmer darkMode={darkMode} loading={loading} data={data} auditSteps={AUDIT_STEPS} isFinished={data?.status === "completed" || data?.status === "failed"} />
+                <AuditShimmer darkMode={darkMode} loading={loading} data={data} auditSteps={AUDIT_STEPS} />
               </div>
             </div>
           ) : (

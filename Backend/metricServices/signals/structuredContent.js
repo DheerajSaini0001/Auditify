@@ -4,7 +4,6 @@
  */
 
 const analyzeStructuredContent = ($) => {
-    console.log('\x1b[34m[AEO:structuredContent]\x1b[0m ▶ Checking tables, lists, and images...');
     const tableCount = $('table').length;
     const ulCount = $('ul').length;
     const olCount = $('ol').length;
@@ -30,7 +29,6 @@ const analyzeStructuredContent = ($) => {
 
     score = Math.min(score, 100);
 
-    console.log(`\x1b[34m[AEO:structuredContent]\x1b[0m ✔ tables: ${tableCount}, lists: ${listCount}, images: ${imgCount}, dataStuckInImages: ${tableCount === 0 && imgCount > 3} → score: ${score}`);
     return {
         signal: "structuredContent",
         score: score,

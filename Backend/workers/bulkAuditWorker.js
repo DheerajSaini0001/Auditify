@@ -1,7 +1,6 @@
 import { workerData, parentPort } from "worker_threads";
 import mongoose from "mongoose";
 import dbConnect from "../config/db.js";
-import configService from "../services/configService.js";
 import BulkAuditReport from "../models/bulkAuditReport.js";
 
 import technicalMetrics from "../metricServices/technicalMetrics.js";
@@ -41,21 +40,8 @@ function handleWorkerSafetyError(error) {
   }
 }
 
-function isBenignTeardownError(error) {
-  if (!error) return true;
-  const lmsg = (error.message || '').toLowerCase();
-  return (
-    lmsg.includes('detached') || lmsg.includes('target closed') ||
-    lmsg.includes('session closed') || lmsg.includes('context was destroyed') ||
-    lmsg.includes('frame is not ready') || lmsg.includes('cdpsession')
-  );
-}
-
 process.on('unhandledRejection', handleWorkerSafetyError);
-process.on('uncaughtException', (error) => {
-  handleWorkerSafetyError(error);
-  if (!isBenignTeardownError(error)) process.exit(1);
-});
+process.on('uncaughtException', handleWorkerSafetyError);
 
 const OverAll = (A, B, C, D, E, F, G) => {
     A ||= 0; B ||= 0; C ||= 0; D ||= 0; E ||= 0; F ||= 0; G ||= 0;
@@ -81,17 +67,6 @@ const OverAll = (A, B, C, D, E, F, G) => {
     };
 };
 
-// Hard wall-clock cap per page so a hung site can't pin a Chromium + DB connection forever.
-// Generous because a full per-page audit can take minutes. Tune via AUDIT_WORKER_TIMEOUT_MS.
-// We only log + exit here; the controller's worker "exit" handler is the single source of
-// truth for marking the page failed (avoids double-counting failedPages).
-const WORKER_TIMEOUT_MS = parseInt(process.env.AUDIT_WORKER_TIMEOUT_MS || "300000", 10); // 5 min
-const watchdog = setTimeout(() => {
-    logger.error(`[Bulk Worker] Page audit timed out after ${WORKER_TIMEOUT_MS}ms — exiting: ${pageUrl}`);
-    process.exit(1);
-}, WORKER_TIMEOUT_MS);
-if (watchdog.unref) watchdog.unref();
-
 (async () => {
     let browser;
     const start = performance.now();
@@ -101,18 +76,13 @@ if (watchdog.unref) watchdog.unref();
             await dbConnect({ maxPoolSize: 1 });
         }
 
-        // Prime this worker's config cache from the DB (see singleAuditWorker note).
-        try { await configService.refreshCache(); } catch (_) {}
-
-        const { browser: b, page, response, $, isBotProtected } = await Puppeteer_Cheerio(url, device);
+        const { browser: b, page, response, $, screenshot, isBotProtected } = await Puppeteer_Cheerio(url, device);
         browser = b;
 
-        // NOTE: base64 screenshots are intentionally NOT embedded in the bulk parent
-        // document — dozens of them would push it past MongoDB's 16MB BSON limit and
-        // permanently break the audit. Only lightweight status fields are stored here.
+        // Update screenshot and bot status in BulkAudit document
         await BulkAuditReport.findOneAndUpdate(
             { _id: bulkAuditId, "pages.url": pageUrl },
-            { $set: { "pages.$.isBotProtected": isBotProtected } }
+            { $set: { "pages.$.screenshot": screenshot, "pages.$.isBotProtected": isBotProtected } }
         );
 
         if (isBotProtected) {
@@ -214,25 +184,14 @@ if (watchdog.unref) watchdog.unref();
             return;
         }
 
-        // Per-metric safety: one metric failing must NOT fail the whole page audit.
-        const safe = (p, name) => Promise.resolve(p).catch((e) => {
-            logger.error(`[Bulk Worker] ${name} failed — continuing with partial data: ${e?.message || e}`);
-            return null;
-        });
-
-        // Full audit — run the 6 page-SAFE metrics in PARALLEL (they are read-only on the
-        // shared page; only page.evaluate, which Playwright serializes). Their network I/O
-        // overlaps, so the slow Google PageSpeed call no longer adds to the total.
-        const [A, B, C, E, F, G] = await Promise.all([
-            safe(technicalMetrics(url, device, page, response, browser), "Technical Performance"),
-            safe(seoMetrics(url, $, page), "On Page SEO"),
-            safe(accessibilityMetrics(page), "Accessibility"),
-            safe(uxContentStructure(device, page), "UX & Content Structure"), // self-computes broken links
-            safe(conversionLeadFlow(page, $), "Conversion & Lead Flow"),
-            safe(aioReadiness(url, page, $), "AIO Readiness"),
-        ]);
-        // Security runs AFTER — it's the only metric that can navigate the shared page.
-        const D = await safe(securityCompliance(url, page, response, browser), "Security/Compliance");
+        // Full audit - run all metrics
+        const A = await technicalMetrics(url, device, page, response, browser);
+        const B = await seoMetrics(url, $, page);
+        const C = await accessibilityMetrics(page);
+        const D = await securityCompliance(url, page, response, browser);
+        const E = await uxContentStructure(device, page);
+        const F = await conversionLeadFlow(page, $);
+        const G = await aioReadiness(url, page, $);
 
         // Extract percentages for overall score calculation
         const overall = OverAll(
@@ -278,7 +237,6 @@ if (watchdog.unref) watchdog.unref();
         parentPort.postMessage({ error: err.message });
 
     } finally {
-        clearTimeout(watchdog);
         if (browser) {
             try { await browser.close(); } catch { }
         }

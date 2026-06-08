@@ -49,35 +49,9 @@ const PlatformScoreBar = ({ platforms, darkMode, platformKey = null, singleCard 
         citations: "Authority Signals"
     };
 
-    const aeoWeights = {
-        gemini: {
-            schema: 40,
-            pageSpeed: 30,
-            botAccess: 10,
-            answerFirst: 10,
-            structuredContent: 10
-        },
-        chatgpt: {
-            llmsTxt: 40,
-            answerFirst: 30,
-            markdownHeaders: 10,
-            botAccess: 10,
-            schema: 10,
-            structuredContent: 0,
-            citations: 0,
-            pageSpeed: 0
-        },
-        perplexity: {
-            structuredContent: 60,
-            citations: 20,
-            pageSpeed: 10,
-            botAccess: 10
-        }
-    };
-
     const platformRelevance = {
         gemini: ['schema', 'botAccess', 'answerFirst', 'pageSpeed'],
-        chatgpt: ['llmsTxt', 'answerFirst', 'markdownHeaders', 'botAccess', 'schema', 'structuredContent', 'citations', 'pageSpeed'],
+        chatgpt: ['llmsTxt', 'markdownHeaders', 'answerFirst', 'botAccess'],
         perplexity: ['structuredContent', 'citations', 'pageSpeed']
     };
 
@@ -156,11 +130,9 @@ const PlatformScoreBar = ({ platforms, darkMode, platformKey = null, singleCard 
                     </div>
 
                     <div className="grid grid-cols-1 gap-6">
-                        {platformRelevance[plat.key]?.map((param) => {
-                            const points = platforms[plat.key]?.breakdown?.[param] ?? 0;
-                            const maxWeight = aeoWeights[plat.key]?.[param] || 0;
-                            const percent = maxWeight > 0 ? Math.min(100, Math.round((points / maxWeight) * 100)) : 0;
-                            return (
+                        {Object.entries(platforms[plat.key].breakdown)
+                            .filter(([param]) => platformRelevance[plat.key]?.includes(param))
+                            .map(([param, points]) => (
                                 <div key={param} className="space-y-2">
                                     <div className="flex items-center justify-between pointer-events-none">
                                         <span className={`text-xs font- ${darkMode ? "text-slate-200" : "text-slate-700"}`}>
@@ -173,12 +145,11 @@ const PlatformScoreBar = ({ platforms, darkMode, platformKey = null, singleCard 
                                     <div className={`h-1.5 rounded-full ${darkMode ? "bg-slate-800" : "bg-slate-100"}`}>
                                         <div
                                             className="h-full rounded-full transition-all duration-700"
-                                            style={{ width: `${percent}%`, backgroundColor: plat.color }}
+                                            style={{ width: `${(points / 40) * 100}%`, backgroundColor: plat.color }}
                                         ></div>
                                     </div>
                                 </div>
-                            );
-                        })}
+                            ))}
                     </div>
                 </div>
             )}

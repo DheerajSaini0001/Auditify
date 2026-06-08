@@ -45,20 +45,17 @@ const ForgotPasswordPage = () => {
       });
 
       if (!ok) {
-        // Surface real failures (CAPTCHA, rate limit, server error) instead of
-        // falsely telling the user a reset link was sent.
-        toast.error((data && data.error) || 'Something went wrong. Please try again.');
-        setLoading(false);
-        return;
+        if (data.error && data.error.includes('CAPTCHA')) {
+          toast.error(data.error);
+          setLoading(false);
+          return;
+        }
       }
-
-      // Only show the "check your inbox" screen on a successful (2xx) response.
-      setSubmitted(true);
     } catch (err) {
       console.error('Request failed:', err);
-      toast.error('Network error. Please check your connection and try again.');
     } finally {
       setLoading(false);
+      setSubmitted(true);
     }
   };
 

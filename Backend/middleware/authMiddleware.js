@@ -16,22 +16,12 @@ export const protect = async (req, res, next) => {
   const token = header.split(' ')[1];
   try {
     const jwtSecret = configService.getConfig('JWT_SECRET');
-    const decoded = jwt.verify(token, jwtSecret, { algorithms: ['HS256'] });
-
+    const decoded = jwt.verify(token, jwtSecret);
+    
     // Attach fresh user object (minus password)
     const user = await User.findById(decoded.userId).select('-password');
     if (!user) {
       return res.status(401).json({ success: false, message: 'User not found' });
-    }
-
-    // Reject blocked accounts
-    if (user.isBlocked) {
-      return res.status(403).json({ success: false, message: 'Account is blocked' });
-    }
-
-    // Reject tokens issued before a password reset / forced logout
-    if (typeof decoded.tv === 'number' && decoded.tv !== user.tokenVersion) {
-      return res.status(401).json({ success: false, message: 'Session expired. Please log in again.' });
     }
 
     // Attach user to request

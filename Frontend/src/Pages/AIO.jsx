@@ -19,7 +19,6 @@ import ParameterInfoModal from "../Component/ParameterInfoModal";
 import { InfoDetails } from "../Component/InfoDetails";
 import AskAIButton from "../Component/AskAIButton";
 import AEOPage from "./AEOPage";
-import ErrorBoundary from "../Component/ErrorBoundary";
 
 const iconMap = {
   Structured_Data: Database,
@@ -707,14 +706,12 @@ const AIO_Inner = React.memo(({ data, loading, darkMode }) => {
 
         {/* AEO Page Section (Contains own gating logic) */}
         <div id="aeo-section" className="mt-16 animate-in slide-in-from-bottom-10 duration-1000">
-          <ErrorBoundary compact label="The AEO section">
-            <AEOPage
-              auditData={data}
-              darkMode={darkMode}
-              onInfo={(info) => setSelectedParameterInfo(info)}
-              hideScreenshot={data?.report === "All"}
-            />
-          </ErrorBoundary>
+          <AEOPage
+            auditData={data}
+            darkMode={darkMode}
+            onInfo={(info) => setSelectedParameterInfo(info)}
+            hideScreenshot={data?.report === "All"}
+          />
         </div>
 
         {/* Gated Detailed Audit Sections */}

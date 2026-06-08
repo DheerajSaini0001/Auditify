@@ -58,19 +58,13 @@ export const batchAEO = async (req, res) => {
 
         const results = [];
         for (const url of urls) {
-            let browser;
             try {
-                const pc = await Puppeteer_Cheerio(url, device);
-                browser = pc.browser;
-                const result = await AEOService.runAudit(url, pc.$);
+                const { browser, $ } = await Puppeteer_Cheerio(url, device);
+                const result = await AEOService.runAudit(url, $);
                 results.push(result);
+                if (browser) await browser.close();
             } catch (e) {
                 results.push({ url, error: e.message });
-            } finally {
-                // Always close the browser, even when runAudit throws, to avoid leaking Chromium.
-                if (browser) {
-                    try { await browser.close(); } catch (_) {}
-                }
             }
         }
 
@@ -94,16 +88,8 @@ export const streamAEO = async (req, res) => {
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
 
-        // If the client disconnects mid-stream, stop work and free the browser.
-        let aborted = false;
-        req.on('close', () => {
-            aborted = true;
-            if (browser) { browser.close().catch(() => {}); }
-        });
-
         const sendEvent = (type, data) => {
-            if (aborted) return;
-            try { res.write(`data: ${JSON.stringify({ type, data })}\n\n`); } catch (_) {}
+            res.write(`data: ${JSON.stringify({ type, data })}\n\n`);
         };
 
         sendEvent("status", { message: "Initializing browser..." });
@@ -136,12 +122,9 @@ export const streamAEO = async (req, res) => {
         res.end();
     } catch (error) {
         logger.error("AEO Stream Error", error);
-        try { res.write(`data: ${JSON.stringify({ type: "error", error: error.message })}\n\n`); } catch (_) {}
-        try { res.end(); } catch (_) {}
+        res.write(`data: ${JSON.stringify({ type: "error", error: error.message })}\n\n`);
+        res.end();
     } finally {
-        // Guard against double-close (Puppeteer_Cheerio may already have closed it on throw).
-        if (browser) {
-            try { await browser.close(); } catch (_) {}
-        }
+        if (browser) await browser.close();
     }
 };

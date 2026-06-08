@@ -1,8 +1,8 @@
-import { API_URL } from '../config';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:2000';
 
 const createFetchRequest = async (endpoint, options = {}) => {
   const token = localStorage.getItem('dealerpulse_token');
-
+  
   const headers = {
     'Content-Type': 'application/json',
     ...options.headers,
@@ -14,7 +14,6 @@ const createFetchRequest = async (endpoint, options = {}) => {
 
   const config = {
     ...options,
-    credentials: 'include', // consistent with apiFetch — send session cookie
     headers,
   };
 

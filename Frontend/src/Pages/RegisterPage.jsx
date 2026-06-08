@@ -110,10 +110,10 @@ const RegisterPage = () => {
       <div className={`register-wrapper ${darkMode ? 'dark' : 'light'}`}>
         {/* Left Side: Branding */}
         <div className="register-branding">
-          <img
-            src={Assets.Bg}
-            alt="Branding"
-            className="branding-image-bg"
+          <img 
+            src="/Users/dheeraj/.gemini/antigravity/brain/395eb820-345b-4db5-9b19-dad312edc833/registration_branding_image_1777615204902.png" 
+            alt="Branding" 
+            className="branding-image-bg" 
           />
           <div className="branding-overlay"></div>
           <div className="branding-content">

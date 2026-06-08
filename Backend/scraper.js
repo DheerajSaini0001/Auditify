@@ -32,7 +32,7 @@ const MAX_RETRIES = 2;
 const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
 /** Async delay */
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const delay = (ms) => Promise.resolve();
 
 /** Pick a random proxy, optionally excluding one that just failed. Returns null if no proxies configured. */
 function pickProxy(exclude = null) {

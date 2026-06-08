@@ -17,7 +17,6 @@ const userSchema = new mongoose.Schema({
   role:            { type: String, enum: ['admin', 'user', 'super_admin'], default: 'user' }, // Preserving role from existing system
   isBlocked:       { type: Boolean, default: false }, // Preserving from existing system
   blockReason:     { type: String, default: null },   // Preserving from existing system
-  tokenVersion:    { type: Number, default: 0 },      // Bumped on password reset / block to revoke old JWTs
   authProvider:    { type: String, enum: ['local', 'google'], default: 'local' },
   googleId:        { type: String, sparse: true },
   googleAccessToken:  { type: String },       // GSC read access token

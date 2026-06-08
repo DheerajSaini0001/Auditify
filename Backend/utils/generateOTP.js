@@ -1,11 +1,9 @@
-import crypto from 'crypto';
-
 /**
- * Generates a cryptographically-secure 6-digit numeric OTP.
+ * Generates a 6-digit numeric OTP.
  * @returns {string}
  */
 const generateOTP = () => {
-    return crypto.randomInt(100000, 1000000).toString();
+    return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
 export default generateOTP;

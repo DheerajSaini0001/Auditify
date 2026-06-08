@@ -1,5 +1,3 @@
-import pLimit from 'p-limit';
-
 // Helper to count syllables in a word (heuristic)
 function countSyllables(word) {
   word = word.toLowerCase().replace(/[^a-z]/g, '');
@@ -186,9 +184,7 @@ async function checkReadability(page) {
   });
 
   return {
-    // Clamp at the source: a raw Flesch value can be negative or >100, which corrupts
-    // any downstream consumer (e.g. PDF/report rendering) that trusts a 0–100 score.
-    score: Math.max(0, Math.min(100, Math.round(overallFleschScore))),
+    score: overallFleschScore,
     status: status,
     details: `This ${pageType} has a readability score of ${overallFleschScore.toFixed(0)} out of 100, which is ${status === 'pass' ? 'perfect' : (status === 'warning' ? 'a bit complex' : 'very difficult')} for your readers.`,
     analysis: analysis,
@@ -684,46 +680,7 @@ async function checkLoadingFeedback(page) {
 }
 
 // Broken Links
-async function checkBrokenLinks(page, precomputedBroken = null) {
-  // ♻️ Reuse the broken links already computed by the SEO metric (Contextual_Linking).
-  // Avoids re-fetching every link on the page a second time.
-  if (Array.isArray(precomputedBroken)) {
-    let pageHost = '';
-    try { pageHost = new URL(page.url()).hostname; } catch (_) {}
-
-    const brokenLinks = precomputedBroken.map((b) => {
-      let isInternal = false;
-      try { isInternal = new URL(b.url).hostname === pageHost; } catch (_) {}
-      return {
-        url: b.url,
-        status: b.status ?? b.error ?? 'Error',
-        text: b.text || '',
-        isInternal
-      };
-    });
-
-    const score = brokenLinks.length === 0 ? 100 : Math.max(0, 100 - (brokenLinks.length * 25));
-    const status = score === 100 ? 'pass' : (score >= 75 ? 'warning' : 'fail');
-    const analysis = status === 'pass'
-      ? { cause: "All links on the page are valid and accessible.", recommendation: "Periodic link audits are recommended to ensure external links remain active." }
-      : { cause: "Broken links were detected during content analysis.", recommendation: "Fix or remove links pointing to non-existent pages to prevent user frustration." };
-
-    return {
-      score,
-      status,
-      details: brokenLinks.length === 0 ? "Every link on your page works perfectly." : `We found ${brokenLinks.length} 'dead-end' links that lead to errors.`,
-      analysis,
-      meta: {
-        brokenCount: brokenLinks.length,
-        brokenLinks,
-        totalChecked: brokenLinks.length,
-        totalInternal: brokenLinks.filter((b) => b.isInternal).length,
-        totalExternal: brokenLinks.filter((b) => !b.isInternal).length,
-        reusedFromSEO: true
-      }
-    };
-  }
-
+async function checkBrokenLinks(page) {
   const linksData = await page.evaluate(() => {
     const anchors = Array.from(document.querySelectorAll('a[href]'));
     const hostname = window.location.hostname;
@@ -765,9 +722,9 @@ async function checkBrokenLinks(page, precomputedBroken = null) {
         return; // Skip checking, treat as valid/fixed
       }
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
 
-      // 1. Try HEAD first (cheaper — no body transferred)
+      // 1. Try HEAD first
       let res = await fetch(url, {
         method: 'HEAD',
         signal: controller.signal,
@@ -782,10 +739,10 @@ async function checkBrokenLinks(page, precomputedBroken = null) {
         return;
       }
 
-      // 2. If HEAD failed (e.g. 404 or server doesn't support HEAD), retry with GET
+      // 2. If HEAD failed (e.g. 404), try GET to confirm (some servers block HEAD)
       if (status >= 400) {
         const controllerGet = new AbortController();
-        const timeoutGet = setTimeout(() => controllerGet.abort(), 5000); // 5s timeout
+        const timeoutGet = setTimeout(() => controllerGet.abort(), 10000);
         res = await fetch(url, {
           method: 'GET',
           signal: controllerGet.signal,
@@ -823,9 +780,10 @@ async function checkBrokenLinks(page, precomputedBroken = null) {
     }
   };
 
-  // Concurrency pool: up to 100 simultaneous link checks (was sequential chunks of 5)
-  const limit = pLimit(100);
-  await Promise.all(urlsToCheck.map((u) => limit(() => checkUrl(u))));
+  // Run in parallel chunks of 5
+  for (let i = 0; i < urlsToCheck.length; i += 5) {
+    await Promise.all(urlsToCheck.slice(i, i + 5).map(checkUrl));
+  }
 
   // Calculate Breakdown
   let totalInternal = 0;
@@ -1125,7 +1083,7 @@ async function checkInPageNav(page, deviceType) {
   };
 }
 
-export default async function evaluateMobileUX(device, page, precomputedBrokenLinks = null) {
+export default async function evaluateMobileUX(device, page) {
   const deviceType = device === 'Mobile' ? 'mobile' : 'desktop';
 
   const readability = await checkReadability(page);
@@ -1136,7 +1094,7 @@ export default async function evaluateMobileUX(device, page, precomputedBrokenLi
   const atf = await checkATF(page);
   const clickFeedback = await checkClickFeedback(page, deviceType);
   const loadingFeedback = await checkLoadingFeedback(page);
-  const brokenLinks = await checkBrokenLinks(page, precomputedBrokenLinks);
+  const brokenLinks = await checkBrokenLinks(page);
   const hierarchy = await checkHierarchyClarity(page);
   const labeling = await checkSectionLabeling(page);
   const density = await checkContentDensity(page, deviceType);

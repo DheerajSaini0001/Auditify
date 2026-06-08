@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Loader2, AlertTriangle } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
-export const AuditShimmer = ({ darkMode, loading, data, auditSteps = [], metricKey = "technicalPerformance", isFinished = false }) => {
+export const AuditShimmer = ({ darkMode, loading, data, auditSteps = [], metricKey = "technicalPerformance" }) => {
     const [activeStep, setActiveStep] = useState(0);
 
     useEffect(() => {
-        if ((loading || !data?.[metricKey]) && !isFinished) {
+        if (loading || !data?.[metricKey]) {
             if (auditSteps.length > 0) {
                 const interval = setInterval(() => {
                     setActiveStep((prev) => (prev + 1) % auditSteps.length);
@@ -13,25 +13,9 @@ export const AuditShimmer = ({ darkMode, loading, data, auditSteps = [], metricK
                 return () => clearInterval(interval);
             }
         }
-    }, [loading, data, auditSteps.length, metricKey, isFinished]);
+    }, [loading, data, auditSteps.length, metricKey]);
 
     if (!loading && data?.[metricKey]) return null;
-
-    // The audit finished but this section returned no data — stop spinning forever.
-    if (isFinished) {
-        return (
-            <div className="flex flex-col items-center justify-center text-center py-12 px-6 min-h-[350px]">
-                <AlertTriangle className="w-12 h-12 text-amber-500 mb-4" />
-                <h2 className={`text-2xl fontsemibold tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
-                    Section data unavailable
-                </h2>
-                <p className={`mt-3 max-w-sm text-base leading-relaxed ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
-                    The audit finished but didn’t return data for this section (often a slow or bot-protected
-                    site, or the performance API was unreachable). Please re-run the audit.
-                </p>
-            </div>
-        );
-    }
 
     const step = auditSteps[activeStep] || auditSteps[0];
     if (!step) return null;

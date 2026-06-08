@@ -883,21 +883,18 @@ const Security_Compilance_Inner = React.memo(function Security_Compilance_Inner(
 
   const [activeStep, setActiveStep] = React.useState(0);
 
-  const hasSectionData = !!data?.securityOrCompliance;
-  const isFinished = !!data && (data.status === "completed" || data.status === "failed");
-
   React.useEffect(() => {
-    if (!hasSectionData && !isFinished) {
+    if (loading || !data?.securityOrCompliance) {
       const interval = setInterval(() => {
         setActiveStep((prev) => (prev + 1) % auditSteps.length);
       }, 2000);
       return () => clearInterval(interval);
     }
-  }, [loading, data, auditSteps.length, isFinished, hasSectionData]);
+  }, [loading, data, auditSteps.length]);
 
   const metric = data?.securityOrCompliance || {};
 
-  if (!hasSectionData) {
+  if (!data?.securityOrCompliance) {
     return (
       <div className={`w-full ${darkMode ? "bg-gray-900" : "bg-gray-50"} transition-colors duration-300`}>
         <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-6`}>
@@ -925,22 +922,9 @@ const Security_Compilance_Inner = React.memo(function Security_Compilance_Inner(
                   </div>
                 </div>
               )}
-              {/* Right Panel: shimmer while running, message when finished-but-empty */}
+              {/* Right Panel: Shimmer */}
               <div className="flex-1 flex flex-col justify-center">
-                {isFinished ? (
-                  <div className="flex flex-col items-center justify-center text-center py-12 px-6 min-h-[350px]">
-                    <AlertTriangle className="w-12 h-12 text-amber-500 mb-4" />
-                    <h2 className={`text-2xl fontsemibold tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
-                      Section data unavailable
-                    </h2>
-                    <p className={`mt-3 max-w-sm text-base leading-relaxed ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
-                      The audit finished but didn’t return data for this section (often a slow or bot-protected site).
-                      Please re-run the audit.
-                    </p>
-                  </div>
-                ) : (
-                  <SecurityShimmer darkMode={darkMode} steps={auditSteps} currentStep={activeStep} />
-                )}
+                <SecurityShimmer darkMode={darkMode} steps={auditSteps} currentStep={activeStep} />
               </div>
             </div>
           </div>

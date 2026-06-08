@@ -1,7 +1,6 @@
 import { workerData, parentPort } from "worker_threads";
 import mongoose from "mongoose";
 import dbConnect from "../config/db.js";
-import configService from "../services/configService.js";
 import SingleAuditReport from "../models/singleAuditReport.js";
 
 import technicalMetrics from "../metricServices/technicalMetrics.js";
@@ -42,23 +41,8 @@ function handleWorkerSafetyError(error) {
   }
 }
 
-function isBenignTeardownError(error) {
-  if (!error) return true;
-  const lmsg = (error.message || '').toLowerCase();
-  return (
-    lmsg.includes('detached') || lmsg.includes('target closed') ||
-    lmsg.includes('session closed') || lmsg.includes('context was destroyed') ||
-    lmsg.includes('frame is not ready') || lmsg.includes('cdpsession')
-  );
-}
-
 process.on('unhandledRejection', handleWorkerSafetyError);
-process.on('uncaughtException', (error) => {
-  handleWorkerSafetyError(error);
-  // A genuine uncaught exception leaves the thread in an undefined state. Exit so the
-  // parent's exit handler fails the report, rather than continuing on corrupt state.
-  if (!isBenignTeardownError(error)) process.exit(1);
-});
+process.on('uncaughtException', handleWorkerSafetyError);
 
 
 // [NEW] — Centralized detached frame error detector (mirrors puppeteer_cheerio.js)
@@ -87,14 +71,12 @@ async function safeMetric(name, fn) {
   try {
     return await fn();
   } catch (err) {
-    // NEVER let one metric sink the whole audit. A failed metric returns null → that
-    // section is simply marked unavailable in the report; every other section still completes.
     if (isDetachedFrameError(err)) {
-      logger.warn(`[Worker] ${name} skipped (detached frame) — continuing with partial data.`);
-    } else {
-      logger.error(`[Worker] ${name} failed — continuing with partial data: ${err?.message || err}`);
+      logger.warn(`[Worker] ${name} skipped due to detached frame during page evaluation — continuing audit with partial data.`);
+      return null;
     }
-    return null;
+    // Unexpected error — re-throw so the outer catch can handle it
+    throw err;
   }
 }
 
@@ -122,23 +104,6 @@ const OverAll = (A, B, C, D, E, F, G) => {
   };
 };
 
-// Hard wall-clock cap so a hung site/metric can never pin a Chromium + DB connection forever.
-// A full "All" audit (Lighthouse API + 7 metric services + AEO + render waits) can legitimately
-// take a few minutes, so this must be generous. Tune via AUDIT_WORKER_TIMEOUT_MS.
-const WORKER_TIMEOUT_MS = parseInt(process.env.AUDIT_WORKER_TIMEOUT_MS || "300000", 10); // 5 min
-const watchdog = setTimeout(async () => {
-  logger.error(`[Worker] Audit timed out after ${WORKER_TIMEOUT_MS}ms — failing report ${auditId}`);
-  try {
-    // Only fail it if it hasn't already finished — never clobber a "completed" report.
-    if (auditId) await SingleAuditReport.findOneAndUpdate(
-      { _id: auditId, status: { $ne: "completed" } },
-      { status: "failed", error: "Audit timed out" }
-    );
-  } catch (_) {}
-  process.exit(1);
-}, WORKER_TIMEOUT_MS);
-if (watchdog.unref) watchdog.unref();
-
 (async () => {
   let browser;
   const start = performance.now();
@@ -148,10 +113,6 @@ if (watchdog.unref) watchdog.unref();
     if (mongoose.connection.readyState !== 1) {
       await dbConnect({ maxPoolSize: 1 });
     }
-
-    // Prime this worker's config cache from the DB so admin-set keys (API keys, Safe
-    // Browsing/VirusTotal) are available — otherwise those checks silently skip.
-    try { await configService.refreshCache(); } catch (_) {}
 
     const { browser: b, page, response, $, screenshot, isBotProtected } = await Puppeteer_Cheerio(url, device, currentAuditId);
     browser = b;
@@ -254,47 +215,34 @@ if (watchdog.unref) watchdog.unref();
       return;
     }
 
-    // ── Run the 6 page-SAFE metrics in PARALLEL, streaming each result to the DB ──────
-    // All of these are READ-ONLY on the shared page (they only call page.evaluate, which
-    // Playwright serializes internally), so running them together is safe — and their
-    // network I/O overlaps (the big win: Technical's slow Google PageSpeed call runs
-    // concurrently with everything else).
-    //
-    // Each metric writes ITS OWN section to the DB the instant it resolves (not after the
-    // whole batch). Because the frontend re-polls the report every ~3s while it's
-    // "inprogress", each section pops into the UI as soon as that particular parallel
-    // metric finishes — in whatever order they complete. Concurrent findByIdAndUpdate calls
-    // each touch a DIFFERENT field, so they're atomic and don't conflict.
-    const writeSection = (fields) =>
-      SingleAuditReport.findByIdAndUpdate(currentAuditId, fields).catch((e) =>
-        logger.error("Error writing section result", e)
-      );
+    // [NEW] — Run AIO & AEO FIRST so guests get results instantly
+    const G_Res = await safeMetric("AIO Readiness", () => aioReadiness(url, page, $));
+    const aeoRes = await safeMetric("AEO", () => AEOService.runAudit(url, $, null, 100)); // Using 100 as placeholder for fast AEO return
+    await SingleAuditReport.findByIdAndUpdate(currentAuditId, {
+      aioReadiness: G_Res,
+      aioCompatibilityBadge: G_Res?.AIO_Compatibility_Badge,
+      aeo: aeoRes
+    });
 
-    const pTech = safeMetric("Technical Performance", () => technicalMetrics(url, device, page, response, browser))
-      .then(async (r) => { await writeSection({ technicalPerformance: r }); return r; });
-    const pSeo = safeMetric("On Page SEO", () => seoMetrics(url, $, page))
-      .then(async (r) => { await writeSection({ onPageSEO: r, siteSchema: r?.Schema }); return r; });
-    const pA11y = safeMetric("Accessibility", () => accessibilityMetrics(page, $))
-      .then(async (r) => { await writeSection({ accessibility: r }); return r; });
-    // In parallel mode UX self-computes its broken links (SEO's result isn't ready yet).
-    const pUx = safeMetric("UX & Content Structure", () => uxContentStructure(device, page))
-      .then(async (r) => { await writeSection({ UXOrContentStructure: r }); return r; });
-    const pConv = safeMetric("Conversion & Lead Flow", () => conversionLeadFlow(page, $))
-      .then(async (r) => { await writeSection({ conversionAndLeadFlow: r }); return r; });
-    const pAio = safeMetric("AIO Readiness", () => aioReadiness(url, page, $))
-      .then(async (r) => { await writeSection({ aioReadiness: r, aioCompatibilityBadge: r?.AIO_Compatibility_Badge }); return r; });
-    const pAeo = safeMetric("AEO", () => AEOService.runAudit(url, $, null, 100))
-      .then(async (r) => { await writeSection({ aeo: r }); return r; });
+    // [NEW] — Full audit ("All"): each metric individually wrapped in safeMetric()
+    // A detached frame in any one metric is non-fatal — audit continues with 0 for that section
+    const A_Res = await safeMetric("Technical Performance", () => technicalMetrics(url, device, page, response, browser));
+    await SingleAuditReport.findByIdAndUpdate(currentAuditId, { technicalPerformance: A_Res });
 
-    const [A_Res, B_Res, C_Res, E_Res, F_Res, G_Res, aeoRes] =
-      await Promise.all([pTech, pSeo, pA11y, pUx, pConv, pAio, pAeo]);
+    const B_Res = await safeMetric("On Page SEO", () => seoMetrics(url, $, page));
+    await SingleAuditReport.findByIdAndUpdate(currentAuditId, { onPageSEO: B_Res, siteSchema: B_Res?.Schema });
 
-    // ── Security runs AFTER the parallel batch ──
-    // It is the ONE metric that mutates the shared page (it submits forms / opens tabs,
-    // which can navigate the page). Running it concurrently would corrupt the other metrics'
-    // DOM reads, so it runs on its own once they're done — then writes its section too.
+    const C_Res = await safeMetric("Accessibility", () => accessibilityMetrics(page, $));
+    await SingleAuditReport.findByIdAndUpdate(currentAuditId, { accessibility: C_Res });
+
     const D_Res = await safeMetric("Security/Compliance", () => securityCompliance(url, page, response, browser));
-    await writeSection({ securityOrCompliance: D_Res });
+    await SingleAuditReport.findByIdAndUpdate(currentAuditId, { securityOrCompliance: D_Res });
+
+    const E_Res = await safeMetric("UX & Content Structure", () => uxContentStructure(device, page));
+    await SingleAuditReport.findByIdAndUpdate(currentAuditId, { UXOrContentStructure: E_Res });
+
+    const F_Res = await safeMetric("Conversion & Lead Flow", () => conversionLeadFlow(page, $));
+    await SingleAuditReport.findByIdAndUpdate(currentAuditId, { conversionAndLeadFlow: F_Res });
 
     // Extract percentages for overall score calculation
     const A = A_Res?.Percentage || 0;
@@ -332,7 +280,6 @@ if (watchdog.unref) watchdog.unref();
     parentPort.postMessage({ error: err.message });
 
   } finally {
-    clearTimeout(watchdog);
     if (browser) {
       try { await browser.close(); } catch { }
     }

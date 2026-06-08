@@ -1,7 +1,7 @@
+securityCompliance.mjs
 import dotenv from "dotenv";
 import fetch from "node-fetch";
 import { URL } from "url";
-import pLimit from "p-limit";
 import { waitForChallengeResolution } from "../utils/puppeteer_cheerio.js";
 import configService from "../services/configService.js";
 
@@ -418,93 +418,93 @@ async function checkGoogleSafeBrowsing(url) {
 }
 
 // VirusTotal
-// async function checkVirusTotal(domain) {
-//   const VT_KEY = getVTKey();
-//   if (!VT_KEY) return { score: 100, status: "pass", details: "VirusTotal API key missing (Skipped)", meta: {}, analysis: null };
+async function checkVirusTotal(domain) {
+  const VT_KEY = getVTKey();
+  if (!VT_KEY) return { score: 100, status: "pass", details: "VirusTotal API key missing (Skipped)", meta: {}, analysis: null };
 
-//   const endpoint = `https://www.virustotal.com/api/v3/domains/${domain}`;
+  const endpoint = `https://www.virustotal.com/api/v3/domains/${domain}`;
 
-//   try {
-//     const res = await fetch(endpoint, { headers: { "x-apikey": VT_KEY } });
+  try {
+    const res = await fetch(endpoint, { headers: { "x-apikey": VT_KEY } });
 
-//     if (!res.ok) {
-//       return {
-//         score: 0,
-//         status: "error",
-//         details: `VirusTotal API error: ${res.status}`,
-//         meta: { httpStatus: res.status },
-//         analysis: { cause: `API responded with status ${res.status}` }
-//       };
-//     }
+    if (!res.ok) {
+      return {
+        score: 0,
+        status: "error",
+        details: `VirusTotal API error: ${res.status}`,
+        meta: { httpStatus: res.status },
+        analysis: { cause: `API responded with status ${res.status}` }
+      };
+    }
 
-//     const j = await res.json();
-//     const stats = j?.data?.attributes?.last_analysis_stats || {};
+    const j = await res.json();
+    const stats = j?.data?.attributes?.last_analysis_stats || {};
 
-//     const malicious = stats.malicious || 0;
-//     const suspicious = stats.suspicious || 0;
-//     const isClean = malicious === 0 && suspicious === 0;
+    const malicious = stats.malicious || 0;
+    const suspicious = stats.suspicious || 0;
+    const isClean = malicious === 0 && suspicious === 0;
 
-//     if (isClean) {
-//       return {
-//         score: 100,
-//         status: "pass",
-//         details: "No malicious or suspicious detections",
-//         meta: { stats },
-//         analysis: null
-//       };
-//     } else {
-//       return {
-//         score: 0,
-//         status: "fail",
-//         details: `Detections occurred: ${malicious} malicious, ${suspicious} suspicious`,
-//         meta: { stats },
-//         analysis: {
-//           cause: "The domain is flagged by one or more security vendors.",
-//           recommendation: "Investigate the specific flags on VirusTotal. Clean up any malware or compromised content if confirmed."
-//         }
-//       };
-//     }
-//   } catch (error) {
-//     return { score: 0, status: "error", details: `Check failed: ${error.message}`, meta: {}, analysis: { cause: error.message } };
-//   }
-// }
+    if (isClean) {
+      return {
+        score: 100,
+        status: "pass",
+        details: "No malicious or suspicious detections",
+        meta: { stats },
+        analysis: null
+      };
+    } else {
+      return {
+        score: 0,
+        status: "fail",
+        details: `Detections occurred: ${malicious} malicious, ${suspicious} suspicious`,
+        meta: { stats },
+        analysis: {
+          cause: "The domain is flagged by one or more security vendors.",
+          recommendation: "Investigate the specific flags on VirusTotal. Clean up any malware or compromised content if confirmed."
+        }
+      };
+    }
+  } catch (error) {
+    return { score: 0, status: "error", details: `Check failed: ${error.message}`, meta: {}, analysis: { cause: error.message } };
+  }
+}
 
 // Domain Blacklist
-// async function checkDomainBlacklist(domain, url) {
-//   const [googleSafeBrowsing, virusTotal] = await Promise.all([
-//     checkGoogleSafeBrowsing(url),
-//     checkVirusTotal(domain),
-//   ]);
+async function checkDomainBlacklist(domain, url) {
+  const [googleSafeBrowsing, virusTotal] = await Promise.all([
+    checkGoogleSafeBrowsing(url),
+    checkVirusTotal(domain),
+  ]);
 
-//   const isGoogleSafe = googleSafeBrowsing.status === "pass";
-//   const isVirusTotalSafe = virusTotal.status === "pass";
-//   const allSafe = isGoogleSafe && isVirusTotalSafe;
+  const isGoogleSafe = googleSafeBrowsing.status === "pass";
+  const isVirusTotalSafe = virusTotal.status === "pass";
+  const allSafe = isGoogleSafe && isVirusTotalSafe;
 
-//   let details = "Domain not found in blacklists";
-//   if (!allSafe) {
-//     if (!isGoogleSafe && !isVirusTotalSafe) details = "Domain found in both Google Safe Browsing and VirusTotal blacklists";
-//     else if (!isGoogleSafe) details = "Domain found in Google Safe Browsing blacklist";
-//     else details = "Domain found in VirusTotal blacklist";
-//   }
+  let details = "Domain not found in blacklists";
+  if (!allSafe) {
+    if (!isGoogleSafe && !isVirusTotalSafe) details = "Domain found in both Google Safe Browsing and VirusTotal blacklists";
+    else if (!isGoogleSafe) details = "Domain found in Google Safe Browsing blacklist";
+    else details = "Domain found in VirusTotal blacklist";
+  }
 
-//   return {
-//     score: allSafe ? 100 : 0,
-//     status: allSafe ? "pass" : "fail",
-//     details,
-//     meta: {
-//       googleSafeBrowsing,
-//       virusTotal
-//     },
-//     analysis: allSafe ? null : {
-//       cause: "The domain or URL is listed in one or more security blacklists (Google Safe Browsing or VirusTotal).",
-//       recommendation: "Review the detailed reports from Google and VirusTotal. Request a review from the respective services after cleaning up any malware or security issues."
-//     }
-//   };
-// }
+  return {
+    score: allSafe ? 100 : 0,
+    status: allSafe ? "pass" : "fail",
+    details,
+    meta: {
+      googleSafeBrowsing,
+      virusTotal
+    },
+    analysis: allSafe ? null : {
+      cause: "The domain or URL is listed in one or more security blacklists (Google Safe Browsing or VirusTotal).",
+      recommendation: "Review the detailed reports from Google and VirusTotal. Request a review from the respective services after cleaning up any malware or security issues."
+    }
+  };
+}
 
 // SQL Injection
 async function checkSQLiExposure(urlString, options = {}) {
-  const { timeout = 5000, lengthDiffThreshold = 0.25 } = options;
+  const { timeout = 15000, lengthDiffThreshold = 0.25 } = options;
 
   const payloads = [
     `' OR '1'='1`,
@@ -564,61 +564,53 @@ async function checkSQLiExposure(urlString, options = {}) {
   const params = Array.from(url.searchParams.keys());
   const testParams = params.length ? params : ["q", "id", "search"]; // added generic params
 
-  // Build all (param × payload) combinations and probe them CONCURRENTLY
-  // (was a nested sequential loop — the single biggest time sink in this metric).
-  const tests = [];
   for (const param of testParams) {
     for (const p of payloads) {
       const testUrl = new URL(url);
       testUrl.searchParams.set(param, p);
-      tests.push({ param, p, testUrl });
-    }
-  }
 
-  const sqliLimit = pLimit(10); // up to 10 concurrent probe requests
-  const findings = await Promise.all(tests.map((t) => sqliLimit(async () => {
-    const res = await fetchBody(t.testUrl);
-    const body = res.text || "";
-    const length = body.length || 0;
+      const res = await fetchBody(testUrl);
+      const body = res.text || "";
+      const length = body.length || 0;
 
-    if (looksLikeSQLError(body)) {
-      return { type: "error", param: t.param, p: t.p };
-    }
-    if (baselineLength > 0 && length > 0) {
-      const diff = Math.abs(length - baselineLength) / baselineLength;
-      if (diff >= lengthDiffThreshold && res.status >= 200 && res.status < 400) {
-        return { type: "length", param: t.param, p: t.p, diff };
+      // Check for SQL error messages in response
+      if (looksLikeSQLError(body)) {
+        return {
+          score: 0,
+          status: "fail",
+          details: `SQL injection vulnerability detected with payload: ${p}`,
+          meta: {
+            payload: p,
+            param: param
+          },
+          analysis: {
+            cause: "The application exposed a database error message in response to the injected payload.",
+            recommendation: "Ensure all user inputs are sanitized and use parameterized queries (Prepared Statements) to prevent SQL injection."
+          }
+        };
+      }
+
+      // Check for significant content length difference (heuristic for blind SQLi)
+      if (baselineLength > 0 && length > 0) {
+        const diff = Math.abs(length - baselineLength) / baselineLength;
+        if (diff >= lengthDiffThreshold && res.status >= 200 && res.status < 400) {
+          return {
+            score: 0,
+            status: "fail",
+            details: `Significant response length difference with payload: ${p}`,
+            meta: {
+              payload: p,
+              param: param,
+              diff: diff
+            },
+            analysis: {
+              cause: "Response length changed significantly with SQL injection payload, suggesting potential blind SQL injection.",
+              recommendation: "Ensure application handles invalid input gracefully without altering response structure unpredictably."
+            }
+          };
+        }
       }
     }
-    return null;
-  })));
-
-  const errorHit = findings.find((f) => f && f.type === "error");
-  if (errorHit) {
-    return {
-      score: 0,
-      status: "fail",
-      details: `SQL injection vulnerability detected with payload: ${errorHit.p}`,
-      meta: { payload: errorHit.p, param: errorHit.param },
-      analysis: {
-        cause: "The application exposed a database error message in response to the injected payload.",
-        recommendation: "Ensure all user inputs are sanitized and use parameterized queries (Prepared Statements) to prevent SQL injection."
-      }
-    };
-  }
-
-  const lengthHit = findings.find((f) => f && f.type === "length");
-  if (lengthHit) {
-    return {
-      score: 0,
-      status: "fail",
-      details: `Significant response length difference with payload: ${lengthHit.p}`,
-      meta: { payload: lengthHit.p, param: lengthHit.param, diff: lengthHit.diff },
-      analysis: {
-        cause: "Response length changed significantly with SQL injection payload, suggesting potential blind SQL injection.",
-        recommendation: "Ensure application handles invalid input gracefully without altering response structure unpredictably."
-      }
-    };
   }
 
   return {
@@ -654,10 +646,10 @@ async function checkXSS(url, browser) {
     testUrl.searchParams.set("xss_test", payload);
 
     // Navigate with a reasonable timeout
-    await page.goto(testUrl.toString(), { waitUntil: "domcontentloaded", timeout: 10000 });
+    await page.goto(testUrl.toString(), { waitUntil: "domcontentloaded", timeout: 30000 });
 
     // Handle bot verification if it appears during XSS test
-    await waitForChallengeResolution(page, 8000);
+    await waitForChallengeResolution(page, 20000);
 
     // Also check for raw payload reflection combined with execution status
     const content = await page.content();
@@ -1361,81 +1353,39 @@ async function checkMFAEnabled(page) {
   };
 }
 
-function skippedResult(label, error) {
-  return {
-    score: 0,
-    status: error ? "error" : "skipped",
-    details: error ? `${label}: check could not be completed` : `${label}: skipped`,
-    meta: { skipped: true, ...(error ? { error } : {}) },
-    analysis: null,
-  };
-}
-
 export default async function securityCompliance(url, page, response, browser) {
+
   const domain = Domain(url);
+  const httpsResult = checkHTTPS(url);
+  const sslResult = await checkSSLConnection(response);
+  const tlsVersionResult = await checkTLSVersion(response);
+  const hstsResult = checkHSTS(response);
 
-  // Per-check guard: a single failing check must NEVER null the whole Security section.
-  // On error / non-result it returns a "skipped" placeholder, which the scoring loop ignores.
-  const safe = async (fn, label) => {
-    try {
-      const r = await fn();
-      return (r && typeof r === "object" && typeof r.score === "number") ? r : skippedResult(label);
-    } catch (e) {
-      console.warn(`[Security] ${label} check failed: ${e?.message || e}`);
-      return skippedResult(label, e?.message || String(e));
-    }
-  };
+  const xFrameOptionsResult = checkXFrameOptions(response);
+  const cspResult = checkCSP(response);
+  const xContentTypeOptionsResult = checkXContentTypeOptions(response);
 
-  try {
-    // ── Probes run CONCURRENTLY, KEYED by name so toggling any probe on/off can NEVER
-    // misalign results (the old positional destructuring was the recurring bug). Comment a
-    // line out to disable a probe — it'll simply show as "skipped", nothing else breaks. ──
-    const PROBES = [
-      ["ssl",          () => checkSSLConnection(response)],
-      ["tls",          () => checkTLSVersion(response)],
-      // ["safeBrowsing", () => checkGoogleSafeBrowsing(url)],
-      // ["blacklist",    () => checkDomainBlacklist(domain, url)], // disabled (duplicates SafeBrowsing + VirusTotal)
-      // ["malware",      () => checkVirusTotal(domain)],
-      ["adminPanel",   () => checkAdminPanelPublic(url)],
-      // ["sqli",         () => checkSQLiExposure(url)],            // disabled (active-attack probe)
-      // ["xss",          () => checkXSS(url, browser)],            // disabled (active-attack probe)
-    ];
-    const probeResults = {};
-    const probesPromise = Promise.all(
-      PROBES.map(async ([key, fn]) => { probeResults[key] = await safe(fn, key); })
-    );
+  const cookieSecureResult = await checkCookiesSecureFlag(page);
+  const cookieHttpOnlyResult = await checkCookiesHttpOnlyFlag(page);
+  const thirdPartyCookiesResult = await checkThirdPartyCookies(url, page);
 
-    // ── Synchronous header checks (instant) — guarded just in case ──
-    const httpsResult = await safe(() => checkHTTPS(url), "HTTPS");
-    const hstsResult = await safe(() => checkHSTS(response), "HSTS");
-    const xFrameOptionsResult = await safe(() => checkXFrameOptions(response), "X-Frame-Options");
-    const cspResult = await safe(() => checkCSP(response), "CSP");
-    const xContentTypeOptionsResult = await safe(() => checkXContentTypeOptions(response), "X-Content-Type-Options");
+  const safeBrowsingResult = await checkGoogleSafeBrowsing(url);
+  const blacklistResult = await checkDomainBlacklist(domain, url);
+  const malwareScanResult = await checkVirusTotal(domain);
 
-    // ── Page-based checks: sequential so the cookie-consent navigation can't race the reads. ──
-    const cookieSecureResult = await safe(() => checkCookiesSecureFlag(page), "Cookies Secure");
-    const cookieHttpOnlyResult = await safe(() => checkCookiesHttpOnlyFlag(page), "Cookies HttpOnly");
-    const thirdPartyCookiesResult = await safe(() => checkThirdPartyCookies(url, page), "Third-Party Cookies");
-    const cookieConsentResult = await safe(() => checkCookieConsent(page), "Cookie Consent");
-    const privacyPolicyResult = await safe(() => checkPrivacyPolicy(page), "Privacy Policy");
-    const gdprCcpaResult = await safe(() => checkGDPRCCPA(page), "GDPR/CCPA");
-    const dataCollectionResult = await safe(() => checkDataCollection(page), "Data Collection");
-    const formsUseHTTPSResult = await safe(() => checkFormsUseHTTPS(page), "Forms Use HTTPS");
-    const weakDefaultCredsResult = await safe(() => checkWeakDefaultCredentials(page), "Weak Default Credentials");
-    const mfaEnabledResult = await safe(() => checkMFAEnabled(page), "MFA Enabled");
+  const sqliExposureResult = await checkSQLiExposure(url);
 
-    // ── Await the concurrent probes, then pull results BY KEY (never by position). ──
-    // Any probe that's disabled/absent falls back to a "skipped" placeholder, so the results
-    // object can never contain `undefined` regardless of which probes are enabled.
-    await probesPromise;
-    const sslResult = probeResults.ssl || skippedResult("SSL");
-    const tlsVersionResult = probeResults.tls || skippedResult("TLS Version");
-    const safeBrowsingResult = probeResults.safeBrowsing || skippedResult("Safe Browsing");
-    const blacklistResult = probeResults.blacklist || skippedResult("Blacklist");
-    const malwareScanResult = probeResults.malware || skippedResult("Malware Scan");
-    const adminPanelPublicResult = probeResults.adminPanel || skippedResult("Admin Panel");
-    const sqliExposureResult = probeResults.sqli || skippedResult("SQLi Exposure");
-    const xssVulnerabilityResult = probeResults.xss || skippedResult("XSS");
+  const cookieConsentResult = await checkCookieConsent(page);
+  const privacyPolicyResult = await checkPrivacyPolicy(page);
+  const gdprCcpaResult = await checkGDPRCCPA(page);
+  const dataCollectionResult = await checkDataCollection(page);
+
+  const formsUseHTTPSResult = await checkFormsUseHTTPS(page);
+  const weakDefaultCredsResult = await checkWeakDefaultCredentials(page);
+  const mfaEnabledResult = await checkMFAEnabled(page);
+  const adminPanelPublicResult = await checkAdminPanelPublic(url);
+
+  const xssVulnerabilityResult = await checkXSS(url, browser);
 
   // Weights: Critical=10, Severe=8-9, High=7, Medium=4-6, Low=1-3
   const weights = {
@@ -1505,18 +1455,13 @@ export default async function securityCompliance(url, page, response, browser) {
   let maxWeightedScore = 0;
 
   for (const key in results) {
-    const result = results[key];
-    // Ignore disabled (skipped) checks and guard against any missing result so the whole
-    // section can never crash on one bad/absent check.
-    if (!result || result.meta?.skipped) continue;
     const weight = weights[key] || 1;
+    const result = results[key];
     totalWeightedScore += (result.score || 0) * weight;
     maxWeightedScore += 100 * weight;
   }
 
-  const totalPercentage = maxWeightedScore > 0
-    ? parseFloat(((totalWeightedScore / maxWeightedScore) * 100).toFixed(0))
-    : 0;
+  const totalPercentage = parseFloat(((totalWeightedScore / maxWeightedScore) * 100).toFixed(0));
 
   return {
     Percentage: totalPercentage,
@@ -1544,10 +1489,6 @@ export default async function securityCompliance(url, page, response, browser) {
     Admin_Panel_Public: adminPanelPublicResult,
     Third_Party_Cookies: thirdPartyCookiesResult,
   };
-  } catch (fatalErr) {
-    // Absolute last resort: this metric must NEVER throw. Return a minimal valid result so the
-    // Security section renders (degraded) instead of showing "Section data unavailable".
-    console.error(`[Security] fatal error: ${fatalErr?.message || fatalErr}`);
-    return { Percentage: 0, error: fatalErr?.message || String(fatalErr) };
-  }
+
+
 }

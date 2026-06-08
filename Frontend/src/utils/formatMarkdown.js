@@ -1,17 +1,6 @@
-// Defensive final pass. All user/AI text is HTML-escaped up front, so the only markup
-// in the output is the fixed, safe set of tags this function generates. This strips any
-// dangerous constructs that could slip through (event handlers, javascript:, script/iframe)
-// as a belt-and-suspenders guard, since the result is fed to dangerouslySetInnerHTML.
-function sanitizeHtml(html) {
-  return html
-    .replace(/<\s*\/?\s*(script|iframe|object|embed|link|meta|style|svg)\b[^>]*>/gi, '')
-    .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
-    .replace(/javascript:/gi, '');
-}
-
 export function formatMarkdown(text) {
   if (!text) return '';
-
+  
   // Escape raw HTML angle brackets so they display as literal text inside the chat bubbles
   let escaped = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
@@ -46,5 +35,5 @@ export function formatMarkdown(text) {
     return trimmed.startsWith('<') ? trimmed : `<p>${trimmed}</p>`;
   });
   
-  return sanitizeHtml(renderedLines.filter(Boolean).join(''));
+  return renderedLines.filter(Boolean).join('');
 }

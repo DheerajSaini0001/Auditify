@@ -21,6 +21,8 @@ const SiteReportSchema = new mongoose.Schema(
     aioReadiness: { type: Object, default: null },
     aeo: { type: Object, default: null },
     isBotProtected: { type: Boolean, default: false },
+    isDealership: { type: Boolean, default: null },
+    dealershipDetection: { type: Object, default: null },
     error: { type: String, default: null },
     screenshot: { type: String, default: null },
     screenshotUrl: { type: String, default: null },

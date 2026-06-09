@@ -11,6 +11,9 @@ import uxContentStructure from "../metricServices/uxContentStructure.js";
 import conversionLeadFlow from "../metricServices/conversionLeadFlow.js";
 import aioReadiness from "../metricServices/aioReadiness.js";
 import Puppeteer_Cheerio from "../utils/puppeteer_cheerio.js";
+import Puppeteer_Simple from "../utils/puppeteer_simple.js";
+import { detectDealership } from "../utils/dealershipDetector.js";
+import * as cheerio from "cheerio";
 import { performance } from "perf_hooks";
 import logger from "../utils/logger.js";
 
@@ -76,6 +79,48 @@ const OverAll = (A, B, C, D, E, F, G) => {
             await dbConnect({ maxPoolSize: 1 });
         }
 
+        // [NEW] — DEALERSHIP DETECTION GATE (runs FIRST, BEFORE the audit)
+        // A fast lightweight fetch is classified up front. Definitively non-dealership
+        // pages are recorded and STOP here — the heavy audit never starts.
+        let preDetection = null;
+        {
+            let preBrowser;
+            try {
+                const { html, status, browser: pb } = await Puppeteer_Simple(url);
+                preBrowser = pb;
+                preDetection = await detectDealership({ url, $: cheerio.load(html || ""), statusCode: status });
+            } catch (gateErr) {
+                logger.warn(`[BulkWorker] Pre-audit dealership check failed — will re-check after full load: ${gateErr.message}`);
+            } finally {
+                if (preBrowser) { try { await preBrowser.close(); } catch { } }
+            }
+        }
+        // FAIL OPEN on inconclusive (blocked / challenge / empty) — never reject.
+        const preInconclusive = !preDetection || preDetection.inconclusive;
+
+        if (preDetection && preDetection.isDealership === false && !preInconclusive) {
+            logger.info(`🚫 Bulk audit gated (pre-check) — not a dealership: ${pageUrl}`);
+            const timeTaken = ((performance.now() - start) / 1000).toFixed(0);
+            await BulkAuditReport.findOneAndUpdate(
+                { _id: bulkAuditId, "pages.url": pageUrl },
+                {
+                    $set: {
+                        "pages.$.status": "completed",
+                        "pages.$.isDealership": false,
+                        "pages.$.dealershipDetection": preDetection,
+                        "pages.$.error": `NOT A DEALERSHIP WEBSITE — ${preDetection.reason}`,
+                        "pages.$.score": 0,
+                        "pages.$.grade": "F",
+                        "pages.$.timeTaken": `${timeTaken}s`,
+                        "pages.$.completedAt": new Date(),
+                    },
+                    $inc: { completedPages: 1 },
+                }
+            );
+            parentPort.postMessage({ success: true });
+            return;
+        }
+
         const { browser: b, page, response, $, screenshot, isBotProtected } = await Puppeteer_Cheerio(url, device);
         browser = b;
 
@@ -104,6 +149,47 @@ const OverAll = (A, B, C, D, E, F, G) => {
             );
             parentPort.postMessage({ success: true });
             return;
+        }
+
+        // [NEW] — DEALERSHIP DETECTION GATE (fallback, full-render)
+        // Only re-runs when the fast pre-check above was inconclusive (blocked/empty).
+        // Otherwise the pre-check verdict is reused.
+        let detection = preInconclusive ? null : preDetection;
+        if (!detection) {
+            try {
+                detection = await detectDealership({ url, $, page, response });
+            } catch (gateErr) {
+                logger.warn(`[BulkWorker] Dealership detection failed (continuing): ${gateErr.message}`);
+            }
+        }
+        // FAIL OPEN: only block on a CONFIDENT negative, never on inconclusive.
+        if (detection && detection.isDealership === false && !detection.inconclusive) {
+            logger.info(`🚫 Bulk audit gated — not a dealership: ${pageUrl}`);
+            const timeTaken = ((performance.now() - start) / 1000).toFixed(0);
+            await BulkAuditReport.findOneAndUpdate(
+                { _id: bulkAuditId, "pages.url": pageUrl },
+                {
+                    $set: {
+                        "pages.$.status": "completed",
+                        "pages.$.isDealership": false,
+                        "pages.$.dealershipDetection": detection,
+                        "pages.$.error": `NOT A DEALERSHIP WEBSITE — ${detection.reason}`,
+                        "pages.$.score": 0,
+                        "pages.$.grade": "F",
+                        "pages.$.timeTaken": `${timeTaken}s`,
+                        "pages.$.completedAt": new Date(),
+                    },
+                    $inc: { completedPages: 1 },
+                }
+            );
+            parentPort.postMessage({ success: true });
+            return;
+        }
+        if (detection && detection.isDealership === true) {
+            await BulkAuditReport.findOneAndUpdate(
+                { _id: bulkAuditId, "pages.url": pageUrl },
+                { $set: { "pages.$.isDealership": true, "pages.$.dealershipDetection": detection } }
+            );
         }
 
         if (report !== "All") {

@@ -12,6 +12,7 @@ import AIO from "./AIO";
 import RawData from "./RawData";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import NotFound from "./NotFound";
+import NotADealership from "./NotADealership";
 import { Loader2 } from "lucide-react";
 
 import ReportRestrictionWrapper from "../Component/ReportRestrictionWrapper.jsx";
@@ -123,6 +124,21 @@ const ReportLayout = () => {
   // Prevent component rendering while redirecting
   if (!data) {
     return null;
+  }
+
+  // 🚫 Not-a-dealership gate result — show a friendly message instead of a
+  // misleading 0% Overall / Average dashboard.
+  if (data.isDealership === false) {
+    return (
+      <NotADealership
+        darkMode={darkMode}
+        data={data}
+        onButtonClick={() => {
+          clearData();
+          navigate("/", { replace: true });
+        }}
+      />
+    );
   }
 
   // ✅ Responsive Error State

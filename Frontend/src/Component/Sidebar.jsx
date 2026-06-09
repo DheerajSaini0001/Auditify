@@ -12,7 +12,8 @@ import {
   ChevronRight,
   BarChart2,
   Plus,
-  NotebookPen
+  NotebookPen,
+  Ban
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useData } from "../context/DataContext";
@@ -25,6 +26,10 @@ export default function Sidebar({ darkMode }) {
   const { isAuthenticated } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Dealership gate: when the audited site is not a dealership there are no
+  // sections to load — avoid showing endless loading spinners.
+  const notDealership = data?.isDealership === false;
 
   const handleGoHome = () => {
     clearData();
@@ -83,7 +88,19 @@ export default function Sidebar({ darkMode }) {
 
       {/* Navigation */}
       <aside className="flex-1 overflow-y-auto py-4 px-3 space-y-1 custom-scrollbar">
-        {menuItems.map((item) => {
+        {notDealership ? (
+          <div className="flex flex-col items-center text-center px-3 py-10 gap-3">
+            <div className={`p-3 rounded-xl ${darkMode ? "bg-amber-500/10 text-amber-400" : "bg-amber-50 text-amber-500"}`}>
+              <Ban className="w-7 h-7" />
+            </div>
+            <p className={`text-sm font-medium ${darkMode ? "text-slate-200" : "text-slate-700"}`}>
+              Not a dealership website
+            </p>
+            <p className={`text-xs leading-relaxed ${darkMode ? "text-slate-500" : "text-slate-500"}`}>
+              Sorry, this site doesn’t belong to a car dealership, so no audit sections are available.
+            </p>
+          </div>
+        ) : menuItems.map((item) => {
           const isAvailable = data?.[item.key];
           const isActive = location.pathname.startsWith(item.path);
           const Icon = item.icon;
@@ -164,6 +181,14 @@ export default function Sidebar({ darkMode }) {
               <span>Download Report</span>
             </button>
           </>
+        ) : notDealership ? (
+          <button
+            onClick={handleGoHome}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm fontsemibold text-white shadow-lg transition-all bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 active:scale-[0.98] shadow-emerald-500/20"
+          >
+            <Plus className="w-5 h-5" />
+            <span>Start New Audit</span>
+          </button>
         ) : (
           <div className={`text-xs text-center p-2 font- ${darkMode ? "text-slate-500 opacity-60" : "text-slate-500"}`}>
             Waiting for analysis...

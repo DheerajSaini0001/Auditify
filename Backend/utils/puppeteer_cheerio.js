@@ -16,6 +16,7 @@ const logger = {
       console.log(...args);
     }
   },
+  info: (...args) => console.log(...args),
   warn: (...args) => console.warn(...args),
   error: (...args) => console.error(...args)
 };
@@ -538,7 +539,16 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', auditId
         "--disable-features=IsolateOrigins,site-per-process",
         "--window-size=1920,1080",
         "--ignore-certificate-errors",
-        "--no-zygote"
+        "--no-zygote",
+        // [NEW] — headless-hardening flags to reduce automation fingerprints
+        "--disable-infobars",
+        "--disable-automation",
+        "--disable-features=AutomationControlled,Translate,OptimizationHints",
+        "--no-first-run",
+        "--no-default-browser-check",
+        "--disable-renderer-backgrounding",
+        "--disable-backgrounding-occluded-windows",
+        "--lang=en-US,en"
       ]
     };
 
@@ -622,6 +632,82 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', auditId
       Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => 8 });
     });
 
+    // [NEW] — Advanced bot-bypass stealth evasions.
+    // Runs on every new document (incl. Cloudflare/Turnstile challenge frames) BEFORE
+    // their scripts. Each evasion is wrapped so a single failure can't abort the rest,
+    // and we avoid redefining properties already set by the init script above.
+    await page.addInitScript(() => {
+      const safe = (fn) => { try { fn(); } catch (_) { /* evasion best-effort */ } };
+
+      // Real Chrome exposes a window.chrome object; headless does not.
+      safe(() => {
+        if (!window.chrome) {
+          window.chrome = {
+            runtime: {},
+            app: { isInstalled: false, InstallState: { DISABLED: 'disabled', INSTALLED: 'installed', NOT_INSTALLED: 'not_installed' }, RunningState: { CANNOT_RUN: 'cannot_run', READY_TO_RUN: 'ready_to_run', RUNNING: 'running' } },
+            csi: function () { },
+            loadTimes: function () { },
+          };
+        }
+      });
+
+      // permissions.query should mirror Notification.permission (headless mismatches this).
+      safe(() => {
+        const originalQuery = window.navigator.permissions && window.navigator.permissions.query;
+        if (originalQuery) {
+          window.navigator.permissions.query = (parameters) =>
+            parameters && parameters.name === 'notifications'
+              ? Promise.resolve({ state: Notification.permission })
+              : originalQuery(parameters);
+        }
+      });
+
+      // Realistic mimeTypes (Chrome PDF viewer). plugins is already spoofed above.
+      safe(() => {
+        Object.defineProperty(navigator, 'mimeTypes', {
+          get: () => [
+            { type: 'application/pdf', suffixes: 'pdf', description: 'Portable Document Format' },
+            { type: 'application/x-google-chrome-pdf', suffixes: 'pdf', description: 'Portable Document Format' },
+          ],
+        });
+      });
+
+      // Spoof platform/vendor so they match the Windows Chrome UA we advertise.
+      safe(() => Object.defineProperty(navigator, 'platform', { get: () => 'Win32' }));
+      safe(() => Object.defineProperty(navigator, 'vendor', { get: () => 'Google Inc.' }));
+      safe(() => Object.defineProperty(navigator, 'maxTouchPoints', { get: () => 0 }));
+
+      // WebGL vendor/renderer — headless reports SwiftShader/Google which is a giveaway.
+      safe(() => {
+        const spoof = (proto) => {
+          if (!proto) return;
+          const getParameter = proto.getParameter;
+          proto.getParameter = function (parameter) {
+            if (parameter === 37445) return 'Intel Inc.';                 // UNMASKED_VENDOR_WEBGL
+            if (parameter === 37446) return 'Intel Iris OpenGL Engine';   // UNMASKED_RENDERER_WEBGL
+            return getParameter.apply(this, [parameter]);
+          };
+        };
+        spoof(window.WebGLRenderingContext && window.WebGLRenderingContext.prototype);
+        spoof(window.WebGL2RenderingContext && window.WebGL2RenderingContext.prototype);
+      });
+
+      // Headless often leaves these at 0 — give them real-looking values.
+      safe(() => {
+        if (window.outerWidth === 0) Object.defineProperty(window, 'outerWidth', { get: () => window.innerWidth });
+        if (window.outerHeight === 0) Object.defineProperty(window, 'outerHeight', { get: () => window.innerHeight + 74 });
+      });
+
+      // navigator.connection (present in real Chrome).
+      safe(() => {
+        if (!navigator.connection) {
+          Object.defineProperty(navigator, 'connection', {
+            get: () => ({ effectiveType: '4g', rtt: 50, downlink: 10, saveData: false }),
+          });
+        }
+      });
+    });
+
     // [EXISTING — DO NOT MODIFY]
     await page.route('**/*', (route) => {
       try {
@@ -683,25 +769,54 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', auditId
       };
     }
 
-    // [EXISTING — DO NOT MODIFY]
-    let challengeResolved = await waitForChallengeResolution(page, 30000);
+    // [ENHANCED] — Bot-bypass: give Cloudflare/Turnstile JS challenges time to
+    // auto-resolve with our stealthed browser, then retry with reloads if needed.
+    let challengeResolved = await waitForChallengeResolution(page, 35000);
     let isBotProtected = await detectChallenge(page);
 
-    if (isBotProtected) {
+    // Positive signal: a Cloudflare clearance cookie means the challenge passed.
+    const hasClearanceCookie = async () => {
+      try {
+        const cookies = await context.cookies();
+        return cookies.some((c) => /^(cf_clearance|__cf_bm|datadome|incap_ses|ak_bmsc)/i.test(c.name) && c.value);
+      } catch (_) {
+        return false;
+      }
+    };
+
+    // Up to 2 reload retries — managed challenges often clear on a second pass once
+    // the clearance cookie is issued.
+    let botRetries = 0;
+    while (isBotProtected && botRetries < 2) {
+      botRetries++;
+      logger.info(`🛡️ Challenge still present — bypass retry ${botRetries}/2 for ${url}`);
       try {
         await page.reload({ waitUntil: "domcontentloaded", timeout: 30000 });
       } catch (reloadErr) {
         logger.warn("⚠️ Page reload during bot protection retry failed:", reloadErr.message);
       }
-      challengeResolved = await waitForChallengeResolution(page, 20000);
+      // Small human-like settle (real wall-clock wait so the challenge JS can run),
+      // then wait for the challenge to auto-clear.
+      try { await page.waitForTimeout(randInt(1500, 3000)); } catch (_) { }
+      challengeResolved = await waitForChallengeResolution(page, 25000);
       isBotProtected = await detectChallenge(page);
+
+      // If a clearance cookie was issued but the DOM check is lagging, reload once
+      // more to land on the real content rather than the interstitial.
+      if (isBotProtected && (await hasClearanceCookie())) {
+        try { await page.reload({ waitUntil: "domcontentloaded", timeout: 30000 }); } catch (_) { }
+        isBotProtected = await detectChallenge(page);
+      }
     }
 
     if (isBotProtected) {
+      logger.warn(`🛡️ Bot protection could not be bypassed after ${botRetries} retries: ${url}`);
       const htmlData = await safePageContent(page);
       const $ = cheerio.load(htmlData);
       return { browser, page, response, $, screenshot: null, isBotProtected: true };
     }
+
+    logger.info(`✅ Bot protection cleared (or none present) for ${url}`);
 
     // [FIX] — wrapped mouse.move with detached frame protection
     try {

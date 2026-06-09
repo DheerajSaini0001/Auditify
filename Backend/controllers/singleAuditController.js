@@ -1,10 +1,12 @@
 import { Worker } from "worker_threads";
 import { join } from "path";
+import mongoose from "mongoose";
 import SingleAuditReport from "../models/singleAuditReport.js";
 import AuditLog from "../models/AuditLog.js";
 import ActivityLog from "../models/ActivityLog.js";
 import Puppeteer_Cheerio from "../utils/puppeteer_cheerio.js";
 import { checkWebsiteExists } from "../utils/fastFetch.js";
+import auditStore from "../utils/auditStore.js";
 import logger from "../utils/logger.js";
  
 const reportFieldMap = {
@@ -75,22 +77,28 @@ export const startAudit = async (req, res) => {
         report,
         userId: req.user?.userId || null
       });
+      // Also drop any in-memory copy that hasn't been flushed yet.
+      auditStore.removeMatching({ url, device, report, userId: req.user?.userId || null });
     }
 
-    // Strict Deduplication: Check if a successful audit already exists or a very recent in-progress one
+    // Strict Deduplication: Check if a successful audit already exists or a very recent in-progress one.
+    // Check the in-memory store FIRST (reports may not be flushed to Mongo yet), then Mongo.
     let existing = null;
     if (!force) {
-      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-      existing = await SingleAuditReport.findOne({ 
-        url, 
-        device, 
-        report, 
-        userId: req.user?.userId || null,
-        $or: [
-          { status: "completed" },
-          { status: "inprogress", createdAt: { $gt: fiveMinutesAgo } }
-        ]
-      }).sort({ createdAt: -1 });
+      existing = auditStore.findActiveDuplicate({ url, device, report, userId: req.user?.userId || null });
+      if (!existing) {
+        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+        existing = await SingleAuditReport.findOne({
+          url,
+          device,
+          report,
+          userId: req.user?.userId || null,
+          $or: [
+            { status: "completed" },
+            { status: "inprogress", createdAt: { $gt: fiveMinutesAgo } }
+          ]
+        }).sort({ createdAt: -1 });
+      }
     }
 
     if (existing) {
@@ -139,13 +147,17 @@ export const startAudit = async (req, res) => {
  
     // ⭐ ENHANCEMENT: Extract section from existing "Full Audit"
     if (report !== "All") {
-      const fullAudit = await SingleAuditReport.findOne({
-        url,
-        device,
-        report: "All",
-        userId: req.user?.userId || null,
-        status: "completed"
-      }).sort({ createdAt: -1 });
+      // Prefer an in-memory completed full audit; fall back to Mongo.
+      let fullAudit = auditStore.findCompletedFullAudit({ url, device, userId: req.user?.userId || null });
+      if (!fullAudit) {
+        fullAudit = await SingleAuditReport.findOne({
+          url,
+          device,
+          report: "All",
+          userId: req.user?.userId || null,
+          status: "completed"
+        }).sort({ createdAt: -1 });
+      }
  
       if (fullAudit) {
         const fieldName = reportFieldMap[report];
@@ -198,32 +210,26 @@ export const startAudit = async (req, res) => {
       }
     }
 
-    // Double-check race condition (buffer for parallel requests)
-    await new Promise(resolve => setTimeout(resolve, 200)); 
+    // Double-check race condition (buffer for parallel requests). Check the
+    // in-memory store first (the in-progress report isn't in Mongo yet), then Mongo.
+    await new Promise(resolve => setTimeout(resolve, 200));
+    const raceDup = auditStore.findActiveDuplicate({ url, device, report, userId: req.user?.userId || null });
+    if (raceDup) return res.status(200).json(raceDup);
     const raceCheck = await SingleAuditReport.findOne({ url, device, report, status: "inprogress", userId: req.user?.userId || null });
     if (raceCheck) return res.status(200).json(raceCheck);
 
     logger.info(`➡️ Starting NEW Audit Request → ${url} | ${device} | ${report}`);
 
-    let newReport;
-    try {
-      newReport = new SingleAuditReport({
-        url,
-        device,
-        report,
-        status: "inprogress",
-        userId: req.user?.userId || null
-      });
-      await newReport.save();
-    } catch (dbError) {
-      // Handle race condition: If two requests hit exactly at the same time
-      if (dbError.code === 11000) {
-        logger.warn(`⚠️ Race condition caught: Audit already exists or is in-progress for: ${url}`);
-        const raceCheck = await SingleAuditReport.findOne({ url, device, report, status: { $ne: "failed" }, userId: req.user?.userId || null });
-        if (raceCheck) return res.send(raceCheck);
-      }
-      throw dbError; // Otherwise, re-throw server errors
-    }
+    // No DB write here. The report lives in memory until the worker finishes; the
+    // main thread then batches it to Mongo. We generate the id up front so the
+    // client can poll immediately and AuditLog can reference it.
+    const newReport = auditStore.createInProgress({
+      _id: new mongoose.Types.ObjectId(),
+      url,
+      device,
+      report,
+      userId: req.user?.userId || null,
+    });
 
     // Create a pending AuditLog entry asynchronously
     const auditLog = new AuditLog({
@@ -284,77 +290,73 @@ export const startAudit = async (req, res) => {
       },
     });
 
-    worker.on("message", async (msg) => {
-      if (msg?.error) {
-        logger.error(`❌ Audit Failed: ${msg.error}`);
-
-        await SingleAuditReport.findByIdAndUpdate(newReport._id, {
-          status: "failed",
-          error: msg.error,
-        });
-
-        // Update AuditLog entry on message error
-        try {
-          const duration = Date.now() - startTime;
-          await AuditLog.updateMany(
-            { reportId: newReport._id, status: "pending" },
-            { 
-              status: "failed",
-              auditDuration: duration,
-              $push: { actions: "failed" }
-            }
-          );
-        } catch (err) {
-          logger.error("Error updating AuditLog on message error", err);
-        }
-
-        return;
-      }
-
-      logger.info("✅ Audit Completed Successfully");
-
-      const duration = Date.now() - startTime;
-
-      // Update AuditLog entry
-      try {
-        await SingleAuditReport.findByIdAndUpdate(newReport._id, { status: "completed" });
-        const finalReport = await SingleAuditReport.findById(newReport._id);
-        if (finalReport) {
-          await AuditLog.updateMany(
-            { reportId: newReport._id, status: "pending" },
-            {
-              status: "success",
-              score: finalReport.score,
-              grade: finalReport.grade,
-              auditDuration: duration,
-              exitPage: "/report",
-              $push: { actions: "completed" }
-            }
-          );
-        }
-      } catch (err) {
-        logger.error("Error updating status/AuditLog on success", err);
-      }
-    })
-
-    worker.on("error", async (err) => {
-      const duration = Date.now() - startTime;
-      await SingleAuditReport.findByIdAndUpdate(newReport._id, { status: "failed" });
-      logger.error(`❌ Audit Failed with worker error`, err);
-
-      // Update AuditLog entry
+    // The worker is DB-free: it streams progress and the final result here. The
+    // main thread owns the in-memory store and batches the final write to Mongo.
+    const markAuditLog = async (fields) => {
       try {
         await AuditLog.updateMany(
           { reportId: newReport._id, status: "pending" },
-          { 
-            status: "failed",
-            auditDuration: duration,
-            $push: { actions: "failed" }
-          }
+          fields
         );
       } catch (err) {
-        logger.error("Error updating AuditLog on error", err);
+        logger.error("Error updating AuditLog", err);
       }
+    };
+
+    worker.on("message", async (msg) => {
+      if (!msg || !msg.type) return;
+
+      if (msg.type === "progress") {
+        // Live, in-memory update — served straight to polling clients, no DB hit.
+        auditStore.applyPatch(newReport._id, msg.patch || {});
+        return;
+      }
+
+      if (msg.type === "error") {
+        logger.error(`❌ Audit Failed: ${msg.error}`);
+        auditStore.complete(newReport._id, { status: "failed", error: msg.error });
+        await markAuditLog({
+          status: "failed",
+          auditDuration: Date.now() - startTime,
+          $push: { actions: "failed" },
+        });
+        return;
+      }
+
+      if (msg.type === "done") {
+        const duration = Date.now() - startTime;
+        // Finalize in memory; this queues the report for the next batched flush.
+        const finalDoc = auditStore.complete(newReport._id, msg.patch || {});
+
+        if (finalDoc?.status === "failed") {
+          await markAuditLog({
+            status: "failed",
+            auditDuration: duration,
+            $push: { actions: "failed" },
+          });
+          return;
+        }
+
+        logger.info("✅ Audit Completed Successfully");
+        await markAuditLog({
+          status: "success",
+          score: finalDoc?.score,
+          grade: finalDoc?.grade,
+          auditDuration: duration,
+          exitPage: "/report",
+          $push: { actions: "completed" },
+        });
+      }
+    });
+
+    worker.on("error", async (err) => {
+      logger.error(`❌ Audit Failed with worker error`, err);
+      auditStore.complete(newReport._id, { status: "failed", error: err.message });
+      await markAuditLog({
+        status: "failed",
+        auditDuration: Date.now() - startTime,
+        $push: { actions: "failed" },
+      });
     });
 
   } catch (error) {
@@ -365,10 +367,29 @@ export const startAudit = async (req, res) => {
   }
 };
 
+// Enforce the same per-user access control whether the report comes from the
+// in-memory store or Mongo. Returns true if the requester may see this report.
+const canAccessReport = (req, report) => {
+  if (req.user && req.user.role !== 'admin' && req.user.role !== 'super_admin') {
+    return String(report.userId || "") === String(req.user.userId || "");
+  }
+  return true;
+};
+
 export const getReportById = async (req, res) => {
   try {
-    const query = { _id: req.params.singleAuditId };
-    
+    const id = req.params.singleAuditId;
+
+    // In-progress (and not-yet-flushed) reports live only in memory — serve from there.
+    const live = auditStore.get(id);
+    if (live) {
+      if (!canAccessReport(req, live)) {
+        return res.status(404).json({ message: "Report not found or access denied" });
+      }
+      return res.status(200).json(live);
+    }
+
+    const query = { _id: id };
     // Non-admins can only see their own reports
     if (req.user && req.user.role !== 'admin' && req.user.role !== 'super_admin') {
       query.userId = req.user.userId;
@@ -387,15 +408,23 @@ export const getReportById = async (req, res) => {
 
 export const getReportStatusById = async (req, res) => {
   try {
-    const query = { _id: req.params.singleAuditId };
-    
-    // Non-admins can only see their own reports
-    if (req.user && req.user.role !== 'admin' && req.user.role !== 'super_admin') {
-      query.userId = req.user.userId;
-    }
+    const id = req.params.singleAuditId;
 
-    // Highly optimized status-only projection
-    const report = await SingleAuditReport.findOne(query).select("_id status screenshotUrl error");
+    // Serve in-progress status straight from memory (no DB read on every 3s poll).
+    let report = auditStore.get(id);
+    if (report) {
+      if (!canAccessReport(req, report)) {
+        return res.status(404).json({ message: "Report not found or access denied" });
+      }
+    } else {
+      const query = { _id: id };
+      // Non-admins can only see their own reports
+      if (req.user && req.user.role !== 'admin' && req.user.role !== 'super_admin') {
+        query.userId = req.user.userId;
+      }
+      // Highly optimized status-only projection
+      report = await SingleAuditReport.findOne(query).select("_id status screenshotUrl error");
+    }
     if (!report) {
       return res.status(404).json({ message: "Report not found or access denied" });
     }
@@ -456,10 +485,18 @@ export const captureScreenshot = async (req, res) => {
       return res.status(400).json({ error: "Missing url or auditId" });
     }
 
-    const report = await SingleAuditReport.findById(auditId);
+    // The report may still be in memory (not yet flushed to Mongo).
+    const liveReport = auditStore.get(auditId);
+    const report = liveReport || await SingleAuditReport.findById(auditId);
     if (!report) {
       return res.status(404).json({ error: "Audit report not found" });
     }
+
+    // Write a patch to wherever the report currently lives.
+    const patchReport = async (patch) => {
+      if (auditStore.get(auditId)) auditStore.applyPatch(auditId, patch);
+      else await SingleAuditReport.findByIdAndUpdate(auditId, patch);
+    };
 
     const device = report.device || "Desktop";
 
@@ -469,10 +506,7 @@ export const captureScreenshot = async (req, res) => {
       result = await Puppeteer_Cheerio(url, device);
     } catch (scrapingError) {
       logger.error("Puppeteer capture failed", scrapingError);
-      await SingleAuditReport.findByIdAndUpdate(auditId, {
-        screenshot: null,
-        screenshotUrl: null
-      });
+      await patchReport({ screenshot: null, screenshotUrl: null });
       return res.status(200).json({ screenshotUrl: null, error: "timeout" });
     }
 
@@ -484,7 +518,7 @@ export const captureScreenshot = async (req, res) => {
 
     if (!screenshot) {
       logger.warn("Screenshot capture returned empty.");
-      await SingleAuditReport.findByIdAndUpdate(auditId, {
+      await patchReport({
         screenshot: null,
         screenshotUrl: null,
         isBotProtected: isBotProtected || false
@@ -495,7 +529,7 @@ export const captureScreenshot = async (req, res) => {
     // Dynamic self-hosted URL
     const screenshotUrl = `/api/screenshot/view/${auditId}`;
 
-    await SingleAuditReport.findByIdAndUpdate(auditId, {
+    await patchReport({
       screenshot,
       screenshotUrl,
       isBotProtected: isBotProtected || false
@@ -512,7 +546,10 @@ export const captureScreenshot = async (req, res) => {
 
 export const getScreenshotImage = async (req, res) => {
   try {
-    const report = await SingleAuditReport.findById(req.params.auditId).select("screenshot");
+    // The screenshot is held in memory during the audit; fall back to Mongo after flush.
+    const report =
+      auditStore.get(req.params.auditId) ||
+      await SingleAuditReport.findById(req.params.auditId).select("screenshot");
     if (!report || !report.screenshot) {
       return res.status(404).send("Screenshot not found");
     }

@@ -2,6 +2,7 @@ import SingleAuditReport from "../models/singleAuditReport.js";
 import BulkAuditReport from "../models/bulkAuditReport.js";
 import ActivityLog from "../models/ActivityLog.js";
 import { chromium } from "playwright";
+import auditStore from "../utils/auditStore.js";
 import logger from "../utils/logger.js";
 
 export const generatePDFReport = async (req, res) => {
@@ -41,11 +42,19 @@ export const generatePDFReport = async (req, res) => {
             createdAt: pageData.completedAt || bulkAudit.createdAt
         };
     } else {
-        const query = { _id: id };
-        if (req.user && req.user.role !== 'admin' && req.user.role !== 'super_admin') {
-            query.userId = req.user.userId;
+        // A completed report may still be buffered in memory (not yet flushed to Mongo).
+        const live = auditStore.get(id);
+        if (live) {
+            const allowed = !(req.user && req.user.role !== 'admin' && req.user.role !== 'super_admin')
+                || String(live.userId || "") === String(req.user.userId || "");
+            report = allowed ? live : null;
+        } else {
+            const query = { _id: id };
+            if (req.user && req.user.role !== 'admin' && req.user.role !== 'super_admin') {
+                query.userId = req.user.userId;
+            }
+            report = await SingleAuditReport.findOne(query);
         }
-        report = await SingleAuditReport.findOne(query);
     }
 
     if (!report) {

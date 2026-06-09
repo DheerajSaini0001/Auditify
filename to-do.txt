@@ -7,10 +7,10 @@
   🔴 HIGH PRIORITY (Critical Path)
 =====================================
 
-[ ] TASK-021: Change default audit mode to Mobile (quick win)
+[✅] TASK-021: Change default audit mode to Mobile (quick win)
               Add the real user data at the technical permormance tab
     Files: Frontend/src/Component/InputForm.jsx
-    Effort: <30 min
+    date: 9/6/2026
 
 [X] TASK-022: Bot bypass
     This is an on-going process, where we detect some cloude flare bots still resolving so that we can reach the web page for crewling

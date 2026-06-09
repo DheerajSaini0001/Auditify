@@ -24,6 +24,7 @@ import connectDB from "./config/db.js";
 import passportConfig from "./config/passport.js";
 import trackingMiddleware from "./middleware/tracking.js";
 import configService from "./services/configService.js";
+import auditStore from "./utils/auditStore.js";
 
 dotenv.config();
 
@@ -158,6 +159,24 @@ const startServer = async () => {
     logger.info(`🚀 Server running on http://localhost:${PORT}`);
   });
 };
+
+// ── Graceful shutdown ──
+// Completed audits are buffered in memory and written to Mongo in batches. On a
+// graceful stop, flush whatever is still buffered so finished work isn't lost.
+let shuttingDown = false;
+const gracefulShutdown = async (signal) => {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  logger.info(`⏳ ${signal} received — flushing buffered audit reports...`);
+  try {
+    await auditStore.flushAll();
+  } catch (err) {
+    logger.error("Error flushing audit store on shutdown", err);
+  }
+  process.exit(0);
+};
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
 
 startServer().catch(err => {
   logger.error("❌ Startup Error", err);

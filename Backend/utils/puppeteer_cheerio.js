@@ -1,7 +1,6 @@
 import { chromium } from "playwright-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import * as cheerio from "cheerio";
-import SingleAuditReport from "../models/singleAuditReport.js";
 
 // Use stealth plugin to evade common bot detection techniques
 // [EXISTING STEALTH CONFIG — DO NOT MODIFY]
@@ -510,16 +509,24 @@ export async function waitForChallengeResolution(page, timeout = 30000) {
   return !await detectChallenge(page);
 }
 
-export default async function Puppeteer_Cheerio(url, device = 'Desktop', auditId = null) {
+/**
+ * @param {string} url
+ * @param {string} device
+ * @param {{auditId?: string, onProgress?: (patch: object) => void}|string|null} opts
+ *   - opts.auditId  : id used only to build the screenshot view URL
+ *   - opts.onProgress: called with a status/field patch instead of writing to Mongo.
+ *     (The worker passes a callback that postMessage()s to the main thread.)
+ *   A bare string is accepted for backward-compat (treated as auditId, no progress).
+ */
+export default async function Puppeteer_Cheerio(url, device = 'Desktop', opts = null) {
   let browser;
 
-  const updateStatus = async (status, extraData = {}) => {
-    if (!auditId) return;
-    try {
-      await SingleAuditReport.findByIdAndUpdate(auditId, { status, ...extraData });
-    } catch (err) {
-      console.error(`Error updating audit status to ${status}:`, err);
-    }
+  const { auditId = null, onProgress = null } =
+    typeof opts === "string" ? { auditId: opts } : (opts || {});
+
+  // Report progress to the caller. No DB access here — this runs inside the worker.
+  const updateStatus = (status, extraData = {}) => {
+    if (typeof onProgress === "function") onProgress({ status, ...extraData });
   };
 
   try {

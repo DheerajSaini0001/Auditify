@@ -67,7 +67,8 @@ const AUDIT_STEPS = [
 const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => {
   const [selectedMetricInfo, setSelectedMetricInfo] = React.useState(null);
   const [selectedParameterInfo, setSelectedParameterInfo] = React.useState(null);
-  const [selectedSource, setSelectedSource] = React.useState("lab");
+  // Core Web Vitals always display real-user (field/CrUX) data; lab is only a fallback inside MetricCard
+  const selectedSource = "field";
   const [expandedDetails, setExpandedDetails] = React.useState({});
   const toggleDetails = (metric) => setExpandedDetails(prev => ({ ...prev, [metric]: !prev[metric] }));
 
@@ -189,25 +190,9 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
               {/* Core Web Vitals */}
               <Section
                 title="Core Web Vitals"
-                subtitle="Field & Lab Data"
+                subtitle="Real User Data"
                 icon={Activity}
                 darkMode={darkMode}
-                action={
-                  <div className={`flex items-center p-1 rounded-lg border ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}>
-                    <button
-                      onClick={() => setSelectedSource("lab")}
-                      className={`px-3 py-1.5 text-xs fontsemibold rounded-md transition-all ${selectedSource === "lab" ? (darkMode ? "bg-blue-600 text-white shadow-sm" : "bg-blue-50 text-blue-600 shadow-sm") : (darkMode ? "text-slate-400 hover:text-slate-200" : "text-slate-500 hover:text-slate-700")}`}
-                    >
-                      Lab Data
-                    </button>
-                    <button
-                      onClick={() => setSelectedSource("field")}
-                      className={`px-3 py-1.5 text-xs fontsemibold rounded-md transition-all ${selectedSource === "field" ? (darkMode ? "bg-blue-600 text-white shadow-sm" : "bg-blue-50 text-blue-600 shadow-sm") : (darkMode ? "text-slate-400 hover:text-slate-200" : "text-slate-500 hover:text-slate-700")}`}
-                    >
-                      Real User
-                    </button>
-                  </div>
-                }
                 shouldAlignStart={isCoreExpanded}
               >
                 {tech.LCP && (

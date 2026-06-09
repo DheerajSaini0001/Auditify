@@ -718,10 +718,10 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', auditId
     await handlePopups(page);
     await autoScroll(page);
 
-    // [EXISTING] — 20 second wait for full JS render
+    // Wait for the page's load (onload) event instead of a fixed delay
     await updateStatus("waiting_for_render");
 
-    // [FIX] — Capture HTML BEFORE the 20s wait in case the page context dies during the wait
+    // [FIX] — Capture HTML BEFORE the load wait in case the page context dies during it
     // This ensures we have valid cheerio data even if the page navigates away
     let preWaitHtml = "";
     try {
@@ -732,6 +732,8 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', auditId
 
     // [FIX] — Wait for the page 'load' (onload) event so images/resources finish
     // loading before we capture content. domcontentloaded fired too early.
+    // This replaces the old fixed 20s render wait — we proceed as soon as the
+    // page actually finishes loading instead of blocking for a fixed duration.
     try {
       if (!page.isClosed()) {
         await page.waitForLoadState('load', { timeout: 15000 });
@@ -741,7 +743,7 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', auditId
       logger.debug('[Frame] waitForLoadState(load) timed out — continuing');
     }
 
-    // [FIX] — Live page context probe after the 20s wait
+    // [FIX] — Live page context probe after the load wait
     // Tests whether page.evaluate() still works. If the page navigated away
     // during the wait, all metrics would fail. Catch this early and return
     // partial result instead of wasting time on 7 failing metric calls.
@@ -753,7 +755,7 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', auditId
       }
     } catch (probeErr) {
       if (isDetachedFrameError(probeErr)) {
-        logger.warn("⚠️ Page context died during 20s render wait — returning partial result with pre-wait HTML.");
+        logger.warn("⚠️ Page context died during load wait — returning partial result with pre-wait HTML.");
         const $ = cheerio.load(preWaitHtml || "<html><body>Page context unavailable after render wait</body></html>");
         return {
           browser,
@@ -769,7 +771,7 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', auditId
     }
 
     if (!pageContextAlive) {
-      logger.warn("⚠️ Page is closed after 20s wait — returning partial result.");
+      logger.warn("⚠️ Page is closed after load wait — returning partial result.");
       const $ = cheerio.load(preWaitHtml || "<html><body>Page closed during render wait</body></html>");
       return {
         browser,
@@ -796,7 +798,7 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', auditId
     // to finish via their onload event before taking the screenshot.
     await waitForImagesLoaded(page, 12000);
 
-    // [FIX] — Re-check page is still alive after 20s wait
+    // [FIX] — Re-check page is still alive after the load/image wait
     // Page might have navigated / frame detached during the wait
     if (page.isClosed()) {
       logger.warn("⚠️ Page closed during render wait — returning partial result");
@@ -808,7 +810,7 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', auditId
       };
     }
 
-    // [EXISTING] — screenshot after 20s wait
+    // Screenshot after the page load (onload) + image wait
     let screenshot = null;
     try {
         const screenshotBuffer = await page.screenshot({
@@ -846,7 +848,7 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', auditId
     await updateStatus("extracting_data");
 
     // [FIX] — safePageContent with extra detached frame guard
-    // If page navigated away during 20s wait, try to recover HTML gracefully
+    // If page navigated away during the load wait, try to recover HTML gracefully
     let htmlData = "";
     try {
       htmlData = await safePageContent(page);

@@ -217,7 +217,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
     const darkMode = theme === "dark";
 
     const [url, setUrl] = useState('');
-    const [device, setDevice] = useState('Desktop');
+    const [device, setDevice] = useState('Mobile');
     const [report, setReport] = useState('All');
     const [showCaptcha, setShowCaptcha] = useState(false);
     const [captchaAnswer, setCaptchaAnswer] = useState('');

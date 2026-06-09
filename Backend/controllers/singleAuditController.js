@@ -4,6 +4,7 @@ import SingleAuditReport from "../models/singleAuditReport.js";
 import AuditLog from "../models/AuditLog.js";
 import ActivityLog from "../models/ActivityLog.js";
 import Puppeteer_Cheerio from "../utils/puppeteer_cheerio.js";
+import { checkWebsiteExists } from "../utils/fastFetch.js";
 import logger from "../utils/logger.js";
  
 const reportFieldMap = {
@@ -54,6 +55,16 @@ export const startAudit = async (req, res) => {
 
     if (!isValidUrl(url)) {
       return res.status(400).json({ error: "Invalid or Restricted URL" });
+    }
+
+    // EXISTENCE CHECK — hit the URL up front. If the domain doesn't resolve or
+    // the host refuses the connection, there's no website to audit: reject now,
+    // BEFORE creating any report or spawning a worker. (Timeouts / blocks / TLS
+    // errors are treated as "exists" so a slow or protected real site still runs.)
+    const existence = await checkWebsiteExists(url);
+    if (!existence.exists) {
+      logger.info(`🌐 Rejected audit — website does not exist: ${url} (${existence.errorCode})`);
+      return res.status(400).json({ error: `Website not found — ${existence.reason}` });
     }
 
     if (force) {

@@ -429,7 +429,7 @@ const DashboardPage = () => {
   const [directAuditing, setDirectAuditing] = useState(false);
 
   // New parameters for device and audit type
-  const [directDevice, setDirectDevice] = useState("Desktop");
+  const [directDevice, setDirectDevice] = useState("Mobile");
   const [directReport, setDirectReport] = useState("All");
   const [deviceOpen, setDeviceOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);

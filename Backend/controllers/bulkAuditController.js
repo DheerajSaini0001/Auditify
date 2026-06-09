@@ -4,6 +4,7 @@ import BulkAuditReport from "../models/bulkAuditReport.js";
 import SingleAuditReport from "../models/singleAuditReport.js";
 import AuditLog from "../models/AuditLog.js";
 import discoverPages from "../utils/sitemapCrawler.js";
+import { checkWebsiteExists } from "../utils/fastFetch.js";
 import logger from "../utils/logger.js";
 
 // validate URL and prevent SSRF
@@ -45,6 +46,14 @@ export const discoverUrls = async (req, res) => {
 
         if (!isValidUrl(url)) {
             return res.status(400).json({ error: "Invalid or Restricted URL" });
+        }
+
+        // EXISTENCE CHECK — hit the site before crawling. If the domain doesn't
+        // resolve / the host refuses, there's nothing to discover: reject now.
+        const existence = await checkWebsiteExists(url);
+        if (!existence.exists) {
+            logger.info(`🌐 Rejected discovery — website does not exist: ${url} (${existence.errorCode})`);
+            return res.status(400).json({ error: `Website not found — ${existence.reason}` });
         }
 
         // Set max pages limit (default: 5, max: 200)
@@ -501,6 +510,14 @@ export const discoverAndAuditUrls = async (req, res) => {
 
         if (!isValidUrl(url)) {
             return res.status(400).json({ error: "Invalid or Restricted URL" });
+        }
+
+        // EXISTENCE CHECK — hit the site before discovering/auditing. If the
+        // domain doesn't resolve / the host refuses, reject now (no audit created).
+        const existence = await checkWebsiteExists(url);
+        if (!existence.exists) {
+            logger.info(`🌐 Rejected auto-bulk audit — website does not exist: ${url} (${existence.errorCode})`);
+            return res.status(400).json({ error: `Website not found — ${existence.reason}` });
         }
 
         // Defaults

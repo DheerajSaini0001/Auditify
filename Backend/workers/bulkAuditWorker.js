@@ -11,7 +11,7 @@ import uxContentStructure from "../metricServices/uxContentStructure.js";
 import conversionLeadFlow from "../metricServices/conversionLeadFlow.js";
 import aioReadiness from "../metricServices/aioReadiness.js";
 import Puppeteer_Cheerio from "../utils/puppeteer_cheerio.js";
-import Puppeteer_Simple from "../utils/puppeteer_simple.js";
+import { checkWebsiteExists } from "../utils/fastFetch.js";
 import { detectDealership } from "../utils/dealershipDetector.js";
 import * as cheerio from "cheerio";
 import { performance } from "perf_hooks";
@@ -79,21 +79,46 @@ const OverAll = (A, B, C, D, E, F, G) => {
             await dbConnect({ maxPoolSize: 1 });
         }
 
+        // [NEW] — WEBSITE EXISTENCE GATE (runs FIRST, BEFORE anything else)
+        // One lightweight HTTP GET per URL. If the domain doesn't resolve or the
+        // host refuses/drops the connection, there is no website to audit — record
+        // the failure for this page and STOP before launching Chromium or any
+        // metric. A timeout/block/TLS error is treated as "exists" (fail open) so
+        // a slow or bot-protected real site is never wrongly rejected. The fetched
+        // html/status is reused for the dealership pre-check (no second request).
+        const existence = await checkWebsiteExists(url);
+        if (!existence.exists) {
+            logger.info(`🌐 Bulk audit gated — website does not exist / unreachable: ${pageUrl} (${existence.errorCode})`);
+            const timeTaken = ((performance.now() - start) / 1000).toFixed(0);
+            await BulkAuditReport.findOneAndUpdate(
+                { _id: bulkAuditId, "pages.url": pageUrl },
+                {
+                    $set: {
+                        "pages.$.status": "failed",
+                        "pages.$.error": `WEBSITE NOT FOUND — ${existence.reason}`,
+                        "pages.$.score": 0,
+                        "pages.$.grade": "F",
+                        "pages.$.timeTaken": `${timeTaken}s`,
+                        "pages.$.completedAt": new Date(),
+                    },
+                    $inc: { completedPages: 1 },
+                }
+            );
+            parentPort.postMessage({ success: true });
+            return;
+        }
+
         // [NEW] — DEALERSHIP DETECTION GATE (runs FIRST, BEFORE the audit)
         // A fast lightweight fetch is classified up front. Definitively non-dealership
         // pages are recorded and STOP here — the heavy audit never starts.
+        // Reuses the html/status from the existence gate above (no browser, no
+        // re-fetch): the detector only reads raw HTML. Blocked/empty => inconclusive
+        // => fall through to the full-render audit below.
         let preDetection = null;
-        {
-            let preBrowser;
-            try {
-                const { html, status, browser: pb } = await Puppeteer_Simple(url);
-                preBrowser = pb;
-                preDetection = await detectDealership({ url, $: cheerio.load(html || ""), statusCode: status });
-            } catch (gateErr) {
-                logger.warn(`[BulkWorker] Pre-audit dealership check failed — will re-check after full load: ${gateErr.message}`);
-            } finally {
-                if (preBrowser) { try { await preBrowser.close(); } catch { } }
-            }
+        try {
+            preDetection = await detectDealership({ url, $: cheerio.load(existence.html || ""), statusCode: existence.status });
+        } catch (gateErr) {
+            logger.warn(`[BulkWorker] Pre-audit dealership check failed — will re-check after full load: ${gateErr.message}`);
         }
         // FAIL OPEN on inconclusive (blocked / challenge / empty) — never reject.
         const preInconclusive = !preDetection || preDetection.inconclusive;

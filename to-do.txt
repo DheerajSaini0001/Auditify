@@ -1,0 +1,351 @@
+==============================================================================
+  AUDITIFY — MASTER TO-DO LIST
+  Generated: 2026-06-08 | Source: new.txt + Framework Doc + Dealership Audit Doc
+==============================================================================
+
+=====================================
+  🔴 HIGH PRIORITY (Critical Path)
+=====================================
+
+[ ] TASK-021: Change default audit mode to Mobile (quick win)
+              Add the real user data at the technical permormance tab
+    Files: Frontend/src/Component/InputForm.jsx
+    Effort: <30 min
+
+[X] TASK-022: Bot bypass
+    This is an on-going process, where we detect some cloude flare bots still resolving so that we can reach the web page for crewling
+    
+
+[ ] TASK-001: Remove mandatory login requirement
+    - Remove blurred lock gate on report pages
+    - Replace login-gated PDF download with email-gate
+    - Add POST /api/report/:id/request-download endpoint
+    - Create EmailGateModal component
+    - Remove verifyToken from PDF export route
+    - Keep tryAuthenticate for optional user association
+    Files: Backend/middleware/auth.js, Backend/routes/singleAuditRoutes.js,
+           Frontend/src/Component/GuestReportPage.jsx,
+           Frontend/src/Component/ReportRestrictionWrapper.jsx,
+           Frontend/src/AppContent.jsx
+    Effort: 1-2 days
+
+[ ] TASK-002: Worker crash recovery & audit retry system
+    - Add retryCount field to SingleAuditReport model (max: 2)
+    - Auto-retry in controller exit handler
+    - Implement BullMQ job queue (deps already installed)
+    - Dead-letter tracking for permanent failures
+    - Exponential backoff (5s, 15s)
+    Files: Backend/controllers/singleAuditController.js,
+           Backend/workers/singleAuditWorker.js,
+           Backend/utils/workerPool.js,
+           Backend/models/singleAuditReport.js
+    Effort: 2-3 days
+
+[ ] TASK-003: Parallel execution architecture
+    - Refactor: API Process → BullMQ Queue → Worker Process(es)
+    - Implement scripts/startApi.js and scripts/startWorker.js
+    - Redis-backed concurrency via BullMQ
+    - Nested worker threads per audit category
+    Depends on: TASK-002
+    Files: Backend/workers/*, Backend/utils/workerPool.js,
+           Backend/scripts/startApi.js, Backend/scripts/startWorker.js
+    Effort: 3-4 days
+
+[ ] TASK-004: Browser/page pooling for XSS scans
+    - Create BrowserPool class
+    - Pool warm-up on worker start, graceful shutdown
+    - Share pool across security scans
+    Depends on: TASK-003
+    Files: Backend/metricServices/securityCompliance.js,
+           Backend/utils/puppeteer_cheerio.js,
+           New: Backend/utils/browserPool.js
+    Effort: 1-2 days
+
+=====================================
+  🟠 HIGH PRIORITY (New Parameters)
+=====================================
+
+[ ] TASK-005: AIO/AEO/GEO readiness enhancements
+    - Knowledge Graph Presence signal
+    - Content NLP Friendliness signal
+    - Topical Authority Score signal
+    - E-E-A-T Signal Scoring
+    - GEO signal category (Gemini/ChatGPT/Perplexity)
+    - AI Discoverability Score
+    Files: Backend/metricServices/aioReadiness.js,
+           Backend/metricServices/aeoService.js,
+           Backend/metricServices/signals/*
+    Effort: 2-3 days
+
+[ ] TASK-006: Advanced content relevance scoring
+    - Content Depth Analysis (word count, boilerplate ratio)
+    - Content Uniqueness (MD5 duplicate detection across VDPs)
+    - Content Freshness (lastmod analysis)
+    - Local Relevance (city/area keyword density)
+    - VDP Description Quality (150+ words, readability)
+    - Topic Clustering
+    Files: Backend/metricServices/seoMetrics.js,
+           New: Backend/metricServices/signals/contentRelevance.js
+    Effort: 2-3 days
+
+[ ] TASK-007: Contextual link analysis
+    - Internal Linking Density & orphan page detection
+    - Related Content Linking (blog→inventory)
+    - Topic Clustering via Links
+    - Anchor Text Analysis
+    - Broken Link Detection (HEAD requests)
+    Files: New: Backend/metricServices/signals/contextualLinks.js,
+           Backend/metricServices/seoMetrics.js
+    Effort: 1-2 days
+
+[ ] TASK-008: sameAs authority validation
+    - Extract sameAs URLs from JSON-LD schema
+    - Validate each sameAs URL resolves (HEAD → 200)
+    - Profile consistency verification
+    - Score: count of valid profiles, platform diversity
+    Files: New: Backend/metricServices/signals/sameAsValidation.js,
+           Backend/metricServices/seoMetrics.js
+    Effort: 1 day
+
+[ ] TASK-009: LLMs.txt quality scoring enhancement
+    - Full llms.txt spec compliance check
+    - llms-full.txt companion file detection
+    - Freshness check (Last-Modified / ETag)
+    - Improved content match (TF-IDF vs keyword overlap)
+    - 4-dimension score breakdown
+    Files: Backend/metricServices/signals/llmsTxt.js
+    Effort: 1 day
+
+[ ] TASK-010: Citation & backlink analysis
+    - Outbound Citation Quality (classify external links)
+    - Backlink Metrics (Moz/Ahrefs API or crawl heuristics)
+    - Citation Consistency (NAP check)
+    - Brand Mention Detection (unlinked citations)
+    - External Citation Metrics
+    Files: Backend/metricServices/signals/citations.js,
+           New: Backend/metricServices/signals/backlinkAnalysis.js
+    Effort: 2-3 days
+
+[ ] TASK-011: E-E-A-T scoring engine
+    - Experience signals (case studies, testimonials, bios)
+    - Expertise (author profiles, credentials)
+    - Authoritativeness (backlinks, mentions, awards)
+    - Trustworthiness (SSL, privacy, contact, transparency)
+    - Composite score → integrate into AIO overall
+    Depends on: TASK-010
+    Files: New: Backend/metricServices/signals/eeatScoring.js
+    Effort: 2 days
+
+[ ] TASK-012: Security & compliance enhancements
+    - MFA detection improvements
+    - XSS scan performance (use browser pool)
+    - Analytics & tracking detection (GA4, GTM)
+    - CRM Integration Detection
+    - Automotive Compliance (TCPA, CAN-SPAM, Reg Z)
+    - FTC Disclosure Detection
+    Depends on: TASK-004 (for XSS perf)
+    Files: Backend/metricServices/securityCompliance.js
+    Effort: 2-3 days
+
+[ ] TASK-013: Accessibility enhancements
+    - Fix Color Contrast AI summary issue (new.txt line 23)
+    - WCAG success criterion references
+    - Interactive element affordance checks
+    - Skip link detection
+    Files: Backend/metricServices/accessibilityMetrics.js
+    Effort: 1-2 days
+
+=====================================
+  🟠 HIGH PRIORITY (Dealer Framework)
+=====================================
+
+[ ] TASK-014: Sitemap evaluation protocol
+    - Sitemap existence, freshness, URL count
+    - Broken link sampling, image sitemap, hreflang
+    Files: Backend/utils/sitemapCrawler.js,
+           New: Backend/metricServices/dealerMetrics/sitemapEvaluation.js
+    Effort: 2 days
+
+[ ] TASK-015: Crawlable dealer parameters (23 parameters)
+    Group A — Site Architecture (Params 1-3):
+    [ ] siteArchitecture.js
+    [ ] clickDepth.js
+    [ ] urlHierarchy.js
+    Group B — Inventory & Content (Params 4-7):
+    [ ] inventoryContent.js (15 sub-params)
+    [ ] vdpDescriptions.js
+    [ ] serviceContent.js
+    [ ] blogContentHub.js
+    Group C — Local & Location (Params 8-10):
+    [ ] localLandingPages.js
+    [ ] locationPages.js
+    [ ] clickToCall.js
+    Group D — Lead Flow (Params 11-15):
+    [ ] tradeInFlow.js
+    [ ] financeFlow.js
+    [ ] appointmentBooking.js
+    [ ] chatbot.js
+    [ ] financeCalculator.js
+    Group E — Search & Filtering (Params 16-19):
+    [ ] siteSearch.js
+    [ ] inventoryFiltering.js
+    [ ] vdpLayout.js
+    [ ] noResultsUX.js
+    Group F — Trust & Compliance (Params 20-23):
+    [ ] staffProfiles.js
+    [ ] reviewWidget.js
+    [ ] ftcDisclosures.js
+    [ ] vehicleHistory.js
+    Depends on: TASK-014
+    Files: New directory: Backend/metricServices/dealerMetrics/
+    Effort: 8-10 days
+
+[ ] TASK-016: Partially crawlable parameters (8 parameters)
+    [ ] oemCompliance.js
+    [ ] reviewFreshness.js
+    [ ] photoQualityAudit.js
+    [ ] inventoryFeedSpeed.js
+    [ ] dealerRaterReviews.js
+    [ ] gbpOptimization.js
+    [ ] crmIntegration.js
+    [ ] automotiveCompliance.js
+    Depends on: API keys (Google Places)
+    Files: New files in Backend/metricServices/dealerMetrics/
+    Effort: 5-7 days
+
+[ ] TASK-017: Dealer scoring engine (300-point system)
+    - Weighted scoring across 32 parameters
+    - Grade: Excellent/Good/Average/Poor
+    - Priority classification per parameter
+    - Integration with existing 7-pillar scoring
+    Depends on: TASK-015, TASK-016
+    Files: New: Backend/metricServices/dealerMetrics/scoringEngine.js
+    Effort: 2 days
+
+=====================================
+  🟡 MEDIUM-HIGH (Reports & UI)
+=====================================
+
+[ ] TASK-018: Dual report system (Dealer vs Developer)
+    Dealer Report:
+    [ ] Business-focused insights
+    [ ] Simple recommendations
+    [ ] Executive summary
+    Developer Report:
+    [ ] Technical findings
+    [ ] Code-level recommendations
+    [ ] Implementation guidance with score-increase estimates
+    [ ] Email-based report retrieval
+    Depends on: TASK-001
+    Files: Backend/controllers/pdfController.js,
+           New: Backend/services/reportGenerator.js,
+           Frontend report pages
+    Effort: 3-4 days
+
+[ ] TASK-019: Update & merge UI
+    - Dealer metric pages in report layout
+    - DealerScoreCard component (32-param breakdown)
+    - Sidebar navigation updates
+    - Dealer vs Developer view toggle
+    - Parameter drill-down pages
+    Depends on: TASK-017, TASK-018
+    Files: Frontend/src/Pages/*, Frontend/src/Component/*
+    Effort: 3-5 days
+
+[ ] TASK-020: Make it dealer-specific
+    - Auto-detect dealer type from URL
+    - Tailor parameter weights by dealer type
+    - Dealer-specific recommendations
+    - Industry benchmark comparisons
+    Depends on: TASK-015, TASK-017
+[ ] TASK-021: when the website does not exist it should show a message
+                "No website exists,Try with another url"
+    Files: Frontend, Backend audit flow
+    Effort: 2-3 days
+
+=====================================
+  🟡 MEDIUM (Reporting Infrastructure)
+=====================================
+
+[ ] TASK-022: Email-based report retrieval
+    - POST /api/report/:id/email endpoint
+    - Email template with branding
+    - Dealer or Developer report selection
+    - Rate limit + audit logging
+    Depends on: TASK-001, TASK-018
+    Files: Backend/utils/sendEmail.js, Backend/controllers/pdfController.js
+    Effort: 1-2 days
+
+[ ] TASK-023: Enhanced PDF report generation
+    - Explainability framework (What/Why/Impact/Evidence/Fix/Business Impact)
+    - 32-parameter dealer scoring breakdown
+    - Dealer type classification section
+    - Trend/comparison data for repeat audits
+    Depends on: TASK-017, TASK-018
+    Files: Backend/controllers/pdfController.js
+    Effort: 2-3 days
+
+=====================================
+  🟢 MEDIUM-LOW (Polish & Advanced)
+=====================================
+
+[ ] TASK-024: Deep link sampling & VDP extraction
+    - Follow 3-5 links per category
+    - Pull 5-10 VDPs for analysis
+    - Click-depth calculation
+    Depends on: TASK-014, TASK-015
+    Files: Backend/utils/sitemapCrawler.js,
+           New: Backend/metricServices/dealerMetrics/deepLinkSampler.js
+    Effort: 2 days
+
+[ ] TASK-025: Audit explainability for AI summary
+    - 6-point framework for AI explanations
+    - Per-parameter AI explanations for 32 dealer params
+    - Dealer-specific prompt engineering
+    Depends on: TASK-015, TASK-016
+    Files: Frontend/src/Component/AISummaryBlock.jsx,
+           Backend/routes/aiExplainRoutes.js
+    Effort: 2-3 days
+
+[ ] TASK-026: Admin dashboard enhancements
+    - Audit queue depth widget
+    - Failed audit list with retry button
+    - API key configuration panel
+    - Dealer type analytics
+    Depends on: TASK-002, TASK-003
+    Files: Frontend/src/Pages/AdminDashboard.jsx,
+           Backend/controllers/adminController.js
+    Effort: 2 days
+
+[ ] TASK-027: MongoDB optimization
+    - Index review and optimization
+    - Compound indexes for admin queries
+    - TTL index tuning
+    - Connection pool sizing
+    Files: Backend/models/singleAuditReport.js, Backend/config/db.js
+    Effort: 1 day
+
+==============================================================================
+  NOTES
+==============================================================================
+
+- BullMQ + IORedis are already in package.json dependencies
+- Playwright is already installed alongside Puppeteer
+- Frontend uses React 19 + Vite + Tailwind CSS 4 + Framer Motion + Recharts
+- Backend uses ES Modules ("type": "module" in package.json)
+- Existing 7 audit pillars: Technical, SEO, Accessibility, Security,
+  UX/Content, Conversion/Lead, AIO Readiness
+- MongoDB TTL: reports expire after 3 hours (10800s)
+- Max concurrent browsers: 4 (configurable via MAX_CONCURRENT_BROWSERS env)
+- Worker timeout: 5 min (configurable via AUDIT_WORKER_TIMEOUT_MS env)
+- scripts/startApi.js and scripts/startWorker.js already have npm scripts
+
+==============================================================================
+  TOTAL ESTIMATED EFFORT: ~50-70 developer-days
+  RECOMMENDED SPRINT PLAN:
+    Sprint 1 (Week 1-2):  TASK-021, 001, 002, 003, 004, 013
+    Sprint 2 (Week 3-4):  TASK-005 through 012
+    Sprint 3 (Week 5-7):  TASK-014 through 017
+    Sprint 4 (Week 8-9):  TASK-018 through 023
+    Sprint 5 (Week 10):   TASK-024 through 027
+==============================================================================

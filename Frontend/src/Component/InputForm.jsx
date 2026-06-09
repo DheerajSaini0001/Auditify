@@ -78,7 +78,7 @@ export default function InputForm() {
   const darkMode = theme === "dark";
 
   const [inputValue, setInputValue] = useState("");
-  const [device, setDevice] = useState("Desktop");
+  const [device, setDevice] = useState("Mobile");
   const [report, setReport] = useState("All");
   const [error, setError] = useState(null);
 

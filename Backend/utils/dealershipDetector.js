@@ -235,6 +235,18 @@ const LISTING_FIELD_KEYWORDS = [
   "rebates"
 ];
 
+// Strong, unambiguously-automotive subset of the listing fields. Used to gate
+// A2 so that a generic retail page (which has "price"/"year"/"make"/"model")
+// cannot be mistaken for a vehicle inventory listing. Every term here is
+// specific to selling cars — a clothing/electronics store would not carry them.
+const STRONG_LISTING_FIELD_KEYWORDS = [
+  "stock number", "stock #", "stock#",
+  "msrp", "odometer", "exterior color", "interior color",
+  "drivetrain", "fuel economy", "city mpg", "highway mpg",
+  "vehicle history report", "carfax", "autocheck",
+  "value your trade", "schedule test drive", "vehicle overview",
+];
+
 const TRADE_IN_PATHS = [
   "/trade-in",
   "/trade-in-value",
@@ -1498,8 +1510,12 @@ export async function detectDealership({ url, $, page, response, statusCode }) {
   if (labelledVin || standaloneVin) groupA.push("A1 - VIN Detected");
 
   // A2 — live vehicle inventory listing (inventory path + listing fields)
+  // Listing fields must be GENUINELY automotive — generic retail words like
+  // "price", "year", "make", "model", "new", "features" appear on any shop and
+  // caused false positives (e.g. an e-commerce homepage with a "/new" link).
+  // We require a strong, vehicle-specific field instead.
   const hasInventoryPath = anyPath(pathHaystack, INVENTORY_PATHS);
-  const hasListingFields = anyKeyword(visibleText, LISTING_FIELD_KEYWORDS);
+  const hasListingFields = anyKeyword(visibleText, STRONG_LISTING_FIELD_KEYWORDS) || labelledVin || standaloneVin;
   if (hasInventoryPath && hasListingFields) groupA.push("A2 - Inventory Listing");
 
   // A3 — dealer platform scripts (self-confirming)
@@ -1557,14 +1573,36 @@ export async function detectDealership({ url, $, page, response, statusCode }) {
   }
 
   // =========================================================================
-  // STEP 4 — DECISION: require at least 3 matched signals total (A + B)
-  // A single signal is NOT enough — a site must match 3 or more parameters
-  // (combining dealership-exclusive Group A and supporting Group B) to confirm.
+  // STEP 4 — DECISION
+  // Require BOTH:
+  //   (a) at least 3 matched signals total (A + B), AND
+  //   (b) at least ONE genuinely-automotive anchor signal.
+  //
+  // Rule (b) is the guard against generic e-commerce sites. Signals like A5
+  // (trade-in), A6 (finance), B3 (payment calculator) and B6 (specials) match
+  // ordinary retail/EMI language ("financing options", "monthly payment",
+  // "specials", "sales event", "trade-in") and on their own are NOT evidence of
+  // a car dealership — a large marketplace (e.g. Flipkart/Amazon) trips several
+  // at once. They only count as PADDING toward the 3-signal threshold; a real,
+  // vehicle-specific anchor must also be present.
   // =========================================================================
   const MIN_SIGNALS = 3;
   const matched = [...groupA, ...groupB];
 
-  if (matched.length >= MIN_SIGNALS) {
+  const AUTOMOTIVE_ANCHORS = new Set([
+    "A1 - VIN Detected",
+    "A2 - Inventory Listing",
+    "A3 - Dealer Platform Script",
+    "A4 - Vehicle Schema",
+    "B1 - Test Drive CTA",
+    "B2 - New/Used Separation",
+    "B5 - Certified Pre-Owned",
+    "B7 - Manufacturer Dealer Keyword",
+    "B8 - Inventory API",
+  ]);
+  const hasAutomotiveAnchor = matched.some((m) => AUTOMOTIVE_ANCHORS.has(m));
+
+  if (matched.length >= MIN_SIGNALS && hasAutomotiveAnchor) {
     return dealership(url, matched);
   }
 
@@ -1573,9 +1611,11 @@ export async function detectDealership({ url, $, page, response, statusCode }) {
   const hasServiceOnly = groupB.includes("B4 - Service Scheduling") && !hasInventoryPath && groupA.length === 0;
   const reason = hasServiceOnly
     ? "D4 — Service/repair shop with no vehicle sales inventory"
-    : matched.length > 0
-      ? `Only ${matched.length} signal(s) matched (need ${MIN_SIGNALS}): ${matched.join(", ")}`
-      : "No dealership signals detected";
+    : matched.length >= MIN_SIGNALS && !hasAutomotiveAnchor
+      ? `Only generic commerce signals — no vehicle-specific evidence (matched: ${matched.join(", ")})`
+      : matched.length > 0
+        ? `Only ${matched.length} signal(s) matched (need ${MIN_SIGNALS}): ${matched.join(", ")}`
+        : "No dealership signals detected";
   return notADealership(url, reason);
 }
 
@@ -1589,20 +1629,37 @@ function isChallengeOrBlockPage(rawHtml, statusCode, response) {
   const html = (rawHtml || "").toLowerCase();
   if (!html) return false;
 
-  const markers = [
-    // Cloudflare
-    "attention required! | cloudflare", "cf-error-details", "cf-browser-verification",
-    "cdn-cgi/challenge-platform", "/cdn-cgi/styles/cf.errors", "checking your browser before accessing",
-    "just a moment...", "_cf_chl_opt", "ray id",
-    // Generic / other vendors
-    "please enable cookies", "please enable javascript and cookies",
-    "access denied", "you have been blocked", "are you a robot", "are you human",
-    "verify you are human", "perimeterx", "px-captcha", "captcha-delivery",
-    "incapsula incident", "_incapsula_", "request unsuccessful. incapsula",
-    "akamai", "reference&#32;#", "distil_r_captcha", "bot detection",
-    "hcaptcha", "g-recaptcha", "recaptcha challenge",
+  // STRONG markers — unambiguous interstitial fingerprints. These only appear on
+  // a real challenge/block page, never as incidental strings inside a normal
+  // site's markup or JS. Match anywhere.
+  const strongMarkers = [
+    "attention required! | cloudflare", "cf-browser-verification",
+    "cdn-cgi/challenge-platform", "/cdn-cgi/styles/cf.errors",
+    "checking your browser before accessing", "just a moment...", "_cf_chl_opt",
+    "please enable javascript and cookies", "verify you are human",
+    "px-captcha", "captcha-delivery", "incapsula incident",
+    "request unsuccessful. incapsula", "distil_r_captcha", "recaptcha challenge",
   ];
-  return markers.some((m) => html.includes(m));
+  if (strongMarkers.some((m) => html.includes(m))) return true;
+
+  // WEAK markers — generic phrases ("access denied", "perimeterx", vendor names)
+  // that legitimately show up inside large sites' JS bundles, error-handling
+  // strings, or analytics tags. A genuine block/challenge page is TINY (a few
+  // KB); a full real homepage is tens to hundreds of KB. So only trust a weak
+  // marker when the page is small OR the HTTP status already signals a block.
+  // This stops a 1MB real page (e.g. an e-commerce homepage) from being
+  // mis-flagged as inconclusive just because "perimeterx" appears in a bundle.
+  const SMALL_PAGE_BYTES = 15000;
+  const looksBlockedBySize = html.replace(/\s/g, "").length < SMALL_PAGE_BYTES;
+  if (!looksBlockedBySize) return false;
+
+  const weakMarkers = [
+    "cf-error-details", "ray id", "please enable cookies",
+    "access denied", "you have been blocked", "are you a robot", "are you human",
+    "perimeterx", "_incapsula_", "akamai", "reference&#32;#", "bot detection",
+    "hcaptcha", "g-recaptcha",
+  ];
+  return weakMarkers.some((m) => html.includes(m));
 }
 
 // --- verdict builders -------------------------------------------------------

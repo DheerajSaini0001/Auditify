@@ -792,6 +792,25 @@ async function checkSkipLinks(page) {
 
 export default async function accessibilityMetrics(page) {
 
+  // [NEW] — Neutralize the stealth plugin's Function.prototype.toString proxy
+  // before running axe. The stealth plugin (puppeteer-extra-plugin-stealth) wraps
+  // toString in a Proxy to mask its evasions; axe-core's injected bundle calls
+  // String()/toString() on functions while serializing, which re-enters that
+  // proxy and recurses forever ("Maximum call stack size exceeded"). The page has
+  // already passed bot-detection during navigation, so the mask is no longer
+  // needed — restore a plain native-looking toString so axe can run. Scoped to
+  // this page; harmless if the proxy isn't present.
+  try {
+    await page.evaluate(() => {
+      const native = function toString() { return "function () { [native code] }"; };
+      try {
+        Object.defineProperty(Function.prototype, "toString", {
+          value: native, writable: true, configurable: true,
+        });
+      } catch (_) { /* non-configurable — best effort */ }
+    });
+  } catch (_) { /* page context unavailable — axe will try anyway */ }
+
   let axeResults;
   try {
     axeResults = await new AxeBuilder({ page }).analyze();

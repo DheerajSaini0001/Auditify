@@ -12,7 +12,7 @@ import conversionLeadFlow from "../metricServices/conversionLeadFlow.js";
 import aioReadiness from "../metricServices/aioReadiness.js";
 import AEOService from "../metricServices/aeoService.js";
 import Puppeteer_Cheerio from "../utils/puppeteer_cheerio.js";
-import Puppeteer_Simple from "../utils/puppeteer_simple.js";
+import { checkWebsiteExists } from "../utils/fastFetch.js";
 import { detectDealership } from "../utils/dealershipDetector.js";
 import * as cheerio from "cheerio";
 import { performance } from "perf_hooks";
@@ -117,23 +117,41 @@ const OverAll = (A, B, C, D, E, F, G) => {
       await dbConnect({ maxPoolSize: 1 });
     }
 
+    // [NEW] — WEBSITE EXISTENCE GATE (runs FIRST, BEFORE anything else)
+    // Hit the URL with one lightweight HTTP GET. If the domain doesn't resolve
+    // or the host refuses/drops the connection, there is no website to audit —
+    // record the failure and STOP before launching Chromium or any metric.
+    // A timeout/block/TLS error is treated as "exists" (fail open) so a slow or
+    // bot-protected real site is never wrongly rejected. We keep the fetched
+    // html/status to reuse for the dealership pre-check (no second round-trip).
+    const existence = await checkWebsiteExists(url);
+    if (!existence.exists) {
+      logger.info(`🌐 Audit gated — website does not exist / unreachable: ${url} (${existence.errorCode})`);
+      await SingleAuditReport.findByIdAndUpdate(currentAuditId, {
+        status: "failed",
+        error: `WEBSITE NOT FOUND — ${existence.reason}`,
+        score: 0,
+        grade: "F",
+        timeTaken: `${((performance.now() - start) / 1000).toFixed(0)}s`,
+      });
+      parentPort.postMessage({ success: true, reportId: currentAuditId });
+      return;
+    }
+
     // [NEW] — DEALERSHIP DETECTION GATE (runs FIRST, BEFORE the audit)
     // A fast, lightweight page fetch is classified up front. If the site is
     // definitively NOT a dealership, we record the verdict and STOP here —
     // the heavy audit (render wait, screenshot, metrics) never starts, so the
     // user never sees an audit begin and then get terminated mid-way.
+    // Reuses the html/status already fetched by the existence gate above, so the
+    // detector reads raw HTML without launching Chromium or re-fetching. If that
+    // markup was blocked/empty, detection is inconclusive and we fall through to
+    // the full-render audit below (which has proper bot-bypass handling).
     let preDetection = null;
-    {
-      let preBrowser;
-      try {
-        const { html, status, browser: pb } = await Puppeteer_Simple(url);
-        preBrowser = pb;
-        preDetection = await detectDealership({ url, $: cheerio.load(html || ""), statusCode: status });
-      } catch (gateErr) {
-        logger.warn(`[Worker] Pre-audit dealership check failed — will re-check after full load: ${gateErr.message}`);
-      } finally {
-        if (preBrowser) { try { await preBrowser.close(); } catch { } }
-      }
+    try {
+      preDetection = await detectDealership({ url, $: cheerio.load(existence.html || ""), statusCode: existence.status });
+    } catch (gateErr) {
+      logger.warn(`[Worker] Pre-audit dealership check failed — will re-check after full load: ${gateErr.message}`);
     }
     // "Inconclusive" = the quick fetch couldn't evaluate (blocked / challenge /
     // empty). We FAIL OPEN — never reject on inconclusive; fall through to the

@@ -10,6 +10,10 @@ import configService from '../services/configService.js';
 import axios from 'axios';
 import logger from '../utils/logger.js';
 
+// Escape user input before using it in a Mongo $regex to prevent regex injection
+// and catastrophic-backtracking (ReDoS). Mirrors the pattern in userController.getHistory.
+const escapeRegex = (str) => String(str).replace(/[-\\^$*+?.()|[\]{}]/g, '\\$&');
+
 export const getAllUsers = async (req, res) => {
   try {
     logger.info(`[Admin] Fetching all users... (Requested by Admin: ${req.user.userId})`);
@@ -17,9 +21,10 @@ export const getAllUsers = async (req, res) => {
 
     const query = {};
     if (search) {
+      const safe = escapeRegex(search);
       query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
+        { name: { $regex: safe, $options: 'i' } },
+        { email: { $regex: safe, $options: 'i' } },
       ];
     }
     if (role) query.role = role;
@@ -166,10 +171,10 @@ export const getAuditLogs = async (req, res) => {
     } = req.query;
 
     const query = {};
-    if (ip) query.ip = { $regex: ip, $options: 'i' };
+    if (ip) query.ip = { $regex: escapeRegex(ip), $options: 'i' };
     if (status) query.status = status;
     if (device) query.device = device;
-    if (country) query.country = { $regex: country, $options: 'i' };
+    if (country) query.country = { $regex: escapeRegex(country), $options: 'i' };
     
     if (captcha === 'true') {
       query.captchaPassed = true;
@@ -183,18 +188,19 @@ export const getAuditLogs = async (req, res) => {
     }
 
     if (search) {
+      const safe = escapeRegex(search);
       // Find matching users first
-      const matchingUsers = await User.find({ 
+      const matchingUsers = await User.find({
         $or: [
-          { name: { $regex: search, $options: 'i' } },
-          { email: { $regex: search, $options: 'i' } }
-        ] 
+          { name: { $regex: safe, $options: 'i' } },
+          { email: { $regex: safe, $options: 'i' } }
+        ]
       }).select('_id');
-      
+
       const userIds = matchingUsers.map(u => u._id);
 
       query.$or = [
-          { url: { $regex: search, $options: 'i' } },
+          { url: { $regex: safe, $options: 'i' } },
           { userId: { $in: userIds } }
       ];
     }

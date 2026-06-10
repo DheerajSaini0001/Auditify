@@ -3,16 +3,22 @@ import passport from 'passport';
 import * as authController from '../controllers/authController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import captchaValidator from '../middleware/captchaValidator.js';
+import {
+  loginLimiter,
+  passwordResetLimiter,
+  registerLimiter,
+  otpLimiter,
+} from '../middleware/rateLimiter.js';
 
 const router = express.Router();
 
-// 4.8.1 Auth endpoints
-router.post('/register', captchaValidator, authController.register);
-router.post('/verify-otp', authController.verifyOTP);
-router.post('/resend-otp', authController.resendOTP);
-router.post('/login', captchaValidator, authController.login);
-router.post('/forgot-password', captchaValidator, authController.forgotPassword);
-router.post('/reset-password', authController.resetPassword);
+// 4.8.1 Auth endpoints — each guarded by an IP-based rate limiter.
+router.post('/register', registerLimiter, captchaValidator, authController.register);
+router.post('/verify-otp', otpLimiter, authController.verifyOTP);
+router.post('/resend-otp', otpLimiter, authController.resendOTP);
+router.post('/login', loginLimiter, captchaValidator, authController.login);
+router.post('/forgot-password', passwordResetLimiter, captchaValidator, authController.forgotPassword);
+router.post('/reset-password', passwordResetLimiter, authController.resetPassword);
 
 // Google OAuth
 router.get('/google', passport.authenticate('google', { 

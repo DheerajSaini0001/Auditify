@@ -79,13 +79,17 @@ export const getActivity = async (req, res) => {
 export const updateProfile = async (req, res) => {
   try {
     const { name } = req.body;
-    
+
+    if (!name || typeof name !== 'string' || name.trim().length < 2) {
+      return res.status(400).json({ error: 'Name must be at least 2 characters', code: 'INVALID_NAME' });
+    }
+
     const user = await User.findById(req.user.userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found', code: 'USER_NOT_FOUND' });
     }
 
-    user.name = name;
+    user.name = name.trim();
     await user.save();
 
     // Log update
@@ -94,10 +98,21 @@ export const updateProfile = async (req, res) => {
       sessionId: 'N/A',
       ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress || '0.0.0.0',
       action: 'PROFILE_UPDATE',
-      metadata: { newName: name },
+      metadata: { newName: user.name },
     });
 
-    res.json({ user });
+    // Return only safe fields — never the password hash or stored OAuth tokens.
+    res.json({
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar,
+        authProvider: user.authProvider,
+        isEmailVerified: user.isEmailVerified,
+      },
+    });
   } catch (error) {
     res.status(500).json({ error: 'Internal server error', code: 'SERVER_ERROR' });
   }

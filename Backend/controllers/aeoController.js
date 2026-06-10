@@ -1,6 +1,7 @@
 import AEOService from "../metricServices/aeoService.js";
 import SingleAuditReport from "../models/singleAuditReport.js";
 import Puppeteer_Cheerio from "../utils/puppeteer_cheerio.js";
+import { validateUrlSafety } from "../utils/ssrfGuard.js";
 import logger from "../utils/logger.js";
 
 export const analyzeAEO = async (req, res) => {
@@ -9,6 +10,11 @@ export const analyzeAEO = async (req, res) => {
 
         if (!url) {
             return res.status(400).json({ error: "URL is required" });
+        }
+
+        const safety = await validateUrlSafety(url);
+        if (!safety.ok) {
+            return res.status(400).json({ error: `Invalid or Restricted URL — ${safety.reason}` });
         }
 
         // Fetch HTML using Puppeteer/Cheerio utility
@@ -28,10 +34,16 @@ export const analyzeAEO = async (req, res) => {
 
 export const getAEOReport = async (req, res) => {
     try {
+        // Fail closed: this endpoint requires authentication. Without it, the
+        // ownership filter below would be skipped and any report id would leak.
+        if (!req.user) {
+            return res.status(401).json({ error: "Authentication required" });
+        }
+
         const query = { _id: req.params.id };
-        
+
         // Non-admins can only see their own reports
-        if (req.user && req.user.role !== 'admin' && req.user.role !== 'super_admin') {
+        if (req.user.role !== 'admin' && req.user.role !== 'super_admin') {
             query.userId = req.user.userId;
         }
 
@@ -56,9 +68,19 @@ export const batchAEO = async (req, res) => {
             return res.status(400).json({ error: "Array of URLs is required" });
         }
 
+        // Cap batch size to bound resource use.
+        if (urls.length > 25) {
+            return res.status(400).json({ error: "Maximum 25 URLs per batch" });
+        }
+
         const results = [];
         for (const url of urls) {
             try {
+                const safety = await validateUrlSafety(url);
+                if (!safety.ok) {
+                    results.push({ url, error: `Restricted URL — ${safety.reason}` });
+                    continue;
+                }
                 const { browser, $ } = await Puppeteer_Cheerio(url, device);
                 const result = await AEOService.runAudit(url, $);
                 results.push(result);
@@ -82,6 +104,11 @@ export const streamAEO = async (req, res) => {
 
         if (!url) {
             return res.status(400).json({ error: "URL is required" });
+        }
+
+        const safety = await validateUrlSafety(url);
+        if (!safety.ok) {
+            return res.status(400).json({ error: `Invalid or Restricted URL — ${safety.reason}` });
         }
 
         res.setHeader('Content-Type', 'text/event-stream');

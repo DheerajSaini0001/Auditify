@@ -242,6 +242,15 @@ export const login = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Invalid email or password' });
     }
 
+    if (user.isBlocked) {
+      return res.status(403).json({
+        success: false,
+        message: user.blockReason
+          ? `Account suspended: ${user.blockReason}`
+          : 'Your account has been suspended. Please contact support.',
+      });
+    }
+
     // Update Login Stats
     user.lastLogin = new Date();
     user.lastLoginIp = req.tracking?.ip || '0.0.0.0';

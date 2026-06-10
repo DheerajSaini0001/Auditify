@@ -23,6 +23,7 @@ import { tryAuthenticate } from "./middleware/auth.js";
 import connectDB from "./config/db.js";
 import passportConfig from "./config/passport.js";
 import trackingMiddleware from "./middleware/tracking.js";
+import { globalLimiter } from "./middleware/rateLimiter.js";
 import configService from "./services/configService.js";
 import auditStore from "./utils/auditStore.js";
 
@@ -39,8 +40,14 @@ const startServer = async () => {
   await configService.initialize();
 
   const FRONTEND_URL = configService.getConfig("FRONTEND_URL", "http://localhost:5173");
-  const SESSION_SECRET = configService.getConfig("SESSION_SECRET", "secret_2026");
+  const SESSION_SECRET = configService.getConfig("SESSION_SECRET");
   const PORT = configService.getConfig("PORT", "2000");
+  const IS_PROD = process.env.NODE_ENV === "production";
+
+  // Refuse to start with a missing/guessable session secret (was hardcoded "secret_2026").
+  if (!SESSION_SECRET || SESSION_SECRET.length < 16) {
+    throw new Error("SESSION_SECRET must be set to a strong value (>= 16 chars).");
+  }
 
   // ── 3. CORS ──
   app.use(cors({
@@ -114,7 +121,7 @@ const startServer = async () => {
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: false, // production me true karna (HTTPS)
+      secure: IS_PROD, // HTTPS-only in production
       httpOnly: true,
       sameSite: "lax",
       maxAge: 24 * 60 * 60 * 1000
@@ -125,6 +132,9 @@ const startServer = async () => {
   passportConfig(passport);
   app.use(passport.initialize());
   app.use(passport.session());
+
+  // ── 8b. Global IP-based rate limit (backstop for state-changing requests) ──
+  app.use(globalLimiter);
 
   // ── 9. Routes ──
   app.use("/api/auth", authRoutes);

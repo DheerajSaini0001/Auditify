@@ -1,10 +1,30 @@
 // Site Audit AI Assistant Route
 import express from 'express';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import configService from '../services/configService.js';
+import { tryAuthenticate } from '../middleware/auth.js';
 import logger from '../utils/logger.js';
 
 const router = express.Router();
+
+// These endpoints call the paid Gemini API. Without a limit, an anonymous caller
+// can drain the API quota/billing or use the backend as a free LLM proxy.
+// tryAuthenticate is applied first so the limiter can key off the user when present.
+const aiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 40,
+    message: { error: 'Too many AI requests, please wait a few minutes.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+    // Key by user when authenticated, else by IP. The IP fallback must go through
+    // ipKeyGenerator so IPv6 clients are normalized to a /56 subnet (a raw req.ip
+    // would let an IPv6 user rotate addresses to bypass the limit).
+    keyGenerator: (req) => req.user?.userId || ipKeyGenerator(req.ip),
+});
+
+router.use(tryAuthenticate);
+router.use(aiLimiter);
 
 /**
  * Helper to call Gemini with retry logic for handling 503 (Service Unavailable)

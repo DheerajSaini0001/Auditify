@@ -5,29 +5,8 @@ import SingleAuditReport from "../models/singleAuditReport.js";
 import AuditLog from "../models/AuditLog.js";
 import discoverPages from "../utils/sitemapCrawler.js";
 import { checkWebsiteExists } from "../utils/fastFetch.js";
+import { validateUrlSafety } from "../utils/ssrfGuard.js";
 import logger from "../utils/logger.js";
-
-// validate URL and prevent SSRF
-const isValidUrl = (string) => {
-    try {
-        const url = new URL(string);
-        // Block localhost, private IPs, and non-http/https protocols
-        if (url.protocol !== "http:" && url.protocol !== "https:") return false;
-        if (
-            url.hostname === "localhost" ||
-            url.hostname === "127.0.0.1" ||
-            url.hostname === "::1" ||
-            url.hostname.startsWith("192.168.") ||
-            url.hostname.startsWith("10.") ||
-            url.hostname.startsWith("172.")
-        ) {
-            return false;
-        }
-        return true;
-    } catch (_) {
-        return false;
-    }
-};
 
 // Discover URLs from a website
 export const discoverUrls = async (req, res) => {
@@ -44,8 +23,9 @@ export const discoverUrls = async (req, res) => {
             url = "https://" + url;
         }
 
-        if (!isValidUrl(url)) {
-            return res.status(400).json({ error: "Invalid or Restricted URL" });
+        const safety = await validateUrlSafety(url);
+        if (!safety.ok) {
+            return res.status(400).json({ error: `Invalid or Restricted URL — ${safety.reason}` });
         }
 
         // EXISTENCE CHECK — hit the site before crawling. If the domain doesn't
@@ -94,6 +74,15 @@ export const auditSelectedUrls = async (req, res) => {
         // Limit to 50 URLs max
         if (selectedUrls.length > 50) {
             return res.status(400).json({ error: "Maximum 50 URLs can be audited at once" });
+        }
+
+        // SSRF guard: selectedUrls is client-supplied and bypasses discovery, so
+        // every entry must be validated before we fetch/audit it.
+        for (const pageUrl of selectedUrls) {
+            const itemSafety = await validateUrlSafety(pageUrl);
+            if (!itemSafety.ok) {
+                return res.status(400).json({ error: `Restricted URL in selection (${pageUrl}) — ${itemSafety.reason}` });
+            }
         }
 
         logger.info(`🚀 Starting audit for ${selectedUrls.length} selected URLs`);
@@ -508,8 +497,9 @@ export const discoverAndAuditUrls = async (req, res) => {
             url = "https://" + url;
         }
 
-        if (!isValidUrl(url)) {
-            return res.status(400).json({ error: "Invalid or Restricted URL" });
+        const safety = await validateUrlSafety(url);
+        if (!safety.ok) {
+            return res.status(400).json({ error: `Invalid or Restricted URL — ${safety.reason}` });
         }
 
         // EXISTENCE CHECK — hit the site before discovering/auditing. If the

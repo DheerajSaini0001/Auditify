@@ -9,7 +9,7 @@ const router = express.Router();
 
 const auditLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 Minutes
-  max: 500000, // Max 5 audits per IP per 15 mins
+  max: 20, // Each audit spawns a Chromium worker — keep this bounded to prevent DoS.
   message: { error: "Too many audit requests, Please wait 15 minutes." },
   standardHeaders: true,
   legacyHeaders: false,

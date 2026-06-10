@@ -1,26 +1,38 @@
 import jwt from 'jsonwebtoken';
 import configService from '../services/configService.js';
+import User from '../models/User.js';
 
-const verifyToken = (req, res, next) => {
+const verifyToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
   const token = authHeader && authHeader.split(' ')[1]; // 'Bearer <token>'
 
   if (!token) {
-    return res.status(401).json({ 
-      error: 'No token provided', 
-      code: 'NO_TOKEN' 
+    return res.status(401).json({
+      error: 'No token provided',
+      code: 'NO_TOKEN'
     });
   }
 
   try {
     const jwtSecret = configService.getConfig('JWT_SECRET');
     const decoded = jwt.verify(token, jwtSecret);
-    req.user = decoded; // { userId, role }
+
+    // Re-check the account against the DB so a blocked/deleted user's still-valid
+    // token is rejected, and so role changes take effect without waiting for expiry.
+    const account = await User.findById(decoded.userId).select('role isBlocked');
+    if (!account) {
+      return res.status(401).json({ error: 'Account no longer exists', code: 'NO_ACCOUNT' });
+    }
+    if (account.isBlocked) {
+      return res.status(403).json({ error: 'Account suspended', code: 'ACCOUNT_BLOCKED' });
+    }
+
+    req.user = { ...decoded, role: account.role }; // role refreshed from source of truth
     next();
   } catch (error) {
-    return res.status(401).json({ 
-      error: 'Invalid or expired token', 
-      code: 'INVALID_TOKEN' 
+    return res.status(401).json({
+      error: 'Invalid or expired token',
+      code: 'INVALID_TOKEN'
     });
   }
 };

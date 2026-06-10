@@ -85,9 +85,20 @@ export const generatePDFReport = async (req, res) => {
 
     let dynamicContent = "";
 
+    // Escape any value that ends up in the PDF HTML. Report fields derive from
+    // the scanned site's content (recommendations, causes, details) and the
+    // user-supplied URL, and the HTML is rendered by Chromium — so unescaped
+    // values are an HTML/script-injection vector.
+    const escapeHtml = (val) => String(val ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+
     const formatValue = (val) => {
-        if (typeof val === 'object' && val !== null) return JSON.stringify(val);
-        return String(val || 'N/A');
+        if (typeof val === 'object' && val !== null) return escapeHtml(JSON.stringify(val));
+        return escapeHtml(String(val || 'N/A'));
     }
 
     sections.forEach((sec, sIdx) => {
@@ -144,17 +155,17 @@ export const generatePDFReport = async (req, res) => {
                    dynamicContent += `
                    <div class="metric-detailed-card">
                        <div class="metric-detailed-header">
-                           <h3>${title}</h3>
-                           <span class="badge ${statusClass}">${status}</span>
+                           <h3>${escapeHtml(title)}</h3>
+                           <span class="badge ${statusClass}">${escapeHtml(status)}</span>
                        </div>
                        <div class="metric-detailed-body">
-                           <p style="font-size: 16px; line-height: 2;"><strong>Status Description:</strong> ${detailsStr}</p>
-                           
-                           ${cause && statusClass.includes('fail') ? `<div class="error-box mt-10"><strong>Why It Failed (Root Cause Analysis):</strong> <br/><span style="color: #991b1b; display:inline-block; margin-top: 8px;">${cause}</span></div>` : ''}
-                           
+                           <p style="font-size: 16px; line-height: 2;"><strong>Status Description:</strong> ${escapeHtml(detailsStr)}</p>
+
+                           ${cause && statusClass.includes('fail') ? `<div class="error-box mt-10"><strong>Why It Failed (Root Cause Analysis):</strong> <br/><span style="color: #991b1b; display:inline-block; margin-top: 8px;">${escapeHtml(cause)}</span></div>` : ''}
+
                            ${advancedDataHtml}
 
-                           ${recommendation ? `<div class="recommendation-box mt-10"><strong>Recommended Engineering Action:</strong> <br/><span style="color: #166534; display:inline-block; margin-top: 8px;">${recommendation}</span></div>` : ''}
+                           ${recommendation ? `<div class="recommendation-box mt-10"><strong>Recommended Engineering Action:</strong> <br/><span style="color: #166534; display:inline-block; margin-top: 8px;">${escapeHtml(recommendation)}</span></div>` : ''}
                            
                            <div style="margin-top: 30px; font-size: 14px; color: #94a3b8; border-top: 2px dashed #e2e8f0; padding-top: 15px; font-weight: bold;">
                                Recorded Metric Score: ${score}/100
@@ -174,7 +185,7 @@ export const generatePDFReport = async (req, res) => {
                     dynamicContent += `
                     <div class="metric-detailed-card">
                         <div class="metric-detailed-header">
-                            <h3>${title}</h3>
+                            <h3>${escapeHtml(title)}</h3>
                             <span class="badge status-pass">Info</span>
                         </div>
                         <div class="metric-detailed-body">
@@ -412,9 +423,9 @@ export const generatePDFReport = async (req, res) => {
         <div class="header">
             <div class="logo">Dealer Pulse.</div>
             <div class="url-info">
-                <h1>${report.url}</h1>
+                <h1>${escapeHtml(report.url)}</h1>
                 <p>Audit Date: ${new Date(report.createdAt).toLocaleDateString()}</p>
-                <p>Device: ${report.device} | Report Type: ${report.report}</p>
+                <p>Device: ${escapeHtml(report.device)} | Report Type: ${escapeHtml(report.report)}</p>
             </div>
         </div>
 
@@ -441,7 +452,7 @@ export const generatePDFReport = async (req, res) => {
             ${report.sectionScore ? report.sectionScore.map(s => `
                 <div class="section-card">
                     <div class="section-header">
-                        <span class="section-title">${s.name}</span>
+                        <span class="section-title">${escapeHtml(s.name)}</span>
                         <span class="section-score" style="color: ${s.score >= 90 ? 'var(--success)' : s.score >= 70 ? 'var(--primary)' : 'var(--danger)'}">
                             ${s.score}%
                           </span>

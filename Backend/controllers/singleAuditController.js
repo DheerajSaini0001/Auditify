@@ -6,6 +6,7 @@ import AuditLog from "../models/AuditLog.js";
 import ActivityLog from "../models/ActivityLog.js";
 import Puppeteer_Cheerio from "../utils/puppeteer_cheerio.js";
 import { checkWebsiteExists } from "../utils/fastFetch.js";
+import { validateUrlSafety } from "../utils/ssrfGuard.js";
 import auditStore from "../utils/auditStore.js";
 import logger from "../utils/logger.js";
  
@@ -21,28 +22,6 @@ const reportFieldMap = {
 
 export const startAudit = async (req, res) => {
 
-  // validate URL and prevent SSRF
-  const isValidUrl = (string) => {
-    try {
-      const url = new URL(string);
-      // Block localhost, private IPs, and non-http/https protocols
-      if (url.protocol !== "http:" && url.protocol !== "https:") return false;
-      if (
-        url.hostname === "localhost" ||
-        url.hostname === "127.0.0.1" ||
-        url.hostname === "::1" ||
-        url.hostname.startsWith("192.168.") ||
-        url.hostname.startsWith("10.") ||
-        url.hostname.startsWith("172.")
-      ) {
-        return false;
-      }
-      return true;
-    } catch (_) {
-      return false;
-    }
-  };
-
   try {
     let { url, device, report, force } = req.body;
 
@@ -55,8 +34,10 @@ export const startAudit = async (req, res) => {
       url = "https://" + url;
     }
 
-    if (!isValidUrl(url)) {
-      return res.status(400).json({ error: "Invalid or Restricted URL" });
+    // SSRF guard: resolves the host and rejects private/reserved/metadata targets.
+    const safety = await validateUrlSafety(url);
+    if (!safety.ok) {
+      return res.status(400).json({ error: `Invalid or Restricted URL — ${safety.reason}` });
     }
 
     // EXISTENCE CHECK — hit the URL up front. If the domain doesn't resolve or
@@ -485,10 +466,21 @@ export const captureScreenshot = async (req, res) => {
       return res.status(400).json({ error: "Missing url or auditId" });
     }
 
+    // SSRF guard: this endpoint drives Puppeteer against the supplied URL.
+    const safety = await validateUrlSafety(url);
+    if (!safety.ok) {
+      return res.status(400).json({ error: `Invalid or Restricted URL — ${safety.reason}` });
+    }
+
     // The report may still be in memory (not yet flushed to Mongo).
     const liveReport = auditStore.get(auditId);
     const report = liveReport || await SingleAuditReport.findById(auditId);
     if (!report) {
+      return res.status(404).json({ error: "Audit report not found" });
+    }
+
+    // Only the report owner (or an admin) may trigger a screenshot for it.
+    if (!canAccessReport(req, report)) {
       return res.status(404).json({ error: "Audit report not found" });
     }
 

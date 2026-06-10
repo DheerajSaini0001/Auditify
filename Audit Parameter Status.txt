@@ -1,0 +1,282 @@
+AUDITIFY - AUDIT PARAMETER CALCULATION STATUS
+==============================================
+Based on code verification of Backend/metricServices/ (June 2026)
+
+
+==============================================
+1. COMPLETELY CALCULATED (implemented with real measurement logic)
+==============================================
+
+TECHNICAL PERFORMANCE
+- Largest Contentful Paint (LCP) - lab + field (CrUX) data
+- Cumulative Layout Shift (CLS) - lab + field (CrUX) data
+- Interaction to Next Paint (INP) - lab + field (CrUX) data
+- First Contentful Paint (FCP) - lab + field (CrUX) data
+- Time To First Byte (TTFB) - lab + field (CrUX) data
+- Total Blocking Time (TBT)
+- Asset Compression Status (Content-Encoding header checks)
+- Asset Optimization / Resource Optimization (image sizing + minification)
+- Caching Policy (Cache-Control header checks)
+- Redirect Chains (real redirect tracing)
+- Render Blocking Resources (DOM detection of blocking CSS/JS)
+- Crawlability (robots.txt + sitemap validation)
+- Indexability (noindex meta detection)
+- Internal Linking Structure
+
+ON PAGE SEO
+- Internal Linking (count + generic anchor text detection)
+- Robots.txt / Crawl Directives
+- XML Sitemap Freshness (lastmod check)
+- FAQ Schema detection
+- Heading Hierarchy (H1-H6 structure, missing heading detection)
+- Semantic HTML (main/nav/header/footer/article/section)
+- Open Graph (og:title, og:image, og:url)
+- Twitter Card (card type)
+
+ACCESSIBILITY (axe-core + custom checks)
+- Color Contrast (WCAG)
+- Image Alt (presence)
+- Meta Viewport / Responsive Rendering
+- Focusable Content / Keyboard Reachability
+- Focus Order
+- Tab Index
+- Skip Links (existence + target resolution)
+- Interactive Element Affordance
+- Label / Form Labels
+- Button Name
+- Link Name
+- Aria Roles
+- Landmarks (header, main, footer, navigation)
+- Html Has Lang
+- List Markup
+- Heading Order
+- Aria Allowed Attr
+
+SECURITY & COMPLIANCE
+- SSL Certificate Validity (expiry calculation)
+- TLS Version (1.2+ / 1.3)
+- HSTS Header
+- SQLi Exposure (payload injection + error pattern + blind detection)
+- Cross-Site Scripting (XSS) checks (payload reflection + alert monitoring)
+- Google Safe Browsing (real API)
+- Blacklist / Domain Reputation (Safe Browsing + VirusTotal)
+- Malware Scan (VirusTotal API)
+- Weak Default Credentials (active login testing)
+- Admin Panel Public Exposure (13 common paths probed)
+- Forms Use HTTPS
+- CSP header
+- X-Frame-Options header
+- X-Content-Type-Options header
+- Cookies Secure flag
+- Cookies HttpOnly flag
+- Cookie Consent (tracking detection + banner detection)
+- GDPR / CCPA (keyword + compliance widget detection)
+- Privacy Policy (visible link detection)
+- Data Collection Transparency
+
+UX & CONTENT
+- Text Readability (Flesch Reading Ease, syllable counting, page-type aware)
+- UX Content Hierarchy Clarity (H1 count + heading progression)
+- Section Labeling Clarity
+- Content Density Balance / Scannability (device-aware)
+- Navigation Discoverability (nav, hamburger, search detection)
+- Breadcrumbs (nav element or BreadcrumbList schema)
+- In-Page Navigation (anchor links, back-to-top)
+- Page-to-Page Flow (footer, internal links, CTAs)
+- Interactive Click Feedback (hover/active/focus style comparison)
+- Broken Links (internal + external, real HTTP checks)
+- Loading Feedback (spinners, skeleton loaders)
+- Above-the-Fold Content (weighted element scoring)
+- Sticky Header Usage (device-specific height limits)
+- Intrusive Interstitials / Pop-Up Assessment
+- Layout Consistency (flex/grid/container detection)
+- SSL Indicators
+
+CONVERSION & LEAD FLOW
+- CTA Presence / Visibility
+- CTA Clarity / Messaging (clear verb matching)
+- CTA Crowding / Focus
+- Submit Button Clarity / Action-Based Text
+- Link Relevance / Intent Matching
+- Form Presence
+- Lead Magnets (downloadables, guides)
+- Incentives Displayed (offers, promotions)
+- Form Length / Field Optimization
+- Testimonials
+- Reviews / Rating Visibility
+- Trust Badges (context-aware)
+- Client Logos / Partner Logos
+- Case Studies / Success Stories
+- Required vs Optional Fields
+- Inline Validation / Real-Time Feedback
+- Friendly Error Handling
+- Microcopy Clarity
+- MultiStep Form Progress / Progress Indicators
+
+AIO / AEO / GEO
+- Gemini / ChatGPT / Perplexity platform scoring (weighted signal matrix)
+- AI Bot Access (GPTBot, PerplexityBot, Google-Extended in robots.txt)
+- FAQ & HowTo Schema (recursive JSON-LD parsing)
+- Markdown Structure / AI-Friendly Formatting (heading hierarchy)
+- llms.txt Presence
+- Data Table Density (tables, lists, data-stuck-in-images flag)
+- Citations & Sources / Source Attribution
+- Structured Data (JSON-LD type extraction + variety scoring)
+- Duplicate Content Detection (canonical + noindex)
+- Internal Linking AI-Friendly (descriptive anchor text)
+- Content Updated Regularly / Freshness Signals (meta, JSON-LD, time tags)
+- Content NLP-Friendly
+- Keywords/Entities Annotated (meta keywords, headings, alt text)
+- Topical Focus Clarity (title/H1 alignment)
+- Terminology Consistency
+- Content Completeness (word count + intro/conclusion)
+- Answer-Oriented Structure / Direct Answers (Q&A extraction)
+- Content Chunking / Short Sections
+- Lists & Structured Blocks (bullets, tables)
+- Author Source Attribution
+- Fact vs Opinion (citation evidence)
+
+
+==============================================
+2. PARTIALLY CALCULATED (check exists but heuristic / incomplete)
+==============================================
+
+TECHNICAL PERFORMANCE
+- Mobile Usability - only viewport meta check; no tap-target or responsive design validation
+- PageSpeed Score - custom weighted score computed, official Lighthouse score not extracted
+- Rendering Performance - layout jank only as cause analysis; lazy-loading check superficial
+- Mobile Load Speed - derived from Speed Index, no dedicated mobile metric
+- Third-Party Script Optimization - presence detected, async/defer status not extracted
+- Lazy Loading Implementation - checked for videos only, not images
+- JavaScript Execution Efficiency - bootup-time/mainthread only as cause analysis
+- Site Architecture - link counts + URL depth only; no internal link graph
+
+ON PAGE SEO
+- Title Tag - length check (30-60 chars) only; no keyword/location/uniqueness analysis
+- H1 Tag - existence/count only; no keyword or location relevance
+- Meta Description - length check (50-160 chars) only; no CTR/uniqueness analysis
+- Content Freshness - only via AEO module, not in SEO scoring
+- Related Content Linking - in-content vs nav links detected; no semantic relatedness
+- Canonical Tag - presence/self-reference only; no pagination/duplicate logic
+- XML Sitemap - structure + freshness only; no coverage or Search Console data
+- Structured Data - JSON-LD presence by @type; no type-specific validation
+- URL Structure / Logical Hierarchy / Readability / Length - basic format checks only
+- Image Optimization / Image Compression - alt text + file size only; no WebP/AVIF/srcset
+- Lazy Loading (images) - video-only check
+- Semantic Structure / Content Sections / Article Markup - basic tag presence scoring
+- OG Description - extracted but not scored
+- Twitter Card Metadata Completeness
+- Social Profiles - link counting only; no sameAs validation
+
+ACCESSIBILITY
+- Descriptive Alt Text - presence checked, descriptiveness not analyzed
+- Decorative Image Handling - relies entirely on axe-core defaults
+- Document Title - presence only, uniqueness across pages not checked
+
+SECURITY & COMPLIANCE
+- HTTPS / Site-wide HTTPS - target URL protocol only; no mixed content check
+- MFA Enabled - heuristic keyword/SSO detection; enforcement not validated
+- Third-Party Cookies - detected but disclosure not verified
+
+UX & CONTENT
+- Table of Contents - anchor/back-to-top detection only, not a real TOC check
+- Mobile Usability - indirect via device-aware metrics; no touch-target validation
+- Mobile Experience / Responsive Layout - flex/grid pattern check only
+
+CONVERSION & LEAD FLOW
+- CTA Flow Alignment / Funnel Placement - simple position-ratio check, no real flow context
+
+AIO / AEO / GEO
+- Search Index Status / Crawl Status - robots.txt + noindex only; no real index coverage data
+- llms.txt Validity - length check only, format not validated
+- Entity Schema - presence detected, no entity-type validation (Organization/Product/LocalBusiness)
+- Topic Relationships - descriptive anchors only, no topic mapping
+- Entity Recognition - meta keyword/alt heuristic, no real entity analysis
+- Topic Depth - title/H1 alignment only, no depth measurement
+- Author Profiles - byline detection only, no profile validation
+- Trust Signals - citations covered, transparency not specifically checked
+
+
+==============================================
+3. NOT CALCULATED (no implementation found)
+==============================================
+
+TECHNICAL PERFORMANCE
+- First Input Delay (FID)
+- Inventory Feed Speed
+- CDN Usage detection
+- Pagination Handling (rel=next/prev)
+
+ON PAGE SEO
+- Title/H1/Meta keyword optimization, location optimization, uniqueness
+- Content Depth
+- Content Uniqueness (cross-site duplication)
+- Inventory Content Quality (VDP extraction)
+- Service Content Quality (service page crawl)
+- Local Relevance
+- VDP Descriptions (100+ words per VIN)
+- OEM Compliance
+- Topic Clustering
+- Duplicate Content Prevention / Pagination Canonicals
+- Blocked Resources Check
+- Sitemap Coverage / Search Console Submission
+- Organization / LocalBusiness / Product / Offer / Vehicle / Breadcrumb schema validation
+- Folder Organization / URL Slug Keyword Usage
+- Next-Gen Image Formats (WebP/AVIF)
+- Image File Naming
+- Link Profile (backlink quality, diversity, relevance)
+- sameAs Implementation / Profile Consistency
+- E-E-A-T Signals (author profiles, credentials, expert content, About Us, contact info)
+- LOCAL SEO SIGNALS - ALL MISSING:
+  - NAP Consistency
+  - Google Business Profile
+  - Local Landing Pages
+  - Local Keyword Usage
+  - Location Page Completeness
+  - Review Signals (Google / DealerRater)
+  - Location Targeting
+  - LocalBusiness Schema validation
+
+ACCESSIBILITY
+- Keyboard Navigation (full-site traversal test)
+- Unique Titles (cross-page)
+- WCAG 2.1 AA Compliance (unified aggregate score)
+
+SECURITY & COMPLIANCE
+- Mixed Content detection
+- CRM Integration / Lead Transfer Validation
+- Finance Form Security / Secure Credit Application
+- FTC / Industry Compliance
+- GA4 Installed
+- GTM Configuration
+- Conversion Tracking (form tracking, call tracking)
+
+UX & CONTENT
+- Site Search / Search Functionality
+- Inventory Filtering / Faceted Search Quality
+- No Results UX / Alternative Suggestions
+- Thumb Reachability
+- Touch Targets
+- Certifications & Awards
+- Pricing Transparency / Fee Visibility
+- Vehicle History Reports (CARFAX / Autocheck)
+- Staff Profiles / Team Pages
+
+CONVERSION & LEAD FLOW
+- Trade-In Flows / Trade-In Estimator
+- Financing Flows / Pre-Approval Process
+- Appointment Booking (Test Drive, Service Scheduling)
+- Finance Calculator / Payment Estimator
+- Thank You Pages
+- Chat Experiences (Live Chat, Chatbot)
+- Click-to-Call (tel: link detection)
+
+AIO / AEO / GEO
+- Index Coverage (real Search Console data)
+- Knowledge Graph Presence / Entity Recognition
+- Brand Entity Strength
+- Citation Consistency (NAP / Brand Consistency)
+- Topical Authority (Industry / Local Authority)
+- Experience Signals (first-hand expertise)
+- Expertise Signals (credentials)
+- Authority Signals (mentions / backlinks)

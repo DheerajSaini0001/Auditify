@@ -1079,7 +1079,7 @@ async function checkFormsUseHTTPS(page) {
 }
 
 // Weak Default Credentials
-async function checkWeakDefaultCredentials(page) {
+async function checkWeakDefaultCredentials(page, browser) {
   // 1. Passive Scan: Check page text for explicit mentions
   const pageText = await page.evaluate(() => document.body.innerText.toLowerCase());
   const explicitIndicators = [
@@ -1134,24 +1134,32 @@ async function checkWeakDefaultCredentials(page) {
   // We only test the first set to avoid account lockouts or excessive requests in this compliance check
   const cred = credentials[0];
 
+  // The active scan SUBMITS the login form, which navigates the page. Run it on an
+  // ISOLATED tab (browser.newPage) — never the shared audit page — so it can't
+  // destroy the execution context that UX/SEO/Accessibility read concurrently in
+  // the full "All" audit. (checkXSS uses the same own-page pattern.)
+  let scanPage = null;
   try {
+    scanPage = await browser.newPage();
+    await scanPage.goto(page.url(), { waitUntil: "domcontentloaded", timeout: 30000 });
+
     // Attempt to fill likely username/password fields
-    const userField = await page.$("input[type='text'], input[type='email'], input[name*='user'], input[name*='login']");
-    const passField = await page.$("input[type='password']");
-    const submitBtn = await page.$("button[type='submit'], input[type='submit']");
+    const userField = await scanPage.$("input[type='text'], input[type='email'], input[name*='user'], input[name*='login']");
+    const passField = await scanPage.$("input[type='password']");
+    const submitBtn = await scanPage.$("button[type='submit'], input[type='submit']");
 
     if (userField && passField && submitBtn) {
       await userField.type(cred.u);
       await passField.type(cred.p);
 
       // Wait for navigation or failure message
-      const navigationPromise = page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 5000 }).catch(() => null);
+      const navigationPromise = scanPage.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 5000 }).catch(() => null);
       await submitBtn.click();
       await navigationPromise;
 
       // Check for success indicators (URL change, "dashboard", "welcome", logout button)
-      const newUrl = page.url();
-      const newText = await page.evaluate(() => document.body.innerText.toLowerCase());
+      const newUrl = scanPage.url();
+      const newText = await scanPage.evaluate(() => document.body.innerText.toLowerCase());
 
       const successKeywords = ["dashboard", "welcome", "logout", "sign out", "my account"];
       const isSuccess = successKeywords.some(k => newText.includes(k)) && !newText.includes("invalid") && !newText.includes("incorrect");
@@ -1175,6 +1183,8 @@ async function checkWeakDefaultCredentials(page) {
     }
   } catch (e) {
     // Ignore active check errors (e.g. selectors not found during interaction)
+  } finally {
+    if (scanPage) { try { await scanPage.close(); } catch {} }
   }
 
   return {
@@ -1381,7 +1391,7 @@ export default async function securityCompliance(url, page, response, browser) {
   const dataCollectionResult = await checkDataCollection(page);
 
   const formsUseHTTPSResult = await checkFormsUseHTTPS(page);
-  const weakDefaultCredsResult = await checkWeakDefaultCredentials(page);
+  const weakDefaultCredsResult = await checkWeakDefaultCredentials(page, browser);
   const mfaEnabledResult = await checkMFAEnabled(page);
   const adminPanelPublicResult = await checkAdminPanelPublic(url);
 

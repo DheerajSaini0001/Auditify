@@ -1,15 +1,17 @@
 // Admin Authentication Middleware
-// This is a placeholder as full auth is wasn't specified in the immediate scope but required by SRS.
-// In production, this should verify JWT or session tokens.
+//
+// DEPRECATED: this was a placeholder that called next() unconditionally — i.e. it
+// authorized EVERY request. It is not wired into any route (admin routes use
+// verifyToken + checkRole('admin') from ./auth.js). It now fails closed so that
+// if it is ever mistakenly mounted, it denies access instead of silently allowing it.
+//
+// Use { verifyToken, checkRole } from './auth.js' for real admin protection.
 
 const adminAuth = (req, res, next) => {
-    // For now, in dev we can bypass or check a header
-    // const adminKey = req.headers['x-admin-key'];
-    // if (adminKey === process.env.ADMIN_SECRET) return next();
-    
-    // As a placeholder, let's assume all requests to admin routes are authorized for now
-    // or you could check for a specific header.
-    next();
+    return res.status(501).json({
+        error: 'adminAuth is deprecated. Use verifyToken + checkRole("admin") instead.',
+        code: 'ADMIN_AUTH_DISABLED',
+    });
 };
 
 export default adminAuth;

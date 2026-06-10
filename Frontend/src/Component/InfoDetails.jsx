@@ -59,6 +59,75 @@ export const InfoDetails = {
             "Reduce DOM size (< 1500 nodes)"
         ]
     },
+    FID: {
+        title: "First Input Delay (FID)",
+        whatThisParameterIs: "FID (First Input Delay) measures how long real users wait between their FIRST interaction (click, tap, key press) and the moment the browser actually starts handling it.",
+        whatItCalculates: "For Lab data, we use Lighthouse 'max-potential-fid' (Max Potential FID) — the duration of the longest main-thread task, i.e. the worst-case delay a user's first input could face. For Field data, we use the 75th percentile of CrUX 'FIRST_INPUT_DELAY_MS' when Google still reports it (FID was replaced by INP in 2024, so field data is rare and the card usually shows the lab value).",
+        whyItMatters: "The first click is the user's first impression of how responsive your site is. If that very first tap feels dead for even a fraction of a second, visitors assume the site is broken or slow.",
+        thresholds: {
+            good: "≤ 100ms (Field) / ≤ 130ms (Lab)",
+            needsImprovement: "100–300ms (Field) / 130–250ms (Lab)",
+            poor: "> 300ms (Field) / > 250ms (Lab)"
+        },
+        actualReasonsForFailure: [
+            "Long Tasks (>50ms) blocking the main thread during load",
+            "Heavy JavaScript execution while the page is still booting",
+            "Third-party scripts occupying the main thread",
+            "Large bundles parsed/compiled before first interaction"
+        ],
+        howToOvercomeFailure: [
+            "Break up long JavaScript tasks to yield to the main thread",
+            "Defer or lazy-load non-critical JavaScript",
+            "Reduce initial JS payload with code-splitting",
+            "Move heavy work to Web Workers"
+        ]
+    },
+    Inventory_Load_Time: {
+        title: "Inventory Page Load Time",
+        whatThisParameterIs: "Measures how long your vehicle inventory page (the page shoppers browse to see your cars) takes to FULLY load — from opening the page until the browser fires window.onload.",
+        whatItCalculates: "We discover your inventory page automatically — first from your sitemap.xml (e.g. /new-inventory, /used-inventory, /vehicles-for-sale), or by crawling homepage links when no sitemap exists. We then open it in a real browser, start a timer, wait for window.onload and report the elapsed time.",
+        whyItMatters: "The inventory page is where buying decisions happen. Shoppers comparing dealerships abandon listing pages that take too long to show vehicles — every extra second directly costs leads.",
+        thresholds: {
+            good: "≤ 4s",
+            needsImprovement: "4s – 8s",
+            poor: "> 8s"
+        },
+        actualReasonsForFailure: [
+            "Dozens of full-size vehicle photos loading at once",
+            "Slow inventory/listing API responses",
+            "Heavy third-party widgets (chat, trade-in, financing) on the listings page",
+            "No lazy loading or pagination for vehicle listings"
+        ],
+        howToOvercomeFailure: [
+            "Lazy-load vehicle images below the fold",
+            "Paginate or infinite-scroll listings instead of rendering all vehicles at once",
+            "Compress photos and serve next-gen formats (WebP/AVIF)",
+            "Defer chat/trade-in/financing widgets until after load"
+        ]
+    },
+    Service_Load_Time: {
+        title: "Service Page Load Time",
+        whatThisParameterIs: "Measures how long your service department page (where customers book maintenance and repairs) takes to FULLY load — from opening the page until the browser fires window.onload.",
+        whatItCalculates: "We discover your service page automatically — first from your sitemap.xml (e.g. /service, /service-center, /schedule-service), or by crawling homepage links when no sitemap exists. We then open it in a real browser, start a timer, wait for window.onload and report the elapsed time.",
+        whyItMatters: "Service drives repeat revenue. Customers scheduling maintenance abandon slow pages — and a sluggish service/booking page sends them to call (or to a competitor) instead of booking online.",
+        thresholds: {
+            good: "≤ 4s",
+            needsImprovement: "4s – 8s",
+            poor: "> 8s"
+        },
+        actualReasonsForFailure: [
+            "Heavy third-party scheduling/booking widgets",
+            "Embedded maps and large hero images loading up front",
+            "Slow service-appointment API responses",
+            "No lazy loading for below-the-fold content"
+        ],
+        howToOvercomeFailure: [
+            "Defer the scheduling/booking widget until after load",
+            "Lazy-load maps and below-the-fold images",
+            "Compress photos and serve next-gen formats (WebP/AVIF)",
+            "Minimize and defer non-critical third-party service scripts"
+        ]
+    },
     CLS: {
         title: "Cumulative Layout Shift (CLS)",
         whatThisParameterIs: "CLS (Cumulative Layout Shift) measures how much the page content jumps around while loading. A stable page prevents accidental clicks and frustration.",
@@ -412,9 +481,12 @@ export const InfoDetails = {
             { param: "Cumulative Layout Shift (CLS)", weight: "15%" },
             { param: "First Contentful Paint (FCP)", weight: "6%" },
             { param: "Time to First Byte (TTFB)", weight: "8%" },
-            { param: "Total Blocking Time (TBT)", weight: "8%" },
-            { param: "Speed Index (SI)", weight: "8%" },
-            { param: "Asset Optimization (Compression, Caching, etc.)", weight: "25%" }
+            { param: "Total Blocking Time (TBT)", weight: "8% (6% when FID is available)" },
+            { param: "Speed Index (SI)", weight: "8% (6% when FID is available)" },
+            { param: "First Input Delay (FID)", weight: "4% (field data when available, otherwise lab Max Potential FID)" },
+            { param: "Inventory Page Load Time", weight: "5% (when an inventory page is found)" },
+            { param: "Service Page Load Time", weight: "5% (when a service page is found)" },
+            { param: "Asset Optimization (Compression, Caching, etc.)", weight: "25% (−5% per timed page found)" }
         ]
     },
 

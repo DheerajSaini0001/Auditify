@@ -22,6 +22,8 @@ const StatusSummary = ({ tech, className = "gap-4" }) => {
     checkStatus(tech?.TBT?.lab?.status);
     checkStatus(tech?.INP?.lab?.status);
     checkStatus(tech?.INP?.crux?.status);
+    checkStatus(tech?.FID?.lab?.status);
+    checkStatus(tech?.FID?.crux?.status);
     checkStatus(tech?.FCP?.lab?.status);
     checkStatus(tech?.FCP?.crux?.status);
     checkStatus(tech?.SI?.lab?.status);
@@ -36,6 +38,8 @@ const StatusSummary = ({ tech, className = "gap-4" }) => {
     checkStatus(tech?.Render_Blocking?.status);
     checkStatus(tech?.Resource_Optimization?.status);
     checkStatus(tech?.Redirect_Chains?.status);
+    checkStatus(tech?.Inventory_Load_Time?.status);
+    checkStatus(tech?.Service_Load_Time?.status);
 
     return (
         <div className={`flex items-center ${className}`}>

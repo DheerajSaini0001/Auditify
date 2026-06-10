@@ -1,4 +1,6 @@
 import googleAPI from "../utils/googleAPI.js";
+import fetch from "node-fetch";
+import * as cheerio from "cheerio";
 
 function calculateScore(observed, good, poor) {
   if (observed <= good) return 100;
@@ -513,6 +515,124 @@ const evaluateINPCrux = (audits, cruxMetrics) => {
     analysis: fieldStatus === "pass" ? null : {
       cause: causes[0] || "Input delay on real-world devices",
       recommendation: recommendations[0] || "Optimize event handlers and avoid blocking main thread."
+    }
+  };
+};
+
+// FID - First Input Delay
+// Lab variant: Lighthouse's "max-potential-fid" (Max Potential FID) — the duration of
+// the longest task, i.e. the worst-case input delay a user could hit. This audit is
+// still shipped in every PageSpeed response, so it's what keeps the FID card visible
+// now that Google has removed real-user FID from CrUX (INP replaced it, Sept 2024).
+const evaluateFIDLab = (audits) => {
+  const fidAudit = audits["max-potential-fid"];
+  if (!fidAudit || fidAudit.numericValue == null) return null;
+
+  const labValue = parseFloat(fidAudit.numericValue.toFixed(0));
+  const labScore = calculateScore(labValue, 130, 250);
+  const labStatus = calculateStatus(labValue, 130, 250);
+
+  const causes = [];
+  const recommendations = [];
+
+  if (labStatus !== "pass") {
+    // Check Long Tasks
+    const longTasks = audits["long-tasks"]?.details?.items || [];
+    if (longTasks.length > 0) {
+      causes.push("Long Tasks keeping the main thread busy at first input");
+      recommendations.push("Break up long JavaScript tasks so the browser can respond to the first interaction.");
+    }
+
+    // Check JS Bootup Time
+    const bootup = audits["bootup-time"]?.numericValue || 0;
+    if (bootup > 1000) {
+      causes.push("Heavy JavaScript execution during page load");
+      recommendations.push("Reduce and defer JavaScript so the page becomes interactive sooner.");
+    }
+
+    // Check Third Party
+    const thirdParty = audits["third-party-summary"]?.details?.items || [];
+    if (thirdParty.length > 0) {
+      causes.push("Third-party scripts occupying the main thread");
+      recommendations.push("Audit and defer non-essential third-party scripts.");
+    }
+
+    if (causes.length === 0) {
+      causes.push("A long main-thread task could delay the first interaction");
+      recommendations.push("Minimize main-thread work and split long tasks.");
+    }
+  }
+
+  return {
+    score: labScore,
+    status: labStatus,
+    details: labStatus === "pass" ? "Worst-case first input delay is low." : `A user's first input could be delayed up to ${labValue}ms.`,
+    meta: {
+      value: labValue + "ms",
+      maxPotential: true,
+      thresholds: { Good: "0-130ms", Warning: "130-250ms", Poor: "250ms+" }
+    },
+    analysis: labStatus === "pass" ? null : {
+      cause: causes[0] || "A long main-thread task could delay the first interaction",
+      recommendation: recommendations[0] || "Minimize main-thread work and split long tasks."
+    }
+  };
+};
+
+// Field variant: real-user FID from CrUX. Google removed FIRST_INPUT_DELAY_MS from
+// CrUX in Sept 2024 (INP replaced it), so most current responses omit it — we return
+// null then and the card falls back to the lab value above.
+const evaluateFIDCrux = (audits, cruxMetrics) => {
+  const fieldValue = cruxMetrics["FIRST_INPUT_DELAY_MS"]?.percentile || null;
+
+  if (fieldValue === null) return null;
+
+  const fieldStatus = calculateStatus(fieldValue, 100, 300);
+  const fieldScore = calculateScore(fieldValue, 100, 300);
+
+  const causes = [];
+  const recommendations = [];
+
+  if (fieldStatus !== "pass") {
+    // Check Long Tasks
+    const longTasks = audits["long-tasks"]?.details?.items || [];
+    if (longTasks.length > 0) {
+      causes.push("Long Tasks keeping the main thread busy at first input");
+      recommendations.push("Break up long JavaScript tasks so the browser can respond to the first interaction.");
+    }
+
+    // Check JS Bootup Time
+    const bootup = audits["bootup-time"]?.numericValue || 0;
+    if (bootup > 1000) {
+      causes.push("Heavy JavaScript execution during page load");
+      recommendations.push("Reduce and defer JavaScript so the page becomes interactive sooner.");
+    }
+
+    // Check Third Party
+    const thirdParty = audits["third-party-summary"]?.details?.items || [];
+    if (thirdParty.length > 0) {
+      causes.push("Third-party scripts occupying the main thread");
+      recommendations.push("Audit and defer non-essential third-party scripts.");
+    }
+
+    if (causes.length === 0) {
+      causes.push("Main thread busy when real users first interact");
+      recommendations.push("Minimize main-thread work and split long tasks.");
+    }
+  }
+
+  return {
+    score: fieldScore,
+    status: fieldStatus,
+    details: fieldStatus === "pass" ? "Real users get a fast response to their first interaction." : `Real users wait ${fieldValue}ms before their first input is handled.`,
+    meta: {
+      value: fieldValue + "ms",
+      p75: true,
+      thresholds: { Good: "0-100ms", Warning: "100-300ms", Poor: "300ms+" }
+    },
+    analysis: fieldStatus === "pass" ? null : {
+      cause: causes[0] || "Main thread busy when real users first interact",
+      recommendation: recommendations[0] || "Minimize main-thread work and split long tasks."
     }
   };
 };
@@ -1062,10 +1182,239 @@ const evaluateRedirectChains = (response) => {
   };
 };
 
+// ───────────────── Timed Page Load (Inventory / Service pages) ─────────────────
+// Dealership-specific checks: find a key page (vehicle inventory listing, or the
+// service department page), open it in its OWN browser tab (never the shared audit
+// page) and time it from navigation start until window.onload fires.
+// Discovery order: sitemap.xml (incl. sitemap indexes) → links crawled from the
+// already-rendered homepage. The same machinery drives every timed-page metric;
+// only the path-ranking function and the display copy differ.
+
+const TIMED_PAGE_NAV_TIMEOUT_MS = 45000;
+
+const fetchTextWithTimeout = async (target, timeoutMs = 10000) => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(target, {
+      signal: controller.signal,
+      redirect: "follow",
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      },
+    });
+    if (!res.ok) return null;
+    return await res.text();
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+};
+
+// Rank how strongly a path looks like an inventory listing page.
+// 3 = used/pre-owned inventory (preferred), 2 = new inventory, 1 = generic inventory.
+const rankInventoryPath = (pathname) => {
+  const p = pathname.toLowerCase();
+  if (/\.(pdf|jpe?g|png|gif|webp|svg|css|js)$/.test(p)) return 0;
+  if (/(used|pre[-_]?owned|certified)[-_]?(inventory|vehicles|cars)/.test(p) || p.includes("searchused") || /\/used\/?$/.test(p)) return 3;
+  if (/new[-_]?(inventory|vehicles|cars)/.test(p) || p.includes("searchnew") || /\/new\/?$/.test(p)) return 2;
+  if (p.includes("vehicles-for-sale") || p.includes("cars-for-sale") || p.includes("inventory") ||
+    p.includes("vehiclesearchresults") || /\/srp\b/.test(p) || /\/(all[-_]?)?vehicles\/?$/.test(p) || p.includes("showroom")) return 1;
+  return 0;
+};
+
+// Rank how strongly a path looks like the service department page.
+// 3 = schedule/appointment, 2 = main service page, 1 = service-adjacent (specials/parts/maintenance).
+// "customer-service" is support, NOT auto service — explicitly excluded.
+const rankServicePath = (pathname) => {
+  const p = pathname.toLowerCase();
+  if (/\.(pdf|jpe?g|png|gif|webp|svg|css|js)$/.test(p)) return 0;
+  if (p.includes("customer-service") || p.includes("customerservice")) return 0;
+  if (p.includes("schedule-service") || p.includes("scheduleservice") || p.includes("service-appointment") ||
+    p.includes("serviceappointment") || p.includes("book-service") || p.includes("schedule-appointment")) return 3;
+  if (/\/service[-_]?(center|department|dept)/.test(p) || p.includes("auto-service") || p.includes("car-service") ||
+    p.includes("vehicle-service") || p.includes("service-and-parts") || /\/service\/?$/.test(p)) return 2;
+  if (p.includes("service") || p.includes("maintenance") || /\/parts\/?$/.test(p)) return 1;
+  return 0;
+};
+
+// Choose the highest-ranked URL on the audited host using `rankPath`. Among equal
+// ranks the SHORTEST url wins — landing pages are short, detail pages are long slugs.
+const pickUrlByRank = (urls, origin, rankPath) => {
+  let baseHost;
+  try { baseHost = new URL(origin).hostname.replace(/^www\./, ""); } catch { return null; }
+  let best = null;
+  let bestRank = 0;
+  for (const raw of urls) {
+    let u;
+    try { u = new URL(raw, origin); } catch { continue; }
+    if (u.hostname.replace(/^www\./, "") !== baseHost) continue;
+    const rank = rankPath(u.pathname);
+    if (rank === 0) continue;
+    if (rank > bestRank || (rank === bestRank && best && u.href.length < best.href.length)) {
+      best = u;
+      bestRank = rank;
+    }
+  }
+  return best ? best.href : null;
+};
+
+const extractSitemapLocs = (xml) =>
+  [...xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/gi)].map((m) => m[1]);
+
+// Strategy 1 — sitemap.xml (handles both plain sitemaps and sitemap indexes).
+// `childHint` prioritizes which child sitemaps to scan first for this page type.
+const findUrlFromSitemap = async (origin, rankPath, childHint) => {
+  const xml = await fetchTextWithTimeout(`${origin}/sitemap.xml`);
+  if (!xml) return null;
+  const locs = extractSitemapLocs(xml);
+  if (!locs.length) return null;
+
+  const direct = pickUrlByRank(locs.filter((u) => !/\.xml(\?|$)/i.test(u)), origin, rankPath);
+  if (direct) return direct;
+
+  // Sitemap index: scan a few child sitemaps — page-like names first (landing
+  // pages usually live there), then type-named ones, then the rest.
+  const childScore = (s) => (/page|misc|static|site|general/i.test(s) ? 0 : childHint.test(s) ? 1 : 2);
+  const children = locs
+    .filter((u) => /\.xml(\?|$)/i.test(u))
+    .sort((a, b) => childScore(a) - childScore(b))
+    .slice(0, 4);
+
+  for (const child of children) {
+    const childXml = await fetchTextWithTimeout(child);
+    if (!childXml) continue;
+    const found = pickUrlByRank(
+      extractSitemapLocs(childXml).filter((u) => !/\.xml(\?|$)/i.test(u)),
+      origin,
+      rankPath
+    );
+    if (found) return found;
+  }
+  return null;
+};
+
+// Strategy 2 — anchor links from the already-rendered homepage. Reading the live
+// page is wrapped in try/catch (it may have detached); falls back to re-fetching
+// the HTML over plain HTTP and parsing it with cheerio.
+const findUrlFromHomepage = async (url, page, rankPath) => {
+  let hrefs = [];
+  try {
+    hrefs = await page.evaluate(() =>
+      Array.from(document.querySelectorAll("a[href]")).map((a) => a.href)
+    );
+  } catch {
+    const html = await fetchTextWithTimeout(url, 15000);
+    if (!html) return null;
+    const $ = cheerio.load(html);
+    $("a[href]").each((_, el) => hrefs.push($(el).attr("href")));
+  }
+  return pickUrlByRank(hrefs, new URL(url).origin, rankPath);
+};
+
+// Generic timed-page-load metric. `cfg` carries the page-type specifics:
+//   { rankPath, childHint, noun, timeoutCause, slowCause, recommendation }
+const measureTimedPageLoad = async ({ url, device, page, browser }, cfg) => {
+  try {
+    const origin = new URL(url).origin;
+    let discoveredVia = "sitemap";
+    let targetUrl = await findUrlFromSitemap(origin, cfg.rankPath, cfg.childHint);
+    if (!targetUrl) {
+      discoveredVia = "crawl";
+      targetUrl = await findUrlFromHomepage(url, page, cfg.rankPath);
+    }
+    if (!targetUrl) return null; // page not found — metric hidden & unscored
+
+    // Time the page in a dedicated tab so the shared audit page that the other
+    // metric services are using in parallel is never touched.
+    const isMobile = String(device || "mobile").toLowerCase() !== "desktop";
+    const tab = await browser.newPage(
+      isMobile
+        ? {
+          viewport: { width: 390, height: 844 },
+          userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1",
+          isMobile: true,
+          hasTouch: true,
+        }
+        : { viewport: { width: 1366, height: 768 } }
+    );
+
+    let loadMs;
+    let timedOut = false;
+    try {
+      const t0 = Date.now();
+      // waitUntil "load" resolves exactly when window.onload fires.
+      await tab.goto(targetUrl, { waitUntil: "load", timeout: TIMED_PAGE_NAV_TIMEOUT_MS });
+      loadMs = Date.now() - t0;
+    } catch {
+      timedOut = true;
+      loadMs = TIMED_PAGE_NAV_TIMEOUT_MS;
+    } finally {
+      try { await tab.close(); } catch { }
+    }
+
+    const seconds = parseFloat((loadMs / 1000).toFixed(1));
+    const score = timedOut ? 0 : calculateScore(loadMs, 4000, 8000);
+    const status = timedOut ? "fail" : calculateStatus(loadMs, 4000, 8000);
+
+    return {
+      score,
+      status,
+      details: timedOut
+        ? `${cfg.noun} did not finish loading within ${TIMED_PAGE_NAV_TIMEOUT_MS / 1000}s.`
+        : status === "pass"
+          ? `${cfg.noun} fully loaded in ${seconds}s.`
+          : `${cfg.noun} took ${seconds}s to fully load.`,
+      meta: {
+        value: seconds + "s",
+        pageUrl: targetUrl,
+        discoveredVia,
+        waitedFor: "window.onload",
+        thresholds: { Good: "0-4s", Warning: "4-8s", Poor: "8s+" },
+      },
+      analysis: status === "pass" ? null : {
+        cause: timedOut ? cfg.timeoutCause : cfg.slowCause,
+        recommendation: cfg.recommendation,
+      },
+    };
+  } catch {
+    return null; // these extra checks must never break the Technical section
+  }
+};
+
+const evaluateInventoryLoad = (url, device, page, browser) =>
+  measureTimedPageLoad({ url, device, page, browser }, {
+    rankPath: rankInventoryPath,
+    childHint: /inventory|vehicle|car/i,
+    noun: "Inventory page",
+    timeoutCause: "The inventory page never fired window.onload — likely very heavy listing images/scripts or a hanging third-party request.",
+    slowCause: "Heavy vehicle images, large scripts or slow listing requests delaying full load of the inventory page.",
+    recommendation: "Lazy-load listing photos, paginate results and defer non-critical third-party widgets (chat, financing) on the inventory page.",
+  });
+
+const evaluateServiceLoad = (url, device, page, browser) =>
+  measureTimedPageLoad({ url, device, page, browser }, {
+    rankPath: rankServicePath,
+    childHint: /service|parts|schedule|appointment|maintenance/i,
+    noun: "Service page",
+    timeoutCause: "The service page never fired window.onload — likely heavy scheduling widgets, maps or a hanging third-party booking script.",
+    slowCause: "Heavy scheduling/booking widgets, maps or slow third-party service tools delaying full load of the service page.",
+    recommendation: "Defer the service-scheduling widget, lazy-load maps and below-the-fold images, and minimize third-party booking scripts on the service page.",
+  });
+
 // MAIN FUNCTION
 export default async function technicalMetrics(url, device, page, response, browser) {
 
-  const data = await googleAPI(url, device);
+  // Inventory & service page timings run in parallel with the (slow) PageSpeed
+  // request — each uses its own browser tab, so the shared page other metrics use
+  // in parallel is never touched.
+  const [data, inventoryLoad, serviceLoad] = await Promise.all([
+    googleAPI(url, device),
+    evaluateInventoryLoad(url, device, page, browser),
+    evaluateServiceLoad(url, device, page, browser),
+  ]);
   const audits = data?.lighthouseResult?.audits || {};
   const cruxMetrics = data?.loadingExperience?.metrics || {};
 
@@ -1079,6 +1428,8 @@ export default async function technicalMetrics(url, device, page, response, brow
   const ttfbCrux = evaluateTTFBCrux(cruxMetrics);
   const inpLab = evaluateINPLab(audits);
   const inpCrux = evaluateINPCrux(audits, cruxMetrics);
+  const fidLab = evaluateFIDLab(audits);
+  const fidCrux = evaluateFIDCrux(audits, cruxMetrics);
   const tbt = evaluateTBT(audits);
   const si = evaluateSI(audits);
 
@@ -1094,19 +1445,36 @@ export default async function technicalMetrics(url, device, page, response, brow
   const scoreCLS = (getScore(clsLab) * 0.07) + (getScore(clsCrux) * 0.08); // 15%
   const scoreFCP = (getScore(fcpLab) * 0.03) + (getScore(fcpCrux) * 0.03); // 6%
   const scoreTTFB = (getScore(ttfbLab) * 0.04) + (getScore(ttfbCrux) * 0.04); // 8%
-  const scoreTBT = getScore(tbt) * 0.08; // 8%
-  const scoreSI = getScore(si) * 0.08;   // 8%
-  const scoreCompression = getScore(compression) * 0.05; // 5%
-  const scoreCaching = getScore(caching) * 0.05;         // 5%
-  const scoreResourceOpt = getScore(resourceOptimization) * 0.06; // 6%
-  const scoreRenderBlocking = getScore(renderBlocking) * 0.05;    // 5%
-  const scoreRedirect = getScore(redirect) * 0.04;       // 4%
+  // FID scores from the best available source: real-user CrUX when Google still
+  // reports it, otherwise the lab Max Potential FID (always present in Lighthouse).
+  // Its 4% is shifted out of the two lab proxies (TBT, SI) so the total stays at
+  // 100%, and if neither source is measurable nothing is penalized — the TBT/SI
+  // weights simply revert to their original 8% split.
+  const fidPrimary = fidCrux || fidLab;
+  const hasFID = !!fidPrimary;
+  const scoreFID = hasFID ? getScore(fidPrimary) * 0.04 : 0;       // 4% when available
+  const scoreTBT = getScore(tbt) * (hasFID ? 0.06 : 0.08); // 8% (6% when FID present)
+  const scoreSI = getScore(si) * (hasFID ? 0.06 : 0.08);   // 8% (6% when FID present)
+  // Inventory & Service page load times each earn 5% when that page is found and
+  // timed. Every present timed-metric is funded by shifting 1% out of each of the
+  // five asset checks, so the Technical total always stays at exactly 100% whether
+  // zero, one, or both timed pages are discovered.
+  const hasInventory = !!inventoryLoad;
+  const hasService = !!serviceLoad;
+  const shift = ((hasInventory ? 1 : 0) + (hasService ? 1 : 0)) * 0.01; // per-asset-check reduction
+  const scoreInventory = hasInventory ? getScore(inventoryLoad) * 0.05 : 0; // 5% when available
+  const scoreService = hasService ? getScore(serviceLoad) * 0.05 : 0;       // 5% when available
+  const scoreCompression = getScore(compression) * (0.05 - shift);         // 5% base
+  const scoreCaching = getScore(caching) * (0.05 - shift);                 // 5% base
+  const scoreResourceOpt = getScore(resourceOptimization) * (0.06 - shift); // 6% base
+  const scoreRenderBlocking = getScore(renderBlocking) * (0.05 - shift);    // 5% base
+  const scoreRedirect = getScore(redirect) * (0.04 - shift);               // 4% base
 
   const actualPercentage = parseFloat((
     scoreLCP + scoreINP + scoreCLS + scoreFCP + scoreTTFB +
-    scoreTBT + scoreSI +
+    scoreFID + scoreTBT + scoreSI +
     scoreCompression + scoreCaching + scoreResourceOpt + scoreRenderBlocking +
-    scoreRedirect
+    scoreRedirect + scoreInventory + scoreService
   ).toFixed(0));
 
   return {
@@ -1116,6 +1484,7 @@ export default async function technicalMetrics(url, device, page, response, brow
     FCP: { lab: fcpLab, crux: fcpCrux },
     TTFB: { lab: ttfbLab, crux: ttfbCrux },
     INP: { lab: inpLab, crux: inpCrux },
+    FID: (fidLab || fidCrux) ? { lab: fidLab, crux: fidCrux } : null,
     TBT: { lab: tbt, crux: null },
     SI: { lab: si, crux: null },
     Compression: compression,
@@ -1123,5 +1492,7 @@ export default async function technicalMetrics(url, device, page, response, brow
     Resource_Optimization: resourceOptimization,
     Render_Blocking: renderBlocking,
     Redirect_Chains: redirect,
+    Inventory_Load_Time: inventoryLoad,
+    Service_Load_Time: serviceLoad,
   };
 }

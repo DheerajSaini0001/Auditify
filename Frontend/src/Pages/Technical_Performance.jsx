@@ -9,7 +9,7 @@ import {
   Activity, Zap, Layout, Image as ImageIcon,
   Server, Database, FileCode, Globe,
   ArrowRightLeft, Clock, Gauge, AlertTriangle,
-  Info, ChevronDown, Sparkles, Briefcase
+  Info, ChevronDown, Sparkles, Briefcase, MousePointerClick, Car, Wrench
 } from "lucide-react";
 import MetricInfoModal from "../Component/MetricInfoModal";
 import ParameterInfoModal from "../Component/ParameterInfoModal";
@@ -62,6 +62,16 @@ const AUDIT_STEPS = [
     title: "Third-Party Impact",
     text: "Evaluating the performance cost of external analytics, ads, and tracking scripts..."
   },
+  {
+    icon: <Car className="w-8 h-8 text-cyan-500" />,
+    title: "Inventory Page Load",
+    text: "Locating your vehicle inventory page (sitemap or crawl) and timing it until it is fully loaded..."
+  },
+  {
+    icon: <Wrench className="w-8 h-8 text-orange-500" />,
+    title: "Service Page Load",
+    text: "Locating your service department page (sitemap or crawl) and timing it until it is fully loaded..."
+  },
 ];
 
 const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => {
@@ -72,8 +82,8 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
   const [expandedDetails, setExpandedDetails] = React.useState({});
   const toggleDetails = (metric) => setExpandedDetails(prev => ({ ...prev, [metric]: !prev[metric] }));
 
-  const isCoreExpanded = expandedDetails.LCP || expandedDetails.INP || expandedDetails.CLS || expandedDetails.FCP || expandedDetails.TTFB;
-  const isLabExpanded = expandedDetails.TBT || expandedDetails.SI;
+  const isCoreExpanded = expandedDetails.LCP || expandedDetails.INP || expandedDetails.FID || expandedDetails.CLS || expandedDetails.FCP || expandedDetails.TTFB;
+  const isLabExpanded = expandedDetails.TBT || expandedDetails.SI || expandedDetails.inventoryLoad || expandedDetails.serviceLoad;
   const isAssetsExpanded = expandedDetails.compression || expandedDetails.caching || expandedDetails.redirectChains || expandedDetails.renderBlocking || expandedDetails.resourceOptimization;
 
   const metric = data || {};
@@ -229,6 +239,22 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                   />
                 )}
 
+                {tech.FID && (
+                  <MetricCard
+                    key="FID"
+                    title="First Input Delay"
+                    icon={MousePointerClick}
+                    metricData={tech.FID}
+                    selectedSource={selectedSource}
+                    darkMode={darkMode}
+                    isOpen={!!expandedDetails.FID}
+                    onToggle={() => toggleDetails('FID')}
+                    description={metricExplanations.FID.whatThisParameterIs}
+                    whyItMatters={metricExplanations.FID.whyItMatters}
+                    onInfoClick={() => setSelectedParameterInfo({ title: "First Input Delay", icon: MousePointerClick, ...metricExplanations.FID, metricData: tech.FID })}
+                  />
+                )}
+
                 {tech.CLS && (
                   <MetricCard
                     key="CLS"
@@ -294,6 +320,38 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                     description={metricExplanations.TBT.whatThisParameterIs}
                     whyItMatters={metricExplanations.TBT.whyItMatters}
                     onInfoClick={() => setSelectedParameterInfo({ title: "Total Blocking Time", icon: Clock, ...metricExplanations.TBT, metricData: tech.TBT })}
+                  />
+                )}
+
+                {tech.Inventory_Load_Time && (
+                  <MetricCard
+                    key="InventoryLoad"
+                    title="Inventory Page Load Time"
+                    icon={Car}
+                    metricData={tech.Inventory_Load_Time}
+                    selectedSource="lab"
+                    darkMode={darkMode}
+                    isOpen={!!expandedDetails.inventoryLoad}
+                    onToggle={() => toggleDetails('inventoryLoad')}
+                    description={metricExplanations.Inventory_Load_Time.whatThisParameterIs}
+                    whyItMatters={metricExplanations.Inventory_Load_Time.whyItMatters}
+                    onInfoClick={() => setSelectedParameterInfo({ title: "Inventory Page Load Time", icon: Car, ...metricExplanations.Inventory_Load_Time, metricData: tech.Inventory_Load_Time })}
+                  />
+                )}
+
+                {tech.Service_Load_Time && (
+                  <MetricCard
+                    key="ServiceLoad"
+                    title="Service Page Load Time"
+                    icon={Wrench}
+                    metricData={tech.Service_Load_Time}
+                    selectedSource="lab"
+                    darkMode={darkMode}
+                    isOpen={!!expandedDetails.serviceLoad}
+                    onToggle={() => toggleDetails('serviceLoad')}
+                    description={metricExplanations.Service_Load_Time.whatThisParameterIs}
+                    whyItMatters={metricExplanations.Service_Load_Time.whyItMatters}
+                    onInfoClick={() => setSelectedParameterInfo({ title: "Service Page Load Time", icon: Wrench, ...metricExplanations.Service_Load_Time, metricData: tech.Service_Load_Time })}
                   />
                 )}
 

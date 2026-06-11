@@ -8,7 +8,8 @@ import LivePreview from "../Component/LivePreview";
 import {
   CheckCircle, XCircle, AlertTriangle, Info,
   MousePointerClick, FileText, ShieldCheck, LayoutTemplate,
-  MessageSquare, Zap, Target, CreditCard, Users, Activity, Loader2, ChevronDown, ChevronUp
+  MessageSquare, Zap, Target, CreditCard, Users, Activity, Loader2, ChevronDown, ChevronUp, Car, Landmark, Calculator, CalendarCheck,
+  PartyPopper, Bot, PhoneCall, Phone
 } from "lucide-react";
 import MetricInfoModal from "../Component/MetricInfoModal";
 import ParameterInfoModal from "../Component/ParameterInfoModal";
@@ -36,6 +37,13 @@ const iconMap = {
   Friendly_Error_Handling: AlertTriangle,
   Microcopy_Clarity: MessageSquare,
   Incentives_Displayed: CreditCard,
+  TradeIn_Flow: Car,
+  Financing_Flow: Landmark,
+  Finance_Calculator: Calculator,
+  Appointment_Booking: CalendarCheck,
+  Thank_You_Pages: PartyPopper,
+  Chat_Experience: Bot,
+  Click_To_Call: PhoneCall,
 };
 
 const educationalContent = InfoDetails;
@@ -607,6 +615,150 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
           </div>
         )}
 
+        {/* Dealer Lead Flows (TradeIn_Flow / Financing_Flow / Finance_Calculator) */}
+        {(metricKey === "TradeIn_Flow" || metricKey === "Financing_Flow" || metricKey === "Finance_Calculator" || metricKey === "Appointment_Booking" || metricKey === "Chat_Experience") && (() => {
+          const labels = {
+            TradeIn_Flow: { widgets: "Estimator Widgets", cta: "Trade-In CTAs", form: "Valuation Form Fields" },
+            Financing_Flow: { widgets: "Lender Widgets", cta: "Financing CTAs", form: "Credit Application Fields" },
+            Finance_Calculator: { widgets: "Calculator Widgets", cta: "Calculator CTAs", form: "Calculator Inputs" },
+            Appointment_Booking: { widgets: "Scheduling Widgets", cta: "Appointment CTAs", form: "Booking Form Fields" },
+            Chat_Experience: { widgets: "Chat Widgets", cta: "Chat Launchers", form: "" },
+          };
+          const { widgets: widgetsLabel, cta: ctaLabel, form: formLabel } = labels[metricKey];
+          return (
+            <>
+              {meta?.detectionType && meta.detectionType !== "none" && (
+                <div className="mt-2">
+                  <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Detection Type</h5>
+                  <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
+                    <span className="break-all">{meta.detectionType.replaceAll("-", " ")}</span>
+                  </div>
+                </div>
+              )}
+              {meta?.foundWidgets && meta.foundWidgets.length > 0 && (
+                <div className="mt-2">
+                  <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>{widgetsLabel}</h5>
+                  <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
+                    <span className="break-all">{meta.foundWidgets.join(", ")}</span>
+                  </div>
+                </div>
+              )}
+              {meta?.ctaExamples && meta.ctaExamples.length > 0 && (
+                <div className="mt-2">
+                  <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>{ctaLabel}</h5>
+                  <div className={`mt-1 p-2 rounded border flex flex-col gap-1.5 font-mono text-[10px] max-h-[150px] overflow-y-auto ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                    {meta.ctaExamples.map((cta, idx) => (
+                      <div key={idx} className="flex gap-2 items-start">
+                        <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1 bg-slate-400`}></span>
+                        <span className="break-all">{cta}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {meta?.formFieldsDetected && meta.formFieldsDetected.length > 0 && (
+                <div className="mt-2">
+                  <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>{formLabel}</h5>
+                  <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
+                    <span className="break-all">{meta.formFieldsDetected.join(", ")}</span>
+                  </div>
+                </div>
+              )}
+              {meta?.matchedKeywords && meta.matchedKeywords.length > 0 && (
+                <div className="mt-2">
+                  <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Matched Keywords</h5>
+                  <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
+                    <span className="break-all">{meta.matchedKeywords.join(", ")}</span>
+                  </div>
+                </div>
+              )}
+            </>
+          );
+        })()}
+
+        {/* Thank_You_Pages */}
+        {metricKey === "Thank_You_Pages" && (
+          <>
+            {meta?.detectionType && (
+              <div className="mt-2">
+                <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Detection Type</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
+                  <span className="break-all">{meta.detectionType.replaceAll("-", " ")}</span>
+                </div>
+              </div>
+            )}
+            {meta?.formCount !== undefined && (
+              <div className="mt-2">
+                <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Forms Detected</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
+                  <span className="break-all">{meta.formCount}</span>
+                </div>
+              </div>
+            )}
+            {meta?.references && meta.references.length > 0 && (
+              <div className="mt-2">
+                <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Thank-You / Confirmation References</h5>
+                <div className={`mt-1 p-2 rounded border flex flex-col gap-1.5 font-mono text-[10px] max-h-[150px] overflow-y-auto ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  {meta.references.map((ref, idx) => (
+                    <div key={idx} className="flex gap-2 items-start">
+                      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1 bg-slate-400`}></span>
+                      <span className="break-all">{ref}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Click_To_Call */}
+        {metricKey === "Click_To_Call" && (
+          <>
+            {meta?.detectionType && (
+              <div className="mt-2">
+                <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Detection Type</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
+                  <span className="break-all">{meta.detectionType.replaceAll("-", " ")}</span>
+                </div>
+              </div>
+            )}
+            {meta?.telCount > 0 && (
+              <div className="mt-2">
+                <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Click-to-Call Links</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
+                  <span className="break-all">{meta.telCount}</span>
+                </div>
+              </div>
+            )}
+            {meta?.telExamples && meta.telExamples.length > 0 && (
+              <div className="mt-2">
+                <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Phone Numbers</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
+                  <span className="break-all">{meta.telExamples.join(", ")}</span>
+                </div>
+              </div>
+            )}
+            {meta?.phoneSample && meta.phoneSample.length > 0 && (
+              <div className="mt-2">
+                <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Unlinked Phone Numbers</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
+                  <span className="break-all">{meta.phoneSample.join(", ")}</span>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
         <div className="flex-grow" />
 
 
@@ -840,7 +992,19 @@ const Conversion_Lead_Flow_Inner = React.memo(({ data, loading, darkMode }) => {
             </Section>
 
             <Section title="Friction Reduction & Validation" icon={LayoutTemplate} darkMode={darkMode}>
-              {["Required_vs_Optional_Fields", "Inline_Validation", "Friendly_Error_Handling", "Microcopy_Clarity", "MultiStep_Form_Progress", "Progress_Indicators"].map((key) => (
+              {["Required_vs_Optional_Fields", "Inline_Validation", "Friendly_Error_Handling", "Microcopy_Clarity", "MultiStep_Form_Progress", "Progress_Indicators", "Thank_You_Pages"].map((key) => (
+                flow[key] && <MetricCard key={key} metricKey={key} data={flow[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
+              ))}
+            </Section>
+
+            <Section title="Dealer Lead Flows" icon={Car} darkMode={darkMode}>
+              {["TradeIn_Flow", "Financing_Flow", "Finance_Calculator", "Appointment_Booking"].map((key) => (
+                flow[key] && <MetricCard key={key} metricKey={key} data={flow[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
+              ))}
+            </Section>
+
+            <Section title="Contact & Engagement" icon={Phone} darkMode={darkMode}>
+              {["Click_To_Call", "Chat_Experience"].map((key) => (
                 flow[key] && <MetricCard key={key} metricKey={key} data={flow[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
               ))}
             </Section>

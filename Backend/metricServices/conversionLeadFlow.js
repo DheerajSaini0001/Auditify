@@ -861,6 +861,810 @@ async function checkLinkRelevance(page) {
   };
 }
 
+// Trade-In Flow / Trade-In Estimator (Dealer Lead Flow)
+async function checkTradeInFlow(page, $) {
+  // Signals ordered strongest -> weakest
+  const textKeywords = [
+    "trade-in", "trade in", "value your trade", "value my trade",
+    "what's my car worth", "whats my car worth", "what is my car worth",
+    "trade-in value", "trade appraisal", "appraise my", "instant cash offer",
+    "get my trade value", "estimate your trade", "sell us your car", "sell your car",
+    // auto / vehicle wording variants (dealers often say "auto" or "vehicle" instead of "car")
+    "value your auto", "value my auto", "value your vehicle", "value my vehicle",
+    "sell us your auto", "sell your auto", "sell us your vehicle", "sell your vehicle",
+    "what's my auto worth", "whats my auto worth", "what's my vehicle worth", "whats my vehicle worth"
+  ];
+  const ctaKeywords = [
+    "trade-in", "tradein", "trade_in", "value-your-trade", "value-my-trade",
+    "whats-my-car-worth", "what-is-my-car-worth", "appraisal", "appraise",
+    "instant-cash-offer", "instant cash offer", "trade-value", "sell-your-car",
+    "value your trade", "value my trade", "what's my car worth",
+    "sell-us-your-car", "sell-us-your-auto", "sell-your-auto", "value-your-auto", "value-your-vehicle"
+  ];
+  const widgetSignals = [
+    "kbb.com", "kbb", "tradepending", "trade-pending", "accutrade", "accu-trade",
+    "blackbook", "black-book", "icoapi", "instantcashoffer", "trade-in-widget",
+    "tradein-widget", "valueyourtrade", "value-your-trade"
+  ];
+
+  const result = await page.evaluate((sig) => {
+    const { textKeywords, ctaKeywords, widgetSignals } = sig;
+    const lc = (s) => (s || "").toLowerCase();
+    // Normalize separators (-, _, /) to spaces so hyphenated slugs match space keywords
+    const norm = (s) => lc(s).replace(/[-_/]+/g, " ").replace(/\s+/g, " ").trim();
+    // Combined keyword set in normalized (space) form for CTA matching
+    const ctaMatchSet = ctaKeywords.concat(textKeywords).map(k => k.replace(/[-_/]+/g, " ").replace(/\s+/g, " ").trim());
+
+    // 1. Widget / embed detection (script src, iframe src, container id/class)
+    const foundWidgets = [];
+    document.querySelectorAll("iframe, script, div, section").forEach(el => {
+      const hay = lc(el.getAttribute("src")) + " " + lc(el.id) + " " + lc(el.className);
+      widgetSignals.forEach(w => {
+        if (hay.includes(w) && !foundWidgets.includes(w)) foundWidgets.push(w);
+      });
+    });
+
+    // 2. CTA / link detection (reads text, href, aria-label, title; separator-normalized)
+    const ctaExamples = [];
+    document.querySelectorAll("a, button").forEach(el => {
+      const hay = [
+        norm(el.innerText || el.value),
+        norm(el.getAttribute("href")),
+        norm(el.getAttribute("aria-label")),
+        norm(el.getAttribute("title"))
+      ].join(" ");
+      if (ctaMatchSet.some(k => k && hay.includes(k))) {
+        const label = (el.innerText || el.value || el.getAttribute("aria-label") || "").trim().slice(0, 40);
+        const rawHref = el.getAttribute("href");
+        if (label && ctaExamples.length < 5) {
+          ctaExamples.push(label + (rawHref ? ` -> ${rawHref}` : ""));
+        }
+      }
+    });
+
+    // 3. Valuation form detection (form referencing trade-in + vehicle-identifying fields)
+    let formFieldsDetected = [];
+    const vehicleFieldHints = ["vin", "year", "make", "model", "mileage", "odometer", "condition", "trim"];
+    document.querySelectorAll("form").forEach(form => {
+      const formText = lc(form.innerText) + " " + lc(form.getAttribute("id")) + " " + lc(form.getAttribute("class"));
+      const hits = new Set();
+      form.querySelectorAll("input, select, textarea").forEach(inp => {
+        const fieldMeta = lc(inp.name) + " " + lc(inp.id) + " " + lc(inp.placeholder) + " " + lc(inp.getAttribute("aria-label"));
+        vehicleFieldHints.forEach(h => { if (fieldMeta.includes(h)) hits.add(h); });
+      });
+      const mentionsTrade = textKeywords.some(k => formText.includes(k));
+      if (mentionsTrade && hits.size >= 2 && formFieldsDetected.length === 0) {
+        formFieldsDetected = Array.from(hits);
+      }
+    });
+
+    // 4. Text mention (weakest signal)
+    const bodyText = lc(document.body.innerText);
+    const matchedKeywords = textKeywords.filter(k => bodyText.includes(k));
+
+    return { foundWidgets, ctaExamples, formFieldsDetected, matchedKeywords };
+  }, { textKeywords, ctaKeywords, widgetSignals });
+
+  const hasWidget = result.foundWidgets.length > 0;
+  const hasCTA = result.ctaExamples.length > 0;
+  const hasForm = result.formFieldsDetected.length > 0;
+  const hasText = result.matchedKeywords.length > 0;
+
+  // PASS: an actionable trade-in tool exists
+  if (hasWidget || hasCTA || hasForm) {
+    const detectionType = hasWidget ? "estimator-widget" : hasForm ? "valuation-form" : "trade-in-cta";
+    return {
+      score: 100,
+      status: "pass",
+      details: "An interactive trade-in valuation flow is available to capture high-intent leads.",
+      meta: {
+        detectionType,
+        foundWidgets: result.foundWidgets,
+        ctaExamples: result.ctaExamples,
+        formFieldsDetected: result.formFieldsDetected,
+        matchedKeywords: result.matchedKeywords
+      },
+      analysis: null
+    };
+  }
+
+  // WARNING: trade-ins mentioned, but no tool to act on
+  if (hasText) {
+    return {
+      score: 50,
+      status: "warning",
+      details: "Trade-ins are mentioned, but no interactive estimator, CTA, or valuation form was found.",
+      meta: {
+        detectionType: "text-mention-only",
+        foundWidgets: [],
+        ctaExamples: [],
+        formFieldsDetected: [],
+        matchedKeywords: result.matchedKeywords
+      },
+      analysis: {
+        cause: "The page references trade-ins in its copy but offers no tool, button, or form for a visitor to actually get a trade-in value.",
+        recommendation: "Add a 'Value Your Trade' CTA or embed a trade-in estimator (e.g., KBB Instant Cash Offer, TradePending) so high-intent trade-in shoppers convert on-site instead of leaving."
+      }
+    };
+  }
+
+  // FAIL: no trade-in signals at all
+  return {
+    score: 0,
+    status: "fail",
+    details: "No trade-in valuation flow or estimator detected.",
+    meta: {
+      detectionType: "none",
+      foundWidgets: [],
+      ctaExamples: [],
+      formFieldsDetected: [],
+      matchedKeywords: []
+    },
+    analysis: {
+      cause: "No trade-in estimator, 'Value Your Trade' CTA, valuation form, or even a textual reference to trade-ins was found on the page.",
+      recommendation: "Add a trade-in estimator and a prominent 'Value Your Trade' Call-to-Action. Trade-in shoppers are high-intent buyers — capturing them on-site prevents these leads from leaking to third-party sites like KBB or Carvana."
+    }
+  };
+}
+
+// Financing Flow / Pre-Approval Process (Dealer Lead Flow)
+async function checkFinancingFlow(page, $) {
+  // Signals ordered strongest -> weakest
+  const textKeywords = [
+    "financing", "auto financing", "car financing", "vehicle financing",
+    "pre-approval", "pre approval", "pre-approved", "pre approved", "get pre-approved",
+    "apply for financing", "apply for credit", "credit application", "finance application",
+    "auto loan", "car loan", "get approved", "bad credit", "no credit",
+    "secure credit application", "finance center", "financing options"
+  ];
+  const ctaKeywords = [
+    "pre-approval", "pre-approved", "preapproval", "preapproved", "get-pre-approved",
+    "apply-for-financing", "apply-for-credit", "credit-application", "finance-application",
+    "auto-loan", "car-loan", "get-financing", "get-approved", "credit-app", "creditapp",
+    "secure-credit-application", "financing", "finance", "apply for financing", "apply for credit"
+  ];
+  const widgetSignals = [
+    "routeone", "route-one", "dealertrack", "dealer-track", "autofi", "auto-fi",
+    "700credit", "capitalone", "capital-one", "drivetime", "americredit", "westlake",
+    "darwinautomotive", "darwin", "promax", "appone", "financing-widget",
+    "creditapp", "credit-application", "prequal", "preapproval"
+  ];
+
+  const result = await page.evaluate((sig) => {
+    const { textKeywords, ctaKeywords, widgetSignals } = sig;
+    const lc = (s) => (s || "").toLowerCase();
+    const norm = (s) => lc(s).replace(/[-_/]+/g, " ").replace(/\s+/g, " ").trim();
+    const ctaMatchSet = ctaKeywords.concat(textKeywords).map(k => k.replace(/[-_/]+/g, " ").replace(/\s+/g, " ").trim());
+
+    // 1. Lender / financing widget detection (script src, iframe src, container id/class)
+    const foundWidgets = [];
+    document.querySelectorAll("iframe, script, div, section").forEach(el => {
+      const hay = lc(el.getAttribute("src")) + " " + lc(el.id) + " " + lc(el.className);
+      widgetSignals.forEach(w => {
+        if (hay.includes(w) && !foundWidgets.includes(w)) foundWidgets.push(w);
+      });
+    });
+
+    // 2. CTA / link detection (text, href, aria-label, title; separator-normalized)
+    const ctaExamples = [];
+    document.querySelectorAll("a, button").forEach(el => {
+      const hay = [
+        norm(el.innerText || el.value),
+        norm(el.getAttribute("href")),
+        norm(el.getAttribute("aria-label")),
+        norm(el.getAttribute("title"))
+      ].join(" ");
+      if (ctaMatchSet.some(k => k && hay.includes(k))) {
+        const label = (el.innerText || el.value || el.getAttribute("aria-label") || "").trim().slice(0, 40);
+        const rawHref = el.getAttribute("href");
+        if (label && ctaExamples.length < 5) {
+          ctaExamples.push(label + (rawHref ? ` -> ${rawHref}` : ""));
+        }
+      }
+    });
+
+    // 3. Credit-application form detection (finance copy + finance-identifying fields)
+    let formFieldsDetected = [];
+    const financeFieldHints = ["ssn", "social security", "income", "employer", "employment", "down payment", "downpayment", "credit score", "date of birth", "dob", "residence", "monthly payment"];
+    document.querySelectorAll("form").forEach(form => {
+      const formText = lc(form.innerText) + " " + lc(form.getAttribute("id")) + " " + lc(form.getAttribute("class"));
+      const hits = new Set();
+      form.querySelectorAll("input, select, textarea").forEach(inp => {
+        const fieldMeta = lc(inp.name) + " " + lc(inp.id) + " " + lc(inp.placeholder) + " " + lc(inp.getAttribute("aria-label"));
+        financeFieldHints.forEach(h => { if (fieldMeta.includes(h)) hits.add(h); });
+      });
+      const mentionsFinance = textKeywords.some(k => formText.includes(k));
+      if (mentionsFinance && hits.size >= 2 && formFieldsDetected.length === 0) {
+        formFieldsDetected = Array.from(hits);
+      }
+    });
+
+    // 4. Text mention (weakest signal)
+    const bodyText = lc(document.body.innerText);
+    const matchedKeywords = textKeywords.filter(k => bodyText.includes(k));
+
+    return { foundWidgets, ctaExamples, formFieldsDetected, matchedKeywords };
+  }, { textKeywords, ctaKeywords, widgetSignals });
+
+  const hasWidget = result.foundWidgets.length > 0;
+  const hasCTA = result.ctaExamples.length > 0;
+  const hasForm = result.formFieldsDetected.length > 0;
+  const hasText = result.matchedKeywords.length > 0;
+
+  // PASS: an actionable financing flow exists
+  if (hasWidget || hasCTA || hasForm) {
+    const detectionType = hasWidget ? "lender-widget" : hasForm ? "credit-application-form" : "financing-cta";
+    return {
+      score: 100,
+      status: "pass",
+      details: "A financing / pre-approval flow is available to capture sales-ready leads on-site.",
+      meta: {
+        detectionType,
+        foundWidgets: result.foundWidgets,
+        ctaExamples: result.ctaExamples,
+        formFieldsDetected: result.formFieldsDetected,
+        matchedKeywords: result.matchedKeywords
+      },
+      analysis: null
+    };
+  }
+
+  // WARNING: financing mentioned, but no actionable flow
+  if (hasText) {
+    return {
+      score: 50,
+      status: "warning",
+      details: "Financing is mentioned, but no pre-approval CTA, credit application, or lender widget was found.",
+      meta: {
+        detectionType: "text-mention-only",
+        foundWidgets: [],
+        ctaExamples: [],
+        formFieldsDetected: [],
+        matchedKeywords: result.matchedKeywords
+      },
+      analysis: {
+        cause: "The page references financing in its copy but offers no pre-approval button, credit application, or lender tool for a visitor to actually start the process.",
+        recommendation: "Add a 'Get Pre-Approved' / 'Apply for Financing' CTA or embed a secure credit application (e.g., RouteOne, DealerTrack, AutoFi) so bottom-of-funnel buyers convert on-site."
+      }
+    };
+  }
+
+  // FAIL: no financing signals at all
+  return {
+    score: 0,
+    status: "fail",
+    details: "No financing or pre-approval flow detected.",
+    meta: {
+      detectionType: "none",
+      foundWidgets: [],
+      ctaExamples: [],
+      formFieldsDetected: [],
+      matchedKeywords: []
+    },
+    analysis: {
+      cause: "No lender widget, credit application, 'Get Pre-Approved' CTA, or even a textual reference to financing was found on the page.",
+      recommendation: "Add a financing / pre-approval flow — a prominent 'Get Pre-Approved' CTA plus a secure credit application. Pre-approval shoppers are your most sales-ready leads; capturing them on-site keeps the financing relationship with the dealer."
+    }
+  };
+}
+
+// Finance Calculator / Payment Estimator (Dealer Lead Flow)
+async function checkFinanceCalculator(page, $) {
+  // Signals ordered strongest -> weakest
+  const textKeywords = [
+    "payment calculator", "finance calculator", "loan calculator", "lease calculator",
+    "payment estimator", "estimate your payment", "estimate your monthly payment",
+    "calculate your payment", "calculate your monthly payment", "estimated monthly payment",
+    "monthly payment calculator", "auto loan calculator", "car payment calculator"
+  ];
+  const ctaKeywords = [
+    "payment-calculator", "finance-calculator", "loan-calculator", "lease-calculator",
+    "estimate-payment", "calculate-payment", "payment-estimator", "monthly-payment",
+    "payment calculator", "finance calculator", "loan calculator", "estimate your payment",
+    "calculate payment", "estimate payment", "auto-loan-calculator", "car-payment-calculator"
+  ];
+  const widgetSignals = [
+    "payment-calculator", "paymentcalculator", "finance-calculator", "financecalculator",
+    "loan-calculator", "loancalculator", "lease-calculator", "leasecalculator",
+    "calculatepayment", "payment-estimator", "paymentestimator", "estimate-payment",
+    "marketscan", "dealerscience", "calculator-widget", "paymentwidget"
+  ];
+
+  const result = await page.evaluate((sig) => {
+    const { textKeywords, ctaKeywords, widgetSignals } = sig;
+    const lc = (s) => (s || "").toLowerCase();
+    const norm = (s) => lc(s).replace(/[-_/]+/g, " ").replace(/\s+/g, " ").trim();
+    const ctaMatchSet = ctaKeywords.concat(textKeywords).map(k => k.replace(/[-_/]+/g, " ").replace(/\s+/g, " ").trim());
+
+    // 1. Calculator widget / embed detection (script src, iframe src, container id/class)
+    const foundWidgets = [];
+    document.querySelectorAll("iframe, script, div, section").forEach(el => {
+      const hay = lc(el.getAttribute("src")) + " " + lc(el.id) + " " + lc(el.className);
+      widgetSignals.forEach(w => {
+        if (hay.includes(w) && !foundWidgets.includes(w)) foundWidgets.push(w);
+      });
+    });
+
+    // 2. CTA / link detection (text, href, aria-label, title; separator-normalized)
+    const ctaExamples = [];
+    document.querySelectorAll("a, button").forEach(el => {
+      const hay = [
+        norm(el.innerText || el.value),
+        norm(el.getAttribute("href")),
+        norm(el.getAttribute("aria-label")),
+        norm(el.getAttribute("title"))
+      ].join(" ");
+      if (ctaMatchSet.some(k => k && hay.includes(k))) {
+        const label = (el.innerText || el.value || el.getAttribute("aria-label") || "").trim().slice(0, 40);
+        const rawHref = el.getAttribute("href");
+        if (label && ctaExamples.length < 5) {
+          ctaExamples.push(label + (rawHref ? ` -> ${rawHref}` : ""));
+        }
+      }
+    });
+
+    // 3. Calculator input cluster (page-wide; calculators are often <div>s, not <form>s)
+    // "core" finance-math fields distinguish a calculator from a generic/credit form
+    const coreHints = ["interest rate", "apr", "term", "months", "loan amount", "amount financed", "monthly payment"];
+    const sharedHints = ["down payment", "downpayment", "vehicle price", "sale price", "msrp", "trade value", "trade-in value"];
+    const allHints = coreHints.concat(sharedHints);
+    const hitSet = new Set();
+    let coreHitCount = 0;
+    document.querySelectorAll("input, select").forEach(inp => {
+      const fieldMeta = lc(inp.name) + " " + lc(inp.id) + " " + lc(inp.placeholder) + " " + lc(inp.getAttribute("aria-label"));
+      allHints.forEach(h => {
+        if (fieldMeta.includes(h)) {
+          hitSet.add(h);
+          if (coreHints.includes(h)) coreHitCount++;
+        }
+      });
+    });
+    // require >=2 distinct calc fields AND at least one rate/term/payment "core" field
+    const formFieldsDetected = (hitSet.size >= 2 && coreHitCount >= 1) ? Array.from(hitSet) : [];
+
+    // 4. Text mention (weakest signal)
+    const bodyText = lc(document.body.innerText);
+    const matchedKeywords = textKeywords.filter(k => bodyText.includes(k));
+
+    return { foundWidgets, ctaExamples, formFieldsDetected, matchedKeywords };
+  }, { textKeywords, ctaKeywords, widgetSignals });
+
+  const hasWidget = result.foundWidgets.length > 0;
+  const hasInputs = result.formFieldsDetected.length > 0;
+  const hasCTA = result.ctaExamples.length > 0;
+  const hasText = result.matchedKeywords.length > 0;
+
+  // PASS: an actionable payment calculator exists
+  if (hasWidget || hasInputs || hasCTA) {
+    const detectionType = hasWidget ? "calculator-widget" : hasInputs ? "calculator-inputs" : "calculator-cta";
+    return {
+      score: 100,
+      status: "pass",
+      details: "An interactive payment calculator / estimator is available to help shoppers gauge affordability.",
+      meta: {
+        detectionType,
+        foundWidgets: result.foundWidgets,
+        ctaExamples: result.ctaExamples,
+        formFieldsDetected: result.formFieldsDetected,
+        matchedKeywords: result.matchedKeywords
+      },
+      analysis: null
+    };
+  }
+
+  // WARNING: calculator mentioned, but no actionable tool
+  if (hasText) {
+    return {
+      score: 50,
+      status: "warning",
+      details: "A payment calculator is mentioned, but no interactive estimator or calculator inputs were found.",
+      meta: {
+        detectionType: "text-mention-only",
+        foundWidgets: [],
+        ctaExamples: [],
+        formFieldsDetected: [],
+        matchedKeywords: result.matchedKeywords
+      },
+      analysis: {
+        cause: "The page references a payment calculator in its copy but offers no interactive tool, inputs, or link for a visitor to actually estimate a monthly payment.",
+        recommendation: "Add an interactive payment calculator (price, down payment, APR, term) so shoppers can see an estimated monthly payment and move toward a financing lead."
+      }
+    };
+  }
+
+  // FAIL: no calculator signals at all
+  return {
+    score: 0,
+    status: "fail",
+    details: "No payment calculator or estimator detected.",
+    meta: {
+      detectionType: "none",
+      foundWidgets: [],
+      ctaExamples: [],
+      formFieldsDetected: [],
+      matchedKeywords: []
+    },
+    analysis: {
+      cause: "No calculator widget, calculator inputs, payment-estimator CTA, or even a textual reference to a payment calculator was found on the page.",
+      recommendation: "Add a finance / payment calculator so shoppers can estimate monthly payments on-site. Removing payment uncertainty increases engagement and lead quality."
+    }
+  };
+}
+
+// Appointment Booking (Test Drive / Service Scheduling) (Dealer Lead Flow)
+async function checkAppointmentBooking(page, $) {
+  // Signals ordered strongest -> weakest
+  const textKeywords = [
+    "schedule service", "service appointment", "schedule a service", "book service",
+    "book a test drive", "schedule a test drive", "schedule test drive", "test drive",
+    "book an appointment", "schedule an appointment", "make an appointment",
+    "book appointment", "schedule appointment", "schedule your visit", "request a test drive",
+    "schedule a visit", "book a visit"
+  ];
+  const ctaKeywords = [
+    "schedule-service", "service-appointment", "book-service", "book-test-drive",
+    "schedule-test-drive", "test-drive", "book-appointment", "schedule-appointment",
+    "make-an-appointment", "request-a-test-drive", "schedule-a-test-drive", "schedule-a-visit",
+    "schedule service", "book a test drive", "schedule a test drive", "test drive",
+    "book an appointment", "schedule an appointment", "make an appointment", "schedule appointment"
+  ];
+  const widgetSignals = [
+    "xtime", "mykaarma", "my-kaarma", "timehighway", "calendly", "setmore",
+    "acuityscheduling", "acuity", "autopoint", "cdkglobal", "dealersocket",
+    "appointment-widget", "appointmentwidget", "booking-widget", "bookingwidget",
+    "scheduler", "schedule-service", "schedule-appointment", "simplybook"
+  ];
+
+  const result = await page.evaluate((sig) => {
+    const { textKeywords, ctaKeywords, widgetSignals } = sig;
+    const lc = (s) => (s || "").toLowerCase();
+    const norm = (s) => lc(s).replace(/[-_/]+/g, " ").replace(/\s+/g, " ").trim();
+    const ctaMatchSet = ctaKeywords.concat(textKeywords).map(k => k.replace(/[-_/]+/g, " ").replace(/\s+/g, " ").trim());
+
+    // 1. Scheduling widget / embed detection (script src, iframe src, container id/class)
+    const foundWidgets = [];
+    document.querySelectorAll("iframe, script, div, section").forEach(el => {
+      const hay = lc(el.getAttribute("src")) + " " + lc(el.id) + " " + lc(el.className);
+      widgetSignals.forEach(w => {
+        if (hay.includes(w) && !foundWidgets.includes(w)) foundWidgets.push(w);
+      });
+    });
+
+    // 2. CTA / link detection (text, href, aria-label, title; separator-normalized)
+    const ctaExamples = [];
+    document.querySelectorAll("a, button").forEach(el => {
+      const hay = [
+        norm(el.innerText || el.value),
+        norm(el.getAttribute("href")),
+        norm(el.getAttribute("aria-label")),
+        norm(el.getAttribute("title"))
+      ].join(" ");
+      if (ctaMatchSet.some(k => k && hay.includes(k))) {
+        const label = (el.innerText || el.value || el.getAttribute("aria-label") || "").trim().slice(0, 40);
+        const rawHref = el.getAttribute("href");
+        if (label && ctaExamples.length < 5) {
+          ctaExamples.push(label + (rawHref ? ` -> ${rawHref}` : ""));
+        }
+      }
+    });
+
+    // 3. Booking form detection (appointment copy + date/time scheduling fields)
+    let formFieldsDetected = [];
+    const dateTimeHints = ["appointment date", "appointment time", "preferred date", "preferred time", "date", "time", "appointment", "schedule"];
+    document.querySelectorAll("form").forEach(form => {
+      const formText = lc(form.innerText) + " " + lc(form.getAttribute("id")) + " " + lc(form.getAttribute("class"));
+      const hits = new Set();
+      form.querySelectorAll("input, select, textarea").forEach(inp => {
+        const type = lc(inp.getAttribute("type"));
+        if (type === "date") hits.add("date");
+        if (type === "time") hits.add("time");
+        const fieldMeta = lc(inp.name) + " " + lc(inp.id) + " " + lc(inp.placeholder) + " " + lc(inp.getAttribute("aria-label"));
+        dateTimeHints.forEach(h => { if (fieldMeta.includes(h)) hits.add(h); });
+      });
+      const mentionsAppt = textKeywords.some(k => formText.includes(k));
+      if (mentionsAppt && hits.size >= 1 && formFieldsDetected.length === 0) {
+        formFieldsDetected = Array.from(hits);
+      }
+    });
+
+    // 4. Text mention (weakest signal)
+    const bodyText = lc(document.body.innerText);
+    const matchedKeywords = textKeywords.filter(k => bodyText.includes(k));
+
+    return { foundWidgets, ctaExamples, formFieldsDetected, matchedKeywords };
+  }, { textKeywords, ctaKeywords, widgetSignals });
+
+  const hasWidget = result.foundWidgets.length > 0;
+  const hasForm = result.formFieldsDetected.length > 0;
+  const hasCTA = result.ctaExamples.length > 0;
+  const hasText = result.matchedKeywords.length > 0;
+
+  // PASS: an actionable appointment booking flow exists
+  if (hasWidget || hasForm || hasCTA) {
+    const detectionType = hasWidget ? "scheduling-widget" : hasForm ? "booking-form" : "appointment-cta";
+    return {
+      score: 100,
+      status: "pass",
+      details: "An appointment booking flow (test drive / service scheduling) is available on-site.",
+      meta: {
+        detectionType,
+        foundWidgets: result.foundWidgets,
+        ctaExamples: result.ctaExamples,
+        formFieldsDetected: result.formFieldsDetected,
+        matchedKeywords: result.matchedKeywords
+      },
+      analysis: null
+    };
+  }
+
+  // WARNING: appointments mentioned, but no actionable booking flow
+  if (hasText) {
+    return {
+      score: 50,
+      status: "warning",
+      details: "Appointments are mentioned, but no scheduling widget, booking form, or appointment CTA was found.",
+      meta: {
+        detectionType: "text-mention-only",
+        foundWidgets: [],
+        ctaExamples: [],
+        formFieldsDetected: [],
+        matchedKeywords: result.matchedKeywords
+      },
+      analysis: {
+        cause: "The page references test drives or service appointments in its copy but offers no scheduler, booking form, or button for a visitor to actually book a time.",
+        recommendation: "Add a 'Schedule Service' / 'Book a Test Drive' CTA or embed a scheduling tool (e.g., Xtime, myKaarma, Calendly) so high-intent visitors can book on-site."
+      }
+    };
+  }
+
+  // FAIL: no appointment signals at all
+  return {
+    score: 0,
+    status: "fail",
+    details: "No appointment booking or scheduling flow detected.",
+    meta: {
+      detectionType: "none",
+      foundWidgets: [],
+      ctaExamples: [],
+      formFieldsDetected: [],
+      matchedKeywords: []
+    },
+    analysis: {
+      cause: "No scheduling widget, booking form, 'Schedule Service' / 'Book a Test Drive' CTA, or even a textual reference to appointments was found on the page.",
+      recommendation: "Add an appointment booking flow — a prominent 'Schedule Service' and 'Book a Test Drive' CTA plus an on-site scheduler. Appointment bookers are ready to visit; capturing them on-site converts browsers into showroom and service-bay visits."
+    }
+  };
+}
+
+// Thank You / Confirmation Pages (Conversion follow-up)
+async function checkThankYouPages(page, $) {
+  const result = await page.evaluate(() => {
+    const lc = (s) => (s || "").toLowerCase();
+    const refKeywords = ["thank-you", "thankyou", "thank_you", "/thanks", "confirmation", "thank you"];
+    const formCount = document.querySelectorAll("form").length;
+    const references = [];
+
+    // Links pointing at a thank-you / confirmation page
+    document.querySelectorAll("a").forEach(a => {
+      const href = lc(a.getAttribute("href"));
+      if (href && refKeywords.some(k => href.includes(k))) {
+        const raw = a.getAttribute("href");
+        if (raw && references.length < 6 && !references.includes(raw)) references.push(raw);
+      }
+    });
+
+    // Form action / redirect attributes pointing at a thank-you page
+    document.querySelectorAll("form").forEach(f => {
+      const action = lc(f.getAttribute("action"));
+      const redirect = lc(
+        f.getAttribute("data-redirect") || f.getAttribute("data-thank-you") ||
+        f.getAttribute("data-confirmation") || f.getAttribute("data-success-url") || ""
+      );
+      const hay = action + " " + redirect;
+      if (refKeywords.some(k => hay.includes(k))) {
+        const raw = f.getAttribute("action") || f.getAttribute("data-redirect") || "form-redirect";
+        if (references.length < 6 && !references.includes(raw)) references.push(raw);
+      }
+    });
+
+    // Is the current page itself a thank-you / confirmation page?
+    const h1 = document.querySelector("h1");
+    const pageSignals = lc(document.title) + " " + lc(location.pathname) + " " + lc(h1 ? h1.innerText : "");
+    const isThankYouPage = ["thank you", "thank-you", "thankyou", "/thanks", "confirmation"].some(k => pageSignals.includes(k));
+
+    return { formCount, references, isThankYouPage };
+  });
+
+  const hasRef = result.references.length > 0 || result.isThankYouPage;
+
+  // PASS: thank-you/confirmation flow detected
+  if (hasRef) {
+    return {
+      score: 100,
+      status: "pass",
+      details: "A thank-you / confirmation page is in place for post-submission follow-up.",
+      meta: {
+        detectionType: result.isThankYouPage ? "is-thank-you-page" : "thank-you-reference",
+        formCount: result.formCount,
+        references: result.references
+      },
+      analysis: null
+    };
+  }
+
+  // WARNING: forms exist but no confirmation page found
+  if (result.formCount > 0) {
+    return {
+      score: 50,
+      status: "warning",
+      details: "Lead forms exist but no thank-you / confirmation page was detected.",
+      meta: { detectionType: "forms-without-thankyou", formCount: result.formCount, references: [] },
+      analysis: {
+        cause: "Forms are present but no thank-you or confirmation page/redirect was found, so successful submissions may not be confirmed to the user or tracked as conversions.",
+        recommendation: "Redirect form submissions to a dedicated thank-you page. It reassures the user, sets next steps, and provides a clean conversion event for analytics and retargeting."
+      }
+    };
+  }
+
+  // NEUTRAL: no forms, so a thank-you page is not required
+  return {
+    score: 100,
+    status: "pass",
+    details: "No lead forms detected, so a thank-you page is not required.",
+    meta: { detectionType: "not-applicable", formCount: 0, references: [] },
+    analysis: { impact: "Thank-you pages become relevant once lead-capture forms are present." }
+  };
+}
+
+// Chat Experience (Live Chat / Chatbot)
+async function checkChatExperience(page, $) {
+  const widgetSignals = [
+    "intercom", "drift", "tawk.to", "tawk", "livechat", "live-chat", "zendesk", "zopim",
+    "tidio", "crisp", "gubagoo", "podium", "liveperson", "olark", "freshchat", "kommunicate",
+    "manychat", "birdeye", "activengage", "carnow", "hubspot", "helpcrunch", "chaport",
+    "chatbot", "chat-widget", "chatwidget", "chat-bubble", "fb-customerchat"
+  ];
+  const textKeywords = ["live chat", "chat with us", "chat now", "start a chat", "chat with an agent", "message us"];
+
+  const result = await page.evaluate((sig) => {
+    const { widgetSignals, textKeywords } = sig;
+    const lc = (s) => (s || "").toLowerCase();
+
+    // Widget / embed detection (script src, iframe src, container id/class)
+    const foundWidgets = [];
+    document.querySelectorAll("iframe, script, div, section, button").forEach(el => {
+      const hay = lc(el.getAttribute("src")) + " " + lc(el.id) + " " + lc(el.className);
+      widgetSignals.forEach(w => { if (hay.includes(w) && !foundWidgets.includes(w)) foundWidgets.push(w); });
+    });
+
+    // Chat launcher buttons (aria-label / title / text)
+    const launchers = [];
+    document.querySelectorAll("a, button, div[role='button']").forEach(el => {
+      const hay = lc(el.getAttribute("aria-label")) + " " + lc(el.getAttribute("title")) + " " + lc(el.innerText);
+      if (/(live chat|open chat|chat with|start chat|chat now|chatbot)/.test(hay)) {
+        const label = (el.getAttribute("aria-label") || el.innerText || "").trim().slice(0, 40);
+        if (label && launchers.length < 5 && !launchers.includes(label)) launchers.push(label);
+      }
+    });
+
+    const bodyText = lc(document.body.innerText);
+    const matchedKeywords = textKeywords.filter(k => bodyText.includes(k));
+
+    return { foundWidgets, launchers, matchedKeywords };
+  }, { widgetSignals, textKeywords });
+
+  const hasWidget = result.foundWidgets.length > 0;
+  const hasLauncher = result.launchers.length > 0;
+  const hasText = result.matchedKeywords.length > 0;
+
+  // PASS: a chat experience is loaded
+  if (hasWidget || hasLauncher) {
+    return {
+      score: 100,
+      status: "pass",
+      details: "A live chat / chatbot experience is available for instant engagement.",
+      meta: {
+        detectionType: hasWidget ? "chat-widget" : "chat-launcher",
+        foundWidgets: result.foundWidgets,
+        ctaExamples: result.launchers,
+        formFieldsDetected: [],
+        matchedKeywords: result.matchedKeywords
+      },
+      analysis: null
+    };
+  }
+
+  // WARNING: chat mentioned, no widget
+  if (hasText) {
+    return {
+      score: 50,
+      status: "warning",
+      details: "Chat is mentioned, but no live chat or chatbot widget was detected.",
+      meta: { detectionType: "text-mention-only", foundWidgets: [], ctaExamples: [], formFieldsDetected: [], matchedKeywords: result.matchedKeywords },
+      analysis: {
+        cause: "The page references chat in its copy but no chat widget or launcher was found loaded on the page.",
+        recommendation: "Add a live chat or chatbot widget (e.g., Gubagoo, Podium, CarNow, Intercom, Drift) so visitors get instant answers and convert without leaving."
+      }
+    };
+  }
+
+  // FAIL: no chat at all
+  return {
+    score: 0,
+    status: "fail",
+    details: "No live chat or chatbot experience detected.",
+    meta: { detectionType: "none", foundWidgets: [], ctaExamples: [], formFieldsDetected: [], matchedKeywords: [] },
+    analysis: {
+      cause: "No chat widget, chatbot, or chat launcher was found on the page.",
+      recommendation: "Add a live chat or chatbot (Gubagoo, Podium, CarNow, Intercom) to answer shopper questions in real time and capture leads outside business hours."
+    }
+  };
+}
+
+// Click-to-Call (tel: link detection)
+async function checkClickToCall(page, $) {
+  const result = await page.evaluate(() => {
+    const digitCount = (s) => (s.replace(/\D/g, "").length);
+
+    const telLinks = Array.from(document.querySelectorAll('a[href^="tel:"]'));
+    const telExamples = [];
+    telLinks.forEach(a => {
+      const num = (a.getAttribute("href") || "").replace(/^tel:/i, "").trim();
+      if (num && telExamples.length < 5 && !telExamples.includes(num)) telExamples.push(num);
+    });
+
+    // Visible phone numbers in body text (10-11 digit, separator-containing)
+    const bodyText = document.body.innerText || "";
+    const phoneRegex = /(\+?\d[\d\s().-]{8,}\d)/g;
+    const matches = bodyText.match(phoneRegex) || [];
+    const phones = matches.filter(s => { const d = digitCount(s); return d >= 10 && d <= 11; });
+
+    return {
+      telCount: telLinks.length,
+      telExamples,
+      phoneInText: phones.length > 0,
+      phoneSample: phones.slice(0, 3).map(s => s.trim())
+    };
+  });
+
+  // PASS: click-to-call links present
+  if (result.telCount > 0) {
+    return {
+      score: 100,
+      status: "pass",
+      details: "Click-to-call (tel:) links are present for one-tap calling.",
+      meta: { detectionType: "tel-links", telCount: result.telCount, telExamples: result.telExamples },
+      analysis: null
+    };
+  }
+
+  // WARNING: phone shown but not tappable
+  if (result.phoneInText) {
+    return {
+      score: 50,
+      status: "warning",
+      details: "A phone number is shown but it is not a click-to-call (tel:) link.",
+      meta: { detectionType: "phone-text-only", telCount: 0, telExamples: [], phoneSample: result.phoneSample },
+      analysis: {
+        cause: "A phone number appears in the page text but is not wrapped in a tel: link, so mobile users cannot tap to call.",
+        recommendation: "Wrap phone numbers in an <a href=\"tel:...\"> link so mobile visitors can call with one tap — phone is a top lead channel for dealerships."
+      }
+    };
+  }
+
+  // FAIL: no phone at all
+  return {
+    score: 0,
+    status: "fail",
+    details: "No phone number or click-to-call link detected.",
+    meta: { detectionType: "none", telCount: 0, telExamples: [] },
+    analysis: {
+      cause: "No tel: link or visible phone number was found on the page.",
+      recommendation: "Display your dealership phone number prominently and make it a click-to-call (tel:) link so shoppers can reach you instantly."
+    }
+  };
+}
+
 export default async function conversionLeadFlow(page, $) {
 
   const checkCTAsScore = checkCTAs($);
@@ -889,6 +1693,15 @@ export default async function conversionLeadFlow(page, $) {
   const checkIncentivesDisplayedScore = checkIncentivesDisplayed($);
   const checkLinkRelevanceScore = await checkLinkRelevance(page);
 
+  // Dealer Lead Flows
+  const checkTradeInFlowScore = await checkTradeInFlow(page, $);
+  const checkFinancingFlowScore = await checkFinancingFlow(page, $);
+  const checkFinanceCalculatorScore = await checkFinanceCalculator(page, $);
+  const checkAppointmentBookingScore = await checkAppointmentBooking(page, $);
+  const checkThankYouPagesScore = await checkThankYouPages(page, $);
+  const checkChatExperienceScore = await checkChatExperience(page, $);
+  const checkClickToCallScore = await checkClickToCall(page, $);
+
 
   // Weights
   const weights = {
@@ -898,7 +1711,9 @@ export default async function conversionLeadFlow(page, $) {
     Form_Length: 3, Submit_Button_Clarity: 3, Required_vs_Optional_Fields: 3, CTA_Flow_Alignment: 3,
     Lead_Magnets: 2, Microcopy_Clarity: 2, Incentives_Displayed: 2, CTA_Crowding: 2,
     Client_Logos: 1, Case_Studies_Accessibility: 1, MultiStep_Form_Progress: 1, Progress_Indicators: 1,
-    Link_Relevance: 5
+    Link_Relevance: 5,
+    TradeIn_Flow: 4, Financing_Flow: 4, Finance_Calculator: 3, Appointment_Booking: 4,
+    Thank_You_Pages: 2, Chat_Experience: 3, Click_To_Call: 3
   };
 
   const metricsMap = {
@@ -923,6 +1738,13 @@ export default async function conversionLeadFlow(page, $) {
     Microcopy_Clarity: checkMicrocopyClarityScore,
     Incentives_Displayed: checkIncentivesDisplayedScore,
     Link_Relevance: checkLinkRelevanceScore,
+    TradeIn_Flow: checkTradeInFlowScore,
+    Financing_Flow: checkFinancingFlowScore,
+    Finance_Calculator: checkFinanceCalculatorScore,
+    Appointment_Booking: checkAppointmentBookingScore,
+    Thank_You_Pages: checkThankYouPagesScore,
+    Chat_Experience: checkChatExperienceScore,
+    Click_To_Call: checkClickToCallScore,
   };
 
   let totalWeight = 0;

@@ -2742,6 +2742,152 @@ export const InfoDetails = {
             "Make CTAs consistently visible and prominent"
         ]
     },
+    TradeIn_Flow: {
+        title: "Trade-In Flow / Estimator",
+        whatThisParameterIs: "We check whether your site lets a visitor find out what their current vehicle is worth and start a trade-in right on your site.",
+        whatItCalculates: "We scan for an interactive trade-in tool — an embedded estimator widget (e.g. KBB Instant Cash Offer, TradePending, Black Book, AccuTrade), a 'Value Your Trade' CTA/link, or a valuation form with vehicle fields (VIN, year, make, model, mileage). If trade-ins are only mentioned in text with no tool, it is flagged as a warning.",
+        whyItMatters: "A shopper valuing their trade is one of your highest-intent leads. If there's no on-site tool, that lead leaks to third-party sites like KBB or Carvana instead of becoming your customer.",
+        thresholds: {
+            good: "An interactive estimator, trade-in CTA, or valuation form is present",
+            needsImprovement: "Trade-ins are mentioned but no tool, button, or form exists",
+            poor: "No trade-in references found at all"
+        },
+        actualReasonsForFailure: [
+            "No trade-in estimator, 'Value Your Trade' CTA, or valuation form was found",
+            "Trade-ins are referenced in copy but visitors have no way to get a value on-site",
+            "The valuation flow relies entirely on an off-site third-party page"
+        ],
+        howToOvercomeFailure: [
+            "Add a prominent 'Value Your Trade' Call-to-Action above the fold",
+            "Embed a trade-in estimator widget (KBB Instant Cash Offer, TradePending, Black Book)",
+            "Offer an on-site valuation form capturing VIN/year/make/model/mileage to convert high-intent leads"
+        ]
+    },
+    Financing_Flow: {
+        title: "Financing / Pre-Approval Flow",
+        whatThisParameterIs: "We check whether a shopper can start a credit application or get pre-approved for an auto loan directly on your site.",
+        whatItCalculates: "We scan for an actionable financing flow — an embedded lender widget (e.g. RouteOne, DealerTrack, AutoFi, 700Credit, Capital One Auto Navigator), a 'Get Pre-Approved' / 'Apply for Financing' CTA, or a secure credit-application form with finance fields (SSN, income, employer, down payment). If financing is only mentioned in text with no tool, it is flagged as a warning.",
+        whyItMatters: "A shopper applying for pre-approval is your most sales-ready lead. Without an on-site flow, that buyer goes to a bank or competitor and you lose the financing relationship and the sale.",
+        thresholds: {
+            good: "A lender widget, pre-approval CTA, or credit application is present",
+            needsImprovement: "Financing is mentioned but no application, CTA, or widget exists",
+            poor: "No financing references found at all"
+        },
+        actualReasonsForFailure: [
+            "No lender widget, credit application, or 'Get Pre-Approved' CTA was found",
+            "Financing is referenced in copy but visitors have no way to apply on-site",
+            "The financing process relies entirely on an off-site third-party page"
+        ],
+        howToOvercomeFailure: [
+            "Add a prominent 'Get Pre-Approved' / 'Apply for Financing' Call-to-Action",
+            "Embed a secure credit application (RouteOne, DealerTrack, AutoFi, 700Credit)",
+            "Offer an on-site finance application to capture bottom-of-funnel, ready-to-buy leads"
+        ]
+    },
+    Finance_Calculator: {
+        title: "Finance Calculator / Payment Estimator",
+        whatThisParameterIs: "We check whether shoppers can estimate a monthly payment on your site using an interactive finance/payment calculator.",
+        whatItCalculates: "We scan for an interactive calculator — an embedded widget (e.g. MarketScan, DealerScience, payment/loan calculator embeds), a cluster of calculator inputs (price, down payment, APR, interest rate, term/months, loan amount), or a 'Payment Calculator' CTA/link. If a calculator is only mentioned in text with no tool, it is flagged as a warning.",
+        whyItMatters: "Payment uncertainty is a top reason shoppers stall. Letting them estimate a monthly payment on-site builds confidence, increases engagement, and warms them toward a financing lead instead of bouncing to a third-party calculator.",
+        thresholds: {
+            good: "An interactive calculator widget, input cluster, or calculator CTA is present",
+            needsImprovement: "A calculator is mentioned but no interactive tool or inputs exist",
+            poor: "No payment calculator references found at all"
+        },
+        actualReasonsForFailure: [
+            "No calculator widget, calculator inputs, or 'Payment Calculator' CTA was found",
+            "A calculator is referenced in copy but visitors cannot estimate a payment on-site",
+            "Payment estimation relies entirely on an off-site third-party tool"
+        ],
+        howToOvercomeFailure: [
+            "Add an interactive payment calculator (price, down payment, APR, term → monthly payment)",
+            "Embed a recognized estimator widget (MarketScan, DealerScience) or build a lightweight one",
+            "Place a clear 'Estimate Your Payment' CTA on vehicle and financing pages"
+        ]
+    },
+    Appointment_Booking: {
+        title: "Appointment Booking",
+        whatThisParameterIs: "We check whether shoppers can book a test drive, service appointment, or sales visit directly on your site.",
+        whatItCalculates: "We scan for an actionable booking flow — an embedded scheduling widget (e.g. Xtime, myKaarma, TimeHighway, Calendly, Setmore, AutoPoint), a booking form with date/time fields, or a 'Schedule Service' / 'Book a Test Drive' CTA. If appointments are only mentioned in text with no tool, it is flagged as a warning.",
+        whyItMatters: "A shopper booking an appointment is ready to physically show up — one of your strongest buying signals. Without an on-site scheduler, that high-intent visitor has to call or leaves, and the lead is lost.",
+        thresholds: {
+            good: "A scheduling widget, booking form, or appointment CTA is present",
+            needsImprovement: "Appointments are mentioned but no scheduler, form, or CTA exists",
+            poor: "No appointment references found at all"
+        },
+        actualReasonsForFailure: [
+            "No scheduling widget, booking form, or 'Schedule Service' / 'Book a Test Drive' CTA was found",
+            "Appointments are referenced in copy but visitors cannot book a time on-site",
+            "Scheduling relies entirely on a phone call or an off-site page"
+        ],
+        howToOvercomeFailure: [
+            "Add prominent 'Schedule Service' and 'Book a Test Drive' Call-to-Actions",
+            "Embed a scheduling tool (Xtime, myKaarma, TimeHighway, Calendly) with real date/time slots",
+            "Offer an on-site booking form so ready-to-visit shoppers convert into showroom and service appointments"
+        ]
+    },
+    Thank_You_Pages: {
+        title: "Thank You / Confirmation Pages",
+        whatThisParameterIs: "We check whether form submissions lead to a thank-you or confirmation page, rather than leaving the user with no feedback.",
+        whatItCalculates: "We scan for thank-you/confirmation references — links to a thank-you page, form action/redirect attributes pointing to one, or the page itself being a confirmation page. If forms exist but no confirmation is found, it is flagged as a warning. If there are no forms, the check is treated as not applicable.",
+        whyItMatters: "A thank-you page reassures the user their submission worked, sets clear next steps, and gives you a clean conversion event for analytics and retargeting. Without it, leads feel uncertain and conversions are harder to track.",
+        thresholds: {
+            good: "A thank-you / confirmation page is referenced (or no forms exist)",
+            needsImprovement: "Lead forms exist but no thank-you / confirmation page was found"
+        },
+        actualReasonsForFailure: [
+            "Forms are present but no thank-you or confirmation page/redirect was detected",
+            "Submissions may not be confirmed to the user or tracked as conversions",
+            "No post-submission feedback exists for the visitor"
+        ],
+        howToOvercomeFailure: [
+            "Redirect form submissions to a dedicated thank-you page",
+            "Confirm success and set next steps (what happens, when you'll respond)",
+            "Fire a conversion event on the thank-you page for analytics and retargeting"
+        ]
+    },
+    Chat_Experience: {
+        title: "Live Chat / Chatbot",
+        whatThisParameterIs: "We check whether visitors can get instant answers through a live chat or chatbot experience.",
+        whatItCalculates: "We scan for chat/chatbot widgets and launchers — known providers (e.g. Gubagoo, Podium, CarNow, Intercom, Drift, tawk.to, Tidio, Zendesk) and chat launch buttons. If chat is only mentioned in text with no widget, it is flagged as a warning.",
+        whyItMatters: "Shoppers with a quick question often won't fill out a form or call. Live chat or a chatbot answers them in real time — and captures leads outside business hours — turning hesitation into conversations.",
+        thresholds: {
+            good: "A live chat or chatbot widget/launcher is present",
+            needsImprovement: "Chat is mentioned but no widget was detected",
+            poor: "No chat experience found at all"
+        },
+        actualReasonsForFailure: [
+            "No chat widget, chatbot, or chat launcher was found on the page",
+            "Chat is referenced in copy but the widget is not loaded",
+            "Visitors have no real-time channel to ask questions"
+        ],
+        howToOvercomeFailure: [
+            "Add a live chat or chatbot (Gubagoo, Podium, CarNow, Intercom, Drift)",
+            "Enable after-hours chatbot responses to capture leads 24/7",
+            "Place the chat launcher where it's visible but not intrusive"
+        ]
+    },
+    Click_To_Call: {
+        title: "Click-to-Call",
+        whatThisParameterIs: "We check whether your phone number is a tap-to-call link, so mobile shoppers can call you with one tap.",
+        whatItCalculates: "We scan for tel: links (a[href^='tel:']). If a phone number appears in the page text but is not wrapped in a tel: link, it is flagged as a warning. If no phone number is present at all, it fails.",
+        whyItMatters: "Phone is one of the highest-converting lead channels for dealerships. On mobile, a tap-to-call link removes all friction; a number shown only as text forces the user to copy and dial manually — and many won't.",
+        thresholds: {
+            good: "One or more click-to-call (tel:) links present",
+            needsImprovement: "A phone number is shown but not a tel: link",
+            poor: "No phone number or click-to-call link found"
+        },
+        actualReasonsForFailure: [
+            "No tel: link was found on the page",
+            "A phone number is shown as plain text, so mobile users cannot tap to call",
+            "No phone number is displayed at all"
+        ],
+        howToOvercomeFailure: [
+            "Wrap phone numbers in an <a href=\"tel:...\"> link",
+            "Display the dealership phone number prominently in the header and footer",
+            "Ensure click-to-call works on every mobile page template"
+        ]
+    },
     CTA_Clarity: {
         title: "CTA Text Clarity",
         whatThisParameterIs: "We check if your button text is clear and tells people exactly what happens when they click.",

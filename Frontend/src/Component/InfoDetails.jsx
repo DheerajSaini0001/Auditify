@@ -2248,22 +2248,162 @@ export const InfoDetails = {
     Navigation_Discoverability: {
         title: "Easy-to-Find Menu",
         whatThisParameterIs: "We check if your menu and search bar are easy to find, so visitors don't get lost trying to explore your site.",
-        whatItCalculates: "We look for three specific things: a menu button (hamburger), a search box, and a main navigation menu, making sure they are all easy to find.",
-        whyItMatters: "Navigation is how users complete their goals. If the way forward isn't immediately obvious, users will experience 'choice paralysis' and likely leave for a competitor's site.",
+        whatItCalculates: "We look for a main navigation menu and a mobile menu button, then grade your site search across three things: that it's Present, Discoverable (in the header / above the fold, not buried), and Functional (a real working search, not just a decorative icon).",
+        whyItMatters: "Navigation is how users complete their goals. Shoppers often want to jump straight to a specific model, price, or stock number — a working, easy-to-find search gets them there fast. If the way forward isn't obvious, users experience 'choice paralysis' and leave for a competitor.",
         thresholds: {
-            good: "Menu button, search bar, and main navigation are all easy to find",
-            needsImprovement: "One or more useful navigation tools (like search) are missing",
-            poor: "Essential navigation controls are hidden or non-existent"
+            good: "Main menu plus a discoverable, working search bar in the header",
+            needsImprovement: "Search exists but is buried in the footer or looks decorative (no working form behind it)",
+            poor: "Essential navigation controls are hidden, or no search exists at all"
         },
         actualReasonsForFailure: [
             "No main navigation menu was detected on the page",
-            "Missing a search bar which makes finding specific info harder",
+            "A search box exists but is buried in the footer instead of the header",
+            "The search icon is decorative — there's no working input or form behind it",
             "On mobile, the 'hamburger' menu icon is missing or hard to spot"
         ],
         howToOvercomeFailure: [
+            "Place a working search bar in the header so it's visible above the fold",
+            "Make sure the search icon actually opens a real input that submits a query",
             "Ensure your main menu is in a standard, easy-to-find location",
-            "Add a search bar or a clearly visible search icon in the header",
             "Use clear icons (like the three horizontal lines for a menu) that users recognize"
+        ]
+    },
+    Inventory_Filtering: {
+        title: "Inventory Filtering",
+        whatThisParameterIs: "We check how well shoppers can narrow down your vehicle inventory using filters — by make, model, year, price, mileage and body type — the way they expect on any car-shopping site.",
+        whatItCalculates: "On an inventory (search-results) page we grade three things: which core filters are present (make, model, year, price, mileage, body type), how rich the controls are (dropdowns vs. checkboxes and price/mileage sliders), and whether the results give feedback (a live count, active-filter chips, a 'clear all' button and sort options). On the homepage we instead look for a quick 'Find Your Vehicle' finder — that's shown for information and doesn't affect the score.",
+        whyItMatters: "Filtering is the single most important action on a dealership site after search. Shoppers rarely browse hundreds of cars — they filter to the handful that match their budget and needs. Weak or missing filters force people to scroll endlessly and they leave for a competitor whose inventory is easier to refine.",
+        thresholds: {
+            good: "Broad filters (make/model/year/price/mileage/body) with sliders, live result counts and a clear-all control",
+            needsImprovement: "Filtering works but misses core facets or uses only basic dropdowns with little result feedback",
+            poor: "No real inventory filtering, or only a free-text box with no facets"
+        },
+        actualReasonsForFailure: [
+            "Core filters like Price or Mileage range are missing",
+            "Filters are plain dropdowns with no checkboxes or range sliders",
+            "No live result count, active-filter chips or 'clear filters' control",
+            "The homepage has no quick way to start narrowing inventory"
+        ],
+        howToOvercomeFailure: [
+            "Offer faceted filters for Make, Model, Year, Price and Mileage",
+            "Use range sliders for price and mileage and checkboxes for multi-select facets",
+            "Show a live result count and active-filter chips as users refine",
+            "Add a 'Find Your Vehicle' finder on the homepage with Make, Model and Price"
+        ]
+    },
+    No_Results_UX: {
+        title: "No-Results Experience",
+        whatThisParameterIs: "We check what happens when a search or filter returns no matching vehicles — whether shoppers get help finding something else, or hit a frustrating dead end.",
+        whatItCalculates: "When we can see an empty-results page, we look for a friendly message, a way to clear or broaden filters, recommended alternative vehicles, and a contact/chat option. When no empty state is visible, we note the fallback tools available (recommendations, search suggestions). This parameter is informational and doesn't affect the score.",
+        whyItMatters: "A dead-end 'no results' page is one of the fastest ways to lose a ready-to-buy shopper. Good recovery — alternatives, a quick filter reset, or a way to get help — keeps them on the lot instead of bouncing to a competitor.",
+        thresholds: {
+            good: "Empty results offer suggestions, a filter reset, alternatives and a contact option",
+            needsImprovement: "Some recovery options exist but key ones (alternatives or reset) are missing",
+            poor: "A blank dead-end with no guidance back to relevant inventory"
+        },
+        actualReasonsForFailure: [
+            "An empty search shows a blank page with no message",
+            "No one-click way to clear or broaden the active filters",
+            "No recommended or similar vehicles are offered",
+            "No contact, chat or 'we'll find it for you' option"
+        ],
+        howToOvercomeFailure: [
+            "Show a friendly 'no matches' message that explains why",
+            "Add a one-click 'clear filters' / 'view all inventory' button",
+            "Recommend similar or popular vehicles on the empty page",
+            "Offer a contact/chat CTA so staff can help source the vehicle"
+        ]
+    },
+    Certifications_Awards: {
+        title: "Certifications & Awards",
+        whatThisParameterIs: "We look for trust signals like manufacturer certifications, BBB accreditation, dealer awards and review-site badges that tell shoppers you're a credible, reputable dealership.",
+        whatItCalculates: "We scan page text, image alt-text and badges for credibility signals — 'certified', BBB, 'Dealer of the Year', DealerRater/KBB/Google ratings, manufacturer-certified and ASE — and count how many distinct ones appear. This is shown for information and doesn't affect the score.",
+        whyItMatters: "Buying a car is a high-trust, high-value decision. Recognizable certifications and awards reassure shoppers that you're legitimate and well-reviewed, which lifts confidence and conversion before they ever contact you.",
+        thresholds: {
+            good: "Several credibility signals (certifications, awards, accreditations) are visible",
+            needsImprovement: "Only one or two trust signals appear",
+            poor: "No certifications, accreditations or awards are shown"
+        },
+        actualReasonsForFailure: [
+            "No manufacturer certification or 'certified dealer' badge is shown",
+            "No BBB accreditation or industry award is displayed",
+            "No review-site ratings (DealerRater, Google, KBB) are surfaced",
+            "Trust badges are buried in the footer or missing entirely"
+        ],
+        howToOvercomeFailure: [
+            "Display manufacturer certifications and 'certified dealer' badges",
+            "Show BBB accreditation and any awards (Dealer of the Year, etc.)",
+            "Add star ratings and badges from DealerRater, Google or KBB",
+            "Place trust signals prominently near the top of key pages"
+        ]
+    },
+    Pricing_Transparency: {
+        title: "Pricing Transparency",
+        whatThisParameterIs: "We check whether your vehicle pricing is open and honest — actual prices shown, fees and taxes disclosed, and payment/financing info available — rather than hidden behind 'call for price'.",
+        whatItCalculates: "On pages that show pricing we grade five things: real prices (not just 'call for price'), fee/tax disclosure, a pricing disclaimer, financing or monthly-payment info, and a clear 'no hidden fees' message. Pages with no pricing are treated as not-applicable.",
+        whyItMatters: "Hidden pricing and surprise fees are the number-one trust killer in car shopping. Transparent, all-in pricing reduces friction, filters in serious buyers, and builds the trust that turns browsers into leads.",
+        thresholds: {
+            good: "Real prices with fees, taxes and payment info clearly disclosed",
+            needsImprovement: "Prices show but fees, disclaimers or payment info are missing",
+            poor: "Prices are hidden behind 'call for price' with no fee disclosure"
+        },
+        actualReasonsForFailure: [
+            "Vehicles show 'call for price' instead of an actual price",
+            "Doc/dealer fees and taxes aren't disclosed near the price",
+            "No financing or monthly-payment estimate is offered",
+            "No 'no hidden fees' / out-the-door pricing statement"
+        ],
+        howToOvercomeFailure: [
+            "Show real prices on every vehicle, not 'call for price'",
+            "Disclose all doc/dealer fees and taxes next to the price",
+            "Add a monthly-payment or financing estimate",
+            "State clearly when there are no hidden fees / show out-the-door pricing"
+        ]
+    },
+    Vehicle_History: {
+        title: "Vehicle History Reports",
+        whatThisParameterIs: "For used and certified pre-owned vehicles, we check whether you provide CARFAX or AutoCheck history reports — the proof buyers expect about accidents, ownership and title.",
+        whatItCalculates: "On used/CPO inventory we look for CARFAX or AutoCheck reports and links, plus reassurance language like 'accident-free', 'one-owner' and 'clean title'. New-vehicle and non-inventory pages are treated as not-applicable, since only used cars have history.",
+        whyItMatters: "Used-car buyers are wary of hidden damage. A free, visible history report removes the single biggest objection in a pre-owned sale and signals that you have nothing to hide — dealers who provide them convert more used inventory.",
+        thresholds: {
+            good: "CARFAX/AutoCheck reports and reassurance language on used vehicles",
+            needsImprovement: "History language present but no actual report link",
+            poor: "Used vehicles shown with no history report available"
+        },
+        actualReasonsForFailure: [
+            "No CARFAX or AutoCheck report is linked on used listings",
+            "History reports require a phone call instead of being free/instant",
+            "No 'accident-free', 'one-owner' or 'clean title' reassurance",
+            "Reports are inconsistent — only some used vehicles have them"
+        ],
+        howToOvercomeFailure: [
+            "Add a free CARFAX or AutoCheck report link to every used/CPO listing",
+            "Highlight 'accident-free', 'one-owner' and 'clean title' where true",
+            "Make the report viewable instantly without a phone call",
+            "Ensure every pre-owned vehicle has a history report attached"
+        ]
+    },
+    Staff_Profiles: {
+        title: "Staff Profiles / Team",
+        whatThisParameterIs: "We check whether your site introduces the real people behind the dealership — a team or staff page with names, photos, roles and contact details.",
+        whatItCalculates: "We look for a 'Meet the Team' / staff page link and on-page profile cards with roles, photos and direct contact (phone or email). This is shown for information and doesn't affect the score.",
+        whyItMatters: "Cars are bought from people, not logos. Putting faces, names and roles forward humanizes the dealership, builds trust and makes shoppers more comfortable reaching out to a specific salesperson or advisor.",
+        thresholds: {
+            good: "A team page plus profiles with photos, roles and contact details",
+            needsImprovement: "A team page link exists but profiles are thin or lack photos/contact",
+            poor: "No staff or team presence anywhere on the site"
+        },
+        actualReasonsForFailure: [
+            "There's no 'Meet the Team' or staff page",
+            "Staff are listed as names only, with no photos",
+            "No roles/titles so shoppers don't know who to ask for",
+            "No direct phone or email for individual team members"
+        ],
+        howToOvercomeFailure: [
+            "Create a 'Meet Our Team' page with photos and roles",
+            "Include sales, finance and service staff, not just management",
+            "Add direct contact (phone/email) for each person",
+            "Link the team page from the main navigation or footer"
         ]
     },
     Above_the_Fold_Content: {

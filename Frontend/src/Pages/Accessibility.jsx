@@ -24,6 +24,7 @@ const iconMap = {
   Focus_Order: Navigation,
   Focusable_Content: Focus,
   Tab_Index: Hash,
+  Keyboard_Navigation: Keyboard,
   Interactive_Element_Affordance: MousePointer,
   Label: Type,
   Aria_Allowed_Attr: Code,
@@ -567,7 +568,7 @@ const Accessibility_Inner = React.memo(function Accessibility_Inner({ data, load
 
             {/* Interaction Section */}
             <Section title="Keyboard & Interaction" icon={Keyboard} darkMode={darkMode}>
-              {["Focusable_Content", "Focus_Order", "Tab_Index", "Skip_Links", "Interactive_Element_Affordance", "Aria_Hidden_Focus"].map(k => metric[k] && (
+              {["Keyboard_Navigation", "Focusable_Content", "Focus_Order", "Tab_Index", "Skip_Links", "Interactive_Element_Affordance", "Aria_Hidden_Focus"].map(k => metric[k] && (
                 <MetricCard key={k} metricKey={k} data={metric[k]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
               ))}
             </Section>

@@ -790,6 +790,64 @@ async function checkSkipLinks(page) {
   };
 }
 
+// Keyboard Navigation (summary aggregate of focus-order, focusable-content, tab-index, aria-hidden-focus)
+const checkKeyboardNavigation = ({ focusOrder, focusableContent, tabindex, ariaHiddenFocus }) => {
+  const parts = [
+    { key: "Focus_Order", weight: 8, metric: focusOrder },
+    { key: "Focusable_Content", weight: 6, metric: focusableContent },
+    { key: "Tab_Index", weight: 5, metric: tabindex },
+    { key: "Aria_Hidden_Focus", weight: 3, metric: ariaHiddenFocus }
+  ];
+
+  let totalWeight = 0;
+  let earnedScore = 0;
+  const breakdown = {};
+  const failing = [];
+
+  for (const part of parts) {
+    const m = part.metric;
+    breakdown[part.key] = { score: m.score, status: m.status, details: m.details };
+    totalWeight += part.weight;
+    earnedScore += (m.score / 100) * part.weight;
+    if (m.status !== "pass") failing.push(part.key.replace(/_/g, " "));
+  }
+
+  const score = totalWeight > 0 ? parseFloat(((earnedScore / totalWeight) * 100).toFixed(0)) : 100;
+
+  let status = "pass";
+  if (parts.some(p => p.metric.status === "fail")) status = "fail";
+  else if (parts.some(p => p.metric.status === "warning")) status = "warning";
+
+  if (status === "pass") {
+    return {
+      score,
+      status,
+      details: "Page is fully operable by keyboard (logical focus order, reachable content, natural tab order, no focus traps).",
+      meta: {
+        threshold: "All interactive content must be operable with a keyboard alone.",
+        components: parts.map(p => p.key),
+        breakdown
+      },
+      analysis: null
+    };
+  }
+
+  return {
+    score,
+    status,
+    details: `Keyboard navigation issues detected in: ${failing.join(", ")}.`,
+    meta: {
+      threshold: "All interactive content must be operable with a keyboard alone.",
+      components: parts.map(p => p.key),
+      breakdown
+    },
+    analysis: {
+      cause: "One or more keyboard-operability checks failed (focus order, focusable content, tab index, or aria-hidden focus traps).",
+      recommendation: "Resolve the individual failing checks: ensure a logical focus order, make all interactive elements focusable, avoid positive tabindex, and remove focusable elements from aria-hidden regions.",
+    }
+  };
+};
+
 export default async function accessibilityMetrics(page) {
 
   // [NEW] — Neutralize the stealth plugin's Function.prototype.toString proxy
@@ -836,6 +894,8 @@ export default async function accessibilityMetrics(page) {
   const metaViewport = checkMetaViewport(axeResults);
   const list = checkList(axeResults);
   const headingOrder = checkHeadingOrder(axeResults);
+
+  const keyboardNavigation = checkKeyboardNavigation({ focusOrder, focusableContent, tabindex, ariaHiddenFocus });
 
   let skipLinks, landMarks;
   try {
@@ -918,6 +978,7 @@ export default async function accessibilityMetrics(page) {
     Aria_Allowed_Attr: ariaAllowedAttr,
     Aria_Roles: ariaRoles,
     Aria_Hidden_Focus: ariaHiddenFocus,
+    Keyboard_Navigation: keyboardNavigation,
     Image_Alt: imageAlt,
     Skip_Links: skipLinks,
     Landmarks: landMarks,

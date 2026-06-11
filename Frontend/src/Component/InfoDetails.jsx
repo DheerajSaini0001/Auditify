@@ -1200,6 +1200,28 @@ export const InfoDetails = {
             "Avoid positive tabindex values which disrupt natural order"
         ]
     },
+    Keyboard_Navigation: {
+        title: "Keyboard Navigation",
+        whatThisParameterIs: "Keyboard Navigation is an overall measure of whether your whole page can be operated using only a keyboard—no mouse required.",
+        whatItCalculates: "We combine four related checks into one summary: Focus Order, Focusable Content, Tab Index, and Aria Hidden Focus. The score is a weighted blend of these four.",
+        whyItMatters: "Many users—including people with motor disabilities and screen reader users—rely entirely on the keyboard. If any part of the navigation chain breaks, large portions of the site become unusable.",
+        thresholds: {
+            good: "Logical focus order, all content reachable, natural tab order, no focus traps",
+            needsImprovement: "One or more keyboard checks show warnings",
+            poor: "Critical keyboard checks failing"
+        },
+        actualReasonsForFailure: [
+            "Focus order does not match the visual layout",
+            "Interactive elements cannot be reached with the Tab key",
+            "Positive tabindex values disrupt the natural order",
+            "Focusable elements are hidden inside aria-hidden regions (focus traps)"
+        ],
+        howToOvercomeFailure: [
+            "Fix the individual failing checks shown in the breakdown",
+            "Use semantic HTML and keep DOM order aligned with visual order",
+            "Avoid positive tabindex and remove focusable nodes from aria-hidden content"
+        ]
+    },
     Focusable_Content: {
         title: "Focusable Content",
         whatThisParameterIs: "Focusable Content are parts of your site—like links and buttons—that people can reach and use using just their keyboard.",

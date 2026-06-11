@@ -80,7 +80,7 @@ const getAEORecommendations = (signals) => {
     }
 
     // 5. Bot Access Recommendations
-    if (signals.botAccess.bots.GPTBot === "blocked") {
+    if (signals.botAccess.bots?.GPTBot === "blocked") {
         recommendations.push({
             priority: "Critical",
             title: "Allow GPTBot in robots.txt",
@@ -90,7 +90,7 @@ const getAEORecommendations = (signals) => {
         });
     }
 
-    if (signals.botAccess.bots["Google-Extended"] === "blocked") {
+    if (signals.botAccess.bots?.["Google-Extended"] === "blocked") {
         recommendations.push({
             priority: "Critical",
             title: "Allow Google-Extended in robots.txt",

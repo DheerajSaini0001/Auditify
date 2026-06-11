@@ -99,9 +99,14 @@ const AIOShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
 };
 
 const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
-  const { score, details, meta, analysis, qanda } = data || {};
+  const { score, status, details, meta, analysis, qanda } = data || {};
   const [showAnalysis, setShowAnalysis] = React.useState(false);
-  const isPassed = score === 100;
+
+  // Three-tier status: green (100 / near 100), amber (partial), red (0 / near 0).
+  // Prefer the backend status (used by the summary counts); fall back to score bands.
+  const tier = status || (score >= 80 ? "pass" : score >= 40 ? "warning" : "fail");
+  const isPassed = tier === "pass";
+  const isWarning = tier === "warning";
 
   const Icon = iconMap[metricKey] || CheckCircle;
   const content = educationalContent[metricKey] || { desc: "Metric check.", why: "Important for AI." };
@@ -113,7 +118,9 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
 
   const statusColor = isPassed
     ? "text-emerald-500 bg-emerald-500/10 border-emerald-500/20"
-    : "text-rose-500 bg-rose-500/10 border-rose-500/20";
+    : isWarning
+      ? "text-amber-500 bg-amber-500/10 border-amber-500/20"
+      : "text-rose-500 bg-rose-500/10 border-rose-500/20";
 
   return (
 
@@ -127,7 +134,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             <div>
               <h3 className={`fontsemibold text-lg ${textColor}`}>{title}</h3>
               <p className={`text-xs font-medium mt-1 px-2 py-0.5 rounded-full w-fit border ${statusColor}`}>
-                {isPassed ? "Ready" : "Optimization Needed"}
+                {isPassed ? "Ready" : isWarning ? "Partially Ready" : "Optimization Needed"}
               </p>
             </div>
           </div>
@@ -181,16 +188,16 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
         {/* Status Verdict */}
         <div className={`p-3.5 rounded-xl border flex flex-col gap-2 transition-all duration-300 ${isPassed
           ? (darkMode ? "bg-emerald-500/5 border-emerald-500/10" : "bg-emerald-50/50 border-emerald-100")
-          : (score === 50
+          : (isWarning
             ? (darkMode ? "bg-amber-500/5 border-amber-500/10" : "bg-amber-50/50 border-amber-100")
             : (darkMode ? "bg-rose-500/5 border-rose-500/10" : "bg-rose-50/50 border-rose-100"))}`}>
           <div className="flex items-center gap-2">
-            <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${isPassed ? "bg-emerald-500" : (score === 50 ? "bg-amber-500" : "bg-rose-500")}`}></div>
+            <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${isPassed ? "bg-emerald-500" : (isWarning ? "bg-amber-500" : "bg-rose-500")}`}></div>
             <h4 className={`text-[10px] fontsemibold uppercase tracking-wider ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
               Audit Status
             </h4>
           </div>
-          <p className={`text-sm fontsemibold leading-normal ${isPassed ? "text-emerald-600 dark:text-emerald-400" : (score === 50 ? "text-amber-600 dark:text-amber-400" : "text-rose-600 dark:text-rose-400")}`}>
+          <p className={`text-sm fontsemibold leading-normal ${isPassed ? "text-emerald-600 dark:text-emerald-400" : (isWarning ? "text-amber-600 dark:text-amber-400" : "text-rose-600 dark:text-rose-400")}`}>
             {details}
           </p>
         </div>
@@ -202,7 +209,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
               type: 'AIO (AI Optimization)',
               title: title,
               details: details || '',
-              severity: isPassed ? 'pass' : score === 50 ? 'warning' : 'critical',
+              severity: isPassed ? 'pass' : isWarning ? 'warning' : 'critical',
               url: ''
             }}
             darkMode={darkMode}

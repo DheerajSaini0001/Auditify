@@ -385,10 +385,6 @@ async function checkNavDiscoverability(page) {
       'button[aria-label*="menu"]', '[aria-controls*="menu"]',
       '.navbar-toggler', '.nav-icon', '.mobile-menu-button'
     ];
-    const searchSelectors = [
-      'input[type="search"]', 'input[placeholder*="search" i]',
-      '[role="search"]', 'button[class*="search" i]', '#search-btn', '.search-icon'
-    ];
     const navSelectors = [
       'nav', '[role="navigation"]', '.nav', '.navigation', '.navbar',
       '.main-menu', '#main-menu', '.site-nav', '.header-nav',
@@ -398,48 +394,152 @@ async function checkNavDiscoverability(page) {
     let hamburgerFound = false;
     for (let sel of hamburgerSelectors) if (document.querySelector(sel)) { hamburgerFound = true; break; }
 
-    let searchFound = false;
-    for (let sel of searchSelectors) if (document.querySelector(sel)) { searchFound = true; break; }
-
     let navFound = false;
     for (let sel of navSelectors) if (document.querySelector(sel)) { navFound = true; break; }
 
+    // ---- Search: deep analysis across Presence, Discoverability & Functionality intent ----
+    // 1. PRESENCE — locate a search affordance and classify what kind it is.
+    const inputSelectors = [
+      'input[type="search"]',
+      'input[placeholder*="search" i]', 'input[name*="search" i]',
+      'input[aria-label*="search" i]', 'input[id*="search" i]', 'input[class*="search" i]'
+    ];
+    const formSelectors = [
+      '[role="search"]', 'form[action*="search" i]', 'form[id*="search" i]', 'form[class*="search" i]'
+    ];
+    const triggerSelectors = [
+      'button[class*="search" i]', 'button[aria-label*="search" i]',
+      'a[href*="search" i]', 'a[aria-label*="search" i]',
+      '#search-btn', '.search-icon', '[class*="search-toggle" i]', '[aria-label*="search" i]'
+    ];
+
+    const pick = (selectors) => {
+      for (const sel of selectors) {
+        const el = document.querySelector(sel);
+        if (el) return el;
+      }
+      return null;
+    };
+
+    const inputEl = pick(inputSelectors);
+    const formEl = pick(formSelectors);
+    const triggerEl = pick(triggerSelectors);
+
+    let searchType = 'none';
+    let searchEl = null;
+    if (inputEl) { searchType = 'input'; searchEl = inputEl; }
+    else if (formEl) { searchType = 'form'; searchEl = formEl; }
+    else if (triggerEl) { searchType = 'trigger'; searchEl = triggerEl; }
+
+    const searchPresent = searchType !== 'none';
+
+    // 2. DISCOVERABILITY — is the search reachable without digging (header / above the fold)?
+    let inHeader = false;
+    let topOffset = null;
+    let searchDiscoverable = false;
+    if (searchEl) {
+      inHeader = !!searchEl.closest('header, nav, [role="banner"], [role="navigation"], .header, .navbar, .site-header');
+      const inFooter = !!searchEl.closest('footer, [role="contentinfo"], .footer, .site-footer');
+      const rect = searchEl.getBoundingClientRect();
+      topOffset = Math.round(rect.top);
+      searchDiscoverable = !inFooter && (inHeader || rect.top < 200);
+    }
+
+    // 3. FUNCTIONALITY INTENT — does it look like a working search, not a dead icon?
+    let searchFunctional = false;
+    if (searchEl) {
+      if (searchType === 'input') {
+        const owningForm = searchEl.closest('form');
+        const hasSubmit = owningForm
+          ? !!owningForm.querySelector('button, input[type="submit"], [type="image"]')
+          : false;
+        searchFunctional = !!(searchEl.name || (owningForm && (owningForm.action || hasSubmit)));
+      } else if (searchType === 'form') {
+        searchFunctional = !!(searchEl.getAttribute('action') || searchEl.querySelector('input'));
+      } else if (searchType === 'trigger') {
+        // A trigger is "functional" if it links somewhere or controls/opens a search input.
+        const controls = searchEl.getAttribute('aria-controls');
+        const href = searchEl.getAttribute('href');
+        searchFunctional = !!(
+          (href && href !== '#' && !href.startsWith('javascript')) ||
+          (controls && document.getElementById(controls)) ||
+          document.querySelector('input[type="search"], input[placeholder*="search" i]')
+        );
+      }
+    }
+
     return {
       hamburger_present: hamburgerFound ? 1 : 0,
-      search_present: searchFound ? 1 : 0,
-      nav_menu_present: navFound ? 1 : 0
+      nav_menu_present: navFound ? 1 : 0,
+      search: {
+        present: searchPresent,
+        type: searchType,
+        inHeader,
+        topOffset,
+        discoverable: searchDiscoverable,
+        functional: searchFunctional
+      }
     };
   });
 
-  const score = (navDiscoverability.hamburger_present * 30) + (navDiscoverability.search_present * 30) + (navDiscoverability.nav_menu_present * 40);
-  const status = score === 100 ? 'pass' : (score >= 40 ? 'warning' : 'fail');
+  const search = navDiscoverability.search;
+
+  // Scoring (total = 100): nav menu 40, hamburger 30, search split 15/8/7 across the three dimensions.
+  const searchScore =
+    (search.present ? 15 : 0) +
+    (search.discoverable ? 8 : 0) +
+    (search.functional ? 7 : 0);
+
+  const score = (navDiscoverability.nav_menu_present * 40) + (navDiscoverability.hamburger_present * 30) + searchScore;
+  const status = score >= 80 ? 'pass' : (score >= 40 ? 'warning' : 'fail');
+
+  // Build a search-specific narrative for the analysis copy.
+  let searchNote;
+  if (!search.present) {
+    searchNote = "no search box was detected, forcing visitors to hunt through menus";
+  } else if (!search.discoverable) {
+    searchNote = "a search exists but is buried (not in the header / above the fold)";
+  } else if (!search.functional) {
+    searchNote = "a search affordance is visible but looks decorative (no working form or input behind it)";
+  } else {
+    searchNote = "a discoverable, working search is available";
+  }
 
   let analysis = {
-    cause: "Key navigation elements (Menu, Search) are clearly presence.",
-    recommendation: "Maintain the visibility of these elements. Ensure search is easily accessible from any page."
+    cause: `Key navigation elements are present and ${searchNote}.`,
+    recommendation: "Maintain the visibility of these elements. Keep search accessible from the header on every page."
   };
 
   if (status === 'fail') {
     analysis = {
-      cause: "Multiple essential navigation controls are missing or hidden.",
-      recommendation: "Ensure that at least a primary navigation menu and a search bar are easily discoverable for all users."
+      cause: `Multiple essential navigation controls are missing or hidden — ${searchNote}.`,
+      recommendation: "Ensure a primary navigation menu and a working, header-level search bar are easily discoverable for all users."
     };
   } else if (status === 'warning') {
     analysis = {
-      cause: "One or more useful navigation elements (like search) are missing.",
-      recommendation: "Consider adding a search bar or a more visible hamburger menu to improve content discoverability."
+      cause: `Some navigation discoverability is weak — ${searchNote}.`,
+      recommendation: "Surface a functional search bar in the header (not the footer) and ensure the menu is obvious so shoppers can jump straight to inventory."
     };
   }
 
   return {
     score,
     status: status,
-    details: `Found: ${navDiscoverability.nav_menu_present ? 'Navigation Menu' : 'No Menu'}, ${navDiscoverability.hamburger_present ? 'Menu Icon' : 'No Icon'}, ${navDiscoverability.search_present ? 'Search Bar' : 'No Search'}.`,
+    details: `Found: ${navDiscoverability.nav_menu_present ? 'Navigation Menu' : 'No Menu'}, ${navDiscoverability.hamburger_present ? 'Menu Icon' : 'No Icon'}, ${search.present ? `Search (${search.functional ? 'functional' : 'decorative'}${search.discoverable ? ', discoverable' : ', buried'})` : 'No Search'}.`,
     analysis: analysis,
     meta: {
       hasHamburger: !!navDiscoverability.hamburger_present,
-      hasSearch: !!navDiscoverability.search_present,
-      hasNavMenu: !!navDiscoverability.nav_menu_present
+      hasSearch: !!search.present, // kept for backward compatibility
+      hasNavMenu: !!navDiscoverability.nav_menu_present,
+      search: {
+        present: search.present,
+        type: search.type,
+        discoverable: search.discoverable,
+        functional: search.functional,
+        inHeader: search.inHeader,
+        topOffset: search.topOffset,
+        score: searchScore
+      }
     }
   };
 }
@@ -1083,6 +1183,484 @@ async function checkInPageNav(page, deviceType) {
   };
 }
 
+// Inventory Filtering / Faceted Search Quality (dealership-specific, context-aware)
+async function checkInventoryFiltering(page) {
+  const data = await page.evaluate(() => {
+    const text = (document.body.innerText || '').toLowerCase();
+    const url = window.location.href.toLowerCase();
+    const pathname = window.location.pathname.toLowerCase();
+
+    // ---- A. Detect page context: 'srp' | 'homepage' | 'other' ----
+    const srpUrlPatterns = [
+      '/inventory', '/vehicles', '/used', '/new', '/pre-owned', '/preowned',
+      '/cpo', '/certified', '/cars', '/listings', '/srp', '/showroom', '/search-inventory'
+    ];
+    const isSrpUrl = srpUrlPatterns.some(p => pathname.includes(p));
+    const isRootPath = pathname === '/' || pathname === '' || pathname === '/index.html' || pathname === '/home';
+
+    // Vehicle schema present?
+    let hasVehicleSchema = false;
+    for (const s of Array.from(document.querySelectorAll('script[type="application/ld+json"]'))) {
+      try {
+        const json = JSON.parse(s.innerText);
+        const arr = Array.isArray(json) ? json : [json];
+        for (const j of arr) {
+          const t = j && j['@type'];
+          const types = Array.isArray(t) ? t : [t];
+          if (types.some(x => ['Vehicle', 'Car', 'Motorcycle', 'AutoDealer'].includes(x))) hasVehicleSchema = true;
+          // ItemList of vehicles
+          if (j && j.itemListElement && JSON.stringify(j).toLowerCase().includes('vehicle')) hasVehicleSchema = true;
+        }
+      } catch (e) { }
+    }
+
+    // Repeated vehicle "cards": elements that contain a price and a year/make-ish token.
+    const priceEls = Array.from(document.querySelectorAll('[class*="price" i], [itemprop="price"]'));
+    const vehicleCardSelectors = [
+      '[class*="vehicle" i]', '[class*="inventory" i]', '[class*="listing" i]',
+      '[class*="srp" i]', '[class*="vdp" i]', '[class*="car-card" i]', '[class*="result-item" i]'
+    ];
+    let vehicleCardCount = 0;
+    for (const sel of vehicleCardSelectors) vehicleCardCount = Math.max(vehicleCardCount, document.querySelectorAll(sel).length);
+
+    const resultCountMatch = text.match(/(\d[\d,]*)\s+(vehicles|cars|results|matches|listings)\b/);
+    const hasResultCount = !!resultCountMatch;
+
+    // Context decision
+    let context = 'other';
+    const srpStrength =
+      (isSrpUrl ? 2 : 0) +
+      (hasVehicleSchema ? 1 : 0) +
+      (vehicleCardCount >= 4 ? 2 : (vehicleCardCount >= 2 ? 1 : 0)) +
+      (hasResultCount ? 1 : 0) +
+      (priceEls.length >= 4 ? 1 : 0);
+
+    if (srpStrength >= 3) context = 'srp';
+    else if (isRootPath) context = 'homepage';
+    else context = 'other';
+
+    // ---- B. Detect filtering UI ----
+    const filterContainerSel = '[class*="filter" i], [class*="facet" i], [id*="filter" i], [aria-label*="filter" i], aside, [class*="refine" i], [class*="sidebar" i]';
+    const filterContainers = Array.from(document.querySelectorAll(filterContainerSel));
+
+    const selects = Array.from(document.querySelectorAll('select'));
+    const checkboxes = Array.from(document.querySelectorAll('input[type="checkbox"]'));
+    const radios = Array.from(document.querySelectorAll('input[type="radio"]'));
+    const ranges = Array.from(document.querySelectorAll('input[type="range"], [class*="slider" i], [class*="range" i][class*="price" i], [class*="noui" i]'));
+
+    const hasFilterControls = filterContainers.length > 0 || selects.length >= 2 || checkboxes.length >= 3 || ranges.length > 0;
+
+    // Gather label/name/placeholder text from likely filter controls for facet matching.
+    const facetTextParts = [];
+    const collectText = (el) => {
+      if (!el) return;
+      facetTextParts.push((el.getAttribute('name') || ''));
+      facetTextParts.push((el.getAttribute('id') || ''));
+      facetTextParts.push((el.getAttribute('aria-label') || ''));
+      facetTextParts.push((el.getAttribute('placeholder') || ''));
+      facetTextParts.push((el.getAttribute('data-filter') || ''));
+      // Associated <label>
+      if (el.id) {
+        const lbl = document.querySelector(`label[for="${el.id}"]`);
+        if (lbl) facetTextParts.push(lbl.innerText || '');
+      }
+      const wrapLabel = el.closest('label');
+      if (wrapLabel) facetTextParts.push(wrapLabel.innerText || '');
+    };
+    [...selects, ...checkboxes, ...radios, ...ranges].slice(0, 400).forEach(collectText);
+    filterContainers.slice(0, 30).forEach(c => facetTextParts.push((c.innerText || '').slice(0, 600)));
+    const facetText = facetTextParts.join(' ').toLowerCase();
+
+    // Core automotive facets (the 6 that drive breadth) + bonus facets.
+    const coreFacets = {
+      make: /\bmake\b|\bbrand\b/,
+      model: /\bmodel\b|\btrim\b.*\bmodel\b|\bmodel\b/,
+      year: /\byear\b/,
+      price: /\bprice\b|\bbudget\b|\bpayment\b|\$/,
+      mileage: /\bmileage\b|\bmiles\b|\bodometer\b/,
+      bodyType: /\bbody\b|\bbody type\b|\bsuv\b|\bsedan\b|\btruck\b|\bcoupe\b|\bvehicle type\b/
+    };
+    const bonusFacets = {
+      trim: /\btrim\b/,
+      fuel: /\bfuel\b|\bmpg\b|\bgas\b|\bdiesel\b|\belectric\b|\bhybrid\b/,
+      transmission: /\btransmission\b|\bautomatic\b|\bmanual\b/,
+      drivetrain: /\bdrivetrain\b|\bdrive type\b|\bawd\b|\bfwd\b|\brwd\b|\b4wd\b/,
+      color: /\bcolor\b|\bcolour\b|\bexterior\b|\binterior\b/,
+      condition: /\bcondition\b|\bnew\b|\bused\b|\bcertified\b|\bcpo\b|\bpre-owned\b/
+    };
+    const coreFacetsFound = Object.keys(coreFacets).filter(k => coreFacets[k].test(facetText));
+    const bonusFacetsFound = Object.keys(bonusFacets).filter(k => bonusFacets[k].test(facetText));
+
+    // Mechanism richness: range sliders or generous checkbox facets = richer than bare dropdowns.
+    const mechanismRich = ranges.length > 0 || checkboxes.length >= 4;
+
+    // Result feedback signals
+    const hasActiveChips = !!document.querySelector('[class*="chip" i], [class*="tag" i][class*="filter" i], [class*="applied" i], [class*="active-filter" i], [class*="selected-filter" i]');
+    const hasClearReset = (() => {
+      const cands = Array.from(document.querySelectorAll('button, a, [role="button"]'));
+      return cands.some(b => /\b(clear|reset|remove)\b.*\b(all|filters?)\b|\bclear filters?\b|\breset all\b/i.test(b.innerText || b.getAttribute('aria-label') || ''));
+    })();
+    const hasSort = !!document.querySelector('select[name*="sort" i], select[id*="sort" i], [class*="sort" i], [aria-label*="sort" i]') || /\bsort by\b/i.test(text);
+
+    // Homepage entry-point finder widget: 2+ grouped vehicle-facet selects, or a "search inventory" finder.
+    let homepageFinder = false;
+    let homepageFinderFacets = [];
+    if (selects.length >= 2) {
+      // Are at least two selects vehicle-facet-ish?
+      const selTexts = selects.map(s => ((s.getAttribute('name') || '') + ' ' + (s.getAttribute('id') || '') + ' ' + (s.getAttribute('aria-label') || '') + ' ' + s.innerText).toLowerCase());
+      const finderHits = Object.keys(coreFacets).filter(k => selTexts.some(t => coreFacets[k].test(t)));
+      homepageFinderFacets = finderHits;
+      homepageFinder = finderHits.length >= 2;
+    }
+    const hasFinderHeading = /\b(find your|search inventory|find a (car|vehicle)|shop (new|used)|browse inventory|search our inventory)\b/i.test(text);
+
+    return {
+      context,
+      srpStrength,
+      hasFilterControls,
+      counts: { selects: selects.length, checkboxes: checkboxes.length, radios: radios.length, ranges: ranges.length, containers: filterContainers.length },
+      coreFacetsFound,
+      bonusFacetsFound,
+      mechanismRich,
+      feedback: { hasResultCount, hasActiveChips, hasClearReset, hasSort, resultCountText: resultCountMatch ? resultCountMatch[0] : null },
+      homepageFinder,
+      homepageFinderFacets,
+      hasFinderHeading
+    };
+  });
+
+  // ---- C. Score per context ----
+  // Context 'other' → not applicable: hide (no score) + info-only.
+  if (data.context === 'other') {
+    return {
+      status: 'pass',
+      details: "This page isn't an inventory listing, so faceted filtering isn't applicable here.",
+      analysis: {
+        cause: "Filtering quality is evaluated on inventory / search-results pages.",
+        recommendation: "Audit an inventory (SRP) URL to grade make/model/price/mileage filtering depth."
+      },
+      meta: { context: 'other', notApplicable: true },
+      infoOnly: true
+    };
+  }
+
+  // Context 'homepage' → grade the entry-point finder widget only; informational (not weighted).
+  if (data.context === 'homepage') {
+    const finderStrong = data.homepageFinder && (data.hasFinderHeading || data.homepageFinderFacets.length >= 3);
+    const score = data.homepageFinder ? (finderStrong ? 100 : 70) : 30;
+    const status = score >= 80 ? 'pass' : (score >= 40 ? 'warning' : 'fail');
+    return {
+      score,
+      status,
+      details: data.homepageFinder
+        ? `Homepage inventory finder detected (${data.homepageFinderFacets.join(', ') || 'make/model'}). Full faceted filtering is graded on inventory pages.`
+        : "No homepage inventory finder widget detected. Full faceted filtering is graded on inventory pages.",
+      analysis: {
+        cause: data.homepageFinder
+          ? "A quick-search finder lets shoppers start narrowing inventory straight from the homepage."
+          : "Shoppers have no homepage shortcut to start narrowing inventory by make/model/price.",
+        recommendation: "Add a prominent 'Find Your Vehicle' finder with at least Make, Model and Price so visitors can begin filtering from the homepage."
+      },
+      meta: {
+        context: 'homepage',
+        homepageFinder: data.homepageFinder,
+        finderFacets: data.homepageFinderFacets,
+        counts: data.counts,
+        infoOnly: true
+      },
+      infoOnly: true
+    };
+  }
+
+  // Context 'srp' → full faceted grading (weighted).
+  const presenceScore = data.hasFilterControls ? 20 : 0;
+
+  const coreCount = Math.min(data.coreFacetsFound.length, 6);
+  const breadthBase = (coreCount / 6) * 36;          // up to 36 for the 6 core facets
+  const bonusBreadth = Math.min(data.bonusFacetsFound.length * 2, 4); // up to 4 bonus
+  const breadthScore = Math.round(breadthBase + bonusBreadth); // up to 40
+
+  const mechanismScore = data.mechanismRich ? 15 : (data.counts.selects >= 3 ? 8 : 0);
+
+  const fb = data.feedback;
+  const feedbackScore =
+    (fb.hasResultCount ? 7 : 0) +
+    (fb.hasActiveChips ? 6 : 0) +
+    (fb.hasClearReset ? 6 : 0) +
+    (fb.hasSort ? 6 : 0); // up to 25
+
+  const score = Math.max(0, Math.min(100, presenceScore + breadthScore + mechanismScore + feedbackScore));
+  const status = score >= 80 ? 'pass' : (score >= 40 ? 'warning' : 'fail');
+
+  const missingCore = ['make', 'model', 'year', 'price', 'mileage', 'bodyType'].filter(f => !data.coreFacetsFound.includes(f));
+
+  let analysis;
+  if (status === 'pass') {
+    analysis = {
+      cause: `A broad faceted filter set is present (${data.coreFacetsFound.join(', ')}) with result feedback, letting shoppers narrow inventory quickly.`,
+      recommendation: "Maintain filter breadth and keep result counts, active-filter chips and a clear-all control visible as users refine."
+    };
+  } else if (status === 'warning') {
+    analysis = {
+      cause: `Filtering works but is incomplete${missingCore.length ? ` — missing ${missingCore.join(', ')}` : ''}${!data.mechanismRich ? '; uses basic dropdowns only' : ''}.`,
+      recommendation: "Add the missing core facets (price/mileage range sliders especially) and surface a result count, active-filter chips and a 'clear all' control."
+    };
+  } else {
+    analysis = {
+      cause: `Inventory filtering is weak or absent${data.hasFilterControls ? '' : ' — no real filter controls were detected'}${missingCore.length ? `; missing ${missingCore.join(', ')}` : ''}.`,
+      recommendation: "Implement faceted filtering for Make, Model, Year, Price and Mileage with checkboxes/range sliders, plus live result counts and a clear-filters affordance."
+    };
+  }
+
+  return {
+    score,
+    status,
+    details: `Inventory page: ${data.coreFacetsFound.length}/6 core facets (${data.coreFacetsFound.join(', ') || 'none'})${data.feedback.resultCountText ? `, ${data.feedback.resultCountText}` : ''}.`,
+    analysis,
+    meta: {
+      context: 'srp',
+      coreFacetsFound: data.coreFacetsFound,
+      bonusFacetsFound: data.bonusFacetsFound,
+      missingCore,
+      mechanismRich: data.mechanismRich,
+      counts: data.counts,
+      feedback: data.feedback,
+      breakdown: { presenceScore, breadthScore, mechanismScore, feedbackScore }
+    }
+  };
+}
+
+// No Results UX / Alternative Suggestions (info-only — a zero-result state can rarely be observed in a single-page audit)
+async function checkNoResultsUX(page) {
+  const data = await page.evaluate(() => {
+    const text = (document.body.innerText || '').toLowerCase();
+    const noResultsState = /(no|0|zero)\s+(results|vehicles|cars|matches|listings)\b|no (vehicles|results|matches) found|couldn'?t find|nothing (found|matched)|no matching (vehicles|results)|your search (returned|found) no/.test(text);
+
+    const hasSuggestions = /\b(try|broaden|widen|adjust|expand|different|similar|popular|browse all|view all|reset your|remove (a )?filter|modify your search)\b/.test(text);
+    const hasReset = Array.from(document.querySelectorAll('button, a, [role="button"]')).some(b => /\b(clear|reset|remove)\b.*\b(all|filters?|search)\b|\bclear filters?\b|\bstart over\b|\bview all (inventory|vehicles)\b/i.test(b.innerText || b.getAttribute('aria-label') || ''));
+    const hasAlternatives = !!document.querySelector('[class*="recommend" i], [class*="related" i], [class*="suggest" i], [class*="similar" i], [class*="featured" i]');
+    const hasCTA = /\b(contact us|call us|chat|get help|request|notify me|let us know)\b/.test(text) || !!document.querySelector('a[href^="tel:"], [class*="chat" i], [class*="contact" i]');
+    const hasSearchSuggest = !!document.querySelector('input[list], [role="listbox"], [class*="autocomplete" i], [class*="typeahead" i], datalist');
+
+    return { noResultsState, hasSuggestions, hasReset, hasAlternatives, hasCTA, hasSearchSuggest };
+  });
+
+  let score, status, details, analysis;
+  if (data.noResultsState) {
+    score = (data.hasSuggestions ? 30 : 0) + (data.hasReset ? 30 : 0) + (data.hasAlternatives ? 25 : 0) + (data.hasCTA ? 15 : 0);
+    status = score >= 80 ? 'pass' : (score >= 40 ? 'warning' : 'fail');
+    const aids = [data.hasSuggestions && 'suggestions', data.hasReset && 'reset', data.hasAlternatives && 'alternatives', data.hasCTA && 'CTA'].filter(Boolean).join(', ') || 'none';
+    details = `Zero-result state detected. Recovery aids: ${aids}.`;
+    analysis = {
+      cause: score >= 80 ? "The empty-results page guides shoppers back on track with suggestions and alternatives." : "A zero-result state was found but it leaves shoppers at a dead end without enough recovery options.",
+      recommendation: "On empty results, show a friendly message, a one-click way to clear/broaden filters, recommended alternative vehicles, and a contact/chat CTA."
+    };
+  } else {
+    const infra = (data.hasAlternatives ? 60 : 0) + (data.hasSearchSuggest ? 40 : 0);
+    score = Math.max(40, infra);
+    status = score >= 80 ? 'pass' : (score >= 40 ? 'warning' : 'fail');
+    details = "No zero-result state on this page; graded available fallback infrastructure (recommendations / search suggestions).";
+    analysis = {
+      cause: "A no-results page couldn't be observed during this single-page audit, so this is informational only.",
+      recommendation: "Ensure that when a search returns nothing, users see suggestions, a clear-filters option, alternative vehicles and a contact CTA instead of a blank page."
+    };
+  }
+
+  return { score, status, details, analysis, meta: { observed: data.noResultsState, hasSuggestions: data.hasSuggestions, hasReset: data.hasReset, hasAlternatives: data.hasAlternatives, hasCTA: data.hasCTA, infoOnly: true }, infoOnly: true };
+}
+
+// Certifications & Awards (info-only — overlaps the AEO Expertise Signals param)
+async function checkCertificationsAwards(page) {
+  const data = await page.evaluate(() => {
+    const text = (document.body.innerText || '').toLowerCase();
+    const imgAlts = Array.from(document.querySelectorAll('img')).map(i => (i.getAttribute('alt') || '').toLowerCase());
+    const altText = imgAlts.join(' ');
+    const haystack = text + ' ' + altText + ' ' + document.body.className.toLowerCase();
+
+    const signals = {
+      certified: /\bcertified\b|\bcertification\b|certified pre-owned|\bcpo\b/,
+      bbb: /\bbbb\b|better business bureau|accredited business/,
+      award: /\baward(s|ed)?\b|dealer of the year|president'?s award|mark of excellence|top rated|top-rated|best dealer/,
+      ratings: /dealerrater|cars\.com award|edmunds|kelley blue book|\bkbb\b|google reviews|5[- ]?star|five[- ]?star/,
+      manufacturer: /(toyota|honda|ford|chevrolet|nissan|bmw|mercedes|hyundai|kia|subaru|gmc|jeep|ram|lexus|audi|volkswagen|mazda) certified/,
+      ase: /\base certified\b|ase[- ]certified/
+    };
+    const found = Object.keys(signals).filter(k => signals[k].test(haystack));
+    const badgeImgs = imgAlts.filter(a => /certified|award|bbb|accredited|5[- ]?star|dealerrater|excellence/.test(a)).length;
+
+    return { found, badgeImgs };
+  });
+
+  const distinct = data.found.length;
+  let score = distinct === 0 ? 20 : distinct === 1 ? 55 : distinct === 2 ? 75 : 100;
+  if (data.badgeImgs > 0 && score < 100) score = Math.min(100, score + 10);
+  const status = score >= 80 ? 'pass' : (score >= 40 ? 'warning' : 'fail');
+
+  return {
+    score, status,
+    details: distinct ? `Trust signals found: ${data.found.join(', ')}${data.badgeImgs ? ` (+${data.badgeImgs} badge image${data.badgeImgs > 1 ? 's' : ''})` : ''}.` : "No certifications, accreditations or awards detected on this page.",
+    analysis: {
+      cause: distinct >= 2 ? "The page surfaces multiple credibility signals (certifications/awards) that build buyer trust." : "Few or no third-party credibility signals (certifications, BBB, awards, ratings) are visible.",
+      recommendation: "Display manufacturer certifications, BBB accreditation, award badges (Dealer of the Year, DealerRater) and star ratings prominently near the top of key pages."
+    },
+    meta: { found: data.found, badgeImgs: data.badgeImgs, infoOnly: true },
+    infoOnly: true
+  };
+}
+
+// Pricing Transparency / Fee Visibility (weighted; hybrid — info-only when no pricing on the page)
+async function checkPricingTransparency(page) {
+  const data = await page.evaluate(() => {
+    const text = (document.body.innerText || '').toLowerCase();
+    const priceEls = document.querySelectorAll('[class*="price" i], [itemprop="price"]').length;
+    const dollarCount = (text.match(/\$\s?\d/g) || []).length;
+    const hasPriceLabels = /\bmsrp\b|sale price|our price|internet price|selling price|list price|asking price/.test(text);
+    const callForPrice = /call for price|contact (us )?for price|price on request|please call|inquire for price/.test(text);
+
+    const feeDisclosure = /\bdoc(umentation)? fee|dealer fee|processing fee|destination (charge|fee)|no hidden fees|no dealer fees|plus (tax|fees|tax and fees)|out[- ]the[- ]door|price includes|price excludes|additional fees may/.test(text);
+    const noHidden = /no hidden fees|no dealer fees|no surprise|transparent pricing|upfront pricing|no markup/.test(text);
+    const disclaimer = /disclaimer|price does not include|does not include tax|see dealer for details|plus applicable|tax, title|excludes tax/.test(text);
+    const financing = /monthly payment|estimated payment|\/mo\b|\bapr\b|financing available|payment calculator|as low as \$/.test(text);
+
+    const hasAnyPrice = priceEls > 0 || dollarCount >= 2 || hasPriceLabels;
+    return { priceEls, dollarCount, hasPriceLabels, callForPrice, feeDisclosure, noHidden, disclaimer, financing, hasAnyPrice };
+  });
+
+  if (!data.hasAnyPrice && !data.callForPrice) {
+    return {
+      status: 'pass',
+      details: "No pricing is shown on this page, so pricing transparency isn't applicable here.",
+      analysis: { cause: "Pricing transparency is evaluated where vehicle prices appear (VDP/SRP/specials).", recommendation: "Audit an inventory or vehicle-detail page to grade price and fee transparency." },
+      meta: { notApplicable: true, infoOnly: true },
+      infoOnly: true
+    };
+  }
+
+  const showsRealPrices = (data.priceEls > 0 || data.dollarCount >= 2 || data.hasPriceLabels) && !(data.callForPrice && data.dollarCount < 2);
+  const score = Math.max(0, Math.min(100,
+    (showsRealPrices ? 30 : 0) +
+    (data.feeDisclosure ? 30 : 0) +
+    (data.disclaimer ? 15 : 0) +
+    (data.financing ? 15 : 0) +
+    (data.noHidden ? 10 : 0)
+  ));
+  const status = score >= 80 ? 'pass' : (score >= 40 ? 'warning' : 'fail');
+
+  let analysis;
+  if (status === 'pass') analysis = { cause: "Prices are shown openly with fee disclosure, building buyer trust before they ever call.", recommendation: "Keep fees and disclaimers visible next to price; consider an out-the-door price estimator." };
+  else if (status === 'warning') analysis = { cause: `Pricing is partly transparent${!data.feeDisclosure ? ' but fees/taxes are not disclosed' : ''}${!data.financing ? '; no payment estimate' : ''}.`, recommendation: "Disclose doc/dealer fees and taxes near the price, add a monthly-payment estimate, and state 'no hidden fees' if true." };
+  else analysis = { cause: data.callForPrice ? "Prices are largely hidden behind 'call for price', which erodes trust." : "Prices appear but fees and disclaimers are not disclosed.", recommendation: "Show actual prices (not just 'call for price'), disclose all fees and taxes, and add financing/payment estimates." };
+
+  return {
+    score, status,
+    details: `${showsRealPrices ? 'Prices shown' : 'Prices hidden / call-for-price'}; fee disclosure: ${data.feeDisclosure ? 'yes' : 'no'}, financing: ${data.financing ? 'yes' : 'no'}.`,
+    analysis,
+    meta: { showsRealPrices, callForPrice: data.callForPrice, feeDisclosure: data.feeDisclosure, noHidden: data.noHidden, disclaimer: data.disclaimer, financing: data.financing }
+  };
+}
+
+// Vehicle History Reports — CARFAX / AutoCheck (weighted; hybrid — only used/CPO vehicles have history)
+async function checkVehicleHistory(page) {
+  const data = await page.evaluate(() => {
+    const text = (document.body.innerText || '').toLowerCase();
+    const url = window.location.pathname.toLowerCase();
+    const html = document.documentElement.innerHTML.toLowerCase();
+
+    const usedUrl = /\/used|\/pre-owned|\/preowned|\/cpo|\/certified/.test(url);
+    const usedText = /\bused\b|pre-owned|pre owned|certified pre-owned|\bcpo\b/.test(text);
+    const newOnlyUrl = /\/new(-|\/|$)/.test(url) && !usedUrl;
+
+    const priceEls = document.querySelectorAll('[class*="price" i], [itemprop="price"]').length;
+    const vehicleContext = usedUrl || usedText || /\/inventory|\/vehicles|\/vdp|\/cars/.test(url) || priceEls >= 2 || /\b(vin|stock\s?#|mileage|odometer)\b/.test(text);
+
+    const carfax = /carfax/.test(html);
+    const autocheck = /autocheck/.test(html);
+    const reportLinks = document.querySelectorAll('a[href*="carfax" i], a[href*="autocheck" i]').length;
+    const historyLang = /vehicle history report|free (vehicle )?history|history report|accident[- ]free|no accidents|\bone[- ]owner\b|\b1[- ]owner\b|clean (title|history)|\bclean carfax\b/.test(text);
+
+    return { usedUrl, usedText, newOnlyUrl, vehicleContext, carfax, autocheck, reportLinks, historyLang };
+  });
+
+  const isUsedContext = data.usedUrl || data.usedText;
+
+  if (!data.vehicleContext || (data.newOnlyUrl && !isUsedContext)) {
+    return {
+      status: 'pass',
+      details: data.newOnlyUrl ? "New-vehicle context — history reports don't apply to new cars." : "No used-vehicle inventory context on this page; history reports not applicable.",
+      analysis: { cause: "CARFAX/AutoCheck history is only expected on used / certified pre-owned vehicles.", recommendation: "Audit a used or CPO inventory/vehicle page to grade history-report availability." },
+      meta: { notApplicable: true, context: data.newOnlyUrl ? 'new' : 'non-inventory', infoOnly: true },
+      infoOnly: true
+    };
+  }
+
+  const hasReport = data.carfax || data.autocheck;
+  const score = Math.max(0, Math.min(100,
+    (hasReport ? 55 : 0) +
+    (data.reportLinks > 0 ? 20 : 0) +
+    (data.historyLang ? 25 : 0)
+  ));
+  const status = score >= 80 ? 'pass' : (score >= 40 ? 'warning' : 'fail');
+  const providers = [data.carfax && 'CARFAX', data.autocheck && 'AutoCheck'].filter(Boolean).join(' & ');
+
+  return {
+    score, status,
+    details: `${hasReport ? `${providers} present` : 'No CARFAX/AutoCheck detected'}${data.reportLinks ? `, ${data.reportLinks} report link(s)` : ''}.`,
+    analysis: {
+      cause: hasReport ? "Vehicle history reports are surfaced, reassuring used-car buyers about condition and ownership." : "Used vehicles are shown without visible CARFAX/AutoCheck history reports, a major trust gap for pre-owned shoppers.",
+      recommendation: "Provide a free CARFAX or AutoCheck report link on every used/CPO listing and highlight 'accident-free' / 'one-owner' / 'clean title' where applicable."
+    },
+    meta: { context: isUsedContext ? 'used' : 'inventory', carfax: data.carfax, autocheck: data.autocheck, reportLinks: data.reportLinks, historyLang: data.historyLang }
+  };
+}
+
+// Staff Profiles / Team Pages (info-only — overlaps the AEO Experience Signals param)
+async function checkStaffProfiles(page) {
+  const data = await page.evaluate(() => {
+    const links = Array.from(document.querySelectorAll('a'));
+    const hasTeamLink = links.some(a => {
+      const t = ((a.innerText || '') + ' ' + (a.getAttribute('href') || '')).toLowerCase();
+      return /meet (the|our) team|our team|our staff|the team|our people|employees|sales team|about-us\/staff|\/staff|\/team|\/our-team|\/meet-/.test(t);
+    });
+
+    const profileContainers = Array.from(document.querySelectorAll('[class*="team" i], [class*="staff" i], [class*="member" i], [class*="employee" i], [class*="profile" i], [class*="person" i]'));
+    const roleRegex = /\b(sales|general)?\s?(manager|consultant|advisor|associate|specialist|finance|director|owner|president|gm|technician|representative)\b/;
+    let profileCount = 0, withPhoto = 0, withContact = 0;
+    profileContainers.slice(0, 60).forEach(c => {
+      const t = (c.innerText || '').toLowerCase();
+      const hasRole = roleRegex.test(t);
+      const hasImg = !!c.querySelector('img');
+      const hasContact = !!c.querySelector('a[href^="tel:"], a[href^="mailto:"]');
+      if (hasRole && (hasImg || t.length > 10)) {
+        profileCount++;
+        if (hasImg) withPhoto++;
+        if (hasContact) withContact++;
+      }
+    });
+
+    const hasOnPageProfiles = profileCount >= 2;
+    return { hasTeamLink, hasOnPageProfiles, profileCount, withPhoto, withContact };
+  });
+
+  const richness = data.hasOnPageProfiles ? ((data.withPhoto > 0 ? 10 : 0) + (data.withContact > 0 ? 10 : 0)) : 0;
+  const score = Math.max(0, Math.min(100,
+    (data.hasTeamLink ? 40 : 0) +
+    (data.hasOnPageProfiles ? 40 : 0) +
+    richness
+  ));
+  const status = score >= 80 ? 'pass' : (score >= 40 ? 'warning' : 'fail');
+
+  return {
+    score, status,
+    details: data.hasOnPageProfiles ? `${data.profileCount} staff profiles detected (${data.withPhoto} with photos, ${data.withContact} with contact).` : data.hasTeamLink ? "A team/staff page link was found, but no profiles on this page." : "No staff profiles or team page detected.",
+    analysis: {
+      cause: (data.hasTeamLink || data.hasOnPageProfiles) ? "The site puts real people forward (team/staff profiles), which humanizes the dealership and builds trust." : "There's no visible team or staff presence, so buyers can't put a face to who they'd work with.",
+      recommendation: "Add a 'Meet Our Team' page with photos, roles and direct contact for sales, finance and service staff."
+    },
+    meta: { hasTeamLink: data.hasTeamLink, hasOnPageProfiles: data.hasOnPageProfiles, profileCount: data.profileCount, withPhoto: data.withPhoto, withContact: data.withContact, infoOnly: true },
+    infoOnly: true
+  };
+}
+
 export default async function evaluateMobileUX(device, page) {
   const deviceType = device === 'Mobile' ? 'mobile' : 'desktop';
 
@@ -1101,6 +1679,12 @@ export default async function evaluateMobileUX(device, page) {
   const flow = await checkPageFlow(page);
   const layout = await checkLayoutConsistency(page);
   const inPageNav = await checkInPageNav(page, deviceType);
+  const inventoryFiltering = await checkInventoryFiltering(page);
+  const noResultsUX = await checkNoResultsUX(page);
+  const certificationsAwards = await checkCertificationsAwards(page);
+  const pricingTransparency = await checkPricingTransparency(page);
+  const vehicleHistory = await checkVehicleHistory(page);
+  const staffProfiles = await checkStaffProfiles(page);
 
   const results = {
     Text_Readability: readability,
@@ -1117,7 +1701,13 @@ export default async function evaluateMobileUX(device, page) {
     Content_Density_Balance: density,
     Page_to_Page_Flow: flow,
     Layout_Consistency: layout,
-    In_Page_Navigation: inPageNav
+    In_Page_Navigation: inPageNav,
+    Inventory_Filtering: inventoryFiltering,
+    No_Results_UX: noResultsUX,
+    Certifications_Awards: certificationsAwards,
+    Pricing_Transparency: pricingTransparency,
+    Vehicle_History: vehicleHistory,
+    Staff_Profiles: staffProfiles
   };
 
   let weightedSum = 0;
@@ -1138,12 +1728,18 @@ export default async function evaluateMobileUX(device, page) {
     Content_Density_Balance: 2,
     Page_to_Page_Flow: 2,
     Layout_Consistency: 1,
-    In_Page_Navigation: 1
+    In_Page_Navigation: 1,
+    Inventory_Filtering: 3,
+    Pricing_Transparency: 3,
+    Vehicle_History: 2
+    // No_Results_UX, Certifications_Awards, Staff_Profiles are info-only (always carry infoOnly:true) — excluded from the weighted score.
   };
 
   for (const [key, result] of Object.entries(results)) {
+    // Info-only params (e.g. context-not-applicable signals) are displayed but excluded from the weighted score.
+    if (!result || result.infoOnly) continue;
     const weight = weights[key] || 1;
-    const score = result ? Math.max(0, Math.min(100, result.score || 0)) : 0;
+    const score = Math.max(0, Math.min(100, result.score || 0));
 
     weightedSum += (score * weight);
     totalPossibleWeight += (100 * weight);

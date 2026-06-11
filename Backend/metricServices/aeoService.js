@@ -93,16 +93,18 @@ class AEOService {
             perplexity: this.computePlatformScore('perplexity', signals, aeoWeights.perplexity)
         };
 
-        // Apply bot-blocking overrides (Accessibility is 0 if bot blocked)
-        if (signals.botAccess.bots['Google-Extended'] === 'blocked') {
+        // Apply bot-blocking overrides (Accessibility is 0 if bot blocked).
+        // Guard `bots` with ?. — when botAccess times out its neutral fallback has no
+        // `bots`, and a missing entry must read as "not blocked" rather than throw.
+        if (signals.botAccess.bots?.['Google-Extended'] === 'blocked') {
             platforms.gemini.score = 0;
             platforms.gemini.blocked = true;
         }
-        if (signals.botAccess.bots['GPTBot'] === 'blocked' && !signals.llmsTxt.exists) {
+        if (signals.botAccess.bots?.['GPTBot'] === 'blocked' && !signals.llmsTxt.exists) {
             platforms.chatgpt.score = 0;
             platforms.chatgpt.blocked = true;
         }
-        if (signals.botAccess.bots['PerplexityBot'] === 'blocked') {
+        if (signals.botAccess.bots?.['PerplexityBot'] === 'blocked') {
             platforms.perplexity.score = 0;
             platforms.perplexity.blocked = true;
         }
@@ -237,7 +239,7 @@ class AEOService {
 
         if (platform === 'gemini') {
             const issues = [];
-            if (signals.botAccess.bots['Google-Extended'] === 'blocked') issues.push("Google-Extended is blocked in robots.txt.");
+            if (signals.botAccess.bots?.['Google-Extended'] === 'blocked') issues.push("Google-Extended is blocked in robots.txt.");
             if (signals.schema.score < 40) issues.push("Missing FAQPage/Product schema.");
             if (signals.pageSpeed.score < 80) issues.push("page load is too slow.");
             
@@ -247,7 +249,7 @@ class AEOService {
 
         if (platform === 'chatgpt') {
             const issues = [];
-            if (signals.botAccess.bots['GPTBot'] === 'blocked') issues.push("GPTBot is blocked in robots.txt (Critical Visibility Issue).");
+            if (signals.botAccess.bots?.['GPTBot'] === 'blocked') issues.push("GPTBot is blocked in robots.txt (Critical Visibility Issue).");
             if (!signals.llmsTxt.exists) issues.push("Missing an llms.txt file.");
             if (signals.answerFirst.score < 80) issues.push("Content structure is too 'wordy'—missing a TL;DR at the top.");
             
@@ -257,7 +259,7 @@ class AEOService {
 
         if (platform === 'perplexity') {
             const issues = [];
-            if (signals.botAccess.bots['PerplexityBot'] === 'blocked') issues.push("PerplexityBot is blocked in robots.txt.");
+            if (signals.botAccess.bots?.['PerplexityBot'] === 'blocked') issues.push("PerplexityBot is blocked in robots.txt.");
             if (signals.structuredContent.dataStuckInImages) issues.push("Your data is stuck in images, not Markdown tables.");
             else if (signals.structuredContent.tables === 0) issues.push("Data is unstructured (missing tables).");
             

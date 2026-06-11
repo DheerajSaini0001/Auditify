@@ -129,6 +129,15 @@ const AdminDashboard = () => {
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [createDropdownOpen, setCreateDropdownOpen] = useState(false);
+
+  // Close the "Create Project" dropdown when clicking outside of it.
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (!e.target.closest('[data-dropdown="create"]')) setCreateDropdownOpen(false);
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
   const [searchInput, setSearchInput] = useState("");
   const [starredIds] = useState(() => {
     try {
@@ -143,7 +152,7 @@ const AdminDashboard = () => {
     <div className="flex flex-col h-full justify-between select-none">
       <div className="flex flex-col p-4 gap-4 overflow-y-auto">
         {/* Create Project Button */}
-        <div className="relative">
+        <div className="relative" data-dropdown="create">
                 <button
                   onClick={() => setCreateDropdownOpen(!createDropdownOpen)}
                   className="w-full flex items-center justify-between px-4 py-2.5 bg-orange-600 hover:bg-orange-350 text-white rounded-xl fontsemibold text-sm transition-all shadow-md shadow-orange-600/10 active:scale-[0.98]"

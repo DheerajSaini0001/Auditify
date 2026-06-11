@@ -10,7 +10,8 @@ import {
   ChevronRight, ChevronUp, Compass, Touchpad, BookOpen, Layers, Image as ImageIcon,
   XOctagon, MonitorPlay, MousePointer2, CheckCircle2, Loader2,
   ExternalLink, CheckCircle, XCircle, Info, Search, Unlink, Tag, AlertTriangle,
-  ListTree, AlignLeft, Grid3X3, Repeat, AppWindow, Anchor, Navigation
+  ListTree, AlignLeft, Grid3X3, Repeat, AppWindow, Anchor, Navigation, SlidersHorizontal,
+  SearchX, Award, DollarSign, FileText, Users, ShieldCheck
 } from "lucide-react";
 import MetricInfoModal from "../Component/MetricInfoModal";
 import ParameterInfoModal from "../Component/ParameterInfoModal";
@@ -32,7 +33,13 @@ const iconMap = {
   Content_Density_Balance: Grid3X3,
   Page_to_Page_Flow: Repeat,
   Layout_Consistency: AppWindow,
-  In_Page_Navigation: Anchor
+  In_Page_Navigation: Anchor,
+  Inventory_Filtering: SlidersHorizontal,
+  No_Results_UX: SearchX,
+  Certifications_Awards: Award,
+  Pricing_Transparency: DollarSign,
+  Vehicle_History: FileText,
+  Staff_Profiles: Users
 };
 
 const uxEducationalContent = InfoDetails;
@@ -129,9 +136,19 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
             </div>
             <div>
               <h3 className={`fontsemibold text-lg ${textColor}`}>{title}</h3>
-              <p className={`text-xs font-medium mt-1 px-2 py-0.5 rounded-full w-fit border ${statusColor}`}>
-                {statusLabel}
-              </p>
+              <div className="flex items-center gap-2 mt-1">
+                <p className={`text-xs font-medium px-2 py-0.5 rounded-full w-fit border ${statusColor}`}>
+                  {statusLabel}
+                </p>
+                {meta?.infoOnly && (
+                  <span
+                    title="Informational — not included in the section score"
+                    className={`text-[9px] fontsemibold px-2 py-0.5 rounded-full border uppercase tracking-wide ${darkMode ? "bg-slate-700/50 text-slate-300 border-slate-600" : "bg-slate-100 text-slate-500 border-slate-300"}`}
+                  >
+                    Info · not scored
+                  </span>
+                )}
+              </div>
             </div>
           </div>
           <div className="flex gap-2 items-center">
@@ -302,19 +319,44 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
 
             {/* 2. Navigation & Flow Section */}
             {type === "Navigation_Discoverability" && meta && (
-              <div>
-                <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Discovery Assets</h5>
-                <div className="grid grid-cols-1 gap-1.5 mt-2">
-                  {[
-                    { l: "Global Nav", v: meta.hasNavMenu },
-                    { l: "Mobile Menu", v: meta.hasHamburger },
-                    { l: "Search Field", v: meta.hasSearch }
-                  ].map((item, i) => (
-                    <div key={i} className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
-                      <span className={darkMode ? "text-slate-300" : "text-slate-600"}>{item.l}:</span>
-                      <span className={item.v ? "text-emerald-500 fontsemibold" : "text-rose-500 fontsemibold"}>{item.v ? "ACTIVE" : "MISSING"}</span>
-                    </div>
-                  ))}
+              <div className="space-y-3">
+                <div>
+                  <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Discovery Assets</h5>
+                  <div className="grid grid-cols-1 gap-1.5 mt-2">
+                    {[
+                      { l: "Global Nav", v: meta.hasNavMenu },
+                      { l: "Mobile Menu", v: meta.hasHamburger }
+                    ].map((item, i) => (
+                      <div key={i} className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
+                        <span className={darkMode ? "text-slate-300" : "text-slate-600"}>{item.l}:</span>
+                        <span className={item.v ? "text-emerald-500 fontsemibold" : "text-rose-500 fontsemibold"}>{item.v ? "ACTIVE" : "MISSING"}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Site Search — three-dimension breakdown */}
+                <div>
+                  <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 flex items-center justify-between ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
+                    <span>Site Search</span>
+                    {meta.search?.present && meta.search?.type && (
+                      <span className={`text-[9px] fontsemibold px-1.5 py-0.5 rounded ${darkMode ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-700"}`}>
+                        {meta.search.type.toUpperCase()}
+                      </span>
+                    )}
+                  </h5>
+                  <div className="grid grid-cols-1 gap-1.5 mt-2">
+                    {[
+                      { l: "Present", v: !!(meta.search?.present ?? meta.hasSearch) },
+                      { l: "Discoverable", v: !!meta.search?.discoverable },
+                      { l: "Functional", v: !!meta.search?.functional }
+                    ].map((item, i) => (
+                      <div key={i} className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
+                        <span className={darkMode ? "text-slate-300" : "text-slate-600"}>{item.l}:</span>
+                        <span className={item.v ? "text-emerald-500 fontsemibold" : "text-rose-500 fontsemibold"}>{item.v ? "YES" : "NO"}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
@@ -335,6 +377,162 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
                 <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
                   <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-blue-400"></span>
                   <span className="break-all">{meta.anchorLinks} Skip-links | Top-scroll: {meta.backToTop ? "Yes" : "No"}</span>
+                </div>
+              </div>
+            )}
+
+            {type === "Inventory_Filtering" && meta && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h5 className={`text-xs fontsemibold uppercase tracking-wider ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Filtering Quality</h5>
+                  <span className={`text-[9px] fontsemibold px-1.5 py-0.5 rounded uppercase tracking-wide ${meta.context === 'srp' ? (darkMode ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-700") : (darkMode ? "bg-slate-600/30 text-slate-300" : "bg-slate-200 text-slate-600")}`}>
+                    {meta.context === 'srp' ? 'Inventory Page' : meta.context === 'homepage' ? 'Homepage Finder · Info' : 'N/A'}
+                  </span>
+                </div>
+
+                {/* SRP: facet coverage + mechanism + feedback */}
+                {meta.context === 'srp' && (
+                  <>
+                    <div>
+                      <p className={`text-[10px] mb-1.5 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Core facets detected ({meta.coreFacetsFound?.length || 0}/6)</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {["make", "model", "year", "price", "mileage", "bodyType"].map((f) => {
+                          const on = meta.coreFacetsFound?.includes(f);
+                          return (
+                            <span key={f} className={`text-[9px] fontsemibold px-2 py-0.5 rounded-full border ${on ? (darkMode ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" : "bg-emerald-50 text-emerald-600 border-emerald-200") : (darkMode ? "bg-slate-800/50 text-slate-500 border-slate-700" : "bg-slate-50 text-slate-400 border-slate-200")}`}>
+                              {f === "bodyType" ? "body" : f}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { l: "Result count", v: meta.feedback?.hasResultCount },
+                        { l: "Active chips", v: meta.feedback?.hasActiveChips },
+                        { l: "Clear filters", v: meta.feedback?.hasClearReset },
+                        { l: "Sort control", v: meta.feedback?.hasSort },
+                        { l: "Range sliders", v: meta.mechanismRich }
+                      ].map((item, i) => (
+                        <div key={i} className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
+                          <span className={darkMode ? "text-slate-300" : "text-slate-600"}>{item.l}:</span>
+                          <span className={item.v ? "text-emerald-500 fontsemibold" : "text-rose-500 fontsemibold"}>{item.v ? "YES" : "NO"}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                {/* Homepage: finder widget summary */}
+                {meta.context === 'homepage' && (
+                  <div className={`p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${meta.homepageFinder ? "bg-emerald-400" : "bg-rose-400"}`}></span>
+                    <span className="break-all">
+                      {meta.homepageFinder ? `Finder widget: ${(meta.finderFacets || []).join(', ') || 'make/model'}` : "No homepage inventory finder detected"}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {type === "No_Results_UX" && meta && (
+              <div className="space-y-2">
+                <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
+                  {meta.observed ? "Empty-State Recovery" : "Fallback Infrastructure"}
+                </h5>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { l: "Suggestions", v: meta.hasSuggestions },
+                    { l: "Clear / Reset", v: meta.hasReset },
+                    { l: "Alternatives", v: meta.hasAlternatives },
+                    { l: "Contact CTA", v: meta.hasCTA }
+                  ].map((item, i) => (
+                    <div key={i} className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
+                      <span className={darkMode ? "text-slate-300" : "text-slate-600"}>{item.l}:</span>
+                      <span className={item.v ? "text-emerald-500 fontsemibold" : "text-rose-500 fontsemibold"}>{item.v ? "YES" : "NO"}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {type === "Certifications_Awards" && meta && (
+              <div>
+                <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Trust Signals ({meta.found?.length || 0})</h5>
+                {meta.found?.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {meta.found.map((f, i) => (
+                      <span key={i} className={`text-[9px] fontsemibold px-2 py-0.5 rounded-full border ${darkMode ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" : "bg-emerald-50 text-emerald-600 border-emerald-200"}`}>{f}</span>
+                    ))}
+                    {meta.badgeImgs > 0 && (
+                      <span className={`text-[9px] fontsemibold px-2 py-0.5 rounded-full border ${darkMode ? "bg-blue-500/15 text-blue-400 border-blue-500/30" : "bg-blue-50 text-blue-600 border-blue-200"}`}>{meta.badgeImgs} badge img</span>
+                    )}
+                  </div>
+                ) : (
+                  <div className={`mt-1 p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-400" : "bg-slate-50 border-slate-200 text-slate-500"}`}>No certifications / awards detected</div>
+                )}
+              </div>
+            )}
+
+            {type === "Pricing_Transparency" && meta && !meta.notApplicable && (
+              <div>
+                <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Transparency Signals</h5>
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  {[
+                    { l: "Real Prices", v: meta.showsRealPrices },
+                    { l: "Fee Disclosure", v: meta.feeDisclosure },
+                    { l: "Disclaimer", v: meta.disclaimer },
+                    { l: "Financing Info", v: meta.financing },
+                    { l: "No Hidden Fees", v: meta.noHidden }
+                  ].map((item, i) => (
+                    <div key={i} className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
+                      <span className={darkMode ? "text-slate-300" : "text-slate-600"}>{item.l}:</span>
+                      <span className={item.v ? "text-emerald-500 fontsemibold" : "text-rose-500 fontsemibold"}>{item.v ? "YES" : "NO"}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {type === "Vehicle_History" && meta && !meta.notApplicable && (
+              <div>
+                <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>History Reports</h5>
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  {[
+                    { l: "CARFAX", v: meta.carfax },
+                    { l: "AutoCheck", v: meta.autocheck },
+                    { l: "Report Links", v: meta.reportLinks > 0 },
+                    { l: "History Language", v: meta.historyLang }
+                  ].map((item, i) => (
+                    <div key={i} className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
+                      <span className={darkMode ? "text-slate-300" : "text-slate-600"}>{item.l}:</span>
+                      <span className={item.v ? "text-emerald-500 fontsemibold" : "text-rose-500 fontsemibold"}>{item.v ? "YES" : "NO"}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {type === "Staff_Profiles" && meta && (
+              <div className="space-y-2">
+                <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Team Presence</h5>
+                <div className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <span className="opacity-70">Team / Staff page:</span>
+                  <span className={meta.hasTeamLink ? "text-emerald-500 fontsemibold" : "text-rose-500 fontsemibold"}>{meta.hasTeamLink ? "LINKED" : "MISSING"}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                    <p className="opacity-70 mb-1">Profiles</p>
+                    <p className="fontsemibold">{meta.profileCount || 0}</p>
+                  </div>
+                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                    <p className="opacity-70 mb-1">Photos</p>
+                    <p className="fontsemibold">{meta.withPhoto || 0}</p>
+                  </div>
+                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                    <p className="opacity-70 mb-1">Contact</p>
+                    <p className="fontsemibold">{meta.withContact || 0}</p>
+                  </div>
                 </div>
               </div>
             )}
@@ -687,6 +885,7 @@ const UX_Content_Structure_Inner = React.memo(({ data, loading, darkMode }) => {
     In_Page_Navigation: "md:col-span-2",
     Broken_Links: "md:col-span-2",
     Page_to_Page_Flow: "md:col-span-2",
+    Inventory_Filtering: "md:col-span-2",
   };
 
   const detailedKeys = [
@@ -707,7 +906,7 @@ const UX_Content_Structure_Inner = React.memo(({ data, loading, darkMode }) => {
     {
       title: "Navigation & Flow",
       icon: Compass,
-      keys: ["Navigation_Discoverability", "Breadcrumbs", "In_Page_Navigation", "Page_to_Page_Flow"]
+      keys: ["Navigation_Discoverability", "Inventory_Filtering", "No_Results_UX", "Breadcrumbs", "In_Page_Navigation", "Page_to_Page_Flow"]
     },
     {
       title: "Interactive Experience",
@@ -718,6 +917,11 @@ const UX_Content_Structure_Inner = React.memo(({ data, loading, darkMode }) => {
       title: "Mobile Layout & Stability",
       icon: Smartphone,
       keys: ["Above_the_Fold_Content", "Sticky_Header_Usage", "Intrusive_Interstitials", "Layout_Consistency"]
+    },
+    {
+      title: "Trust & Transparency",
+      icon: ShieldCheck,
+      keys: ["Certifications_Awards", "Pricing_Transparency", "Vehicle_History", "Staff_Profiles"]
     }
   ];
 
@@ -824,6 +1028,8 @@ const UX_Content_Structure_Inner = React.memo(({ data, loading, darkMode }) => {
                 {section.keys.map((key) => {
                   const metric = results[key];
                   if (!metric) return null;
+                  // Hide "not applicable" params (no score returned), e.g. pricing on a page with no prices.
+                  if ((metric.Score ?? metric.score) === undefined) return null;
                   return (
                     <MetricCard
                       key={key}

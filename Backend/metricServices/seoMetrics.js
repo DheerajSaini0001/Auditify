@@ -1,3 +1,5 @@
+import * as cheerio from "cheerio";
+
 // Helper to standardized return object
 const evaluateParameter = (score, details, meta = {}) => {
   const status = score === 1 ? "pass" : score >= 0.5 ? "warning" : "fail";
@@ -1633,6 +1635,2057 @@ const checkStructuredData = async (page) => {
   }
 };
 
+// ──────────────────────────────────────────────────────────────────────────
+// Cross-page Uniqueness (titles & meta descriptions)
+// Samples up to 5 eligible internal content pages (from sitemap, else by
+// crawling the homepage), extracts each page's <title> and meta description
+// in a single fetch, normalizes them and scores how many are unique.
+// Duplicate / missing values lower the score.
+// ──────────────────────────────────────────────────────────────────────────
+
+// Paths that are templated / boilerplate and therefore not useful for a
+// title-uniqueness comparison (inventory, VDPs, legal pages, etc.).
+const TU_EXCLUDE_RE = /(vdp|vehicle-?details?|\/vehicles?\/|inventory|\/new\/|\/used\/|search|about|contact|privacy|terms|condition|disclaimer|cookie|sitemap)/i;
+const TU_ASSET_RE = /\.(jpe?g|png|gif|webp|svg|css|js|pdf|xml|json|ico|mp4|webm|woff2?|ttf|eot)(\?|#|$)/i;
+// 17-char VIN pattern → typical of vehicle detail pages.
+const TU_VIN_RE = /\/[A-HJ-NPR-Z0-9]{17}(\/|$)/i;
+
+const tuNormalizeText = (raw) => {
+  if (!raw) return "";
+  return raw
+    .replace(/&amp;/gi, "&")
+    .replace(/&#0?38;/g, "&")
+    .replace(/\s+/g, " ") // collapse line breaks + multiple spaces → single space
+    .trim();
+};
+
+const tuIsEligible = (href) => {
+  try {
+    const { pathname } = new URL(href);
+    if (TU_ASSET_RE.test(pathname)) return false;
+    if (TU_VIN_RE.test(pathname)) return false;
+    if (TU_EXCLUDE_RE.test(pathname)) return false;
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+// Fisher–Yates shuffle then slice — random selection without bias.
+const tuPickRandom = (arr, n) => {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy.slice(0, n);
+};
+
+// Fetch raw text, preferring the Puppeteer page context (to reuse cookies /
+// bypass Cloudflare), falling back to node-fetch.
+const tuFetchRaw = async (target, page) => {
+  if (page) {
+    try {
+      const html = await page.evaluate(async (u) => {
+        try {
+          const r = await fetch(u);
+          if (!r.ok) return null;
+          return await r.text();
+        } catch {
+          return null;
+        }
+      }, target);
+      if (html) return html;
+    } catch {
+      // fall through to node-fetch
+    }
+  }
+  try {
+    const r = await fetch(target, {
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
+      redirect: "follow",
+      signal: AbortSignal.timeout(7000),
+    });
+    if (r.ok) return await r.text();
+  } catch {
+    // ignore
+  }
+  return null;
+};
+
+const tuExtractLocs = (xml) => {
+  const locs = [];
+  const re = /<loc>\s*([\s\S]*?)\s*<\/loc>/gi;
+  let m;
+  while ((m = re.exec(xml))) {
+    const v = m[1].trim();
+    if (v) locs.push(v);
+  }
+  return locs;
+};
+
+// Collect candidate URLs from sitemap XML (resolving a sitemap index by
+// fetching a few child sitemaps), or [] if not a usable sitemap.
+const tuUrlsFromSitemap = async (sitemapContent, page) => {
+  if (!sitemapContent) return [];
+  const lower = sitemapContent.toLowerCase();
+  if (lower.includes("<sitemapindex")) {
+    const children = tuExtractLocs(sitemapContent).slice(0, 3);
+    const urls = [];
+    for (const child of children) {
+      const xml = await tuFetchRaw(child, page);
+      if (xml) urls.push(...tuExtractLocs(xml));
+      if (urls.length > 300) break;
+    }
+    return urls;
+  }
+  if (lower.includes("<urlset")) {
+    return tuExtractLocs(sitemapContent);
+  }
+  return [];
+};
+
+// Fallback: collect internal links by crawling the current (home) page DOM.
+const tuUrlsFromHomepage = ($, baseUrl) => {
+  let origin;
+  try {
+    origin = new URL(baseUrl).origin;
+  } catch {
+    return [];
+  }
+  const out = [];
+  $("a[href]").each((i, el) => {
+    const href = $(el).attr("href");
+    if (!href) return;
+    try {
+      const abs = new URL(href, baseUrl);
+      if (abs.origin !== origin) return;
+      abs.hash = "";
+      out.push(abs.href);
+    } catch {
+      // skip invalid hrefs
+    }
+  });
+  return out;
+};
+
+const tuExtractTitle = (html) => {
+  const m = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+  if (!m) return null;
+  const norm = tuNormalizeText(m[1]);
+  return norm.length ? norm : null;
+};
+
+const tuExtractMetaDescription = (html) => {
+  const metaTags = html.match(/<meta\b[^>]*>/gi) || [];
+  for (const tag of metaTags) {
+    if (/\bname\s*=\s*["']description["']/i.test(tag)) {
+      const m = tag.match(/\bcontent\s*=\s*(?:"([^"]*)"|'([^']*)')/i);
+      if (m) {
+        const norm = tuNormalizeText(m[1] ?? m[2] ?? "");
+        return norm.length ? norm : null;
+      }
+    }
+  }
+  return null;
+};
+
+const tuExtractH1 = (html) => {
+  const m = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+  if (!m) return null;
+  const text = tuNormalizeText(m[1].replace(/<[^>]+>/g, " "));
+  return text.length ? text : null;
+};
+
+// Lightweight visible-text extraction (prefers <main>), capped for performance.
+const tuExtractBodyText = (html) => {
+  let h = html;
+  const mainMatch = h.match(/<main[^>]*>([\s\S]*?)<\/main>/i);
+  if (mainMatch) h = mainMatch[1];
+  const text = h
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ");
+  return tuNormalizeText(text).slice(0, 5000);
+};
+
+// Derive a target keyword for a page — URL slug first, then H1, then the most
+// frequent significant word in the main content (mirrors the spec's methods).
+const tuKeywordFromSlug = (pageUrl) => {
+  try {
+    const { pathname } = new URL(pageUrl);
+    const segs = pathname.split("/").filter(Boolean);
+    if (!segs.length) return [];
+    const last = segs[segs.length - 1].replace(/\.(html?|php|aspx?)$/i, "");
+    return last
+      .split(/[-_]+/)
+      .map((t) => t.toLowerCase())
+      .filter((t) => t.length > 2 && !stopWords.has(t) && !/^\d+$/.test(t));
+  } catch {
+    return [];
+  }
+};
+
+const tuDeriveKeyword = (page) => {
+  // Method 1 — URL slug.
+  let tokens = tuKeywordFromSlug(page.url);
+  if (tokens.length) return { tokens, source: "url" };
+
+  // Method 2 — Page H1.
+  if (page.h1) {
+    tokens = cleanText(page.h1).slice(0, 3);
+    if (tokens.length) return { tokens, source: "h1" };
+  }
+
+  // Method 3 — Most frequent significant words in main content.
+  if (page.bodyText) {
+    const words = cleanText(page.bodyText);
+    const freq = {};
+    words.forEach((w) => { freq[w] = (freq[w] || 0) + 1; });
+    const top = Object.entries(freq)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 2)
+      .map((e) => e[0]);
+    if (top.length) return { tokens: top, source: "content" };
+  }
+
+  return { tokens: [], source: "none" };
+};
+
+// Loose match: direct substring or a stemmed substring so "finance" matches
+// "Financing" and "specials" matches "Special Offers".
+const tuStem = (w) => w.replace(/(ing|ed|es|s|e)$/i, "");
+const tuTitleHasKeyword = (title, tokens) => {
+  if (!title || !tokens.length) return false;
+  const t = title.toLowerCase();
+  return tokens.some((tok) => {
+    const k = tok.toLowerCase();
+    if (k.length >= 3 && t.includes(k)) return true;
+    const stem = tuStem(k);
+    return stem.length >= 4 && t.includes(stem);
+  });
+};
+
+// ── Location helpers (Title Location Optimization) ──────────────────────────
+const TU_STATES = {
+  AL: "Alabama", AK: "Alaska", AZ: "Arizona", AR: "Arkansas", CA: "California",
+  CO: "Colorado", CT: "Connecticut", DE: "Delaware", FL: "Florida", GA: "Georgia",
+  HI: "Hawaii", ID: "Idaho", IL: "Illinois", IN: "Indiana", IA: "Iowa",
+  KS: "Kansas", KY: "Kentucky", LA: "Louisiana", ME: "Maine", MD: "Maryland",
+  MA: "Massachusetts", MI: "Michigan", MN: "Minnesota", MS: "Mississippi",
+  MO: "Missouri", MT: "Montana", NE: "Nebraska", NV: "Nevada", NH: "New Hampshire",
+  NJ: "New Jersey", NM: "New Mexico", NY: "New York", NC: "North Carolina",
+  ND: "North Dakota", OH: "Ohio", OK: "Oklahoma", OR: "Oregon", PA: "Pennsylvania",
+  RI: "Rhode Island", SC: "South Carolina", SD: "South Dakota", TN: "Tennessee",
+  TX: "Texas", UT: "Utah", VT: "Vermont", VA: "Virginia", WA: "Washington",
+  WV: "West Virginia", WI: "Wisconsin", WY: "Wyoming", DC: "District of Columbia",
+};
+const TU_STATE_BY_NAME = Object.fromEntries(
+  Object.entries(TU_STATES).map(([abbr, name]) => [name.toLowerCase(), abbr])
+);
+
+// Walk parsed JSON-LD looking for a postal address (LocalBusiness etc.).
+const tuFindSchemaAddress = (node) => {
+  if (!node || typeof node !== "object") return null;
+  if (Array.isArray(node)) {
+    for (const n of node) {
+      const r = tuFindSchemaAddress(n);
+      if (r) return r;
+    }
+    return null;
+  }
+  const fromAddrObj = (a) => {
+    if (a && typeof a === "object" && !Array.isArray(a)) {
+      const city = a.addressLocality || a.addresslocality;
+      const state = a.addressRegion || a.addressregion;
+      if (city || state) {
+        return {
+          city: city ? String(city).trim() : null,
+          state: state ? String(state).trim() : null,
+        };
+      }
+    }
+    return null;
+  };
+  if (node.address) {
+    if (Array.isArray(node.address)) {
+      for (const a of node.address) {
+        const r = fromAddrObj(a);
+        if (r) return r;
+      }
+    } else {
+      const r = fromAddrObj(node.address);
+      if (r) return r;
+    }
+  }
+  const direct = fromAddrObj(node);
+  if (direct) return direct;
+  for (const k of Object.keys(node)) {
+    const r = tuFindSchemaAddress(node[k]);
+    if (r) return r;
+  }
+  return null;
+};
+
+// Parse a US-style "City, ST ZIP" (or full state name) out of free text.
+const tuParseUsAddress = (text) => {
+  if (!text) return null;
+  const abbr = text.match(/(?:^|,)\s*([A-Za-z][A-Za-z .'-]{1,40}?)\s*,\s*([A-Z]{2})\b\s*(?:\d{5})?/);
+  if (abbr && TU_STATES[abbr[2].toUpperCase()]) {
+    return { city: abbr[1].trim(), state: abbr[2].toUpperCase() };
+  }
+  const names = Object.values(TU_STATES).join("|");
+  const full = text.match(
+    new RegExp(`(?:^|,)\\s*([A-Za-z][A-Za-z .'-]{1,40}?)\\s*,\\s*(${names})\\b`, "i")
+  );
+  if (full) {
+    const stateName = full[2];
+    return {
+      city: full[1].trim(),
+      state: TU_STATE_BY_NAME[stateName.toLowerCase()] || null,
+      stateName,
+    };
+  }
+  return null;
+};
+
+// Does the title mention the city or state? Abbreviations are matched
+// case-sensitively (uppercase) to avoid false hits on words like "in"/"or".
+const tuTitleHasLocation = (title, loc) => {
+  if (!title || !loc) return { found: false, hits: [] };
+  const t = title.toLowerCase();
+  const hits = [];
+  if (loc.city && loc.city.length > 2 && t.includes(loc.city.toLowerCase())) {
+    hits.push(loc.city);
+  }
+  if (loc.state) {
+    if (new RegExp(`\\b${loc.state.toUpperCase()}\\b`).test(title)) hits.push(loc.state);
+    const full = TU_STATES[loc.state.toUpperCase()];
+    if (full && t.includes(full.toLowerCase())) hits.push(full);
+  }
+  if (loc.stateName && t.includes(loc.stateName.toLowerCase())) hits.push(loc.stateName);
+  return { found: hits.length > 0, hits: [...new Set(hits)] };
+};
+
+// Find a same-origin "Contact" page link on the current page.
+const tuFindContactUrl = ($, baseUrl) => {
+  let origin;
+  try {
+    origin = new URL(baseUrl).origin;
+  } catch {
+    return null;
+  }
+  let found = null;
+  $("a[href]").each((i, el) => {
+    if (found) return;
+    const href = $(el).attr("href") || "";
+    const text = ($(el).text() || "").toLowerCase();
+    if (/contact/i.test(href) || /contact/.test(text)) {
+      try {
+        const abs = new URL(href, baseUrl);
+        if (abs.origin === origin) found = abs.href;
+      } catch {
+        // skip
+      }
+    }
+  });
+  return found;
+};
+
+// Sample up to 5 eligible internal pages ONCE, extracting the title, meta
+// description, H1 and main-content text from each. Shared by the title- and
+// meta-description uniqueness checks and the keyword-optimization check so the
+// same pages are fetched only one time.
+const tuSamplePages = async (url, $, page, sitemapContent = null) => {
+  try {
+    let origin;
+    try {
+      origin = new URL(url).origin;
+    } catch {
+      return { ok: false, reason: "Invalid base URL", results: [] };
+    }
+
+    // 1️⃣ Gather candidate URLs — prefer sitemap, else crawl homepage.
+    let candidates = await tuUrlsFromSitemap(sitemapContent, page);
+    if (!candidates.length) candidates = tuUrlsFromHomepage($, url);
+
+    // 2️⃣ Filter: same-origin, dedupe, drop excluded / asset URLs.
+    const seen = new Set();
+    const eligible = [];
+    for (const c of candidates) {
+      let abs;
+      try {
+        abs = new URL(c, url);
+      } catch {
+        continue;
+      }
+      if (abs.origin !== origin) continue;
+      abs.hash = "";
+      const clean = abs.href;
+      if (seen.has(clean)) continue;
+      if (!tuIsEligible(clean)) continue;
+      seen.add(clean);
+      eligible.push(clean);
+    }
+
+    if (!eligible.length) {
+      return {
+        ok: false,
+        reason:
+          "No eligible content pages were found (after excluding inventory, vehicle detail, about, contact and legal pages) to compare across the site.",
+        results: [],
+      };
+    }
+
+    // 3️⃣ Eligible < 5 → use all; else randomly select 5.
+    const selected = eligible.length <= 5 ? eligible : tuPickRandom(eligible, 5);
+
+    // 4️⃣ Visit each page once; extract + normalize title AND meta description.
+    const results = [];
+    for (const target of selected) {
+      const html = await tuFetchRaw(target, page);
+      results.push({
+        url: target,
+        title: html ? tuExtractTitle(html) : null,
+        metaDescription: html ? tuExtractMetaDescription(html) : null,
+        h1: html ? tuExtractH1(html) : null,
+        bodyText: html ? tuExtractBodyText(html) : null,
+      });
+    }
+
+    return { ok: true, results };
+  } catch (e) {
+    return { ok: false, reason: e.message, results: [] };
+  }
+};
+
+// Generic uniqueness scorer driven by which field of the sample to evaluate.
+// cfg = { field: "title"|"metaDescription", noun: "title", tag: "<title> tag" }
+const tuScoreUniqueness = (sample, cfg) => {
+  const { field, noun, tag } = cfg;
+
+  if (!sample || !sample.ok) {
+    return evaluateParameter(0.5, `Not enough eligible pages to compare ${noun}s`, {
+      pagesChecked: 0,
+      found: 0,
+      uniqueCount: 0,
+      duplicateCount: 0,
+      missingCount: 0,
+      values: [],
+      results: [],
+      statusLabel: "Inconclusive",
+      why_this_occurred:
+        (sample && sample.reason) ||
+        `No eligible content pages were found to evaluate ${noun} uniqueness across the site.`,
+      how_to_fix: `Expose crawlable content pages through a valid sitemap.xml or homepage navigation so ${noun}s can be compared.`,
+    });
+  }
+
+  // Project the sampled pages onto the field we're scoring.
+  const results = sample.results.map((r) => ({ url: r.url, value: r[field] || null }));
+  const pagesChecked = results.length;
+  const found = results.filter((r) => r.value);
+  const foundCount = found.length;
+  const missingCount = pagesChecked - foundCount;
+
+  // All values missing → score 0.
+  if (foundCount === 0) {
+    return evaluateParameter(0, `All sampled pages are missing a ${tag}`, {
+      pagesChecked,
+      found: 0,
+      uniqueCount: 0,
+      duplicateCount: 0,
+      missingCount,
+      values: [],
+      results,
+      statusLabel: "Critical",
+      why_this_occurred: `None of the ${pagesChecked} sampled page(s) returned a usable ${tag}.`,
+      how_to_fix: `Add a unique, descriptive ${tag} to every page on the site.`,
+    });
+  }
+
+  // Count unique values (case-insensitive). Missing values count against.
+  const uniqueCount = new Set(found.map((r) => r.value.toLowerCase())).size;
+  const duplicateCount = foundCount - uniqueCount;
+
+  // Score = uniqueValues / pagesChecked (5 unique of 5 → 100).
+  const score = uniqueCount / pagesChecked;
+  const scorePct = Math.round(score * 100);
+
+  let statusLabel;
+  if (scorePct >= 100) statusLabel = "Excellent";
+  else if (scorePct >= 80) statusLabel = "Good";
+  else if (scorePct >= 60) statusLabel = "Fair";
+  else if (scorePct >= 40) statusLabel = "Needs Improvement";
+  else statusLabel = "Poor";
+
+  const issues = [];
+  if (duplicateCount > 0) issues.push(`${duplicateCount} duplicate ${noun}(s)`);
+  if (missingCount > 0) issues.push(`${missingCount} missing ${noun}(s)`);
+
+  const details =
+    score === 1
+      ? `All ${pagesChecked} sampled pages have unique ${noun}s`
+      : `Checked ${pagesChecked} pages — ${uniqueCount} unique${
+          issues.length ? ` (${issues.join(", ")})` : ""
+        }`;
+
+  const explanation =
+    score === 1
+      ? `Sampled ${pagesChecked} content pages and every ${noun} was unique.`
+      : `Out of ${pagesChecked} sampled pages, only ${uniqueCount} ${noun}(s) were unique${
+          issues.length ? ` — ${issues.join(" and ")}` : ""
+        }. Duplicate or missing ${noun}s weaken keyword targeting and confuse search engines.`;
+
+  const recommendation =
+    score === 1
+      ? `Maintain a unique, descriptive ${tag} for every page.`
+      : `Give each page a distinct ${tag} that reflects its specific content, and ensure none are left empty.`;
+
+  return evaluateParameter(score, details, {
+    pagesChecked,
+    found: foundCount,
+    uniqueCount,
+    duplicateCount,
+    missingCount,
+    values: found.map((r) => r.value),
+    results,
+    statusLabel,
+    why_this_occurred: explanation,
+    how_to_fix: recommendation,
+  });
+};
+
+const checkTitleUniqueness = (sample) =>
+  tuScoreUniqueness(sample, { field: "title", noun: "title", tag: "<title> tag" });
+
+const checkMetaDescriptionUniqueness = (sample) =>
+  tuScoreUniqueness(sample, {
+    field: "metaDescription",
+    noun: "meta description",
+    tag: "meta description",
+  });
+
+// Title Keyword Optimization — for each sampled page derive a target keyword
+// (URL → H1 → main content) and check whether the <title> contains it.
+// Score = optimized pages / pages checked (4 of 5 → 80).
+const checkTitleKeywordOptimization = (sample) => {
+  if (!sample || !sample.ok) {
+    return evaluateParameter(0.5, "Not enough eligible pages to check keyword optimization", {
+      pagesChecked: 0,
+      optimizedCount: 0,
+      results: [],
+      statusLabel: "Inconclusive",
+      why_this_occurred:
+        (sample && sample.reason) ||
+        "No eligible content pages were found to evaluate title keyword optimization across the site.",
+      how_to_fix:
+        "Expose crawlable content pages through a valid sitemap.xml or homepage navigation so titles can be evaluated.",
+    });
+  }
+
+  const results = sample.results.map((r) => {
+    const { tokens, source } = tuDeriveKeyword(r);
+    const optimized = tuTitleHasKeyword(r.title, tokens);
+    return {
+      url: r.url,
+      title: r.title || null,
+      keyword: tokens.join(" ") || null,
+      source,
+      optimized,
+    };
+  });
+
+  const pagesChecked = results.length;
+  const optimizedCount = results.filter((r) => r.optimized).length;
+  const score = pagesChecked ? optimizedCount / pagesChecked : 0;
+  const scorePct = Math.round(score * 100);
+
+  let statusLabel;
+  if (scorePct >= 100) statusLabel = "Excellent";
+  else if (scorePct >= 80) statusLabel = "Good";
+  else if (scorePct >= 60) statusLabel = "Fair";
+  else if (scorePct >= 40) statusLabel = "Needs Improvement";
+  else statusLabel = "Poor";
+
+  const details =
+    score === 1
+      ? `All ${pagesChecked} sampled titles include their target keyword`
+      : `Checked ${pagesChecked} pages — ${optimizedCount} title(s) include the target keyword`;
+
+  const explanation =
+    score === 1
+      ? `Every one of the ${pagesChecked} sampled pages has a title that includes its target keyword.`
+      : `Only ${optimizedCount} of ${pagesChecked} sampled pages have a title that includes the page's target keyword (derived from the URL, H1 or main content). Titles missing their keyword rank weaker for the terms the page is about.`;
+
+  const recommendation =
+    score === 1
+      ? "Keep including each page's primary keyword naturally in its <title> tag."
+      : "Include each page's primary keyword (what the page is actually about) near the start of its <title> tag.";
+
+  return evaluateParameter(score, details, {
+    pagesChecked,
+    optimizedCount,
+    results,
+    statusLabel,
+    why_this_occurred: explanation,
+    how_to_fix: recommendation,
+  });
+};
+
+// Title Location Optimization — determine the dealership's city/state (from
+// LocalBusiness schema → footer → contact page) and check whether the home
+// page <title> mentions it. Binary: location in title → 100, else 0.
+const checkTitleLocationOptimization = async (url, $, page, titleText, structuredData) => {
+  try {
+    const title = titleText || ($("title").first().text() || "").trim();
+
+    let loc = null;
+    let source = null;
+
+    // 1️⃣ LocalBusiness schema (most reliable).
+    if (structuredData) {
+      const s = tuFindSchemaAddress(structuredData);
+      if (s && (s.city || s.state)) {
+        loc = s;
+        source = "schema";
+      }
+    }
+
+    // 2️⃣ Footer address.
+    if (!loc) {
+      const footerText = tuNormalizeText($("footer").text() || "");
+      const f = tuParseUsAddress(footerText);
+      if (f) {
+        loc = f;
+        source = "footer";
+      }
+    }
+
+    // 3️⃣ Contact page address.
+    if (!loc) {
+      const contactUrl = tuFindContactUrl($, url);
+      if (contactUrl) {
+        const html = await tuFetchRaw(contactUrl, page);
+        if (html) {
+          const c = tuParseUsAddress(tuExtractBodyText(html));
+          if (c) {
+            loc = c;
+            source = "contact";
+          }
+        }
+      }
+    }
+
+    // 4️⃣ Last resort — scan the whole page body text.
+    if (!loc) {
+      const b = tuParseUsAddress(tuNormalizeText($("body").text() || ""));
+      if (b) {
+        loc = b;
+        source = "page";
+      }
+    }
+
+    if (!loc || (!loc.city && !loc.state)) {
+      return evaluateParameter(0.5, "Dealership location could not be determined", {
+        title,
+        locationFound: false,
+        statusLabel: "Inconclusive",
+        why_this_occurred:
+          "Could not determine the dealership's city/state from LocalBusiness schema, the footer, or a contact page.",
+        how_to_fix:
+          "Add a LocalBusiness schema with a complete postal address and display your city & state in the site footer.",
+      });
+    }
+
+    const match = tuTitleHasLocation(title, loc);
+    const score = match.found ? 1 : 0;
+    const locStr = [loc.city, loc.stateName || loc.state].filter(Boolean).join(", ");
+
+    const details = match.found
+      ? `Title includes the dealership location (${locStr})`
+      : `Title is missing the dealership location (${locStr})`;
+
+    const explanation = match.found
+      ? `The home page title references the dealership location: ${match.hits.join(", ")}.`
+      : `The dealership is located in ${locStr}, but the home page title does not mention the city or state, weakening local search relevance.`;
+
+    const recommendation = match.found
+      ? "Keep your city/state in the title to reinforce local relevance."
+      : `Add your city and/or state (e.g. "${locStr}") to the home page <title> to capture local search traffic.`;
+
+    return evaluateParameter(score, details, {
+      title,
+      city: loc.city || null,
+      state: loc.state || null,
+      stateName: loc.stateName || (loc.state ? TU_STATES[loc.state.toUpperCase()] : null),
+      location: locStr,
+      source,
+      matched: match.hits,
+      locationFound: true,
+      statusLabel: match.found ? "Excellent" : "Poor",
+      why_this_occurred: explanation,
+      how_to_fix: recommendation,
+    });
+  } catch (e) {
+    return evaluateParameter(0, "Title location optimization check failed", {
+      error: e.message,
+    });
+  }
+};
+
+// ── Service Content Quality (0–10) ──────────────────────────────────────────
+// Finds the site's service page, then scores it across 4 checks
+// (description, content length, booking, pre-service info), each worth 0–2.
+const TU_SERVICE_RE = /(\bservices?\b|consultation|treatment|repair|install|support|booking|\bbook\b|appointment|schedule|maintenance|detailing|body-?shop|oil-?change)/i;
+const TU_NON_SERVICE_RE = /(blog|news|about|contact|privacy|terms|career|inventory|vehicle|\.(jpe?g|png|gif|webp|pdf|xml|css|js))/i;
+
+const tuFindServicePage = (candidates) => {
+  let best = null;
+  let bestScore = -1;
+  for (const u of candidates) {
+    let path;
+    try {
+      path = new URL(u).pathname.toLowerCase();
+    } catch {
+      continue;
+    }
+    if (TU_NON_SERVICE_RE.test(path)) continue;
+    if (!TU_SERVICE_RE.test(path)) continue;
+    const segs = path.split("/").filter(Boolean);
+    const last = segs[segs.length - 1] || "";
+    let s;
+    if (/^services?$/.test(last)) s = 100 - path.length;
+    else if (/services?/.test(last)) s = 80 - path.length;
+    else if (TU_SERVICE_RE.test(last)) s = 60 - path.length;
+    else s = 40 - path.length;
+    if (s > bestScore) {
+      bestScore = s;
+      best = u;
+    }
+  }
+  return best;
+};
+
+const checkServiceContentQuality = async (url, $, page, sitemapContent = null) => {
+  try {
+    // 1️⃣ Gather candidate URLs (sitemap + homepage nav + current page).
+    let origin;
+    try {
+      origin = new URL(url).origin;
+    } catch {
+      return evaluateParameter(0, "Service Page Not Found", {
+        score10: 0, maxScore: 10, serviceFound: false,
+        failureReasons: ["No Service Page Found"],
+        statusLabel: "Critical",
+        why_this_occurred: "The site URL could not be parsed to locate a service page.",
+        how_to_fix: "Publish a dedicated service page describing your services.",
+      });
+    }
+
+    const candidateSet = new Set();
+    const fromSitemap = await tuUrlsFromSitemap(sitemapContent, page);
+    [...fromSitemap, ...tuUrlsFromHomepage($, url), url].forEach((c) => {
+      try {
+        const abs = new URL(c, url);
+        if (abs.origin === origin) {
+          abs.hash = "";
+          candidateSet.add(abs.href);
+        }
+      } catch {
+        // skip
+      }
+    });
+
+    const servicePageUrl = tuFindServicePage([...candidateSet]);
+
+    // 2️⃣ No service page → score 0.
+    if (!servicePageUrl) {
+      return evaluateParameter(0, "Service Page Not Found", {
+        score10: 0, maxScore: 10, serviceFound: false,
+        failureReasons: ["No Service Page Found"],
+        statusLabel: "Critical",
+        why_this_occurred:
+          "No dedicated service page (services, consultation, repair, booking, appointment, etc.) was found in the site's navigation or sitemap.",
+        how_to_fix:
+          "Create a dedicated service page that explains your services, who they're for, and how to book.",
+      });
+    }
+
+    // 3️⃣ Fetch & parse the service page.
+    const html = await tuFetchRaw(servicePageUrl, page);
+    if (!html) {
+      return evaluateParameter(0, "Service page could not be loaded", {
+        score10: 0, maxScore: 10, serviceFound: true, servicePageUrl,
+        failureReasons: ["Service page could not be loaded"],
+        statusLabel: "Critical",
+        why_this_occurred: `A service page was found (${servicePageUrl}) but its content could not be retrieved.`,
+        how_to_fix: "Ensure the service page is publicly accessible and not blocking crawlers.",
+      });
+    }
+
+    const $$ = cheerio.load(html);
+    const title = ($$("title").first().text() || "").trim();
+    const h1 = ($$("h1").first().text() || "").trim();
+
+    // Interactive elements (CTAs) from the FULL document.
+    const interactive = [];
+    $$("a, button, input[type=submit], input[type=button], [role=button]").each((i, el) => {
+      const txt = ($$(el).text() || $$(el).attr("value") || "").trim();
+      if (txt) interactive.push(txt);
+    });
+    const ctaBlob = interactive.join(" | ").toLowerCase();
+
+    // Forms (full document) + booking-form detection.
+    const formCount = $$("form").length;
+    let hasBookingForm = false;
+    $$("form").each((i, el) => {
+      const attrs = [
+        $$(el).attr("action"), $$(el).attr("id"),
+        $$(el).attr("class"), $$(el).attr("name"),
+      ].filter(Boolean).join(" ");
+      const ftext = $$(el).text().toLowerCase();
+      if (/appoint|book|schedul|reserv/i.test(attrs) || /appointment|book now|schedule/i.test(ftext)) {
+        hasBookingForm = true;
+      }
+    });
+    const hasCalendly = /calendly|acuityscheduling|youcanbook|cal\.com\/|squareup\.com\/appointments|setmore|simplybook/i.test(html);
+    const hasFaqSchema = /"@type"\s*:\s*"FAQPage"/i.test(html) || $$('[itemtype*="FAQPage" i]').length > 0;
+
+    // Headings (full document) for FAQ / section detection.
+    const headingsBlob = $$("h1,h2,h3,h4,h5,h6")
+      .map((i, el) => $$(el).text().trim())
+      .get()
+      .join(" | ")
+      .toLowerCase();
+
+    // Visible content (exclude chrome) for word count + section keywords.
+    const $body = cheerio.load(html);
+    $body("script, style, noscript, header, footer, nav, [role=navigation]").remove();
+    const contentText = ($body("body").text() || "").replace(/\s+/g, " ").trim();
+    const contentLower = contentText.toLowerCase();
+    const wordCount = contentText ? contentText.split(/\s+/).filter((w) => /[a-z0-9]/i.test(w)).length : 0;
+    const listItems = $body("ul li, ol li").length;
+
+    // ── CHECK 1: Service Description (0–2) ──
+    const hasWhat = !!h1 && wordCount >= 40;
+    const hasBenefits =
+      /benefit|features?|why choose|advantage|guarantee|certified|expert|trusted|quality|professional|warrant|reliable/i.test(contentLower) ||
+      listItems >= 3;
+    const hasWho =
+      /for (you|your|drivers|customers|owners|families|businesses|clients)|ideal for|designed for|whether you|all makes|any (vehicle|model|car)|perfect for|suited (for|to)|tailored (for|to)/i.test(contentLower);
+    const descAspects = [hasWhat, hasBenefits, hasWho].filter(Boolean).length;
+    const descMark = descAspects >= 2 ? 2 : descAspects === 1 ? 1 : 0;
+
+    // ── CHECK 2: Content Length (0–2) ──
+    const lengthMark = wordCount >= 150 ? 2 : wordCount >= 75 ? 1 : 0;
+
+    // ── CHECK 3: Appointment / Booking (0–2) ──
+    const BOOKING_RE = /(book\s*(now|an?\s*appointment|online|service)|schedule\s*(service|consultation|appointment|now|online|a\s*visit)|request\s*(service|an?\s*appointment|a\s*quote)|make\s*an?\s*appointment|reserve\s*(your|a)|appointment|book\s*now)/i;
+    const hasBookingSystem = hasCalendly || hasBookingForm || BOOKING_RE.test(ctaBlob);
+    let bookingMark, bookingType;
+    if (hasBookingSystem) {
+      bookingMark = 2;
+      bookingType = "Appointment/Booking system";
+    } else if (formCount > 0) {
+      bookingMark = 1;
+      bookingType = "Contact form only";
+    } else {
+      bookingMark = 0;
+      bookingType = "No booking option";
+    }
+
+    // ── CHECK 4: Pre-Service Information (0–2) ──
+    const sectionBlob = `${contentLower} ${headingsBlob}`;
+    const sections = {
+      process: /how it works|our process|the process|what to expect|step-by-step|step\s*\d|steps\b/i.test(sectionBlob),
+      timeline: /timeline|turnaround|how long|duration|estimated time|same.?day|within \d+ (hours|days)/i.test(sectionBlob),
+      pricing: /pricing|packages|price list|\$\s?\d|cost estimate|our rates|fees?\b|quote/i.test(sectionBlob),
+      requirements: /requirements?|what you need|what to bring|eligibility|prerequisite|before your (visit|appointment|service)/i.test(sectionBlob),
+      faq: /faq|frequently asked|common questions/i.test(headingsBlob) || hasFaqSchema || $body("details").length > 0,
+    };
+    const sectionsFound = Object.entries(sections).filter(([, v]) => v).map(([k]) => k);
+    const preMark = sectionsFound.length >= 2 ? 2 : sectionsFound.length === 1 ? 1 : 0;
+
+    // ── Final score: raw 0–8 scaled to 0–10 ──
+    const rawScore = descMark + lengthMark + bookingMark + preMark;
+    const score10 = Math.round((rawScore / 8) * 10);
+    const fraction = rawScore / 8;
+
+    // Failure reasons.
+    const failureReasons = [];
+    if (descMark === 0) failureReasons.push("Service description missing (does not explain what the service is, its benefits, or who it's for)");
+    else if (descMark === 1) failureReasons.push("Service description is only partial");
+    if (wordCount < 75) failureReasons.push("Content is too thin (under 75 words)");
+    else if (wordCount < 150) failureReasons.push("Content is below the 150-word recommendation");
+    if (bookingMark === 0) failureReasons.push("No appointment/booking option found");
+    else if (bookingMark === 1) failureReasons.push("Only a generic contact form (no dedicated booking option)");
+    if (preMark === 0) failureReasons.push("No process, pricing, requirements, or FAQ information found");
+    else if (preMark === 1) failureReasons.push("Only one pre-service info section found (process, pricing, requirements, or FAQ)");
+
+    let statusLabel;
+    if (score10 >= 9) statusLabel = "Excellent";
+    else if (score10 >= 7) statusLabel = "Good";
+    else if (score10 >= 5) statusLabel = "Fair";
+    else if (score10 >= 3) statusLabel = "Needs Improvement";
+    else statusLabel = "Poor";
+
+    const details = `Service content quality: ${score10}/10`;
+    const explanation =
+      score10 >= 9
+        ? `The service page (${servicePageUrl}) is comprehensive across description, depth, booking and pre-service information.`
+        : `The service page scored ${score10}/10. ${failureReasons.length ? failureReasons.join("; ") + "." : ""}`;
+    const recommendation =
+      score10 >= 9
+        ? "Maintain the depth and booking experience on your service page."
+        : "Strengthen the weak areas: explain the service fully, exceed 150 words, offer a clear booking/appointment option, and add process, pricing, requirements or FAQs.";
+
+    return evaluateParameter(fraction, details, {
+      score10,
+      maxScore: 10,
+      rawScore,
+      serviceFound: true,
+      servicePageUrl,
+      pageTitle: title || null,
+      h1: h1 || null,
+      wordCount,
+      checks: {
+        serviceDescription: { mark: descMark, max: 2, hasWhat, hasBenefits, hasWho },
+        contentLength: { mark: lengthMark, max: 2, wordCount },
+        booking: { mark: bookingMark, max: 2, type: bookingType, formCount },
+        preServiceInfo: { mark: preMark, max: 2, sectionsFound },
+      },
+      failureReasons,
+      statusLabel,
+      why_this_occurred: explanation,
+      how_to_fix: recommendation,
+    });
+  } catch (e) {
+    return evaluateParameter(0, "Service content quality check failed", {
+      score10: 0, maxScore: 10, serviceFound: false,
+      failureReasons: ["Check failed: " + e.message],
+      error: e.message,
+    });
+  }
+};
+
+// ── Content Depth + Uniqueness + Relevance (0–10) ───────────────────────────
+const TU_AUTO_BRANDS = [
+  "toyota", "honda", "ford", "chevrolet", "chevy", "nissan", "hyundai", "kia",
+  "jeep", "ram", "dodge", "chrysler", "gmc", "buick", "cadillac", "subaru",
+  "mazda", "volkswagen", "vw", "bmw", "mercedes", "audi", "lexus", "acura",
+  "infiniti", "volvo", "porsche", "jaguar", "land rover", "mitsubishi",
+  "lincoln", "tesla", "genesis", "fiat", "alfa romeo", "mini", "maserati",
+];
+const TU_DEPTH_THRESHOLDS = { srp: 150, vdp: 200, service: 150, tradein: 150, about: 200, contact: 100, other: 150 };
+const TU_TYPE_LABELS = { srp: "SRP (Inventory)", vdp: "VDP (Vehicle)", service: "Service", tradein: "Trade-In", about: "About Us", contact: "Contact Us", other: "Content" };
+const TU_FILLER_RE = /lorem ipsum|welcome to our website|quality service to our customers|the best solutions|we provide quality|your one.?stop|industry.?leading solutions|committed to excellence/i;
+
+const tuClassifyPageType = (u) => {
+  let path;
+  try {
+    path = new URL(u).pathname.toLowerCase();
+  } catch {
+    return null;
+  }
+  if (/\/contact/.test(path)) return "contact";
+  if (/\/about|meet-the-team|our-story|dealership-info|who-we-are/.test(path)) return "about";
+  if (/trade.?in|value-your-trade|sell-(us-)?your-(car|vehicle)|appraisal/.test(path)) return "tradein";
+  if (/service|schedule-service|auto-repair|maintenance/.test(path)) return "service";
+  if (TU_VIN_RE.test(path)) return "vdp";
+  if (/\/(vehicle|vehicles|vdp)\//.test(path) && /\d{4,}/.test(path)) return "vdp";
+  if (/-\d{4}-/.test(path) && /\/(new|used|inventory|vehicle)/.test(path)) return "vdp";
+  if (/inventory|\/new\b|\/used\b|\/search|vehicles?(\/|$)|for-sale/.test(path)) return "srp";
+  return null;
+};
+
+const tuFingerprint = (words, k = 4) => {
+  const set = new Set();
+  for (let i = 0; i + k <= words.length; i++) set.add(words.slice(i, i + k).join(" "));
+  if (!set.size && words.length) set.add(words.join(" "));
+  return set;
+};
+const tuJaccard = (a, b) => {
+  if (!a.size || !b.size) return 0;
+  const [small, big] = a.size < b.size ? [a, b] : [b, a];
+  let inter = 0;
+  for (const x of small) if (big.has(x)) inter++;
+  return inter / (a.size + b.size - inter);
+};
+
+// Per-type mandatory mentions ("Fail if only generic content").
+const tuSpecialValidation = (type, blob) => {
+  switch (type) {
+    case "srp": {
+      const hasBrand = TU_AUTO_BRANDS.some((b) => blob.includes(b));
+      const hasCat = /inventory|new|used|sedan|suv|truck|crossover|coupe|hatchback|van|lease|in stock|browse|for sale/i.test(blob);
+      return { pass: hasBrand && hasCat, need: "vehicle category, brand & inventory info" };
+    }
+    case "vdp": {
+      const ok = /engine|mpg|horsepower|transmission|mileage|\bvin\b|\btrim\b|features|specifications?|interior|exterior|drivetrain|warranty/i.test(blob);
+      return { pass: ok, need: "vehicle model, features & specifications" };
+    }
+    case "service": {
+      const ok = /oil change|brake|tire|maintenance|repair|diagnostic|inspection|alignment|battery|transmission|coolant|process|how it works/i.test(blob);
+      return { pass: ok, need: "specific service, process & benefits" };
+    }
+    case "tradein": {
+      const ok = /trade.?in|valuation|appraisal|kelley blue book|\bkbb\b|value your|trade.?in offer|estimate your/i.test(blob);
+      return { pass: ok, need: "trade-in process, valuation & instructions" };
+    }
+    case "about": {
+      const ok = /since \d{4}|founded|established|history|mission|our team|family.?owned|locally owned|our story/i.test(blob);
+      return { pass: ok, need: "dealer name, history, mission, team & location" };
+    }
+    case "contact": {
+      const hasPhone = /(\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/.test(blob);
+      const hasEmail = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i.test(blob);
+      const hasAddr = !!tuParseUsAddress(blob);
+      return { pass: hasPhone && (hasEmail || hasAddr), need: "business name, address, phone & email" };
+    }
+    default:
+      return { pass: true, need: "" };
+  }
+};
+
+const checkContentDepthQuality = async (url, $, page, sitemapContent = null) => {
+  try {
+    let origin, host;
+    try {
+      const parsed = new URL(url);
+      origin = parsed.origin;
+      host = parsed.hostname;
+    } catch {
+      return evaluateParameter(0, "Content quality check failed", {
+        score10: 0, maxScore: 10, pagesAnalyzed: 0,
+        failureReasons: ["Invalid site URL"],
+        statusLabel: "Critical",
+      });
+    }
+
+    // Domain brand tokens (for dealer-name relevance).
+    const domainTokens = host
+      .replace(/^www\./, "")
+      .split(".")[0]
+      .split(/[^a-z0-9]+/i)
+      .filter((t) => t.length > 3)
+      .map((t) => t.toLowerCase());
+
+    // Gather + dedupe same-origin candidates.
+    const candidateSet = new Set();
+    const fromSitemap = await tuUrlsFromSitemap(sitemapContent, page);
+    [...fromSitemap, ...tuUrlsFromHomepage($, url)].forEach((c) => {
+      try {
+        const abs = new URL(c, url);
+        if (abs.origin === origin) {
+          abs.hash = "";
+          candidateSet.add(abs.href);
+        }
+      } catch {
+        // skip
+      }
+    });
+
+    // Classify into page types.
+    const byType = {};
+    for (const u of candidateSet) {
+      const type = tuClassifyPageType(u);
+      if (!type) continue;
+      (byType[type] = byType[type] || []).push(u);
+    }
+
+    // Select target pages: one per type, then fill with extra VDP/SRP (for
+    // uniqueness comparison), capped at 6 fetches.
+    const pickShortest = (arr) => arr.slice().sort((a, b) => a.length - b.length)[0];
+    const targets = [];
+    ["contact", "about", "tradein", "service", "srp", "vdp"].forEach((t) => {
+      if (byType[t]?.length) targets.push({ type: t, url: pickShortest(byType[t]) });
+    });
+    const used = new Set(targets.map((x) => x.url));
+    for (const t of ["vdp", "srp"]) {
+      for (const u of byType[t] || []) {
+        if (targets.length >= 6) break;
+        if (!used.has(u)) {
+          targets.push({ type: t, url: u });
+          used.add(u);
+        }
+      }
+    }
+
+    if (!targets.length) {
+      return evaluateParameter(0.5, "No target content pages found", {
+        score10: 0, maxScore: 10, pagesAnalyzed: 0, pages: [],
+        failureReasons: ["No target pages (SRP, VDP, Service, Trade-In, About, Contact) found to analyze"],
+        statusLabel: "Inconclusive",
+        why_this_occurred:
+          "Could not identify any target content pages (inventory, vehicle, service, trade-in, about or contact) in the site's navigation or sitemap.",
+        how_to_fix: "Ensure key pages are crawlable via the sitemap and homepage navigation.",
+      });
+    }
+
+    // Fetch + extract content for each target.
+    const pages = [];
+    for (const tgt of targets) {
+      const html = await tuFetchRaw(tgt.url, page);
+      if (!html) {
+        pages.push({ ...tgt, loaded: false });
+        continue;
+      }
+      const $b = cheerio.load(html);
+      $b('script, style, noscript, header, footer, nav, [role=navigation], [class*="cookie" i], [id*="cookie" i], [class*="consent" i], [id*="consent" i], [class*="gdpr" i]').remove();
+      const text = ($b("body").text() || "").replace(/\s+/g, " ").trim();
+      const headings = $b("h1,h2,h3,h4,h5,h6").map((i, el) => $b(el).text().trim()).get().join(" | ");
+      const tokens = text.toLowerCase().split(/\s+/).filter((w) => /[a-z0-9]/i.test(w));
+      const wordCount = tokens.length;
+      pages.push({
+        ...tgt,
+        loaded: true,
+        text,
+        headings,
+        wordCount,
+        fp: tuFingerprint(tokens.slice(0, 2000)),
+      });
+    }
+
+    // Score each page.
+    const loaded = pages.filter((p) => p.loaded);
+    const aggReasons = new Set();
+
+    const scored = pages.map((p) => {
+      if (!p.loaded) {
+        aggReasons.add("A target page could not be loaded");
+        return { type: p.type, typeLabel: TU_TYPE_LABELS[p.type], url: p.url, loaded: false, score10: 0 };
+      }
+
+      const blob = `${p.text} ${p.headings}`.toLowerCase();
+      const contentLower = p.text.toLowerCase();
+
+      // CHECK 1 — Relevance.
+      const hasBrand = TU_AUTO_BRANDS.some((b) => contentLower.includes(b));
+      const hasLocation = !!tuParseUsAddress(p.text);
+      const hasPhone = /(\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/.test(p.text);
+      const hasEmail = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i.test(p.text);
+      const hasYear = /\b(since|established|est\.?|founded(?: in)?|serving)\b[^.]{0,40}(19|20)\d{2}\b/i.test(contentLower);
+      const hasDealerName = domainTokens.some((t) => contentLower.includes(t));
+      const isFiller = TU_FILLER_RE.test(contentLower);
+      const signalCount = [hasBrand, hasLocation, hasPhone || hasEmail, hasYear, hasDealerName].filter(Boolean).length;
+
+      let relevanceMark;
+      if (isFiller && signalCount < 2) relevanceMark = 0;
+      else if (signalCount >= 3) relevanceMark = 2;
+      else if (signalCount >= 1) relevanceMark = 1;
+      else relevanceMark = 0;
+
+      // Special validation can cap relevance (mandatory mentions missing).
+      const special = tuSpecialValidation(p.type, blob);
+      if (!special.pass) {
+        relevanceMark = Math.min(relevanceMark, 1);
+        aggReasons.add(`${TU_TYPE_LABELS[p.type]} is missing required content (${special.need})`);
+      }
+
+      // CHECK 2 — Depth.
+      const threshold = TU_DEPTH_THRESHOLDS[p.type] || 150;
+      const depthMark = p.wordCount >= threshold ? 2 : p.wordCount >= Math.round(threshold * 0.6) ? 1 : 0;
+
+      // CHECK 3 — Uniqueness (vs other loaded pages).
+      let maxSim = null;
+      for (const other of loaded) {
+        if (other.url === p.url) continue;
+        const sim = tuJaccard(p.fp, other.fp);
+        if (maxSim === null || sim > maxSim) maxSim = sim;
+      }
+      const uniquenessMark = maxSim === null ? 2 : maxSim < 0.3 ? 2 : maxSim <= 0.6 ? 1 : 0;
+
+      // Page-level failure reasons → aggregate.
+      if (relevanceMark === 0) aggReasons.add("Content appears generic and not dealer-specific");
+      if (isFiller) aggReasons.add("Content contains filler or template text");
+      if (!hasLocation && !hasBrand && !hasDealerName) aggReasons.add("Content lacks business/location references");
+      if (depthMark === 0) aggReasons.add("Content below recommended word count");
+      if (uniquenessMark === 0) aggReasons.add("Content appears duplicated across pages");
+      if (!special.pass) aggReasons.add("Page lacks unique business information");
+
+      const raw = relevanceMark + depthMark + uniquenessMark; // 0–6
+      const score10 = Math.round((raw / 6) * 10);
+
+      return {
+        type: p.type,
+        typeLabel: TU_TYPE_LABELS[p.type],
+        url: p.url,
+        loaded: true,
+        wordCount: p.wordCount,
+        threshold,
+        relevance: relevanceMark,
+        depth: depthMark,
+        uniqueness: uniquenessMark,
+        similarity: maxSim === null ? null : Math.round(maxSim * 100),
+        specialPass: special.pass,
+        raw,
+        score10,
+      };
+    });
+
+    const scoredLoaded = scored.filter((s) => s.loaded);
+    const avg10 = scoredLoaded.length
+      ? Math.round(scoredLoaded.reduce((s, p) => s + p.score10, 0) / scoredLoaded.length)
+      : 0;
+    const fraction = avg10 / 10;
+
+    let statusLabel;
+    if (avg10 >= 9) statusLabel = "Excellent";
+    else if (avg10 >= 7) statusLabel = "Good";
+    else if (avg10 >= 5) statusLabel = "Fair";
+    else if (avg10 >= 3) statusLabel = "Needs Improvement";
+    else statusLabel = "Poor";
+
+    const failureReasons = [...aggReasons];
+    const details = `Content depth/uniqueness/relevance: ${avg10}/10 across ${scoredLoaded.length} page(s)`;
+    const explanation =
+      avg10 >= 9
+        ? `Analyzed ${scoredLoaded.length} target page(s); content is deep, unique and dealer-specific.`
+        : `Analyzed ${scoredLoaded.length} target page(s), averaging ${avg10}/10. ${failureReasons.length ? failureReasons.slice(0, 4).join("; ") + "." : ""}`;
+    const recommendation =
+      avg10 >= 9
+        ? "Keep content specific, detailed and distinct on each key page."
+        : "Add dealer-specific detail (names, locations, brands, history), exceed the per-page word thresholds, and make each page's content unique.";
+
+    return evaluateParameter(fraction, details, {
+      score10: avg10,
+      maxScore: 10,
+      pagesAnalyzed: scoredLoaded.length,
+      pages: scored,
+      failureReasons,
+      statusLabel,
+      why_this_occurred: explanation,
+      how_to_fix: recommendation,
+    });
+  } catch (e) {
+    return evaluateParameter(0, "Content quality check failed", {
+      score10: 0, maxScore: 10, pagesAnalyzed: 0,
+      failureReasons: ["Check failed: " + e.message],
+      error: e.message,
+    });
+  }
+};
+
+// E-E-A-T (Experience, Expertise, Authoritativeness, Trust) signals — 0–10.
+// Discovers key trust pages (About, Contact, Team, Privacy, Terms) via the
+// sitemap/homepage links, fetches one best (shortest) match per category
+// (bounded — ≤5 extra fetches plus the already-loaded homepage), then scores
+// five 0–2 checks per the E-E-A-T spec. Missing pages score 0 + a failure
+// reason and never abort the audit.
+// Keyword variants per category, incl. hyphen/underscore/concatenated forms
+// (e.g. CarDekho uses /info/about_us, /info/contact_us). Matched against whole
+// path SEGMENTS by exact equality, so long content slugs that merely contain a
+// keyword (e.g. /web-stories/7-things-to-know-about-the-…) never false-match.
+const EEAT_CATEGORIES = {
+  about: ["about-us", "about_us", "aboutus", "about", "our-story", "our_story", "company", "history", "mission", "who-we-are", "who_we_are"],
+  contact: ["contact-us", "contact_us", "contactus", "contact", "get-in-touch", "reach-us"],
+  team: ["our-team", "our_team", "team", "staff", "leadership", "management", "people", "authors", "author"],
+  privacy: ["privacy-policy", "privacy_policy", "privacypolicy", "privacy"],
+  terms: ["terms-and-conditions", "terms_and_condition", "terms_and_conditions", "terms-of-service", "terms-conditions", "terms", "tos"],
+};
+
+// Probe slugs used as a fallback when a category isn't linked from the homepage
+// or sitemap (often the case for JS-rendered footers). Combined with the path
+// prefix observed on already-discovered pages (e.g. /info/).
+const EEAT_PROBE_SLUGS = {
+  about: ["about-us", "about_us", "aboutus", "about"],
+  contact: ["contact-us", "contact_us", "contactus", "contact"],
+  team: ["our-team", "our_team", "team", "leadership"],
+  privacy: ["privacy-policy", "privacy_policy", "privacy"],
+  terms: ["terms-and-conditions", "terms_and_condition", "terms-of-service", "terms"],
+};
+
+// Match a category by exact path-segment equality (extensions stripped).
+const eeatMatchCategory = (pathname) => {
+  const segs = (pathname || "")
+    .toLowerCase()
+    .split("/")
+    .filter(Boolean)
+    .map((s) => s.replace(/\.(html?|php|aspx?)$/, ""));
+  for (const [cat, kws] of Object.entries(EEAT_CATEGORIES)) {
+    if (segs.some((seg) => kws.includes(seg))) return cat;
+  }
+  return null;
+};
+
+// Lightweight existence check (HEAD, GET fallback) for fallback page probing.
+const eeatUrlExists = async (target) => {
+  try {
+    const head = await fetch(target, {
+      method: "HEAD",
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
+      redirect: "follow",
+      signal: AbortSignal.timeout(6000),
+    });
+    if (head.ok) return true;
+    if (head.status !== 405 && head.status !== 501) return false;
+    // Some servers reject HEAD — retry with a GET.
+    const get = await fetch(target, {
+      method: "GET",
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
+      redirect: "follow",
+      signal: AbortSignal.timeout(7000),
+    });
+    return get.ok;
+  } catch {
+    return false;
+  }
+};
+
+const checkEEAT = async (url, $, page, sitemapContent = null) => {
+  try {
+    let origin, protocol;
+    try {
+      const parsed = new URL(url);
+      origin = parsed.origin;
+      protocol = parsed.protocol;
+    } catch {
+      return evaluateParameter(0, "E-E-A-T check failed", {
+        score10: 0, maxScore: 10, pagesAnalyzed: 0,
+        failureReasons: ["Invalid site URL"],
+        statusLabel: "Critical",
+      });
+    }
+
+    // 1️⃣ Gather same-origin candidate URLs (sitemap first, homepage fallback).
+    const candidateSet = new Set();
+    const fromSitemap = await tuUrlsFromSitemap(sitemapContent, page);
+    [...fromSitemap, ...tuUrlsFromHomepage($, url)].forEach((c) => {
+      try {
+        const abs = new URL(c, url);
+        if (abs.origin === origin) {
+          abs.hash = "";
+          candidateSet.add(abs.href);
+        }
+      } catch {
+        // skip invalid hrefs
+      }
+    });
+
+    // 2️⃣ Pick ONE best (shortest) match per category — bounded discovery.
+    const pickShortest = (arr) => arr.slice().sort((a, b) => a.length - b.length)[0];
+    const byCat = {};
+    for (const u of candidateSet) {
+      let cat = null;
+      try {
+        cat = eeatMatchCategory(new URL(u).pathname);
+      } catch {
+        cat = null;
+      }
+      if (!cat) continue;
+      (byCat[cat] = byCat[cat] || []).push(u);
+    }
+    const discoveredPages = {};
+    for (const cat of Object.keys(EEAT_CATEGORIES)) {
+      if (byCat[cat]?.length) discoveredPages[cat] = pickShortest(byCat[cat]);
+    }
+
+    // 2️⃣b Fallback: for any still-missing category, probe common URL patterns
+    //      under the site root AND any path prefix seen on discovered pages
+    //      (e.g. CarDekho keeps these under /info/ with underscores). Bounded by
+    //      a small HEAD-request budget; stops at the first hit per category.
+    const observedPrefixes = new Set();
+    for (const u of Object.values(discoveredPages)) {
+      try {
+        const segs = new URL(u).pathname.split("/").filter(Boolean);
+        if (segs.length > 1) observedPrefixes.add("/" + segs.slice(0, -1).join("/") + "/");
+      } catch {
+        // skip
+      }
+    }
+    // Observed prefixes (e.g. /info/) first — strong signal — then the root.
+    const prefixes = [...observedPrefixes, "/"];
+    let probeBudget = 14;
+    for (const cat of Object.keys(EEAT_PROBE_SLUGS)) {
+      if (discoveredPages[cat] || probeBudget <= 0) continue;
+      let hit = null;
+      for (const pre of prefixes) {
+        for (const slug of EEAT_PROBE_SLUGS[cat]) {
+          if (probeBudget <= 0) break;
+          probeBudget--;
+          const candidate = origin + pre + slug;
+          if (await eeatUrlExists(candidate)) {
+            hit = candidate;
+            break;
+          }
+        }
+        if (hit) break;
+      }
+      if (hit) discoveredPages[cat] = hit;
+    }
+
+    // 3️⃣ Reuse the already-loaded homepage; fetch each discovered page (≤5).
+    //    Build per-category text + a combined site-wide blob.
+    const homepageText = ($("body").text() || "").replace(/\s+/g, " ").trim().slice(0, 8000);
+    const pageText = { home: homepageText }; // category -> visible text
+    const fetchedHtml = []; // raw html of fetched category pages (for <form> detection)
+    let fetchCount = 0;
+    for (const cat of Object.keys(discoveredPages)) {
+      if (fetchCount >= 5) break;
+      const html = await tuFetchRaw(discoveredPages[cat], page);
+      fetchCount++;
+      if (html) {
+        pageText[cat] = tuExtractBodyText(html);
+        fetchedHtml.push(html);
+      }
+    }
+    const siteBlob = Object.values(pageText).join(" \n ").toLowerCase();
+    const pagesAnalyzed = Object.keys(pageText).length;
+
+    const failureReasons = [];
+
+    // Shared signal helpers.
+    const phoneRe = /(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/;
+    const emailRe = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i;
+    const streetRe = /\b\d{1,5}\s+[a-z0-9.\s]{2,30}\b(street|st|avenue|ave|road|rd|blvd|boulevard|lane|ln|drive|dr|suite|ste|court|ct|way|highway|hwy)\b/i;
+    const hasForm = $("form").length > 0 || fetchedHtml.some((h) => /<form[\s>]/i.test(h));
+
+    // Original-case all-pages blob, used to surface the actual matched values.
+    const rawBlob = Object.values(pageText).join("  ");
+
+    // ── CHECK 1 — About page (0–2) ─────────────────────────────────────────
+    let aboutMark = 0;
+    const aboutFound = [];
+    const aboutText = pageText.about || "";
+    if (discoveredPages.about && aboutText) {
+      const aboutTerms = ["our story", "history", "founded", "established", "since \\d{4}", "mission", "vision", "values", "our team", "who we are"];
+      aboutTerms.forEach((t) => {
+        if (new RegExp(`\\b${t}\\b`, "i").test(aboutText)) aboutFound.push(t.replace("\\d{4}", "year").replace(/\b\w/g, (c) => c.toUpperCase()));
+      });
+      const wordCount = aboutText.split(/\s+/).filter(Boolean).length;
+      aboutFound.push(`${wordCount} words`);
+      aboutMark = aboutFound.length > 1 && wordCount >= 150 ? 2 : 1;
+    }
+    if (aboutMark === 0) failureReasons.push("About Us page missing");
+    else if (aboutMark === 1) failureReasons.push("About page is thin — add company story, history & mission");
+
+    // ── CHECK 2 — Contact information (0–2) ────────────────────────────────
+    const phoneMatch = rawBlob.match(phoneRe);
+    const emailMatch = rawBlob.match(emailRe);
+    const addr = tuParseUsAddress(rawBlob);
+    const hasStreet = streetRe.test(rawBlob);
+    const contactFound = [];
+    if (phoneMatch) contactFound.push("Phone: " + phoneMatch[0].replace(/\s+/g, " ").trim());
+    if (emailMatch) contactFound.push("Email: " + emailMatch[0]);
+    if (addr) contactFound.push("Address: " + [addr.city, addr.state || addr.stateName].filter(Boolean).join(", "));
+    else if (hasStreet) contactFound.push("Postal address");
+    if (hasForm) contactFound.push("Contact form");
+    const contactSignals = contactFound.length;
+    const contactMark = contactSignals >= 3 ? 2 : contactSignals >= 1 ? 1 : 0;
+    if (contactMark === 0) failureReasons.push("Contact information missing");
+    else if (contactMark === 1) failureReasons.push("Contact information incomplete — add phone, email, address & a contact form");
+
+    // ── CHECK 3 — Author / Team credentials (0–2) ──────────────────────────
+    const teamBlob = (pageText.team || "") + " " + siteBlob;
+    const hasTeam = !!discoveredPages.team || /\b(our team|meet the team|leadership|staff|founder|ceo|director|owner)\b/i.test(teamBlob);
+    const credRe = /\b(certified|certification|licensed|license|accredit\w*|cpa|m\.?d\.?|ph\.?d\.?|esq\.?|llb|degree|qualified|chartered|ase|award-winning|specialist|registered)\b/i;
+    const credMatch = teamBlob.match(credRe);
+    const hasCredentials = !!credMatch;
+    const credFound = [];
+    if (hasTeam) credFound.push(discoveredPages.team ? "Team / author page" : "Team / author section");
+    if (credMatch) credFound.push("Credential: " + credMatch[0].trim());
+    let credMark = 0;
+    if (hasTeam && hasCredentials) credMark = 2;
+    else if (hasTeam) credMark = 1;
+    if (credMark === 0) failureReasons.push("No author or team credentials found");
+    else if (credMark === 1) failureReasons.push("Team/author found but no professional credentials listed");
+
+    // ── CHECK 4 — Experience & expertise (0–2) ─────────────────────────────
+    const expChecks = [
+      { label: "Established / since year", re: /\b(serving|established|est\.?|founded(?: in)?|since)\b[^.]{0,30}(19|20)\d{2}\b/i },
+      { label: "Years of experience", re: /\b\d{1,3}\+?\s*years?\b[^.]{0,20}(experience|business|industry|serving)/i },
+      { label: "Awards & recognition", re: /\b(award|awards|awarded|recognition)\b/i },
+      { label: "Testimonials / reviews", re: /\b(testimonial|testimonials|reviews?|rated|rating)\b/i },
+      { label: "Case studies / success stories", re: /\b(case stud(y|ies)|success stor(y|ies)|portfolio)\b/i },
+      { label: "Certifications", re: /\b(certified|certification|accredited)\b/i },
+    ];
+    const expFound = expChecks.filter((c) => c.re.test(siteBlob)).map((c) => c.label);
+    const expMark = expFound.length >= 2 ? 2 : expFound.length >= 1 ? 1 : 0;
+    if (expMark === 0) failureReasons.push("No experience or expertise signals found");
+
+    // ── CHECK 5 — Trust signals (0–2) ──────────────────────────────────────
+    const hasPrivacy = !!discoveredPages.privacy || /\bprivacy policy\b/i.test(siteBlob);
+    const hasTerms = !!discoveredPages.terms || /\bterms (of service|and conditions|& conditions)\b/i.test(siteBlob);
+    const reviewMatch = siteBlob.match(/\b(google reviews|trustpilot|yelp|bbb|better business bureau|verified reviews?|trust badge|secure checkout|ssl secured)\b/i);
+    const trustFound = [];
+    if (protocol === "https:") trustFound.push("HTTPS");
+    if (hasPrivacy) trustFound.push("Privacy Policy");
+    if (hasTerms) trustFound.push("Terms & Conditions");
+    if (reviewMatch) trustFound.push("Reviews/Trust: " + reviewMatch[0]);
+    const trustSignals = trustFound.length;
+    const trustMark = trustSignals >= 3 ? 2 : trustSignals >= 1 ? 1 : 0;
+    if (protocol !== "https:") failureReasons.push("Site is not served over HTTPS");
+    if (!hasPrivacy) failureReasons.push("Privacy Policy missing");
+    if (!hasTerms) failureReasons.push("Terms & Conditions missing");
+    if (trustMark === 0) failureReasons.push("Trust signals missing");
+
+    // ── Aggregate ──────────────────────────────────────────────────────────
+    const checks = {
+      about: { mark: aboutMark, max: 2, pageFound: !!discoveredPages.about, url: discoveredPages.about || null, found: aboutFound },
+      contact: { mark: contactMark, max: 2, signals: contactSignals, hasForm, found: contactFound },
+      credentials: { mark: credMark, max: 2, teamFound: hasTeam, credentialsFound: hasCredentials, url: discoveredPages.team || null, found: credFound },
+      experience: { mark: expMark, max: 2, signals: expFound.length, found: expFound },
+      trust: { mark: trustMark, max: 2, https: protocol === "https:", privacy: hasPrivacy, terms: hasTerms, signals: trustSignals, found: trustFound },
+    };
+
+    const score10 = aboutMark + contactMark + credMark + expMark + trustMark; // 0–10
+    const fraction = score10 / 10;
+
+    let statusLabel;
+    if (score10 >= 9) statusLabel = "Excellent";
+    else if (score10 >= 7) statusLabel = "Good";
+    else if (score10 >= 5) statusLabel = "Fair";
+    else if (score10 >= 3) statusLabel = "Needs Improvement";
+    else statusLabel = "Poor";
+
+    const details = `E-E-A-T signals: ${score10}/10 across ${pagesAnalyzed} page(s)`;
+    const explanation =
+      score10 >= 9
+        ? "Strong E-E-A-T: about, contact, credentials, experience and trust signals are all present."
+        : `Scored ${score10}/10 for E-E-A-T. ${failureReasons.length ? failureReasons.slice(0, 4).join("; ") + "." : ""}`;
+    const recommendation =
+      score10 >= 9
+        ? "Maintain detailed About/Team pages, complete contact details, credentials and trust signals."
+        : "Add a detailed About page, complete contact info, author credentials, experience signals (years/awards/testimonials) and trust signals (HTTPS, Privacy Policy, Terms, reviews).";
+
+    return evaluateParameter(fraction, details, {
+      score10,
+      maxScore: 10,
+      pagesAnalyzed,
+      discoveredPages,
+      checks,
+      failureReasons,
+      statusLabel,
+      why_this_occurred: explanation,
+      how_to_fix: recommendation,
+    });
+  } catch (e) {
+    return evaluateParameter(0, "E-E-A-T check failed", {
+      score10: 0, maxScore: 10, pagesAnalyzed: 0,
+      failureReasons: ["Check failed: " + e.message],
+      error: e.message,
+    });
+  }
+};
+
+// ──────────────────────────────────────────────────────────────────────────
+// Local SEO Signals (separate card)
+// Eight URL-detectable local-search signals: NAP consistency, LocalBusiness
+// schema, location targeting, local keyword usage, local landing pages,
+// location-page completeness, Google Business Profile link, and review signals.
+// Output-only (not weighted into the on-page Percentage), mirroring the
+// Service_Content_Quality / Content_Depth_Quality pattern. Each sub-signal is a
+// lightweight { key, label, score (0–100), status, details, found, … } object
+// collected under meta.parameters so the front-end can render one row per signal.
+// ──────────────────────────────────────────────────────────────────────────
+
+// Schema.org @types that represent a physical/local business (lower-cased).
+const LOCAL_BUSINESS_TYPES = new Set([
+  "localbusiness", "autodealer", "store", "restaurant", "dentist", "autorepair",
+  "hotel", "lodgingbusiness", "professionalservice", "homeandconstructionbusiness",
+  "medicalbusiness", "legalservice", "financialservice", "realestateagent",
+  "generalcontractor", "plumber", "electrician", "hvacbusiness", "cafeorcoffeeshop",
+  "foodestablishment", "healthandbeautybusiness", "automotivebusiness", "shoppingcenter",
+]);
+
+// Walk parsed JSON-LD (handles arrays + @graph), invoking visit() on every object node.
+const ldWalk = (node, visit) => {
+  if (!node || typeof node !== "object") return;
+  if (Array.isArray(node)) { node.forEach((n) => ldWalk(n, visit)); return; }
+  visit(node);
+  for (const k of Object.keys(node)) {
+    const v = node[k];
+    if (v && typeof v === "object") ldWalk(v, visit);
+  }
+};
+
+// First LocalBusiness-like JSON-LD node (or null).
+const ldFindLocalBusiness = (content) => {
+  let found = null;
+  ldWalk(content, (n) => {
+    if (found) return;
+    const types = [].concat(n["@type"] || []).map((t) => String(t).toLowerCase());
+    if (types.some((t) => LOCAL_BUSINESS_TYPES.has(t))) found = n;
+  });
+  return found;
+};
+
+// Standardised sub-signal object (mirrors evaluateParameter's status thresholds).
+const mkLocalSub = (key, label, frac, details, extra = {}) => {
+  const f = Math.max(0, Math.min(1, frac));
+  const status = f >= 1 ? "pass" : f >= 0.5 ? "warning" : "fail";
+  return { key, label, score: Math.round(f * 100), status, details, ...extra };
+};
+
+// Resolve the business city/state once (schema → footer → contact page → body).
+// Refactor of the cascade also used by checkTitleLocationOptimization.
+const resolveBusinessLocation = async (url, $, page, structuredData) => {
+  let loc = null;
+  let source = null;
+  if (structuredData) {
+    const s = tuFindSchemaAddress(structuredData);
+    if (s && (s.city || s.state)) { loc = s; source = "schema"; }
+  }
+  if (!loc) {
+    const f = tuParseUsAddress(tuNormalizeText($("footer").text() || ""));
+    if (f) { loc = f; source = "footer"; }
+  }
+  if (!loc) {
+    const contactUrl = tuFindContactUrl($, url);
+    if (contactUrl) {
+      const html = await tuFetchRaw(contactUrl, page);
+      if (html) {
+        const c = tuParseUsAddress(tuExtractBodyText(html));
+        if (c) { loc = c; source = "contact"; }
+      }
+    }
+  }
+  if (!loc) {
+    const b = tuParseUsAddress(tuNormalizeText($("body").text() || ""));
+    if (b) { loc = b; source = "page"; }
+  }
+  return { loc, source };
+};
+
+// Collect distinct 10-digit phone numbers from tel: links and footer text.
+const localExtractPhones = ($) => {
+  const phones = new Set();
+  $('a[href^="tel:"]').each((i, el) => {
+    const d = ($(el).attr("href") || "").replace(/[^\d]/g, "");
+    if (d.length >= 10) phones.add(d.slice(-10));
+  });
+  const footer = $("footer").text() || "";
+  (footer.match(/\(?\d{3}\)?[\s.\-]?\d{3}[\s.\-]?\d{4}/g) || []).forEach((p) => {
+    const d = p.replace(/[^\d]/g, "");
+    if (d.length >= 10) phones.add(d.slice(-10));
+  });
+  return [...phones];
+};
+
+// 1️⃣ NAP Consistency — name/address/phone present and agreeing across sources.
+const localCheckNAP = ($, schemaBiz, structuredData) => {
+  const phones = localExtractPhones($);
+  const schemaPhone = schemaBiz?.telephone
+    ? String(schemaBiz.telephone).replace(/[^\d]/g, "").slice(-10) : null;
+  const schemaName = schemaBiz?.name ? String(schemaBiz.name).trim() : null;
+  const addr = tuFindSchemaAddress(structuredData) ||
+    tuParseUsAddress(tuNormalizeText($("footer").text() || ""));
+
+  const found = [];
+  let pts = 0;
+  let max = 0;
+
+  max++;
+  if (schemaName) { pts++; found.push(`Name: ${schemaName}`); }
+
+  max++;
+  const phonePresent = phones.length > 0 || !!schemaPhone;
+  if (phonePresent) { pts++; found.push(`Phone: ${phones[0] || schemaPhone}`); }
+
+  max++;
+  if (addr && (addr.city || addr.state)) {
+    pts++;
+    found.push(`Address: ${[addr.city, addr.state].filter(Boolean).join(", ")}`);
+  }
+
+  max++;
+  let consistent;
+  if (schemaPhone && phones.length) consistent = phones.includes(schemaPhone);
+  else consistent = phones.length <= 1; // a single number used site-wide can't conflict
+  if (consistent) pts++;
+  else found.push("⚠ Phone differs between schema and page");
+
+  const frac = max ? pts / max : 0;
+  const details = phonePresent || addr
+    ? (consistent ? "NAP present and consistent" : "NAP found but inconsistent (phone mismatch)")
+    : "No NAP (name/address/phone) detected";
+
+  return mkLocalSub("NAP_Consistency", "NAP Consistency", frac, details, {
+    found,
+    phones,
+    schemaPhone,
+    why_this_occurred: phonePresent || addr
+      ? (consistent
+        ? "Name, address and phone are present and agree across sources."
+        : "The phone number in your schema differs from the one shown on the page.")
+      : "No name/address/phone could be extracted from the page, footer or schema.",
+    how_to_fix:
+      "Display a single, identical Name, Address and Phone (NAP) in your footer, contact page and LocalBusiness schema.",
+  });
+};
+
+// Organization-like @types whose fields (telephone, sameAs, …) describe the
+// same business entity when present alongside a LocalBusiness node in a graph.
+const ORG_LIKE_TYPES = new Set(["organization", "corporation", "ngo", "onlinebusiness"]);
+
+// True if `node` (or any nested object within it, e.g. a contactPoint) has a
+// non-empty value for any of the given property keys.
+const ldDeepHas = (node, keys) => {
+  let hit = false;
+  ldWalk(node, (n) => {
+    if (hit) return;
+    for (const k of keys) {
+      const v = n[k];
+      if (v === undefined || v === null) continue;
+      if (Array.isArray(v) ? v.length > 0 : v !== "") { hit = true; return; }
+    }
+  });
+  return hit;
+};
+
+// 2️⃣ LocalBusiness Schema — present with the key fields filled in. Fields are
+// aggregated across ALL LocalBusiness + Organization nodes in the JSON-LD graph
+// (and their nested objects), because real sites split telephone / sameAs /
+// hours across sibling nodes that Google merges into one entity.
+const localCheckSchema = (structuredData) => {
+  const bizNodes = [];
+  const entityNodes = []; // business + organization nodes describing the entity
+  ldWalk(structuredData, (n) => {
+    const types = [].concat(n["@type"] || []).map((t) => String(t).toLowerCase());
+    if (types.some((t) => LOCAL_BUSINESS_TYPES.has(t))) {
+      bizNodes.push(n);
+      entityNodes.push(n);
+    } else if (types.some((t) => ORG_LIKE_TYPES.has(t))) {
+      entityNodes.push(n);
+    }
+  });
+
+  if (!bizNodes.length) {
+    return mkLocalSub("LocalBusiness_Schema", "LocalBusiness Schema", 0,
+      "No LocalBusiness schema found", {
+        found: [],
+        missing: ["name", "address", "telephone", "geo", "openingHours", "sameAs"],
+        why_this_occurred:
+          "No JSON-LD of type LocalBusiness (or a subtype like AutoDealer) was detected.",
+        how_to_fix:
+          "Add a LocalBusiness JSON-LD block with name, address, telephone, geo, openingHours and sameAs.",
+      });
+  }
+
+  const has = (...keys) => entityNodes.some((n) => ldDeepHas(n, keys));
+  const fields = {
+    name: has("name", "legalName"),
+    address: has("address"),
+    telephone: has("telephone", "phone"),
+    geo: has("geo", "latitude", "hasMap"),
+    openingHours: has("openingHours", "openingHoursSpecification"),
+    sameAs: has("sameAs"),
+  };
+  const keys = Object.keys(fields);
+  const present = keys.filter((k) => fields[k]);
+  const missing = keys.filter((k) => !fields[k]);
+  const frac = present.length / keys.length;
+  const schemaType = [
+    ...new Set(bizNodes.flatMap((n) => [].concat(n["@type"] || []))),
+  ].join(", ");
+
+  return mkLocalSub("LocalBusiness_Schema", "LocalBusiness Schema", frac,
+    missing.length ? `Schema present, missing: ${missing.join(", ")}` : "Complete LocalBusiness schema", {
+      found: present.map((k) => `${k} ✓`),
+      missing,
+      schemaType,
+      why_this_occurred: missing.length
+        ? `Your LocalBusiness schema is missing ${missing.length} recommended field(s): ${missing.join(", ")}.`
+        : "Your LocalBusiness schema includes all key fields.",
+      how_to_fix: missing.length
+        ? `Add the missing properties (${missing.join(", ")}) to your LocalBusiness JSON-LD.`
+        : "Keep the schema valid and in sync with your on-page NAP.",
+    });
+};
+
+// 3️⃣ Location Targeting — city/state present in title, meta description and body.
+const localCheckTargeting = ($, loc, title, metaDesc) => {
+  if (!loc) {
+    return mkLocalSub("Location_Targeting", "Location Targeting", 0,
+      "No business location to target", {
+        found: [],
+        why_this_occurred: "No city/state could be determined, so location targeting cannot be evaluated.",
+        how_to_fix: "Add your city & state to the page and to a LocalBusiness schema.",
+      });
+  }
+  const inTitle = tuTitleHasLocation(title, loc).found;
+  const inMeta = tuTitleHasLocation(metaDesc, loc).found;
+  const body = ($("body").text() || "").toLowerCase();
+  const cityLc = loc.city ? loc.city.toLowerCase() : null;
+  const stateFull = loc.state ? (TU_STATES[loc.state.toUpperCase()] || "").toLowerCase() : null;
+  const inBody = (cityLc && cityLc.length > 2 && body.includes(cityLc)) ||
+    (stateFull && body.includes(stateFull));
+
+  const zones = [["Title", inTitle], ["Meta description", inMeta], ["Body", inBody]];
+  const hits = zones.filter(([, v]) => v);
+  const missing = zones.filter(([, v]) => !v).map(([z]) => z);
+  const frac = hits.length / zones.length;
+  const locStr = [loc.city, loc.stateName || loc.state].filter(Boolean).join(", ");
+
+  return mkLocalSub("Location_Targeting", "Location Targeting", frac,
+    `Geo terms in ${hits.length}/3 zones (${locStr})`, {
+      found: hits.map(([z]) => z),
+      location: locStr,
+      why_this_occurred: hits.length === zones.length
+        ? "Your city/state appears in the title, meta description and body."
+        : `Your location (${locStr}) is missing from: ${missing.join(", ")}.`,
+      how_to_fix: `Include "${locStr}" in your title tag, meta description and visible page copy.`,
+    });
+};
+
+// 4️⃣ Local Keyword Usage — geo-modified / "near me" keywords in headings & content.
+const LOCAL_NEAR_ME = [
+  "near me", "nearby", "in my area", "areas we serve", "service area",
+  "serving", "directions", "local",
+];
+const localCheckKeywords = ($, loc) => {
+  const text = (
+    ($("h1,h2,h3").text() || "") + " " +
+    ($("title").text() || "") + " " +
+    ($("body").text() || "")
+  ).toLowerCase();
+  const nearMe = LOCAL_NEAR_ME.filter((k) => text.includes(k));
+  let cityHits = 0;
+  if (loc?.city && loc.city.length > 2) {
+    const esc = loc.city.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    cityHits = (text.match(new RegExp(esc, "g")) || []).length;
+  }
+  let frac = 0;
+  if (cityHits >= 2 || nearMe.length >= 1) frac = 1;
+  else if (cityHits === 1) frac = 0.5;
+
+  const found = [];
+  if (cityHits) found.push(`${cityHits}× city mention`);
+  nearMe.forEach((k) => found.push(`"${k}"`));
+
+  return mkLocalSub("Local_Keyword_Usage", "Local Keyword Usage", frac,
+    found.length ? `Local keywords: ${found.slice(0, 5).join(", ")}` : "No local/geo keywords found", {
+      found,
+      cityHits,
+      why_this_occurred: found.length
+        ? "Geo-modified or near-me keywords are present in your headings/content."
+        : "No city names or 'near me'-style local phrases were found in headings or content.",
+      how_to_fix:
+        "Add geo-modified keywords (e.g. \"<service> in <city>\", \"near me\") to headings and body copy.",
+    });
+};
+
+// 5️⃣ Local Landing Pages — dedicated location/store pages discovered by crawling.
+const LOCATION_URL_RE =
+  /\/(locations?|store-?locator|stores?|branch(?:es)?|dealers?|find-?(?:us|a-?store)|areas?-?we-?serve|service-?areas?|cities|near-?me)(?:\/|$|-)/i;
+const localCheckLandingPages = ($, url, loc) => {
+  const links = tuUrlsFromHomepage($, url);
+  const seen = new Set();
+  const pages = [];
+  for (const u of links) {
+    let path;
+    try { path = new URL(u).pathname; } catch { continue; }
+    const low = path.toLowerCase();
+    if (TU_ASSET_RE.test(low)) continue;
+    if (LOCATION_URL_RE.test(low) && !seen.has(low)) {
+      seen.add(low);
+      pages.push(u);
+    }
+  }
+
+  // 3-tier scoring: dedicated location page → 100; no page but a business
+  // location was detected → 50; neither → 0.
+  const hasLocation = !!(loc && (loc.city || loc.state));
+  const locStr = hasLocation ? [loc.city, loc.stateName || loc.state].filter(Boolean).join(", ") : null;
+
+  let frac;
+  let details;
+  let why;
+  if (pages.length >= 1) {
+    frac = 1;
+    details = `${pages.length} location page(s) found`;
+    why = "The site links to dedicated location/store pages.";
+  } else if (hasLocation) {
+    frac = 0.5;
+    details = `No dedicated location page, but a business location was detected (${locStr})`;
+    why = `No dedicated location page (e.g. /locations) was found, but the business location "${locStr}" is present on the site.`;
+  } else {
+    frac = 0;
+    details = "No dedicated location pages or business location found";
+    why = "No URLs matching location-page patterns (e.g. /locations, /store-locator) and no business location were found.";
+  }
+
+  const found = pages.slice(0, 8).map((p) => { try { return new URL(p).pathname; } catch { return p; } });
+  if (!pages.length && hasLocation) found.push(`Location: ${locStr}`);
+
+  return mkLocalSub("Local_Landing_Pages", "Local Landing Pages", frac, details, {
+    found,
+    pages: pages.slice(0, 8),
+    count: pages.length,
+    locationFound: hasLocation,
+    why_this_occurred: why,
+    how_to_fix: "Create a dedicated landing page for each location or service area (e.g. /locations/<city>).",
+  });
+};
+
+// 6️⃣ Location Page Completeness — map, hours, directions and NAP on a location page.
+const localCheckCompleteness = async (landingPages, $, url, page, contactUrlHint) => {
+  let html = null;
+  let source = "home page";
+  const target = landingPages[0] || null;
+  if (target) { html = await tuFetchRaw(target, page); source = "location page"; }
+  if (!html && contactUrlHint) { html = await tuFetchRaw(contactUrlHint, page); source = "contact page"; }
+
+  const rawHtml = html || $.html() || "";
+  const low = rawHtml.toLowerCase();
+
+  const hasMap =
+    /(google\.[a-z.]+\/maps|maps\.google|\/maps\/embed)/i.test(rawHtml) ||
+    /<iframe[^>]+maps/i.test(rawHtml) ||
+    /class=["'][^"']*\bmap\b/i.test(rawHtml);
+  const hasDirections = /maps\/dir|get\s+directions|driving\s+directions/i.test(low);
+  const hasHours =
+    /opening\s*hours|openinghours|hours of operation/i.test(low) ||
+    /\b(mon|tue|wed|thu|fri|sat|sun)[a-z]*\s*[-–:]/i.test(low) ||
+    /\b\d{1,2}(:\d{2})?\s*(am|pm)\b/i.test(low);
+  const hasPhone = /href=["']tel:/i.test(rawHtml) || /\(?\d{3}\)?[\s.\-]?\d{3}[\s.\-]?\d{4}/.test(low);
+
+  const checks = [["Map", hasMap], ["Hours", hasHours], ["Directions", hasDirections], ["Phone/NAP", hasPhone]];
+  const present = checks.filter(([, v]) => v);
+  const missing = checks.filter(([, v]) => !v).map(([l]) => l);
+  const frac = present.length / checks.length;
+
+  let inspected = target || contactUrlHint || url;
+  try { inspected = new URL(inspected).pathname; } catch { /* keep as-is */ }
+
+  return mkLocalSub("Location_Page_Completeness", "Location Page Completeness", frac,
+    `${present.length}/4 elements present (${source})`, {
+      found: present.map(([l]) => l),
+      missing,
+      inspected,
+      why_this_occurred: present.length === checks.length
+        ? "The location page includes a map, hours, directions and contact details."
+        : `The location page is missing: ${missing.join(", ")}.`,
+      how_to_fix:
+        "On each location page add an embedded Google Map, opening hours, a directions link and a click-to-call phone/NAP.",
+    });
+};
+
+// 7️⃣ Google Business Profile — detect a link to the GBP / Maps listing (link-only).
+const GBP_RE =
+  /(g\.page|business\.google\.com|google\.[a-z.]+\/maps\/place|maps\.app\.goo\.gl|goo\.gl\/maps)/i;
+const localCheckGBP = ($, schemaBiz) => {
+  const links = [];
+  $("a[href]").each((i, el) => {
+    const href = $(el).attr("href") || "";
+    if (GBP_RE.test(href)) links.push(href);
+  });
+  const sameAs = schemaBiz && schemaBiz.sameAs ? [].concat(schemaBiz.sameAs) : [];
+  const schemaGbp = sameAs.filter((s) => GBP_RE.test(String(s)));
+  const all = [...new Set([...links, ...schemaGbp])];
+  const frac = all.length ? 1 : 0;
+
+  return mkLocalSub("Google_Business_Profile", "Google Business Profile", frac,
+    all.length ? "Google Business Profile link detected" : "No Google Business Profile link found", {
+      found: all.slice(0, 5),
+      partial: true,
+      why_this_occurred: all.length
+        ? "A link to your Google Business Profile / Maps listing was found."
+        : "No link to a Google Business Profile (g.page, Maps listing) was detected. Only the link can be verified from the page — full profile data (reviews, photos, posts) requires the Google Places API.",
+      how_to_fix:
+        "Claim your Google Business Profile and link to it (g.page or Maps) from your site; keep it active with posts, photos and accurate hours.",
+    });
+};
+
+// 8️⃣ Review Signals — AggregateRating/Review schema, widgets, or review-platform links.
+const REVIEW_PLATFORM_RE =
+  /(dealerrater\.com|yelp\.com|trustpilot\.com|cars\.com|bbb\.org|google\.[a-z.]+\/maps|facebook\.com\/[^"']*\/reviews|g\.page\/[^"']*\/review)/i;
+const localCheckReviews = ($, structuredData) => {
+  const found = [];
+  let rating = null;
+  let count = null;
+  ldWalk(structuredData, (n) => {
+    const types = [].concat(n["@type"] || []).map((t) => String(t).toLowerCase());
+    if (types.includes("aggregaterating") || n.ratingValue) {
+      rating = rating ?? n.ratingValue;
+      count = count ?? (n.reviewCount || n.ratingCount);
+    }
+    if (n.aggregateRating && typeof n.aggregateRating === "object") {
+      rating = rating ?? n.aggregateRating.ratingValue;
+      count = count ?? (n.aggregateRating.reviewCount || n.aggregateRating.ratingCount);
+    }
+    if (types.includes("review")) found.push("Review schema");
+  });
+  if (rating) found.push(`Rating ${rating}${count ? ` (${count} reviews)` : ""} in schema`);
+
+  const platforms = new Set();
+  $("a[href]").each((i, el) => {
+    const href = $(el).attr("href") || "";
+    if (REVIEW_PLATFORM_RE.test(href)) {
+      try { platforms.add(new URL(href, "https://x.invalid").hostname.replace(/^www\./, "")); } catch { /* skip */ }
+    }
+  });
+  platforms.forEach((p) => found.push(p));
+
+  const hasStars = $('[class*="rating"], [class*="stars"], [itemprop="ratingValue"]').length > 0;
+  if (hasStars && !rating) found.push("Star/rating widget");
+
+  let frac = 0;
+  if (rating || platforms.size) frac = 1;
+  else if (hasStars) frac = 0.5;
+
+  return mkLocalSub("Review_Signals", "Review Signals", frac,
+    found.length ? `Review signals: ${[...new Set(found)].slice(0, 4).join(", ")}` : "No review signals found", {
+      found: [...new Set(found)].slice(0, 6),
+      rating: rating || null,
+      reviewCount: count || null,
+      partial: true,
+      why_this_occurred: found.length
+        ? "Review/rating signals (schema, widgets or links to review platforms) were detected."
+        : "No AggregateRating schema, review widgets or links to review platforms (Google, Yelp, DealerRater) were found. Live ratings require each platform's API.",
+      how_to_fix:
+        "Collect reviews on Google and relevant platforms, link to them, and add AggregateRating structured data.",
+    });
+};
+
+// Aggregate all eight Local SEO signals into a single output-only metric.
+const checkLocalSEO = async (url, $, page, structuredData, title, metaDesc) => {
+  try {
+    const { loc, source } = await resolveBusinessLocation(url, $, page, structuredData);
+    const schemaBiz = ldFindLocalBusiness(structuredData);
+    const contactUrlHint = tuFindContactUrl($, url);
+
+    const nap = localCheckNAP($, schemaBiz, structuredData);
+    const schema = localCheckSchema(structuredData);
+    const targeting = localCheckTargeting($, loc, title, metaDesc);
+    const keywords = localCheckKeywords($, loc);
+    const landing = localCheckLandingPages($, url, loc);
+    const completeness = await localCheckCompleteness(landing.pages || [], $, url, page, contactUrlHint);
+    const gbp = localCheckGBP($, schemaBiz);
+    const reviews = localCheckReviews($, structuredData);
+
+    // Strip the heavy 'pages' array from the landing sub-signal before exposing.
+    const parameters = [nap, schema, targeting, keywords, landing, completeness, gbp, reviews]
+      .map(({ pages, ...rest }) => rest);
+
+    const avg = parameters.reduce((s, p) => s + p.score, 0) / parameters.length / 100;
+    const locStr = loc ? [loc.city, loc.stateName || loc.state].filter(Boolean).join(", ") : null;
+    const passing = parameters.filter((p) => p.status === "pass").length;
+
+    const details = locStr
+      ? `Local SEO: ${passing}/${parameters.length} signals optimized · ${locStr}`
+      : `Local SEO: ${passing}/${parameters.length} signals optimized`;
+
+    return evaluateParameter(avg, details, {
+      score10: Math.round(avg * 10),
+      locationFound: !!loc,
+      location: locStr,
+      locationSource: source,
+      parameters,
+      passing,
+      total: parameters.length,
+      why_this_occurred: loc
+        ? `Detected business location "${locStr}" (via ${source}). ${passing}/${parameters.length} local signals are fully optimized.`
+        : "No clear local-business location was detected. If this is a local business, add a LocalBusiness schema and display your NAP.",
+      how_to_fix:
+        "Strengthen the weak signals below: consistent NAP, complete LocalBusiness schema, geo-targeted titles & keywords, dedicated location pages, a linked Google Business Profile and review signals.",
+    });
+  } catch (e) {
+    return evaluateParameter(0, "Local SEO check failed", { error: e.message, parameters: [] });
+  }
+};
+
 export default async function seoMetrics(url, $, page) {
 
   const titleMetric = checkTitle($);
@@ -1653,13 +3706,44 @@ export default async function seoMetrics(url, $, page) {
   const slugMetric = checkSlugs(url);
   const robotsMetric = await checkRobotsTxt(url, page);
   const sitemapMetric = await checkSitemap(url, robotsMetric?.meta?.content, page);
+  // Sample eligible internal pages once, then score title & meta-desc uniqueness.
+  const uniquenessSample = await tuSamplePages(url, $, page, sitemapMetric?.meta?.content);
+  const titleUniquenessMetric = checkTitleUniqueness(uniquenessSample);
+  const metaDescUniquenessMetric = checkMetaDescriptionUniqueness(uniquenessSample);
+  const titleKeywordMetric = checkTitleKeywordOptimization(uniquenessSample);
   const structuredDataMetric = await checkStructuredData(page);
+  const titleLocationMetric = await checkTitleLocationOptimization(
+    url,
+    $,
+    page,
+    titleMetric?.meta?.title,
+    structuredDataMetric?.meta?.content
+  );
+  // Standalone 0–10 service-page quality score (output-only, not weighted).
+  const serviceContentMetric = await checkServiceContentQuality(url, $, page, sitemapMetric?.meta?.content);
+  // Standalone 0–10 content depth/uniqueness/relevance score (output-only).
+  const contentDepthMetric = await checkContentDepthQuality(url, $, page, sitemapMetric?.meta?.content);
+  // E-E-A-T (Experience, Expertise, Authoritativeness, Trust) 0–10 score (weighted).
+  const eeatMetric = await checkEEAT(url, $, page, sitemapMetric?.meta?.content);
+  // Local SEO signals (8 sub-signals). Output-only — not weighted into Percentage.
+  const localSEOMetric = await checkLocalSEO(
+    url,
+    $,
+    page,
+    structuredDataMetric?.meta?.content,
+    titleMetric?.meta?.title,
+    metaDescMetric?.meta?.description
+  );
 
   const { ogMetric, twitterMetric, socialLinksMetric } = checkSocial($);
 
   const weights = {
-    Title: 0.15,
-    Meta_Description: 0.08,
+    Title: 0.04,
+    Title_Uniqueness: 0.04,
+    Title_Keyword_Optimization: 0.04,
+    Title_Location_Optimization: 0.03,
+    Meta_Description: 0.05,
+    Meta_Description_Uniqueness: 0.03,
     H1: 0.10,
     Content_Relevance: 0.10,
     Duplicate_Content: 0.02,
@@ -1676,14 +3760,19 @@ export default async function seoMetrics(url, $, page) {
     Video: 0.01,
     Open_Graph: 0.02,
     Twitter_Card: 0.02,
-    Social_Links: 0.01
+    Social_Links: 0.01,
+    EEAT: 0.08
   };
 
   const getScore = (metric) => metric?.score || 0;
 
   const weightedScore =
     (getScore(titleMetric) * weights.Title) +
+    (getScore(titleUniquenessMetric) * weights.Title_Uniqueness) +
+    (getScore(titleKeywordMetric) * weights.Title_Keyword_Optimization) +
+    (getScore(titleLocationMetric) * weights.Title_Location_Optimization) +
     (getScore(metaDescMetric) * weights.Meta_Description) +
+    (getScore(metaDescUniquenessMetric) * weights.Meta_Description_Uniqueness) +
     (getScore(h1Metric) * weights.H1) +
     (contentRelevanceMetric.percentage * weights.Content_Relevance) +
     (getScore(imageMetric) * weights.Image) +
@@ -1699,13 +3788,30 @@ export default async function seoMetrics(url, $, page) {
     (getScore(videoMetric) * weights.Video) +
     (getScore(ogMetric) * weights.Open_Graph) +
     (getScore(twitterMetric) * weights.Twitter_Card) +
-    (getScore(socialLinksMetric) * weights.Social_Links);
+    (getScore(socialLinksMetric) * weights.Social_Links) +
+    (getScore(eeatMetric) * weights.EEAT);
 
-  const actualPercentage = parseFloat(weightedScore.toFixed(0));
+  // Normalize by the sum of weights actually used above (Duplicate_Content and
+  // URL_Structure are defined in the map but NOT weighted, so we can't blindly
+  // sum Object.values). Dividing by this total proportionally rescales every
+  // weight to sum to 1.0, putting the score on a true 0–100 scale.
+  const totalWeight =
+    weights.Title + weights.Title_Uniqueness + weights.Title_Keyword_Optimization +
+    weights.Title_Location_Optimization + weights.Meta_Description + weights.Meta_Description_Uniqueness +
+    weights.H1 + weights.Content_Relevance + weights.Image + weights.Canonical +
+    weights.Contextual_Linking + weights.Sitemap + weights.Robots_Txt + weights.Structured_Data +
+    weights.Heading_Hierarchy + weights.URL_Slugs + weights.Links + weights.Semantic_Tags +
+    weights.Video + weights.Open_Graph + weights.Twitter_Card + weights.Social_Links + weights.EEAT;
+
+  const actualPercentage = parseFloat((weightedScore / totalWeight).toFixed(0));
 
   return {
     Title: titleMetric,
+    Title_Uniqueness: titleUniquenessMetric,
+    Title_Keyword_Optimization: titleKeywordMetric,
+    Title_Location_Optimization: titleLocationMetric,
     Meta_Description: metaDescMetric,
+    Meta_Description_Uniqueness: metaDescUniquenessMetric,
     URL_Structure: urlStructureMetric,
     Canonical: canonicalMetric,
     H1: h1Metric,
@@ -1720,9 +3826,13 @@ export default async function seoMetrics(url, $, page) {
     Robots_Txt: robotsMetric,
     Sitemap: sitemapMetric,
     Structured_Data: structuredDataMetric,
+    Service_Content_Quality: serviceContentMetric,
+    Content_Depth_Quality: contentDepthMetric,
+    Local_SEO: localSEOMetric,
     Open_Graph: ogMetric,
     Twitter_Card: twitterMetric,
     Social_Links: socialLinksMetric,
+    EEAT: eeatMetric,
     Percentage: actualPercentage,
   };
 }

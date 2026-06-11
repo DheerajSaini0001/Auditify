@@ -9,7 +9,7 @@ import {
   Search, FileText, Link, Image as ImageIcon, Video,
   Layout, FileCode, Lock, Copy, List, Tag, Globe,
   CheckCircle, AlertTriangle, XCircle, Info, Loader2, ArrowRight,
-  ChevronDown, ChevronUp, ExternalLink, Box, Check
+  ChevronDown, ChevronUp, ExternalLink, Box, Check, ShieldCheck, MapPin
 } from "lucide-react";
 import MetricInfoModal from "../Component/MetricInfoModal";
 import ParameterInfoModal from "../Component/ParameterInfoModal";
@@ -1894,6 +1894,606 @@ const SitemapCard = ({ data, darkMode, onInfo }) => {
 
 
 
+// Reusable card for cross-page uniqueness checks (titles & meta descriptions).
+const UniquenessCard = ({ data, darkMode, onInfo, title, metricKey, noun = "Value", missingLabel = "Missing value" }) => {
+  const meta = data?.meta || {};
+  const score = data?.score || 0;
+  const status = data?.status || "fail";
+  const statusText = data?.details || title;
+
+  const results = Array.isArray(meta?.results) ? meta.results : [];
+  const pagesChecked = meta?.pagesChecked ?? results.length;
+  const uniqueCount = meta?.uniqueCount ?? 0;
+  const duplicateCount = meta?.duplicateCount ?? 0;
+  const missingCount = meta?.missingCount ?? 0;
+
+  // Mark which values are duplicated (case-insensitive) for highlighting.
+  const counts = {};
+  results.forEach(r => {
+    if (r?.value) {
+      const k = r.value.toLowerCase();
+      counts[k] = (counts[k] || 0) + 1;
+    }
+  });
+
+  return (
+    <SEOCard
+      title={title}
+      icon={Copy}
+      iconColor="text-blue-400"
+      score={score}
+      status={status}
+      statusText={statusText}
+      analysis={data?.analysis}
+      meta={meta}
+      metricKey={metricKey}
+      darkMode={darkMode}
+      onInfo={onInfo}
+      className="col-span-1"
+      getStatusFromScore={getStatusFromScore}
+      InfoDetails={InfoDetails}
+      showAnalysis={false}
+    >
+      {pagesChecked > 0 && (
+        <div className="grid grid-cols-3 gap-3 mb-4">
+          {[
+            { label: "Pages Checked", value: pagesChecked, color: darkMode ? "text-gray-100" : "text-gray-900" },
+            { label: `Unique ${noun}s`, value: uniqueCount, color: "text-emerald-500" },
+            { label: "Duplicate / Missing", value: duplicateCount + missingCount, color: (duplicateCount + missingCount) > 0 ? "text-amber-500" : (darkMode ? "text-gray-100" : "text-gray-900") },
+          ].map((s, i) => (
+            <div key={i} className={`p-3 rounded-lg text-center ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
+              <div className={`text-lg fontsemibold ${s.color}`}>{s.value}</div>
+              <div className="text-[10px] uppercase fontsemibold tracking-wider opacity-60">{s.label}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {results.length > 0 && (
+        <div className="space-y-2">
+          <div className={`text-[10px] fontsemibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+            Sampled {noun}s
+          </div>
+          {results.map((r, i) => {
+            const isMissing = !r?.value;
+            const isDup = r?.value && counts[r.value.toLowerCase()] > 1;
+            return (
+              <div key={i} className={`p-2 rounded text-xs ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
+                <div className="flex items-center gap-2">
+                  {isMissing ? (
+                    <AlertTriangle size={12} className="text-red-500 shrink-0" />
+                  ) : isDup ? (
+                    <Copy size={12} className="text-amber-500 shrink-0" />
+                  ) : (
+                    <CheckCircle size={12} className="text-emerald-500 shrink-0" />
+                  )}
+                  <span className={`fontsemibold truncate ${isMissing ? "text-red-500 italic" : isDup ? "text-amber-500" : (darkMode ? "text-gray-200" : "text-gray-800")}`}>
+                    {isMissing ? missingLabel : r.value}{isDup ? "  (duplicate)" : ""}
+                  </span>
+                </div>
+                {r?.url && (
+                  <div className={`mt-1 pl-5 truncate text-[10px] ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+                    {r.url}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </SEOCard>
+  );
+};
+
+// Cross-page Title Keyword Optimization card.
+const KeywordOptimizationCard = ({ data, darkMode, onInfo }) => {
+  const meta = data?.meta || {};
+  const score = data?.score || 0;
+  const status = data?.status || "fail";
+  const statusText = data?.details || "Title Keyword Optimization";
+
+  const results = Array.isArray(meta?.results) ? meta.results : [];
+  const pagesChecked = meta?.pagesChecked ?? results.length;
+  const optimizedCount = meta?.optimizedCount ?? results.filter(r => r?.optimized).length;
+
+  return (
+    <SEOCard
+      title="Title Keyword Optimization"
+      icon={Search}
+      iconColor="text-blue-400"
+      score={score}
+      status={status}
+      statusText={statusText}
+      analysis={data?.analysis}
+      meta={meta}
+      metricKey="Title_Keyword_Optimization"
+      darkMode={darkMode}
+      onInfo={onInfo}
+      className="col-span-1"
+      getStatusFromScore={getStatusFromScore}
+      InfoDetails={InfoDetails}
+      showAnalysis={false}
+    >
+      {pagesChecked > 0 && (
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          {[
+            { label: "Pages Checked", value: pagesChecked, color: darkMode ? "text-gray-100" : "text-gray-900" },
+            { label: "Keyword Optimized", value: `${optimizedCount}/${pagesChecked}`, color: optimizedCount === pagesChecked ? "text-emerald-500" : "text-amber-500" },
+          ].map((s, i) => (
+            <div key={i} className={`p-3 rounded-lg text-center ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
+              <div className={`text-lg fontsemibold ${s.color}`}>{s.value}</div>
+              <div className="text-[10px] uppercase fontsemibold tracking-wider opacity-60">{s.label}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {results.length > 0 && (
+        <div className="space-y-2">
+          <div className={`text-[10px] fontsemibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+            Sampled Pages
+          </div>
+          {results.map((r, i) => (
+            <div key={i} className={`p-2 rounded text-xs ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
+              <div className="flex items-center gap-2">
+                {r?.optimized ? (
+                  <CheckCircle size={12} className="text-emerald-500 shrink-0" />
+                ) : (
+                  <AlertTriangle size={12} className="text-amber-500 shrink-0" />
+                )}
+                <span className={`fontsemibold truncate ${darkMode ? "text-gray-200" : "text-gray-800"}`}>
+                  {r?.title || "Missing title"}
+                </span>
+              </div>
+              <div className="mt-1 pl-5 flex items-center gap-2 flex-wrap">
+                {r?.keyword ? (
+                  <span className={`px-1.5 py-0.5 rounded text-[10px] fontsemibold ${r.optimized ? "bg-emerald-500/15 text-emerald-500" : "bg-amber-500/15 text-amber-500"}`}>
+                    keyword: {r.keyword}{r?.source ? ` (${r.source})` : ""}
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-gray-400 italic">no keyword detected</span>
+                )}
+              </div>
+              {r?.url && (
+                <div className={`mt-1 pl-5 truncate text-[10px] ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+                  {r.url}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </SEOCard>
+  );
+};
+
+// Title Location Optimization card (home page title vs dealership city/state).
+const LocationOptimizationCard = ({ data, darkMode, onInfo }) => {
+  const meta = data?.meta || {};
+  const score = data?.score || 0;
+  const status = data?.status || "fail";
+  const statusText = data?.details || "Title Location Optimization";
+
+  const locationFound = meta?.locationFound;
+  const matched = Array.isArray(meta?.matched) ? meta.matched : [];
+  const inTitle = matched.length > 0;
+
+  return (
+    <SEOCard
+      title="Title Location Optimization"
+      icon={Globe}
+      iconColor="text-blue-400"
+      score={score}
+      status={status}
+      statusText={statusText}
+      analysis={data?.analysis}
+      meta={meta}
+      metricKey="Title_Location_Optimization"
+      darkMode={darkMode}
+      onInfo={onInfo}
+      className="col-span-1"
+      getStatusFromScore={getStatusFromScore}
+      InfoDetails={InfoDetails}
+      showAnalysis={false}
+    >
+      {meta?.title && (
+        <div className="mb-3 space-y-1">
+          <div className={`text-[10px] fontsemibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+            Home Page Title
+          </div>
+          <div className={`p-2 rounded text-xs fontsemibold ${darkMode ? "bg-gray-900 text-gray-200" : "bg-gray-50 border border-gray-100 text-gray-800"}`}>
+            {meta.title}
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
+          <div className="text-[10px] uppercase fontsemibold tracking-wider opacity-60">Detected Location</div>
+          <div className={`text-sm fontsemibold mt-1 ${darkMode ? "text-gray-100" : "text-gray-900"}`}>
+            {locationFound ? (meta?.location || "—") : "Not determined"}
+          </div>
+          {locationFound && meta?.source && (
+            <div className="text-[10px] opacity-50 mt-0.5">via {meta.source}</div>
+          )}
+        </div>
+        <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
+          <div className="text-[10px] uppercase fontsemibold tracking-wider opacity-60">In Title?</div>
+          <div className={`text-sm fontsemibold mt-1 flex items-center gap-1.5 ${!locationFound ? "text-amber-500" : inTitle ? "text-emerald-500" : "text-red-500"}`}>
+            {!locationFound ? (
+              <><AlertTriangle size={13} /> Unknown</>
+            ) : inTitle ? (
+              <><CheckCircle size={13} /> Yes ({matched.join(", ")})</>
+            ) : (
+              <><AlertTriangle size={13} /> No</>
+            )}
+          </div>
+        </div>
+      </div>
+    </SEOCard>
+  );
+};
+
+// Service Content Quality (0–10) card.
+const ServiceContentQualityCard = ({ data, darkMode, onInfo, className = "" }) => {
+  const meta = data?.meta || {};
+  const status = data?.status || "fail";
+  const score10 = meta?.score10 ?? 0;
+  const serviceFound = meta?.serviceFound;
+  const checks = meta?.checks || {};
+  const failureReasons = Array.isArray(meta?.failureReasons) ? meta.failureReasons : [];
+
+  const scoreColor = score10 >= 7 ? "text-emerald-500" : score10 >= 4 ? "text-amber-500" : "text-red-500";
+  const markColor = (m) => (m >= 2 ? "text-emerald-500" : m === 1 ? "text-amber-500" : "text-red-500");
+
+  const checkRows = serviceFound ? [
+    { label: "Service Description", c: checks.serviceDescription, sub: (c) => {
+        const parts = [];
+        if (c?.hasWhat) parts.push("what");
+        if (c?.hasBenefits) parts.push("benefits");
+        if (c?.hasWho) parts.push("audience");
+        return parts.length ? `Explains: ${parts.join(", ")}` : "Missing key explanation";
+      } },
+    { label: "Content Length", c: checks.contentLength, sub: (c) => `${c?.wordCount ?? 0} words` },
+    { label: "Appointment / Booking", c: checks.booking, sub: (c) => c?.type || "—" },
+    { label: "Pre-Service Info", c: checks.preServiceInfo, sub: (c) => (c?.sectionsFound?.length ? c.sectionsFound.join(", ") : "None found") },
+  ] : [];
+
+  return (
+    <SEOCard
+      title="Service Content Quality"
+      icon={FileText}
+      iconColor="text-blue-400"
+      score={score10 * 10}
+      status={status}
+      statusText={serviceFound ? `${score10}/10` : "Service Page Not Found"}
+      analysis={data?.analysis}
+      meta={meta}
+      metricKey="Service_Content_Quality"
+      darkMode={darkMode}
+      onInfo={onInfo}
+      className={className}
+      getStatusFromScore={getStatusFromScore}
+      InfoDetails={InfoDetails}
+      showAnalysis={false}
+    >
+      {!serviceFound ? (
+        <div className={`p-4 rounded-lg border border-red-500/30 bg-red-500/10`}>
+          <div className="fontsemibold text-red-500 flex items-center gap-2">
+            <AlertTriangle size={16} /> Service Page Not Found
+          </div>
+          <p className={`text-xs mt-1 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+            No dedicated service page was found in the site's navigation or sitemap.
+          </p>
+        </div>
+      ) : (
+        <>
+          <div className="flex items-end gap-2 mb-4">
+            <span className={`text-3xl fontsemibold ${scoreColor}`}>{score10}</span>
+            <span className={`text-sm mb-1 opacity-60`}>/ 10</span>
+            {meta?.servicePageUrl && (
+              <a
+                href={meta.servicePageUrl}
+                target="_blank"
+                rel="noreferrer"
+                className={`ml-auto text-[10px] truncate max-w-[55%] ${darkMode ? "text-blue-400" : "text-blue-600"} hover:underline`}
+              >
+                {meta.servicePageUrl}
+              </a>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            {checkRows.map((row, i) => (
+              <div key={i} className={`p-2 rounded ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
+                <div className="flex items-center justify-between">
+                  <span className={`text-xs fontsemibold ${darkMode ? "text-gray-200" : "text-gray-800"}`}>{row.label}</span>
+                  <span className={`text-xs fontsemibold ${markColor(row.c?.mark ?? 0)}`}>{row.c?.mark ?? 0}/{row.c?.max ?? 2}</span>
+                </div>
+                <div className={`text-[10px] mt-0.5 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>{row.sub(row.c)}</div>
+              </div>
+            ))}
+          </div>
+
+          {failureReasons.length > 0 && (
+            <div className="mt-3 space-y-1">
+              <div className="text-[10px] fontsemibold uppercase tracking-wider text-amber-500">Issues</div>
+              {failureReasons.map((r, i) => (
+                <div key={i} className={`text-[11px] flex items-start gap-1.5 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                  <AlertTriangle size={11} className="text-amber-500 shrink-0 mt-0.5" /> {r}
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </SEOCard>
+  );
+};
+
+// Content Depth + Uniqueness + Relevance (0–10) card.
+const ContentDepthQualityCard = ({ data, darkMode, onInfo, className = "" }) => {
+  const meta = data?.meta || {};
+  const status = data?.status || "fail";
+  const score10 = meta?.score10 ?? 0;
+  const pagesAnalyzed = meta?.pagesAnalyzed ?? 0;
+  const pages = Array.isArray(meta?.pages) ? meta.pages : [];
+  const failureReasons = Array.isArray(meta?.failureReasons) ? meta.failureReasons : [];
+
+  const scoreColor = score10 >= 7 ? "text-emerald-500" : score10 >= 4 ? "text-amber-500" : "text-red-500";
+  const markColor = (m) => (m >= 2 ? "text-emerald-500" : m === 1 ? "text-amber-500" : "text-red-500");
+
+  return (
+    <SEOCard
+      title="Content Depth & Uniqueness"
+      icon={FileText}
+      iconColor="text-blue-400"
+      score={score10 * 10}
+      status={status}
+      statusText={pagesAnalyzed ? `${score10}/10` : "No target pages found"}
+      analysis={data?.analysis}
+      meta={meta}
+      metricKey="Content_Depth_Quality"
+      darkMode={darkMode}
+      onInfo={onInfo}
+      className={className}
+      getStatusFromScore={getStatusFromScore}
+      InfoDetails={InfoDetails}
+      showAnalysis={false}
+    >
+      {!pagesAnalyzed ? (
+        <div className={`p-4 rounded-lg border border-amber-500/30 bg-amber-500/10`}>
+          <div className="fontsemibold text-amber-500 flex items-center gap-2">
+            <AlertTriangle size={16} /> No target pages found
+          </div>
+          <p className={`text-xs mt-1 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+            Could not identify SRP, VDP, Service, Trade-In, About or Contact pages to analyze.
+          </p>
+        </div>
+      ) : (
+        <>
+          <div className="flex items-end gap-2 mb-4">
+            <span className={`text-3xl fontsemibold ${scoreColor}`}>{score10}</span>
+            <span className="text-sm mb-1 opacity-60">/ 10</span>
+            <span className="ml-auto text-[10px] opacity-50">{pagesAnalyzed} page(s) analyzed</span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-[11px]">
+              <thead>
+                <tr className={`text-left ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+                  <th className="py-1 pr-2 fontsemibold uppercase tracking-wider text-[9px]">Page</th>
+                  <th className="py-1 px-1 fontsemibold uppercase tracking-wider text-[9px] text-center" title="Relevance">Rel</th>
+                  <th className="py-1 px-1 fontsemibold uppercase tracking-wider text-[9px] text-center" title="Depth (word count)">Depth</th>
+                  <th className="py-1 px-1 fontsemibold uppercase tracking-wider text-[9px] text-center" title="Uniqueness">Uniq</th>
+                  <th className="py-1 pl-1 fontsemibold uppercase tracking-wider text-[9px] text-right">Score</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pages.map((p, i) => (
+                  <tr key={i} className={`border-t ${darkMode ? "border-gray-800" : "border-gray-100"}`}>
+                    <td className="py-1.5 pr-2">
+                      <div className={`fontsemibold ${darkMode ? "text-gray-200" : "text-gray-800"}`}>{p.typeLabel || p.type}</div>
+                      {p.loaded ? (
+                        <div className="opacity-50 truncate max-w-[160px]">{p.wordCount} words{p.similarity != null ? ` · ${p.similarity}% sim` : ""}</div>
+                      ) : (
+                        <div className="text-red-500">not loaded</div>
+                      )}
+                    </td>
+                    <td className={`py-1.5 px-1 text-center fontsemibold ${markColor(p.relevance ?? 0)}`}>{p.loaded ? `${p.relevance}/2` : "—"}</td>
+                    <td className={`py-1.5 px-1 text-center fontsemibold ${markColor(p.depth ?? 0)}`}>{p.loaded ? `${p.depth}/2` : "—"}</td>
+                    <td className={`py-1.5 px-1 text-center fontsemibold ${markColor(p.uniqueness ?? 0)}`}>{p.loaded ? `${p.uniqueness}/2` : "—"}</td>
+                    <td className={`py-1.5 pl-1 text-right fontsemibold ${p.loaded ? markColor(Math.round((p.score10 ?? 0) / 5)) : ""}`}>{p.loaded ? `${p.score10}/10` : "0"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {failureReasons.length > 0 && (
+            <div className="mt-3 space-y-1">
+              <div className="text-[10px] fontsemibold uppercase tracking-wider text-amber-500">Issues</div>
+              {failureReasons.map((r, i) => (
+                <div key={i} className={`text-[11px] flex items-start gap-1.5 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                  <AlertTriangle size={11} className="text-amber-500 shrink-0 mt-0.5" /> {r}
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </SEOCard>
+  );
+};
+
+// E-E-A-T signals (0–10) card — About, Contact, Author/Credentials,
+// Experience, Trust (each 0–2).
+const EEATCard = ({ data, darkMode, onInfo, className = "" }) => {
+  const meta = data?.meta || {};
+  const status = data?.status || "fail";
+  const score10 = meta?.score10 ?? 0;
+  const checks = meta?.checks || {};
+  const failureReasons = Array.isArray(meta?.failureReasons) ? meta.failureReasons : [];
+
+  const scoreColor = score10 >= 7 ? "text-emerald-500" : score10 >= 4 ? "text-amber-500" : "text-red-500";
+  const markColor = (m) => (m >= 2 ? "text-emerald-500" : m === 1 ? "text-amber-500" : "text-red-500");
+
+  const checkRows = [
+    { label: "About Page", c: checks.about, empty: "No About page found" },
+    { label: "Contact Information", c: checks.contact, empty: "No contact details found" },
+    { label: "Author / Credentials", c: checks.credentials, empty: "No team/author info found" },
+    { label: "Experience & Expertise", c: checks.experience, empty: "No experience signals found" },
+    { label: "Trust Signals", c: checks.trust, empty: "No trust signals found" },
+  ];
+
+  return (
+    <SEOCard
+      title="E-E-A-T Signals"
+      icon={ShieldCheck}
+      iconColor="text-blue-400"
+      score={score10 * 10}
+      status={status}
+      statusText={`${score10}/10`}
+      analysis={data?.analysis}
+      meta={meta}
+      metricKey="EEAT"
+      darkMode={darkMode}
+      onInfo={onInfo}
+      className={className}
+      getStatusFromScore={getStatusFromScore}
+      InfoDetails={InfoDetails}
+      showAnalysis={false}
+    >
+      <div className="flex items-end gap-2 mb-4">
+        <span className={`text-3xl fontsemibold ${scoreColor}`}>{score10}</span>
+        <span className={`text-sm mb-1 opacity-60`}>/ 10</span>
+        {typeof meta?.pagesAnalyzed === "number" && (
+          <span className={`ml-auto text-[10px] ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+            {meta.pagesAnalyzed} page(s) analyzed
+          </span>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        {checkRows.map((row, i) => {
+          const found = Array.isArray(row.c?.found) ? row.c.found : [];
+          return (
+            <div key={i} className={`p-2 rounded ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
+              <div className="flex items-center justify-between">
+                <span className={`text-xs fontsemibold ${darkMode ? "text-gray-200" : "text-gray-800"}`}>{row.label}</span>
+                <span className={`text-xs fontsemibold ${markColor(row.c?.mark ?? 0)}`}>{row.c?.mark ?? 0}/{row.c?.max ?? 2}</span>
+              </div>
+              {found.length > 0 ? (
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {found.map((f, j) => (
+                    <span
+                      key={j}
+                      className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded ${darkMode ? "bg-gray-800 text-gray-300 border border-gray-700" : "bg-white text-gray-600 border border-gray-200"}`}
+                    >
+                      <Check size={9} className="text-emerald-500 shrink-0" /> {f}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <div className={`text-[10px] mt-0.5 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>{row.empty}</div>
+              )}
+              {row.c?.url && (
+                <a href={row.c.url} target="_blank" rel="noreferrer" className={`block text-[10px] mt-1 truncate ${darkMode ? "text-blue-400" : "text-blue-600"} hover:underline`}>
+                  {row.c.url}
+                </a>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {failureReasons.length > 0 && (
+        <div className="mt-3 space-y-1">
+          <div className="text-[10px] fontsemibold uppercase tracking-wider text-amber-500">Issues</div>
+          {failureReasons.map((r, i) => (
+            <div key={i} className={`text-[11px] flex items-start gap-1.5 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+              <AlertTriangle size={11} className="text-amber-500 shrink-0 mt-0.5" /> {r}
+            </div>
+          ))}
+        </div>
+      )}
+    </SEOCard>
+  );
+};
+
+// Local SEO — one card holding 8 local-search sub-signals (meta.parameters).
+const LocalSEOCard = ({ data, darkMode, onInfo, className = "" }) => {
+  const meta = data?.meta || {};
+  const status = data?.status || "fail";
+  const score10 = meta?.score10 ?? Math.round((data?.score || 0) / 10);
+  const parameters = Array.isArray(meta?.parameters) ? meta.parameters : [];
+  const location = meta?.location;
+
+  const scoreColor = score10 >= 7 ? "text-emerald-500" : score10 >= 4 ? "text-amber-500" : "text-red-500";
+  const statColor = (s) => (s === "pass" ? "text-emerald-500" : s === "warning" ? "text-amber-500" : "text-red-500");
+  const StatIcon = (s) => (s === "pass" ? CheckCircle : s === "warning" ? AlertTriangle : XCircle);
+
+  return (
+    <SEOCard
+      title="Local SEO"
+      icon={MapPin}
+      iconColor="text-red-400"
+      score={score10 * 10}
+      status={status}
+      statusText={`${score10}/10`}
+      analysis={data?.analysis}
+      meta={meta}
+      metricKey="Local_SEO"
+      darkMode={darkMode}
+      onInfo={onInfo}
+      className={className}
+      getStatusFromScore={getStatusFromScore}
+      InfoDetails={InfoDetails}
+      showAnalysis={false}
+    >
+      <div className="flex items-end gap-2 mb-4">
+        <span className={`text-3xl fontsemibold ${scoreColor}`}>{score10}</span>
+        <span className="text-sm mb-1 opacity-60">/ 10</span>
+        {location && (
+          <span className={`ml-auto inline-flex items-center gap-1 text-[11px] ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+            <MapPin size={11} /> {location}
+          </span>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+        {parameters.map((p, i) => {
+          const Icon = StatIcon(p.status);
+          const found = Array.isArray(p.found) ? p.found : [];
+          return (
+            <div key={p.key || i} className={`p-2.5 rounded ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
+              <div className="flex items-center justify-between gap-2">
+                <span className={`text-xs fontsemibold ${darkMode ? "text-gray-200" : "text-gray-800"}`}>{p.label}</span>
+                <span className={`inline-flex items-center gap-1 text-xs fontsemibold ${statColor(p.status)}`}>
+                  <Icon size={12} className="shrink-0" /> {p.score}%
+                </span>
+              </div>
+              <div className={`text-[11px] mt-0.5 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>{p.details}</div>
+              {found.length > 0 && (
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {found.slice(0, 4).map((f, j) => (
+                    <span
+                      key={j}
+                      className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded ${darkMode ? "bg-gray-800 text-gray-300 border border-gray-700" : "bg-white text-gray-600 border border-gray-200"}`}
+                    >
+                      <Check size={9} className="text-emerald-500 shrink-0" /> {f}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </SEOCard>
+  );
+};
+
 const StructuredDataCard = ({ data, darkMode, onInfo, className = "" }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
@@ -2229,7 +2829,11 @@ const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading,
   const metricStats = useMemo(() => {
     const metrics = [
       seo.Title,
+      seo.Title_Uniqueness,
+      seo.Title_Keyword_Optimization,
+      seo.Title_Location_Optimization,
       seo.Meta_Description,
+      seo.Meta_Description_Uniqueness,
       seo.URL_Structure,
       seo.URL_Slugs,
       seo.Canonical,
@@ -2434,6 +3038,30 @@ const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading,
                 resolveLink={resolveLink}
                 className="md:col-span-2"
               />
+              {seo.Service_Content_Quality && (
+                <ServiceContentQualityCard
+                  data={seo.Service_Content_Quality}
+                  darkMode={darkMode}
+                  onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Service_Content_Quality, icon: FileText })}
+                  className="md:col-span-2"
+                />
+              )}
+              {seo.Content_Depth_Quality && (
+                <ContentDepthQualityCard
+                  data={seo.Content_Depth_Quality}
+                  darkMode={darkMode}
+                  onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Content_Depth_Quality, icon: FileText })}
+                  className="md:col-span-2"
+                />
+              )}
+              {seo.EEAT && (
+                <EEATCard
+                  data={seo.EEAT}
+                  darkMode={darkMode}
+                  onInfo={() => setSelectedParameterInfo({ ...InfoDetails.EEAT, icon: ShieldCheck })}
+                  className="md:col-span-2"
+                />
+              )}
             </Section>
 
             {/* Technical Foundation */}
@@ -2453,6 +3081,42 @@ const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading,
                 darkMode={darkMode}
                 onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Sitemap, icon: Search })}
               />
+              {seo.Title_Uniqueness && (
+                <UniquenessCard
+                  data={seo.Title_Uniqueness}
+                  darkMode={darkMode}
+                  title="Title Uniqueness"
+                  metricKey="Title_Uniqueness"
+                  noun="Title"
+                  missingLabel="Missing title"
+                  onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Title_Uniqueness, icon: Copy })}
+                />
+              )}
+              {seo.Meta_Description_Uniqueness && (
+                <UniquenessCard
+                  data={seo.Meta_Description_Uniqueness}
+                  darkMode={darkMode}
+                  title="Meta Description Uniqueness"
+                  metricKey="Meta_Description_Uniqueness"
+                  noun="Description"
+                  missingLabel="Missing description"
+                  onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Meta_Description_Uniqueness, icon: Copy })}
+                />
+              )}
+              {seo.Title_Keyword_Optimization && (
+                <KeywordOptimizationCard
+                  data={seo.Title_Keyword_Optimization}
+                  darkMode={darkMode}
+                  onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Title_Keyword_Optimization, icon: Search })}
+                />
+              )}
+              {seo.Title_Location_Optimization && (
+                <LocationOptimizationCard
+                  data={seo.Title_Location_Optimization}
+                  darkMode={darkMode}
+                  onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Title_Location_Optimization, icon: Globe })}
+                />
+              )}
               <StructuredDataCard
                 data={seo.Structured_Data}
                 darkMode={darkMode}
@@ -2532,6 +3196,17 @@ const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading,
                 className="md:col-span-2"
               />
             </Section>
+
+            {/* Local SEO */}
+            {seo.Local_SEO && (
+              <Section title="Local SEO" icon={MapPin} darkMode={darkMode} gridClasses="grid-cols-1">
+                <LocalSEOCard
+                  data={seo.Local_SEO}
+                  darkMode={darkMode}
+                  onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Local_SEO, icon: MapPin })}
+                />
+              </Section>
+            )}
 
           </div>
         </ReportRestrictionWrapper>

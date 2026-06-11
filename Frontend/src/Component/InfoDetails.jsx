@@ -922,6 +922,194 @@ export const InfoDetails = {
         ]
     },
 
+    Title_Uniqueness: {
+        title: "Title Uniqueness",
+        whatThisParameterIs: "Checks whether different pages across your site use unique <title> tags instead of repeating the same title everywhere.",
+        whatItCalculates: "We sample up to 5 eligible content pages (from your sitemap, or by crawling the homepage), extract and normalize each <title>, then measure how many are unique.",
+        whyItMatters: "Duplicate or missing titles confuse search engines about which page to rank and weaken keyword targeting. Unique, descriptive titles help each page rank for its own topic.",
+        thresholds: {
+            good: "All sampled titles unique (100)",
+            poor: "All titles duplicated or missing (0)"
+        },
+        actualReasonsForFailure: [
+            "Multiple pages share the same <title> tag",
+            "Templated titles not customized per page",
+            "Pages missing a <title> tag entirely"
+        ],
+        howToOvercomeFailure: [
+            "Write a distinct title for each page reflecting its content",
+            "Avoid reusing a single site-wide title template",
+            "Ensure every page has a non-empty <title> tag"
+        ]
+    },
+
+    Meta_Description_Uniqueness: {
+        title: "Meta Description Uniqueness",
+        whatThisParameterIs: "Checks whether different pages across your site use unique meta descriptions instead of repeating the same description everywhere.",
+        whatItCalculates: "We sample up to 5 eligible content pages (from your sitemap, or by crawling the homepage), extract and normalize each meta description, then measure how many are unique.",
+        whyItMatters: "Duplicate or missing meta descriptions reduce click-through from search results and signal low-effort, templated content. Unique descriptions let each page pitch its own value in the SERP.",
+        thresholds: {
+            good: "All sampled descriptions unique (100)",
+            poor: "All descriptions duplicated or missing (0)"
+        },
+        actualReasonsForFailure: [
+            "Multiple pages share the same meta description",
+            "A single site-wide description template is reused",
+            "Pages missing a meta description entirely"
+        ],
+        howToOvercomeFailure: [
+            "Write a distinct meta description for each page",
+            "Summarize each page's unique content in ~150-160 chars",
+            "Ensure every page has a non-empty meta description"
+        ]
+    },
+
+    Title_Keyword_Optimization: {
+        title: "Title Keyword Optimization",
+        whatThisParameterIs: "Checks whether each page's <title> tag actually contains the keyword that page is about.",
+        whatItCalculates: "We sample up to 5 eligible content pages, derive each page's target keyword (from its URL, then its H1, then its main content), and check whether the <title> includes that keyword. Score = optimized pages / pages checked.",
+        whyItMatters: "A title that includes the page's primary keyword tells search engines and users exactly what the page offers, directly improving rankings and click-through for those terms.",
+        thresholds: {
+            good: "All sampled titles contain their keyword (100)",
+            poor: "No sampled titles contain their keyword (0)"
+        },
+        actualReasonsForFailure: [
+            "Titles are generic and omit the page's main keyword",
+            "Same templated title reused across different pages",
+            "Title focuses only on brand name, not the topic"
+        ],
+        howToOvercomeFailure: [
+            "Include the page's primary keyword in its <title>",
+            "Place the keyword near the start of the title",
+            "Match the title to the page's actual content and URL"
+        ]
+    },
+
+    Title_Location_Optimization: {
+        title: "Title Location Optimization",
+        whatThisParameterIs: "Checks whether your home page <title> tag mentions your dealership's city or state.",
+        whatItCalculates: "We determine your location from your LocalBusiness schema, footer address, or contact page, then check whether the home page title contains that city and/or state.",
+        whyItMatters: "Local buyers search with location terms ('cars in Dallas, TX'). A title that names your city/state matches those searches and signals local relevance, driving nearby foot traffic.",
+        thresholds: {
+            good: "Title contains the city or state (100)",
+            poor: "Title omits the location entirely (0)"
+        },
+        actualReasonsForFailure: [
+            "Home page title only shows the brand/dealer name",
+            "No city or state present in the title",
+            "Location data missing from schema/footer/contact page"
+        ],
+        howToOvercomeFailure: [
+            "Add your city and state to the home page title",
+            "Use a format like 'Dealer Name | New & Used Cars in City, ST'",
+            "Publish a LocalBusiness schema with your full address"
+        ]
+    },
+
+    Service_Content_Quality: {
+        title: "Service Content Quality",
+        whatThisParameterIs: "A 0–10 quality score for your main service page — how well it explains, supports, and converts service visitors.",
+        whatItCalculates: "We locate your service page, then score four checks (each 0–2): (1) Service description — what it is, benefits, who it's for; (2) Content length — 150+ words; (3) Booking — an appointment/booking system vs. a plain contact form; (4) Pre-service info — process, pricing, requirements or FAQs. The raw total is scaled to /10.",
+        whyItMatters: "A thorough service page that explains the offering and makes booking easy turns visitors into appointments. Thin or booking-less service pages lose ready-to-buy customers.",
+        thresholds: {
+            good: "Detailed page with booking & supporting info (9-10/10)",
+            poor: "No service page, or thin with no booking (0-3/10)"
+        },
+        actualReasonsForFailure: [
+            "No service page found on the site",
+            "Service description missing or thin (<150 words)",
+            "No appointment/booking option",
+            "No process, pricing, requirements or FAQ sections"
+        ],
+        howToOvercomeFailure: [
+            "Create a dedicated service page explaining what, benefits & who it's for",
+            "Write 150+ words of genuine, helpful content",
+            "Add a booking/appointment system (not just a contact form)",
+            "Include process, pricing, requirements or an FAQ section"
+        ]
+    },
+
+    Content_Depth_Quality: {
+        title: "Content Depth & Uniqueness",
+        whatThisParameterIs: "A 0–10 score for how deep, unique and dealer-specific the content is on your key pages (SRP, VDP, Service, Trade-In, About, Contact).",
+        whatItCalculates: "We identify your key pages and score three checks per page (each 0–2): (1) Relevance — dealer/brand/location/contact specifics vs. generic filler; (2) Depth — meets the per-page-type word threshold; (3) Uniqueness — content fingerprint similarity vs. your other pages. Per-page raw (0–6) is scaled to /10 and averaged. Page-type rules also require specific mentions (e.g. VDPs must list features/specs).",
+        whyItMatters: "Generic, thin, or duplicated content tells Google your pages add no unique value, suppressing rankings. Deep, dealer-specific, unique content wins local and long-tail search.",
+        thresholds: {
+            good: "Deep, unique, dealer-specific content (9-10/10)",
+            poor: "Generic/thin/duplicated content (0-3/10)"
+        },
+        actualReasonsForFailure: [
+            "Content appears generic and not dealer-specific",
+            "Content contains filler or template text",
+            "Content lacks business/location references",
+            "Content below recommended word count",
+            "Content appears duplicated across pages"
+        ],
+        howToOvercomeFailure: [
+            "Add real dealer names, brands, locations & history",
+            "Meet the word-count threshold for each page type",
+            "Make every page's content unique (no shared templates)",
+            "Include the required mentions for each page type (specs, process, address, etc.)"
+        ]
+    },
+
+    EEAT: {
+        title: "E-E-A-T Signals",
+        whatThisParameterIs: "A 0–10 score for the Experience, Expertise, Authoritativeness and Trust signals on your site — the credibility cues Google's quality raters look for.",
+        whatItCalculates: "We discover your key trust pages (About, Contact, Team, Privacy, Terms) via your sitemap and homepage links, fetch the best match for each, then score five checks (each 0–2): (1) About page — company story, history & mission; (2) Contact information — phone, email, physical address & a contact form; (3) Author/team credentials — named people with certifications or professional qualifications; (4) Experience & expertise — years in business, awards, testimonials, case studies; (5) Trust signals — HTTPS, Privacy Policy, Terms, and review/trust platforms. The five marks add up to a /10 score.",
+        whyItMatters: "Google rewards sites that visibly demonstrate who is behind the content and why they can be trusted — especially for businesses and YMYL topics. Missing About/Contact pages, anonymous content, or absent trust signals suppress rankings and erode visitor confidence.",
+        thresholds: {
+            good: "Detailed About/Team, full contact info, credentials & trust signals (8-10/10)",
+            poor: "Missing About/Contact, anonymous content, no trust signals (0-3/10)"
+        },
+        actualReasonsForFailure: [
+            "About Us page missing or thin",
+            "Contact information incomplete (no phone, email, address or form)",
+            "No author or team credentials found",
+            "No experience or expertise signals (years, awards, testimonials)",
+            "Trust signals missing (HTTPS, Privacy Policy, Terms, reviews)"
+        ],
+        howToOvercomeFailure: [
+            "Publish a detailed About page with your story, history & mission",
+            "Show complete contact details — phone, email, address & a contact form",
+            "Add a team/author section with names, roles & professional credentials",
+            "Highlight experience: years in business, awards, testimonials & case studies",
+            "Serve the site over HTTPS and add Privacy Policy, Terms & review/trust badges"
+        ]
+    },
+
+    Local_SEO: {
+        title: "Local SEO Signals",
+        whatThisParameterIs: "A 0–10 score across eight local-search signals that help a physical/local business rank in Google Maps and 'near me' searches: NAP Consistency, LocalBusiness Schema, Location Targeting, Local Keyword Usage, Local Landing Pages, Location Page Completeness, Google Business Profile and Review Signals.",
+        whatItCalculates: "First we resolve your business city/state (LocalBusiness schema → footer → contact page → body text). Then we score each signal: (1) NAP Consistency — name/address/phone present and the schema phone matching the on-page phone; (2) LocalBusiness Schema — present with name, address, telephone, geo, openingHours & sameAs; (3) Location Targeting — your city/state appearing in the title, meta description and body; (4) Local Keyword Usage — geo-modified or 'near me' keywords in headings/content; (5) Local Landing Pages — dedicated /locations, /store-locator style pages found by crawling; (6) Location Page Completeness — a map, opening hours, directions link and click-to-call NAP on that page; (7) Google Business Profile — a link to your GBP/Maps listing (link-only; full data needs the Google Places API); (8) Review Signals — AggregateRating/Review schema, rating widgets or links to review platforms. The eight scores are averaged onto a /10 scale.",
+        whyItMatters: "For location-based businesses, local signals drive the bulk of qualified traffic. Consistent NAP, valid LocalBusiness schema, geo-targeted content and an active Google Business Profile with reviews are what push you into the Google Map Pack and 'near me' results.",
+        thresholds: {
+            good: "Strong across all eight signals (8–10/10)",
+            needsImprovement: "Solid NAP & schema but missing some signals (5–7/10)",
+            poor: "Weak or missing local foundation (0–4/10)"
+        },
+        actualReasonsForFailure: [
+            "NAP (name, address, phone) is missing or inconsistent across the page and schema",
+            "LocalBusiness schema is missing or incomplete (no address, phone, hours or geo)",
+            "City/state not present in the title, meta description or body copy",
+            "No geo-modified or 'near me' keywords in headings/content",
+            "No dedicated location / store-locator landing pages",
+            "Location pages lack a map, hours, directions or click-to-call NAP",
+            "No link to a Google Business Profile / Maps listing",
+            "No review schema, rating widgets or links to review platforms"
+        ],
+        howToOvercomeFailure: [
+            "Show one identical NAP in the footer, contact page and LocalBusiness schema",
+            "Add a complete LocalBusiness JSON-LD with address, telephone, geo, openingHours & sameAs",
+            "Include your city & state in the title, meta description and visible copy",
+            "Use geo-modified keywords (e.g. \"<service> in <city>\", \"near me\") in headings & content",
+            "Create a dedicated landing page per location or service area (e.g. /locations/<city>)",
+            "On each location page add an embedded map, opening hours, a directions link and a tel: phone",
+            "Claim your Google Business Profile and link to it (g.page / Maps) from the site",
+            "Collect reviews on Google and relevant platforms and add AggregateRating structured data"
+        ]
+    },
+
     // Methodologies (On-Page SEO)
     On_Page_SEO_Methodology: {
         icon: Search,

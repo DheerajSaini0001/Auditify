@@ -25,6 +25,7 @@ class ConfigService {
       // ── API Keys & Third Party ──
       { key: 'GEMINI_API_KEY', label: 'Gemini AI API Key', group: 'google', isSecret: true },
       { key: 'API_KEY', label: 'Google Maps/Search API Key', group: 'google', isSecret: true },
+      { key: 'KG_API_KEY', label: 'Google Knowledge Graph Search API Key', group: 'google', isSecret: true },
       { key: 'SafeBrowsing', label: 'Google Safe Browsing Key', group: 'google', isSecret: true },
       { key: 'vt_key', label: 'VirusTotal API Key', group: 'security', isSecret: true },
       { key: 'RECAPTCHA_SECRET_KEY', label: 'reCAPTCHA Secret Key', group: 'google', isSecret: true },

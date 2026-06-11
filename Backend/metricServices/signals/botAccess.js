@@ -1,3 +1,4 @@
+import axios from 'axios';
 import Puppeteer_Simple from '../../utils/puppeteer_simple.js';
 
 /**
@@ -5,6 +6,35 @@ import Puppeteer_Simple from '../../utils/puppeteer_simple.js';
  * Fetches and parses robots.txt for AI bots and checks meta robots.
  * Reflects "Google Search Index Status".
  */
+
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36';
+
+// robots.txt is a static text file. Fetch it fast with axios; only escalate to the
+// stealth browser (slow) if a WAF appears to block the plain request — never for a
+// clean 404 (which just means "no robots.txt", i.e. everything allowed).
+const fetchRobots = async (robotsUrl) => {
+    try {
+        const resp = await axios.get(robotsUrl, {
+            timeout: 6000,
+            maxRedirects: 3,
+            responseType: 'text',
+            transformResponse: [(d) => d],
+            headers: { 'User-Agent': UA, Accept: 'text/plain,*/*' },
+            validateStatus: () => true,
+        });
+        if (resp.status === 200 || resp.status === 404) {
+            return { status: resp.status, content: typeof resp.data === 'string' ? resp.data : '' };
+        }
+    } catch { /* fall through to browser */ }
+
+    try {
+        const r = await Puppeteer_Simple(robotsUrl);
+        if (r.browser) await r.browser.close();
+        return { status: r.status, content: r.html };
+    } catch {
+        return { status: 0, content: '' };
+    }
+};
 
 const analyzeBotAccess = async (url, $) => {
     try {
@@ -20,9 +50,8 @@ const analyzeBotAccess = async (url, $) => {
         };
 
         try {
-            const { html: content, status, browser } = await Puppeteer_Simple(robotsUrl);
-            if (browser) await browser.close();
-            
+            const { status, content } = await fetchRobots(robotsUrl);
+
             if (status === 200 && content) {
                 const lines = content.split(/\r?\n/);
                 let currentAgents = [];

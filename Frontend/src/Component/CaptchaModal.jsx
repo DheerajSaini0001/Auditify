@@ -34,8 +34,9 @@ const CaptchaModal = ({
 
   if (!isOpen) return null;
 
-  const handleVerify = async () => {
-    if (!captchaAnswer) return;
+  const handleVerify = async (e) => {
+    e?.preventDefault();
+    if (!captchaAnswer || verifying || isVerified) return;
 
     setVerifying(true);
     try {
@@ -83,7 +84,7 @@ const CaptchaModal = ({
           </p>
         </div>
 
-        <div className="space-y-6">
+        <form onSubmit={handleVerify} className="space-y-6">
           <div className={`p-1 rounded-2xl ${darkMode ? 'bg-slate-800/50' : 'bg-slate-50'}`}>
             <MathCaptcha
               onAnswerChange={(val, id) => { setCaptchaAnswer(val); setCaptchaId(id); }}
@@ -91,7 +92,7 @@ const CaptchaModal = ({
           </div>
 
           <button
-            onClick={handleVerify}
+            type="submit"
             disabled={verifying || !captchaAnswer || isVerified}
             className={`w-full py-4 rounded-xl fontsemibold flex items-center justify-center gap-2 transition-all duration-300 ${isVerified
               ? 'bg-emerald-500 text-white'
@@ -109,7 +110,7 @@ const CaptchaModal = ({
               <span>{buttonText}</span>
             )}
           </button>
-        </div>
+        </form>
 
         <p className="mt-6 text-center text-xs text-slate-400 uppercase tracking-widest font-">
           Secure Verification Powered by Dealer Pulse

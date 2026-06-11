@@ -321,6 +321,110 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
                                     url={auditData.url}
                                 />
                             ) : <SignalSkeleton darkMode={darkMode} title="Citations & Sources" />}
+
+                            {aeo.signals?.indexCoverage ? (
+                                <AEOSignalCard
+                                    signal="indexCoverage"
+                                    score={aeo.signals.indexCoverage.score}
+                                    data={aeo.signals.indexCoverage}
+                                    title="Index Coverage"
+                                    description="Estimated share of your sitemap URLs that are indexable (HTTP 200, no noindex, self-canonical) — index eligibility for Google & AI engines."
+                                    darkMode={darkMode}
+                                    onInfo={onInfo}
+                                    url={auditData.url}
+                                />
+                            ) : <SignalSkeleton darkMode={darkMode} title="Index Coverage" />}
+
+                            {aeo.signals?.entityRecognition ? (
+                                <AEOSignalCard
+                                    signal="entityRecognition"
+                                    score={aeo.signals.entityRecognition.score}
+                                    data={aeo.signals.entityRecognition}
+                                    title="Entity Recognition"
+                                    description="Organization/LocalBusiness schema + Knowledge Graph presence — how confidently search & AI engines can identify this business as an entity."
+                                    darkMode={darkMode}
+                                    onInfo={onInfo}
+                                    url={auditData.url}
+                                />
+                            ) : <SignalSkeleton darkMode={darkMode} title="Entity Recognition" />}
+
+                            {aeo.signals?.brandEntityStrength ? (
+                                <AEOSignalCard
+                                    signal="brandEntityStrength"
+                                    score={aeo.signals.brandEntityStrength.score}
+                                    data={aeo.signals.brandEntityStrength}
+                                    title="Brand Entity Strength"
+                                    description="How authoritative & established your brand is as an entity — sameAs breadth, Wikipedia/Knowledge Graph presence, review volume, and brand completeness."
+                                    darkMode={darkMode}
+                                    onInfo={onInfo}
+                                    url={auditData.url}
+                                />
+                            ) : <SignalSkeleton darkMode={darkMode} title="Brand Entity Strength" />}
+
+                            {aeo.signals?.citationConsistency ? (
+                                <AEOSignalCard
+                                    signal="citationConsistency"
+                                    score={aeo.signals.citationConsistency.score}
+                                    data={aeo.signals.citationConsistency}
+                                    title="Citation Consistency"
+                                    description="NAP (Name/Address/Phone) & brand consistency — whether your identity details agree across schema, tel: links, and brand tags on the page."
+                                    darkMode={darkMode}
+                                    onInfo={onInfo}
+                                    url={auditData.url}
+                                />
+                            ) : <SignalSkeleton darkMode={darkMode} title="Citation Consistency" />}
+
+                            {aeo.signals?.topicalAuthority ? (
+                                <AEOSignalCard
+                                    signal="topicalAuthority"
+                                    score={aeo.signals.topicalAuthority.score}
+                                    data={aeo.signals.topicalAuthority}
+                                    title="Topical Authority"
+                                    description="Industry & local content depth — content depth, subtopic headings, internal topic-cluster links, automotive topic coverage, and local-authority signals."
+                                    darkMode={darkMode}
+                                    onInfo={onInfo}
+                                    url={auditData.url}
+                                />
+                            ) : <SignalSkeleton darkMode={darkMode} title="Topical Authority" />}
+
+                            {aeo.signals?.experienceSignals ? (
+                                <AEOSignalCard
+                                    signal="experienceSignals"
+                                    score={aeo.signals.experienceSignals.score}
+                                    data={aeo.signals.experienceSignals}
+                                    title="Experience Signals"
+                                    description="First-hand experience (E-E-A-T) — original media, genuine customer testimonials, an authentic operator voice, and real staff presence."
+                                    darkMode={darkMode}
+                                    onInfo={onInfo}
+                                    url={auditData.url}
+                                />
+                            ) : <SignalSkeleton darkMode={darkMode} title="Experience Signals" />}
+
+                            {aeo.signals?.expertiseSignals ? (
+                                <AEOSignalCard
+                                    signal="expertiseSignals"
+                                    score={aeo.signals.expertiseSignals.score}
+                                    data={aeo.signals.expertiseSignals}
+                                    title="Expertise Signals"
+                                    description="Credentials (E-E-A-T) — certifications & accreditations, awards/recognition, years in business, and credentialed author bylines."
+                                    darkMode={darkMode}
+                                    onInfo={onInfo}
+                                    url={auditData.url}
+                                />
+                            ) : <SignalSkeleton darkMode={darkMode} title="Expertise Signals" />}
+
+                            {aeo.signals?.authoritySignals ? (
+                                <AEOSignalCard
+                                    signal="authoritySignals"
+                                    score={aeo.signals.authoritySignals.score}
+                                    data={aeo.signals.authoritySignals}
+                                    title="Authority Signals"
+                                    description="Mentions & authority (E-E-A-T) — press/'as seen in' mentions, links to authoritative sources, third-party trust badges, and social proof. (On-page proxies; real backlinks need a paid SEO API.)"
+                                    darkMode={darkMode}
+                                    onInfo={onInfo}
+                                    url={auditData.url}
+                                />
+                            ) : <SignalSkeleton darkMode={darkMode} title="Authority Signals" />}
                         </div>
                     </div>
 

@@ -285,7 +285,9 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         setCaptchaId('');
     };
 
-    const handleSubmitWithCaptcha = () => {
+    const handleSubmitWithCaptcha = (e) => {
+        e?.preventDefault();
+        if (isLoading) return;
         if (!captchaAnswer && captchaAnswer !== 0 && captchaAnswer !== '0') {
             setCaptchaError("Please complete the verification.");
             return;
@@ -611,20 +613,21 @@ ${
                                 </p>
                             </div>
 
-                            <div className={`w-full rounded-2xl border p-5 space-y-4 ${darkMode ? 'bg-white/4 border-white/8' : 'bg-slate-50 border-slate-200'}`}>
+                            <form onSubmit={handleSubmitWithCaptcha} className={`w-full rounded-2xl border p-5 space-y-4 ${darkMode ? 'bg-white/4 border-white/8' : 'bg-slate-50 border-slate-200'}`}>
                                 <MathCaptcha
+                                    autoFocus
                                     onAnswerChange={(val, id) => { setCaptchaAnswer(val); setCaptchaId(id); }}
                                     error={captchaError}
                                 />
                                 <button
-                                    onClick={handleSubmitWithCaptcha}
+                                    type="submit"
                                     disabled={isLoading || !captchaAnswer}
                                     className="w-full py-3 bg-[#ea580c] hover:bg-[#c2410c] text-white font- rounded-xl
                                         transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-orange-600/20 active:scale-[0.98]"
                                 >
                                     {isLoading ? "Verifying…" : "Verify & Start Audit"}
                                 </button>
-                            </div>
+                            </form>
 
                             <button
                                 onClick={() => setShowCaptcha(false)}

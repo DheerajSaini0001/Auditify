@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
-const MathCaptcha = ({ onAnswerChange, error }) => {
+const MathCaptcha = ({ onAnswerChange, error, autoFocus = false }) => {
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
   const [captchaId, setCaptchaId] = useState('');
   const [loading, setLoading] = useState(false);
+  const inputRef = useRef(null);
 
   const fetchCaptcha = useCallback(async () => {
     setLoading(true);
@@ -25,6 +26,14 @@ const MathCaptcha = ({ onAnswerChange, error }) => {
     fetchCaptcha();
   }, [fetchCaptcha]);
 
+  // Focus the answer field when mounted inside a modal (slight delay so the
+  // modal's open animation doesn't steal focus back).
+  useEffect(() => {
+    if (!autoFocus) return;
+    const t = setTimeout(() => inputRef.current?.focus(), 100);
+    return () => clearTimeout(t);
+  }, [autoFocus]);
+
   return (
     <div className="flex flex-col gap-3 w-full">
       <div className="flex justify-between items-center bg-slate-100 dark:bg-slate-800 p-3 rounded-lg">
@@ -43,6 +52,7 @@ const MathCaptcha = ({ onAnswerChange, error }) => {
         </button>
       </div>
       <input
+        ref={inputRef}
         type="number"
         value={answer}
         onChange={(e) => {

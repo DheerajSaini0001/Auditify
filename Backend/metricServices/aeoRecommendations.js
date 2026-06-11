@@ -122,6 +122,106 @@ const getAEORecommendations = (signals) => {
         });
     }
 
+    // 8. Index Coverage Recommendation (estimated from sitemap)
+    if (signals.indexCoverage && signals.indexCoverage.score < 75) {
+        const ic = signals.indexCoverage;
+        recommendations.push({
+            priority: ic.score <= 25 ? "Critical" : "High",
+            title: ic.sitemapFound ? "Improve Index Coverage" : "Publish an XML Sitemap",
+            action: ic.sitemapFound
+                ? `Only ~${ic.estimatedCoverage}% of your sampled sitemap URLs are indexable (≈${ic.estimatedIndexed} of ${ic.submitted}). Fix noindex tags, wrong canonicals, and non-200 pages so search and AI engines can index them. Issues: ${(ic.issues || []).join('; ')}.`
+                : "No XML sitemap was found at robots.txt, /sitemap.xml, or /sitemap_index.xml. Publish a sitemap and reference it in robots.txt so Google and AI crawlers have a reliable map of your pages to index.",
+            platform: "All",
+            impact: ic.score <= 25 ? 35 : 20
+        });
+    }
+
+    // 9. Entity Recognition / Knowledge Graph Recommendation
+    if (signals.entityRecognition && signals.entityRecognition.score < 100) {
+        const er = signals.entityRecognition;
+        recommendations.push({
+            priority: er.score <= 40 ? "High" : "Medium",
+            title: er.orgSchema?.found ? "Strengthen Your Entity Schema" : "Add Organization/LocalBusiness Schema",
+            action: er.orgSchema?.found
+                ? `Your Organization schema is incomplete. Add the missing fields so engines can fully recognize your business as an entity. Issues: ${(er.issues || []).join('; ')}.`
+                : "Add Organization (or LocalBusiness/AutoDealer) JSON-LD with name, address, logo, telephone, and sameAs links to your social/Wikipedia profiles. This is the strongest signal for entity recognition and Knowledge Graph eligibility.",
+            platform: "Gemini",
+            impact: er.score <= 40 ? 25 : 15
+        });
+    }
+
+    // 10. Brand Entity Strength Recommendation (info-only signal)
+    if (signals.brandEntityStrength && signals.brandEntityStrength.score < 55) {
+        const bes = signals.brandEntityStrength;
+        recommendations.push({
+            priority: bes.score < 30 ? "Medium" : "Low",
+            title: "Strengthen Your Brand Entity",
+            action: `Brand entity strength is ${bes.tier?.toLowerCase() || 'low'} (${bes.score}/100). Broaden your verified footprint and authority signals: add more sameAs profile links, pursue a Wikipedia/Wikidata presence, and expose aggregateRating (review counts) in schema. ${(bes.issues || []).slice(0, 2).join(' ')}`,
+            platform: "All",
+            impact: 10
+        });
+    }
+
+    // 11. Citation Consistency (NAP / Brand) Recommendation
+    if (signals.citationConsistency && signals.citationConsistency.score < 100) {
+        const cc = signals.citationConsistency;
+        recommendations.push({
+            priority: cc.distinctPhoneCount > 1 ? "High" : "Medium",
+            title: cc.distinctPhoneCount > 1 ? "Fix Conflicting NAP Details" : "Complete & Align Your NAP",
+            action: `Citation consistency is ${cc.score}/100. Ensure one canonical Name, Address, and Phone across your LocalBusiness schema, tel: links, and brand tags so search/AI engines can state your details confidently. ${(cc.issues || []).slice(0, 2).join(' ')}`,
+            platform: "Gemini",
+            impact: cc.distinctPhoneCount > 1 ? 20 : 12
+        });
+    }
+
+    // 12. Topical Authority Recommendation
+    if (signals.topicalAuthority && signals.topicalAuthority.score < 100) {
+        const ta = signals.topicalAuthority;
+        recommendations.push({
+            priority: ta.score < 40 ? "High" : "Medium",
+            title: "Build Topical Authority",
+            action: `Topical authority is ${ta.score}/100. Deepen coverage of your core topics and tie them together: add comprehensive content, more subtopic headings, internal links to related pages (topic clusters), and clear local signals (city/region, service area). ${(ta.issues || []).slice(0, 2).join(' ')}`,
+            platform: "All",
+            impact: ta.score < 40 ? 20 : 12
+        });
+    }
+
+    // 13. Experience Signals (first-hand expertise) Recommendation
+    if (signals.experienceSignals && signals.experienceSignals.score < 80) {
+        const ex = signals.experienceSignals;
+        recommendations.push({
+            priority: ex.score < 40 ? "Medium" : "Low",
+            title: "Show First-Hand Experience",
+            action: `Experience signals are ${ex.score}/100. Demonstrate real, hands-on experience: original photos of your actual inventory/staff/lot with alt text, genuine customer testimonials, a walkaround video, and a first-person voice. ${(ex.issues || []).slice(0, 2).join(' ')}`,
+            platform: "All",
+            impact: 10
+        });
+    }
+
+    // 14. Expertise Signals (credentials) Recommendation
+    if (signals.expertiseSignals && signals.expertiseSignals.score < 80) {
+        const ep = signals.expertiseSignals;
+        recommendations.push({
+            priority: ep.score < 40 ? "Medium" : "Low",
+            title: "Surface Your Credentials",
+            action: `Expertise signals are ${ep.score}/100. Make your qualifications visible: certifications (ASE, manufacturer-certified, BBB accredited), awards/recognition, years in business, and credentialed author bylines. ${(ep.issues || []).slice(0, 2).join(' ')}`,
+            platform: "All",
+            impact: 10
+        });
+    }
+
+    // 15. Authority Signals (mentions / backlinks) Recommendation
+    if (signals.authoritySignals && signals.authoritySignals.score < 80) {
+        const au = signals.authoritySignals;
+        recommendations.push({
+            priority: au.score < 40 ? "Medium" : "Low",
+            title: "Build Authority Signals",
+            action: `Authority signals are ${au.score}/100. Add press/"as seen in" mentions, link to authoritative sources (NHTSA, KBB, .gov/.edu), display third-party trust badges (BBB, Google, DealerRater), and link all social profiles. (Real backlink growth needs off-site work / a paid SEO tool.) ${(au.issues || []).slice(0, 2).join(' ')}`,
+            platform: "All",
+            impact: 10
+        });
+    }
+
     if (signals.botAccess.isNoindexed) {
         recommendations.push({
             priority: "Critical",

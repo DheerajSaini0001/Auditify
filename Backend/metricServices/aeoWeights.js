@@ -6,29 +6,41 @@
 
 const aeoWeights = {
     gemini: {
-        schema: 40,           // User Priority: FAQ/Product/JSON-LD
-        pageSpeed: 30,        // User Priority: <2s load
-        botAccess: 10,
-        answerFirst: 10,
+        schema: 30,           // User Priority: FAQ/Product/JSON-LD (−5 → topicalAuthority)
+        pageSpeed: 20,        // User Priority: <2s load
+        botAccess: 5,
+        answerFirst: 5,
         structuredContent: 10,
+        indexCoverage: 10,    // Estimated sitemap index eligibility
+        entityRecognition: 10, // Org/LocalBusiness schema + Knowledge Graph presence
+        citationConsistency: 5, // NAP / brand consistency across on-page sources
+        topicalAuthority: 5,   // Industry/local content depth & coverage
         llmsTxt: 0,
         citations: 0
     },
     chatgpt: {
         llmsTxt: 40,          // User Priority: llms.txt
-        answerFirst: 30,       // User Priority: TL;DR check
+        answerFirst: 17,       // User Priority: TL;DR check (−5 → topicalAuthority)
         markdownHeaders: 10,
-        botAccess: 10,
-        schema: 10,
+        botAccess: 5,
+        schema: 5,
+        indexCoverage: 10,    // Estimated sitemap index eligibility
+        entityRecognition: 5, // Org/LocalBusiness schema + Knowledge Graph presence
+        citationConsistency: 3, // NAP / brand consistency across on-page sources
+        topicalAuthority: 5,   // Industry/local content depth & coverage
         structuredContent: 0,
         citations: 0,
         pageSpeed: 0
     },
     perplexity: {
-        structuredContent: 60, // User Priority: Tables vs Images
+        structuredContent: 40, // User Priority: Tables vs Images (−7 → topicalAuthority)
         citations: 20,         // Citations/Sources
         pageSpeed: 10,
-        botAccess: 10,
+        botAccess: 5,
+        indexCoverage: 10,     // Estimated sitemap index eligibility
+        entityRecognition: 5,  // Org/LocalBusiness schema + Knowledge Graph presence
+        citationConsistency: 3, // NAP / brand consistency across on-page sources
+        topicalAuthority: 7,   // Industry/local content depth & coverage (Perplexity values depth)
         answerFirst: 0,
         schema: 0,
         llmsTxt: 0,

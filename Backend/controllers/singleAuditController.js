@@ -357,30 +357,54 @@ const canAccessReport = (req, report) => {
   return true;
 };
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Completed reports are buffered in memory and written to Mongo in batches, so a
+// report can briefly be in neither place (mid-flush) or lag a DB write/replication.
+// These give a refresh a short cooldown to settle before we declare it missing.
+const REPORT_LOOKUP_RETRIES = 3;
+const REPORT_LOOKUP_COOLDOWN_MS = 400; // up to ~1.2s total before a 404
+
+// Resolve a report by id: memory first, then Mongo with a cooldown+retry, then null.
+// `projection` (optional) restricts the Mongo fields fetched (used by the status poll).
+const resolveReport = async (req, id, projection = null) => {
+  // 1) Memory — in-progress and not-yet-flushed reports live only here.
+  const liveDoc = auditStore.get(id);
+  if (liveDoc) return { doc: liveDoc, ok: canAccessReport(req, liveDoc) };
+
+  // 2) Mongo, with a short cooldown+retry to ride out the flush / write-lag window.
+  const query = { _id: id };
+  if (req.user && req.user.role !== 'admin' && req.user.role !== 'super_admin') {
+    query.userId = req.user.userId; // non-admins only see their own reports
+  }
+
+  for (let attempt = 0; attempt < REPORT_LOOKUP_RETRIES; attempt++) {
+    const q = SingleAuditReport.findOne(query);
+    const found = await (projection ? q.select(projection) : q);
+    if (found) return { doc: found, ok: true }; // Mongo query already scoped by userId
+
+    // Cheap re-check of memory in case a failed flush re-queued the report.
+    const reappeared = auditStore.get(id);
+    if (reappeared) return { doc: reappeared, ok: canAccessReport(req, reappeared) };
+
+    if (attempt < REPORT_LOOKUP_RETRIES - 1) await sleep(REPORT_LOOKUP_COOLDOWN_MS);
+  }
+
+  return { doc: null, ok: false };
+};
+
 export const getReportById = async (req, res) => {
   try {
     const id = req.params.singleAuditId;
-
-    // In-progress (and not-yet-flushed) reports live only in memory — serve from there.
-    const live = auditStore.get(id);
-    if (live) {
-      if (!canAccessReport(req, live)) {
-        return res.status(404).json({ message: "Report not found or access denied" });
-      }
-      return res.status(200).json(live);
-    }
-
-    const query = { _id: id };
-    // Non-admins can only see their own reports
-    if (req.user && req.user.role !== 'admin' && req.user.role !== 'super_admin') {
-      query.userId = req.user.userId;
-    }
-
-    const report = await SingleAuditReport.findOne(query);
-    if (!report) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(404).json({ message: "Report not found or access denied" });
     }
-    res.status(200).json(report);
+
+    const { doc, ok } = await resolveReport(req, id);
+    if (!doc || !ok) {
+      return res.status(404).json({ message: "Report not found or access denied" });
+    }
+    res.status(200).json(doc);
   } catch (error) {
     logger.error("Error fetching report", error);
     res.status(500).json({ message: "Internal Server Error" });
@@ -390,23 +414,14 @@ export const getReportById = async (req, res) => {
 export const getReportStatusById = async (req, res) => {
   try {
     const id = req.params.singleAuditId;
-
-    // Serve in-progress status straight from memory (no DB read on every 3s poll).
-    let report = auditStore.get(id);
-    if (report) {
-      if (!canAccessReport(req, report)) {
-        return res.status(404).json({ message: "Report not found or access denied" });
-      }
-    } else {
-      const query = { _id: id };
-      // Non-admins can only see their own reports
-      if (req.user && req.user.role !== 'admin' && req.user.role !== 'super_admin') {
-        query.userId = req.user.userId;
-      }
-      // Highly optimized status-only projection
-      report = await SingleAuditReport.findOne(query).select("_id status screenshotUrl error");
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(404).json({ message: "Report not found or access denied" });
     }
-    if (!report) {
+
+    // Memory first (no DB read on the in-progress 3s poll), then Mongo with a
+    // status-only projection and the same cooldown+retry as the full fetch.
+    const { doc: report, ok } = await resolveReport(req, id, "_id status screenshotUrl error");
+    if (!report || !ok) {
       return res.status(404).json({ message: "Report not found or access denied" });
     }
 

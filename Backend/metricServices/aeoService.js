@@ -8,7 +8,34 @@ import analyzeStructuredContent from './signals/structuredContent.js';
 import analyzeBotAccess from './signals/botAccess.js';
 import analyzeMarkdownHeaders from './signals/markdownHeaders.js';
 import analyzeCitations from './signals/citations.js';
+import analyzeIndexCoverage from './signals/indexCoverage.js';
+import analyzeEntityRecognition from './signals/entityRecognition.js';
+import analyzeBrandEntityStrength from './signals/brandEntityStrength.js';
+import analyzeCitationConsistency from './signals/citationConsistency.js';
+import analyzeTopicalAuthority from './signals/topicalAuthority.js';
+import analyzeExperienceSignals from './signals/experienceSignals.js';
+import analyzeExpertiseSignals from './signals/expertiseSignals.js';
+import analyzeAuthoritySignals from './signals/authoritySignals.js';
 import logger from '../utils/logger.js';
+
+// Safety net: no single signal may stall the whole AEO. If one exceeds this budget
+// it resolves to a neutral fallback so the rest of the audit still completes.
+const SIGNAL_TIMEOUT_MS = 20000;
+const timeoutFallback = (key) => ({ signal: key, score: 50, timedOut: true, issues: ['This check timed out and was skipped.'] });
+const withTimeout = (value, key) => {
+    let timer;
+    return Promise.race([
+        // Clear the pending timer as soon as the real signal settles, so a fast
+        // signal doesn't log a false "timed out" warning (or keep a timer alive) 20s later.
+        Promise.resolve(value).then((v) => { clearTimeout(timer); return v; }),
+        new Promise((resolve) => {
+            timer = setTimeout(() => {
+                logger.warn(`[AEO] signal "${key}" timed out after ${SIGNAL_TIMEOUT_MS}ms — using neutral fallback`);
+                resolve(timeoutFallback(key));
+            }, SIGNAL_TIMEOUT_MS);
+        }),
+    ]);
+};
 
 /**
  * AEO Service Orchestrator
@@ -23,13 +50,21 @@ class AEOService {
         
         // Execute all signals
         const results = await Promise.all([
-            analyzeAnswerFirst($),
-            analyzeLlmsTxt(url),
-            analyzeSchemaMarkup($, url),
-            analyzeStructuredContent($),
-            analyzeBotAccess(url, $),
-            analyzeMarkdownHeaders($),
-            analyzeCitations($)
+            withTimeout(analyzeAnswerFirst($), 'answerFirst'),
+            withTimeout(analyzeLlmsTxt(url), 'llmsTxt'),
+            withTimeout(analyzeSchemaMarkup($, url), 'schema'),
+            withTimeout(analyzeStructuredContent($), 'structuredContent'),
+            withTimeout(analyzeBotAccess(url, $), 'botAccess'),
+            withTimeout(analyzeMarkdownHeaders($), 'markdownHeaders'),
+            withTimeout(analyzeCitations($), 'citations'),
+            withTimeout(analyzeIndexCoverage(url), 'indexCoverage'),
+            withTimeout(analyzeEntityRecognition(url, $), 'entityRecognition'),
+            withTimeout(analyzeBrandEntityStrength(url, $), 'brandEntityStrength'),
+            withTimeout(analyzeCitationConsistency(url, $), 'citationConsistency'),
+            withTimeout(analyzeTopicalAuthority(url, $), 'topicalAuthority'),
+            withTimeout(analyzeExperienceSignals(url, $), 'experienceSignals'),
+            withTimeout(analyzeExpertiseSignals(url, $), 'expertiseSignals'),
+            withTimeout(analyzeAuthoritySignals(url, $), 'authoritySignals')
         ]);
 
         const signals = {
@@ -40,6 +75,14 @@ class AEOService {
             botAccess: results[4],
             markdownHeaders: results[5],
             citations: results[6],
+            indexCoverage: results[7],
+            entityRecognition: results[8],
+            brandEntityStrength: results[9],
+            citationConsistency: results[10],
+            topicalAuthority: results[11],
+            experienceSignals: results[12],
+            expertiseSignals: results[13],
+            authoritySignals: results[14],
             pageSpeed: { score: performanceScore }
         };
 
@@ -94,7 +137,7 @@ class AEOService {
 
         const runAndEmit = async (signalKey, fn) => {
             try {
-                const result = await fn();
+                const result = await withTimeout(fn(), signalKey);
                 if (onSignalComplete) onSignalComplete(signalKey, result);
                 return result;
             } catch (err) {
@@ -112,7 +155,15 @@ class AEOService {
             runAndEmit('structuredContent', () => analyzeStructuredContent($)),
             runAndEmit('botAccess', () => analyzeBotAccess(url, $)),
             runAndEmit('markdownHeaders', () => analyzeMarkdownHeaders($)),
-            runAndEmit('citations', () => analyzeCitations($))
+            runAndEmit('citations', () => analyzeCitations($)),
+            runAndEmit('indexCoverage', () => analyzeIndexCoverage(url)),
+            runAndEmit('entityRecognition', () => analyzeEntityRecognition(url, $)),
+            runAndEmit('brandEntityStrength', () => analyzeBrandEntityStrength(url, $)),
+            runAndEmit('citationConsistency', () => analyzeCitationConsistency(url, $)),
+            runAndEmit('topicalAuthority', () => analyzeTopicalAuthority(url, $)),
+            runAndEmit('experienceSignals', () => analyzeExperienceSignals(url, $)),
+            runAndEmit('expertiseSignals', () => analyzeExpertiseSignals(url, $)),
+            runAndEmit('authoritySignals', () => analyzeAuthoritySignals(url, $))
         ]);
 
         const signals = {
@@ -123,6 +174,14 @@ class AEOService {
             botAccess: results[4],
             markdownHeaders: results[5],
             citations: results[6],
+            indexCoverage: results[7],
+            entityRecognition: results[8],
+            brandEntityStrength: results[9],
+            citationConsistency: results[10],
+            topicalAuthority: results[11],
+            experienceSignals: results[12],
+            expertiseSignals: results[13],
+            authoritySignals: results[14],
             pageSpeed: { score: performanceScore }
         };
 

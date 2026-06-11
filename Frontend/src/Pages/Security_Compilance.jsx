@@ -9,7 +9,8 @@ import {
   Shield, Lock, Globe, AlertTriangle, CheckCircle, XCircle,
   Info, Server, Eye, FileText, AlertOctagon, Smartphone,
   Layout, Code, Terminal, Bug, MapPin, Share2, CalendarClock,
-  Database, EyeOff, MousePointer, Bell, Key, Globe2, Layers, ShieldCheck, Search, Loader2
+  Database, EyeOff, MousePointer, Bell, Key, Globe2, Layers, ShieldCheck, Search, Loader2, CreditCard,
+  BarChart3, Tag, PhoneCall
 } from "lucide-react";
 import MetricInfoModal from "../Component/MetricInfoModal";
 import ParameterInfoModal from "../Component/ParameterInfoModal";
@@ -49,6 +50,11 @@ const iconMap = {
   Notification_Request: Bell,
   Third_Party_Cookies: Share2,
   Deprecated_APIs: AlertTriangle,
+  CRM_Integration: Database,
+  Finance_Form_Security: CreditCard,
+  GA4_Installed: BarChart3,
+  GTM_Configuration: Tag,
+  Conversion_Tracking: PhoneCall,
 };
 
 const educationalContent = InfoDetails;
@@ -466,6 +472,104 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             </div>
           )}
 
+          {meta?.breakdown?.length > 0 && (() => {
+            const detected = meta.detectedProviders?.length
+              ? { label: "Detected Provider", items: meta.detectedProviders }
+              : meta.detectedCRMs?.length
+                ? { label: "Detected CRM", items: meta.detectedCRMs }
+                : null;
+            const scoreLabel = metricKey === "Finance_Form_Security" ? "PCI Score" : metricKey === "CRM_Integration" ? "Lead Transfer Score" : "Score";
+            const missing = (meta.maxScore ?? 10) - (meta.rawScore ?? 0);
+            return (
+              <div className={`mt-3 p-2 rounded border border-dashed text-xs space-y-2 ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"}`}>
+                <div className="flex justify-between items-center">
+                  <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>{scoreLabel}:</span>
+                  <span className={`fontsemibold ${(meta.rawScore ?? 0) >= (meta.maxScore ?? 10) ? "text-emerald-500" : (meta.rawScore ?? 0) > 0 ? "text-amber-500" : "text-rose-500"}`}>{meta.rawScore ?? 0} / {meta.maxScore ?? 10}</span>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  {meta.breakdown.map((b, i) => (
+                    <div key={i} className="flex flex-col gap-0.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="flex items-center gap-1.5 min-w-0">
+                          {b.earned
+                            ? <CheckCircle className="w-3 h-3 flex-shrink-0 text-emerald-500" />
+                            : <XCircle className="w-3 h-3 flex-shrink-0 text-rose-500" />}
+                          <span className={`truncate ${b.earned ? "text-emerald-600" : (darkMode ? "text-gray-300" : "text-gray-700")}`}>{b.label}</span>
+                        </span>
+                        <span className={`flex-shrink-0 fontsemibold ${b.earned ? "text-emerald-500" : "text-gray-400"}`}>{b.earned ? `+${b.points}` : `0 / ${b.points}`}</span>
+                      </div>
+                      {!b.earned && (
+                        <span className={`pl-[18px] text-[10px] leading-snug ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                          To earn: {b.detail}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {missing > 0 && (
+                  <div className={`pt-1.5 mt-0.5 border-t text-[10px] fontsemibold ${darkMode ? "border-gray-700 text-amber-300" : "border-gray-200 text-amber-600"}`}>
+                    Missing {missing} pt{missing === 1 ? "" : "s"} to reach {meta.maxScore ?? 10}/{meta.maxScore ?? 10} — complete the unchecked steps above.
+                  </div>
+                )}
+
+                {detected && (
+                  <div className="flex flex-col gap-1">
+                    <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>{detected.label}:</span>
+                    <div className={`p-1.5 rounded truncate italic text-[10px] ${darkMode ? "bg-gray-900/80 text-emerald-300" : "bg-emerald-50 text-emerald-700"}`}>
+                      {detected.items.join(", ")}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
+          {(metricKey === "GA4_Installed" && meta?.measurementIds?.length > 0) && (
+            <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"}`}>
+              <span className={`font-medium block mb-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>GA4 Measurement ID:</span>
+              <div className="flex flex-wrap gap-1.5">
+                {meta.measurementIds.map((id, i) => (
+                  <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-mono ${darkMode ? "bg-emerald-500/10 text-emerald-300" : "bg-emerald-50 text-emerald-700"}`}>{id}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {(metricKey === "GTM_Configuration" && meta?.containerIds?.length > 0) && (
+            <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"}`}>
+              <span className={`font-medium block mb-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>GTM Container ID:</span>
+              <div className="flex flex-wrap gap-1.5">
+                {meta.containerIds.map((id, i) => (
+                  <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-mono ${darkMode ? "bg-emerald-500/10 text-emerald-300" : "bg-emerald-50 text-emerald-700"}`}>{id}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {metricKey === "Conversion_Tracking" && meta && (
+            <div className={`mt-3 p-2 rounded border border-dashed text-xs space-y-2 ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"}`}>
+              <div className="grid grid-cols-2 gap-2">
+                <div className={`p-1.5 rounded ${darkMode ? "bg-gray-900/60" : "bg-white border border-gray-100"}`}>
+                  <div className="text-[10px] opacity-70">Form tracking</div>
+                  <div className={`text-[10px] fontsemibold ${meta.formTracking ? "text-emerald-500" : "text-rose-500"}`}>{meta.formTracking ? "Detected" : "Missing"}</div>
+                </div>
+                <div className={`p-1.5 rounded ${darkMode ? "bg-gray-900/60" : "bg-white border border-gray-100"}`}>
+                  <div className="text-[10px] opacity-70">Call tracking{meta.telLinks > 0 ? ` (${meta.telLinks} tel)` : ""}</div>
+                  <div className={`text-[10px] fontsemibold ${meta.callTracking ? "text-emerald-500" : "text-rose-500"}`}>{meta.callTracking ? "Detected" : "Missing"}</div>
+                </div>
+              </div>
+              {meta.signals?.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {meta.signals.map((s, i) => (
+                    <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-mono ${darkMode ? "bg-emerald-500/10 text-emerald-300" : "bg-emerald-50 text-emerald-700"}`}>{s}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {metricKey === "MFA_Enabled" && meta && (meta.foundKeyword || meta.ssoFound) && (
             <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"}`}>
               <div className="flex flex-col gap-1">
@@ -738,6 +842,111 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
                     <span className="w-1.5 h-1.5 bg-rose-500 rounded-full flex-shrink-0"></span>
                     {meta.credentials}
                   </div>
+                </div>
+              )}
+
+              {metricKey === "CRM_Integration" && meta && (
+                <div className="space-y-2">
+                  {meta.checkedUrl && (
+                    <div>
+                      <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>Page Tested</h5>
+                      <a href={meta.checkedUrl} target="_blank" rel="noopener noreferrer" className={`block p-2 rounded text-[10px] font-mono break-all hover:underline ${darkMode ? "bg-gray-800 text-blue-400" : "bg-blue-50 text-blue-600"}`}>
+                        {meta.checkedUrl}
+                      </a>
+                    </div>
+                  )}
+                  <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>Lead Transfer Breakdown</h5>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className={`p-2 rounded border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"}`}>
+                      <div className="text-[10px] opacity-70">CRM Evidence</div>
+                      <div className={`text-[10px] fontsemibold ${meta.crmEvidenceFound ? "text-emerald-500" : "text-rose-500"}`}>{meta.crmEvidenceFound ? "+3 Found" : "0"}</div>
+                    </div>
+                    <div className={`p-2 rounded border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"}`}>
+                      <div className="text-[10px] opacity-70">Lead Endpoint</div>
+                      <div className={`text-[10px] fontsemibold ${meta.leadEndpointDetected ? "text-emerald-500" : "text-rose-500"}`}>{meta.leadEndpointDetected ? "+5 Detected" : "0"}</div>
+                    </div>
+                    <div className={`p-2 rounded border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"}`}>
+                      <div className="text-[10px] opacity-70">Submission</div>
+                      <div className={`text-[10px] fontsemibold ${meta.successfulResponse ? "text-emerald-500" : "text-rose-500"}`}>{meta.successfulResponse ? "+2 Success" : "0"}</div>
+                    </div>
+                  </div>
+                  {meta.detectedCRMs?.length > 0 && (
+                    <div>
+                      <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 text-emerald-500`}>Detected CRM</h5>
+                      <div className="flex flex-wrap gap-1.5">
+                        {meta.detectedCRMs.map((crm, idx) => (
+                          <span key={idx} className={`px-2 py-0.5 rounded text-[10px] font-mono ${darkMode ? "bg-emerald-500/10 text-emerald-300" : "bg-emerald-50 text-emerald-700"}`}>{crm}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {meta.leadEndpoints?.length > 0 && (
+                    <div>
+                      <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>Lead Endpoints</h5>
+                      <div className={`mt-1 p-2 rounded max-h-32 overflow-y-auto custom-scrollbar border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+                        <ul className="space-y-1.5">
+                          {meta.leadEndpoints.map((ep, idx) => (
+                            <li key={idx} className={`p-2 rounded text-[10px] font-mono flex items-center gap-2 border border-dashed ${darkMode ? "bg-gray-900/50 border-gray-700 text-gray-300" : "bg-gray-50 border-gray-200 text-gray-600"}`}>
+                              <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full flex-shrink-0"></span>
+                              <span className="break-all">{ep.method} {ep.url}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {metricKey === "Finance_Form_Security" && meta && (
+                <div className="space-y-2">
+                  {meta.checkedUrl && (
+                    <div>
+                      <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>Page Tested</h5>
+                      <a href={meta.checkedUrl} target="_blank" rel="noopener noreferrer" className={`block p-2 rounded text-[10px] font-mono break-all hover:underline ${darkMode ? "bg-gray-800 text-blue-400" : "bg-blue-50 text-blue-600"}`}>
+                        {meta.checkedUrl}
+                      </a>
+                    </div>
+                  )}
+                  {meta.breakdown?.length > 0 && (
+                    <div>
+                      <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>PCI Breakdown ({meta.rawScore ?? 0}/{meta.maxScore ?? 10})</h5>
+                      <ul className="space-y-1.5">
+                        {meta.breakdown.map((b, idx) => (
+                          <li key={idx} className={`p-2 rounded text-[10px] border ${b.earned ? (darkMode ? "bg-emerald-500/5 border-emerald-500/20" : "bg-emerald-50 border-emerald-100") : (darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200")}`}>
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="flex items-center gap-1.5">
+                                {b.earned ? <CheckCircle className="w-3 h-3 text-emerald-500" /> : <XCircle className="w-3 h-3 text-rose-500" />}
+                                <span className={b.earned ? "text-emerald-600 fontsemibold" : (darkMode ? "text-gray-300" : "text-gray-700")}>{b.label}</span>
+                              </span>
+                              <span className={`fontsemibold ${b.earned ? "text-emerald-500" : "text-gray-400"}`}>{b.earned ? `+${b.points}` : `0 / ${b.points}`}</span>
+                            </div>
+                            {!b.earned && <div className={`mt-0.5 pl-[18px] ${darkMode ? "text-gray-400" : "text-gray-500"}`}>To earn: {b.detail}</div>}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {meta.detectedProviders?.length > 0 && (
+                    <div>
+                      <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 text-emerald-500`}>Finance Providers</h5>
+                      <div className="flex flex-wrap gap-1.5">
+                        {meta.detectedProviders.map((p, idx) => (
+                          <span key={idx} className={`px-2 py-0.5 rounded text-[10px] font-mono ${darkMode ? "bg-emerald-500/10 text-emerald-300" : "bg-emerald-50 text-emerald-700"}`}>{p}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {meta.sensitiveFields?.length > 0 && (
+                    <div>
+                      <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${meta.sensitiveDataHandledSecurely ? "text-amber-500" : "text-rose-500"}`}>Sensitive Fields Collected</h5>
+                      <div className="flex flex-wrap gap-1.5">
+                        {meta.sensitiveFields.map((f, idx) => (
+                          <span key={idx} className={`px-2 py-0.5 rounded text-[10px] font-mono ${darkMode ? "bg-rose-500/10 text-rose-300" : "bg-rose-50 text-rose-600"}`}>{f}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1064,6 +1273,24 @@ const Security_Compilance_Inner = React.memo(function Security_Compilance_Inner(
                 "Cookie_Consent", "GDPR_CCPA", "Privacy_Policy",
                 "Data_Collection", "Third_Party_Cookies"
               ].map((key) => (
+                metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
+              ))}
+            </Section>
+
+            <Section title="CRM Integration (Lead Transfer)" icon={Database} darkMode={darkMode}>
+              {["CRM_Integration"].map((key) => (
+                metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
+              ))}
+            </Section>
+
+            <Section title="Finance Form Security (PCI)" icon={CreditCard} darkMode={darkMode}>
+              {["Finance_Form_Security"].map((key) => (
+                metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
+              ))}
+            </Section>
+
+            <Section title="Analytics & Conversion Tracking" icon={BarChart3} darkMode={darkMode}>
+              {["GA4_Installed", "GTM_Configuration", "Conversion_Tracking"].map((key) => (
                 metric[key] && <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
               ))}
             </Section>

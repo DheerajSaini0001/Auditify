@@ -441,6 +441,30 @@ const DashboardPage = () => {
     setReportOpen(false);
   };
 
+  // Close any open dropdown when clicking outside it. Each dropdown wrapper carries a
+  // data-dropdown="<id>" marker; a mousedown anywhere closes every dropdown except the
+  // one whose wrapper was clicked (so clicking outside closes all, and clicking another
+  // trigger switches cleanly).
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      const clickedId = e.target.closest('[data-dropdown]')?.getAttribute('data-dropdown');
+      const setters = {
+        protocol: setProtocolOpen,
+        device: setDeviceOpen,
+        report: setReportOpen,
+        scope: setScopeOpen,
+        time: setTimeDropdownOpen,
+        sort: setSortDropdownOpen,
+        create: setCreateDropdownOpen,
+      };
+      Object.entries(setters).forEach(([id, set]) => {
+        if (id !== clickedId) set(false);
+      });
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
+
   const reportOptions = [
     { value: "All", label: "Full Audit" },
     { value: "Technical Performance", label: "Technical Performance" },
@@ -580,7 +604,7 @@ const DashboardPage = () => {
     <div className="flex flex-col h-full  justify-between select-none">
       <div className="flex flex-col p-4 gap-4 overflow-y-auto">
         {/* Create Project Button */}
-        <div className="relative">
+        <div className="relative" data-dropdown="create">
           <button
             onClick={() => setCreateDropdownOpen(!createDropdownOpen)}
             className="w-full flex items-center justify-between px-4 py-2.5 bg-orange-600 hover:bg-orange-350 text-white rounded-xl fontsemibold text-sm transition-all shadow-md shadow-orange-600/10 active:scale-[0.98]"
@@ -764,10 +788,13 @@ const DashboardPage = () => {
       <main className="flex-grow flex flex-col min-w-0 p-6 md:p-8 space-y-6 overflow-y-auto">
 
         {/* ── DIRECT AUDIT MULTI-PART BAR ── */}
-        <div className={`p-3 rounded-2xl border flex flex-col xl:flex-row items-stretch gap-1.5 transition-all duration-300 shadow-lg ${darkMode ? 'bg-slate-900/90 border-slate-800 backdrop-blur-md' : 'bg-white border-slate-200'}`}>
+        {/* relative z-40: dark-mode backdrop-blur makes this a stacking context that traps the
+            absolute dropdown panels; an explicit z-index lifts the whole bar (and its open
+            dropdowns) above the tools/projects bar that follows it in the DOM. */}
+        <div className={`relative z-40 p-3 rounded-2xl border flex flex-col xl:flex-row items-stretch gap-1.5 transition-all duration-300 shadow-lg ${darkMode ? 'bg-slate-900/90 border-slate-800 backdrop-blur-md' : 'bg-white border-slate-200'}`}>
 
           {/* 1. Protocol Selector Dropdown */}
-          <div className="relative shrink-0 flex-1 xl:flex-none">
+          <div className="relative shrink-0 flex-1 xl:flex-none" data-dropdown="protocol">
             <button
               onClick={() => {
                 const state = !protocolOpen;
@@ -809,7 +836,7 @@ const DashboardPage = () => {
           </form>
 
           {/* 3. Device Selector Dropdown */}
-          <div className="relative shrink-0 flex-1 xl:flex-none">
+          <div className="relative shrink-0 flex-1 xl:flex-none" data-dropdown="device">
             <button
               onClick={() => {
                 const state = !deviceOpen;
@@ -839,7 +866,7 @@ const DashboardPage = () => {
           </div>
 
           {/* 4. Audit Category Selector Dropdown */}
-          <div className="relative shrink-0 flex-1 xl:flex-none">
+          <div className="relative shrink-0 flex-1 xl:flex-none" data-dropdown="report">
             <button
               onClick={() => {
                 const state = !reportOpen;
@@ -871,7 +898,7 @@ const DashboardPage = () => {
           </div>
 
           {/* 5. Scope Selector Dropdown (Subdomains option removed) */}
-          <div className="relative shrink-0 flex-1 xl:flex-none">
+          <div className="relative shrink-0 flex-1 xl:flex-none" data-dropdown="scope">
             <button
               onClick={() => {
                 const state = !scopeOpen;
@@ -937,7 +964,7 @@ const DashboardPage = () => {
             </span>
 
             {/* Date drop */}
-            <div className="relative">
+            <div className="relative" data-dropdown="time">
               <button
                 onClick={() => setTimeDropdownOpen(!timeDropdownOpen)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-xs fontsemibold transition-all duration-300 ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800 hover:text-white' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900'}`}
@@ -962,7 +989,7 @@ const DashboardPage = () => {
             </div>
 
             {/* Sort Dropdown */}
-            <div className="relative">
+            <div className="relative" data-dropdown="sort">
               <button
                 onClick={() => setSortDropdownOpen(!sortDropdownOpen)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-xs fontsemibold transition-all duration-300 ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800 hover:text-white' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900'}`}

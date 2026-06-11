@@ -1665,7 +1665,192 @@ async function checkClickToCall(page, $) {
   };
 }
 
+// ---------------------------------------------------------------------------
+// Analytics & Conversion Tracking
+// ---------------------------------------------------------------------------
+// Gather the rendered page's scripts (src + inline), full HTML, tel: links, and
+// known tracking globals once, so GA4 / GTM / Conversion checks can share it.
+export async function collectTrackingData(page) {
+  return await page.evaluate(() => {
+    const scripts = Array.from(document.querySelectorAll("script"));
+    const scriptSrcs = scripts.map((s) => s.src).filter(Boolean);
+    const inline = scripts.map((s) => s.textContent || "").join("\n").slice(0, 200000);
+    const html = document.documentElement.outerHTML.slice(0, 300000);
+    const telLinks = document.querySelectorAll('a[href^="tel:"]').length;
+    let gtmObj = [];
+    try { if (window.google_tag_manager) gtmObj = Object.keys(window.google_tag_manager); } catch (e) {}
+    return {
+      scriptSrcs,
+      inline,
+      html,
+      telLinks,
+      gtmObj,
+      hasDataLayer: Array.isArray(window.dataLayer),
+      hasGtag: typeof window.gtag === "function",
+      hasFbq: typeof window.fbq === "function",
+      hasGa: typeof window.ga === "function",
+    };
+  });
+}
+
+// GA4 Installed — dedicated Google Analytics 4 tag check.
+export function checkGA4Installed(data) {
+  const hay = data.scriptSrcs.join(" ") + " " + data.inline + " " + data.html;
+  const measurementIds = [...new Set(hay.match(/G-[A-Z0-9]{6,12}/g) || [])];
+  const gtagJs = /googletagmanager\.com\/gtag\/js\?id=G-/i.test(hay) || /gtag\/js\?id=G-/i.test(hay);
+  const ga4ViaGtm = (data.gtmObj || []).some((k) => /^G-/.test(k));
+
+  if (measurementIds.length || ga4ViaGtm) {
+    return {
+      score: 100,
+      status: "pass",
+      details: measurementIds.length
+        ? `GA4 detected (${measurementIds.join(", ")})`
+        : "GA4 configured via Google Tag Manager",
+      meta: { measurementIds, method: measurementIds.length ? "gtag.js" : "gtm", hasGtag: data.hasGtag },
+      analysis: null,
+    };
+  }
+
+  if (gtagJs || data.hasGtag) {
+    return {
+      score: 50,
+      status: "warning",
+      details: "gtag.js present but no GA4 measurement ID (G-XXXXXXX) confirmed",
+      meta: { measurementIds: [], method: "gtag.js", hasGtag: data.hasGtag },
+      analysis: {
+        cause: "The Google tag (gtag.js) library is loaded, but no GA4 'G-' measurement ID was found — it may be a legacy Universal Analytics (UA-) or Google Ads-only tag.",
+        recommendation: "Add a GA4 property and configure the tag with its G-XXXXXXX measurement ID to track modern analytics.",
+      },
+    };
+  }
+
+  return {
+    score: 0,
+    status: "fail",
+    details: "No GA4 (Google Analytics 4) tag detected",
+    meta: { measurementIds: [] },
+    analysis: {
+      cause: "No GA4 measurement ID (G-XXXXXXX) or gtag.js loader was found on the page.",
+      recommendation: "Install Google Analytics 4 (directly via gtag.js or through Google Tag Manager) so you can measure traffic, engagement, and conversions.",
+    },
+  };
+}
+
+// GTM Configuration — Google Tag Manager container detection.
+export function checkGTMConfiguration(data) {
+  const hay = data.scriptSrcs.join(" ") + " " + data.inline + " " + data.html;
+  const idsInHtml = hay.match(/GTM-[A-Z0-9]{4,9}/g) || [];
+  const idsInObj = (data.gtmObj || []).filter((k) => /^GTM-/.test(k));
+  const containerIds = [...new Set([...idsInHtml, ...idsInObj])];
+  const gtmJs = /googletagmanager\.com\/gtm\.js\?id=GTM-/i.test(hay) || /gtm\.js\?id=GTM-/i.test(hay);
+
+  if (containerIds.length) {
+    return {
+      score: 100,
+      status: "pass",
+      details: `Google Tag Manager detected (${containerIds.join(", ")})`,
+      meta: { containerIds, hasDataLayer: data.hasDataLayer },
+      analysis: null,
+    };
+  }
+
+  if (gtmJs) {
+    return {
+      score: 50,
+      status: "warning",
+      details: "GTM loader present but container ID (GTM-XXXX) could not be confirmed",
+      meta: { containerIds: [], hasDataLayer: data.hasDataLayer },
+      analysis: {
+        cause: "The GTM loader script is present but no GTM-XXXX container ID was resolved.",
+        recommendation: "Verify the Tag Manager container snippet is installed correctly with a valid GTM-XXXX ID.",
+      },
+    };
+  }
+
+  return {
+    score: 0,
+    status: "fail",
+    details: "No Google Tag Manager container detected",
+    meta: { containerIds: [], hasDataLayer: data.hasDataLayer },
+    analysis: {
+      cause: "No GTM container ID (GTM-XXXX) or gtm.js loader was found on the page.",
+      recommendation: "Install Google Tag Manager to manage analytics and marketing tags without code changes, and to centralize conversion tracking.",
+    },
+  };
+}
+
+// Conversion Tracking (form/call) — form-submit & call conversion event detection.
+export function checkConversionTracking(data) {
+  const hay = (data.scriptSrcs.join(" ") + " " + data.inline + " " + data.html).toLowerCase();
+
+  // ---- Form / lead conversion signals ----
+  const formSignals = [];
+  if (/generate_lead/.test(hay)) formSignals.push("GA4 generate_lead event");
+  if (/['"]form_submit['"]|formsubmit|form_submission/.test(hay)) formSignals.push("form_submit event");
+  if (/gtag\(\s*['"]event['"]\s*,\s*['"](generate_lead|sign_up|submit|conversion|contact)['"]/.test(hay)) formSignals.push("gtag conversion event");
+  if (/aw-\d{6,}/.test(hay) || /send_to['"]?\s*:\s*['"]aw-/.test(hay)) formSignals.push("Google Ads conversion (AW-)");
+  if (data.hasFbq && /fbq\(\s*['"]track['"]\s*,\s*['"](lead|completeregistration|submitapplication|contact)['"]/.test(hay)) formSignals.push("Meta Pixel Lead event");
+  if (/datalayer\.push/.test(hay) && /(lead|form_submit|formsubmit|conversion|contact)/.test(hay)) formSignals.push("dataLayer conversion push");
+
+  // ---- Call / phone conversion signals ----
+  const callSignals = [];
+  const callProviders = ["callrail.com", "calltrk.com", "calltrackingmetrics.com", "dialogtech", "marchex", "retreaver", "invoca", "whatconverts", "calltracking"];
+  callProviders.forEach((p) => { if (hay.includes(p)) callSignals.push(p); });
+  if (/phone_call|click_to_call|tel_conversion|phone_conversion|call_conversion/.test(hay)) callSignals.push("phone conversion event");
+
+  const formTracking = formSignals.length > 0;
+  const callTracking = callSignals.length > 0;
+  const telLinks = data.telLinks || 0;
+
+  const baseMeta = { formTracking, callTracking, signals: [...formSignals, ...callSignals], telLinks };
+
+  if (formTracking && callTracking) {
+    return {
+      score: 100,
+      status: "pass",
+      details: "Form and call conversion tracking detected",
+      meta: baseMeta,
+      analysis: null,
+    };
+  }
+
+  if (formTracking || callTracking) {
+    const have = formTracking ? "form" : "call";
+    const missing = formTracking ? "call" : "form";
+    return {
+      score: 50,
+      status: "warning",
+      details: `Only ${have} conversion tracking detected — ${missing} tracking missing`,
+      meta: baseMeta,
+      analysis: {
+        cause: `Conversion events were found for ${have} submissions, but no ${missing} conversion tracking was detected${missing === "call" && telLinks > 0 ? " despite clickable phone numbers being present" : ""}.`,
+        recommendation: missing === "call"
+          ? "Add call conversion tracking (e.g., Google Ads phone_conversion, or a call-tracking provider like CallRail) so phone leads are measured."
+          : "Add form-submission conversion tracking (e.g., a GA4 'generate_lead' event or Google Ads conversion) so form leads are measured.",
+      },
+    };
+  }
+
+  return {
+    score: 0,
+    status: "fail",
+    details: "No form or call conversion tracking events detected",
+    meta: baseMeta,
+    analysis: {
+      cause: "No conversion-tracking events (GA4 generate_lead, Google Ads conversion, Meta Pixel Lead, or a call-tracking provider) were detected on the page.",
+      recommendation: "Fire a conversion event on form submissions and add phone-call tracking, so you can measure how many leads each channel produces.",
+    },
+  };
+}
+
 export default async function conversionLeadFlow(page, $) {
+
+  const trackingData = await collectTrackingData(page);
+  const checkGA4Score = checkGA4Installed(trackingData);
+  const checkGTMScore = checkGTMConfiguration(trackingData);
+  const checkConversionTrackingScore = checkConversionTracking(trackingData);
+
 
   const checkCTAsScore = checkCTAs($);
   const checkCTAClarityScore = checkCTAClarity($);
@@ -1713,7 +1898,8 @@ export default async function conversionLeadFlow(page, $) {
     Client_Logos: 1, Case_Studies_Accessibility: 1, MultiStep_Form_Progress: 1, Progress_Indicators: 1,
     Link_Relevance: 5,
     TradeIn_Flow: 4, Financing_Flow: 4, Finance_Calculator: 3, Appointment_Booking: 4,
-    Thank_You_Pages: 2, Chat_Experience: 3, Click_To_Call: 3
+    Thank_You_Pages: 2, Chat_Experience: 3, Click_To_Call: 3,
+    Conversion_Tracking: 5, GA4_Installed: 4, GTM_Configuration: 3,
   };
 
   const metricsMap = {
@@ -1745,6 +1931,9 @@ export default async function conversionLeadFlow(page, $) {
     Thank_You_Pages: checkThankYouPagesScore,
     Chat_Experience: checkChatExperienceScore,
     Click_To_Call: checkClickToCallScore,
+    GA4_Installed: checkGA4Score,
+    GTM_Configuration: checkGTMScore,
+    Conversion_Tracking: checkConversionTrackingScore,
   };
 
   let totalWeight = 0;

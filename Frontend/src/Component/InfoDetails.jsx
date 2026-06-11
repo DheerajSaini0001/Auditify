@@ -2090,6 +2090,51 @@ export const InfoDetails = {
             "Ensure that all third-party cookie usage complies with GDPR and CCPA regulations"
         ]
     },
+    CRM_Integration: {
+        title: "CRM Integration (Lead Transfer)",
+        whatThisParameterIs: "This check verifies that your contact/lead forms are actually connected to a CRM, so the inquiries visitors submit are captured instead of disappearing into a void.",
+        whatItCalculates: "It scans your forms (action URLs, hidden fields) and page scripts for known CRM signatures (HubSpot, Salesforce, VinSolutions, DealerSocket, Elead, Zoho and others), then submits a clearly-labelled test lead and watches the network for a CRM lead endpoint and a successful (HTTP 200/201) response. Scored out of 10: CRM evidence (+3), lead endpoint detected (+5), successful submission (+2).",
+        whyItMatters: "A beautiful contact form is worthless if the leads never reach your sales team. A broken or unconnected form means every inquiry is a customer you paid to attract and then silently lost.",
+        thresholds: {
+            good: "Lead endpoint detected and the test submission returned HTTP 200/201",
+            needsImprovement: "CRM evidence or a lead endpoint was found, but a successful submission could not be confirmed",
+            poor: "A contact/lead form exists but no CRM integration was detected"
+        },
+        actualReasonsForFailure: [
+            "The contact form is not wired to any CRM — submissions go nowhere or only to an inbox",
+            "CRM scripts are present on the page but the form action does not post to the CRM lead endpoint",
+            "The lead endpoint was contacted but did not return a success (200/201) status, so leads may be dropped"
+        ],
+        howToOvercomeFailure: [
+            "Connect your contact/lead forms to a CRM (e.g., HubSpot, Salesforce, Zoho) using their official form embed or API",
+            "Verify the form's action/handler actually posts to the CRM lead endpoint and returns a success response",
+            "Submit a real test lead end-to-end and confirm it appears in your CRM and routes to the right sales owner"
+        ]
+    },
+
+    Finance_Form_Security: {
+        title: "Finance Form Security (PCI)",
+        whatThisParameterIs: "This check looks at your finance / credit-application page to make sure customers' most sensitive data (SSN, bank, and card details) is collected and submitted safely.",
+        whatItCalculates: "On the finance page it scores 5 things out of 10: HTTPS (+2), sensitive data handled securely (+2), a trusted finance provider like RouteOne/Dealertrack/CreditIQ/Stripe/PayPal (+3), a secure HTTPS submission endpoint (+2), and trust signals such as Privacy Policy, Terms, and SSL messaging (+1). If no finance page exists, the check is marked Not Applicable.",
+        whyItMatters: "A credit application carries the most sensitive data a customer will ever give you. A single insecure field or endpoint here is a serious breach risk and a direct PCI/compliance failure — and an instant trust-killer for buyers.",
+        thresholds: {
+            good: "8–10/10 — HTTPS end-to-end, a PCI-compliant provider, and clear trust signals",
+            needsImprovement: "5–7/10 — secure basics in place but missing a provider or trust signals",
+            poor: "Below 5/10 — sensitive data collected or submitted without adequate safeguards"
+        },
+        actualReasonsForFailure: [
+            "The finance / credit-application page is not served fully over HTTPS",
+            "Raw SSN, card, or bank fields are collected on-page instead of through a PCI-compliant provider",
+            "The form submits to an insecure (HTTP) endpoint, or no trusted finance provider is used",
+            "Privacy Policy, Terms, or secure-application messaging is missing from the page"
+        ],
+        howToOvercomeFailure: [
+            "Serve the entire finance page over HTTPS with a valid SSL certificate",
+            "Process credit applications through a PCI-compliant provider (RouteOne, Dealertrack, CreditIQ, Stripe, PayPal) so you never store raw card/SSN data",
+            "Ensure the form's submission endpoint is HTTPS and the data is encrypted in transit",
+            "Add visible Privacy Policy and Terms links plus clear 'your information is secure / encrypted' messaging"
+        ]
+    },
 
     // Methodologies (Security & Compliance)
     Security_And_Compliance_Methodology: {
@@ -2779,6 +2824,69 @@ export const InfoDetails = {
             "Ensure 'Buy' buttons link directly to Checkout, Cart, or Product pages",
             "Point 'Sign Up' buttons to Registration or Pricing pages",
             "Avoid linking conversion buttons to Blog, About, or Contact pages"
+        ]
+    },
+    GA4_Installed: {
+        title: "GA4 Installed",
+        whatThisParameterIs: "We check whether Google Analytics 4 — Google's current analytics platform — is installed so you can actually measure your website traffic and leads.",
+        whatItCalculates: "We scan the rendered page's scripts and tags for a GA4 measurement ID (G-XXXXXXX), the gtag.js loader, or a GA4 tag configured through Google Tag Manager.",
+        whyItMatters: "If GA4 isn't installed, you're flying blind — you can't see how many visitors you get, where they come from, or which pages turn them into customers.",
+        thresholds: {
+            good: "A GA4 measurement ID (G-XXXXXXX) is detected",
+            needsImprovement: "gtag.js is present but no GA4 ID is confirmed (possibly legacy UA or Ads-only)",
+            poor: "No GA4 tag detected"
+        },
+        actualReasonsForFailure: [
+            "No GA4 measurement ID (G-XXXXXXX) was found on the page",
+            "Only a legacy Universal Analytics (UA-) or Google Ads tag is present",
+            "Analytics is loaded so late or conditionally that the tag isn't detectable"
+        ],
+        howToOvercomeFailure: [
+            "Create a GA4 property in Google Analytics and get its G-XXXXXXX measurement ID",
+            "Install the tag via gtag.js or through Google Tag Manager",
+            "Verify tracking fires using Google Tag Assistant or the GA4 real-time report"
+        ]
+    },
+    GTM_Configuration: {
+        title: "GTM Configuration",
+        whatThisParameterIs: "We check whether Google Tag Manager is installed — the central hub that lets you add and manage analytics and marketing tags without editing code.",
+        whatItCalculates: "We look for a GTM container ID (GTM-XXXX), the gtm.js loader, and the Tag Manager runtime object on the rendered page.",
+        whyItMatters: "Tag Manager makes it fast and safe to deploy tracking (GA4, Ads, Meta Pixel, conversions) and reduces the risk of broken or duplicated tags.",
+        thresholds: {
+            good: "A GTM container ID (GTM-XXXX) is detected",
+            needsImprovement: "The GTM loader is present but the container ID isn't confirmed",
+            poor: "No GTM container detected"
+        },
+        actualReasonsForFailure: [
+            "No GTM container ID (GTM-XXXX) was found on the page",
+            "The Tag Manager snippet is missing or installed incorrectly",
+            "Tags are hard-coded individually instead of managed through GTM"
+        ],
+        howToOvercomeFailure: [
+            "Create a Google Tag Manager container and install its GTM-XXXX snippet in the page head and body",
+            "Move your analytics and marketing tags into GTM for centralized management",
+            "Use GTM Preview mode to confirm tags fire correctly"
+        ]
+    },
+    Conversion_Tracking: {
+        title: "Conversion Tracking (Form / Call)",
+        whatThisParameterIs: "We check whether your site actually measures conversions — when a visitor submits a form or calls your phone number.",
+        whatItCalculates: "We scan for form-conversion events (GA4 generate_lead, Google Ads conversions, Meta Pixel Lead, dataLayer pushes) and call-tracking signals (providers like CallRail, or phone-conversion events), alongside clickable tel: numbers.",
+        whyItMatters: "Traffic numbers mean nothing without conversions. If form and phone leads aren't tracked, you can't tell which marketing actually drives customers — so budget gets wasted.",
+        thresholds: {
+            good: "Both form and call conversion tracking detected",
+            needsImprovement: "Only one of form or call tracking detected",
+            poor: "No conversion tracking events detected"
+        },
+        actualReasonsForFailure: [
+            "Form submissions don't fire a conversion event (e.g., GA4 generate_lead or a Google Ads conversion)",
+            "Phone numbers are clickable but calls aren't tracked (no call-tracking provider or phone-conversion event)",
+            "No analytics/ads conversion events are configured at all"
+        ],
+        howToOvercomeFailure: [
+            "Fire a conversion event on successful form submission (GA4 'generate_lead' and/or a Google Ads conversion)",
+            "Add call tracking (Google Ads phone conversions or a provider like CallRail) for tel: links",
+            "Verify each conversion in GA4 / Google Ads after a test submission and test call"
         ]
     },
     CTA_Flow_Alignment: {

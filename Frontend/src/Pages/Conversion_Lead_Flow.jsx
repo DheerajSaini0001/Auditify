@@ -9,7 +9,7 @@ import {
   CheckCircle, XCircle, AlertTriangle, Info,
   MousePointerClick, FileText, ShieldCheck, LayoutTemplate,
   MessageSquare, Zap, Target, CreditCard, Users, Activity, Loader2, ChevronDown, ChevronUp, Car, Landmark, Calculator, CalendarCheck,
-  PartyPopper, Bot, PhoneCall, Phone
+  PartyPopper, Bot, PhoneCall, Phone, BarChart3, Tag
 } from "lucide-react";
 import MetricInfoModal from "../Component/MetricInfoModal";
 import ParameterInfoModal from "../Component/ParameterInfoModal";
@@ -44,6 +44,9 @@ const iconMap = {
   Thank_You_Pages: PartyPopper,
   Chat_Experience: Bot,
   Click_To_Call: PhoneCall,
+  GA4_Installed: BarChart3,
+  GTM_Configuration: Tag,
+  Conversion_Tracking: PhoneCall,
 };
 
 const educationalContent = InfoDetails;
@@ -201,6 +204,56 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             darkMode={darkMode}
             meta={meta}
           />
+        )}
+
+        {/* GA4 Specific Data */}
+        {metricKey === "GA4_Installed" && meta?.measurementIds?.length > 0 && (
+          <div>
+            <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>GA4 Measurement ID</h5>
+            <div className="flex flex-wrap gap-1.5">
+              {meta.measurementIds.map((id, i) => (
+                <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-mono ${darkMode ? "bg-emerald-500/10 text-emerald-300" : "bg-emerald-50 text-emerald-700"}`}>{id}</span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* GTM Specific Data */}
+        {metricKey === "GTM_Configuration" && meta?.containerIds?.length > 0 && (
+          <div>
+            <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>GTM Container ID</h5>
+            <div className="flex flex-wrap gap-1.5">
+              {meta.containerIds.map((id, i) => (
+                <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-mono ${darkMode ? "bg-emerald-500/10 text-emerald-300" : "bg-emerald-50 text-emerald-700"}`}>{id}</span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Conversion Tracking Specific Data */}
+        {metricKey === "Conversion_Tracking" && meta && (
+          <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-2">
+              <div className={`p-2 rounded border ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
+                <div className="text-[10px] opacity-70">Form tracking</div>
+                <div className={`text-[10px] fontsemibold ${meta.formTracking ? "text-emerald-500" : "text-rose-500"}`}>{meta.formTracking ? "Detected" : "Missing"}</div>
+              </div>
+              <div className={`p-2 rounded border ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
+                <div className="text-[10px] opacity-70">Call tracking{meta.telLinks > 0 ? ` (${meta.telLinks} tel link${meta.telLinks === 1 ? "" : "s"})` : ""}</div>
+                <div className={`text-[10px] fontsemibold ${meta.callTracking ? "text-emerald-500" : "text-rose-500"}`}>{meta.callTracking ? "Detected" : "Missing"}</div>
+              </div>
+            </div>
+            {meta.signals?.length > 0 && (
+              <div>
+                <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Tracking Signals</h5>
+                <div className="flex flex-wrap gap-1.5">
+                  {meta.signals.map((s, i) => (
+                    <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-mono ${darkMode ? "bg-emerald-500/10 text-emerald-300" : "bg-emerald-50 text-emerald-700"}`}>{s}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         )}
 
         {/* CTA Presence Specific Data */}
@@ -977,6 +1030,12 @@ const Conversion_Lead_Flow_Inner = React.memo(({ data, loading, darkMode }) => {
                 }
                 return <MetricCard key={key} metricKey={key} data={flow[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />;
               })}
+            </Section>
+
+            <Section title="Analytics & Conversion Tracking" icon={BarChart3} darkMode={darkMode}>
+              {["GA4_Installed", "GTM_Configuration", "Conversion_Tracking"].map((key) => (
+                flow[key] && <MetricCard key={key} metricKey={key} data={flow[key]} darkMode={darkMode} onInfo={() => setSelectedParameterInfo({ ...educationalContent[key], icon: iconMap[key] || CheckCircle })} />
+              ))}
             </Section>
 
             <Section title="Lead Capture & Incentives" icon={Target} darkMode={darkMode}>

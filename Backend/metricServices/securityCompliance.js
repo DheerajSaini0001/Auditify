@@ -4,6 +4,7 @@ import fetch from "node-fetch";
 import { URL } from "url";
 import { waitForChallengeResolution } from "../utils/puppeteer_cheerio.js";
 import configService from "../services/configService.js";
+import { collectTrackingData, checkGA4Installed, checkGTMConfiguration, checkConversionTracking } from "./conversionLeadFlow.js";
 
 dotenv.config();
 
@@ -1363,6 +1364,613 @@ async function checkMFAEnabled(page) {
   };
 }
 
+// ---------------------------------------------------------------------------
+// CRM Integration (Lead Transfer)  —  scored 0..10, normalised to 0..100
+// ---------------------------------------------------------------------------
+// Flow (per audit spec):
+//   1. Static analysis of contact/lead forms — form action, hidden fields,
+//      CRM scripts/SDKs on the page.            CRM evidence found  -> +3
+//   2. Active test (isolated tab): fill a clearly-labelled test lead and submit,
+//      capturing network requests for known CRM lead endpoints.
+//                                               Lead endpoint hit   -> +5
+//   3. Endpoint returns HTTP 200/201.           Successful response -> +2
+//   Max raw = 10.  score = rawScore * 10.
+//
+// Known CRM signatures. `patterns` are matched (case-insensitive, substring)
+// against form actions, hidden field name=value pairs, script srcs/inline code,
+// and the URLs of network requests fired during submission.
+const CRM_SIGNATURES = [
+  { name: "HubSpot", patterns: ["hsforms.net", "hsforms.com", "hs-scripts.com", "hs-analytics.net", "hubspot.com", "api.hsforms.com", "forms.hubspot.com", "hbspt", "_hsq"] },
+  { name: "Salesforce", patterns: ["salesforce.com", "force.com", "pardot.com", "pi.pardot.com", "web-to-lead", "webto.salesforce.com", "sfdcstatic.com", "d.la1-c2-iad.salesforceliveagent.com"] },
+  { name: "VinSolutions", patterns: ["vinsolutions.com", "vinmanager", "vindigital"] },
+  { name: "DealerSocket", patterns: ["dealersocket.com", "dealersocket", "blackbookcdx"] },
+  { name: "Elead", patterns: ["eleadcrm.com", "elead-crm", "eleadtrack", "eleadcrm"] },
+  { name: "Zoho", patterns: ["zoho.com", "zohopublic.com", "crm.zoho", "forms.zoho", "zohocdn.com", "zohostatic.com"] },
+  // Automotive / dealership CRMs (common on auto-dealer sites)
+  { name: "goCRM", patterns: ["gocrm.ai", "gocrm.io", "api.gocrm"] },
+  { name: "Selly Automotive", patterns: ["sellyserver.co", "sellyautomotive.com", "sellyauto"] },
+  { name: "DriveCentric", patterns: ["drivecentric.com", "drivecentric"] },
+  { name: "ProMax", patterns: ["promaxunlimited.com", "promax"] },
+  { name: "AutoRaptor", patterns: ["autoraptor.com", "autoraptor"] },
+  { name: "CDK Global", patterns: ["cdkglobal.com", "cdk.com", "cobaltgroup"] },
+  { name: "Dealer.com / DealerInspire", patterns: ["dealer.com", "dealerinspire.com"] },
+  { name: "Gubagoo", patterns: ["gubagoo.com", "gubagoo.io"] },
+  { name: "ActivEngage", patterns: ["activengage.com"] },
+  { name: "Other CRM/Marketing", patterns: ["/web-to-lead", "/leads", "/lead-capture", "leadform", "marketo.com", "mktoresp.com", "act-on.com", "salesloft.com", "/api/lead", "crm-api", "leadperfection", "cars.com/leads"] },
+];
+
+function matchCRM(haystack) {
+  if (!haystack) return null;
+  const h = String(haystack).toLowerCase();
+  for (const crm of CRM_SIGNATURES) {
+    if (crm.patterns.some((p) => h.includes(p))) return crm.name;
+  }
+  return null;
+}
+
+// Per-component scoring breakdown so the UI can show exactly why the score is
+// what it is, and what's still missing to reach 10/10.
+function buildCRMBreakdown(meta) {
+  return [
+    {
+      label: "CRM evidence on page",
+      points: 3,
+      earned: !!meta.crmEvidenceFound,
+      detail: meta.crmEvidenceFound
+        ? `Detected: ${meta.detectedCRMs.join(", ")}`
+        : "No CRM script, SDK, or CRM form action was found. Add your CRM's official form embed or tracking SDK (e.g., HubSpot, Salesforce, goCRM, Selly) to the page.",
+    },
+    {
+      label: "Lead endpoint detected on submit",
+      points: 5,
+      earned: !!meta.leadEndpointDetected,
+      detail: meta.leadEndpointDetected
+        ? `Lead posted to: ${(meta.leadEndpoints || []).map((e) => e.crm).join(", ")}`
+        : "Submitting the form did not post to a recognized CRM endpoint — typically because the lead is relayed to the CRM server-side. Post the lead directly to the CRM (client-side form action or API) so the integration is verifiable from the browser.",
+    },
+    {
+      label: "Successful submission (HTTP 200/201)",
+      points: 2,
+      earned: !!meta.successfulResponse,
+      detail: meta.successfulResponse
+        ? "The CRM lead endpoint returned a success response."
+        : meta.leadEndpointDetected
+          ? "The CRM endpoint did not return HTTP 200/201. Ensure the lead endpoint responds with a success status so submissions aren't silently dropped."
+          : "Blocked until a CRM lead endpoint is detected (above).",
+    },
+  ];
+}
+
+// Find the site's contact page from the homepage's links (read-only).
+// Lead forms live on /contact, not the homepage, so we test there.
+async function discoverContactUrl(page) {
+  try {
+    return await page.evaluate(() => {
+      const bad = (raw) => /^(mailto:|tel:|javascript:|#)/i.test(raw || "");
+      const links = Array.from(document.querySelectorAll("a[href]"))
+        .map((a) => ({
+          href: a.href,
+          raw: a.getAttribute("href") || "",
+          text: (a.textContent || "").trim().toLowerCase(),
+        }))
+        .filter((l) => l.href && !bad(l.raw));
+      // Strongest signal: the URL path itself mentions contact.
+      const byHref = links.find((l) => /contact/i.test(l.href));
+      if (byHref) return byHref.href;
+      // Next: a link whose visible text is "contact".
+      const byText = links.find((l) => /\bcontact\b/.test(l.text));
+      return byText ? byText.href : null;
+    });
+  } catch {
+    return null;
+  }
+}
+
+async function checkCRMIntegration(url, page, browser) {
+  const meta = {
+    checkedUrl: null,
+    crmEvidenceFound: false,
+    detectedCRMs: [],
+    leadEndpointDetected: false,
+    leadEndpoints: [],
+    submissionAttempted: false,
+    successfulResponse: false,
+    responseStatuses: [],
+    testLead: { name: "Test User", email: "test@example.com" },
+    rawScore: 0,
+    maxScore: 10,
+  };
+  let rawScore = 0;
+  const detected = new Set();
+  let scanPage = null;
+  const crmRequests = [];
+  const crmResponses = new Map();
+  let submitted = false; // flips true the instant we click submit
+
+  // Resource types that are page assets, NOT a lead submission. A request to a
+  // CRM host for one of these (e.g. loading the goCRM SDK script) must NOT be
+  // mistaken for a lead-transfer endpoint.
+  const ASSET_TYPES = ["script", "stylesheet", "image", "font", "media", "manifest", "other"];
+
+  try {
+    // ---- Locate the contact page (where the real lead form lives) ----
+    const discovered = await discoverContactUrl(page);
+    const origin = new URL(page.url()).origin;
+    const candidates = [];
+    const pushUniq = (u) => { if (u && !candidates.includes(u)) candidates.push(u); };
+    pushUniq(discovered);
+    pushUniq(origin + "/contact-us");
+    pushUniq(origin + "/contact");
+    pushUniq(origin + "/contactus");
+    pushUniq(page.url()); // homepage — last-resort fallback
+
+    // ISOLATED tab — never the shared audit page, so submitting can't destroy the
+    // execution context the other concurrent metrics read.
+    scanPage = await browser.newPage();
+    scanPage.on("request", (req) => {
+      const crm = matchCRM(req.url());
+      if (!crm) return;
+      crmRequests.push({
+        crm,
+        url: req.url(),
+        method: req.method(),
+        isAsset: ASSET_TYPES.includes(req.resourceType()),
+        afterSubmit: submitted,
+      });
+    });
+    scanPage.on("response", (resp) => {
+      const crm = matchCRM(resp.url());
+      if (crm) crmResponses.set(resp.url(), resp.status());
+    });
+
+    // Navigate to the first candidate that loads (HTTP < 400) and has a form;
+    // otherwise fall through to the homepage.
+    for (let i = 0; i < candidates.length; i++) {
+      const cand = candidates[i];
+      const isLast = i === candidates.length - 1;
+      try {
+        const resp = await scanPage.goto(cand, { waitUntil: "domcontentloaded", timeout: 30000 });
+        if (!isLast && resp && resp.status() >= 400) continue; // 404 etc → try next
+        await waitForChallengeResolution(scanPage, 15000).catch(() => {});
+        const formCount = await scanPage.$$eval("form", (fs) => fs.length).catch(() => 0);
+        meta.checkedUrl = scanPage.url();
+        if (formCount > 0 || isLast) break;
+      } catch (e) {
+        meta.checkedUrl = cand;
+        if (isLast) break;
+      }
+    }
+
+    // ---------- 1. STATIC ANALYSIS (on the contact page) ----------
+    const staticData = await scanPage.evaluate(() => {
+      const forms = Array.from(document.querySelectorAll("form")).map((f) => ({
+        action: f.getAttribute("action") || "",
+        hidden: Array.from(f.querySelectorAll("input[type='hidden']")).map(
+          (i) => `${i.name || ""}=${i.value || ""}`
+        ),
+        hasEmail: !!f.querySelector("input[type='email'], input[name*='email' i], input[id*='email' i]"),
+        text: ((f.innerText || "") + " " + (f.outerHTML || "")).slice(0, 800),
+      }));
+      const scripts = Array.from(document.querySelectorAll("script")).map(
+        (s) => s.getAttribute("src") || (s.textContent || "").slice(0, 600)
+      );
+      return { forms, scripts };
+    });
+
+    for (const f of staticData.forms) {
+      const a = matchCRM(f.action);
+      if (a) detected.add(a);
+      for (const h of f.hidden) {
+        const m = matchCRM(h);
+        if (m) detected.add(m);
+      }
+    }
+    for (const s of staticData.scripts) {
+      const m = matchCRM(s);
+      if (m) detected.add(m);
+    }
+
+    if (detected.size > 0) {
+      rawScore += 3;
+      meta.crmEvidenceFound = true;
+    }
+
+    // Identify a testable contact/lead form (prefer one with an email field).
+    const leadKeywords = ["contact", "lead", "quote", "get started", "request", "info", "test drive", "schedule", "demo", "inquiry", "enquiry", "subscribe", "sign up", "appointment", "trade-in"];
+    const hasLeadForm = staticData.forms.some(
+      (f) => f.hasEmail || leadKeywords.some((k) => f.text.toLowerCase().includes(k))
+    );
+
+    if (!hasLeadForm) {
+      // No contact/lead form found — lead transfer is not applicable.
+      // Mirror the Forms_Use_HTTPS "no forms => neutral" convention so sites
+      // without lead-gen aren't penalised on their security score.
+      meta.detectedCRMs = [...detected];
+      meta.rawScore = rawScore;
+      meta.missingPoints = meta.maxScore - rawScore;
+      meta.breakdown = buildCRMBreakdown(meta);
+      return {
+        score: 100,
+        status: "not_applicable",
+        details: meta.crmEvidenceFound
+          ? `CRM SDK detected (${meta.detectedCRMs.join(", ")}) but no testable contact/lead form on ${meta.checkedUrl}`
+          : `No contact/lead form detected on ${meta.checkedUrl}`,
+        meta,
+        analysis: null,
+      };
+    }
+
+    // ---------- 2 & 3. ACTIVE TEST (same contact page, already loaded) ----------
+    // Submit a clearly-labelled test lead and watch for a CRM lead endpoint.
+    meta.submissionAttempted = true;
+
+    // Pick the first form that has an email field, else the first form.
+    const forms = await scanPage.$$("form");
+    let targetForm = null;
+    for (const fh of forms) {
+      const emailField = await fh.$("input[type='email'], input[name*='email' i], input[id*='email' i]");
+      if (emailField) { targetForm = fh; break; }
+    }
+    if (!targetForm && forms.length) targetForm = forms[0];
+
+    if (targetForm) {
+      const nameField = await targetForm.$("input[name*='name' i], input[id*='name' i], input[type='text']:not([name*='search' i])");
+      const emailField = await targetForm.$("input[type='email'], input[name*='email' i], input[id*='email' i]");
+      const phoneField = await targetForm.$("input[type='tel'], input[name*='phone' i], input[id*='phone' i]");
+      const submitBtn =
+        (await targetForm.$("button[type='submit'], input[type='submit']")) ||
+        (await targetForm.$("button"));
+
+      if (nameField) await nameField.type(meta.testLead.name).catch(() => {});
+      if (emailField) await emailField.type(meta.testLead.email).catch(() => {});
+      if (phoneField) await phoneField.type("0000000000").catch(() => {});
+
+      if (submitBtn) {
+        submitted = true; // requests from here on count as lead-transfer traffic
+        const navP = scanPage
+          .waitForNavigation({ waitUntil: "domcontentloaded", timeout: 8000 })
+          .catch(() => null);
+        await submitBtn.click().catch(() => {});
+        await navP;
+        // Give async XHR/fetch lead posts time to fire after submit.
+        await scanPage.waitForTimeout(2500).catch(() => {});
+      }
+    }
+
+    // A lead endpoint = a non-asset CRM request fired AFTER submission (the SDK
+    // script loading earlier doesn't count).
+    const leadPosts = crmRequests.filter((r) => r.afterSubmit && !r.isAsset);
+    if (leadPosts.length > 0) {
+      rawScore += 5;
+      meta.leadEndpointDetected = true;
+      meta.leadEndpoints = leadPosts.slice(0, 10).map((r) => ({ crm: r.crm, url: r.url, method: r.method }));
+      leadPosts.forEach((r) => detected.add(r.crm));
+
+      const statuses = leadPosts.map((r) => crmResponses.get(r.url)).filter((s) => s != null);
+      meta.responseStatuses = statuses;
+      if (statuses.some((s) => s === 200 || s === 201)) {
+        rawScore += 2;
+        meta.successfulResponse = true;
+      }
+    }
+
+    if (rawScore > 10) rawScore = 10;
+    meta.detectedCRMs = [...detected];
+    meta.rawScore = rawScore;
+    meta.missingPoints = meta.maxScore - rawScore;
+    meta.breakdown = buildCRMBreakdown(meta);
+
+    const where = meta.checkedUrl ? ` (tested ${meta.checkedUrl})` : "";
+    let status, details, analysis;
+    if (meta.leadEndpointDetected && meta.successfulResponse) {
+      status = "pass";
+      details = `CRM lead transfer confirmed (${meta.detectedCRMs.join(", ")}) with a successful submission${where}`;
+      analysis = null;
+    } else if (meta.leadEndpointDetected) {
+      status = "warning";
+      details = `Lead endpoint detected (${meta.detectedCRMs.join(", ")}) but submission did not return HTTP 200/201${where}`;
+      analysis = {
+        cause: "A request reached a CRM lead endpoint during the test submission, but no success (200/201) response was observed.",
+        recommendation: "Verify the form handler reliably posts leads to your CRM and that the endpoint returns a success status, so no inquiries are silently lost.",
+      };
+    } else if (meta.crmEvidenceFound) {
+      status = "warning";
+      details = `CRM SDK detected (${meta.detectedCRMs.join(", ")}) but no lead endpoint fired on form submission${where}`;
+      analysis = {
+        cause: "CRM scripts/SDKs are present on the page, but submitting the lead form did not trigger any request to a known CRM lead endpoint. The lead may be relayed to the CRM server-side, which cannot be observed from the browser.",
+        recommendation: "Confirm the contact form is actually wired to the CRM (correct form action / handler) so submitted leads are captured.",
+      };
+    } else {
+      status = "fail";
+      details = `No CRM integration detected for the contact/lead form${where}`;
+      analysis = {
+        cause: "A contact/lead form exists, but no CRM evidence was found statically and no CRM lead endpoint was contacted on submission.",
+        recommendation: "Integrate the lead form with a CRM (e.g., HubSpot, Salesforce, Zoho) so inquiries are automatically captured and routed to sales.",
+      };
+    }
+
+    return { score: rawScore * 10, status, details, meta, analysis };
+  } catch (error) {
+    meta.detectedCRMs = [...detected];
+    meta.rawScore = rawScore;
+    return {
+      score: 0,
+      status: "error",
+      details: `CRM Integration check failed: ${error.message}`,
+      meta,
+      analysis: { cause: error.message },
+    };
+  } finally {
+    if (scanPage) await scanPage.close().catch(() => {});
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Finance Form Security (PCI)  —  scored 0..10, normalised to 0..100
+// ---------------------------------------------------------------------------
+// Flow (per audit spec):
+//   Find the finance / credit-application page.  Not found -> Not Applicable.
+//   On that page (PASSIVE only — we NEVER submit a fake credit application):
+//     HTTPS                         +2
+//     Sensitive data handled safely +2   (SSN / card / bank collected over HTTPS,
+//                                          or not collected client-side at all)
+//     Trusted finance provider      +3   (RouteOne, Dealertrack, CreditIQ, Stripe, PayPal…)
+//     Secure submission endpoint    +2   (form action is HTTPS)
+//     Security signals              +1   (>=2 of: Privacy Policy, Terms, SSL/secure messaging)
+//   Max raw = 10.  score = rawScore * 10.
+const FINANCE_PROVIDERS = [
+  { name: "RouteOne", patterns: ["routeone.com", "routeone.net", "routeone"] },
+  { name: "Dealertrack", patterns: ["dealertrack.com", "dealertrack"] },
+  { name: "CreditIQ", patterns: ["creditiq.com", "creditiq", "credit-iq"] },
+  { name: "Stripe", patterns: ["js.stripe.com", "api.stripe.com", "stripe.com", "stripe.network"] },
+  { name: "PayPal", patterns: ["paypal.com", "paypalobjects.com"] },
+  { name: "700Credit", patterns: ["700credit.com", "700credit"] },
+  { name: "AppOne", patterns: ["appone.net", "appone.com"] },
+  { name: "DealerCenter", patterns: ["dealercenter.net", "dealercenter.com"] },
+  { name: "Affirm", patterns: ["affirm.com"] },
+  { name: "Capital One Auto", patterns: ["capitalone.com"] },
+  { name: "CUDL / Origence", patterns: ["cudl.com", "origence.com"] },
+  { name: "Santander / Chrysler Capital", patterns: ["santanderconsumerusa.com", "chryslercapital.com"] },
+  { name: "Westlake", patterns: ["westlakefinancial.com", "westlake"] },
+  { name: "Credit Bureaus", patterns: ["transunion.com", "equifax.com", "experian.com"] },
+];
+
+function matchFinanceProvider(haystack) {
+  if (!haystack) return null;
+  const h = String(haystack).toLowerCase();
+  for (const p of FINANCE_PROVIDERS) {
+    if (p.patterns.some((s) => h.includes(s))) return p.name;
+  }
+  return null;
+}
+
+// Find the finance / credit-application page from the homepage links.
+async function discoverFinanceUrl(page) {
+  try {
+    return await page.evaluate(() => {
+      const bad = (raw) => /^(mailto:|tel:|javascript:|#)/i.test(raw || "");
+      const kw = /financ|credit[-_ ]?app|get[-_ ]?approved|pre[-_ ]?approv|apply.*financ|auto.*loan/i;
+      const links = Array.from(document.querySelectorAll("a[href]"))
+        .map((a) => ({ href: a.href, raw: a.getAttribute("href") || "", text: (a.textContent || "").trim().toLowerCase() }))
+        .filter((l) => l.href && !bad(l.raw));
+      const byHref = links.find((l) => /financ|credit[-_ ]?app|pre[-_ ]?approv|get[-_ ]?approved/i.test(l.href));
+      if (byHref) return byHref.href;
+      const byText = links.find((l) => kw.test(l.text));
+      return byText ? byText.href : null;
+    });
+  } catch {
+    return null;
+  }
+}
+
+async function checkFinanceFormSecurity(url, page, browser) {
+  const meta = {
+    checkedUrl: null,
+    financePageFound: false,
+    httpsSecure: false,
+    sensitiveFields: [],
+    sensitiveDataHandledSecurely: false,
+    detectedProviders: [],
+    secureEndpoint: false,
+    securitySignals: [],
+    rawScore: 0,
+    maxScore: 10,
+  };
+  const POINTS = { https: 2, handling: 2, provider: 3, endpoint: 2, signals: 1 };
+  let scanPage = null;
+
+  try {
+    const discovered = await discoverFinanceUrl(page);
+    const origin = new URL(page.url()).origin;
+    const candidates = [];
+    const pushUniq = (u) => { if (u && !candidates.includes(u)) candidates.push(u); };
+    pushUniq(discovered);
+    pushUniq(origin + "/finance");
+    pushUniq(origin + "/financing");
+    pushUniq(origin + "/credit-application");
+    pushUniq(origin + "/apply-for-financing");
+    pushUniq(origin + "/finance-application");
+
+    scanPage = await browser.newPage();
+
+    // Navigate candidates until we land on a page that actually looks like a
+    // finance / credit-application page. If none qualify → Not Applicable.
+    let data = null;
+    for (let i = 0; i < candidates.length; i++) {
+      const cand = candidates[i];
+      try {
+        const resp = await scanPage.goto(cand, { waitUntil: "domcontentloaded", timeout: 30000 });
+        if (resp && resp.status() >= 400) continue;
+        await waitForChallengeResolution(scanPage, 12000).catch(() => {});
+        const d = await scanPage.evaluate(() => {
+          const lower = (s) => (s || "").toLowerCase();
+          const bodyText = lower(document.body ? document.body.innerText : "").slice(0, 8000);
+          const title = lower(document.title);
+          const hay = title + " " + bodyText;
+          const financeKw = ["financ", "credit application", "credit app", "auto loan", "car loan", "pre-approval", "preapprov", "get approved", "down payment", "monthly payment", "apply for financ"];
+          const isFinancePage = financeKw.some((k) => hay.includes(k));
+
+          const sensSel = "input[name*='ssn' i], input[id*='ssn' i], input[name*='social' i], input[autocomplete*='cc-' i], input[name*='card' i], input[id*='card' i], input[name*='routing' i], input[name*='account' i], input[name*='bank' i]";
+          const forms = Array.from(document.querySelectorAll("form")).map((f) => ({
+            action: f.getAttribute("action") || "",
+            sensitive: !!f.querySelector(sensSel),
+          }));
+
+          const fieldTokens = Array.from(document.querySelectorAll("input, select")).map((i) =>
+            [i.name, i.id, i.getAttribute("autocomplete"), i.getAttribute("placeholder"), i.getAttribute("aria-label")].filter(Boolean).join(" ")
+          );
+
+          const providerHaystack = [
+            ...Array.from(document.querySelectorAll("script[src]")).map((s) => s.getAttribute("src")),
+            ...Array.from(document.querySelectorAll("iframe[src]")).map((f) => f.getAttribute("src")),
+            ...Array.from(document.querySelectorAll("form[action]")).map((f) => f.getAttribute("action")),
+            ...Array.from(document.querySelectorAll("a[href]")).map((a) => a.getAttribute("href")),
+          ].filter(Boolean);
+
+          const linkText = Array.from(document.querySelectorAll("a"))
+            .map((a) => lower(a.textContent) + " " + lower(a.getAttribute("href") || "")).join(" ");
+          const hasPrivacy = /privacy/.test(linkText);
+          const hasTerms = /terms|conditions/.test(linkText);
+          const secureMessaging = /secure|encrypt|256-bit|\bssl\b|your information is protected|safe and secure|secure application/.test(bodyText);
+
+          return { protocol: location.protocol, isFinancePage, forms, fieldTokens, providerHaystack, hasPrivacy, hasTerms, secureMessaging };
+        });
+        if (d && d.isFinancePage) { data = d; meta.checkedUrl = scanPage.url(); break; }
+      } catch (e) {
+        continue;
+      }
+    }
+
+    if (!data) {
+      // No finance / credit-application page → Not Applicable (neutral score).
+      meta.rawScore = 0;
+      meta.missingPoints = 0;
+      return {
+        score: 100,
+        status: "not_applicable",
+        details: "No finance / credit application page found on the site",
+        meta,
+        analysis: null,
+      };
+    }
+
+    meta.financePageFound = true;
+
+    const isInsecure = (action) => {
+      if (!action) return false; // empty/relative action on an HTTPS page is fine
+      try { return new URL(action, meta.checkedUrl).protocol === "http:"; } catch { return false; }
+    };
+
+    // 1) HTTPS
+    meta.httpsSecure = data.protocol === "https:";
+
+    // 2) Sensitive data handling
+    const SENS = ["ssn", "social security", "socialsecurity", "social-security", "credit card", "creditcard", "cc-number", "cardnumber", "card-number", "card number", "cvv", "cvc", "routing", "account number", "accountnumber", "bank account", "iban", "tax id", "taxid"];
+    const sensTokens = (data.fieldTokens || []).map((t) => t.toLowerCase());
+    meta.sensitiveFields = [...new Set(SENS.filter((s) => sensTokens.some((t) => t.includes(s))))];
+    const anyInsecureSensitiveForm = (data.forms || []).some((f) => f.sensitive && isInsecure(f.action));
+    const handlingEarned = meta.sensitiveFields.length === 0
+      ? true // nothing sensitive collected client-side → PCI scope minimized / delegated
+      : (meta.httpsSecure && !anyInsecureSensitiveForm);
+    meta.sensitiveDataHandledSecurely = handlingEarned;
+
+    // 3) Trusted finance provider
+    const provSet = new Set();
+    for (const h of (data.providerHaystack || [])) { const m = matchFinanceProvider(h); if (m) provSet.add(m); }
+    meta.detectedProviders = [...provSet];
+
+    // 4) Secure submission endpoint
+    meta.secureEndpoint = !(data.forms || []).some((f) => isInsecure(f.action));
+
+    // 5) Security signals
+    const signals = [];
+    if (data.hasPrivacy) signals.push("Privacy Policy");
+    if (data.hasTerms) signals.push("Terms");
+    if (data.secureMessaging) signals.push("Secure/SSL messaging");
+    meta.securitySignals = signals;
+    const signalsEarned = signals.length >= 2;
+
+    let rawScore = 0;
+    if (meta.httpsSecure) rawScore += POINTS.https;
+    if (handlingEarned) rawScore += POINTS.handling;
+    if (meta.detectedProviders.length > 0) rawScore += POINTS.provider;
+    if (meta.secureEndpoint) rawScore += POINTS.endpoint;
+    if (signalsEarned) rawScore += POINTS.signals;
+    if (rawScore > 10) rawScore = 10;
+    meta.rawScore = rawScore;
+    meta.missingPoints = meta.maxScore - rawScore;
+
+    meta.breakdown = [
+      {
+        label: "Page served over HTTPS",
+        points: POINTS.https,
+        earned: meta.httpsSecure,
+        detail: meta.httpsSecure ? "Finance page loads over HTTPS." : "Serve the finance / credit-application page over HTTPS with a valid SSL certificate.",
+      },
+      {
+        label: "Sensitive data handled securely",
+        points: POINTS.handling,
+        earned: handlingEarned,
+        detail: handlingEarned
+          ? (meta.sensitiveFields.length ? `Sensitive fields (${meta.sensitiveFields.join(", ")}) are collected over HTTPS.` : "No raw SSN / card / bank fields are collected on-page (PCI scope minimized).")
+          : `Sensitive fields (${meta.sensitiveFields.join(", ")}) are collected over an insecure connection. Collect them only over HTTPS, or hand off to a PCI-compliant provider.`,
+      },
+      {
+        label: "Trusted finance provider",
+        points: POINTS.provider,
+        earned: meta.detectedProviders.length > 0,
+        detail: meta.detectedProviders.length ? `Detected: ${meta.detectedProviders.join(", ")}` : "No trusted finance / lending provider detected. Process credit applications through a PCI-compliant provider (RouteOne, Dealertrack, CreditIQ, Stripe, PayPal).",
+      },
+      {
+        label: "Secure submission endpoint",
+        points: POINTS.endpoint,
+        earned: meta.secureEndpoint,
+        detail: meta.secureEndpoint ? "The application form submits to an HTTPS endpoint." : "The form posts to an insecure (HTTP) endpoint. Point the form action to an HTTPS URL.",
+      },
+      {
+        label: "Security signals (privacy / terms / SSL)",
+        points: POINTS.signals,
+        earned: signalsEarned,
+        detail: signalsEarned ? `Present: ${signals.join(", ")}` : "Add at least two trust signals: a Privacy Policy link, a Terms link, and visible secure-application / SSL messaging.",
+      },
+    ];
+
+    const where = meta.checkedUrl ? ` (tested ${meta.checkedUrl})` : "";
+    let status, details, analysis;
+    if (rawScore >= 8) {
+      status = "pass";
+      details = `Finance form security is strong — ${rawScore}/10${where}`;
+      analysis = null;
+    } else if (rawScore >= 5) {
+      status = "warning";
+      details = `Finance form security is partial — ${rawScore}/10${where}`;
+      analysis = {
+        cause: "The finance / credit-application page is missing one or more PCI best practices (see the per-item breakdown).",
+        recommendation: "Address the unearned items: enforce HTTPS end-to-end, delegate sensitive data to a PCI-compliant provider, and add clear privacy/terms/secure-application messaging.",
+      };
+    } else {
+      status = "fail";
+      details = `Finance form security is weak — ${rawScore}/10${where}`;
+      analysis = {
+        cause: "The finance / credit-application page collects or submits financial data without adequate PCI safeguards.",
+        recommendation: "Serve the page over HTTPS, never collect raw SSN/card/bank data outside a PCI-compliant provider, ensure the submission endpoint is HTTPS, and surface privacy/terms/secure-application signals.",
+      };
+    }
+
+    return { score: rawScore * 10, status, details, meta, analysis };
+  } catch (error) {
+    return {
+      score: 0,
+      status: "error",
+      details: `Finance Form Security check failed: ${error.message}`,
+      meta,
+      analysis: { cause: error.message },
+    };
+  } finally {
+    if (scanPage) await scanPage.close().catch(() => {});
+  }
+}
+
 export default async function securityCompliance(url, page, response, browser) {
 
   const domain = Domain(url);
@@ -1396,6 +2004,24 @@ export default async function securityCompliance(url, page, response, browser) {
   const adminPanelPublicResult = await checkAdminPanelPublic(url);
 
   const xssVulnerabilityResult = await checkXSS(url, browser);
+
+  const crmIntegrationResult = await checkCRMIntegration(url, page, browser);
+
+  const financeFormSecurityResult = await checkFinanceFormSecurity(url, page, browser);
+
+  // Analytics & conversion tracking — shown in the Security section for visibility.
+  // These are DISPLAY-ONLY here (not added to `results`/weights below) so they
+  // don't distort the security score with non-security signals. The same checks
+  // are scored in the Conversion & Lead Flow module.
+  let ga4Result = null, gtmResult = null, conversionTrackingResult = null;
+  try {
+    const trackingData = await collectTrackingData(page);
+    ga4Result = checkGA4Installed(trackingData);
+    gtmResult = checkGTMConfiguration(trackingData);
+    conversionTrackingResult = checkConversionTracking(trackingData);
+  } catch (e) {
+    // Tracking detection is best-effort; never fail the security audit over it.
+  }
 
   // Weights: Critical=10, Severe=8-9, High=7, Medium=4-6, Low=1-3
   const weights = {
@@ -1433,6 +2059,12 @@ export default async function securityCompliance(url, page, response, browser) {
     // Low / Informational
     Data_Collection: 3,
     Third_Party_Cookies: 3,
+
+    // Business Integration (Lead Transfer)
+    CRM_Integration: 5,
+
+    // Finance / PCI
+    Finance_Form_Security: 7,
   };
 
   const results = {
@@ -1459,6 +2091,8 @@ export default async function securityCompliance(url, page, response, browser) {
     MFA_Enabled: mfaEnabledResult,
     Admin_Panel_Public: adminPanelPublicResult,
     Third_Party_Cookies: thirdPartyCookiesResult,
+    CRM_Integration: crmIntegrationResult,
+    Finance_Form_Security: financeFormSecurityResult,
   };
 
   let totalWeightedScore = 0;
@@ -1498,6 +2132,12 @@ export default async function securityCompliance(url, page, response, browser) {
     MFA_Enabled: mfaEnabledResult,
     Admin_Panel_Public: adminPanelPublicResult,
     Third_Party_Cookies: thirdPartyCookiesResult,
+    CRM_Integration: crmIntegrationResult,
+    Finance_Form_Security: financeFormSecurityResult,
+    // Display-only (not part of the weighted security score)
+    GA4_Installed: ga4Result,
+    GTM_Configuration: gtmResult,
+    Conversion_Tracking: conversionTrackingResult,
   };
 
 

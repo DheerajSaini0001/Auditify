@@ -14,6 +14,11 @@ function calculateStatus(value, goodThreshold, needsImprovementThreshold) {
   return "fail";
 }
 
+// Format a millisecond value as seconds for display (e.g. 1800 -> "1.8s", 234 -> "0.23s").
+// Used by the latency Core Web Vitals (FCP, INP, FID, TBT) whose value + threshold scale
+// are surfaced in seconds. Scoring still runs on the raw ms numbers above.
+const msToSec = (ms) => `${parseFloat(((Number(ms) || 0) / 1000).toFixed(2))}s`;
+
 // LCP - Largest Contentful Paint
 const evaluateLCPLab = (audits) => {
   const labValue = parseFloat((audits["largest-contentful-paint"]?.numericValue || 0).toFixed(0));
@@ -276,10 +281,10 @@ const evaluateFCPLab = (audits) => {
   return {
     score: labScore,
     status: labStatus,
-    details: labStatus === "pass" ? "First Paint timing is good." : `First Paint is delayed (${labValue}ms).`,
+    details: labStatus === "pass" ? "First Paint timing is good." : `First Paint is delayed (${msToSec(labValue)}).`,
     meta: {
-      value: labValue + "ms",
-      thresholds: { Good: "0-1800ms", Warning: "1800-3000ms", Poor: "3000ms+" }
+      value: msToSec(labValue),
+      thresholds: { Good: "0-1.8s", Warning: "1.8-3s", Poor: "3s+" }
     },
     analysis: labStatus === "pass" ? null : {
       cause: causes[0] || "Critical request chain depth or script execution",
@@ -323,11 +328,11 @@ const evaluateFCPCrux = (audits, cruxMetrics) => {
   return {
     score: fieldScore,
     status: fieldStatus,
-    details: fieldStatus === "pass" ? "Real-world First Paint is optimal." : `Real users experience FCP delay (${fieldValue}ms).`,
+    details: fieldStatus === "pass" ? "Real-world First Paint is optimal." : `Real users experience FCP delay (${msToSec(fieldValue)}).`,
     meta: {
-      value: fieldValue + "ms",
+      value: msToSec(fieldValue),
       p75: true,
-      thresholds: { Good: "0-1800ms", Warning: "1800-3000ms", Poor: "3000ms+" }
+      thresholds: { Good: "0-1.8s", Warning: "1.8-3s", Poor: "3s+" }
     },
     analysis: fieldStatus === "pass" ? null : {
       cause: causes[0] || "Network latency or connection setup time",
@@ -452,10 +457,10 @@ const evaluateINPLab = (audits) => {
   return {
     score: labScore,
     status: labStatus,
-    details: labStatus === "pass" ? "Interaction responsiveness is good." : `Responsiveness is low (${labValue}ms).`,
+    details: labStatus === "pass" ? "Interaction responsiveness is good." : `Responsiveness is low (${msToSec(labValue)}).`,
     meta: {
-      value: labValue + "ms",
-      thresholds: { Good: "0-3800ms", Warning: "3800-7300ms", Poor: "7300ms+" }
+      value: msToSec(labValue),
+      thresholds: { Good: "0-3.8s", Warning: "3.8-7.3s", Poor: "7.3s+" }
     },
     analysis: labStatus === "pass" ? null : {
       cause: causes[0] || "Input delay due to background tasks",
@@ -506,11 +511,11 @@ const evaluateINPCrux = (audits, cruxMetrics) => {
   return {
     score: fieldScore,
     status: fieldStatus,
-    details: fieldStatus === "pass" ? "Real-world interaction feedback is fast." : `Real users face input delays (${fieldValue}ms).`,
+    details: fieldStatus === "pass" ? "Real-world interaction feedback is fast." : `Real users face input delays (${msToSec(fieldValue)}).`,
     meta: {
-      value: fieldValue + "ms",
+      value: msToSec(fieldValue),
       p75: true,
-      thresholds: { Good: "0-200ms", Warning: "200-500ms", Poor: "500ms+" }
+      thresholds: { Good: "0-0.2s", Warning: "0.2-0.5s", Poor: "0.5s+" }
     },
     analysis: fieldStatus === "pass" ? null : {
       cause: causes[0] || "Input delay on real-world devices",
@@ -566,11 +571,11 @@ const evaluateFIDLab = (audits) => {
   return {
     score: labScore,
     status: labStatus,
-    details: labStatus === "pass" ? "Worst-case first input delay is low." : `A user's first input could be delayed up to ${labValue}ms.`,
+    details: labStatus === "pass" ? "Worst-case first input delay is low." : `A user's first input could be delayed up to ${msToSec(labValue)}.`,
     meta: {
-      value: labValue + "ms",
+      value: msToSec(labValue),
       maxPotential: true,
-      thresholds: { Good: "0-130ms", Warning: "130-250ms", Poor: "250ms+" }
+      thresholds: { Good: "0-0.13s", Warning: "0.13-0.25s", Poor: "0.25s+" }
     },
     analysis: labStatus === "pass" ? null : {
       cause: causes[0] || "A long main-thread task could delay the first interaction",
@@ -624,11 +629,11 @@ const evaluateFIDCrux = (audits, cruxMetrics) => {
   return {
     score: fieldScore,
     status: fieldStatus,
-    details: fieldStatus === "pass" ? "Real users get a fast response to their first interaction." : `Real users wait ${fieldValue}ms before their first input is handled.`,
+    details: fieldStatus === "pass" ? "Real users get a fast response to their first interaction." : `Real users wait ${msToSec(fieldValue)} before their first input is handled.`,
     meta: {
-      value: fieldValue + "ms",
+      value: msToSec(fieldValue),
       p75: true,
-      thresholds: { Good: "0-100ms", Warning: "100-300ms", Poor: "300ms+" }
+      thresholds: { Good: "0-0.1s", Warning: "0.1-0.3s", Poor: "0.3s+" }
     },
     analysis: fieldStatus === "pass" ? null : {
       cause: causes[0] || "Main thread busy when real users first interact",
@@ -678,10 +683,10 @@ const evaluateTBT = (audits) => {
   return {
     score: labScore,
     status: labStatus,
-    details: labStatus === "pass" ? "Main thread is clear." : `Main thread is blocked (${labValue}ms).`,
+    details: labStatus === "pass" ? "Main thread is clear." : `Main thread is blocked (${msToSec(labValue)}).`,
     meta: {
-      value: labValue + "ms",
-      thresholds: { Good: "0-200ms", Warning: "200-600ms", Poor: "600ms+" }
+      value: msToSec(labValue),
+      thresholds: { Good: "0-0.2s", Warning: "0.2-0.6s", Poor: "0.6s+" }
     },
     analysis: labStatus === "pass" ? null : {
       cause: causes[0] || "General main thread congestion",

@@ -305,21 +305,39 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
         {/* CTA Flow Alignment Specific Data */}
         {metricKey === "CTA_Flow_Alignment" && (
           <>
-            {meta?.positionRatio && (
+            {meta?.compositeScore !== undefined && (
               <div className="mt-2">
-                <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Position Ratio</h5>
+                <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Funnel Placement Score</h5>
                 <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
-                  <span className="break-all">{meta.positionRatio}</span>
+                  <span className="break-all">{meta.compositeScore}/100</span>
                 </div>
               </div>
             )}
-            {meta?.idealRange && (
+            {meta?.aboveFoldCTA !== undefined && (
               <div className="mt-2">
-                <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Ideal Ratio Range</h5>
+                <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Above-the-Fold CTA</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${meta.aboveFoldCTA ? "bg-emerald-500" : "bg-rose-500"}`}></span>
+                  <span className="break-all">{meta.aboveFoldCTA ? "Yes" : "No"}</span>
+                </div>
+              </div>
+            )}
+            {meta?.distribution && (
+              <div className="mt-2">
+                <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>CTA Distribution (Top / Mid / Bottom)</h5>
                 <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
-                  <span className="break-all">{meta.idealRange}</span>
+                  <span className="break-all">{meta.distribution.top} / {meta.distribution.middle} / {meta.distribution.bottom}{meta.isLongPage ? " (long page)" : ""}</span>
+                </div>
+              </div>
+            )}
+            {meta?.ctaCount !== undefined && (
+              <div className="mt-2">
+                <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>CTAs Found</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
+                  <span className="break-all">{meta.ctaCount}{meta.examples && meta.examples.length > 0 ? ` — ${meta.examples.join(", ")}` : ""}</span>
                 </div>
               </div>
             )}

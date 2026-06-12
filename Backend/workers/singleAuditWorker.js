@@ -300,6 +300,12 @@ const OverAll = (A, B, C, D, E, F, G) => {
       if (report === "UX & Content Structure") updateData.UXOrContentStructure = result;
       if (report === "Conversion & Lead Flow") updateData.conversionAndLeadFlow = result;
       if (report === "AIO (AI-Optimization) Readiness") {
+        // Promote the already-computed AEO to a TOP-LEVEL `aeo` field (it was nested
+        // under result.aeo at compute time). Without this the report has no top-level
+        // `aeo`, so the frontend re-runs the whole AEO live via the slow Puppeteer
+        // stream and appears stuck. The full-audit path already sets top-level `aeo`.
+        updateData.aeo = result?.aeo || null;
+        if (result) delete result.aeo; // avoid storing it twice (also nested under aioReadiness)
         updateData.aioReadiness = result;
         updateData.aioCompatibilityBadge = result?.AIO_Compatibility_Badge;
       }

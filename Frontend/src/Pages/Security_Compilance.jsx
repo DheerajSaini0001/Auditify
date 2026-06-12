@@ -226,6 +226,14 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
                   {meta.protocol}
                 </code>
               </div>
+              {(meta.activeCount !== undefined || meta.passiveCount !== undefined) && (
+                <div className="flex justify-between items-center">
+                  <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Mixed Content:</span>
+                  <span className={`fontsemibold ${meta.activeCount > 0 ? "text-rose-500" : meta.passiveCount > 0 ? "text-amber-500" : "text-emerald-500"}`}>
+                    {meta.activeCount > 0 || meta.passiveCount > 0 ? `${meta.activeCount || 0} active / ${meta.passiveCount || 0} passive` : "None"}
+                  </span>
+                </div>
+              )}
             </div>
           )}
 
@@ -375,18 +383,29 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
 
           {metricKey === "Third_Party_Cookies" && meta?.thirdPartyCookies && (() => {
             const total = meta.thirdPartyCookies?.length || 0;
-            const domainCount = meta.uniqueDomains ? meta.uniqueDomains.split(',').length : 0;
+            const domainCount = Array.isArray(meta.uniqueDomains)
+              ? meta.uniqueDomains.length
+              : (meta.uniqueDomains ? String(meta.uniqueDomains).split(',').length : 0);
+            const disclosed = meta.disclosed;
 
             return (
               <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"} space-y-1.5`}>
                 <div className="flex justify-between items-center">
                   <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>3rd-Party Cookies:</span>
-                  <span className={`fontsemibold ${total > 0 ? "text-rose-500" : "text-emerald-500"}`}>{total}</span>
+                  <span className={`fontsemibold ${total > 0 ? (disclosed ? "text-amber-500" : "text-rose-500") : "text-emerald-500"}`}>{total}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Unique Domains:</span>
-                  <span className={`fontsemibold ${domainCount > 0 ? "text-rose-500" : "text-emerald-500"}`}>{domainCount}</span>
+                  <span className={`fontsemibold ${darkMode ? "text-gray-300" : "text-gray-700"}`}>{domainCount}</span>
                 </div>
+                {total > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Disclosed:</span>
+                    <span className={`fontsemibold ${disclosed ? "text-emerald-500" : "text-rose-500"}`}>
+                      {disclosed ? `Yes (${meta.hasConsent ? "consent" : ""}${meta.hasConsent && meta.hasPrivacyPolicy ? " + " : ""}${meta.hasPrivacyPolicy ? "policy" : ""})` : "No"}
+                    </span>
+                  </div>
+                )}
               </div>
             );
           })()}
@@ -570,14 +589,26 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             </div>
           )}
 
-          {metricKey === "MFA_Enabled" && meta && (meta.foundKeyword || meta.ssoFound) && (
-            <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"}`}>
-              <div className="flex flex-col gap-1">
-                <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Authentication Evidence:</span>
-                <div className={`p-1.5 rounded truncate italic text-[10px] ${darkMode ? "bg-gray-900/80 text-emerald-300" : "bg-emerald-50 text-emerald-700"}`}>
-                  {meta.foundKeyword || meta.ssoFound}
-                </div>
+          {metricKey === "MFA_Enabled" && meta && (
+            <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50"} space-y-1.5`}>
+              <div className="flex justify-between items-center">
+                <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Login Surface:</span>
+                <span className={`fontsemibold ${meta.hasAuthSurface ? (darkMode ? "text-gray-200" : "text-gray-700") : "text-gray-400"}`}>
+                  {meta.hasAuthSurface ? "Detected" : "None (N/A)"}
+                </span>
               </div>
+              {meta.method && (
+                <div className="flex justify-between items-center">
+                  <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Method:</span>
+                  <code className={`px-1.5 py-0.5 rounded font-mono fontsemibold ${darkMode ? "bg-blue-500/10 text-blue-400" : "bg-blue-50 text-blue-700"}`}>{meta.method}</code>
+                </div>
+              )}
+              {(meta.mfaKeyword || meta.ssoKeyword) && (
+                <div className="flex justify-between items-center gap-2">
+                  <span className={`font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Evidence:</span>
+                  <span className={`fontsemibold italic truncate ${darkMode ? "text-emerald-300" : "text-emerald-700"}`}>{meta.mfaKeyword || meta.ssoKeyword}</span>
+                </div>
+              )}
             </div>
           )}
 
@@ -950,7 +981,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
                 </div>
               )}
 
-              {(metricKey === "MFA_Enabled" || metricKey === "GDPR_CCPA") && meta && (meta.foundKeyword || meta.ssoFound) && (
+              {metricKey === "GDPR_CCPA" && meta && (meta.foundKeyword || meta.ssoFound) && (
                 <div>
                   <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 text-emerald-500`}>Evidence Found</h5>
                   <div className={`p-2 rounded text-[10px] italic ${darkMode ? "bg-gray-800 text-gray-300" : "bg-emerald-50 text-emerald-700"}`}>

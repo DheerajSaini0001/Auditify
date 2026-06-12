@@ -51,6 +51,8 @@ ACCESSIBILITY (axe-core + custom checks)
 - List Markup
 - Heading Order
 - Aria Allowed Attr
+- Document Title (presence via axe + cross-page uniqueness by sampling internal pages)
+- WCAG 2.1 AA Compliance (unified A/AA aggregate from axe, severity-capped; display-only summary)
 
 SECURITY & COMPLIANCE
 - SSL Certificate Validity (expiry calculation)
@@ -73,6 +75,9 @@ SECURITY & COMPLIANCE
 - GDPR / CCPA (keyword + compliance widget detection)
 - Privacy Policy (visible link detection)
 - Data Collection Transparency
+- HTTPS / Site-wide (final landed URL protocol + active/passive mixed-content scan)
+- MFA Enabled (auth-surface scoped; genuine MFA vs SSO vs single-factor; N/A info-only when no login)
+- Third-Party Cookies (disclosure-aware: consent banner / privacy-policy verification)
 
 UX & CONTENT
 - Text Readability (Flesch Reading Ease, syllable counting, page-type aware)
@@ -90,6 +95,8 @@ UX & CONTENT
 - Sticky Header Usage (device-specific height limits)
 - Intrusive Interstitials / Pop-Up Assessment
 - Layout Consistency (flex/grid/container detection)
+- Mobile Experience / Responsive Layout (viewport meta + horizontal-overflow + responsive images + media queries)
+- Mobile Usability (44px tap-target sizing + legible-text + thumb-reach; info-only on desktop)
 - SSL Indicators
 
 CONVERSION & LEAD FLOW
@@ -179,17 +186,12 @@ ON PAGE SEO
 ACCESSIBILITY
 - Descriptive Alt Text - presence checked, descriptiveness not analyzed
 - Decorative Image Handling - relies entirely on axe-core defaults
-- Document Title - presence only, uniqueness across pages not checked
 
 SECURITY & COMPLIANCE
-- HTTPS / Site-wide HTTPS - target URL protocol only; no mixed content check
-- MFA Enabled - heuristic keyword/SSO detection; enforcement not validated
-- Third-Party Cookies - detected but disclosure not verified
+- (none - HTTPS/mixed-content, MFA, and Third-Party Cookie disclosure upgraded to full checks)
 
 UX & CONTENT
 - Table of Contents - anchor/back-to-top detection only, not a real TOC check
-- Mobile Usability - indirect via device-aware metrics; no touch-target validation
-- Mobile Experience / Responsive Layout - flex/grid pattern check only
 
 CONVERSION & LEAD FLOW
 - (none - CTA Flow Alignment upgraded to full rendered-geometry funnel analysis)
@@ -247,8 +249,6 @@ ON PAGE SEO
 
 ACCESSIBILITY
 - Keyboard Navigation (full-site traversal test)
-- Unique Titles (cross-page)
-- WCAG 2.1 AA Compliance (unified aggregate score)
 
 SECURITY & COMPLIANCE
 - Mixed Content detection

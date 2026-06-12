@@ -54,7 +54,7 @@ const cleanText = (text, includeNgrams = false) => {
   return [...filteredWords, ...ngrams];
 };
 
-const checkSlugs = (url) => {
+const checkSlugs = (url, $ = null) => {
   try {
     const u = new URL(url);
     const slug = u.pathname;
@@ -66,23 +66,79 @@ const checkSlugs = (url) => {
 
     const segments = slug.split('/').filter(Boolean);
     const lastSegment = segments[segments.length - 1];
-
     if (!lastSegment) return evaluateParameter(1, "Root URL", { slug: "/", valid: true });
 
-    const checks = [];
-    if (lastSegment.length > 50) checks.push("Slug is too long (>50 chars)");
-    if (/[A-Z]/.test(lastSegment)) checks.push("Slug contains uppercase letters");
-    if (/_/.test(lastSegment)) checks.push("Slug contains underscores (use hyphens)");
-    if (/[0-9]/.test(lastSegment) && segments.length > 2) checks.push("Slug contains numbers (check for dates/IDs)"); // Soft check
+    let decoded = lastSegment;
+    try { decoded = decodeURIComponent(lastSegment); } catch (_) {}
+    const slugNoExt = decoded.replace(/\.(html?|php|aspx?|jsp|cfm)$/i, ""); // strip ext for readability
+    const tokens = slugNoExt.split(/[-_]/).filter(Boolean);
+    const charLength = lastSegment.length;
+    const wordCount = tokens.length;
+    const issues = []; // { msg, sev: 'high' | 'low' }
 
-    const valid = checks.length === 0;
-    const score = valid ? 1 : 0.5;
-    const details = valid ? "URL slug is SEO friendly" : `Slug issues: ${checks.join(", ")}`;
+    // ── Length ────────────────────────────────────────────────────
+    if (charLength > 75) issues.push({ msg: "Slug is very long (>75 chars)", sev: "high" });
+    else if (charLength > 60) issues.push({ msg: "Slug is long (>60 chars)", sev: "low" });
 
-    return evaluateParameter(score, details, {
+    // ── Format ────────────────────────────────────────────────────
+    if (/[A-Z]/.test(lastSegment)) issues.push({ msg: "Contains uppercase letters", sev: "high" });
+    if (/_/.test(lastSegment)) issues.push({ msg: "Uses underscores (prefer hyphens)", sev: "high" });
+
+    // ── Readability / keywords ────────────────────────────────────
+    const lowerTokens = tokens.map(t => t.toLowerCase());
+    const numericTokens = lowerTokens.filter(t => /^\d+$/.test(t) || /^[a-f0-9]{8,}$/i.test(t));
+    const meaningful = lowerTokens.filter(t => t.length > 1 && !/^\d+$/.test(t) && !stopWords.has(t));
+    const stopCount = lowerTokens.filter(t => stopWords.has(t)).length;
+
+    if (meaningful.length === 0) issues.push({ msg: "No descriptive keywords in slug", sev: "high" });
+    if (numericTokens.length && numericTokens.length >= lowerTokens.length / 2) issues.push({ msg: "Slug is mostly numbers/IDs", sev: "low" });
+    if (wordCount > 8) issues.push({ msg: `Too many words (${wordCount}); keep it concise`, sev: "low" });
+    if (wordCount >= 2 && stopCount > wordCount / 2) issues.push({ msg: "Heavy on filler/stop words", sev: "low" });
+
+    // ── Keyword alignment with title / H1 (when $ is available) ────
+    let keywordAligned = null;
+    let matchedKeywords = [];
+    if ($ && meaningful.length) {
+      const titleText = ($("title").first().text() || "") + " " + ($("h1").first().text() || "");
+      const titleTerms = new Set(cleanText(titleText));
+      matchedKeywords = meaningful.filter(t => titleTerms.has(t));
+      keywordAligned = matchedKeywords.length > 0;
+      if (titleTerms.size > 0 && !keywordAligned) {
+        issues.push({ msg: "Slug keywords don't match the page title/H1", sev: "low" });
+      }
+    }
+
+    // ── Severity-tiered score ─────────────────────────────────────
+    const highCount = issues.filter(i => i.sev === "high").length;
+    const lowCount = issues.filter(i => i.sev === "low").length;
+    let score;
+    if (issues.length === 0) score = 1;
+    else if (highCount === 0) score = lowCount >= 3 ? 0.5 : 0.7;
+    else score = highCount >= 2 ? 0.3 : 0.5;
+
+    const issueMsgs = issues.map(i => i.msg);
+    const details = issues.length === 0
+      ? `SEO-friendly slug (${wordCount} word${wordCount === 1 ? "" : "s"})`
+      : `Slug issues: ${issueMsgs.join(", ")}`;
+
+    return evaluateParameter(parseFloat(score.toFixed(2)), details, {
       slug: lastSegment,
-      valid,
-      issues: checks,
+      decoded: slugNoExt,
+      valid: issues.length === 0,
+      charLength,
+      wordCount,
+      tokens,
+      meaningfulKeywords: meaningful,
+      numericTokens,
+      keywordAligned,
+      matchedKeywords,
+      issues: issueMsgs,
+      why_this_occurred: issues.length
+        ? `The slug has ${issues.length} issue(s): ${issueMsgs.join(", ")}.`
+        : "The slug is concise, lowercase, hyphenated and keyword-rich.",
+      how_to_fix: issues.length
+        ? "Use a short (3-5 word) lowercase, hyphenated slug built from the page's primary keywords; avoid IDs, dates, stop-word filler, and uppercase."
+        : "No changes needed.",
     });
   } catch (e) {
     return evaluateParameter(0, "Invalid URL for slug check", { error: e.message });
@@ -106,6 +162,16 @@ const checkImages = async ($, base_url) => {
     const missingTitle = [];
 
     const brokenImages = []; // 🔥 NEW
+
+    // Image-optimization accumulators (next-gen formats, lazy loading, file naming)
+    let nextGenCount = 0;        // webp / avif
+    let lazyCount = 0;           // loading="lazy"
+    let responsiveCount = 0;     // srcset / sizes
+    let descriptiveNameCount = 0;
+    let namingDenom = 0;         // non-data images considered for naming
+    const legacyExamples = [];
+    const badNameExamples = [];
+    const GENERIC_NAME = /^(img|image|dsc|dscn|photo|pic|picture|screenshot|untitled|download|unnamed|file|scaled|cropped|asset)[-_]?\d*$|^\d+$|^[a-f0-9]{16,}$|^[a-z0-9]{1,3}$/i;
 
     const meaningless = ["", "image", "logo", "icon", "pic", "picture", "photo", " ", "12345", "-", "graphics", "img", "undefined", "null", "spacer"];
 
@@ -133,11 +199,37 @@ const checkImages = async ($, base_url) => {
       } else {
         missingTitle.push({ src });
       }
+
+      // FORMAT (next-gen) / LAZY / RESPONSIVE / NAMING
+      const srcset = el.attr("srcset") || "";
+      const fmtHay = (src + " " + srcset).toLowerCase();
+      const inPicture = el.closest("picture");
+      const pictureNextGen = inPicture.length > 0 &&
+        inPicture.find('source[type="image/webp"], source[type="image/avif"], source[srcset*=".webp"], source[srcset*=".avif"]').length > 0;
+      const isNextGen = /\.(webp|avif)(\?|#|$)/.test(fmtHay) || fmtHay.includes("format=webp") || fmtHay.includes("format=avif") || pictureNextGen;
+      if (isNextGen) nextGenCount++;
+      else if (/\.(jpe?g|png)(\?|#|$)/.test(fmtHay) && legacyExamples.length < 10) legacyExamples.push(src);
+
+      if ((el.attr("loading") || "").toLowerCase() === "lazy") lazyCount++;
+      if (srcset || el.attr("sizes")) responsiveCount++;
+
+      if (src && !src.startsWith("data:") && !src.startsWith("blob:")) {
+        namingDenom++;
+        const fname = (src.split("?")[0].split("#")[0].split("/").pop() || "").replace(/\.[a-z0-9]+$/i, "");
+        const descriptive = fname && !GENERIC_NAME.test(fname) && /[a-z]{3,}/i.test(fname);
+        if (descriptive) descriptiveNameCount++;
+        else if (badNameExamples.length < 10) badNameExamples.push(fname || src);
+      }
     }
 
     const altScore = total > 0 ? (withAlt / total) : 1;
     const meaningfulScore = total > 0 ? (meaningfulAlt / total) : 1;
     const titleScore = total > 0 ? (withTitle / total) : 1;
+    const nextGenScore = total > 0 ? (nextGenCount / total) : 1;
+    // Lazy loading: don't penalise pages with only a few (above-the-fold) images.
+    const lazyScore = total <= 4 ? 1 : (lazyCount / total);
+    const namingScore = namingDenom > 0 ? (descriptiveNameCount / namingDenom) : 1;
+    const responsiveScore = total > 0 ? (responsiveCount / total) : 1;
 
     // 🔍 SIZE CHECK
     const largeImages = [];
@@ -204,10 +296,13 @@ const checkImages = async ($, base_url) => {
 
     // 🎯 SCORE
     const weightedScore =
-      (altScore * 0.5) +
-      (meaningfulScore * 0.2) +
-      (titleScore * 0.1) +
-      (sizeScore * 0.2);
+      (altScore * 0.35) +
+      (meaningfulScore * 0.13) +
+      (titleScore * 0.05) +
+      (sizeScore * 0.15) +
+      (nextGenScore * 0.12) +
+      (lazyScore * 0.10) +
+      (namingScore * 0.10);
 
     let score = parseFloat(weightedScore.toFixed(2));
     if (score < 1 && score < 0.5) score = 0.5;
@@ -231,10 +326,13 @@ const checkImages = async ($, base_url) => {
     if (meaningfulAlt < total) issues.push(`${total - meaningfulAlt} weak Alt text`);
     if (largeImages.length > 0) issues.push(`${largeImages.length} large images (>150KB)`);
     if (brokenImages.length > 0) issues.push(`${brokenImages.length} broken images`);
+    if (nextGenCount < total) issues.push(`${total - nextGenCount} images not next-gen (WebP/AVIF)`);
+    if (total > 4 && lazyCount < total - 2) issues.push(`${total - lazyCount} images not lazy-loaded`);
+    if (descriptiveNameCount < namingDenom) issues.push(`${namingDenom - descriptiveNameCount} non-descriptive file names`);
 
     if (issues.length > 0) {
       explanation = `Issues found: ${issues.join(", ")}.`;
-      recommendation = "Fix broken images, add descriptive Alt text, and compress large images.";
+      recommendation = "Fix broken images, add descriptive Alt text, serve WebP/AVIF, lazy-load below-the-fold images, use keyword-rich file names, and compress large images.";
     } else {
       explanation = "All images are optimized and accessible.";
       recommendation = "Maintain this optimization.";
@@ -250,6 +348,16 @@ const checkImages = async ($, base_url) => {
       largeImages,
       broken_images_count: brokenImages.length, // 🔥 NEW
       broken_images: brokenImages, // 🔥 NEW
+      nextGenCount,
+      nextGenPct: total > 0 ? Math.round((nextGenCount / total) * 100) : 100,
+      lazyCount,
+      lazyPct: total > 0 ? Math.round((lazyCount / total) * 100) : 100,
+      responsiveCount,
+      descriptiveNameCount,
+      namingDenom,
+      namingPct: namingDenom > 0 ? Math.round((descriptiveNameCount / namingDenom) * 100) : 100,
+      legacyExamples,
+      badNameExamples,
       why_this_occurred: explanation,
       how_to_fix: recommendation
     });
@@ -493,99 +601,97 @@ const checkSemanticTags = async ($) => {
     tags.forEach(tag => {
       const count = $(tag).length;
       result[tag] = count;
-
-      if (count > 0) {
-        foundTags.push(tag);
-      } else {
+      if (count > 0) foundTags.push(tag);
+      else {
         missingTags.push(tag);
-
-        // 🔍 Heuristic detection
-        const heuristicSelector = `
-          div[class*="${tag}"], 
-          div[id*="${tag}"],
-          section[class*="${tag}"],
-          article[class*="${tag}"]
-        `;
-        if ($(heuristicSelector).length > 0) {
-          potentialReplacements.push(tag);
-        }
+        const heuristicSelector = `div[class*="${tag}"], div[id*="${tag}"], section[class*="${tag}"], article[class*="${tag}"]`;
+        if ($(heuristicSelector).length > 0) potentialReplacements.push(tag);
       }
     });
 
     const mainCount = result["main"];
-    const hasHeader = result["header"] > 0;
-    const hasNav = result["nav"] > 0;
-    const hasFooter = result["footer"] > 0;
 
-    // ⚠️ WARNING: <main> missing or multiple
-    if (mainCount === 0 || mainCount > 1) {
-      return evaluateParameter(0.5, 
-        mainCount === 0 ? "Main tag missing" : "Multiple main tags found",
-        {
-          ...result,
-          found: foundTags,
-          missing: missingTags,
-          potentialReplacements,
-          why_this_occurred: "<main> should exist once to define primary content.",
-          how_to_fix: mainCount === 0
-            ? "Add a <main> tag wrapping the core content."
-            : "Ensure only one <main> tag is used."
-        }
-      );
+    // ARIA landmark fallback for missing native tags
+    const ariaLandmarks = {
+      main: $('[role="main"]').length,
+      navigation: $('[role="navigation"]').length,
+      banner: $('[role="banner"]').length,           // header
+      contentinfo: $('[role="contentinfo"]').length, // footer
+    };
+    const hasMain = mainCount === 1 || (mainCount === 0 && ariaLandmarks.main > 0);
+    const hasHeader = result["header"] > 0 || ariaLandmarks.banner > 0;
+    const hasNav = result["nav"] > 0 || ariaLandmarks.navigation > 0;
+    const hasFooter = result["footer"] > 0 || ariaLandmarks.contentinfo > 0;
+
+    // Sectioning content (section/article) should each carry a heading.
+    const sectioning = $("section, article").toArray();
+    let sectioningWithHeadings = 0;
+    const sectionsWithoutHeadings = [];
+    sectioning.forEach(el => {
+      const $el = $(el);
+      const labelled = $el.find("h1,h2,h3,h4,h5,h6,[role='heading']").length > 0 || $el.attr("aria-label") || $el.attr("aria-labelledby");
+      if (labelled) sectioningWithHeadings++;
+      else if (sectionsWithoutHeadings.length < 10) {
+        const cls = ($el.attr("class") || "").split(/\s+/).slice(0, 2).filter(Boolean).join(".");
+        sectionsWithoutHeadings.push(`${el.name}${cls ? "." + cls : ""}`);
+      }
+    });
+    const sectioningCount = sectioning.length;
+
+    // Div-soup ratio: semantic block elements vs <div>.
+    const semanticCount = $("main,nav,article,section,header,footer,aside,figure,figcaption,details,summary").length;
+    const divCount = $("div").length;
+    const semanticRatio = (semanticCount + divCount) > 0 ? semanticCount / (semanticCount + divCount) : 1;
+
+    // ── Composite score ───────────────────────────────────────────
+    let raw = 0;
+    const issues = [];
+    if (mainCount === 1) raw += 0.25;
+    else if (hasMain) { raw += 0.15; issues.push(mainCount > 1 ? "Multiple <main> elements" : "<main> via ARIA role only"); }
+    else issues.push("No <main> landmark");
+    if (hasHeader) raw += 0.10; else issues.push("No <header>/banner");
+    if (hasNav) raw += 0.10; else issues.push("No <nav>");
+    if (hasFooter) raw += 0.10; else issues.push("No <footer>/contentinfo");
+    if (result["article"] > 0 || result["section"] > 0) raw += 0.10;
+    else issues.push("No <section>/<article> sectioning content");
+    if (sectioningCount === 0) raw += 0.20; // nothing to fault
+    else {
+      const r = sectioningWithHeadings / sectioningCount;
+      raw += 0.20 * r;
+      if (r < 0.7) issues.push(`${sectioningCount - sectioningWithHeadings}/${sectioningCount} sections lack a heading`);
     }
+    raw += 0.15 * Math.min(1, semanticRatio / 0.25); // ~25%+ semantic is healthy
+    if (semanticRatio < 0.1) issues.push("Heavily div-based markup (low semantic ratio)");
 
-    // ⚠️ WARNING: missing header/nav/footer
-    if (!hasHeader || !hasNav || !hasFooter) {
-      return evaluateParameter(0.5, "Missing core semantic tags", {
-        ...result,
-        found: foundTags,
-        missing: missingTags,
-        potentialReplacements,
-        why_this_occurred: "Core tags like <header>, <nav>, or <footer> are missing.",
-        how_to_fix: "Add <header>, <nav>, and <footer> for better structure."
-      });
-    }
+    raw = Math.max(0, Math.min(1, raw));
+    // Snap strong structures to a clean pass (evaluateParameter passes only at exactly 1).
+    const score = raw >= 0.9 ? 1 : parseFloat(raw.toFixed(2));
 
-    // ⚠️ / ❌ Only div structure
-    const totalSemanticUsed = foundTags.length;
-    const onlyMainPresent = totalSemanticUsed === 1 && mainCount === 1;
+    const details = score === 1
+      ? "Strong semantic structure"
+      : (score >= 0.5 ? `Semantic structure could improve: ${issues.slice(0, 3).join(", ")}` : `Weak semantic structure: ${issues.slice(0, 3).join(", ")}`);
 
-    if (onlyMainPresent) {
-      const isSevere = potentialReplacements.length === 0;
-
-      return evaluateParameter(
-        isSevere ? 0 : 0.5,
-        isSevere
-          ? "Only div structure (no semantics)"
-          : "Div-based structure detected",
-        {
-          ...result,
-          found: foundTags,
-          missing: missingTags,
-          potentialReplacements,
-          why_this_occurred: "Page relies heavily on <div> instead of semantic tags.",
-          how_to_fix: potentialReplacements.length > 0
-            ? `Replace <div class="${potentialReplacements[0]}"> with <${potentialReplacements[0]}>.`
-            : "Refactor layout using semantic tags like <section>, <article>, etc."
-        }
-      );
-    }
-
-    // 🎯 GOOD
-    return evaluateParameter(1, "Proper semantic structure", {
+    return evaluateParameter(score, details, {
       ...result,
       found: foundTags,
       missing: missingTags,
       potentialReplacements,
-      why_this_occurred: "All major semantic tags are properly used.",
-      how_to_fix: "Maintain this structure."
+      ariaLandmarks,
+      sectioningCount,
+      sectioningWithHeadings,
+      sectionsWithoutHeadings,
+      semanticCount,
+      divCount,
+      semanticRatio: parseFloat(semanticRatio.toFixed(2)),
+      semanticScore: parseFloat(raw.toFixed(2)),
+      issues,
+      why_this_occurred: issues.length ? `Semantic issues: ${issues.join(", ")}.` : "All major semantic landmarks and sectioning are properly used.",
+      how_to_fix: issues.length
+        ? "Use a single <main> plus <header>/<nav>/<footer>; wrap content in <section>/<article> each with a heading; replace generic <div>s with semantic elements."
+        : "Maintain this structure.",
     });
-
   } catch (err) {
-    return evaluateParameter(0, "Error checking semantic tags", {
-      error: err.message,
-      importance: "Medium"
-    });
+    return evaluateParameter(0, "Error checking semantic tags", { error: err.message });
   }
 };
 
@@ -698,6 +804,7 @@ const isTextRelatedToUrl = (text, href) => {
 const checkContextualLinks = async ($, url) => {
   try {
     const contentLinks = new Set();
+    const contentLinkText = new Map(); // href -> anchor text (for semantic relatedness)
     const menuLinks = new Set();
     const issues = [];
 
@@ -726,6 +833,7 @@ const checkContextualLinks = async ($, url) => {
         // Nav links: only include if text is semantically related to the URL
         if (isTextRelatedToUrl(text, href)) {
           contentLinks.add(href);
+          if (!contentLinkText.has(href)) contentLinkText.set(href, text);
         }
         return;
       }
@@ -734,6 +842,7 @@ const checkContextualLinks = async ($, url) => {
       // Include if → has no visible text (icon/image anchor) OR text is related to the URL
       if (!text || isTextRelatedToUrl(text, href)) {
         contentLinks.add(href);
+        if (!contentLinkText.has(href)) contentLinkText.set(href, text);
       }
     });
 
@@ -842,6 +951,42 @@ if (brokenLinks.length > 0) {
   issues.push(`${brokenLinks.length} broken contextual links found.`);
 }
 
+// 🧠 Semantic relatedness — are the in-content links topically related to THIS page?
+const topicTerms = new Set();
+const titleTxt = $("title").first().text() || "";
+const h1Txt = $("h1").first().text() || "";
+const headTxt = $("h2, h3").map((i, el) => $(el).text()).get().join(" ");
+[titleTxt, h1Txt, headTxt].forEach(t => cleanText(t).forEach(w => topicTerms.add(w)));
+// Add the most frequent body terms so a single generic heading doesn't dominate the topic.
+const _freq = {};
+cleanText((scope.text() || "").slice(0, 1500)).forEach(w => { _freq[w] = (_freq[w] || 0) + 1; });
+Object.entries(_freq).sort((a, b) => b[1] - a[1]).slice(0, 15).forEach(([w]) => topicTerms.add(w));
+
+const relatedExamples = [];
+const unrelatedExamples = [];
+let relatedCount = 0;
+const uniqueLinks = Array.from(contentLinks);
+uniqueLinks.forEach(href => {
+  const anchor = contentLinkText.get(href) || "";
+  let slug = "";
+  try { slug = new URL(href, url).pathname.replace(/[-_/]+/g, " "); } catch (_) { slug = String(href).replace(/[-_/]+/g, " "); }
+  const linkTerms = new Set([...cleanText(anchor), ...cleanText(slug)]);
+  const shared = [...linkTerms].filter(t => topicTerms.has(t));
+  if (shared.length > 0) {
+    relatedCount++;
+    if (relatedExamples.length < 8) relatedExamples.push({ href, anchor: anchor.slice(0, 40), shared: shared.slice(0, 4) });
+  } else if (unrelatedExamples.length < 8) {
+    unrelatedExamples.push({ href, anchor: anchor.slice(0, 40) });
+  }
+});
+const relatedRatio = uniqueLinks.length > 0 ? relatedCount / uniqueLinks.length : 1;
+
+// Only judge relatedness when there are enough links for it to be meaningful.
+if (uniqueLinks.length >= 5 && relatedRatio < 0.3) {
+  if (score === 1) score = 0.5;
+  issues.push(`Only ${Math.round(relatedRatio * 100)}% of in-content links are topically related to this page.`);
+}
+
 const details = score === 1
   ? "Good contextual linking"
   : "Contextual linking issues found";
@@ -862,10 +1007,14 @@ else if (ratio < 0.3) {
   explanation = "Most links are in navigation instead of content.";
   recommendation = "Increase contextual linking.";
 }
+else if (uniqueLinks.length >= 5 && relatedRatio < 0.3) {
+  explanation = "Most in-content links point to topically unrelated pages.";
+  recommendation = "Link to pages that share this page's topic (e.g. related models, services, or guides) to build topical clusters.";
+}
 else if (missingLinks.length > 0) {
   explanation = "Important pages are not linked within content.";
   recommendation = "Link key pages inside content.";
-} 
+}
 else {
   explanation = "Links are well distributed inside content.";
   recommendation = "Maintain contextual linking strategy.";
@@ -874,6 +1023,11 @@ else {
       totalContextual,
       totalMenu,
       contextual_ratio: ratio.toFixed(2),
+      related_ratio: relatedRatio.toFixed(2),
+      related_count: relatedCount,
+      related_examples: relatedExamples,
+      unrelated_examples: unrelatedExamples,
+      topic_terms: Array.from(topicTerms).slice(0, 20),
       foundLinks: Array.from(contentLinks).slice(0, 50),
       missingLinks: missingLinks.slice(0, 20),
       broken_links_count: brokenLinks.length, // 🔥 NEW
@@ -1000,44 +1154,76 @@ const checkURLStructure = (url) => {
   try {
     const parsed = new URL(url);
     const path = parsed.pathname;
-    const issues = [];
-    let explanation = "";
-    let recommendation = "";
-
-    if (path.length > 1 && path !== path.toLowerCase()) {
-      issues.push("URL contains uppercase letters");
-    }
-    if (path.includes("_")) {
-      issues.push("URL contains underscores (use hyphens)");
-    }
-    if (parsed.search) {
-      issues.push("URL contains query parameters");
-    }
-
+    const fullLen = url.length;
     const segments = path.split('/').filter(Boolean);
-    if (segments.length > 3) {
-      issues.push("URL is too deep (> 3 segments)");
+    const depth = segments.length;
+    const issues = []; // { msg, sev: 'high' | 'low' }
+
+    // ── Format checks ─────────────────────────────────────────────
+    if (path.length > 1 && path !== path.toLowerCase()) issues.push({ msg: "Contains uppercase letters", sev: "high" });
+    if (path.includes("_")) issues.push({ msg: "Uses underscores (prefer hyphens)", sev: "high" });
+    if (parsed.search) issues.push({ msg: "Has query parameters", sev: "high" });
+    if (/%20|\s/.test(path)) issues.push({ msg: "Contains spaces / %20", sev: "high" });
+    let decodedPath = path;
+    try { decodedPath = decodeURIComponent(path); } catch (_) {}
+    if (/[^a-z0-9\-\/._~%]/i.test(decodedPath)) issues.push({ msg: "Contains special characters", sev: "low" });
+
+    // ── Hierarchy / folder checks ─────────────────────────────────
+    if (depth > 3) issues.push({ msg: `Deep path (${depth} folders, recommend ≤ 3)`, sev: depth > 4 ? "high" : "low" });
+
+    const hasFileExtension = /\.(html?|php|aspx?|jsp|cfm)$/i.test(path);
+    if (hasFileExtension) issues.push({ msg: "Ends in a file extension (.html/.php/…)", sev: "low" });
+
+    const hasDateInPath = /\/(19|20)\d{2}\/(0?[1-9]|1[0-2])(\/(0?[1-9]|[12]\d|3[01]))?(\/|$)/.test(path + "/");
+    if (hasDateInPath) issues.push({ msg: "Contains a date in the path", sev: "low" });
+
+    // Per-segment analysis: non-descriptive IDs / hashes, overly long segments
+    const nonDescriptive = [];
+    const longSegments = [];
+    segments.forEach(seg => {
+      let s = seg.toLowerCase();
+      try { s = decodeURIComponent(s); } catch (_) {}
+      if (/^\d+$/.test(s) || /^[a-f0-9]{12,}$/i.test(s)) nonDescriptive.push(seg);
+      if (s.length > 40) longSegments.push(seg);
+    });
+    if (nonDescriptive.length) issues.push({ msg: `Non-descriptive segment(s): ${nonDescriptive.slice(0, 3).join(", ")}`, sev: "low" });
+    if (longSegments.length) issues.push({ msg: "Overly long path segment(s)", sev: "low" });
+
+    // Repeated consecutive segments (/blog/blog/)
+    for (let i = 1; i < segments.length; i++) {
+      if (segments[i].toLowerCase() === segments[i - 1].toLowerCase()) { issues.push({ msg: "Repeated path segment", sev: "low" }); break; }
     }
 
-    const score = issues.length === 0 ? 1 : 0.5; // WARNING
-    const details = issues.length === 0 ? "Clean SEO URL" : `Poor URL structure: ${issues.join(", ")}`;
+    if (fullLen > 115) issues.push({ msg: `URL is long (${fullLen} chars)`, sev: "low" });
 
-    if (issues.length > 0) {
-      explanation = `The URL structure contains ${issues.length} potential issue(s): ${issues.join(", ")}.`;
-      recommendation = "Simplify the URL structure. Use lowercase letters, hyphens instead of underscores, avoid query parameters for static pages, and keep the path depth shallow.";
-    } else {
-      explanation = "The URL follows standard SEO conventions (clean, concise, and descriptive).";
-      recommendation = "No changes needed. Maintain this structure for future pages.";
-    }
+    // ── Severity-tiered score ─────────────────────────────────────
+    const highCount = issues.filter(i => i.sev === "high").length;
+    const lowCount = issues.filter(i => i.sev === "low").length;
+    let score;
+    if (issues.length === 0) score = 1;
+    else if (highCount === 0) score = lowCount >= 3 ? 0.5 : 0.7;
+    else score = highCount >= 2 ? 0.3 : 0.5;
+
+    const issueMsgs = issues.map(i => i.msg);
+    const hierarchy = depth === 0 ? "root" : segments.join(" › ");
+    const details = issues.length === 0
+      ? (depth === 0 ? "Clean root URL" : `Clean URL hierarchy (${depth} folder${depth === 1 ? "" : "s"})`)
+      : `URL structure issues: ${issueMsgs.join(", ")}`;
 
     return evaluateParameter(parseFloat(score.toFixed(2)), details, {
-      url,
-      issues,
-      why_this_occurred: explanation,
-      how_to_fix: recommendation,
+      url, path, depth, segments, length: fullLen,
+      hierarchy, hasFileExtension, hasDateInPath,
+      nonDescriptiveSegments: nonDescriptive,
+      issues: issueMsgs,
+      why_this_occurred: issues.length
+        ? `The URL has ${issues.length} structural issue(s): ${issueMsgs.join(", ")}.`
+        : "The URL uses a clean, shallow, descriptive folder hierarchy.",
+      how_to_fix: issues.length
+        ? "Use lowercase, hyphen-separated, descriptive folders; keep depth ≤ 3; drop file extensions, dates, numeric IDs, and query parameters from indexable URLs."
+        : "No changes needed. Maintain this structure for future pages.",
     });
   } catch (err) {
-    return evaluateParameter(0, "Invalid URL format", { url, error: err.message, why_this_occurred: "The provided URL could not be parsed.", how_to_fix: "Ensure the URL is correctly formatted (e.g. https://example.com).", importance: "Critical", seo_best_practices: "URLs must be valid RFC 3986 strings." });
+    return evaluateParameter(0, "Invalid URL format", { url, error: err.message, why_this_occurred: "The provided URL could not be parsed.", how_to_fix: "Ensure the URL is correctly formatted (e.g. https://example.com)." });
   }
 };
 
@@ -1169,83 +1355,135 @@ const checkMetaDescription = ($) => {
 
 const checkCanonical = ($, url) => {
   const links = $('link[rel="canonical"]');
-  const exists = links.length > 0; // Boolean for clarity
+  const exists = links.length > 0;
   const canonical = exists ? (links.attr("href") || "").trim() : "";
+
+  // Duplicate-content / pagination context signals
+  const inHead = $('head link[rel="canonical"]').length > 0;
+  const robotsContent = (($('meta[name="robots"]').attr('content') || "") + " " + ($('meta[name="googlebot"]').attr('content') || "")).toLowerCase();
+  const hasNoindex = /noindex/.test(robotsContent);
+  const hasRelNext = $('link[rel="next"]').length > 0;
+  const hasRelPrev = $('link[rel="prev"]').length > 0;
+  const pageMatch = String(url).match(/[?&]page=(\d+)|\/page\/(\d+)/i);
+  const pageNum = pageMatch ? parseInt(pageMatch[1] || pageMatch[2], 10) : null;
+  const isPaginated = hasRelNext || hasRelPrev || (pageNum != null);
+  const isDeepPage = (pageNum != null && pageNum > 1) || hasRelPrev;
 
   let score = 0;
   let details = "Canonical tag missing";
   let explanation = "";
   let recommendation = "";
   let isSelfReferencing = false;
+  let canonicalizesParams = false;
+  let paginationIssue = false;
+  let noindexConflict = false;
 
   if (!exists) {
-    score = 0.5; // WARNING
-    explanation = "No canonical tag was found in the <head> section of the page.";
-    recommendation = "Add a <link rel=\"canonical\" href=\"...\" /> tag pointing to the authoritative URL for this page to prevent duplicate content issues.";
+    score = 0.5;
+    details = "Canonical tag missing";
+    explanation = "No canonical tag was found in the <head> of the page.";
+    recommendation = "Add a <link rel=\"canonical\" href=\"...\" /> pointing to the authoritative URL for this page to prevent duplicate-content issues.";
   } else if (links.length > 1) {
     score = 0;
     details = "Multiple canonical tags found";
-    explanation = "Multiple <link rel=\"canonical\"> tags were detected on the page.";
-    recommendation = "Ensure only one canonical tag is present per page. Remove duplicate tags.";
+    explanation = "Multiple <link rel=\"canonical\"> tags were detected; search engines may ignore all of them.";
+    recommendation = "Keep exactly one canonical tag per page and remove the duplicates.";
   } else if (!canonical) {
     score = 0;
     details = "Canonical tag empty";
-    explanation = "A canonical tag exists, but the href attribute is empty.";
-    recommendation = "Add the correct absolute URL to the href attribute of the canonical tag.";
+    explanation = "A canonical tag exists but its href attribute is empty.";
+    recommendation = "Set the correct absolute URL in the href attribute of the canonical tag.";
+  } else if (!inHead) {
+    score = 0.5;
+    details = "Canonical tag not in <head>";
+    explanation = "The canonical tag is not inside the <head>; canonicals placed in the <body> are ignored by search engines.";
+    recommendation = "Move the <link rel=\"canonical\"> into the <head> section.";
   } else {
     try {
       const canonicalUrl = new URL(canonical, url);
       const currentUrl = new URL(url);
 
-      // Helper: Get comparison string
       const getComparisonString = (uObj) => {
         const host = uObj.hostname.replace(/^www\./, '').toLowerCase();
         let path = uObj.pathname;
-        if (path.length > 1 && path.endsWith('/')) {
-          path = path.slice(0, -1);
-        }
+        if (path.length > 1 && path.endsWith('/')) path = path.slice(0, -1);
         return host + path + uObj.search;
       };
 
       const canonStr = getComparisonString(canonicalUrl);
       const currStr = getComparisonString(currentUrl);
-
       isSelfReferencing = canonStr === currStr;
+
+      const canonHost = canonicalUrl.hostname.replace(/^www\./, '');
+      const currHost = currentUrl.hostname.replace(/^www\./, '');
+      // Same path, params present on current but stripped on canonical => canonicalizing a parameterized variant
+      canonicalizesParams =
+        canonHost === currHost &&
+        canonicalUrl.pathname.replace(/\/$/, '') === currentUrl.pathname.replace(/\/$/, '') &&
+        !!currentUrl.search && !canonicalUrl.search;
 
       if (isSelfReferencing) {
         score = 1;
-        details = "Self-referencing canonical tag";
-        explanation = "The canonical tag correctly points to the current page URL.";
-        recommendation = "No action needed. This confirms the page is the master version.";
-      } else {
-        // Check if same root domain
-        const canonHost = canonicalUrl.hostname.replace(/^www\./, '');
-        const currHost = currentUrl.hostname.replace(/^www\./, '');
-
-        if (canonHost === currHost) {
+        details = isDeepPage ? "Self-referencing canonical (paginated page)" : "Self-referencing canonical tag";
+        explanation = isDeepPage
+          ? "The paginated page correctly canonicalizes to itself, keeping its deep content indexable."
+          : "The canonical tag correctly points to the current page URL.";
+        recommendation = "No action needed.";
+      } else if (canonHost === currHost) {
+        if (isPaginated && isDeepPage) {
+          score = 0.5;
+          paginationIssue = true;
+          details = "Paginated page canonicalizes to another page";
+          explanation = "This is a deep paginated page but its canonical points to a different page (often page 1). Items unique to this page may not get indexed.";
+          recommendation = "Self-canonicalize each paginated page (page N canonical = page N), using rel=prev/next or a 'view-all' page rather than canonicalizing every page to page 1.";
+        } else if (canonicalizesParams) {
+          score = 1;
+          details = "Canonicalizes a parameterized URL variant";
+          explanation = "The canonical strips query parameters and points to the clean base URL — correct handling of tracking/sort/filter variants.";
+          recommendation = "No action needed; this consolidates duplicate parameterized URLs.";
+        } else {
           score = 1;
           details = "Canonical points to another internal URL";
-          explanation = "The canonical tag points to a different URL on the same domain. This indicates this page is a duplicate or variant.";
-          recommendation = "Ensure this is intentional (e.g., for tracking parameters or similar content). If this page should be indexed, point the canonical to itself.";
-        } else {
-          score = 0; // ERROR
-          details = "Canonical points to external domain";
-          explanation = "The canonical tag points to a completely different domain.";
-          recommendation = "Verify if this is a cross-domain syndication. If not, correct the canonical link to point to your own domain.";
+          explanation = "The canonical points to a different URL on the same domain, marking this page as a duplicate/variant of it.";
+          recommendation = "Confirm this is intentional. If this page should be indexed on its own, point the canonical to itself.";
         }
+      } else {
+        score = 0;
+        details = "Canonical points to external domain";
+        explanation = "The canonical tag points to a different domain.";
+        recommendation = "Verify this is intentional cross-domain syndication; otherwise point the canonical to your own domain.";
       }
     } catch (e) {
       score = 0;
       details = "Invalid Canonical URL";
-      explanation = "The URL specified in the canonical tag is malformed.";
-      recommendation = "Correct the URL format in the canonical tag (ensure it includes protocol like https://).";
+      explanation = "The URL in the canonical tag is malformed.";
+      recommendation = "Correct the URL format (include the protocol, e.g. https://).";
     }
+  }
+
+  // noindex + canonical-to-a-different-URL is a contradictory signal
+  if (canonical && hasNoindex && !isSelfReferencing && score > 0.5) {
+    noindexConflict = true;
+    score = 0.5;
+    details = "noindex conflicts with canonical";
+    explanation = "The page is set to noindex but also has a canonical pointing to a different URL — contradictory signals that search engines may handle unpredictably.";
+    recommendation = "Use either noindex OR a cross-URL canonical, not both. For a duplicate you want consolidated, drop the noindex and keep the canonical.";
   }
 
   return evaluateParameter(score, details, {
     canonical,
-    exists: exists ? 1 : 0, // Keep 1/0 for compatibility if needed, but logic uses boolean
+    exists: exists ? 1 : 0,
     isSelfReferencing,
+    inHead,
+    hasNoindex,
+    noindexConflict,
+    isPaginated,
+    isDeepPage,
+    pageNum,
+    hasRelNext,
+    hasRelPrev,
+    canonicalizesParams,
+    paginationIssue,
     why_this_occurred: explanation,
     how_to_fix: recommendation,
   });
@@ -1285,22 +1523,114 @@ const checkSocial = ($) => {
   const twDetails = twScore === 1 ? "Twitter Card tags are optimized" : twScore === 0.5 ? `Missing key Twitter tags: ${twMissing.join(", ")}` : "No Twitter Card tags found";
   const twitterMetric = evaluateParameter(twScore, twDetails, { tags: twTags, missing: twMissing, parameter: "1 if twitter:card and twitter:title exist" });
 
-  // 3. Social Links
-  const socialDomains = ["facebook.com", "twitter.com", "x.com", "linkedin.com", "instagram.com", "youtube.com", "pinterest.com", "tiktok.com", "reddit.com", "whatsapp.com", "snapchat.com", "medium.com"];
+  // 3. Social Profiles (sameAs consistency)
+  const platformOf = (u) => {
+    const map = {
+      "facebook.com": "facebook", "fb.com": "facebook", "twitter.com": "twitter", "x.com": "twitter",
+      "linkedin.com": "linkedin", "instagram.com": "instagram", "youtube.com": "youtube", "youtu.be": "youtube",
+      "pinterest.com": "pinterest", "tiktok.com": "tiktok", "reddit.com": "reddit", "snapchat.com": "snapchat",
+      "medium.com": "medium", "yelp.com": "yelp"
+    };
+    try {
+      const h = new URL(u, "https://x.com").hostname.replace(/^www\./, "").toLowerCase();
+      for (const d in map) if (h.includes(d)) return map[d];
+    } catch (e) {}
+    return null;
+  };
+  const normProfile = (u) => {
+    try {
+      const x = new URL(u, "https://x.com");
+      return (x.hostname.replace(/^www\./, "") + x.pathname.replace(/\/$/, "")).toLowerCase();
+    } catch (e) { return String(u).toLowerCase(); }
+  };
+
+  // On-page social links
   const foundLinks = [];
   $("a").each((i, el) => {
     const href = $(el).attr("href");
-    if (href) {
-      try {
-        const hostname = new URL(href, "https://example.com").hostname.toLowerCase();
-        if (socialDomains.some(domain => hostname.includes(domain))) foundLinks.push(href);
-      } catch (e) { }
-    }
+    if (href && platformOf(href)) foundLinks.push(href);
   });
   const uniqueLinks = [...new Set(foundLinks)];
-  const linkScore = uniqueLinks.length > 0 ? 1 : 0.5; // WARNING
-  const linkDetails = linkScore === 1 ? `${uniqueLinks.length} social profiles found` : "No social media links found";
-  const socialLinksMetric = evaluateParameter(linkScore, linkDetails, { links: uniqueLinks, count: uniqueLinks.length, parameter: "1 if at least one social profile link exists" });
+
+  // sameAs URLs from JSON-LD (Organization/LocalBusiness, recursively through @graph/nesting)
+  const sameAsUrls = [];
+  $('script[type="application/ld+json"]').each((i, el) => {
+    try {
+      const json = JSON.parse($(el).html().trim().replace(/<!\[CDATA\[|\]\]>|<!--|-->/g, ''));
+      const collect = (o) => {
+        if (!o || typeof o !== 'object') return;
+        if (o.sameAs) [].concat(o.sameAs).forEach(s => { if (typeof s === 'string') sameAsUrls.push(s); });
+        const kids = Array.isArray(o) ? o : (o['@graph'] && Array.isArray(o['@graph']) ? o['@graph'] : Object.values(o));
+        kids.forEach(k => { if (k && typeof k === 'object') collect(k); });
+      };
+      collect(json);
+    } catch (e) {}
+  });
+  const uniqueSameAs = [...new Set(sameAsUrls)];
+  const inSameAsSet = new Set(uniqueSameAs.map(normProfile));
+
+  // Profiles with sameAs-declared flag, platform diversity, and per-platform handle conflicts
+  const profiles = uniqueLinks.map(u => ({ platform: platformOf(u), url: u, inSameAs: inSameAsSet.has(normProfile(u)) }));
+  const onPagePlatforms = [...new Set(profiles.map(p => p.platform).filter(Boolean))];
+  const sameAsPlatforms = [...new Set(uniqueSameAs.map(platformOf).filter(Boolean))];
+
+  const byPlatform = {};
+  [...uniqueLinks, ...uniqueSameAs].forEach(u => {
+    const p = platformOf(u);
+    if (!p) return;
+    (byPlatform[p] = byPlatform[p] || new Set()).add(normProfile(u));
+  });
+  const conflicts = Object.entries(byPlatform).filter(([, set]) => set.size > 1).map(([platform, set]) => ({ platform, handles: [...set] }));
+
+  const missingFromSameAs = profiles.filter(p => !p.inSameAs).map(p => p.url);
+  const sameAsOnly = sameAsPlatforms.filter(p => !onPagePlatforms.includes(p));
+
+  const hasSocial = uniqueLinks.length > 0;
+  const hasSameAs = uniqueSameAs.length > 0;
+
+  let linkScore, linkDetails, lExpl, lFix;
+  if (!hasSocial && !hasSameAs) {
+    linkScore = 0.5;
+    linkDetails = "No social profiles found";
+    lExpl = "No social-media links or sameAs entries were found.";
+    lFix = "Link your social profiles (footer) and declare them in Organization/LocalBusiness sameAs.";
+  } else if (conflicts.length > 0) {
+    linkScore = 0.5;
+    linkDetails = `Inconsistent profiles (${conflicts.length} platform conflict)`;
+    lExpl = `Conflicting handles for: ${conflicts.map(c => c.platform).join(", ")} — the same platform points to different profiles.`;
+    lFix = "Use one consistent profile per platform across on-page links and sameAs.";
+  } else if (hasSocial && !hasSameAs) {
+    linkScore = 0.7;
+    linkDetails = `${onPagePlatforms.length} platform(s) linked, but none declared in sameAs`;
+    lExpl = "Profiles are linked on-page but not declared in structured-data sameAs, weakening entity recognition by search engines.";
+    lFix = "Add the profile URLs to your Organization/LocalBusiness sameAs array.";
+  } else if (hasSameAs && missingFromSameAs.length > 0) {
+    linkScore = 0.7;
+    linkDetails = `${missingFromSameAs.length} linked profile(s) not in sameAs`;
+    lExpl = "Some on-page social profiles are not declared in sameAs, so the entity graph is incomplete.";
+    lFix = "Add every linked social profile to the sameAs array for consistent entity signals.";
+  } else {
+    linkScore = 1;
+    linkDetails = `${onPagePlatforms.length || sameAsPlatforms.length} platform(s), consistent with sameAs`;
+    lExpl = "Social profiles are linked and consistently declared in sameAs.";
+    lFix = "Maintain consistent profiles across pages and sameAs.";
+  }
+
+  const socialLinksMetric = evaluateParameter(linkScore, linkDetails, {
+    links: uniqueLinks,
+    count: uniqueLinks.length,
+    profiles,
+    platforms: onPagePlatforms,
+    platformCount: onPagePlatforms.length,
+    sameAs: uniqueSameAs,
+    sameAsCount: uniqueSameAs.length,
+    sameAsPlatforms,
+    missingFromSameAs,
+    sameAsOnly,
+    conflicts,
+    why_this_occurred: lExpl,
+    how_to_fix: lFix,
+  });
 
   return { ogMetric, twitterMetric, socialLinksMetric };
 };
@@ -1526,69 +1856,121 @@ const checkSitemap = async (url, robotsContent = null, page) => {
 
     let score = 0;
     let details = "Sitemap check";
+    let explanation = "";
+    let recommendation = "";
+
+    // Coverage / freshness / broken-URL signals (populated when a valid sitemap exists)
+    let isIndex = false;
+    let urlCount = 0;
+    let lastmodCount = 0;
+    let mostRecentLastmod = null;
+    let oldestLastmod = null;
+    let sampledUrls = [];
+    let brokenUrls = [];
+    let hasImageSitemap = false;
+    let hasHreflang = false;
 
     if (!exists) {
-      // ⚠️ MISSING
       score = 0.5;
       details = "sitemap.xml missing";
-    } 
-    else {
-      // ❌ BROKEN / INVALID
-      const isValidStructure =
-        content.includes("<urlset") || content.includes("<sitemapindex");
+      explanation = "No sitemap was found via robots.txt or the common default locations.";
+      recommendation = "Create a sitemap.xml, list your important URLs with <lastmod>, and reference it in robots.txt.";
+    } else if (!(content.includes("<urlset") || content.includes("<sitemapindex"))) {
+      score = 0;
+      details = "Sitemap broken / invalid";
+      explanation = "A file was returned but it is not a valid XML sitemap (<urlset>/<sitemapindex>).";
+      recommendation = "Fix the sitemap so it is well-formed XML with a <urlset> or <sitemapindex> root.";
+    } else {
+      isIndex = content.includes("<sitemapindex");
+      const locMatches = content.match(/<loc>\s*([\s\S]*?)\s*<\/loc>/gi) || [];
+      const locUrls = locMatches.map(t => t.replace(/<\/?loc>/gi, "").trim()).filter(Boolean);
+      urlCount = locUrls.length;
+      hasImageSitemap = /<image:image|<image:loc/i.test(content);
+      hasHreflang = /hreflang=/i.test(content);
 
-      if (!isValidStructure) {
-        score = 0;
-        details = "Sitemap broken / invalid";
-      } 
-      else {
-        // ⚠️ OUTDATED (no lastmod OR very old)
-        const lastmodMatches = content.match(/<lastmod>(.*?)<\/lastmod>/gi);
+      // Freshness — use the MOST RECENT <lastmod> (a sitemap legitimately holds older pages too,
+      // so the old "any entry > 180d = outdated" rule wrongly penalised normal sitemaps).
+      const lastmodMatches = content.match(/<lastmod>(.*?)<\/lastmod>/gi) || [];
+      const dates = lastmodMatches
+        .map(t => new Date(t.replace(/<\/?lastmod>/gi, "").trim()))
+        .filter(d => !isNaN(d.getTime()));
+      lastmodCount = dates.length;
+      if (dates.length) {
+        const sorted = dates.slice().sort((a, b) => b - a);
+        mostRecentLastmod = sorted[0].toISOString().slice(0, 10);
+        oldestLastmod = sorted[sorted.length - 1].toISOString().slice(0, 10);
+      }
+      const newestDays = dates.length
+        ? Math.floor((Date.now() - Math.max(...dates.map(d => d.getTime()))) / 86400000)
+        : null;
 
-        let isOutdated = false;
-
-        if (!lastmodMatches) {
-          isOutdated = true; // no lastmod at all
-        } else {
-          const now = new Date();
-
-          for (let tag of lastmodMatches) {
-            const dateStr = tag.replace(/<\/?lastmod>/gi, "").trim();
-            const date = new Date(dateStr);
-
-            if (!isNaN(date)) {
-              const diffDays = (now - date) / (1000 * 60 * 60 * 24);
-
-              if (diffDays > 180) { // 6 months
-                isOutdated = true;
-                break;
-              }
-            }
+      // Broken-URL sampling — spread up to 5 <loc> URLs and check status. Prefer the
+      // Puppeteer page (bypasses bot protection) so 403s don't read as broken.
+      const sample = [];
+      if (locUrls.length) {
+        const step = Math.max(1, Math.floor(locUrls.length / 5));
+        for (let i = 0; i < locUrls.length && sample.length < 5; i += step) sample.push(locUrls[i]);
+      }
+      sampledUrls = sample;
+      const fetchStatus = async (u) => {
+        try {
+          if (page) {
+            return await page.evaluate(async (x) => {
+              try { const r = await fetch(x, { method: "GET" }); return r.status; } catch { return -1; }
+            }, u);
           }
-        }
+          const r = await fetch(u, { headers, signal: AbortSignal.timeout(6000) });
+          return r.status;
+        } catch { return -1; }
+      };
+      const statuses = await Promise.all(sample.map(async (u) => ({ url: u, status: await fetchStatus(u) })));
+      // Only definitive failures count as broken; 401/403/429/-1 are blocked/unverified.
+      brokenUrls = statuses.filter(s => s.status === 404 || s.status === 410 || (s.status >= 500 && s.status < 600));
 
-        if (isOutdated) {
-          score = 0.5;
-          details = "Sitemap outdated";
-        } else {
-          // ✅ GOOD
-          score = 1;
-          details = "Proper sitemap";
-        }
+      if (urlCount === 0) {
+        score = 0;
+        details = "Sitemap is empty";
+        explanation = "The sitemap is valid XML but contains no <loc> URLs.";
+        recommendation = "Populate the sitemap with your indexable URLs.";
+      } else if (brokenUrls.length > 0) {
+        score = 0.5;
+        details = `${brokenUrls.length} of ${sample.length} sampled sitemap URLs are broken`;
+        explanation = "Some URLs listed in the sitemap return 404/410/5xx, wasting crawl budget and signalling poor maintenance.";
+        recommendation = "Remove or fix dead URLs in the sitemap and regenerate it automatically from live content.";
+      } else if (lastmodCount === 0) {
+        score = 0.5;
+        details = `Sitemap found (${urlCount} ${isIndex ? "child sitemaps" : "URLs"}) but no <lastmod>`;
+        explanation = "The sitemap lists URLs but none carry a <lastmod>, so crawlers can't tell what changed.";
+        recommendation = "Add accurate <lastmod> timestamps so search engines prioritise recently updated pages.";
+      } else if (newestDays != null && newestDays > 180) {
+        score = 0.5;
+        details = `Sitemap stale — newest <lastmod> ${newestDays}d ago`;
+        explanation = "Even the most recently changed entry is over six months old, suggesting the sitemap (or site) isn't being maintained.";
+        recommendation = "Regenerate the sitemap so <lastmod> reflects recent content changes.";
+      } else {
+        score = 1;
+        details = isIndex
+          ? `Sitemap index found (${urlCount} child sitemaps)`
+          : `Proper sitemap (${urlCount} URLs, freshest ${newestDays}d ago)`;
+        explanation = "A valid, fresh sitemap was found with reachable sampled URLs.";
+        recommendation = "Keep the sitemap auto-generated and reference it in robots.txt.";
       }
     }
-
-    const explanation = exists
-      ? "A sitemap was found and validated for structure and freshness."
-      : "No sitemap was found. Search engines may miss important pages.";
-
-    const recommendation = exists
-      ? "Keep your sitemap updated with <lastmod> and submit it to search engines."
-      : "Create a sitemap.xml and reference it in robots.txt.";
 
     return evaluateParameter(score, details, {
       content,
       exists: exists ? 1 : 0,
+      isIndex,
+      urlCount,
+      lastmodCount,
+      lastmodCoverage: urlCount ? Math.round((lastmodCount / urlCount) * 100) : 0,
+      mostRecentLastmod,
+      oldestLastmod,
+      sampledUrls,
+      brokenUrls,
+      broken_count: brokenUrls.length,
+      hasImageSitemap,
+      hasHreflang,
       why_this_occurred: explanation,
       how_to_fix: recommendation,
     });
@@ -1604,29 +1986,135 @@ const checkStructuredData = async (page) => {
   try {
     const result = await page.evaluate(() => {
       const scripts = Array.from(document.querySelectorAll('script[type="application/ld+json"]'))
-        .map(el => {
-          try { return JSON.parse(el.innerText); } catch { return null; }
-        })
+        .map(el => { try { return JSON.parse(el.innerText); } catch { return null; } })
         .filter(Boolean);
-
-      const types = scripts.map(s => s['@type']).filter(Boolean);
-      return { hasData: scripts.length > 0, types: types.join(', '), content: scripts };
+      return { hasData: scripts.length > 0, content: scripts };
     });
 
-    const score = result.hasData ? 1 : 0.5; // WARNING
-    const details = result.hasData ? "Structured Data found" : "Structured Data missing";
+    if (!result.hasData) {
+      return evaluateParameter(0.5, "Structured Data missing", {
+        content: [], types: "", exists: false, detectedTypes: [], otherTypes: [], validated: [], errorCount: 0,
+        why_this_occurred: "No JSON-LD structured data found on the page.",
+        how_to_fix: "Add Schema.org JSON-LD (Organization/LocalBusiness, Product/Vehicle, Offer, FAQPage, BreadcrumbList) so the page is eligible for rich results.",
+      });
+    }
 
-    const explanation = result.hasData
-      ? `Found JSON-LD structured data of type(s): ${result.types}.`
-      : "No JSON-LD structured data found on the page.";
-    const recommendation = result.hasData
-      ? "Ensure your structured data is valid according to Schema.org and covers key elements."
-      : "Add Schema.org structured data (JSON-LD) to help search engines understand your content and display rich snippets.";
+    // Flatten every object that carries an @type (through @graph, arrays, and nested values).
+    const nodes = [];
+    const visit = (obj) => {
+      if (!obj || typeof obj !== 'object') return;
+      if (Array.isArray(obj)) { obj.forEach(visit); return; }
+      if (Array.isArray(obj['@graph'])) obj['@graph'].forEach(visit);
+      if (obj['@type']) nodes.push(obj);
+      for (const k of Object.keys(obj)) {
+        if (k === '@graph') continue;
+        const v = obj[k];
+        if (v && typeof v === 'object') visit(v);
+      }
+    };
+    result.content.forEach(visit);
+
+    const typeOf = (o) => [].concat(o['@type']).filter(Boolean).map(String);
+    const truthy = (v) => v !== undefined && v !== null && v !== "" && !(Array.isArray(v) && v.length === 0);
+    const has = (o, f) => truthy(o[f]);
+
+    const LOCALBIZ = new Set(["LocalBusiness", "AutoDealer", "AutomotiveBusiness", "CarDealer", "Store", "AutoRepair", "AutoPartsStore", "MotorcycleDealer", "AutoBodyShop", "GasStation"]);
+    const ORG = new Set(["Organization", "Corporation", "NGO", "GovernmentOrganization", "EducationalOrganization"]);
+    const REQ = {
+      Organization:    { required: ["name", "url"], recommended: ["logo", "sameAs", "contactPoint"] },
+      LocalBusiness:   { required: ["name", "address"], recommended: ["telephone", "openingHours", "geo", "image", "url", "priceRange"] },
+      Product:         { required: ["name"], recommended: ["image", "offers", "brand", "description"] },
+      Offer:           { required: ["price", "priceCurrency"], recommended: ["availability", "url"] },
+      Vehicle:         { required: ["name"], recommended: ["brand", "model", "offers", "vehicleIdentificationNumber", "mileageFromOdometer"] },
+      Article:         { required: ["headline"], recommended: ["image", "datePublished", "author"] },
+      Review:          { required: ["reviewRating", "author"], recommended: ["itemReviewed"] },
+      AggregateRating: { required: ["ratingValue"], recommended: ["reviewCount", "ratingCount"] },
+    };
+    const hasField = (o, f) => {
+      if (f === "openingHours") return has(o, "openingHours") || has(o, "openingHoursSpecification");
+      if (f === "url") return has(o, "url") || has(o, "@id");
+      if (f === "telephone") return has(o, "telephone") || (o.contactPoint && [].concat(o.contactPoint).some(c => c && c.telephone));
+      if (f === "name") return has(o, "name") || has(o, "legalName");
+      return has(o, f);
+    };
+
+    const validated = [];
+    const otherTypes = new Set();
+    let errorCount = 0;
+
+    const validateGeneric = (o, rules, label) => {
+      const missingRequired = rules.required.filter(f => !hasField(o, f));
+      const missingRecommended = rules.recommended.filter(f => !hasField(o, f));
+      if (missingRequired.length) errorCount++;
+      validated.push({ type: label, valid: missingRequired.length === 0, missingRequired, missingRecommended });
+    };
+    const validateFAQ = (o) => {
+      const ents = [].concat(o.mainEntity || []).filter(Boolean);
+      const missingRequired = [];
+      if (ents.length === 0) missingRequired.push("mainEntity (Question list)");
+      else if (!ents.some(q => q && hasField(q, "name") && q.acceptedAnswer && [].concat(q.acceptedAnswer).some(a => a && truthy(a.text)))) {
+        missingRequired.push("Question.name + acceptedAnswer.text");
+      }
+      if (missingRequired.length) errorCount++;
+      validated.push({ type: "FAQPage", valid: missingRequired.length === 0, missingRequired, missingRecommended: [], count: ents.length });
+    };
+    const validateBreadcrumb = (o) => {
+      const items = [].concat(o.itemListElement || []).filter(Boolean);
+      const missingRequired = [];
+      if (items.length === 0) missingRequired.push("itemListElement");
+      else if (items.some(it => !(it && (truthy(it.name) || (it.item && (truthy(it.item.name) || truthy(it.item['@id'])))))) ) {
+        missingRequired.push("ListItem.name/item on some entries");
+      }
+      if (missingRequired.length) errorCount++;
+      validated.push({ type: "BreadcrumbList", valid: missingRequired.length === 0, missingRequired, missingRecommended: [], count: items.length });
+    };
+
+    nodes.forEach(o => {
+      const types = typeOf(o);
+      if (types.includes("FAQPage")) return validateFAQ(o);
+      if (types.includes("BreadcrumbList")) return validateBreadcrumb(o);
+      const lb = types.find(t => LOCALBIZ.has(t));
+      if (lb) return validateGeneric(o, REQ.LocalBusiness, lb);
+      const og = types.find(t => ORG.has(t));
+      if (og) return validateGeneric(o, REQ.Organization, og);
+      const known = types.find(t => REQ[t]);
+      if (known) return validateGeneric(o, REQ[known], known);
+      types.forEach(t => otherTypes.add(t)); // present but not a rich-result type we validate
+    });
+
+    const detectedTypes = [...new Set(validated.map(v => v.type))];
+    const typesStr = [...detectedTypes, ...otherTypes].join(", ");
+
+    let score, details, explanation, recommendation;
+    if (errorCount > 0) {
+      const bad = validated.filter(v => !v.valid);
+      score = 0.5;
+      details = `Structured Data incomplete (${errorCount} type(s) missing required fields)`;
+      explanation = `These schema types are missing required fields: ${bad.map(b => `${b.type} [${b.missingRequired.join(", ")}]`).join("; ")}.`;
+      recommendation = "Add the missing required Schema.org properties so the markup qualifies for rich results.";
+    } else if (validated.length === 0) {
+      score = 0.7;
+      details = `Structured Data present but no rich-result types (${[...otherTypes].join(", ") || "generic"})`;
+      explanation = "JSON-LD is present but none of the high-value rich-result types (Organization/LocalBusiness, Product/Vehicle, Offer, FAQPage, BreadcrumbList) were found.";
+      recommendation = "Add LocalBusiness/AutoDealer, Product/Vehicle + Offer, FAQPage and BreadcrumbList markup to unlock rich results.";
+    } else {
+      score = 1;
+      details = `Valid structured data (${detectedTypes.join(", ")})`;
+      explanation = `Found valid JSON-LD: ${detectedTypes.join(", ")}.`;
+      const recs = validated.filter(v => v.missingRecommended && v.missingRecommended.length);
+      recommendation = recs.length
+        ? `Optional: add recommended fields — ${recs.map(r => `${r.type} [${r.missingRecommended.join(", ")}]`).join("; ")}.`
+        : "Structured data is valid for the detected types. Keep it in sync with on-page content.";
+    }
 
     return evaluateParameter(score, details, {
       content: result.content,
-      types: result.types,
-      exists: result.hasData,
+      types: typesStr,
+      exists: true,
+      detectedTypes,
+      otherTypes: [...otherTypes],
+      validated,
+      errorCount,
       why_this_occurred: explanation,
       how_to_fix: recommendation,
     });
@@ -3686,6 +4174,85 @@ const checkLocalSEO = async (url, $, page, structuredData, title, metaDesc) => {
   }
 };
 
+// Content Freshness (On-Page SEO) — recency of the page's update signals.
+// Mirrors the AEO freshness signals but scores by recency tiers and feeds the SEO score.
+const checkContentFreshness = ($) => {
+  const sources = [];
+  const pushDate = (raw, src) => {
+    if (!raw) return;
+    const d = new Date(raw);
+    if (!isNaN(d.getTime())) sources.push({ date: d, source: src });
+  };
+
+  // 1. Meta tags
+  const metaPairs = [
+    ['meta[property="article:modified_time"]', 'article:modified_time'],
+    ['meta[name="last-modified"]', 'last-modified'],
+    ['meta[name="revised"]', 'revised'],
+    ['meta[name="dcterms.modified"]', 'dcterms.modified'],
+    ['meta[name="lastmod"]', 'lastmod'],
+    ['meta[itemprop="dateModified"]', 'itemprop:dateModified'],
+    ['meta[property="og:updated_time"]', 'og:updated_time'],
+    ['meta[property="article:published_time"]', 'article:published_time'],
+  ];
+  metaPairs.forEach(([sel, name]) => { const v = $(sel).attr('content'); if (v) pushDate(v, name); });
+
+  // 2. JSON-LD dateModified / datePublished (recursive)
+  const findDates = (obj, acc) => {
+    if (!obj || typeof obj !== 'object') return;
+    if (obj.dateModified) acc.push(obj.dateModified);
+    if (obj.datePublished) acc.push(obj.datePublished);
+    const kids = Array.isArray(obj) ? obj : (obj['@graph'] && Array.isArray(obj['@graph']) ? obj['@graph'] : Object.values(obj));
+    kids.forEach(k => { if (k && typeof k === 'object') findDates(k, acc); });
+  };
+  $('script[type="application/ld+json"]').each((i, el) => {
+    try {
+      const c = $(el).html().trim().replace(/<!\[CDATA\[|\]\]>|<!--|-->/g, '');
+      const acc = []; findDates(JSON.parse(c), acc);
+      acc.forEach(d => pushDate(d, 'jsonld'));
+    } catch (e) {}
+  });
+
+  // 3. <time datetime> elements
+  $('time[datetime]').each((i, el) => pushDate($(el).attr('datetime'), 'time-tag'));
+
+  // 4. Visible "last updated" text
+  const m = $('body').text().match(/(last updated|updated on|last modified|published on)[:\s]+([A-Za-z]{3,9}\.?\s+\d{1,2},?\s+\d{4}|\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/i);
+  if (m) pushDate(m[2], 'visible-text');
+
+  if (sources.length === 0) {
+    return evaluateParameter(0.5, "No content freshness signal found.", {
+      mostRecent: null, signalCount: 0,
+      checked: "meta tags, JSON-LD dateModified/datePublished, <time>, visible 'last updated' text",
+      why_this_occurred: "No update timestamp (meta tag, structured-data date, <time> element, or visible 'last updated' text) was found, so search engines can't tell how fresh this content is.",
+      how_to_fix: "Expose a last-updated date via dateModified in JSON-LD, an article:modified_time meta tag, or a visible 'Last updated' label — especially on inventory, service, and blog pages."
+    });
+  }
+
+  sources.sort((a, b) => b.date - a.date);
+  const newest = sources[0];
+  const daysAgo = Math.floor((Date.now() - newest.date.getTime()) / 86400000);
+  const baseMeta = {
+    mostRecent: newest.date.toISOString().slice(0, 10),
+    daysAgo, source: newest.source,
+    signalCount: sources.length,
+    signals: [...new Set(sources.map(s => s.source))]
+  };
+
+  if (daysAgo < 0) return evaluateParameter(1, `Content carries a future-dated timestamp (${baseMeta.mostRecent}).`, baseMeta);
+  if (daysAgo <= 180) return evaluateParameter(1, `Content is fresh — last updated ${daysAgo} day(s) ago.`, baseMeta);
+  if (daysAgo <= 365) return evaluateParameter(0.7, `Content is aging — last updated ${daysAgo} day(s) ago.`, {
+    ...baseMeta,
+    why_this_occurred: `The most recent update signal is ${daysAgo} days old.`,
+    how_to_fix: "Refresh and re-date key pages at least every 6–12 months; stale dates signal lower relevance to search engines."
+  });
+  return evaluateParameter(0.4, `Content looks stale — last updated ${daysAgo} day(s) ago.`, {
+    ...baseMeta,
+    why_this_occurred: `The most recent update signal is over a year old (${daysAgo} days).`,
+    how_to_fix: "Update the content and its dateModified/last-updated signal. Outdated pages — especially inventory and pricing — lose ranking strength."
+  });
+};
+
 export default async function seoMetrics(url, $, page) {
 
   const titleMetric = checkTitle($);
@@ -3703,7 +4270,8 @@ export default async function seoMetrics(url, $, page) {
 
 
   const contentRelevanceMetric = checkContentRelevance($, titleMetric.meta.title, metaDescMetric.meta.description);
-  const slugMetric = checkSlugs(url);
+  const contentFreshnessMetric = checkContentFreshness($);
+  const slugMetric = checkSlugs(url, $);
   const robotsMetric = await checkRobotsTxt(url, page);
   const sitemapMetric = await checkSitemap(url, robotsMetric?.meta?.content, page);
   // Sample eligible internal pages once, then score title & meta-desc uniqueness.
@@ -3746,6 +4314,7 @@ export default async function seoMetrics(url, $, page) {
     Meta_Description_Uniqueness: 0.03,
     H1: 0.10,
     Content_Relevance: 0.10,
+    Content_Freshness: 0.04,
     Duplicate_Content: 0.02,
     Image: 0.08,
     Canonical: 0.08,
@@ -3775,6 +4344,7 @@ export default async function seoMetrics(url, $, page) {
     (getScore(metaDescUniquenessMetric) * weights.Meta_Description_Uniqueness) +
     (getScore(h1Metric) * weights.H1) +
     (contentRelevanceMetric.percentage * weights.Content_Relevance) +
+    (getScore(contentFreshnessMetric) * weights.Content_Freshness) +
     (getScore(imageMetric) * weights.Image) +
     (getScore(canonicalMetric) * weights.Canonical) +
     (getScore(contextualMetric) * weights.Contextual_Linking) +
@@ -3798,7 +4368,7 @@ export default async function seoMetrics(url, $, page) {
   const totalWeight =
     weights.Title + weights.Title_Uniqueness + weights.Title_Keyword_Optimization +
     weights.Title_Location_Optimization + weights.Meta_Description + weights.Meta_Description_Uniqueness +
-    weights.H1 + weights.Content_Relevance + weights.Image + weights.Canonical +
+    weights.H1 + weights.Content_Relevance + weights.Content_Freshness + weights.Image + weights.Canonical +
     weights.Contextual_Linking + weights.Sitemap + weights.Robots_Txt + weights.Structured_Data +
     weights.Heading_Hierarchy + weights.URL_Slugs + weights.Links + weights.Semantic_Tags +
     weights.Video + weights.Open_Graph + weights.Twitter_Card + weights.Social_Links + weights.EEAT;
@@ -3822,6 +4392,7 @@ export default async function seoMetrics(url, $, page) {
     Contextual_Linking: contextualMetric,
     Links: linksMetric,
     Content_Relevance: contentRelevanceMetric,
+    Content_Freshness: contentFreshnessMetric,
     URL_Slugs: slugMetric,
     Robots_Txt: robotsMetric,
     Sitemap: sitemapMetric,

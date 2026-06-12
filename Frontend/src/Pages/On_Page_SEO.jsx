@@ -9,7 +9,7 @@ import {
   Search, FileText, Link, Image as ImageIcon, Video,
   Layout, FileCode, Lock, Copy, List, Tag, Globe,
   CheckCircle, AlertTriangle, XCircle, Info, Loader2, ArrowRight,
-  ChevronDown, ChevronUp, ExternalLink, Box, Check, ShieldCheck, MapPin
+  ChevronDown, ChevronUp, ExternalLink, Box, Check, ShieldCheck, MapPin, Clock
 } from "lucide-react";
 import MetricInfoModal from "../Component/MetricInfoModal";
 import ParameterInfoModal from "../Component/ParameterInfoModal";
@@ -249,6 +249,28 @@ const CanonicalTagCard = ({ data, darkMode, onInfo }) => {
         <div className={`p-3 rounded-lg border font-mono text-xs break-all ${darkMode ? "bg-gray-900 border-gray-700 text-gray-300" : "bg-gray-50 border-gray-200 text-gray-600"}`}>
           {meta.canonical || <span className="italic opacity-50">No canonical tag found</span>}
         </div>
+
+        {(meta.isPaginated || meta.noindexConflict || meta.canonicalizesParams || meta.paginationIssue || (meta.canonical && meta.inHead === false)) && (
+          <div className="flex flex-wrap gap-1.5 mt-3">
+            {meta.paginationIssue && (
+              <span className="px-2 py-0.5 rounded text-[10px] fontsemibold border bg-amber-500/10 text-amber-500 border-amber-500/20">Paginated → other page</span>
+            )}
+            {meta.isPaginated && !meta.paginationIssue && (
+              <span className="px-2 py-0.5 rounded text-[10px] fontsemibold border bg-blue-500/10 text-blue-500 border-blue-500/20">
+                Paginated{meta.pageNum ? ` (p${meta.pageNum})` : ""}
+              </span>
+            )}
+            {meta.canonicalizesParams && (
+              <span className="px-2 py-0.5 rounded text-[10px] fontsemibold border bg-emerald-500/10 text-emerald-500 border-emerald-500/20">Strips URL params</span>
+            )}
+            {meta.noindexConflict && (
+              <span className="px-2 py-0.5 rounded text-[10px] fontsemibold border bg-rose-500/10 text-rose-500 border-rose-500/20">noindex conflict</span>
+            )}
+            {meta.canonical && meta.inHead === false && (
+              <span className="px-2 py-0.5 rounded text-[10px] fontsemibold border bg-rose-500/10 text-rose-500 border-rose-500/20">Not in &lt;head&gt;</span>
+            )}
+          </div>
+        )}
       </div>
     </SEOCard>
   );
@@ -281,13 +303,49 @@ const URLStructureCard = ({ data, darkMode, onInfo }) => {
       getStatusFromScore={getStatusFromScore}
       InfoDetails={InfoDetails}
     >
-      <div>
-        <h4 className={`text-xs fontsemibold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
-          Analyzed URL
-        </h4>
-        <div className={`p-3 rounded-lg border font-mono text-xs break-all ${darkMode ? "bg-gray-900 border-gray-700 text-gray-300" : "bg-gray-50 border-gray-200 text-gray-600"}`}>
-          {meta.url || <span className="italic opacity-50">No URL data</span>}
+      <div className="space-y-3">
+        <div>
+          <h4 className={`text-xs fontsemibold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+            Analyzed URL
+          </h4>
+          <div className={`p-3 rounded-lg border font-mono text-xs break-all ${darkMode ? "bg-gray-900 border-gray-700 text-gray-300" : "bg-gray-50 border-gray-200 text-gray-600"}`}>
+            {meta.url || <span className="italic opacity-50">No URL data</span>}
+          </div>
         </div>
+
+        {meta.segments && (
+          <div className="grid grid-cols-3 gap-2">
+            <div className={`p-2 rounded ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
+              <div className={`text-[10px] fontsemibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Depth</div>
+              <div className={`text-sm fontsemibold mt-0.5 ${meta.depth > 3 ? "text-amber-500" : (darkMode ? "text-gray-200" : "text-gray-700")}`}>{meta.depth} folder{meta.depth === 1 ? "" : "s"}</div>
+            </div>
+            <div className={`p-2 rounded ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
+              <div className={`text-[10px] fontsemibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Length</div>
+              <div className={`text-sm fontsemibold mt-0.5 ${meta.length > 115 ? "text-amber-500" : (darkMode ? "text-gray-200" : "text-gray-700")}`}>{meta.length}</div>
+            </div>
+            <div className={`p-2 rounded ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
+              <div className={`text-[10px] fontsemibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Extension</div>
+              <div className={`text-sm fontsemibold mt-0.5 ${meta.hasFileExtension ? "text-amber-500" : "text-emerald-500"}`}>{meta.hasFileExtension ? "Yes" : "None"}</div>
+            </div>
+          </div>
+        )}
+
+        {meta.hierarchy && meta.hierarchy !== "root" && (
+          <div className={`p-2 rounded font-mono text-[11px] ${darkMode ? "bg-gray-900 text-gray-300" : "bg-gray-50 text-gray-600 border border-gray-100"}`}>
+            {meta.hierarchy}
+          </div>
+        )}
+
+        {meta.issues?.length > 0 && (
+          <div className="space-y-1">
+            <div className="text-[10px] fontsemibold uppercase tracking-wider text-amber-500">Issues</div>
+            {meta.issues.map((iss, i) => (
+              <div key={i} className={`flex items-start gap-1.5 text-[11px] ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                <AlertTriangle size={11} className="text-amber-500 shrink-0 mt-0.5" /> {iss}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </SEOCard>
   );
@@ -507,6 +565,28 @@ const ImageAnalysisCard = ({ data, darkMode, onInfo, resolveLink, className = ""
             )}
           </div>
 
+          {/* Modern-format / delivery stats */}
+          {meta.nextGenPct !== undefined && (
+            <div className="grid grid-cols-3 md:grid-cols-4 gap-2 text-center">
+              <div className={`p-2 rounded border ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
+                <div className={`text-lg fontsemibold ${meta.nextGenPct >= 70 ? "text-emerald-500" : "text-amber-500"}`}>{meta.nextGenPct}%</div>
+                <div className="text-[10px] uppercase fontsemibold tracking-wider opacity-60">Next-Gen</div>
+              </div>
+              <div className={`p-2 rounded border ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
+                <div className={`text-lg fontsemibold ${meta.lazyPct >= 50 ? "text-emerald-500" : "text-amber-500"}`}>{meta.lazyPct}%</div>
+                <div className="text-[10px] uppercase fontsemibold tracking-wider opacity-60">Lazy-Load</div>
+              </div>
+              <div className={`p-2 rounded border ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
+                <div className={`text-lg fontsemibold ${meta.namingPct >= 70 ? "text-emerald-500" : "text-amber-500"}`}>{meta.namingPct}%</div>
+                <div className="text-[10px] uppercase fontsemibold tracking-wider opacity-60">Named Well</div>
+              </div>
+              <div className={`p-2 rounded border ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
+                <div className={`text-lg fontsemibold ${darkMode ? "text-white" : "text-gray-900"}`}>{meta.responsiveCount || 0}</div>
+                <div className="text-[10px] uppercase fontsemibold tracking-wider opacity-60">Responsive</div>
+              </div>
+            </div>
+          )}
+
           {/* Issues List (Clickable Links) */}
           {
             (meta.missingAlt?.length > 0 || meta.missingTitle?.length > 0 || meta.largeImages?.length > 0 || meta.broken_images?.length > 0) && (
@@ -714,6 +794,35 @@ const SemanticTagsCard = ({ data, darkMode, onInfo, className }) => {
             {["article", "section", "aside"].map(t => renderTagBadge(t, false))}
           </div>
         </div>
+
+        {/* Structural quality stats */}
+        {meta.semanticRatio !== undefined && (
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div className={`p-2 rounded border ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
+              <div className={`text-sm fontsemibold ${meta.semanticRatio >= 0.1 ? "text-emerald-500" : "text-amber-500"}`}>{Math.round(meta.semanticRatio * 100)}%</div>
+              <div className="text-[9px] uppercase fontsemibold tracking-wider opacity-60">Semantic vs div</div>
+            </div>
+            <div className={`p-2 rounded border ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
+              <div className={`text-sm fontsemibold ${(meta.sectioningCount === 0 || meta.sectioningWithHeadings >= meta.sectioningCount * 0.7) ? "text-emerald-500" : "text-amber-500"}`}>{meta.sectioningWithHeadings || 0}/{meta.sectioningCount || 0}</div>
+              <div className="text-[9px] uppercase fontsemibold tracking-wider opacity-60">Sections w/ heading</div>
+            </div>
+            <div className={`p-2 rounded border ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
+              <div className={`text-sm fontsemibold ${darkMode ? "text-white" : "text-gray-900"}`}>{meta.semanticCount || 0}</div>
+              <div className="text-[9px] uppercase fontsemibold tracking-wider opacity-60">Semantic els</div>
+            </div>
+          </div>
+        )}
+
+        {meta.sectionsWithoutHeadings?.length > 0 && (
+          <div className="text-[10px] space-y-0.5">
+            <span className="fontsemibold uppercase tracking-wider text-amber-500">Sections without a heading:</span>
+            <div className="flex flex-wrap gap-1">
+              {meta.sectionsWithoutHeadings.slice(0, 8).map((s, i) => (
+                <span key={i} className={`font-mono px-1.5 py-0.5 rounded ${darkMode ? "bg-gray-900 text-gray-400" : "bg-gray-100 text-gray-500"}`}>{s}</span>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Warnings / Potential Replacements */}
         {
@@ -1089,6 +1198,52 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
             )}
           </div>
 
+
+          {/* Topical Relatedness */}
+          {meta.related_ratio !== undefined && (
+            <div className={`text-xs p-4 rounded-xl border ${darkMode ? "border-gray-700 bg-gray-800/40" : "border-gray-100 bg-gray-50"}`}>
+              <div className={`fontsemibold mb-2 uppercase flex items-center gap-2 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                <Link size={14} className="mt-[-2px]" />
+                Topical Relatedness
+                <span className={`ml-auto fontsemibold ${Number(meta.related_ratio) >= 0.3 ? "text-emerald-500" : "text-amber-500"}`}>
+                  {Math.round(Number(meta.related_ratio) * 100)}% related
+                </span>
+              </div>
+              {meta.topic_terms?.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-3">
+                  {meta.topic_terms.slice(0, 12).map((t, i) => (
+                    <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-mono ${darkMode ? "bg-gray-900 text-gray-400" : "bg-white text-gray-500 border border-gray-100"}`}>{t}</span>
+                  ))}
+                </div>
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {meta.related_examples?.length > 0 && (
+                  <div>
+                    <div className="text-[10px] fontsemibold uppercase tracking-wider text-emerald-500 mb-1">Related Links</div>
+                    <div className="space-y-1 max-h-40 overflow-y-auto custom-scrollbar">
+                      {meta.related_examples.map((e, i) => (
+                        <div key={i} className={`font-mono text-[10px] truncate ${darkMode ? "text-gray-400" : "text-gray-600"}`} title={e.href}>
+                          <span className="text-emerald-500">↳</span> {e.anchor || e.href} {e.shared?.length ? <span className="opacity-60">({e.shared.join(", ")})</span> : null}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {meta.unrelated_examples?.length > 0 && (
+                  <div>
+                    <div className="text-[10px] fontsemibold uppercase tracking-wider text-amber-500 mb-1">Unrelated Links</div>
+                    <div className="space-y-1 max-h-40 overflow-y-auto custom-scrollbar">
+                      {meta.unrelated_examples.map((e, i) => (
+                        <div key={i} className={`font-mono text-[10px] truncate ${darkMode ? "text-gray-400" : "text-gray-600"}`} title={e.href}>
+                          <span className="text-amber-500">↳</span> {e.anchor || e.href}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Analysis & Recs from API */}
 
@@ -1701,6 +1856,33 @@ const URLSlugCard = ({ data, darkMode, onInfo }) => {
             You are at root URL
           </div>
         )}
+
+        {meta?.slug && meta.slug !== "/" && meta.wordCount !== undefined && (
+          <>
+            <div className="grid grid-cols-3 gap-2">
+              <div className={`p-1.5 rounded text-center ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
+                <div className={`text-[9px] fontsemibold uppercase ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Words</div>
+                <div className={`text-xs fontsemibold ${meta.wordCount > 8 ? "text-amber-500" : (darkMode ? "text-gray-200" : "text-gray-700")}`}>{meta.wordCount}</div>
+              </div>
+              <div className={`p-1.5 rounded text-center ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
+                <div className={`text-[9px] fontsemibold uppercase ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Chars</div>
+                <div className={`text-xs fontsemibold ${meta.charLength > 60 ? "text-amber-500" : (darkMode ? "text-gray-200" : "text-gray-700")}`}>{meta.charLength}</div>
+              </div>
+              <div className={`p-1.5 rounded text-center ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
+                <div className={`text-[9px] fontsemibold uppercase ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Title Match</div>
+                <div className={`text-xs fontsemibold ${meta.keywordAligned === true ? "text-emerald-500" : meta.keywordAligned === false ? "text-amber-500" : "opacity-40"}`}>{meta.keywordAligned === true ? "Yes" : meta.keywordAligned === false ? "No" : "—"}</div>
+              </div>
+            </div>
+            {meta.meaningfulKeywords?.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {meta.meaningfulKeywords.slice(0, 8).map((k, i) => (
+                  <span key={i} className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${meta.matchedKeywords?.includes(k) ? (darkMode ? "bg-emerald-900/30 text-emerald-300" : "bg-emerald-50 text-emerald-700 border border-emerald-100") : (darkMode ? "bg-gray-900 text-gray-400" : "bg-white text-gray-500 border border-gray-100")}`}>{k}</span>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
         {meta?.issues?.length > 0 ? (
           <div className="space-y-1">
             <div className="font- text-amber-500 text-xs uppercase">Slug Issues:</div>
@@ -1811,6 +1993,68 @@ const RobotsTxtCard = ({ data, darkMode, onInfo }) => {
 };
 
 // ------------------------------------------------------
+// Content Freshness Card
+// ------------------------------------------------------
+const ContentFreshnessCard = ({ data, darkMode, onInfo }) => {
+  const meta = data?.meta || {};
+  const score = data?.score || 0;
+  const isPassed = data?.status === "pass";
+  const statusText = data?.details || "Content freshness";
+
+  return (
+    <SEOCard
+      title="Content Freshness"
+      icon={Clock}
+      iconColor="text-teal-400"
+      score={score}
+      status={data.status}
+      statusText={statusText}
+      analysis={data.analysis}
+      meta={meta}
+      metricKey="Content_Freshness"
+      darkMode={darkMode}
+      onInfo={onInfo}
+      className="col-span-1"
+      getStatusFromScore={getStatusFromScore}
+      InfoDetails={InfoDetails}
+      showAnalysis={false}
+    >
+      {(meta?.mostRecent || meta?.daysAgo !== undefined) && (
+        <div className="grid grid-cols-2 gap-2">
+          <div className={`p-2 rounded ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
+            <div className={`text-[10px] fontsemibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Last Updated</div>
+            <div className={`text-xs fontsemibold mt-0.5 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>{meta.mostRecent || "—"}{meta.daysAgo !== undefined && meta.daysAgo !== null ? ` (${meta.daysAgo}d ago)` : ""}</div>
+          </div>
+          <div className={`p-2 rounded ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
+            <div className={`text-[10px] fontsemibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Signals</div>
+            <div className={`text-xs fontsemibold mt-0.5 break-words ${darkMode ? "text-gray-200" : "text-gray-700"}`}>{meta.signals?.length ? meta.signals.join(", ") : (meta.source || "none")}</div>
+          </div>
+        </div>
+      )}
+
+      {data.analysis && !isPassed && (
+        <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-xs fontsemibold uppercase tracking-wider text-amber-500">
+              <AlertTriangle size={12} />
+              <span>Analysis</span>
+            </div>
+            <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>{data.analysis.cause}</p>
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-xs fontsemibold uppercase tracking-wider text-blue-500">
+              <CheckCircle size={12} />
+              <span>Recommendation</span>
+            </div>
+            <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>{data.analysis.recommendation}</p>
+          </div>
+        </div>
+      )}
+    </SEOCard>
+  );
+};
+
+// ------------------------------------------------------
 // Specialized Sitemap Card
 // ------------------------------------------------------
 const SitemapCard = ({ data, darkMode, onInfo }) => {
@@ -1852,6 +2096,39 @@ const SitemapCard = ({ data, darkMode, onInfo }) => {
             <p className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
               A sitemap was found, but it appears to be outdated (older than 6 months or missing tags).
             </p>
+          )}
+        </div>
+      )}
+
+      {meta?.exists === 1 && meta?.urlCount !== undefined && (
+        <div className="space-y-2">
+          <div className="grid grid-cols-3 gap-2">
+            <div className={`p-2 rounded ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
+              <div className={`text-[10px] fontsemibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>{meta.isIndex ? "Child Sitemaps" : "URLs"}</div>
+              <div className={`text-sm fontsemibold mt-0.5 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>{meta.urlCount}</div>
+            </div>
+            <div className={`p-2 rounded ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
+              <div className={`text-[10px] fontsemibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>lastmod</div>
+              <div className={`text-sm fontsemibold mt-0.5 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>{meta.lastmodCoverage}%</div>
+            </div>
+            <div className={`p-2 rounded ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
+              <div className={`text-[10px] fontsemibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Broken (sampled)</div>
+              <div className={`text-sm fontsemibold mt-0.5 ${meta.broken_count > 0 ? "text-rose-500" : "text-emerald-500"}`}>{meta.broken_count || 0}</div>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {meta.isIndex && <span className="px-2 py-0.5 rounded text-[10px] fontsemibold border bg-blue-500/10 text-blue-500 border-blue-500/20">Sitemap index</span>}
+            {meta.mostRecent || meta.mostRecentLastmod ? <span className="px-2 py-0.5 rounded text-[10px] fontsemibold border bg-gray-500/10 text-gray-400 border-gray-500/20">Newest: {meta.mostRecentLastmod || meta.mostRecent}</span> : null}
+            {meta.hasImageSitemap && <span className="px-2 py-0.5 rounded text-[10px] fontsemibold border bg-emerald-500/10 text-emerald-500 border-emerald-500/20">Image sitemap</span>}
+            {meta.hasHreflang && <span className="px-2 py-0.5 rounded text-[10px] fontsemibold border bg-emerald-500/10 text-emerald-500 border-emerald-500/20">hreflang</span>}
+          </div>
+          {meta.brokenUrls?.length > 0 && (
+            <div className="space-y-1">
+              <div className="text-[10px] fontsemibold uppercase tracking-wider text-rose-500">Broken Sampled URLs</div>
+              {meta.brokenUrls.slice(0, 5).map((b, i) => (
+                <div key={i} className={`font-mono text-[10px] truncate ${darkMode ? "text-rose-300" : "text-rose-600"}`} title={b.url}>HTTP {b.status} · {b.url}</div>
+              ))}
+            </div>
           )}
         </div>
       )}
@@ -2514,7 +2791,7 @@ const StructuredDataCard = ({ data, darkMode, onInfo, className = "" }) => {
               <div className={`flex items-center gap-2 mt-1`}>
                 <ScoreBadge
                   status={getStatusFromScore(score)}
-                  value={isPassed ? "Detected" : "Missing"}
+                  value={isPassed ? "Valid" : (meta?.errorCount > 0 ? "Incomplete" : (meta?.exists ? "No rich types" : "Missing"))}
                   darkMode={darkMode}
                 />
               </div>
@@ -2539,6 +2816,35 @@ const StructuredDataCard = ({ data, darkMode, onInfo, className = "" }) => {
                   </span>
                 ))}
               </div>
+            </div>
+          )}
+
+          {meta?.validated?.length > 0 && (
+            <div className="space-y-1.5">
+              <div className={`text-[10px] fontsemibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Schema Validation:</div>
+              {meta.validated.map((v, i) => (
+                <div key={i} className={`p-2 rounded border ${v.valid ? (darkMode ? "border-emerald-500/20 bg-emerald-500/5" : "border-emerald-100 bg-emerald-50/50") : (darkMode ? "border-amber-500/20 bg-amber-500/5" : "border-amber-100 bg-amber-50/50")}`}>
+                  <div className="flex items-center gap-2">
+                    {v.valid ? <CheckCircle size={12} className="text-emerald-500 shrink-0" /> : <AlertTriangle size={12} className="text-amber-500 shrink-0" />}
+                    <span className={`text-xs fontsemibold ${darkMode ? "text-gray-200" : "text-gray-800"}`}>{v.type}{v.count !== undefined ? ` (${v.count})` : ""}</span>
+                  </div>
+                  {v.missingRequired?.length > 0 && (
+                    <div className="text-[10px] text-rose-500 mt-1">Missing required: {v.missingRequired.join(", ")}</div>
+                  )}
+                  {v.valid && v.missingRecommended?.length > 0 && (
+                    <div className={`text-[10px] mt-1 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Recommended: {v.missingRecommended.join(", ")}</div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {meta?.otherTypes?.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              <span className={`text-[10px] ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Other types:</span>
+              {meta.otherTypes.map((t, i) => (
+                <span key={i} className={`px-1.5 py-0.5 rounded text-[10px] ${darkMode ? "bg-gray-900 text-gray-400" : "bg-gray-100 text-gray-500"}`}>{t}</span>
+              ))}
             </div>
           )}
 
@@ -2786,6 +3092,44 @@ const SocialProfilesCard = ({ data, darkMode, onInfo, className = "" }) => {
             )}
           </div>
 
+          {/* sameAs consistency */}
+          {(meta.sameAsCount !== undefined) && (
+            <div className={`p-3 rounded-lg border ${darkMode ? "border-gray-700 bg-gray-900/40" : "border-gray-100 bg-gray-50"}`}>
+              <div className="flex items-center justify-between mb-2">
+                <span className={`text-[10px] fontsemibold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>schema sameAs</span>
+                <span className={`text-xs fontsemibold ${meta.sameAsCount > 0 ? "text-emerald-500" : "text-amber-500"}`}>{meta.sameAsCount} declared</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div>
+                  <div className={`text-sm fontsemibold ${darkMode ? "text-gray-200" : "text-gray-800"}`}>{meta.platformCount || 0}</div>
+                  <div className="text-[9px] uppercase opacity-60">Platforms</div>
+                </div>
+                <div>
+                  <div className={`text-sm fontsemibold ${meta.missingFromSameAs?.length > 0 ? "text-amber-500" : "text-emerald-500"}`}>{(meta.count || 0) - (meta.missingFromSameAs?.length || 0)}/{meta.count || 0}</div>
+                  <div className="text-[9px] uppercase opacity-60">In sameAs</div>
+                </div>
+                <div>
+                  <div className={`text-sm fontsemibold ${meta.conflicts?.length > 0 ? "text-rose-500" : "text-emerald-500"}`}>{meta.conflicts?.length || 0}</div>
+                  <div className="text-[9px] uppercase opacity-60">Conflicts</div>
+                </div>
+              </div>
+              {meta.conflicts?.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {meta.conflicts.map((c, i) => (
+                    <div key={i} className="text-[10px] text-rose-500">
+                      <span className="fontsemibold uppercase">{c.platform}:</span> {c.handles.join(" vs ")}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {meta.missingFromSameAs?.length > 0 && meta.sameAsCount > 0 && (
+                <div className={`mt-2 text-[10px] ${darkMode ? "text-amber-400" : "text-amber-600"}`}>
+                  Not declared in sameAs: {meta.missingFromSameAs.slice(0, 4).map(u => { try { return new URL(u).hostname.replace("www.", ""); } catch { return u; } }).join(", ")}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Ask AI Button */}
           {!isPassed && (
             <AskAIButton
@@ -3030,6 +3374,13 @@ const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading,
                 darkMode={darkMode}
                 onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Content_Relevance, icon: CheckCircle })}
               />
+              {seo.Content_Freshness && (
+                <ContentFreshnessCard
+                  data={seo.Content_Freshness}
+                  darkMode={darkMode}
+                  onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Content_Freshness, icon: Clock })}
+                />
+              )}
               <ContextualAnalysisCard
                 data={seo.Contextual_Linking}
                 linksData={seo.Links}

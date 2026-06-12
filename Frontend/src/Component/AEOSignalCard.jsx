@@ -31,6 +31,8 @@ const BREAKDOWN_MAX = {
     experienceSignals: { reviews: 25, media: 30, firstPerson: 25, people: 20 },
     expertiseSignals: { credentials: 35, awards: 25, tenure: 20, authorExpertise: 20 },
     authoritySignals: { pressMentions: 30, externalAuthority: 25, trustBadges: 25, socialProof: 20 },
+    llmsTxt: { present: 10, h1: 20, sections: 15, links: 20, summary: 10, sameDomain: 5, relevance: 20 },
+    citations: { citations: 45, policies: 20, contactTransparency: 20, trustBasics: 15 },
 };
 
 // camelCase key → "Title Case" label.
@@ -109,7 +111,7 @@ const getWhyItMatters = (signal) => {
         case 'answerFirst':
             return "AI models are trained to find the 'Nugget' of info immediately. Pushing the answer down increases the risk of being ignored.";
         case 'citations':
-            return "Citations build authority. RAG-based search engines (like Perplexity) prioritize content that links to reputable external sources.";
+            return "Trust signals tell engines your content is accountable: cited sources, clear policies (privacy/terms/contact), transparent contact & authorship, HTTPS and dated content. RAG engines like Perplexity prioritize verifiable, trustworthy pages.";
         case 'indexCoverage':
             return "If your pages aren't indexable, they can't appear in Google results or be retrieved by AI answer engines — index coverage is the foundation every other AEO signal builds on.";
         case 'entityRecognition':

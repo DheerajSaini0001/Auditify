@@ -20,6 +20,7 @@ import AskAIButton from "../Component/AskAIButton";
 
 // Icon Mapping
 const iconMap = {
+  WCAG_AA_Compliance: ShieldCheck,
   Color_Contrast: Type,
   Focus_Order: Navigation,
   Focusable_Content: Focus,
@@ -94,8 +95,8 @@ const AccessibilityShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
 // Simplified Metric Card
 const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
   const { score, details, meta, analysis } = data || {};
-  const isPassed = score === 100;
-  const isWarning = score === 50;
+  const isPassed = score === 100 || data?.status === "pass";
+  const isWarning = !isPassed && (score === 50 || data?.status === "warning");
   const [showDetails, setShowDetails] = React.useState(false);
 
   const Icon = iconMap[metricKey] || CheckCircle;
@@ -183,6 +184,61 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             )}
           </div>
         </div>
+
+        {/* WCAG 2.1 AA Compliance summary */}
+        {metricKey === "WCAG_AA_Compliance" && meta && (
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-2">
+              <div className={`p-3 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-slate-100/40 border-slate-200/50"}`}>
+                <p className="text-[9px] font-black uppercase tracking-widest opacity-40">Grade</p>
+                <p className={`text-sm fontsemibold mt-0.5 ${isPassed ? "text-emerald-500" : isWarning ? "text-amber-500" : "text-rose-500"}`}>{meta.grade}</p>
+              </div>
+              <div className={`p-3 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-slate-100/40 border-slate-200/50"}`}>
+                <p className="text-[9px] font-black uppercase tracking-widest opacity-40">Conformance</p>
+                <p className={`text-sm fontsemibold mt-0.5 ${darkMode ? "text-slate-200" : "text-slate-800"}`}>{meta.conformanceRatio}% · {meta.passedRules}/{meta.passedRules + meta.violatedRuleCount} rules</p>
+              </div>
+            </div>
+            {meta.byImpact && (meta.violatedRuleCount > 0) && (
+              <div className="flex flex-wrap gap-2">
+                {["critical", "serious", "moderate", "minor"].map(imp => meta.byImpact[imp] > 0 && (
+                  <span key={imp} className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider border ${imp === "critical" || imp === "serious" ? "bg-rose-500/10 text-rose-500 border-rose-500/20" : imp === "moderate" ? "bg-amber-500/10 text-amber-500 border-amber-500/20" : "bg-blue-500/10 text-blue-500 border-blue-500/20"}`}>
+                    {meta.byImpact[imp]} {imp}
+                  </span>
+                ))}
+              </div>
+            )}
+            {meta.violatedRules?.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {meta.violatedRules.slice(0, 12).map((r, i) => (
+                  <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-mono ${darkMode ? "bg-slate-800 text-slate-300" : "bg-slate-100 text-slate-600"}`}>{r.id}</span>
+                ))}
+              </div>
+            )}
+            {meta.note && (
+              <p className={`text-[10px] italic leading-relaxed ${darkMode ? "text-slate-500" : "text-slate-400"}`}>{meta.note}</p>
+            )}
+          </div>
+        )}
+
+        {/* Document Title uniqueness */}
+        {metricKey === "Document_Title" && meta?.currentTitle && (
+          <div className="space-y-2">
+            <div className={`p-3 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-slate-100/40 border-slate-200/50"}`}>
+              <p className="text-[9px] font-black uppercase tracking-widest opacity-40">Current Title</p>
+              <p className={`text-xs fontsemibold mt-0.5 break-words ${darkMode ? "text-slate-200" : "text-slate-800"}`}>{meta.currentTitle}</p>
+              <p className={`text-[10px] mt-1 fontsemibold ${meta.unique === false ? "text-rose-500" : meta.unique === true ? "text-emerald-500" : "opacity-40"}`}>
+                {meta.unique === false ? `Duplicated on ${meta.duplicates?.length || 0} page(s)` : meta.unique === true ? `Unique across ${meta.checkedCount} sampled page(s)` : "Uniqueness not verified"}
+              </p>
+            </div>
+            {meta.duplicates?.length > 0 && (
+              <div className="space-y-1">
+                {meta.duplicates.slice(0, 4).map((d, i) => (
+                  <p key={i} className={`text-[10px] font-mono break-all ${darkMode ? "text-rose-300" : "text-rose-600"}`}>↳ {d.url}</p>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Ask AI Button */}
         {!isPassed && (
@@ -560,6 +616,12 @@ const Accessibility_Inner = React.memo(function Accessibility_Inner({ data, load
         {/* Visual Accessibility Section (Gated) */}
         <ReportRestrictionWrapper>
           <div className="space-y-12">
+            {metric.WCAG_AA_Compliance && (
+              <Section title="WCAG 2.1 AA Compliance" icon={ShieldCheck} darkMode={darkMode}>
+                <MetricCard metricKey="WCAG_AA_Compliance" data={metric.WCAG_AA_Compliance} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
+              </Section>
+            )}
+
             <Section title="Visual & Media" icon={Eye} darkMode={darkMode}>
               {["Color_Contrast", "Image_Alt", "Meta_Viewport"].map(k => metric[k] && (
                 <MetricCard key={k} metricKey={k} data={metric[k]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />

@@ -1637,21 +1637,44 @@ export const InfoDetails = {
     },
     Document_Title: {
         title: "Document Title",
-        whatThisParameterIs: "The Document Title is the name of your page shown in browser tabs. It's the first thing a screen reader says to describe your page.",
-        whatItCalculates: "We check the <head> section to ensure a non-empty <title> tag is present.",
-        whyItMatters: "The title is the very first thing a screen reader announces. It gives users immediate confirmation that they've landed on the right page.",
+        whatThisParameterIs: "The Document Title is the name of your page shown in browser tabs. It's the first thing a screen reader says to describe your page, and it should be unique per page.",
+        whatItCalculates: "We confirm a non-empty <title> is present, then sample up to 4 other internal pages and compare their titles to this one. If the same title is reused on other pages, it's flagged as not unique (a warning).",
+        whyItMatters: "The title is the first thing a screen reader announces and how users tell tabs, history, and search results apart. Duplicate titles across pages leave users (and search engines) unable to distinguish them.",
         thresholds: {
-            good: "Non-empty <title> present",
+            good: "Non-empty <title>, unique across sampled pages",
+            needsImprovement: "Title is reused on other pages (not unique)",
             poor: "Title is missing or empty"
         },
         actualReasonsForFailure: [
             "Document title is missing or empty",
-            "Title tag exists but contains no text"
+            "The same <title> is reused across multiple pages",
+            "Title tag exists but contains no descriptive text"
         ],
         howToOvercomeFailure: [
-            "Add a <title> element to the <head> of the page",
-            "Ensure the title provides a concise summary of the page content",
-            "Make sure the title is unique for each page"
+            "Add a <title> element to the <head> of every page",
+            "Give each page a unique, descriptive title (page/section name + dealership name)",
+            "Avoid a single site-wide title shared across all pages"
+        ]
+    },
+    WCAG_AA_Compliance: {
+        title: "WCAG 2.1 AA Compliance",
+        whatThisParameterIs: "A single roll-up of how the page does against the automated WCAG 2.1 Level A/AA accessibility rules — the legal benchmark for ADA accessibility.",
+        whatItCalculates: "We take the axe-core results, keep only the rules tagged WCAG 2.0/2.1 Level A and AA, and compute a rule-level conformance ratio (passed ÷ total). The score is then capped by the worst issue present — a single critical or serious AA failure caps the result, because under WCAG one failing criterion means the level isn't met. This is a display-only summary and does not double-count the individual rule cards.",
+        whyItMatters: "ADA and many regulations point at WCAG 2.1 AA. A unified grade tells you at a glance whether the page is broadly conformant or has blocking issues, instead of reading 19 separate rule cards.",
+        thresholds: {
+            good: "No AA rule violations (conformant on automated checks)",
+            needsImprovement: "Only moderate/minor AA issues (partially conformant)",
+            poor: "Critical or serious AA failures (non-conformant)"
+        },
+        actualReasonsForFailure: [
+            "One or more critical/serious WCAG A/AA rules are failing (e.g. contrast, names, labels)",
+            "Multiple moderate AA issues lower the overall conformance ratio",
+            "Structural or ARIA failures that block Level AA conformance"
+        ],
+        howToOvercomeFailure: [
+            "Fix critical and serious violations first (contrast, labels/names, ARIA, structure)",
+            "Re-test until no AA rules fail, then keep automated checks in CI",
+            "Complete a manual AA audit — automation covers only ~30–50% of WCAG criteria"
         ]
     },
     Html_Has_Lang: {
@@ -1800,11 +1823,12 @@ export const InfoDetails = {
     HTTPS: {
         title: "HTTPS Usage",
         whatThisParameterIs: "HTTPS is a secure way for your browser to talk to a website, ensuring that your connection is always private and safe.",
-        whatItCalculates: "It verifies that the page is loaded via the https protocol scheme.",
-        whyItMatters: "HTTPS creates a private and secure connection between your visitor and the server, making it impossible for hackers to snoop on sensitive information.",
+        whatItCalculates: "It verifies the actually-landed page (after redirects) is served over HTTPS, then scans the rendered page for mixed content — insecure http:// subresources. Active mixed content (scripts, stylesheets, iframes) is treated as a failure because browsers block it; passive mixed content (images, media) is a warning.",
+        whyItMatters: "HTTPS creates a private, secure connection. But a single HTTP script or image on an HTTPS page (mixed content) breaks that guarantee — browsers block active mixed content and warn users the page is 'not fully secure'.",
         thresholds: {
-            good: "HTTPS enabled",
-            poor: "HTTP only"
+            good: "HTTPS with no mixed content",
+            needsImprovement: "HTTPS but images/media load over HTTP (passive mixed content)",
+            poor: "HTTP only, or active mixed content (scripts/styles/iframes over HTTP)"
         },
         actualReasonsForFailure: [
             "The website is served over HTTP instead of HTTPS",
@@ -2082,21 +2106,22 @@ export const InfoDetails = {
     MFA_Enabled: {
         title: "Multi-Factor Authentication (MFA)",
         whatThisParameterIs: "MFA (Multi-Factor Authentication) adds an extra layer of security beyond just a password, like a code sent to your phone.",
-        whatItCalculates: "It scans the page for MFA-related input fields, specific keywords ('2FA', 'OTP'), or SSO/Federated login indicators.",
-        whyItMatters: "Even if someone steals your password, MFA ensures they still can't get in. It's the ultimate protection for your most sensitive accounts.",
+        whatItCalculates: "MFA only matters if a login exists, so we first check for an authentication surface (password field or login link). If none, this is marked Not Applicable and excluded from the score. If a login exists, we grade the evidence: genuine MFA signals (OTP input, '2FA' keywords) pass; SSO/federated login is a warning (it may delegate MFA but that can't be confirmed); single-factor password-only is a warning. Enforcement cannot be proven without credentials.",
+        whyItMatters: "Even if someone steals your password, MFA ensures they still can't get in. It's the strongest protection for sensitive customer and admin accounts.",
         thresholds: {
-            good: "MFA or SSO indicators detected on the login page",
-            poor: "No visible MFA or SSO indicators found"
+            good: "Genuine MFA signal detected at the login (OTP input / 2FA keywords)",
+            needsImprovement: "Login exists but only SSO or single-factor password detected",
+            poor: "Not applicable when no login exists (excluded from the score)"
         },
         actualReasonsForFailure: [
-            "No explicit Multi-Factor Authentication (MFA) or SSO options were detected on the entry page",
-            "The login form appears to use single-factor authentication only",
-            "MFA indicators are missing from visible page text and input attributes"
+            "A login exists but only single-factor (password) authentication was detected",
+            "Login is delegated to SSO; native MFA enforcement could not be confirmed",
+            "No MFA input or keyword was visible on the authentication surface"
         ],
         howToOvercomeFailure: [
-            "Ensure MFA is available and enforced for all user accounts, especially sensitive ones",
-            "Provide modern authentication options like SSO (Google, Microsoft) or Authenticator apps",
-            "Display clear indicators on the login page if MFA is required in a subsequent step"
+            "Offer and enforce MFA (authenticator app, OTP, or security key) for customer and admin accounts",
+            "If using SSO, confirm the identity provider enforces MFA",
+            "Note: a post-login MFA step may not be visible to an unauthenticated scan"
         ]
     },
     Google_Safe_Browsing: {
@@ -2241,22 +2266,22 @@ export const InfoDetails = {
     },
     Third_Party_Cookies: {
         title: "Third-Party Cookies",
-        whatThisParameterIs: "This check identifies 'outside' trackers that are following your visitors, which can impact privacy and load times.",
-        whatItCalculates: "It compares the domain of each cookie with the main hostname to identify external sources.",
-        whyItMatters: "Reducing 'outsider' tracking makes your site feel more private and often helps it load faster for your visitors.",
+        whatThisParameterIs: "This check looks at 'outside' trackers following your visitors and, more importantly, whether you disclose them.",
+        whatItCalculates: "It identifies cookies set by external domains, then checks whether they are DISCLOSED — via a cookie-consent banner or a privacy policy. Third-party cookies that are disclosed pass; undisclosed third-party cookies fail as a GDPR/CCPA risk. No third-party cookies also passes (nothing to disclose).",
+        whyItMatters: "Third-party cookies (analytics, ads) are normal and often necessary. The compliance question isn't whether they exist — it's whether you disclose them and obtain consent. Undisclosed tracking is the actual legal risk.",
         thresholds: {
-            good: "No third-party cookies detected",
-            poor: "One or more third-party cookies identified"
+            good: "No third-party cookies, or they are disclosed via consent banner / privacy policy",
+            poor: "Third-party cookies present with no consent banner or privacy-policy disclosure"
         },
         actualReasonsForFailure: [
-            "Cookies from external domains are being stored, posing potential privacy risks",
-            "Tracking or advertising scripts are setting cookies without explicit first-party scope",
-            "Sensitive user data could be shared with external domains via cookie storage"
+            "Cookies from external domains are stored but there is no cookie-consent banner",
+            "No privacy policy discloses the third-party cookies / tracking",
+            "Non-essential cookies are set before the user has a chance to consent"
         ],
         howToOvercomeFailure: [
-            "Audit all third-party scripts (ads, analytics, social) to see if they are necessary",
-            "Use cookie-free alternatives for simple tracking wherever possible",
-            "Ensure that all third-party cookie usage complies with GDPR and CCPA regulations"
+            "Add a cookie-consent banner and obtain consent before setting non-essential cookies",
+            "Publish a privacy policy that names the third parties and their cookies",
+            "Audit third-party scripts (ads, analytics, social) and remove any that aren't needed"
         ]
     },
     CRM_Integration: {
@@ -2806,6 +2831,48 @@ export const InfoDetails = {
             "Use a standard layout system to ensure everything is perfectly aligned",
             "Standardize your spacing so gaps between sections are always the same",
             "Ensure similar items (like all primary buttons) share the exact same style"
+        ]
+    },
+    Mobile_Experience: {
+        title: "Mobile Experience / Responsive Layout",
+        whatThisParameterIs: "We check whether your page genuinely adapts to small screens, rather than just guessing from CSS structure.",
+        whatItCalculates: "Using the rendered page, we score four signals: (1) a responsive viewport meta tag with width=device-width (30%); (2) no horizontal overflow — content never spills wider than the screen (35%); (3) responsive images using srcset/sizes/<picture> (20%); and (4) CSS media queries driving the layout (15%).",
+        whyItMatters: "If a page forces sideways scrolling or ignores the device width, mobile shoppers pinch, zoom, and leave. Most dealership traffic is mobile, so a layout that truly adapts is essential to keep visitors and conversions.",
+        thresholds: {
+            good: "Score ≥ 75 — responsive viewport, no overflow, responsive techniques in use",
+            needsImprovement: "Score 45–74 — partially responsive with gaps",
+            poor: "Score < 45 — does not adapt to mobile screens"
+        },
+        actualReasonsForFailure: [
+            "Missing viewport meta tag or no width=device-width",
+            "Content overflows the viewport, causing horizontal scroll",
+            "Images aren't served responsively and no media queries adapt the layout"
+        ],
+        howToOvercomeFailure: [
+            "Add <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
+            "Remove fixed-width elements that push the page wider than the screen",
+            "Serve responsive images (srcset/sizes) and use CSS media queries to adapt the layout"
+        ]
+    },
+    Mobile_Usability: {
+        title: "Mobile Usability",
+        whatThisParameterIs: "We check whether the page is comfortable to use one-handed on a phone — big enough tap targets, legible text, and reachable navigation.",
+        whatItCalculates: "We measure three things on the rendered page: (1) tap targets at least 44×44px, per Apple HIG / WCAG 2.5.5 (55%); (2) text at a legible size of at least 12px (30%); and (3) thumb reach — a reachable sticky bar or mobile menu for one-handed use (15%). On desktop reports this is shown for context but not scored.",
+        whyItMatters: "Small buttons cause mis-taps, tiny text forces zooming, and out-of-reach menus frustrate one-handed users. Touch ergonomics directly affect whether mobile shoppers can complete a lead form or call.",
+        thresholds: {
+            good: "Score ≥ 75 — large tap targets, legible text, reachable nav",
+            needsImprovement: "Score 45–74 — some small targets or text",
+            poor: "Score < 45 — many tap targets or text too small for touch"
+        },
+        actualReasonsForFailure: [
+            "Tap targets are smaller than 44×44px, causing mis-taps",
+            "Text is below a legible size and forces zooming",
+            "No reachable sticky or mobile navigation for one-handed use"
+        ],
+        howToOvercomeFailure: [
+            "Size tap targets at least 44×44px with adequate spacing between them",
+            "Keep body text at 16px (never below 12px)",
+            "Provide a reachable sticky header or bottom navigation bar on mobile"
         ]
     },
     In_Page_Navigation: {

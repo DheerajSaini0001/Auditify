@@ -33,6 +33,8 @@ const iconMap = {
   Content_Density_Balance: Grid3X3,
   Page_to_Page_Flow: Repeat,
   Layout_Consistency: AppWindow,
+  Mobile_Experience: Smartphone,
+  Mobile_Usability: Touchpad,
   In_Page_Navigation: Anchor,
   Inventory_Filtering: SlidersHorizontal,
   No_Results_UX: SearchX,
@@ -715,6 +717,79 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
                 </div>
               </div>
             )}
+
+            {type === "Mobile_Experience" && meta && (
+              <div className="space-y-2">
+                <div>
+                  <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Responsive Viewport</h5>
+                  <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${meta.hasDeviceWidth ? "bg-emerald-500" : "bg-rose-500"}`}></span>
+                    <span className="break-all">{meta.hasDeviceWidth ? "width=device-width set" : meta.hasViewportMeta ? "viewport meta present, no device-width" : "no viewport meta"}</span>
+                  </div>
+                </div>
+                <div>
+                  <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Horizontal Overflow</h5>
+                  <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${meta.horizontalOverflow ? "bg-rose-500" : "bg-emerald-500"}`}></span>
+                    <span className="break-all">{meta.horizontalOverflow ? `Overflows by ${meta.overflowBy}px${meta.offenders && meta.offenders.length ? ` (${meta.offenders.join(", ")})` : ""}` : "None"}</span>
+                  </div>
+                </div>
+                {meta.responsiveImageRatio !== null && meta.responsiveImageRatio !== undefined && (
+                  <div>
+                    <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Responsive Images</h5>
+                    <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                      <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400"></span>
+                      <span className="break-all">{meta.responsiveImages}/{meta.imagesTotal} ({meta.responsiveImageRatio}%) · {meta.mediaQueryCount} media queries</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {type === "Mobile_Usability" && meta && (
+              <div className="space-y-2">
+                {meta.touchTargetPct !== null && meta.touchTargetPct !== undefined && (
+                  <div>
+                    <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Tap Targets ≥ 44px</h5>
+                    <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${meta.touchTargetPct >= 80 ? "bg-emerald-500" : "bg-rose-500"}`}></span>
+                      <span className="break-all">{meta.adequateTargets}/{meta.totalTargets} ({meta.touchTargetPct}%)</span>
+                    </div>
+                  </div>
+                )}
+                {meta.legibleTextPct !== null && meta.legibleTextPct !== undefined && (
+                  <div>
+                    <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Legible Text ≥ 12px</h5>
+                    <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${meta.legibleTextPct >= 90 ? "bg-emerald-500" : "bg-amber-500"}`}></span>
+                      <span className="break-all">{meta.legibleText}/{meta.textTotal} ({meta.legibleTextPct}%)</span>
+                    </div>
+                  </div>
+                )}
+                {!meta.notMeasurable && (
+                  <div>
+                    <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Thumb Reach</h5>
+                    <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${meta.thumbReachOk ? "bg-emerald-500" : "bg-amber-500"}`}></span>
+                      <span className="break-all">{meta.thumbReachOk ? "Reachable sticky / mobile nav" : "No reachable sticky or mobile nav"}</span>
+                    </div>
+                  </div>
+                )}
+                {meta.smallExamples && meta.smallExamples.length > 0 && (
+                  <div>
+                    <h5 className={`text-xs fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Smallest Tap Targets</h5>
+                    <div className={`mt-1 p-2 rounded border flex flex-col gap-1 font-mono text-[10px] max-h-[120px] overflow-y-auto ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                      {meta.smallExamples.map((ex, i) => (
+                        <div key={i} className="flex gap-2 items-start">
+                          <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1 bg-slate-400"></span>
+                          <span className="break-all">{ex}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -916,7 +991,7 @@ const UX_Content_Structure_Inner = React.memo(({ data, loading, darkMode }) => {
     {
       title: "Mobile Layout & Stability",
       icon: Smartphone,
-      keys: ["Above_the_Fold_Content", "Sticky_Header_Usage", "Intrusive_Interstitials", "Layout_Consistency"]
+      keys: ["Mobile_Experience", "Mobile_Usability", "Above_the_Fold_Content", "Sticky_Header_Usage", "Intrusive_Interstitials", "Layout_Consistency"]
     },
     {
       title: "Trust & Transparency",

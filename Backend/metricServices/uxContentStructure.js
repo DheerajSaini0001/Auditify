@@ -1661,6 +1661,261 @@ async function checkStaffProfiles(page) {
   };
 }
 
+// Mobile Experience / Responsive Layout
+// Real responsive validation — viewport meta, horizontal overflow, responsive images,
+// and media-query usage — rather than a flex/grid pattern guess.
+async function checkMobileExperience(page, deviceType) {
+  const data = await page.evaluate(() => {
+    const lc = (s) => (s || "").toLowerCase();
+    const innerWidth = window.innerWidth || 0;
+
+    // 1. Viewport meta
+    const vp = document.querySelector('meta[name="viewport"]');
+    const viewportContent = vp ? lc(vp.getAttribute("content")) : "";
+    const hasViewportMeta = !!vp;
+    const hasDeviceWidth = viewportContent.includes("width=device-width");
+
+    // 2. Horizontal overflow (content wider than the viewport)
+    const docScrollWidth = Math.max(
+      document.documentElement.scrollWidth,
+      document.body ? document.body.scrollWidth : 0
+    );
+    const overflowBy = Math.max(0, docScrollWidth - innerWidth);
+    const horizontalOverflow = overflowBy > 2;
+
+    // Identify a few offending wide elements (for the recommendation)
+    const offenders = [];
+    if (horizontalOverflow) {
+      document.querySelectorAll("body *").forEach(el => {
+        if (offenders.length >= 5) return;
+        const rect = el.getBoundingClientRect();
+        if (rect.width > innerWidth + 2 && rect.height > 0) {
+          const tag = el.tagName.toLowerCase();
+          const cls = (el.className && typeof el.className === "string")
+            ? "." + el.className.trim().split(/\s+/).slice(0, 2).join(".") : "";
+          const sig = tag + cls;
+          if (!offenders.includes(sig)) offenders.push(sig);
+        }
+      });
+    }
+
+    // 3. Responsive images (srcset / sizes / <picture>)
+    const imgs = Array.from(document.querySelectorAll("img"));
+    const imagesTotal = imgs.length;
+    let responsiveImages = 0;
+    imgs.forEach(img => {
+      if (img.hasAttribute("srcset") || img.hasAttribute("sizes") || img.closest("picture")) responsiveImages++;
+    });
+
+    // 4. Media-query usage (same-origin stylesheets + inline <style>)
+    let mediaQueryCount = 0;
+    try {
+      for (const sheet of Array.from(document.styleSheets)) {
+        let rules;
+        try { rules = sheet.cssRules; } catch (e) { continue; } // cross-origin sheets throw
+        if (!rules) continue;
+        for (const rule of Array.from(rules)) {
+          if (rule.type === 4 /* CSSMediaRule */) mediaQueryCount++;
+        }
+      }
+    } catch (e) {}
+
+    return {
+      innerWidth, hasViewportMeta, viewportContent, hasDeviceWidth,
+      horizontalOverflow, overflowBy: Math.round(overflowBy), offenders,
+      imagesTotal, responsiveImages, mediaQueryCount
+    };
+  });
+
+  // Composite scoring (0-100)
+  let score = 0;
+  if (data.hasViewportMeta && data.hasDeviceWidth) score += 30;     // viewport meta (30)
+  else if (data.hasViewportMeta) score += 15;
+  if (!data.horizontalOverflow) score += 35;                        // no horizontal overflow (35)
+  if (data.imagesTotal === 0) score += 20;                          // responsive images (20), N/A => full
+  else score += Math.round((data.responsiveImages / data.imagesTotal) * 20);
+  if (data.mediaQueryCount > 0) score += 15;                        // media queries present (15)
+  score = Math.max(0, Math.min(100, score));
+
+  const responsiveImageRatio = data.imagesTotal > 0
+    ? Math.round((data.responsiveImages / data.imagesTotal) * 100) : null;
+
+  const meta = {
+    hasViewportMeta: data.hasViewportMeta,
+    viewportContent: data.viewportContent,
+    hasDeviceWidth: data.hasDeviceWidth,
+    horizontalOverflow: data.horizontalOverflow,
+    overflowBy: data.overflowBy,
+    offenders: data.offenders,
+    imagesTotal: data.imagesTotal,
+    responsiveImages: data.responsiveImages,
+    responsiveImageRatio,
+    mediaQueryCount: data.mediaQueryCount,
+    score
+  };
+
+  const issues = [];
+  if (!data.hasViewportMeta) issues.push("no responsive viewport meta tag");
+  else if (!data.hasDeviceWidth) issues.push("viewport meta missing width=device-width");
+  if (data.horizontalOverflow) issues.push(`content overflows the viewport by ${data.overflowBy}px (horizontal scroll)`);
+  if (data.imagesTotal > 0 && responsiveImageRatio !== null && responsiveImageRatio < 50) issues.push("few images use srcset/sizes/<picture>");
+  if (data.mediaQueryCount === 0) issues.push("no CSS media queries detected");
+
+  const status = score >= 75 ? "pass" : score >= 45 ? "warning" : "fail";
+
+  if (status === "pass") {
+    return {
+      score, status,
+      details: "The layout adapts to the screen: responsive viewport, no horizontal overflow, and responsive techniques in use.",
+      meta, analysis: null
+    };
+  }
+  return {
+    score, status,
+    details: status === "warning" ? "The layout is partially responsive but has gaps." : "The layout does not adapt well to mobile screens.",
+    meta,
+    analysis: {
+      cause: `Responsive issues detected: ${issues.join("; ") || "the page does not adapt cleanly to smaller viewports"}.`,
+      recommendation: "Add <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">, remove fixed-width elements that cause horizontal scroll, serve responsive images with srcset/sizes, and use CSS media queries to adapt the layout."
+    }
+  };
+}
+
+// Mobile Usability (touch targets, legible text, thumb reach)
+async function checkMobileUsability(page, deviceType) {
+  const data = await page.evaluate(() => {
+    const innerWidth = window.innerWidth || 0;
+    const innerHeight = window.innerHeight || 0;
+
+    const isVisible = (el) => {
+      const rect = el.getBoundingClientRect();
+      if (rect.width <= 1 || rect.height <= 1) return false;
+      const style = window.getComputedStyle(el);
+      if (style.display === "none" || style.visibility === "hidden" || parseFloat(style.opacity) === 0) return false;
+      return true;
+    };
+
+    // 1. Touch targets (>= 44px min side, per Apple HIG / WCAG 2.5.5)
+    const tapSelector = 'a[href], button, input:not([type="hidden"]), select, textarea, [role="button"], summary, label[for]';
+    const MIN = 44;
+    let totalTargets = 0, adequate = 0, tooSmall = 0;
+    const smallExamples = [];
+    document.querySelectorAll(tapSelector).forEach(el => {
+      if (!isVisible(el)) return;
+      const rect = el.getBoundingClientRect();
+      const minSide = Math.min(rect.width, rect.height);
+      totalTargets++;
+      if (minSide >= MIN) adequate++;
+      else {
+        tooSmall++;
+        if (smallExamples.length < 5) {
+          const label = (el.innerText || el.value || el.getAttribute("aria-label") || el.tagName).trim().slice(0, 24);
+          smallExamples.push(`${label || el.tagName.toLowerCase()} (${Math.round(rect.width)}x${Math.round(rect.height)})`);
+        }
+      }
+    });
+
+    // 2. Legible font sizes (>= 12px hard minimum)
+    const textSelector = "p, li, a, span, button, td, th, h1, h2, h3, h4, h5, h6, label, dd, dt";
+    let textTotal = 0, legible = 0, tiny = 0;
+    document.querySelectorAll(textSelector).forEach(el => {
+      const text = (el.innerText || "").trim();
+      if (!text || text.length < 2) return;
+      if (!isVisible(el)) return;
+      const fs = parseFloat(window.getComputedStyle(el).fontSize) || 0;
+      if (fs <= 0) return;
+      textTotal++;
+      if (fs >= 12) legible++;
+      else tiny++;
+    });
+
+    // 3. Thumb reach heuristic — a reachable sticky bar or mobile nav
+    let hasStickyBar = false;
+    document.querySelectorAll("header, nav, div, footer").forEach(el => {
+      if (hasStickyBar) return;
+      const style = window.getComputedStyle(el);
+      if (style.position === "fixed" || style.position === "sticky") {
+        const rect = el.getBoundingClientRect();
+        const nearEdge = rect.top <= 4 || (innerHeight - rect.bottom) <= 4;
+        if (nearEdge && rect.width >= innerWidth * 0.6 && rect.height > 0) hasStickyBar = true;
+      }
+    });
+    const hasMobileNav = !!document.querySelector('.navbar-toggler, .nav-icon, .mobile-menu-button, .hamburger, [class*="hamburger"], button[aria-label*="menu" i], [aria-label*="open menu" i]');
+
+    return { innerWidth, totalTargets, adequate, tooSmall, smallExamples, textTotal, legible, tiny, hasStickyBar, hasMobileNav };
+  });
+
+  // Guard: a page that rendered essentially empty (failed load / JS-only shell) has no
+  // measurable UI — don't let the empty-set ratio defaults (1.0) produce a false "pass".
+  if (data.totalTargets === 0 && data.textTotal <= 1) {
+    return {
+      score: 0,
+      status: "warning",
+      infoOnly: true,
+      details: "Not enough rendered content to assess mobile usability.",
+      meta: { totalTargets: 0, textTotal: data.textTotal, notMeasurable: true, infoOnly: true, score: 0 },
+      analysis: null
+    };
+  }
+
+  // Composite scoring (0-100)
+  const touchRatio = data.totalTargets > 0 ? data.adequate / data.totalTargets : 1;
+  const fontRatio = data.textTotal > 0 ? data.legible / data.textTotal : 1;
+  const thumbSignal = (data.hasStickyBar || data.hasMobileNav) ? 1 : 0;
+  let score = Math.round((0.55 * touchRatio + 0.30 * fontRatio + 0.15 * thumbSignal) * 100);
+  score = Math.max(0, Math.min(100, score));
+
+  const touchPct = data.totalTargets > 0 ? Math.round(touchRatio * 100) : null;
+  const fontPct = data.textTotal > 0 ? Math.round(fontRatio * 100) : null;
+
+  // Touch-target sizing is not a fair signal on desktop — show but don't weight it there.
+  const infoOnly = deviceType !== "mobile";
+
+  const meta = {
+    totalTargets: data.totalTargets,
+    adequateTargets: data.adequate,
+    tooSmallTargets: data.tooSmall,
+    touchTargetPct: touchPct,
+    smallExamples: data.smallExamples,
+    textTotal: data.textTotal,
+    legibleText: data.legible,
+    tinyText: data.tiny,
+    legibleTextPct: fontPct,
+    hasStickyBar: data.hasStickyBar,
+    hasMobileNav: data.hasMobileNav,
+    thumbReachOk: thumbSignal === 1,
+    minTouchTargetPx: 44,
+    infoOnly,
+    score
+  };
+
+  const issues = [];
+  if (touchPct !== null && touchPct < 80) issues.push(`${data.tooSmall} of ${data.totalTargets} tap targets are smaller than 44px`);
+  if (fontPct !== null && fontPct < 90) issues.push(`${data.tiny} text elements are below a legible size`);
+  if (!data.hasStickyBar && !data.hasMobileNav) issues.push("no reachable sticky nav or mobile menu for one-handed use");
+
+  const status = score >= 75 ? "pass" : score >= 45 ? "warning" : "fail";
+
+  if (status === "pass") {
+    return {
+      score, status, infoOnly,
+      details: infoOnly
+        ? "Touch ergonomics shown for mobile context (not scored on desktop)."
+        : "Tap targets are large enough, text is legible, and navigation is within thumb reach.",
+      meta, analysis: null
+    };
+  }
+  return {
+    score, status, infoOnly,
+    details: status === "warning" ? "Mobile usability is workable but has friction points." : "Mobile usability needs work — small tap targets or text.",
+    meta,
+    analysis: {
+      cause: `Usability issues for touch users: ${issues.join("; ") || "tap targets or text are not optimized for one-handed mobile use"}.`,
+      recommendation: "Make tap targets at least 44×44px with adequate spacing, keep body text at 16px (never below 12px), and provide a reachable sticky or bottom navigation for one-handed use."
+    }
+  };
+}
+
 export default async function evaluateMobileUX(device, page) {
   const deviceType = device === 'Mobile' ? 'mobile' : 'desktop';
 
@@ -1678,6 +1933,8 @@ export default async function evaluateMobileUX(device, page) {
   const density = await checkContentDensity(page, deviceType);
   const flow = await checkPageFlow(page);
   const layout = await checkLayoutConsistency(page);
+  const mobileExperience = await checkMobileExperience(page, deviceType);
+  const mobileUsability = await checkMobileUsability(page, deviceType);
   const inPageNav = await checkInPageNav(page, deviceType);
   const inventoryFiltering = await checkInventoryFiltering(page);
   const noResultsUX = await checkNoResultsUX(page);
@@ -1701,6 +1958,8 @@ export default async function evaluateMobileUX(device, page) {
     Content_Density_Balance: density,
     Page_to_Page_Flow: flow,
     Layout_Consistency: layout,
+    Mobile_Experience: mobileExperience,
+    Mobile_Usability: mobileUsability,
     In_Page_Navigation: inPageNav,
     Inventory_Filtering: inventoryFiltering,
     No_Results_UX: noResultsUX,
@@ -1728,6 +1987,8 @@ export default async function evaluateMobileUX(device, page) {
     Content_Density_Balance: 2,
     Page_to_Page_Flow: 2,
     Layout_Consistency: 1,
+    Mobile_Experience: 3,
+    Mobile_Usability: 3,
     In_Page_Navigation: 1,
     Inventory_Filtering: 3,
     Pricing_Transparency: 3,

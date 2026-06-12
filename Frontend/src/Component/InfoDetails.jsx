@@ -42,9 +42,9 @@ export const InfoDetails = {
         whatItCalculates: "For Lab data, we use Total Blocking Time (TBT) as a proxy. For Field data, we use CrUX 'interaction-to-next-paint' metric which measures real user interaction latency.",
         whyItMatters: "Nobody likes a site that feels 'laggy.' Instant reactions to clicks make your website feel alive, professional, and easy to use.",
         thresholds: {
-            good: "≤ 200ms (Field) / ≤ 3.8s (Lab)",
-            needsImprovement: "200ms–500ms (Field) / 3.8s–7.3s (Lab)",
-            poor: "> 500ms (Field) / > 7.3s (Lab)"
+            good: "≤ 0.2s (Field) / ≤ 3.8s (Lab)",
+            needsImprovement: "0.2s–0.5s (Field) / 3.8s–7.3s (Lab)",
+            poor: "> 0.5s (Field) / > 7.3s (Lab)"
         },
         actualReasonsForFailure: [
             "Long Tasks (>50ms) blocking main thread",
@@ -65,9 +65,9 @@ export const InfoDetails = {
         whatItCalculates: "For Lab data, we use Lighthouse 'max-potential-fid' (Max Potential FID) — the duration of the longest main-thread task, i.e. the worst-case delay a user's first input could face. For Field data, we use the 75th percentile of CrUX 'FIRST_INPUT_DELAY_MS' when Google still reports it (FID was replaced by INP in 2024, so field data is rare and the card usually shows the lab value).",
         whyItMatters: "The first click is the user's first impression of how responsive your site is. If that very first tap feels dead for even a fraction of a second, visitors assume the site is broken or slow.",
         thresholds: {
-            good: "≤ 100ms (Field) / ≤ 130ms (Lab)",
-            needsImprovement: "100–300ms (Field) / 130–250ms (Lab)",
-            poor: "> 300ms (Field) / > 250ms (Lab)"
+            good: "≤ 0.1s (Field) / ≤ 0.13s (Lab)",
+            needsImprovement: "0.1s–0.3s (Field) / 0.13s–0.25s (Lab)",
+            poor: "> 0.3s (Field) / > 0.25s (Lab)"
         },
         actualReasonsForFailure: [
             "Long Tasks (>50ms) blocking the main thread during load",
@@ -203,9 +203,9 @@ export const InfoDetails = {
         whatItCalculates: "We sum the duration of all 'long tasks' (tasks > 50ms) between First Contentful Paint and Time to Interactive, found in the Main Thread work breakdown.",
         whyItMatters: "If your page is frozen while loading, users can't do anything. Reducing blocking time makes your site feel snappy and responsive immediately.",
         thresholds: {
-            good: "≤ 200ms",
-            needsImprovement: "200ms – 600ms",
-            poor: "> 600ms"
+            good: "≤ 0.2s",
+            needsImprovement: "0.2s – 0.6s",
+            poor: "> 0.6s"
         },
         actualReasonsForFailure: [
             "Long Tasks (>50ms) on main thread",

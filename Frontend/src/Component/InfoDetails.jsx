@@ -42,9 +42,9 @@ export const InfoDetails = {
         whatItCalculates: "For Lab data, we use Total Blocking Time (TBT) as a proxy. For Field data, we use CrUX 'interaction-to-next-paint' metric which measures real user interaction latency.",
         whyItMatters: "Nobody likes a site that feels 'laggy.' Instant reactions to clicks make your website feel alive, professional, and easy to use.",
         thresholds: {
-            good: "≤ 200ms (Field) / ≤ 3.8s (Lab)",
-            needsImprovement: "200ms–500ms (Field) / 3.8s–7.3s (Lab)",
-            poor: "> 500ms (Field) / > 7.3s (Lab)"
+            good: "≤ 0.2s (Field) / ≤ 3.8s (Lab)",
+            needsImprovement: "0.2s–0.5s (Field) / 3.8s–7.3s (Lab)",
+            poor: "> 0.5s (Field) / > 7.3s (Lab)"
         },
         actualReasonsForFailure: [
             "Long Tasks (>50ms) blocking main thread",
@@ -65,9 +65,9 @@ export const InfoDetails = {
         whatItCalculates: "For Lab data, we use Lighthouse 'max-potential-fid' (Max Potential FID) — the duration of the longest main-thread task, i.e. the worst-case delay a user's first input could face. For Field data, we use the 75th percentile of CrUX 'FIRST_INPUT_DELAY_MS' when Google still reports it (FID was replaced by INP in 2024, so field data is rare and the card usually shows the lab value).",
         whyItMatters: "The first click is the user's first impression of how responsive your site is. If that very first tap feels dead for even a fraction of a second, visitors assume the site is broken or slow.",
         thresholds: {
-            good: "≤ 100ms (Field) / ≤ 130ms (Lab)",
-            needsImprovement: "100–300ms (Field) / 130–250ms (Lab)",
-            poor: "> 300ms (Field) / > 250ms (Lab)"
+            good: "≤ 0.1s (Field) / ≤ 0.13s (Lab)",
+            needsImprovement: "0.1s–0.3s (Field) / 0.13s–0.25s (Lab)",
+            poor: "> 0.3s (Field) / > 0.25s (Lab)"
         },
         actualReasonsForFailure: [
             "Long Tasks (>50ms) blocking the main thread during load",
@@ -180,8 +180,8 @@ export const InfoDetails = {
         whatItCalculates: "We measure the time from the initial request to the receipt of the first byte using Lighthouse 'server-response-time' (Lab) and CrUX 'experimental_time_to_first_byte' (Field).",
         whyItMatters: "Everything else waits for this. If your server is slow to respond, your entire website feels slow, no matter how optimized your code is.",
         thresholds: {
-            good: "≤ 800ms",
-            needsImprovement: "800ms – 1.8s",
+            good: "≤ 0.8s",
+            needsImprovement: "0.8s – 1.8s",
             poor: "> 1.8s"
         },
         actualReasonsForFailure: [
@@ -203,9 +203,9 @@ export const InfoDetails = {
         whatItCalculates: "We sum the duration of all 'long tasks' (tasks > 50ms) between First Contentful Paint and Time to Interactive, found in the Main Thread work breakdown.",
         whyItMatters: "If your page is frozen while loading, users can't do anything. Reducing blocking time makes your site feel snappy and responsive immediately.",
         thresholds: {
-            good: "≤ 200ms",
-            needsImprovement: "200ms – 600ms",
-            poor: "> 600ms"
+            good: "≤ 0.2s",
+            needsImprovement: "0.2s – 0.6s",
+            poor: "> 0.6s"
         },
         actualReasonsForFailure: [
             "Long Tasks (>50ms) on main thread",
@@ -346,6 +346,168 @@ export const InfoDetails = {
         ]
     },
 
+    PageSpeed_Score: {
+        title: "PageSpeed Score (Lighthouse)",
+        whatThisParameterIs: "The official Google Lighthouse Performance score (0–100) — the single headline number you see in PageSpeed Insights — reported for both Mobile and Desktop.",
+        whatItCalculates: "We read Lighthouse's `categories.performance.score` straight from the PageSpeed Insights API for each strategy. It is Lighthouse's own weighted blend of FCP, Speed Index, LCP, Total Blocking Time and CLS — not our internal weighting.",
+        whyItMatters: "This is the number clients, agencies and Google itself quote. It is a quick, standardized benchmark of overall speed, and because Mobile is scored separately it reflects how most real visitors actually experience the site.",
+        thresholds: {
+            good: "90–100 (Green)",
+            needsImprovement: "50–89 (Orange)",
+            poor: "0–49 (Red)"
+        },
+        actualReasonsForFailure: [
+            "Slow Largest Contentful Paint and Speed Index",
+            "High Total Blocking Time from heavy JavaScript",
+            "Layout shifts (CLS) during load",
+            "Large, unoptimized assets over a mobile connection"
+        ],
+        howToOvercomeFailure: [
+            "Fix the failing Core Web Vitals below — they directly feed this score",
+            "Reduce and defer JavaScript to cut Total Blocking Time",
+            "Compress images and serve next-gen formats (WebP/AVIF)",
+            "Eliminate render-blocking resources and reserve space to stop layout shifts"
+        ]
+    },
+    Mobile_Usability: {
+        title: "Mobile Usability",
+        whatThisParameterIs: "Checks whether the page is genuinely usable on a phone: responsive layout (no horizontal scrolling), tap targets large enough to press, legible text, and a correctly configured viewport.",
+        whatItCalculates: "We render the page in a real mobile-emulated browser (iPhone viewport, touch enabled) and inspect the live DOM. Four sub-checks are scored and summed to 100: Viewport meta (25), Responsive/no horizontal overflow (30), Tap-target sizing — interactive elements ≥44×44px (30), and Legible fonts ≥12px (15).",
+        whyItMatters: "The majority of dealership traffic is mobile. If buttons are too small, text is unreadable, or the page scrolls sideways, shoppers bounce — and Google's mobile-first index ranks the mobile experience, not the desktop one.",
+        thresholds: {
+            good: "≥ 90% (responsive, tappable, legible)",
+            needsImprovement: "50% – 89%",
+            poor: "< 50%"
+        },
+        actualReasonsForFailure: [
+            "Missing or zoom-blocking viewport meta tag",
+            "Content wider than the screen (horizontal scrolling)",
+            "Buttons/links smaller than 44×44px and too close together",
+            "Body text rendered below 12px"
+        ],
+        howToOvercomeFailure: [
+            'Add <meta name="viewport" content="width=device-width, initial-scale=1"> and allow zoom',
+            "Make wide elements fluid (max-width:100%) to remove horizontal scroll",
+            "Enlarge tap targets to at least 44×44px with adequate spacing",
+            "Use a base body font size of at least 16px"
+        ]
+    },
+    Mobile_Load_Speed: {
+        title: "Mobile Load Speed",
+        whatThisParameterIs: "Measures how long the page takes to FULLY load on a real mobile connection — from navigation start until the browser fires window.onload — not just the visual Speed Index estimate.",
+        whatItCalculates: "We open the page in a mobile-emulated browser (iPhone viewport) throttled to a representative mid-tier profile — Slow 4G network plus 4× CPU slowdown — and time it until window.onload, also capturing TTFB, DOMContentLoaded and total transfer size.",
+        whyItMatters: "A score that looks fine on fast office WiFi can be painfully slow on a phone on cellular data. This throttled, real-navigation measurement reflects what mobile shoppers actually wait through before the page is usable.",
+        thresholds: {
+            good: "≤ 5s",
+            needsImprovement: "5s – 10s",
+            poor: "> 10s"
+        },
+        actualReasonsForFailure: [
+            "Slow server response (TTFB) on mobile",
+            "Large total page weight over a constrained connection",
+            "Heavy, eagerly-loaded images and third-party scripts",
+            "Render-blocking JavaScript delaying full load"
+        ],
+        howToOvercomeFailure: [
+            "Improve server response time and serve mobile visitors from a CDN/edge cache",
+            "Reduce total bytes: compress images, code-split JS, defer non-critical assets",
+            "Lazy-load below-the-fold media and defer third-party widgets",
+            "Shrink and prioritize the critical rendering payload"
+        ]
+    },
+    Rendering_Performance: {
+        title: "Rendering Performance",
+        whatThisParameterIs: "How visually stable the page is while it loads — i.e. whether content jumps around (layout shift / 'jank') as images, fonts and ads come in.",
+        whatItCalculates: "Scored on Lighthouse's Cumulative Layout Shift (CLS), but unlike the raw CLS vital it surfaces the FIXABLE culprits — the specific shifting elements and the images missing width/height that cause reflow — with an affected-elements list.",
+        whyItMatters: "Layout jank makes users mis-tap (e.g. hitting the wrong button as the page shifts) and makes a site feel broken. A stable layout feels fast and trustworthy from the first moment and protects your Core Web Vitals ranking.",
+        thresholds: {
+            good: "≥ 90% (CLS ≤ 0.1)",
+            needsImprovement: "50% – 89% (CLS 0.1–0.25)",
+            poor: "< 50% (CLS > 0.25)"
+        },
+        actualReasonsForFailure: [
+            "High Cumulative Layout Shift from late-loading content",
+            "Images missing width/height (or aspect-ratio) causing reflow",
+            "Ads / embeds / banners injected without reserved space",
+            "Web fonts swapping in and reflowing text"
+        ],
+        howToOvercomeFailure: [
+            "Add explicit width & height (or CSS aspect-ratio) to all images",
+            "Reserve space for ads/embeds/banners before they load",
+            "Use font-display:swap and preload key fonts to stop text reflow",
+            "Avoid injecting content above existing content"
+        ]
+    },
+    Lazy_Loading: {
+        title: "Lazy Loading Implementation",
+        whatThisParameterIs: "Whether media that isn't visible yet (below-the-fold images, iframes and videos) defers its loading instead of downloading up-front and slowing the initial render.",
+        whatItCalculates: "The share of deferrable media that actually defers: below-the-fold <img> and <iframe> using loading=\"lazy\", plus <video> using preload=\"none\"/\"metadata\". Cross-checked against Lighthouse's offscreen-images audit so a good ratio with real offscreen waste can't read as a perfect score.",
+        whyItMatters: "Eagerly loading off-screen media wastes bandwidth and competes with the content users can actually see, slowing the first paint — especially on mobile data. Deferring it lets the visible viewport render first.",
+        thresholds: {
+            good: "≥ 90% of below-the-fold media deferred",
+            needsImprovement: "50% – 89% deferred",
+            poor: "< 50% deferred"
+        },
+        actualReasonsForFailure: [
+            "Below-the-fold images load eagerly (missing loading=\"lazy\")",
+            "Embedded iframes (maps, videos, widgets) load up-front",
+            "Videos preload full media instead of preload=\"none\"",
+            "Lighthouse flags offscreen images as deferrable"
+        ],
+        howToOvercomeFailure: [
+            'Add loading="lazy" to below-the-fold <img> and <iframe> elements',
+            'Set preload="none" (or "metadata") on <video> elements',
+            "Defer offscreen images so the visible viewport renders first",
+            "Use a facade (click-to-load) for heavy embeds like maps and video players"
+        ]
+    },
+    Third_Party_Optimization: {
+        title: "Third-Party Script Optimization",
+        whatThisParameterIs: "How efficiently external/third-party scripts (chat, analytics, ads, tag managers, financing widgets) are loaded — and how much they tie up the main thread.",
+        whatItCalculates: "Each cross-origin <script> is classified as async, defer, or render-blocking from the live DOM. The score is the share that are async/defer, then capped down by Lighthouse's third-party main-thread blocking time so heavy third parties can't read as optimized.",
+        whyItMatters: "Third-party scripts are a leading cause of slow, janky sites — a single synchronous tag can block the whole page. Loading them async/defer and trimming unused ones keeps your site responsive even when external services are slow.",
+        thresholds: {
+            good: "≥ 90% async/defer, low blocking time",
+            needsImprovement: "50% – 89%",
+            poor: "< 50% (synchronous / heavy third parties)"
+        },
+        actualReasonsForFailure: [
+            "Third-party <script> tags load synchronously (no async/defer)",
+            "Third-party code blocks the main thread for a long time",
+            "Too many tag-manager / analytics / ad scripts",
+            "Unused or duplicate third-party tags still on the page"
+        ],
+        howToOvercomeFailure: [
+            "Add async or defer to every third-party <script>",
+            "Lazy-load or facade non-critical widgets (chat, maps, video)",
+            "Remove unused or duplicate third-party tags",
+            "Self-host critical third-party scripts where licensing allows"
+        ]
+    },
+    JS_Execution: {
+        title: "JavaScript Execution Efficiency",
+        whatThisParameterIs: "How long JavaScript ties up the browser's main thread while the page loads — parsing, compiling and executing scripts — which directly determines how soon the page becomes interactive.",
+        whatItCalculates: "Uses Lighthouse's bootup-time ('Reduce JavaScript execution time') as the primary score, alongside the total main-thread work breakdown, and lists the individual scripts costing the most execution time.",
+        whyItMatters: "Every millisecond the main thread spends on JavaScript is a millisecond the page can't respond to taps or scrolls. Heavy JS execution is the usual root cause of poor responsiveness (TBT/INP) and a sluggish first interaction.",
+        thresholds: {
+            good: "≤ 2s of JS execution",
+            needsImprovement: "2s – 3.5s",
+            poor: "> 3.5s"
+        },
+        actualReasonsForFailure: [
+            "Large JavaScript bundles parsed and executed on load",
+            "Unused JavaScript shipped to the browser",
+            "Expensive third-party scripts running on the main thread",
+            "Unnecessary polyfills served to modern browsers"
+        ],
+        howToOvercomeFailure: [
+            "Code-split and defer non-critical JavaScript",
+            "Remove unused JavaScript (tree-shaking, route-based splitting)",
+            "Move heavy work to Web Workers",
+            "Trim polyfills and ship modern bundles to modern browsers"
+        ]
+    },
+
     // Answer Engine Optimization (AEO) Signals
     answerFirst: {
         title: "Answer-First Policy",
@@ -474,19 +636,26 @@ export const InfoDetails = {
                 </li>
             </ul>
         ),
-        howThisScoreIsCalculated: "We calculate a weighted average of Core Web Vitals (45%), Load Speed metrics (22%), and Technical Optimization checks (33%). Lab data from Lighthouse and Field data from CrUX (if available) are combined to provide the most accurate assessment of real-world performance.",
+        howThisScoreIsCalculated: "We compute a weighted average over every metric that could actually be measured, then normalize by the total weight of those metrics — so the score is always on a 0–100 scale no matter which optional signals (CrUX field data, FID, the inventory/service pages, the mobile experience) exist. Lab data from Lighthouse and Field data from CrUX (when available) are combined for the most accurate real-world assessment. The official Lighthouse PageSpeed Score is shown separately and is NOT folded in, because it is itself an aggregate of the Core Web Vitals below.",
         weightage: [
-            { param: "Largest Contentful Paint (LCP)", weight: "15%" },
-            { param: "Interaction to Next Paint (INP)", weight: "15%" },
-            { param: "Cumulative Layout Shift (CLS)", weight: "15%" },
-            { param: "First Contentful Paint (FCP)", weight: "6%" },
-            { param: "Time to First Byte (TTFB)", weight: "8%" },
-            { param: "Total Blocking Time (TBT)", weight: "8% (6% when FID is available)" },
-            { param: "Speed Index (SI)", weight: "8% (6% when FID is available)" },
-            { param: "First Input Delay (FID)", weight: "4% (field data when available, otherwise lab Max Potential FID)" },
-            { param: "Inventory Page Load Time", weight: "5% (when an inventory page is found)" },
-            { param: "Service Page Load Time", weight: "5% (when a service page is found)" },
-            { param: "Asset Optimization (Compression, Caching, etc.)", weight: "25% (−5% per timed page found)" }
+            { param: "Largest Contentful Paint (LCP)", weight: "15" },
+            { param: "Interaction to Next Paint (INP)", weight: "15" },
+            { param: "Cumulative Layout Shift (CLS)", weight: "15" },
+            { param: "First Contentful Paint (FCP)", weight: "6" },
+            { param: "Time to First Byte (TTFB)", weight: "8" },
+            { param: "Total Blocking Time (TBT)", weight: "6" },
+            { param: "Speed Index (SI)", weight: "6" },
+            { param: "First Input Delay (FID)", weight: "4 (field when available, else lab Max Potential FID)" },
+            { param: "Asset Optimization (Compression, Caching, Resource Opt, Render-Blocking, Redirects)", weight: "25" },
+            { param: "Mobile Usability (responsive, tap targets, fonts, viewport)", weight: "5" },
+            { param: "Rendering Performance (layout stability / visual jank)", weight: "5" },
+            { param: "Lazy Loading Implementation (images, iframes, video)", weight: "5" },
+            { param: "Third-Party Script Optimization (async/defer + blocking time)", weight: "5" },
+            { param: "JavaScript Execution Efficiency (bootup / main-thread time)", weight: "5" },
+            { param: "Mobile Load Speed (throttled full mobile load)", weight: "5" },
+            { param: "Inventory Page Load Time", weight: "5 (when an inventory page is found)" },
+            { param: "Service Page Load Time", weight: "5 (when a service page is found)" },
+            { param: "PageSpeed Score (Lighthouse, Mobile & Desktop)", weight: "Informational — shown, not scored" }
         ]
     },
 

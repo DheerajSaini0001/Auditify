@@ -14,6 +14,25 @@ function calculateStatus(value, goodThreshold, needsImprovementThreshold) {
   return "fail";
 }
 
+// Format a millisecond timing as seconds for DISPLAY only (e.g. 2500 → "2.5s",
+// 150 → "0.15s", 800 → "0.8s"). Scoring still uses the raw millisecond thresholds —
+// only the value/threshold strings shown on the card are converted to seconds.
+const msToSeconds = (ms) => parseFloat((ms / 1000).toFixed(2));
+const fmtSeconds = (ms) => msToSeconds(ms) + "s";
+
+// A metric that could NOT be measured at all (browser/CDP/page-context failure, or
+// PageSpeed couldn't analyze the URL). Returned instead of null so the card still
+// renders and surfaces WHY it failed — mirroring the accessibility "<check> skipped
+// — <reason>." convention. Flagged `notScored` so a transient measurement failure is
+// excluded from the weighted Technical total rather than penalizing it as a real 0.
+const notCalculated = (reason, recommendation) => ({
+  score: 0,
+  status: "fail",
+  details: reason,
+  meta: { value: "Not calculated", notScored: true, reason },
+  analysis: { cause: reason, recommendation },
+});
+
 // LCP - Largest Contentful Paint
 const evaluateLCPLab = (audits) => {
   const labValue = parseFloat((audits["largest-contentful-paint"]?.numericValue || 0).toFixed(0));
@@ -60,11 +79,11 @@ const evaluateLCPLab = (audits) => {
   return {
     score: labScore,
     status: labStatus,
-    details: labStatus === "pass" ? "LCP is within optimal range." : `LCP is delayed (${labValue}ms).`,
+    details: labStatus === "pass" ? "LCP is within optimal range." : `LCP is delayed (${fmtSeconds(labValue)}).`,
     meta: {
-      value: labValue + "ms",
+      value: fmtSeconds(labValue),
       lcpElement,
-      thresholds: { Good: "0-2500ms", Warning: "2500-4000ms", Poor: "4000ms+" }
+      thresholds: { Good: "0-2.5s", Warning: "2.5-4s", Poor: "4s+" }
     },
     analysis: labStatus === "pass" ? null : {
       cause: causes[0] || "General main-thread blocking or large resources",
@@ -122,11 +141,11 @@ const evaluateLCPCrux = (audits, cruxMetrics) => {
   return {
     score: fieldScore,
     status: fieldStatus,
-    details: fieldStatus === "pass" ? "LCP (Real Users) is within optimal range." : `Real users experience LCP delay (${fieldValue}ms).`,
+    details: fieldStatus === "pass" ? "LCP (Real Users) is within optimal range." : `Real users experience LCP delay (${fmtSeconds(fieldValue)}).`,
     meta: {
-      value: fieldValue + "ms",
+      value: fmtSeconds(fieldValue),
       p75: true,
-      thresholds: { Good: "0-2500ms", Warning: "2500-4000ms", Poor: "4000ms+" }
+      thresholds: { Good: "0-2.5s", Warning: "2.5-4s", Poor: "4s+" }
     },
     analysis: fieldStatus === "pass" ? null : {
       cause: causes[0] || "Network or device latency variations",
@@ -276,10 +295,10 @@ const evaluateFCPLab = (audits) => {
   return {
     score: labScore,
     status: labStatus,
-    details: labStatus === "pass" ? "First Paint timing is good." : `First Paint is delayed (${labValue}ms).`,
+    details: labStatus === "pass" ? "First Paint timing is good." : `First Paint is delayed (${fmtSeconds(labValue)}).`,
     meta: {
-      value: labValue + "ms",
-      thresholds: { Good: "0-1800ms", Warning: "1800-3000ms", Poor: "3000ms+" }
+      value: fmtSeconds(labValue),
+      thresholds: { Good: "0-1.8s", Warning: "1.8-3s", Poor: "3s+" }
     },
     analysis: labStatus === "pass" ? null : {
       cause: causes[0] || "Critical request chain depth or script execution",
@@ -323,11 +342,11 @@ const evaluateFCPCrux = (audits, cruxMetrics) => {
   return {
     score: fieldScore,
     status: fieldStatus,
-    details: fieldStatus === "pass" ? "Real-world First Paint is optimal." : `Real users experience FCP delay (${fieldValue}ms).`,
+    details: fieldStatus === "pass" ? "Real-world First Paint is optimal." : `Real users experience FCP delay (${fmtSeconds(fieldValue)}).`,
     meta: {
-      value: fieldValue + "ms",
+      value: fmtSeconds(fieldValue),
       p75: true,
-      thresholds: { Good: "0-1800ms", Warning: "1800-3000ms", Poor: "3000ms+" }
+      thresholds: { Good: "0-1.8s", Warning: "1.8-3s", Poor: "3s+" }
     },
     analysis: fieldStatus === "pass" ? null : {
       cause: causes[0] || "Network latency or connection setup time",
@@ -365,10 +384,10 @@ const evaluateTTFBLab = (audits) => {
   return {
     score: labScore,
     status: labStatus,
-    details: labStatus === "pass" ? "Server response time is excellent." : `Server response is slow (${labValue}ms).`,
+    details: labStatus === "pass" ? "Server response time is excellent." : `Server response is slow (${fmtSeconds(labValue)}).`,
     meta: {
-      value: labValue + "ms",
-      thresholds: { Good: "0-800ms", Warning: "800-1800ms", Poor: "1800ms+" }
+      value: fmtSeconds(labValue),
+      thresholds: { Good: "0-0.8s", Warning: "0.8-1.8s", Poor: "1.8s+" }
     },
     analysis: labStatus === "pass" ? null : {
       cause: causes[0] || "Server processing capacity reached",
@@ -399,11 +418,11 @@ const evaluateTTFBCrux = (cruxMetrics) => {
   return {
     score: fieldScore,
     status: fieldStatus,
-    details: fieldStatus === "pass" ? "Real-world server response is good." : `Real users face slow server response (${fieldValue}ms).`,
+    details: fieldStatus === "pass" ? "Real-world server response is good." : `Real users face slow server response (${fmtSeconds(fieldValue)}).`,
     meta: {
-      value: fieldValue + "ms",
+      value: fmtSeconds(fieldValue),
       p75: true,
-      thresholds: { Good: "0-800ms", Warning: "800-1800ms", Poor: "1800ms+" }
+      thresholds: { Good: "0-0.8s", Warning: "0.8-1.8s", Poor: "1.8s+" }
     },
     analysis: fieldStatus === "pass" ? null : {
       cause: causes[0] || "Slow field TTFB (high server latency)",
@@ -452,10 +471,10 @@ const evaluateINPLab = (audits) => {
   return {
     score: labScore,
     status: labStatus,
-    details: labStatus === "pass" ? "Interaction responsiveness is good." : `Responsiveness is low (${labValue}ms).`,
+    details: labStatus === "pass" ? "Interaction responsiveness is good." : `Responsiveness is low (${fmtSeconds(labValue)}).`,
     meta: {
-      value: labValue + "ms",
-      thresholds: { Good: "0-3800ms", Warning: "3800-7300ms", Poor: "7300ms+" }
+      value: fmtSeconds(labValue),
+      thresholds: { Good: "0-3.8s", Warning: "3.8-7.3s", Poor: "7.3s+" }
     },
     analysis: labStatus === "pass" ? null : {
       cause: causes[0] || "Input delay due to background tasks",
@@ -506,11 +525,11 @@ const evaluateINPCrux = (audits, cruxMetrics) => {
   return {
     score: fieldScore,
     status: fieldStatus,
-    details: fieldStatus === "pass" ? "Real-world interaction feedback is fast." : `Real users face input delays (${fieldValue}ms).`,
+    details: fieldStatus === "pass" ? "Real-world interaction feedback is fast." : `Real users face input delays (${fmtSeconds(fieldValue)}).`,
     meta: {
-      value: fieldValue + "ms",
+      value: fmtSeconds(fieldValue),
       p75: true,
-      thresholds: { Good: "0-200ms", Warning: "200-500ms", Poor: "500ms+" }
+      thresholds: { Good: "0-0.2s", Warning: "0.2-0.5s", Poor: "0.5s+" }
     },
     analysis: fieldStatus === "pass" ? null : {
       cause: causes[0] || "Input delay on real-world devices",
@@ -566,11 +585,11 @@ const evaluateFIDLab = (audits) => {
   return {
     score: labScore,
     status: labStatus,
-    details: labStatus === "pass" ? "Worst-case first input delay is low." : `A user's first input could be delayed up to ${labValue}ms.`,
+    details: labStatus === "pass" ? "Worst-case first input delay is low." : `A user's first input could be delayed up to ${fmtSeconds(labValue)}.`,
     meta: {
-      value: labValue + "ms",
+      value: fmtSeconds(labValue),
       maxPotential: true,
-      thresholds: { Good: "0-130ms", Warning: "130-250ms", Poor: "250ms+" }
+      thresholds: { Good: "0-0.13s", Warning: "0.13-0.25s", Poor: "0.25s+" }
     },
     analysis: labStatus === "pass" ? null : {
       cause: causes[0] || "A long main-thread task could delay the first interaction",
@@ -624,11 +643,11 @@ const evaluateFIDCrux = (audits, cruxMetrics) => {
   return {
     score: fieldScore,
     status: fieldStatus,
-    details: fieldStatus === "pass" ? "Real users get a fast response to their first interaction." : `Real users wait ${fieldValue}ms before their first input is handled.`,
+    details: fieldStatus === "pass" ? "Real users get a fast response to their first interaction." : `Real users wait ${fmtSeconds(fieldValue)} before their first input is handled.`,
     meta: {
-      value: fieldValue + "ms",
+      value: fmtSeconds(fieldValue),
       p75: true,
-      thresholds: { Good: "0-100ms", Warning: "100-300ms", Poor: "300ms+" }
+      thresholds: { Good: "0-0.1s", Warning: "0.1-0.3s", Poor: "0.3s+" }
     },
     analysis: fieldStatus === "pass" ? null : {
       cause: causes[0] || "Main thread busy when real users first interact",
@@ -678,10 +697,10 @@ const evaluateTBT = (audits) => {
   return {
     score: labScore,
     status: labStatus,
-    details: labStatus === "pass" ? "Main thread is clear." : `Main thread is blocked (${labValue}ms).`,
+    details: labStatus === "pass" ? "Main thread is clear." : `Main thread is blocked (${fmtSeconds(labValue)}).`,
     meta: {
-      value: labValue + "ms",
-      thresholds: { Good: "0-200ms", Warning: "200-600ms", Poor: "600ms+" }
+      value: fmtSeconds(labValue),
+      thresholds: { Good: "0-0.2s", Warning: "0.2-0.6s", Poor: "0.6s+" }
     },
     analysis: labStatus === "pass" ? null : {
       cause: causes[0] || "General main thread congestion",
@@ -731,10 +750,10 @@ const evaluateSI = (audits) => {
   return {
     score: labScore,
     status: labStatus,
-    details: labStatus === "pass" ? "Visual load speed is optimal." : `Visual page load is slow (${labValue}ms).`,
+    details: labStatus === "pass" ? "Visual load speed is optimal." : `Visual page load is slow (${fmtSeconds(labValue)}).`,
     meta: {
-      value: labValue + "ms",
-      thresholds: { Good: "0-3400ms", Warning: "3400-5800ms", Poor: "5800ms+" }
+      value: fmtSeconds(labValue),
+      thresholds: { Good: "0-3.4s", Warning: "3.4-5.8s", Poor: "5.8s+" }
     },
     analysis: labStatus === "pass" ? null : {
       cause: causes[0] || "Resources competing for bandwidth",
@@ -1404,19 +1423,728 @@ const evaluateServiceLoad = (url, device, page, browser) =>
     recommendation: "Defer the service-scheduling widget, lazy-load maps and below-the-fold images, and minimize third-party booking scripts on the service page.",
   });
 
+// ───────────────── PageSpeed Score (official Lighthouse 0–100) ─────────────────
+// The headline Performance-category score Google itself shows. It is an AGGREGATE of
+// metrics already scored above (FCP, SI, LCP, TBT, CLS), so it is surfaced as an
+// informational card only and is NOT folded into the weighted Technical % — doing so
+// would double-count those vitals. Reported for both Mobile and Desktop strategies.
+const evaluatePageSpeedScore = (mobileData, desktopData) => {
+  const extract = (d) => {
+    const s = d?.lighthouseResult?.categories?.performance?.score;
+    return typeof s === "number" ? Math.round(s * 100) : null;
+  };
+  const mobileScore = extract(mobileData);
+  const desktopScore = extract(desktopData);
+
+  // Headline = mobile (mobile-first), falling back to desktop when mobile is absent.
+  const primary = mobileScore != null ? mobileScore : desktopScore;
+  if (primary == null) return notCalculated(
+    "Google PageSpeed could not analyze this URL — Lighthouse returned no Performance score (the site may be too slow, blocking automated requests, or the PageSpeed API key/quota is unavailable).",
+    "Confirm the site loads in Google PageSpeed Insights and that the PageSpeed API key/quota is configured, then re-run the audit."
+  );
+
+  // Lighthouse bands: ≥90 good, 50–89 needs improvement, <50 poor.
+  const bandStatus = (s) => (s == null ? null : s >= 90 ? "pass" : s >= 50 ? "warning" : "fail");
+  const status = bandStatus(primary);
+
+  const parts = [];
+  if (mobileScore != null) parts.push(`Mobile ${mobileScore}/100`);
+  if (desktopScore != null) parts.push(`Desktop ${desktopScore}/100`);
+
+  return {
+    score: primary,
+    status,
+    details:
+      status === "pass"
+        ? `Official Lighthouse Performance score is strong (${parts.join(", ")}).`
+        : `Official Lighthouse Performance score needs work (${parts.join(", ")}).`,
+    meta: {
+      value: primary + "/100",
+      mobileScore: mobileScore != null ? mobileScore + "/100" : "Not measured",
+      desktopScore: desktopScore != null ? desktopScore + "/100" : "Not measured",
+      mobileStatus: bandStatus(mobileScore),
+      desktopStatus: bandStatus(desktopScore),
+      source: "Lighthouse categories.performance.score",
+      informational: true, // shown, not folded into the weighted Technical %
+      thresholds: { Good: "90-100", Warning: "50-89", Poor: "0-49" },
+    },
+    analysis:
+      status === "pass"
+        ? null
+        : {
+            cause:
+              "The Lighthouse Performance score is pulled down by the Core Web Vitals (LCP/CLS/TBT) and Speed Index measured below.",
+            recommendation:
+              "Fix the failing Core Web Vitals and asset checks below — they directly determine this score.",
+          },
+  };
+};
+
+// ───────────────── Mobile Experience (Load Speed + Usability) ─────────────────
+// Both metrics need a real mobile-emulated render, so they share ONE dedicated tab
+// (never the shared audit page). The tab is throttled to a representative mid-tier
+// mobile profile (Slow-4G network + 4× CPU) to TIME the full load, then the throttle
+// is lifted and the rendered DOM is inspected for responsiveness, tap-target sizing
+// and legible fonts. Returns { mobileLoadSpeed, mobileUsability } (either may be null
+// if measurement fails — a null metric is simply excluded from the weighted total).
+
+const MOBILE_NAV_TIMEOUT_MS = 60000;
+
+// Build the Mobile Load Speed metric from the throttled full-load timing.
+const buildMobileLoadSpeed = (loadMs, timedOut, navTiming) => {
+  const seconds = parseFloat((loadMs / 1000).toFixed(1));
+  const GOOD = 5000, POOR = 10000; // throttled (Slow 4G + 4× CPU) full-load thresholds
+  const score = timedOut ? 0 : calculateScore(loadMs, GOOD, POOR);
+  const status = timedOut ? "fail" : calculateStatus(loadMs, GOOD, POOR);
+
+  const causes = [];
+  const recommendations = [];
+  if (status !== "pass") {
+    if (navTiming && navTiming.ttfb > 1200) {
+      causes.push(`Slow server response on mobile (TTFB ${navTiming.ttfb}ms)`);
+      recommendations.push("Improve server response time and serve mobile visitors from a CDN/edge cache.");
+    }
+    if (navTiming && navTiming.transferKB > 2048) {
+      causes.push(`Large page weight (${navTiming.transferKB}KB) over a mobile connection`);
+      recommendations.push("Reduce total bytes: compress images, code-split JS and defer non-critical assets.");
+    }
+    if (causes.length === 0) {
+      causes.push(
+        timedOut
+          ? "The page never fired window.onload within the time limit on a throttled mobile connection."
+          : "Heavy assets and scripts slow the full load on a throttled mobile connection."
+      );
+      recommendations.push("Lazy-load below-the-fold media, defer third-party scripts and shrink the critical payload.");
+    }
+  }
+
+  return {
+    score,
+    status,
+    details: timedOut
+      ? `Page did not finish loading on mobile within ${MOBILE_NAV_TIMEOUT_MS / 1000}s.`
+      : status === "pass"
+        ? `Page fully loaded on mobile in ${seconds}s.`
+        : `Page took ${seconds}s to fully load on mobile.`,
+    meta: {
+      value: seconds + "s",
+      emulation: "iPhone viewport · Slow 4G · 4× CPU throttle",
+      waitedFor: "window.onload",
+      ttfb: navTiming ? navTiming.ttfb + "ms" : null,
+      domContentLoaded: navTiming ? navTiming.domContentLoaded + "ms" : null,
+      transferKB: navTiming ? navTiming.transferKB : null,
+      thresholds: { Good: "0-5s", Warning: "5-10s", Poor: "10s+" },
+    },
+    analysis: status === "pass" ? null : { cause: causes[0], recommendation: recommendations[0] },
+  };
+};
+
+// Build the Mobile Usability metric from the DOM inspection.
+// Sub-scores sum to 100: viewport 25, responsive layout 30, tap targets 30, fonts 15.
+const buildMobileUsability = (d) => {
+  if (!d) return notCalculated(
+    "Mobile usability could not be measured — the mobile render returned no DOM data to inspect.",
+    "Re-run the audit; if it persists the site may be blocking the mobile/headless browser."
+  );
+
+  let viewportPts = 0;
+  if (d.hasViewport && d.usesDeviceWidth && d.allowsScaling) viewportPts = 25;
+  else if (d.hasViewport && d.usesDeviceWidth) viewportPts = 18; // present but blocks zoom
+  else if (d.hasViewport) viewportPts = 12;
+
+  const responsivePts = d.horizontalOverflow
+    ? Math.max(0, 30 - Math.min(30, Math.round(d.overflowPx / 15)))
+    : 30;
+
+  const tapRatio = d.totalTargets === 0 ? 1 : (d.totalTargets - d.smallCount) / d.totalTargets;
+  const tapPts = Math.round(tapRatio * 30);
+
+  const fontRatio = d.fontSampleTotal === 0 ? 1 : (d.fontSampleTotal - d.smallFontCount) / d.fontSampleTotal;
+  const fontPts = Math.round(fontRatio * 15);
+
+  const score = Math.max(0, Math.min(100, viewportPts + responsivePts + tapPts + fontPts));
+  let status = "pass";
+  if (score < 90) status = "warning";
+  if (score < 50) status = "fail";
+
+  const causes = [];
+  const recommendations = [];
+  if (!d.hasViewport) {
+    causes.push("No responsive viewport meta tag");
+    recommendations.push('Add <meta name="viewport" content="width=device-width, initial-scale=1">.');
+  } else if (!d.usesDeviceWidth) {
+    causes.push("Viewport meta tag does not use width=device-width");
+    recommendations.push("Set the viewport to width=device-width so the layout adapts to the screen.");
+  } else if (!d.allowsScaling) {
+    causes.push("Viewport disables pinch-zoom (user-scalable=no / maximum-scale=1)");
+    recommendations.push("Allow users to zoom — remove user-scalable=no and maximum-scale=1 from the viewport.");
+  }
+  if (d.horizontalOverflow) {
+    causes.push(`Content is ${d.overflowPx}px wider than the screen (horizontal scrolling)`);
+    recommendations.push("Make wide elements fluid (max-width:100%, avoid fixed pixel widths) to remove horizontal scroll.");
+  }
+  if (d.smallCount > 0) {
+    causes.push(`${d.smallCount} of ${d.totalTargets} tap targets are smaller than 44×44px`);
+    recommendations.push("Enlarge buttons/links to at least 44×44px and space them out for comfortable tapping.");
+  }
+  if (d.smallFontCount > 0) {
+    causes.push(`${d.smallFontCount} text elements use a font smaller than 12px`);
+    recommendations.push("Use a base body font size of at least 16px for readable text on mobile.");
+  }
+
+  return {
+    score,
+    status,
+    details: status === "pass"
+      ? "Page is mobile-friendly: responsive, legible and easy to tap."
+      : "Mobile usability issues detected (layout, tap targets or legibility).",
+    meta: {
+      value: score + "%",
+      viewport: d.hasViewport ? (d.allowsScaling ? "Configured" : "Blocks zoom") : "Missing",
+      viewportContent: d.vpContent || "None",
+      horizontalScroll: d.horizontalOverflow ? `${d.overflowPx}px overflow` : "None",
+      tapTargets: `${d.totalTargets - d.smallCount}/${d.totalTargets} adequately sized`,
+      smallTapTargets: d.smallTargets,
+      overflowingElements: d.overflowingElements,
+      legibleFonts: d.fontSampleTotal === 0 ? "N/A" : `${d.fontSampleTotal - d.smallFontCount}/${d.fontSampleTotal} ≥12px`,
+      breakdown: { viewport: viewportPts, responsive: responsivePts, tapTargets: tapPts, fonts: fontPts },
+      thresholds: { Good: "≥90%", Warning: "50-89%", Poor: "<50%" },
+    },
+    analysis: status === "pass" ? null : { cause: causes[0], recommendation: recommendations[0] },
+  };
+};
+
+const measureMobileExperience = async ({ url, page, browser }) => {
+  let tab;
+  try {
+    tab = await browser.newPage({
+      viewport: { width: 390, height: 844 },
+      userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1",
+      isMobile: true,
+      hasTouch: true,
+      deviceScaleFactor: 3,
+    });
+
+    // Emulate a mid-tier mobile device on Slow 4G via CDP (Chromium only). Best-effort:
+    // if the CDP session can't be created we simply measure unthrottled.
+    let client = null;
+    try {
+      client = await tab.context().newCDPSession(tab);
+      await client.send("Network.enable");
+      await client.send("Network.emulateNetworkConditions", {
+        offline: false,
+        latency: 150,                                 // ms RTT (Slow 4G)
+        downloadThroughput: (1.6 * 1024 * 1024) / 8,  // ~1.6 Mbps
+        uploadThroughput: (750 * 1024) / 8,           // ~750 Kbps
+      });
+      await client.send("Emulation.setCPUThrottlingRate", { rate: 4 });
+    } catch {
+      client = null;
+    }
+
+    let loadMs;
+    let timedOut = false;
+    try {
+      const t0 = Date.now();
+      await tab.goto(url, { waitUntil: "load", timeout: MOBILE_NAV_TIMEOUT_MS });
+      loadMs = Date.now() - t0;
+    } catch {
+      timedOut = true;
+      loadMs = MOBILE_NAV_TIMEOUT_MS;
+    }
+
+    // Lift throttling so the DOM inspection below runs quickly.
+    if (client) {
+      try {
+        await client.send("Emulation.setCPUThrottlingRate", { rate: 1 });
+        await client.send("Network.emulateNetworkConditions", {
+          offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1,
+        });
+      } catch {}
+    }
+
+    const navTiming = timedOut
+      ? null
+      : await tab.evaluate(() => {
+          const nav = performance.getEntriesByType("navigation")[0];
+          if (!nav) return null;
+          return {
+            ttfb: Math.round(nav.responseStart),
+            domContentLoaded: Math.round(nav.domContentLoadedEventEnd),
+            load: Math.round(nav.loadEventEnd),
+            transferKB: Math.round((nav.transferSize || 0) / 1024),
+          };
+        });
+
+    const usabilityData = await tab.evaluate(() => {
+      // Viewport meta configuration.
+      const vp = document.querySelector('meta[name="viewport"]');
+      const vpContent = vp?.getAttribute("content") || "";
+      const hasViewport = !!vp;
+      const allowsScaling =
+        hasViewport &&
+        !/user-scalable\s*=\s*no/i.test(vpContent) &&
+        !/maximum-scale\s*=\s*1(\.0)?\b/i.test(vpContent);
+      const usesDeviceWidth = /width\s*=\s*device-width/i.test(vpContent);
+
+      // Responsiveness — horizontal overflow beyond the viewport width.
+      const winWidth = window.innerWidth;
+      const docWidth = Math.max(
+        document.documentElement.scrollWidth,
+        document.body ? document.body.scrollWidth : 0
+      );
+      const overflowPx = Math.max(0, docWidth - winWidth);
+      const horizontalOverflow = overflowPx > 5; // small tolerance for sub-pixel rounding
+
+      const overflowingElements = [];
+      if (horizontalOverflow) {
+        const all = document.querySelectorAll("body *");
+        const cap = Math.min(all.length, 4000);
+        for (let i = 0; i < cap; i++) {
+          const el = all[i];
+          const r = el.getBoundingClientRect();
+          if (r.width > 0 && r.right > winWidth + 5) {
+            const cls =
+              el.className && typeof el.className === "string"
+                ? el.className.trim().split(/\s+/).slice(0, 2).join(".")
+                : "";
+            overflowingElements.push({
+              tag: el.tagName.toLowerCase(),
+              cls,
+              right: Math.round(r.right),
+            });
+            if (overflowingElements.length >= 6) break;
+          }
+        }
+      }
+
+      // Tap-target sizing — interactive elements should be ≥44×44px.
+      const MIN = 44;
+      const interactiveSel =
+        'a[href], button, input:not([type="hidden"]), select, textarea, [role="button"], [onclick]';
+      const targets = Array.from(document.querySelectorAll(interactiveSel)).filter((el) => {
+        const style = window.getComputedStyle(el);
+        if (style.visibility === "hidden" || style.display === "none") return false;
+        const r = el.getBoundingClientRect();
+        return r.width > 0 && r.height > 0;
+      });
+      const totalTargets = targets.length;
+      const smallTargets = [];
+      for (const el of targets) {
+        const r = el.getBoundingClientRect();
+        if (r.width < MIN || r.height < MIN) {
+          if (smallTargets.length < 10) {
+            smallTargets.push({
+              tag: el.tagName.toLowerCase(),
+              text: (el.innerText || el.value || el.getAttribute("aria-label") || "").trim().slice(0, 40),
+              size: `${Math.round(r.width)}x${Math.round(r.height)}px`,
+            });
+          }
+        }
+      }
+      const smallCount = targets.reduce((n, el) => {
+        const r = el.getBoundingClientRect();
+        return n + (r.width < MIN || r.height < MIN ? 1 : 0);
+      }, 0);
+
+      // Legible fonts — leaf text nodes should render at ≥12px.
+      const textEls = Array.from(
+        document.querySelectorAll("p, span, li, a, td, th, label, h1, h2, h3, h4, h5, h6, div")
+      ).filter((el) => el.children.length === 0 && el.textContent && el.textContent.trim().length > 0);
+      const sampleFont = textEls.slice(0, 400);
+      let smallFontCount = 0;
+      for (const el of sampleFont) {
+        const fs = parseFloat(window.getComputedStyle(el).fontSize);
+        if (fs && fs < 12) smallFontCount++;
+      }
+
+      return {
+        hasViewport, allowsScaling, usesDeviceWidth, vpContent,
+        horizontalOverflow, overflowPx, overflowingElements,
+        totalTargets, smallCount, smallTargets,
+        fontSampleTotal: sampleFont.length, smallFontCount,
+      };
+    });
+
+    try { await tab.close(); } catch {}
+
+    return {
+      mobileLoadSpeed: buildMobileLoadSpeed(loadMs, timedOut, navTiming),
+      mobileUsability: buildMobileUsability(usabilityData),
+    };
+  } catch {
+    try { if (tab) await tab.close(); } catch {}
+    // The mobile render failed entirely — surface both metrics as "not calculated"
+    // (with the reason) instead of hiding them.
+    return {
+      mobileLoadSpeed: notCalculated(
+        "Mobile load speed could not be measured — the mobile browser render failed (navigation or browser error).",
+        "Re-run the audit; if it persists the site may be blocking the mobile/headless browser or timing out."
+      ),
+      mobileUsability: notCalculated(
+        "Mobile usability could not be measured — the mobile browser render failed (page context unavailable).",
+        "Re-run the audit; if it persists the site may be blocking the mobile/headless browser or timing out."
+      ),
+    };
+  }
+};
+
+// ───────────────── Rendering Performance (layout stability / visual jank) ─────────────────
+// How stable the layout is while the page loads — scored on Lighthouse CLS, but its
+// value over the raw CLS vital is surfacing the FIXABLE culprits (unsized images and
+// the specific shifting elements) with an affected list. Lazy-loading of media is now
+// a separate metric (see Lazy Loading) so the two no longer double-count.
+const evaluateRenderingPerformance = (audits) => {
+  const clsAudit = audits["cumulative-layout-shift"];
+  if (clsAudit?.numericValue == null && !audits["layout-shifts"]) {
+    return notCalculated(
+      "Rendering performance could not be analyzed — Lighthouse returned no layout-stability data for this URL.",
+      "Confirm the site loads in Google PageSpeed Insights, then re-run the audit."
+    );
+  }
+  const cls = parseFloat((clsAudit?.numericValue || 0).toFixed(3));
+  const shiftItems = audits["layout-shifts"]?.details?.items || [];
+  const unsized = audits["unsized-images"]?.details?.items || [];
+
+  const score = calculateScore(cls, 0.1, 0.25);
+  const status = calculateStatus(cls, 0.1, 0.25);
+
+  const causes = [];
+  const recommendations = [];
+  if (status !== "pass") {
+    if (unsized.length > 0) {
+      causes.push(`${unsized.length} image(s) without width/height attributes causing reflow`);
+      recommendations.push("Add explicit width & height (or CSS aspect-ratio) to images so the browser reserves space.");
+    }
+    if (shiftItems.length > 0) {
+      causes.push(`${shiftItems.length} element(s) shifting position during load`);
+      recommendations.push("Reserve space for ads/embeds/banners and avoid injecting content above existing content.");
+    }
+    if (causes.length === 0) {
+      causes.push(`Cumulative Layout Shift is ${cls} (target ≤ 0.1)`);
+      recommendations.push("Reserve space for late-loading content and use font-display:swap to stop text reflow.");
+    }
+  }
+
+  const unsizedSamples = unsized.slice(0, 10).map((it) => {
+    let fileName = "image";
+    try { const p = new URL(it.url).pathname; fileName = p.substring(p.lastIndexOf("/") + 1) || "image"; } catch {}
+    return { fileName, snippet: (it.node?.snippet || "").slice(0, 160) };
+  });
+
+  return {
+    score,
+    status,
+    details: status === "pass"
+      ? "Layout is visually stable — minimal shifting during load."
+      : `Layout shifts during load (CLS ${cls}).`,
+    meta: {
+      value: score + "%",
+      cls,
+      layoutShiftElements: shiftItems.length,
+      unsizedImages: unsized.length,
+      unsizedImageSamples: unsizedSamples,
+      thresholds: { Good: "≥90%", Warning: "50-89%", Poor: "<50%" },
+    },
+    analysis: status === "pass" ? null : { cause: causes[0], recommendation: recommendations[0] },
+  };
+};
+
+// ───────────────── Lazy Loading Implementation ─────────────────
+// Share of deferrable media that actually defers: below-the-fold images & iframes
+// using loading="lazy", plus <video> using preload="none"/"metadata". Cross-checked
+// against Lighthouse's offscreen-images audit so a good ratio with real offscreen
+// waste can't read as a perfect score.
+const evaluateLazyLoading = async (audits, page) => {
+  try {
+    const m = await page.evaluate(() => {
+      const vh = window.innerHeight || 800;
+      const fileNameOf = (src) => {
+        try { const p = new URL(src).pathname; return p.substring(p.lastIndexOf("/") + 1) || "media"; } catch { return "media"; }
+      };
+      const eager = [];
+
+      const imgs = Array.from(document.querySelectorAll("img"));
+      let imgBelow = 0, imgLazy = 0;
+      for (const img of imgs) {
+        const top = img.getBoundingClientRect().top + window.scrollY;
+        if (top > vh) {
+          imgBelow++;
+          if (img.getAttribute("loading") === "lazy") imgLazy++;
+          else if (eager.length < 12) {
+            const src = img.currentSrc || img.src || "";
+            eager.push({ type: "img", fileName: fileNameOf(src), src: src.slice(0, 160), top: Math.round(top) });
+          }
+        }
+      }
+
+      const iframes = Array.from(document.querySelectorAll("iframe"));
+      let ifBelow = 0, ifLazy = 0;
+      for (const f of iframes) {
+        const top = f.getBoundingClientRect().top + window.scrollY;
+        if (top > vh) {
+          ifBelow++;
+          if (f.getAttribute("loading") === "lazy") ifLazy++;
+          else if (eager.length < 12) eager.push({ type: "iframe", fileName: fileNameOf(f.src || ""), src: (f.src || "").slice(0, 160), top: Math.round(top) });
+        }
+      }
+
+      const vids = Array.from(document.querySelectorAll("video"));
+      let vidDeferred = 0;
+      for (const v of vids) {
+        const preload = (v.getAttribute("preload") || "").toLowerCase();
+        if (preload === "none" || preload === "metadata") vidDeferred++;
+        else if (eager.length < 12) eager.push({ type: "video", fileName: fileNameOf(v.currentSrc || v.src || "video"), src: (v.currentSrc || v.src || "").slice(0, 160), top: 0 });
+      }
+
+      return {
+        totalImages: imgs.length, imgBelow, imgLazy,
+        totalIframes: iframes.length, ifBelow, ifLazy,
+        totalVideos: vids.length, vidDeferred, eager,
+      };
+    });
+
+    const offscreen = audits["offscreen-images"]?.details?.items || [];
+    const offscreenSavingsKB = Math.round((audits["offscreen-images"]?.details?.overallSavingsBytes || 0) / 1024);
+
+    const deferrable = m.imgBelow + m.ifBelow + m.totalVideos;
+    const deferred = m.imgLazy + m.ifLazy + m.vidDeferred;
+    const eagerCount = Math.max(0, deferrable - deferred);
+
+    let score;
+    if (deferrable === 0) score = offscreen.length > 0 ? 70 : 100; // nothing deferrable on screen
+    else score = Math.round((deferred / deferrable) * 100);
+    if (offscreen.length > 0 && score > 85) score = 85; // Lighthouse still sees deferrable waste
+
+    let status = "pass";
+    if (score < 90) status = "warning";
+    if (score < 50) status = "fail";
+
+    const causes = [];
+    const recommendations = [];
+    if (eagerCount > 0) {
+      causes.push(`${eagerCount} below-the-fold media item(s) load eagerly instead of lazily`);
+      recommendations.push('Add loading="lazy" to below-the-fold images & iframes and preload="none" to videos.');
+    } else if (offscreen.length > 0) {
+      causes.push(`${offscreen.length} offscreen image(s) could be deferred (~${offscreenSavingsKB}KB)`);
+      recommendations.push("Defer offscreen images so the browser renders the visible viewport first.");
+    }
+
+    return {
+      score,
+      status,
+      details: deferrable === 0 && offscreen.length === 0
+        ? "No below-the-fold media that needs deferring."
+        : status === "pass"
+          ? "Below-the-fold media is deferred (lazy-loaded)."
+          : "Some below-the-fold media loads eagerly instead of lazily.",
+      meta: {
+        value: score + "%",
+        totalImages: m.totalImages,
+        belowFoldImages: m.imgBelow,
+        lazyImages: m.imgLazy,
+        eagerImages: Math.max(0, m.imgBelow - m.imgLazy),
+        totalIframes: m.totalIframes,
+        belowFoldIframes: m.ifBelow,
+        lazyIframes: m.ifLazy,
+        totalVideos: m.totalVideos,
+        deferredVideos: m.vidDeferred,
+        offscreenImages: offscreen.length,
+        offscreenSavingsKB,
+        eagerMediaSamples: m.eager,
+        thresholds: { Good: "≥90%", Warning: "50-89%", Poor: "<50%" },
+      },
+      analysis: status === "pass" ? null : { cause: causes[0], recommendation: recommendations[0] },
+    };
+  } catch {
+    return notCalculated(
+      "Lazy-loading could not be analyzed — the page context was unavailable during inspection.",
+      "Re-run the audit; if it persists the page may have navigated away or blocked script evaluation."
+    );
+  }
+};
+
+// ───────────────── Third-Party Script Optimization ─────────────────
+// Extracts each third-party (cross-origin) <script>'s async/defer/blocking status from
+// the live DOM, combined with Lighthouse's third-party-summary main-thread blocking time.
+const evaluateThirdPartyOptimization = async (audits, page) => {
+  try {
+    const m = await page.evaluate(() => {
+      const host = location.hostname.replace(/^www\./, "");
+      const fileNameOf = (src) => {
+        try { const p = new URL(src).pathname; return p.substring(p.lastIndexOf("/") + 1) || src; } catch { return src; }
+      };
+      const scripts = Array.from(document.querySelectorAll("script[src]"));
+      const third = [];
+      for (const s of scripts) {
+        let u; try { u = new URL(s.src, location.origin); } catch { continue; }
+        if (!/^https?:$/.test(u.protocol)) continue;
+        const h = u.hostname.replace(/^www\./, "");
+        const firstParty = h === host || h.endsWith("." + host) || host.endsWith("." + h);
+        if (firstParty) continue;
+        const loading = s.defer ? "defer" : (s.async ? "async" : "blocking");
+        third.push({ url: s.src, fileName: fileNameOf(s.src), host: u.hostname, loading });
+      }
+      return { totalScripts: scripts.length, third };
+    });
+
+    const total = m.third.length;
+    const blocking = m.third.filter((s) => s.loading === "blocking");
+    const optimized = total - blocking.length; // async or defer
+
+    const tpItems = audits["third-party-summary"]?.details?.items || [];
+    const tpBlockingMs = Math.round(tpItems.reduce((s, i) => s + (i.blockingTime || 0), 0));
+    const entities = tpItems
+      .filter((i) => (i.blockingTime || 0) > 0)
+      .sort((a, b) => (b.blockingTime || 0) - (a.blockingTime || 0))
+      .slice(0, 10)
+      .map((i) => ({
+        entity: typeof i.entity === "string" ? i.entity : (i.entity?.text || "Third-party"),
+        blockingMs: Math.round(i.blockingTime || 0),
+      }));
+
+    let score;
+    if (total === 0) score = 100;
+    else score = Math.round((optimized / total) * 100);
+    // A high async/defer ratio still can't read as perfect if third parties block the
+    // main thread for a long time.
+    if (tpBlockingMs > 250 && score > 80) score = 80;
+    if (tpBlockingMs > 600) score = Math.min(score, 50);
+
+    let status = "pass";
+    if (score < 90) status = "warning";
+    if (score < 50) status = "fail";
+
+    const causes = [];
+    const recommendations = [];
+    if (blocking.length > 0) {
+      causes.push(`${blocking.length} of ${total} third-party script(s) load synchronously (no async/defer)`);
+      recommendations.push("Add async or defer to third-party <script> tags so they don't block HTML parsing.");
+    }
+    if (tpBlockingMs > 250) {
+      causes.push(`Third-party code blocks the main thread for ~${tpBlockingMs}ms`);
+      recommendations.push("Lazy-load or facade non-critical third parties (chat, ads, analytics) and remove unused ones.");
+    }
+    if (causes.length === 0 && total > 0) {
+      causes.push(`${total} third-party script(s) present`);
+      recommendations.push("Audit third-party scripts periodically and remove any that are unused.");
+    }
+
+    return {
+      score,
+      status,
+      details: total === 0
+        ? "No third-party scripts detected."
+        : status === "pass"
+          ? "Third-party scripts load efficiently (async/defer) with low main-thread cost."
+          : "Third-party scripts are blocking or main-thread heavy.",
+      meta: {
+        value: score + "%",
+        totalScripts: m.totalScripts,
+        thirdPartyScripts: total,
+        asyncDeferCount: optimized,
+        blockingCount: blocking.length,
+        thirdPartyBlockingMs: tpBlockingMs,
+        blockingScripts: blocking.slice(0, 10),
+        entities,
+        thresholds: { Good: "≥90%", Warning: "50-89%", Poor: "<50%" },
+      },
+      analysis: status === "pass" ? null : { cause: causes[0], recommendation: recommendations[0] },
+    };
+  } catch {
+    return notCalculated(
+      "Third-party script optimization could not be analyzed — the page context was unavailable during inspection.",
+      "Re-run the audit; if it persists the page may have navigated away or blocked script evaluation."
+    );
+  }
+};
+
+// ───────────────── JavaScript Execution Efficiency ─────────────────
+// A standalone metric for how long JavaScript ties up the main thread, from Lighthouse's
+// bootup-time ("Reduce JavaScript execution time") plus mainthread-work-breakdown —
+// previously only read as a cause for INP/TBT.
+const evaluateJsExecution = (audits) => {
+  const bootup = audits["bootup-time"];
+  const mainThread = audits["mainthread-work-breakdown"];
+  if (!bootup && !mainThread) {
+    return notCalculated(
+      "JavaScript execution efficiency could not be measured — Lighthouse returned no bootup/main-thread data for this URL.",
+      "Confirm the site loads in Google PageSpeed Insights, then re-run the audit."
+    );
+  }
+  const bootupMs = Math.round(bootup?.numericValue || 0);
+  const mainThreadMs = Math.round(mainThread?.numericValue || 0);
+
+  // Lighthouse "Reduce JavaScript execution time": good ≤ ~2s, poor ≥ 3.5s.
+  const score = calculateScore(bootupMs, 2000, 3500);
+  const status = calculateStatus(bootupMs, 2000, 3500);
+
+  const topScripts = (bootup?.details?.items || [])
+    .slice()
+    .sort((a, b) => (b.scripting || 0) - (a.scripting || 0))
+    .slice(0, 10)
+    .map((it) => {
+      const url = it.url || "";
+      let fileName = url;
+      try { const p = new URL(url).pathname; fileName = p.substring(p.lastIndexOf("/") + 1) || url; } catch {}
+      return { fileName, url, scriptingMs: Math.round(it.scripting || 0), parseMs: Math.round(it.scriptParseCompile || 0) };
+    });
+
+  const causes = [];
+  const recommendations = [];
+  if (status !== "pass") {
+    causes.push(`JavaScript executes for ${fmtSeconds(bootupMs)} during load (target ≤ 2s)`);
+    recommendations.push("Code-split and defer non-critical JS, remove unused JavaScript, and trim polyfills.");
+    if (mainThreadMs > 4000) {
+      causes.push(`Main thread is busy for ${fmtSeconds(mainThreadMs)} (parse/compile/execute)`);
+      recommendations.push("Break up long tasks and move heavy work off the main thread (Web Workers).");
+    }
+  }
+
+  return {
+    score,
+    status,
+    details: status === "pass"
+      ? `JavaScript execution is efficient (${fmtSeconds(bootupMs)}).`
+      : `JavaScript executes for ${fmtSeconds(bootupMs)} during load.`,
+    meta: {
+      value: fmtSeconds(bootupMs),
+      jsExecutionTime: fmtSeconds(bootupMs),
+      mainThreadTime: fmtSeconds(mainThreadMs),
+      topScripts,
+      thresholds: { Good: "0-2s", Warning: "2-3.5s", Poor: "3.5s+" },
+    },
+    analysis: status === "pass" ? null : { cause: causes[0], recommendation: recommendations[0] },
+  };
+};
+
 // MAIN FUNCTION
 export default async function technicalMetrics(url, device, page, response, browser) {
 
-  // Inventory & service page timings run in parallel with the (slow) PageSpeed
-  // request — each uses its own browser tab, so the shared page other metrics use
-  // in parallel is never touched.
-  const [data, inventoryLoad, serviceLoad] = await Promise.all([
-    googleAPI(url, device),
+  // The audited device drives every lab/field metric below; the OTHER device is
+  // requested too, purely to surface the official Lighthouse Performance score for
+  // both Mobile and Desktop. Inventory/service/mobile-experience timings each run in
+  // their own browser tab and all of this runs in parallel with the (slow) PageSpeed
+  // requests, so the shared page other metrics use in parallel is never touched.
+  const wantDevice = String(device || "mobile").toLowerCase() === "desktop" ? "desktop" : "mobile";
+  const otherDevice = wantDevice === "desktop" ? "mobile" : "desktop";
+
+  const [primaryData, otherData, inventoryLoad, serviceLoad, mobileExp] = await Promise.all([
+    googleAPI(url, wantDevice),
+    googleAPI(url, otherDevice),
     evaluateInventoryLoad(url, device, page, browser),
     evaluateServiceLoad(url, device, page, browser),
+    measureMobileExperience({ url, page, browser }),
   ]);
+  const data = primaryData;
   const audits = data?.lighthouseResult?.audits || {};
   const cruxMetrics = data?.loadingExperience?.metrics || {};
+
+  const mobileData = wantDevice === "mobile" ? primaryData : otherData;
+  const desktopData = wantDevice === "desktop" ? primaryData : otherData;
+  const pageSpeedScore = evaluatePageSpeedScore(mobileData, desktopData);
+  const mobileLoadSpeed = mobileExp.mobileLoadSpeed;
+  const mobileUsability = mobileExp.mobileUsability;
 
   const lcpLab = evaluateLCPLab(audits);
   const lcpCrux = evaluateLCPCrux(audits, cruxMetrics);
@@ -1438,47 +2166,65 @@ export default async function technicalMetrics(url, device, page, response, brow
   const resourceOptimization = await evaluateResourceOptimization(page);
   const renderBlocking = await evaluateRenderBlocking(page);
   const redirect = evaluateRedirectChains(response);
+  const renderingPerformance = evaluateRenderingPerformance(audits);
+  const lazyLoading = await evaluateLazyLoading(audits, page);
+  const thirdPartyOptimization = await evaluateThirdPartyOptimization(audits, page);
+  const jsExecution = evaluateJsExecution(audits);
 
   const getScore = (metric) => metric?.score || 0;
-  const scoreLCP = (getScore(lcpLab) * 0.07) + (getScore(lcpCrux) * 0.08); // 15%
-  const scoreINP = (getScore(inpLab) * 0.07) + (getScore(inpCrux) * 0.08); // 15%
-  const scoreCLS = (getScore(clsLab) * 0.07) + (getScore(clsCrux) * 0.08); // 15%
-  const scoreFCP = (getScore(fcpLab) * 0.03) + (getScore(fcpCrux) * 0.03); // 6%
-  const scoreTTFB = (getScore(ttfbLab) * 0.04) + (getScore(ttfbCrux) * 0.04); // 8%
-  // FID scores from the best available source: real-user CrUX when Google still
-  // reports it, otherwise the lab Max Potential FID (always present in Lighthouse).
-  // Its 4% is shifted out of the two lab proxies (TBT, SI) so the total stays at
-  // 100%, and if neither source is measurable nothing is penalized — the TBT/SI
-  // weights simply revert to their original 8% split.
+  // A metric counts toward the weighted total only if it was actually measured —
+  // `notCalculated()` results are flagged `meta.notScored` so a failed measurement is
+  // shown (with its reason) but never penalizes the score as a real 0.
+  const scored = (metric) => !!metric && !metric?.meta?.notScored;
+  // FID uses the best available source: real-user CrUX when Google still reports it,
+  // otherwise the lab Max Potential FID (always present in Lighthouse).
   const fidPrimary = fidCrux || fidLab;
   const hasFID = !!fidPrimary;
-  const scoreFID = hasFID ? getScore(fidPrimary) * 0.04 : 0;       // 4% when available
-  const scoreTBT = getScore(tbt) * (hasFID ? 0.06 : 0.08); // 8% (6% when FID present)
-  const scoreSI = getScore(si) * (hasFID ? 0.06 : 0.08);   // 8% (6% when FID present)
-  // Inventory & Service page load times each earn 5% when that page is found and
-  // timed. Every present timed-metric is funded by shifting 1% out of each of the
-  // five asset checks, so the Technical total always stays at exactly 100% whether
-  // zero, one, or both timed pages are discovered.
-  const hasInventory = !!inventoryLoad;
-  const hasService = !!serviceLoad;
-  const shift = ((hasInventory ? 1 : 0) + (hasService ? 1 : 0)) * 0.01; // per-asset-check reduction
-  const scoreInventory = hasInventory ? getScore(inventoryLoad) * 0.05 : 0; // 5% when available
-  const scoreService = hasService ? getScore(serviceLoad) * 0.05 : 0;       // 5% when available
-  const scoreCompression = getScore(compression) * (0.05 - shift);         // 5% base
-  const scoreCaching = getScore(caching) * (0.05 - shift);                 // 5% base
-  const scoreResourceOpt = getScore(resourceOptimization) * (0.06 - shift); // 6% base
-  const scoreRenderBlocking = getScore(renderBlocking) * (0.05 - shift);    // 5% base
-  const scoreRedirect = getScore(redirect) * (0.04 - shift);               // 4% base
 
-  const actualPercentage = parseFloat((
-    scoreLCP + scoreINP + scoreCLS + scoreFCP + scoreTTFB +
-    scoreFID + scoreTBT + scoreSI +
-    scoreCompression + scoreCaching + scoreResourceOpt + scoreRenderBlocking +
-    scoreRedirect + scoreInventory + scoreService
-  ).toFixed(0));
+  // Weighted average over the metrics that could actually be measured. Each entry
+  // contributes its `weight` only when `present`, and the total is normalized by the
+  // sum of present weights — so the Technical % is always on a 0-100 scale no matter
+  // which optional signals (CrUX field data, FID, the timed/mobile pages) exist.
+  // Weights preserve the original relative importance; the three mobile/rendering
+  // metrics are folded in at 5 each. PageSpeed Score is intentionally excluded — it
+  // is itself an aggregate of the vitals below and would double-count them.
+  const components = [
+    { score: getScore(lcpLab),    weight: 7, present: true },
+    { score: getScore(lcpCrux),   weight: 8, present: !!lcpCrux },
+    { score: getScore(inpLab),    weight: 7, present: true },
+    { score: getScore(inpCrux),   weight: 8, present: !!inpCrux },
+    { score: getScore(clsLab),    weight: 7, present: true },
+    { score: getScore(clsCrux),   weight: 8, present: !!clsCrux },
+    { score: getScore(fcpLab),    weight: 3, present: true },
+    { score: getScore(fcpCrux),   weight: 3, present: !!fcpCrux },
+    { score: getScore(ttfbLab),   weight: 4, present: true },
+    { score: getScore(ttfbCrux),  weight: 4, present: !!ttfbCrux },
+    { score: getScore(fidPrimary), weight: 4, present: hasFID },
+    { score: getScore(tbt),       weight: 6, present: true },
+    { score: getScore(si),        weight: 6, present: true },
+    { score: getScore(compression),          weight: 5, present: true },
+    { score: getScore(caching),              weight: 5, present: true },
+    { score: getScore(resourceOptimization), weight: 6, present: true },
+    { score: getScore(renderBlocking),       weight: 5, present: true },
+    { score: getScore(redirect),             weight: 4, present: true },
+    { score: getScore(inventoryLoad),        weight: 5, present: scored(inventoryLoad) },
+    { score: getScore(serviceLoad),          weight: 5, present: scored(serviceLoad) },
+    { score: getScore(mobileUsability),      weight: 5, present: scored(mobileUsability) },
+    { score: getScore(renderingPerformance), weight: 5, present: scored(renderingPerformance) },
+    { score: getScore(mobileLoadSpeed),      weight: 5, present: scored(mobileLoadSpeed) },
+    { score: getScore(lazyLoading),          weight: 5, present: scored(lazyLoading) },
+    { score: getScore(thirdPartyOptimization), weight: 5, present: scored(thirdPartyOptimization) },
+    { score: getScore(jsExecution),          weight: 5, present: scored(jsExecution) },
+  ];
+  const presentComponents = components.filter((c) => c.present);
+  const totalWeight = presentComponents.reduce((s, c) => s + c.weight, 0);
+  const actualPercentage = totalWeight === 0 ? 0 : parseFloat(
+    (presentComponents.reduce((s, c) => s + c.score * c.weight, 0) / totalWeight).toFixed(0)
+  );
 
   return {
     Percentage: actualPercentage,
+    PageSpeed_Score: pageSpeedScore,
     LCP: { lab: lcpLab, crux: lcpCrux },
     CLS: { lab: clsLab, crux: clsCrux },
     FCP: { lab: fcpLab, crux: fcpCrux },
@@ -1491,7 +2237,13 @@ export default async function technicalMetrics(url, device, page, response, brow
     Caching: caching,
     Resource_Optimization: resourceOptimization,
     Render_Blocking: renderBlocking,
+    Rendering_Performance: renderingPerformance,
+    Lazy_Loading: lazyLoading,
+    Third_Party_Optimization: thirdPartyOptimization,
+    JS_Execution: jsExecution,
     Redirect_Chains: redirect,
+    Mobile_Usability: mobileUsability,
+    Mobile_Load_Speed: mobileLoadSpeed,
     Inventory_Load_Time: inventoryLoad,
     Service_Load_Time: serviceLoad,
   };

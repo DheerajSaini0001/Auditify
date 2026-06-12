@@ -2145,7 +2145,6 @@ export default async function technicalMetrics(url, device, page, response, brow
   const pageSpeedScore = evaluatePageSpeedScore(mobileData, desktopData);
   const mobileLoadSpeed = mobileExp.mobileLoadSpeed;
   const mobileUsability = mobileExp.mobileUsability;
-
   const lcpLab = evaluateLCPLab(audits);
   const lcpCrux = evaluateLCPCrux(audits, cruxMetrics);
   const clsLab = evaluateCLSLab(audits);
@@ -2160,7 +2159,6 @@ export default async function technicalMetrics(url, device, page, response, brow
   const fidCrux = evaluateFIDCrux(audits, cruxMetrics);
   const tbt = evaluateTBT(audits);
   const si = evaluateSI(audits);
-
   const compression = await evaluateCompression(page);
   const caching = await evaluateCaching(page);
   const resourceOptimization = await evaluateResourceOptimization(page);
@@ -2170,7 +2168,6 @@ export default async function technicalMetrics(url, device, page, response, brow
   const lazyLoading = await evaluateLazyLoading(audits, page);
   const thirdPartyOptimization = await evaluateThirdPartyOptimization(audits, page);
   const jsExecution = evaluateJsExecution(audits);
-
   const getScore = (metric) => metric?.score || 0;
   // A metric counts toward the weighted total only if it was actually measured —
   // `notCalculated()` results are flagged `meta.notScored` so a failed measurement is
@@ -2180,7 +2177,6 @@ export default async function technicalMetrics(url, device, page, response, brow
   // otherwise the lab Max Potential FID (always present in Lighthouse).
   const fidPrimary = fidCrux || fidLab;
   const hasFID = !!fidPrimary;
-
   // Weighted average over the metrics that could actually be measured. Each entry
   // contributes its `weight` only when `present`, and the total is normalized by the
   // sum of present weights — so the Technical % is always on a 0-100 scale no matter
@@ -2221,7 +2217,6 @@ export default async function technicalMetrics(url, device, page, response, brow
   const actualPercentage = totalWeight === 0 ? 0 : parseFloat(
     (presentComponents.reduce((s, c) => s + c.score * c.weight, 0) / totalWeight).toFixed(0)
   );
-
   return {
     Percentage: actualPercentage,
     PageSpeed_Score: pageSpeedScore,

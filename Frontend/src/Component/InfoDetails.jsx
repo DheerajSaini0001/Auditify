@@ -540,46 +540,46 @@ export const InfoDetails = {
     Canonical: {
         title: "Canonical Tag",
         whatThisParameterIs: "A Canonical Tag tells search engines which version of a page is the 'master copy,' avoiding confusion if you have similar content on different URLs.",
-        whatItCalculates: "We verify the presence of a single `<link rel='canonical'>` tag and check if it points to a valid, absolute URL that matches the current page (self-referencing).",
-        whyItMatters: "It prevents search engines from getting confused. By pointing to one 'main' version, you ensure that all your ranking power goes to the right page.",
+        whatItCalculates: "Beyond presence and self-reference, we now check duplicate-content and pagination handling: that the tag sits in the <head>; whether the page is paginated (rel=prev/next or ?page=) and whether a deep paginated page wrongly canonicalizes to page 1 instead of itself; whether it correctly strips tracking/sort/filter query parameters; and whether a noindex directive contradicts a cross-URL canonical.",
+        whyItMatters: "It prevents search engines from getting confused. Done right it consolidates duplicate URLs; done wrong (e.g. all paginated pages → page 1, or noindex + canonical together) it hides content or sends contradictory signals.",
         thresholds: {
-            good: "Single valid canonical tag (1.0)",
-            needsImprovement: "Points to external URL (0.5)",
-            poor: "Missing or invalid canonical (0)"
+            good: "Single in-head canonical; self-referencing, or correctly canonicalizing a parameter variant",
+            needsImprovement: "Missing, not in <head>, paginated page → another page, or noindex/canonical conflict",
+            poor: "Multiple/empty/invalid canonical, or pointing to an external domain"
         },
         actualReasonsForFailure: [
-            "Canonical tag missing",
-            "Canonical points to external domain",
-            "Multiple canonical tags found",
-            "Canonical href is empty"
+            "Canonical tag missing, empty, duplicated, or placed outside the <head>",
+            "Canonical points to an external domain or a malformed URL",
+            "A deep paginated page canonicalizes to a different page (often page 1)",
+            "noindex is set while the canonical points to a different URL (contradictory)"
         ],
         howToOvercomeFailure: [
-            "Add a <link rel='canonical'> pointing to the authoritative URL",
-            "Ensure only one canonical tag is present",
-            "Correct the URL format (absolute URL required)",
-            "Point canonical to self if page is master version"
+            "Add a single <link rel='canonical'> in the <head> with an absolute URL",
+            "Self-canonicalize each paginated page; use rel=prev/next or a view-all page",
+            "Canonicalize parameterized variants to the clean base URL",
+            "Don't combine noindex with a cross-URL canonical"
         ]
     },
     URL_Structure: {
         title: "URL Structure",
         whatThisParameterIs: "URL Structure is the layout of your web address. A clean address is easier for both people and search engines to understand.",
-        whatItCalculates: "We parse the URL path to check for uppercase letters, underscores, depth (>3 segments), and query parameters.",
-        whyItMatters: "Clean web addresses are much more likely to be clicked and shared. They also help search engines index your site more effectively.",
+        whatItCalculates: "Beyond format (lowercase, hyphens-not-underscores, no query params, no spaces/special chars), we analyse the folder hierarchy: depth (≤3 recommended, severity scales with depth), file extensions (.html/.php), dates in the path, non-descriptive numeric/hash segments, overly long or repeated segments, and total URL length.",
+        whyItMatters: "Clean, shallow, descriptive folder hierarchies are easier to click, share, and crawl. Deep paths, IDs, dates, and file extensions add noise and dilute the keywords in the URL.",
         thresholds: {
-            good: "Short, lowercase, hyphenated, ≤3 levels deep",
-            needsImprovement: "Minor formatting issues",
-            poor: "Deep, parameterized, or messy URLs"
+            good: "Short, lowercase, hyphenated, descriptive folders ≤3 deep",
+            needsImprovement: "Minor issues (file extension, slightly deep, long URL)",
+            poor: "Multiple serious issues (uppercase, underscores, params, very deep, ID segments)"
         },
         actualReasonsForFailure: [
-            "Uppercase letters in URL",
-            "Underscores instead of hyphens",
-            "Too many URL segments",
-            "Query parameters present"
+            "Uppercase letters, underscores, spaces, or query parameters",
+            "Deep path (> 3 folders) or non-descriptive numeric/ID segments",
+            "File extension or a date embedded in the path",
+            "Repeated segments or an excessively long URL"
         ],
         howToOvercomeFailure: [
-            "Refactor layout to use <header>, <nav>, <main>, <footer>",
-            "Convert <div> elements to semantic tags where appropriate",
-            "Ensure correct nesting of semantic regions"
+            "Use lowercase, hyphen-separated, descriptive folder names",
+            "Keep depth ≤ 3 and drop file extensions, dates, and numeric IDs",
+            "Remove query parameters from indexable URLs and keep them concise"
         ]
     },
     H1: {
@@ -606,22 +606,23 @@ export const InfoDetails = {
     Image: {
         title: "Image Optimization",
         whatThisParameterIs: "Image Optimization ensures your pictures are the right size and have hidden 'alt text' so everyone (including search engines) knows what's in them.",
-        whatItCalculates: "We scan all `<img>` tags for the presence of `alt` attributes, filter out generic terms (e.g. 'image'), and check if file sizes exceed 150KB.",
+        whatItCalculates: "We score every <img> on a weighted blend: alt-text presence (35%) and quality (13%), compression (files <150KB, 15%), next-gen formats (WebP/AVIF incl. <picture> sources, 12%), lazy loading (loading='lazy' on below-the-fold images, 10%), descriptive file names vs generic IMG_1234/hashes (10%), and title attributes (5%). We also surface responsive (srcset) usage and broken images.",
         whyItMatters: "Optimized images aren't just faster—they help you show up in Image Search and ensure visually impaired users know what's in your photos.",
         thresholds: {
-            good: "Alt text present & images <150KB",
-            needsImprovement: "Partial optimization",
-            poor: "Missing alt text or large images"
+            good: "Descriptive alt + WebP/AVIF + lazy-loaded + named well + <150KB",
+            needsImprovement: "Some legacy formats, eager loading, or generic file names",
+            poor: "Missing alt text, broken images, or large unoptimized files"
         },
         actualReasonsForFailure: [
-            "Missing or meaningless alt text",
-            "Oversized image files",
-            "Missing title attributes"
+            "Missing or meaningless alt text, or broken images",
+            "Legacy formats only (no WebP/AVIF) and oversized files",
+            "Below-the-fold images not lazy-loaded",
+            "Generic file names (IMG_1234.jpg, hashes, numeric IDs)"
         ],
         howToOvercomeFailure: [
-            "Add descriptive Alt text to all images",
-            "Compress large files to under 150KB",
-            "Use WebP format recommended"
+            "Add descriptive Alt text and keyword-rich file names",
+            "Serve WebP/AVIF (via <picture> or a CDN) and compress under 150KB",
+            "Add loading='lazy' to below-the-fold images and srcset for responsiveness"
         ]
     },
     Video: {
@@ -650,43 +651,44 @@ export const InfoDetails = {
     Semantic_Tags: {
         title: "Semantic HTML Tags",
         whatThisParameterIs: "Semantic tags are labels in your code (like 'header' or 'article') that help search engines and screen readers understand how your page is organized.",
-        whatItCalculates: "We check for the presence of core HTML5 landmarks: `<main>`, `<nav>`, `<header>`, `<footer>`, `<article>`, `<section>`, and `<aside>`.",
-        whyItMatters: "Think of these as the 'chapters' of your book. They help search engines and accessibility tools navigate and understand your content with ease.",
+        whatItCalculates: "A composite, not just presence: a single <main> plus <header>/<nav>/<footer> (with ARIA landmark fallbacks — role=main/navigation/banner/contentinfo), the presence of <section>/<article> sectioning content, whether each section/article carries a heading (a key semantic/accessibility rule), and the semantic-to-div ratio (to catch 'div soup' even when a token tag exists).",
+        whyItMatters: "Semantic landmarks are the 'chapters' of your page — they let search engines and screen readers navigate it. Sections without headings and pages built almost entirely from <div>s undermine that even if a few tags are present.",
         thresholds: {
-            good: "Core semantic tags present",
-            needsImprovement: "Partial usage",
-            poor: "No semantic structure"
+            good: "Single <main>, header/nav/footer, sectioning content with headings, healthy semantic ratio",
+            needsImprovement: "Missing a landmark, sections lacking headings, or div-heavy markup",
+            poor: "No <main>/landmarks, or almost entirely <div>-based"
         },
         actualReasonsForFailure: [
-            "Missing main or nav tags",
-            "Overuse of generic divs",
-            "Incomplete semantic structure"
+            "Missing <main> (and no role='main'), or multiple <main> elements",
+            "Missing <header>/<nav>/<footer> landmarks",
+            "<section>/<article> elements without a heading",
+            "Heavily div-based markup (low semantic-to-div ratio)"
         ],
         howToOvercomeFailure: [
-            "Use semantic HTML elements",
-            "Replace generic divs with meaningful tags",
-            "Ensure logical document structure"
+            "Use one <main> plus <header>, <nav>, and <footer>",
+            "Give every <section>/<article> a heading (h1–h6 or aria-label)",
+            "Replace generic <div>s with semantic elements where they convey structure"
         ]
     },
     Contextual_Linking: {
         title: "Contextual Linking",
-        whatThisParameterIs: "Contextual linking means adding helpful links within your text that point to other related pages on your website.",
-        whatItCalculates: "We identify links within the main content area (excluding navigation menus) and check if they point to internal pages.",
-        whyItMatters: "Internal links help visitors (and search bots) discover more of your great content, keeping people on your site longer.",
+        whatThisParameterIs: "Contextual linking means adding helpful links within your text that point to other related pages on your website — and whether those links are topically related to the page they sit on.",
+        whatItCalculates: "We identify links in the main content area (excluding navigation), verify they aren't broken, and now measure topical relatedness: we derive this page's topic terms (title, headings, top body terms) and check what share of in-content links have anchor text or URL slugs that overlap that topic. A low related ratio (with enough links) signals weak topical clustering.",
+        whyItMatters: "Internal links help visitors and search bots discover more content. Links to topically related pages build 'topic clusters' that strengthen rankings; a wall of unrelated links does little for SEO.",
         thresholds: {
-            good: "Contextual links present",
-            needsImprovement: "Some key links missing",
-            poor: "No contextual links"
+            good: "Contextual links present, valid, and topically related",
+            needsImprovement: "Few links related to the page topic, or some key links missing",
+            poor: "No contextual links, or broken links"
         },
         actualReasonsForFailure: [
             "No links in main content",
-            "Important pages only linked in navigation",
-            "Poor internal linking strategy"
+            "Most in-content links point to topically unrelated pages",
+            "Important pages only linked in navigation, or broken links present"
         ],
         howToOvercomeFailure: [
             "Add internal links naturally within content body",
-            "Link to key service/category pages from article text",
-            "Use descriptive anchor text for contextual links"
+            "Link to pages that share this page's topic (related models, services, guides) to build topic clusters",
+            "Use descriptive anchor text that reflects the linked page's subject"
         ]
     },
     Heading_Hierarchy: {
@@ -728,6 +730,27 @@ export const InfoDetails = {
             "Add unique, valuable content (> 300 words)",
             "Rewrite repeated sentences",
             "Ensure content provides depth on the topic"
+        ]
+    },
+    Content_Freshness: {
+        title: "Content Freshness",
+        whatThisParameterIs: "Content Freshness measures how recently the page's content was updated, based on the date signals it exposes.",
+        whatItCalculates: "We collect every update signal on the page — meta tags (article:modified_time, last-modified, og:updated_time), JSON-LD dateModified/datePublished, <time datetime> elements, and visible 'Last updated' text — take the most recent valid date, and score by recency: fresh ≤ 6 months, aging 6–12 months, stale > 12 months. No date signal is a warning.",
+        whyItMatters: "Search engines favor recently maintained pages, especially for inventory, pricing, and service content where staleness signals out-of-date information. A visible, machine-readable update date helps both crawlers and shoppers trust the page.",
+        thresholds: {
+            good: "Updated within the last 6 months",
+            needsImprovement: "6–12 months old, or no date signal found",
+            poor: "More than 12 months since the last update"
+        },
+        actualReasonsForFailure: [
+            "The most recent update date is over a year old (stale)",
+            "No update timestamp is exposed (meta, JSON-LD, <time>, or visible text)",
+            "Date signals exist but are in an unparseable format"
+        ],
+        howToOvercomeFailure: [
+            "Add dateModified to your JSON-LD and an article:modified_time meta tag",
+            "Show a visible 'Last updated' date on inventory, service, and blog pages",
+            "Genuinely refresh key pages every 6–12 months and update the date signal"
         ]
     },
     Content_Relevance: {
@@ -777,43 +800,45 @@ export const InfoDetails = {
     URL_Slugs: {
         title: "URL Slugs",
         whatThisParameterIs: "A URL slug is the last part of your web address that identifies the specific page in a way that's easy for humans to read.",
-        whatItCalculates: "We analyze the last segment of the URL path for length (>50 chars), uppercase letters, underscores, and numeric IDs.",
-        whyItMatters: "Short, readable slugs are much more welcoming. They look professional in social media shares and are easy for search engines to read.",
+        whatItCalculates: "We analyse the final URL segment on three axes: length (chars + word count), format (lowercase, hyphens-not-underscores), and readability/keywords — does it contain descriptive words (vs numeric IDs, hashes, or stop-word filler), and do those words match the page's title/H1? Severity-tiered scoring weights format and 'no descriptive keywords' more heavily than cosmetic issues.",
+        whyItMatters: "A short, readable, keyword-rich slug tells users and search engines what the page is about before they even open it. ID-only or stuffed slugs waste that signal and look untrustworthy in shares and results.",
         thresholds: {
-            good: "Clean slug (1.0)",
-            needsImprovement: "Formatting issues (0.5)"
+            good: "Short, lowercase, hyphenated, keyword-rich, aligned with the title",
+            needsImprovement: "Minor issues (a bit long, mostly IDs, weak title alignment)",
+            poor: "Uppercase/underscores, no descriptive keywords, or very long"
         },
         actualReasonsForFailure: [
-            "Slug too long",
+            "Slug has no descriptive keywords (numeric ID / hash only)",
             "Uppercase letters or underscores",
-            "Numbers or IDs in slug"
+            "Too long, too many words, or heavy on stop-word filler",
+            "Slug keywords don't match the page title/H1"
         ],
         howToOvercomeFailure: [
-            "Simplify the URL structure",
-            "Use lowercase letters only",
-            "Use hyphens instead of underscores",
-            "Keep path depth shallow (< 4 segments)"
+            "Build the slug from the page's primary keywords (3–5 words)",
+            "Use lowercase letters and hyphens, not underscores",
+            "Drop numeric IDs, dates, and filler words; keep it concise"
         ]
     },
     Structured_Data: {
         title: "Structured Data (Schema Markup)",
         whatThisParameterIs: "Structured Data (Schema) is hidden code that helps search engines show 'extra' info like star ratings or prices directly in search results.",
-        whatItCalculates: "We search for `<script type='application/ld+json'>` blocks and validate their JSON content.",
-        whyItMatters: "Structured data helps you stand out. Things like star ratings and prices in search results can greatly increase the number of people who click your link.",
+        whatItCalculates: "We parse every JSON-LD block (including @graph and nested objects) and validate each @type against its Schema.org/Google required and recommended fields — Organization (name, url), LocalBusiness/AutoDealer (name, address, telephone, hours, geo), Product (name, image, offers), Offer (price, priceCurrency), Vehicle (name, brand, VIN…), FAQPage (Question + acceptedAnswer.text), BreadcrumbList (ListItem name/position), Article, Review, AggregateRating. A type missing required fields is flagged.",
+        whyItMatters: "Rich results only appear when the markup is valid and complete. Schema that's present but missing required fields (e.g. a Product with no offers, an Offer with no price) won't earn rich snippets — and invalid markup can be ignored entirely.",
         thresholds: {
-            good: "Schema detected (1.0)",
-            poor: "No schema detected (0)"
+            good: "All detected rich-result types have their required fields",
+            needsImprovement: "Some types are missing required fields, or only generic (non-rich) schema is present",
+            poor: "No structured data found, or it fails to parse"
         },
         actualReasonsForFailure: [
-            "No JSON-LD script found",
-            "Invalid JSON syntax in script",
-            "Missing required Schema properties",
-            "Unrecognized @type"
+            "A schema type is missing required fields (e.g. Product without offers, Offer without price)",
+            "LocalBusiness/AutoDealer missing name or address",
+            "FAQPage/BreadcrumbList present but its items lack required properties",
+            "Only generic types (WebSite/WebPage) present — no rich-result schema"
         ],
         howToOvercomeFailure: [
-            "Add relevant JSON-LD schema markup",
-            "Validate schema with Google Rich Results Test",
-            "Fix JSON syntax errors"
+            "Add the missing required properties listed for each type",
+            "Add LocalBusiness/AutoDealer, Product/Vehicle + Offer, FAQPage and BreadcrumbList markup",
+            "Validate with Google's Rich Results Test after fixing"
         ]
     },
     Open_Graph: {
@@ -863,21 +888,22 @@ export const InfoDetails = {
     Social_Links: {
         title: "Social Profile Links",
         whatThisParameterIs: "Social Profile Links connect your website to your official social media pages, helping visitors find your community.",
-        whatItCalculates: "We scan all external links to identify URLs matching known social media platforms (Facebook, Twitter, LinkedIn, etc.).",
-        whyItMatters: "These links show you are a real brand with a real community. They make it easy for your most loyal fans to follow you everywhere.",
+        whatItCalculates: "We find on-page links to known platforms (Facebook, X/Twitter, LinkedIn, Instagram, YouTube, TikTok, Yelp, etc.) AND cross-check them against the sameAs URLs in your Organization/LocalBusiness JSON-LD. We report platform diversity, which linked profiles are declared in sameAs, profiles missing from sameAs, and conflicts where one platform points to two different handles.",
+        whyItMatters: "Google uses sameAs to tie your site to your social profiles for entity recognition (Knowledge Panel). Linking profiles but not declaring them in sameAs — or pointing to inconsistent handles — weakens that connection.",
         thresholds: {
-            good: "Social links present (1.0)",
-            poor: "No social links found (0)"
+            good: "Profiles linked and consistently declared in sameAs",
+            needsImprovement: "Profiles linked but missing from sameAs, or no sameAs at all",
+            poor: "Conflicting handles per platform, or no social presence found"
         },
         actualReasonsForFailure: [
-            "No external links to social domains found",
-            "Links to social profiles broken",
-            "Social links not recognized"
+            "Social profiles linked on-page but not declared in structured-data sameAs",
+            "Same platform points to two different profiles (inconsistent)",
+            "No social links or sameAs entries found at all"
         ],
         howToOvercomeFailure: [
-            "Add links to your official social media profiles",
-            "Fix broken or incorrect social URLs",
-            "Ensure links point to recognized platforms"
+            "Add every linked social profile to the Organization/LocalBusiness sameAs array",
+            "Use one consistent profile per platform across on-page links and sameAs",
+            "Link your official profiles in the footer and keep them in sync"
         ]
     },
 
@@ -903,22 +929,23 @@ export const InfoDetails = {
     },
     Sitemap: {
         title: "XML Sitemap",
-        whatThisParameterIs: "An XML Sitemap is like a map of your website that helps search engines find and index all your important pages quickly.",
-        whatItCalculates: "We attempt to fetch the `/sitemap.xml` file from the root domain.",
-        whyItMatters: "A sitemap ensures Google doesn't miss any of your pages. It's the fastest way to get your new content found and shown to the world.",
+        whatThisParameterIs: "An XML Sitemap is a map of your website that helps search engines find and index your important pages, plus signals which pages changed recently.",
+        whatItCalculates: "We locate the sitemap (robots.txt + common defaults), validate it's well-formed (<urlset>/<sitemapindex>), and assess coverage and freshness: the number of URLs (or child sitemaps for an index), how many carry a <lastmod>, the most recent <lastmod>, and a sampled broken-URL check (only 404/410/5xx count, bot-blocked responses are ignored). Freshness is judged by the NEWEST entry, not penalised for legitimately old pages.",
+        whyItMatters: "A complete, fresh sitemap ensures Google doesn't miss pages and recrawls updated ones quickly. Dead URLs in the sitemap waste crawl budget; a stale sitemap suggests the site isn't maintained.",
         thresholds: {
-            good: "File exists (1.0)",
-            poor: "File missing (0)"
+            good: "Valid sitemap, has URLs with recent <lastmod>, sampled URLs reachable",
+            needsImprovement: "Missing, no <lastmod>, stale (newest > 6 months), or broken sampled URLs",
+            poor: "Invalid/empty sitemap, or not well-formed XML"
         },
         actualReasonsForFailure: [
-            "Sitemap.xml not found (404)",
-            "Sitemap file is empty",
-            "Server error preventing fetch"
+            "Sitemap not found, empty, or not valid XML",
+            "Sampled URLs return 404/410/5xx (dead links in the sitemap)",
+            "No <lastmod> tags, or the newest entry is over six months old"
         ],
         howToOvercomeFailure: [
-            "Generate and upload sitemap.xml to root",
-            "Submit sitemap to Google Search Console",
-            "Ensure sitemap contains valid URLs"
+            "Auto-generate the sitemap from live content and reference it in robots.txt",
+            "Include accurate <lastmod> timestamps and remove dead URLs",
+            "Use a sitemap index for large sites; add image/hreflang entries where relevant"
         ]
     },
 

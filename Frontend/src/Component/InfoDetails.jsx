@@ -3031,23 +3031,23 @@ export const InfoDetails = {
     },
     CTA_Flow_Alignment: {
         title: "CTA Flow Alignment",
-        whatThisParameterIs: "We check if your buttons are placed at the most natural points where a visitor is ready to act.",
-        whatItCalculates: "We check the position of your primary Call-to-Action relative to the rest of the page content to ensure it appears at the right moment.",
-        whyItMatters: "Asking for a commitment before explaining the value is pushy. Asking too late means they might miss it.",
+        whatThisParameterIs: "We check if your buttons are placed at the right points in the user's journey — visible immediately and repeated as the page guides them toward a decision.",
+        whatItCalculates: "Using the page's real rendered layout, we score three funnel signals: (1) Above-the-fold — is a visible CTA in the first screen? (40%); (2) Distribution — on long pages, are CTAs spread across the top, middle, and bottom thirds? (35%); (3) End-of-page — on long pages, is there a CTA near the bottom so users can act without scrolling back? (25%). The combined score is bucketed into pass / warning / fail.",
+        whyItMatters: "Asking for a commitment before explaining the value is pushy; asking too late means they miss it. A CTA visible up front plus repeats at natural decision points keeps momentum through the whole journey.",
         thresholds: {
-            good: "CTA well-positioned (10-90% of page)",
-            needsImprovement: "CTA too early (<10%) or too late (>90%)",
-            poor: "No flow-aligned CTA found"
+            good: "Funnel placement score ≥ 70 (above-the-fold CTA + good coverage)",
+            needsImprovement: "Score 40–69 — gaps like no above-the-fold CTA or clustering on a long page",
+            poor: "Score < 40, or no conversion CTAs found at all"
         },
         actualReasonsForFailure: [
-            "Primary CTA is placed at the extreme top (too early) or bottom (too late) of the content",
-            "No CTAs with strong keywords found in the main content flow",
-            "User is asked to commit before understanding the value"
+            "No primary CTA is visible above the fold",
+            "CTAs are clustered in one part of a long page instead of distributed",
+            "No CTA near the end of a long page, forcing users to scroll back"
         ],
         howToOvercomeFailure: [
-            "Position CTAs where users have enough context to make a decision, typically after a value proposition",
-            "Distribute CTAs evenly throughout long pages",
-            "Ensure a CTA is visible at the moment of highest interest"
+            "Place a primary CTA above the fold so an action is visible immediately",
+            "Repeat a CTA after each key value section on long pages",
+            "Add a closing CTA near the bottom of long pages"
         ]
     },
     Form_Presence: {

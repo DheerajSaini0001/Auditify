@@ -112,6 +112,14 @@ CONVERSION & LEAD FLOW
 - Friendly Error Handling
 - Microcopy Clarity
 - MultiStep Form Progress / Progress Indicators
+- CTA Flow Alignment / Funnel Placement (rendered geometry: above-the-fold + distribution + end-of-page)
+- Trade-In Flows / Trade-In Estimator (widget/CTA/form detection, separator-normalized)
+- Financing Flows / Pre-Approval Process (lender widget/credit-app form/CTA detection)
+- Finance Calculator / Payment Estimator (widget/input-cluster/CTA detection)
+- Appointment Booking (Test Drive / Service Scheduling) (scheduler widget/booking form/CTA)
+- Thank You Pages (link/form-action/redirect + self-page detection, N/A when no forms)
+- Chat Experiences (Live Chat / Chatbot) (vendor widget + launcher detection)
+- Click-to-Call (tel: link detection; warns on unlinked phone numbers)
 
 AIO / AEO / GEO
 - Gemini / ChatGPT / Perplexity platform scoring (weighted signal matrix)
@@ -184,7 +192,7 @@ UX & CONTENT
 - Mobile Experience / Responsive Layout - flex/grid pattern check only
 
 CONVERSION & LEAD FLOW
-- CTA Flow Alignment / Funnel Placement - simple position-ratio check, no real flow context
+- (none - CTA Flow Alignment upgraded to full rendered-geometry funnel analysis)
 
 AIO / AEO / GEO
 - Search Index Status / Crawl Status - robots.txt + noindex only; no real index coverage data
@@ -263,13 +271,7 @@ UX & CONTENT
 - Staff Profiles / Team Pages
 
 CONVERSION & LEAD FLOW
-- Trade-In Flows / Trade-In Estimator
-- Financing Flows / Pre-Approval Process
-- Appointment Booking (Test Drive, Service Scheduling)
-- Finance Calculator / Payment Estimator
-- Thank You Pages
-- Chat Experiences (Live Chat, Chatbot)
-- Click-to-Call (tel: link detection)
+- (all implemented - see COMPLETELY CALCULATED above)
 
 AIO / AEO / GEO
 - Index Coverage (real Search Console data)

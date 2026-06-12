@@ -132,50 +132,158 @@ async function checkCTACrowding(page, maxCTAs = 3) {
   };
 }
 
-// CTA Flow Alignment
-function checkCTAFlowAlignment($) {
-  const ctaKeywords = ["buy now", "sign up", "get started", "subscribe", "download", "contact us", "book now"];
-  const ctas = $("a, button").filter((_, el) => {
-    const text = $(el).text().toLowerCase().trim();
-    return ctaKeywords.some(keyword => text.includes(keyword));
-  });
+// CTA Flow Alignment / Funnel Placement
+// Evaluates REAL rendered geometry — above-the-fold presence, distribution across the
+// page, and end-of-page repetition — instead of a naive source-order DOM-index ratio.
+async function checkCTAFlowAlignment(page, $) {
+  // Conversion-focused CTA detection (explicit CTA classes + intent links), kept tight
+  // on purpose so generic buttons (nav toggles, cards) don't inflate distribution.
+  const ctaSelectors = [
+    '.cta', '.cta-button', '.cta-btn', '.btn-primary', '.btn-cta',
+    'a.cta', 'a.cta-button', 'a.btn-primary',
+    'a[href*="signup"]', 'a[href*="register"]', 'a[href*="subscribe"]',
+    'a[href*="contact"]', 'a[href*="quote"]', 'a[href*="appointment"]',
+    'a[href*="finance"]', 'a[href*="trade"]', 'a[href*="test-drive"]',
+    '[id*="cta"]', '[class*="cta"]'
+  ];
+  const ctaKeywords = [
+    "buy now", "sign up", "get started", "subscribe", "download", "contact us", "book now",
+    "get a quote", "request a quote", "value your trade", "value my trade", "trade-in",
+    "get pre-approved", "apply for financing", "schedule service", "book a test drive",
+    "test drive", "schedule appointment", "learn more", "shop now", "view inventory",
+    "browse inventory", "call now", "get directions", "schedule", "reserve"
+  ];
 
-  const count = ctas.length;
-  const idealRange = "0.1 - 0.9";
+  const result = await page.evaluate((cfg) => {
+    const { ctaSelectors, ctaKeywords } = cfg;
+    const lc = (s) => (s || "").toLowerCase();
 
-  if (count === 0) return {
-    score: 0,
-    status: "fail",
-    details: "No flow CTAs found.",
-    meta: { count, checkedKeywords: ctaKeywords },
-    analysis: {
-      cause: "No Call-to-Action elements with conversion-oriented keywords were found.",
-      recommendation: "Add CTAs with strong action keywords like 'Get Started' or 'Buy Now' to guide user flow."
-    }
+    const viewportHeight = window.innerHeight || 800;
+    const documentHeight = Math.max(
+      document.documentElement.scrollHeight,
+      document.body ? document.body.scrollHeight : 0
+    ) || viewportHeight;
+
+    // Candidate CTAs: selector matches + conversion-keyword text/aria
+    const candidates = new Set();
+    try { document.querySelectorAll(ctaSelectors.join(",")).forEach(el => candidates.add(el)); } catch (e) {}
+    document.querySelectorAll("a, button, input[type='submit'], input[type='button']").forEach(el => {
+      const text = lc(el.innerText || el.value || el.getAttribute("aria-label"));
+      if (text && ctaKeywords.some(k => text.includes(k))) candidates.add(el);
+    });
+
+    const isVisible = (el) => {
+      const rect = el.getBoundingClientRect();
+      if (rect.width <= 1 || rect.height <= 1) return false;
+      const style = window.getComputedStyle(el);
+      if (style.display === "none" || style.visibility === "hidden" || parseFloat(style.opacity) === 0) return false;
+      return true;
+    };
+
+    const ctas = [];
+    candidates.forEach(el => {
+      if (!isVisible(el)) return;
+      const rect = el.getBoundingClientRect();
+      const absoluteTop = rect.top + window.scrollY;
+      const label = (el.innerText || el.value || el.getAttribute("aria-label") || "").trim().slice(0, 40);
+      ctas.push({ absoluteTop, label });
+    });
+    ctas.sort((a, b) => a.absoluteTop - b.absoluteTop);
+
+    const ctaCount = ctas.length;
+    const aboveFoldCTA = ctas.some(c => c.absoluteTop < viewportHeight);
+
+    // Distribution across page thirds
+    const third = documentHeight / 3;
+    const distribution = { top: 0, middle: 0, bottom: 0 };
+    ctas.forEach(c => {
+      if (c.absoluteTop < third) distribution.top++;
+      else if (c.absoluteTop < 2 * third) distribution.middle++;
+      else distribution.bottom++;
+    });
+
+    const isLongPage = documentHeight > 2 * viewportHeight;
+    const endCTA = ctas.some(c => c.absoluteTop > documentHeight * 0.75);
+    const examples = ctas.slice(0, 5).map(c => c.label).filter(Boolean);
+
+    return { ctaCount, aboveFoldCTA, distribution, isLongPage, endCTA, viewportHeight, documentHeight, examples };
+  }, { ctaSelectors, ctaKeywords });
+
+  // No CTAs at all
+  if (result.ctaCount === 0) {
+    return {
+      score: 0,
+      status: "fail",
+      details: "No conversion CTAs found to evaluate funnel placement.",
+      meta: {
+        ctaCount: 0, aboveFoldCTA: false, distribution: result.distribution,
+        isLongPage: result.isLongPage, endCTA: false,
+        documentHeight: result.documentHeight, viewportHeight: result.viewportHeight, examples: []
+      },
+      analysis: {
+        cause: "No Call-to-Action elements with conversion intent were detected, so funnel placement cannot be assessed.",
+        recommendation: "Add clear CTAs (e.g., 'Value Your Trade', 'Get Pre-Approved', 'Schedule Service') and place a primary one above the fold."
+      }
+    };
+  }
+
+  // Composite funnel-context score
+  const sectionsCovered = ["top", "middle", "bottom"].filter(s => result.distribution[s] > 0).length;
+  const coverage = result.isLongPage ? (sectionsCovered / 3) : 1;          // long pages must spread CTAs across the journey
+  const endSignal = result.isLongPage ? (result.endCTA ? 1 : 0) : 1;        // short pages don't need a repeated end CTA
+  const aboveFold = result.aboveFoldCTA ? 1 : 0;
+  const composite = Math.round((0.4 * aboveFold + 0.35 * coverage + 0.25 * endSignal) * 100);
+
+  const baseMeta = {
+    compositeScore: composite,
+    ctaCount: result.ctaCount,
+    aboveFoldCTA: result.aboveFoldCTA,
+    distribution: result.distribution,
+    isLongPage: result.isLongPage,
+    endCTA: result.endCTA,
+    documentHeight: result.documentHeight,
+    viewportHeight: result.viewportHeight,
+    examples: result.examples
   };
 
-  const totalElements = $("*").length;
-  const firstCTAIndex = $("*").index(ctas.first());
-  const ratio = firstCTAIndex / totalElements;
-  const positionRatio = ratio.toFixed(2);
-
-  if (ratio > 0.1 && ratio < 0.9) {
+  // Strong funnel placement
+  if (composite >= 70) {
     return {
       score: 100,
       status: "pass",
-      details: "CTA placement aligns with user flow.",
-      meta: { count, positionRatio, idealRange },
+      details: "CTAs are well-placed across the user's journey (above the fold and through the page).",
+      meta: baseMeta,
       analysis: null
     };
   }
+
+  // Targeted guidance for the partial / poor cases
+  const issues = [];
+  if (!result.aboveFoldCTA) issues.push("no primary CTA is visible above the fold");
+  if (result.isLongPage && sectionsCovered < 2) issues.push("CTAs are clustered in one part of a long page");
+  if (result.isLongPage && !result.endCTA) issues.push("no CTA near the end of a long page");
+
+  if (composite >= 40) {
+    return {
+      score: 50,
+      status: "warning",
+      details: "CTA placement partially supports the funnel but has gaps.",
+      meta: baseMeta,
+      analysis: {
+        cause: `Funnel placement is weak because ${issues.join("; ") || "CTAs are not distributed to match the decision journey"}.`,
+        recommendation: "Place a primary CTA above the fold, repeat a CTA after key value sections, and add one near the end of long pages so users can act without scrolling back."
+      }
+    };
+  }
+
   return {
-    score: 50,
-    status: "warning",
-    details: "CTA placement might be too early or too late.",
-    meta: { count, positionRatio, idealRange },
+    score: 0,
+    status: "fail",
+    details: "CTA placement does not align with the user's decision flow.",
+    meta: baseMeta,
     analysis: {
-      cause: "The primary Call-to-Action is placed at the extreme top or bottom of the content flow.",
-      recommendation: "Position CTAs where users have enough context to make a decision, typically after a value proposition."
+      cause: `Funnel placement is poor because ${issues.join("; ") || "CTAs are positioned where users lack context or visibility"}.`,
+      recommendation: "Add a prominent above-the-fold CTA, distribute CTAs at natural decision points, and ensure a closing CTA on long pages."
     }
   };
 }
@@ -1855,7 +1963,7 @@ export default async function conversionLeadFlow(page, $) {
   const checkCTAsScore = checkCTAs($);
   const checkCTAClarityScore = checkCTAClarity($);
   const checkCTACrowdingScore = await checkCTACrowding(page);
-  const checkCTAFlowAlignmentScore = checkCTAFlowAlignment($);
+  const checkCTAFlowAlignmentScore = await checkCTAFlowAlignment(page, $);
 
   const checkFormPresenceScore = await checkFormPresence(page);
   const checkFormLengthOptimalScore = checkFormLengthOptimal($);

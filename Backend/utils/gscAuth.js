@@ -58,18 +58,25 @@ export const refreshGoogleToken = async (user) => {
  * @param {Object} user - The user document
  * @returns {Promise<Response>}
  */
-export const fetchGSC = async (url, user) => {
-  let response = await fetch(url, {
-    headers: { Authorization: `Bearer ${user.googleAccessToken}` }
-  });
+export const fetchGSC = async (url, user, options = {}) => {
+  // Build the fetch init for a given token, supporting GET (default) and POST+JSON
+  // body (e.g. the URL Inspection API) while keeping the 401 auto-refresh behaviour.
+  const buildInit = (token) => {
+    const init = { method: options.method || 'GET', headers: { Authorization: `Bearer ${token}` } };
+    if (options.body !== undefined) {
+      init.headers['Content-Type'] = 'application/json';
+      init.body = typeof options.body === 'string' ? options.body : JSON.stringify(options.body);
+    }
+    return init;
+  };
+
+  let response = await fetch(url, buildInit(user.googleAccessToken));
 
   if (response.status === 401) {
     console.log(`[GSC Auth] Token 401 for ${user.email}, attempting refresh...`);
     const newToken = await refreshGoogleToken(user);
     if (newToken) {
-      response = await fetch(url, {
-        headers: { Authorization: `Bearer ${newToken}` }
-      });
+      response = await fetch(url, buildInit(newToken));
     }
   }
 

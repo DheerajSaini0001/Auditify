@@ -25,13 +25,22 @@ TECHNICAL PERFORMANCE
 
 ON PAGE SEO
 - Internal Linking (count + generic anchor text detection)
+- Related Content Linking (in-content vs nav + broken-link check + semantic topical relatedness via term overlap)
 - Robots.txt / Crawl Directives
-- XML Sitemap Freshness (lastmod check)
+- XML Sitemap (structure + coverage URL/child count + index detection + broken-URL sampling + newest-lastmod freshness + image/hreflang; GSC submission excluded)
 - FAQ Schema detection
 - Heading Hierarchy (H1-H6 structure, missing heading detection)
 - Semantic HTML (main/nav/header/footer/article/section)
 - Open Graph (og:title, og:image, og:url)
 - Twitter Card (card type)
+- Content Freshness (meta/JSON-LD dateModified+datePublished/time/visible-text; recency-tiered, weighted in SEO score)
+- Canonical Tag (presence/self-ref + in-head + pagination self-canonical + param-strip + noindex-conflict)
+- Structured Data (per-@type required/recommended field validation: Org/LocalBusiness/Product/Offer/Vehicle/FAQPage/BreadcrumbList/Article/Review/AggregateRating; @graph+nested flatten)
+- URL Structure (format + folder hierarchy/depth + file-ext + date-in-path + ID/long/repeated segments + length; severity-tiered)
+- URL Slug (length/word-count + format + readability (descriptive-vs-ID/stopword tokens) + title/H1 keyword alignment; severity-tiered)
+- Image Optimization (alt+quality + compression + next-gen WebP/AVIF incl <picture> + lazy-load + responsive srcset + descriptive file names; weighted blend)
+- Semantic Structure (composite: main/header/nav/footer + ARIA landmark fallbacks + sectioning-content-has-headings + semantic-vs-div ratio)
+- Social Profiles (on-page links + JSON-LD sameAs cross-check: platform diversity, in-sameAs coverage, per-platform handle conflicts)
 
 ACCESSIBILITY (axe-core + custom checks)
 - Color Contrast (WCAG)
@@ -51,6 +60,8 @@ ACCESSIBILITY (axe-core + custom checks)
 - List Markup
 - Heading Order
 - Aria Allowed Attr
+- Document Title (presence via axe + cross-page uniqueness by sampling internal pages)
+- WCAG 2.1 AA Compliance (unified A/AA aggregate from axe, severity-capped; display-only summary)
 
 SECURITY & COMPLIANCE
 - SSL Certificate Validity (expiry calculation)
@@ -73,6 +84,9 @@ SECURITY & COMPLIANCE
 - GDPR / CCPA (keyword + compliance widget detection)
 - Privacy Policy (visible link detection)
 - Data Collection Transparency
+- HTTPS / Site-wide (final landed URL protocol + active/passive mixed-content scan)
+- MFA Enabled (auth-surface scoped; genuine MFA vs SSO vs single-factor; N/A info-only when no login)
+- Third-Party Cookies (disclosure-aware: consent banner / privacy-policy verification)
 
 UX & CONTENT
 - Text Readability (Flesch Reading Ease, syllable counting, page-type aware)
@@ -90,6 +104,8 @@ UX & CONTENT
 - Sticky Header Usage (device-specific height limits)
 - Intrusive Interstitials / Pop-Up Assessment
 - Layout Consistency (flex/grid/container detection)
+- Mobile Experience / Responsive Layout (viewport meta + horizontal-overflow + responsive images + media queries)
+- Mobile Usability (44px tap-target sizing + legible-text + thumb-reach; info-only on desktop)
 - SSL Indicators
 
 CONVERSION & LEAD FLOW
@@ -112,6 +128,14 @@ CONVERSION & LEAD FLOW
 - Friendly Error Handling
 - Microcopy Clarity
 - MultiStep Form Progress / Progress Indicators
+- CTA Flow Alignment / Funnel Placement (rendered geometry: above-the-fold + distribution + end-of-page)
+- Trade-In Flows / Trade-In Estimator (widget/CTA/form detection, separator-normalized)
+- Financing Flows / Pre-Approval Process (lender widget/credit-app form/CTA detection)
+- Finance Calculator / Payment Estimator (widget/input-cluster/CTA detection)
+- Appointment Booking (Test Drive / Service Scheduling) (scheduler widget/booking form/CTA)
+- Thank You Pages (link/form-action/redirect + self-page detection, N/A when no forms)
+- Chat Experiences (Live Chat / Chatbot) (vendor widget + launcher detection)
+- Click-to-Call (tel: link detection; warns on unlinked phone numbers)
 
 AIO / AEO / GEO
 - Gemini / ChatGPT / Perplexity platform scoring (weighted signal matrix)
@@ -155,36 +179,23 @@ ON PAGE SEO
 - Title Tag - length check (30-60 chars) only; no keyword/location/uniqueness analysis
 - H1 Tag - existence/count only; no keyword or location relevance
 - Meta Description - length check (50-160 chars) only; no CTR/uniqueness analysis
-- Content Freshness - only via AEO module, not in SEO scoring
-- Related Content Linking - in-content vs nav links detected; no semantic relatedness
-- Canonical Tag - presence/self-reference only; no pagination/duplicate logic
-- XML Sitemap - structure + freshness only; no coverage or Search Console data
-- Structured Data - JSON-LD presence by @type; no type-specific validation
-- URL Structure / Logical Hierarchy / Readability / Length - basic format checks only
-- Image Optimization / Image Compression - alt text + file size only; no WebP/AVIF/srcset
 - Lazy Loading (images) - video-only check
-- Semantic Structure / Content Sections / Article Markup - basic tag presence scoring
 - OG Description - extracted but not scored
 - Twitter Card Metadata Completeness
-- Social Profiles - link counting only; no sameAs validation
+- (Social Profiles upgraded to sameAs consistency — see COMPLETELY CALCULATED)
 
 ACCESSIBILITY
 - Descriptive Alt Text - presence checked, descriptiveness not analyzed
 - Decorative Image Handling - relies entirely on axe-core defaults
-- Document Title - presence only, uniqueness across pages not checked
 
 SECURITY & COMPLIANCE
-- HTTPS / Site-wide HTTPS - target URL protocol only; no mixed content check
-- MFA Enabled - heuristic keyword/SSO detection; enforcement not validated
-- Third-Party Cookies - detected but disclosure not verified
+- (none - HTTPS/mixed-content, MFA, and Third-Party Cookie disclosure upgraded to full checks)
 
 UX & CONTENT
 - Table of Contents - anchor/back-to-top detection only, not a real TOC check
-- Mobile Usability - indirect via device-aware metrics; no touch-target validation
-- Mobile Experience / Responsive Layout - flex/grid pattern check only
 
 CONVERSION & LEAD FLOW
-- CTA Flow Alignment / Funnel Placement - simple position-ratio check, no real flow context
+- (none - CTA Flow Alignment upgraded to full rendered-geometry funnel analysis)
 
 AIO / AEO / GEO
 - Search Index Status / Crawl Status - robots.txt + noindex only; no real index coverage data
@@ -221,11 +232,8 @@ ON PAGE SEO
 - Blocked Resources Check
 - Sitemap Coverage / Search Console Submission
 - Organization / LocalBusiness / Product / Offer / Vehicle / Breadcrumb schema validation
-- Folder Organization / URL Slug Keyword Usage
-- Next-Gen Image Formats (WebP/AVIF)
-- Image File Naming
+- Folder Organization (covered via URL Structure hierarchy analysis)
 - Link Profile (backlink quality, diversity, relevance)
-- sameAs Implementation / Profile Consistency
 - E-E-A-T Signals (author profiles, credentials, expert content, About Us, contact info)
 - LOCAL SEO SIGNALS - ALL MISSING:
   - NAP Consistency
@@ -239,8 +247,6 @@ ON PAGE SEO
 
 ACCESSIBILITY
 - Keyboard Navigation (full-site traversal test)
-- Unique Titles (cross-page)
-- WCAG 2.1 AA Compliance (unified aggregate score)
 
 SECURITY & COMPLIANCE
 - Mixed Content detection
@@ -263,13 +269,7 @@ UX & CONTENT
 - Staff Profiles / Team Pages
 
 CONVERSION & LEAD FLOW
-- Trade-In Flows / Trade-In Estimator
-- Financing Flows / Pre-Approval Process
-- Appointment Booking (Test Drive, Service Scheduling)
-- Finance Calculator / Payment Estimator
-- Thank You Pages
-- Chat Experiences (Live Chat, Chatbot)
-- Click-to-Call (tel: link detection)
+- (all implemented - see COMPLETELY CALCULATED above)
 
 AIO / AEO / GEO
 - Index Coverage (real Search Console data)

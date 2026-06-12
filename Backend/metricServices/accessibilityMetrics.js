@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import logger from "../utils/logger.js";
+import fastFetch from "../utils/fastFetch.js";
 
 function evaluateRule(results, ruleId) {
   if (!results || !results.violations) {
@@ -479,40 +480,170 @@ const checkButtonName = (results) => {
   };
 };
 
-// Document Title
-const checkDocumentTitle = (results) => {
+// Document Title (presence via axe + cross-page uniqueness via sampling)
+const checkDocumentTitle = async (results, page) => {
   const { score, status, violation } = evaluateRule(results, "document-title");
 
-  if (status === "pass") {
+  // axe says the title is missing/empty -> hard fail on presence
+  if (status !== "pass") {
+    const failedNodes = violation.nodes.map(node => node).slice(0, 10);
     return {
       score,
       status,
-      details: "Page has a valid, non-empty <title>.",
+      details: "Document title is missing or empty.",
       meta: {
-        threshold: "Page must have a descriptive browser tab title.",
+        threshold: "Every page must have a unique, descriptive browser-tab title.",
+        impact: violation.impact,
+        description: violation.description,
+        help: violation.help,
+        helpUrl: violation.helpUrl,
+        tags: violation.tags,
+        failedNodes: failedNodes,
+        count: violation.nodes.length
       },
-      analysis: null
+      analysis: {
+        cause: "Without a title, users cannot identify the page content in tabs or search results.",
+        recommendation: "Add a unique, descriptive <title> element to the <head> of every page.",
+      }
     };
   }
 
-  const failedNodes = violation.nodes.map(node => node).slice(0, 10);
+  // Title present -> verify cross-page uniqueness by sampling a few internal pages
+  let currentTitle = "";
+  try { currentTitle = (await page.evaluate(() => document.title || "")).trim(); } catch (_) {}
+
+  const sampled = [];
+  const duplicates = [];
+  let checkedCount = 0;
+  try {
+    const origin = new URL(page.url()).origin;
+    const currentUrl = page.url().split("#")[0];
+    const links = await page.evaluate((origin) => {
+      const out = new Set();
+      document.querySelectorAll('a[href]').forEach(a => {
+        try {
+          const u = new URL(a.getAttribute('href'), location.href);
+          if (u.origin === origin && !/\.(pdf|jpe?g|png|gif|svg|webp|zip|mp4|docx?|xml|json|css|js)$/i.test(u.pathname)) {
+            out.add(u.href.split('#')[0]);
+          }
+        } catch (_) {}
+      });
+      return Array.from(out);
+    }, origin);
+
+    const candidates = links.filter(u => u !== currentUrl).slice(0, 4);
+    const fetched = await Promise.all(candidates.map(async (link) => {
+      try {
+        const { html } = await fastFetch(link, { timeout: 6000 });
+        if (!html) return null;
+        const m = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+        const t = m ? m[1].replace(/\s+/g, ' ').trim() : "";
+        return t ? { url: link, title: t } : null;
+      } catch (_) { return null; }
+    }));
+    fetched.filter(Boolean).forEach(({ url, title }) => {
+      checkedCount++;
+      sampled.push({ url, title });
+      if (currentTitle && title.toLowerCase() === currentTitle.toLowerCase()) duplicates.push({ url, title });
+    });
+  } catch (_) { /* sampling is best-effort — never fail the audit over it */ }
+
+  // Duplicate titles across pages -> uniqueness warning
+  if (duplicates.length > 0) {
+    return {
+      score: 50,
+      status: "warning",
+      details: `Title "${currentTitle}" is duplicated on ${duplicates.length} other sampled page(s).`,
+      meta: {
+        threshold: "Every page should have a unique, descriptive <title>.",
+        currentTitle, sampledPages: sampled, duplicates, checkedCount, unique: false
+      },
+      analysis: {
+        cause: "The same <title> is reused across multiple pages, so users and search engines can't tell them apart in tabs, history, and search results.",
+        recommendation: "Give each page a unique, descriptive title — e.g. include the specific page/section plus the dealership name."
+      }
+    };
+  }
+
+  // Present + (unique among sampled, or none could be sampled)
+  const verified = checkedCount > 0;
   return {
-    score,
-    status,
-    details: "Document title is missing or empty.",
+    score: 100,
+    status: "pass",
+    details: verified
+      ? `Page has a valid <title>, unique across ${checkedCount} sampled page(s).`
+      : "Page has a valid, non-empty <title> (uniqueness not verified — no comparable pages sampled).",
     meta: {
-      threshold: "Page must have a descriptive browser tab title.",
-      impact: violation.impact,
-      description: violation.description,
-      help: violation.help,
-      helpUrl: violation.helpUrl,
-      tags: violation.tags,
-      failedNodes: failedNodes,
-      count: violation.nodes.length
+      threshold: "Every page should have a unique, descriptive <title>.",
+      currentTitle, sampledPages: sampled, duplicates: [], checkedCount, unique: verified ? true : null
     },
+    analysis: null
+  };
+};
+
+// WCAG 2.1 AA Compliance — unified aggregate over axe-testable A/AA rules.
+// Display-only (kept out of metricsMap) so it doesn't double-count the individual rules.
+const checkWcagAACompliance = (results) => {
+  const AA_TAGS = new Set(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]);
+  const isAA = (node) => Array.isArray(node.tags) && node.tags.some(t => AA_TAGS.has(t));
+
+  const violations = (results.violations || []).filter(isAA);
+  const passes = (results.passes || []).filter(isAA);
+
+  const byImpact = { critical: 0, serious: 0, moderate: 0, minor: 0 };
+  const violatedRules = [];
+  violations.forEach(v => {
+    const imp = v.impact || "moderate";
+    if (byImpact[imp] !== undefined) byImpact[imp]++;
+    if (violatedRules.length < 20) {
+      violatedRules.push({ id: v.id, impact: imp, help: v.help, nodes: v.nodes ? v.nodes.length : 0 });
+    }
+  });
+
+  const passCount = passes.length;
+  const violationCount = violations.length;
+  const totalRules = passCount + violationCount;
+
+  // Rule-level conformance ratio, then capped by the worst severity present
+  // (a single critical/serious AA failure means the page is not AA-conformant).
+  const ratio = totalRules > 0 ? (passCount / totalRules) * 100 : 100;
+  let score = Math.round(ratio);
+  if (byImpact.critical > 0) score = Math.min(score, 50);
+  else if (byImpact.serious > 0) score = Math.min(score, 70);
+  else if (byImpact.moderate > 0) score = Math.min(score, 85);
+  score = Math.max(0, Math.min(100, score));
+
+  let grade, status;
+  if (violationCount === 0) { grade = "Conformant (automated checks)"; status = "pass"; }
+  else if (byImpact.critical > 0 || score < 60) { grade = "Non-conformant"; status = "fail"; }
+  else { grade = "Partially conformant"; status = "warning"; }
+
+  const note = "Automated WCAG 2.1 A/AA checks via axe-core, which cover roughly 30–50% of WCAG success criteria. A clean result is necessary but not sufficient for full AA conformance — manual review is still required.";
+
+  const meta = {
+    grade, score,
+    conformanceRatio: Math.round(ratio),
+    passedRules: passCount,
+    violatedRuleCount: violationCount,
+    byImpact,
+    violatedRules,
+    note
+  };
+
+  if (status === "pass") {
+    return {
+      score, status, infoOnly: true,
+      details: `Passes all ${passCount} axe-testable WCAG 2.1 A/AA rules.`,
+      meta, analysis: null
+    };
+  }
+  return {
+    score, status, infoOnly: true,
+    details: `${violationCount} WCAG 2.1 A/AA rule(s) failing (${byImpact.critical} critical, ${byImpact.serious} serious, ${byImpact.moderate} moderate, ${byImpact.minor} minor).`,
+    meta,
     analysis: {
-      cause: "Without a title, users cannot identify the page content in tabs or search results.",
-      recommendation: "Add a <title> element to the <head>.",
+      cause: "One or more automated WCAG 2.1 A/AA success criteria are failing, so the page does not meet Level AA conformance for the axe-testable rules.",
+      recommendation: "Fix the failing rules starting with critical and serious impact (contrast, names/labels, ARIA, structure), then re-test and complete a manual AA audit for criteria automation can't cover."
     }
   };
 };
@@ -889,7 +1020,8 @@ export default async function accessibilityMetrics(page) {
   const imageAlt = checkImageAlt(axeResults);
   const linkName = checkLinkName(axeResults);
   const buttonName = checkButtonName(axeResults);
-  const documentTitle = checkDocumentTitle(axeResults);
+  const documentTitle = await checkDocumentTitle(axeResults, page);
+  const wcagAACompliance = checkWcagAACompliance(axeResults);
   const htmlHasLang = checkHtmlHasLang(axeResults);
   const metaViewport = checkMetaViewport(axeResults);
   const list = checkList(axeResults);
@@ -969,6 +1101,7 @@ export default async function accessibilityMetrics(page) {
 
   return {
     Percentage: actualPercentage,
+    WCAG_AA_Compliance: wcagAACompliance,
     Color_Contrast: colorContrast,
     Focus_Order: focusOrder,
     Focusable_Content: focusableContent,

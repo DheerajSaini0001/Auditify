@@ -42,7 +42,27 @@ const withTimeout = (value, key) => {
  * Calls each signal analyzer and computes platform-weighted scores.
  */
 class AEOService {
-    static async runAudit(url, $, htmlBody, performanceScore = 100) {
+    // Fold real Google Search Console index status into the botAccess signal (when a
+    // logged-in dealer audits their own verified property). Real "not indexed" is a
+    // concrete problem, so it can only LOWER the score — never mask an on-page noindex.
+    static enrichBotAccessWithGSC(signals, gsc) {
+        if (!gsc || !signals || !signals.botAccess) return;
+        const ba = signals.botAccess;
+        ba.gsc = gsc;
+        ba.source = 'search-console';
+        if (gsc.onGoogle) {
+            ba.gscIndexed = true;
+            ba.reason = `✅ Google Search Console (real data): URL is indexed — "${gsc.coverageState}"${gsc.lastCrawlTime ? `, last crawled ${String(gsc.lastCrawlTime).slice(0, 10)}` : ''}.`;
+        } else {
+            ba.gscIndexed = false;
+            ba.score = Math.min(typeof ba.score === 'number' ? ba.score : 100, 35);
+            const note = `Google Search Console (real data): "${gsc.coverageState || gsc.verdict}" — this page is NOT currently indexed by Google.`;
+            ba.issues = [note, ...(Array.isArray(ba.issues) ? ba.issues : [])];
+            ba.reason = `⚠️ ${note}`;
+        }
+    }
+
+    static async runAudit(url, $, htmlBody, performanceScore = 100, options = {}) {
         // Use existing cheerio instance if provided to save overhead
         if (!$) {
             $ = cheerio.load(htmlBody);
@@ -51,12 +71,12 @@ class AEOService {
         // Execute all signals
         const results = await Promise.all([
             withTimeout(analyzeAnswerFirst($), 'answerFirst'),
-            withTimeout(analyzeLlmsTxt(url), 'llmsTxt'),
+            withTimeout(analyzeLlmsTxt(url, $), 'llmsTxt'),
             withTimeout(analyzeSchemaMarkup($, url), 'schema'),
             withTimeout(analyzeStructuredContent($), 'structuredContent'),
             withTimeout(analyzeBotAccess(url, $), 'botAccess'),
             withTimeout(analyzeMarkdownHeaders($), 'markdownHeaders'),
-            withTimeout(analyzeCitations($), 'citations'),
+            withTimeout(analyzeCitations($, url), 'citations'),
             withTimeout(analyzeIndexCoverage(url), 'indexCoverage'),
             withTimeout(analyzeEntityRecognition(url, $), 'entityRecognition'),
             withTimeout(analyzeBrandEntityStrength(url, $), 'brandEntityStrength'),
@@ -85,6 +105,9 @@ class AEOService {
             authoritySignals: results[14],
             pageSpeed: { score: performanceScore }
         };
+
+        // Real GSC index status (if available) — applied before scoring so it counts.
+        this.enrichBotAccessWithGSC(signals, options.gsc);
 
         // Compute platform-specific scores
         const platforms = {
@@ -132,7 +155,7 @@ class AEOService {
         };
     }
 
-    static async runAuditStream(url, $, htmlBody, performanceScore = 100, onSignalComplete) {
+    static async runAuditStream(url, $, htmlBody, performanceScore = 100, onSignalComplete, options = {}) {
         if (!$) {
             $ = cheerio.load(htmlBody);
         }
@@ -152,12 +175,12 @@ class AEOService {
 
         const results = await Promise.all([
             runAndEmit('answerFirst', () => analyzeAnswerFirst($)),
-            runAndEmit('llmsTxt', () => analyzeLlmsTxt(url)),
+            runAndEmit('llmsTxt', () => analyzeLlmsTxt(url, $)),
             runAndEmit('schema', () => analyzeSchemaMarkup($, url)),
             runAndEmit('structuredContent', () => analyzeStructuredContent($)),
             runAndEmit('botAccess', () => analyzeBotAccess(url, $)),
             runAndEmit('markdownHeaders', () => analyzeMarkdownHeaders($)),
-            runAndEmit('citations', () => analyzeCitations($)),
+            runAndEmit('citations', () => analyzeCitations($, url)),
             runAndEmit('indexCoverage', () => analyzeIndexCoverage(url)),
             runAndEmit('entityRecognition', () => analyzeEntityRecognition(url, $)),
             runAndEmit('brandEntityStrength', () => analyzeBrandEntityStrength(url, $)),
@@ -186,6 +209,9 @@ class AEOService {
             authoritySignals: results[14],
             pageSpeed: { score: performanceScore }
         };
+
+        // Real GSC index status (if available) — applied before scoring so it counts.
+        this.enrichBotAccessWithGSC(signals, options.gsc);
 
         const platforms = {
             gemini: this.computePlatformScore('gemini', signals, aeoWeights.gemini),

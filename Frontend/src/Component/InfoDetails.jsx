@@ -540,46 +540,46 @@ export const InfoDetails = {
     Canonical: {
         title: "Canonical Tag",
         whatThisParameterIs: "A Canonical Tag tells search engines which version of a page is the 'master copy,' avoiding confusion if you have similar content on different URLs.",
-        whatItCalculates: "We verify the presence of a single `<link rel='canonical'>` tag and check if it points to a valid, absolute URL that matches the current page (self-referencing).",
-        whyItMatters: "It prevents search engines from getting confused. By pointing to one 'main' version, you ensure that all your ranking power goes to the right page.",
+        whatItCalculates: "Beyond presence and self-reference, we now check duplicate-content and pagination handling: that the tag sits in the <head>; whether the page is paginated (rel=prev/next or ?page=) and whether a deep paginated page wrongly canonicalizes to page 1 instead of itself; whether it correctly strips tracking/sort/filter query parameters; and whether a noindex directive contradicts a cross-URL canonical.",
+        whyItMatters: "It prevents search engines from getting confused. Done right it consolidates duplicate URLs; done wrong (e.g. all paginated pages → page 1, or noindex + canonical together) it hides content or sends contradictory signals.",
         thresholds: {
-            good: "Single valid canonical tag (1.0)",
-            needsImprovement: "Points to external URL (0.5)",
-            poor: "Missing or invalid canonical (0)"
+            good: "Single in-head canonical; self-referencing, or correctly canonicalizing a parameter variant",
+            needsImprovement: "Missing, not in <head>, paginated page → another page, or noindex/canonical conflict",
+            poor: "Multiple/empty/invalid canonical, or pointing to an external domain"
         },
         actualReasonsForFailure: [
-            "Canonical tag missing",
-            "Canonical points to external domain",
-            "Multiple canonical tags found",
-            "Canonical href is empty"
+            "Canonical tag missing, empty, duplicated, or placed outside the <head>",
+            "Canonical points to an external domain or a malformed URL",
+            "A deep paginated page canonicalizes to a different page (often page 1)",
+            "noindex is set while the canonical points to a different URL (contradictory)"
         ],
         howToOvercomeFailure: [
-            "Add a <link rel='canonical'> pointing to the authoritative URL",
-            "Ensure only one canonical tag is present",
-            "Correct the URL format (absolute URL required)",
-            "Point canonical to self if page is master version"
+            "Add a single <link rel='canonical'> in the <head> with an absolute URL",
+            "Self-canonicalize each paginated page; use rel=prev/next or a view-all page",
+            "Canonicalize parameterized variants to the clean base URL",
+            "Don't combine noindex with a cross-URL canonical"
         ]
     },
     URL_Structure: {
         title: "URL Structure",
         whatThisParameterIs: "URL Structure is the layout of your web address. A clean address is easier for both people and search engines to understand.",
-        whatItCalculates: "We parse the URL path to check for uppercase letters, underscores, depth (>3 segments), and query parameters.",
-        whyItMatters: "Clean web addresses are much more likely to be clicked and shared. They also help search engines index your site more effectively.",
+        whatItCalculates: "Beyond format (lowercase, hyphens-not-underscores, no query params, no spaces/special chars), we analyse the folder hierarchy: depth (≤3 recommended, severity scales with depth), file extensions (.html/.php), dates in the path, non-descriptive numeric/hash segments, overly long or repeated segments, and total URL length.",
+        whyItMatters: "Clean, shallow, descriptive folder hierarchies are easier to click, share, and crawl. Deep paths, IDs, dates, and file extensions add noise and dilute the keywords in the URL.",
         thresholds: {
-            good: "Short, lowercase, hyphenated, ≤3 levels deep",
-            needsImprovement: "Minor formatting issues",
-            poor: "Deep, parameterized, or messy URLs"
+            good: "Short, lowercase, hyphenated, descriptive folders ≤3 deep",
+            needsImprovement: "Minor issues (file extension, slightly deep, long URL)",
+            poor: "Multiple serious issues (uppercase, underscores, params, very deep, ID segments)"
         },
         actualReasonsForFailure: [
-            "Uppercase letters in URL",
-            "Underscores instead of hyphens",
-            "Too many URL segments",
-            "Query parameters present"
+            "Uppercase letters, underscores, spaces, or query parameters",
+            "Deep path (> 3 folders) or non-descriptive numeric/ID segments",
+            "File extension or a date embedded in the path",
+            "Repeated segments or an excessively long URL"
         ],
         howToOvercomeFailure: [
-            "Refactor layout to use <header>, <nav>, <main>, <footer>",
-            "Convert <div> elements to semantic tags where appropriate",
-            "Ensure correct nesting of semantic regions"
+            "Use lowercase, hyphen-separated, descriptive folder names",
+            "Keep depth ≤ 3 and drop file extensions, dates, and numeric IDs",
+            "Remove query parameters from indexable URLs and keep them concise"
         ]
     },
     H1: {
@@ -606,22 +606,23 @@ export const InfoDetails = {
     Image: {
         title: "Image Optimization",
         whatThisParameterIs: "Image Optimization ensures your pictures are the right size and have hidden 'alt text' so everyone (including search engines) knows what's in them.",
-        whatItCalculates: "We scan all `<img>` tags for the presence of `alt` attributes, filter out generic terms (e.g. 'image'), and check if file sizes exceed 150KB.",
+        whatItCalculates: "We score every <img> on a weighted blend: alt-text presence (35%) and quality (13%), compression (files <150KB, 15%), next-gen formats (WebP/AVIF incl. <picture> sources, 12%), lazy loading (loading='lazy' on below-the-fold images, 10%), descriptive file names vs generic IMG_1234/hashes (10%), and title attributes (5%). We also surface responsive (srcset) usage and broken images.",
         whyItMatters: "Optimized images aren't just faster—they help you show up in Image Search and ensure visually impaired users know what's in your photos.",
         thresholds: {
-            good: "Alt text present & images <150KB",
-            needsImprovement: "Partial optimization",
-            poor: "Missing alt text or large images"
+            good: "Descriptive alt + WebP/AVIF + lazy-loaded + named well + <150KB",
+            needsImprovement: "Some legacy formats, eager loading, or generic file names",
+            poor: "Missing alt text, broken images, or large unoptimized files"
         },
         actualReasonsForFailure: [
-            "Missing or meaningless alt text",
-            "Oversized image files",
-            "Missing title attributes"
+            "Missing or meaningless alt text, or broken images",
+            "Legacy formats only (no WebP/AVIF) and oversized files",
+            "Below-the-fold images not lazy-loaded",
+            "Generic file names (IMG_1234.jpg, hashes, numeric IDs)"
         ],
         howToOvercomeFailure: [
-            "Add descriptive Alt text to all images",
-            "Compress large files to under 150KB",
-            "Use WebP format recommended"
+            "Add descriptive Alt text and keyword-rich file names",
+            "Serve WebP/AVIF (via <picture> or a CDN) and compress under 150KB",
+            "Add loading='lazy' to below-the-fold images and srcset for responsiveness"
         ]
     },
     Video: {
@@ -650,43 +651,44 @@ export const InfoDetails = {
     Semantic_Tags: {
         title: "Semantic HTML Tags",
         whatThisParameterIs: "Semantic tags are labels in your code (like 'header' or 'article') that help search engines and screen readers understand how your page is organized.",
-        whatItCalculates: "We check for the presence of core HTML5 landmarks: `<main>`, `<nav>`, `<header>`, `<footer>`, `<article>`, `<section>`, and `<aside>`.",
-        whyItMatters: "Think of these as the 'chapters' of your book. They help search engines and accessibility tools navigate and understand your content with ease.",
+        whatItCalculates: "A composite, not just presence: a single <main> plus <header>/<nav>/<footer> (with ARIA landmark fallbacks — role=main/navigation/banner/contentinfo), the presence of <section>/<article> sectioning content, whether each section/article carries a heading (a key semantic/accessibility rule), and the semantic-to-div ratio (to catch 'div soup' even when a token tag exists).",
+        whyItMatters: "Semantic landmarks are the 'chapters' of your page — they let search engines and screen readers navigate it. Sections without headings and pages built almost entirely from <div>s undermine that even if a few tags are present.",
         thresholds: {
-            good: "Core semantic tags present",
-            needsImprovement: "Partial usage",
-            poor: "No semantic structure"
+            good: "Single <main>, header/nav/footer, sectioning content with headings, healthy semantic ratio",
+            needsImprovement: "Missing a landmark, sections lacking headings, or div-heavy markup",
+            poor: "No <main>/landmarks, or almost entirely <div>-based"
         },
         actualReasonsForFailure: [
-            "Missing main or nav tags",
-            "Overuse of generic divs",
-            "Incomplete semantic structure"
+            "Missing <main> (and no role='main'), or multiple <main> elements",
+            "Missing <header>/<nav>/<footer> landmarks",
+            "<section>/<article> elements without a heading",
+            "Heavily div-based markup (low semantic-to-div ratio)"
         ],
         howToOvercomeFailure: [
-            "Use semantic HTML elements",
-            "Replace generic divs with meaningful tags",
-            "Ensure logical document structure"
+            "Use one <main> plus <header>, <nav>, and <footer>",
+            "Give every <section>/<article> a heading (h1–h6 or aria-label)",
+            "Replace generic <div>s with semantic elements where they convey structure"
         ]
     },
     Contextual_Linking: {
         title: "Contextual Linking",
-        whatThisParameterIs: "Contextual linking means adding helpful links within your text that point to other related pages on your website.",
-        whatItCalculates: "We identify links within the main content area (excluding navigation menus) and check if they point to internal pages.",
-        whyItMatters: "Internal links help visitors (and search bots) discover more of your great content, keeping people on your site longer.",
+        whatThisParameterIs: "Contextual linking means adding helpful links within your text that point to other related pages on your website — and whether those links are topically related to the page they sit on.",
+        whatItCalculates: "We identify links in the main content area (excluding navigation), verify they aren't broken, and now measure topical relatedness: we derive this page's topic terms (title, headings, top body terms) and check what share of in-content links have anchor text or URL slugs that overlap that topic. A low related ratio (with enough links) signals weak topical clustering.",
+        whyItMatters: "Internal links help visitors and search bots discover more content. Links to topically related pages build 'topic clusters' that strengthen rankings; a wall of unrelated links does little for SEO.",
         thresholds: {
-            good: "Contextual links present",
-            needsImprovement: "Some key links missing",
-            poor: "No contextual links"
+            good: "Contextual links present, valid, and topically related",
+            needsImprovement: "Few links related to the page topic, or some key links missing",
+            poor: "No contextual links, or broken links"
         },
         actualReasonsForFailure: [
             "No links in main content",
-            "Important pages only linked in navigation",
-            "Poor internal linking strategy"
+            "Most in-content links point to topically unrelated pages",
+            "Important pages only linked in navigation, or broken links present"
         ],
         howToOvercomeFailure: [
             "Add internal links naturally within content body",
-            "Link to key service/category pages from article text",
-            "Use descriptive anchor text for contextual links"
+            "Link to pages that share this page's topic (related models, services, guides) to build topic clusters",
+            "Use descriptive anchor text that reflects the linked page's subject"
         ]
     },
     Heading_Hierarchy: {
@@ -728,6 +730,27 @@ export const InfoDetails = {
             "Add unique, valuable content (> 300 words)",
             "Rewrite repeated sentences",
             "Ensure content provides depth on the topic"
+        ]
+    },
+    Content_Freshness: {
+        title: "Content Freshness",
+        whatThisParameterIs: "Content Freshness measures how recently the page's content was updated, based on the date signals it exposes.",
+        whatItCalculates: "We collect every update signal on the page — meta tags (article:modified_time, last-modified, og:updated_time), JSON-LD dateModified/datePublished, <time datetime> elements, and visible 'Last updated' text — take the most recent valid date, and score by recency: fresh ≤ 6 months, aging 6–12 months, stale > 12 months. No date signal is a warning.",
+        whyItMatters: "Search engines favor recently maintained pages, especially for inventory, pricing, and service content where staleness signals out-of-date information. A visible, machine-readable update date helps both crawlers and shoppers trust the page.",
+        thresholds: {
+            good: "Updated within the last 6 months",
+            needsImprovement: "6–12 months old, or no date signal found",
+            poor: "More than 12 months since the last update"
+        },
+        actualReasonsForFailure: [
+            "The most recent update date is over a year old (stale)",
+            "No update timestamp is exposed (meta, JSON-LD, <time>, or visible text)",
+            "Date signals exist but are in an unparseable format"
+        ],
+        howToOvercomeFailure: [
+            "Add dateModified to your JSON-LD and an article:modified_time meta tag",
+            "Show a visible 'Last updated' date on inventory, service, and blog pages",
+            "Genuinely refresh key pages every 6–12 months and update the date signal"
         ]
     },
     Content_Relevance: {
@@ -777,43 +800,45 @@ export const InfoDetails = {
     URL_Slugs: {
         title: "URL Slugs",
         whatThisParameterIs: "A URL slug is the last part of your web address that identifies the specific page in a way that's easy for humans to read.",
-        whatItCalculates: "We analyze the last segment of the URL path for length (>50 chars), uppercase letters, underscores, and numeric IDs.",
-        whyItMatters: "Short, readable slugs are much more welcoming. They look professional in social media shares and are easy for search engines to read.",
+        whatItCalculates: "We analyse the final URL segment on three axes: length (chars + word count), format (lowercase, hyphens-not-underscores), and readability/keywords — does it contain descriptive words (vs numeric IDs, hashes, or stop-word filler), and do those words match the page's title/H1? Severity-tiered scoring weights format and 'no descriptive keywords' more heavily than cosmetic issues.",
+        whyItMatters: "A short, readable, keyword-rich slug tells users and search engines what the page is about before they even open it. ID-only or stuffed slugs waste that signal and look untrustworthy in shares and results.",
         thresholds: {
-            good: "Clean slug (1.0)",
-            needsImprovement: "Formatting issues (0.5)"
+            good: "Short, lowercase, hyphenated, keyword-rich, aligned with the title",
+            needsImprovement: "Minor issues (a bit long, mostly IDs, weak title alignment)",
+            poor: "Uppercase/underscores, no descriptive keywords, or very long"
         },
         actualReasonsForFailure: [
-            "Slug too long",
+            "Slug has no descriptive keywords (numeric ID / hash only)",
             "Uppercase letters or underscores",
-            "Numbers or IDs in slug"
+            "Too long, too many words, or heavy on stop-word filler",
+            "Slug keywords don't match the page title/H1"
         ],
         howToOvercomeFailure: [
-            "Simplify the URL structure",
-            "Use lowercase letters only",
-            "Use hyphens instead of underscores",
-            "Keep path depth shallow (< 4 segments)"
+            "Build the slug from the page's primary keywords (3–5 words)",
+            "Use lowercase letters and hyphens, not underscores",
+            "Drop numeric IDs, dates, and filler words; keep it concise"
         ]
     },
     Structured_Data: {
         title: "Structured Data (Schema Markup)",
         whatThisParameterIs: "Structured Data (Schema) is hidden code that helps search engines show 'extra' info like star ratings or prices directly in search results.",
-        whatItCalculates: "We search for `<script type='application/ld+json'>` blocks and validate their JSON content.",
-        whyItMatters: "Structured data helps you stand out. Things like star ratings and prices in search results can greatly increase the number of people who click your link.",
+        whatItCalculates: "We parse every JSON-LD block (including @graph and nested objects) and validate each @type against its Schema.org/Google required and recommended fields — Organization (name, url), LocalBusiness/AutoDealer (name, address, telephone, hours, geo), Product (name, image, offers), Offer (price, priceCurrency), Vehicle (name, brand, VIN…), FAQPage (Question + acceptedAnswer.text), BreadcrumbList (ListItem name/position), Article, Review, AggregateRating. A type missing required fields is flagged.",
+        whyItMatters: "Rich results only appear when the markup is valid and complete. Schema that's present but missing required fields (e.g. a Product with no offers, an Offer with no price) won't earn rich snippets — and invalid markup can be ignored entirely.",
         thresholds: {
-            good: "Schema detected (1.0)",
-            poor: "No schema detected (0)"
+            good: "All detected rich-result types have their required fields",
+            needsImprovement: "Some types are missing required fields, or only generic (non-rich) schema is present",
+            poor: "No structured data found, or it fails to parse"
         },
         actualReasonsForFailure: [
-            "No JSON-LD script found",
-            "Invalid JSON syntax in script",
-            "Missing required Schema properties",
-            "Unrecognized @type"
+            "A schema type is missing required fields (e.g. Product without offers, Offer without price)",
+            "LocalBusiness/AutoDealer missing name or address",
+            "FAQPage/BreadcrumbList present but its items lack required properties",
+            "Only generic types (WebSite/WebPage) present — no rich-result schema"
         ],
         howToOvercomeFailure: [
-            "Add relevant JSON-LD schema markup",
-            "Validate schema with Google Rich Results Test",
-            "Fix JSON syntax errors"
+            "Add the missing required properties listed for each type",
+            "Add LocalBusiness/AutoDealer, Product/Vehicle + Offer, FAQPage and BreadcrumbList markup",
+            "Validate with Google's Rich Results Test after fixing"
         ]
     },
     Open_Graph: {
@@ -863,21 +888,22 @@ export const InfoDetails = {
     Social_Links: {
         title: "Social Profile Links",
         whatThisParameterIs: "Social Profile Links connect your website to your official social media pages, helping visitors find your community.",
-        whatItCalculates: "We scan all external links to identify URLs matching known social media platforms (Facebook, Twitter, LinkedIn, etc.).",
-        whyItMatters: "These links show you are a real brand with a real community. They make it easy for your most loyal fans to follow you everywhere.",
+        whatItCalculates: "We find on-page links to known platforms (Facebook, X/Twitter, LinkedIn, Instagram, YouTube, TikTok, Yelp, etc.) AND cross-check them against the sameAs URLs in your Organization/LocalBusiness JSON-LD. We report platform diversity, which linked profiles are declared in sameAs, profiles missing from sameAs, and conflicts where one platform points to two different handles.",
+        whyItMatters: "Google uses sameAs to tie your site to your social profiles for entity recognition (Knowledge Panel). Linking profiles but not declaring them in sameAs — or pointing to inconsistent handles — weakens that connection.",
         thresholds: {
-            good: "Social links present (1.0)",
-            poor: "No social links found (0)"
+            good: "Profiles linked and consistently declared in sameAs",
+            needsImprovement: "Profiles linked but missing from sameAs, or no sameAs at all",
+            poor: "Conflicting handles per platform, or no social presence found"
         },
         actualReasonsForFailure: [
-            "No external links to social domains found",
-            "Links to social profiles broken",
-            "Social links not recognized"
+            "Social profiles linked on-page but not declared in structured-data sameAs",
+            "Same platform points to two different profiles (inconsistent)",
+            "No social links or sameAs entries found at all"
         ],
         howToOvercomeFailure: [
-            "Add links to your official social media profiles",
-            "Fix broken or incorrect social URLs",
-            "Ensure links point to recognized platforms"
+            "Add every linked social profile to the Organization/LocalBusiness sameAs array",
+            "Use one consistent profile per platform across on-page links and sameAs",
+            "Link your official profiles in the footer and keep them in sync"
         ]
     },
 
@@ -903,22 +929,23 @@ export const InfoDetails = {
     },
     Sitemap: {
         title: "XML Sitemap",
-        whatThisParameterIs: "An XML Sitemap is like a map of your website that helps search engines find and index all your important pages quickly.",
-        whatItCalculates: "We attempt to fetch the `/sitemap.xml` file from the root domain.",
-        whyItMatters: "A sitemap ensures Google doesn't miss any of your pages. It's the fastest way to get your new content found and shown to the world.",
+        whatThisParameterIs: "An XML Sitemap is a map of your website that helps search engines find and index your important pages, plus signals which pages changed recently.",
+        whatItCalculates: "We locate the sitemap (robots.txt + common defaults), validate it's well-formed (<urlset>/<sitemapindex>), and assess coverage and freshness: the number of URLs (or child sitemaps for an index), how many carry a <lastmod>, the most recent <lastmod>, and a sampled broken-URL check (only 404/410/5xx count, bot-blocked responses are ignored). Freshness is judged by the NEWEST entry, not penalised for legitimately old pages.",
+        whyItMatters: "A complete, fresh sitemap ensures Google doesn't miss pages and recrawls updated ones quickly. Dead URLs in the sitemap waste crawl budget; a stale sitemap suggests the site isn't maintained.",
         thresholds: {
-            good: "File exists (1.0)",
-            poor: "File missing (0)"
+            good: "Valid sitemap, has URLs with recent <lastmod>, sampled URLs reachable",
+            needsImprovement: "Missing, no <lastmod>, stale (newest > 6 months), or broken sampled URLs",
+            poor: "Invalid/empty sitemap, or not well-formed XML"
         },
         actualReasonsForFailure: [
-            "Sitemap.xml not found (404)",
-            "Sitemap file is empty",
-            "Server error preventing fetch"
+            "Sitemap not found, empty, or not valid XML",
+            "Sampled URLs return 404/410/5xx (dead links in the sitemap)",
+            "No <lastmod> tags, or the newest entry is over six months old"
         ],
         howToOvercomeFailure: [
-            "Generate and upload sitemap.xml to root",
-            "Submit sitemap to Google Search Console",
-            "Ensure sitemap contains valid URLs"
+            "Auto-generate the sitemap from live content and reference it in robots.txt",
+            "Include accurate <lastmod> timestamps and remove dead URLs",
+            "Use a sitemap index for large sites; add image/hreflang entries where relevant"
         ]
     },
 
@@ -1468,21 +1495,44 @@ export const InfoDetails = {
     },
     Document_Title: {
         title: "Document Title",
-        whatThisParameterIs: "The Document Title is the name of your page shown in browser tabs. It's the first thing a screen reader says to describe your page.",
-        whatItCalculates: "We check the <head> section to ensure a non-empty <title> tag is present.",
-        whyItMatters: "The title is the very first thing a screen reader announces. It gives users immediate confirmation that they've landed on the right page.",
+        whatThisParameterIs: "The Document Title is the name of your page shown in browser tabs. It's the first thing a screen reader says to describe your page, and it should be unique per page.",
+        whatItCalculates: "We confirm a non-empty <title> is present, then sample up to 4 other internal pages and compare their titles to this one. If the same title is reused on other pages, it's flagged as not unique (a warning).",
+        whyItMatters: "The title is the first thing a screen reader announces and how users tell tabs, history, and search results apart. Duplicate titles across pages leave users (and search engines) unable to distinguish them.",
         thresholds: {
-            good: "Non-empty <title> present",
+            good: "Non-empty <title>, unique across sampled pages",
+            needsImprovement: "Title is reused on other pages (not unique)",
             poor: "Title is missing or empty"
         },
         actualReasonsForFailure: [
             "Document title is missing or empty",
-            "Title tag exists but contains no text"
+            "The same <title> is reused across multiple pages",
+            "Title tag exists but contains no descriptive text"
         ],
         howToOvercomeFailure: [
-            "Add a <title> element to the <head> of the page",
-            "Ensure the title provides a concise summary of the page content",
-            "Make sure the title is unique for each page"
+            "Add a <title> element to the <head> of every page",
+            "Give each page a unique, descriptive title (page/section name + dealership name)",
+            "Avoid a single site-wide title shared across all pages"
+        ]
+    },
+    WCAG_AA_Compliance: {
+        title: "WCAG 2.1 AA Compliance",
+        whatThisParameterIs: "A single roll-up of how the page does against the automated WCAG 2.1 Level A/AA accessibility rules — the legal benchmark for ADA accessibility.",
+        whatItCalculates: "We take the axe-core results, keep only the rules tagged WCAG 2.0/2.1 Level A and AA, and compute a rule-level conformance ratio (passed ÷ total). The score is then capped by the worst issue present — a single critical or serious AA failure caps the result, because under WCAG one failing criterion means the level isn't met. This is a display-only summary and does not double-count the individual rule cards.",
+        whyItMatters: "ADA and many regulations point at WCAG 2.1 AA. A unified grade tells you at a glance whether the page is broadly conformant or has blocking issues, instead of reading 19 separate rule cards.",
+        thresholds: {
+            good: "No AA rule violations (conformant on automated checks)",
+            needsImprovement: "Only moderate/minor AA issues (partially conformant)",
+            poor: "Critical or serious AA failures (non-conformant)"
+        },
+        actualReasonsForFailure: [
+            "One or more critical/serious WCAG A/AA rules are failing (e.g. contrast, names, labels)",
+            "Multiple moderate AA issues lower the overall conformance ratio",
+            "Structural or ARIA failures that block Level AA conformance"
+        ],
+        howToOvercomeFailure: [
+            "Fix critical and serious violations first (contrast, labels/names, ARIA, structure)",
+            "Re-test until no AA rules fail, then keep automated checks in CI",
+            "Complete a manual AA audit — automation covers only ~30–50% of WCAG criteria"
         ]
     },
     Html_Has_Lang: {
@@ -1631,11 +1681,12 @@ export const InfoDetails = {
     HTTPS: {
         title: "HTTPS Usage",
         whatThisParameterIs: "HTTPS is a secure way for your browser to talk to a website, ensuring that your connection is always private and safe.",
-        whatItCalculates: "It verifies that the page is loaded via the https protocol scheme.",
-        whyItMatters: "HTTPS creates a private and secure connection between your visitor and the server, making it impossible for hackers to snoop on sensitive information.",
+        whatItCalculates: "It verifies the actually-landed page (after redirects) is served over HTTPS, then scans the rendered page for mixed content — insecure http:// subresources. Active mixed content (scripts, stylesheets, iframes) is treated as a failure because browsers block it; passive mixed content (images, media) is a warning.",
+        whyItMatters: "HTTPS creates a private, secure connection. But a single HTTP script or image on an HTTPS page (mixed content) breaks that guarantee — browsers block active mixed content and warn users the page is 'not fully secure'.",
         thresholds: {
-            good: "HTTPS enabled",
-            poor: "HTTP only"
+            good: "HTTPS with no mixed content",
+            needsImprovement: "HTTPS but images/media load over HTTP (passive mixed content)",
+            poor: "HTTP only, or active mixed content (scripts/styles/iframes over HTTP)"
         },
         actualReasonsForFailure: [
             "The website is served over HTTP instead of HTTPS",
@@ -1913,21 +1964,22 @@ export const InfoDetails = {
     MFA_Enabled: {
         title: "Multi-Factor Authentication (MFA)",
         whatThisParameterIs: "MFA (Multi-Factor Authentication) adds an extra layer of security beyond just a password, like a code sent to your phone.",
-        whatItCalculates: "It scans the page for MFA-related input fields, specific keywords ('2FA', 'OTP'), or SSO/Federated login indicators.",
-        whyItMatters: "Even if someone steals your password, MFA ensures they still can't get in. It's the ultimate protection for your most sensitive accounts.",
+        whatItCalculates: "MFA only matters if a login exists, so we first check for an authentication surface (password field or login link). If none, this is marked Not Applicable and excluded from the score. If a login exists, we grade the evidence: genuine MFA signals (OTP input, '2FA' keywords) pass; SSO/federated login is a warning (it may delegate MFA but that can't be confirmed); single-factor password-only is a warning. Enforcement cannot be proven without credentials.",
+        whyItMatters: "Even if someone steals your password, MFA ensures they still can't get in. It's the strongest protection for sensitive customer and admin accounts.",
         thresholds: {
-            good: "MFA or SSO indicators detected on the login page",
-            poor: "No visible MFA or SSO indicators found"
+            good: "Genuine MFA signal detected at the login (OTP input / 2FA keywords)",
+            needsImprovement: "Login exists but only SSO or single-factor password detected",
+            poor: "Not applicable when no login exists (excluded from the score)"
         },
         actualReasonsForFailure: [
-            "No explicit Multi-Factor Authentication (MFA) or SSO options were detected on the entry page",
-            "The login form appears to use single-factor authentication only",
-            "MFA indicators are missing from visible page text and input attributes"
+            "A login exists but only single-factor (password) authentication was detected",
+            "Login is delegated to SSO; native MFA enforcement could not be confirmed",
+            "No MFA input or keyword was visible on the authentication surface"
         ],
         howToOvercomeFailure: [
-            "Ensure MFA is available and enforced for all user accounts, especially sensitive ones",
-            "Provide modern authentication options like SSO (Google, Microsoft) or Authenticator apps",
-            "Display clear indicators on the login page if MFA is required in a subsequent step"
+            "Offer and enforce MFA (authenticator app, OTP, or security key) for customer and admin accounts",
+            "If using SSO, confirm the identity provider enforces MFA",
+            "Note: a post-login MFA step may not be visible to an unauthenticated scan"
         ]
     },
     Google_Safe_Browsing: {
@@ -2072,22 +2124,22 @@ export const InfoDetails = {
     },
     Third_Party_Cookies: {
         title: "Third-Party Cookies",
-        whatThisParameterIs: "This check identifies 'outside' trackers that are following your visitors, which can impact privacy and load times.",
-        whatItCalculates: "It compares the domain of each cookie with the main hostname to identify external sources.",
-        whyItMatters: "Reducing 'outsider' tracking makes your site feel more private and often helps it load faster for your visitors.",
+        whatThisParameterIs: "This check looks at 'outside' trackers following your visitors and, more importantly, whether you disclose them.",
+        whatItCalculates: "It identifies cookies set by external domains, then checks whether they are DISCLOSED — via a cookie-consent banner or a privacy policy. Third-party cookies that are disclosed pass; undisclosed third-party cookies fail as a GDPR/CCPA risk. No third-party cookies also passes (nothing to disclose).",
+        whyItMatters: "Third-party cookies (analytics, ads) are normal and often necessary. The compliance question isn't whether they exist — it's whether you disclose them and obtain consent. Undisclosed tracking is the actual legal risk.",
         thresholds: {
-            good: "No third-party cookies detected",
-            poor: "One or more third-party cookies identified"
+            good: "No third-party cookies, or they are disclosed via consent banner / privacy policy",
+            poor: "Third-party cookies present with no consent banner or privacy-policy disclosure"
         },
         actualReasonsForFailure: [
-            "Cookies from external domains are being stored, posing potential privacy risks",
-            "Tracking or advertising scripts are setting cookies without explicit first-party scope",
-            "Sensitive user data could be shared with external domains via cookie storage"
+            "Cookies from external domains are stored but there is no cookie-consent banner",
+            "No privacy policy discloses the third-party cookies / tracking",
+            "Non-essential cookies are set before the user has a chance to consent"
         ],
         howToOvercomeFailure: [
-            "Audit all third-party scripts (ads, analytics, social) to see if they are necessary",
-            "Use cookie-free alternatives for simple tracking wherever possible",
-            "Ensure that all third-party cookie usage complies with GDPR and CCPA regulations"
+            "Add a cookie-consent banner and obtain consent before setting non-essential cookies",
+            "Publish a privacy policy that names the third parties and their cookies",
+            "Audit third-party scripts (ads, analytics, social) and remove any that aren't needed"
         ]
     },
     CRM_Integration: {
@@ -2639,6 +2691,48 @@ export const InfoDetails = {
             "Ensure similar items (like all primary buttons) share the exact same style"
         ]
     },
+    Mobile_Experience: {
+        title: "Mobile Experience / Responsive Layout",
+        whatThisParameterIs: "We check whether your page genuinely adapts to small screens, rather than just guessing from CSS structure.",
+        whatItCalculates: "Using the rendered page, we score four signals: (1) a responsive viewport meta tag with width=device-width (30%); (2) no horizontal overflow — content never spills wider than the screen (35%); (3) responsive images using srcset/sizes/<picture> (20%); and (4) CSS media queries driving the layout (15%).",
+        whyItMatters: "If a page forces sideways scrolling or ignores the device width, mobile shoppers pinch, zoom, and leave. Most dealership traffic is mobile, so a layout that truly adapts is essential to keep visitors and conversions.",
+        thresholds: {
+            good: "Score ≥ 75 — responsive viewport, no overflow, responsive techniques in use",
+            needsImprovement: "Score 45–74 — partially responsive with gaps",
+            poor: "Score < 45 — does not adapt to mobile screens"
+        },
+        actualReasonsForFailure: [
+            "Missing viewport meta tag or no width=device-width",
+            "Content overflows the viewport, causing horizontal scroll",
+            "Images aren't served responsively and no media queries adapt the layout"
+        ],
+        howToOvercomeFailure: [
+            "Add <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
+            "Remove fixed-width elements that push the page wider than the screen",
+            "Serve responsive images (srcset/sizes) and use CSS media queries to adapt the layout"
+        ]
+    },
+    Mobile_Usability: {
+        title: "Mobile Usability",
+        whatThisParameterIs: "We check whether the page is comfortable to use one-handed on a phone — big enough tap targets, legible text, and reachable navigation.",
+        whatItCalculates: "We measure three things on the rendered page: (1) tap targets at least 44×44px, per Apple HIG / WCAG 2.5.5 (55%); (2) text at a legible size of at least 12px (30%); and (3) thumb reach — a reachable sticky bar or mobile menu for one-handed use (15%). On desktop reports this is shown for context but not scored.",
+        whyItMatters: "Small buttons cause mis-taps, tiny text forces zooming, and out-of-reach menus frustrate one-handed users. Touch ergonomics directly affect whether mobile shoppers can complete a lead form or call.",
+        thresholds: {
+            good: "Score ≥ 75 — large tap targets, legible text, reachable nav",
+            needsImprovement: "Score 45–74 — some small targets or text",
+            poor: "Score < 45 — many tap targets or text too small for touch"
+        },
+        actualReasonsForFailure: [
+            "Tap targets are smaller than 44×44px, causing mis-taps",
+            "Text is below a legible size and forces zooming",
+            "No reachable sticky or mobile navigation for one-handed use"
+        ],
+        howToOvercomeFailure: [
+            "Size tap targets at least 44×44px with adequate spacing between them",
+            "Keep body text at 16px (never below 12px)",
+            "Provide a reachable sticky header or bottom navigation bar on mobile"
+        ]
+    },
     In_Page_Navigation: {
         title: "Long Page Shortcuts",
         whatThisParameterIs: "We look for 'shortcuts' on long pages, like 'Back to Top' buttons, to save your visitors from endless scrolling.",
@@ -3031,23 +3125,23 @@ export const InfoDetails = {
     },
     CTA_Flow_Alignment: {
         title: "CTA Flow Alignment",
-        whatThisParameterIs: "We check if your buttons are placed at the most natural points where a visitor is ready to act.",
-        whatItCalculates: "We check the position of your primary Call-to-Action relative to the rest of the page content to ensure it appears at the right moment.",
-        whyItMatters: "Asking for a commitment before explaining the value is pushy. Asking too late means they might miss it.",
+        whatThisParameterIs: "We check if your buttons are placed at the right points in the user's journey — visible immediately and repeated as the page guides them toward a decision.",
+        whatItCalculates: "Using the page's real rendered layout, we score three funnel signals: (1) Above-the-fold — is a visible CTA in the first screen? (40%); (2) Distribution — on long pages, are CTAs spread across the top, middle, and bottom thirds? (35%); (3) End-of-page — on long pages, is there a CTA near the bottom so users can act without scrolling back? (25%). The combined score is bucketed into pass / warning / fail.",
+        whyItMatters: "Asking for a commitment before explaining the value is pushy; asking too late means they miss it. A CTA visible up front plus repeats at natural decision points keeps momentum through the whole journey.",
         thresholds: {
-            good: "CTA well-positioned (10-90% of page)",
-            needsImprovement: "CTA too early (<10%) or too late (>90%)",
-            poor: "No flow-aligned CTA found"
+            good: "Funnel placement score ≥ 70 (above-the-fold CTA + good coverage)",
+            needsImprovement: "Score 40–69 — gaps like no above-the-fold CTA or clustering on a long page",
+            poor: "Score < 40, or no conversion CTAs found at all"
         },
         actualReasonsForFailure: [
-            "Primary CTA is placed at the extreme top (too early) or bottom (too late) of the content",
-            "No CTAs with strong keywords found in the main content flow",
-            "User is asked to commit before understanding the value"
+            "No primary CTA is visible above the fold",
+            "CTAs are clustered in one part of a long page instead of distributed",
+            "No CTA near the end of a long page, forcing users to scroll back"
         ],
         howToOvercomeFailure: [
-            "Position CTAs where users have enough context to make a decision, typically after a value proposition",
-            "Distribute CTAs evenly throughout long pages",
-            "Ensure a CTA is visible at the moment of highest interest"
+            "Place a primary CTA above the fold so an action is visible immediately",
+            "Repeat a CTA after each key value section on long pages",
+            "Add a closing CTA near the bottom of long pages"
         ]
     },
     Form_Presence: {

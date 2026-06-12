@@ -31,6 +31,8 @@ const BREAKDOWN_MAX = {
     experienceSignals: { reviews: 25, media: 30, firstPerson: 25, people: 20 },
     expertiseSignals: { credentials: 35, awards: 25, tenure: 20, authorExpertise: 20 },
     authoritySignals: { pressMentions: 30, externalAuthority: 25, trustBadges: 25, socialProof: 20 },
+    llmsTxt: { present: 10, h1: 20, sections: 15, links: 20, summary: 10, sameDomain: 5, relevance: 20 },
+    citations: { citations: 45, policies: 20, contactTransparency: 20, trustBasics: 15 },
 };
 
 // camelCase key → "Title Case" label.
@@ -109,7 +111,7 @@ const getWhyItMatters = (signal) => {
         case 'answerFirst':
             return "AI models are trained to find the 'Nugget' of info immediately. Pushing the answer down increases the risk of being ignored.";
         case 'citations':
-            return "Citations build authority. RAG-based search engines (like Perplexity) prioritize content that links to reputable external sources.";
+            return "Trust signals tell engines your content is accountable: cited sources, clear policies (privacy/terms/contact), transparent contact & authorship, HTTPS and dated content. RAG engines like Perplexity prioritize verifiable, trustworthy pages.";
         case 'indexCoverage':
             return "If your pages aren't indexable, they can't appear in Google results or be retrieved by AI answer engines — index coverage is the foundation every other AEO signal builds on.";
         case 'entityRecognition':
@@ -175,27 +177,30 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
     const [showDetails, setShowDetails] = useState(false);
     const Icon = iconMap[signal] || Database;
 
-    let status = "Failed";
-    let statusColor = "text-rose-500 bg-rose-500/10 border-rose-500/20";
+    // 3-tier threshold colouring: < T1 → Red (incorrect), T1–T2 → Orange (partial),
+    // ≥ T2 → Green (correct).
+    const T1 = 25;
+    const T2 = 75;
 
-    if (score >= 100) {
+    let status, statusColor, boxBg, boxText;
+    if (score >= T2) {
         status = "Passed";
         statusColor = "text-emerald-500 bg-emerald-500/10 border-emerald-500/20";
-    } else if (score > 40 || ((signal === 'aeoSchema' || signal === 'structuredContent') && score === 0)) {
-        status = score === 0 && (signal === 'aeoSchema' || signal === 'structuredContent') ? "Warning" : "Partial";
+        boxBg = darkMode ? "bg-emerald-500/5 border-emerald-500/20" : "bg-emerald-50/50 border-emerald-100";
+        boxText = "text-emerald-600";
+    } else if (score >= T1) {
+        status = "Partial";
         statusColor = "text-amber-500 bg-amber-500/10 border-amber-500/20";
+        boxBg = darkMode ? "bg-amber-500/5 border-amber-500/20" : "bg-amber-50 border-amber-100";
+        boxText = "text-amber-600";
+    } else {
+        status = "Failed";
+        statusColor = "text-rose-500 bg-rose-500/10 border-rose-500/20";
+        boxBg = darkMode ? "bg-rose-500/5 border-rose-500/20" : "bg-rose-50 border-rose-100";
+        boxText = "text-rose-600";
     }
 
-    const isFailed = score < 100 && status !== "Warning";
-    const isWarning = status === "Warning" || (score < 100 && score > 40);
-
-    const boxBg = isFailed
-        ? (darkMode ? "bg-rose-500/5 border-rose-500/20" : "bg-rose-50 border-rose-100")
-        : (isWarning
-            ? (darkMode ? "bg-amber-500/5 border-amber-500/20" : "bg-amber-50 border-amber-100")
-            : (darkMode ? "bg-emerald-500/5 border-emerald-500/20" : "bg-emerald-50/50 border-emerald-100"));
-
-    const boxText = isFailed ? "text-rose-600" : (isWarning ? "text-amber-600" : "text-emerald-600");
+    const isFailed = score < T1;
 
     // ── Data-driven detail (breakdown bars + "How to improve") for ALL signals ──
     const breakdownMax = BREAKDOWN_MAX[signal] || {};

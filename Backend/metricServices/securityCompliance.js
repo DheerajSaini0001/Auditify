@@ -19,21 +19,89 @@ function Domain(urlString) {
   return host;
 }
 
-// HTTPS (Hypertext Transfer Protocol Secure)
-function checkHTTPS(url) {
-  const parsedUrl = new URL(url);
+// HTTPS (Hypertext Transfer Protocol Secure) + mixed-content scan
+// Checks the actually-landed URL (after redirects) and scans the rendered page for
+// insecure http:// subresources (mixed content), not just the input URL's protocol.
+async function checkHTTPS(url, page) {
+  // Use the actual landed URL (after any HTTP -> HTTPS redirects), not just the input.
+  let finalUrl = url;
+  try { if (page && !page.isClosed()) finalUrl = page.url() || url; } catch (e) {}
+  let parsedUrl;
+  try { parsedUrl = new URL(finalUrl); } catch (e) { parsedUrl = new URL(url); }
   const isHttps = parsedUrl.protocol === "https:";
+
+  // Not HTTPS at all -> hard fail (no point scanning mixed content)
+  if (!isHttps) {
+    return {
+      score: 0,
+      status: "fail",
+      details: `Page is served over ${parsedUrl.protocol}, not HTTPS`,
+      meta: { protocol: parsedUrl.protocol, finalUrl, mixedContent: { active: [], passive: [] }, activeCount: 0, passiveCount: 0 },
+      analysis: {
+        cause: `The website is served over ${parsedUrl.protocol} instead of HTTPS.`,
+        recommendation: "Obtain an SSL certificate and redirect all HTTP traffic to HTTPS."
+      }
+    };
+  }
+
+  // HTTPS page -> scan for mixed content (insecure http:// subresources)
+  let mixed = { active: [], passive: [] };
+  try {
+    mixed = await page.evaluate(() => {
+      const active = [];   // scripts, stylesheets, iframes — browsers BLOCK these
+      const passive = [];  // images, media — browsers WARN / try to upgrade
+      const push = (arr, kind, val) => {
+        if (val && /^http:\/\//i.test(val) && arr.length < 15) arr.push(`${kind}: ${val}`);
+      };
+      document.querySelectorAll('script[src]').forEach(el => push(active, "script", el.getAttribute("src")));
+      document.querySelectorAll('link[rel="stylesheet"][href]').forEach(el => push(active, "css", el.getAttribute("href")));
+      document.querySelectorAll('iframe[src]').forEach(el => push(active, "iframe", el.getAttribute("src")));
+      document.querySelectorAll('img[src]').forEach(el => push(passive, "img", el.getAttribute("src")));
+      document.querySelectorAll('video[src], audio[src], source[src]').forEach(el => push(passive, "media", el.getAttribute("src")));
+      document.querySelectorAll('img[srcset], source[srcset]').forEach(el => {
+        (el.getAttribute("srcset") || "").split(",").forEach(part => push(passive, "img", part.trim().split(/\s+/)[0]));
+      });
+      return { active, passive };
+    });
+  } catch (e) {}
+
+  const activeCount = mixed.active.length;
+  const passiveCount = mixed.passive.length;
+
+  // Active mixed content — browsers block these, breaking the page and security
+  if (activeCount > 0) {
+    return {
+      score: 30,
+      status: "fail",
+      details: `HTTPS, but ${activeCount} active mixed-content resource(s) loaded over HTTP`,
+      meta: { protocol: "https:", finalUrl, mixedContent: mixed, activeCount, passiveCount },
+      analysis: {
+        cause: "The HTTPS page loads scripts, stylesheets, or iframes over insecure HTTP. Browsers block active mixed content, which can break functionality and expose users.",
+        recommendation: "Update all script, stylesheet, and iframe URLs to https:// (or protocol-relative //) and add a Content-Security-Policy 'upgrade-insecure-requests' directive."
+      }
+    };
+  }
+
+  // Passive mixed content — browser 'not fully secure' warnings
+  if (passiveCount > 0) {
+    return {
+      score: 65,
+      status: "warning",
+      details: `HTTPS, but ${passiveCount} passive mixed-content resource(s) (images/media) loaded over HTTP`,
+      meta: { protocol: "https:", finalUrl, mixedContent: mixed, activeCount: 0, passiveCount },
+      analysis: {
+        cause: "The HTTPS page loads images or media over insecure HTTP, triggering 'not fully secure' browser warnings.",
+        recommendation: "Serve all images and media over https:// and add 'upgrade-insecure-requests' to your CSP."
+      }
+    };
+  }
+
   return {
-    score: isHttps ? 100 : 0,
-    status: isHttps ? "pass" : "fail",
-    details: isHttps ? "Protocol is HTTPS" : `Protocol is ${parsedUrl.protocol}, not HTTPS`,
-    meta: {
-      protocol: parsedUrl.protocol
-    },
-    analysis: isHttps ? null : {
-      cause: `The website is served over ${parsedUrl.protocol} instead of HTTPS.`,
-      recommendation: "Enforce HTTPS by obtaining an SSL certificate and redirecting all HTTP traffic to HTTPS."
-    }
+    score: 100,
+    status: "pass",
+    details: "Served over HTTPS with no mixed content",
+    meta: { protocol: "https:", finalUrl, mixedContent: { active: [], passive: [] }, activeCount: 0, passiveCount: 0 },
+    analysis: null
   };
 }
 
@@ -324,8 +392,10 @@ async function checkCookiesHttpOnlyFlag(page) {
   };
 }
 
-// Cookies - Third Party Cookies
-async function checkThirdPartyCookies(url, page) {
+// Cookies - Third Party Cookies (disclosure-aware)
+// Third-party cookies are normal (analytics/ads); the compliance question is whether
+// they are DISCLOSED (consent banner + privacy policy), not merely whether they exist.
+async function checkThirdPartyCookies(url, page, cookieConsentResult, privacyPolicyResult) {
   const pageHostname = new URL(url).hostname;
   const cookies = await page.context().cookies();
 
@@ -333,32 +403,45 @@ async function checkThirdPartyCookies(url, page) {
     const cookieDomain = cookie.domain.startsWith('.') ? cookie.domain.slice(1) : cookie.domain;
     return !pageHostname.includes(cookieDomain) && !cookieDomain.includes(pageHostname);
   });
+  const uniqueDomains = [...new Set(thirdPartyCookies.map(c => c.domain))];
 
-  if (thirdPartyCookies.length > 0) {
-    const uniqueDomains = [...new Set(thirdPartyCookies.map(c => c.domain))].join(", ");
+  // No third-party cookies -> nothing to disclose
+  if (thirdPartyCookies.length === 0) {
     return {
-      score: 0,
-      status: "fail",
-      details: `Third-party cookies detected from: ${uniqueDomains}`,
-      meta: {
-        thirdPartyCookies,
-        uniqueDomains
-      },
-      analysis: {
-        cause: "Cookies from external domains are being stored on the user's browser.",
-        recommendation: "Audit third-party scripts (ads, analytics) and ensure they comply with privacy regulations (GDPR/CCPA)."
-      }
+      score: 100,
+      status: "pass",
+      details: "No third-party cookies detected",
+      meta: { thirdPartyCookies: [], uniqueDomains: [], disclosed: null },
+      analysis: null
     };
   }
 
+  // Disclosure signals (reuse already-computed consent + privacy-policy checks)
+  const hasConsent = cookieConsentResult?.status === "pass";
+  const hasPrivacyPolicy = privacyPolicyResult?.status === "pass";
+  const disclosed = hasConsent || hasPrivacyPolicy;
+
+  if (disclosed) {
+    const via = [hasConsent ? "consent banner" : null, hasPrivacyPolicy ? "privacy policy" : null].filter(Boolean).join(" + ");
+    return {
+      score: 100,
+      status: "pass",
+      details: `Third-party cookies from ${uniqueDomains.length} domain(s), disclosed via ${via}.`,
+      meta: { thirdPartyCookies, uniqueDomains, disclosed: true, hasConsent, hasPrivacyPolicy },
+      analysis: null
+    };
+  }
+
+  // Third-party cookies but NO disclosure -> GDPR/CCPA risk
   return {
-    score: 100,
-    status: "pass",
-    details: "No third-party cookies detected",
-    meta: {
-      thirdPartyCookies: []
-    },
-    analysis: null
+    score: 30,
+    status: "fail",
+    details: `Third-party cookies from ${uniqueDomains.join(", ")} with no consent banner or privacy-policy disclosure`,
+    meta: { thirdPartyCookies, uniqueDomains, disclosed: false, hasConsent, hasPrivacyPolicy },
+    analysis: {
+      cause: "Cookies from external domains are stored on the user's browser, but no cookie-consent banner or privacy-policy disclosure was found — a GDPR/CCPA risk.",
+      recommendation: "Disclose third-party cookies via a cookie-consent banner and a privacy policy that names the third parties, and obtain consent before setting non-essential cookies."
+    }
   };
 }
 
@@ -1283,83 +1366,90 @@ async function checkAdminPanelPublic(baseUrl, options = {}) {
 }
 
 // MFA Enabled
+// MFA is only meaningful when an authentication surface exists. Enforcement cannot be
+// proven black-box (no credentials), so we scope to whether a login exists and grade
+// the strength of the evidence honestly instead of passing on any stray keyword.
 async function checkMFAEnabled(page) {
-  // 1. Check for specific input fields indicative of MFA (e.g., 6-digit code fields)
-  const mfaInputs = await page.$$eval("input", (inputs) =>
-    inputs.some(i =>
-      (i.autocomplete === "one-time-code") ||
-      (i.name && /otp|mfa|2fa|verification|code/i.test(i.name)) ||
-      (i.placeholder && /enter code|verification code|6-digit/i.test(i.placeholder))
-    )
-  );
+  const surface = await page.evaluate(() => {
+    const lc = (s) => (s || "").toLowerCase();
+    const bodyText = lc(document.body.innerText);
 
-  if (mfaInputs) {
+    // Authentication surface: a password field or a login affordance
+    const hasPasswordField = !!document.querySelector('input[type="password"]');
+    const loginPatterns = ["login", "log in", "log-in", "signin", "sign in", "sign-in", "my account", "/account", "customer portal"];
+    let loginAffordance = false;
+    document.querySelectorAll("a, button").forEach(el => {
+      const hay = lc(el.innerText) + " " + lc(el.getAttribute("href")) + " " + lc(el.getAttribute("aria-label"));
+      if (loginPatterns.some(p => hay.includes(p))) loginAffordance = true;
+    });
+
+    // Genuine MFA signals
+    // Specific MFA tokens only — bare "code" is excluded so zip/postal/promo-code
+    // inputs don't false-positive as MFA fields.
+    const mfaNameRe = /\b(otp|mfa|2fa|totp|one[-_]?time[-_]?(code|password)|verification[-_]?code|auth(entication)?[-_]?code|security[-_]?code)\b/i;
+    const mfaInput = Array.from(document.querySelectorAll("input")).some(i =>
+      i.autocomplete === "one-time-code" ||
+      (i.name && mfaNameRe.test(i.name)) ||
+      (i.placeholder && /verification code|one-time|6-digit/i.test(i.placeholder))
+    );
+    const mfaKeywords = ["two-factor", "2fa", "multi-factor", "mfa", "authenticator app", "verification code", "security key", "one-time password", "backup code"];
+    const mfaKeyword = mfaKeywords.find(k => bodyText.includes(k)) || null;
+
+    // SSO / federated auth — may delegate MFA, but not proof of enforcement
+    const ssoKeywords = ["continue with google", "continue with microsoft", "continue with apple", "sign in with google", "login with", "okta", "auth0", "saml", "duo security"];
+    const ssoKeyword = ssoKeywords.find(k => bodyText.includes(k)) || null;
+
+    return { hasPasswordField, loginAffordance, mfaInput, mfaKeyword, ssoKeyword };
+  });
+
+  const hasAuthSurface = surface.hasPasswordField || surface.loginAffordance || surface.mfaInput || !!surface.ssoKeyword;
+
+  // No authentication surface -> MFA not applicable (info-only, excluded from the score)
+  if (!hasAuthSurface) {
     return {
       score: 100,
-      status: "pass",
-      details: "MFA-related input field detected",
-      meta: {
-        method: "input-detection"
-      },
+      status: "not_applicable",
+      infoOnly: true,
+      details: "No customer login / authentication surface found — MFA not applicable.",
+      meta: { hasAuthSurface: false },
       analysis: null
     };
   }
 
-  // 2. Check for text indicators on the page (e.g., "Login with SSO", "Use Security Key")
-  const pageText = await page.evaluate(() => document.body.innerText.toLowerCase());
-  const mfaKeywords = [
-    "two-factor",
-    "2fa",
-    "multi-factor",
-    "mfa",
-    "authenticator app",
-    "verification code",
-    "security key",
-    "one-time password",
-    "send sms",
-    "backup code"
-  ];
-
-  const foundKeyword = mfaKeywords.find(k => pageText.includes(k));
-
-  if (foundKeyword) {
+  // Genuine MFA signal at the login surface
+  if (surface.mfaInput || surface.mfaKeyword) {
     return {
       score: 100,
       status: "pass",
-      details: `MFA indicator found in text: "${foundKeyword}"`,
-      meta: {
-        method: "text-detection",
-        foundKeyword
-      },
+      details: surface.mfaInput ? "MFA code input detected at login" : `MFA indicator found: "${surface.mfaKeyword}"`,
+      meta: { hasAuthSurface: true, method: surface.mfaInput ? "input" : "keyword", mfaKeyword: surface.mfaKeyword, note: "Presence detected; enforcement cannot be verified without credentials." },
       analysis: null
     };
   }
 
-  // 3. Check for SSO/Federated Login buttons which imply delegated auth (often enforcing MFA)
-  const ssoKeywords = ["sso", "saml", "okta", "auth0", "duo", "continue with google", "continue with microsoft", "login with"];
-  const ssoFound = ssoKeywords.find(k => pageText.includes(k));
-
-  if (ssoFound) {
+  // SSO present — delegated auth may carry MFA, but not proof of enforcement
+  if (surface.ssoKeyword) {
     return {
-      score: 100,
-      status: "pass",
-      details: `SSO/Federated login detected: "${ssoFound}" (Likely supports MFA)`,
-      meta: {
-        method: "sso-detection",
-        ssoFound
-      },
-      analysis: null
+      score: 70,
+      status: "warning",
+      details: `SSO/federated login detected ("${surface.ssoKeyword}") — may delegate MFA, but native MFA is not confirmed`,
+      meta: { hasAuthSurface: true, method: "sso", ssoKeyword: surface.ssoKeyword },
+      analysis: {
+        cause: "Login is delegated to an SSO / identity provider. MFA may be enforced there, but it cannot be confirmed from this page.",
+        recommendation: "Verify the identity provider enforces MFA, or offer native MFA (authenticator / OTP) on the login flow."
+      }
     };
   }
 
+  // Auth surface exists but only single-factor (password), no MFA signals
   return {
-    score: 50,
+    score: 40,
     status: "warning",
-    details: "No visible MFA/2FA indicators found on login page",
-    meta: {},
+    details: "A login exists but no MFA / second-factor option was detected (single-factor).",
+    meta: { hasAuthSurface: true, method: "password-only", hasPasswordField: surface.hasPasswordField },
     analysis: {
-      cause: "Could not detect explicit Multi-Factor Authentication (MFA) or SSO options on the entry page.",
-      recommendation: "Ensure MFA is available and enforced for sensitive accounts. If it is a post-login step, this check may miss it."
+      cause: "An authentication surface is present but only single-factor (password) login was detected; no MFA option was visible.",
+      recommendation: "Offer and enforce MFA (authenticator app, OTP, or security key) for customer and admin accounts. Note: a post-login MFA step may not be visible to this scan."
     }
   };
 }
@@ -1974,7 +2064,7 @@ async function checkFinanceFormSecurity(url, page, browser) {
 export default async function securityCompliance(url, page, response, browser) {
 
   const domain = Domain(url);
-  const httpsResult = checkHTTPS(url);
+  const httpsResult = await checkHTTPS(url, page);
   const sslResult = await checkSSLConnection(response);
   const tlsVersionResult = await checkTLSVersion(response);
   const hstsResult = checkHSTS(response);
@@ -1985,7 +2075,6 @@ export default async function securityCompliance(url, page, response, browser) {
 
   const cookieSecureResult = await checkCookiesSecureFlag(page);
   const cookieHttpOnlyResult = await checkCookiesHttpOnlyFlag(page);
-  const thirdPartyCookiesResult = await checkThirdPartyCookies(url, page);
 
   const safeBrowsingResult = await checkGoogleSafeBrowsing(url);
   const blacklistResult = await checkDomainBlacklist(domain, url);
@@ -1995,6 +2084,7 @@ export default async function securityCompliance(url, page, response, browser) {
 
   const cookieConsentResult = await checkCookieConsent(page);
   const privacyPolicyResult = await checkPrivacyPolicy(page);
+  const thirdPartyCookiesResult = await checkThirdPartyCookies(url, page, cookieConsentResult, privacyPolicyResult);
   const gdprCcpaResult = await checkGDPRCCPA(page);
   const dataCollectionResult = await checkDataCollection(page);
 
@@ -2099,8 +2189,10 @@ export default async function securityCompliance(url, page, response, browser) {
   let maxWeightedScore = 0;
 
   for (const key in results) {
-    const weight = weights[key] || 1;
     const result = results[key];
+    // Info-only / not-applicable params (e.g. MFA on a site with no login) are displayed but not scored.
+    if (!result || result.infoOnly) continue;
+    const weight = weights[key] || 1;
     totalWeightedScore += (result.score || 0) * weight;
     maxWeightedScore += 100 * weight;
   }

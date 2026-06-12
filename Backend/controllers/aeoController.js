@@ -1,8 +1,27 @@
 import AEOService from "../metricServices/aeoService.js";
 import SingleAuditReport from "../models/singleAuditReport.js";
+import User from "../models/User.js";
 import Puppeteer_Cheerio from "../utils/puppeteer_cheerio.js";
 import { validateUrlSafety } from "../utils/ssrfGuard.js";
+import { inspectUrl } from "../utils/gscInspect.js";
 import logger from "../utils/logger.js";
+
+/**
+ * Real Google Search Console index status for the audited URL — only returns data when
+ * the logged-in user has connected GSC and verified a property matching this domain.
+ * Returns null (→ on-page fallback) for anonymous users or unowned/unverified URLs.
+ */
+const getGscCoverage = async (reqUser, url) => {
+    if (!reqUser?.userId) return null;
+    try {
+        const user = await User.findById(reqUser.userId);
+        if (!user) return null;
+        return await inspectUrl(user, url);
+    } catch (err) {
+        logger.warn(`[GSC] coverage lookup failed: ${err.message}`);
+        return null;
+    }
+};
 
 export const analyzeAEO = async (req, res) => {
     try {
@@ -17,11 +36,14 @@ export const analyzeAEO = async (req, res) => {
             return res.status(400).json({ error: `Invalid or Restricted URL — ${safety.reason}` });
         }
 
-        // Fetch HTML using Puppeteer/Cheerio utility
-        const { browser, $ } = await Puppeteer_Cheerio(url, device);
-        
+        // Fetch HTML + real GSC coverage (when the user owns the property) in parallel.
+        const [{ browser, $ }, gsc] = await Promise.all([
+            Puppeteer_Cheerio(url, device),
+            getGscCoverage(req.user, url),
+        ]);
+
         try {
-            const results = await AEOService.runAudit(url, $);
+            const results = await AEOService.runAudit(url, $, null, 100, { gsc });
             res.status(200).json(results);
         } finally {
             if (browser) await browser.close();
@@ -120,20 +142,24 @@ export const streamAEO = async (req, res) => {
         };
 
         sendEvent("status", { message: "Initializing browser..." });
-        const pc = await Puppeteer_Cheerio(url, device);
+        const [pc, gsc] = await Promise.all([
+            Puppeteer_Cheerio(url, device),
+            getGscCoverage(req.user, url),
+        ]);
         browser = pc.browser;
         const $ = pc.$;
 
         sendEvent("status", { message: "Executing signals..." });
 
         const results = await AEOService.runAuditStream(
-            url, 
-            $, 
-            null, 
-            100, 
+            url,
+            $,
+            null,
+            100,
             (signalName, signalResult) => {
                 sendEvent("signal", { name: signalName, data: signalResult });
-            }
+            },
+            { gsc }
         );
 
         sendEvent("complete", results);

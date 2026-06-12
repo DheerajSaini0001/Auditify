@@ -314,8 +314,8 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
                                     signal="citations"
                                     score={aeo.signals.citations.score}
                                     data={aeo.signals.citations}
-                                    title="Citations & Sources"
-                                    description="Verification of external links and citation markers (Source Attribution)."
+                                    title="Trust Signals"
+                                    description="Citations & transparency — cited sources/references, policy pages (privacy/terms/contact/about), transparent contact & authorship, and trust basics (HTTPS, disclosures, dates)."
                                     darkMode={darkMode}
                                     onInfo={onInfo}
                                     url={auditData.url}

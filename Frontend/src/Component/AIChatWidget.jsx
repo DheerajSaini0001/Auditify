@@ -40,7 +40,7 @@ const AIChatWidget = () => {
     }, [data?._id]);
 
     // Hide widget on dashboard page, when no completed audit is loaded, or if not authenticated
-    if (!isAuthenticated || !data || data.status !== 'completed' || location.pathname === '/dashboard') {
+    if (!isAuthenticated || !data || data.status !== 'success' || location.pathname === '/dashboard') {
         return null;
     }
 

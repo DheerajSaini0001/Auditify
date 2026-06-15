@@ -196,6 +196,20 @@ function removeMatching({ url, device, report, userId }) {
   }
 }
 
+/**
+ * _ids of every report still held in memory for a user — both in-progress and
+ * completed-but-not-yet-flushed (buffered). These have an AuditLog entry but no Mongo
+ * report doc yet, so the history endpoint must union these with the Mongo ids to show
+ * the true count (e.g. 3 buffered + 4 in Mongo = 7).
+ */
+function liveReportIdsForUser(userId) {
+  const ids = [];
+  for (const doc of live.values()) {
+    if (sameUser(doc.userId, userId)) ids.push(doc._id);
+  }
+  return ids;
+}
+
 function toPersistable(doc) {
   const out = {};
   for (const k of SCHEMA_FIELDS) if (doc[k] !== undefined) out[k] = doc[k];
@@ -279,6 +293,7 @@ export default {
   findActiveDuplicate,
   findCompletedFullAudit,
   removeMatching,
+  liveReportIdsForUser,
   flush,
   flushAll,
   sweep,

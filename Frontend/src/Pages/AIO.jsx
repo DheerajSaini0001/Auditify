@@ -606,7 +606,7 @@ const AIO_Inner = React.memo(({ data, loading, darkMode }) => {
   const [activeStep, setActiveStep] = React.useState(0);
 
   React.useEffect(() => {
-    if (loading || !data || data.status === "inprogress") {
+    if (loading || !data || data.status === "pending") {
       const interval = setInterval(() => {
         setActiveStep((prev) => (prev + 1) % auditSteps.length);
       }, 2000);
@@ -615,7 +615,7 @@ const AIO_Inner = React.memo(({ data, loading, darkMode }) => {
   }, [loading, data, auditSteps.length]);
 
   const hasAioData = aio && Object.keys(aio).length > 0;
-  const isAioLoading = loading || !data || data.status === "inprogress" || !hasAioData;
+  const isAioLoading = loading || !data || data.status === "pending" || !hasAioData;
 
   const allMetrics = Object.values(aio).filter(val => typeof val === 'object' && val !== null && 'score' in val);
   const passedCount = allMetrics.filter(m => m.status === "pass").length;

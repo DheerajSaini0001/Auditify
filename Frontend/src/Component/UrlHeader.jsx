@@ -16,7 +16,7 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
 
   // Auto-trigger actions after login redirect
   React.useEffect(() => {
-    if (isAuthenticated && location.state?.action === 'download' && data?.status === "completed") {
+    if (isAuthenticated && location.state?.action === 'download' && data?.status === "success") {
       console.log("[UrlHeader] Auto-triggering download from intent...");
       // Clear action from state to prevent loops
       window.history.replaceState({ ...location.state, action: null }, '');
@@ -139,7 +139,7 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
         {/* Right: Metadata Badges */}
         <div className="flex flex-wrap items-center gap-3 w-full lg:flex-1 lg:justify-end order-2 lg:order-3">
           {/* AI Summary Button */}
-          {data?.status === "completed" && sectionData && (
+          {data?.status === "success" && sectionData && (
             <button
               onClick={handleGetAISummary}
               className={`flex items-center gap-2 px-6 py-2 rounded-xl font-semibold bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all transition-all`}
@@ -170,7 +170,7 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
           )}
 
           {/* Download PDF Button */}
-          {data?.status === "completed" && (
+          {data?.status === "success" && (
             <button
               onClick={handleDownloadPDF}
               className={`flex items-center gap-2 px-6 py-2 rounded-xl font-semibold text-white shadow-lg transition-all active:scale-95 transform hover:-translate-y-0.5 ${isAuthenticated

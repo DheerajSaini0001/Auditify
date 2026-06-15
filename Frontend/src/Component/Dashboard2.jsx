@@ -104,59 +104,55 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
   };
 
   const isAuditComplete = completedSections === sectionMappings.length;
+  const isLoadingView = loading || !isAuditComplete;
 
-  const [countdown, setCountdown] = React.useState(20);
-
-  React.useEffect(() => {
-    if (data?.status === "waiting_for_render") {
-      const timer = setInterval(() => {
-        setCountdown((prev) => (prev > 0 ? prev - 1 : 0));
-      }, 1000);
-      return () => clearInterval(timer);
-    } else {
-      setCountdown(20);
-    }
-  }, [data?.status]);
-
+  // Current audit PHASE (no timer). Driven by the backend's raw status (data.rawStatus);
+  // the overall status is normalized elsewhere to pending/success/failed. Each phase
+  // maps to a checkpoint % and a plain-language title + description shown while loading.
   const stageInfo = useMemo(() => {
-    let progress = 0;
-    let message = "Initializing...";
-
-    switch (data?.status) {
-      case "launching":
-        progress = 15;
-        message = "🚀 Launching browser...";
-        break;
-      case "navigating":
-        progress = 35;
-        message = "⏳ Navigating to target URL...";
-        break;
-      case "waiting_for_render":
-        progress = 55;
-        message = "⏳ Waiting for website to fully load... (~20s)";
-        break;
-      case "screenshot_ready":
-        progress = 75;
-        message = "✅ Website loaded successfully — crawling this page";
-        break;
-      case "extracting_data":
-        progress = 90;
-        message = "🧠 Extracting audit data...";
-        break;
-      case "completed":
-        progress = 100;
-        message = "✅ Audit completed successfully!";
-        break;
-      case "failed":
-        progress = 100;
-        message = data?.error || "❌ Audit failed";
-        break;
-      default:
-        progress = Math.round((completedSections / 7) * 100) || 10;
-        message = "⏳ Auditing in progress...";
+    // Browser/crawl phases only cover the first ~45% of the bar. The remaining 55% is
+    // driven by SECTIONS completing (they run concurrently and finish at different
+    // times) — so the bar keeps moving through the analysis instead of jumping to ~90%
+    // and stalling while every section finishes.
+    const phases = {
+      launching: { base: 8, title: "Launching browser", desc: "Spinning up a secure headless browser to load your website." },
+      navigating: { base: 18, title: "Opening your website", desc: "Navigating to the target URL." },
+      waiting_for_render: { base: 30, title: "Rendering the page", desc: "Waiting for the page and its dynamic content to fully load." },
+      screenshot_ready: { base: 40, title: "Capturing the page", desc: "Page loaded — capturing a snapshot and crawling the content." },
+      extracting_data: { base: 45, title: "Analyzing your site", desc: "Extracting page data and scoring the report sections." },
+    };
+    if (data?.status === "failed") {
+      return { progress: 100, title: "Audit failed", desc: data?.error || "Something went wrong while auditing this site." };
     }
-    return { progress, message };
-  }, [data?.status, data?.error, completedSections]);
+    const total = sectionMappings.length;
+    const phase = phases[data?.rawStatus];
+    // Once any section reports, the bar tracks section completion across 45% → 100%.
+    if (completedSections > 0) {
+      return {
+        progress: Math.min(99, 45 + Math.round((completedSections / total) * 55)),
+        title: "Analyzing your site",
+        desc: "Scoring SEO, performance, accessibility, security and more.",
+      };
+    }
+    if (phase) return { progress: phase.base, title: phase.title, desc: phase.desc };
+    return { progress: 8, title: "Auditing your site", desc: "Running checks across all report sections." };
+  }, [data?.rawStatus, data?.status, data?.error, completedSections, sectionMappings.length]);
+
+  // Rotating "did you know" quotes to keep the user engaged while they wait.
+  const loadingQuotes = useMemo(() => [
+    "53% of mobile visitors leave a page that takes longer than 3 seconds to load.",
+    "Nearly 95% of car buyers research online before stepping into a dealership.",
+    "75% of users judge a business's credibility on its website design alone.",
+    "Most shoppers never scroll past page one of Google — local visibility is everything.",
+    "A one-second delay in load time can cut conversions by around 7%.",
+    "Clear calls-to-action and visible trust signals turn more visitors into leads.",
+  ], []);
+  const [quoteIndex, setQuoteIndex] = React.useState(0);
+  React.useEffect(() => {
+    if (!isLoadingView) return;
+    const t = setInterval(() => setQuoteIndex((p) => (p + 1) % loadingQuotes.length), 5000);
+    return () => clearInterval(t);
+  }, [isLoadingView, loadingQuotes.length]);
 
   // Rotating Audit Steps (Timer-based for visual engagement)
   const [currentStepIndex, setCurrentStepIndex] = React.useState(0);
@@ -261,8 +257,7 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
 
                         {/* Progress Bar */}
                         <div className="w-full space-y-2">
-                          <div className="flex justify-between text-xs font-semibold uppercase tracking-widest opacity-70">
-                            <span className="text-emerald-500 font-semibold">{stageInfo.message}</span>
+                          <div className="flex justify-end text-sm font-bold tracking-wide opacity-80">
                             <span>{stageInfo.progress}%</span>
                           </div>
                           <div className="h-2 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
@@ -273,75 +268,28 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
                           </div>
                         </div>
 
-                        {/* Custom Loading Card based on State */}
-                        {data?.status === "waiting_for_render" ? (
-                          /* Countdown Stage */
-                          <div className="relative overflow-hidden rounded-2xl border bg-slate-50/50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700/50 p-8 text-center transition-all duration-500 flex flex-col items-center">
-                            <div className="mb-6 relative">
-                              <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-xl animate-pulse"></div>
-                              <div className="relative w-20 h-20 bg-white dark:bg-slate-800 rounded-full shadow-lg border border-slate-100 dark:border-slate-700 flex items-center justify-center">
-                                <span className="text-3xl font-black text-emerald-500 animate-pulse">{countdown}s</span>
-                              </div>
-                            </div>
-                            <div className="space-y-3 max-w-md">
-                              <h3 className={`text-xl font-semibold ${darkMode ? "text-white" : "text-slate-900"}`}>
-                                Dynamic Page Rendering
-                              </h3>
-                              <p className={`text-sm leading-relaxed ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
-                                Waiting for single-page applications, dynamic javascript elements, and client-rendered visual modules to fully materialize in headless browser.
-                              </p>
+                        {/* Current audit phase / status — shown until the report is ready */}
+                        <div className="relative overflow-hidden rounded-2xl border bg-slate-50/50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700/50 p-10 text-center transition-all duration-500 flex flex-col items-center">
+                          <div className="relative mb-6">
+                            <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-xl animate-pulse"></div>
+                            <div className="relative w-20 h-20 bg-white dark:bg-slate-800 rounded-full shadow-lg border border-slate-100 dark:border-slate-700 flex items-center justify-center text-emerald-500">
+                              <Loader2 className="w-9 h-9 animate-spin" />
                             </div>
                           </div>
-                        ) : (data?.status === "screenshot_ready" || data?.status === "extracting_data") ? (
-                          /* Screenshot Ready Banner / Verified Stage */
-                          <div className="relative overflow-hidden rounded-2xl border bg-slate-50/50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700/50 p-8 text-center transition-all duration-500 flex flex-col items-center">
-                            <div className="mb-6 relative">
-                              <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-xl animate-pulse"></div>
-                              <div className="relative w-20 h-20 bg-white dark:bg-slate-800 rounded-full shadow-lg border border-slate-100 dark:border-slate-700 flex items-center justify-center text-emerald-500 animate-pulse">
-                                <CheckCircle2 className="w-10 h-10" strokeWidth={2.5} />
-                              </div>
-                            </div>
-                            <div className="space-y-4 max-w-md">
-                              <h3 className="text-xl font-semibold text-emerald-600 dark:text-emerald-400">
-                                Visual Scan Verified
-                              </h3>
-                              <div className="p-3 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 rounded-xl font-semibold text-sm border border-emerald-500/20 shadow-sm animate-pulse">
-                                ✅ Website loaded successfully — crawling this page
-                              </div>
-                              <p className={`text-xs md:text-sm leading-relaxed ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
-                                The live rendering matches the expected viewport layout. Data parsing and optimization auditing are executing in background.
-                              </p>
-                            </div>
+                          <div key={stageInfo.title} className="animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-2 max-w-md">
+                            <span className="text-[10px] font-semibold uppercase tracking-widest text-emerald-500">Current Step</span>
+                            <h3 className={`text-xl font-semibold ${darkMode ? "text-white" : "text-slate-900"}`}>{stageInfo.title}</h3>
+                            <p className={`text-sm leading-relaxed ${darkMode ? "text-slate-400" : "text-slate-500"}`}>{stageInfo.desc}</p>
                           </div>
-                        ) : (
-                          /* Default Carousel Stage */
-                          <div className="relative overflow-hidden rounded-2xl border bg-slate-50/50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700/50 p-8 text-center transition-all duration-500 flex flex-col items-center">
+                        </div>
 
-                            {/* Animated Icon Ring */}
-                            <div className="mb-6 relative">
-                              <div className="absolute inset-0 bg-blue-500/20 rounded-full blur-xl animate-pulse"></div>
-                              <div className="relative p-5 bg-white dark:bg-slate-800 rounded-full shadow-lg border border-slate-100 dark:border-slate-700 transition-all duration-300 transform">
-                                {auditSteps[currentStepIndex]?.icon || <Loader2 className="w-8 h-8 animate-spin text-blue-500" />}
-                              </div>
-                            </div>
-
-                            <div key={currentStepIndex} className="animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-3 max-w-md">
-                              <h3 className={`text-xl font-semibold ${darkMode ? "text-white" : "text-slate-900"}`}>
-                                {auditSteps[currentStepIndex]?.title}
-                              </h3>
-                              <p className={`text-sm leading-relaxed ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
-                                {auditSteps[currentStepIndex]?.text}
-                              </p>
-                            </div>
-
-                            {/* Step Indicators */}
-                            <div className="flex justify-center gap-2 mt-8">
-                              {auditSteps.map((_, i) => (
-                                <div key={i} className={`h-1.5 rounded-full transition-all duration-500 ${i === currentStepIndex ? "w-8 bg-blue-500" : "w-1.5 bg-slate-300 dark:bg-slate-700"}`} />
-                              ))}
-                            </div>
-                          </div>
-                        )}
+                        {/* Rotating quote to pass the time */}
+                        <p
+                          key={quoteIndex}
+                          className={`text-center text-sm italic leading-relaxed animate-in fade-in duration-700 ${darkMode ? "text-slate-400" : "text-slate-500"}`}
+                        >
+                          “{loadingQuotes[quoteIndex]}”
+                        </p>
 
                       </div>
                     </div>

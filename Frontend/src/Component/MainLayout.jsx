@@ -8,6 +8,7 @@ import Footer from "./Footer";
 import { useData } from "../context/DataContext";
 import { isSectionVisibleForAudience } from "../config/parameterAudience";
 import DeveloperViewNotice from "./reusablecomponent/DeveloperViewNotice";
+import MoreParamsFooter from "./reusablecomponent/MoreParamsFooter";
 
 // Section route prefix → { key used by parameterAudience.js, display label }.
 const SECTION_BY_PREFIX = {
@@ -103,6 +104,11 @@ export default function MainLayout() {
                             />
                         ) : (
                             <Outlet />
+                        )}
+                        {/* On a mixed section in Dealer mode, invite the user to see the
+                            developer-only params (the component self-hides otherwise). */}
+                        {currentSection && data?.report === "All" && !sectionHiddenForAudience && (
+                            <MoreParamsFooter sectionKey={currentSection.key} darkMode={darkMode} />
                         )}
                     </div>
                     <Footer />

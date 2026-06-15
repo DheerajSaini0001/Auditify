@@ -3,14 +3,35 @@ import ActivityLog from '../models/ActivityLog.js';
 import AuditLog from '../models/AuditLog.js';
 import SingleAuditReport from '../models/singleAuditReport.js';
 import BulkAuditReport from '../models/bulkAuditReport.js';
+import auditStore from '../utils/auditStore.js';
 
 export const getHistory = async (req, res) => {
   try {
     const { page = 1, limit = 10, search = '' } = req.query;
-    
-    const query = { 
-      userId: req.user.userId, 
-      status: { $in: ['success', 'pending', 'failed'] }
+    const userId = req.user.userId;
+
+    // AuditLog is a permanent log of every audit ever run; the actual reports live in
+    // SingleAuditReport / BulkAuditReport and are deleted by a Mongo TTL after a few
+    // hours. So we only show history rows whose report STILL EXISTS — otherwise the
+    // count (e.g. "47 results") includes long-gone reports the user can't open.
+    //
+    // A report "exists" if it's in Mongo OR still held in the in-memory auditStore
+    // (in-progress, or completed-but-not-yet-flushed). We union both so e.g. 3 buffered
+    // + 4 in Mongo correctly shows 7.
+    const [singleIds, bulkIds] = await Promise.all([
+      SingleAuditReport.find({ userId }).distinct('_id'),
+      BulkAuditReport.find({ userId }).distinct('_id'),
+    ]);
+    const memoryIds = auditStore.liveReportIdsForUser(userId);
+    const existingSingleIds = [...singleIds, ...memoryIds];
+
+    const query = {
+      userId,
+      status: { $in: ['success', 'pending', 'failed'] },
+      $or: [
+        { reportId: { $in: existingSingleIds } },
+        { parentBulkAuditId: { $in: bulkIds } },
+      ],
     };
 
     if (search && typeof search === 'string') {
@@ -19,29 +40,19 @@ export const getHistory = async (req, res) => {
       query.url = { $regex: escapedSearch, $options: 'i' };
     }
 
-    // Use AuditLog for granular audit details
-    const audits = await AuditLog.find(query)
-    .sort({ createdAt: -1 })
-    .skip((page - 1) * limit)
-    .limit(parseInt(limit));
+    const [audits, total] = await Promise.all([
+      AuditLog.find(query)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(parseInt(limit)),
+      AuditLog.countDocuments(query),
+    ]);
 
-    const total = await AuditLog.countDocuments(query);
-
-    // Check report existence efficiently for current page items
-    const auditsWithExistence = await Promise.all(
-      audits.map(async (audit) => {
-        let reportExists = false;
-        if (audit.reportId) {
-          reportExists = await SingleAuditReport.exists({ _id: audit.reportId });
-        } else if (audit.parentBulkAuditId) {
-          reportExists = await BulkAuditReport.exists({ _id: audit.parentBulkAuditId });
-        }
-        return {
-          ...audit.toObject(),
-          reportExists: !!reportExists,
-        };
-      })
-    );
+    // Every returned row was matched against an existing report above.
+    const auditsWithExistence = audits.map((audit) => ({
+      ...audit.toObject(),
+      reportExists: true,
+    }));
 
     res.json({
       audits: auditsWithExistence,

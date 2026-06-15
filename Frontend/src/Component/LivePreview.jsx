@@ -28,8 +28,8 @@ const LivePreview = ({ data, showInFullAudit = true, variant = "card" }) => {
     // We now always render the placeholder if no screenshot is present.
 
     const isMobile = data?.device === "Mobile";
-    const statusText = data?.status === "inprogress" ? "Running Visual Scan..." : "Live Preview Ready";
-    const isScanning = data?.status === "inprogress";
+    const statusText = data?.status === "pending" ? "Running Visual Scan..." : "Live Preview Ready";
+    const isScanning = data?.status === "pending";
 
     // Variant "card" now implies the inner styling, but we remove the outer border/shadow 
     // because the parent Dashboard container already handles the main "box".

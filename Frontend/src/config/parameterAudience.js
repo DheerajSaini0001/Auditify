@@ -189,3 +189,9 @@ export const isSectionVisibleForAudience = (sectionKey, mode) => {
     if (mode === "developer") return true;
     return (SECTION_PARAMS[sectionKey] || []).some((k) => DEALER_PARAMS.has(k));
 };
+
+// Param keys in a section that are HIDDEN in dealer mode (developer-only). Used to
+// offer a "switch to Developer mode to see N more parameters" prompt on mixed sections
+// (those that show some dealer params but also have developer-only ones).
+export const developerOnlyParamsInSection = (sectionKey) =>
+    (SECTION_PARAMS[sectionKey] || []).filter((k) => !DEALER_PARAMS.has(k));

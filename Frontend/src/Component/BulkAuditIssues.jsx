@@ -21,7 +21,7 @@ const IssueRow = ({ issue, pages, darkMode, onDrillDown }) => {
                         {issue.severity === 'error' ? <XCircle className="w-4 h-4" /> : issue.severity === 'warning' ? <AlertCircle className="w-4 h-4" /> : <Info className="w-4 h-4" />}
                     </div>
                     <div>
-                        <h4 className={`text-sm fontsemibold ${darkMode ? "text-slate-200" : "text-slate-700"}`}>{issue.title}</h4>
+                        <h4 className={`text-sm font-semibold ${darkMode ? "text-slate-200" : "text-slate-700"}`}>{issue.title}</h4>
                         <p className={`text-xs ${darkMode ? "text-slate-500" : "text-slate-400"}`}>{issue.description}</p>
                     </div>
                 </div>
@@ -42,7 +42,7 @@ const IssueRow = ({ issue, pages, darkMode, onDrillDown }) => {
                         <span className={`text-sm font-black ${issue.severity === 'error' ? 'text-red-500' : issue.severity === 'warning' ? 'text-yellow-500' : 'text-blue-500'}`}>
                             {affectedPages.length}
                         </span>
-                        <span className={`text-[10px] ml-1 fontsemibold uppercase tracking-wider ${darkMode ? "text-slate-600" : "text-slate-400"}`}>Pages</span>
+                        <span className={`text-[10px] ml-1 font-semibold uppercase tracking-wider ${darkMode ? "text-slate-600" : "text-slate-400"}`}>Pages</span>
                     </div>
                     {isOpen ? <ChevronDown className="w-4 h-4 text-slate-500" /> : <ChevronRight className="w-4 h-4 text-slate-500" />}
                 </div>
@@ -58,7 +58,7 @@ const IssueRow = ({ issue, pages, darkMode, onDrillDown }) => {
                                     href={page.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-center gap-1 text-[10px] fontsemibold text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    className="flex items-center gap-1 text-[10px] font-semibold text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity"
                                 >
                                     Visit <ExternalLink className="w-3 h-3" />
                                 </a>
@@ -233,7 +233,7 @@ export default function BulkAuditIssues({ pages, darkMode, onDrillDown }) {
         return (
             <div className={`p-12 rounded-3xl border text-center ${darkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-100 shadow-xl"}`}>
                 <Info className={`w-12 h-12 mx-auto mb-4 ${darkMode ? "text-slate-700" : "text-slate-200"}`} />
-                <h3 className="text-xl fontsemibold mb-2">No data yet</h3>
+                <h3 className="text-xl font-semibold mb-2">No data yet</h3>
                 <p className={`${darkMode ? "text-slate-500" : "text-slate-400"}`}>Complete audits to see aggregate issue reports.</p>
             </div>
         );

@@ -4,6 +4,8 @@ import {
     MessageCircle, Database, ShieldCheck, FileText, Layout,
     Table, Link, Activity, Award, MapPin, Network, Camera, GraduationCap, Megaphone
 } from 'lucide-react';
+import { InfoDetails } from './InfoDetails';
+import { isActionableParam } from '../config/parameterAudience';
 const iconMap = {
     aeoSchema: Database,
     botAccess: ShieldCheck,
@@ -238,7 +240,7 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
                 </div>
 
                 <div className="flex items-center gap-3">
-                    {score < 100 && (
+                    {score < 100 && isActionableParam(signal) && (
                         <button
                             onClick={() => setShowDetails(!showDetails)}
                             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${showDetails
@@ -251,13 +253,17 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
                     )}
                     {onInfo && (
                         <button
-                            onClick={() => onInfo({
-                                title,
-                                whatThisParameterIs: description,
-                                whyItMatters: getWhyItMatters(signal),
-                                icon: Icon,
-                                thresholds: data?.threshold || "N/A"
-                            })}
+                            onClick={() => {
+                                const info = InfoDetails[signal] || {};
+                                onInfo({
+                                    ...info,
+                                    title: info.title || title,
+                                    whatThisParameterIs: info.whatThisParameterIs || description,
+                                    whyItMatters: info.whyItMatters || getWhyItMatters(signal),
+                                    icon: Icon,
+                                    thresholds: info.thresholds || data?.threshold || "N/A"
+                                });
+                            }}
                             className={`p-2 rounded-lg transition-colors ${darkMode ? "bg-slate-800 text-slate-500 hover:text-indigo-400" : "bg-slate-50 text-slate-400 hover:text-indigo-600 border border-slate-100"}`}
                         >
                             <Info size={18} />
@@ -294,7 +300,7 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
                                             const low = max && val < max;
                                             return (
                                                 <div key={key} className="flex flex-col gap-1">
-                                                    <div className="flex justify-between text-[11px] fontsemibold">
+                                                    <div className="flex justify-between text-[11px] font-semibold">
                                                         <span className={darkMode ? "text-slate-300" : "text-slate-700"}>{prettyLabel(key)}</span>
                                                         <span className={low ? "text-amber-500" : "text-emerald-500"}>{val}{max ? `/${max}` : ""}</span>
                                                     </div>
@@ -316,7 +322,7 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
                                 </div>
                                 <ul className="flex flex-col gap-2">
                                     {improvements.map((tip, i) => (
-                                        <li key={i} className={`flex gap-2 text-[11px] leading-snug fontsemibold ${darkMode ? "text-slate-300" : "text-slate-700"}`}>
+                                        <li key={i} className={`flex gap-2 text-[11px] leading-snug font-semibold ${darkMode ? "text-slate-300" : "text-slate-700"}`}>
                                             <span className="text-indigo-500 mt-0.5">→</span>
                                             <span>{tip}</span>
                                         </li>
@@ -363,7 +369,7 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
                                     <Brain size={14} className="text-indigo-500" />
                                     <span className="text-[10px] font-black uppercase tracking-widest text-indigo-500">AEO Engine Impact</span>
                                 </div>
-                                <p className={`text-[11px] leading-snug fontsemibold ${darkMode ? "text-slate-300" : "text-slate-700"}`}>
+                                <p className={`text-[11px] leading-snug font-semibold ${darkMode ? "text-slate-300" : "text-slate-700"}`}>
                                     Failing this signal reduces AI selection probability by ~70% across premium engines.
                                 </p>
                             </div>
@@ -379,7 +385,7 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
                 {!isFailed && status === "Passed" ? (
                     <div className="flex items-center gap-3 py-2">
                         <CheckCircle className="text-emerald-500" size={18} />
-                        <span className="text-xs fontsemibold text-emerald-600 uppercase tracking-widest">Optimized & Confirmed</span>
+                        <span className="text-xs font-semibold text-emerald-600 uppercase tracking-widest">Optimized & Confirmed</span>
                     </div>
                 ) : null}
             </div>

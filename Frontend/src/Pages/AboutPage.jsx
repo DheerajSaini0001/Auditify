@@ -42,7 +42,7 @@ export default function AboutPage() {
             <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-6">
               <Target className="w-6 h-6 text-emerald-500" />
             </div>
-            <h2 className="text-2xl fontsemibold mb-4">Our Mission</h2>
+            <h2 className="text-2xl font-semibold mb-4">Our Mission</h2>
             <p className={`leading-relaxed ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
               Our goal is to democratize technical SEO and performance auditing. We believe every website owner—from freelancers to enterprises—deserves clear, actionable data to improve their digital presence without needing a PhD in computer science.
             </p>
@@ -53,7 +53,7 @@ export default function AboutPage() {
             <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center mb-6">
               <Zap className="w-6 h-6 text-blue-500" />
             </div>
-            <h2 className="text-2xl fontsemibold mb-4">What We Analyze</h2>
+            <h2 className="text-2xl font-semibold mb-4">What We Analyze</h2>
             <ul className="space-y-4">
               {[
                 "Core Web Vitals & Performance Speed",
@@ -91,7 +91,7 @@ export default function AboutPage() {
           ].map((feature, idx) => (
             <div key={idx} className={`p-6 rounded-xl border transition-all ${darkMode ? 'bg-slate-900/30 border-slate-800 hover:border-slate-700' : 'bg-white border-slate-100 shadow-lg shadow-slate-200/50 hover:border-slate-200'}`}>
               <div className="mb-4">{feature.icon}</div>
-              <h3 className="fontsemibold text-lg mb-2">{feature.title}</h3>
+              <h3 className="font-semibold text-lg mb-2">{feature.title}</h3>
               <p className={`text-sm ${darkMode ? "text-slate-400" : "text-slate-600"}`}>{feature.desc}</p>
             </div>
           ))}
@@ -102,14 +102,14 @@ export default function AboutPage() {
       {/* Metric Calculation Documentation Section */}
       <div className="mt-28 animate-in fade-in slide-in-from-bottom-5 duration-1000 delay-200 max-w-7xl w-full">
         <div className="text-center mb-16 px-4">
-          <div className="inline-block mb-3 px-4 py-1.5 rounded-full bg-emerald-500/10 text-emerald-500 text-sm font- border border-emerald-500/20">
+          <div className="inline-block mb-3 px-4 py-1.5 rounded-full bg-emerald-500/10 text-emerald-500 text-sm font-semibold border border-emerald-500/20">
             Transparency Report
           </div>
-          <h2 className="text-3xl md:text-5xl fontsemibold tracking-tight mb-4 bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-cyan-500 to-blue-500">
+          <h2 className="text-3xl md:text-5xl font-semibold tracking-tight mb-4 bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-cyan-500 to-blue-500">
             How We Score Your Site
           </h2>
           <p className={`max-w-2xl mx-auto text-lg ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
-            We analyze <span className="text-emerald-500 fontsemibold">100+ data points</span> across 7 key categories to give you precise, actionable insights. Here's exactly how our algorithm works.
+            We analyze <span className="text-emerald-500 font-semibold">100+ data points</span> across 7 key categories to give you precise, actionable insights. Here's exactly how our algorithm works.
           </p>
         </div>
 
@@ -123,7 +123,7 @@ export default function AboutPage() {
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-1">
-                  <h3 className="text-2xl fontsemibold">1. Technical Performance</h3>
+                  <h3 className="text-2xl font-semibold">1. Technical Performance</h3>
                   <span className={`px-3 py-1 rounded-full text-xs font-medium border ${darkMode ? "bg-blue-500/10 border-blue-500/20 text-blue-400" : "bg-blue-50 border-blue-100 text-blue-600"}`}>Core Web Vitals</span>
                 </div>
                 <p className={`text-sm ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Weighted average of Google Lighthouse & CrUX real-user data.</p>
@@ -142,7 +142,7 @@ export default function AboutPage() {
               ].map((metric, i) => (
                 <div key={i} className={`relative overflow-hidden p-4 rounded-2xl border transition-all duration-300 hover:scale-105 ${darkMode ? "bg-slate-950/40 border-slate-800 hover:border-slate-700" : "bg-slate-50/80 border-slate-100 hover:border-blue-200 hover:bg-blue-50/30"}`}>
                   <div className={`text-2xl font-black mb-1 ${metric.color}`}>{metric.weight}</div>
-                  <div className={`fontsemibold text-sm mb-1 ${darkMode ? "text-slate-200" : "text-slate-700"}`}>{metric.label}</div>
+                  <div className={`font-semibold text-sm mb-1 ${darkMode ? "text-slate-200" : "text-slate-700"}`}>{metric.label}</div>
                   <div className="text-xs opacity-60 font-medium">{metric.sub}</div>
                 </div>
               ))}
@@ -157,7 +157,7 @@ export default function AboutPage() {
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-1">
-                  <h3 className="text-2xl fontsemibold">2. On-Page SEO</h3>
+                  <h3 className="text-2xl font-semibold">2. On-Page SEO</h3>
                   <span className={`px-3 py-1 rounded-full text-xs font-medium border ${darkMode ? "bg-purple-500/10 border-purple-500/20 text-purple-400" : "bg-purple-50 border-purple-100 text-purple-600"}`}>Rankability</span>
                 </div>
                 <p className={`text-sm ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Analysis of content structure, meta tags, and semantic HTML.</p>
@@ -189,12 +189,12 @@ export default function AboutPage() {
                 }
               ].map((group, idx) => (
                 <div key={idx} className={`p-5 rounded-2xl border ${darkMode ? "bg-slate-950/30 border-slate-800" : "bg-slate-50 border-slate-100"}`}>
-                  <h4 className={`text-sm fontsemibold uppercase tracking-wider mb-4 bg-clip-text text-transparent bg-gradient-to-r ${group.color}`}>{group.title}</h4>
+                  <h4 className={`text-sm font-semibold uppercase tracking-wider mb-4 bg-clip-text text-transparent bg-gradient-to-r ${group.color}`}>{group.title}</h4>
                   <ul className="space-y-3">
                     {group.items.map((item, i) => (
                       <li key={i} className="flex justify-between items-center text-sm">
                         <span className={darkMode ? "text-slate-300" : "text-slate-600"}>{item.name}</span>
-                        <span className={`fontsemibold px-2 py-0.5 rounded text-xs ${darkMode ? "bg-slate-800 text-slate-200" : "bg-white border text-slate-700 shadow-sm"}`}>{item.val}</span>
+                        <span className={`font-semibold px-2 py-0.5 rounded text-xs ${darkMode ? "bg-slate-800 text-slate-200" : "bg-white border text-slate-700 shadow-sm"}`}>{item.val}</span>
                       </li>
                     ))}
                   </ul>
@@ -212,20 +212,20 @@ export default function AboutPage() {
                   <Users className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="text-xl fontsemibold">3. Accessibility</h3>
-                  <div className="text-xs font- tracking-wide text-emerald-500 uppercase mt-1">WCAG 2.1 Level AA</div>
+                  <h3 className="text-xl font-semibold">3. Accessibility</h3>
+                  <div className="text-xs font-semibold tracking-wide text-emerald-500 uppercase mt-1">WCAG 2.1 Level AA</div>
                 </div>
               </div>
 
               <div className="space-y-6">
                 <div className="relative pl-4 border-l-2 border-emerald-500/30">
-                  <div className="text-sm fontsemibold mb-2">High Impact (3 pts each)</div>
+                  <div className="text-sm font-semibold mb-2">High Impact (3 pts each)</div>
                   <div className={`text-sm leading-relaxed ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
                     Strict checks for Color Contrast, Focus Order, Labels, and Image Alt Text.
                   </div>
                 </div>
                 <div className="relative pl-4 border-l-2 border-emerald-500/10">
-                  <div className="text-sm fontsemibold mb-2 opacity-80">Medium Impact (2 pts each)</div>
+                  <div className="text-sm font-semibold mb-2 opacity-80">Medium Impact (2 pts each)</div>
                   <div className="flex flex-wrap gap-2">
                     {["Tab Index", "ARIA Roles", "ARIA Attr", "Hidden Focus"].map(tag => (
                       <span key={tag} className={`text-xs px-2 py-1 rounded border ${darkMode ? "bg-slate-800 border-slate-700 text-slate-400" : "bg-slate-100 border-slate-200 text-slate-600"}`}>{tag}</span>
@@ -242,20 +242,20 @@ export default function AboutPage() {
                   <ShieldCheck className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="text-xl fontsemibold">4. Security</h3>
-                  <div className="text-xs font- tracking-wide text-red-500 uppercase mt-1">Vulnerability Scan</div>
+                  <h3 className="text-xl font-semibold">4. Security</h3>
+                  <div className="text-xs font-semibold tracking-wide text-red-500 uppercase mt-1">Vulnerability Scan</div>
                 </div>
               </div>
 
               <div className="space-y-6">
                 <div className="relative pl-4 border-l-2 border-red-500/30">
-                  <div className="text-sm fontsemibold mb-2">Critical Checks (5 pts each)</div>
+                  <div className="text-sm font-semibold mb-2">Critical Checks (5 pts each)</div>
                   <div className={`text-sm leading-relaxed ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
                     Detection of Malware, SQL Injection flaws, XSS vulnerabilities, and Weak Credential exposure.
                   </div>
                 </div>
                 <div className="relative pl-4 border-l-2 border-red-500/10">
-                  <div className="text-sm fontsemibold mb-2 opacity-80">Standard Checks (1-3 pts each)</div>
+                  <div className="text-sm font-semibold mb-2 opacity-80">Standard Checks (1-3 pts each)</div>
                   <div className="flex flex-wrap gap-2">
                     {["SSL Validity", "HSTS Header", "CSP Policy", "Secure Cookies", "MFA"].map(tag => (
                       <span key={tag} className={`text-xs px-2 py-1 rounded border ${darkMode ? "bg-slate-800 border-slate-700 text-slate-400" : "bg-slate-100 border-slate-200 text-slate-600"}`}>{tag}</span>
@@ -273,7 +273,7 @@ export default function AboutPage() {
             <div className={`p-6 rounded-3xl border ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-white border-slate-200 shadow-lg'}`}>
               <div className="flex items-center gap-3 mb-6">
                 <div className="p-2 rounded-lg bg-orange-350/10 text-orange-350"><BarChart3 className="w-5 h-5" /></div>
-                <h3 className="text-lg fontsemibold">5. UX & Structure</h3>
+                <h3 className="text-lg font-semibold">5. UX & Structure</h3>
               </div>
               <div className="space-y-3">
                 {[
@@ -284,7 +284,7 @@ export default function AboutPage() {
                 ].map((x, i) => (
                   <div key={i} className={`flex justify-between items-center p-2 rounded-lg ${darkMode ? "bg-slate-800/50" : "bg-slate-50"}`}>
                     <span className="text-sm font-medium">{x.l}</span>
-                    <span className={`text-xs fontsemibold uppercase ${x.c}`}>{x.r}</span>
+                    <span className={`text-xs font-semibold uppercase ${x.c}`}>{x.r}</span>
                   </div>
                 ))}
               </div>
@@ -294,11 +294,11 @@ export default function AboutPage() {
             <div className={`p-6 rounded-3xl border ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-white border-slate-200 shadow-lg'}`}>
               <div className="flex items-center gap-3 mb-6">
                 <div className="p-2 rounded-lg bg-pink-500/10 text-pink-500"><Target className="w-5 h-5" /></div>
-                <h3 className="text-lg fontsemibold">6. Conversion</h3>
+                <h3 className="text-lg font-semibold">6. Conversion</h3>
               </div>
               <div className="flex flex-wrap gap-2 mb-4">
                 {["CTA Visibility", "Form Presence", "Trust Badges", "Contact Info"].map(x => (
-                  <span key={x} className="px-2 py-1 text-xs fontsemibold text-pink-500 bg-pink-500/10 rounded-md border border-pink-500/20">{x}</span>
+                  <span key={x} className="px-2 py-1 text-xs font-semibold text-pink-500 bg-pink-500/10 rounded-md border border-pink-500/20">{x}</span>
                 ))}
               </div>
               <p className={`text-sm ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
@@ -310,11 +310,11 @@ export default function AboutPage() {
             <div className={`p-6 rounded-3xl border ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-white border-slate-200 shadow-lg'}`}>
               <div className="flex items-center gap-3 mb-6">
                 <div className="p-2 rounded-lg bg-teal-500/10 text-teal-500"><Zap className="w-5 h-5" /></div>
-                <h3 className="text-lg fontsemibold">7. AI Readiness</h3>
+                <h3 className="text-lg font-semibold">7. AI Readiness</h3>
               </div>
               <div className="p-4 rounded-xl bg-gradient-to-br from-teal-500/10 to-emerald-500/5 border border-teal-500/20 mb-3">
                 <div className="text-xl font-black text-teal-500 mb-1">~10%</div>
-                <div className="text-xs uppercase fontsemibold tracking-wider opacity-70">Structured Data Score</div>
+                <div className="text-xs uppercase font-semibold tracking-wider opacity-70">Structured Data Score</div>
               </div>
               <div className="space-y-1">
                 {[

@@ -4,6 +4,7 @@ import { InfoDetails as DefaultInfoDetails } from "../../Component/InfoDetails";
 import ScoreBadge from "./ScoreBadge";
 import AskAIButton from "../AskAIButton";
 import Tooltip from "./Tooltip";
+import { isActionableParam } from "../../config/parameterAudience";
 
 /**
  * SEOCard - Flexible reusable wrapper for SEO metric cards
@@ -49,6 +50,16 @@ const SEOCard = ({
     const isPassed = currentStatus === "pass";
     const currentAnalysis = analysis;
 
+    // Fallback content from InfoDetails when no backend analysis is supplied.
+    const infoEntry = (metricKey && InfoDetails?.[metricKey]) || {};
+    const fallbackReasons = infoEntry.actualReasonsForFailure || [];
+    const fallbackFixes = infoEntry.howToOvercomeFailure || [];
+    const hasFallback = fallbackReasons.length > 0 || fallbackFixes.length > 0;
+    // Show the details toggle whenever the card is imperfect and we have something to show
+    // — but only for dealer parameters. Developer-only params hide "why the score is less"
+    // (requirement b). Hidden, not removed: reclassify in parameterAudience.js to restore.
+    const canShowDetails = showAnalysis && !isPassed && (!!currentAnalysis || hasFallback) && isActionableParam(metricKey);
+
     return (
         <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group ${className} ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
             <div className="p-5 space-y-4">
@@ -59,7 +70,7 @@ const SEOCard = ({
                             <Icon size={24} className={darkMode ? iconColor : iconColor.replace('400', '600')} />
                         </div>
                         <div>
-                            <h3 className={`fontsemibold text-lg ${darkMode ? "text-gray-100" : "text-gray-900"}`}>{title}</h3>
+                            <h3 className={`font-semibold text-lg ${darkMode ? "text-gray-100" : "text-gray-900"}`}>{title}</h3>
                             <div className={`flex items-center gap-2 mt-1`}>
                                 <ScoreBadge
                                     status={currentStatus}
@@ -76,10 +87,10 @@ const SEOCard = ({
                     </div>
 
                     <div className="flex items-center gap-1">
-                        {showAnalysis && currentAnalysis && !isPassed && (
+                        {canShowDetails && (
                             <button
                                 onClick={() => setShowDetails(!showDetails)}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs fontsemibold transition-all ${darkMode
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${darkMode
                                     ? "bg-slate-700 hover:bg-slate-600 text-slate-300"
                                     : "bg-slate-100 hover:bg-slate-200 text-slate-600"
                                     }`}
@@ -96,14 +107,14 @@ const SEOCard = ({
                                         {metricKey && InfoDetails?.[metricKey] && (
                                             <>
                                                 <div>
-                                                    <h4 className="text-[10px] fontsemibold uppercase tracking-widest text-blue-500 mb-1">Description</h4>
+                                                    <h4 className="text-[10px] font-semibold uppercase tracking-widest text-blue-500 mb-1">Description</h4>
                                                     <p className="text-xs leading-relaxed opacity-90">
                                                         {InfoDetails[metricKey].whatThisParameterIs || InfoDetails[metricKey].whatThisMetricIs || InfoDetails[metricKey].whatThisParameterIs}
                                                     </p>
                                                 </div>
                                                 <div className={`h-px w-full ${darkMode ? "bg-slate-800" : "bg-slate-100"}`} />
                                                 <div>
-                                                    <h4 className="text-[10px] fontsemibold uppercase tracking-widest text-indigo-500 mb-1">Why it matters</h4>
+                                                    <h4 className="text-[10px] font-semibold uppercase tracking-widest text-indigo-500 mb-1">Why it matters</h4>
                                                     <p className="text-xs leading-relaxed opacity-90">
                                                         {InfoDetails[metricKey].whyItMatters || "No description available."}
                                                     </p>
@@ -134,29 +145,52 @@ const SEOCard = ({
                     {children}
 
 
-                    {/* Analysis Details (Only if toggled) */}
-                    {showAnalysis && showDetails && currentAnalysis && !isPassed && (
+                    {/* Analysis Details (Only if toggled). Uses backend analysis when present,
+                        otherwise falls back to InfoDetails reasons + fixes. */}
+                    {showDetails && canShowDetails && (
                         <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
-                            {/* Analysis */}
+                            {/* Cause */}
                             <div className="space-y-2">
-                                <div className="flex items-center gap-2 text-xs fontsemibold uppercase tracking-wider text-amber-500">
+                                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-amber-500">
                                     <AlertTriangle size={12} />
-                                    <span>Analysis</span>
+                                    <span>Cause</span>
                                 </div>
-                                <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                                    {currentAnalysis.cause}
-                                </p>
+                                {currentAnalysis?.cause ? (
+                                    <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                                        {currentAnalysis.cause}
+                                    </p>
+                                ) : (
+                                    <ul className="space-y-1">
+                                        {fallbackReasons.map((reason, i) => (
+                                            <li key={i} className={`text-sm flex items-start gap-2 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                                                <span className="mt-1.5 w-1 h-1 rounded-full bg-rose-500 flex-shrink-0" />
+                                                <span>{reason}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
                             </div>
 
                             {/* Recommendation */}
                             <div className="space-y-2">
-                                <div className="flex items-center gap-2 text-xs fontsemibold uppercase tracking-wider text-blue-500">
+                                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-blue-500">
                                     <CheckCircle size={12} />
                                     <span>Recommendation</span>
                                 </div>
-                                <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                                    {currentAnalysis.recommendation}
-                                </p>
+                                {currentAnalysis?.recommendation ? (
+                                    <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                                        {currentAnalysis.recommendation}
+                                    </p>
+                                ) : (
+                                    <ul className="space-y-1">
+                                        {fallbackFixes.map((rec, i) => (
+                                            <li key={i} className={`text-sm flex items-start gap-2 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                                                <span className="mt-1.5 w-1 h-1 rounded-full bg-emerald-500 flex-shrink-0" />
+                                                <span>{rec}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
                             </div>
                         </div>
                     )}
@@ -167,6 +201,7 @@ const SEOCard = ({
                             finding={{ type: 'On-Page SEO', title: title, details: statusText || '', severity: currentStatus === 'pass' ? 'pass' : currentStatus === 'warning' ? 'warning' : 'critical', url: '' }}
                             darkMode={darkMode}
                             meta={meta}
+                            paramKey={metricKey}
                         />
                     )}
                 </div>

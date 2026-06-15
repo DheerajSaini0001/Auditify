@@ -215,7 +215,7 @@ export default function InputForm() {
         {/* Header Section */}
         <div className="text-center mb-12 space-y-5 animate-in fade-in slide-in-from-bottom-5 duration-700">
 
-          <h1 className="text-4xl md:text-6xl fontsemibold tracking-tight">
+          <h1 className="text-4xl md:text-6xl font-semibold tracking-tight">
             Analyze your <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500">Website Health</span>
           </h1>
 
@@ -298,7 +298,7 @@ export default function InputForm() {
                 type="submit"
                 disabled={loading}
                 className={`
-                  hidden lg:flex items-center justify-center gap-2 px-6 py-3 ml-2 rounded-xl fontsemibold text-white shadow-lg transition-all 
+                  hidden lg:flex items-center justify-center gap-2 px-6 py-3 ml-2 rounded-xl font-semibold text-white shadow-lg transition-all 
                   bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 hover:shadow-emerald-500/25 active:scale-95
                   disabled:opacity-70 disabled:cursor-wait min-w-[140px]
                 `}
@@ -314,7 +314,7 @@ export default function InputForm() {
             type="submit"
             disabled={loading}
             className={`
-              lg:hidden w-full mt-4 flex items-center justify-center gap-2 px-6 py-4 rounded-xl fontsemibold text-white shadow-lg transition-all 
+              lg:hidden w-full mt-4 flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-semibold text-white shadow-lg transition-all 
               bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 active:scale-95
               disabled:opacity-70 disabled:cursor-wait
             `}
@@ -366,7 +366,7 @@ export default function InputForm() {
               <button
                 onClick={handleSubmitWithCaptcha}
                 disabled={loading || !captchaAnswer}
-                className="mt-4 w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white fontsemibold rounded-xl transition-all disabled:opacity-50"
+                className="mt-4 w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl transition-all disabled:opacity-50"
               >
                 {loading ? "Verifying..." : "Verify & Run Audit"}
               </button>
@@ -374,7 +374,7 @@ export default function InputForm() {
 
             <button
               onClick={() => setShowCaptcha(false)}
-              className={`text-xs fontsemibold uppercase tracking-[0.2em] ${darkMode ? "text-slate-500 hover:text-white" : "text-slate-600 hover:text-slate-900"} transition-all duration-200 hover:scale-110 active:scale-95`}
+              className={`text-xs font-semibold uppercase tracking-[0.2em] ${darkMode ? "text-slate-500 hover:text-white" : "text-slate-600 hover:text-slate-900"} transition-all duration-200 hover:scale-110 active:scale-95`}
             >
               Cancel
             </button>

@@ -49,7 +49,7 @@ const LivePreview = ({ data, showInFullAudit = true, variant = "card" }) => {
 
                     {/* Text Info */}
                     <div>
-                        <h3 className={`text-xs fontsemibold uppercase tracking-widest mb-1 ${darkMode ? "text-slate-200" : "text-slate-800"}`}>
+                        <h3 className={`text-xs font-semibold uppercase tracking-widest mb-1 ${darkMode ? "text-slate-200" : "text-slate-800"}`}>
                             {isMobile ? "Mobile Viewport" : "Desktop Viewport"}
                         </h3>
                         <div className="flex items-center gap-2">
@@ -131,7 +131,7 @@ const LivePreview = ({ data, showInFullAudit = true, variant = "card" }) => {
                                     </div>
                                 </div>
                                 <div className="space-y-0.5 relative z-10">
-                                    <h3 className={`text-xs fontsemibold uppercase tracking-wider ${darkMode ? "text-slate-300" : "text-slate-700"}`}>
+                                    <h3 className={`text-xs font-semibold uppercase tracking-wider ${darkMode ? "text-slate-300" : "text-slate-700"}`}>
                                         Rendering
                                     </h3>
                                     <p className={`text-[10px] ${darkMode ? "text-slate-500" : "text-slate-400"}`}>

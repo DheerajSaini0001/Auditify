@@ -18,6 +18,13 @@ export const DataProvider = ({ children }) => {
   const [isAiChatOpen, setIsAiChatOpen] = useState(false);
   const [aiChatContext, setAiChatContext] = useState(null);
 
+  // 👥 AUDIENCE MODE ('dealer' | 'developer') — controls which parameters show
+  // across all report sections and which PDF gets downloaded. ALWAYS defaults to
+  // 'dealer' on a fresh load (the primary audience); the toggle changes it for the
+  // current session only — we intentionally do NOT persist it, so every page load /
+  // new audit starts in Dealer view.
+  const [audienceMode, setAudienceMode] = useState("dealer");
+
   // 🛡️ HELPER: Safe LocalStorage with Cleanup
   const safeLocalStorageSet = (key, value) => {
     try {
@@ -349,6 +356,7 @@ export const DataProvider = ({ children }) => {
       value={{ 
         data, setData, loading, fetchData, clearData, discoverUrls, startBulkAudit, autoBulkAudit, getBulkAuditStatus, fetchSingleReport, getAuditById, fetchBulkPageReport,
         isAiChatOpen, setIsAiChatOpen, aiChatContext, setAiChatContext,
+        audienceMode, setAudienceMode,
         pollingState, setPollingState
       }}
     >

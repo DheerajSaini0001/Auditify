@@ -8,7 +8,7 @@ const Section = ({ title, subtitle, icon: Icon, children, darkMode, action, shou
                     <Icon size={20} />
                 </div>
                 <div>
-                    <h2 className={`text-xl fontsemibold ${darkMode ? "text-white" : "text-gray-900"}`}>{title}</h2>
+                    <h2 className={`text-xl font-semibold ${darkMode ? "text-white" : "text-gray-900"}`}>{title}</h2>
                     <p className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-500"}`}>{subtitle}</p>
                 </div>
             </div>

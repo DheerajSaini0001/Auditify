@@ -6,13 +6,35 @@ import { ThemeContext } from "../context/ThemeContext";
 import ScrollToTop from "./ScrollToTop";
 import Footer from "./Footer";
 import { useData } from "../context/DataContext";
+import { isSectionVisibleForAudience } from "../config/parameterAudience";
+import DeveloperViewNotice from "./reusablecomponent/DeveloperViewNotice";
+
+// Section route prefix → { key used by parameterAudience.js, display label }.
+const SECTION_BY_PREFIX = {
+    "/technical-performance": { key: "technicalPerformance", label: "Technical Performance" },
+    "/on-page-seo": { key: "onPageSEO", label: "On-Page SEO" },
+    "/accessibility": { key: "accessibility", label: "Accessibility" },
+    "/security-compliance": { key: "securityOrCompliance", label: "Security & Compliance" },
+    "/ux-content-structure": { key: "UXOrContentStructure", label: "UX & Content" },
+    "/conversion-lead-flow": { key: "conversionAndLeadFlow", label: "Conversion & Lead Flow" },
+    "/aio": { key: "aioReadiness", label: "AIO Readiness" },
+};
 
 export default function MainLayout() {
     const { theme } = useContext(ThemeContext);
-    const { data } = useData();
+    const { data, audienceMode, setAudienceMode } = useData();
     const darkMode = theme === "dark";
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const location = useLocation();
+
+    // When the section we're on has no parameters for the current audience (e.g.
+    // viewing AIO Readiness in Dealer mode — it has only technical params), keep the
+    // section but show a "switch to Developer mode" notice instead of a blank page.
+    const sectionPrefix = Object.keys(SECTION_BY_PREFIX).find((p) => location.pathname.startsWith(p));
+    const currentSection = sectionPrefix ? SECTION_BY_PREFIX[sectionPrefix] : null;
+    const sectionHiddenForAudience =
+        !!data && data.report === "All" && currentSection &&
+        !isSectionVisibleForAudience(currentSection.key, audienceMode);
 
     const isReportPath = location.pathname.startsWith("/report") ||
         location.pathname.startsWith("/technical-performance") ||
@@ -73,7 +95,15 @@ export default function MainLayout() {
                 >
                     <ScrollToTop />
                     <div className="flex-grow">
-                        <Outlet />
+                        {sectionHiddenForAudience ? (
+                            <DeveloperViewNotice
+                                darkMode={darkMode}
+                                sectionName={currentSection.label}
+                                onSwitch={() => setAudienceMode("developer")}
+                            />
+                        ) : (
+                            <Outlet />
+                        )}
                     </div>
                     <Footer />
                 </main>

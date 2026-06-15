@@ -330,15 +330,15 @@ export default function AIChatOverlay() {
               {/* Target Info */}
               <div className="flex-grow overflow-hidden space-y-2">
                 <div className="space-y-0.5">
-                  <span className="text-[9px] fontsemibold uppercase tracking-wider opacity-40 flex items-center gap-1">
+                  <span className="text-[9px] font-semibold uppercase tracking-wider opacity-40 flex items-center gap-1">
                     <Globe className="w-2.5 h-2.5" /> Target URL
                   </span>
-                  <p className="text-xs fontsemibold truncate opacity-90 block hover:underline cursor-pointer" title={url}>
+                  <p className="text-xs font-semibold truncate opacity-90 block hover:underline cursor-pointer" title={url}>
                     {url || 'N/A'}
                   </p>
                 </div>
                 {data?.device && (
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] fontsemibold border leading-none bg-slate-500/5 border-slate-500/10 opacity-70">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold border leading-none bg-slate-500/5 border-slate-500/10 opacity-70">
                     <Layers className="w-3 h-3" />
                     <span>{data.device} Mode</span>
                   </div>
@@ -385,11 +385,11 @@ export default function AIChatOverlay() {
                       }`}>
                       <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
                       <div className="space-y-1">
-                        <h4 className="text-xs fontsemibold uppercase tracking-wider">Strategic Delay</h4>
+                        <h4 className="text-xs font-semibold uppercase tracking-wider">Strategic Delay</h4>
                         <p className="text-xs leading-relaxed opacity-90">{summaryError}</p>
                         <button
                           onClick={fetchStrategicSummary}
-                          className="mt-2 text-[10px] fontsemibold flex items-center gap-1 underline uppercase hover:opacity-85"
+                          className="mt-2 text-[10px] font-semibold flex items-center gap-1 underline uppercase hover:opacity-85"
                         >
                           <RefreshCw className="w-2.5 h-2.5" /> Retry Synthesis
                         </button>
@@ -411,7 +411,7 @@ export default function AIChatOverlay() {
                         <h4 className="text-[9px] font-black uppercase tracking-wider text-emerald-500/80 mb-0.5">
                           Health Strength
                         </h4>
-                        <p className="text-xs font- leading-relaxed">
+                        <p className="text-xs font-semibold leading-relaxed">
                           {summary.strength}
                         </p>
                       </div>
@@ -429,7 +429,7 @@ export default function AIChatOverlay() {
                         <h4 className="text-[9px] font-black uppercase tracking-wider text-amber-500/80 mb-0.5">
                           Critical Bottleneck
                         </h4>
-                        <p className="text-xs font- leading-relaxed">
+                        <p className="text-xs font-semibold leading-relaxed">
                           {summary.bottleneck}
                         </p>
                       </div>
@@ -448,7 +448,7 @@ export default function AIChatOverlay() {
                           }`}>
                           Priority Strategist Action
                         </h4>
-                        <p className="text-xs fontsemibold leading-relaxed">
+                        <p className="text-xs font-semibold leading-relaxed">
                           {summary.action}
                         </p>
                       </div>
@@ -580,7 +580,7 @@ export default function AIChatOverlay() {
                   key={i}
                   onClick={() => handlePillClick(prompt)}
                   disabled={chatLoading}
-                  className={`px-3 py-1 rounded-full text-xs fontsemibold border transition-all duration-200 active:scale-95 leading-none shrink-0 ${darkMode
+                  className={`px-3 py-1 rounded-full text-xs font-semibold border transition-all duration-200 active:scale-95 leading-none shrink-0 ${darkMode
                     ? 'bg-slate-850 border-slate-700 hover:border-indigo-500 text-slate-300 hover:text-white'
                     : 'bg-white border-slate-200 hover:border-indigo-500 text-slate-600 hover:text-indigo-600 shadow-sm'
                     }`}

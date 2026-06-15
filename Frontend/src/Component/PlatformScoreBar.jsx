@@ -63,7 +63,7 @@ const PlatformScoreBar = ({ platforms, darkMode, platformKey = null, singleCard 
                 <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-2">
                         <span style={{ color: plat.color }}>{plat.icon}</span>
-                        <span className={`text-[11px] fontsemibold uppercase tracking-wider ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
+                        <span className={`text-[11px] font-semibold uppercase tracking-wider ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
                             {plat.name} Analysis
                         </span>
                     </div>
@@ -72,10 +72,10 @@ const PlatformScoreBar = ({ platforms, darkMode, platformKey = null, singleCard 
 
                 <div className="text-right">
                     <div className="flex items-baseline justify-end gap-1">
-                        <span className={`text-4xl fontsemibold tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
+                        <span className={`text-4xl font-semibold tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
                             {plat.score}
                         </span>
-                        <span className="text-xs fontsemibold opacity-30">%</span>
+                        <span className="text-xs font-semibold opacity-30">%</span>
                     </div>
                 </div>
             </div>
@@ -89,7 +89,7 @@ const PlatformScoreBar = ({ platforms, darkMode, platformKey = null, singleCard 
             </div>
 
             {/* Insight Label */}
-            <div className={`px-3 py-1.5 rounded-lg w-fit text-[10px] fontsemibold uppercase tracking-widest border transition-colors ${plat.score >= 80 ? "bg-emerald-500/5 text-emerald-600 border-emerald-500/20" : plat.score >= 50 ? "bg-amber-500/5 text-amber-600 border-amber-500/20" : "bg-rose-500/5 text-rose-600 border-rose-500/20"}`}>
+            <div className={`px-3 py-1.5 rounded-lg w-fit text-[10px] font-semibold uppercase tracking-widest border transition-colors ${plat.score >= 80 ? "bg-emerald-500/5 text-emerald-600 border-emerald-500/20" : plat.score >= 50 ? "bg-amber-500/5 text-amber-600 border-amber-500/20" : "bg-rose-500/5 text-rose-600 border-rose-500/20"}`}>
                 Engine Rating: {plat.score >= 80 ? 'Optimized' : plat.score >= 50 ? 'Average' : 'Critical'}
             </div>
 
@@ -100,12 +100,12 @@ const PlatformScoreBar = ({ platforms, darkMode, platformKey = null, singleCard 
 
                 <div className="flex items-center gap-2 mb-3">
                     <Shield size={14} className={plat.score < 50 ? "text-rose-500" : "text-slate-400"} />
-                    <span className={`text-[10px] fontsemibold uppercase tracking-widest ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
+                    <span className={`text-[10px] font-semibold uppercase tracking-widest ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
                         Strategic Diagnostic
                     </span>
                 </div>
 
-                <p className={`text-sm font- leading-relaxed ${darkMode ? "text-slate-300" : "text-slate-700"}`}>
+                <p className={`text-sm font-semibold leading-relaxed ${darkMode ? "text-slate-300" : "text-slate-700"}`}>
                     {platforms[plat.key].reason}
                 </p>
             </div>
@@ -117,7 +117,7 @@ const PlatformScoreBar = ({ platforms, darkMode, platformKey = null, singleCard 
                     ? (darkMode ? "bg-slate-800 border-slate-700 text-white" : "bg-slate-100 border-slate-200 text-slate-900")
                     : (darkMode ? "bg-transparent border-slate-800 text-slate-400 hover:text-white" : "bg-transparent border-slate-100 text-slate-500 hover:text-slate-900")}`}
             >
-                <span className="text-[10px] fontsemibold uppercase tracking-widest">Technical Breakdown</span>
+                <span className="text-[10px] font-semibold uppercase tracking-widest">Technical Breakdown</span>
                 <ChevronRight size={14} className={`transition-transform duration-300 ${expandedPlatform === plat.key ? 'rotate-90' : ''}`} />
             </button>
 
@@ -126,7 +126,7 @@ const PlatformScoreBar = ({ platforms, darkMode, platformKey = null, singleCard 
                 <div className={`p-6 rounded-xl space-y-6 animate-in slide-in-from-top-2 duration-300 ${darkMode ? "bg-slate-950/50 border border-slate-800" : "bg-white border border-slate-200 shadow-inner"}`}>
                     <div className="flex items-center gap-2 opacity-40">
                         <BarChart3 size={12} />
-                        <span className="text-[9px] fontsemibold uppercase tracking-[0.2em]">Signal Distribution</span>
+                        <span className="text-[9px] font-semibold uppercase tracking-[0.2em]">Signal Distribution</span>
                     </div>
 
                     <div className="grid grid-cols-1 gap-6">
@@ -135,10 +135,10 @@ const PlatformScoreBar = ({ platforms, darkMode, platformKey = null, singleCard 
                             .map(([param, points]) => (
                                 <div key={param} className="space-y-2">
                                     <div className="flex items-center justify-between pointer-events-none">
-                                        <span className={`text-xs font- ${darkMode ? "text-slate-200" : "text-slate-700"}`}>
+                                        <span className={`text-xs font-semibold ${darkMode ? "text-slate-200" : "text-slate-700"}`}>
                                             {parameterLabels[param] || param}
                                         </span>
-                                        <span className={`text-[10px] fontsemibold ${points > 0 ? (darkMode ? "text-blue-400" : "text-blue-600") : "text-slate-500"}`}>
+                                        <span className={`text-[10px] font-semibold ${points > 0 ? (darkMode ? "text-blue-400" : "text-blue-600") : "text-slate-500"}`}>
                                             +{points} PTS
                                         </span>
                                     </div>

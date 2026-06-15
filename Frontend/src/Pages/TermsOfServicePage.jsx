@@ -29,7 +29,7 @@ export default function TermsOfServicePage() {
           <div className={`space-y-12 text-base md:text-lg leading-relaxed ${darkMode ? "text-slate-300" : "text-slate-700"}`}>
 
             <section className="space-y-4">
-              <h2 className="text-2xl fontsemibold flex items-center gap-3">
+              <h2 className="text-2xl font-semibold flex items-center gap-3">
                 <AlertCircle className="text-red-500" />
                 1. Prohibition of Abuse
               </h2>
@@ -38,7 +38,7 @@ export default function TermsOfServicePage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl fontsemibold flex items-center gap-3">
+              <h2 className="text-2xl font-semibold flex items-center gap-3">
                 <FileText className="text-blue-500" />
                 2. Imperfect Diagnostic Output
               </h2>
@@ -47,7 +47,7 @@ export default function TermsOfServicePage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl fontsemibold flex items-center gap-3">
+              <h2 className="text-2xl font-semibold flex items-center gap-3">
                 <ServerCrash className="text-purple-500" />
                 3. Service Level Modifications
               </h2>

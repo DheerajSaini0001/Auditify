@@ -227,8 +227,8 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
 
                         {/* Progress Bar */}
                         <div className="w-full space-y-2">
-                          <div className="flex justify-between text-xs fontsemibold uppercase tracking-widest opacity-70">
-                            <span className="text-emerald-500 fontsemibold">{stageInfo.message}</span>
+                          <div className="flex justify-between text-xs font-semibold uppercase tracking-widest opacity-70">
+                            <span className="text-emerald-500 font-semibold">{stageInfo.message}</span>
                             <span>{stageInfo.progress}%</span>
                           </div>
                           <div className="h-2 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
@@ -250,7 +250,7 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
                               </div>
                             </div>
                             <div className="space-y-3 max-w-md">
-                              <h3 className={`text-xl fontsemibold ${darkMode ? "text-white" : "text-slate-900"}`}>
+                              <h3 className={`text-xl font-semibold ${darkMode ? "text-white" : "text-slate-900"}`}>
                                 Dynamic Page Rendering
                               </h3>
                               <p className={`text-sm leading-relaxed ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
@@ -268,10 +268,10 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
                               </div>
                             </div>
                             <div className="space-y-4 max-w-md">
-                              <h3 className="text-xl fontsemibold text-emerald-600 dark:text-emerald-400">
+                              <h3 className="text-xl font-semibold text-emerald-600 dark:text-emerald-400">
                                 Visual Scan Verified
                               </h3>
-                              <div className="p-3 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 rounded-xl font- text-sm border border-emerald-500/20 shadow-sm animate-pulse">
+                              <div className="p-3 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 rounded-xl font-semibold text-sm border border-emerald-500/20 shadow-sm animate-pulse">
                                 ✅ Website loaded successfully — crawling this page
                               </div>
                               <p className={`text-xs md:text-sm leading-relaxed ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
@@ -292,7 +292,7 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
                             </div>
 
                             <div key={currentStepIndex} className="animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-3 max-w-md">
-                              <h3 className={`text-xl fontsemibold ${darkMode ? "text-white" : "text-slate-900"}`}>
+                              <h3 className={`text-xl font-semibold ${darkMode ? "text-white" : "text-slate-900"}`}>
                                 {auditSteps[currentStepIndex]?.title}
                               </h3>
                               <p className={`text-sm leading-relaxed ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
@@ -324,19 +324,19 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
                           <CircularProgress value={data.score?.toFixed(0) || 0} size={160} stroke={14} />
                           <div className="absolute inset-0 flex items-center justify-center flex-col gap-1">
                             <span className={`text-3xl font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>{data.score?.toFixed(0)}%</span>
-                            <span className={`text-xs fontsemibold uppercase tracking-widest ${darkMode ? "text-slate-500" : "text-slate-400"}`}>SCORE</span>
+                            <span className={`text-xs font-semibold uppercase tracking-widest ${darkMode ? "text-slate-500" : "text-slate-400"}`}>SCORE</span>
                           </div>
                         </div>
 
                         <div className="text-center sm:text-left space-y-4 max-w-lg">
                           <div>
-                            <h3 className={`text-3xl fontsemibold tracking-tight mb-3 ${darkMode ? "text-white" : "text-slate-900"}`}>Overall Health Score</h3>
+                            <h3 className={`text-3xl font-semibold tracking-tight mb-3 ${darkMode ? "text-white" : "text-slate-900"}`}>Overall Health Score</h3>
                             <p className={`text-sm md:text-base leading-relaxed ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
                               Aggregated score reflecting Core Web Vitals, SEO, and technical performance benchmarks.
                             </p>
                           </div>
 
-                          <div className={`inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full text-sm fontsemibold border shadow-sm ${gradeColor(data.grade)}`}>
+                          <div className={`inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full text-sm font-semibold border shadow-sm ${gradeColor(data.grade)}`}>
                             {["A+", "A", "B"].includes(data.grade) ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
                             Grade {data.grade || "-"}
                           </div>
@@ -359,7 +359,7 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
                               <Bot className="w-6 h-6" />
                             </div>
                             <div>
-                              <h4 className={`fontsemibold text-base mb-1 ${darkMode ? "text-white" : "text-slate-900"}`}>AIO & GEO Readiness</h4>
+                              <h4 className={`font-semibold text-base mb-1 ${darkMode ? "text-white" : "text-slate-900"}`}>AIO & GEO Readiness</h4>
                               <p className={`text-sm ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
                                 {data.aioCompatibilityBadge === "High"
                                   ? "Content is structure-optimized for AI engines (ChatGPT, Gemini) coverage."
@@ -369,7 +369,7 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
                           </div>
 
                           <div className="flex items-center gap-3">
-                            <span className={`text-lg fontsemibold ${data.aioCompatibilityBadge === "High" ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
+                            <span className={`text-lg font-semibold ${data.aioCompatibilityBadge === "High" ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
                               {data.aioCompatibilityBadge || "N/A"}
                             </span>
                             <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${darkMode ? "bg-slate-800 group-hover:bg-slate-700" : "bg-slate-100 group-hover:bg-slate-200"}`}>
@@ -411,8 +411,8 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
                     <div className="w-12 h-12 rounded-full bg-slate-800 dark:bg-white flex items-center justify-center mb-4 shadow-xl">
                       <Lock className="w-5 h-5 text-white dark:text-slate-900" />
                     </div>
-                    <h4 className={`fontsemibold text-lg mb-1 ${darkMode ? 'text-white' : 'text-slate-900'}`}>{name}</h4>
-                    <p className="text-sm fontsemibold text-emerald-600 dark:text-emerald-400">Sign up to unlock this report</p>
+                    <h4 className={`font-semibold text-lg mb-1 ${darkMode ? 'text-white' : 'text-slate-900'}`}>{name}</h4>
+                    <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">Sign up to unlock this report</p>
                   </div>
                 </div>
               ))}
@@ -432,7 +432,7 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
             <div className={`p-8 rounded-3xl border ${cardClass}`}>
               <div className="flex items-center justify-between mb-8">
                 <div>
-                  <h3 className={`text-2xl fontsemibold ${darkMode ? "text-white" : "text-slate-900"}`}>Category Performance</h3>
+                  <h3 className={`text-2xl font-semibold ${darkMode ? "text-white" : "text-slate-900"}`}>Category Performance</h3>
                   <p className={`text-sm mt-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Detailed analysis across key audit verticals</p>
                 </div>
               </div>
@@ -476,10 +476,10 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
                         </div>
                       </div>
 
-                      <h4 className={`text-base fontsemibold mb-1 ${darkMode ? "text-slate-200" : "text-slate-700"}`}>
+                      <h4 className={`text-base font-semibold mb-1 ${darkMode ? "text-slate-200" : "text-slate-700"}`}>
                         {item.name}
                       </h4>
-                      <span className={`text-xs fontsemibold uppercase tracking-wider ${statusColor}`}>
+                      <span className={`text-xs font-semibold uppercase tracking-wider ${statusColor}`}>
                         {statusText}
                       </span>
                     </button>

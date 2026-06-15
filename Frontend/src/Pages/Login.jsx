@@ -63,7 +63,7 @@ const Login = () => {
           <div className="w-16 h-16 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-blue-600/20">
             <LogIn className="text-white w-8 h-8" />
           </div>
-          <h1 className={`text-3xl fontsemibold mb-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>Welcome Back</h1>
+          <h1 className={`text-3xl font-semibold mb-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>Welcome Back</h1>
           <p className={darkMode ? 'text-gray-400' : 'text-slate-500'}>Sign in to your Dealer Pulse account</p>
         </header>
 
@@ -131,7 +131,7 @@ const Login = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font- rounded-2xl shadow-lg shadow-blue-600/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 group"
+              className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold rounded-2xl shadow-lg shadow-blue-600/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 group"
             >
               {loading ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -149,7 +149,7 @@ const Login = () => {
           <Link
             to="/register"
             state={{ from: location.state?.from }}
-            className={`font- transition-colors ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
+            className={`font-semibold transition-colors ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
           >
             Create Account
           </Link>

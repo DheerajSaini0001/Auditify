@@ -70,7 +70,7 @@ const CircularProgress = ({ score, size = 66, strokeWidth = 4, color = "#3b82f6"
           className="transition-all duration-700 ease-out"
         />
       </svg>
-      <div className={`absolute fontsemibold text-[15px] leading-none tracking-tight transition-colors duration-300 ${darkMode ? 'text-slate-100' : 'text-slate-800'}`}>
+      <div className={`absolute font-semibold text-[15px] leading-none tracking-tight transition-colors duration-300 ${darkMode ? 'text-slate-100' : 'text-slate-800'}`}>
         {score}
       </div>
     </div>
@@ -607,7 +607,7 @@ const DashboardPage = () => {
         <div className="relative" data-dropdown="create">
           <button
             onClick={() => setCreateDropdownOpen(!createDropdownOpen)}
-            className="w-full flex items-center justify-between px-4 py-2.5 bg-orange-600 hover:bg-orange-350 text-white rounded-xl fontsemibold text-sm transition-all shadow-md shadow-orange-600/10 active:scale-[0.98]"
+            className="w-full flex items-center justify-between px-4 py-2.5 bg-orange-600 hover:bg-orange-350 text-white rounded-xl font-semibold text-sm transition-all shadow-md shadow-orange-600/10 active:scale-[0.98]"
           >
             <div className="flex items-center gap-2">
               <Plus size={16} />
@@ -620,13 +620,13 @@ const DashboardPage = () => {
             <div className={`absolute top-full left-0 right-0 mt-1.5 rounded-xl shadow-xl z-50 py-1 animate-in fade-in slide-in-from-top-1 duration-150 border transition-all duration-300 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
               <button
                 onClick={() => { setCreateDropdownOpen(false); navigate("/dashboard/add-website"); }}
-                className={`w-full text-left px-4 py-2 text-xs fontsemibold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-50'}`}
               >
                 Add Google Search Console Site
               </button>
               <button
                 onClick={() => { setCreateDropdownOpen(false); navigate("/bulk-audit"); }}
-                className={`w-full text-left px-4 py-2 text-xs fontsemibold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-50'}`}
               >
                 Quick Manual Audit Page
               </button>
@@ -654,7 +654,7 @@ const DashboardPage = () => {
         <nav className="flex flex-col gap-1 mt-2">
           <button
             onClick={() => { setActiveTab("Overview"); setSidebarOpen(false); }}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs fontsemibold transition-all duration-300 border-none ${activeTab === "Overview"
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 border-none ${activeTab === "Overview"
               ? (darkMode ? 'bg-emerald-950/40 text-emerald-400' : 'bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 shadow-sm')
               : (darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50')
               }`}
@@ -667,7 +667,7 @@ const DashboardPage = () => {
 
           <button
             onClick={() => navigate("/audit-history")}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs fontsemibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
           >
             <FileText size={16} />
             <span>Report History</span>
@@ -676,7 +676,7 @@ const DashboardPage = () => {
 
           <button
             onClick={() => { setActiveTab("Starred"); setSidebarOpen(false); }}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs fontsemibold transition-all duration-300 ${activeTab === "Starred"
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${activeTab === "Starred"
               ? (darkMode ? 'bg-amber-950/40 text-amber-400' : 'bg-amber-50 text-amber-600 border border-amber-500/20 shadow-sm')
               : (darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50')
               }`}
@@ -694,7 +694,7 @@ const DashboardPage = () => {
           {(user?.role === 'admin' || user?.role === 'super_admin') && (
             <button
               onClick={() => navigate("/admin")}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs fontsemibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
             >
               <ShieldCheck size={16} className="text-blue-500 shrink-0" />
               <span>Admin Panel</span>
@@ -704,7 +704,7 @@ const DashboardPage = () => {
           {user?.role === 'super_admin' && (
             <button
               onClick={() => navigate("/admin/setup")}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs fontsemibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
             >
               <Settings size={16} className="text-indigo-500 shrink-0" />
               <span>System Setup</span>
@@ -715,7 +715,7 @@ const DashboardPage = () => {
 
           <button
             onClick={() => toggleTheme()}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs fontsemibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
           >
             <div className="flex items-center gap-3">
               {darkMode ? <Sun size={16} className="text-amber-400 shrink-0" /> : <Moon size={16} className="text-indigo-500 shrink-0" />}
@@ -737,12 +737,12 @@ const DashboardPage = () => {
             <Lock size={14} className={`transition-colors duration-300 ${darkMode ? 'fill-emerald-400/20 text-emerald-400' : 'fill-emerald-600/20 text-emerald-700'}`} />
             <span className="text-[11px] font-black uppercase tracking-wider">Unlock Advanced</span>
           </div>
-          <p className={`text-[10px] font- leading-relaxed transition-colors duration-300 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+          <p className={`text-[10px] font-semibold leading-relaxed transition-colors duration-300 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
             Get deeper insights, historical data, and AI-powered recommendations.
           </p>
           <button
             onClick={() => toast.success('Premium checkout is launching soon!')}
-            className="w-full py-2 bg-orange-600 hover:bg-orange-350 text-white rounded-xl fontsemibold text-xs shadow-md shadow-orange-600/10 transition-all active:scale-[0.98]"
+            className="w-full py-2 bg-orange-600 hover:bg-orange-350 text-white rounded-xl font-semibold text-xs shadow-md shadow-orange-600/10 transition-all active:scale-[0.98]"
           >
             Upgrade Now
           </button>
@@ -801,7 +801,7 @@ const DashboardPage = () => {
                 closeAllDropdowns();
                 setProtocolOpen(state);
               }}
-              className={`w-full h-11 px-4 flex items-center justify-between gap-2 text-xs fontsemibold transition-all duration-300 rounded-xl select-none ${darkMode ? 'bg-slate-850 hover:bg-slate-800 text-slate-200 border-none' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'
+              className={`w-full h-11 px-4 flex items-center justify-between gap-2 text-xs font-semibold transition-all duration-300 rounded-xl select-none ${darkMode ? 'bg-slate-850 hover:bg-slate-800 text-slate-200 border-none' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'
                 }`}
             >
               <span className="truncate">{protocol}</span>
@@ -814,7 +814,7 @@ const DashboardPage = () => {
                   <button
                     key={p}
                     onClick={() => { setProtocol(p); setProtocolOpen(false); }}
-                    className={`w-full text-left px-4 py-2.5 text-xs fontsemibold transition-colors duration-250 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-50 text-slate-700'} ${protocol === p ? (darkMode ? 'bg-slate-750 text-white' : 'bg-slate-100 text-slate-900') : ''}`}
+                    className={`w-full text-left px-4 py-2.5 text-xs font-semibold transition-colors duration-250 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-50 text-slate-700'} ${protocol === p ? (darkMode ? 'bg-slate-750 text-white' : 'bg-slate-100 text-slate-900') : ''}`}
                   >
                     {p}
                   </button>
@@ -843,7 +843,7 @@ const DashboardPage = () => {
                 closeAllDropdowns();
                 setDeviceOpen(state);
               }}
-              className={`w-full h-11 px-4 flex items-center justify-between gap-2 text-xs fontsemibold transition-all duration-300 rounded-xl select-none ${darkMode ? 'bg-slate-850 hover:bg-slate-800 text-slate-200 border-none' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'
+              className={`w-full h-11 px-4 flex items-center justify-between gap-2 text-xs font-semibold transition-all duration-300 rounded-xl select-none ${darkMode ? 'bg-slate-850 hover:bg-slate-800 text-slate-200 border-none' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'
                 }`}
             >
               <span className="truncate">{directDevice}</span>
@@ -856,7 +856,7 @@ const DashboardPage = () => {
                   <button
                     key={d}
                     onClick={() => { setDirectDevice(d); setDeviceOpen(false); }}
-                    className={`w-full text-left px-4 py-2.5 text-xs fontsemibold transition-colors duration-250 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-50 text-slate-700'} ${directDevice === d ? (darkMode ? 'bg-slate-750 text-white' : 'bg-slate-100 text-slate-900') : ''}`}
+                    className={`w-full text-left px-4 py-2.5 text-xs font-semibold transition-colors duration-250 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-50 text-slate-700'} ${directDevice === d ? (darkMode ? 'bg-slate-750 text-white' : 'bg-slate-100 text-slate-900') : ''}`}
                   >
                     {d}
                   </button>
@@ -873,7 +873,7 @@ const DashboardPage = () => {
                 closeAllDropdowns();
                 setReportOpen(state);
               }}
-              className={`w-full h-11 px-4 flex items-center justify-between gap-2 text-xs fontsemibold transition-all duration-300 rounded-xl select-none ${darkMode ? 'bg-slate-850 hover:bg-slate-800 text-slate-200 border-none' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'
+              className={`w-full h-11 px-4 flex items-center justify-between gap-2 text-xs font-semibold transition-all duration-300 rounded-xl select-none ${darkMode ? 'bg-slate-850 hover:bg-slate-800 text-slate-200 border-none' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'
                 }`}
             >
               <span className="truncate">
@@ -888,7 +888,7 @@ const DashboardPage = () => {
                   <button
                     key={opt.value}
                     onClick={() => { setDirectReport(opt.value); setReportOpen(false); }}
-                    className={`w-full text-left px-4 py-2 text-xs fontsemibold transition-colors duration-250 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-50 text-slate-700'} ${directReport === opt.value ? (darkMode ? 'bg-slate-750 text-white' : 'bg-slate-100 text-slate-900') : ''}`}
+                    className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors duration-250 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-50 text-slate-700'} ${directReport === opt.value ? (darkMode ? 'bg-slate-750 text-white' : 'bg-slate-100 text-slate-900') : ''}`}
                   >
                     {opt.label}
                   </button>
@@ -905,7 +905,7 @@ const DashboardPage = () => {
                 closeAllDropdowns();
                 setScopeOpen(state);
               }}
-              className={`w-full h-11 px-4 flex items-center justify-between gap-2 text-xs fontsemibold transition-all duration-300 rounded-xl select-none ${darkMode ? 'bg-slate-850 hover:bg-slate-800 text-slate-200 border-none' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'
+              className={`w-full h-11 px-4 flex items-center justify-between gap-2 text-xs font-semibold transition-all duration-300 rounded-xl select-none ${darkMode ? 'bg-slate-850 hover:bg-slate-800 text-slate-200 border-none' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'
                 }`}
             >
               <span className="truncate">{scope}</span>
@@ -918,7 +918,7 @@ const DashboardPage = () => {
                   <button
                     key={s}
                     onClick={() => { setScope(s); setScopeOpen(false); }}
-                    className={`w-full text-left px-4 py-2 text-xs fontsemibold transition-colors duration-250 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-50 text-slate-700'} ${scope === s ? (darkMode ? 'bg-slate-750 text-white' : 'bg-slate-100 text-slate-900') : ''}`}
+                    className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors duration-250 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-50 text-slate-700'} ${scope === s ? (darkMode ? 'bg-slate-750 text-white' : 'bg-slate-100 text-slate-900') : ''}`}
                   >
                     {s}
                   </button>
@@ -950,7 +950,7 @@ const DashboardPage = () => {
             {/* Mobile Sidebar Toggle Button */}
             <button
               onClick={() => setSidebarOpen(true)}
-              className={`md:hidden flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-xs fontsemibold transition-all duration-300 ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+              className={`md:hidden flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
             >
               <Menu size={14} />
               <span>Menu</span>
@@ -959,7 +959,7 @@ const DashboardPage = () => {
 
           {/* Right dropdown filters */}
           <div className="flex flex-wrap items-center gap-2">
-            <span className={`text-xs fontsemibold flex items-center gap-1 transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+            <span className={`text-xs font-semibold flex items-center gap-1 transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
               Metrics based on monthly volume <HelpCircle size={12} className="cursor-help" title="Based on average GSC and audit impressions" />
             </span>
 
@@ -967,7 +967,7 @@ const DashboardPage = () => {
             <div className="relative" data-dropdown="time">
               <button
                 onClick={() => setTimeDropdownOpen(!timeDropdownOpen)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-xs fontsemibold transition-all duration-300 ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800 hover:text-white' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900'}`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-xs font-semibold transition-all duration-300 ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800 hover:text-white' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900'}`}
               >
                 <History size={14} />
                 <span>{timeRange}</span>
@@ -979,7 +979,7 @@ const DashboardPage = () => {
                     <button
                       key={range}
                       onClick={() => { setTimeRange(range); setTimeDropdownOpen(false); }}
-                      className={`w-full text-left px-4 py-1.5 text-xs fontsemibold transition-colors duration-250 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-50 text-slate-700'} ${timeRange === range ? (darkMode ? 'bg-slate-700 text-white' : 'bg-slate-100 text-slate-900') : ''}`}
+                      className={`w-full text-left px-4 py-1.5 text-xs font-semibold transition-colors duration-250 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-50 text-slate-700'} ${timeRange === range ? (darkMode ? 'bg-slate-700 text-white' : 'bg-slate-100 text-slate-900') : ''}`}
                     >
                       {range}
                     </button>
@@ -992,7 +992,7 @@ const DashboardPage = () => {
             <div className="relative" data-dropdown="sort">
               <button
                 onClick={() => setSortDropdownOpen(!sortDropdownOpen)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-xs fontsemibold transition-all duration-300 ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800 hover:text-white' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900'}`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-xs font-semibold transition-all duration-300 ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800 hover:text-white' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900'}`}
               >
                 <Settings size={14} />
                 <span>{sortBy}</span>
@@ -1004,7 +1004,7 @@ const DashboardPage = () => {
                     <button
                       key={option}
                       onClick={() => { setSortBy(option); setSortDropdownOpen(false); }}
-                      className={`w-full text-left px-4 py-1.5 text-xs fontsemibold transition-colors duration-250 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-50 text-slate-700'} ${sortBy === option ? (darkMode ? 'bg-slate-700 text-white' : 'bg-slate-100 text-slate-900') : ''}`}
+                      className={`w-full text-left px-4 py-1.5 text-xs font-semibold transition-colors duration-250 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-50 text-slate-700'} ${sortBy === option ? (darkMode ? 'bg-slate-700 text-white' : 'bg-slate-100 text-slate-900') : ''}`}
                     >
                       {option}
                     </button>
@@ -1017,7 +1017,7 @@ const DashboardPage = () => {
             <button
               onClick={() => refresh(true)}
               disabled={loading}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs fontsemibold transition-all duration-300 active:scale-[0.98] disabled:opacity-50"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition-all duration-300 active:scale-[0.98] disabled:opacity-50"
               title="Force Sync with Backend"
             >
               <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
@@ -1032,7 +1032,7 @@ const DashboardPage = () => {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-4 py-1.5 rounded-lg text-xs fontsemibold transition-all border-none flex items-center gap-1.5 ${activeTab === tab
+              className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all border-none flex items-center gap-1.5 ${activeTab === tab
                 ? tab === "Starred"
                   ? (darkMode ? 'bg-amber-950/40 text-amber-400' : 'bg-amber-50 text-amber-600')
                   : (darkMode ? 'bg-emerald-950/40 text-emerald-400' : 'bg-emerald-50 text-emerald-600')
@@ -1055,7 +1055,7 @@ const DashboardPage = () => {
 
         {/* Sync status & loader if GSC syncing */}
         {syncing && (
-          <div className={`p-3 border rounded-xl flex items-center justify-center gap-2 text-xs fontsemibold animate-pulse animate-in fade-in duration-300 transition-colors duration-300 ${darkMode ? 'bg-emerald-950/20 border-emerald-900/30 text-emerald-400' : 'bg-emerald-50 border-emerald-100 text-emerald-700'}`}>
+          <div className={`p-3 border rounded-xl flex items-center justify-center gap-2 text-xs font-semibold animate-pulse animate-in fade-in duration-300 transition-colors duration-300 ${darkMode ? 'bg-emerald-950/20 border-emerald-900/30 text-emerald-400' : 'bg-emerald-50 border-emerald-100 text-emerald-700'}`}>
             <RefreshCw size={14} className="animate-spin" />
             <span>Synchronizing GSC properties with Google Search Console API...</span>
           </div>
@@ -1105,18 +1105,18 @@ const DashboardPage = () => {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 gap-3">
               <RefreshCw size={32} className="animate-spin text-emerald-500" />
-              <p className={`text-xs fontsemibold uppercase tracking-wider animate-pulse transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Syncing latest database records...</p>
+              <p className={`text-xs font-semibold uppercase tracking-wider animate-pulse transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Syncing latest database records...</p>
             </div>
           ) : (isApiSearching && apiSearchLoading) ? (
             <div className="flex flex-col items-center justify-center py-20 gap-3">
               <RefreshCw size={32} className="animate-spin text-emerald-500" />
-              <p className={`text-xs fontsemibold uppercase tracking-wider animate-pulse transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Searching projects on server...</p>
+              <p className={`text-xs font-semibold uppercase tracking-wider animate-pulse transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Searching projects on server...</p>
             </div>
           ) : displayProjects.length === 0 ? (
             <div className={`rounded-2xl p-12 text-center flex flex-col items-center justify-center gap-4 animate-in fade-in duration-300 transition-all duration-300 border ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
               <Globe size={40} className={`transition-colors duration-300 ${darkMode ? 'text-slate-600' : 'text-slate-300'}`} />
               <div>
-                <h3 className={`fontsemibold text-sm transition-colors duration-300 ${darkMode ? 'text-white' : 'text-slate-800'}`}>
+                <h3 className={`font-semibold text-sm transition-colors duration-300 ${darkMode ? 'text-white' : 'text-slate-800'}`}>
                   {isApiSearching ? 'No matching projects found' : 'No properties added yet'}
                 </h3>
                 <p className={`text-xs mt-1 transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
@@ -1126,7 +1126,7 @@ const DashboardPage = () => {
               {!isApiSearching && (
                 <button
                   onClick={() => navigate("/dashboard/add-website")}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl fontsemibold text-xs transition-all duration-300 active:scale-[0.98]"
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-xs transition-all duration-300 active:scale-[0.98]"
                 >
                   Add Website
                 </button>
@@ -1136,7 +1136,7 @@ const DashboardPage = () => {
             <div className={`rounded-2xl p-12 text-center flex flex-col items-center justify-center gap-4 animate-in fade-in duration-300 transition-all duration-300 border ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
               <Star size={40} className={`transition-colors duration-300 ${darkMode ? 'text-slate-600' : 'text-slate-300'}`} />
               <div>
-                <h3 className={`fontsemibold text-sm transition-colors duration-300 ${darkMode ? 'text-white' : 'text-slate-800'}`}>
+                <h3 className={`font-semibold text-sm transition-colors duration-300 ${darkMode ? 'text-white' : 'text-slate-800'}`}>
                   No starred websites yet
                 </h3>
                 <p className={`text-xs mt-1 transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
@@ -1145,7 +1145,7 @@ const DashboardPage = () => {
               </div>
               <button
                 onClick={() => setActiveTab("Overview")}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl fontsemibold text-xs transition-all duration-300 active:scale-[0.98]"
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-xs transition-all duration-300 active:scale-[0.98]"
               >
                 Browse All Projects
               </button>
@@ -1165,7 +1165,7 @@ const DashboardPage = () => {
                     {/* Left Block: Domain Brand & Badges */}
                     <div className="flex items-center gap-3">
                       {proj.hasBlackIcon ? (
-                        <div className="w-10 h-10 rounded-xl bg-black flex items-center justify-center text-white shrink-0 fontsemibold text-sm">
+                        <div className="w-10 h-10 rounded-xl bg-black flex items-center justify-center text-white shrink-0 font-semibold text-sm">
                           {/* Waveform graphic */}
                           <svg viewBox="0 0 100 100" className="w-5 h-5 fill-none stroke-emerald-400" strokeWidth="8" strokeLinecap="round">
                             <line x1="20" y1="50" x2="20" y2="80" />
@@ -1175,7 +1175,7 @@ const DashboardPage = () => {
                           </svg>
                         </div>
                       ) : (
-                        <div className={`w-10 h-10 rounded-xl border overflow-hidden flex items-center justify-center fontsemibold shrink-0 text-sm transition-all duration-300 ${darkMode ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-slate-50 border-slate-100 text-slate-400'}`}>
+                        <div className={`w-10 h-10 rounded-xl border overflow-hidden flex items-center justify-center font-semibold shrink-0 text-sm transition-all duration-300 ${darkMode ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-slate-50 border-slate-100 text-slate-400'}`}>
                           <img
                             src={`https://www.google.com/s2/favicons?sz=128&domain=${proj.url}`}
                             alt={proj.url}
@@ -1196,14 +1196,14 @@ const DashboardPage = () => {
 
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className={`fontsemibold text-[15px] truncate max-w-xs leading-tight transition-colors duration-300 ${darkMode ? 'text-white' : 'text-slate-800'}`}>
+                          <span className={`font-semibold text-[15px] truncate max-w-xs leading-tight transition-colors duration-300 ${darkMode ? 'text-white' : 'text-slate-800'}`}>
                             {proj.url}
                           </span>
                           {proj.verified && (
                             <CheckCircle size={14} className="text-emerald-500 fill-emerald-100/50 shrink-0" />
                           )}
                         </div>
-                        <div className={`flex items-center gap-1 mt-0.5 text-[11px] fontsemibold truncate cursor-pointer transition-colors duration-300 ${darkMode ? 'text-slate-500 hover:text-slate-300' : 'text-slate-450 hover:text-slate-700'}`}>
+                        <div className={`flex items-center gap-1 mt-0.5 text-[11px] font-semibold truncate cursor-pointer transition-colors duration-300 ${darkMode ? 'text-slate-500 hover:text-slate-300' : 'text-slate-450 hover:text-slate-700'}`}>
                           <span>{proj.subtext}</span>
                           <ChevronDown size={10} />
                         </div>
@@ -1292,7 +1292,7 @@ const DashboardPage = () => {
                                 setActiveMenuId(null);
                                 navigate(`/bulk-audit?url=https://${proj.url}&auto=true`);
                               }}
-                              className={`w-full text-left px-4 py-2 text-xs fontsemibold flex items-center gap-2 transition-colors duration-200 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-50 text-slate-700'}`}
+                              className={`w-full text-left px-4 py-2 text-xs font-semibold flex items-center gap-2 transition-colors duration-200 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-50 text-slate-700'}`}
                             >
                               <Zap size={12} className="text-emerald-500" />
                               <span>Re-Audit Website</span>
@@ -1302,7 +1302,7 @@ const DashboardPage = () => {
                                 setActiveMenuId(null);
                                 navigate(`/bulk-audit?url=https://${proj.url}&auto=true`);
                               }}
-                              className={`w-full text-left px-4 py-2 text-xs fontsemibold flex items-center gap-2 transition-colors duration-200 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-50 text-slate-700'}`}
+                              className={`w-full text-left px-4 py-2 text-xs font-semibold flex items-center gap-2 transition-colors duration-200 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-50 text-slate-700'}`}
                             >
                               <History size={12} className="text-indigo-500" />
                               <span>Run Bulk Audit</span>
@@ -1314,7 +1314,7 @@ const DashboardPage = () => {
                                 setActiveMenuId(null);
                                 handleDelete(proj._id, proj.url);
                               }}
-                              className={`w-full text-left px-4 py-2 text-xs fontsemibold flex items-center gap-2 transition-colors duration-200 ${darkMode ? 'hover:bg-rose-950/20 text-rose-500' : 'hover:bg-rose-50 text-rose-600'}`}
+                              className={`w-full text-left px-4 py-2 text-xs font-semibold flex items-center gap-2 transition-colors duration-200 ${darkMode ? 'hover:bg-rose-950/20 text-rose-500' : 'hover:bg-rose-50 text-rose-600'}`}
                             >
                               <Trash2 size={12} />
                               <span>Delete Property</span>
@@ -1337,7 +1337,7 @@ const DashboardPage = () => {
                         <span className={`text-[11px] font-black uppercase tracking-wide mt-3 transition-colors duration-300 ${darkMode ? 'text-slate-400 group-hover:text-white' : 'text-slate-500 group-hover:text-slate-800'}`}>
                           Performance
                         </span>
-                        <div className={`flex items-center gap-1 mt-1 text-[10px] fontsemibold transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                        <div className={`flex items-center gap-1 mt-1 text-[10px] font-semibold transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${getRatingInfo(scores.performance, 'performance').dotColor}`} />
                           <span>{getRatingInfo(scores.performance, 'performance').label}</span>
                         </div>
@@ -1352,7 +1352,7 @@ const DashboardPage = () => {
                         <span className={`text-[11px] font-black uppercase tracking-wide mt-3 transition-colors duration-300 ${darkMode ? 'text-slate-400 group-hover:text-white' : 'text-slate-500 group-hover:text-slate-800'}`}>
                           SEO Score
                         </span>
-                        <div className={`flex items-center gap-1 mt-1 text-[10px] fontsemibold transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                        <div className={`flex items-center gap-1 mt-1 text-[10px] font-semibold transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${getRatingInfo(scores.seo, 'seo').dotColor}`} />
                           <span>{getRatingInfo(scores.seo, 'seo').label}</span>
                         </div>
@@ -1367,7 +1367,7 @@ const DashboardPage = () => {
                         <span className={`text-[11px] font-black uppercase tracking-wide mt-3 transition-colors duration-300 ${darkMode ? 'text-slate-400 group-hover:text-white' : 'text-slate-500 group-hover:text-slate-800'}`}>
                           Accessibility
                         </span>
-                        <div className={`flex items-center gap-1 mt-1 text-[10px] fontsemibold transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                        <div className={`flex items-center gap-1 mt-1 text-[10px] font-semibold transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${getRatingInfo(scores.accessibility, 'accessibility').dotColor}`} />
                           <span>{getRatingInfo(scores.accessibility, 'accessibility').label}</span>
                         </div>
@@ -1382,7 +1382,7 @@ const DashboardPage = () => {
                         <span className={`text-[11px] font-black uppercase tracking-wide mt-3 transition-colors duration-300 ${darkMode ? 'text-slate-400 group-hover:text-white' : 'text-slate-500 group-hover:text-slate-800'}`}>
                           Security
                         </span>
-                        <div className={`flex items-center gap-1 mt-1 text-[10px] fontsemibold transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                        <div className={`flex items-center gap-1 mt-1 text-[10px] font-semibold transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${getRatingInfo(scores.security, 'security').dotColor}`} />
                           <span>{getRatingInfo(scores.security, 'security').label}</span>
                         </div>
@@ -1397,7 +1397,7 @@ const DashboardPage = () => {
                         <span className={`text-[11px] font-black uppercase tracking-wide mt-3 transition-colors duration-300 ${darkMode ? 'text-slate-400 group-hover:text-white' : 'text-slate-500 group-hover:text-slate-800'}`}>
                           On-Page SEO
                         </span>
-                        <div className={`flex items-center gap-1 mt-1 text-[10px] fontsemibold transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                        <div className={`flex items-center gap-1 mt-1 text-[10px] font-semibold transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${getRatingInfo(scores.onPage, 'onPage').dotColor}`} />
                           <span>{getRatingInfo(scores.onPage, 'onPage').label}</span>
                         </div>
@@ -1412,7 +1412,7 @@ const DashboardPage = () => {
                         <span className={`text-[11px] font-black uppercase tracking-wide mt-3 transition-colors duration-300 ${darkMode ? 'text-slate-400 group-hover:text-white' : 'text-slate-500 group-hover:text-slate-800'}`}>
                           Conversion
                         </span>
-                        <div className={`flex items-center gap-1 mt-1 text-[10px] fontsemibold transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                        <div className={`flex items-center gap-1 mt-1 text-[10px] font-semibold transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${getRatingInfo(scores.conversion, 'conversion').dotColor}`} />
                           <span>{getRatingInfo(scores.conversion, 'conversion').label}</span>
                         </div>
@@ -1427,7 +1427,7 @@ const DashboardPage = () => {
                         <span className={`text-[11px] font-black uppercase tracking-wide mt-3 transition-colors duration-300 ${darkMode ? 'text-slate-400 group-hover:text-white' : 'text-slate-500 group-hover:text-slate-800'}`}>
                           AI Readiness
                         </span>
-                        <div className={`flex items-center gap-1 mt-1 text-[10px] fontsemibold transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                        <div className={`flex items-center gap-1 mt-1 text-[10px] font-semibold transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${getRatingInfo(scores.aiReadiness, 'aiReadiness').dotColor}`} />
                           <span>{getRatingInfo(scores.aiReadiness, 'aiReadiness').label}</span>
                         </div>
@@ -1439,8 +1439,8 @@ const DashboardPage = () => {
                       <div className="flex items-center gap-4">
                         <RefreshCw size={24} className="animate-spin text-amber-500" />
                         <div className="text-left">
-                          <h4 className={`text-sm fontsemibold transition-colors duration-300 ${darkMode ? 'text-white' : 'text-slate-800'}`}>Auditing in progress...</h4>
-                          <p className={`text-[11px] font- mt-0.5 leading-relaxed transition-colors duration-300 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Re-scanned audit metrics are being compiled by the analysis engine. Please wait.</p>
+                          <h4 className={`text-sm font-semibold transition-colors duration-300 ${darkMode ? 'text-white' : 'text-slate-800'}`}>Auditing in progress...</h4>
+                          <p className={`text-[11px] font-semibold mt-0.5 leading-relaxed transition-colors duration-300 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Re-scanned audit metrics are being compiled by the analysis engine. Please wait.</p>
                         </div>
                       </div>
                     </div>
@@ -1452,8 +1452,8 @@ const DashboardPage = () => {
                           <AlertCircle size={20} className="text-rose-500" />
                         </div>
                         <div className="text-left">
-                          <h4 className={`text-[13px] fontsemibold transition-colors duration-300 ${darkMode ? 'text-white' : 'text-slate-800'}`}>Audit Failed</h4>
-                          <p className={`text-[11px] font- mt-0.5 leading-relaxed transition-colors duration-300 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>The crawler or analysis engine encountered an error. Click below to try running it again.</p>
+                          <h4 className={`text-[13px] font-semibold transition-colors duration-300 ${darkMode ? 'text-white' : 'text-slate-800'}`}>Audit Failed</h4>
+                          <p className={`text-[11px] font-semibold mt-0.5 leading-relaxed transition-colors duration-300 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>The crawler or analysis engine encountered an error. Click below to try running it again.</p>
                         </div>
                       </div>
 
@@ -1461,10 +1461,10 @@ const DashboardPage = () => {
                       <div className={`flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1 border-t border-rose-500/10`}>
                         <button
                           onClick={() => handleSingleAudit(proj._id, proj.url)}
-                          className={`flex items-center justify-center gap-2 flex-1 px-4 py-2.5 rounded-xl text-xs fontsemibold transition-all duration-300 active:scale-[0.98] border ${darkMode ? 'bg-slate-800 border-slate-700 text-rose-455 hover:bg-slate-700 hover:border-rose-700/50' : 'bg-white border-slate-200 text-rose-700 hover:bg-rose-50 hover:border-rose-200'}`}
+                          className={`flex items-center justify-center gap-2 flex-1 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all duration-300 active:scale-[0.98] border ${darkMode ? 'bg-slate-800 border-slate-700 text-rose-455 hover:bg-slate-700 hover:border-rose-700/50' : 'bg-white border-slate-200 text-rose-700 hover:bg-rose-50 hover:border-rose-200'}`}
                         >
                           <Zap size={13} className="text-rose-500" />
-                          <div className="text-left fontsemibold">Re-Run Audit</div>
+                          <div className="text-left font-semibold">Re-Run Audit</div>
                         </button>
                       </div>
                     </div>
@@ -1473,8 +1473,8 @@ const DashboardPage = () => {
                       <div className="flex items-center gap-4">
                         <AlertCircle size={24} className="text-slate-500 animate-bounce" />
                         <div className="text-left">
-                          <h4 className={`text-sm fontsemibold transition-colors duration-300 ${darkMode ? 'text-white' : 'text-slate-800'}`}>Connection Lost</h4>
-                          <p className={`text-[11px] font- mt-0.5 leading-relaxed transition-colors duration-300 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Network error during status check. Retrying to connect in 5 seconds...</p>
+                          <h4 className={`text-sm font-semibold transition-colors duration-300 ${darkMode ? 'text-white' : 'text-slate-800'}`}>Connection Lost</h4>
+                          <p className={`text-[11px] font-semibold mt-0.5 leading-relaxed transition-colors duration-300 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Network error during status check. Retrying to connect in 5 seconds...</p>
                         </div>
                       </div>
                     </div>
@@ -1486,8 +1486,8 @@ const DashboardPage = () => {
                           <Sparkles size={20} className={darkMode ? 'text-emerald-400' : 'text-emerald-600'} />
                         </div>
                         <div className="text-left">
-                          <h4 className={`text-[13px] fontsemibold transition-colors duration-300 ${darkMode ? 'text-white' : 'text-slate-800'}`}>No Audit Data Available</h4>
-                          <p className={`text-[11px] font- mt-0.5 leading-relaxed transition-colors duration-300 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Choose how you want to audit this property — run a quick single-page audit or a full site bulk audit.</p>
+                          <h4 className={`text-[13px] font-semibold transition-colors duration-300 ${darkMode ? 'text-white' : 'text-slate-800'}`}>No Audit Data Available</h4>
+                          <p className={`text-[11px] font-semibold mt-0.5 leading-relaxed transition-colors duration-300 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Choose how you want to audit this property — run a quick single-page audit or a full site bulk audit.</p>
                         </div>
                       </div>
 
@@ -1497,7 +1497,7 @@ const DashboardPage = () => {
                         <button
                           onClick={() => handleSingleAudit(proj._id, proj.url)}
                           disabled={!!auditingProjectId}
-                          className={`flex items-center justify-center gap-2 flex-1 px-4 py-2.5 rounded-xl text-xs fontsemibold transition-all duration-300 active:scale-[0.98] border disabled:opacity-60 disabled:cursor-wait ${darkMode ? 'bg-slate-800 border-slate-700 text-emerald-400 hover:bg-slate-700 hover:border-emerald-700/50' : 'bg-white border-slate-200 text-emerald-705 hover:bg-emerald-50 hover:border-emerald-200'}`}
+                          className={`flex items-center justify-center gap-2 flex-1 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all duration-300 active:scale-[0.98] border disabled:opacity-60 disabled:cursor-wait ${darkMode ? 'bg-slate-800 border-slate-700 text-emerald-400 hover:bg-slate-700 hover:border-emerald-700/50' : 'bg-white border-slate-200 text-emerald-705 hover:bg-emerald-50 hover:border-emerald-200'}`}
                         >
                           {auditingProjectId === proj._id ? (
                             <RefreshCw size={13} className="animate-spin" />
@@ -1505,10 +1505,10 @@ const DashboardPage = () => {
                             <Zap size={13} className={darkMode ? 'text-emerald-400' : 'text-emerald-650'} />
                           )}
                           <div className="text-left">
-                            <div className="fontsemibold">
+                            <div className="font-semibold">
                               {auditingProjectId === proj._id ? 'Auditing...' : 'Run Single Audit'}
                             </div>
-                            <div className={`text-[9px] font- uppercase tracking-wider ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                            <div className={`text-[9px] font-semibold uppercase tracking-wider ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
                               {auditingProjectId === proj._id ? 'Please wait' : 'Homepage only · Fast'}
                             </div>
                           </div>
@@ -1517,12 +1517,12 @@ const DashboardPage = () => {
                         {/* Bulk Audit */}
                         <button
                           onClick={() => navigate(`/bulk-audit?url=https://${proj.url}&auto=true`)}
-                          className="flex items-center justify-center gap-2 flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs fontsemibold transition-all duration-300 active:scale-[0.98] shadow-md shadow-emerald-600/10"
+                          className="flex items-center justify-center gap-2 flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold transition-all duration-300 active:scale-[0.98] shadow-md shadow-emerald-600/10"
                         >
                           <History size={13} className="fill-emerald-100/20" />
                           <div className="text-left">
-                            <div className="fontsemibold">Run Bulk Audit</div>
-                            <div className="text-[9px] font- uppercase tracking-wider text-emerald-200">All pages · Comprehensive</div>
+                            <div className="font-semibold">Run Bulk Audit</div>
+                            <div className="text-[9px] font-semibold uppercase tracking-wider text-emerald-200">All pages · Comprehensive</div>
                           </div>
                         </button>
                       </div>

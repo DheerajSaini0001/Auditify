@@ -34,14 +34,14 @@ export default function CookiesPolicyPage() {
           <div className="p-12 md:p-16 space-y-12">
 
             <div className="space-y-4">
-              <h3 className="text-xl fontsemibold flex items-center gap-2"><Zap className="text-teal-500 w-5 h-5" /> Required Auth Tokens</h3>
+              <h3 className="text-xl font-semibold flex items-center gap-2"><Zap className="text-teal-500 w-5 h-5" /> Required Auth Tokens</h3>
               <p className={`leading-relaxed ${darkMode ? "text-slate-300" : "text-slate-600"}`}>
                 Session integrity leans heavily on HTTP-Only configured cookies. Upon OAuth culmination or standard local authorization, our backend plants an encrypted Json Web Token. Without this localized state artifact, routing through protected dashboard layers collapses entirely. It is fundamentally mandatory for platform operation.
               </p>
             </div>
 
             <div className="space-y-4">
-              <h3 className="text-xl fontsemibold flex items-center gap-2"><ShieldAlert className="text-teal-500 w-5 h-5" /> Diagnostic Telemetry</h3>
+              <h3 className="text-xl font-semibold flex items-center gap-2"><ShieldAlert className="text-teal-500 w-5 h-5" /> Diagnostic Telemetry</h3>
               <p className={`leading-relaxed ${darkMode ? "text-slate-300" : "text-slate-600"}`}>
                 Engineers require real-world metrics to solve crashes. Anomalous frontend javascript exceptions, combined with API latency reports, are funneled out using completely anonymized storage identifiers. We are not feeding your behavioral metrics into an ad-exchange marketplace.
               </p>

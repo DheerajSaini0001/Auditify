@@ -31,7 +31,7 @@ export default function ContactPage() {
 
           <div className="flex-1 space-y-10">
             <div>
-              <h2 className="text-3xl fontsemibold mb-4">Direct Channels</h2>
+              <h2 className="text-3xl font-semibold mb-4">Direct Channels</h2>
               <p className={darkMode ? "text-slate-400" : "text-slate-600"}>We operate synchronously in UTC+5:30. Inquiries are generally processed within 24 hours.</p>
             </div>
 
@@ -41,7 +41,7 @@ export default function ContactPage() {
                   <Mail size={20} />
                 </div>
                 <div>
-                  <div className="fontsemibold">Email Us</div>
+                  <div className="font-semibold">Email Us</div>
                   <a href="mailto:support@sltechsoft.com" className={`text-sm ${darkMode ? "text-slate-400 hover:text-emerald-400" : "text-slate-600 hover:text-emerald-600"}`}>support@sltechsoft.com</a>
                 </div>
               </div>
@@ -51,7 +51,7 @@ export default function ContactPage() {
                   <Phone size={20} />
                 </div>
                 <div>
-                  <div className="fontsemibold">Enterprise Line</div>
+                  <div className="font-semibold">Enterprise Line</div>
                   <div className={`text-sm ${darkMode ? "text-slate-400" : "text-slate-600"}`}>+91 XX-XXXX-XXXX (SLA Holders Only)</div>
                 </div>
               </div>
@@ -61,7 +61,7 @@ export default function ContactPage() {
                   <MapPin size={20} />
                 </div>
                 <div>
-                  <div className="fontsemibold">Headquarters</div>
+                  <div className="font-semibold">Headquarters</div>
                   <div className={`text-sm ${darkMode ? "text-slate-400" : "text-slate-600"}`}>Success Ladder Technologies, India</div>
                 </div>
               </div>
@@ -91,17 +91,17 @@ export default function ContactPage() {
           </div>
 
           <div className={`flex-1 rounded-3xl p-8 mt-12 md:mt-0 ${darkMode ? "bg-[#060B14] border border-slate-800" : "bg-slate-50 border border-slate-200"}`}>
-            <h3 className="text-2xl fontsemibold mb-6">Send a message</h3>
+            <h3 className="text-2xl font-semibold mb-6">Send a message</h3>
             <form className="space-y-4" onSubmit={e => e.preventDefault()}>
               <div>
-                <label className={`block text-xs fontsemibold mb-2 uppercase tracking-wide ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Email Address</label>
+                <label className={`block text-xs font-semibold mb-2 uppercase tracking-wide ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Email Address</label>
                 <input type="email" placeholder="you@company.com" className={`w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${darkMode ? "bg-slate-900 border-slate-700 text-white" : "bg-white border-slate-300"}`} />
               </div>
               <div>
-                <label className={`block text-xs fontsemibold mb-2 uppercase tracking-wide ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Message</label>
+                <label className={`block text-xs font-semibold mb-2 uppercase tracking-wide ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Message</label>
                 <textarea rows="4" placeholder="How can we assist you?" className={`w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all resize-none ${darkMode ? "bg-slate-900 border-slate-700 text-white" : "bg-white border-slate-300"}`}></textarea>
               </div>
-              <button disabled className="w-full py-4 rounded-xl bg-blue-500 hover:bg-blue-600 transition-colors text-white fontsemibold opacity-80 cursor-not-allowed">
+              <button disabled className="w-full py-4 rounded-xl bg-blue-500 hover:bg-blue-600 transition-colors text-white font-semibold opacity-80 cursor-not-allowed">
                 Transmission Offline (Demo)
               </button>
             </form>

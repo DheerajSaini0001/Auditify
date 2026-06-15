@@ -4,10 +4,14 @@ import ActivityLog from "../models/ActivityLog.js";
 import { chromium } from "playwright";
 import auditStore from "../utils/auditStore.js";
 import logger from "../utils/logger.js";
+import { DEALER_PARAMS } from "../config/parameterAudience.js";
 
 export const generatePDFReport = async (req, res) => {
   try {
     const { id } = req.params;
+    // 👥 Audience mode: 'dealer' → dealer-relevant params only; anything else → full report.
+    const mode = req.query.mode === "dealer" ? "dealer" : "developer";
+    const isDealer = mode === "dealer";
     let report;
 
     // Handle Virtual ID for Bulk Audit Pages (format: bulkAuditId_base64Url)
@@ -84,6 +88,11 @@ export const generatePDFReport = async (req, res) => {
     ];
 
     let dynamicContent = "";
+    let sectionNum = 0;
+
+    // Skip top-level non-metric keys, and (in dealer mode) any param outside DEALER_PARAMS.
+    const SKIP_KEYS = ['Percentage', 'Section_Score', 'score', 'grade'];
+    const isMetricVisible = (mKey) => !SKIP_KEYS.includes(mKey) && (!isDealer || DEALER_PARAMS.has(mKey));
 
     // Escape any value that ends up in the PDF HTML. Report fields derive from
     // the scanned site's content (recommendations, causes, details) and the
@@ -101,13 +110,18 @@ export const generatePDFReport = async (req, res) => {
         return escapeHtml(String(val || 'N/A'));
     }
 
-    sections.forEach((sec, sIdx) => {
+    sections.forEach((sec) => {
         const data = report[sec.key];
         if (data && typeof data === 'object') {
-            dynamicContent += `<div class="page-break"></div><h2 class="section-main-title">Section ${sIdx + 1}: ${sec.title}</h2>`;
-            
+            // In dealer mode, skip a whole section that has no dealer-relevant params.
+            const hasVisible = Object.keys(data).some(isMetricVisible);
+            if (!hasVisible) return;
+
+            sectionNum += 1;
+            dynamicContent += `<div class="page-break"></div><h2 class="section-main-title">Section ${sectionNum}: ${sec.title}</h2>`;
+
             Object.entries(data).forEach(([mKey, mVal]) => {
-                if (['Percentage', 'Section_Score', 'score', 'grade'].includes(mKey)) return;
+                if (!isMetricVisible(mKey)) return;
 
                 const processMetric = (metric, subName = "") => {
                    if (!metric || typeof metric !== 'object' || Array.isArray(metric)) return;
@@ -425,7 +439,7 @@ export const generatePDFReport = async (req, res) => {
             <div class="url-info">
                 <h1>${escapeHtml(report.url)}</h1>
                 <p>Audit Date: ${new Date(report.createdAt).toLocaleDateString()}</p>
-                <p>Device: ${escapeHtml(report.device)} | Report Type: ${escapeHtml(report.report)}</p>
+                <p>Device: ${escapeHtml(report.device)} | Report Type: ${escapeHtml(report.report)} | View: ${isDealer ? "Dealer" : "Developer"}</p>
             </div>
         </div>
 
@@ -528,7 +542,7 @@ export const generatePDFReport = async (req, res) => {
     res.contentType("application/pdf");
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename=Dealer Pulse-Report-${report.url.replace(/[^a-z0-9]/gi, "-")}.pdf`
+      `attachment; filename=Dealer Pulse-Report-${report.url.replace(/[^a-z0-9]/gi, "-")}-${mode}.pdf`
     );
 
     // Activity Log for analytics (Admin Dashboard)

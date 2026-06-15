@@ -62,7 +62,7 @@ export default function ServicesPage() {
                 <div className={`w-14 h-14 rounded-2xl bg-${item.color}-500/10 flex items-center justify-center text-${item.color}-500 mb-6 border border-${item.color}-500/20`}>
                   {item.icon}
                 </div>
-                <h3 className="text-2xl fontsemibold mb-4">{item.title}</h3>
+                <h3 className="text-2xl font-semibold mb-4">{item.title}</h3>
                 <p className={`leading-relaxed ${darkMode ? "text-slate-300" : "text-slate-600"}`}>
                   {item.desc}
                 </p>

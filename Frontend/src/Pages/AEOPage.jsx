@@ -5,7 +5,17 @@ import AEORecommendations from '../Component/AEORecommendations';
 import PlatformScoreBar from '../Component/PlatformScoreBar';
 import LivePreview from '../Component/LivePreview';
 import { useAuth } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
+import { isVisibleForAudience } from '../config/parameterAudience';
 import { Lock } from 'lucide-react';
+
+// AEO "Core Signal Breakdown" signal keys (must match the AEOSignalCard `signal` props).
+const AEO_SIGNAL_KEYS = [
+    "aeoSchema", "botAccess", "markdownHeaders", "llmsTxt", "structuredContent",
+    "citations", "indexCoverage", "entityRecognition", "brandEntityStrength",
+    "citationConsistency", "topicalAuthority", "experienceSignals",
+    "expertiseSignals", "authoritySignals",
+];
 import { useNavigate } from 'react-router-dom';
 import { savePostAuthIntent } from '../utils/intentStore';
 
@@ -24,7 +34,12 @@ const SignalSkeleton = ({ darkMode, title }) => (
 
 const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
     const { isAuthenticated } = useAuth();
+    const { audienceMode } = useData();
     const navigate = useNavigate();
+
+    // AEO signals are developer-only by default — hide the whole breakdown in Dealer mode
+    // (per-signal classification still honored via isVisibleForAudience).
+    const showSignalBreakdown = AEO_SIGNAL_KEYS.some((s) => isVisibleForAudience(s, audienceMode));
 
     const auditId = auditData?._id;
     const intendedPath = auditId ? `/report/${auditId}` : null;
@@ -124,13 +139,13 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
                                     <div className="text-[3.5rem] font-black text-emerald-500 leading-none tracking-tighter mb-2">
                                         {auditData.aioReadiness.Percentage}%
                                     </div>
-                                    <div className="text-[10px] uppercase fontsemibold tracking-widest text-slate-500 mb-6">
+                                    <div className="text-[10px] uppercase font-semibold tracking-widest text-slate-500 mb-6">
                                         Initial AIO Score
                                     </div>
                                 </div>
                             )}
                             <div className={`animate-spin rounded-full h-12 w-12 border-b-2 mb-6 ${darkMode ? "border-indigo-400" : "border-indigo-600"}`}></div>
-                            <h3 className={`text-xl fontsemibold ${darkMode ? "text-slate-200" : "text-gray-700"}`}>AEO Engine Analyzing...</h3>
+                            <h3 className={`text-xl font-semibold ${darkMode ? "text-slate-200" : "text-gray-700"}`}>AEO Engine Analyzing...</h3>
                             <p className={`text-sm mt-2 text-center max-w-sm ${darkMode ? "text-slate-500" : "text-gray-400"}`}>{streamStatus || "Generating Answer Engine Optimization scores across Gemini, ChatGPT, and Perplexity AI."}</p>
                         </div>
                     </div>
@@ -155,7 +170,7 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
 
                 {/* Right Column: AEO Score Section */}
                 <div className={`w-full ${hideScreenshot ? "max-w-3xl" : "xl:w-[55%]"} flex flex-col items-center justify-center`}>
-                    <h2 className={`text-[1.35rem] fontsemibold mb-10 tracking-tight ${darkMode ? "text-slate-100" : "text-gray-900"}`}>
+                    <h2 className={`text-[1.35rem] font-semibold mb-10 tracking-tight ${darkMode ? "text-slate-100" : "text-gray-900"}`}>
                         AI Engine Visibility
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-3xl">
@@ -168,7 +183,7 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
                         ) : (
                             <div className="col-span-3 flex flex-col items-center justify-center py-12">
                                 <div className={`animate-spin rounded-full h-12 w-12 border-b-2 mb-6 ${darkMode ? "border-indigo-400" : "border-indigo-600"}`}></div>
-                                <h3 className={`text-xl fontsemibold ${darkMode ? "text-slate-200" : "text-gray-700"}`}>{streamStatus}</h3>
+                                <h3 className={`text-xl font-semibold ${darkMode ? "text-slate-200" : "text-gray-700"}`}>{streamStatus}</h3>
                             </div>
                         )}
                     </div>
@@ -189,7 +204,7 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
                 <div className="flex items-center gap-6">
                     <div className="text-right">
                         <div className="text-[3.5rem] font-black leading-none text-blue-600 tracking-tighter">{isComplete ? `${aeo.overallScore}%` : '...'}</div>
-                        <div className="text-[10px] uppercase fontsemibold tracking-[0.2em] mt-1 text-slate-600">AEO Mastery</div>
+                        <div className="text-[10px] uppercase font-semibold tracking-[0.2em] mt-1 text-slate-600">AEO Mastery</div>
                     </div>
                     <div className="h-16 w-[1px] bg-slate-800"></div>
                     <div className="text-xs font-medium leading-relaxed max-w-[120px] text-slate-500">
@@ -230,18 +245,19 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
                         <p className={`text-base mb-8 ${darkMode ? "text-slate-400" : "text-gray-500"}`}>
                             Get deep dive analysis into your Core Signal Breakdown and a personalized Action Plan for generative AI search.
                         </p>
-                        <button onClick={handleLogin} className="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white fontsemibold rounded-full transition-colors shadow-lg shadow-indigo-500/30">
+                        <button onClick={handleLogin} className="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-full transition-colors shadow-lg shadow-indigo-500/30">
                             Login to unlock full AEO insights
                         </button>
                     </div>
                 </div>
             ) : (
                 <>
-                    {/* Signal Breakdown */}
+                    {/* Signal Breakdown (developer-only by default) */}
+                    {showSignalBreakdown && (
                     <div className="space-y-6 pt-6">
                         <div className="flex items-center gap-3 mb-8">
                             <div className="h-6 w-1.5 bg-indigo-500 rounded-full shadow-[0_0_10px_rgba(99,102,241,0.5)]"></div>
-                            <h2 className={`text-2xl fontsemibold tracking-tight ${darkMode ? "text-slate-200" : "text-gray-800"}`}>Core Signal Breakdown</h2>
+                            <h2 className={`text-2xl font-semibold tracking-tight ${darkMode ? "text-slate-200" : "text-gray-800"}`}>Core Signal Breakdown</h2>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
                             {aeo.signals?.schema ? (
@@ -427,6 +443,7 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
                             ) : <SignalSkeleton darkMode={darkMode} title="Authority Signals" />}
                         </div>
                     </div>
+                    )}
 
                     {/* Actionable Recommendations */}
                     {isComplete && (

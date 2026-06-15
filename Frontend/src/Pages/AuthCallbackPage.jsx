@@ -75,7 +75,7 @@ const AuthCallbackPage = () => {
           <Loader2 className="animate-spin text-blue-500" size={24} />
           <h2 className="text-2xl font-black tracking-widest uppercase">Authenticating...</h2>
         </div>
-        <p className="text-gray-500 fontsemibold text-sm tracking-widest">CONNECTING TO YOUR SECURE DASHBOARD</p>
+        <p className="text-gray-500 font-semibold text-sm tracking-widest">CONNECTING TO YOUR SECURE DASHBOARD</p>
       </div>
     </div>
   );

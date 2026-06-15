@@ -47,7 +47,7 @@ const AISummaryBlock = ({ sectionName, sectionData, auditScore, url, darkMode })
                 </div>
                 <h3 className={`text-lg font-black tracking-tight ${darkMode ? 'text-white' : 'text-blue-900'}`}>
                     AI Actionable Summary
-                    <span className={`ml-2 text-xs fontsemibold px-2 py-0.5 rounded-full ${darkMode ? 'bg-blue-500/10 text-blue-500' : 'bg-blue-600/10 text-blue-600'}`}>
+                    <span className={`ml-2 text-xs font-semibold px-2 py-0.5 rounded-full ${darkMode ? 'bg-blue-500/10 text-blue-500' : 'bg-blue-600/10 text-blue-600'}`}>
                         {sectionName}
                     </span>
                 </h3>
@@ -65,7 +65,7 @@ const AISummaryBlock = ({ sectionName, sectionData, auditScore, url, darkMode })
                         if (isQuota) {
                             return (
                                 <div className="space-y-2 mt-1">
-                                    <p className={`fontsemibold flex items-center gap-2 ${darkMode ? 'text-amber-450' : 'text-amber-800'}`}>
+                                    <p className={`font-semibold flex items-center gap-2 ${darkMode ? 'text-amber-450' : 'text-amber-800'}`}>
                                         <AlertTriangle className="w-4 h-4 shrink-0 text-amber-500" />
                                         AI Quota Limit Exceeded
                                     </p>

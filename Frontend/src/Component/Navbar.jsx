@@ -135,7 +135,7 @@ const innerBgClass = isTop
               data?.fromBulkAudit ? (
                 <button
                   onClick={() => navigate("/bulk-audit")}
-                  className={`hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl fontsemibold text-white shadow-lg transition-all 
+                  className={`hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-white shadow-lg transition-all 
                   bg-orange-600 hover:bg-orange-350 hover:scale-[1.02] active:scale-[0.98]
                   shadow-orange-350/20`}
                 >
@@ -145,7 +145,7 @@ const innerBgClass = isTop
               ) : (
                 <button
                   onClick={handleGoHome}
-                  className={`hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl fontsemibold text-white shadow-lg transition-all 
+                  className={`hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-white shadow-lg transition-all 
                   bg-orange-600 hover:bg-orange-350 hover:scale-[1.02] active:scale-[0.98]
                   shadow-orange-350/20`}
                 >
@@ -165,7 +165,7 @@ const innerBgClass = isTop
                       className={`flex items-center gap-2 p-1 pl-2 rounded-full border transition-all duration-300 ${buttonClass}`}
                     >
                       <div className="hidden sm:flex flex-col items-end mr-1">
-                        <span className="text-[10px] fontsemibold leading-none truncate max-w-[80px]">{user?.name?.split(' ')[0]}</span>
+                        <span className="text-[10px] font-semibold leading-none truncate max-w-[80px]">{user?.name?.split(' ')[0]}</span>
                         <span className="text-[8px] font-black uppercase text-blue-500 tracking-tighter">{user?.role}</span>
                       </div>
 
@@ -185,13 +185,13 @@ const innerBgClass = isTop
                         }`}>
                         <div className="px-5 pb-3 mb-2 border-b border-slate-800/10">
                           <p className="text-[10px] font-black uppercase text-gray-500 tracking-widest mb-1">Signed in as</p>
-                          <p className={`fontsemibold text-sm truncate ${darkMode ? "text-white" : "text-slate-500"}`}>{user?.email}</p>
+                          <p className={`font-semibold text-sm truncate ${darkMode ? "text-white" : "text-slate-500"}`}>{user?.email}</p>
                         </div>
 
                         <div className="space-y-1">
                           <button
                             onClick={() => { logout(); setProfileOpen(false); }}
-                            className={`w-full flex items-center gap-3 px-5 py-2.5 text-sm fontsemibold text-rose-500 transition-all ${darkMode ? "hover:bg-rose-500/10" : "hover:bg-rose-50"}`}
+                            className={`w-full flex items-center gap-3 px-5 py-2.5 text-sm font-semibold text-rose-500 transition-all ${darkMode ? "hover:bg-rose-500/10" : "hover:bg-rose-50"}`}
                           >
                             <LogOut size={16} /> Logout
                           </button>
@@ -213,10 +213,10 @@ const innerBgClass = isTop
                         <Moon className="w-5 h-5 text-indigo-500 fill-indigo-500/20" />
                       )}
                     </button>
-                    <button onClick={handleLogin} className={`px-4 py-1.5 rounded-lg text-sm fontsemibold border ${buttonClass}`}>
+                    <button onClick={handleLogin} className={`px-4 py-1.5 rounded-lg text-sm font-semibold border ${buttonClass}`}>
                       Login
                     </button>
-                    <button onClick={handleRegister} className="hidden sm:block px-4 py-1.5 rounded-lg text-sm fontsemibold text-white bg-orange-600 hover:bg-orange-350 shadow-md shadow-orange-600/20">
+                    <button onClick={handleRegister} className="hidden sm:block px-4 py-1.5 rounded-lg text-sm font-semibold text-white bg-orange-600 hover:bg-orange-350 shadow-md shadow-orange-600/20">
                       Sign Up
                     </button>
                   </div>

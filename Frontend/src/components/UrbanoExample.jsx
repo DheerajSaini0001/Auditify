@@ -4,11 +4,11 @@ export default function UrbanoExample() {
   return (
     <div className="p-8 max-w-2xl mx-auto">
       {/* Heading using Urbano font */}
-      <h1 className="font-urbano text-5xl fontsemibold text-gray-900 mb-4">
+      <h1 className="font-urbano text-5xl font-semibold text-gray-900 mb-4">
         Hello with Urbano Font
       </h1>
 
-      <h2 className="font-urbano text-3xl fontsemibold text-indigo-600 mb-6">
+      <h2 className="font-urbano text-3xl font-semibold text-indigo-600 mb-6">
         Subheading in Urbano Bold
       </h2>
 

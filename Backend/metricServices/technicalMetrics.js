@@ -65,11 +65,11 @@ const evaluateLCPLab = (audits) => {
   return {
     score: labScore,
     status: labStatus,
-    details: labStatus === "pass" ? "LCP is within optimal range." : `LCP is delayed (${labValue}ms).`,
+    details: labStatus === "pass" ? "LCP is within optimal range." : `LCP is delayed (${msToSec(labValue)}).`,
     meta: {
-      value: labValue + "ms",
+      value: msToSec(labValue),
       lcpElement,
-      thresholds: { Good: "0-2500ms", Warning: "2500-4000ms", Poor: "4000ms+" }
+      thresholds: { Good: "0-2.5s", Warning: "2.5-4s", Poor: "4s+" }
     },
     analysis: labStatus === "pass" ? null : {
       cause: causes[0] || "General main-thread blocking or large resources",
@@ -127,11 +127,11 @@ const evaluateLCPCrux = (audits, cruxMetrics) => {
   return {
     score: fieldScore,
     status: fieldStatus,
-    details: fieldStatus === "pass" ? "LCP (Real Users) is within optimal range." : `Real users experience LCP delay (${fieldValue}ms).`,
+    details: fieldStatus === "pass" ? "LCP (Real Users) is within optimal range." : `Real users experience LCP delay (${msToSec(fieldValue)}).`,
     meta: {
-      value: fieldValue + "ms",
+      value: msToSec(fieldValue),
       p75: true,
-      thresholds: { Good: "0-2500ms", Warning: "2500-4000ms", Poor: "4000ms+" }
+      thresholds: { Good: "0-2.5s", Warning: "2.5-4s", Poor: "4s+" }
     },
     analysis: fieldStatus === "pass" ? null : {
       cause: causes[0] || "Network or device latency variations",
@@ -370,10 +370,10 @@ const evaluateTTFBLab = (audits) => {
   return {
     score: labScore,
     status: labStatus,
-    details: labStatus === "pass" ? "Server response time is excellent." : `Server response is slow (${labValue}ms).`,
+    details: labStatus === "pass" ? "Server response time is excellent." : `Server response is slow (${msToSec(labValue)}).`,
     meta: {
-      value: labValue + "ms",
-      thresholds: { Good: "0-800ms", Warning: "800-1800ms", Poor: "1800ms+" }
+      value: msToSec(labValue),
+      thresholds: { Good: "0-0.8s", Warning: "0.8-1.8s", Poor: "1.8s+" }
     },
     analysis: labStatus === "pass" ? null : {
       cause: causes[0] || "Server processing capacity reached",
@@ -404,11 +404,11 @@ const evaluateTTFBCrux = (cruxMetrics) => {
   return {
     score: fieldScore,
     status: fieldStatus,
-    details: fieldStatus === "pass" ? "Real-world server response is good." : `Real users face slow server response (${fieldValue}ms).`,
+    details: fieldStatus === "pass" ? "Real-world server response is good." : `Real users face slow server response (${msToSec(fieldValue)}).`,
     meta: {
-      value: fieldValue + "ms",
+      value: msToSec(fieldValue),
       p75: true,
-      thresholds: { Good: "0-800ms", Warning: "800-1800ms", Poor: "1800ms+" }
+      thresholds: { Good: "0-0.8s", Warning: "0.8-1.8s", Poor: "1.8s+" }
     },
     analysis: fieldStatus === "pass" ? null : {
       cause: causes[0] || "Slow field TTFB (high server latency)",
@@ -736,10 +736,10 @@ const evaluateSI = (audits) => {
   return {
     score: labScore,
     status: labStatus,
-    details: labStatus === "pass" ? "Visual load speed is optimal." : `Visual page load is slow (${labValue}ms).`,
+    details: labStatus === "pass" ? "Visual load speed is optimal." : `Visual page load is slow (${msToSec(labValue)}).`,
     meta: {
-      value: labValue + "ms",
-      thresholds: { Good: "0-3400ms", Warning: "3400-5800ms", Poor: "5800ms+" }
+      value: msToSec(labValue),
+      thresholds: { Good: "0-3.4s", Warning: "3.4-5.8s", Poor: "5.8s+" }
     },
     analysis: labStatus === "pass" ? null : {
       cause: causes[0] || "Resources competing for bandwidth",

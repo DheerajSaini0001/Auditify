@@ -104,7 +104,7 @@ const AddWebsitePage = () => {
               }`}>
               Add <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">Property</span>
             </h1>
-            <p className={`text-xs fontsemibold uppercase tracking-widest opacity-80 transition-colors duration-300 ${darkMode ? 'text-slate-400' : 'text-slate-500'
+            <p className={`text-xs font-semibold uppercase tracking-widest opacity-80 transition-colors duration-300 ${darkMode ? 'text-slate-400' : 'text-slate-500'
               }`}>
               Auditify Pro Engine
             </p>
@@ -128,7 +128,7 @@ const AddWebsitePage = () => {
                   type="url"
                   required
                   autoFocus
-                  className={`block w-full pl-14 pr-5 py-4 rounded-2xl border-2 transition-all text-base fontsemibold shadow-sm outline-none ${darkMode
+                  className={`block w-full pl-14 pr-5 py-4 rounded-2xl border-2 transition-all text-base font-semibold shadow-sm outline-none ${darkMode
                       ? 'bg-white/5 border-white/5 text-white placeholder:text-slate-600 focus:bg-white/10 focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10'
                       : 'bg-slate-50 border-slate-100 text-slate-900 placeholder:text-slate-300 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5'
                     }`}
@@ -155,7 +155,7 @@ const AddWebsitePage = () => {
               <div>
                 <h4 className={`text-[10px] font-black mb-0.5 tracking-[0.1em] uppercase transition-colors duration-300 ${darkMode ? 'text-blue-200' : 'text-blue-900'
                   }`}>Security Note</h4>
-                <p className={`text-[10px] fontsemibold leading-relaxed transition-colors duration-300 ${darkMode ? 'text-blue-400/70' : 'text-blue-700/80'
+                <p className={`text-[10px] font-semibold leading-relaxed transition-colors duration-300 ${darkMode ? 'text-blue-400/70' : 'text-blue-700/80'
                   }`}>
                   Ownership verification via GSC is required for full SEO & Traffic analytics.
                 </p>

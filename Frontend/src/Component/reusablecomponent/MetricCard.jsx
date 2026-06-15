@@ -4,6 +4,7 @@ import ThresholdBar from "./ThresholdBar";
 import MetricAnalysisDetails from "./MetricAnalysisDetails";
 import AskAIButton from "../AskAIButton";
 import Tooltip from "./Tooltip";
+import { isActionableParam } from "../../config/parameterAudience";
 
 const MetricCard = ({
     title,
@@ -16,6 +17,9 @@ const MetricCard = ({
     onInfoClick,
     isOpen,
     onToggle,
+    fallbackCauses,
+    fallbackRecommendations,
+    paramKey,
 }) => {
     const [internalOpen, setInternalOpen] = useState(false);
 
@@ -90,12 +94,12 @@ const MetricCard = ({
                         <Icon size={24} strokeWidth={2} />
                     </div>
                     <div>
-                        <h3 className={`fontsemibold text-lg leading-tight mb-1 ${textColor}`}>
+                        <h3 className={`font-semibold text-lg leading-tight mb-1 ${textColor}`}>
                             {title}
                         </h3>
                         <div className="flex items-center gap-2 flex-wrap">
                             <span
-                                className={`text-xs fontsemibold px-2.5 py-1 rounded-md border ${statusBadgeColor}`}
+                                className={`text-xs font-semibold px-2.5 py-1 rounded-md border ${statusBadgeColor}`}
                             >
                                 {statusText}
                             </span>
@@ -105,10 +109,10 @@ const MetricCard = ({
                 </div>
 
                 <div className="flex items-center gap-1">
-                    {activeData?.analysis && (
+                    {status !== "pass" && isActionableParam(paramKey) && (
                         <button
                             onClick={handleToggle}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs fontsemibold transition-all ${darkMode
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${darkMode
                                 ? "bg-slate-700 hover:bg-slate-600 text-slate-300"
                                 : "bg-slate-100 hover:bg-slate-200 text-slate-600"
                                 }`}
@@ -122,12 +126,12 @@ const MetricCard = ({
                         content={
                             <div className="space-y-4 text-left">
                                 <div>
-                                    <h4 className="text-[10px] fontsemibold uppercase tracking-widest text-blue-500 mb-1">Description</h4>
+                                    <h4 className="text-[10px] font-semibold uppercase tracking-widest text-blue-500 mb-1">Description</h4>
                                     <p className="text-xs leading-relaxed opacity-90">{description}</p>
                                 </div>
                                 <div className={`h-px w-full ${darkMode ? "bg-slate-800" : "bg-slate-100"}`} />
                                 <div>
-                                    <h4 className="text-[10px] fontsemibold uppercase tracking-widest text-indigo-500 mb-1">Why it matters</h4>
+                                    <h4 className="text-[10px] font-semibold uppercase tracking-widest text-indigo-500 mb-1">Why it matters</h4>
                                     <p className="text-xs leading-relaxed opacity-90">{whyItMatters}</p>
                                 </div>
                             </div>
@@ -152,7 +156,7 @@ const MetricCard = ({
             <div className="space-y-6 flex-grow">
                 <div>
                     <h4
-                        className={`text-[10px] fontsemibold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-500" : "text-gray-400"
+                        className={`text-[10px] font-semibold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-500" : "text-gray-400"
                             }`}
                     >
                         Current Value
@@ -184,6 +188,8 @@ const MetricCard = ({
                 darkMode={darkMode}
                 isOpen={showDetails}
                 onToggle={handleToggle}
+                fallbackCauses={fallbackCauses}
+                fallbackRecommendations={fallbackRecommendations}
             />
 
             {/* Ask AI Button */}
@@ -192,6 +198,7 @@ const MetricCard = ({
                     finding={{ type: 'Technical Performance', title: title, details: activeData?.details || '', severity: status === 'pass' ? 'pass' : status === 'warning' ? 'warning' : 'critical', url: '' }}
                     darkMode={darkMode}
                     meta={activeData?.meta}
+                    paramKey={paramKey}
                 />
             )}
 

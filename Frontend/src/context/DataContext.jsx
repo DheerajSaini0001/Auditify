@@ -5,6 +5,18 @@ import toast from "react-hot-toast";
 const DataContext = createContext();
 export const useData = () => useContext(DataContext);
 
+// Collapse the audit report's status into ONLY three values: pending | success | failed.
+// The backend pipeline uses many internal stages (inprogress, launching, navigating,
+// waiting_for_render, screenshot_ready, extracting_data, completed). We normalize them
+// here so the whole app sees a single, simple status model.
+const normalizeStatus = (raw) => {
+  if (raw === "success" || raw === "completed") return "success";
+  if (raw === "failed") return "failed";
+  return "pending"; // any in-flight / unknown stage
+};
+const withNormalizedStatus = (report) =>
+  report ? { ...report, rawStatus: report.status, status: normalizeStatus(report.status) } : report;
+
 export const DataProvider = ({ children }) => {
 
   // ⭐ DATA STATE (Persist in LocalStorage to handle refresh)
@@ -17,6 +29,13 @@ export const DataProvider = ({ children }) => {
   // 🤖 AI CHAT OVERLAY STATE
   const [isAiChatOpen, setIsAiChatOpen] = useState(false);
   const [aiChatContext, setAiChatContext] = useState(null);
+
+  // 👥 AUDIENCE MODE ('dealer' | 'developer') — controls which parameters show
+  // across all report sections and which PDF gets downloaded. ALWAYS defaults to
+  // 'dealer' on a fresh load (the primary audience); the toggle changes it for the
+  // current session only — we intentionally do NOT persist it, so every page load /
+  // new audit starts in Dealer view.
+  const [audienceMode, setAudienceMode] = useState("dealer");
 
   // 🛡️ HELPER: Safe LocalStorage with Cleanup
   const safeLocalStorageSet = (key, value) => {
@@ -113,10 +132,10 @@ export const DataProvider = ({ children }) => {
         return { success: false, error: result.error };
       }
 
-      const auditData = result.data;
+      const auditData = withNormalizedStatus(result.data);
       setData(auditData);
 
-      if (auditData.status !== "completed") {
+      if (auditData.status !== "success") {
         startLiveFetch(auditData._id);
       }
 
@@ -134,7 +153,7 @@ export const DataProvider = ({ children }) => {
   const startLiveFetch = (id) => {
     if (intervalId) clearInterval(intervalId);
 
-    setPollingState(prev => ({ ...prev, [id]: "inprogress" }));
+    setPollingState(prev => ({ ...prev, [id]: "pending" }));
 
     const newInterval = setInterval(async () => {
       try {
@@ -144,11 +163,11 @@ export const DataProvider = ({ children }) => {
           const newStatus = result.data.status;
           setPollingState(prev => ({ ...prev, [id]: newStatus }));
 
-          if (newStatus === "completed" || newStatus === "failed") {
+          if (newStatus === "success" || newStatus === "failed") {
             clearInterval(newInterval);
             setIntervalId(null);
 
-            if (newStatus === "completed") {
+            if (newStatus === "success") {
               toast.success("Audit complete!");
             } else if (newStatus === "failed") {
               toast.error("Audit run failed.");
@@ -258,6 +277,7 @@ export const DataProvider = ({ children }) => {
 
       const result = await handleResponse(res);
       if (result.success) {
+        result.data = withNormalizedStatus(result.data);
         setData(result.data);
         safeLocalStorageSet(`dealerpulse_audit_${id}`, JSON.stringify(result.data));
       }
@@ -298,6 +318,7 @@ export const DataProvider = ({ children }) => {
 
       const result = await handleResponse(res);
       if (result.success) {
+        result.data = withNormalizedStatus(result.data);
         setData(result.data);
         safeLocalStorageSet(`dealerpulse_audit_${result.data._id}`, JSON.stringify(result.data));
       }
@@ -316,7 +337,7 @@ export const DataProvider = ({ children }) => {
 
   // 🔄 RESTART POLLING ON REFRESH
   useEffect(() => {
-    if (data && data.status === "inprogress" && !intervalId) {
+    if (data && data.status === "pending" && !intervalId) {
       startLiveFetch(data._id);
     }
   }, [data, intervalId]);
@@ -349,6 +370,7 @@ export const DataProvider = ({ children }) => {
       value={{ 
         data, setData, loading, fetchData, clearData, discoverUrls, startBulkAudit, autoBulkAudit, getBulkAuditStatus, fetchSingleReport, getAuditById, fetchBulkPageReport,
         isAiChatOpen, setIsAiChatOpen, aiChatContext, setAiChatContext,
+        audienceMode, setAudienceMode,
         pollingState, setPollingState
       }}
     >

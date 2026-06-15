@@ -20,8 +20,8 @@ export default function PrivacyPolicyPage() {
         {/* Sticky Sidebar */}
         <div className={`hidden md:block sticky top-32 w-1/4 space-y-8 pl-4 border-l-2 ${darkMode ? "border-slate-800" : "border-slate-200"}`}>
           <div>
-            <div className="text-xl fontsemibold mb-4">Privacy Framework</div>
-            <ul className={`space-y-4 text-sm font- ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
+            <div className="text-xl font-semibold mb-4">Privacy Framework</div>
+            <ul className={`space-y-4 text-sm font-semibold ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
               <li className="text-emerald-500 transition-colors">1. Data Architecture</li>
               <li className="hover:text-emerald-500 transition-colors cursor-pointer">2. Retention Cycles</li>
               <li className="hover:text-emerald-500 transition-colors cursor-pointer">3. Sub-processors</li>
@@ -48,7 +48,7 @@ export default function PrivacyPolicyPage() {
           <div className={`space-y-16 text-base md:text-lg leading-relaxed ${darkMode ? "text-slate-300" : "text-slate-700"}`}>
 
             <section className="space-y-4">
-              <div className="flex items-center gap-3 text-2xl fontsemibold">
+              <div className="flex items-center gap-3 text-2xl font-semibold">
                 <DatabaseZap className="text-emerald-500" />
                 <h2>1. The Extraction Mechanics</h2>
               </div>
@@ -59,20 +59,20 @@ export default function PrivacyPolicyPage() {
             <div className={`h-px w-full ${darkMode ? "bg-slate-800" : "bg-slate-200"}`}></div>
 
             <section className="space-y-4">
-              <div className="flex items-center gap-3 text-2xl fontsemibold">
+              <div className="flex items-center gap-3 text-2xl font-semibold">
                 <FileKey className="text-blue-500" />
                 <h2>2. Asynchronous Data Expiration</h2>
               </div>
               <p>For unauthenticated, "guest" network streams, any resulting generated PDF reports or direct relational database entries inherit a strictly enforced twenty-four hour TTL (Time To Live). A chron routine aggressively wipes these ghost artifacts.</p>
               <div className={`p-6 rounded-2xl border-l-4 border-blue-500 ${darkMode ? "bg-blue-500/5 text-blue-100 border-r border-t border-b border-slate-800" : "bg-blue-50 text-slate-800 border-r border-t border-b border-slate-200"}`}>
-                <span className="fontsemibold">Important:</span> Manual deletions triggered via the authenticated user dashboard dashboard represent irreversible hard-deletes. We maintain zero invisible redundant fallback clusters holding dropped projects.
+                <span className="font-semibold">Important:</span> Manual deletions triggered via the authenticated user dashboard dashboard represent irreversible hard-deletes. We maintain zero invisible redundant fallback clusters holding dropped projects.
               </div>
             </section>
 
             <div className={`h-px w-full ${darkMode ? "bg-slate-800" : "bg-slate-200"}`}></div>
 
             <section className="space-y-4">
-              <div className="flex items-center gap-3 text-2xl fontsemibold">
+              <div className="flex items-center gap-3 text-2xl font-semibold">
                 <ShieldCheck className="text-purple-500" />
                 <h2>3. Cross-Border Sub-Processors</h2>
               </div>
@@ -83,7 +83,7 @@ export default function PrivacyPolicyPage() {
             <div className={`h-px w-full ${darkMode ? "bg-slate-800" : "bg-slate-200"}`}></div>
 
             <section className="space-y-4">
-              <div className="flex items-center gap-3 text-2xl fontsemibold">
+              <div className="flex items-center gap-3 text-2xl font-semibold">
                 <Lock className="text-emerald-500" />
                 <h2>4. GDPR & CCPA Compliance</h2>
               </div>

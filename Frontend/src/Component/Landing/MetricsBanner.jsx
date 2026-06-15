@@ -44,7 +44,7 @@ const MetricCard = ({ value, suffix, label, sublabel, icon: Icon, accentColor, d
         >
             {/* Top row */}
             <div className="flex items-center justify-between">
-                <p className={`text-xs fontsemibold uppercase tracking-[0.2em]
+                <p className={`text-xs font-semibold uppercase tracking-[0.2em]
                     ${darkMode ? 'text-white' : 'text-slate-500'}`}>
                     {label}
                 </p>
@@ -121,7 +121,7 @@ const MetricsBanner = () => {
                     className="flex flex-col lg:flex-row lg:items-end justify-between gap-8"
                 >
                     <div className="space-y-3">
-                        <p className={`text-xs fontsemibold uppercase tracking-[0.25em]
+                        <p className={`text-xs font-semibold uppercase tracking-[0.25em]
                             ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
                             DealerPulse at a Glance
                         </p>
@@ -141,7 +141,7 @@ const MetricsBanner = () => {
                                 initial={{ opacity: 0 }}
                                 animate={isInView ? { opacity: 1 } : {}}
                                 transition={{ delay: 0.1 + i * 0.05 }}
-                                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font- border
+                                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border
                                     ${darkMode
                                         ? 'bg-white/4 border-white/8 text-white'
                                         : 'bg-white border-slate-200 text-slate-600 shadow-sm'}`}

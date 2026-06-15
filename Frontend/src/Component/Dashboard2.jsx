@@ -191,6 +191,40 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
     return "text-red-600 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-500/10 dark:border-red-500/20";
   };
 
+  // Plain-language summary of what the overall score means for the business.
+  const healthSummary = (score) => {
+    const s = Number(score) || 0;
+
+    // Score-band intro (plain language, business-focused).
+    let intro;
+    if (s >= 90) intro = "Your website is in excellent shape — fast, easy to use, and well set up to win leads and rank in search.";
+    else if (s >= 75) intro = "Your website is performing well, with a few areas to tidy up to capture more leads, bookings, and search visibility.";
+    else if (s >= 50) intro = "Your website works, but it's leaving leads and search traffic on the table.";
+    else intro = "Your website has issues that are likely costing you leads, customers, and search ranking.";
+
+    // Lowest-scoring sections (below 75) = the priorities to work on first.
+    const weak = sectionMappings
+      .map((sec) => ({ name: sec.name, value: data?.[sec.key]?.Percentage }))
+      .filter((sec) => typeof sec.value === "number" && sec.value < 75)
+      .sort((a, b) => a.value - b.value);
+    const top = weak.slice(0, 3).map((w) => `${w.name} (${Math.round(w.value)}%)`);
+
+    let focus;
+    if (top.length === 0) {
+      focus = " No major problem areas — focus on maintenance and fine-tuning.";
+    } else {
+      const joined =
+        top.length === 1 ? top[0]
+          : top.length === 2 ? `${top[0]} and ${top[1]}`
+            : `${top[0]}, ${top[1]}, and ${top[2]}`;
+      const extra = weak.length > 3 ? `, plus ${weak.length - 3} more` : "";
+      const label = top.length === 1 ? "Top priority" : `Top ${top.length} priorities`;
+      focus = ` ${label} to work on: ${joined}${extra}.`;
+    }
+
+    return intro + focus;
+  };
+
   return (
     <div id="dashboard" className={`w-full font-sans transition-colors duration-300 ${bgClass}`}>
 
@@ -332,7 +366,7 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
                           <div>
                             <h3 className={`text-3xl font-semibold tracking-tight mb-3 ${darkMode ? "text-white" : "text-slate-900"}`}>Overall Health Score</h3>
                             <p className={`text-sm md:text-base leading-relaxed ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
-                              Aggregated score reflecting Core Web Vitals, SEO, and technical performance benchmarks.
+                              {healthSummary(data.score)}
                             </p>
                           </div>
 

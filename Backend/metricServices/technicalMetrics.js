@@ -2079,10 +2079,10 @@ const evaluateJsExecution = (audits) => {
   const causes = [];
   const recommendations = [];
   if (status !== "pass") {
-    causes.push(`JavaScript executes for ${fmtSeconds(bootupMs)} during load (target ≤ 2s)`);
+    causes.push(`JavaScript executes for ${msToSec(bootupMs)} during load (target ≤ 2s)`);
     recommendations.push("Code-split and defer non-critical JS, remove unused JavaScript, and trim polyfills.");
     if (mainThreadMs > 4000) {
-      causes.push(`Main thread is busy for ${fmtSeconds(mainThreadMs)} (parse/compile/execute)`);
+      causes.push(`Main thread is busy for ${msToSec(mainThreadMs)} (parse/compile/execute)`);
       recommendations.push("Break up long tasks and move heavy work off the main thread (Web Workers).");
     }
   }
@@ -2091,12 +2091,12 @@ const evaluateJsExecution = (audits) => {
     score,
     status,
     details: status === "pass"
-      ? `JavaScript execution is efficient (${fmtSeconds(bootupMs)}).`
-      : `JavaScript executes for ${fmtSeconds(bootupMs)} during load.`,
+      ? `JavaScript execution is efficient (${msToSec(bootupMs)}).`
+      : `JavaScript executes for ${msToSec(bootupMs)} during load.`,
     meta: {
-      value: fmtSeconds(bootupMs),
-      jsExecutionTime: fmtSeconds(bootupMs),
-      mainThreadTime: fmtSeconds(mainThreadMs),
+      value: msToSec(bootupMs),
+      jsExecutionTime: msToSec(bootupMs),
+      mainThreadTime: msToSec(mainThreadMs),
       topScripts,
       thresholds: { Good: "0-2s", Warning: "2-3.5s", Poor: "3.5s+" },
     },

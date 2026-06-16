@@ -2016,65 +2016,7 @@ const ContentFreshnessCard = ({ data, darkMode, onInfo }) => {
 
 // ------------------------------------------------------
 // Content Freshness Card
-// ------------------------------------------------------
-const ContentFreshnessCard = ({ data, darkMode, onInfo }) => {
-  const meta = data?.meta || {};
-  const score = data?.score || 0;
-  const isPassed = data?.status === "pass";
-  const statusText = data?.details || "Content freshness";
-
-  return (
-    <SEOCard
-      title="Content Freshness"
-      icon={Clock}
-      iconColor="text-teal-400"
-      score={score}
-      status={data.status}
-      statusText={statusText}
-      analysis={data.analysis}
-      meta={meta}
-      metricKey="Content_Freshness"
-      darkMode={darkMode}
-      onInfo={onInfo}
-      className="col-span-1"
-      getStatusFromScore={getStatusFromScore}
-      InfoDetails={InfoDetails}
-      showAnalysis={false}
-    >
-      {(meta?.mostRecent || meta?.daysAgo !== undefined) && (
-        <div className="grid grid-cols-2 gap-2">
-          <div className={`p-2 rounded ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
-            <div className={`text-[10px] fontsemibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Last Updated</div>
-            <div className={`text-xs fontsemibold mt-0.5 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>{meta.mostRecent || "—"}{meta.daysAgo !== undefined && meta.daysAgo !== null ? ` (${meta.daysAgo}d ago)` : ""}</div>
-          </div>
-          <div className={`p-2 rounded ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
-            <div className={`text-[10px] fontsemibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Signals</div>
-            <div className={`text-xs fontsemibold mt-0.5 break-words ${darkMode ? "text-gray-200" : "text-gray-700"}`}>{meta.signals?.length ? meta.signals.join(", ") : (meta.source || "none")}</div>
-          </div>
-        </div>
-      )}
-
-      {data.analysis && !isPassed && (
-        <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs fontsemibold uppercase tracking-wider text-amber-500">
-              <AlertTriangle size={12} />
-              <span>Analysis</span>
-            </div>
-            <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>{data.analysis.cause}</p>
-          </div>
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs fontsemibold uppercase tracking-wider text-blue-500">
-              <CheckCircle size={12} />
-              <span>Recommendation</span>
-            </div>
-            <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>{data.analysis.recommendation}</p>
-          </div>
-        </div>
-      )}
-    </SEOCard>
-  );
-};
+// ---------------------------------
 
 // ------------------------------------------------------
 // Specialized Sitemap Card

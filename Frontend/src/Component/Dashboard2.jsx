@@ -175,10 +175,10 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
   })), [data, sectionMappings]);
 
   // Styles
-  const bgClass = darkMode ? "bg-[#0B1120] text-slate-300" : "bg-slate-50 text-slate-600";
+  const bgClass = darkMode ? "bg-[#0B1120] text-slate-300" : "bg-surface text-muted";
   const cardClass = darkMode
     ? "bg-slate-900 border border-slate-800 shadow-xl shadow-black/20"
-    : "bg-white border border-slate-200 shadow-xl shadow-slate-200/50";
+    : "bg-card border border-line shadow-xl shadow-slate-200/50";
 
   // Define grade colors
   const gradeColor = (grade) => {
@@ -237,7 +237,7 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
             <div className="flex flex-col xl:flex-row min-h-[300px]">
 
               {/* Left Panel: Live Preview (Widened) */}
-              <div className={`w-full ${isAuthenticated ? "xl:w-1/2 border-b xl:border-b-0 xl:border-r" : "max-w-5xl mx-auto"} p-6 flex items-center justify-center relative overflow-hidden ${darkMode ? "bg-slate-900/30 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
+              <div className={`w-full ${isAuthenticated ? "xl:w-1/2 border-b xl:border-b-0 xl:border-r" : "max-w-5xl mx-auto"} p-6 flex items-center justify-center relative overflow-hidden ${darkMode ? "bg-slate-900/30 border-slate-800" : "bg-cardsoft border-line"}`}>
                 {/* Decorative Background Blob */}
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/5 blur-3xl rounded-full pointer-events-none"></div>
 
@@ -253,14 +253,14 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
                   {(loading || !isAuditComplete) ? (
                     /* Loading State: Dynamic status & countdown */
                     <div className="flex flex-col justify-center h-full min-h-[300px] animate-in fade-in duration-500">
-                      <div className="w-full max-w-lg mx-auto space-y-8">
+                      <div className="w-full max-w-lg mx-auto space-y-6">
 
                         {/* Progress Bar */}
                         <div className="w-full space-y-2">
                           <div className="flex justify-end text-sm font-bold tracking-wide opacity-80">
                             <span>{stageInfo.progress}%</span>
                           </div>
-                          <div className="h-2 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                          <div className="h-2 w-full bg-line dark:bg-slate-800 rounded-full overflow-hidden">
                             <div
                               className="h-full bg-gradient-to-r from-emerald-500 via-teal-500 to-blue-500 transition-all duration-700 ease-out"
                               style={{ width: `${stageInfo.progress}%` }}
@@ -269,24 +269,24 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
                         </div>
 
                         {/* Current audit phase / status — shown until the report is ready */}
-                        <div className="relative overflow-hidden rounded-2xl border bg-slate-50/50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700/50 p-10 text-center transition-all duration-500 flex flex-col items-center">
+                        <div className="relative overflow-hidden rounded-2xl border bg-cardsoft dark:bg-slate-800/30 border-line dark:border-slate-700/50 p-10 text-center transition-all duration-500 flex flex-col items-center">
                           <div className="relative mb-6">
                             <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-xl animate-pulse"></div>
-                            <div className="relative w-20 h-20 bg-white dark:bg-slate-800 rounded-full shadow-lg border border-slate-100 dark:border-slate-700 flex items-center justify-center text-emerald-500">
+                            <div className="relative w-20 h-20 bg-card dark:bg-slate-800 rounded-full shadow-lg border border-line dark:border-slate-700 flex items-center justify-center text-emerald-500">
                               <Loader2 className="w-9 h-9 animate-spin" />
                             </div>
                           </div>
                           <div key={stageInfo.title} className="animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-2 max-w-md">
                             <span className="text-[10px] font-semibold uppercase tracking-widest text-emerald-500">Current Step</span>
-                            <h3 className={`text-xl font-semibold ${darkMode ? "text-white" : "text-slate-900"}`}>{stageInfo.title}</h3>
-                            <p className={`text-sm leading-relaxed ${darkMode ? "text-slate-400" : "text-slate-500"}`}>{stageInfo.desc}</p>
+                            <h3 className={`text-xl font-semibold ${darkMode ? "text-white" : "text-ink"}`}>{stageInfo.title}</h3>
+                            <p className={`text-sm leading-relaxed ${darkMode ? "text-slate-400" : "text-muted"}`}>{stageInfo.desc}</p>
                           </div>
                         </div>
 
                         {/* Rotating quote to pass the time */}
                         <p
                           key={quoteIndex}
-                          className={`text-center text-sm italic leading-relaxed animate-in fade-in duration-700 ${darkMode ? "text-slate-400" : "text-slate-500"}`}
+                          className={`text-center text-sm italic leading-relaxed animate-in fade-in duration-700 ${darkMode ? "text-slate-400" : "text-muted"}`}
                         >
                           “{loadingQuotes[quoteIndex]}”
                         </p>
@@ -295,25 +295,25 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
                     </div>
                   ) : (
                     /* Real Data */
-                    <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500 max-w-2xl mx-auto w-full">
+                    <div className="space-y-7 animate-in fade-in slide-in-from-right-4 duration-500 max-w-2xl mx-auto w-full">
 
                       {/* Overall Score Section - Refined */}
-                      <div className="flex flex-col sm:flex-row items-center gap-12 justify-center xl:justify-start">
+                      <div className="flex flex-col sm:flex-row items-center gap-8 justify-center xl:justify-start">
                         <div className="relative flex-shrink-0 group cursor-default">
                           {/* Subtle Glow Effect */}
                           <div className={`absolute -inset-4 rounded-full blur-3xl opacity-10 transition-opacity duration-700 group-hover:opacity-20 ${data.grade && ["A+", "A", "B"].includes(data.grade) ? "bg-emerald-500" : "bg-amber-500"}`}></div>
 
                           <CircularProgress value={data.score?.toFixed(0) || 0} size={160} stroke={14} />
                           <div className="absolute inset-0 flex items-center justify-center flex-col gap-1">
-                            <span className={`text-3xl font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>{data.score?.toFixed(0)}%</span>
-                            <span className={`text-xs font-semibold uppercase tracking-widest ${darkMode ? "text-slate-500" : "text-slate-400"}`}>SCORE</span>
+                            <span className={`text-3xl font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>{data.score?.toFixed(0)}%</span>
+                            <span className={`text-xs font-semibold uppercase tracking-widest ${darkMode ? "text-slate-500" : "text-faint"}`}>SCORE</span>
                           </div>
                         </div>
 
                         <div className="text-center sm:text-left space-y-4 max-w-lg">
                           <div>
-                            <h3 className={`text-3xl font-semibold tracking-tight mb-3 ${darkMode ? "text-white" : "text-slate-900"}`}>Overall Health Score</h3>
-                            <p className={`text-sm md:text-base leading-relaxed ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
+                            <h3 className={`text-3xl font-semibold tracking-tight mb-3 ${darkMode ? "text-white" : "text-ink"}`}>Overall Health Score</h3>
+                            <p className={`text-sm md:text-base leading-relaxed ${darkMode ? "text-slate-400" : "text-muted"}`}>
                               {healthSummary(data.score)}
                             </p>
                           </div>
@@ -325,12 +325,12 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
                         </div>
                       </div>
 
-                      <div className={`w-full h-px ${darkMode ? "bg-slate-800/60" : "bg-slate-100"}`}></div>
+                      <div className={`w-full h-px ${darkMode ? "bg-slate-800/60" : "bg-line"}`}></div>
 
                       {/* AIO Readiness Card - Production Polished */}
                       <div
                         onClick={() => navigate(data?._id ? `/aio/${data._id}` : '/aio')}
-                        className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 cursor-pointer ${darkMode ? "bg-slate-800/20 border-slate-700/50 hover:bg-slate-800/40 hover:border-slate-600" : "bg-white border-slate-200 hover:border-slate-300 hover:shadow-md"}`}
+                        className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 cursor-pointer ${darkMode ? "bg-slate-800/20 border-slate-700/50 hover:bg-slate-800/40 hover:border-slate-600" : "bg-card border-line hover:border-slate-300 hover:shadow-md"}`}
                       >
                         {/* Hover Gradient Line */}
                         <div className={`absolute top-0 left-0 w-1 h-full transition-all duration-300 ${data.aioCompatibilityBadge === "High" ? "bg-emerald-500" : "bg-amber-500"}`}></div>
@@ -341,8 +341,8 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
                               <Bot className="w-6 h-6" />
                             </div>
                             <div>
-                              <h4 className={`font-semibold text-base mb-1 ${darkMode ? "text-white" : "text-slate-900"}`}>AIO & GEO Readiness</h4>
-                              <p className={`text-sm ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
+                              <h4 className={`font-semibold text-base mb-1 ${darkMode ? "text-white" : "text-ink"}`}>AIO & GEO Readiness</h4>
+                              <p className={`text-sm ${darkMode ? "text-slate-400" : "text-muted"}`}>
                                 {data.aioCompatibilityBadge === "High"
                                   ? "Content is structure-optimized for AI engines (ChatGPT, Gemini) coverage."
                                   : "Optimization required for better visibility in Generative AI results."}
@@ -354,8 +354,8 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
                             <span className={`text-lg font-semibold ${data.aioCompatibilityBadge === "High" ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
                               {data.aioCompatibilityBadge || "N/A"}
                             </span>
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${darkMode ? "bg-slate-800 group-hover:bg-slate-700" : "bg-slate-100 group-hover:bg-slate-200"}`}>
-                              <ArrowRight className={`w-4 h-4 transition-transform duration-300 group-hover:translate-x-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`} />
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${darkMode ? "bg-slate-800 group-hover:bg-slate-700" : "bg-surface-2 group-hover:bg-slate-200"}`}>
+                              <ArrowRight className={`w-4 h-4 transition-transform duration-300 group-hover:translate-x-1 ${darkMode ? "text-slate-400" : "text-muted"}`} />
                             </div>
                           </div>
                         </div>
@@ -371,7 +371,7 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
 
         {/* ✅ Guest View: AEO Page + Locked Cards */}
         {!isAuthenticated && (
-          <div className="space-y-8 animate-in fade-in duration-700">
+          <div className="space-y-6 animate-in fade-in duration-700">
             {/* AEO Component handles its own loading */}
             <div className="mt-8">
               <AEOPage auditData={data} darkMode={darkMode} onInfo={() => { }} />
@@ -380,7 +380,7 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
             {/* 6 Locked Blurred Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
               {['Technical Performance', 'On-Page SEO', 'Accessibility', 'Security/Compliance', 'UX & Content Structure', 'Conversion & Lead Flow'].map((name, i) => (
-                <div key={i} onClick={handleLogin} className={`relative overflow-hidden rounded-2xl border p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:-translate-y-1 hover:shadow-xl ${darkMode ? 'bg-slate-900/80 border-slate-700' : 'bg-white border-slate-200'}`}>
+                <div key={i} onClick={handleLogin} className={`relative overflow-hidden rounded-2xl border p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:-translate-y-1 hover:shadow-xl ${darkMode ? 'bg-slate-900/80 border-slate-700' : 'bg-card border-line'}`}>
                   {/* Blur content underneath */}
                   <div className="opacity-30 flex flex-col items-center z-0 filter blur-[4px]">
                     <div className="w-16 h-16 rounded-full bg-slate-300 dark:bg-slate-700 mb-4"></div>
@@ -393,7 +393,7 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
                     <div className="w-12 h-12 rounded-full bg-slate-800 dark:bg-white flex items-center justify-center mb-4 shadow-xl">
                       <Lock className="w-5 h-5 text-white dark:text-slate-900" />
                     </div>
-                    <h4 className={`font-semibold text-lg mb-1 ${darkMode ? 'text-white' : 'text-slate-900'}`}>{name}</h4>
+                    <h4 className={`font-semibold text-lg mb-1 ${darkMode ? 'text-white' : 'text-ink'}`}>{name}</h4>
                     <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">Sign up to unlock this report</p>
                   </div>
                 </div>
@@ -414,8 +414,8 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
             <div className={`p-8 rounded-3xl border ${cardClass}`}>
               <div className="flex items-center justify-between mb-8">
                 <div>
-                  <h3 className={`text-2xl font-semibold ${darkMode ? "text-white" : "text-slate-900"}`}>Category Performance</h3>
-                  <p className={`text-sm mt-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Detailed analysis across key audit verticals</p>
+                  <h3 className={`text-2xl font-semibold ${darkMode ? "text-white" : "text-ink"}`}>Category Performance</h3>
+                  <p className={`text-sm mt-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Detailed analysis across key audit verticals</p>
                 </div>
               </div>
 
@@ -441,10 +441,10 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
                     <button
                       key={item.name}
                       onClick={() => navigate(data?._id ? `/${item.Link}/${data._id}` : `/${item.Link}`)}
-                      className={`group relative p-6 rounded-2xl border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl flex flex-col items-center text-center ${darkMode ? "bg-slate-800/30 border-slate-700 hover:bg-slate-800" : "bg-white border-slate-100 hover:border-slate-200"}`}
+                      className={`group relative p-6 rounded-2xl border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl flex flex-col items-center text-center ${darkMode ? "bg-slate-800/30 border-slate-700 hover:bg-slate-800" : "bg-card border-linesoft hover:border-slate-200"}`}
                     >
                       <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:translate-x-1">
-                        <ArrowRight className={`w-5 h-5 ${darkMode ? "text-slate-400" : "text-slate-400"}`} />
+                        <ArrowRight className={`w-5 h-5 ${darkMode ? "text-slate-400" : "text-faint"}`} />
                       </div>
 
                       <div className="mb-6 mt-2 relative">
@@ -452,13 +452,13 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
                         <div className={`absolute inset-0 rounded-full blur-xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 ${score >= 90 ? "bg-emerald-500" : score >= 50 ? "bg-amber-500" : "bg-red-500"}`}></div>
                         <CircularProgress value={score} size={110} stroke={8} color={ringColor} />
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
-                          <span className={`text-2xl font-black ${darkMode ? "text-white" : "text-slate-900"}`}>
+                          <span className={`text-2xl font-black ${darkMode ? "text-white" : "text-ink"}`}>
                             {score}%
                           </span>
                         </div>
                       </div>
 
-                      <h4 className={`text-base font-semibold mb-1 ${darkMode ? "text-slate-200" : "text-slate-700"}`}>
+                      <h4 className={`text-base font-semibold mb-1 ${darkMode ? "text-slate-200" : "text-inksoft"}`}>
                         {item.name}
                       </h4>
                       <span className={`text-xs font-semibold uppercase tracking-wider ${statusColor}`}>

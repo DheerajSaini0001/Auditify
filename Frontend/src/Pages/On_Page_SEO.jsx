@@ -44,7 +44,7 @@ const DetailsToggle = ({ isOpen, setIsOpen, darkMode, paramKey }) => {
       onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${darkMode
         ? "bg-slate-700 hover:bg-slate-600 text-slate-300"
-        : "bg-slate-100 hover:bg-slate-200 text-slate-600"
+        : "bg-cardsoft hover:bg-surface-2 text-muted"
         }`}
     >
       {isOpen ? "Hide Details" : "View Details"}
@@ -70,7 +70,7 @@ const DetailsPanel = ({ analysis, metricKey, reasons, darkMode }) => {
   if (!hasCause && !hasRec) return null;
 
   return (
-    <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
+    <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t ${darkMode ? "border-gray-700" : "border-line"}`}>
       {hasCause && (
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-amber-500">
@@ -78,11 +78,11 @@ const DetailsPanel = ({ analysis, metricKey, reasons, darkMode }) => {
             <span>Cause</span>
           </div>
           {analysis?.cause ? (
-            <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>{analysis.cause}</p>
+            <p className={`text-sm ${darkMode ? "text-gray-300" : "text-muted"}`}>{analysis.cause}</p>
           ) : (
             <ul className="space-y-1">
               {causeList.map((reason, i) => (
-                <li key={i} className={`text-sm flex items-start gap-2 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                <li key={i} className={`text-sm flex items-start gap-2 ${darkMode ? "text-gray-300" : "text-muted"}`}>
                   <span className="mt-1.5 w-1 h-1 rounded-full bg-rose-500 flex-shrink-0" />
                   <span>{reason}</span>
                 </li>
@@ -98,11 +98,11 @@ const DetailsPanel = ({ analysis, metricKey, reasons, darkMode }) => {
             <span>Recommendation</span>
           </div>
           {analysis?.recommendation ? (
-            <p className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>{analysis.recommendation}</p>
+            <p className={`text-sm ${darkMode ? "text-gray-300" : "text-muted"}`}>{analysis.recommendation}</p>
           ) : (
             <ul className="space-y-1">
               {fallbackFixes.map((rec, i) => (
-                <li key={i} className={`text-sm flex items-start gap-2 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                <li key={i} className={`text-sm flex items-start gap-2 ${darkMode ? "text-gray-300" : "text-muted"}`}>
                   <span className="mt-1.5 w-1 h-1 rounded-full bg-emerald-500 flex-shrink-0" />
                   <span>{rec}</span>
                 </li>
@@ -122,7 +122,7 @@ const Section = ({ title, icon: Icon, children, darkMode, gridClasses = "grid-co
       <div className={`p-2 rounded-lg ${darkMode ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-600"}`}>
         <Icon size={20} />
       </div>
-      <h2 className={`text-xl font-semibold ${darkMode ? "text-white" : "text-gray-900"}`}>
+      <h2 className={`text-xl font-semibold ${darkMode ? "text-white" : "text-ink"}`}>
         {title}
       </h2>
     </div>
@@ -145,23 +145,23 @@ const TitleTagCard = ({ data, darkMode, onInfo }) => {
   const [showDetails, setShowDetails] = React.useState(false);
 
   return (
-    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group col-span-1 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group col-span-1 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-line"}`}>
       <div className="p-5 space-y-4">
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
+            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-surface-2"} group-hover:scale-110 transition-transform duration-300`}>
               <Tag size={24} className={darkMode ? "text-blue-400" : "text-blue-600"} />
             </div>
             <div>
-              <h3 className={`font-semibold text-lg ${darkMode ? "text-gray-100" : "text-gray-900"}`}>Title Tag</h3>
+              <h3 className={`font-semibold text-lg ${darkMode ? "text-gray-100" : "text-ink"}`}>Title Tag</h3>
               <div className={`flex items-center gap-2 mt-1`}>
                 <ScoreBadge
                   status={getStatusFromScore(score)}
                   value={statusText}
                   darkMode={darkMode}
                 />
-                <span className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                <span className={`text-xs ${darkMode ? "text-gray-400" : "text-muted"}`}>
                   ({meta.length || 0} characters)
                 </span>
               </div>
@@ -178,7 +178,7 @@ const TitleTagCard = ({ data, darkMode, onInfo }) => {
                   e.stopPropagation();
                   onInfo();
                 }}
-                className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
+                className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-faint hover:text-ink"}`}
               >
                 <Info size={18} />
               </button>
@@ -192,10 +192,10 @@ const TitleTagCard = ({ data, darkMode, onInfo }) => {
 
           {/* The Title Itself */}
           <div>
-            <h4 className={`text-xs font-semibold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+            <h4 className={`text-xs font-semibold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-500" : "text-faint"}`}>
               Current Title
             </h4>
-            <div className={`p-3 rounded-lg border font-serif text-lg leading-snug ${darkMode ? "bg-gray-900 border-gray-700 text-gray-200" : "bg-gray-50 border-gray-200 text-gray-800"}`}>
+            <div className={`p-3 rounded-lg border font-serif text-lg leading-snug ${darkMode ? "bg-gray-900 border-gray-700 text-gray-200" : "bg-cardsoft border-line text-inksoft"}`}>
               {meta.title || <span className="italic opacity-50">No title found</span>}
             </div>
           </div>
@@ -255,10 +255,10 @@ const MetaDescriptionCard = ({ data, darkMode, onInfo }) => {
       InfoDetails={InfoDetails}
     >
       <div>
-        <h4 className={`text-xs font-semibold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+        <h4 className={`text-xs font-semibold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-500" : "text-faint"}`}>
           Current Description
         </h4>
-        <div className={`p-3 rounded-lg border font-serif text-sm leading-relaxed ${darkMode ? "bg-gray-900 border-gray-700 text-gray-200" : "bg-gray-50 border-gray-200 text-gray-800"}`}>
+        <div className={`p-3 rounded-lg border font-serif text-sm leading-relaxed ${darkMode ? "bg-gray-900 border-gray-700 text-gray-200" : "bg-cardsoft border-line text-inksoft"}`}>
           {meta.description || <span className="italic opacity-50">No meta description found</span>}
         </div>
       </div>
@@ -298,10 +298,10 @@ const CanonicalTagCard = ({ data, darkMode, onInfo }) => {
       )}
     >
       <div>
-        <h4 className={`text-xs font-semibold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+        <h4 className={`text-xs font-semibold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-500" : "text-faint"}`}>
           Canonical URL
         </h4>
-        <div className={`p-3 rounded-lg border font-mono text-xs break-all ${darkMode ? "bg-gray-900 border-gray-700 text-gray-300" : "bg-gray-50 border-gray-200 text-gray-600"}`}>
+        <div className={`p-3 rounded-lg border font-mono text-xs break-all ${darkMode ? "bg-gray-900 border-gray-700 text-gray-300" : "bg-cardsoft border-line text-muted"}`}>
           {meta.canonical || <span className="italic opacity-50">No canonical tag found</span>}
         </div>
 
@@ -360,33 +360,33 @@ const URLStructureCard = ({ data, darkMode, onInfo }) => {
     >
       <div className="space-y-3">
         <div>
-          <h4 className={`text-xs font-semibold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+          <h4 className={`text-xs font-semibold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-500" : "text-faint"}`}>
             Analyzed URL
           </h4>
-          <div className={`p-3 rounded-lg border font-mono text-xs break-all ${darkMode ? "bg-gray-900 border-gray-700 text-gray-300" : "bg-gray-50 border-gray-200 text-gray-600"}`}>
+          <div className={`p-3 rounded-lg border font-mono text-xs break-all ${darkMode ? "bg-gray-900 border-gray-700 text-gray-300" : "bg-cardsoft border-line text-muted"}`}>
             {meta.url || <span className="italic opacity-50">No URL data</span>}
           </div>
         </div>
 
         {meta.segments && (
           <div className="grid grid-cols-3 gap-2">
-            <div className={`p-2 rounded ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
-              <div className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Depth</div>
-              <div className={`text-sm font-semibold mt-0.5 ${meta.depth > 3 ? "text-amber-500" : (darkMode ? "text-gray-200" : "text-gray-700")}`}>{meta.depth} folder{meta.depth === 1 ? "" : "s"}</div>
+            <div className={`p-2 rounded ${darkMode ? "bg-gray-900" : "bg-cardsoft border border-line"}`}>
+              <div className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-faint"}`}>Depth</div>
+              <div className={`text-sm font-semibold mt-0.5 ${meta.depth > 3 ? "text-amber-500" : (darkMode ? "text-gray-200" : "text-inksoft")}`}>{meta.depth} folder{meta.depth === 1 ? "" : "s"}</div>
             </div>
-            <div className={`p-2 rounded ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
-              <div className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Length</div>
-              <div className={`text-sm font-semibold mt-0.5 ${meta.length > 115 ? "text-amber-500" : (darkMode ? "text-gray-200" : "text-gray-700")}`}>{meta.length}</div>
+            <div className={`p-2 rounded ${darkMode ? "bg-gray-900" : "bg-cardsoft border border-line"}`}>
+              <div className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-faint"}`}>Length</div>
+              <div className={`text-sm font-semibold mt-0.5 ${meta.length > 115 ? "text-amber-500" : (darkMode ? "text-gray-200" : "text-inksoft")}`}>{meta.length}</div>
             </div>
-            <div className={`p-2 rounded ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
-              <div className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Extension</div>
+            <div className={`p-2 rounded ${darkMode ? "bg-gray-900" : "bg-cardsoft border border-line"}`}>
+              <div className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-faint"}`}>Extension</div>
               <div className={`text-sm font-semibold mt-0.5 ${meta.hasFileExtension ? "text-amber-500" : "text-emerald-500"}`}>{meta.hasFileExtension ? "Yes" : "None"}</div>
             </div>
           </div>
         )}
 
         {meta.hierarchy && meta.hierarchy !== "root" && (
-          <div className={`p-2 rounded font-mono text-[11px] ${darkMode ? "bg-gray-900 text-gray-300" : "bg-gray-50 text-gray-600 border border-gray-100"}`}>
+          <div className={`p-2 rounded font-mono text-[11px] ${darkMode ? "bg-gray-900 text-gray-300" : "bg-cardsoft text-muted border border-line"}`}>
             {meta.hierarchy}
           </div>
         )}
@@ -395,7 +395,7 @@ const URLStructureCard = ({ data, darkMode, onInfo }) => {
           <div className="space-y-1">
             <div className="text-[10px] font-semibold uppercase tracking-wider text-amber-500">Issues</div>
             {meta.issues.map((iss, i) => (
-              <div key={i} className={`flex items-start gap-1.5 text-[11px] ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+              <div key={i} className={`flex items-start gap-1.5 text-[11px] ${darkMode ? "text-gray-300" : "text-muted"}`}>
                 <AlertTriangle size={11} className="text-amber-500 shrink-0 mt-0.5" /> {iss}
               </div>
             ))}
@@ -420,23 +420,23 @@ const H1TagCard = ({ data, darkMode, onInfo }) => {
   const [showDetails, setShowDetails] = React.useState(false);
 
   return (
-    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group col-span-1 md:col-span-2 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group col-span-1 md:col-span-2 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-line"}`}>
       <div className="p-5 space-y-4">
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
+            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-surface-2"} group-hover:scale-110 transition-transform duration-300`}>
               <Layout size={24} className={darkMode ? "text-violet-400" : "text-violet-600"} />
             </div>
             <div>
-              <h3 className={`font-semibold text-lg ${darkMode ? "text-gray-100" : "text-gray-900"}`}>H1 Tag</h3>
+              <h3 className={`font-semibold text-lg ${darkMode ? "text-gray-100" : "text-ink"}`}>H1 Tag</h3>
               <div className={`flex items-center gap-2 mt-1`}>
                 <ScoreBadge
                   status={getStatusFromScore(score)}
                   value={statusText}
                   darkMode={darkMode}
                 />
-                <span className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                <span className={`text-xs ${darkMode ? "text-gray-400" : "text-muted"}`}>
                   ({meta.count || 0} Found)
                 </span>
               </div>
@@ -453,7 +453,7 @@ const H1TagCard = ({ data, darkMode, onInfo }) => {
                   e.stopPropagation();
                   onInfo();
                 }}
-                className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
+                className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-faint hover:text-ink"}`}
               >
                 <Info size={18} />
               </button>
@@ -466,10 +466,10 @@ const H1TagCard = ({ data, darkMode, onInfo }) => {
 
           {/* H1 Content Display */}
           <div>
-            <h4 className={`text-xs font-semibold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+            <h4 className={`text-xs font-semibold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-500" : "text-faint"}`}>
               H1 Content
             </h4>
-            <div className={`p-3 rounded-lg border leading-tight space-y-2 ${darkMode ? "bg-gray-900 border-gray-700 text-gray-200" : "bg-gray-50 border-gray-200 text-gray-800"}`}>
+            <div className={`p-3 rounded-lg border leading-tight space-y-2 ${darkMode ? "bg-gray-900 border-gray-700 text-gray-200" : "bg-cardsoft border-line text-inksoft"}`}>
               {meta.content && meta.content.length > 0 ? (
                 meta.content.map((h, i) => (
                   <div key={i} className="font-serif text-lg">• {h}</div>
@@ -521,23 +521,23 @@ const ImageAnalysisCard = ({ data, darkMode, onInfo, resolveLink, className = ""
   const statusText = isPassed ? "Fully Optimized" : (score >= 50 ? "Good / Improvements" : "Needs Attention");
 
   return (
-    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group col-span-1 md:col-span-2 lg:col-span-3 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group col-span-1 md:col-span-2 lg:col-span-3 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-line"}`}>
       <div className="p-5 space-y-4">
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
+            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-surface-2"} group-hover:scale-110 transition-transform duration-300`}>
               <ImageIcon size={24} className={darkMode ? "text-pink-400" : "text-pink-600"} />
             </div>
             <div>
-              <h3 className={`font-semibold text-lg ${darkMode ? "text-gray-100" : "text-gray-900"}`}>Image Optimization</h3>
+              <h3 className={`font-semibold text-lg ${darkMode ? "text-gray-100" : "text-ink"}`}>Image Optimization</h3>
               <div className={`flex items-center gap-2 mt-1`}>
                 <ScoreBadge
                   status={getStatusFromScore(score)}
                   value={statusText}
                   darkMode={darkMode}
                 />
-                <span className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                <span className={`text-xs ${darkMode ? "text-gray-400" : "text-muted"}`}>
                   ({meta.total || 0} Total Images)
                 </span>
               </div>
@@ -554,7 +554,7 @@ const ImageAnalysisCard = ({ data, darkMode, onInfo, resolveLink, className = ""
                   e.stopPropagation();
                   onInfo();
                 }}
-                className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
+                className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-faint hover:text-ink"}`}
               >
                 <Info size={18} />
               </button>
@@ -568,30 +568,30 @@ const ImageAnalysisCard = ({ data, darkMode, onInfo, resolveLink, className = ""
           {/* Stats Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-center">
             {/* 1. With Alt */}
-            <div className={`p-2 rounded border ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
-              <div className={`text-lg font-semibold ${darkMode ? "text-white" : "text-gray-900"}`}>{meta.withAlt || 0}</div>
+            <div className={`p-2 rounded border ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-cardsoft border-line"}`}>
+              <div className={`text-lg font-semibold ${darkMode ? "text-white" : "text-ink"}`}>{meta.withAlt || 0}</div>
               <div className="text-[10px] uppercase font-semibold tracking-wider opacity-60">With Alt</div>
             </div>
 
             {/* 2. Without Alt (New) */}
-            <div className={`p-2 rounded border ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
-              <div className={`text-lg font-semibold ${meta.missingAlt?.length > 0 ? "text-amber-500" : (darkMode ? "text-white" : "text-gray-900")}`}>
+            <div className={`p-2 rounded border ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-cardsoft border-line"}`}>
+              <div className={`text-lg font-semibold ${meta.missingAlt?.length > 0 ? "text-amber-500" : (darkMode ? "text-white" : "text-ink")}`}>
                 {meta.missingAlt?.length || 0}
               </div>
               <div className="text-[10px] uppercase font-semibold tracking-wider opacity-60">Without Alt</div>
             </div>
 
             {/* 3. Without Title */}
-            <div className={`p-2 rounded border ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
-              <div className={`text-lg font-semibold ${meta.missingTitle?.length > 0 ? "text-amber-500" : (darkMode ? "text-white" : "text-gray-900")}`}>
+            <div className={`p-2 rounded border ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-cardsoft border-line"}`}>
+              <div className={`text-lg font-semibold ${meta.missingTitle?.length > 0 ? "text-amber-500" : (darkMode ? "text-white" : "text-ink")}`}>
                 {meta.missingTitle?.length || 0}
               </div>
               <div className="text-[10px] uppercase font-semibold tracking-wider opacity-60">Without Title</div>
             </div>
 
             {/* 4. Heavy Images */}
-            <div className={`p-2 rounded border ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
-              <div className={`text-lg font-semibold ${meta.largeImages?.length > 0 ? "text-red-500" : (darkMode ? "text-white" : "text-gray-900")}`}>
+            <div className={`p-2 rounded border ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-cardsoft border-line"}`}>
+              <div className={`text-lg font-semibold ${meta.largeImages?.length > 0 ? "text-red-500" : (darkMode ? "text-white" : "text-ink")}`}>
                 {meta.largeImages?.length || 0}
               </div>
               <div className="text-[10px] uppercase font-semibold tracking-wider opacity-60">Heavy (&gt;150KB)</div>
@@ -613,20 +613,20 @@ const ImageAnalysisCard = ({ data, darkMode, onInfo, resolveLink, className = ""
           {/* Modern-format / delivery stats */}
           {meta.nextGenPct !== undefined && (
             <div className="grid grid-cols-3 md:grid-cols-4 gap-2 text-center">
-              <div className={`p-2 rounded border ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
+              <div className={`p-2 rounded border ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-cardsoft border-line"}`}>
                 <div className={`text-lg font-semibold ${meta.nextGenPct >= 70 ? "text-emerald-500" : "text-amber-500"}`}>{meta.nextGenPct}%</div>
                 <div className="text-[10px] uppercase font-semibold tracking-wider opacity-60">Next-Gen</div>
               </div>
-              <div className={`p-2 rounded border ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
+              <div className={`p-2 rounded border ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-cardsoft border-line"}`}>
                 <div className={`text-lg font-semibold ${meta.lazyPct >= 50 ? "text-emerald-500" : "text-amber-500"}`}>{meta.lazyPct}%</div>
                 <div className="text-[10px] uppercase font-semibold tracking-wider opacity-60">Lazy-Load</div>
               </div>
-              <div className={`p-2 rounded border ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
+              <div className={`p-2 rounded border ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-cardsoft border-line"}`}>
                 <div className={`text-lg font-semibold ${meta.namingPct >= 70 ? "text-emerald-500" : "text-amber-500"}`}>{meta.namingPct}%</div>
                 <div className="text-[10px] uppercase font-semibold tracking-wider opacity-60">Named Well</div>
               </div>
-              <div className={`p-2 rounded border ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
-                <div className={`text-lg font-semibold ${darkMode ? "text-white" : "text-gray-900"}`}>{meta.responsiveCount || 0}</div>
+              <div className={`p-2 rounded border ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-cardsoft border-line"}`}>
+                <div className={`text-lg font-semibold ${darkMode ? "text-white" : "text-ink"}`}>{meta.responsiveCount || 0}</div>
                 <div className="text-[10px] uppercase font-semibold tracking-wider opacity-60">Responsive</div>
               </div>
             </div>
@@ -790,7 +790,7 @@ const SemanticTagsCard = ({ data, darkMode, onInfo, className }) => {
   const renderTagBadge = (tagName, isCritical) => {
     const exists = meta.found?.some(t => t.toLowerCase() === tagName.toLowerCase());
     return (
-      <div key={tagName} className={`flex items-center justify-between px-2 py-1 rounded border transition-colors ${exists ? (darkMode ? "bg-green-500/10 border-green-500/30 text-green-400" : "bg-green-50 border-green-200 text-green-700") : (isCritical ? (darkMode ? "bg-red-500/10 border-red-500/30 text-red-400" : "bg-red-50 border-red-200 text-red-700") : (darkMode ? "bg-gray-800 border-gray-700 text-gray-500" : "bg-gray-50 border-gray-200 text-gray-400"))}`}>
+      <div key={tagName} className={`flex items-center justify-between px-2 py-1 rounded border transition-colors ${exists ? (darkMode ? "bg-green-500/10 border-green-500/30 text-green-400" : "bg-green-50 border-green-200 text-green-700") : (isCritical ? (darkMode ? "bg-red-500/10 border-red-500/30 text-red-400" : "bg-red-50 border-red-200 text-red-700") : (darkMode ? "bg-gray-800 border-gray-700 text-gray-500" : "bg-cardsoft border-line text-faint"))}`}>
         <span className="font-mono text-[10px] font-semibold">&lt;{tagName}&gt;</span>
         {exists ? <Check size={10} /> : (isCritical ? <AlertTriangle size={10} /> : <div className="w-[10px]" />)}
       </div>
@@ -798,16 +798,16 @@ const SemanticTagsCard = ({ data, darkMode, onInfo, className }) => {
   };
 
   return (
-    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group ${className} ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group ${className} ${darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-line"}`}>
       <div className="p-5 space-y-4">
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
+            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-surface-2"} group-hover:scale-110 transition-transform duration-300`}>
               <Box size={24} className={darkMode ? "text-emerald-400" : "text-emerald-600"} />
             </div>
             <div>
-              <h3 className={`font-semibold text-lg ${darkMode ? "text-gray-100" : "text-gray-900"}`}>Semantic Structure</h3>
+              <h3 className={`font-semibold text-lg ${darkMode ? "text-gray-100" : "text-ink"}`}>Semantic Structure</h3>
               <div className={`flex items-center gap-2 mt-1`}>
                 <ScoreBadge
                   status={getStatusFromScore(score)}
@@ -828,7 +828,7 @@ const SemanticTagsCard = ({ data, darkMode, onInfo, className }) => {
                   e.stopPropagation();
                   onInfo();
                 }}
-                className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
+                className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-faint hover:text-ink"}`}
               >
                 <Info size={18} />
               </button>
@@ -839,12 +839,12 @@ const SemanticTagsCard = ({ data, darkMode, onInfo, className }) => {
         {/* Tag Grid */}
         <div className="space-y-3">
 
-          <div className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Core Elements (Key for SEO)</div>
+          <div className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-faint"}`}>Core Elements (Key for SEO)</div>
           <div className="grid grid-cols-2 gap-2">
             {["header", "nav", "main", "footer"].map(t => renderTagBadge(t, true))}
           </div>
 
-          <div className={`mt-2 text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Content Elements</div>
+          <div className={`mt-2 text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-faint"}`}>Content Elements</div>
           <div className="grid grid-cols-3 gap-2">
             {["article", "section", "aside"].map(t => renderTagBadge(t, false))}
           </div>
@@ -853,16 +853,16 @@ const SemanticTagsCard = ({ data, darkMode, onInfo, className }) => {
         {/* Structural quality stats */}
         {meta.semanticRatio !== undefined && (
           <div className="grid grid-cols-3 gap-2 text-center">
-            <div className={`p-2 rounded border ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
+            <div className={`p-2 rounded border ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-cardsoft border-line"}`}>
               <div className={`text-sm font-semibold ${meta.semanticRatio >= 0.1 ? "text-emerald-500" : "text-amber-500"}`}>{Math.round(meta.semanticRatio * 100)}%</div>
               <div className="text-[9px] uppercase font-semibold tracking-wider opacity-60">Semantic vs div</div>
             </div>
-            <div className={`p-2 rounded border ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
+            <div className={`p-2 rounded border ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-cardsoft border-line"}`}>
               <div className={`text-sm font-semibold ${(meta.sectioningCount === 0 || meta.sectioningWithHeadings >= meta.sectioningCount * 0.7) ? "text-emerald-500" : "text-amber-500"}`}>{meta.sectioningWithHeadings || 0}/{meta.sectioningCount || 0}</div>
               <div className="text-[9px] uppercase font-semibold tracking-wider opacity-60">Sections w/ heading</div>
             </div>
-            <div className={`p-2 rounded border ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
-              <div className={`text-sm font-semibold ${darkMode ? "text-white" : "text-gray-900"}`}>{meta.semanticCount || 0}</div>
+            <div className={`p-2 rounded border ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-cardsoft border-line"}`}>
+              <div className={`text-sm font-semibold ${darkMode ? "text-white" : "text-ink"}`}>{meta.semanticCount || 0}</div>
               <div className="text-[9px] uppercase font-semibold tracking-wider opacity-60">Semantic els</div>
             </div>
           </div>
@@ -873,7 +873,7 @@ const SemanticTagsCard = ({ data, darkMode, onInfo, className }) => {
             <span className="font-semibold uppercase tracking-wider text-amber-500">Sections without a heading:</span>
             <div className="flex flex-wrap gap-1">
               {meta.sectionsWithoutHeadings.slice(0, 8).map((s, i) => (
-                <span key={i} className={`font-mono px-1.5 py-0.5 rounded ${darkMode ? "bg-gray-900 text-gray-400" : "bg-gray-100 text-gray-500"}`}>{s}</span>
+                <span key={i} className={`font-mono px-1.5 py-0.5 rounded ${darkMode ? "bg-gray-900 text-gray-400" : "bg-surface-2 text-muted"}`}>{s}</span>
               ))}
             </div>
           </div>
@@ -1120,23 +1120,23 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
   const [showDetails, setShowDetails] = React.useState(false);
 
   return (
-    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group lg:col-span-3 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group lg:col-span-3 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-line"}`}>
       <div className="p-5 space-y-5">
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
+            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-surface-2"} group-hover:scale-110 transition-transform duration-300`}>
               <ExternalLink size={24} className={darkMode ? "text-amber-400" : "text-amber-600"} />
             </div>
             <div>
-              <h3 className={`font-semibold text-lg ${darkMode ? "text-gray-100" : "text-gray-900"}`}>Contextual Links</h3>
+              <h3 className={`font-semibold text-lg ${darkMode ? "text-gray-100" : "text-ink"}`}>Contextual Links</h3>
               <div className={`flex items-center gap-2 mt-1`}>
                 <ScoreBadge
                   status={getStatusFromScore(finalScore)}
                   value={statusText}
                   darkMode={darkMode}
                 />
-                <span className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                <span className={`text-xs ${darkMode ? "text-gray-400" : "text-muted"}`}>
                   ({contextualLinks.length} / {allLinks.length} Contextual)
                 </span>
               </div>
@@ -1153,7 +1153,7 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
                   e.stopPropagation();
                   onInfo();
                 }}
-                className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
+                className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-faint hover:text-ink"}`}
               >
                 <Info size={18} />
               </button>
@@ -1165,21 +1165,21 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
         <div className="space-y-4">
           {/* Description */}
           <div>
-            <span className={`text-xs font-semibold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>DESCRIPTION: </span>
-            <span className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+            <span className={`text-xs font-semibold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-muted"}`}>DESCRIPTION: </span>
+            <span className={`text-xs ${darkMode ? "text-gray-300" : "text-muted"}`}>
               {InfoDetails.Contextual_Linking.whatThisParameterIs}
             </span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Contextual Links */}
-            <div className={`rounded-xl border overflow-hidden flex flex-col ${darkMode ? "bg-black/20 border-gray-700" : "bg-gray-50 border-gray-200"}`} style={{ maxHeight: '300px' }}>
-              <div className={`px-4 py-2 border-b text-xs font-semibold uppercase tracking-wider sticky top-0 bg-opacity-90 backdrop-blur ${darkMode ? "bg-emerald-900/30 border-gray-700 text-emerald-400" : "bg-emerald-50 border-gray-200 text-emerald-700"}`}>
+            <div className={`rounded-xl border overflow-hidden flex flex-col ${darkMode ? "bg-black/20 border-gray-700" : "bg-cardsoft border-line"}`} style={{ maxHeight: '300px' }}>
+              <div className={`px-4 py-2 border-b text-xs font-semibold uppercase tracking-wider sticky top-0 bg-opacity-90 backdrop-blur ${darkMode ? "bg-emerald-900/30 border-gray-700 text-emerald-400" : "bg-emerald-50 border-line text-emerald-700"}`}>
                 Contextual Links ({contextualLinks.length})
               </div>
               <div className="overflow-y-auto custom-scrollbar p-1 space-y-1 flex-1">
                 {contextualLinks.length > 0 ? contextualLinks.map((link, i) => (
-                  <a key={i} href={resolveLink(link.href)} target="_blank" rel="noopener noreferrer" className={`block p-2 rounded text-[10px] break-all border group/link transition-all ${darkMode ? "bg-emerald-900/10 border-transparent hover:bg-emerald-900/20" : "bg-white border-transparent hover:border-emerald-200 hover:shadow-sm"}`}>
+                  <a key={i} href={resolveLink(link.href)} target="_blank" rel="noopener noreferrer" className={`block p-2 rounded text-[10px] break-all border group/link transition-all ${darkMode ? "bg-emerald-900/10 border-transparent hover:bg-emerald-900/20" : "bg-card border-transparent hover:border-emerald-200 hover:shadow-sm"}`}>
                     <div className={`font-semibold mb-0.5 ${darkMode ? "text-emerald-300" : "text-emerald-700"}`}>"{link.text}"</div>
                     <div className="opacity-50 font-mono text-[9px] truncate group-hover/link:opacity-80 transition-opacity">{link.href}</div>
                   </a>
@@ -1188,13 +1188,13 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
             </div>
 
             {/* Non-Contextual Links */}
-            <div className={`rounded-xl border overflow-hidden flex flex-col ${darkMode ? "bg-black/20 border-gray-700" : "bg-gray-50 border-gray-200"}`} style={{ maxHeight: '300px' }}>
-              <div className={`px-4 py-2 border-b text-xs font-semibold uppercase tracking-wider sticky top-0 bg-opacity-90 backdrop-blur ${darkMode ? "bg-amber-900/30 border-gray-700 text-amber-400" : "bg-amber-50 border-gray-200 text-amber-700"}`}>
+            <div className={`rounded-xl border overflow-hidden flex flex-col ${darkMode ? "bg-black/20 border-gray-700" : "bg-cardsoft border-line"}`} style={{ maxHeight: '300px' }}>
+              <div className={`px-4 py-2 border-b text-xs font-semibold uppercase tracking-wider sticky top-0 bg-opacity-90 backdrop-blur ${darkMode ? "bg-amber-900/30 border-gray-700 text-amber-400" : "bg-amber-50 border-line text-amber-700"}`}>
                 Non-Contextual Links ({nonContextualLinks.length})
               </div>
               <div className="overflow-y-auto custom-scrollbar p-1 space-y-1 flex-1">
                 {nonContextualLinks.length > 0 ? nonContextualLinks.map((link, i) => (
-                  <a key={i} href={resolveLink(link.href)} target="_blank" rel="noopener noreferrer" className={`block p-2 rounded text-[10px] break-all border group/link transition-all ${darkMode ? "bg-amber-900/10 border-transparent hover:bg-amber-900/20" : "bg-white border-transparent hover:border-amber-200 hover:shadow-sm"}`}>
+                  <a key={i} href={resolveLink(link.href)} target="_blank" rel="noopener noreferrer" className={`block p-2 rounded text-[10px] break-all border group/link transition-all ${darkMode ? "bg-amber-900/10 border-transparent hover:bg-amber-900/20" : "bg-card border-transparent hover:border-amber-200 hover:shadow-sm"}`}>
                     <div className={`font-semibold mb-0.5 ${darkMode ? "text-amber-300" : "text-amber-700"}`}>"{link.text}"</div>
                     <div className="opacity-50 font-mono text-[9px] truncate group-hover/link:opacity-80 transition-opacity">{link.href}</div>
                   </a>
@@ -1212,18 +1212,18 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
 
             {meta.broken_links?.length > 0 ? (
               <>
-                <p className={`mb-3 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                <p className={`mb-3 ${darkMode ? "text-gray-300" : "text-muted"}`}>
                   These contextual links are returning an error (e.g., 404 Not Found) when accessed.
                 </p>
                 <div className="max-h-80 overflow-y-auto custom-scrollbar space-y-1 p-2 bg-black/5 dark:bg-black/20 rounded">
                   {meta.broken_links.map((linkObj, i) => (
-                    <div key={i} className={`flex justify-between items-center ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"} p-2 rounded border shadow-sm`}>
+                    <div key={i} className={`flex justify-between items-center ${darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-line"} p-2 rounded border shadow-sm`}>
                       <div className="flex items-center gap-2 font-mono text-[11px] truncate mr-2">
                         <span className="font-semibold text-red-500 dark:text-red-400 shrink-0 truncate">
                           {linkObj.status ? `HTTP ${linkObj.status}` : linkObj.error || "Broken"}
                         </span>
                       </div>
-                      <a href={resolveLink(linkObj.url || "")} target="_blank" rel="noopener noreferrer" className={`font-mono text-[10px] truncate transition-colors max-w-[70%] text-right ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-700"}`}>
+                      <a href={resolveLink(linkObj.url || "")} target="_blank" rel="noopener noreferrer" className={`font-mono text-[10px] truncate transition-colors max-w-[70%] text-right ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-accent hover:text-accenthover"}`}>
                         {linkObj.url || "—"}
                       </a>
                     </div>
@@ -1240,8 +1240,8 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
 
           {/* Topical Relatedness */}
           {meta.related_ratio !== undefined && (
-            <div className={`text-xs p-4 rounded-xl border ${darkMode ? "border-gray-700 bg-gray-800/40" : "border-gray-100 bg-gray-50"}`}>
-              <div className={`font-semibold mb-2 uppercase flex items-center gap-2 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+            <div className={`text-xs p-4 rounded-xl border ${darkMode ? "border-gray-700 bg-gray-800/40" : "border-line bg-cardsoft"}`}>
+              <div className={`font-semibold mb-2 uppercase flex items-center gap-2 ${darkMode ? "text-gray-300" : "text-muted"}`}>
                 <Link size={14} className="mt-[-2px]" />
                 Topical Relatedness
                 <span className={`ml-auto font-semibold ${Number(meta.related_ratio) >= 0.3 ? "text-emerald-500" : "text-amber-500"}`}>
@@ -1251,7 +1251,7 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
               {meta.topic_terms?.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mb-3">
                   {meta.topic_terms.slice(0, 12).map((t, i) => (
-                    <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-mono ${darkMode ? "bg-gray-900 text-gray-400" : "bg-white text-gray-500 border border-gray-100"}`}>{t}</span>
+                    <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-mono ${darkMode ? "bg-gray-900 text-gray-400" : "bg-card text-muted border border-line"}`}>{t}</span>
                   ))}
                 </div>
               )}
@@ -1261,7 +1261,7 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
                     <div className="text-[10px] font-semibold uppercase tracking-wider text-emerald-500 mb-1">Related Links</div>
                     <div className="space-y-1 max-h-40 overflow-y-auto custom-scrollbar">
                       {meta.related_examples.map((e, i) => (
-                        <div key={i} className={`font-mono text-[10px] truncate ${darkMode ? "text-gray-400" : "text-gray-600"}`} title={e.href}>
+                        <div key={i} className={`font-mono text-[10px] truncate ${darkMode ? "text-gray-400" : "text-muted"}`} title={e.href}>
                           <span className="text-emerald-500">↳</span> {e.anchor || e.href} {e.shared?.length ? <span className="opacity-60">({e.shared.join(", ")})</span> : null}
                         </div>
                       ))}
@@ -1273,7 +1273,7 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
                     <div className="text-[10px] font-semibold uppercase tracking-wider text-amber-500 mb-1">Unrelated Links</div>
                     <div className="space-y-1 max-h-40 overflow-y-auto custom-scrollbar">
                       {meta.unrelated_examples.map((e, i) => (
-                        <div key={i} className={`font-mono text-[10px] truncate ${darkMode ? "text-gray-400" : "text-gray-600"}`} title={e.href}>
+                        <div key={i} className={`font-mono text-[10px] truncate ${darkMode ? "text-gray-400" : "text-muted"}`} title={e.href}>
                           <span className="text-amber-500">↳</span> {e.anchor || e.href}
                         </div>
                       ))}
@@ -1328,18 +1328,18 @@ const LinkProfileCard = ({ data, darkMode, onInfo, resolveLink, className = "lg:
     return (
       <div className="max-h-60 overflow-y-auto custom-scrollbar p-1 space-y-1">
         {links.map((link, i) => (
-          <div key={i} className={`p-2 rounded text-[10px] break-all border group/link transition-all ${darkMode ? "bg-gray-800/40 border-gray-700/50 hover:bg-gray-800" : "bg-white border-gray-100 hover:border-gray-200 hover:shadow-sm"}`}>
+          <div key={i} className={`p-2 rounded text-[10px] break-all border group/link transition-all ${darkMode ? "bg-gray-800/40 border-gray-700/50 hover:bg-gray-800" : "bg-card border-line hover:border-line hover:shadow-sm"}`}>
             <div className="flex items-start justify-between gap-2 mb-1">
-              <span className={`font-semibold ${darkMode ? "text-gray-200" : "text-gray-700"}`}>"{link.text || "No Anchor Text"}"</span>
+              <span className={`font-semibold ${darkMode ? "text-gray-200" : "text-inksoft"}`}>"{link.text || "No Anchor Text"}"</span>
               {link.target === "_blank" && <ExternalLink size={10} className="mt-0.5 opacity-40 shrink-0" />}
             </div>
             <div className="flex items-center gap-1.5 min-w-0">
               {link.target && (
-                <span className={`text-[8px] font-mono px-1.5 py-0.5 rounded border opacity-70 shrink-0 ${darkMode ? "border-gray-600 text-gray-400 bg-gray-900/50" : "border-gray-200 text-gray-500 bg-gray-50"}`}>
+                <span className={`text-[8px] font-mono px-1.5 py-0.5 rounded border opacity-70 shrink-0 ${darkMode ? "border-gray-600 text-gray-400 bg-gray-900/50" : "border-line text-muted bg-cardsoft"}`}>
                   {link.target}
                 </span>
               )}
-              <a href={resolveLink(link.href)} target="_blank" rel="noopener noreferrer" className={`font-mono text-[9px] truncate transition-colors flex-1 min-w-0 ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-700"}`}>
+              <a href={resolveLink(link.href)} target="_blank" rel="noopener noreferrer" className={`font-mono text-[9px] truncate transition-colors flex-1 min-w-0 ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-accent hover:text-accenthover"}`}>
                 {link.href}
               </a>
             </div>
@@ -1350,23 +1350,23 @@ const LinkProfileCard = ({ data, darkMode, onInfo, resolveLink, className = "lg:
   };
 
   return (
-    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group ${className} ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group ${className} ${darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-line"}`}>
       <div className="p-5 space-y-4">
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
+            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-surface-2"} group-hover:scale-110 transition-transform duration-300`}>
               <Link size={24} className={darkMode ? "text-blue-400" : "text-blue-600"} />
             </div>
             <div>
-              <h3 className={`font-semibold text-lg ${darkMode ? "text-gray-100" : "text-gray-900"}`}>Link Profile</h3>
+              <h3 className={`font-semibold text-lg ${darkMode ? "text-gray-100" : "text-ink"}`}>Link Profile</h3>
               <div className={`flex items-center gap-2 mt-1`}>
                 <ScoreBadge
                   status={getStatusFromScore(score)}
                   value={statusText}
                   darkMode={darkMode}
                 />
-                <span className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                <span className={`text-xs ${darkMode ? "text-gray-400" : "text-muted"}`}>
                   ({meta.total || 0} Total Links)
                 </span>
               </div>
@@ -1383,7 +1383,7 @@ const LinkProfileCard = ({ data, darkMode, onInfo, resolveLink, className = "lg:
                   e.stopPropagation();
                   onInfo();
                 }}
-                className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
+                className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-faint hover:text-ink"}`}
               >
                 <Info size={18} />
               </button>
@@ -1393,18 +1393,18 @@ const LinkProfileCard = ({ data, darkMode, onInfo, resolveLink, className = "lg:
 
         {/* Stats Grid */}
         <div className="grid grid-cols-3 gap-3">
-          <div title="Links pointing to pages on the same domain" onClick={() => setActiveTab("internal")} className={`cursor-pointer p-3 rounded border text-center transition-all ${activeTab === "internal" ? (darkMode ? "bg-blue-900/20 border-blue-500 ring-1 ring-blue-500" : "bg-blue-50 border-blue-500 ring-1 ring-blue-500") : (darkMode ? "bg-gray-900/50 border-gray-700 hover:border-gray-600" : "bg-gray-50 border-gray-200 hover:border-gray-300")}`}>
+          <div title="Links pointing to pages on the same domain" onClick={() => setActiveTab("internal")} className={`cursor-pointer p-3 rounded border text-center transition-all ${activeTab === "internal" ? (darkMode ? "bg-blue-900/20 border-blue-500 ring-1 ring-blue-500" : "bg-blue-50 border-blue-500 ring-1 ring-blue-500") : (darkMode ? "bg-gray-900/50 border-gray-700 hover:border-gray-600" : "bg-cardsoft border-line hover:border-line")}`}>
             <div className={`text-2xl font-black ${darkMode ? "text-blue-400" : "text-blue-600"}`}>{meta.internal || 0}</div>
             <div className="text-[10px] font-semibold uppercase tracking-wider opacity-60">Internal</div>
           </div>
 
-          <div title="Links pointing to different domains" onClick={() => setActiveTab("external")} className={`cursor-pointer p-3 rounded border text-center transition-all ${activeTab === "external" ? (darkMode ? "bg-purple-900/20 border-purple-500 ring-1 ring-purple-500" : "bg-purple-50 border-purple-500 ring-1 ring-purple-500") : (darkMode ? "bg-gray-900/50 border-gray-700 hover:border-gray-600" : "bg-gray-50 border-gray-200 hover:border-gray-300")}`}>
+          <div title="Links pointing to different domains" onClick={() => setActiveTab("external")} className={`cursor-pointer p-3 rounded border text-center transition-all ${activeTab === "external" ? (darkMode ? "bg-purple-900/20 border-purple-500 ring-1 ring-purple-500" : "bg-purple-50 border-purple-500 ring-1 ring-purple-500") : (darkMode ? "bg-gray-900/50 border-gray-700 hover:border-gray-600" : "bg-cardsoft border-line hover:border-line")}`}>
             <div className={`text-2xl font-black ${darkMode ? "text-purple-400" : "text-purple-600"}`}>{meta.external || 0}</div>
             <div className="text-[10px] font-semibold uppercase tracking-wider opacity-60">External</div>
           </div>
 
-          <div className={`p-3 rounded border text-center ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
-            <div className={`text-2xl font-black ${darkMode ? "text-white" : "text-gray-900"}`}>{meta.unique || 0}</div>
+          <div className={`p-3 rounded border text-center ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-cardsoft border-line"}`}>
+            <div className={`text-2xl font-black ${darkMode ? "text-white" : "text-ink"}`}>{meta.unique || 0}</div>
             <div className="text-[10px] font-semibold uppercase tracking-wider opacity-60">Unique</div>
           </div>
         </div>
@@ -1415,18 +1415,18 @@ const LinkProfileCard = ({ data, darkMode, onInfo, resolveLink, className = "lg:
             <div className="font-semibold text-amber-500 mb-2 uppercase flex items-center gap-1">
               <AlertTriangle size={14} className="mt-[-2px]" /> Generic Anchor Text ({meta.bad_links_count})
             </div>
-            <p className={`mb-3 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+            <p className={`mb-3 ${darkMode ? "text-gray-300" : "text-muted"}`}>
               These links use non-descriptive anchor text like "click here". Replacing them with relevant keywords improves context for search engines.
             </p>
             <div className="max-h-40 overflow-y-auto custom-scrollbar space-y-1 p-2 bg-black/5 dark:bg-black/20 rounded">
               {meta.bad_links.map((link, i) => (
-                <div key={i} className={`flex justify-between items-center ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"} p-2 rounded border shadow-sm`}>
+                <div key={i} className={`flex justify-between items-center ${darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-line"} p-2 rounded border shadow-sm`}>
                   <div className="flex items-center gap-2 font-mono text-[11px] truncate mr-2">
                     <span className="opacity-50 text-[10px] shrink-0">&lt;a&gt;</span>
                     <span className="font-semibold text-amber-600 dark:text-amber-400 shrink-0 truncate">"{link.text || link}"</span>
                     <span className="opacity-50 text-[10px] shrink-0">&lt;/a&gt;</span>
                   </div>
-                  <a href={resolveLink(link.href || "")} target="_blank" rel="noopener noreferrer" className={`font-mono text-[9px] truncate transition-colors max-w-[45%] text-right ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-700"}`}>
+                  <a href={resolveLink(link.href || "")} target="_blank" rel="noopener noreferrer" className={`font-mono text-[9px] truncate transition-colors max-w-[45%] text-right ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-accent hover:text-accenthover"}`}>
                     {link.href || "—"}
                   </a>
                 </div>
@@ -1436,8 +1436,8 @@ const LinkProfileCard = ({ data, darkMode, onInfo, resolveLink, className = "lg:
         )}
 
         {/* Link Lists Tabs */}
-        <div className={`rounded-xl border overflow-hidden ${darkMode ? "bg-black/20 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
-          <div className={`px-4 py-2 border-b text-xs font-semibold uppercase tracking-wider flex justify-between items-center ${darkMode ? "border-gray-700 text-gray-400" : "border-gray-200 text-gray-500"}`}>
+        <div className={`rounded-xl border overflow-hidden ${darkMode ? "bg-black/20 border-gray-700" : "bg-cardsoft border-line"}`}>
+          <div className={`px-4 py-2 border-b text-xs font-semibold uppercase tracking-wider flex justify-between items-center ${darkMode ? "border-gray-700 text-gray-400" : "border-line text-muted"}`}>
             <span>{activeTab === "internal" ? "Internal Links" : "External Links"}</span>
             <span className="opacity-50 text-[10px]">
               Total: {activeTab === "internal" ? meta.internalLinks?.length : meta.externalLinks?.length}
@@ -1492,16 +1492,16 @@ const HeadingHierarchyCard = ({ data, darkMode, onInfo }) => {
   const statusText = isPassed ? "Logical Structure" : "Imbalanced Hierarchy";
 
   return (
-    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group col-span-1 md:col-span-2 lg:col-span-3 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group col-span-1 md:col-span-2 lg:col-span-3 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-line"}`}>
       <div className="p-5 space-y-4">
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
+            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-surface-2"} group-hover:scale-110 transition-transform duration-300`}>
               <List size={24} className={darkMode ? "text-blue-400" : "text-blue-600"} />
             </div>
             <div>
-              <h3 className={`font-semibold text-lg ${darkMode ? "text-gray-100" : "text-gray-900"}`}>Heading Hierarchy</h3>
+              <h3 className={`font-semibold text-lg ${darkMode ? "text-gray-100" : "text-ink"}`}>Heading Hierarchy</h3>
               <div className={`flex items-center gap-2 mt-1`}>
                 <ScoreBadge
                   status={getStatusFromScore(score)}
@@ -1521,7 +1521,7 @@ const HeadingHierarchyCard = ({ data, darkMode, onInfo }) => {
                   e.stopPropagation();
                   onInfo();
                 }}
-                className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
+                className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-faint hover:text-ink"}`}
               >
                 <Info size={18} />
               </button>
@@ -1536,7 +1536,7 @@ const HeadingHierarchyCard = ({ data, darkMode, onInfo }) => {
             {/* Heading Counts */}
             <div className="grid grid-cols-6 gap-2 text-center">
               {['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].map((tag) => (
-                <div key={tag} className={`p-2 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-50"}`}>
+                <div key={tag} className={`p-2 rounded-lg ${darkMode ? "bg-gray-700" : "bg-cardsoft"}`}>
                   <div className="text-[10px] font-semibold opacity-60 uppercase">{tag}</div>
                   <div className={`font-semibold text-lg ${meta?.counts?.[tag] > 0 ? (darkMode ? "text-blue-400" : "text-blue-600") : "text-gray-400"}`}>
                     {meta?.counts?.[tag] || 0}
@@ -1547,8 +1547,8 @@ const HeadingHierarchyCard = ({ data, darkMode, onInfo }) => {
 
             {/* Heading List */}
             {meta?.headings?.length > 0 && (
-              <div className={`rounded-xl border ${darkMode ? "border-gray-700 bg-gray-900/50" : "border-gray-100 bg-gray-50"}`}>
-                <div className={`px-4 py-2 border-b text-xs font-semibold uppercase tracking-wider ${darkMode ? "border-gray-700 text-gray-400" : "border-gray-200 text-gray-500"}`}>
+              <div className={`rounded-xl border ${darkMode ? "border-gray-700 bg-gray-900/50" : "border-line bg-cardsoft"}`}>
+                <div className={`px-4 py-2 border-b text-xs font-semibold uppercase tracking-wider ${darkMode ? "border-gray-700 text-gray-400" : "border-line text-muted"}`}>
                   Heading Structure
                 </div>
                 <div className="max-h-60 overflow-y-auto custom-scrollbar p-2 space-y-1">
@@ -1576,7 +1576,7 @@ const HeadingHierarchyCard = ({ data, darkMode, onInfo }) => {
                           h.tag === 'h2' ? "font-semibold opacity-95" :
                             h.tag === 'h3' ? "font-medium opacity-90" :
                               "opacity-80"
-                          } ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
+                          } ${darkMode ? "text-gray-200" : "text-inksoft"}`}>
                           {h.text}
                         </span>
                       </div>
@@ -1635,23 +1635,23 @@ const ContentRelevanceCard = ({ data, darkMode, onInfo }) => {
   const statusText = meta.score === "HIGH" ? "Strong Relevance" : (meta.score === "MEDIUM" ? "Moderate Relevance" : "Low Relevance");
 
   return (
-    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group col-span-1 md:col-span-2 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group col-span-1 md:col-span-2 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-line"}`}>
       <div className="p-5 space-y-4">
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
+            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-surface-2"} group-hover:scale-110 transition-transform duration-300`}>
               <CheckCircle size={24} className={darkMode ? "text-emerald-400" : "text-emerald-600"} />
             </div>
             <div>
-              <h3 className={`font-semibold text-lg ${darkMode ? "text-gray-100" : "text-gray-900"}`}>Content Relevance</h3>
+              <h3 className={`font-semibold text-lg ${darkMode ? "text-gray-100" : "text-ink"}`}>Content Relevance</h3>
               <div className={`flex items-center gap-2 mt-1`}>
                 <ScoreBadge
                   status={status}
                   value={statusText}
                   darkMode={darkMode}
                 />
-                <span className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                <span className={`text-xs ${darkMode ? "text-gray-400" : "text-muted"}`}>
                   ({percentage}% Match)
                 </span>
               </div>
@@ -1668,7 +1668,7 @@ const ContentRelevanceCard = ({ data, darkMode, onInfo }) => {
                   e.stopPropagation();
                   onInfo();
                 }}
-                className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
+                className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-faint hover:text-ink"}`}
               >
                 <Info size={18} />
               </button>
@@ -1680,7 +1680,7 @@ const ContentRelevanceCard = ({ data, darkMode, onInfo }) => {
         <div className="space-y-4">
           <div className="space-y-4">
             {/* Reason */}
-            <div className={`p-3 rounded-lg border text-sm leading-relaxed ${darkMode ? "bg-gray-900 border-gray-700 text-gray-300" : "bg-blue-50/50 border-blue-100 text-gray-700"}`}>
+            <div className={`p-3 rounded-lg border text-sm leading-relaxed ${darkMode ? "bg-gray-900 border-gray-700 text-gray-300" : "bg-cardsoft border-line text-inksoft"}`}>
               <div className="font-semibold text-xs uppercase tracking-wider mb-1 opacity-50">Audit Findings</div>
               {meta.reason}
             </div>
@@ -1767,23 +1767,23 @@ const VideoAnalysisCard = ({ data, darkMode, onInfo, className = "" }) => {
   const statusText = isPassed ? "Fully Optimized" : (score >= 50 ? "Partially Optimized" : "Needs Attention");
 
   return (
-    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group ${className} ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group ${className} ${darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-line"}`}>
       <div className="p-5 space-y-4">
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
+            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-surface-2"} group-hover:scale-110 transition-transform duration-300`}>
               <Video size={24} className={darkMode ? "text-purple-400" : "text-purple-600"} />
             </div>
             <div>
-              <h3 className={`font-semibold text-lg ${darkMode ? "text-gray-100" : "text-gray-900"}`}>Video Optimization</h3>
+              <h3 className={`font-semibold text-lg ${darkMode ? "text-gray-100" : "text-ink"}`}>Video Optimization</h3>
               <div className={`flex items-center gap-2 mt-1`}>
                 <ScoreBadge
                   status={getStatusFromScore(score)}
                   value={statusText}
                   darkMode={darkMode}
                 />
-                <span className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                <span className={`text-xs ${darkMode ? "text-gray-400" : "text-muted"}`}>
                   ({meta.total || 0} Videos)
                 </span>
               </div>
@@ -1794,7 +1794,7 @@ const VideoAnalysisCard = ({ data, darkMode, onInfo, className = "" }) => {
               <DetailsToggle isOpen={showDetails} setIsOpen={setShowDetails} darkMode={darkMode} paramKey="Video" />
             )}
             {onInfo && (
-              <button onClick={(e) => { e.stopPropagation(); onInfo(); }} className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}>
+              <button onClick={(e) => { e.stopPropagation(); onInfo(); }} className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-faint hover:text-ink"}`}>
                 <Info size={18} />
               </button>
             )}
@@ -1804,19 +1804,19 @@ const VideoAnalysisCard = ({ data, darkMode, onInfo, className = "" }) => {
         <div className="space-y-4">
 
           <div className="grid grid-cols-2 gap-2">
-            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-900/50" : "bg-gray-50"} border ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
+            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-900/50" : "bg-cardsoft"} border ${darkMode ? "border-gray-700" : "border-line"}`}>
               <div className="text-[10px] font-semibold uppercase opacity-50 mb-1">Embedded</div>
               <div className="text-lg font-semibold">{meta.embeddingCount ?? meta.embedding ?? 0}</div>
             </div>
-            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-900/50" : "bg-gray-50"} border ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
+            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-900/50" : "bg-cardsoft"} border ${darkMode ? "border-gray-700" : "border-line"}`}>
               <div className="text-[10px] font-semibold uppercase opacity-50 mb-1">Lazy Loaded</div>
               <div className={`text-lg font-semibold ${meta.lazyCount === meta.total ? "text-green-500" : "text-amber-500"}`}>{meta.lazyCount || 0}</div>
             </div>
-            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-900/50" : "bg-gray-50"} border ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
+            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-900/50" : "bg-cardsoft"} border ${darkMode ? "border-gray-700" : "border-line"}`}>
               <div className="text-[10px] font-semibold uppercase opacity-50 mb-1">Schema Markup</div>
               <div className={`text-lg font-semibold ${meta.metaCount > 0 ? "text-green-500" : "text-red-500"}`}>{meta.metaCount || 0}</div>
             </div>
-            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-900/50" : "bg-gray-50"} border ${darkMode ? "border-gray-700" : "border-gray-100"}`}>
+            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-900/50" : "bg-cardsoft"} border ${darkMode ? "border-gray-700" : "border-line"}`}>
               <div className="text-[10px] font-semibold uppercase opacity-50 mb-1">Health Score</div>
               <div className="text-lg font-semibold">{(score * 100).toFixed(0)}%</div>
             </div>
@@ -1877,11 +1877,11 @@ const URLSlugCard = ({ data, darkMode, onInfo }) => {
     >
       <div className="space-y-2">
         {meta?.slug && meta.slug !== "/" ? (
-          <div className={`text-xs font-mono p-1.5 rounded break-all ${darkMode ? "bg-gray-700/50 text-gray-300" : "bg-gray-100 text-gray-600"}`}>
+          <div className={`text-xs font-mono p-1.5 rounded break-all ${darkMode ? "bg-gray-700/50 text-gray-300" : "bg-surface-2 text-muted"}`}>
             /{meta.slug}
           </div>
         ) : (
-          <div className={`text-xs font-semibold p-1.5 rounded ${darkMode ? "bg-blue-900/20 text-blue-400" : "bg-blue-50 text-blue-700"}`}>
+          <div className={`text-xs font-semibold p-1.5 rounded ${darkMode ? "bg-blue-900/20 text-blue-400" : "bg-accentsoft text-accent"}`}>
             You are at root URL
           </div>
         )}
@@ -1889,23 +1889,23 @@ const URLSlugCard = ({ data, darkMode, onInfo }) => {
         {meta?.slug && meta.slug !== "/" && meta.wordCount !== undefined && (
           <>
             <div className="grid grid-cols-3 gap-2">
-              <div className={`p-1.5 rounded text-center ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
-                <div className={`text-[9px] font-semibold uppercase ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Words</div>
-                <div className={`text-xs font-semibold ${meta.wordCount > 8 ? "text-amber-500" : (darkMode ? "text-gray-200" : "text-gray-700")}`}>{meta.wordCount}</div>
+              <div className={`p-1.5 rounded text-center ${darkMode ? "bg-gray-900" : "bg-cardsoft border border-line"}`}>
+                <div className={`text-[9px] font-semibold uppercase ${darkMode ? "text-gray-500" : "text-faint"}`}>Words</div>
+                <div className={`text-xs font-semibold ${meta.wordCount > 8 ? "text-amber-500" : (darkMode ? "text-gray-200" : "text-inksoft")}`}>{meta.wordCount}</div>
               </div>
-              <div className={`p-1.5 rounded text-center ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
-                <div className={`text-[9px] font-semibold uppercase ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Chars</div>
-                <div className={`text-xs font-semibold ${meta.charLength > 60 ? "text-amber-500" : (darkMode ? "text-gray-200" : "text-gray-700")}`}>{meta.charLength}</div>
+              <div className={`p-1.5 rounded text-center ${darkMode ? "bg-gray-900" : "bg-cardsoft border border-line"}`}>
+                <div className={`text-[9px] font-semibold uppercase ${darkMode ? "text-gray-500" : "text-faint"}`}>Chars</div>
+                <div className={`text-xs font-semibold ${meta.charLength > 60 ? "text-amber-500" : (darkMode ? "text-gray-200" : "text-inksoft")}`}>{meta.charLength}</div>
               </div>
-              <div className={`p-1.5 rounded text-center ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
-                <div className={`text-[9px] font-semibold uppercase ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Title Match</div>
+              <div className={`p-1.5 rounded text-center ${darkMode ? "bg-gray-900" : "bg-cardsoft border border-line"}`}>
+                <div className={`text-[9px] font-semibold uppercase ${darkMode ? "text-gray-500" : "text-faint"}`}>Title Match</div>
                 <div className={`text-xs font-semibold ${meta.keywordAligned === true ? "text-emerald-500" : meta.keywordAligned === false ? "text-amber-500" : "opacity-40"}`}>{meta.keywordAligned === true ? "Yes" : meta.keywordAligned === false ? "No" : "—"}</div>
               </div>
             </div>
             {meta.meaningfulKeywords?.length > 0 && (
               <div className="flex flex-wrap gap-1">
                 {meta.meaningfulKeywords.slice(0, 8).map((k, i) => (
-                  <span key={i} className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${meta.matchedKeywords?.includes(k) ? (darkMode ? "bg-emerald-900/30 text-emerald-300" : "bg-emerald-50 text-emerald-700 border border-emerald-100") : (darkMode ? "bg-gray-900 text-gray-400" : "bg-white text-gray-500 border border-gray-100")}`}>{k}</span>
+                  <span key={i} className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${meta.matchedKeywords?.includes(k) ? (darkMode ? "bg-emerald-900/30 text-emerald-300" : "bg-emerald-50 text-emerald-700 border border-emerald-100") : (darkMode ? "bg-gray-900 text-gray-400" : "bg-card text-muted border border-line")}`}>{k}</span>
                 ))}
               </div>
             )}
@@ -1962,8 +1962,8 @@ const RobotsTxtCard = ({ data, darkMode, onInfo }) => {
     >
       {meta?.content && (
         <div className="space-y-1">
-          <div className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>File content (Preview):</div>
-          <pre className={`p-2 rounded text-[10px] font-mono whitespace-pre-wrap max-h-32 overflow-y-auto ${darkMode ? "bg-gray-900 text-gray-400" : "bg-gray-50 text-gray-600 border border-gray-100"}`}>
+          <div className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-faint"}`}>File content (Preview):</div>
+          <pre className={`p-2 rounded text-[10px] font-mono whitespace-pre-wrap max-h-32 overflow-y-auto ${darkMode ? "bg-gray-900 text-gray-400" : "bg-cardsoft text-muted border border-line"}`}>
             {meta.content}
           </pre>
         </div>
@@ -2000,13 +2000,13 @@ const ContentFreshnessCard = ({ data, darkMode, onInfo }) => {
     >
       {(meta?.mostRecent || meta?.daysAgo !== undefined) && (
         <div className="grid grid-cols-2 gap-2">
-          <div className={`p-2 rounded ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
-            <div className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Last Updated</div>
-            <div className={`text-xs font-semibold mt-0.5 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>{meta.mostRecent || "—"}{meta.daysAgo !== undefined && meta.daysAgo !== null ? ` (${meta.daysAgo}d ago)` : ""}</div>
+          <div className={`p-2 rounded ${darkMode ? "bg-gray-900" : "bg-cardsoft border border-line"}`}>
+            <div className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-faint"}`}>Last Updated</div>
+            <div className={`text-xs font-semibold mt-0.5 ${darkMode ? "text-gray-200" : "text-inksoft"}`}>{meta.mostRecent || "—"}{meta.daysAgo !== undefined && meta.daysAgo !== null ? ` (${meta.daysAgo}d ago)` : ""}</div>
           </div>
-          <div className={`p-2 rounded ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
-            <div className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Signals</div>
-            <div className={`text-xs font-semibold mt-0.5 break-words ${darkMode ? "text-gray-200" : "text-gray-700"}`}>{meta.signals?.length ? meta.signals.join(", ") : (meta.source || "none")}</div>
+          <div className={`p-2 rounded ${darkMode ? "bg-gray-900" : "bg-cardsoft border border-line"}`}>
+            <div className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-faint"}`}>Signals</div>
+            <div className={`text-xs font-semibold mt-0.5 break-words ${darkMode ? "text-gray-200" : "text-inksoft"}`}>{meta.signals?.length ? meta.signals.join(", ") : (meta.source || "none")}</div>
           </div>
         </div>
       )}
@@ -2056,7 +2056,7 @@ const SitemapCard = ({ data, darkMode, onInfo }) => {
               {meta.outdatedReason}
             </p>
           ) : (
-            <p className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+            <p className={`text-xs ${darkMode ? "text-gray-300" : "text-muted"}`}>
               A sitemap was found, but it appears to be outdated (older than 6 months or missing tags).
             </p>
           )}
@@ -2066,16 +2066,16 @@ const SitemapCard = ({ data, darkMode, onInfo }) => {
       {meta?.exists === 1 && meta?.urlCount !== undefined && (
         <div className="space-y-2">
           <div className="grid grid-cols-3 gap-2">
-            <div className={`p-2 rounded ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
-              <div className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>{meta.isIndex ? "Child Sitemaps" : "URLs"}</div>
-              <div className={`text-sm font-semibold mt-0.5 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>{meta.urlCount}</div>
+            <div className={`p-2 rounded ${darkMode ? "bg-gray-900" : "bg-cardsoft border border-line"}`}>
+              <div className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-faint"}`}>{meta.isIndex ? "Child Sitemaps" : "URLs"}</div>
+              <div className={`text-sm font-semibold mt-0.5 ${darkMode ? "text-gray-200" : "text-inksoft"}`}>{meta.urlCount}</div>
             </div>
-            <div className={`p-2 rounded ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
-              <div className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>lastmod</div>
-              <div className={`text-sm font-semibold mt-0.5 ${darkMode ? "text-gray-200" : "text-gray-700"}`}>{meta.lastmodCoverage}%</div>
+            <div className={`p-2 rounded ${darkMode ? "bg-gray-900" : "bg-cardsoft border border-line"}`}>
+              <div className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-faint"}`}>lastmod</div>
+              <div className={`text-sm font-semibold mt-0.5 ${darkMode ? "text-gray-200" : "text-inksoft"}`}>{meta.lastmodCoverage}%</div>
             </div>
-            <div className={`p-2 rounded ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
-              <div className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Broken (sampled)</div>
+            <div className={`p-2 rounded ${darkMode ? "bg-gray-900" : "bg-cardsoft border border-line"}`}>
+              <div className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-faint"}`}>Broken (sampled)</div>
               <div className={`text-sm font-semibold mt-0.5 ${meta.broken_count > 0 ? "text-rose-500" : "text-emerald-500"}`}>{meta.broken_count || 0}</div>
             </div>
           </div>
@@ -2098,8 +2098,8 @@ const SitemapCard = ({ data, darkMode, onInfo }) => {
 
       {meta?.content && (
         <div className="space-y-1">
-          <div className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>File content (Preview):</div>
-          <pre className={`p-2 rounded text-[10px] font-mono whitespace-pre-wrap max-h-92 overflow-y-auto ${darkMode ? "bg-gray-900 text-gray-400" : "bg-gray-50 text-gray-600 border border-gray-100"}`}>
+          <div className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-faint"}`}>File content (Preview):</div>
+          <pre className={`p-2 rounded text-[10px] font-mono whitespace-pre-wrap max-h-92 overflow-y-auto ${darkMode ? "bg-gray-900 text-gray-400" : "bg-cardsoft text-muted border border-line"}`}>
             {meta.content}
           </pre>
         </div>
@@ -2152,11 +2152,11 @@ const UniquenessCard = ({ data, darkMode, onInfo, title, metricKey, noun = "Valu
       {pagesChecked > 0 && (
         <div className="grid grid-cols-3 gap-3 mb-4">
           {[
-            { label: "Pages Checked", value: pagesChecked, color: darkMode ? "text-gray-100" : "text-gray-900" },
+            { label: "Pages Checked", value: pagesChecked, color: darkMode ? "text-gray-100" : "text-ink" },
             { label: `Unique ${noun}s`, value: uniqueCount, color: "text-emerald-500" },
-            { label: "Duplicate / Missing", value: duplicateCount + missingCount, color: (duplicateCount + missingCount) > 0 ? "text-amber-500" : (darkMode ? "text-gray-100" : "text-gray-900") },
+            { label: "Duplicate / Missing", value: duplicateCount + missingCount, color: (duplicateCount + missingCount) > 0 ? "text-amber-500" : (darkMode ? "text-gray-100" : "text-ink") },
           ].map((s, i) => (
-            <div key={i} className={`p-3 rounded-lg text-center ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
+            <div key={i} className={`p-3 rounded-lg text-center ${darkMode ? "bg-gray-900" : "bg-cardsoft border border-line"}`}>
               <div className={`text-lg font-semibold ${s.color}`}>{s.value}</div>
               <div className="text-[10px] uppercase font-semibold tracking-wider opacity-60">{s.label}</div>
             </div>
@@ -2166,14 +2166,14 @@ const UniquenessCard = ({ data, darkMode, onInfo, title, metricKey, noun = "Valu
 
       {results.length > 0 && (
         <div className="space-y-2">
-          <div className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+          <div className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-faint"}`}>
             Sampled {noun}s
           </div>
           {results.map((r, i) => {
             const isMissing = !r?.value;
             const isDup = r?.value && counts[r.value.toLowerCase()] > 1;
             return (
-              <div key={i} className={`p-2 rounded text-xs ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
+              <div key={i} className={`p-2 rounded text-xs ${darkMode ? "bg-gray-900" : "bg-cardsoft border border-line"}`}>
                 <div className="flex items-center gap-2">
                   {isMissing ? (
                     <AlertTriangle size={12} className="text-red-500 shrink-0" />
@@ -2182,12 +2182,12 @@ const UniquenessCard = ({ data, darkMode, onInfo, title, metricKey, noun = "Valu
                   ) : (
                     <CheckCircle size={12} className="text-emerald-500 shrink-0" />
                   )}
-                  <span className={`font-semibold truncate ${isMissing ? "text-red-500 italic" : isDup ? "text-amber-500" : (darkMode ? "text-gray-200" : "text-gray-800")}`}>
+                  <span className={`font-semibold truncate ${isMissing ? "text-red-500 italic" : isDup ? "text-amber-500" : (darkMode ? "text-gray-200" : "text-ink")}`}>
                     {isMissing ? missingLabel : r.value}{isDup ? "  (duplicate)" : ""}
                   </span>
                 </div>
                 {r?.url && (
-                  <div className={`mt-1 pl-5 truncate text-[10px] ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+                  <div className={`mt-1 pl-5 truncate text-[10px] ${darkMode ? "text-gray-500" : "text-faint"}`}>
                     {r.url}
                   </div>
                 )}
@@ -2231,10 +2231,10 @@ const KeywordOptimizationCard = ({ data, darkMode, onInfo }) => {
       {pagesChecked > 0 && (
         <div className="grid grid-cols-2 gap-3 mb-4">
           {[
-            { label: "Pages Checked", value: pagesChecked, color: darkMode ? "text-gray-100" : "text-gray-900" },
+            { label: "Pages Checked", value: pagesChecked, color: darkMode ? "text-gray-100" : "text-ink" },
             { label: "Keyword Optimized", value: `${optimizedCount}/${pagesChecked}`, color: optimizedCount === pagesChecked ? "text-emerald-500" : "text-amber-500" },
           ].map((s, i) => (
-            <div key={i} className={`p-3 rounded-lg text-center ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
+            <div key={i} className={`p-3 rounded-lg text-center ${darkMode ? "bg-gray-900" : "bg-cardsoft border border-line"}`}>
               <div className={`text-lg font-semibold ${s.color}`}>{s.value}</div>
               <div className="text-[10px] uppercase font-semibold tracking-wider opacity-60">{s.label}</div>
             </div>
@@ -2244,18 +2244,18 @@ const KeywordOptimizationCard = ({ data, darkMode, onInfo }) => {
 
       {results.length > 0 && (
         <div className="space-y-2">
-          <div className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+          <div className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-faint"}`}>
             Sampled Pages
           </div>
           {results.map((r, i) => (
-            <div key={i} className={`p-2 rounded text-xs ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
+            <div key={i} className={`p-2 rounded text-xs ${darkMode ? "bg-gray-900" : "bg-cardsoft border border-line"}`}>
               <div className="flex items-center gap-2">
                 {r?.optimized ? (
                   <CheckCircle size={12} className="text-emerald-500 shrink-0" />
                 ) : (
                   <AlertTriangle size={12} className="text-amber-500 shrink-0" />
                 )}
-                <span className={`font-semibold truncate ${darkMode ? "text-gray-200" : "text-gray-800"}`}>
+                <span className={`font-semibold truncate ${darkMode ? "text-gray-200" : "text-ink"}`}>
                   {r?.title || "Missing title"}
                 </span>
               </div>
@@ -2269,7 +2269,7 @@ const KeywordOptimizationCard = ({ data, darkMode, onInfo }) => {
                 )}
               </div>
               {r?.url && (
-                <div className={`mt-1 pl-5 truncate text-[10px] ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+                <div className={`mt-1 pl-5 truncate text-[10px] ${darkMode ? "text-gray-500" : "text-faint"}`}>
                   {r.url}
                 </div>
               )}
@@ -2311,26 +2311,26 @@ const LocationOptimizationCard = ({ data, darkMode, onInfo }) => {
     >
       {meta?.title && (
         <div className="mb-3 space-y-1">
-          <div className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+          <div className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-faint"}`}>
             Home Page Title
           </div>
-          <div className={`p-2 rounded text-xs font-semibold ${darkMode ? "bg-gray-900 text-gray-200" : "bg-gray-50 border border-gray-100 text-gray-800"}`}>
+          <div className={`p-2 rounded text-xs font-semibold ${darkMode ? "bg-gray-900 text-gray-200" : "bg-cardsoft border border-line text-ink"}`}>
             {meta.title}
           </div>
         </div>
       )}
 
       <div className="grid grid-cols-2 gap-3">
-        <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
+        <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-900" : "bg-cardsoft border border-line"}`}>
           <div className="text-[10px] uppercase font-semibold tracking-wider opacity-60">Detected Location</div>
-          <div className={`text-sm font-semibold mt-1 ${darkMode ? "text-gray-100" : "text-gray-900"}`}>
+          <div className={`text-sm font-semibold mt-1 ${darkMode ? "text-gray-100" : "text-ink"}`}>
             {locationFound ? (meta?.location || "—") : "Not determined"}
           </div>
           {locationFound && meta?.source && (
             <div className="text-[10px] opacity-50 mt-0.5">via {meta.source}</div>
           )}
         </div>
-        <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
+        <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-900" : "bg-cardsoft border border-line"}`}>
           <div className="text-[10px] uppercase font-semibold tracking-wider opacity-60">In Title?</div>
           <div className={`text-sm font-semibold mt-1 flex items-center gap-1.5 ${!locationFound ? "text-amber-500" : inTitle ? "text-emerald-500" : "text-red-500"}`}>
             {!locationFound ? (
@@ -2394,7 +2394,7 @@ const ServiceContentQualityCard = ({ data, darkMode, onInfo, className = "" }) =
           <div className="font-semibold text-red-500 flex items-center gap-2">
             <AlertTriangle size={16} /> Service Page Not Found
           </div>
-          <p className={`text-xs mt-1 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+          <p className={`text-xs mt-1 ${darkMode ? "text-gray-300" : "text-muted"}`}>
             No dedicated service page was found in the site's navigation or sitemap.
           </p>
         </div>
@@ -2408,7 +2408,7 @@ const ServiceContentQualityCard = ({ data, darkMode, onInfo, className = "" }) =
                 href={meta.servicePageUrl}
                 target="_blank"
                 rel="noreferrer"
-                className={`ml-auto text-[10px] truncate max-w-[55%] ${darkMode ? "text-blue-400" : "text-blue-600"} hover:underline`}
+                className={`ml-auto text-[10px] truncate max-w-[55%] ${darkMode ? "text-blue-400" : "text-accent"} hover:underline`}
               >
                 {meta.servicePageUrl}
               </a>
@@ -2417,12 +2417,12 @@ const ServiceContentQualityCard = ({ data, darkMode, onInfo, className = "" }) =
 
           <div className="space-y-2">
             {checkRows.map((row, i) => (
-              <div key={i} className={`p-2 rounded ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
+              <div key={i} className={`p-2 rounded ${darkMode ? "bg-gray-900" : "bg-cardsoft border border-line"}`}>
                 <div className="flex items-center justify-between">
-                  <span className={`text-xs font-semibold ${darkMode ? "text-gray-200" : "text-gray-800"}`}>{row.label}</span>
+                  <span className={`text-xs font-semibold ${darkMode ? "text-gray-200" : "text-ink"}`}>{row.label}</span>
                   <span className={`text-xs font-semibold ${markColor(row.c?.mark ?? 0)}`}>{row.c?.mark ?? 0}/{row.c?.max ?? 2}</span>
                 </div>
-                <div className={`text-[10px] mt-0.5 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>{row.sub(row.c)}</div>
+                <div className={`text-[10px] mt-0.5 ${darkMode ? "text-gray-500" : "text-faint"}`}>{row.sub(row.c)}</div>
               </div>
             ))}
           </div>
@@ -2431,7 +2431,7 @@ const ServiceContentQualityCard = ({ data, darkMode, onInfo, className = "" }) =
             <div className="mt-3 space-y-1">
               <div className="text-[10px] font-semibold uppercase tracking-wider text-amber-500">Issues</div>
               {failureReasons.map((r, i) => (
-                <div key={i} className={`text-[11px] flex items-start gap-1.5 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                <div key={i} className={`text-[11px] flex items-start gap-1.5 ${darkMode ? "text-gray-300" : "text-muted"}`}>
                   <AlertTriangle size={11} className="text-amber-500 shrink-0 mt-0.5" /> {r}
                 </div>
               ))}
@@ -2477,7 +2477,7 @@ const ContentDepthQualityCard = ({ data, darkMode, onInfo, className = "" }) => 
           <div className="font-semibold text-amber-500 flex items-center gap-2">
             <AlertTriangle size={16} /> No target pages found
           </div>
-          <p className={`text-xs mt-1 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+          <p className={`text-xs mt-1 ${darkMode ? "text-gray-300" : "text-muted"}`}>
             Could not identify SRP, VDP, Service, Trade-In, About or Contact pages to analyze.
           </p>
         </div>
@@ -2492,7 +2492,7 @@ const ContentDepthQualityCard = ({ data, darkMode, onInfo, className = "" }) => 
           <div className="overflow-x-auto">
             <table className="w-full text-[11px]">
               <thead>
-                <tr className={`text-left ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+                <tr className={`text-left ${darkMode ? "text-gray-500" : "text-faint"}`}>
                   <th className="py-1 pr-2 font-semibold uppercase tracking-wider text-[9px]">Page</th>
                   <th className="py-1 px-1 font-semibold uppercase tracking-wider text-[9px] text-center" title="Relevance">Rel</th>
                   <th className="py-1 px-1 font-semibold uppercase tracking-wider text-[9px] text-center" title="Depth (word count)">Depth</th>
@@ -2502,9 +2502,9 @@ const ContentDepthQualityCard = ({ data, darkMode, onInfo, className = "" }) => 
               </thead>
               <tbody>
                 {pages.map((p, i) => (
-                  <tr key={i} className={`border-t ${darkMode ? "border-gray-800" : "border-gray-100"}`}>
+                  <tr key={i} className={`border-t ${darkMode ? "border-gray-800" : "border-line"}`}>
                     <td className="py-1.5 pr-2">
-                      <div className={`font-semibold ${darkMode ? "text-gray-200" : "text-gray-800"}`}>{p.typeLabel || p.type}</div>
+                      <div className={`font-semibold ${darkMode ? "text-gray-200" : "text-ink"}`}>{p.typeLabel || p.type}</div>
                       {p.loaded ? (
                         <div className="opacity-50 truncate max-w-[160px]">{p.wordCount} words{p.similarity != null ? ` · ${p.similarity}% sim` : ""}</div>
                       ) : (
@@ -2525,7 +2525,7 @@ const ContentDepthQualityCard = ({ data, darkMode, onInfo, className = "" }) => 
             <div className="mt-3 space-y-1">
               <div className="text-[10px] font-semibold uppercase tracking-wider text-amber-500">Issues</div>
               {failureReasons.map((r, i) => (
-                <div key={i} className={`text-[11px] flex items-start gap-1.5 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                <div key={i} className={`text-[11px] flex items-start gap-1.5 ${darkMode ? "text-gray-300" : "text-muted"}`}>
                   <AlertTriangle size={11} className="text-amber-500 shrink-0 mt-0.5" /> {r}
                 </div>
               ))}
@@ -2578,7 +2578,7 @@ const EEATCard = ({ data, darkMode, onInfo, className = "" }) => {
         <span className={`text-3xl font-semibold ${scoreColor}`}>{score10}</span>
         <span className={`text-sm mb-1 opacity-60`}>/ 10</span>
         {typeof meta?.pagesAnalyzed === "number" && (
-          <span className={`ml-auto text-[10px] ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+          <span className={`ml-auto text-[10px] ${darkMode ? "text-gray-500" : "text-faint"}`}>
             {meta.pagesAnalyzed} page(s) analyzed
           </span>
         )}
@@ -2588,9 +2588,9 @@ const EEATCard = ({ data, darkMode, onInfo, className = "" }) => {
         {checkRows.map((row, i) => {
           const found = Array.isArray(row.c?.found) ? row.c.found : [];
           return (
-            <div key={i} className={`p-2 rounded ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
+            <div key={i} className={`p-2 rounded ${darkMode ? "bg-gray-900" : "bg-cardsoft border border-line"}`}>
               <div className="flex items-center justify-between">
-                <span className={`text-xs font-semibold ${darkMode ? "text-gray-200" : "text-gray-800"}`}>{row.label}</span>
+                <span className={`text-xs font-semibold ${darkMode ? "text-gray-200" : "text-ink"}`}>{row.label}</span>
                 <span className={`text-xs font-semibold ${markColor(row.c?.mark ?? 0)}`}>{row.c?.mark ?? 0}/{row.c?.max ?? 2}</span>
               </div>
               {found.length > 0 ? (
@@ -2598,17 +2598,17 @@ const EEATCard = ({ data, darkMode, onInfo, className = "" }) => {
                   {found.map((f, j) => (
                     <span
                       key={j}
-                      className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded ${darkMode ? "bg-gray-800 text-gray-300 border border-gray-700" : "bg-white text-gray-600 border border-gray-200"}`}
+                      className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded ${darkMode ? "bg-gray-800 text-gray-300 border border-gray-700" : "bg-card text-muted border border-line"}`}
                     >
                       <Check size={9} className="text-emerald-500 shrink-0" /> {f}
                     </span>
                   ))}
                 </div>
               ) : (
-                <div className={`text-[10px] mt-0.5 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>{row.empty}</div>
+                <div className={`text-[10px] mt-0.5 ${darkMode ? "text-gray-500" : "text-faint"}`}>{row.empty}</div>
               )}
               {row.c?.url && (
-                <a href={row.c.url} target="_blank" rel="noreferrer" className={`block text-[10px] mt-1 truncate ${darkMode ? "text-blue-400" : "text-blue-600"} hover:underline`}>
+                <a href={row.c.url} target="_blank" rel="noreferrer" className={`block text-[10px] mt-1 truncate ${darkMode ? "text-blue-400" : "text-accent"} hover:underline`}>
                   {row.c.url}
                 </a>
               )}
@@ -2621,7 +2621,7 @@ const EEATCard = ({ data, darkMode, onInfo, className = "" }) => {
         <div className="mt-3 space-y-1">
           <div className="text-[10px] font-semibold uppercase tracking-wider text-amber-500">Issues</div>
           {failureReasons.map((r, i) => (
-            <div key={i} className={`text-[11px] flex items-start gap-1.5 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+            <div key={i} className={`text-[11px] flex items-start gap-1.5 ${darkMode ? "text-gray-300" : "text-muted"}`}>
               <AlertTriangle size={11} className="text-amber-500 shrink-0 mt-0.5" /> {r}
             </div>
           ))}
@@ -2664,7 +2664,7 @@ const LocalSEOCard = ({ data, darkMode, onInfo, className = "" }) => {
         <span className={`text-3xl font-semibold ${scoreColor}`}>{score10}</span>
         <span className="text-sm mb-1 opacity-60">/ 10</span>
         {location && (
-          <span className={`ml-auto inline-flex items-center gap-1 text-[11px] ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+          <span className={`ml-auto inline-flex items-center gap-1 text-[11px] ${darkMode ? "text-gray-400" : "text-muted"}`}>
             <MapPin size={11} /> {location}
           </span>
         )}
@@ -2675,20 +2675,20 @@ const LocalSEOCard = ({ data, darkMode, onInfo, className = "" }) => {
           const Icon = StatIcon(p.status);
           const found = Array.isArray(p.found) ? p.found : [];
           return (
-            <div key={p.key || i} className={`p-2.5 rounded ${darkMode ? "bg-gray-900" : "bg-gray-50 border border-gray-100"}`}>
+            <div key={p.key || i} className={`p-2.5 rounded ${darkMode ? "bg-gray-900" : "bg-cardsoft border border-line"}`}>
               <div className="flex items-center justify-between gap-2">
-                <span className={`text-xs font-semibold ${darkMode ? "text-gray-200" : "text-gray-800"}`}>{p.label}</span>
+                <span className={`text-xs font-semibold ${darkMode ? "text-gray-200" : "text-ink"}`}>{p.label}</span>
                 <span className={`inline-flex items-center gap-1 text-xs font-semibold ${statColor(p.status)}`}>
                   <Icon size={12} className="shrink-0" /> {p.score}%
                 </span>
               </div>
-              <div className={`text-[11px] mt-0.5 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>{p.details}</div>
+              <div className={`text-[11px] mt-0.5 ${darkMode ? "text-gray-400" : "text-muted"}`}>{p.details}</div>
               {found.length > 0 && (
                 <div className="mt-1 flex flex-wrap gap-1">
                   {found.slice(0, 4).map((f, j) => (
                     <span
                       key={j}
-                      className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded ${darkMode ? "bg-gray-800 text-gray-300 border border-gray-700" : "bg-white text-gray-600 border border-gray-200"}`}
+                      className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded ${darkMode ? "bg-gray-800 text-gray-300 border border-gray-700" : "bg-card text-muted border border-line"}`}
                     >
                       <Check size={9} className="text-emerald-500 shrink-0" /> {f}
                     </span>
@@ -2711,16 +2711,16 @@ const StructuredDataCard = ({ data, darkMode, onInfo, className = "" }) => {
   const [showDetails, setShowDetails] = React.useState(false);
 
   return (
-    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group ${className} ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group ${className} ${darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-line"}`}>
       <div className="p-5 space-y-4">
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
+            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-surface-2"} group-hover:scale-110 transition-transform duration-300`}>
               <Tag size={24} className={darkMode ? "text-indigo-400" : "text-indigo-600"} />
             </div>
             <div>
-              <h3 className={`font-semibold text-lg ${darkMode ? "text-gray-100" : "text-gray-900"}`}>Structured Data</h3>
+              <h3 className={`font-semibold text-lg ${darkMode ? "text-gray-100" : "text-ink"}`}>Structured Data</h3>
               <div className={`flex items-center gap-2 mt-1`}>
                 <ScoreBadge
                   status={getStatusFromScore(score)}
@@ -2735,7 +2735,7 @@ const StructuredDataCard = ({ data, darkMode, onInfo, className = "" }) => {
               <DetailsToggle isOpen={showDetails} setIsOpen={setShowDetails} darkMode={darkMode} paramKey="Structured_Data" />
             )}
             {onInfo && (
-              <button onClick={(e) => { e.stopPropagation(); onInfo(); }} className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}>
+              <button onClick={(e) => { e.stopPropagation(); onInfo(); }} className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-faint hover:text-ink"}`}>
                 <Info size={18} />
               </button>
             )}
@@ -2746,7 +2746,7 @@ const StructuredDataCard = ({ data, darkMode, onInfo, className = "" }) => {
 
           {meta?.types && (
             <div className="space-y-1">
-              <div className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Detected Schema Types:</div>
+              <div className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-faint"}`}>Detected Schema Types:</div>
               <div className={`flex flex-wrap gap-1`}>
                 {meta.types.split(',').map((type, i) => (
                   <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-medium ${darkMode ? "bg-indigo-900/30 text-indigo-300" : "bg-indigo-50 text-indigo-700 border border-indigo-100"}`}>
@@ -2759,18 +2759,18 @@ const StructuredDataCard = ({ data, darkMode, onInfo, className = "" }) => {
 
           {meta?.validated?.length > 0 && (
             <div className="space-y-1.5">
-              <div className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Schema Validation:</div>
+              <div className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-faint"}`}>Schema Validation:</div>
               {meta.validated.map((v, i) => (
                 <div key={i} className={`p-2 rounded border ${v.valid ? (darkMode ? "border-emerald-500/20 bg-emerald-500/5" : "border-emerald-100 bg-emerald-50/50") : (darkMode ? "border-amber-500/20 bg-amber-500/5" : "border-amber-100 bg-amber-50/50")}`}>
                   <div className="flex items-center gap-2">
                     {v.valid ? <CheckCircle size={12} className="text-emerald-500 shrink-0" /> : <AlertTriangle size={12} className="text-amber-500 shrink-0" />}
-                    <span className={`text-xs font-semibold ${darkMode ? "text-gray-200" : "text-gray-800"}`}>{v.type}{v.count !== undefined ? ` (${v.count})` : ""}</span>
+                    <span className={`text-xs font-semibold ${darkMode ? "text-gray-200" : "text-ink"}`}>{v.type}{v.count !== undefined ? ` (${v.count})` : ""}</span>
                   </div>
                   {v.missingRequired?.length > 0 && (
                     <div className="text-[10px] text-rose-500 mt-1">Missing required: {v.missingRequired.join(", ")}</div>
                   )}
                   {v.valid && v.missingRecommended?.length > 0 && (
-                    <div className={`text-[10px] mt-1 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Recommended: {v.missingRecommended.join(", ")}</div>
+                    <div className={`text-[10px] mt-1 ${darkMode ? "text-gray-500" : "text-faint"}`}>Recommended: {v.missingRecommended.join(", ")}</div>
                   )}
                 </div>
               ))}
@@ -2779,17 +2779,17 @@ const StructuredDataCard = ({ data, darkMode, onInfo, className = "" }) => {
 
           {meta?.otherTypes?.length > 0 && (
             <div className="flex flex-wrap gap-1">
-              <span className={`text-[10px] ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Other types:</span>
+              <span className={`text-[10px] ${darkMode ? "text-gray-500" : "text-faint"}`}>Other types:</span>
               {meta.otherTypes.map((t, i) => (
-                <span key={i} className={`px-1.5 py-0.5 rounded text-[10px] ${darkMode ? "bg-gray-900 text-gray-400" : "bg-gray-100 text-gray-500"}`}>{t}</span>
+                <span key={i} className={`px-1.5 py-0.5 rounded text-[10px] ${darkMode ? "bg-gray-900 text-gray-400" : "bg-surface-2 text-muted"}`}>{t}</span>
               ))}
             </div>
           )}
 
           {meta?.content?.length > 0 && (
             <div className="space-y-1">
-              <div className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Raw JSON-LD Content:</div>
-              <pre className={`p-2 rounded text-[10px] font-mono whitespace-pre-wrap max-h-80 overflow-y-auto ${darkMode ? "bg-gray-900 text-gray-400" : "bg-gray-50 text-gray-600 border border-gray-100"}`}>
+              <div className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-faint"}`}>Raw JSON-LD Content:</div>
+              <pre className={`p-2 rounded text-[10px] font-mono whitespace-pre-wrap max-h-80 overflow-y-auto ${darkMode ? "bg-gray-900 text-gray-400" : "bg-cardsoft text-muted border border-line"}`}>
                 {JSON.stringify(meta.content, null, 2)}
               </pre>
             </div>
@@ -2835,16 +2835,16 @@ const OpenGraphCard = ({ data, darkMode, onInfo, className = "" }) => {
   const [showDetails, setShowDetails] = React.useState(false);
 
   return (
-    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group ${className} ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group ${className} ${darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-line"}`}>
       <div className="p-5 space-y-4">
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
+            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-surface-2"} group-hover:scale-110 transition-transform duration-300`}>
               <Globe size={24} className={darkMode ? "text-blue-400" : "text-blue-600"} />
             </div>
             <div>
-              <h3 className={`font-semibold text-lg ${darkMode ? "text-gray-100" : "text-gray-900"}`}>Open Graph</h3>
+              <h3 className={`font-semibold text-lg ${darkMode ? "text-gray-100" : "text-ink"}`}>Open Graph</h3>
               <div className={`flex items-center gap-2 mt-1`}>
                 <ScoreBadge
                   status={getStatusFromScore(score)}
@@ -2859,7 +2859,7 @@ const OpenGraphCard = ({ data, darkMode, onInfo, className = "" }) => {
               <DetailsToggle isOpen={showDetails} setIsOpen={setShowDetails} darkMode={darkMode} paramKey="Open_Graph" />
             )}
             {onInfo && (
-              <button onClick={(e) => { e.stopPropagation(); onInfo(); }} className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}>
+              <button onClick={(e) => { e.stopPropagation(); onInfo(); }} className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-faint hover:text-ink"}`}>
                 <Info size={18} />
               </button>
             )}
@@ -2871,7 +2871,7 @@ const OpenGraphCard = ({ data, darkMode, onInfo, className = "" }) => {
           {meta?.tags && (
             <div className="grid grid-cols-1 gap-2">
               {Object.entries(meta.tags).map(([key, val], i) => (
-                <div key={i} className={`p-2 rounded border ${darkMode ? "bg-gray-900/40 border-gray-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                <div key={i} className={`p-2 rounded border ${darkMode ? "bg-gray-900/40 border-gray-700/50" : "bg-cardsoft border-line"}`}>
                   <div className="text-[9px] font-semibold uppercase opacity-50 mb-0.5">{key.replace("og:", "")}</div>
                   <div className={`text-xs font-mono break-all ${val ? (darkMode ? "text-blue-300" : "text-blue-600") : "text-red-500 italic"}`}>
                     {val || "Missing"}
@@ -2916,16 +2916,16 @@ const TwitterCardCard = ({ data, darkMode, onInfo, className = "" }) => {
   const [showDetails, setShowDetails] = React.useState(false);
 
   return (
-    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group ${className} ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group ${className} ${darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-line"}`}>
       <div className="p-5 space-y-4">
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
+            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-surface-2"} group-hover:scale-110 transition-transform duration-300`}>
               <Globe size={24} className={darkMode ? "text-cyan-400" : "text-cyan-600"} />
             </div>
             <div>
-              <h3 className={`font-semibold text-lg ${darkMode ? "text-gray-100" : "text-gray-900"}`}>Twitter Card</h3>
+              <h3 className={`font-semibold text-lg ${darkMode ? "text-gray-100" : "text-ink"}`}>Twitter Card</h3>
               <div className={`flex items-center gap-2 mt-1`}>
                 <ScoreBadge
                   status={getStatusFromScore(score)}
@@ -2940,7 +2940,7 @@ const TwitterCardCard = ({ data, darkMode, onInfo, className = "" }) => {
               <DetailsToggle isOpen={showDetails} setIsOpen={setShowDetails} darkMode={darkMode} paramKey="Twitter_Card" />
             )}
             {onInfo && (
-              <button onClick={(e) => { e.stopPropagation(); onInfo(); }} className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}>
+              <button onClick={(e) => { e.stopPropagation(); onInfo(); }} className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-faint hover:text-ink"}`}>
                 <Info size={18} />
               </button>
             )}
@@ -2952,7 +2952,7 @@ const TwitterCardCard = ({ data, darkMode, onInfo, className = "" }) => {
           {meta?.tags && (
             <div className="grid grid-cols-1 gap-2">
               {Object.entries(meta.tags).map(([key, val], i) => (
-                <div key={i} className={`p-2 rounded border ${darkMode ? "bg-gray-900/40 border-gray-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                <div key={i} className={`p-2 rounded border ${darkMode ? "bg-gray-900/40 border-gray-700/50" : "bg-cardsoft border-line"}`}>
                   <div className="text-[9px] font-semibold uppercase opacity-50 mb-0.5">{key.replace("twitter:", "")}</div>
                   <div className={`text-xs font-mono break-all ${val ? (darkMode ? "text-cyan-300" : "text-cyan-600") : "text-red-500 italic"}`}>
                     {val || "Missing"}
@@ -3018,16 +3018,16 @@ const SocialProfilesCard = ({ data, darkMode, onInfo, className = "" }) => {
   };
 
   return (
-    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group ${className} ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group ${className} ${darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-line"}`}>
       <div className="p-5 space-y-4">
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
+            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-surface-2"} group-hover:scale-110 transition-transform duration-300`}>
               <Globe size={24} className={darkMode ? "text-purple-400" : "text-purple-600"} />
             </div>
             <div>
-              <h3 className={`font-semibold text-lg ${darkMode ? "text-gray-100" : "text-gray-900"}`}>Social Profiles</h3>
+              <h3 className={`font-semibold text-lg ${darkMode ? "text-gray-100" : "text-ink"}`}>Social Profiles</h3>
               <div className={`flex items-center gap-2 mt-1`}>
                 <ScoreBadge
                   status={getStatusFromScore(score)}
@@ -3042,7 +3042,7 @@ const SocialProfilesCard = ({ data, darkMode, onInfo, className = "" }) => {
               <DetailsToggle isOpen={showDetails} setIsOpen={setShowDetails} darkMode={darkMode} paramKey="Social_Links" />
             )}
             {onInfo && (
-              <button onClick={(e) => { e.stopPropagation(); onInfo(); }} className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}>
+              <button onClick={(e) => { e.stopPropagation(); onInfo(); }} className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-faint hover:text-ink"}`}>
                 <Info size={18} />
               </button>
             )}
@@ -3056,14 +3056,14 @@ const SocialProfilesCard = ({ data, darkMode, onInfo, className = "" }) => {
               meta.links.map((link, i) => {
                 const info = getPlatformInfo(link);
                 return (
-                  <a key={i} href={link} target="_blank" rel="noopener noreferrer" className={`flex items-center justify-between p-2.5 rounded-lg border group/link transition-all ${darkMode ? "bg-gray-900/40 border-gray-700/50 hover:bg-gray-700/50" : "bg-gray-50/50 border-gray-100 hover:bg-gray-100/50 hover:border-gray-200"}`}>
+                  <a key={i} href={link} target="_blank" rel="noopener noreferrer" className={`flex items-center justify-between p-2.5 rounded-lg border group/link transition-all ${darkMode ? "bg-gray-900/40 border-gray-700/50 hover:bg-gray-700/50" : "bg-cardsoft border-line hover:bg-surface-2 hover:border-line"}`}>
                     <div className="flex items-center gap-3 min-w-0">
                       <div className={`p-1.5 rounded ${info.color}`}>
                         <Link size={14} />
                       </div>
                       <div className="flex flex-col min-w-0">
                         <span className={`text-[10px] font-semibold uppercase tracking-tight opacity-60`}>{info.name}</span>
-                        <span className={`text-xs font-medium truncate ${darkMode ? "text-gray-300" : "text-gray-700"}`}>{getDisplayHost(link)}</span>
+                        <span className={`text-xs font-medium truncate ${darkMode ? "text-gray-300" : "text-inksoft"}`}>{getDisplayHost(link)}</span>
                       </div>
                     </div>
                     <ArrowRight size={14} className="opacity-0 group-hover/link:opacity-100 translate-x-[-10px] group-hover/link:translate-x-0 transition-all text-blue-500" />
@@ -3071,7 +3071,7 @@ const SocialProfilesCard = ({ data, darkMode, onInfo, className = "" }) => {
                 );
               })
             ) : (
-              <div className={`col-span-2 p-4 rounded-lg border border-dashed ${darkMode ? "bg-gray-900/30 border-gray-700 text-gray-500" : "bg-gray-50 border-gray-200 text-gray-400"} text-center text-xs italic`}>
+              <div className={`col-span-2 p-4 rounded-lg border border-dashed ${darkMode ? "bg-gray-900/30 border-gray-700 text-gray-500" : "bg-cardsoft border-line text-faint"} text-center text-xs italic`}>
                 No official social profiles detected in the page code.
               </div>
             )}
@@ -3079,14 +3079,14 @@ const SocialProfilesCard = ({ data, darkMode, onInfo, className = "" }) => {
 
           {/* sameAs consistency */}
           {(meta.sameAsCount !== undefined) && (
-            <div className={`p-3 rounded-lg border ${darkMode ? "border-gray-700 bg-gray-900/40" : "border-gray-100 bg-gray-50"}`}>
+            <div className={`p-3 rounded-lg border ${darkMode ? "border-gray-700 bg-gray-900/40" : "border-line bg-cardsoft"}`}>
               <div className="flex items-center justify-between mb-2">
-                <span className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>schema sameAs</span>
+                <span className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-muted"}`}>schema sameAs</span>
                 <span className={`text-xs font-semibold ${meta.sameAsCount > 0 ? "text-emerald-500" : "text-amber-500"}`}>{meta.sameAsCount} declared</span>
               </div>
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div>
-                  <div className={`text-sm font-semibold ${darkMode ? "text-gray-200" : "text-gray-800"}`}>{meta.platformCount || 0}</div>
+                  <div className={`text-sm font-semibold ${darkMode ? "text-gray-200" : "text-ink"}`}>{meta.platformCount || 0}</div>
                   <div className="text-[9px] uppercase opacity-60">Platforms</div>
                 </div>
                 <div>
@@ -3167,7 +3167,7 @@ const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading,
   const mediaVisible = segVisible(["Image", "Video", "Heading_Hierarchy", "Semantic_Tags"]);
   const socialVisible = segVisible(["Links", "Open_Graph", "Twitter_Card", "Social_Links"]);
   const overallScore = seo.Percentage || 0;
-  const mainBg = darkMode ? "bg-gray-900" : "bg-gray-50";
+  const mainBg = darkMode ? "bg-gray-900" : "bg-surface";
 
   // Calculate metrics stats using useMemo for performance
   const metricStats = useMemo(() => {
@@ -3225,19 +3225,19 @@ const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading,
 
   if (!data?.onPageSEO) {
     return (
-      <div className={`w-full ${darkMode ? "bg-gray-900" : "bg-gray-50"} transition-colors duration-300`}>
+      <div className={`w-full ${darkMode ? "bg-gray-900" : "bg-surface"} transition-colors duration-300`}>
         <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-6`}>
           {/* ✅ Card 1: URL Header Card */}
-          <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
+          <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-surface border border-line shadow-xl shadow-slate-200/50"}`}>
             <UrlHeader data={data} darkMode={darkMode} hideBorder={true} />
           </div>
 
           {/* ✅ Card 2: Overview / Preview Card */}
-          <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
+          <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-surface border border-line shadow-xl shadow-slate-200/50"}`}>
             <div className={`flex flex-col xl:flex-row ${data?.report === "All" ? "" : "min-h-[300px]"}`}>
               {/* Left Panel: Live Preview (Only if not All) */}
               {data?.report !== "All" && (
-                <div className={`w-full xl:w-[45%] p-3 lg:p-4 flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
+                <div className={`w-full xl:w-[45%] p-3 lg:p-4 flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-surface-2 border-line"}`}>
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/5 blur-3xl rounded-full pointer-events-none"></div>
                   <div className="w-full relative z-10">
                     <LivePreview data={data} loading={loading} variant="plain" />
@@ -3260,7 +3260,7 @@ const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading,
       <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-6`}>
 
         {/* ✅ Card 1: URL Header Card */}
-        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
+        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-surface border border-line shadow-xl shadow-slate-200/50"}`}>
           <UrlHeader
             data={data}
             darkMode={darkMode}
@@ -3272,12 +3272,12 @@ const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading,
         </div>
 
         {/* ✅ Card 2: Overview / Preview Card */}
-        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
+        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-surface border border-line shadow-xl shadow-slate-200/50"}`}>
           <div className={`flex flex-col xl:flex-row ${data.report === "All" ? "" : "min-h-[300px]"}`}>
 
             {/* Left Panel: Live Preview (Only if not All) */}
             {data.report !== "All" && (
-              <div className={`w-full xl:w-[45%] ${data.report === "All" ? "p-6 lg:p-10" : "p-3 lg:p-4"} flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
+              <div className={`w-full xl:w-[45%] ${data.report === "All" ? "p-6 lg:p-10" : "p-3 lg:p-4"} flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-surface-2 border-line"}`}>
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/5 blur-3xl rounded-full pointer-events-none"></div>
                 <div className="w-full relative z-10">
                   <LivePreview data={data} loading={loading} variant="plain" />
@@ -3287,22 +3287,22 @@ const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading,
 
             {/* Right Panel: Metrics & Score */}
             <div className={`flex-1 ${data.report === "All" ? "px-6 pb-4 pt-2 lg:px-10 lg:pt-2" : "px-6 pb-4 pt-4 lg:px-12 lg:pt-6"} flex flex-col justify-center`}>
-              <div className={`w-full ${data.report === "All" ? "" : "max-w-2xl mx-auto"} ${data.report === "All" ? "space-y-10" : "space-y-8"}`}>
+              <div className={`w-full ${data.report === "All" ? "" : "max-w-2xl mx-auto"} ${data.report === "All" ? "space-y-7" : "space-y-6"}`}>
 
                 {/* Top Content Area */}
-                <div className={`flex flex-col md:flex-row items-center ${data.report === "All" ? "gap-10 md:gap-14 justify-between" : "gap-8 md:gap-12 justify-center"}`}>
+                <div className={`flex flex-col md:flex-row items-center ${data.report === "All" ? "gap-7 md:gap-9 justify-between" : "gap-8 md:gap-8 justify-center"}`}>
 
                   {/* Text Content */}
                   <div className={`flex-1 ${data.report === "All" ? "space-y-5" : "space-y-4"} text-left order-2 md:order-1`}>
                     <div className={`${data.report === "All" ? "space-y-2" : "space-y-1.5"}`}>
-                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-blue-100/50 text-blue-600 border border-blue-200"}`}>
+                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-accentsoft text-accent border border-accent/20"}`}>
                         <Search className="w-3.5 h-3.5" />
                         <span>SEO Audit</span>
                       </div>
-                      <h3 className={`${data.report === "All" ? "text-3xl lg:text-5xl" : "text-2xl lg:text-4xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
-                        On-Page <span className="text-blue-500">SEO</span>
+                      <h3 className={`${data.report === "All" ? "text-3xl lg:text-5xl" : "text-2xl lg:text-4xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>
+                        On-Page <span className="text-accent">SEO</span>
                       </h3>
-                      <p className={`text-sm leading-relaxed opacity-70 ${darkMode ? "text-slate-300" : "text-slate-600"}`}>
+                      <p className={`text-sm leading-relaxed opacity-70 ${darkMode ? "text-slate-300" : "text-muted"}`}>
                         Deep dive into your content strategy, technical structure, and user experience signals.
                       </p>
                     </div>
@@ -3312,21 +3312,21 @@ const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading,
                       <div className={`flex items-center ${data.report === "All" ? "gap-5" : "gap-4"}`}>
                         <div className="flex items-center gap-2">
                           <CheckCircle size={18} className="text-emerald-500" />
-                          <span className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{metricStats.passed} Passed</span>
+                          <span className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-muted"}`}>{metricStats.passed} Passed</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <AlertTriangle size={18} className="text-amber-500" />
-                          <span className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{metricStats.warning} Warning</span>
+                          <span className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-muted"}`}>{metricStats.warning} Warning</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <XCircle size={18} className="text-rose-500" />
-                          <span className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{metricStats.failed} Failed</span>
+                          <span className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-muted"}`}>{metricStats.failed} Failed</span>
                         </div>
                       </div>
-                      <div className={`w-px h-4 ${darkMode ? "bg-slate-800" : "bg-slate-200 hidden md:block"}`}></div>
+                      <div className={`w-px h-4 ${darkMode ? "bg-slate-800" : "bg-surface-2 hidden md:block"}`}></div>
                       <button
                         onClick={() => setSelectedMetricInfo(scoreCalculationInfo)}
-                        className={`flex items-center gap-2 text-sm font-semibold transition-all ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-700"}`}
+                        className={`flex items-center gap-2 text-sm font-semibold transition-all ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-accent hover:text-accenthover"}`}
                       >
                         <Info size={16} />
                         <span className="border-b border-transparent hover:border-current">Metric Methodology</span>
@@ -3339,7 +3339,7 @@ const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading,
                     <div className={`absolute -inset-8 rounded-full blur-3xl opacity-25 transition-opacity duration-700 group-hover:opacity-40 ${overallScore >= 80 ? "bg-emerald-500" : "bg-amber-500"}`}></div>
                     <CircularProgress value={overallScore} size={data.report === "All" ? 180 : 150} stroke={14} />
                     <div className="absolute inset-0 flex items-center justify-center flex-col gap-0.5">
-                      <span className={`${data.report === "All" ? "text-5xl" : "text-3xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>{overallScore}%</span>
+                      <span className={`${data.report === "All" ? "text-5xl" : "text-3xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>{overallScore}%</span>
                       <span className="text-[11px] font-semibold uppercase tracking-[0.2em] opacity-50">SCORE</span>
                     </div>
                   </div>
@@ -3352,7 +3352,7 @@ const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading,
 
         {/* Content Mastery */}
         <ReportRestrictionWrapper>
-          <div className="space-y-8">
+          <div className="space-y-6">
             {contentMasteryVisible && (
             <Section title="Content Mastery" icon={FileText} darkMode={darkMode} gridClasses="grid-cols-1 md:grid-cols-2">
               {vis('Title') && (

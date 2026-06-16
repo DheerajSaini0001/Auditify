@@ -20,15 +20,15 @@ import { useNavigate } from 'react-router-dom';
 import { savePostAuthIntent } from '../utils/intentStore';
 
 const SignalSkeleton = ({ darkMode, title }) => (
-    <div className={`relative overflow-hidden rounded-[2rem] border p-8 flex flex-col gap-6 ${darkMode ? "bg-slate-900/50 border-slate-800" : "bg-gray-50 border-gray-200"}`}>
+    <div className={`relative overflow-hidden rounded-[2rem] border p-8 flex flex-col gap-6 ${darkMode ? "bg-slate-900/50 border-slate-800" : "bg-cardsoft border-line"}`}>
         <div className="flex items-center gap-5">
-            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center animate-pulse ${darkMode ? "bg-slate-800" : "bg-slate-200"}`}></div>
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center animate-pulse ${darkMode ? "bg-slate-800" : "bg-surface-2"}`}></div>
             <div className="flex flex-col gap-2">
-                <div className={`h-6 w-48 rounded animate-pulse ${darkMode ? "bg-slate-800" : "bg-slate-200"}`}></div>
-                <div className={`h-4 w-16 rounded-full animate-pulse ${darkMode ? "bg-slate-800" : "bg-slate-200"}`}></div>
+                <div className={`h-6 w-48 rounded animate-pulse ${darkMode ? "bg-slate-800" : "bg-surface-2"}`}></div>
+                <div className={`h-4 w-16 rounded-full animate-pulse ${darkMode ? "bg-slate-800" : "bg-surface-2"}`}></div>
             </div>
         </div>
-        <div className={`h-24 w-full rounded-2xl animate-pulse ${darkMode ? "bg-slate-800" : "bg-slate-200"}`}></div>
+        <div className={`h-24 w-full rounded-2xl animate-pulse ${darkMode ? "bg-slate-800" : "bg-surface-2"}`}></div>
     </div>
 );
 
@@ -123,8 +123,8 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
 
     if (!aeo || (!isComplete && Object.keys(aeo?.signals || {}).length === 0)) {
         return (
-            <div className="max-w-7xl mx-auto space-y-24 mt-12 transition-colors duration-500">
-                <div className={`flex flex-col xl:flex-row items-center ${hideScreenshot ? "justify-center" : "gap-16 py-4"}`}>
+            <div className="max-w-7xl mx-auto space-y-24 mt-8 transition-colors duration-500">
+                <div className={`flex flex-col xl:flex-row items-center ${hideScreenshot ? "justify-center" : "gap-10 py-4"}`}>
                     {!hideScreenshot && (
                         <div className="w-full xl:w-[45%] flex items-center justify-center">
                             <div className="w-full relative">
@@ -133,20 +133,20 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
                         </div>
                     )}
                     <div className={`w-full ${hideScreenshot ? "max-w-3xl" : "xl:w-[55%]"} flex flex-col items-center justify-center`}>
-                        <div className={`flex flex-col items-center justify-center w-full min-h-[400px] border border-dashed rounded-3xl p-12 ${darkMode ? "bg-slate-900 border-slate-800" : "bg-gray-50 border-gray-200"}`}>
+                        <div className={`flex flex-col items-center justify-center w-full min-h-[400px] border border-dashed rounded-3xl p-12 ${darkMode ? "bg-slate-900 border-slate-800" : "bg-surface-2 border-line"}`}>
                             {auditData?.aioReadiness?.Percentage !== undefined && (
                                 <div className="mb-8 flex flex-col items-center">
                                     <div className="text-[3.5rem] font-black text-emerald-500 leading-none tracking-tighter mb-2">
                                         {auditData.aioReadiness.Percentage}%
                                     </div>
-                                    <div className="text-[10px] uppercase font-semibold tracking-widest text-slate-500 mb-6">
+                                    <div className="text-[10px] uppercase font-semibold tracking-widest text-muted mb-6">
                                         Initial AIO Score
                                     </div>
                                 </div>
                             )}
                             <div className={`animate-spin rounded-full h-12 w-12 border-b-2 mb-6 ${darkMode ? "border-indigo-400" : "border-indigo-600"}`}></div>
-                            <h3 className={`text-xl font-semibold ${darkMode ? "text-slate-200" : "text-gray-700"}`}>AEO Engine Analyzing...</h3>
-                            <p className={`text-sm mt-2 text-center max-w-sm ${darkMode ? "text-slate-500" : "text-gray-400"}`}>{streamStatus || "Generating Answer Engine Optimization scores across Gemini, ChatGPT, and Perplexity AI."}</p>
+                            <h3 className={`text-xl font-semibold ${darkMode ? "text-slate-200" : "text-inksoft"}`}>AEO Engine Analyzing...</h3>
+                            <p className={`text-sm mt-2 text-center max-w-sm ${darkMode ? "text-slate-500" : "text-faint"}`}>{streamStatus || "Generating Answer Engine Optimization scores across Gemini, ChatGPT, and Perplexity AI."}</p>
                         </div>
                     </div>
                 </div>
@@ -155,10 +155,10 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
     }
 
     return (
-        <div className="max-w-7xl mx-auto space-y-24 mt-12 transition-colors duration-500">
-          
+        <div className="max-w-7xl mx-auto space-y-24 mt-8 transition-colors duration-500">
+
                  {/* Visual Overview (Top Row) */}
-            <div className={`flex flex-col xl:flex-row items-center ${hideScreenshot ? "justify-center" : "gap-16 py-4"}`}>
+            <div className={`flex flex-col xl:flex-row items-center ${hideScreenshot ? "justify-center" : "gap-10 py-4"}`}>
                 {/* Left Column: LivePreview */}
                 {!hideScreenshot && (
                     <div className="w-full xl:w-[45%] flex items-center justify-center">
@@ -170,7 +170,7 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
 
                 {/* Right Column: AEO Score Section */}
                 <div className={`w-full ${hideScreenshot ? "max-w-3xl" : "xl:w-[55%]"} flex flex-col items-center justify-center`}>
-                    <h2 className={`text-[1.35rem] font-semibold mb-10 tracking-tight ${darkMode ? "text-slate-100" : "text-gray-900"}`}>
+                    <h2 className={`text-[1.35rem] font-semibold mb-7 tracking-tight ${darkMode ? "text-slate-100" : "text-ink"}`}>
                         AI Engine Visibility
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-3xl">
@@ -181,9 +181,9 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
                                 <AEOScoreGauge score={aeo.platforms?.perplexity?.score || 0} title="PERPLEXITY" subtitle="AI" color="#A259FF" size={160} darkMode={darkMode} />
                             </>
                         ) : (
-                            <div className="col-span-3 flex flex-col items-center justify-center py-12">
+                            <div className="col-span-3 flex flex-col items-center justify-center py-8">
                                 <div className={`animate-spin rounded-full h-12 w-12 border-b-2 mb-6 ${darkMode ? "border-indigo-400" : "border-indigo-600"}`}></div>
-                                <h3 className={`text-xl font-semibold ${darkMode ? "text-slate-200" : "text-gray-700"}`}>{streamStatus}</h3>
+                                <h3 className={`text-xl font-semibold ${darkMode ? "text-slate-200" : "text-inksoft"}`}>{streamStatus}</h3>
                             </div>
                         )}
                     </div>
@@ -194,20 +194,20 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
                 <div className="space-y-4">
                     <div className="flex items-center gap-4">
                       
-                        <h1 className={`text-4xl md:text-[2.75rem] font-black tracking-tight ${darkMode ? "text-white" : "text-gray-900"} leading-none`}>
+                        <h1 className={`text-4xl md:text-[2.75rem] font-black tracking-tight ${darkMode ? "text-white" : "text-ink"} leading-none`}>
                             Answer Engine <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Optimization</span>
                         </h1>
                     </div>
-                    <p className="text-[1.1rem] font-medium text-slate-400">Measuring your site's readiness for the next generation of AI search.</p>
+                    <p className="text-[1.1rem] font-medium text-muted">Measuring your site's readiness for the next generation of AI search.</p>
                 </div>
 
                 <div className="flex items-center gap-6">
                     <div className="text-right">
-                        <div className="text-[3.5rem] font-black leading-none text-blue-600 tracking-tighter">{isComplete ? `${aeo.overallScore}%` : '...'}</div>
-                        <div className="text-[10px] uppercase font-semibold tracking-[0.2em] mt-1 text-slate-600">AEO Mastery</div>
+                        <div className="text-[3.5rem] font-black leading-none text-accent tracking-tighter">{isComplete ? `${aeo.overallScore}%` : '...'}</div>
+                        <div className="text-[10px] uppercase font-semibold tracking-[0.2em] mt-1 text-muted">AEO Mastery</div>
                     </div>
-                    <div className="h-16 w-[1px] bg-slate-800"></div>
-                    <div className="text-xs font-medium leading-relaxed max-w-[120px] text-slate-500">
+                    <div className={`h-16 w-[1px] ${darkMode ? "bg-slate-800" : "bg-line"}`}></div>
+                    <div className="text-xs font-medium leading-relaxed max-w-[120px] text-muted">
                         Overall platform readiness across 5 signals.
                     </div>
                 </div>
@@ -232,17 +232,17 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
 
             {/* Gated Sections */}
             {!isAuthenticated ? (
-                <div className={`relative overflow-hidden rounded-[3.5rem] border p-12 text-center flex flex-col items-center justify-center mt-12 ${darkMode ? "bg-slate-900/50 border-slate-800" : "bg-white border-slate-200"}`}>
+                <div className={`relative overflow-hidden rounded-[3.5rem] border p-12 text-center flex flex-col items-center justify-center mt-8 ${darkMode ? "bg-slate-900/50 border-slate-800" : "bg-card border-line"}`}>
                     <div className="absolute inset-0 filter blur-[15px] opacity-20 pointer-events-none flex flex-col gap-4 p-8">
                         <div className="h-20 bg-slate-400 rounded-xl w-full"></div>
                         <div className="h-40 bg-slate-400 rounded-xl w-full"></div>
                     </div>
-                    <div className="relative z-10 flex flex-col items-center max-w-md mx-auto py-12">
+                    <div className="relative z-10 flex flex-col items-center max-w-md mx-auto py-8">
                         <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-6 shadow-xl ${darkMode ? "bg-indigo-500/20 text-indigo-400" : "bg-indigo-100 text-indigo-600"}`}>
                             <Lock className="w-10 h-10" />
                         </div>
-                        <h3 className={`text-2xl font-black tracking-tight mb-4 ${darkMode ? "text-white" : "text-gray-900"}`}>Login to unlock full AEO insights</h3>
-                        <p className={`text-base mb-8 ${darkMode ? "text-slate-400" : "text-gray-500"}`}>
+                        <h3 className={`text-2xl font-black tracking-tight mb-4 ${darkMode ? "text-white" : "text-ink"}`}>Login to unlock full AEO insights</h3>
+                        <p className={`text-base mb-8 ${darkMode ? "text-slate-400" : "text-muted"}`}>
                             Get deep dive analysis into your Core Signal Breakdown and a personalized Action Plan for generative AI search.
                         </p>
                         <button onClick={handleLogin} className="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-full transition-colors shadow-lg shadow-indigo-500/30">
@@ -257,7 +257,7 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
                     <div className="space-y-6 pt-6">
                         <div className="flex items-center gap-3 mb-8">
                             <div className="h-6 w-1.5 bg-indigo-500 rounded-full shadow-[0_0_10px_rgba(99,102,241,0.5)]"></div>
-                            <h2 className={`text-2xl font-semibold tracking-tight ${darkMode ? "text-slate-200" : "text-gray-800"}`}>Core Signal Breakdown</h2>
+                            <h2 className={`text-2xl font-semibold tracking-tight ${darkMode ? "text-slate-200" : "text-ink"}`}>Core Signal Breakdown</h2>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
                             {aeo.signals?.schema ? (
@@ -447,7 +447,7 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
 
                     {/* Actionable Recommendations */}
                     {isComplete && (
-                        <div className={`pt-12 border-t ${darkMode ? "border-slate-800" : "border-gray-50"}`}>
+                        <div className={`pt-8 border-t ${darkMode ? "border-slate-800" : "border-line"}`}>
                             <AEORecommendations recommendations={aeo.recommendations} darkMode={darkMode} />
                         </div>
                     )}

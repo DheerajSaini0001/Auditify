@@ -53,7 +53,7 @@ const ThresholdBar = ({
 
     return (
         <div className="mt-4">
-            <h4 className={`text-xs font-semibold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+            <h4 className={`text-xs font-semibold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-500" : "text-faint"}`}>
                 Thresholds Distribution
             </h4>
 
@@ -72,7 +72,7 @@ const ThresholdBar = ({
                         style={{ left: `${currentPercent}%` }}
                     >
                         <div className={`absolute -top-1.5 left-1/2 transform -translate-x-1/2 w-2 h-2 rotate-45 border border-white dark:border-gray-900 ${passed ? "bg-emerald-500" : warning ? "bg-amber-500" : "bg-rose-500"}`}></div>
-                        <div className={`absolute bottom-full mb-1 left-1/2 transform -translate-x-1/2 text-[10px] font-semibold px-1 py-0.5 rounded bg-white shadow-sm border border-gray-200 whitespace-nowrap z-20 ${passed ? "text-emerald-600" : warning ? "text-amber-600" : "text-rose-600"}`}>
+                        <div className={`absolute bottom-full mb-1 left-1/2 transform -translate-x-1/2 text-[10px] font-semibold px-1 py-0.5 rounded bg-card shadow-sm border border-line whitespace-nowrap z-20 ${passed ? "text-emerald-600" : warning ? "text-amber-600" : "text-rose-600"}`}>
                             {data.meta.value}
                         </div>
                     </div>

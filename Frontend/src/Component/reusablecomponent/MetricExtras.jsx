@@ -17,12 +17,12 @@ export const NotCalculatedNote = ({ metric, darkMode }) => (
 export const AffectedList = ({ title, items, darkMode, renderLabel, renderBadge }) => {
   if (!items || items.length === 0) return null;
   return (
-    <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
-      <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-3 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>{title}</p>
+    <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
+      <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-3 ${darkMode ? "text-gray-500" : "text-faint"}`}>{title}</p>
       <div className="flex flex-col gap-2">
         {items.map((item, idx) => (
           <div key={idx} className="flex justify-between items-center gap-2">
-            <p className={`text-[10px] truncate max-w-[70%] font-mono ${darkMode ? "text-gray-300" : "text-gray-600"}`} title={typeof item === "string" ? item : (item.src || item.text || "")}>
+            <p className={`text-[10px] truncate max-w-[70%] font-mono ${darkMode ? "text-gray-300" : "text-muted"}`} title={typeof item === "string" ? item : (item.src || item.text || "")}>
               {renderLabel(item)}
             </p>
             <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${darkMode ? "bg-rose-900/20 text-rose-400" : "bg-rose-100 text-rose-600"}`}>

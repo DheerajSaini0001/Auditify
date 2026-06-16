@@ -19,18 +19,18 @@ const AuditDropdown = ({ title, items, darkMode = false }) => {
     <div
       className={`pl-4 rounded-2xl  w-full    font-sans border-b py-2 mb-5 transition-colors duration-300 ${darkMode
           ? 'bg-gray-800 border-gray-700 text-gray-200'
-          : 'bg-white border-gray-200 text-gray-800'
+          : 'bg-card border-line text-ink'
         }`}
     >
       {/* Header */}
       <div className="flex justify-between items-center">
         <h3
-          className={`text-base font-medium tracking-wide ${darkMode ? 'text-gray-100' : 'text-gray-800'
+          className={`text-base font-medium tracking-wide ${darkMode ? 'text-gray-100' : 'text-ink'
             }`}
         >
           {title}
           <span
-            className={`ml-2 font-normal ${darkMode ? 'text-gray-400' : 'text-gray-500'
+            className={`ml-2 font-normal ${darkMode ? 'text-gray-400' : 'text-muted'
               }`}
           >
             ({items.length})
@@ -40,7 +40,7 @@ const AuditDropdown = ({ title, items, darkMode = false }) => {
           onClick={handleToggle}
           className={`text-sm font-medium py-1 px-2 focus:outline-none transition-colors duration-200 ${darkMode
               ? 'text-gray-300 hover:text-gray-100'
-              : 'text-gray-600 hover:text-gray-900'
+              : 'text-muted hover:text-ink'
             }`}
         >
           {isOpen ? 'Hide' : 'Show'}
@@ -55,7 +55,7 @@ const AuditDropdown = ({ title, items, darkMode = false }) => {
               key={index}
               className={`rounded-md p-4 text-sm shadow-sm border transition-colors duration-300 ${darkMode
                   ? 'bg-gray-700 border-gray-600 text-gray-200'
-                  : 'bg-gray-50 border-gray-200 text-gray-700'
+                  : 'bg-cardsoft border-line text-inksoft'
                 }`}
             >
               {/* Object Data */}
@@ -63,20 +63,20 @@ const AuditDropdown = ({ title, items, darkMode = false }) => {
                 <div>
                   <div className="flex justify-between items-center mb-1">
                     <h4
-                      className={`font-semibold ${darkMode ? 'text-gray-100' : 'text-gray-800'
+                      className={`font-semibold ${darkMode ? 'text-gray-100' : 'text-ink'
                         }`}
                     >
                       {item.metric}
                     </h4>
                     <span
-                      className={`text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'
+                      className={`text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-muted'
                         }`}
                     >
                       {item.severity}
                     </span>
                   </div>
                   <div
-                    className={`grid grid-cols-2 gap-x-3 text-sm mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'
+                    className={`grid grid-cols-2 gap-x-3 text-sm mb-2 ${darkMode ? 'text-gray-300' : 'text-muted'
                       }`}
                   >
                     <p>
@@ -87,7 +87,7 @@ const AuditDropdown = ({ title, items, darkMode = false }) => {
                     </p>
                   </div>
                   <p
-                    className={`italic ${darkMode ? 'text-gray-200' : 'text-gray-700'
+                    className={`italic ${darkMode ? 'text-gray-200' : 'text-inksoft'
                       }`}
                   >
                     {item.suggestion}

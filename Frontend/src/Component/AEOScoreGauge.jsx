@@ -14,7 +14,7 @@ const AEOScoreGauge = ({ score, title, subtitle, color, size = 160, darkMode }) 
                         cx={size / 2}
                         cy={size / 2}
                         r={radius}
-                        stroke={darkMode ? "#0a0a0a" : "#f1f5f9"}
+                        stroke={darkMode ? "#0a0a0a" : "#E7E0D2"}
                         strokeWidth="10"
                         fill="transparent"
                     />
@@ -36,7 +36,7 @@ const AEOScoreGauge = ({ score, title, subtitle, color, size = 160, darkMode }) 
                     <span className="text-[2rem] font-black tracking-tighter" style={{ color }}>{score}%</span>
                 </div>
             </div>
-            <div className={`mt-6 flex flex-col text-[13px] font-semibold tracking-[0.15em] ml-2 ${darkMode ? "text-slate-400" : "text-gray-700"}`}>
+            <div className={`mt-6 flex flex-col text-[13px] font-semibold tracking-[0.15em] ml-2 ${darkMode ? "text-slate-400" : "text-muted"}`}>
                 <span>{title}</span>
                 <span>{subtitle}</span>
             </div>

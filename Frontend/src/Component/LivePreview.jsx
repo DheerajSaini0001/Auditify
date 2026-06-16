@@ -43,18 +43,18 @@ const LivePreview = ({ data, showInFullAudit = true, variant = "card" }) => {
             <div className="flex items-center justify-between gap-4 mb-4 px-2">
                 <div className="flex items-center gap-4">
                     {/* Icon Box */}
-                    <div className={`p-3 rounded-2xl shadow-sm border ${darkMode ? "bg-slate-800 border-slate-700 text-indigo-400" : "bg-white border-slate-100 text-indigo-600"}`}>
+                    <div className={`p-3 rounded-2xl shadow-sm border ${darkMode ? "bg-slate-800 border-slate-700 text-indigo-400" : "bg-card border-line text-accent"}`}>
                         {isMobile ? <Smartphone className="w-6 h-6" strokeWidth={2} /> : <Monitor className="w-6 h-6" strokeWidth={2} />}
                     </div>
 
                     {/* Text Info */}
                     <div>
-                        <h3 className={`text-xs font-semibold uppercase tracking-widest mb-1 ${darkMode ? "text-slate-200" : "text-slate-800"}`}>
+                        <h3 className={`text-xs font-semibold uppercase tracking-widest mb-1 ${darkMode ? "text-slate-200" : "text-ink"}`}>
                             {isMobile ? "Mobile Viewport" : "Desktop Viewport"}
                         </h3>
                         <div className="flex items-center gap-2">
                             <span className={`w-1.5 h-1.5 rounded-full ${isScanning ? "bg-amber-500 animate-pulse" : "bg-emerald-500"}`}></span>
-                            <span className={`text-xs font-medium ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
+                            <span className={`text-xs font-medium ${darkMode ? "text-slate-400" : "text-muted"}`}>
                                 {statusText}
                             </span>
                         </div>
@@ -62,11 +62,11 @@ const LivePreview = ({ data, showInFullAudit = true, variant = "card" }) => {
                 </div>
 
                 {/* Relocated Pill Style Badge (Above the SS, Right Aligned) */}
-                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border backdrop-blur-sm ${darkMode ? "bg-slate-800/40 border-slate-700 text-slate-400" : "bg-white/80 border-slate-200 text-slate-600 shadow-sm"}`}>
+                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border backdrop-blur-sm ${darkMode ? "bg-slate-800/40 border-slate-700 text-slate-400" : "bg-card/80 border-line text-muted shadow-sm"}`}>
                     <div className="flex items-center gap-2">
                         {isMobile ? <Smartphone className="w-3 h-3" /> : <Monitor className="w-3 h-3" />}
                     </div>
-                    <div className={`w-px h-3 ${darkMode ? "bg-slate-700" : "bg-slate-300"}`}></div>
+                    <div className={`w-px h-3 ${darkMode ? "bg-slate-700" : "bg-line"}`}></div>
                     <span className="text-[10px] font-mono font-medium opacity-80">{isMobile ? "393 x 852" : "1920 x 1080"}</span>
                 </div>
             </div>
@@ -82,7 +82,7 @@ const LivePreview = ({ data, showInFullAudit = true, variant = "card" }) => {
                     }
                     ${darkMode
                         ? "bg-slate-900 border-slate-700"
-                        : "bg-white border-slate-100" // White bg for the window itself
+                        : "bg-card border-line" // White bg for the window itself
                     }
                 `}>
                     {/* Inner Content - Forced Light Background for Canvas */}
@@ -126,15 +126,15 @@ const LivePreview = ({ data, showInFullAudit = true, variant = "card" }) => {
 
                                 <div className="relative z-10 mb-3">
                                     <div className="absolute inset-0 bg-emerald-500 blur-xl opacity-20 animate-pulse"></div>
-                                    <div className={`relative p-3 rounded-full border shadow-sm ${darkMode ? "bg-slate-800 border-slate-700 text-emerald-400" : "bg-white border-emerald-100 text-emerald-600"}`}>
+                                    <div className={`relative p-3 rounded-full border shadow-sm ${darkMode ? "bg-slate-800 border-slate-700 text-emerald-400" : "bg-card border-emerald-100 text-emerald-600"}`}>
                                         <ScanLine className="w-6 h-6 animate-pulse" strokeWidth={1.5} />
                                     </div>
                                 </div>
                                 <div className="space-y-0.5 relative z-10">
-                                    <h3 className={`text-xs font-semibold uppercase tracking-wider ${darkMode ? "text-slate-300" : "text-slate-700"}`}>
+                                    <h3 className={`text-xs font-semibold uppercase tracking-wider ${darkMode ? "text-slate-300" : "text-ink"}`}>
                                         Rendering
                                     </h3>
-                                    <p className={`text-[10px] ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
+                                    <p className={`text-[10px] ${darkMode ? "text-slate-500" : "text-faint"}`}>
                                         Capturing visuals...
                                     </p>
                                 </div>

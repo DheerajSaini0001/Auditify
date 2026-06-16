@@ -265,51 +265,51 @@ const AIChatWidget = () => {
     }
 
     return (
-        <div className={`fixed bottom-6 right-6 w-[350px] sm:w-[400px] h-[500px] max-h-[80vh] flex flex-col rounded-2xl shadow-2xl z-50 transition-all duration-300 transform origin-bottom-right border ${darkMode ? 'bg-[#0F172A] border-slate-700 shadow-blue-500/10' : 'bg-white border-slate-200'}`}>
+        <div className={`fixed bottom-6 right-6 w-[350px] sm:w-[400px] h-[500px] max-h-[80vh] flex flex-col rounded-2xl shadow-2xl z-50 transition-all duration-300 transform origin-bottom-right border ${darkMode ? 'bg-[#0F172A] border-slate-700 shadow-blue-500/10' : 'bg-card border-line'}`}>
             {/* Subtle Inner Glow for Dark Mode */}
             {darkMode && <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-500/50 to-transparent"></div>}
 
             {/* Header */}
-            <div className={`p-4 rounded-t-2xl flex items-center justify-between border-b ${darkMode ? 'bg-gradient-to-r from-[#1E293B] to-[#0F172A] border-slate-700 text-white' : 'bg-blue-700 text-white border-transparent'}`}>
+            <div className={`p-4 rounded-t-2xl flex items-center justify-between border-b ${darkMode ? 'bg-gradient-to-r from-[#1E293B] to-[#0F172A] border-slate-700 text-white' : 'bg-surface text-ink border-line'}`}>
                 <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center border border-blue-500/30">
                         <Sparkles className="w-4 h-4 text-white" />
                     </div>
                     <div>
-                        <h3 className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>Site Audit AI Intelligence</h3>
+                        <h3 className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-muted"}`}>Site Audit AI Intelligence</h3>
                         <div className="flex items-center gap-1.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                            <span className={`text-[10px] uppercase tracking-wider font-semibold ${darkMode ? 'text-emerald-400' : 'text-white'}`}>AI Online</span>
+                            <span className={`text-[10px] uppercase tracking-wider font-semibold ${darkMode ? 'text-emerald-400' : 'text-accent'}`}>AI Online</span>
                         </div>
                     </div>
                 </div>
                 <div className="flex items-center gap-1">
                     <button
                         onClick={() => setMessages([{ role: 'bot', text: 'Hi! I am your Site Audit AI Assistant. Ask me anything about your current audit results! ✨' }])}
-                        className={`p-1.5 rounded-lg transition-colors ${darkMode ? 'hover:bg-slate-700 text-white' : 'hover:bg-white/10 text-white'}`}
+                        className={`p-1.5 rounded-lg transition-colors ${darkMode ? 'hover:bg-slate-700 text-white' : 'hover:bg-linesoft text-ink'}`}
                         title="Clear Chat"
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 16h-5.38" />
                         </svg>
                     </button>
-                    <button onClick={() => setIsOpen(false)} className={`p-1.5 rounded-lg transition-colors ${darkMode ? 'hover:bg-slate-700 text-white' : 'hover:bg-white/10 text-white'}`}>
+                    <button onClick={() => setIsOpen(false)} className={`p-1.5 rounded-lg transition-colors ${darkMode ? 'hover:bg-slate-700 text-white' : 'hover:bg-linesoft text-ink'}`}>
                         <X className="w-4 h-4" />
                     </button>
                 </div>
             </div>
 
             {/* Chat Body */}
-            <div className={`flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar ${darkMode ? 'bg-[#0F172A]' : 'bg-slate-50'}`}>
+            <div className={`flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar ${darkMode ? 'bg-[#0F172A]' : 'bg-surface-2'}`}>
                 {messages.map((msg, idx) => (
                     <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                         <div className={`max-w-[85%] flex gap-2 min-w-0 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                            <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center border ${msg.role === 'user' ? (darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-blue-100 border-blue-200 text-blue-700') : (darkMode ? 'bg-blue-700 border-blue-600 text-white' : 'bg-blue-700 border-blue-600 text-white')}`}>
+                            <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center border ${msg.role === 'user' ? (darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-accentsoft border-accentsoft text-accent') : (darkMode ? 'bg-blue-700 border-blue-600 text-white' : 'bg-accent border-accent text-white')}`}>
                                 {msg.role === 'user' ? <User size={14} /> : <Bot size={14} />}
                             </div>
                             <div className={`p-3 rounded-2xl text-xs leading-relaxed break-all whitespace-pre-wrap overflow-hidden ${msg.role === 'user'
-                                ? (darkMode ? 'bg-blue-700 text-white rounded-tr-none shadow-lg' : 'bg-white shadow-sm border border-slate-100 rounded-tr-none text-slate-700')
-                                : (darkMode ? 'bg-slate-800 text-white border border-slate-700 rounded-tl-none shadow-sm' : 'bg-white shadow-sm border border-slate-100 rounded-tl-none text-slate-700')
+                                ? (darkMode ? 'bg-blue-700 text-white rounded-tr-none shadow-lg' : 'bg-card shadow-sm border border-line rounded-tr-none text-inksoft')
+                                : (darkMode ? 'bg-slate-800 text-white border border-slate-700 rounded-tl-none shadow-sm' : 'bg-card shadow-sm border border-line rounded-tl-none text-inksoft')
                                 }`}>
                                 <div dangerouslySetInnerHTML={{ __html: formatMarkdown(msg.text) }} />
                             </div>
@@ -319,10 +319,10 @@ const AIChatWidget = () => {
                 {isLoading && (
                     <div className="flex justify-start">
                         <div className="max-w-[85%] flex gap-2 min-w-0">
-                            <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center border ${darkMode ? 'bg-blue-700 border-blue-600' : 'bg-blue-700 border-blue-600 text-white'}`}>
+                            <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center border ${darkMode ? 'bg-blue-700 border-blue-600' : 'bg-accent border-accent text-white'}`}>
                                 <Bot size={14} />
                             </div>
-                            <div className={`p-3 rounded-2xl text-xs flex items-center gap-2 break-all whitespace-pre-wrap overflow-hidden ${darkMode ? 'bg-slate-800 text-white border border-slate-700' : 'bg-white shadow-sm border border-slate-100'}`}>
+                            <div className={`p-3 rounded-2xl text-xs flex items-center gap-2 break-all whitespace-pre-wrap overflow-hidden ${darkMode ? 'bg-slate-800 text-white border border-slate-700' : 'bg-card shadow-sm border border-line'}`}>
                                 <Loader2 className="w-3 h-3 animate-spin text-blue-500" />
                                 Analyzing results...
                             </div>
@@ -333,20 +333,20 @@ const AIChatWidget = () => {
             </div>
 
             {/* Input Area */}
-            <form onSubmit={handleSend} className={`p-4 border-t ${darkMode ? 'bg-[#1E293B] border-slate-700' : 'bg-white border-slate-100'}`}>
+            <form onSubmit={handleSend} className={`p-4 border-t ${darkMode ? 'bg-[#1E293B] border-slate-700' : 'bg-card border-line'}`}>
                 <div className="flex items-center gap-2">
                     <input
                         type="text"
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         placeholder="Ask me anything..."
-                        className={`flex-1 bg-transparent border-none focus:ring-0 text-xs py-2 px-1 ${darkMode ? 'text-white placeholder-slate-400' : 'text-slate-800'}`}
+                        className={`flex-1 bg-transparent border-none focus:ring-0 text-xs py-2 px-1 ${darkMode ? 'text-white placeholder-slate-400' : 'text-ink placeholder-faint'}`}
                         disabled={isLoading}
                     />
                     <button
                         type="submit"
                         disabled={!input.trim() || isLoading}
-                        className={`p-2 rounded-xl transition-all duration-300 ${input.trim() && !isLoading ? 'bg-orange-600 text-white shadow-lg' : 'bg-slate-200 text-slate-400 dark:bg-slate-700'}`}
+                        className={`p-2 rounded-xl transition-all duration-300 ${input.trim() && !isLoading ? 'bg-orange-600 text-white shadow-lg' : 'bg-cardsoft text-faint dark:bg-slate-700'}`}
                     >
                         <Send className="w-4 h-4" />
                     </button>

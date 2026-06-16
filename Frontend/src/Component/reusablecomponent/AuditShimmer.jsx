@@ -22,7 +22,7 @@ export const AuditShimmer = ({ darkMode, loading, data, auditSteps = [], metricK
 
     return (
         <div className="flex flex-col items-center justify-center py-8 px-4 animate-in fade-in zoom-in duration-500 min-h-[350px]">
-            <div className={`w-full max-w-xl rounded-[32px] p-8 flex flex-col items-center text-center transition-all duration-500 ${darkMode ? "bg-slate-800/40 border border-slate-700/50" : "bg-slate-100/60 border border-slate-200/50"
+            <div className={`w-full max-w-xl rounded-[32px] p-8 flex flex-col items-center text-center transition-all duration-500 ${darkMode ? "bg-slate-800/40 border border-slate-700/50" : "bg-cardsoft/60 border border-line/50"
                 }`}>
 
                 {/* Icon Container (Circle) */}
@@ -37,19 +37,19 @@ export const AuditShimmer = ({ darkMode, loading, data, auditSteps = [], metricK
                 </div>
 
                 {/* Title */}
-                <h2 className={`mt-6 text-2xl font-semibold tracking-tight transition-all duration-500 ${darkMode ? "text-white" : "text-slate-900"
+                <h2 className={`mt-6 text-2xl font-semibold tracking-tight transition-all duration-500 ${darkMode ? "text-white" : "text-ink"
                     }`}>
                     {step.title}
                 </h2>
 
                 {/* Description (3 lines focused) */}
-                <p className={`mt-4 text-base leading-relaxed max-w-sm mx-auto transition-all duration-500 ${darkMode ? "text-slate-400" : "text-slate-500"
+                <p className={`mt-4 text-base leading-relaxed max-w-sm mx-auto transition-all duration-500 ${darkMode ? "text-slate-400" : "text-muted"
                     }`}>
                     {step.text}
                 </p>
 
                 {/* Processing State */}
-                <div className="mt-8 flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                <div className="mt-8 flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 text-accent dark:text-blue-400">
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
                     <span className="text-xs font-semibold uppercase tracking-wider">Processing</span>
                 </div>

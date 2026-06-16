@@ -4,12 +4,12 @@ const Section = ({ title, subtitle, icon: Icon, children, darkMode, action, shou
     <div className="space-y-4">
         <div className="flex items-center justify-between px-2">
             <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${darkMode ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-600"}`}>
+                <div className={`p-2 rounded-lg ${darkMode ? "bg-blue-500/20 text-blue-400" : "bg-accentsoft text-accent"}`}>
                     <Icon size={20} />
                 </div>
                 <div>
-                    <h2 className={`text-xl font-semibold ${darkMode ? "text-white" : "text-gray-900"}`}>{title}</h2>
-                    <p className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-500"}`}>{subtitle}</p>
+                    <h2 className={`text-xl font-semibold ${darkMode ? "text-white" : "text-ink"}`}>{title}</h2>
+                    <p className={`text-sm ${darkMode ? "text-gray-400" : "text-muted"}`}>{subtitle}</p>
                 </div>
             </div>
             {action && <div>{action}</div>}

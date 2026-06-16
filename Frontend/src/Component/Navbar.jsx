@@ -2,6 +2,7 @@ import React, { useContext, useRef, useEffect } from "react";
 import { ThemeContext } from "../context/ThemeContext.jsx";
 import { Menu, X, Sun, Moon, Home, NotebookPen, Plus, User, LogOut, LayoutDashboard, ShieldCheck, History, ChevronDown, Settings } from "lucide-react";
 import Assets from "../assets/Assets.js";
+import DarkLogoDealerPulse from "../assets/DarkLogoDealer_Pulse.png";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useData } from "../context/DataContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -14,6 +15,16 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
   const { data, clearData } = useData();
   const { isAuthenticated, isLoading, logout, user } = useAuth();
   const [profileOpen, setProfileOpen] = React.useState(false);
+  const [avatarError, setAvatarError] = React.useState(false);
+
+  // Build initials for the fallback avatar. Full name -> first letter of first
+  // and last name; single name -> first letter doubled (e.g. "Keshav" -> "KK").
+  const getInitials = (name) => {
+    if (!name || !name.trim()) return "U";
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return (parts[0][0] + parts[0][0]).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  };
   const navigate = useNavigate();
   const location = useLocation();
   const [isScrolled, setIsScrolled] = React.useState(false);
@@ -77,22 +88,34 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
   // Styles dynamically based on scroll and theme
   const isTop = !isScrolled;
 
-  const navbarClass = isTop
-    ? "bg-transparent text-white"
-    : (darkMode ? "bg-[#0B1120] text-white shadow-lg border-b border-slate-800" : "bg-white text-slate-900 shadow-md border-b border-slate-200");
+  // In dark theme the top-of-page hero is the blue gradient (white text); in
+  // light theme the hero is cream, so the navbar text must be navy at all times.
+  const textClass = darkMode ? "text-white" : "text-ink";
 
-const innerBgClass = isTop
-  ? "bg-gradient-to-r from-[#1E3A8A] to-[#1E47C3]"
-  : "bg-transparent";
+  // The scrolled (solid) background is a separate layer that fades in over the
+  // gradient via opacity, so there's no abrupt background-image swap.
+  const scrolledBgClass = darkMode
+    ? "bg-[#0B1120] border-b border-slate-800 shadow-lg"
+    : "bg-surface";
 
-  const buttonClass = isTop
+  const buttonClass = darkMode
     ? "bg-white/5 hover:bg-white/10 border-white/10 text-slate-300 hover:text-white"
-    : (darkMode ? "bg-white/5 hover:bg-white/10 border-white/10 text-slate-300 hover:text-white" : "bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-600 hover:text-slate-900");
+    : "bg-cardsoft hover:bg-surface-2 border-line text-muted hover:text-ink";
 
 
   return (
-    <nav className={`sticky top-0 w-full z-50 transition-all duration-300 ${navbarClass}`}>
-      <div className={`w-full py-1 px-4 sm:px-6 lg:px-8 transition-colors duration-300 ${innerBgClass}`}>
+    <nav className={`sticky top-0 w-full z-50 transition-colors duration-300 ${textClass}`}>
+      {/* Base gradient (always present, never swapped — avoids snap) */}
+      <div
+        aria-hidden="true"
+        className={`absolute inset-0 pointer-events-none ${darkMode ? "bg-gradient-to-r from-[#1E3A8A] to-[#1E47C3]" : "bg-surface"}`}
+      />
+      {/* Solid scrolled background fades in on top of the gradient */}
+      <div
+        aria-hidden="true"
+        className={`absolute inset-0 pointer-events-none transition-opacity duration-300 ease-out ${isScrolled ? "opacity-100" : "opacity-0"} ${scrolledBgClass}`}
+      />
+      <div className={`relative w-full py-1 px-4 sm:px-6 lg:px-8`}>
         <div className={`flex items-center justify-between h-16 `}>
 
           {/* Left Section: Mobile Menu & Logo */}
@@ -117,7 +140,7 @@ const innerBgClass = isTop
               <div className="relative">
                 <div className={`absolute opacity-0 rounded-full ${darkMode ? "bg-emerald-500" : "bg-emerald-400"}`}></div>
                 <img
-                  src={isTop ? Assets.Logo : (darkMode ? Assets.Logo : Assets.DarkLogo)}
+                  src={darkMode ? Assets.Logo : DarkLogoDealerPulse}
                   alt="DealerPulse Logo"
                   title="DealerPulse Logo"
                   className="relative h-14 w-auto -hover:scale-105 transition-all duration-300"
@@ -166,26 +189,32 @@ const innerBgClass = isTop
                     >
                       <div className="hidden sm:flex flex-col items-end mr-1">
                         <span className="text-[10px] font-semibold leading-none truncate max-w-[80px]">{user?.name?.split(' ')[0]}</span>
-                        <span className="text-[8px] font-black uppercase text-blue-500 tracking-tighter">{user?.role}</span>
+                        <span className="text-[8px] font-black uppercase text-accent tracking-tighter">{user?.role}</span>
                       </div>
 
-                      {user?.avatar ? (
-                        <img src={user.avatar} alt="Profile" title="User Profile" className="w-8 h-8 rounded-full border border-white/20 shadow-sm" />
+                      {user?.avatar && !avatarError ? (
+                        <img
+                          src={user.avatar}
+                          alt="Profile"
+                          title="User Profile"
+                          onError={() => setAvatarError(true)}
+                          className="w-8 h-8 rounded-full border border-white/20 shadow-sm object-cover"
+                        />
                       ) : (
-                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-black">
-                          {user?.name?.charAt(0)}
+                        <div className="w-8 h-8 rounded-full bg-[#16213E] flex items-center justify-center text-white text-[11px] font-black tracking-tight">
+                          {getInitials(user?.name)}
                         </div>
                       )}
-                      <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform duration-300 ${profileOpen ? 'rotate-180' : ''}`} />
+                      <ChevronDown className={`w-3 h-3 text-faint transition-transform duration-300 ${profileOpen ? 'rotate-180' : ''}`} />
                     </button>
 
                     {/* Profile Dropdown */}
                     {profileOpen && (
-                      <div className={`absolute right-0 mt-3 w-56 rounded-3xl border shadow-2xl z-20 py-3 overflow-hidden animate-in fade-in zoom-in duration-200 ${darkMode ? "bg-[#0B1120] border-slate-800" : "bg-white border-slate-100"
+                      <div className={`absolute right-0 mt-3 w-56 rounded-3xl border shadow-2xl z-20 py-3 overflow-hidden animate-in fade-in zoom-in duration-200 ${darkMode ? "bg-[#0B1120] border-slate-800" : "bg-card border-line"
                         }`}>
                         <div className="px-5 pb-3 mb-2 border-b border-slate-800/10">
-                          <p className="text-[10px] font-black uppercase text-gray-500 tracking-widest mb-1">Signed in as</p>
-                          <p className={`font-semibold text-sm truncate ${darkMode ? "text-white" : "text-slate-500"}`}>{user?.email}</p>
+                          <p className="text-[10px] font-black uppercase text-muted tracking-widest mb-1">Signed in as</p>
+                          <p className={`font-semibold text-sm truncate ${darkMode ? "text-white" : "text-muted"}`}>{user?.email}</p>
                         </div>
 
                         <div className="space-y-1">

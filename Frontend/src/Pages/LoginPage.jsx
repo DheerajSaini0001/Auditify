@@ -5,7 +5,6 @@ import { ThemeContext } from '../context/ThemeContext.jsx';
 import { Mail, Lock, Eye, EyeOff, Loader2, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { savePostAuthIntent } from '../utils/intentStore';
-import Assets from '../assets/Assets.js';
 import CaptchaModal from '../Component/CaptchaModal';
 import './LoginPage.css';
 
@@ -99,14 +98,7 @@ const LoginPage = () => {
 
       <div className={`login-card ${darkMode ? 'dark' : 'light'}`}>
         <div className="login-header">
-          <Link to="/">
-            <img 
-              src={darkMode ? Assets.Logo : Assets.DarkLogo} 
-              alt="Dealer Pulse" 
-              className="login-logo" 
-            />
-          </Link>
-          <h1 className={`login-title ${darkMode ? 'text-white' : 'text-slate-900'}`}>Welcome Back</h1>
+          <h1 className={`login-title ${darkMode ? 'text-white' : 'text-ink'}`}>Welcome Back</h1>
           <p className="login-subtitle">Enter your credentials to access your account</p>
         </div>
 
@@ -152,7 +144,7 @@ const LoginPage = () => {
                 type="checkbox" 
                 checked={rememberMe} 
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="w-4 h-4 rounded border-line text-accent focus:ring-accent"
               />
               <span>Remember me</span>
             </label>

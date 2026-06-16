@@ -58,7 +58,7 @@ const ConversionShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
 
   return (
     <div className="flex flex-col items-center justify-center py-8 px-4 animate-in fade-in zoom-in duration-500 min-h-[350px]">
-      <div className={`w-full max-w-xl rounded-[32px] p-8 flex flex-col items-center text-center transition-all duration-500 ${darkMode ? "bg-slate-800/40 border border-slate-700/50" : "bg-slate-100/60 border border-slate-200/50"}`}>
+      <div className={`w-full max-w-xl rounded-[32px] p-8 flex flex-col items-center text-center transition-all duration-500 ${darkMode ? "bg-slate-800/40 border border-slate-700/50" : "bg-cardsoft border border-line"}`}>
         {/* Icon Container (Circle) */}
         <div className={`w-20 h-20 rounded-full flex items-center justify-center shadow-xl transition-all duration-500 ${darkMode ? "bg-slate-900 shadow-black/40 text-white" : "bg-[#1e293b] shadow-slate-400/30 text-white"}`}>
           <div className="animate-pulse">
@@ -70,12 +70,12 @@ const ConversionShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
         </div>
 
         {/* Title */}
-        <h2 className={`mt-6 text-2xl font-semibold tracking-tight transition-all duration-500 ${darkMode ? "text-white" : "text-slate-900"}`}>
+        <h2 className={`mt-6 text-2xl font-semibold tracking-tight transition-all duration-500 ${darkMode ? "text-white" : "text-ink"}`}>
           {step.title}
         </h2>
 
         {/* Description */}
-        <p className={`mt-4 text-base leading-relaxed max-w-sm mx-auto transition-all duration-500 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
+        <p className={`mt-4 text-base leading-relaxed max-w-sm mx-auto transition-all duration-500 ${darkMode ? "text-slate-400" : "text-muted"}`}>
           {step.text}
         </p>
 
@@ -112,9 +112,9 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
   const recommendations = info.howToOvercomeFailure || [];
   const title = metricKey.replaceAll("_", " ");
 
-  const cardBg = darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200";
-  const textColor = darkMode ? "text-gray-100" : "text-gray-900";
-  const subTextColor = darkMode ? "text-gray-400" : "text-gray-500";
+  const cardBg = darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-line";
+  const textColor = darkMode ? "text-gray-100" : "text-ink";
+  const subTextColor = darkMode ? "text-gray-400" : "text-muted";
 
   let statusBg = "bg-rose-500";
   let statusBorder = "border-rose-500";
@@ -140,8 +140,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
       <div className="p-5 space-y-4">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
-              <Icon size={24} className={darkMode ? "text-blue-400" : "text-blue-600"} />
+            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-accentsoft"} group-hover:scale-110 transition-transform duration-300`}>
+              <Icon size={24} className={darkMode ? "text-blue-400" : "text-accent"} />
             </div>
             <div>
               <h3 className={`font-semibold text-lg ${textColor}`}>{title}</h3>
@@ -157,7 +157,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
                   e.stopPropagation();
                   setIsOpen(!isOpen);
                 }}
-                className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-1 rounded transition-colors ${isOpen ? (darkMode ? "bg-slate-700 text-slate-200" : "bg-slate-200 text-slate-800") : (darkMode ? "text-gray-400 hover:text-white hover:bg-gray-800" : "text-gray-500 hover:text-gray-900 hover:bg-gray-100")}`}
+                className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-1 rounded transition-colors ${isOpen ? (darkMode ? "bg-slate-700 text-slate-200" : "bg-surface-2 text-ink") : (darkMode ? "text-gray-400 hover:text-white hover:bg-gray-800" : "text-muted hover:text-ink hover:bg-surface-2")}`}
                 title="Toggle Analysis"
               >
                 {isOpen ? "Hide Detail" : "View Detail"}
@@ -170,7 +170,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
                   e.stopPropagation();
                   onInfo({ ...content, icon: Icon, thresholds: meta?.threshold || content.thresholds });
                 }}
-                className={`p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
+                className={`p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-faint hover:text-ink"}`}
                 title="View Methodology"
               >
                 <Info size={18} />
@@ -181,15 +181,15 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
 
 
 
-        <div className={`mt-4 p-4 rounded-lg flex items-start gap-3 ${darkMode ? "bg-slate-800/50" : "bg-slate-50"}`}>
+        <div className={`mt-4 p-4 rounded-lg flex items-start gap-3 ${darkMode ? "bg-slate-800/50" : "bg-cardsoft"}`}>
           <div className={`mt-0.5 p-1.5 rounded-full flex-shrink-0 ${isPassed ? "bg-emerald-500/10 text-emerald-500" : isWarning ? "bg-amber-500/10 text-amber-500" : "bg-rose-500/10 text-rose-500"}`}>
             {isPassed ? <CheckCircle size={14} /> : isWarning ? <AlertTriangle size={14} /> : <XCircle size={14} />}
           </div>
           <div>
-            <h4 className={`text-xs font-semibold uppercase tracking-wide mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
+            <h4 className={`text-xs font-semibold uppercase tracking-wide mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>
               Key Insight
             </h4>
-            <p className={`text-sm font-medium leading-relaxed ${darkMode ? "text-slate-200" : "text-slate-700"}`}>
+            <p className={`text-sm font-medium leading-relaxed ${darkMode ? "text-slate-200" : "text-inksoft"}`}>
               {details}
             </p>
           </div>
@@ -214,7 +214,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
         {/* GA4 Specific Data */}
         {metricKey === "GA4_Installed" && meta?.measurementIds?.length > 0 && (
           <div>
-            <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>GA4 Measurement ID</h5>
+            <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>GA4 Measurement ID</h5>
             <div className="flex flex-wrap gap-1.5">
               {meta.measurementIds.map((id, i) => (
                 <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-mono ${darkMode ? "bg-emerald-500/10 text-emerald-300" : "bg-emerald-50 text-emerald-700"}`}>{id}</span>
@@ -226,7 +226,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
         {/* GTM Specific Data */}
         {metricKey === "GTM_Configuration" && meta?.containerIds?.length > 0 && (
           <div>
-            <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>GTM Container ID</h5>
+            <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>GTM Container ID</h5>
             <div className="flex flex-wrap gap-1.5">
               {meta.containerIds.map((id, i) => (
                 <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-mono ${darkMode ? "bg-emerald-500/10 text-emerald-300" : "bg-emerald-50 text-emerald-700"}`}>{id}</span>
@@ -239,18 +239,18 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
         {metricKey === "Conversion_Tracking" && meta && (
           <div className="space-y-2">
             <div className="grid grid-cols-2 gap-2">
-              <div className={`p-2 rounded border ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
+              <div className={`p-2 rounded border ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-cardsoft border-line"}`}>
                 <div className="text-[10px] opacity-70">Form tracking</div>
                 <div className={`text-[10px] font-semibold ${meta.formTracking ? "text-emerald-500" : "text-rose-500"}`}>{meta.formTracking ? "Detected" : "Missing"}</div>
               </div>
-              <div className={`p-2 rounded border ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
+              <div className={`p-2 rounded border ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-cardsoft border-line"}`}>
                 <div className="text-[10px] opacity-70">Call tracking{meta.telLinks > 0 ? ` (${meta.telLinks} tel link${meta.telLinks === 1 ? "" : "s"})` : ""}</div>
                 <div className={`text-[10px] font-semibold ${meta.callTracking ? "text-emerald-500" : "text-rose-500"}`}>{meta.callTracking ? "Detected" : "Missing"}</div>
               </div>
             </div>
             {meta.signals?.length > 0 && (
               <div>
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Tracking Signals</h5>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Tracking Signals</h5>
                 <div className="flex flex-wrap gap-1.5">
                   {meta.signals.map((s, i) => (
                     <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-mono ${darkMode ? "bg-emerald-500/10 text-emerald-300" : "bg-emerald-50 text-emerald-700"}`}>{s}</span>
@@ -264,8 +264,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
         {/* CTA Presence Specific Data */}
         {metricKey === "CTA_Presence" && meta?.selectors && meta.selectors.length > 0 && (
           <div>
-            <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Found CTA Selectors</h5>
-            <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+            <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Found CTA Selectors</h5>
+            <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
               <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
               <span className="break-all">{meta.selectors.join(", ")}</span>
             </div>
@@ -277,8 +277,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
           <>
             {meta?.totalChecked > 0 && (
               <div className="mt-2">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Total CTA Checked</h5>
-                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Total CTA Checked</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
                   <span className="break-all">{meta.totalChecked}</span>
                 </div>
@@ -286,8 +286,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             )}
             {meta?.examples && meta.examples.length > 0 && (
               <div className="mt-2">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Clear CTA Examples</h5>
-                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Clear CTA Examples</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
                   <span className="break-all">{meta.examples.join(", ")}</span>
                 </div>
@@ -299,8 +299,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
         {/* CTA Crowding Specific Data */}
         {metricKey === "CTA_Crowding" && meta?.limit !== undefined && (
           <div className="mt-2">
-            <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Recommended Maximum</h5>
-            <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+            <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Recommended Maximum</h5>
+            <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
               <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
               <span className="break-all">{meta.limit}</span>
             </div>
@@ -312,8 +312,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
           <>
             {meta?.compositeScore !== undefined && (
               <div className="mt-2">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Funnel Placement Score</h5>
-                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Funnel Placement Score</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
                   <span className="break-all">{meta.compositeScore}/100</span>
                 </div>
@@ -321,8 +321,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             )}
             {meta?.aboveFoldCTA !== undefined && (
               <div className="mt-2">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Above-the-Fold CTA</h5>
-                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Above-the-Fold CTA</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${meta.aboveFoldCTA ? "bg-emerald-500" : "bg-rose-500"}`}></span>
                   <span className="break-all">{meta.aboveFoldCTA ? "Yes" : "No"}</span>
                 </div>
@@ -330,8 +330,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             )}
             {meta?.distribution && (
               <div className="mt-2">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>CTA Distribution (Top / Mid / Bottom)</h5>
-                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>CTA Distribution (Top / Mid / Bottom)</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
                   <span className="break-all">{meta.distribution.top} / {meta.distribution.middle} / {meta.distribution.bottom}{meta.isLongPage ? " (long page)" : ""}</span>
                 </div>
@@ -339,8 +339,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             )}
             {meta?.ctaCount !== undefined && (
               <div className="mt-2">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>CTAs Found</h5>
-                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>CTAs Found</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
                   <span className="break-all">{meta.ctaCount}{meta.examples && meta.examples.length > 0 ? ` — ${meta.examples.join(", ")}` : ""}</span>
                 </div>
@@ -352,8 +352,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
         {/* Form Presence Specific Data */}
         {metricKey === "Form_Presence" && meta?.count !== undefined && (
           <div className="mt-2">
-            <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Total Forms Detected</h5>
-            <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+            <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Total Forms Detected</h5>
+            <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
               <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
               <span className="break-all">{meta.count}</span>
             </div>
@@ -365,8 +365,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
           <>
             {meta?.optimalForms !== undefined && (
               <div className="mt-2">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Optimal Forms Count</h5>
-                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Optimal Forms Count</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
                   <span className="break-all">{meta.optimalForms}</span>
                 </div>
@@ -374,8 +374,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             )}
             {meta?.totalForms !== undefined && (
               <div className="mt-2">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Total Forms Analyzed</h5>
-                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Total Forms Analyzed</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
                   <span className="break-all">{meta.totalForms}</span>
                 </div>
@@ -383,8 +383,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             )}
             {meta?.details && meta.details.length > 0 && (
               <div className="mt-2">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Issues Detected</h5>
-                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Issues Detected</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
                   <span className="break-all">{meta.details.join(", ")}</span>
                 </div>
@@ -398,8 +398,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
           <>
             {meta?.checkedInputs && meta.checkedInputs.length > 0 && (
               <div className="mt-2">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Checked Inputs</h5>
-                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Checked Inputs</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
                   <span className="break-all">{meta.checkedInputs.join(", ")}</span>
                 </div>
@@ -407,8 +407,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             )}
             {meta?.hasValidation !== undefined && (
               <div className="mt-2">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Validation Active</h5>
-                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Validation Active</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
                   <span className="break-all">{meta.hasValidation ? "Yes" : "No"}</span>
                 </div>
@@ -422,8 +422,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
           <>
             {meta?.totalCount !== undefined && (
               <div className="mt-2">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Total Buttons</h5>
-                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Total Buttons</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
                   <span className="break-all">{meta.totalCount}</span>
                 </div>
@@ -431,8 +431,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             )}
             {meta?.clearCount !== undefined && (
               <div className="mt-2">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Clear Count</h5>
-                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Clear Count</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
                   <span className="break-all">{meta.clearCount}</span>
                 </div>
@@ -440,8 +440,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             )}
             {meta?.examples && meta.examples.length > 0 && (
               <div className="mt-2">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Button Examples</h5>
-                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Button Examples</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
                   <span className="break-all">{meta.examples.join(", ")}</span>
                 </div>
@@ -453,8 +453,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
         {/* MultiStep Form Progress */}
         {metricKey === "MultiStep_Form_Progress" && meta?.hasProgress !== undefined && (
           <div className="mt-2">
-            <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Progress Indicators</h5>
-            <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+            <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Progress Indicators</h5>
+            <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
               <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
               <span className="break-all">{meta.hasProgress ? "Detected" : "Not Found"}</span>
             </div>
@@ -466,8 +466,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
           <>
             {meta?.checkedKeywords && meta.checkedKeywords.length > 0 && (
               <div className="mt-2">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Target Keywords</h5>
-                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Target Keywords</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
                   <span className="break-all">{meta.checkedKeywords.join(", ")}</span>
                 </div>
@@ -475,8 +475,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             )}
             {meta?.found && meta.found.length > 0 && (
               <div className="mt-2">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Found Matches</h5>
-                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Found Matches</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
                   <span className="break-all">{meta.found.join(", ")}</span>
                 </div>
@@ -490,8 +490,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
           <>
             {meta?.checkedKeywords && meta.checkedKeywords.length > 0 && (
               <div className="mt-2">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Target Keywords</h5>
-                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Target Keywords</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
                   <span className="break-all">{meta.checkedKeywords.join(", ")}</span>
                 </div>
@@ -499,8 +499,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             )}
             {meta?.found && meta.found.length > 0 && (
               <div className="mt-2">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Found Matches</h5>
-                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Found Matches</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
                   <span className="break-all">{meta.found.join(", ")}</span>
                 </div>
@@ -514,8 +514,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
           <>
             {meta?.checkedKeywords && meta.checkedKeywords.length > 0 && (
               <div className="mt-2">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Target Keywords</h5>
-                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Target Keywords</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
                   <span className="break-all">{meta.checkedKeywords.join(", ")}</span>
                 </div>
@@ -523,8 +523,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             )}
             {meta?.found && meta.found.length > 0 && (
               <div className="mt-2">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Found Matches</h5>
-                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Found Matches</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
                   <span className="break-all">{meta.found.join(", ")}</span>
                 </div>
@@ -538,8 +538,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
           <>
             {meta?.checkedKeywords && meta.checkedKeywords.length > 0 && (
               <div className="mt-2">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Target Keywords</h5>
-                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Target Keywords</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
                   <span className="break-all">{meta.checkedKeywords.join(", ")}</span>
                 </div>
@@ -547,8 +547,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             )}
             {meta?.found && meta.found.length > 0 && (
               <div className="mt-2">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Found Matches</h5>
-                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Found Matches</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
                   <span className="break-all">{meta.found.join(", ")}</span>
                 </div>
@@ -562,8 +562,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
           <>
             {meta?.checkedKeywords && meta.checkedKeywords.length > 0 && (
               <div className="mt-2">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Target Keywords</h5>
-                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Target Keywords</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
                   <span className="break-all">{meta.checkedKeywords.join(", ")}</span>
                 </div>
@@ -571,8 +571,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             )}
             {meta?.found && meta.found.length > 0 && (
               <div className="mt-2">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Found Matches</h5>
-                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Found Matches</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
                   <span className="break-all">{meta.found.join(", ")}</span>
                 </div>
@@ -586,8 +586,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
           <>
             {meta?.checkedKeywords && meta.checkedKeywords.length > 0 && (
               <div className="mt-2">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Target Keywords</h5>
-                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Target Keywords</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
                   <span className="break-all">{meta.checkedKeywords.join(", ")}</span>
                 </div>
@@ -595,8 +595,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             )}
             {meta?.found && meta.found.length > 0 && (
               <div className="mt-2">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Found Matches</h5>
-                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Found Matches</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
                   <span className="break-all">{meta.found.join(", ")}</span>
                 </div>
@@ -608,8 +608,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
         {/* Client_Logos */}
         {metricKey === "Client_Logos" && meta?.checkedSelectors && meta.checkedSelectors.length > 0 && (
           <div className="mt-2">
-            <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Checked Selectors</h5>
-            <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+            <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Checked Selectors</h5>
+            <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
               <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
               <span className="break-all">{meta.checkedSelectors.join(", ")}</span>
             </div>
@@ -619,8 +619,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
         {/* Friendly_Error_Handling */}
         {metricKey === "Friendly_Error_Handling" && meta?.checkedSelectors && meta.checkedSelectors.length > 0 && (
           <div className="mt-2">
-            <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Checked Selectors</h5>
-            <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+            <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Checked Selectors</h5>
+            <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
               <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
               <span className="break-all">{meta.checkedSelectors.join(", ")}</span>
             </div>
@@ -630,8 +630,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
         {/* Microcopy_Clarity */}
         {metricKey === "Microcopy_Clarity" && meta?.checkedSelectors && meta.checkedSelectors.length > 0 && (
           <div className="mt-2">
-            <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Checked Selectors</h5>
-            <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+            <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Checked Selectors</h5>
+            <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
               <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
               <span className="break-all">{meta.checkedSelectors.join(", ")}</span>
             </div>
@@ -641,8 +641,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
         {/* Progress_Indicators */}
         {metricKey === "Progress_Indicators" && meta?.checkedSelectors && meta.checkedSelectors.length > 0 && (
           <div className="mt-2">
-            <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Checked Selectors</h5>
-            <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+            <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Checked Selectors</h5>
+            <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
               <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
               <span className="break-all">{meta.checkedSelectors.join(", ")}</span>
             </div>
@@ -705,8 +705,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             <>
               {meta?.detectionType && meta.detectionType !== "none" && (
                 <div className="mt-2">
-                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Detection Type</h5>
-                  <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Detection Type</h5>
+                  <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                     <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
                     <span className="break-all">{meta.detectionType.replaceAll("-", " ")}</span>
                   </div>
@@ -714,8 +714,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
               )}
               {meta?.foundWidgets && meta.foundWidgets.length > 0 && (
                 <div className="mt-2">
-                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>{widgetsLabel}</h5>
-                  <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>{widgetsLabel}</h5>
+                  <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                     <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
                     <span className="break-all">{meta.foundWidgets.join(", ")}</span>
                   </div>
@@ -723,8 +723,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
               )}
               {meta?.ctaExamples && meta.ctaExamples.length > 0 && (
                 <div className="mt-2">
-                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>{ctaLabel}</h5>
-                  <div className={`mt-1 p-2 rounded border flex flex-col gap-1.5 font-mono text-[10px] max-h-[150px] overflow-y-auto ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>{ctaLabel}</h5>
+                  <div className={`mt-1 p-2 rounded border flex flex-col gap-1.5 font-mono text-[10px] max-h-[150px] overflow-y-auto ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                     {meta.ctaExamples.map((cta, idx) => (
                       <div key={idx} className="flex gap-2 items-start">
                         <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1 bg-slate-400`}></span>
@@ -736,8 +736,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
               )}
               {meta?.formFieldsDetected && meta.formFieldsDetected.length > 0 && (
                 <div className="mt-2">
-                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>{formLabel}</h5>
-                  <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>{formLabel}</h5>
+                  <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                     <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
                     <span className="break-all">{meta.formFieldsDetected.join(", ")}</span>
                   </div>
@@ -745,8 +745,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
               )}
               {meta?.matchedKeywords && meta.matchedKeywords.length > 0 && (
                 <div className="mt-2">
-                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Matched Keywords</h5>
-                  <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Matched Keywords</h5>
+                  <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                     <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
                     <span className="break-all">{meta.matchedKeywords.join(", ")}</span>
                   </div>
@@ -761,8 +761,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
           <>
             {meta?.detectionType && (
               <div className="mt-2">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Detection Type</h5>
-                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Detection Type</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
                   <span className="break-all">{meta.detectionType.replaceAll("-", " ")}</span>
                 </div>
@@ -770,8 +770,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             )}
             {meta?.formCount !== undefined && (
               <div className="mt-2">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Forms Detected</h5>
-                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Forms Detected</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
                   <span className="break-all">{meta.formCount}</span>
                 </div>
@@ -779,8 +779,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             )}
             {meta?.references && meta.references.length > 0 && (
               <div className="mt-2">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Thank-You / Confirmation References</h5>
-                <div className={`mt-1 p-2 rounded border flex flex-col gap-1.5 font-mono text-[10px] max-h-[150px] overflow-y-auto ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Thank-You / Confirmation References</h5>
+                <div className={`mt-1 p-2 rounded border flex flex-col gap-1.5 font-mono text-[10px] max-h-[150px] overflow-y-auto ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   {meta.references.map((ref, idx) => (
                     <div key={idx} className="flex gap-2 items-start">
                       <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1 bg-slate-400`}></span>
@@ -798,8 +798,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
           <>
             {meta?.detectionType && (
               <div className="mt-2">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Detection Type</h5>
-                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Detection Type</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
                   <span className="break-all">{meta.detectionType.replaceAll("-", " ")}</span>
                 </div>
@@ -807,8 +807,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             )}
             {meta?.telCount > 0 && (
               <div className="mt-2">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Click-to-Call Links</h5>
-                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Click-to-Call Links</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
                   <span className="break-all">{meta.telCount}</span>
                 </div>
@@ -816,8 +816,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             )}
             {meta?.telExamples && meta.telExamples.length > 0 && (
               <div className="mt-2">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Phone Numbers</h5>
-                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Phone Numbers</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
                   <span className="break-all">{meta.telExamples.join(", ")}</span>
                 </div>
@@ -825,8 +825,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             )}
             {meta?.phoneSample && meta.phoneSample.length > 0 && (
               <div className="mt-2">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Unlinked Phone Numbers</h5>
-                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Unlinked Phone Numbers</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400`}></span>
                   <span className="break-all">{meta.phoneSample.join(", ")}</span>
                 </div>
@@ -840,12 +840,12 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
 
         {/* Expanded Analysis Content */}
         {isOpen && (
-          <div className={`mt-3 p-3 rounded-lg text-xs leading-relaxed border animate-in slide-in-from-top-2 duration-200 ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-white border-slate-200 text-slate-600"}`}>
+          <div className={`mt-3 p-3 rounded-lg text-xs leading-relaxed border animate-in slide-in-from-top-2 duration-200 ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-card border-line text-muted"}`}>
 
             {/* Cause */}
             {(analysis?.cause || reasons.length > 0) && (
               <div className="mb-4">
-                <p className={`font-semibold mb-1 ${darkMode ? "text-slate-200" : "text-slate-700"}`}>Cause:</p>
+                <p className={`font-semibold mb-1 ${darkMode ? "text-slate-200" : "text-inksoft"}`}>Cause:</p>
                 <div className="pl-1 opacity-90">
                   {analysis?.cause ? (
                     <p>{analysis.cause}</p>
@@ -888,10 +888,10 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
 const Section = ({ title, icon: Icon, children, darkMode }) => (
   <div className="space-y-4">
     <div className="flex items-center gap-3 px-2">
-      <div className={`p-2 rounded-lg ${darkMode ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-600"}`}>
+      <div className={`p-2 rounded-lg ${darkMode ? "bg-blue-500/20 text-blue-400" : "bg-accentsoft text-accent"}`}>
         <Icon size={20} />
       </div>
-      <h2 className={`text-xl font-semibold ${darkMode ? "text-white" : "text-gray-900"}`}>
+      <h2 className={`text-xl font-semibold ${darkMode ? "text-white" : "text-ink"}`}>
         {title}
       </h2>
     </div>
@@ -929,9 +929,9 @@ const Conversion_Lead_Flow_Inner = React.memo(({ data, loading, darkMode }) => {
 
   if (!data?.conversionAndLeadFlow) {
     return (
-      <div className={`w-full ${darkMode ? "bg-gray-900" : "bg-gray-50"} transition-colors duration-300`}>
+      <div className={`w-full ${darkMode ? "bg-gray-900" : "bg-surface"} transition-colors duration-300`}>
         <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-6`}>
-          <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
+          <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-card border border-line shadow-xl shadow-slate-200/50"}`}>
             <UrlHeader
               data={data}
               darkMode={darkMode}
@@ -943,11 +943,11 @@ const Conversion_Lead_Flow_Inner = React.memo(({ data, loading, darkMode }) => {
           </div>
 
           {/* ✅ Card 2: Overview / Preview Card */}
-          <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
+          <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-card border border-line shadow-xl shadow-slate-200/50"}`}>
             <div className={`flex flex-col xl:flex-row ${data?.report === "All" ? "" : "min-h-[300px]"}`}>
               {/* Left Panel: Live Preview (Only if not All) */}
               {data?.report !== "All" && (
-                <div className={`w-full xl:w-[45%] p-3 lg:p-4 flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
+                <div className={`w-full xl:w-[45%] p-3 lg:p-4 flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-surface-2 border-linesoft"}`}>
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/5 blur-3xl rounded-full pointer-events-none"></div>
                   <div className="w-full relative z-10">
                     <LivePreview data={data} loading={loading} variant="plain" />
@@ -965,7 +965,7 @@ const Conversion_Lead_Flow_Inner = React.memo(({ data, loading, darkMode }) => {
     );
   }
 
-  const mainBg = darkMode ? "bg-gray-900" : "bg-gray-50";
+  const mainBg = darkMode ? "bg-gray-900" : "bg-surface";
 
   const allMetrics = Object.values(flow).filter(val => typeof val === 'object' && val !== null && 'status' in val);
   const passedCount = allMetrics.filter(m => m.status === "pass").length;
@@ -976,7 +976,7 @@ const Conversion_Lead_Flow_Inner = React.memo(({ data, loading, darkMode }) => {
     <div className={`w-full ${mainBg} transition-colors duration-300`}>
       <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-6`}>
 
-        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
+        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-card border border-line shadow-xl shadow-slate-200/50"}`}>
           <UrlHeader
             data={data}
             darkMode={darkMode}
@@ -987,11 +987,11 @@ const Conversion_Lead_Flow_Inner = React.memo(({ data, loading, darkMode }) => {
           />
         </div>
 
-        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
+        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-card border border-line shadow-xl shadow-slate-200/50"}`}>
           <div className={`flex flex-col xl:flex-row ${data.report === "All" ? "" : "min-h-[300px]"}`}>
 
             {data.report !== "All" && (
-              <div className={`w-full xl:w-[45%] ${data.report === "All" ? "p-6 lg:p-10" : "p-3 lg:p-4"} flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
+              <div className={`w-full xl:w-[45%] ${data.report === "All" ? "p-6 lg:p-10" : "p-3 lg:p-4"} flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-surface-2 border-linesoft"}`}>
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/5 blur-3xl rounded-full pointer-events-none"></div>
                 <div className="w-full relative z-10">
                   <LivePreview data={data} loading={loading} variant="plain" />
@@ -1000,21 +1000,21 @@ const Conversion_Lead_Flow_Inner = React.memo(({ data, loading, darkMode }) => {
             )}
 
             <div className={`flex-1 ${data.report === "All" ? "px-6 pb-4 pt-2 lg:px-10 lg:pt-2" : "px-6 pb-4 pt-4 lg:px-12 lg:pt-6"} flex flex-col justify-center`}>
-              <div className={`w-full ${data.report === "All" ? "" : "max-w-2xl mx-auto"} ${data.report === "All" ? "space-y-10" : "space-y-8"}`}>
+              <div className={`w-full ${data.report === "All" ? "" : "max-w-2xl mx-auto"} ${data.report === "All" ? "space-y-7" : "space-y-6"}`}>
 
-                <div className={`flex flex-col md:flex-row items-center ${data.report === "All" ? "gap-10 md:gap-14 justify-between" : "gap-8 md:gap-12 justify-center"}`}>
+                <div className={`flex flex-col md:flex-row items-center ${data.report === "All" ? "gap-7 md:gap-9 justify-between" : "gap-8 md:gap-8 justify-center"}`}>
 
                   <div className={`flex-1 ${data.report === "All" ? "space-y-5" : "space-y-4"} text-left order-2 md:order-1`}>
                     <div className={`${data.report === "All" ? "space-y-2" : "space-y-1.5"}`}>
-                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-blue-100/50 text-blue-600 border border-blue-200"}`}>
+                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-accentsoft text-accent border border-accent/20"}`}>
                         <Target className="w-3.5 h-3.5" />
                         <span>Conversion Audit</span>
                       </div>
-                      <h3 className={`${data.report === "All" ? "text-3xl lg:text-5xl" : "text-2xl lg:text-4xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
-                        Conversion & <span className="text-blue-500">Lead Flow</span>
+                      <h3 className={`${data.report === "All" ? "text-3xl lg:text-5xl" : "text-2xl lg:text-4xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>
+                        Conversion & <span className={darkMode ? "text-blue-500" : "text-accent"}>Lead Flow</span>
                       </h3>
                     </div>
-                    <p className={`text-sm font-medium leading-relaxed ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
+                    <p className={`text-sm font-medium leading-relaxed ${darkMode ? "text-slate-400" : "text-muted"}`}>
                       Optimize your checkout paths, signup structures, value arguments, and Call-to-Actions to maximize page ROI.
                     </p>
 
@@ -1022,23 +1022,23 @@ const Conversion_Lead_Flow_Inner = React.memo(({ data, loading, darkMode }) => {
                                          <div className={`flex items-center ${data.report === "All" ? "gap-5" : "gap-4"}`}>
                                            <div className="flex items-center gap-2">
                                              <CheckCircle size={18} className="text-emerald-500" />
-                                             <span className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{passedCount} Passed</span>
+                                             <span className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-muted"}`}>{passedCount} Passed</span>
                                            </div>
                                            {warningCount > 0 && (
                                              <div className="flex items-center gap-2">
                                                <AlertTriangle size={18} className="text-amber-500" />
-                                               <span className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{warningCount} Warning</span>
+                                               <span className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-muted"}`}>{warningCount} Warning</span>
                                              </div>
                                            )}
                                            <div className="flex items-center gap-2">
                                              <XCircle size={18} className="text-rose-500" />
-                                             <span className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{failedCount} Failed</span>
+                                             <span className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-muted"}`}>{failedCount} Failed</span>
                                            </div>
                                          </div>
-                                         <div className={`w-px h-4 ${darkMode ? "bg-slate-800" : "bg-slate-200 hidden md:block"}`}></div>
+                                         <div className={`w-px h-4 ${darkMode ? "bg-slate-800" : "bg-line hidden md:block"}`}></div>
                                          <button
                                            onClick={() => setSelectedMetricInfo(scoreCalculationInfo)}
-                                           className={`flex items-center gap-2 text-sm font-semibold transition-all ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-700"}`}
+                                           className={`flex items-center gap-2 text-sm font-semibold transition-all ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-accent hover:text-accenthover"}`}
                                          >
                                            <Info size={16} />
                                            <span className="border-b border-transparent hover:border-current">Metric Methodology</span>
@@ -1050,7 +1050,7 @@ const Conversion_Lead_Flow_Inner = React.memo(({ data, loading, darkMode }) => {
                     <div className={`absolute -inset-8 rounded-full blur-3xl opacity-25 transition-opacity duration-700 group-hover:opacity-40 ${flow.Percentage >= 80 ? "bg-emerald-500" : "bg-amber-500"}`}></div>
                     <CircularProgress value={flow.Percentage || 0} size={data.report === "All" ? 180 : 150} stroke={14} />
                     <div className="absolute inset-0 flex items-center justify-center flex-col gap-0.5">
-                      <span className={`${data.report === "All" ? "text-5xl" : "text-3xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>{flow.Percentage || 0}%</span>
+                      <span className={`${data.report === "All" ? "text-5xl" : "text-3xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>{flow.Percentage || 0}%</span>
                       <span className="text-[11px] font-semibold uppercase tracking-[0.2em] opacity-50">SCORE</span>
                     </div>
                   </div>
@@ -1061,7 +1061,7 @@ const Conversion_Lead_Flow_Inner = React.memo(({ data, loading, darkMode }) => {
         </div>
 
         <ReportRestrictionWrapper>
-          <div className="space-y-8">
+          <div className="space-y-6">
             {(() => {
               const visible = (keys) => keys.filter((k) => flow[k] && isVisibleForAudience(k, audienceMode));
               const ctaKeys = visible(["CTA_Presence", "CTA_Clarity", "CTA_Crowding", "CTA_Flow_Alignment", "Submit_Button_Clarity", "Link_Relevance"]);

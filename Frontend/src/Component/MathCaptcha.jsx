@@ -36,17 +36,17 @@ const MathCaptcha = ({ onAnswerChange, error, autoFocus = false }) => {
 
   return (
     <div className="flex flex-col gap-3 w-full">
-      <div className="flex justify-between items-center bg-slate-100 dark:bg-slate-800 p-3 rounded-lg">
+      <div className="flex justify-between items-center bg-cardsoft dark:bg-slate-800 p-3 rounded-lg">
         {loading ? (
-          <span className="font-semibold text-lg text-slate-400">Loading...</span>
+          <span className="font-semibold text-lg text-faint">Loading...</span>
         ) : (
-          <span className="font-semibold text-lg dark:text-white">What is {question}?</span>
+          <span className="font-semibold text-lg text-ink">What is {question}?</span>
         )}
         <button
           type="button"
           onClick={fetchCaptcha}
           disabled={loading}
-          className="text-emerald-500 hover:text-emerald-600 font-semibold text-sm disabled:opacity-50"
+          className="cursor-pointer text-accent hover:text-[#c2410c] hover:bg-accentsoft font-semibold text-sm px-3 py-1.5 rounded-full transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
           Refresh
         </button>
@@ -60,7 +60,7 @@ const MathCaptcha = ({ onAnswerChange, error, autoFocus = false }) => {
           onAnswerChange(e.target.value, captchaId);
         }}
         placeholder="Enter your answer"
-        className="w-full p-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 transition-all font-medium"
+        className="w-full p-3 border border-line dark:border-slate-600 rounded-lg bg-card dark:bg-slate-800 text-ink outline-none focus:ring-2 focus:ring-[#ea580c] focus:border-[#ea580c] transition-all font-medium"
       />
       {error && <p className="text-red-500 text-sm">{error}</p>}
     </div>

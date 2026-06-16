@@ -94,9 +94,9 @@ const CircularProgress = ({ score, label, color, darkMode }) => {
             strokeLinecap="round"
           />
         </svg>
-        <span className={`absolute text-xl font-semibold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{score}</span>
+        <span className={`absolute text-xl font-semibold ${darkMode ? 'text-white' : 'text-ink'}`}>{score}</span>
       </div>
-      <span className={`text-[10px] font-semibold uppercase text-center max-w-[80px] leading-tight ${darkMode ? 'text-gray-400' : 'text-slate-500'}`}>{label}</span>
+      <span className={`text-[10px] font-semibold uppercase text-center max-w-[80px] leading-tight ${darkMode ? 'text-gray-400' : 'text-muted'}`}>{label}</span>
     </div>
   );
 };
@@ -104,14 +104,14 @@ const CircularProgress = ({ score, label, color, darkMode }) => {
 const MiniStat = ({ label, value, trend, trendValue, icon: Icon, color, darkMode }) => (
   <div className={`border rounded-2xl p-5 flex flex-col justify-between transition-all ${darkMode
     ? 'bg-[#111111] border-white/5 shadow-xl'
-    : 'bg-white border-slate-200 shadow-sm'
+    : 'bg-card border-line shadow-sm'
     }`}>
     <div className="flex justify-between items-start">
-      <p className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? 'text-gray-500' : 'text-slate-400'}`}>{label}</p>
-      {Icon && <Icon size={16} className={darkMode ? 'text-gray-600' : 'text-slate-300'} />}
+      <p className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? 'text-gray-500' : 'text-faint'}`}>{label}</p>
+      {Icon && <Icon size={16} className={darkMode ? 'text-gray-600' : 'text-faint'} />}
     </div>
     <div className="mt-2">
-      <h3 className={`text-2xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{value}</h3>
+      <h3 className={`text-2xl font-black ${darkMode ? 'text-white' : 'text-ink'}`}>{value}</h3>
       <div className={`flex items-center gap-1 mt-1 text-[10px] font-semibold ${trend === 'up' ? 'text-emerald-500' : 'text-rose-500'}`}>
         {trend === 'up' ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
         <span>{trendValue}</span>
@@ -165,16 +165,16 @@ const AdminDashboard = () => {
                 </button>
       
                 {createDropdownOpen && (
-                  <div className={`absolute top-full left-0 right-0 mt-1.5 rounded-xl shadow-xl z-50 py-1 animate-in fade-in slide-in-from-top-1 duration-150 border transition-all duration-300 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+                  <div className={`absolute top-full left-0 right-0 mt-1.5 rounded-xl shadow-xl z-50 py-1 animate-in fade-in slide-in-from-top-1 duration-150 border transition-all duration-300 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-card border-line'}`}>
                     <button
                       onClick={() => { setCreateDropdownOpen(false); navigate("/dashboard/add-website"); }}
-                      className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                      className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-inksoft hover:bg-cardsoft'}`}
                     >
                       Add Google Search Console Site
                     </button>
                     <button
                       onClick={() => { setCreateDropdownOpen(false); navigate("/bulk-audit"); }}
-                      className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                      className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-inksoft hover:bg-cardsoft'}`}
                     >
                       Quick Manual Audit Page
                     </button>
@@ -184,16 +184,16 @@ const AdminDashboard = () => {
 
         {/* Search project box */}
         <div className="relative">
-          <Search className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors duration-300 ${darkMode ? 'text-slate-400' : 'text-slate-455'}`} size={14} />
+          <Search className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors duration-300 ${darkMode ? 'text-slate-400' : 'text-faint'}`} size={14} />
           <input
             id="project-search-input"
             type="text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search projects..."
-            className={`w-full pl-9 pr-8 py-2 border rounded-xl text-xs font-medium focus:outline-none focus:border-emerald-500/50 transition-colors duration-300 ${darkMode ? 'bg-slate-850 border-slate-700 text-slate-100 placeholder-slate-500' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'}`}
+            className={`w-full pl-9 pr-8 py-2 border rounded-xl text-xs font-medium focus:outline-none focus:border-emerald-500/50 transition-colors duration-300 ${darkMode ? 'bg-slate-850 border-slate-700 text-slate-100 placeholder-slate-500' : 'bg-cardsoft border-line text-inksoft placeholder-faint'}`}
           />
-          <span className={`absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] font-black border px-1 py-0.5 rounded leading-none transition-colors duration-300 ${darkMode ? 'text-slate-400 bg-slate-800/80 border-slate-700/50' : 'text-slate-505 bg-slate-200/50 border-slate-300/30'}`}>
+          <span className={`absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] font-black border px-1 py-0.5 rounded leading-none transition-colors duration-300 ${darkMode ? 'text-slate-400 bg-slate-800/80 border-slate-700/50' : 'text-muted bg-surface-2 border-line'}`}>
             ⌘K
           </span>
         </div>
@@ -202,7 +202,7 @@ const AdminDashboard = () => {
         <nav className="flex flex-col gap-1 mt-2">
           <button
             onClick={() => navigate("/dashboard")}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-505 hover:text-slate-800 hover:bg-slate-50'}`}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-muted hover:text-ink hover:bg-cardsoft'}`}
           >
             <LayoutDashboard size={16} />
             <span>Projects</span>
@@ -212,7 +212,7 @@ const AdminDashboard = () => {
 
           <button
             onClick={() => navigate("/audit-history")}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-505 hover:text-slate-800 hover:bg-slate-50'}`}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-muted hover:text-ink hover:bg-cardsoft'}`}
           >
             <FileText size={16} />
             <span>Report History</span>
@@ -222,12 +222,12 @@ const AdminDashboard = () => {
 
           <button
             onClick={() => navigate('/dashboard?tab=starred')}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-550 hover:text-slate-800 hover:bg-slate-50'}`}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-muted hover:text-ink hover:bg-cardsoft'}`}
           >
             <Star size={16} />
             <span>Starred</span>
             {starredIds.length > 0 && (
-              <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${darkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-600'}`}>
+              <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${darkMode ? 'bg-slate-800 text-slate-400' : 'bg-cardsoft text-muted'}`}>
                 {starredIds.length}
               </span>
             )}
@@ -238,7 +238,7 @@ const AdminDashboard = () => {
               onClick={() => navigate("/admin")}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 border-none ${darkMode ? 'bg-emerald-950/40 text-emerald-400' : 'bg-emerald-50 text-emerald-700 border border-emerald-500/20 shadow-sm'}`}
             >
-              <ShieldCheck size={16} className="text-blue-500 shrink-0" />
+              <ShieldCheck size={16} className="text-accent shrink-0" />
               <span>Admin Panel</span>
             </button>
           )}
@@ -246,25 +246,25 @@ const AdminDashboard = () => {
           {user?.role === 'super_admin' && (
             <button
               onClick={() => navigate("/admin/setup")}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-505 hover:text-slate-800 hover:bg-slate-50'}`}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-muted hover:text-ink hover:bg-cardsoft'}`}
             >
               <Settings size={16} className="text-indigo-500 shrink-0" />
               <span>System Setup</span>
             </button>
           )}
 
-          <div className={`my-1.5 border-t transition-colors duration-300 ${darkMode ? 'border-slate-800' : 'border-slate-100'}`}></div>
+          <div className={`my-1.5 border-t transition-colors duration-300 ${darkMode ? 'border-slate-800' : 'border-line'}`}></div>
 
           <button
             onClick={() => toggleTheme()}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-505 hover:text-slate-800 hover:bg-slate-50'}`}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-muted hover:text-ink hover:bg-cardsoft'}`}
           >
             <div className="flex items-center gap-3">
               {darkMode ? <Sun size={16} className="text-amber-400 shrink-0" /> : <Moon size={16} className="text-indigo-500 shrink-0" />}
               <span>{darkMode ? "Light Mode" : "Dark Mode"}</span>
             </div>
-            <div className={`w-8 h-4 rounded-full relative transition-colors duration-300 ${darkMode ? "bg-amber-400/20" : "bg-slate-200"}`}>
-              <div className={`absolute top-0.5 w-3 h-3 rounded-full transition-all duration-300 ${darkMode ? "right-0.5 bg-amber-400" : "left-0.5 bg-slate-400"}`}></div>
+            <div className={`w-8 h-4 rounded-full relative transition-colors duration-300 ${darkMode ? "bg-amber-400/20" : "bg-surface-2"}`}>
+              <div className={`absolute top-0.5 w-3 h-3 rounded-full transition-all duration-300 ${darkMode ? "right-0.5 bg-amber-400" : "left-0.5 bg-faint"}`}></div>
             </div>
           </button>
         </nav>
@@ -273,13 +273,13 @@ const AdminDashboard = () => {
       </div>
 
       {/* Premium promotional block */}
-      <div className={`p-4 border-t transition-colors duration-300 ${darkMode ? 'border-slate-800' : 'border-slate-100'}`}>
+      <div className={`p-4 border-t transition-colors duration-300 ${darkMode ? 'border-slate-800' : 'border-line'}`}>
         <div className={`p-4 rounded-2xl border flex flex-col gap-3 transition-colors duration-300 ${darkMode ? 'bg-emerald-950/20 border-emerald-900/30' : 'bg-emerald-500/10 border-emerald-500/20 shadow-emerald-500/5'}`}>
           <div className={`flex items-center gap-2 transition-colors duration-300 ${darkMode ? 'text-emerald-400' : 'text-emerald-800'}`}>
             <Lock size={14} className={`transition-colors duration-300 ${darkMode ? 'fill-emerald-400/20 text-emerald-400' : 'fill-emerald-600/20 text-emerald-700'}`} />
             <span className="text-[11px] font-black uppercase tracking-wider">Unlock Advanced</span>
           </div>
-          <p className={`text-[10px] font-semibold leading-relaxed transition-colors duration-300 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+          <p className={`text-[10px] font-semibold leading-relaxed transition-colors duration-300 ${darkMode ? 'text-slate-300' : 'text-inksoft'}`}>
             Get deeper insights, historical data, and AI-powered recommendations.
           </p>
           <button
@@ -455,8 +455,8 @@ const AdminDashboard = () => {
     <button
       onClick={() => { setActiveTab(id); setPage(1); setSearch(''); }}
       className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${active
-        ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-        : `${darkMode ? 'text-gray-400 hover:bg-white/5 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'}`
+        ? 'bg-accent hover:bg-accenthover text-white shadow-lg shadow-blue-500/20'
+        : `${darkMode ? 'text-gray-400 hover:bg-white/5 hover:text-white' : 'text-muted hover:bg-cardsoft hover:text-ink'}`
         }`}
     >
       <Icon size={18} />
@@ -472,7 +472,7 @@ const AdminDashboard = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay }}
-      className={`relative overflow-hidden border rounded-3xl p-6 shadow-xl transition-all ${darkMode ? 'bg-[#16161e]/80 border-white/5 hover:border-white/10' : 'bg-white border-slate-200 hover:border-blue-200'}`}
+      className={`relative overflow-hidden border rounded-3xl p-6 shadow-xl transition-all ${darkMode ? 'bg-[#16161e]/80 border-white/5 hover:border-white/10' : 'bg-card border-line hover:border-accent'}`}
     >
       <div className="flex items-start justify-between">
         <div className={`p-3 rounded-2xl ${color} bg-opacity-10`}>
@@ -485,8 +485,8 @@ const AdminDashboard = () => {
         )}
       </div>
       <div className="mt-4">
-        <p className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-slate-500"}`}>{label}</p>
-        <p className={`text-3xl font-black mt-1 ${darkMode ? "text-white" : "text-slate-900"}`}>{value}</p>
+        <p className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-muted"}`}>{label}</p>
+        <p className={`text-3xl font-black mt-1 ${darkMode ? "text-white" : "text-ink"}`}>{value}</p>
       </div>
       {/* Decorative gradient */}
       <div className={`absolute -right-4 -bottom-4 w-24 h-24 blur-3xl opacity-10 rounded-full ${color.replace('bg-', 'bg-')}`} />
@@ -520,10 +520,10 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <div className={`w-full min-h-[calc(100vh-4rem)] flex flex-col md:flex-row font-sans transition-colors duration-300 ${darkMode ? 'bg-slate-950 text-slate-50 dark' : 'bg-slate-50 text-slate-900'}`}>
+    <div className={`w-full min-h-[calc(100vh-4rem)] flex flex-col md:flex-row font-sans transition-colors duration-300 ${darkMode ? 'bg-slate-950 text-slate-50 dark' : 'bg-surface text-ink'}`}>
 
       {/* ── DESKTOP SIDEBAR ── */}
-      <aside className={`hidden md:flex flex-col w-60 shrink-0 border-r justify-between transition-colors duration-300 sticky top-0 h-[calc(100vh-4rem)] ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}>
+      <aside className={`hidden md:flex flex-col w-60 shrink-0 border-r justify-between transition-colors duration-300 sticky top-0 h-[calc(100vh-4rem)] ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-card border-line'}`}>
         <SidebarContent />
       </aside>
 
@@ -531,11 +531,11 @@ const AdminDashboard = () => {
       <aside className={`
         fixed inset-y-0 left-0 z-50 w-64 border-r flex flex-col justify-between pt-1 transform transition-transform duration-300 ease-in-out md:hidden
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        transition-colors duration-300 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}
+        transition-colors duration-300 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-card border-line'}
       `}>
-        <div className={`flex justify-between items-center p-4 border-b transition-colors duration-300 ${darkMode ? 'border-slate-800' : 'border-slate-100'}`}>
-          <span className="text-xs font-black uppercase tracking-widest text-slate-500">Menu Options</span>
-          <button onClick={() => setSidebarOpen(false)} className={`p-1 rounded-lg transition-colors ${darkMode ? 'hover:bg-slate-800 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>
+        <div className={`flex justify-between items-center p-4 border-b transition-colors duration-300 ${darkMode ? 'border-slate-800' : 'border-line'}`}>
+          <span className="text-xs font-black uppercase tracking-widest text-muted">Menu Options</span>
+          <button onClick={() => setSidebarOpen(false)} className={`p-1 rounded-lg transition-colors ${darkMode ? 'hover:bg-slate-800 text-white' : 'hover:bg-cardsoft text-muted'}`}>
             <X size={16} />
           </button>
         </div>
@@ -570,7 +570,7 @@ const AdminDashboard = () => {
               {/* Mobile Sidebar Toggle Button */}
               <button
                 onClick={() => setSidebarOpen(true)}
-                className={`md:hidden flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                className={`md:hidden flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800' : 'bg-card border-line text-muted hover:bg-cardsoft'}`}
               >
                 <Menu size={14} />
                 <span>Menu</span>
@@ -579,7 +579,7 @@ const AdminDashboard = () => {
 
             <div className="flex items-center gap-4">
               {/* Tab Switcher */}
-              <div className="bg-white/5 p-1 rounded-xl flex items-center gap-1">
+              <div className={`p-1 rounded-xl flex items-center gap-1 ${darkMode ? 'bg-white/5' : 'bg-cardsoft'}`}>
                 {[
                   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
                   { id: 'users', label: 'Users', icon: Users },
@@ -590,8 +590,8 @@ const AdminDashboard = () => {
                     key={tab.id}
                     onClick={() => { setActiveTab(tab.id); setPage(1); }}
                     className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-[10px] font-semibold transition-all ${activeTab === tab.id
-                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-                      : 'text-gray-500 hover:text-white hover:bg-white/5'
+                      ? 'bg-accent hover:bg-accenthover text-white shadow-lg shadow-blue-500/20'
+                      : (darkMode ? 'text-gray-500 hover:text-white hover:bg-white/5' : 'text-muted hover:text-ink hover:bg-card')
                       }`}
                   >
                     <tab.icon size={12} />
@@ -600,9 +600,9 @@ const AdminDashboard = () => {
                 ))}
               </div>
 
-              <div className="flex items-center gap-2 border-l border-white/10 pl-4 ml-2">
+              <div className={`flex items-center gap-2 border-l pl-4 ml-2 ${darkMode ? 'border-white/10' : 'border-line'}`}>
 
-                <button className={`px-4 py-2 border rounded-lg text-[10px] font-semibold transition-all flex items-center gap-2 ${darkMode ? 'bg-transparent border-white/10 hover:bg-white/5 text-white' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'
+                <button className={`px-4 py-2 border rounded-lg text-[10px] font-semibold transition-all flex items-center gap-2 ${darkMode ? 'bg-transparent border-white/10 hover:bg-white/5 text-white' : 'bg-card border-line hover:bg-cardsoft text-inksoft'
                   }`}>
                   Export Report <ArrowUpRight size={14} />
                 </button>
@@ -691,8 +691,8 @@ const AdminDashboard = () => {
 
                 {/* Charts Row */}
                 <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                  <div className={`xl:col-span-2 border rounded-2xl p-6 ${darkMode ? 'bg-[#111111] border-white/5' : 'bg-white border-slate-200 shadow-sm'}`}>
-                    <h3 className={`text-[10px] font-semibold uppercase tracking-widest mb-6 ${darkMode ? 'text-gray-500' : 'text-slate-400'}`}>Audit Volume — Last 14 Days</h3>
+                  <div className={`xl:col-span-2 border rounded-2xl p-6 ${darkMode ? 'bg-[#111111] border-white/5' : 'bg-card border-line shadow-sm'}`}>
+                    <h3 className={`text-[10px] font-semibold uppercase tracking-widest mb-6 ${darkMode ? 'text-gray-500' : 'text-muted'}`}>Audit Volume — Last 14 Days</h3>
                     <div className="h-64">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={volumeData}>
@@ -710,8 +710,8 @@ const AdminDashboard = () => {
                     </div>
                   </div>
 
-                  <div className={`border rounded-2xl p-6 ${darkMode ? 'bg-[#111111] border-white/5' : 'bg-white border-slate-200 shadow-sm'}`}>
-                    <h3 className={`text-[10px] font-semibold uppercase tracking-widest mb-6 ${darkMode ? 'text-gray-500' : 'text-slate-400'}`}>Score Distribution</h3>
+                  <div className={`border rounded-2xl p-6 ${darkMode ? 'bg-[#111111] border-white/5' : 'bg-card border-line shadow-sm'}`}>
+                    <h3 className={`text-[10px] font-semibold uppercase tracking-widest mb-6 ${darkMode ? 'text-gray-500' : 'text-muted'}`}>Score Distribution</h3>
                     {/* Distribution Placeholder */}
                     <div className="space-y-4">
                       {[
@@ -734,10 +734,10 @@ const AdminDashboard = () => {
 
                 {/* Metrics & Trends Row */}
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  <div className={`border rounded-2xl p-6 ${darkMode ? 'bg-[#111111] border-white/5' : 'bg-white border-slate-200 shadow-sm'}`}>
-                    <h3 className={`text-[10px] font-semibold uppercase tracking-widest mb-6 ${darkMode ? 'text-gray-500' : 'text-slate-400'}`}>Device Split</h3>
+                  <div className={`border rounded-2xl p-6 ${darkMode ? 'bg-[#111111] border-white/5' : 'bg-card border-line shadow-sm'}`}>
+                    <h3 className={`text-[10px] font-semibold uppercase tracking-widest mb-6 ${darkMode ? 'text-gray-500' : 'text-muted'}`}>Device Split</h3>
                     <div className="mt-8 space-y-6">
-                      <div className={`h-2 w-full rounded-full overflow-hidden flex ${darkMode ? 'bg-white/5' : 'bg-slate-100'}`}>
+                      <div className={`h-2 w-full rounded-full overflow-hidden flex ${darkMode ? 'bg-white/5' : 'bg-surface-2'}`}>
                         {deviceSplitData.map((d, idx) => {
                           const total = deviceSplitData.reduce((acc, curr) => acc + curr.count, 0);
                           const percentage = total > 0 ? (d.count / total) * 100 : 0;
@@ -755,27 +755,27 @@ const AdminDashboard = () => {
                           return (
                             <div key={idx} className="flex items-center gap-2">
                               <div className={`w-2 h-2 rounded-full ${colors[idx % colors.length]}`} />
-                              <span className={`text-[10px] font-semibold ${darkMode ? 'text-gray-400' : 'text-slate-500'}`}>{percentage}% {d.name}</span>
+                              <span className={`text-[10px] font-semibold ${darkMode ? 'text-gray-400' : 'text-muted'}`}>{percentage}% {d.name}</span>
                             </div>
                           );
                         })}
                       </div>
                     </div>
                   </div>
-                  <div className={`border rounded-2xl p-6 ${darkMode ? 'bg-[#111111] border-white/5' : 'bg-white border-slate-200 shadow-sm'}`}>
-                    <h3 className={`text-[10px] font-semibold uppercase tracking-widest mb-6 ${darkMode ? 'text-gray-500' : 'text-slate-400'}`}>Top Audited Locations</h3>
+                  <div className={`border rounded-2xl p-6 ${darkMode ? 'bg-[#111111] border-white/5' : 'bg-card border-line shadow-sm'}`}>
+                    <h3 className={`text-[10px] font-semibold uppercase tracking-widest mb-6 ${darkMode ? 'text-gray-500' : 'text-muted'}`}>Top Audited Locations</h3>
                     <div className="space-y-4 max-h-[160px] overflow-y-auto pr-2 custom-scrollbar">
                       {countrySplitData.length === 0 ? (
                         <div className="text-center py-8 text-[10px] text-gray-500">No location data available.</div>
                       ) : countrySplitData.map((c, i) => (
                         <div key={i} className="space-y-1.5">
                           <div className="flex items-center justify-between">
-                            <span className={`text-[10px] font-semibold ${darkMode ? 'text-white' : 'text-slate-700'}`}>{c.name}</span>
-                            <span className={`text-[10px] font-semibold ${darkMode ? 'text-gray-400' : 'text-slate-500'}`}>{c.count}</span>
+                            <span className={`text-[10px] font-semibold ${darkMode ? 'text-white' : 'text-inksoft'}`}>{c.name}</span>
+                            <span className={`text-[10px] font-semibold ${darkMode ? 'text-gray-400' : 'text-muted'}`}>{c.count}</span>
                           </div>
-                          <div className={`h-1.5 w-full rounded-full ${darkMode ? 'bg-white/5' : 'bg-slate-100'}`}>
+                          <div className={`h-1.5 w-full rounded-full ${darkMode ? 'bg-white/5' : 'bg-surface-2'}`}>
                             <div
-                              className="h-full bg-blue-500 rounded-full"
+                              className="h-full bg-accent rounded-full"
                               style={{
                                 width: `${(c.count / Math.max(...countrySplitData.map(x => x.count))) * 100}%`
                               }}
@@ -787,8 +787,8 @@ const AdminDashboard = () => {
                   </div>
 
 
-                  <div className={`border rounded-2xl p-6 ${darkMode ? 'bg-[#111111] border-white/5' : 'bg-white border-slate-200 shadow-sm'}`}>
-                    <h3 className={`text-[10px] font-semibold uppercase tracking-widest mb-6 ${darkMode ? 'text-gray-500' : 'text-slate-400'}`}>Score Trend (AVG)</h3>
+                  <div className={`border rounded-2xl p-6 ${darkMode ? 'bg-[#111111] border-white/5' : 'bg-card border-line shadow-sm'}`}>
+                    <h3 className={`text-[10px] font-semibold uppercase tracking-widest mb-6 ${darkMode ? 'text-gray-500' : 'text-muted'}`}>Score Trend (AVG)</h3>
                     <div className="h-40">
                       <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={scoreTrendData}>
@@ -814,20 +814,20 @@ const AdminDashboard = () => {
 
                 {/* Lists Row */}
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                  <div className={`border rounded-2xl p-6 ${darkMode ? 'bg-[#111111] border-white/5' : 'bg-white border-slate-200 shadow-sm'}`}>
-                    <h3 className={`text-[10px] font-semibold uppercase tracking-widest mb-6 ${darkMode ? 'text-gray-500' : 'text-slate-400'}`}>Recent Audits</h3>
+                  <div className={`border rounded-2xl p-6 ${darkMode ? 'bg-[#111111] border-white/5' : 'bg-card border-line shadow-sm'}`}>
+                    <h3 className={`text-[10px] font-semibold uppercase tracking-widest mb-6 ${darkMode ? 'text-gray-500' : 'text-muted'}`}>Recent Audits</h3>
                     <div className="space-y-4">
                       {recentAudits.length === 0 ? (
                         <div className="text-center py-8 text-xs text-gray-500">No audits recorded yet.</div>
                       ) : recentAudits.map((audit) => (
-                        <div key={audit._id} className={`flex items-center justify-between p-3 rounded-xl transition-all ${darkMode ? 'hover:bg-white/5' : 'hover:bg-slate-50'}`}>
+                        <div key={audit._id} className={`flex items-center justify-between p-3 rounded-xl transition-all ${darkMode ? 'hover:bg-white/5' : 'hover:bg-cardsoft'}`}>
                           <div className="flex items-center gap-4">
                             <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-xs font-semibold ${audit.score >= 80 ? 'bg-emerald-500/10 text-emerald-500' : audit.score >= 50 ? 'bg-amber-500/10 text-amber-500' : 'bg-rose-500/10 text-rose-500'
                               }`}>
                               {audit.score || 'N/A'}
                             </div>
                             <div className="flex flex-col">
-                              <span className={`text-xs font-semibold truncate max-w-[200px] ${darkMode ? 'text-white' : 'text-slate-700'}`}>{audit.url}</span>
+                              <span className={`text-xs font-semibold truncate max-w-[200px] ${darkMode ? 'text-white' : 'text-inksoft'}`}>{audit.url}</span>
                               <span className="text-[9px] text-gray-500 uppercase">{audit.device} Audit</span>
                             </div>
                           </div>
@@ -852,16 +852,16 @@ const AdminDashboard = () => {
                 exit={{ opacity: 0, y: -20 }}
                 className="space-y-6"
               >
-                <div className={`border rounded-[2.5rem] mt-6 p-8 shadow-2xl transition-colors ${darkMode ? 'bg-[#111111] border-white/5' : 'bg-white border-slate-200'
+                <div className={`border rounded-[2.5rem] mt-6 p-8 shadow-2xl transition-colors ${darkMode ? 'bg-[#111111] border-white/5' : 'bg-card border-line'
                   }`}>
-                  <h3 className={`text-xs font-black uppercase tracking-widest mb-8 ${darkMode ? 'text-slate-400' : 'text-slate-500'
+                  <h3 className={`text-xs font-black uppercase tracking-widest mb-8 ${darkMode ? 'text-slate-400' : 'text-muted'
                     }`}>
                     Critical Issues Detected
                   </h3>
 
-                  <div className="space-y-8 pl-2">
+                  <div className="space-y-6 pl-2">
                     {recentActivity.length === 0 ? (
-                      <div className="text-center py-12 text-sm text-gray-500">
+                      <div className="text-center py-8 text-sm text-gray-500">
                         No user activity logs recorded yet.
                       </div>
                     ) : (
@@ -890,11 +890,11 @@ const AdminDashboard = () => {
 
                             {/* Content */}
                             <div className="flex flex-col gap-1">
-                              <h4 className={`text-base font-semibold leading-tight transition-colors ${darkMode ? 'text-slate-100 group-hover:text-blue-400' : 'text-slate-800 group-hover:text-blue-600'
+                              <h4 className={`text-base font-semibold leading-tight transition-colors ${darkMode ? 'text-slate-100 group-hover:text-blue-400' : 'text-ink group-hover:text-accent'
                                 }`}>
                                 {displayName} {displayAction}
                               </h4>
-                              <p className={`text-xs font-semibold ${darkMode ? 'text-slate-500' : 'text-slate-400'
+                              <p className={`text-xs font-semibold ${darkMode ? 'text-slate-500' : 'text-faint'
                                 }`}>
                                 {activity.ip} • {formattedDate}
                               </p>
@@ -917,13 +917,13 @@ const AdminDashboard = () => {
                 className="space-y-6"
               >
                 {/* Existing Controls Area */}
-                <div className={`flex flex-col md:flex-row md:items-center gap-4 backdrop-blur-xl border rounded-[1.5rem] p-4 shadow-lg transition-colors ${darkMode ? 'bg-[#16161e]/50 border-white/5' : 'bg-white border-slate-200'}`}>
+                <div className={`flex flex-col md:flex-row md:items-center gap-4 backdrop-blur-xl border rounded-[1.5rem] p-4 shadow-lg transition-colors ${darkMode ? 'bg-[#16161e]/50 border-white/5' : 'bg-card border-line'}`}>
                   <div className="relative flex-1">
-                    <Search className={`absolute left-4 top-1/2 -translate-y-1/2 ${darkMode ? 'text-gray-500' : 'text-slate-400'}`} size={18} />
+                    <Search className={`absolute left-4 top-1/2 -translate-y-1/2 ${darkMode ? 'text-gray-500' : 'text-muted'}`} size={18} />
                     <input
                       type="text"
                       placeholder={activeTab === 'users' ? "Search users by name, email..." : "Search audits by website URL..."}
-                      className={`w-full pl-12 pr-4 py-3 border border-transparent rounded-xl focus:border-blue-500/50 focus:outline-none transition-all ${darkMode ? 'bg-white/5 text-white placeholder:text-gray-600' : 'bg-slate-100 text-slate-900 placeholder:text-slate-400'
+                      className={`w-full pl-12 pr-4 py-3 border border-transparent rounded-xl focus:border-accent focus:outline-none transition-all ${darkMode ? 'bg-white/5 text-white placeholder:text-gray-600' : 'bg-surface-2 text-ink placeholder:text-faint'
                         }`}
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
@@ -931,11 +931,11 @@ const AdminDashboard = () => {
                   </div>
                   {activeTab === 'logs' && (
                     <div className="relative">
-                      <Filter className={`absolute left-4 top-1/2 -translate-y-1/2 ${darkMode ? 'text-gray-500' : 'text-slate-400'}`} size={18} />
+                      <Filter className={`absolute left-4 top-1/2 -translate-y-1/2 ${darkMode ? 'text-gray-500' : 'text-muted'}`} size={18} />
                       <input
                         type="text"
                         placeholder="Country Filter..."
-                        className={`pl-12 pr-4 py-3 border border-transparent rounded-xl focus:border-blue-500/50 focus:outline-none transition-all ${darkMode ? 'bg-white/5 text-white placeholder:text-gray-600' : 'bg-slate-100 text-slate-900 placeholder:text-slate-400'
+                        className={`pl-12 pr-4 py-3 border border-transparent rounded-xl focus:border-accent focus:outline-none transition-all ${darkMode ? 'bg-white/5 text-white placeholder:text-gray-600' : 'bg-surface-2 text-ink placeholder:text-faint'
                           }`}
                         value={countryFilter}
                         onChange={(e) => setCountryFilter(e.target.value)}
@@ -945,11 +945,11 @@ const AdminDashboard = () => {
                 </div>
 
                 {/* Data Table */}
-                <div className={`backdrop-blur-xl border rounded-[2rem] overflow-hidden shadow-2xl transition-colors ${darkMode ? 'bg-[#16161e]/50 border-white/5' : 'bg-white border-slate-200'}`}>
+                <div className={`backdrop-blur-xl border rounded-[2rem] overflow-hidden shadow-2xl transition-colors ${darkMode ? 'bg-[#16161e]/50 border-white/5' : 'bg-card border-line'}`}>
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
-                        <tr className={`border-b text-[10px] uppercase tracking-[0.2em] font-black ${darkMode ? 'border-white/5 text-gray-500' : 'border-slate-100 text-slate-400'}`}>
+                        <tr className={`border-b text-[10px] uppercase tracking-[0.2em] font-black ${darkMode ? 'border-white/5 text-gray-500' : 'border-line text-faint'}`}>
                           {activeTab === 'users' ? (
                             <>
                               <th className="px-8 py-6">User Identity</th>
@@ -969,19 +969,19 @@ const AdminDashboard = () => {
                           )}
                         </tr>
                       </thead>
-                      <tbody className={`divide-y ${darkMode ? 'divide-white/5' : 'divide-slate-100'}`}>
+                      <tbody className={`divide-y ${darkMode ? 'divide-white/5' : 'divide-line'}`}>
                         {loading ? (
                           <tr>
-                            <td colSpan="6" className="px-8 py-24 text-center">
+                            <td colSpan="6" className="px-8 py-14 text-center">
                               <div className="flex flex-col items-center gap-4">
-                                <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                                <div className="w-12 h-12 border-4 border-accent border-t-transparent rounded-full animate-spin" />
                                 <p className="text-sm font-black animate-pulse text-gray-500 uppercase tracking-widest">Accessing Secure Records...</p>
                               </div>
                             </td>
                           </tr>
                         ) : (activeTab === 'users' ? users : logs).length === 0 ? (
                           <tr>
-                            <td colSpan="6" className="px-8 py-24 text-center">
+                            <td colSpan="6" className="px-8 py-14 text-center">
                               <div className="flex flex-col items-center gap-4 opacity-20">
                                 <ShieldAlert size={64} />
                                 <p className="text-xl font-black uppercase tracking-widest">No Records Found</p>
@@ -992,18 +992,18 @@ const AdminDashboard = () => {
                           <tr
                             key={item._id}
                             onClick={activeTab === 'users' ? () => handleUserClick(item) : undefined}
-                            className={`transition-colors group cursor-pointer ${darkMode ? 'hover:bg-white/[0.03]' : 'hover:bg-slate-50'}`}
+                            className={`transition-colors group cursor-pointer ${darkMode ? 'hover:bg-white/[0.03]' : 'hover:bg-cardsoft'}`}
                           >
                             {activeTab === 'users' ? (
                               <>
                                 <td className="px-8 py-5">
                                   <div className="flex items-center gap-4">
-                                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-black bg-gradient-to-br from-blue-600 to-indigo-600 shadow-lg shadow-blue-500/20 text-white`}>
+                                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-black ${darkMode ? 'bg-gradient-to-br from-blue-600 to-indigo-600' : 'bg-accent'} shadow-lg shadow-blue-500/20 text-white`}>
                                       {item.avatar ? <img src={item.avatar} alt="" className="w-10 h-10 rounded-2xl" /> : item.name.charAt(0)}
                                     </div>
                                     <div className="min-w-0">
-                                      <p className={`font-black text-sm truncate ${darkMode ? 'text-white' : 'text-slate-900'}`}>{item.name}</p>
-                                      <p className={`text-[10px] font-semibold ${darkMode ? 'text-gray-500' : 'text-slate-400'}`}>{item.email}</p>
+                                      <p className={`font-black text-sm truncate ${darkMode ? 'text-white' : 'text-ink'}`}>{item.name}</p>
+                                      <p className={`text-[10px] font-semibold ${darkMode ? 'text-gray-500' : 'text-muted'}`}>{item.email}</p>
                                     </div>
                                   </div>
                                 </td>
@@ -1014,8 +1014,8 @@ const AdminDashboard = () => {
                                 </td>
                                 <td className="px-8 py-5">
                                   <div className="flex flex-col">
-                                    <span className={`text-[10px] font-mono font-black ${darkMode ? 'text-gray-300' : 'text-slate-700'}`}>{item.lastLoginIp || '0.0.0.0'}</span>
-                                    <span className="text-[9px] text-blue-500 font-black uppercase tracking-widest">{item.lastLoginCountry || 'Unknown'}</span>
+                                    <span className={`text-[10px] font-mono font-black ${darkMode ? 'text-gray-300' : 'text-inksoft'}`}>{item.lastLoginIp || '0.0.0.0'}</span>
+                                    <span className="text-[9px] text-accent font-black uppercase tracking-widest">{item.lastLoginCountry || 'Unknown'}</span>
                                   </div>
                                 </td>
                                 <td className="px-8 py-5 text-[10px] font-black text-gray-500 uppercase tracking-tighter">{formatTimestamp(item.createdAt)}</td>
@@ -1034,8 +1034,8 @@ const AdminDashboard = () => {
                               <>
                                 <td className="px-8 py-5">
                                   <div className="flex items-center gap-3">
-                                    <div className={`p-2.5 rounded-xl ${darkMode ? 'bg-white/5' : 'bg-slate-100'}`}>
-                                      <Globe size={14} className="text-blue-500" />
+                                    <div className={`p-2.5 rounded-xl ${darkMode ? 'bg-white/5' : 'bg-surface-2'}`}>
+                                      <Globe size={14} className="text-accent" />
                                     </div>
                                     <div className="flex flex-col min-w-0">
                                       <span className="font-black text-sm truncate max-w-[280px]">{item.url}</span>
@@ -1070,15 +1070,15 @@ const AdminDashboard = () => {
                   </div>
 
                   {/* Pagination */}
-                  <div className={`px-8 py-6 border-t flex items-center justify-between ${darkMode ? 'border-white/5' : 'border-slate-100'}`}>
+                  <div className={`px-8 py-6 border-t flex items-center justify-between ${darkMode ? 'border-white/5' : 'border-line'}`}>
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">
-                      Showing <span className={darkMode ? 'text-white' : 'text-slate-900'}>{((page - 1) * 10) + 1}</span> to <span className={darkMode ? 'text-white' : 'text-slate-900'}>{Math.min(page * 10, totalItems)}</span> of {totalItems}
+                      Showing <span className={darkMode ? 'text-white' : 'text-ink'}>{((page - 1) * 10) + 1}</span> to <span className={darkMode ? 'text-white' : 'text-ink'}>{Math.min(page * 10, totalItems)}</span> of {totalItems}
                     </p>
                     <div className="flex gap-2">
                       <button
                         onClick={() => setPage(p => Math.max(1, p - 1))}
                         disabled={page === 1}
-                        className={`px-4 py-2 rounded-xl border text-xs font-semibold disabled:opacity-30 transition-colors ${darkMode ? 'border-white/10 hover:bg-blue-600 hover:text-white' : 'border-slate-200 hover:bg-blue-600 hover:text-white'
+                        className={`px-4 py-2 rounded-xl border text-xs font-semibold disabled:opacity-30 transition-colors ${darkMode ? 'border-white/10 hover:bg-blue-600 hover:text-white' : 'border-line hover:bg-accent hover:text-white'
                           }`}
                       >
                         Previous
@@ -1086,7 +1086,7 @@ const AdminDashboard = () => {
                       <button
                         onClick={() => setPage(p => p + 1)}
                         disabled={page * 10 >= totalItems}
-                        className={`px-4 py-2 rounded-xl border text-xs font-semibold disabled:opacity-30 transition-colors ${darkMode ? 'border-white/10 hover:bg-blue-600 hover:text-white' : 'border-slate-200 hover:bg-blue-600 hover:text-white'
+                        className={`px-4 py-2 rounded-xl border text-xs font-semibold disabled:opacity-30 transition-colors ${darkMode ? 'border-white/10 hover:bg-blue-600 hover:text-white' : 'border-line hover:bg-accent hover:text-white'
                           }`}
                       >
                         Next
@@ -1107,9 +1107,9 @@ const AdminDashboard = () => {
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   {/* General Config */}
-                  <div className={`border rounded-[2rem] p-8 transition-colors ${darkMode ? 'bg-[#16161e]/50 border-white/5' : 'bg-white border-slate-200 shadow-sm'}`}>
-                    <h3 className={`text-xl font-black mb-8 flex items-center gap-3 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                      <Settings className="text-blue-500" size={24} />
+                  <div className={`border rounded-[2rem] p-8 transition-colors ${darkMode ? 'bg-[#16161e]/50 border-white/5' : 'bg-card border-line shadow-sm'}`}>
+                    <h3 className={`text-xl font-black mb-8 flex items-center gap-3 ${darkMode ? 'text-white' : 'text-ink'}`}>
+                      <Settings className="text-accent" size={24} />
                       Platform Settings
                     </h3>
                     <div className="space-y-6">
@@ -1118,17 +1118,17 @@ const AdminDashboard = () => {
                         { label: "Public Registration", desc: "Allow new users to sign up", toggle: true, icon: UserPlus },
                         { label: "Guest Audits", desc: "Allow non-logged users to scan", toggle: true, icon: Globe }
                       ].map((item, i) => (
-                        <div key={i} className={`flex items-center justify-between py-4 border-b last:border-0 ${darkMode ? 'border-white/5' : 'border-slate-100'}`}>
+                        <div key={i} className={`flex items-center justify-between py-4 border-b last:border-0 ${darkMode ? 'border-white/5' : 'border-line'}`}>
                           <div className="flex items-center gap-4">
-                            <div className={`p-2.5 rounded-xl ${darkMode ? 'bg-white/5' : 'bg-slate-50'}`}>
-                              <item.icon size={18} className={darkMode ? 'text-gray-400' : 'text-slate-400'} />
+                            <div className={`p-2.5 rounded-xl ${darkMode ? 'bg-white/5' : 'bg-cardsoft'}`}>
+                              <item.icon size={18} className={darkMode ? 'text-gray-400' : 'text-faint'} />
                             </div>
                             <div>
-                              <p className={`font-black text-sm ${darkMode ? 'text-white' : 'text-slate-700'}`}>{item.label}</p>
+                              <p className={`font-black text-sm ${darkMode ? 'text-white' : 'text-inksoft'}`}>{item.label}</p>
                               <p className="text-[10px] text-gray-500 uppercase font-semibold tracking-tighter">{item.desc}</p>
                             </div>
                           </div>
-                          <div className={`w-11 h-6 rounded-full relative cursor-pointer transition-colors ${item.toggle ? 'bg-blue-600' : 'bg-gray-300'}`}>
+                          <div className={`w-11 h-6 rounded-full relative cursor-pointer transition-colors ${item.toggle ? 'bg-accent' : 'bg-gray-300'}`}>
                             <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all shadow-sm ${item.toggle ? 'left-6' : 'left-1'}`} />
                           </div>
                         </div>
@@ -1137,8 +1137,8 @@ const AdminDashboard = () => {
                   </div>
 
                   {/* Feature Flags / Advanced */}
-                  <div className={`border rounded-[2rem] p-8 transition-colors ${darkMode ? 'bg-[#16161e]/50 border-white/5' : 'bg-white border-slate-200 shadow-sm'}`}>
-                    <h3 className={`text-xl font-black mb-8 flex items-center gap-3 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                  <div className={`border rounded-[2rem] p-8 transition-colors ${darkMode ? 'bg-[#16161e]/50 border-white/5' : 'bg-card border-line shadow-sm'}`}>
+                    <h3 className={`text-xl font-black mb-8 flex items-center gap-3 ${darkMode ? 'text-white' : 'text-ink'}`}>
                       <Zap className="text-amber-500" size={24} />
                       Advanced Features
                     </h3>
@@ -1148,13 +1148,13 @@ const AdminDashboard = () => {
                         { label: "Bulk Processing", desc: "Enable multi-site queueing", toggle: true, icon: Activity },
                         { label: "Webhook Events", desc: "Push results to external URLs", toggle: false, icon: ExternalLink }
                       ].map((item, i) => (
-                        <div key={i} className={`flex items-center justify-between py-4 border-b last:border-0 ${darkMode ? 'border-white/5' : 'border-slate-100'}`}>
+                        <div key={i} className={`flex items-center justify-between py-4 border-b last:border-0 ${darkMode ? 'border-white/5' : 'border-line'}`}>
                           <div className="flex items-center gap-4">
-                            <div className={`p-2.5 rounded-xl ${darkMode ? 'bg-white/5' : 'bg-slate-50'}`}>
-                              <item.icon size={18} className={darkMode ? 'text-gray-400' : 'text-slate-400'} />
+                            <div className={`p-2.5 rounded-xl ${darkMode ? 'bg-white/5' : 'bg-cardsoft'}`}>
+                              <item.icon size={18} className={darkMode ? 'text-gray-400' : 'text-faint'} />
                             </div>
                             <div>
-                              <p className={`font-black text-sm ${darkMode ? 'text-white' : 'text-slate-700'}`}>{item.label}</p>
+                              <p className={`font-black text-sm ${darkMode ? 'text-white' : 'text-inksoft'}`}>{item.label}</p>
                               <p className="text-[10px] text-gray-500 uppercase font-semibold tracking-tighter">{item.desc}</p>
                             </div>
                           </div>
@@ -1201,40 +1201,40 @@ const AdminDashboard = () => {
                   initial={{ opacity: 0, scale: 0.9, y: 40 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.9, y: 40 }}
-                  className={`relative w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-[2.5rem] shadow-[0_0_50px_rgba(0,0,0,0.5)] border ${darkMode ? 'bg-[#0f0f15] border-white/10' : 'bg-white border-slate-200'}`}
+                  className={`relative w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-[2.5rem] shadow-[0_0_50px_rgba(0,0,0,0.5)] border ${darkMode ? 'bg-[#0f0f15] border-white/10' : 'bg-card border-line'}`}
                 >
                   <div className="h-full flex flex-col">
-                    <div className="p-8 border-b border-white/5 flex items-center justify-between shrink-0">
+                    <div className="p-8 border-b border-line flex items-center justify-between shrink-0">
                       <div className="flex items-center gap-6">
-                        <div className="w-20 h-20 rounded-[2rem] bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-3xl font-black text-white shadow-2xl shadow-blue-500/40">
+                        <div className={`w-20 h-20 rounded-[2rem] ${darkMode ? 'bg-gradient-to-br from-blue-600 to-indigo-600' : 'bg-accent'} flex items-center justify-center text-3xl font-black text-white shadow-2xl shadow-blue-500/40`}>
                           {selectedUser.name.charAt(0)}
                         </div>
                         <div>
                           <h3 className="text-3xl font-black tracking-tight">{selectedUser.name}</h3>
                           <div className="flex items-center gap-3 mt-1">
-                            <p className="text-blue-500 font-semibold text-sm">{selectedUser.email}</p>
+                            <p className="text-accent font-semibold text-sm">{selectedUser.email}</p>
                             <span className="w-1 h-1 rounded-full bg-gray-500" />
                             <p className="text-gray-500 font-semibold text-sm">UID: {selectedUser._id.slice(-8).toUpperCase()}</p>
                           </div>
                         </div>
                       </div>
-                      <button onClick={() => setSelectedUser(null)} className={`p-4 rounded-full transition-all ${darkMode ? 'bg-white/5 hover:bg-white/10' : 'bg-slate-100 hover:bg-slate-200'}`}>
+                      <button onClick={() => setSelectedUser(null)} className={`p-4 rounded-full transition-all ${darkMode ? 'bg-white/5 hover:bg-white/10' : 'bg-cardsoft hover:bg-surface-2'}`}>
                         <X size={24} />
                       </button>
                     </div>
 
                     <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
                       {userDetailLoading ? (
-                        <div className="flex flex-col items-center justify-center py-24 gap-4">
-                          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                        <div className="flex flex-col items-center justify-center py-14 gap-4">
+                          <div className="w-16 h-16 border-4 border-accent border-t-transparent rounded-full animate-spin" />
                           <p className="font-black text-gray-500 uppercase tracking-widest">Decrypting User Profile...</p>
                         </div>
                       ) : userDetails && (
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                           {/* Left: Stats & Details */}
                           <div className="space-y-6">
-                            <div className={`p-6 rounded-3xl border ${darkMode ? 'bg-white/5 border-white/5' : 'bg-slate-50 border-slate-100'}`}>
-                              <h4 className="text-[10px] font-black uppercase tracking-widest text-blue-500 mb-4">Account Metrics</h4>
+                            <div className={`p-6 rounded-3xl border ${darkMode ? 'bg-white/5 border-white/5' : 'bg-cardsoft border-line'}`}>
+                              <h4 className="text-[10px] font-black uppercase tracking-widest text-accent mb-4">Account Metrics</h4>
                               <div className="space-y-4">
                                 <div className="flex justify-between items-center">
                                   <span className="text-xs text-gray-500">Total Audits</span>
@@ -1266,7 +1266,7 @@ const AdminDashboard = () => {
                               </div>
                             </div>
 
-                            <div className={`p-6 rounded-3xl border ${darkMode ? 'bg-white/5 border-white/5' : 'bg-slate-50 border-slate-100'}`}>
+                            <div className={`p-6 rounded-3xl border ${darkMode ? 'bg-white/5 border-white/5' : 'bg-cardsoft border-line'}`}>
                               <h4 className="text-[10px] font-black uppercase tracking-widest text-emerald-500 mb-4">Active Projects</h4>
                               <div className="space-y-3">
                                 {selectedUser.websites?.length > 0 ? selectedUser.websites.map((w, i) => (
@@ -1282,14 +1282,14 @@ const AdminDashboard = () => {
 
                           {/* Right: History Timeline */}
                           <div className="md:col-span-2 space-y-6">
-                            <div className={`p-6 rounded-3xl border h-full ${darkMode ? 'bg-white/5 border-white/5' : 'bg-slate-50 border-slate-100'}`}>
+                            <div className={`p-6 rounded-3xl border h-full ${darkMode ? 'bg-white/5 border-white/5' : 'bg-cardsoft border-line'}`}>
                               <div className="flex items-center justify-between mb-6">
                                 <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-500">Recent Activity Log</h4>
                                 <Calendar size={14} className="text-gray-500" />
                               </div>
                               <div className="space-y-4">
                                 {userDetails.auditHistory?.length > 0 ? userDetails.auditHistory.slice(0, 10).map((h, i) => (
-                                  <div key={i} className={`flex items-center gap-4 p-4 rounded-2xl ${darkMode ? 'bg-black/20 hover:bg-black/30' : 'bg-white hover:bg-slate-100/50'} transition-colors`}>
+                                  <div key={i} className={`flex items-center gap-4 p-4 rounded-2xl ${darkMode ? 'bg-black/20 hover:bg-black/30' : 'bg-card hover:bg-surface-2'} transition-colors`}>
                                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-[10px] ${h.status === 'success' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'
                                       }`}>
                                       {h.score || '!!'}
@@ -1298,10 +1298,10 @@ const AdminDashboard = () => {
                                       <p className="text-xs font-semibold truncate">{h.url}</p>
                                       <p className="text-[9px] text-gray-500 uppercase tracking-tighter">{formatTimestamp(h.createdAt)}</p>
                                     </div>
-                                    <span className="text-[10px] font-black text-blue-500 px-2 py-1 bg-blue-500/5 rounded">AUDIT</span>
+                                    <span className="text-[10px] font-black text-accent px-2 py-1 bg-accentsoft rounded">AUDIT</span>
                                   </div>
                                 )) : (
-                                  <div className="flex flex-col items-center justify-center py-12 opacity-20">
+                                  <div className="flex flex-col items-center justify-center py-8 opacity-20">
                                     <Activity size={48} />
                                     <p className="font-semibold mt-2">No history recorded</p>
                                   </div>
@@ -1313,8 +1313,8 @@ const AdminDashboard = () => {
                       )}
                     </div>
 
-                    <div className="p-6 border-t border-white/5 flex justify-end shrink-0">
-                      <button onClick={() => setSelectedUser(null)} className="px-8 py-3 bg-blue-600 text-white rounded-2xl font-black text-xs shadow-xl shadow-blue-500/20 active:scale-95 transition-transform">
+                    <div className="p-6 border-t border-line flex justify-end shrink-0">
+                      <button onClick={() => setSelectedUser(null)} className="px-8 py-3 bg-accent hover:bg-accenthover text-white rounded-2xl font-black text-xs shadow-xl shadow-blue-500/20 active:scale-95 transition-transform">
                         Close Profile
                       </button>
                     </div>

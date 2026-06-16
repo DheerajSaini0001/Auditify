@@ -51,15 +51,15 @@ export default function Sidebar({ darkMode }) {
   // Styles
   const sidebarClass = darkMode
     ? "bg-[#0B1120] border-r border-slate-800 text-slate-300"
-    : "bg-white border-r border-slate-200 text-slate-600";
+    : "bg-surface text-muted";
 
   const headerClass = darkMode
     ? "border-b border-slate-800 bg-[#0B1120]"
-    : "border-b border-slate-200 bg-white";
+    : "border-b border-linesoft bg-surface";
 
   const getItemClass = (isActive, isDisabled) => {
     if (isDisabled) {
-      return `opacity-50 cursor-not-allowed ${darkMode ? "text-slate-600" : "text-slate-400"}`;
+      return `opacity-50 cursor-not-allowed ${darkMode ? "text-slate-600" : "text-faint"}`;
     }
     if (isActive) {
       return darkMode
@@ -67,8 +67,8 @@ export default function Sidebar({ darkMode }) {
         : "bg-emerald-50 text-emerald-700 border-r-2 border-emerald-500";
     }
     return darkMode
-      ? "hover:bg-slate-800 hover:text-white"
-      : "hover:bg-slate-50 hover:text-slate-900";
+      ? "hover:bg-emerald-500/10 hover:text-emerald-400"
+      : "hover:bg-emerald-50 hover:text-emerald-700";
   };
 
   return (
@@ -80,10 +80,10 @@ export default function Sidebar({ darkMode }) {
           <BarChart2 className="w-6 h-6" />
         </div>
         <Link to={data?._id ? `/report/${data._id}` : "/report"} replace className="block">
-          <h2 className={`text-lg font-semibold leading-none ${darkMode ? "text-white" : "text-slate-900"}`}>
+          <h2 className={`text-lg font-semibold leading-none ${darkMode ? "text-white" : "text-ink"}`}>
             Audit Report
           </h2>
-          <span className={`text-xs font-semibold ${darkMode ? 'text-slate-500' : 'text-slate-600'}`}>Overview</span>
+          <span className={`text-xs font-semibold ${darkMode ? 'text-slate-500' : 'text-muted'}`}>Overview</span>
         </Link>
       </div>
 
@@ -94,10 +94,10 @@ export default function Sidebar({ darkMode }) {
             <div className={`p-3 rounded-xl ${darkMode ? "bg-amber-500/10 text-amber-400" : "bg-amber-50 text-amber-500"}`}>
               <Ban className="w-7 h-7" />
             </div>
-            <p className={`text-sm font-medium ${darkMode ? "text-slate-200" : "text-slate-700"}`}>
+            <p className={`text-sm font-medium ${darkMode ? "text-slate-200" : "text-inksoft"}`}>
               Not a dealership website
             </p>
-            <p className={`text-xs leading-relaxed ${darkMode ? "text-slate-500" : "text-slate-500"}`}>
+            <p className={`text-xs leading-relaxed ${darkMode ? "text-slate-500" : "text-muted"}`}>
               Sorry, this site doesn’t belong to a car dealership, so no audit sections are available.
             </p>
           </div>
@@ -126,7 +126,7 @@ export default function Sidebar({ darkMode }) {
               </div>
 
               {devOnly ? (
-                <span className={`text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded ${darkMode ? "bg-slate-800 text-slate-500" : "bg-slate-100 text-slate-400"}`}>
+                <span className={`text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded ${darkMode ? "bg-slate-800 text-slate-500" : "bg-cardsoft text-faint"}`}>
                   Dev
                 </span>
               ) : !isAvailable ? (
@@ -140,23 +140,23 @@ export default function Sidebar({ darkMode }) {
       </aside>
 
       {/* Footer / Actions */}
-      <div className={`p-3 border-t space-y-3 ${darkMode ? "border-slate-800 bg-[#0B1120]" : "border-slate-200 bg-white"}`}>
+      <div className={`p-3 border-t space-y-3 ${darkMode ? "border-slate-800 bg-[#0B1120]" : "border-linesoft bg-surface"}`}>
         {data?.sectionScore ? (
           <>
             {/* 👥 Dealer / Developer view toggle */}
             <div>
-              <div className={`text-[10px] font-semibold uppercase tracking-wider mb-1.5 ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
+              <div className={`text-[10px] font-semibold uppercase tracking-wider mb-1.5 ${darkMode ? "text-slate-500" : "text-faint"}`}>
                 View Mode
               </div>
-              <div className={`grid grid-cols-2 gap-1 p-1 rounded-xl ${darkMode ? "bg-slate-800/60" : "bg-slate-100"}`}>
+              <div className={`grid grid-cols-2 gap-1 p-1 rounded-xl ${darkMode ? "bg-slate-800/60" : "bg-cardsoft"}`}>
                 {["dealer", "developer"].map((m) => (
                   <button
                     key={m}
                     onClick={() => setAudienceMode(m)}
                     aria-pressed={audienceMode === m}
                     className={`py-1.5 rounded-lg text-xs font-semibold capitalize transition-all ${audienceMode === m
-                      ? "bg-blue-600 text-white shadow-sm"
-                      : (darkMode ? "text-slate-300 hover:bg-slate-700/50" : "text-slate-600 hover:bg-white")}`}
+                      ? (darkMode ? "bg-slate-700 text-white shadow-sm" : "bg-[#16213E] text-white shadow-sm")
+                      : (darkMode ? "text-slate-300 hover:bg-slate-700/50" : "text-muted hover:bg-card")}`}
                   >
                     {m}
                   </button>
@@ -202,7 +202,7 @@ export default function Sidebar({ darkMode }) {
                   navigate("/login", { state: { from: location.pathname } });
                 }
               }}
-              className="group w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 shadow-md shadow-blue-600/20 transition-all hover:shadow-blue-600/30 active:scale-[0.98]"
+              className={`group w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white shadow-md shadow-black/10 transition-all hover:shadow-black/20 active:scale-[0.98] ${darkMode ? "bg-slate-700 hover:bg-slate-600" : "bg-[#16213E] hover:bg-[#2A3656]"}`}
             >
               <FileText className="w-4 h-4" />
               <span>Download {audienceMode === "dealer" ? "Dealer" : "Developer"} Report</span>
@@ -217,7 +217,7 @@ export default function Sidebar({ darkMode }) {
             <span>Start New Audit</span>
           </button>
         ) : (
-          <div className={`text-xs text-center p-2 font-semibold ${darkMode ? "text-slate-500 opacity-60" : "text-slate-500"}`}>
+          <div className={`text-xs text-center p-2 font-semibold ${darkMode ? "text-slate-500 opacity-60" : "text-muted"}`}>
             Waiting for analysis...
           </div>
         )}

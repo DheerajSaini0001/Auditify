@@ -77,9 +77,9 @@ const MetricCard = ({
                     ? "text-rose-400"
                     : "text-rose-600";
 
-    const cardBg = darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200";
-    const textColor = darkMode ? "text-gray-100" : "text-gray-900";
-    const subTextColor = darkMode ? "text-gray-400" : "text-gray-500";
+    const cardBg = darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-line";
+    const textColor = darkMode ? "text-gray-100" : "text-ink";
+    const subTextColor = darkMode ? "text-gray-400" : "text-muted";
 
     return (
         <div
@@ -88,7 +88,7 @@ const MetricCard = ({
             <div className="flex items-start justify-between mb-6">
                 <div className="flex items-start gap-4">
                     <div
-                        className={`p-3 rounded-xl flex-shrink-0 ${darkMode ? "bg-blue-900/20 text-blue-400" : "bg-blue-50 text-blue-600"
+                        className={`p-3 rounded-xl flex-shrink-0 ${darkMode ? "bg-blue-900/20 text-blue-400" : "bg-accentsoft text-accent"
                             }`}
                     >
                         <Icon size={24} strokeWidth={2} />
@@ -114,7 +114,7 @@ const MetricCard = ({
                             onClick={handleToggle}
                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${darkMode
                                 ? "bg-slate-700 hover:bg-slate-600 text-slate-300"
-                                : "bg-slate-100 hover:bg-slate-200 text-slate-600"
+                                : "bg-cardsoft hover:bg-surface-2 text-muted"
                                 }`}
                         >
                             {showDetails ? "Hide Details" : "View Details"}
@@ -129,7 +129,7 @@ const MetricCard = ({
                                     <h4 className="text-[10px] font-semibold uppercase tracking-widest text-blue-500 mb-1">Description</h4>
                                     <p className="text-xs leading-relaxed opacity-90">{description}</p>
                                 </div>
-                                <div className={`h-px w-full ${darkMode ? "bg-slate-800" : "bg-slate-100"}`} />
+                                <div className={`h-px w-full ${darkMode ? "bg-slate-800" : "bg-line"}`} />
                                 <div>
                                     <h4 className="text-[10px] font-semibold uppercase tracking-widest text-indigo-500 mb-1">Why it matters</h4>
                                     <p className="text-xs leading-relaxed opacity-90">{whyItMatters}</p>
@@ -144,7 +144,7 @@ const MetricCard = ({
                             }}
                             className={`p-1.5 rounded-full transition-colors ${darkMode
                                 ? "text-gray-500 hover:text-gray-300 hover:bg-gray-700"
-                                : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                                : "text-faint hover:text-muted hover:bg-surface-2"
                                 }`}
                             title="View Methodology"
                         >
@@ -156,13 +156,13 @@ const MetricCard = ({
             <div className="space-y-6 flex-grow">
                 <div>
                     <h4
-                        className={`text-[10px] font-semibold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-500" : "text-gray-400"
+                        className={`text-[10px] font-semibold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-500" : "text-faint"
                             }`}
                     >
                         Current Value
                     </h4>
                     <div
-                        className={`text-base font-medium ${darkMode ? "text-gray-300" : "text-gray-700"
+                        className={`text-base font-medium ${darkMode ? "text-gray-300" : "text-inksoft"
                             }`}
                     >
                         {title} is{" "}

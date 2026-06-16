@@ -8,34 +8,34 @@ export default function DoNotSellInfoPage() {
   const darkMode = theme === "dark";
 
   const containerClass = darkMode
-    ? "min-h-screen py-24 px-4 sm:px-8 flex flex-col items-center bg-[#060B14] text-white relative font-sans"
-    : "min-h-screen py-24 px-4 sm:px-8 flex flex-col items-center bg-[#F8FAFC] text-slate-900 relative font-sans";
+    ? "min-h-screen py-14 px-4 sm:px-8 flex flex-col items-center bg-[#060B14] text-white relative font-sans"
+    : "min-h-screen py-14 px-4 sm:px-8 flex flex-col items-center bg-surface text-ink relative font-sans";
 
   return (
     <div className={containerClass}>
       <div className={`absolute inset-0 block pointer-events-none ${darkMode ? 'bg-[url("https://www.transparenttextures.com/patterns/cubes.png")] opacity-5' : 'bg-[url("https://www.transparenttextures.com/patterns/cubes.png")] opacity-10'}`}></div>
 
-      <div className="relative z-10 max-w-6xl w-full mx-auto md:flex gap-16 relative items-start">
+      <div className="relative z-10 max-w-6xl w-full mx-auto md:flex gap-10 relative items-start">
 
         {/* Sticky Sidebar */}
-        <div className={`hidden md:block sticky top-32 w-1/4 space-y-8 pl-4 border-l-2 ${darkMode ? "border-slate-800" : "border-slate-200"}`}>
+        <div className={`hidden md:block sticky top-32 w-1/4 space-y-8 pl-4 border-l-2 ${darkMode ? "border-slate-800" : "border-line"}`}>
           <div>
             <div className="text-xl font-semibold mb-4">Consumer Rights</div>
-            <ul className={`space-y-4 text-sm font-semibold ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
-              <li className="text-emerald-500 transition-colors">1. CCPA Overview</li>
-              <li className="hover:text-emerald-500 transition-colors cursor-pointer">2. Data Sales Policy</li>
-              <li className="hover:text-emerald-500 transition-colors cursor-pointer">3. Opt-Out Request</li>
-              <li className="hover:text-emerald-500 transition-colors cursor-pointer">4. Verification Process</li>
+            <ul className={`space-y-4 text-sm font-semibold ${darkMode ? "text-slate-400" : "text-muted"}`}>
+              <li className="text-accent transition-colors">1. CCPA Overview</li>
+              <li className="hover:text-accent transition-colors cursor-pointer">2. Data Sales Policy</li>
+              <li className="hover:text-accent transition-colors cursor-pointer">3. Opt-Out Request</li>
+              <li className="hover:text-accent transition-colors cursor-pointer">4. Verification Process</li>
             </ul>
           </div>
-          <div className={`text-xs p-4 rounded-xl border ${darkMode ? "bg-slate-900/50 border-slate-800 text-slate-500" : "bg-white border-slate-200 text-slate-400"}`}>
+          <div className={`text-xs p-4 rounded-xl border ${darkMode ? "bg-slate-900/50 border-slate-800 text-slate-500" : "bg-card border-line text-faint"}`}>
             Document Revision: 1.0.0<br />
             Last Modified: April 28, 2026
           </div>
         </div>
 
         {/* Main Content */}
-        <div className="w-full md:w-3/4 space-y-12">
+        <div className="w-full md:w-3/4 space-y-8">
 
           <PageHeader
             badge="Privacy"
@@ -45,35 +45,35 @@ export default function DoNotSellInfoPage() {
             darkMode={darkMode}
           />
 
-          <div className={`space-y-16 text-base md:text-lg leading-relaxed ${darkMode ? "text-slate-300" : "text-slate-700"}`}>
+          <div className={`space-y-10 text-base md:text-lg leading-relaxed ${darkMode ? "text-slate-300" : "text-inksoft"}`}>
 
             <section className="space-y-4">
               <div className="flex items-center gap-3 text-2xl font-semibold">
-                <ShieldOff className="text-rose-500" />
+                <ShieldOff className="text-accent" />
                 <h2>1. CCPA and Your Privacy Rights</h2>
               </div>
               <p>The California Consumer Privacy Act (CCPA) grants California residents specific rights regarding their personal information. One of these is the right to opt-out of the "sale" of personal information. Dealer Pulse respects these rights for all users, regardless of their location.</p>
               <p>While Dealer Pulse does not sell your personal information in the traditional sense (exchanging it for money), the CCPA defines "sale" broadly to include sharing information for other benefits.</p>
             </section>
 
-            <div className={`h-px w-full ${darkMode ? "bg-slate-800" : "bg-slate-200"}`}></div>
+            <div className={`h-px w-full ${darkMode ? "bg-slate-800" : "bg-line"}`}></div>
 
             <section className="space-y-4">
               <div className="flex items-center gap-3 text-2xl font-semibold">
-                <Database className="text-blue-500" />
+                <Database className="text-accent" />
                 <h2>2. What Information We Collect</h2>
               </div>
               <p>We collect minimal data necessary to provide our auditing services. This includes your email address for account management and the URLs you submit for analysis. We do not track your browsing history across the web or build advertising profiles.</p>
-              <div className={`p-6 rounded-2xl border-l-4 border-blue-500 ${darkMode ? "bg-blue-500/5 text-blue-100 border-r border-t border-b border-slate-800" : "bg-blue-50 text-slate-800 border-r border-t border-b border-slate-200"}`}>
+              <div className={`p-6 rounded-2xl border-l-4 border-accent ${darkMode ? "bg-[#ea580c]/5 text-orange-100 border-r border-t border-b border-slate-800" : "bg-accentsoft text-ink border-r border-t border-b border-line"}`}>
                 <span className="font-semibold">Our Commitment:</span> We explicitly do not syndicate, trade, or offload customer data to third-party data brokers or marketing exchanges.
               </div>
             </section>
 
-            <div className={`h-px w-full ${darkMode ? "bg-slate-800" : "bg-slate-200"}`}></div>
+            <div className={`h-px w-full ${darkMode ? "bg-slate-800" : "bg-line"}`}></div>
 
             <section className="space-y-4">
               <div className="flex items-center gap-3 text-2xl font-semibold">
-                <UserX className="text-emerald-500" />
+                <UserX className="text-accent" />
                 <h2>3. How to Opt-Out</h2>
               </div>
               <p>If you wish to exercise your right to opt-out of any potential sharing of your information that could be categorized as a "sale" under CCPA, you can do so through the following methods:</p>
@@ -84,11 +84,11 @@ export default function DoNotSellInfoPage() {
               </ul>
             </section>
 
-            <div className={`h-px w-full ${darkMode ? "bg-slate-800" : "bg-slate-200"}`}></div>
+            <div className={`h-px w-full ${darkMode ? "bg-slate-800" : "bg-line"}`}></div>
 
             <section className="space-y-4">
               <div className="flex items-center gap-3 text-2xl font-semibold">
-                <Eye className="text-purple-500" />
+                <Eye className="text-accent" />
                 <h2>4. Verification and Response</h2>
               </div>
               <p>To protect your privacy, we must verify your identity before fulfilling your request. We may ask for information that allows us to reasonably verify you are the person about whom we collected personal information.</p>

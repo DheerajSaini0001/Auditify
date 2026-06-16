@@ -41,6 +41,14 @@ const StatusSummary = ({ tech, className = "gap-4" }) => {
     checkStatus(tech?.Inventory_Load_Time?.status);
     checkStatus(tech?.Service_Load_Time?.status);
 
+    // Mobile Experience & Rendering (PageSpeed Score is informational — not tallied)
+    checkStatus(tech?.Mobile_Usability?.status);
+    checkStatus(tech?.Mobile_Load_Speed?.status);
+    checkStatus(tech?.Rendering_Performance?.status);
+    checkStatus(tech?.Lazy_Loading?.status);
+    checkStatus(tech?.Third_Party_Optimization?.status);
+    checkStatus(tech?.JS_Execution?.status);
+
     return (
         <div className={`flex items-center ${className}`}>
             <div className="flex items-center gap-2">

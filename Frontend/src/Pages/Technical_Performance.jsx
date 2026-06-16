@@ -9,7 +9,8 @@ import {
   Activity, Zap, Layout, Image as ImageIcon,
   Server, Database, FileCode, Globe,
   ArrowRightLeft, Clock, Gauge, AlertTriangle,
-  Info, ChevronDown, Sparkles, Briefcase, MousePointerClick, Car, Wrench
+  Info, ChevronDown, Sparkles, Briefcase, MousePointerClick, Car, Wrench,
+  Smartphone, Layers, Cpu
 } from "lucide-react";
 import MetricInfoModal from "../Component/MetricInfoModal";
 import ParameterInfoModal from "../Component/ParameterInfoModal";
@@ -17,6 +18,7 @@ import { InfoDetails } from "../Component/InfoDetails";
 import { isVisibleForAudience } from "../config/parameterAudience";
 
 import MetricCard from "../Component/reusablecomponent/MetricCard";
+import { NotCalculatedNote, AffectedList } from "../Component/reusablecomponent/MetricExtras";
 import StatusSummary from "../Component/reusablecomponent/StatusSummary";
 import { AuditShimmer } from "../Component/reusablecomponent/AuditShimmer";
 
@@ -86,6 +88,8 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
   const isCoreExpanded = expandedDetails.LCP || expandedDetails.INP || expandedDetails.FID || expandedDetails.CLS || expandedDetails.FCP || expandedDetails.TTFB;
   const isLabExpanded = expandedDetails.TBT || expandedDetails.SI || expandedDetails.inventoryLoad || expandedDetails.serviceLoad;
   const isAssetsExpanded = expandedDetails.compression || expandedDetails.caching || expandedDetails.redirectChains || expandedDetails.renderBlocking || expandedDetails.resourceOptimization;
+  const isMobileExpanded = expandedDetails.pageSpeedScore || expandedDetails.mobileUsability || expandedDetails.mobileLoadSpeed || expandedDetails.renderingPerformance;
+  const isScriptExpanded = expandedDetails.lazyLoading || expandedDetails.thirdPartyOptimization || expandedDetails.jsExecution;
 
   // 👥 Dealer/Developer audience filtering (presentation-only; scores unchanged)
   const { audienceMode } = useData();
@@ -413,6 +417,304 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                   />
                 )}
               </Section>
+              )}
+
+              {/* Mobile Experience & PageSpeed */}
+              {(tech.PageSpeed_Score || tech.Mobile_Usability || tech.Mobile_Load_Speed || tech.Rendering_Performance) && (
+                <Section
+                  title="Mobile Experience & PageSpeed"
+                  subtitle="Responsive, mobile load and official Lighthouse score"
+                  icon={Smartphone}
+                  darkMode={darkMode}
+                  shouldAlignStart={isMobileExpanded}
+                >
+                  {tech.PageSpeed_Score && (
+                    <OptimizationCard
+                      icon={Gauge}
+                      title="PageSpeed Score"
+                      metricData={tech.PageSpeed_Score}
+                      darkMode={darkMode}
+                      isOpen={expandedDetails.pageSpeedScore}
+                      onToggle={() => toggleDetails('pageSpeedScore')}
+                      description={metricExplanations.PageSpeed_Score.whatThisParameterIs}
+                      whyItMatters={metricExplanations.PageSpeed_Score.whyItMatters}
+                      onInfoClick={() => setSelectedParameterInfo({ title: "PageSpeed Score", icon: Gauge, ...metricExplanations.PageSpeed_Score, metricData: tech.PageSpeed_Score })}
+                      displayValue={tech.PageSpeed_Score.meta?.value}
+                    >
+                      {tech.PageSpeed_Score.meta?.notScored ? (
+                        <NotCalculatedNote metric={tech.PageSpeed_Score} darkMode={darkMode} />
+                      ) : (
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                            <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-blue-400" : "text-blue-600"}`}>Mobile</p>
+                            <p className={`text-xl font-black ${darkMode ? "text-blue-300" : "text-blue-700"}`}>{tech.PageSpeed_Score.meta?.mobileScore}</p>
+                          </div>
+                          <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                            <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-indigo-400" : "text-indigo-600"}`}>Desktop</p>
+                            <p className={`text-xl font-black ${darkMode ? "text-indigo-300" : "text-indigo-700"}`}>{tech.PageSpeed_Score.meta?.desktopScore}</p>
+                          </div>
+                        </div>
+                      )}
+                    </OptimizationCard>
+                  )}
+
+                  {tech.Mobile_Usability && (
+                    <OptimizationCard
+                      icon={Smartphone}
+                      title="Mobile Usability"
+                      metricData={tech.Mobile_Usability}
+                      darkMode={darkMode}
+                      isOpen={expandedDetails.mobileUsability}
+                      onToggle={() => toggleDetails('mobileUsability')}
+                      description={metricExplanations.Mobile_Usability.whatThisParameterIs}
+                      whyItMatters={metricExplanations.Mobile_Usability.whyItMatters}
+                      onInfoClick={() => setSelectedParameterInfo({ title: "Mobile Usability", icon: Smartphone, ...metricExplanations.Mobile_Usability, metricData: tech.Mobile_Usability })}
+                      displayValue={tech.Mobile_Usability.meta?.value}
+                    >
+                      {tech.Mobile_Usability.meta?.notScored ? (
+                        <NotCalculatedNote metric={tech.Mobile_Usability} darkMode={darkMode} />
+                      ) : (
+                        <div className="flex flex-col gap-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Viewport</p>
+                              <p className={`text-sm font-black ${darkMode ? "text-gray-200" : "text-gray-700"}`}>{tech.Mobile_Usability.meta?.viewport}</p>
+                            </div>
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Horizontal Scroll</p>
+                              <p className={`text-sm font-black ${darkMode ? "text-gray-200" : "text-gray-700"}`}>{tech.Mobile_Usability.meta?.horizontalScroll}</p>
+                            </div>
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Tap Targets</p>
+                              <p className={`text-sm font-black ${darkMode ? "text-gray-200" : "text-gray-700"}`}>{tech.Mobile_Usability.meta?.tapTargets}</p>
+                            </div>
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Legible Fonts</p>
+                              <p className={`text-sm font-black ${darkMode ? "text-gray-200" : "text-gray-700"}`}>{tech.Mobile_Usability.meta?.legibleFonts}</p>
+                            </div>
+                          </div>
+                          <AffectedList
+                            title="Tap Targets Too Small (<44×44px)"
+                            items={tech.Mobile_Usability.meta?.smallTapTargets}
+                            darkMode={darkMode}
+                            renderLabel={(i) => (i.text ? `<${i.tag}> ${i.text}` : `<${i.tag}>`)}
+                            renderBadge={(i) => i.size}
+                          />
+                          <AffectedList
+                            title="Elements Overflowing the Screen"
+                            items={tech.Mobile_Usability.meta?.overflowingElements}
+                            darkMode={darkMode}
+                            renderLabel={(i) => (i.cls ? `${i.tag}.${i.cls}` : i.tag)}
+                            renderBadge={(i) => `right: ${i.right}px`}
+                          />
+                        </div>
+                      )}
+                    </OptimizationCard>
+                  )}
+
+                  {tech.Rendering_Performance && (
+                    <OptimizationCard
+                      icon={Layers}
+                      title="Rendering Performance"
+                      metricData={tech.Rendering_Performance}
+                      darkMode={darkMode}
+                      isOpen={expandedDetails.renderingPerformance}
+                      onToggle={() => toggleDetails('renderingPerformance')}
+                      description={metricExplanations.Rendering_Performance.whatThisParameterIs}
+                      whyItMatters={metricExplanations.Rendering_Performance.whyItMatters}
+                      onInfoClick={() => setSelectedParameterInfo({ title: "Rendering Performance", icon: Layers, ...metricExplanations.Rendering_Performance, metricData: tech.Rendering_Performance })}
+                      displayValue={tech.Rendering_Performance.meta?.value}
+                    >
+                      {tech.Rendering_Performance.meta?.notScored ? (
+                        <NotCalculatedNote metric={tech.Rendering_Performance} darkMode={darkMode} />
+                      ) : (
+                        <div className="flex flex-col gap-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Layout Shift (CLS)</p>
+                              <p className={`text-xl font-black ${darkMode ? "text-gray-200" : "text-gray-700"}`}>{tech.Rendering_Performance.meta?.cls}</p>
+                            </div>
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>Shifting Elements</p>
+                              <p className={`text-xl font-black ${darkMode ? "text-rose-300" : "text-rose-700"}`}>{tech.Rendering_Performance.meta?.layoutShiftElements}</p>
+                            </div>
+                            <div className={`p-4 rounded-xl border col-span-2 ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-amber-400" : "text-amber-600"}`}>Unsized Images</p>
+                              <p className={`text-xl font-black ${darkMode ? "text-amber-300" : "text-amber-700"}`}>{tech.Rendering_Performance.meta?.unsizedImages}</p>
+                            </div>
+                          </div>
+                          <AffectedList
+                            title="Images Missing Width/Height"
+                            items={tech.Rendering_Performance.meta?.unsizedImageSamples}
+                            darkMode={darkMode}
+                            renderLabel={(i) => i.fileName || i.snippet}
+                            renderBadge={() => "no dimensions"}
+                          />
+                        </div>
+                      )}
+                    </OptimizationCard>
+                  )}
+
+                  {tech.Mobile_Load_Speed && (
+                    <MetricCard
+                      key="MobileLoadSpeed"
+                      title="Mobile Load Speed"
+                      icon={Clock}
+                      metricData={tech.Mobile_Load_Speed}
+                      selectedSource="lab"
+                      darkMode={darkMode}
+                      isOpen={!!expandedDetails.mobileLoadSpeed}
+                      onToggle={() => toggleDetails('mobileLoadSpeed')}
+                      description={metricExplanations.Mobile_Load_Speed.whatThisParameterIs}
+                      whyItMatters={metricExplanations.Mobile_Load_Speed.whyItMatters}
+                      onInfoClick={() => setSelectedParameterInfo({ title: "Mobile Load Speed", icon: Clock, ...metricExplanations.Mobile_Load_Speed, metricData: tech.Mobile_Load_Speed })}
+                    />
+                  )}
+                </Section>
+              )}
+
+              {/* Script & Loading Efficiency */}
+              {(tech.Lazy_Loading || tech.Third_Party_Optimization || tech.JS_Execution) && (
+                <Section
+                  title="Script & Loading Efficiency"
+                  subtitle="Third-party scripts, lazy-loading and JS execution"
+                  icon={Cpu}
+                  darkMode={darkMode}
+                  shouldAlignStart={isScriptExpanded}
+                >
+                  {tech.Third_Party_Optimization && (
+                    <OptimizationCard
+                      icon={Globe}
+                      title="Third-Party Script Optimization"
+                      metricData={tech.Third_Party_Optimization}
+                      darkMode={darkMode}
+                      isOpen={expandedDetails.thirdPartyOptimization}
+                      onToggle={() => toggleDetails('thirdPartyOptimization')}
+                      description={metricExplanations.Third_Party_Optimization.whatThisParameterIs}
+                      whyItMatters={metricExplanations.Third_Party_Optimization.whyItMatters}
+                      onInfoClick={() => setSelectedParameterInfo({ title: "Third-Party Script Optimization", icon: Globe, ...metricExplanations.Third_Party_Optimization, metricData: tech.Third_Party_Optimization })}
+                      displayValue={tech.Third_Party_Optimization.meta?.value}
+                    >
+                      {tech.Third_Party_Optimization.meta?.notScored ? (
+                        <NotCalculatedNote metric={tech.Third_Party_Optimization} darkMode={darkMode} />
+                      ) : (
+                        <div className="flex flex-col gap-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Third-Party Scripts</p>
+                              <p className={`text-xl font-black ${darkMode ? "text-gray-200" : "text-gray-700"}`}>{tech.Third_Party_Optimization.meta?.thirdPartyScripts}</p>
+                            </div>
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>Async / Defer</p>
+                              <p className={`text-xl font-black ${darkMode ? "text-emerald-300" : "text-emerald-700"}`}>{tech.Third_Party_Optimization.meta?.asyncDeferCount}</p>
+                            </div>
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>Blocking</p>
+                              <p className={`text-xl font-black ${darkMode ? "text-rose-300" : "text-rose-700"}`}>{tech.Third_Party_Optimization.meta?.blockingCount}</p>
+                            </div>
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-amber-400" : "text-amber-600"}`}>Main-Thread Block</p>
+                              <p className={`text-xl font-black ${darkMode ? "text-amber-300" : "text-amber-700"}`}>{tech.Third_Party_Optimization.meta?.thirdPartyBlockingMs}ms</p>
+                            </div>
+                          </div>
+                          <AffectedList
+                            title="Synchronous (Blocking) Third-Party Scripts"
+                            items={tech.Third_Party_Optimization.meta?.blockingScripts}
+                            darkMode={darkMode}
+                            renderLabel={(i) => i.fileName || i.url}
+                            renderBadge={(i) => i.host}
+                          />
+                        </div>
+                      )}
+                    </OptimizationCard>
+                  )}
+
+                  {tech.Lazy_Loading && (
+                    <OptimizationCard
+                      icon={ImageIcon}
+                      title="Lazy Loading Implementation"
+                      metricData={tech.Lazy_Loading}
+                      darkMode={darkMode}
+                      isOpen={expandedDetails.lazyLoading}
+                      onToggle={() => toggleDetails('lazyLoading')}
+                      description={metricExplanations.Lazy_Loading.whatThisParameterIs}
+                      whyItMatters={metricExplanations.Lazy_Loading.whyItMatters}
+                      onInfoClick={() => setSelectedParameterInfo({ title: "Lazy Loading Implementation", icon: ImageIcon, ...metricExplanations.Lazy_Loading, metricData: tech.Lazy_Loading })}
+                      displayValue={tech.Lazy_Loading.meta?.value}
+                    >
+                      {tech.Lazy_Loading.meta?.notScored ? (
+                        <NotCalculatedNote metric={tech.Lazy_Loading} darkMode={darkMode} />
+                      ) : (
+                        <div className="flex flex-col gap-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Below-Fold Images</p>
+                              <p className={`text-xl font-black ${darkMode ? "text-gray-200" : "text-gray-700"}`}>{tech.Lazy_Loading.meta?.belowFoldImages}</p>
+                            </div>
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>Lazy-Loaded</p>
+                              <p className={`text-xl font-black ${darkMode ? "text-emerald-300" : "text-emerald-700"}`}>{tech.Lazy_Loading.meta?.lazyImages}</p>
+                            </div>
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>Eager Images</p>
+                              <p className={`text-xl font-black ${darkMode ? "text-rose-300" : "text-rose-700"}`}>{tech.Lazy_Loading.meta?.eagerImages}</p>
+                            </div>
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-amber-400" : "text-amber-600"}`}>Iframes / Videos</p>
+                              <p className={`text-xl font-black ${darkMode ? "text-amber-300" : "text-amber-700"}`}>{tech.Lazy_Loading.meta?.belowFoldIframes} / {tech.Lazy_Loading.meta?.totalVideos}</p>
+                            </div>
+                          </div>
+                          <AffectedList
+                            title="Eagerly-Loaded Below-Fold Media"
+                            items={tech.Lazy_Loading.meta?.eagerMediaSamples}
+                            darkMode={darkMode}
+                            renderLabel={(i) => `${i.type}: ${i.fileName || i.src}`}
+                            renderBadge={(i) => (i.top ? `@ ${i.top}px` : i.type)}
+                          />
+                        </div>
+                      )}
+                    </OptimizationCard>
+                  )}
+
+                  {tech.JS_Execution && (
+                    <OptimizationCard
+                      icon={Cpu}
+                      title="JavaScript Execution Efficiency"
+                      metricData={tech.JS_Execution}
+                      darkMode={darkMode}
+                      isOpen={expandedDetails.jsExecution}
+                      onToggle={() => toggleDetails('jsExecution')}
+                      description={metricExplanations.JS_Execution.whatThisParameterIs}
+                      whyItMatters={metricExplanations.JS_Execution.whyItMatters}
+                      onInfoClick={() => setSelectedParameterInfo({ title: "JavaScript Execution Efficiency", icon: Cpu, ...metricExplanations.JS_Execution, metricData: tech.JS_Execution })}
+                      displayValue={tech.JS_Execution.meta?.value}
+                    >
+                      {tech.JS_Execution.meta?.notScored ? (
+                        <NotCalculatedNote metric={tech.JS_Execution} darkMode={darkMode} />
+                      ) : (
+                        <div className="flex flex-col gap-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>JS Execution Time</p>
+                              <p className={`text-xl font-black ${darkMode ? "text-gray-200" : "text-gray-700"}`}>{tech.JS_Execution.meta?.jsExecutionTime}</p>
+                            </div>
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-amber-400" : "text-amber-600"}`}>Main-Thread Time</p>
+                              <p className={`text-xl font-black ${darkMode ? "text-amber-300" : "text-amber-700"}`}>{tech.JS_Execution.meta?.mainThreadTime}</p>
+                            </div>
+                          </div>
+                          <AffectedList
+                            title="Scripts Costing the Most Execution Time"
+                            items={tech.JS_Execution.meta?.topScripts}
+                            darkMode={darkMode}
+                            renderLabel={(i) => i.fileName || i.url}
+                            renderBadge={(i) => `${i.scriptingMs}ms`}
+                          />
+                        </div>
+                      )}
+                    </OptimizationCard>
+                  )}
+                </Section>
               )}
 
               {/* Category 3: Asset & Optimizations (Gated) */}

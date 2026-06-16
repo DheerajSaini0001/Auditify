@@ -79,7 +79,7 @@ export default function NotADealership({ darkMode, data, onButtonClick }) {
           onClick={handleHome}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="group flex items-center gap-3 px-8 py-3.5 rounded-full fontsemibold shadow-lg transition-all duration-300 mt-8 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-emerald-500/25"
+          className="group flex items-center gap-3 px-8 py-3.5 rounded-full font-semibold shadow-lg transition-all duration-300 mt-8 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-emerald-500/25"
         >
           <Home className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
           <span>Audit Another Website</span>

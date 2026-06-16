@@ -68,10 +68,10 @@ const ForgotPasswordPage = () => {
           </div>
           <h2 className="text-3xl font-black text-gray-900 tracking-tight">Check your inbox</h2>
           <p className="mt-4 text-gray-500 leading-relaxed">
-            If an account exists for <span className="font- text-gray-900">{email}</span>, we've sent a password reset link.
+            If an account exists for <span className="font-semibold text-gray-900">{email}</span>, we've sent a password reset link.
           </p>
           <div className="mt-8 pt-6 border-t border-gray-100">
-            <Link to="/login" className="inline-flex items-center text-sm fontsemibold text-emerald-600 hover:text-emerald-500 transition-colors uppercase tracking-[0.2em]">
+            <Link to="/login" className="inline-flex items-center text-sm font-semibold text-emerald-600 hover:text-emerald-500 transition-colors uppercase tracking-[0.2em]">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Sign In
             </Link>
@@ -112,13 +112,13 @@ const ForgotPasswordPage = () => {
           <button
             type="submit"
             disabled={loading}
-            className="group relative w-full flex justify-center py-4 px-4 rounded-2xl fontsemibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all shadow-lg shadow-blue-500/20 active:scale-[0.98]"
+            className="group relative w-full flex justify-center py-4 px-4 rounded-2xl font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all shadow-lg shadow-blue-500/20 active:scale-[0.98]"
           >
             {loading ? <Loader2 className="animate-spin h-5 w-5" /> : 'Send Reset Link'}
           </button>
 
           <div className="text-center">
-            <Link to="/login" className="inline-flex items-center text-sm fontsemibold text-gray-400 hover:text-gray-600 transition-colors uppercase tracking-[0.2em] hover:scale-105 active:scale-95 duration-200">
+            <Link to="/login" className="inline-flex items-center text-sm font-semibold text-gray-400 hover:text-gray-600 transition-colors uppercase tracking-[0.2em] hover:scale-105 active:scale-95 duration-200">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Return to Login
             </Link>

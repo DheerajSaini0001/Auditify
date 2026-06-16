@@ -75,7 +75,7 @@ export default function HelpCenterPage() {
         <div>
           <div className="flex items-center gap-3 mb-8">
             <Sparkles className="text-indigo-500" />
-            <h2 className="text-3xl fontsemibold tracking-tight">Frequent Friction Points</h2>
+            <h2 className="text-3xl font-semibold tracking-tight">Frequent Friction Points</h2>
           </div>
 
           <div className="grid gap-4">
@@ -89,7 +89,7 @@ export default function HelpCenterPage() {
                   }`}
               >
                 <div className="flex items-center justify-between p-6 md:p-8">
-                  <h3 className={`text-xl fontsemibold transition-colors ${openFaq === faq.id ? 'text-indigo-500' : ''}`}>{faq.q}</h3>
+                  <h3 className={`text-xl font-semibold transition-colors ${openFaq === faq.id ? 'text-indigo-500' : ''}`}>{faq.q}</h3>
                   <div className={`p-2 rounded-full transition-transform duration-300 ${openFaq === faq.id ? 'rotate-90 bg-indigo-500 text-white' : (darkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500')}`}>
                     {openFaq === faq.id ? <Minus size={20} /> : <Plus size={20} />}
                   </div>

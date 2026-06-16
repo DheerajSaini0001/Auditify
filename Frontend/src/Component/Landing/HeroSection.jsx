@@ -57,7 +57,7 @@ const CustomDropdown = ({ value, onChange, options, icon, darkMode, disabled }) 
                 <span className={`flex-shrink-0 transition-colors ${darkMode ? 'text-slate-white group-hover/drop:text-white' : 'text-white group-hover/drop:text-white'}`}>
                     {React.cloneElement(icon, { size: 14 })}
                 </span>
-                <span className={`text-[10px] font- uppercase tracking-widest truncate max-w-[72px] ${darkMode ? 'text-white group-hover/drop:text-white' : 'text-white group-hover/drop:text-white'}`}>
+                <span className={`text-[10px] font-semibold uppercase tracking-widest truncate max-w-[72px] ${darkMode ? 'text-white group-hover/drop:text-white' : 'text-white group-hover/drop:text-white'}`}>
                     {selectedLabel}
                 </span>
                 <ChevronDown className={`w-3 h-3 transition-transform duration-300 ${isOpen ? "rotate-180 text-white" : darkMode ? "text-white" : "text-white"}`} />
@@ -84,7 +84,7 @@ const CustomDropdown = ({ value, onChange, options, icon, darkMode, disabled }) 
                                     type="button"
                                     onClick={() => { onChange(opt.value); setIsOpen(false); }}
                                     className={`
-                                        w-full flex items-center justify-between px-4 py-3 text-[11px] fontsemibold tracking-wide rounded-xl transition-all duration-200
+                                        w-full flex items-center justify-between px-4 py-3 text-[11px] font-semibold tracking-wide rounded-xl transition-all duration-200
                                         ${value === opt.value
                                             ? (darkMode ? "bg-[#ea580c]/20 text-orange-400" : "bg-[#ea580c]/10 text-[#ea580c]")
                                             : (darkMode ? "text-slate-400 hover:bg-white/5 hover:text-white" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900")}
@@ -164,7 +164,7 @@ const ScoreRing = ({ score, color, label, delay = 0 }) => {
                     {currentScore}
                 </span>
             </div>
-            <span className="text-[11px] fontsemibold uppercase tracking-[0.18em] text-white">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white">
                 {label}
             </span>
         </div>
@@ -335,7 +335,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                 >
                     {/* Badge */}
                     <motion.div variants={item} className="flex justify-center lg:justify-start">
-                        <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] fontsemibold uppercase tracking-[0.22em] border bg-[#ea580c]/15 border-[#ea580c]/30 text-orange-200">
+                        <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-semibold uppercase tracking-[0.22em] border bg-[#ea580c]/15 border-[#ea580c]/30 text-orange-200">
                             <span className="w-1.5 h-1.5 rounded-full bg-[#ea580c] animate-pulse inline-block" />
                             Dealer Website Audit Platform
                         </span>
@@ -372,7 +372,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                                 initial={{ opacity: 0, scale: 0.85 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ delay: 0.4 + i * 0.06 }}
-                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font- border bg-white/5 border-white/10 text-white"
+                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold border bg-white/5 border-white/10 text-white"
                             >
                                 <span className="text-orange-400">{a.icon}</span>
                                 {a.label}
@@ -489,7 +489,7 @@ ${
                         className="flex flex-wrap items-center justify-center lg:justify-start gap-6"
                     >
 
-                        <span className="text-xs font- text-white">·</span>
+                        <span className="text-xs font-semibold text-white">·</span>
 
                     </motion.div>
                 </motion.div>
@@ -547,7 +547,7 @@ ${
                                 { label: "AIO Readiness", pct: 63, color: "#EAB308" },
                             ].map((m, i) => (
                                 <div key={m.label} className="space-y-2">
-                                    <div className="flex justify-between text-[11px] fontsemibold tracking-wide">
+                                    <div className="flex justify-between text-[11px] font-semibold tracking-wide">
                                         <span className="text-white">{m.label}</span>
                                         <span style={{ color: m.color }}>{m.pct}</span>
                                     </div>
@@ -567,7 +567,7 @@ ${
                         {/* Footer badge */}
                         <div className="flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-full border border-white/10 bg-transparent">
                             <span className="text-[#E1701A] text-[13px] drop-shadow-[0_0_8px_rgba(225,112,26,0.6)]">⚡</span>
-                            <span className="text-[10px] font- text-white tracking-wider flex gap-2">
+                            <span className="text-[10px] font-semibold text-white tracking-wider flex gap-2">
                                 <span>7 audit dimensions</span>
                                 <span className="text-white">•</span>
                                 <span>Real-time analysis</span>
@@ -622,7 +622,7 @@ ${
                                 <button
                                     type="submit"
                                     disabled={isLoading || !captchaAnswer}
-                                    className="w-full py-3 bg-[#ea580c] hover:bg-[#c2410c] text-white font- rounded-xl
+                                    className="w-full py-3 bg-[#ea580c] hover:bg-[#c2410c] text-white font-semibold rounded-xl
                                         transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-orange-600/20 active:scale-[0.98]"
                                 >
                                     {isLoading ? "Verifying…" : "Verify & Start Audit"}
@@ -631,7 +631,7 @@ ${
 
                             <button
                                 onClick={() => setShowCaptcha(false)}
-                                className={`text-[11px] font- uppercase tracking-widest transition-colors
+                                className={`text-[11px] font-semibold uppercase tracking-widest transition-colors
                                     ${darkMode ? 'text-slate-600 hover:text-slate-300' : 'text-slate-400 hover:text-slate-700'}`}
                             >
                                 Cancel

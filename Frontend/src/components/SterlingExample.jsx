@@ -20,17 +20,17 @@ export default function SterlingExample() {
       </h2>
 
       {/*  */}
-      <h2 className="font-sterling text-3xl font- text-indigo-700">
+      <h2 className="font-sterling text-3xl font-semibold text-indigo-700">
         Sterling  — The quick brown fox
       </h2>
 
       {/* Bold */}
-      <h2 className="font-sterling text-3xl fontsemibold text-gray-900">
+      <h2 className="font-sterling text-3xl font-semibold text-gray-900">
         Sterling Bold — The quick brown fox
       </h2>
 
       {/* bold */}
-      <h1 className="font-sterling text-5xl fontsemibold text-gray-900">
+      <h1 className="font-sterling text-5xl font-semibold text-gray-900">
         Sterling bold — The quick brown fox
       </h1>
 
@@ -40,7 +40,7 @@ export default function SterlingExample() {
       </p>
 
       {/* Bold Italic */}
-      <p className="font-sterling text-2xl fontsemibold italic text-indigo-600">
+      <p className="font-sterling text-2xl font-semibold italic text-indigo-600">
         Sterling Bold Italic — The quick brown fox jumps
       </p>
 
@@ -52,7 +52,7 @@ export default function SterlingExample() {
 
       {/* Real-world heading example */}
       <div className="border-t pt-6">
-        <h1 className="font-sterling text-6xl fontsemibold tracking-tight 
+        <h1 className="font-sterling text-6xl font-semibold tracking-tight 
                         text-gray-900 leading-none mb-3">
           Build Something Great
         </h1>

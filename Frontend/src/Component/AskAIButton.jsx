@@ -3,8 +3,15 @@ import { formatMarkdown } from '../utils/formatMarkdown.js';
 import './aiAssistant.css';
 import { Sparkles, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { isActionableParam } from '../config/parameterAudience';
 
-const AskAIButton = ({ finding, auditScore, darkMode, meta }) => {
+const AskAIButton = ({ finding, auditScore, darkMode, meta, paramKey }) => {
+  // Requirement (b): the AI Summary explains why the score is low, so developer-only
+  // parameters (not in the dealer set) must not show it — same rule as View Details.
+  // Hidden, not removed: reclassifying the param in parameterAudience.js brings it back.
+  // Guard before any hooks so hook order stays consistent (paramKey is stable per card).
+  if (paramKey && !isActionableParam(paramKey)) return null;
+
   const { isAuthenticated } = useAuth();
   const [aiExplanation, setAiExplanation] = useState('');
   const [isLoading, setIsLoading] = useState(false);

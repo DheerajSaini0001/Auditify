@@ -82,7 +82,7 @@ export default function LoginPrompt({ darkMode }) {
           {/* Login */}
           <button
             onClick={handleLogin}
-            className={`flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl fontsemibold transition-all duration-300 w-full sm:w-auto shadow-sm hover:shadow active:scale-95 ${darkMode
+            className={`flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl font-semibold transition-all duration-300 w-full sm:w-auto shadow-sm hover:shadow active:scale-95 ${darkMode
                 ? "bg-slate-800 text-white hover:bg-slate-700 border border-slate-700"
                 : "bg-black text-white hover:bg-slate-900"
               }`}
@@ -92,7 +92,7 @@ export default function LoginPrompt({ darkMode }) {
           </button>
 
           <span
-            className={`text-[11px] fontsemibold uppercase tracking-[0.2em] opacity-40 ${darkMode ? "text-slate-500" : "text-slate-400"
+            className={`text-[11px] font-semibold uppercase tracking-[0.2em] opacity-40 ${darkMode ? "text-slate-500" : "text-slate-400"
               }`}
           >
             or
@@ -101,7 +101,7 @@ export default function LoginPrompt({ darkMode }) {
           {/* Register */}
           <button
             onClick={handleRegister}
-            className="flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl fontsemibold transition-all duration-300 w-full sm:w-auto shadow-sm hover:shadow active:scale-95 bg-blue-600 hover:bg-blue-700 text-white"
+            className="flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl font-semibold transition-all duration-300 w-full sm:w-auto shadow-sm hover:shadow active:scale-95 bg-blue-600 hover:bg-blue-700 text-white"
           >
             <UserPlus size={18} />
             Create a FREE account
@@ -112,7 +112,7 @@ export default function LoginPrompt({ darkMode }) {
         <div className="mt-10 pt-8 border-t border-dashed opacity-10"></div>
 
         <p
-          className={`text-[10px] fontsemibold uppercase tracking-[0.2em] opacity-30 mt-4 ${darkMode ? "text-slate-500" : "text-slate-400"
+          className={`text-[10px] font-semibold uppercase tracking-[0.2em] opacity-30 mt-4 ${darkMode ? "text-slate-500" : "text-slate-400"
             }`}
         >
           Join 50,000+ businesses auditing with Dealerpulse

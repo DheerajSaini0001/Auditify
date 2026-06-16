@@ -99,9 +99,9 @@ const OtpVerifyPage = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
         <div className="text-center">
-          <h2 className="text-3xl fontsemibold text-gray-900">Verify your email</h2>
+          <h2 className="text-3xl font-semibold text-gray-900">Verify your email</h2>
           <p className="mt-2 text-sm text-gray-600">
-            We sent a 6-digit code to <span className="font- text-blue-600">{email}</span>
+            We sent a 6-digit code to <span className="font-semibold text-blue-600">{email}</span>
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -115,7 +115,7 @@ const OtpVerifyPage = () => {
                 value={data}
                 onChange={(e) => handleChange(e.target, index)}
                 onKeyDown={(e) => handleKeyDown(e, index)}
-                className="w-12 h-14 text-center text-2xl fontsemibold border-2 rounded-xl focus:border-blue-500 focus:ring-blue-500 outline-none transition-all"
+                className="w-12 h-14 text-center text-2xl font-semibold border-2 rounded-xl focus:border-blue-500 focus:ring-blue-500 outline-none transition-all"
               />
             ))}
           </div>
@@ -123,7 +123,7 @@ const OtpVerifyPage = () => {
           <button
             type="submit"
             disabled={otp.join('').length < 6}
-            className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm fontsemibold rounded-xl text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all"
+            className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-xl text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all"
           >
             Verify Account
           </button>

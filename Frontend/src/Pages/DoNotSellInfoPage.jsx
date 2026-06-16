@@ -20,8 +20,8 @@ export default function DoNotSellInfoPage() {
         {/* Sticky Sidebar */}
         <div className={`hidden md:block sticky top-32 w-1/4 space-y-8 pl-4 border-l-2 ${darkMode ? "border-slate-800" : "border-slate-200"}`}>
           <div>
-            <div className="text-xl fontsemibold mb-4">Consumer Rights</div>
-            <ul className={`space-y-4 text-sm font- ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
+            <div className="text-xl font-semibold mb-4">Consumer Rights</div>
+            <ul className={`space-y-4 text-sm font-semibold ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
               <li className="text-emerald-500 transition-colors">1. CCPA Overview</li>
               <li className="hover:text-emerald-500 transition-colors cursor-pointer">2. Data Sales Policy</li>
               <li className="hover:text-emerald-500 transition-colors cursor-pointer">3. Opt-Out Request</li>
@@ -48,7 +48,7 @@ export default function DoNotSellInfoPage() {
           <div className={`space-y-16 text-base md:text-lg leading-relaxed ${darkMode ? "text-slate-300" : "text-slate-700"}`}>
 
             <section className="space-y-4">
-              <div className="flex items-center gap-3 text-2xl fontsemibold">
+              <div className="flex items-center gap-3 text-2xl font-semibold">
                 <ShieldOff className="text-rose-500" />
                 <h2>1. CCPA and Your Privacy Rights</h2>
               </div>
@@ -59,20 +59,20 @@ export default function DoNotSellInfoPage() {
             <div className={`h-px w-full ${darkMode ? "bg-slate-800" : "bg-slate-200"}`}></div>
 
             <section className="space-y-4">
-              <div className="flex items-center gap-3 text-2xl fontsemibold">
+              <div className="flex items-center gap-3 text-2xl font-semibold">
                 <Database className="text-blue-500" />
                 <h2>2. What Information We Collect</h2>
               </div>
               <p>We collect minimal data necessary to provide our auditing services. This includes your email address for account management and the URLs you submit for analysis. We do not track your browsing history across the web or build advertising profiles.</p>
               <div className={`p-6 rounded-2xl border-l-4 border-blue-500 ${darkMode ? "bg-blue-500/5 text-blue-100 border-r border-t border-b border-slate-800" : "bg-blue-50 text-slate-800 border-r border-t border-b border-slate-200"}`}>
-                <span className="fontsemibold">Our Commitment:</span> We explicitly do not syndicate, trade, or offload customer data to third-party data brokers or marketing exchanges.
+                <span className="font-semibold">Our Commitment:</span> We explicitly do not syndicate, trade, or offload customer data to third-party data brokers or marketing exchanges.
               </div>
             </section>
 
             <div className={`h-px w-full ${darkMode ? "bg-slate-800" : "bg-slate-200"}`}></div>
 
             <section className="space-y-4">
-              <div className="flex items-center gap-3 text-2xl fontsemibold">
+              <div className="flex items-center gap-3 text-2xl font-semibold">
                 <UserX className="text-emerald-500" />
                 <h2>3. How to Opt-Out</h2>
               </div>
@@ -87,7 +87,7 @@ export default function DoNotSellInfoPage() {
             <div className={`h-px w-full ${darkMode ? "bg-slate-800" : "bg-slate-200"}`}></div>
 
             <section className="space-y-4">
-              <div className="flex items-center gap-3 text-2xl fontsemibold">
+              <div className="flex items-center gap-3 text-2xl font-semibold">
                 <Eye className="text-purple-500" />
                 <h2>4. Verification and Response</h2>
               </div>

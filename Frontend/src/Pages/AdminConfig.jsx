@@ -73,7 +73,7 @@ const AdminConfig = () => {
         <div className="relative">
                 <button
                   onClick={() => setCreateDropdownOpen(!createDropdownOpen)}
-                  className="w-full flex items-center justify-between px-4 py-2.5 bg-orange-600 hover:bg-orange-350 text-white rounded-xl fontsemibold text-sm transition-all shadow-md shadow-orange-600/10 active:scale-[0.98]"
+                  className="w-full flex items-center justify-between px-4 py-2.5 bg-orange-600 hover:bg-orange-350 text-white rounded-xl font-semibold text-sm transition-all shadow-md shadow-orange-600/10 active:scale-[0.98]"
                 >
                   <div className="flex items-center gap-2">
                     <Plus size={16} />
@@ -86,13 +86,13 @@ const AdminConfig = () => {
                   <div className={`absolute top-full left-0 right-0 mt-1.5 rounded-xl shadow-xl z-50 py-1 animate-in fade-in slide-in-from-top-1 duration-150 border transition-all duration-300 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
                     <button
                       onClick={() => { setCreateDropdownOpen(false); navigate("/dashboard/add-website"); }}
-                      className={`w-full text-left px-4 py-2 text-xs fontsemibold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                      className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-50'}`}
                     >
                       Add Google Search Console Site
                     </button>
                     <button
                       onClick={() => { setCreateDropdownOpen(false); navigate("/bulk-audit"); }}
-                      className={`w-full text-left px-4 py-2 text-xs fontsemibold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                      className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-50'}`}
                     >
                       Quick Manual Audit Page
                     </button>
@@ -120,7 +120,7 @@ const AdminConfig = () => {
         <nav className="flex flex-col gap-1 mt-2">
           <button
             onClick={() => navigate("/dashboard")}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs fontsemibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-505 hover:text-slate-800 hover:bg-slate-50'}`}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-505 hover:text-slate-800 hover:bg-slate-50'}`}
           >
             <LayoutDashboard size={16} />
             <span>Projects</span>
@@ -130,7 +130,7 @@ const AdminConfig = () => {
 
           <button
             onClick={() => navigate("/audit-history")}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs fontsemibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-505 hover:text-slate-800 hover:bg-slate-50'}`}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-505 hover:text-slate-800 hover:bg-slate-50'}`}
           >
             <FileText size={16} />
             <span>Report History</span>
@@ -140,12 +140,12 @@ const AdminConfig = () => {
 
           <button
             onClick={() => navigate('/dashboard?tab=starred')}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs fontsemibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-550 hover:text-slate-800 hover:bg-slate-50'}`}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-550 hover:text-slate-800 hover:bg-slate-50'}`}
           >
             <Star size={16} />
             <span>Starred</span>
             {starredIds.length > 0 && (
-              <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full fontsemibold ${darkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-600'}`}>
+              <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${darkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-600'}`}>
                 {starredIds.length}
               </span>
             )}
@@ -154,7 +154,7 @@ const AdminConfig = () => {
           {(user?.role === 'admin' || user?.role === 'super_admin') && (
             <button
               onClick={() => navigate("/admin")}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs fontsemibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-505 hover:text-slate-800 hover:bg-slate-50'}`}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-505 hover:text-slate-800 hover:bg-slate-50'}`}
             >
               <ShieldCheck size={16} className="text-blue-500 shrink-0" />
               <span>Admin Panel</span>
@@ -164,7 +164,7 @@ const AdminConfig = () => {
           {user?.role === 'super_admin' && (
             <button
               onClick={() => navigate("/admin/setup")}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs fontsemibold transition-all duration-300 border-none ${darkMode ? 'bg-emerald-950/40 text-emerald-400' : 'bg-emerald-50 text-emerald-700 border border-emerald-500/20 shadow-sm'}`}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 border-none ${darkMode ? 'bg-emerald-950/40 text-emerald-400' : 'bg-emerald-50 text-emerald-700 border border-emerald-500/20 shadow-sm'}`}
             >
               <Settings size={16} className="text-indigo-500 shrink-0" />
               <span>System Setup</span>
@@ -175,7 +175,7 @@ const AdminConfig = () => {
 
           <button
             onClick={() => toggleTheme()}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs fontsemibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-505 hover:text-slate-800 hover:bg-slate-50'}`}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-505 hover:text-slate-800 hover:bg-slate-50'}`}
           >
             <div className="flex items-center gap-3">
               {darkMode ? <Sun size={16} className="text-amber-400 shrink-0" /> : <Moon size={16} className="text-indigo-500 shrink-0" />}
@@ -197,12 +197,12 @@ const AdminConfig = () => {
             <Lock size={14} className={`transition-colors duration-300 ${darkMode ? 'fill-emerald-400/20 text-emerald-400' : 'fill-emerald-600/20 text-emerald-700'}`} />
             <span className="text-[11px] font-black uppercase tracking-wider">Unlock Advanced</span>
           </div>
-          <p className={`text-[10px] font- leading-relaxed transition-colors duration-300 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+          <p className={`text-[10px] font-semibold leading-relaxed transition-colors duration-300 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
             Get deeper insights, historical data, and AI-powered recommendations.
           </p>
           <button
             onClick={() => toast.success('Premium checkout is launching soon!')}
-            className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl fontsemibold text-xs shadow-md shadow-emerald-600/10 transition-all active:scale-[0.98]"
+            className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-xs shadow-md shadow-emerald-600/10 transition-all active:scale-[0.98]"
           >
             Upgrade Now
           </button>
@@ -461,7 +461,7 @@ const AdminConfig = () => {
                   {/* Mobile Sidebar Toggle Button */}
                   <button
                     onClick={() => setSidebarOpen(true)}
-                    className={`md:hidden flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-xs fontsemibold transition-all duration-300 ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                    className={`md:hidden flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
                   >
                     <Menu size={14} />
                     <span>Menu</span>
@@ -477,21 +477,21 @@ const AdminConfig = () => {
               <button
                 onClick={handleRefreshCache}
                 disabled={refreshing}
-                className={`flex items-center gap-2 px-5 py-3 rounded-xl border text-xs fontsemibold uppercase tracking-wider transition-all ${dk ? 'border-white/10 hover:bg-white/5 text-white/50 hover:text-white' : 'border-slate-200 hover:bg-slate-100 text-slate-500'}`}
+                className={`flex items-center gap-2 px-5 py-3 rounded-xl border text-xs font-semibold uppercase tracking-wider transition-all ${dk ? 'border-white/10 hover:bg-white/5 text-white/50 hover:text-white' : 'border-slate-200 hover:bg-slate-100 text-slate-500'}`}
               >
                 <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
                 Sync Cache
               </button>
               <button
                 onClick={handleExport}
-                className={`flex items-center gap-2 px-5 py-3 rounded-xl border text-xs fontsemibold uppercase tracking-wider transition-all ${dk ? 'border-white/10 hover:bg-white/5 text-white/50 hover:text-white' : 'border-slate-200 hover:bg-slate-100 text-slate-500'}`}
+                className={`flex items-center gap-2 px-5 py-3 rounded-xl border text-xs font-semibold uppercase tracking-wider transition-all ${dk ? 'border-white/10 hover:bg-white/5 text-white/50 hover:text-white' : 'border-slate-200 hover:bg-slate-100 text-slate-500'}`}
               >
                 <Download size={14} />
                 Export
               </button>
               <button
                 onClick={() => handleOpenModal()}
-                className={`flex items-center gap-2 px-6 py-3 rounded-xl fontsemibold text-xs uppercase tracking-wider transition-all active:scale-95 ${dk ? 'bg-indigo-600 hover:bg-indigo-500 text-white border border-indigo-500/50' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/20'}`}
+                className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-xs uppercase tracking-wider transition-all active:scale-95 ${dk ? 'bg-indigo-600 hover:bg-indigo-500 text-white border border-indigo-500/50' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/20'}`}
               >
                 <Plus size={14} strokeWidth={3} />
                 Add Secret
@@ -516,7 +516,7 @@ const AdminConfig = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs fontsemibold uppercase tracking-wider transition-all ${activeTab === tab.id
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all ${activeTab === tab.id
                   ? (dk ? 'bg-white/10 text-white' : 'bg-white text-slate-900 shadow-sm')
                   : (dk ? 'text-white/30 hover:text-white/60' : 'text-slate-400 hover:text-slate-600')
                   }`}
@@ -683,7 +683,7 @@ const AdminConfig = () => {
                   {/* Sensitive Toggle */}
                   <div className={`flex items-center justify-between py-4 px-4 rounded-xl border ${dk ? 'border-white/[0.06] bg-white/[0.02]' : 'border-slate-100 bg-slate-50'}`}>
                     <div>
-                      <p className="fontsemibold text-sm">Sensitive Value</p>
+                      <p className="font-semibold text-sm">Sensitive Value</p>
                       <p className={`text-xs mt-0.5 ${dk ? 'text-white/30' : 'text-slate-400'}`}>Masked in API responses & audit logs</p>
                     </div>
                     <button
@@ -700,7 +700,7 @@ const AdminConfig = () => {
                   <button
                     type="submit"
                     disabled={saving}
-                    className={`w-full py-4 rounded-xl fontsemibold text-sm uppercase tracking-wider transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3 ${dk ? 'bg-indigo-600 hover:bg-indigo-500 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg'}`}
+                    className={`w-full py-4 rounded-xl font-semibold text-sm uppercase tracking-wider transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3 ${dk ? 'bg-indigo-600 hover:bg-indigo-500 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg'}`}
                   >
                     {saving ? <RefreshCw className="animate-spin" size={16} /> : <Save size={16} />}
                     {isEditing ? 'Update Configuration' : 'Create Configuration'}
@@ -761,7 +761,7 @@ const AdminConfig = () => {
                         </div>
                         <button
                           onClick={() => handleRollback(historyKey, v.version)}
-                          className={`ml-4 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs fontsemibold uppercase tracking-wider transition-all active:scale-95 ${dk ? 'bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/20' : 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200'}`}
+                          className={`ml-4 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all active:scale-95 ${dk ? 'bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/20' : 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200'}`}
                         >
                           <RotateCcw size={12} />
                           Restore
@@ -786,7 +786,7 @@ const StatCard = ({ label, value, icon: Icon, color, dk }) => (
   <div className={`p-5 rounded-2xl border transition-colors ${dk ? 'bg-[#0a0a0f] border-white/[0.06]' : 'bg-white border-slate-200 shadow-sm'}`}>
     <div className="flex items-center justify-between">
       <div>
-        <p className={`text-[10px] uppercase fontsemibold tracking-wider mb-1 ${dk ? 'text-white/25' : 'text-slate-400'}`}>{label}</p>
+        <p className={`text-[10px] uppercase font-semibold tracking-wider mb-1 ${dk ? 'text-white/25' : 'text-slate-400'}`}>{label}</p>
         <p className="text-2xl font-black" style={{ color }}>{value}</p>
       </div>
       <div className={`p-3 rounded-xl ${dk ? 'bg-white/[0.03]' : 'bg-slate-50'}`}>
@@ -801,7 +801,7 @@ const SelectFilter = ({ value, onChange, options, dk }) => (
     <select
       value={value}
       onChange={e => onChange(e.target.value)}
-      className={`appearance-none pl-4 pr-10 py-3 rounded-xl border text-xs fontsemibold uppercase tracking-wider cursor-pointer focus:outline-none focus:ring-2 transition-all ${dk
+      className={`appearance-none pl-4 pr-10 py-3 rounded-xl border text-xs font-semibold uppercase tracking-wider cursor-pointer focus:outline-none focus:ring-2 transition-all ${dk
         ? 'bg-transparent border-white/[0.08] text-white/60 focus:border-indigo-500/50 focus:ring-indigo-500/20'
         : 'bg-white border-slate-200 text-slate-600 focus:border-indigo-500 focus:ring-indigo-500/20 shadow-sm'
         }`}
@@ -816,7 +816,7 @@ const SelectFilter = ({ value, onChange, options, dk }) => (
 
 const FormField = ({ label, children, dk }) => (
   <div>
-    <label className={`text-[10px] uppercase fontsemibold tracking-wider mb-2 block ${dk ? 'text-white/30' : 'text-slate-400'}`}>{label}</label>
+    <label className={`text-[10px] uppercase font-semibold tracking-wider mb-2 block ${dk ? 'text-white/30' : 'text-slate-400'}`}>{label}</label>
     {children}
   </div>
 );
@@ -855,25 +855,25 @@ const ConfigRow = ({ config, idx, total, dk, revealedValue, onReveal, openMenu, 
         <div className="flex items-center gap-3 md:w-[240px] min-w-0">
           <div className="w-1 h-8 rounded-full flex-shrink-0" style={{ backgroundColor: catColor }} />
           <div className="min-w-0">
-            <h3 className={`fontsemibold text-sm font-mono truncate transition-colors ${dk ? 'group-hover:text-indigo-400' : 'group-hover:text-indigo-600'}`}>
+            <h3 className={`font-semibold text-sm font-mono truncate transition-colors ${dk ? 'group-hover:text-indigo-400' : 'group-hover:text-indigo-600'}`}>
               {config.key}
             </h3>
             <div className="flex items-center gap-1.5 mt-1.5">
               <span
-                className="text-[9px] fontsemibold uppercase tracking-wider px-1.5 py-0.5 rounded-md"
+                className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-md"
                 style={{ backgroundColor: catColor + '18', color: catColor }}
               >
                 {getCategoryLabel(config.category)}
               </span>
               {config.environment !== 'all' && (
                 <span
-                  className="text-[9px] fontsemibold uppercase tracking-wider px-1.5 py-0.5 rounded-md"
+                  className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-md"
                   style={{ backgroundColor: getEnvColor(config.environment) + '18', color: getEnvColor(config.environment) }}
                 >
                   {config.environment}
                 </span>
               )}
-              <span className={`text-[9px] fontsemibold px-1.5 py-0.5 rounded-md ${dk ? 'bg-white/5 text-white/25' : 'bg-slate-100 text-slate-400'}`}>
+              <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-md ${dk ? 'bg-white/5 text-white/25' : 'bg-slate-100 text-slate-400'}`}>
                 v{config.version}
               </span>
             </div>
@@ -901,7 +901,7 @@ const ConfigRow = ({ config, idx, total, dk, revealedValue, onReveal, openMenu, 
         {/* Meta + Actions */}
         <div className="flex items-center gap-4 md:w-[200px] justify-end">
           <div className="text-right">
-            <p className={`text-[10px] fontsemibold whitespace-nowrap ${dk ? 'text-white/20' : 'text-slate-300'}`}>
+            <p className={`text-[10px] font-semibold whitespace-nowrap ${dk ? 'text-white/20' : 'text-slate-300'}`}>
               {config.updatedAt ? new Date(config.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}
             </p>
             {config.description && (
@@ -948,7 +948,7 @@ const ConfigRow = ({ config, idx, total, dk, revealedValue, onReveal, openMenu, 
 const MenuButton = ({ icon: Icon, label, color, onClick, dk }) => (
   <button
     onClick={onClick}
-    className={`w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-2.5 text-xs fontsemibold tracking-wide transition-colors ${dk ? 'hover:bg-white/5 text-white/50 hover:text-white' : 'hover:bg-slate-50 text-slate-600'}`}
+    className={`w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-2.5 text-xs font-semibold tracking-wide transition-colors ${dk ? 'hover:bg-white/5 text-white/50 hover:text-white' : 'hover:bg-slate-50 text-slate-600'}`}
   >
     <Icon size={14} style={{ color }} />
     {label}
@@ -996,9 +996,9 @@ const AuditTrail = ({ logs, loading, pagination, onPageChange, dk }) => {
                   >
                     {log.action}
                   </span>
-                  <span className={`text-sm font-mono fontsemibold ${dk ? 'text-white/80' : 'text-slate-700'}`}>{log.key}</span>
+                  <span className={`text-sm font-mono font-semibold ${dk ? 'text-white/80' : 'text-slate-700'}`}>{log.key}</span>
                   {log.version && (
-                    <span className={`text-[9px] fontsemibold px-1.5 py-0.5 rounded ${dk ? 'bg-white/5 text-white/20' : 'bg-slate-100 text-slate-400'}`}>
+                    <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded ${dk ? 'bg-white/5 text-white/20' : 'bg-slate-100 text-slate-400'}`}>
                       v{log.version}
                     </span>
                   )}
@@ -1040,7 +1040,7 @@ const AuditTrail = ({ logs, loading, pagination, onPageChange, dk }) => {
               <button
                 key={page}
                 onClick={() => onPageChange(page)}
-                className={`w-9 h-9 rounded-lg text-xs fontsemibold transition-all ${pagination.page === page
+                className={`w-9 h-9 rounded-lg text-xs font-semibold transition-all ${pagination.page === page
                   ? 'bg-indigo-600 text-white'
                   : (dk ? 'bg-white/5 text-white/40 hover:bg-white/10' : 'bg-slate-100 text-slate-500 hover:bg-slate-200')
                   }`}

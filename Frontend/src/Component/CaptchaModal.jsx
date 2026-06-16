@@ -78,7 +78,7 @@ const CaptchaModal = ({
           <div className={`p-4 rounded-full mb-4 ${darkMode ? 'bg-blue-500/10' : 'bg-blue-50'}`}>
             <ShieldCheck className="w-10 h-10 text-blue-500" />
           </div>
-          <h2 className="text-2xl fontsemibold mb-2">{title}</h2>
+          <h2 className="text-2xl font-semibold mb-2">{title}</h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm">
             {description}
           </p>
@@ -94,7 +94,7 @@ const CaptchaModal = ({
           <button
             type="submit"
             disabled={verifying || !captchaAnswer || isVerified}
-            className={`w-full py-4 rounded-xl fontsemibold flex items-center justify-center gap-2 transition-all duration-300 ${isVerified
+            className={`w-full py-4 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all duration-300 ${isVerified
               ? 'bg-emerald-500 text-white'
               : 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/20 active:scale-95'
               } disabled:opacity-50 disabled:cursor-not-allowed`}
@@ -112,7 +112,7 @@ const CaptchaModal = ({
           </button>
         </form>
 
-        <p className="mt-6 text-center text-xs text-slate-400 uppercase tracking-widest font-">
+        <p className="mt-6 text-center text-xs text-slate-400 uppercase tracking-widest font-semibold">
           Secure Verification Powered by Dealer Pulse
         </p>
       </div>

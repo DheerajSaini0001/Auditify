@@ -14,24 +14,10 @@ function calculateStatus(value, goodThreshold, needsImprovementThreshold) {
   return "fail";
 }
 
-// Format a millisecond timing as seconds for DISPLAY only (e.g. 2500 → "2.5s",
-// 150 → "0.15s", 800 → "0.8s"). Scoring still uses the raw millisecond thresholds —
-// only the value/threshold strings shown on the card are converted to seconds.
-const msToSeconds = (ms) => parseFloat((ms / 1000).toFixed(2));
-const fmtSeconds = (ms) => msToSeconds(ms) + "s";
-
-// A metric that could NOT be measured at all (browser/CDP/page-context failure, or
-// PageSpeed couldn't analyze the URL). Returned instead of null so the card still
-// renders and surfaces WHY it failed — mirroring the accessibility "<check> skipped
-// — <reason>." convention. Flagged `notScored` so a transient measurement failure is
-// excluded from the weighted Technical total rather than penalizing it as a real 0.
-const notCalculated = (reason, recommendation) => ({
-  score: 0,
-  status: "fail",
-  details: reason,
-  meta: { value: "Not calculated", notScored: true, reason },
-  analysis: { cause: reason, recommendation },
-});
+// Format a millisecond value as seconds for display (e.g. 1800 -> "1.8s", 234 -> "0.23s").
+// Used by the latency Core Web Vitals (FCP, INP, FID, TBT) whose value + threshold scale
+// are surfaced in seconds. Scoring still runs on the raw ms numbers above.
+const msToSec = (ms) => `${parseFloat(((Number(ms) || 0) / 1000).toFixed(2))}s`;
 
 // LCP - Largest Contentful Paint
 const evaluateLCPLab = (audits) => {
@@ -79,9 +65,9 @@ const evaluateLCPLab = (audits) => {
   return {
     score: labScore,
     status: labStatus,
-    details: labStatus === "pass" ? "LCP is within optimal range." : `LCP is delayed (${fmtSeconds(labValue)}).`,
+    details: labStatus === "pass" ? "LCP is within optimal range." : `LCP is delayed (${msToSec(labValue)}).`,
     meta: {
-      value: fmtSeconds(labValue),
+      value: msToSec(labValue),
       lcpElement,
       thresholds: { Good: "0-2.5s", Warning: "2.5-4s", Poor: "4s+" }
     },
@@ -141,9 +127,9 @@ const evaluateLCPCrux = (audits, cruxMetrics) => {
   return {
     score: fieldScore,
     status: fieldStatus,
-    details: fieldStatus === "pass" ? "LCP (Real Users) is within optimal range." : `Real users experience LCP delay (${fmtSeconds(fieldValue)}).`,
+    details: fieldStatus === "pass" ? "LCP (Real Users) is within optimal range." : `Real users experience LCP delay (${msToSec(fieldValue)}).`,
     meta: {
-      value: fmtSeconds(fieldValue),
+      value: msToSec(fieldValue),
       p75: true,
       thresholds: { Good: "0-2.5s", Warning: "2.5-4s", Poor: "4s+" }
     },
@@ -295,9 +281,9 @@ const evaluateFCPLab = (audits) => {
   return {
     score: labScore,
     status: labStatus,
-    details: labStatus === "pass" ? "First Paint timing is good." : `First Paint is delayed (${fmtSeconds(labValue)}).`,
+    details: labStatus === "pass" ? "First Paint timing is good." : `First Paint is delayed (${msToSec(labValue)}).`,
     meta: {
-      value: fmtSeconds(labValue),
+      value: msToSec(labValue),
       thresholds: { Good: "0-1.8s", Warning: "1.8-3s", Poor: "3s+" }
     },
     analysis: labStatus === "pass" ? null : {
@@ -342,9 +328,9 @@ const evaluateFCPCrux = (audits, cruxMetrics) => {
   return {
     score: fieldScore,
     status: fieldStatus,
-    details: fieldStatus === "pass" ? "Real-world First Paint is optimal." : `Real users experience FCP delay (${fmtSeconds(fieldValue)}).`,
+    details: fieldStatus === "pass" ? "Real-world First Paint is optimal." : `Real users experience FCP delay (${msToSec(fieldValue)}).`,
     meta: {
-      value: fmtSeconds(fieldValue),
+      value: msToSec(fieldValue),
       p75: true,
       thresholds: { Good: "0-1.8s", Warning: "1.8-3s", Poor: "3s+" }
     },
@@ -384,9 +370,9 @@ const evaluateTTFBLab = (audits) => {
   return {
     score: labScore,
     status: labStatus,
-    details: labStatus === "pass" ? "Server response time is excellent." : `Server response is slow (${fmtSeconds(labValue)}).`,
+    details: labStatus === "pass" ? "Server response time is excellent." : `Server response is slow (${msToSec(labValue)}).`,
     meta: {
-      value: fmtSeconds(labValue),
+      value: msToSec(labValue),
       thresholds: { Good: "0-0.8s", Warning: "0.8-1.8s", Poor: "1.8s+" }
     },
     analysis: labStatus === "pass" ? null : {
@@ -418,9 +404,9 @@ const evaluateTTFBCrux = (cruxMetrics) => {
   return {
     score: fieldScore,
     status: fieldStatus,
-    details: fieldStatus === "pass" ? "Real-world server response is good." : `Real users face slow server response (${fmtSeconds(fieldValue)}).`,
+    details: fieldStatus === "pass" ? "Real-world server response is good." : `Real users face slow server response (${msToSec(fieldValue)}).`,
     meta: {
-      value: fmtSeconds(fieldValue),
+      value: msToSec(fieldValue),
       p75: true,
       thresholds: { Good: "0-0.8s", Warning: "0.8-1.8s", Poor: "1.8s+" }
     },
@@ -471,9 +457,9 @@ const evaluateINPLab = (audits) => {
   return {
     score: labScore,
     status: labStatus,
-    details: labStatus === "pass" ? "Interaction responsiveness is good." : `Responsiveness is low (${fmtSeconds(labValue)}).`,
+    details: labStatus === "pass" ? "Interaction responsiveness is good." : `Responsiveness is low (${msToSec(labValue)}).`,
     meta: {
-      value: fmtSeconds(labValue),
+      value: msToSec(labValue),
       thresholds: { Good: "0-3.8s", Warning: "3.8-7.3s", Poor: "7.3s+" }
     },
     analysis: labStatus === "pass" ? null : {
@@ -525,9 +511,9 @@ const evaluateINPCrux = (audits, cruxMetrics) => {
   return {
     score: fieldScore,
     status: fieldStatus,
-    details: fieldStatus === "pass" ? "Real-world interaction feedback is fast." : `Real users face input delays (${fmtSeconds(fieldValue)}).`,
+    details: fieldStatus === "pass" ? "Real-world interaction feedback is fast." : `Real users face input delays (${msToSec(fieldValue)}).`,
     meta: {
-      value: fmtSeconds(fieldValue),
+      value: msToSec(fieldValue),
       p75: true,
       thresholds: { Good: "0-0.2s", Warning: "0.2-0.5s", Poor: "0.5s+" }
     },
@@ -585,9 +571,9 @@ const evaluateFIDLab = (audits) => {
   return {
     score: labScore,
     status: labStatus,
-    details: labStatus === "pass" ? "Worst-case first input delay is low." : `A user's first input could be delayed up to ${fmtSeconds(labValue)}.`,
+    details: labStatus === "pass" ? "Worst-case first input delay is low." : `A user's first input could be delayed up to ${msToSec(labValue)}.`,
     meta: {
-      value: fmtSeconds(labValue),
+      value: msToSec(labValue),
       maxPotential: true,
       thresholds: { Good: "0-0.13s", Warning: "0.13-0.25s", Poor: "0.25s+" }
     },
@@ -643,9 +629,9 @@ const evaluateFIDCrux = (audits, cruxMetrics) => {
   return {
     score: fieldScore,
     status: fieldStatus,
-    details: fieldStatus === "pass" ? "Real users get a fast response to their first interaction." : `Real users wait ${fmtSeconds(fieldValue)} before their first input is handled.`,
+    details: fieldStatus === "pass" ? "Real users get a fast response to their first interaction." : `Real users wait ${msToSec(fieldValue)} before their first input is handled.`,
     meta: {
-      value: fmtSeconds(fieldValue),
+      value: msToSec(fieldValue),
       p75: true,
       thresholds: { Good: "0-0.1s", Warning: "0.1-0.3s", Poor: "0.3s+" }
     },
@@ -697,9 +683,9 @@ const evaluateTBT = (audits) => {
   return {
     score: labScore,
     status: labStatus,
-    details: labStatus === "pass" ? "Main thread is clear." : `Main thread is blocked (${fmtSeconds(labValue)}).`,
+    details: labStatus === "pass" ? "Main thread is clear." : `Main thread is blocked (${msToSec(labValue)}).`,
     meta: {
-      value: fmtSeconds(labValue),
+      value: msToSec(labValue),
       thresholds: { Good: "0-0.2s", Warning: "0.2-0.6s", Poor: "0.6s+" }
     },
     analysis: labStatus === "pass" ? null : {
@@ -750,9 +736,9 @@ const evaluateSI = (audits) => {
   return {
     score: labScore,
     status: labStatus,
-    details: labStatus === "pass" ? "Visual load speed is optimal." : `Visual page load is slow (${fmtSeconds(labValue)}).`,
+    details: labStatus === "pass" ? "Visual load speed is optimal." : `Visual page load is slow (${msToSec(labValue)}).`,
     meta: {
-      value: fmtSeconds(labValue),
+      value: msToSec(labValue),
       thresholds: { Good: "0-3.4s", Warning: "3.4-5.8s", Poor: "5.8s+" }
     },
     analysis: labStatus === "pass" ? null : {

@@ -63,7 +63,7 @@ const AuditDropdown = ({ title, items, darkMode = false }) => {
                 <div>
                   <div className="flex justify-between items-center mb-1">
                     <h4
-                      className={`font- ${darkMode ? 'text-gray-100' : 'text-gray-800'
+                      className={`font-semibold ${darkMode ? 'text-gray-100' : 'text-gray-800'
                         }`}
                     >
                       {item.metric}

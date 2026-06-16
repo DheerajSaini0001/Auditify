@@ -609,6 +609,226 @@ export const InfoDetails = {
         ]
     },
 
+    markdownHeaders: {
+        title: "Markdown Structure",
+        whatThisParameterIs: "Markdown Structure checks the quality of your H1–H3 heading hierarchy so AI models can cleanly extract and understand your page (a ChatGPT priority signal).",
+        whatItCalculates: "We parse your heading tags and score whether there is a single H1 followed by a logical, sequential H2/H3 outline with no skipped or out-of-order levels.",
+        whyItMatters: "Markdown headers (H1-H3) are the primary way LLMs 'read' your page. A broken hierarchy causes extraction errors and loss of context.",
+        thresholds: {
+            good: "Single H1 with a clean, sequential H2/H3 outline",
+            needsImprovement: "Minor hierarchy gaps or a skipped heading level",
+            poor: "Missing/multiple H1s or a broken, out-of-order heading structure"
+        },
+        actualReasonsForFailure: [
+            "Page has no H1, or more than one H1",
+            "Heading levels are skipped (e.g. H1 jumps straight to H3)",
+            "Headings are used for styling instead of document structure"
+        ],
+        howToOvercomeFailure: [
+            "Use exactly one H1 that states the page topic",
+            "Follow it with sequential H2/H3 sections so LLMs can map the page",
+            "Never skip heading levels purely for visual sizing"
+        ]
+    },
+
+    citations: {
+        title: "Trust Signals",
+        whatThisParameterIs: "Trust Signals measures citations & transparency on the page — cited sources/references, policy pages (privacy/terms/contact/about), transparent contact & authorship, and trust basics like HTTPS, disclosures and dates.",
+        whatItCalculates: "We score four components: citations to reputable sources (45), presence of policy pages (20), contact & authorship transparency (20), and trust basics such as HTTPS and dated content (15).",
+        whyItMatters: "Trust signals tell engines your content is accountable: cited sources, clear policies (privacy/terms/contact), transparent contact & authorship, HTTPS and dated content. RAG engines like Perplexity prioritize verifiable, trustworthy pages.",
+        thresholds: {
+            good: "Cited sources plus complete policy, contact and trust basics",
+            needsImprovement: "Some trust elements present but citations or policies are thin",
+            poor: "No external citations and missing policy/contact transparency"
+        },
+        actualReasonsForFailure: [
+            "No links or references to reputable external sources",
+            "Missing privacy/terms/contact/about pages",
+            "No visible authorship, contact details or content dates"
+        ],
+        howToOvercomeFailure: [
+            "Link to reputable external sources and add citation markers",
+            "Publish clear privacy, terms, contact and about pages",
+            "Show authorship, contact info, publish/updated dates and serve over HTTPS"
+        ]
+    },
+
+    indexCoverage: {
+        title: "Index Coverage",
+        whatThisParameterIs: "Index Coverage estimates the share of your sitemap URLs that are actually eligible to be indexed (HTTP 200, no noindex, self-canonical) — the index eligibility foundation for Google and AI engines.",
+        whatItCalculates: "We sample URLs from your XML sitemap and check each for a 200 response, absence of noindex, and a self-referencing canonical, then report the estimated indexable percentage. (Real per-URL data comes from the GSC URL Inspection API when the property is verified.)",
+        whyItMatters: "If your pages aren't indexable, they can't appear in Google results or be retrieved by AI answer engines — index coverage is the foundation every other AEO signal builds on.",
+        thresholds: {
+            good: "~90%+ of sampled sitemap URLs are indexable",
+            needsImprovement: "Some sampled URLs are non-indexable or no sitemap signal is weak",
+            poor: "No sitemap found, or a large share of URLs are noindex/non-200/non-canonical"
+        },
+        actualReasonsForFailure: [
+            "No XML sitemap was found",
+            "Sampled URLs return non-200 status codes",
+            "Pages carry noindex or point their canonical at another URL"
+        ],
+        howToOvercomeFailure: [
+            "Publish and submit a complete XML sitemap",
+            "Remove unintended noindex tags and fix broken (non-200) URLs",
+            "Ensure each page self-canonicalizes unless intentionally consolidated"
+        ]
+    },
+
+    entityRecognition: {
+        title: "Entity Recognition",
+        whatThisParameterIs: "Entity Recognition checks whether engines can confidently identify your business as a real entity, via Organization/LocalBusiness schema plus Knowledge Graph presence.",
+        whatItCalculates: "We look for valid Organization/LocalBusiness JSON-LD (and its completeness) and check for a matching Knowledge Graph entity using the Knowledge Graph API.",
+        whyItMatters: "AI engines can only cite or recommend a business they can identify with confidence. Organization/LocalBusiness schema and a Knowledge Graph entity turn your site from 'some text' into a recognized entity engines trust.",
+        thresholds: {
+            good: "Complete Organization/LocalBusiness schema with a matching Knowledge Graph entity",
+            needsImprovement: "Schema present but missing fields, or no Knowledge Graph match",
+            poor: "No Organization/LocalBusiness schema found"
+        },
+        actualReasonsForFailure: [
+            "No Organization/LocalBusiness JSON-LD on the page",
+            "Schema present but missing key fields (name, logo, url, sameAs)",
+            "No matching entity in the Knowledge Graph"
+        ],
+        howToOvercomeFailure: [
+            "Add complete Organization/LocalBusiness JSON-LD",
+            "Include name, logo, url, address, contact and sameAs links",
+            "Build consistent off-site references so a Knowledge Graph entity forms"
+        ]
+    },
+
+    brandEntityStrength: {
+        title: "Brand Entity Strength",
+        whatThisParameterIs: "Brand Entity Strength grades how authoritative and established your brand is as an entity — sameAs breadth, Wikipedia/Knowledge Graph presence, review volume and brand completeness. (Informational meter — not separately weighted, to avoid double-counting Entity Recognition.)",
+        whatItCalculates: "We grade four components: sameAs breadth (30), authoritative/Wikipedia & Knowledge Graph presence (25), review volume (25), and brand completeness (20), and roll them into a tiered brand-authority score.",
+        whyItMatters: "When engines must choose which business to cite, they favor the strongest, most-corroborated entity — broad sameAs footprint, a Wikipedia presence, and high review volume signal an established, trustworthy brand.",
+        thresholds: {
+            good: "Strong tier — broad sameAs, authoritative presence and high review volume",
+            needsImprovement: "Moderate tier — some signals present but footprint is limited",
+            poor: "Weak tier — few sameAs links, no authoritative presence, little review volume"
+        },
+        actualReasonsForFailure: [
+            "Few or no sameAs profile links declared",
+            "No Wikipedia or Knowledge Graph presence",
+            "Low review volume and incomplete brand details"
+        ],
+        howToOvercomeFailure: [
+            "Declare a broad, consistent sameAs set (social, directories, profiles)",
+            "Earn authoritative mentions that can seed a Knowledge Graph entity",
+            "Grow genuine review volume and complete your brand profile"
+        ]
+    },
+
+    citationConsistency: {
+        title: "Citation Consistency",
+        whatThisParameterIs: "Citation Consistency checks whether your NAP (Name/Address/Phone) and brand details agree across the page — schema, tel: links and brand tags — so engines can state your identity with confidence.",
+        whatItCalculates: "We compare on-page identity signals and score completeness (40), phone consistency (25), name consistency (20) and address completeness (15). (On-page only — a full citation audit needs the Places API with billing.)",
+        whyItMatters: "If your name, address, or phone conflicts across sources, engines can't confidently state your details — so they omit or hedge. One consistent NAP everywhere is foundational for local trust and 'near me / call X' answers.",
+        thresholds: {
+            good: "One consistent NAP across schema, tel: links and visible text",
+            needsImprovement: "Mostly consistent but some details are incomplete",
+            poor: "Conflicting phone numbers or mismatched name/address on the page"
+        },
+        actualReasonsForFailure: [
+            "Multiple different phone numbers appear on the page",
+            "Business name or address differs between schema and visible text",
+            "Address or contact details are incomplete"
+        ],
+        howToOvercomeFailure: [
+            "Use one identical NAP everywhere (schema, tel: links, footer)",
+            "Match your LocalBusiness schema to the visible name/address/phone",
+            "Complete all address and contact fields"
+        ]
+    },
+
+    topicalAuthority: {
+        title: "Topical Authority",
+        whatThisParameterIs: "Topical Authority measures industry & local content depth — content depth, subtopic headings, internal topic-cluster links, automotive topic coverage and local-authority signals.",
+        whatItCalculates: "We score six components: content depth (20), subtopic headings (15), internal cluster links (15), a verified topic cluster (15), industry topic coverage (20) and local signals (15), using on-page content plus a shallow internal crawl.",
+        whyItMatters: "Engines cite sites that demonstrably own a topic. Deep content, well-linked topic clusters, broad industry coverage, and clear local signals tell an AI you're the authoritative source for 'best X in [city]'-type questions.",
+        thresholds: {
+            good: "Deep, well-linked content covering the topic and local area",
+            needsImprovement: "Reasonable content but thin clusters or limited topic coverage",
+            poor: "Shallow content with few internal links and little topic/local coverage"
+        },
+        actualReasonsForFailure: [
+            "Thin content with low word count and few subtopic headings",
+            "Few internal links connecting related topic pages",
+            "Limited industry coverage and weak local-authority signals"
+        ],
+        howToOvercomeFailure: [
+            "Publish deeper content with clear subtopic headings",
+            "Interlink related pages into coherent topic clusters",
+            "Cover more industry subtopics and add local-relevant detail"
+        ]
+    },
+
+    experienceSignals: {
+        title: "Experience Signals",
+        whatThisParameterIs: "Experience Signals measures the first 'E' of E-E-A-T — demonstrable first-hand experience: original media, genuine customer testimonials, an authentic operator voice and real staff presence. (Informational — overlaps Brand Entity Strength reviews.)",
+        whatItCalculates: "We score four components: original media (30), genuine reviews/testimonials (25), first-person/operator voice (25) and real people/staff presence (20), from on-page content.",
+        whyItMatters: "Google's E-E-A-T rewards demonstrable first-hand experience. Original photos of your real inventory, genuine testimonials, and an authentic operator voice prove the content comes from people who actually do this — not rephrased boilerplate.",
+        thresholds: {
+            good: "Original media, real testimonials and an authentic first-hand voice",
+            needsImprovement: "Some experience signals present but media or voice is thin",
+            poor: "Stock-only imagery, no testimonials and generic boilerplate copy"
+        },
+        actualReasonsForFailure: [
+            "Only stock imagery with no original photos/video of your real operation",
+            "No genuine customer testimonials or reviews on the page",
+            "Generic boilerplate copy with no first-hand operator voice"
+        ],
+        howToOvercomeFailure: [
+            "Add original photos/video of your actual inventory and premises",
+            "Publish genuine customer testimonials and reviews",
+            "Write in a first-hand voice and show real staff"
+        ]
+    },
+
+    expertiseSignals: {
+        title: "Expertise Signals",
+        whatThisParameterIs: "Expertise Signals measures the second 'E' of E-E-A-T — credentials: certifications & accreditations, awards/recognition, years in business and credentialed author bylines. (Informational — similar to Experience Signals.)",
+        whatItCalculates: "We score four components: credentials/certifications (35), awards & recognition (25), tenure/years in business (20) and credentialed author expertise (20), from on-page content.",
+        whyItMatters: "E-E-A-T's 'Expertise' is about credentials. Visible certifications, awards, years in business, and credentialed authors tell engines the content comes from qualified professionals — raising trust and citation likelihood.",
+        thresholds: {
+            good: "Visible certifications, awards, tenure and credentialed authorship",
+            needsImprovement: "Some credentials shown but awards or authorship are missing",
+            poor: "No certifications, awards, tenure or author credentials on the page"
+        },
+        actualReasonsForFailure: [
+            "No certifications or accreditations are displayed",
+            "No awards, recognition or years-in-business shown",
+            "Content has no credentialed author byline"
+        ],
+        howToOvercomeFailure: [
+            "Display certifications, accreditations and manufacturer approvals",
+            "Show awards, recognition and how long you've been in business",
+            "Attribute content to credentialed authors with short bios"
+        ]
+    },
+
+    authoritySignals: {
+        title: "Authority Signals",
+        whatThisParameterIs: "Authority Signals measures the 'A' of E-E-A-T — third-party validation: press/'as seen in' mentions, links to authoritative sources, trust badges and social proof. (On-page proxies only — true backlink authority needs a paid SEO API.)",
+        whatItCalculates: "We score four components from on-page proxies: press mentions (30), external authoritative links (25), trust badges (25) and social proof (20).",
+        whyItMatters: "Authority is third-party validation — who vouches for you. Press mentions, authoritative outbound links, and trust badges signal that others recognize you. (True backlink authority is off-site and needs a dedicated SEO tool.)",
+        thresholds: {
+            good: "Press mentions, authoritative links, trust badges and strong social proof",
+            needsImprovement: "Some authority proxies present but mentions or badges are thin",
+            poor: "No press mentions, authoritative links, badges or social proof on the page"
+        },
+        actualReasonsForFailure: [
+            "No press or 'as seen in' mentions on the page",
+            "No links to authoritative external sources",
+            "Missing third-party trust badges and social proof"
+        ],
+        howToOvercomeFailure: [
+            "Add a press / 'as seen in' section with real mentions",
+            "Link to and earn references from authoritative sources",
+            "Display recognized trust badges and visible social proof"
+        ]
+    },
+
     // Methodologies (Technical)
     Technical_Performance_Methodology: {
         icon: Zap,
@@ -620,19 +840,19 @@ export const InfoDetails = {
         whatToDoForAGoodScore: (
             <ul className="list-disc pl-5 space-y-2">
                 <li>
-                    <span className="font-">Master Core Web Vitals (45% of score):</span> Prioritize LCP (load speed), INP (responsiveness), and CLS (visual stability) as they are heavily weighted.
+                    <span className="font-semibold">Master Core Web Vitals (45% of score):</span> Prioritize LCP (load speed), INP (responsiveness), and CLS (visual stability) as they are heavily weighted.
                 </li>
                 <li>
-                    <span className="font-">Optimize Server Response (TTFB):</span> Ensure the server responds in under 800ms using caching and database optimization to build a strong foundation.
+                    <span className="font-semibold">Optimize Server Response (TTFB):</span> Ensure the server responds in under 800ms using caching and database optimization to build a strong foundation.
                 </li>
                 <li>
-                    <span className="font-">Minimize Main Thread Blocking (TBT):</span> Break up long JavaScript tasks and defer non-critical scripts to keep the page interactive.
+                    <span className="font-semibold">Minimize Main Thread Blocking (TBT):</span> Break up long JavaScript tasks and defer non-critical scripts to keep the page interactive.
                 </li>
                 <li>
-                    <span className="font-">Maximize Asset Optimization:</span> Compress text resources (Gzip/Brotli), cache static assets for &gt;7 days, and resize/compress images.
+                    <span className="font-semibold">Maximize Asset Optimization:</span> Compress text resources (Gzip/Brotli), cache static assets for &gt;7 days, and resize/compress images.
                 </li>
                 <li>
-                    <span className="font-">Clear the Render Path:</span> Eliminate render-blocking resources and remove unnecessary redirect chains to speed up the first paint.
+                    <span className="font-semibold">Clear the Render Path:</span> Eliminate render-blocking resources and remove unnecessary redirect chains to speed up the first paint.
                 </li>
             </ul>
         ),
@@ -1317,19 +1537,19 @@ export const InfoDetails = {
         whatToDoForAGoodScore: (
             <ul className="list-disc pl-5 space-y-2">
                 <li>
-                    <span className="font-">Prioritize High-Weight Content Signals:</span> Focus on unique Page Titles (15%), compelling H1 tags (10%), and high-quality, non-duplicate content (12%).
+                    <span className="font-semibold">Prioritize High-Weight Content Signals:</span> Focus on unique Page Titles (15%), compelling H1 tags (10%), and high-quality, non-duplicate content (12%).
                 </li>
                 <li>
-                    <span className="font-">Build Strong Internal Connectivity:</span> Ensure contextual links (8%) point to key pages and your URL structure (3%) is clean and descriptive.
+                    <span className="font-semibold">Build Strong Internal Connectivity:</span> Ensure contextual links (8%) point to key pages and your URL structure (3%) is clean and descriptive.
                 </li>
                 <li>
-                    <span className="font-">Technical Authority:</span> Implement correct Canonical tags (8%) to prevent duplication and valid Structured Data (6%) for rich snippets.
+                    <span className="font-semibold">Technical Authority:</span> Implement correct Canonical tags (8%) to prevent duplication and valid Structured Data (6%) for rich snippets.
                 </li>
                 <li>
-                    <span className="font-">Optimize Media & Structure:</span> Ensure all images have Alt text (8%) and follow a logical Heading Hierarchy (3%).
+                    <span className="font-semibold">Optimize Media & Structure:</span> Ensure all images have Alt text (8%) and follow a logical Heading Hierarchy (3%).
                 </li>
                 <li>
-                    <span className="font-">Ensure Crawlability:</span> Maintain a valid Sitemap (5%) and Robots.txt (4%) to help search engines index your site effectively.
+                    <span className="font-semibold">Ensure Crawlability:</span> Maintain a valid Sitemap (5%) and Robots.txt (4%) to help search engines index your site effectively.
                 </li>
             </ul>
         ),
@@ -1810,25 +2030,25 @@ export const InfoDetails = {
         whatToDoForAGoodScore: (
             <ul className="list-disc pl-5 space-y-2">
                 <li>
-                    <span className="font-">Ensure meaningful text alternatives:</span> Give all images descriptive alt text and ensure buttons and links have discernible names describing their purpose.
+                    <span className="font-semibold">Ensure meaningful text alternatives:</span> Give all images descriptive alt text and ensure buttons and links have discernible names describing their purpose.
                 </li>
                 <li>
-                    <span className="font-">Guarantee keyboard operability:</span> Verify that all interactive elements are focusable, have a visible focus indicators, and follow a logical tab order.
+                    <span className="font-semibold">Guarantee keyboard operability:</span> Verify that all interactive elements are focusable, have a visible focus indicators, and follow a logical tab order.
                 </li>
                 <li>
-                    <span className="font-">Maintain sufficient color contrast:</span> Ensure text and interactive elements stand out clearly against their backgrounds (aim for a 4.5:1 ratio).
+                    <span className="font-semibold">Maintain sufficient color contrast:</span> Ensure text and interactive elements stand out clearly against their backgrounds (aim for a 4.5:1 ratio).
                 </li>
                 <li>
-                    <span className="font-">Label all form inputs:</span> Every input field must have a visible label or accessible name to be usable by assistive technologies.
+                    <span className="font-semibold">Label all form inputs:</span> Every input field must have a visible label or accessible name to be usable by assistive technologies.
                 </li>
                 <li>
-                    <span className="font-">Structure content logically:</span> Use proper heading hierarchy (H1–H6), landmarks (main, nav), and lists to help screen readers navigate efficiently.
+                    <span className="font-semibold">Structure content logically:</span> Use proper heading hierarchy (H1–H6), landmarks (main, nav), and lists to help screen readers navigate efficiently.
                 </li>
                 <li>
-                    <span className="font-">Define page context:</span> Set a unique document title and correct HTML language attribute to help users orient themselves immediately.
+                    <span className="font-semibold">Define page context:</span> Set a unique document title and correct HTML language attribute to help users orient themselves immediately.
                 </li>
                 <li>
-                    <span className="font-">Use ARIA with care:</span> Only use ARIA roles and attributes when native HTML cannot achieve the desired result, and ensure they are valid.
+                    <span className="font-semibold">Use ARIA with care:</span> Only use ARIA roles and attributes when native HTML cannot achieve the desired result, and ensure they are valid.
                 </li>
             </ul>
         ),
@@ -2374,7 +2594,7 @@ export const InfoDetails = {
                 <p>In today's world, security is the 'entrance fee' for doing business online. If visitors don't feel safe on your site, they won't stay, they won't buy, and they certainly won't return.</p>
 
                 <div>
-                    <span className="font- block mb-1">A secure website gives you and your users:</span>
+                    <span className="font-semibold block mb-1">A secure website gives you and your users:</span>
                     <ul className="list-disc pl-5 space-y-1 text-sm">
                         <li><strong>Peace of Mind:</strong> Knowing that sensitive data (like passwords and credit cards) is locked behind industrial-strength encryption.</li>
                         <li><strong>Instant Trust:</strong> Showing the 'Secure' padlock that tells visitors their connection is private and authentic.</li>
@@ -2390,25 +2610,25 @@ export const InfoDetails = {
         whatToDoForAGoodScore: (
             <ul className="list-disc pl-5 space-y-2">
                 <li>
-                    <span className="font-">Secure your site with HTTPS and valid SSL:</span> Ensure your site uses HTTPS, has a valid SSL certificate (not nearing expiry), and supports modern encryption protocols (TLS 1.2+).
+                    <span className="font-semibold">Secure your site with HTTPS and valid SSL:</span> Ensure your site uses HTTPS, has a valid SSL certificate (not nearing expiry), and supports modern encryption protocols (TLS 1.2+).
                 </li>
                 <li>
-                    <span className="font-">Identify and Patch Critical Vulnerabilities:</span> Use tools to scan for and fix issues like SQL Injection, Cross-Site Scripting (XSS), and exposed database errors.
+                    <span className="font-semibold">Identify and Patch Critical Vulnerabilities:</span> Use tools to scan for and fix issues like SQL Injection, Cross-Site Scripting (XSS), and exposed database errors.
                 </li>
                 <li>
-                    <span className="font-">Harden Security Headers:</span> Implement robust headers like Content Security Policy (CSP), HSTS, X-Frame-Options, and X-Content-Type-Options to stop code injection and clickjacking.
+                    <span className="font-semibold">Harden Security Headers:</span> Implement robust headers like Content Security Policy (CSP), HSTS, X-Frame-Options, and X-Content-Type-Options to stop code injection and clickjacking.
                 </li>
                 <li>
-                    <span className="font-">Monitor Malware and Domain Reputation:</span> Regularly check against Google Safe Browsing and global blacklists to ensure your site hasn't been compromised or flagged as malicious.
+                    <span className="font-semibold">Monitor Malware and Domain Reputation:</span> Regularly check against Google Safe Browsing and global blacklists to ensure your site hasn't been compromised or flagged as malicious.
                 </li>
                 <li>
-                    <span className="font-">Protect Administrative Access:</span> Ensure administrative panels are not publicly accessible and that all login systems avoid weak or default credentials.
+                    <span className="font-semibold">Protect Administrative Access:</span> Ensure administrative panels are not publicly accessible and that all login systems avoid weak or default credentials.
                 </li>
                 <li>
-                    <span className="font-">Secure Cookies and Authentication:</span> Sensitive cookies must have 'Secure' and 'HttpOnly' flags, and multi-factor authentication (MFA) should be supported where possible.
+                    <span className="font-semibold">Secure Cookies and Authentication:</span> Sensitive cookies must have 'Secure' and 'HttpOnly' flags, and multi-factor authentication (MFA) should be supported where possible.
                 </li>
                 <li>
-                    <span className="font-">Ensure Compliance and Privacy:</span> Maintain a visible Privacy Policy, display clear Cookie Consent banners, and adhere to global data protection laws like GDPR and CCPA.
+                    <span className="font-semibold">Ensure Compliance and Privacy:</span> Maintain a visible Privacy Policy, display clear Cookie Consent banners, and adhere to global data protection laws like GDPR and CCPA.
                 </li>
             </ul>
         ),
@@ -2737,6 +2957,7 @@ export const InfoDetails = {
     },
     Broken_Links: {
         title: "Broken Links",
+        whatThisParameterIs: "Broken Links checks whether every link on your page leads somewhere that actually works, instead of sending visitors to a dead 'page not found' error.",
         whatItCalculates: "Our system clicks every link on your page behind the scenes to make sure they all lead to active pages and not '404 - Not Found' errors.",
         whyItMatters: "Broken links destroy trust and professionalism. They also hurt your SEO rankings because they signal to search engines that your website might be poorly maintained or outdated.",
         thresholds: {
@@ -2941,7 +3162,7 @@ export const InfoDetails = {
                 <p>Even the fastest website will fail if users struggle to read your content, find your menu, or trust your professional appearance.</p>
 
                 <div>
-                    <span className="font- block mb-1">Poor content experience leads to:</span>
+                    <span className="font-semibold block mb-1">Poor content experience leads to:</span>
                     <ul className="list-disc pl-5 space-y-1 text-sm">
                         <li>Immediate exits due to 'Information Overload'</li>
                         <li>Loss of brand trust because of broken links or messy layouts</li>
@@ -2956,34 +3177,34 @@ export const InfoDetails = {
         whatToDoForAGoodScore: (
             <ul className="list-disc pl-5 space-y-2">
                 <li>
-                    <span className="font-">Prioritize the 'Above-the-Fold' experience:</span> Move your most important headlines and 'Call to Action' buttons to the very top (ATF Content).
+                    <span className="font-semibold">Prioritize the 'Above-the-Fold' experience:</span> Move your most important headlines and 'Call to Action' buttons to the very top (ATF Content).
                 </li>
                 <li>
-                    <span className="font-">Remove interaction blockers:</span> Eliminate full-screen overlays and aggressive pop-ups that stand between the user and your content (Intrusive Interstitials).
+                    <span className="font-semibold">Remove interaction blockers:</span> Eliminate full-screen overlays and aggressive pop-ups that stand between the user and your content (Intrusive Interstitials).
                 </li>
                 <li>
-                    <span className="font-">Build trust with reliability:</span> Ensure every link on your page works perfectly and follow a logical heading order (Broken Links & Hierarchy).
+                    <span className="font-semibold">Build trust with reliability:</span> Ensure every link on your page works perfectly and follow a logical heading order (Broken Links & Hierarchy).
                 </li>
                 <li>
-                    <span className="font-">Write for your audience:</span> Use simple, clear sentences and vocabulary that matches your readers' expectations (Text Readability).
+                    <span className="font-semibold">Write for your audience:</span> Use simple, clear sentences and vocabulary that matches your readers' expectations (Text Readability).
                 </li>
                 <li>
-                    <span className="font-">Make your menu easy to find:</span> Always provide a visible menu button, search bar, and breadcrumbs for deeper pages (Nav Discoverability & Breadcrumbs).
+                    <span className="font-semibold">Make your menu easy to find:</span> Always provide a visible menu button, search bar, and breadcrumbs for deeper pages (Nav Discoverability & Breadcrumbs).
                 </li>
                 <li>
-                    <span className="font-">Provide immediate visual cues:</span> Ensure buttons 'glow' or change color when touched and show loading signs during waits (Click Feedback & Loading Feedback).
+                    <span className="font-semibold">Provide immediate visual cues:</span> Ensure buttons 'glow' or change color when touched and show loading signs during waits (Click Feedback & Loading Feedback).
                 </li>
                 <li>
-                    <span className="font-">Organize with clear signposts:</span> Use descriptive section titles and a consistent layout system to help users skim your page (Section Labeling & Layout Consistency).
+                    <span className="font-semibold">Organize with clear signposts:</span> Use descriptive section titles and a consistent layout system to help users skim your page (Section Labeling & Layout Consistency).
                 </li>
                 <li>
-                    <span className="font-">Optimize content density:</span> Balance your text with white space to avoid 'wall-of-text' fatigue (Content Density).
+                    <span className="font-semibold">Optimize content density:</span> Balance your text with white space to avoid 'wall-of-text' fatigue (Content Density).
                 </li>
                 <li>
-                    <span className="font-">Guide the user journey:</span> Use a helpful footer and navigation shortcuts like 'Back to Top' buttons on long pages (Flow & In-Page Nav).
+                    <span className="font-semibold">Guide the user journey:</span> Use a helpful footer and navigation shortcuts like 'Back to Top' buttons on long pages (Flow & In-Page Nav).
                 </li>
                 <li>
-                    <span className="font-">Keep headers compact:</span> Ensure your top menu doesn't take up too much vertical space on mobile devices (Sticky Header).
+                    <span className="font-semibold">Keep headers compact:</span> Ensure your top menu doesn't take up too much vertical space on mobile devices (Sticky Header).
                 </li>
             </ul>
         ),
@@ -3663,7 +3884,7 @@ export const InfoDetails = {
         whatToDoForAGoodScore: (
             <ul className="list-disc pl-5 space-y-4">
                 <li>
-                    <span className="font- block mb-1">Make your buttons impossible to miss:</span>
+                    <span className="font-semibold block mb-1">Make your buttons impossible to miss:</span>
                     <ul className="list-[circle] pl-5 space-y-1 text-sm">
                         <li>Design buttons to look clickable, using standard classes like <strong>.btn</strong> or <strong>.cta</strong>.</li>
                         <li>Use exciting words on buttons (e.g. "Get Started", "Join Now") instead of just "Submit".</li>
@@ -3672,7 +3893,7 @@ export const InfoDetails = {
                     </ul>
                 </li>
                 <li>
-                    <span className="font- block mb-1">Make forms easy to finish:</span>
+                    <span className="font-semibold block mb-1">Make forms easy to finish:</span>
                     <ul className="list-[circle] pl-5 space-y-1 text-sm">
                         <li>Include at least one clear signup or contact form using standard HTML tags.</li>
                         <li>Short forms convert better. Try to ask for fewer than 7 things.</li>
@@ -3682,7 +3903,7 @@ export const InfoDetails = {
                     </ul>
                 </li>
                 <li>
-                    <span className="font- block mb-1">Show that you can be trusted:</span>
+                    <span className="font-semibold block mb-1">Show that you can be trusted:</span>
                     <ul className="list-[circle] pl-5 space-y-1 text-sm">
                         <li>Add a section titled <strong>"Testimonials"</strong> or <strong>"Reviews"</strong> to show social proof.</li>
                         <li>Display security badges (like SSL icons) to reassure visitors your site is safe.</li>
@@ -3691,7 +3912,7 @@ export const InfoDetails = {
                     </ul>
                 </li>
                 <li>
-                    <span className="font- block mb-1">Remove roadblocks:</span>
+                    <span className="font-semibold block mb-1">Remove roadblocks:</span>
                     <ul className="list-[circle] pl-5 space-y-1 text-sm">
                         <li>Add helpful hints inside form boxes (placeholders) to guide typing.</li>
                         <li>If your form is long, use a progress bar to show how much is left.</li>
@@ -3998,7 +4219,7 @@ export const InfoDetails = {
         whatThisMetricIs: (
             <div className="space-y-2">
                 <p>This score measures how easy it is for Artificial Intelligence (like ChatGPT, Perplexity, or Google Gemini) to find, understand, and use your content to answer user questions.</p>
-                <p>We audit <span className="fontsemibold text-indigo-400">14 critical AIO signals</span>—ranging from hidden "Identity Code" to content chunking—combined with <span className="fontsemibold text-indigo-400">Answer Engine Optimization (AEO)</span> specific logic for the top 3 AI platforms.</p>
+                <p>We audit <span className="font-semibold text-indigo-400">14 critical AIO signals</span>—ranging from hidden "Identity Code" to content chunking—combined with <span className="font-semibold text-indigo-400">Answer Engine Optimization (AEO)</span> specific logic for the top 3 AI platforms.</p>
             </div>
         ),
         whyItMatters: (
@@ -4006,7 +4227,7 @@ export const InfoDetails = {
                 <p>AI models are now the primary way people discover information. If an AI can't "read" your site easily or if you block their crawlers, you lose 100% visibility in AI-driven search.</p>
 
                 <div>
-                    <span className="font- block mb-1 text-indigo-400">A high AIO/AEO score means:</span>
+                    <span className="font-semibold block mb-1 text-indigo-400">A high AIO/AEO score means:</span>
                     <ul className="list-disc pl-5 space-y-1 text-sm">
                         <li>Your site appears as a "Primary Source" in Gemini & ChatGPT responses</li>
                         <li>High citation value in Perplexity's real-time retrieval engine</li>
@@ -4021,38 +4242,38 @@ export const InfoDetails = {
         whatToDoForAGoodScore: (
             <ul className="list-disc pl-5 space-y-4">
                 <li>
-                    <span className="font- block mb-1">Build a Technical 'Identity' for AI (Core AIO):</span>
+                    <span className="font-semibold block mb-1">Build a Technical 'Identity' for AI (Core AIO):</span>
                     <ul className="list-[circle] pl-5 space-y-1 text-sm">
-                        <li><span className="fontsemibold">Structured Data:</span> Use JSON-LD (Organization, FAQ, HowTo) to define your brand entities.</li>
-                        <li><span className="fontsemibold">Freshness & Canonical:</span> Keep content updated and use canonical redirects to avoid confusing LLMs.</li>
-                        <li><span className="fontsemibold">Trust (EEAT):</span> Include Author Bios and link to reputable citations (.edu, .gov) to prove factual accuracy.</li>
+                        <li><span className="font-semibold">Structured Data:</span> Use JSON-LD (Organization, FAQ, HowTo) to define your brand entities.</li>
+                        <li><span className="font-semibold">Freshness & Canonical:</span> Keep content updated and use canonical redirects to avoid confusing LLMs.</li>
+                        <li><span className="font-semibold">Trust (EEAT):</span> Include Author Bios and link to reputable citations (.edu, .gov) to prove factual accuracy.</li>
                     </ul>
                 </li>
                 <li>
-                    <span className="font- block mb-1">Optimize for 'The Best Answer' (Readability):</span>
+                    <span className="font-semibold block mb-1">Optimize for 'The Best Answer' (Readability):</span>
                     <ul className="list-[circle] pl-5 space-y-1 text-sm">
-                        <li><span className="fontsemibold">Chunking:</span> Break "Walls of Text" into small 40-60 word chunks for better AI summarization.</li>
-                        <li><span className="fontsemibold">Answer-First:</span> Place a 1-sentence TL;DR answer in the first 100 words of the page.</li>
-                        <li><span className="fontsemibold">Structure:</span> Use semantic H1-H4 headers and HTML Tables—AI loves structured data extraction.</li>
+                        <li><span className="font-semibold">Chunking:</span> Break "Walls of Text" into small 40-60 word chunks for better AI summarization.</li>
+                        <li><span className="font-semibold">Answer-First:</span> Place a 1-sentence TL;DR answer in the first 100 words of the page.</li>
+                        <li><span className="font-semibold">Structure:</span> Use semantic H1-H4 headers and HTML Tables—AI loves structured data extraction.</li>
                     </ul>
                 </li>
                 <li>
-                    <span className="font- block mb-1">Master Platform Specific Readiness (AEO):</span>
+                    <span className="font-semibold block mb-1">Master Platform Specific Readiness (AEO):</span>
                     <ul className="list-[circle] pl-5 space-y-1 text-sm">
-                        <li><span className="fontsemibold text-blue-400">Gemini:</span> Focus on Question-based Schema and allow 'Google-Extended' indexing.</li>
-                        <li><span className="fontsemibold text-emerald-400">ChatGPT:</span> Maintain a valid /llms.txt file and clear Markdown-style hierarchy.</li>
-                        <li><span className="fontsemibold text-purple-400">Perplexity:</span> Prioritize semantic Data Tables and 90+ Page Speed scores.</li>
+                        <li><span className="font-semibold text-blue-400">Gemini:</span> Focus on Question-based Schema and allow 'Google-Extended' indexing.</li>
+                        <li><span className="font-semibold text-emerald-400">ChatGPT:</span> Maintain a valid /llms.txt file and clear Markdown-style hierarchy.</li>
+                        <li><span className="font-semibold text-purple-400">Perplexity:</span> Prioritize semantic Data Tables and 90+ Page Speed scores.</li>
                     </ul>
                 </li>
             </ul>
         ),
         howThisScoreIsCalculated: (
             <div className="space-y-4">
-                <p>Our audit engine analyzes <span className="fontsemibold">14 backend parameters</span> categorized into Identity, Freshness, Readability, and Trust. We then apply platform-specific weighted offsets for the Big 3 AI platforms.</p>
+                <p>Our audit engine analyzes <span className="font-semibold">14 backend parameters</span> categorized into Identity, Freshness, Readability, and Trust. We then apply platform-specific weighted offsets for the Big 3 AI platforms.</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2 p-4 bg-indigo-50/10 rounded-xl border border-indigo-500/20 italic text-[11px]">
-                    <div><span className="fontsemibold text-blue-400">Gemini</span>: Weights Schema & Search Bot status.</div>
-                    <div><span className="fontsemibold text-emerald-400">ChatGPT</span>: Weights llms.txt & Markdown structure.</div>
-                    <div><span className="fontsemibold text-purple-400">Perplexity</span>: Weights Tables, Citations & Speed.</div>
+                    <div><span className="font-semibold text-blue-400">Gemini</span>: Weights Schema & Search Bot status.</div>
+                    <div><span className="font-semibold text-emerald-400">ChatGPT</span>: Weights llms.txt & Markdown structure.</div>
+                    <div><span className="font-semibold text-purple-400">Perplexity</span>: Weights Tables, Citations & Speed.</div>
                 </div>
                 <p>An overall score of 80%+ earns you the "AI-Ready" badge, signaling top-tier compatibility with the LLM ecosystem.</p>
             </div>

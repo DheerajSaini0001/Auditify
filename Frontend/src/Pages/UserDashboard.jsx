@@ -51,7 +51,7 @@ const UserDashboard = () => {
               <LayoutDashboard className="text-blue-500" size={24} />
               <span className="text-blue-500 font-black tracking-widest text-xs uppercase">Personal Overview</span>
             </div>
-            <h1 className={`text-4xl fontsemibold tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
+            <h1 className={`text-4xl font-semibold tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
               Welcome, {user?.name}
             </h1>
             <p className={`mt-2 text-lg ${darkMode ? "text-gray-400" : "text-slate-500"}`}>Your audit performance and history at a glance.</p>
@@ -86,7 +86,7 @@ const UserDashboard = () => {
                 <History size={24} />
               </div>
               <div>
-                <h2 className={`text-xl fontsemibold ${darkMode ? "text-white" : "text-slate-900"}`}>Recent Audits</h2>
+                <h2 className={`text-xl font-semibold ${darkMode ? "text-white" : "text-slate-900"}`}>Recent Audits</h2>
                 <p className={`text-xs ${darkMode ? "text-gray-500" : "text-slate-500"}`}>Your latest 10 security and performance inspections</p>
               </div>
             </div>
@@ -130,7 +130,7 @@ const UserDashboard = () => {
                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform ${darkMode ? "bg-blue-500/10 text-blue-400" : "bg-blue-50 text-blue-600"}`}>
                             <ExternalLink size={16} />
                           </div>
-                          <span className={`fontsemibold truncate max-w-sm ${darkMode ? "text-gray-200" : "text-slate-700"}`}>{audit.url}</span>
+                          <span className={`font-semibold truncate max-w-sm ${darkMode ? "text-gray-200" : "text-slate-700"}`}>{audit.url}</span>
                         </div>
                       </td>
                       <td className="px-10 py-6">

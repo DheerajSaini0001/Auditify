@@ -38,15 +38,15 @@ const MathCaptcha = ({ onAnswerChange, error, autoFocus = false }) => {
     <div className="flex flex-col gap-3 w-full">
       <div className="flex justify-between items-center bg-slate-100 dark:bg-slate-800 p-3 rounded-lg">
         {loading ? (
-          <span className="fontsemibold text-lg text-slate-400">Loading...</span>
+          <span className="font-semibold text-lg text-slate-400">Loading...</span>
         ) : (
-          <span className="fontsemibold text-lg dark:text-white">What is {question}?</span>
+          <span className="font-semibold text-lg dark:text-white">What is {question}?</span>
         )}
         <button
           type="button"
           onClick={fetchCaptcha}
           disabled={loading}
-          className="text-emerald-500 hover:text-emerald-600 font- text-sm disabled:opacity-50"
+          className="text-emerald-500 hover:text-emerald-600 font-semibold text-sm disabled:opacity-50"
         >
           Refresh
         </button>

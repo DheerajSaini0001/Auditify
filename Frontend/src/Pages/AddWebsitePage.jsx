@@ -79,7 +79,7 @@ const AddWebsitePage = () => {
 
         <div className={`relative p-8 md:p-10 rounded-[2.5rem] backdrop-blur-3xl overflow-hidden transition-all duration-300 border shadow-2xl ${darkMode
             ? 'bg-[#16161e]/90 text-white border-white/5 shadow-[0_20px_50px_rgba(0,0,0,0.3)]'
-            : 'bg-white/90 text-slate-900 border-white shadow-[0_20px_60px_rgba(0,0,0,0.05)]'
+            : 'bg-card/90 text-ink border-line shadow-[0_20px_60px_rgba(0,0,0,0.05)]'
           }`}>
           {/* Animated Scan Line */}
           <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-blue-500 to-transparent animate-scan" />
@@ -100,11 +100,11 @@ const AddWebsitePage = () => {
               />
             </motion.div>
 
-            <h1 className={`text-3xl font-black tracking-tight mb-3 leading-tight transition-colors duration-300 ${darkMode ? 'text-white' : 'text-slate-900'
+            <h1 className={`text-3xl font-black tracking-tight mb-3 leading-tight transition-colors duration-300 ${darkMode ? 'text-white' : 'text-ink'
               }`}>
               Add <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">Property</span>
             </h1>
-            <p className={`text-xs font-semibold uppercase tracking-widest opacity-80 transition-colors duration-300 ${darkMode ? 'text-slate-400' : 'text-slate-500'
+            <p className={`text-xs font-semibold uppercase tracking-widest opacity-80 transition-colors duration-300 ${darkMode ? 'text-slate-400' : 'text-muted'
               }`}>
               Auditify Pro Engine
             </p>
@@ -113,7 +113,7 @@ const AddWebsitePage = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <div className="flex items-center justify-between ml-1">
-                <label className={`text-[10px] font-black uppercase tracking-[0.2em] transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-slate-400'
+                <label className={`text-[10px] font-black uppercase tracking-[0.2em] transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-faint'
                   }`}>
                   Website URL
                 </label>
@@ -121,7 +121,7 @@ const AddWebsitePage = () => {
               <div className="relative group">
                 <div className={`absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none transition-colors duration-300 ${darkMode ? 'group-focus-within:text-blue-400' : 'group-focus-within:text-blue-600'
                   }`}>
-                  <Link2 className={`h-5 w-5 transition-colors duration-300 ${darkMode ? 'text-slate-600' : 'text-slate-400'
+                  <Link2 className={`h-5 w-5 transition-colors duration-300 ${darkMode ? 'text-slate-600' : 'text-faint'
                     }`} />
                 </div>
                 <input
@@ -130,7 +130,7 @@ const AddWebsitePage = () => {
                   autoFocus
                   className={`block w-full pl-14 pr-5 py-4 rounded-2xl border-2 transition-all text-base font-semibold shadow-sm outline-none ${darkMode
                       ? 'bg-white/5 border-white/5 text-white placeholder:text-slate-600 focus:bg-white/10 focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10'
-                      : 'bg-slate-50 border-slate-100 text-slate-900 placeholder:text-slate-300 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5'
+                      : 'bg-cardsoft border-line text-ink placeholder:text-faint focus:bg-card focus:border-accent focus:ring-4 focus:ring-accent/10'
                     }`}
                   placeholder="https://example.com"
                   value={url}
@@ -184,7 +184,7 @@ const AddWebsitePage = () => {
               <button
                 type="button"
                 onClick={() => navigate('/dashboard')}
-                className={`group flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] py-2 transition-all ${darkMode ? 'text-slate-500 hover:text-slate-200' : 'text-slate-400 hover:text-slate-900'
+                className={`group flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] py-2 transition-all ${darkMode ? 'text-slate-500 hover:text-slate-200' : 'text-faint hover:text-ink'
                   }`}
               >
                 <ArrowLeft className="h-3 w-3 transition-transform group-hover:-translate-x-1" />

@@ -12,16 +12,14 @@ const ReportRestrictionWrapper = ({ children }) => {
 
   if (!isAuthenticated) {
     return (
-      <div className={`relative mt-6 rounded-[2rem] overflow-hidden max-h-[460px] ${darkMode ? "bg-slate-900/20" : "bg-white/40"}`}>
-        {/* Blurring the content for a premium feel - Fixed height to prevent scroll */}
-        <div className="px-4 py-8 filter blur-[40px] opacity-[0.03] pointer-events-none select-none h-[460px] overflow-hidden">
+      <div className="relative mt-6 mb-10 rounded-[2rem] overflow-hidden">
+        {/* Faintly blurred content peeking behind the card (sits behind, no own box) */}
+        <div className="absolute inset-0 filter blur-[40px] opacity-[0.03] pointer-events-none select-none overflow-hidden">
           {children}
         </div>
-        
-        {/* Lock Overlay Background Wrapper */}
-        <div className={`absolute inset-0 z-30 flex items-center justify-center p-4 backdrop-blur-md ${
-          darkMode ? "bg-slate-950/40" : "bg-white/30"
-        }`}>
+
+        {/* Login card defines the height — sits directly over the content */}
+        <div className="relative z-30 flex items-center justify-center px-4 py-8">
           <LoginOverlay darkMode={darkMode} />
         </div>
       </div>

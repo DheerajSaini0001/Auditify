@@ -255,7 +255,7 @@ export default function AIChatOverlay() {
           transition={{ duration: 0.35, ease: 'easeOut' }}
           className={`relative w-full h-full md:h-[90vh] md:max-w-7xl flex flex-col md:flex-row md:rounded-3xl overflow-hidden border shadow-2xl ${darkMode
             ? 'bg-slate-900/90 border-slate-800 text-white shadow-black/80'
-            : 'bg-white border-slate-200 text-slate-800 shadow-slate-200/50'
+            : 'bg-card border-line text-inksoft shadow-slate-200/50'
             }`}
         >
           {/* Header Close Button for Mobile Stack */}
@@ -272,7 +272,7 @@ export default function AIChatOverlay() {
           {/* ========================================== */}
           <div className={`w-full md:w-[38%] flex flex-col p-6 md:p-8 border-b md:border-b-0 md:border-r overflow-y-auto custom-scrollbar ${darkMode
             ? 'bg-slate-950/40 border-slate-800/70'
-            : 'bg-slate-50/50 border-slate-200/70'
+            : 'bg-surface-2 border-line'
             }`}>
             {/* Page Header */}
             <div className="flex items-center gap-3 mb-6">
@@ -290,7 +290,7 @@ export default function AIChatOverlay() {
             </div>
 
             {/* Score & URL Overview Card */}
-            <div className={`p-5 rounded-2xl border flex items-center gap-5 mb-6 ${darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-100 shadow-sm'
+            <div className={`p-5 rounded-2xl border flex items-center gap-5 mb-6 ${darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-card border-line shadow-sm'
               }`}>
               {/* Circular Gauge */}
               <div className="relative w-24 h-24 flex-shrink-0 flex items-center justify-center">
@@ -299,7 +299,7 @@ export default function AIChatOverlay() {
                     cx={size / 2}
                     cy={size / 2}
                     r={radius}
-                    className={darkMode ? 'stroke-slate-800' : 'stroke-slate-100'}
+                    className={darkMode ? 'stroke-slate-800' : 'stroke-[#E7E0D2]'}
                     strokeWidth={strokeWidth}
                     fill="transparent"
                   />
@@ -356,7 +356,7 @@ export default function AIChatOverlay() {
                 /* Synthesis Skeleton Loader */
                 <div className="space-y-4 animate-pulse">
                   {[1, 2, 3].map(i => (
-                    <div key={i} className={`p-4 rounded-xl border h-24 ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-100/50 border-slate-100'}`} />
+                    <div key={i} className={`p-4 rounded-xl border h-24 ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-cardsoft border-line'}`} />
                   ))}
                 </div>
               ) : summaryError ? (
@@ -475,7 +475,7 @@ export default function AIChatOverlay() {
               onClick={handleClose}
               className={`absolute top-4 right-4 z-50 p-2 rounded-xl transition-all duration-200 active:scale-95 hidden md:block border ${darkMode
                 ? 'bg-slate-800/50 border-slate-700 hover:bg-slate-800 text-slate-300'
-                : 'bg-slate-100/80 border-slate-200 hover:bg-slate-200 text-slate-600'
+                : 'bg-cardsoft border-line hover:bg-surface-2 text-muted'
                 }`}
               title="Minimize Overlay"
             >
@@ -483,7 +483,7 @@ export default function AIChatOverlay() {
             </button>
 
             {/* Conversation Header */}
-            <div className={`px-6 py-4 flex items-center justify-between border-b ${darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-100 shadow-sm'
+            <div className={`px-6 py-4 flex items-center justify-between border-b ${darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-card border-line shadow-sm'
               }`}>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
@@ -507,7 +507,7 @@ export default function AIChatOverlay() {
             </div>
 
             {/* Chat Messages viewport */}
-            <div className={`flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar ${darkMode ? 'bg-slate-900/20' : 'bg-slate-50/50'
+            <div className={`flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar ${darkMode ? 'bg-slate-900/20' : 'bg-surface-2'
               }`}>
               {/* If empty and greeting is loading, show loading skeleton */}
               {messages.length === 0 && chatLoading && (
@@ -516,7 +516,7 @@ export default function AIChatOverlay() {
                     <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center border bg-indigo-600 border-indigo-500 text-white animate-bounce-subtle">
                       <Bot size={16} />
                     </div>
-                    <div className={`p-4 rounded-2xl rounded-tl-none text-sm flex items-center gap-3 border shadow-sm ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-100 text-slate-800'
+                    <div className={`p-4 rounded-2xl rounded-tl-none text-sm flex items-center gap-3 border shadow-sm ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-card border-line text-inksoft'
                       }`}>
                       <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />
                       <span>Site Audit AI is analyzing detailed module JSON data...</span>
@@ -530,7 +530,7 @@ export default function AIChatOverlay() {
                 <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[85%] flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
                     <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center border ${msg.role === 'user'
-                      ? (darkMode ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-600')
+                      ? (darkMode ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-cardsoft border-line text-muted')
                       : 'bg-indigo-600 border-indigo-500 text-white'
                       }`}>
                       {msg.role === 'user' ? <User size={15} /> : <Bot size={15} />}
@@ -539,10 +539,10 @@ export default function AIChatOverlay() {
                     <div className={`p-4 rounded-2xl text-sm leading-relaxed border ${msg.role === 'user'
                       ? (darkMode
                         ? 'bg-indigo-600 border-indigo-500 text-white rounded-tr-none shadow-lg shadow-indigo-600/10'
-                        : 'bg-white border-slate-100 text-slate-800 rounded-tr-none shadow-sm')
+                        : 'bg-card border-line text-inksoft rounded-tr-none shadow-sm')
                       : (darkMode
                         ? 'bg-slate-800 border-slate-700/80 text-slate-100 rounded-tl-none'
-                        : 'bg-white border-slate-100 text-slate-800 rounded-tl-none shadow-sm')
+                        : 'bg-card border-line text-inksoft rounded-tl-none shadow-sm')
                       }`}>
                       <div className="prose prose-sm dark:prose-invert" dangerouslySetInnerHTML={{ __html: formatMarkdown(msg.text) }} />
                     </div>
@@ -557,7 +557,7 @@ export default function AIChatOverlay() {
                     <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center border bg-indigo-600 border-indigo-500 text-white">
                       <Bot size={15} />
                     </div>
-                    <div className={`p-4 rounded-2xl rounded-tl-none text-sm flex items-center gap-3 border shadow-sm ${darkMode ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-white border-slate-100 text-slate-800'
+                    <div className={`p-4 rounded-2xl rounded-tl-none text-sm flex items-center gap-3 border shadow-sm ${darkMode ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-card border-line text-inksoft'
                       }`}>
                       <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />
                       <span>Assistant is thinking...</span>
@@ -570,7 +570,7 @@ export default function AIChatOverlay() {
             </div>
 
             {/* suggestion template pills container */}
-            <div className={`px-6 py-3 border-t flex flex-wrap gap-2 ${darkMode ? 'bg-slate-900/40 border-slate-850' : 'bg-slate-50 border-slate-100'
+            <div className={`px-6 py-3 border-t flex flex-wrap gap-2 ${darkMode ? 'bg-slate-900/40 border-slate-850' : 'bg-surface-2 border-line'
               }`}>
               <span className="text-[9px] font-black uppercase tracking-wider opacity-45 flex items-center gap-1 mr-1 shrink-0 h-6">
                 <HelpCircle className="w-3 h-3" /> Quick Context Queries:
@@ -582,7 +582,7 @@ export default function AIChatOverlay() {
                   disabled={chatLoading}
                   className={`px-3 py-1 rounded-full text-xs font-semibold border transition-all duration-200 active:scale-95 leading-none shrink-0 ${darkMode
                     ? 'bg-slate-850 border-slate-700 hover:border-indigo-500 text-slate-300 hover:text-white'
-                    : 'bg-white border-slate-200 hover:border-indigo-500 text-slate-600 hover:text-indigo-600 shadow-sm'
+                    : 'bg-card border-line hover:border-indigo-500 text-muted hover:text-indigo-600 shadow-sm'
                     }`}
                 >
                   {prompt}
@@ -593,7 +593,7 @@ export default function AIChatOverlay() {
             {/* Chat Input Container */}
             <form
               onSubmit={(e) => { e.preventDefault(); handleSend(); }}
-              className={`p-6 border-t flex items-center gap-3 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'
+              className={`p-6 border-t flex items-center gap-3 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-card border-line'
                 }`}
             >
               <input
@@ -603,7 +603,7 @@ export default function AIChatOverlay() {
                 placeholder={`Ask AI anything about this ${sectionName} audit...`}
                 className={`flex-1 bg-transparent rounded-xl border border-transparent focus:ring-0 text-sm py-3 px-4 transition-all ${darkMode
                   ? 'text-white bg-slate-950/60 border-slate-800 focus:border-slate-700'
-                  : 'text-slate-800 bg-slate-50 border-slate-200 focus:border-slate-350'
+                  : 'text-inksoft bg-surface-2 border-line focus:border-slate-350'
                   }`}
                 disabled={chatLoading}
               />
@@ -614,7 +614,7 @@ export default function AIChatOverlay() {
                   ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-500/20 hover:bg-indigo-550'
                   : (darkMode
                     ? 'bg-slate-800 border-slate-750 text-slate-500'
-                    : 'bg-slate-100 border-slate-200 text-slate-400')
+                    : 'bg-cardsoft border-line text-faint')
                   }`}
               >
                 <Send className="w-4 h-4" />

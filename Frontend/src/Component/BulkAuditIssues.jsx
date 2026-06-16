@@ -11,18 +11,18 @@ const IssueRow = ({ issue, pages, darkMode, onDrillDown }) => {
     if (affectedPages.length === 0) return null;
 
     return (
-        <div className={`border-b ${darkMode ? "border-slate-800" : "border-slate-100"} last:border-0`}>
+        <div className={`border-b ${darkMode ? "border-slate-800" : "border-line"} last:border-0`}>
             <div
                 onClick={() => setIsOpen(!isOpen)}
-                className={`flex items-center justify-between px-6 py-4 cursor-pointer transition-colors ${darkMode ? "hover:bg-slate-800/30" : "hover:bg-slate-50/50"}`}
+                className={`flex items-center justify-between px-6 py-4 cursor-pointer transition-colors ${darkMode ? "hover:bg-slate-800/30" : "hover:bg-cardsoft"}`}
             >
                 <div className="flex items-center gap-4 flex-1">
                     <div className={`p-1.5 rounded-lg ${issue.severity === 'error' ? 'bg-red-500/10 text-red-500' : issue.severity === 'warning' ? 'bg-yellow-500/10 text-yellow-500' : 'bg-blue-500/10 text-blue-500'}`}>
                         {issue.severity === 'error' ? <XCircle className="w-4 h-4" /> : issue.severity === 'warning' ? <AlertCircle className="w-4 h-4" /> : <Info className="w-4 h-4" />}
                     </div>
                     <div>
-                        <h4 className={`text-sm font-semibold ${darkMode ? "text-slate-200" : "text-slate-700"}`}>{issue.title}</h4>
-                        <p className={`text-xs ${darkMode ? "text-slate-500" : "text-slate-400"}`}>{issue.description}</p>
+                        <h4 className={`text-sm font-semibold ${darkMode ? "text-slate-200" : "text-ink"}`}>{issue.title}</h4>
+                        <p className={`text-xs ${darkMode ? "text-slate-500" : "text-faint"}`}>{issue.description}</p>
                     </div>
                 </div>
 
@@ -32,7 +32,7 @@ const IssueRow = ({ issue, pages, darkMode, onDrillDown }) => {
                             e.stopPropagation();
                             onDrillDown(issue, affectedPages);
                         }}
-                        className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border transition-all flex items-center gap-2 ${darkMode ? "bg-slate-800 border-slate-700 text-emerald-400 hover:bg-slate-700" : "bg-slate-50 border-slate-200 text-emerald-600 hover:bg-slate-100"}`}
+                        className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border transition-all flex items-center gap-2 ${darkMode ? "bg-slate-800 border-slate-700 text-emerald-400 hover:bg-slate-700" : "bg-cardsoft border-line text-emerald-600 hover:bg-surface-2"}`}
                     >
                         <ListFilter className="w-3 h-3" />
                         View Details
@@ -42,18 +42,18 @@ const IssueRow = ({ issue, pages, darkMode, onDrillDown }) => {
                         <span className={`text-sm font-black ${issue.severity === 'error' ? 'text-red-500' : issue.severity === 'warning' ? 'text-yellow-500' : 'text-blue-500'}`}>
                             {affectedPages.length}
                         </span>
-                        <span className={`text-[10px] ml-1 font-semibold uppercase tracking-wider ${darkMode ? "text-slate-600" : "text-slate-400"}`}>Pages</span>
+                        <span className={`text-[10px] ml-1 font-semibold uppercase tracking-wider ${darkMode ? "text-slate-600" : "text-faint"}`}>Pages</span>
                     </div>
                     {isOpen ? <ChevronDown className="w-4 h-4 text-slate-500" /> : <ChevronRight className="w-4 h-4 text-slate-500" />}
                 </div>
             </div>
 
             {isOpen && (
-                <div className={`px-6 pb-4 animate-in slide-in-from-top-2 duration-200 ${darkMode ? "bg-slate-900/50" : "bg-slate-50/30"}`}>
+                <div className={`px-6 pb-4 animate-in slide-in-from-top-2 duration-200 ${darkMode ? "bg-slate-900/50" : "bg-cardsoft"}`}>
                     <div className="pt-2 space-y-2">
                         {affectedPages.map((page, idx) => (
                             <div key={idx} className="flex items-center justify-between py-2 group">
-                                <span className={`text-xs truncate max-w-md ${darkMode ? "text-slate-400" : "text-slate-600"}`}>{page.url}</span>
+                                <span className={`text-xs truncate max-w-md ${darkMode ? "text-slate-400" : "text-muted"}`}>{page.url}</span>
                                 <a
                                     href={page.url}
                                     target="_blank"
@@ -80,10 +80,10 @@ const IssueCategory = ({ title, description, issues, pages, darkMode, onDrillDow
     if (!hasIssues) return null;
 
     return (
-        <div className={`rounded-2xl border mb-8 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500 ${darkMode ? "bg-slate-900/50 border-slate-800" : "bg-white border-slate-100 shadow-xl"}`}>
-            <div className={`px-6 py-4 border-b ${darkMode ? "bg-slate-800/30 border-slate-800" : "bg-slate-50 border-slate-100"}`}>
-                <h3 className={`text-lg font-black ${darkMode ? "text-slate-200" : "text-slate-800"}`}>{title}</h3>
-                {description && <p className={`text-xs mt-1 ${darkMode ? "text-slate-500" : "text-slate-400"}`}>{description}</p>}
+        <div className={`rounded-2xl border mb-8 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500 ${darkMode ? "bg-slate-900/50 border-slate-800" : "bg-card border-line shadow-xl"}`}>
+            <div className={`px-6 py-4 border-b ${darkMode ? "bg-slate-800/30 border-slate-800" : "bg-cardsoft border-line"}`}>
+                <h3 className={`text-lg font-black ${darkMode ? "text-slate-200" : "text-ink"}`}>{title}</h3>
+                {description && <p className={`text-xs mt-1 ${darkMode ? "text-slate-500" : "text-faint"}`}>{description}</p>}
             </div>
             <div>
                 {issues.map((issue, idx) => (
@@ -231,10 +231,10 @@ export default function BulkAuditIssues({ pages, darkMode, onDrillDown }) {
 
     if (completedPages.length === 0) {
         return (
-            <div className={`p-12 rounded-3xl border text-center ${darkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-100 shadow-xl"}`}>
-                <Info className={`w-12 h-12 mx-auto mb-4 ${darkMode ? "text-slate-700" : "text-slate-200"}`} />
+            <div className={`p-12 rounded-3xl border text-center ${darkMode ? "bg-slate-900 border-slate-800" : "bg-card border-line shadow-xl"}`}>
+                <Info className={`w-12 h-12 mx-auto mb-4 ${darkMode ? "text-slate-700" : "text-faint"}`} />
                 <h3 className="text-xl font-semibold mb-2">No data yet</h3>
-                <p className={`${darkMode ? "text-slate-500" : "text-slate-400"}`}>Complete audits to see aggregate issue reports.</p>
+                <p className={`${darkMode ? "text-slate-500" : "text-faint"}`}>Complete audits to see aggregate issue reports.</p>
             </div>
         );
     }

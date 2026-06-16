@@ -29,6 +29,15 @@ import ScoreBadge from "../Component/reusablecomponent/ScoreBadge";
 const scoreCalculationInfo = InfoDetails.Technical_Performance_Methodology;
 const metricExplanations = InfoDetails;
 
+// Score-linked colour for 0–100 scores: <25 Red, 25–74 Orange, ≥75 Green.
+// `tier`: "label" (lighter) or "value" (stronger).
+const scoreText = (score, darkMode, tier = "value") => {
+  const n = Number(score);
+  if (n >= 75) return darkMode ? (tier === "label" ? "text-emerald-400" : "text-emerald-300") : (tier === "label" ? "text-emerald-600" : "text-emerald-700");
+  if (n >= 25) return darkMode ? (tier === "label" ? "text-amber-400" : "text-amber-300") : (tier === "label" ? "text-amber-600" : "text-amber-700");
+  return darkMode ? (tier === "label" ? "text-rose-400" : "text-rose-300") : (tier === "label" ? "text-rose-600" : "text-rose-700");
+};
+
 const AUDIT_STEPS = [
   {
     icon: <Server className="w-8 h-8 text-blue-500" />,
@@ -97,7 +106,7 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
   const metric = data || {};
   const tech = metric.technicalPerformance || {};
   const overallScore = tech?.Percentage || 0;
-  const mainBg = darkMode ? "bg-gray-900" : "bg-gray-50";
+  const mainBg = darkMode ? "bg-gray-900" : "bg-surface";
 
   const anyVisible = (keys) => keys.some((k) => tech[k] && isVisibleForAudience(k, audienceMode));
   const coreVisible = anyVisible(['LCP', 'INP', 'FID', 'CLS', 'FCP', 'TTFB']);
@@ -109,10 +118,10 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
       {/* Background Decorative Elements */}
      
 
-      <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-4"} pb-16 space-y-6 relative z-10`}>
+      <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-4"} pb-10 space-y-6 relative z-10`}>
 
         {/* ✅ Card 1: URL Header Card */}
-        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
+        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-card border border-line shadow-xl shadow-slate-200/50"}`}>
           <UrlHeader
             data={data}
             darkMode={darkMode}
@@ -124,12 +133,12 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
         </div>
 
         {/* ✅ Card 2: Overview / Preview Card */}
-        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
+        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-card border border-line shadow-xl shadow-slate-200/50"}`}>
             {loading || !data?.technicalPerformance ? (
             <div className={`flex flex-col xl:flex-row ${data?.report === "All" ? "" : "min-h-[300px]"}`}>
               {/* Left Panel: Live Preview (Only if not All) */}
               {data?.report !== "All" && (
-                <div className={`w-full xl:w-[45%] p-3 lg:p-4 flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden backdrop-blur-md ${darkMode ? "bg-slate-955/40 border-slate-800" : "bg-white/40 border-white/20"}`}>
+                <div className={`w-full xl:w-[45%] p-3 lg:p-4 flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden backdrop-blur-md ${darkMode ? "bg-slate-955/40 border-slate-800" : "bg-card border-line"}`}>
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/10 blur-[100px] rounded-full pointer-events-none"></div>
                   <div className="w-full relative z-10 hover:scale-[1.02] transition-transform duration-500">
                     <LivePreview data={data} loading={loading} variant="plain" />
@@ -146,7 +155,7 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
 
               {/* Left Panel: Live Preview (Only if not All) */}
               {data?.report !== "All" && (
-                <div className={`w-full xl:w-[45%] ${data?.report === "All" ? "p-6 lg:p-10" : "p-3 lg:p-4"} flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden backdrop-blur-md ${darkMode ? "bg-slate-955/40 border-slate-800" : "bg-white/40 border-white/20"}`}>
+                <div className={`w-full xl:w-[45%] ${data?.report === "All" ? "p-6 lg:p-10" : "p-3 lg:p-4"} flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden backdrop-blur-md ${darkMode ? "bg-slate-955/40 border-slate-800" : "bg-card border-line"}`}>
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/10 blur-[100px] rounded-full pointer-events-none animate-pulse duration-[10000ms]"></div>
                   <div className="w-full relative z-10 hover:scale-[1.02] transition-transform duration-500">
                     <LivePreview data={data} loading={loading} variant="plain" />
@@ -156,22 +165,22 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
 
               {/* Right Panel: Metrics & Score */}
               <div className={`flex-1 ${data?.report === "All" ? "px-6 pb-4 pt-2 lg:px-10 lg:pt-2" : "px-6 pb-4 pt-4 lg:px-12 lg:pt-6"} flex flex-col justify-center`}>
-                <div className={`w-full ${data?.report === "All" ? "" : "max-w-2xl mx-auto"} ${data?.report === "All" ? "space-y-10" : "space-y-8"}`}>
+                <div className={`w-full ${data?.report === "All" ? "" : "max-w-2xl mx-auto"} ${data?.report === "All" ? "space-y-7" : "space-y-6"}`}>
 
                   {/* Top Content Area */}
-                  <div className={`flex flex-col md:flex-row items-center ${data?.report === "All" ? "gap-10 md:gap-14 justify-between" : "gap-8 md:gap-12 justify-center"}`}>
+                  <div className={`flex flex-col md:flex-row items-center ${data?.report === "All" ? "gap-7 md:gap-9 justify-between" : "gap-8 md:gap-8 justify-center"}`}>
 
                     {/* Text Content */}
                     <div className={`flex-1 ${data?.report === "All" ? "space-y-5" : "space-y-4"} text-left order-2 md:order-1`}>
                       <div className={`${data?.report === "All" ? "space-y-2" : "space-y-1.5"}`}>
-                        <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider animate-in fade-in slide-in-from-left-4 duration-500 ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20 shadow-[0_0_15px_-3px_rgba(59,130,246,0.3)]" : "bg-blue-100/50 text-blue-600 border border-blue-200"}`}>
+                        <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider animate-in fade-in slide-in-from-left-4 duration-500 ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20 shadow-[0_0_15px_-3px_rgba(59,130,246,0.3)]" : "bg-accentsoft text-accent border border-accent/20"}`}>
                           <Activity className="w-3.5 h-3.5 animate-pulse" />
                           <span>Performance Audit</span>
                         </div>
-                        <h3 className={`${data?.report === "All" ? "text-3xl lg:text-5xl" : "text-2xl lg:text-4xl"} font-black tracking-tight animate-in fade-in slide-in-from-left-6 duration-700 delay-75 ${darkMode ? "text-white" : "text-slate-900"}`}>
+                        <h3 className={`${data?.report === "All" ? "text-3xl lg:text-5xl" : "text-2xl lg:text-4xl"} font-black tracking-tight animate-in fade-in slide-in-from-left-6 duration-700 delay-75 ${darkMode ? "text-white" : "text-ink"}`}>
                           Technical <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-indigo-500">Performance</span>
                         </h3>
-                        <p className={`text-sm leading-relaxed opacity-70 animate-in fade-in slide-in-from-left-8 duration-700 delay-150 ${darkMode ? "text-slate-300" : "text-slate-600"}`}>
+                        <p className={`text-sm leading-relaxed opacity-70 animate-in fade-in slide-in-from-left-8 duration-700 delay-150 ${darkMode ? "text-slate-300" : "text-muted"}`}>
                           Core vitals and speed configurations analysis for a faster user experience.
                         </p>
                       </div>
@@ -179,10 +188,10 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                       {/* Stats & Tools */}
                       <div className={`flex flex-wrap items-center ${data?.report === "All" ? "gap-6" : "gap-5"}`}>
                         <StatusSummary tech={tech} className={data?.report === "All" ? "gap-5" : "gap-4"} />
-                        <div className={`w-px h-4 ${darkMode ? "bg-slate-800" : "bg-slate-200 hidden md:block"}`}></div>
+                        <div className={`w-px h-4 ${darkMode ? "bg-slate-800" : "bg-line hidden md:block"}`}></div>
                         <button
                           onClick={() => setSelectedMetricInfo(scoreCalculationInfo)}
-                          className={`group flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 border ${darkMode ? "bg-slate-800/50 border-slate-700 hover:border-blue-500/50 text-blue-400 hover:text-blue-300 shadow-lg shadow-blue-500/5" : "bg-blue-50 border-blue-100 hover:border-blue-300 text-blue-600 shadow-sm"}`}
+                          className={`group flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 border ${darkMode ? "bg-slate-800/50 border-slate-700 hover:border-blue-500/50 text-blue-400 hover:text-blue-300 shadow-lg shadow-blue-500/5" : "bg-accentsoft border-accent/20 hover:border-accent/40 text-accent shadow-sm"}`}
                         >
                           <Info size={14} className="transition-transform group-hover:rotate-12" />
                           <span>Methodology</span>
@@ -195,7 +204,7 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                       <div className={`absolute -inset-8 rounded-full blur-3xl opacity-25 transition-opacity duration-700 group-hover:opacity-40 ${overallScore >= 80 ? "bg-emerald-500" : overallScore >= 50 ? "bg-amber-500" : "bg-rose-500"}`}></div>
                       <CircularProgress value={overallScore} size={data?.report === "All" ? 180 : 150} stroke={14} />
                       <div className="absolute inset-0 flex items-center justify-center flex-col gap-0.5">
-                        <span className={`${data?.report === "All" ? "text-5xl" : "text-3xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>{overallScore}%</span>
+                        <span className={`${data?.report === "All" ? "text-5xl" : "text-3xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>{overallScore}%</span>
                         <span className="text-[11px] font-semibold uppercase tracking-[0.2em] opacity-50">SCORE</span>
                       </div>
                     </div>
@@ -209,7 +218,7 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
         {/* Sections - Manual Unrolled Rendering */}
         {data?.technicalPerformance && (
           <ReportRestrictionWrapper>
-            <div className="space-y-8">
+            <div className="space-y-6">
               {/* Core Web Vitals */}
               {coreVisible && (
               <Section
@@ -433,6 +442,7 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                       icon={Gauge}
                       title="PageSpeed Score"
                       metricData={tech.PageSpeed_Score}
+                      paramKey="PageSpeed_Score"
                       darkMode={darkMode}
                       isOpen={expandedDetails.pageSpeedScore}
                       onToggle={() => toggleDetails('pageSpeedScore')}
@@ -445,13 +455,13 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                         <NotCalculatedNote metric={tech.PageSpeed_Score} darkMode={darkMode} />
                       ) : (
                         <div className="grid grid-cols-2 gap-4">
-                          <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
-                            <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-blue-400" : "text-blue-600"}`}>Mobile</p>
-                            <p className={`text-xl font-black ${darkMode ? "text-blue-300" : "text-blue-700"}`}>{tech.PageSpeed_Score.meta?.mobileScore}</p>
+                          <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
+                            <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${scoreText(tech.PageSpeed_Score.meta?.mobileScore, darkMode, "label")}`}>Mobile</p>
+                            <p className={`text-xl font-black ${scoreText(tech.PageSpeed_Score.meta?.mobileScore, darkMode, "value")}`}>{tech.PageSpeed_Score.meta?.mobileScore}</p>
                           </div>
-                          <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
-                            <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-indigo-400" : "text-indigo-600"}`}>Desktop</p>
-                            <p className={`text-xl font-black ${darkMode ? "text-indigo-300" : "text-indigo-700"}`}>{tech.PageSpeed_Score.meta?.desktopScore}</p>
+                          <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
+                            <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${scoreText(tech.PageSpeed_Score.meta?.desktopScore, darkMode, "label")}`}>Desktop</p>
+                            <p className={`text-xl font-black ${scoreText(tech.PageSpeed_Score.meta?.desktopScore, darkMode, "value")}`}>{tech.PageSpeed_Score.meta?.desktopScore}</p>
                           </div>
                         </div>
                       )}
@@ -476,21 +486,21 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                       ) : (
                         <div className="flex flex-col gap-4">
                           <div className="grid grid-cols-2 gap-4">
-                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
-                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Viewport</p>
-                              <p className={`text-sm font-black ${darkMode ? "text-gray-200" : "text-gray-700"}`}>{tech.Mobile_Usability.meta?.viewport}</p>
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
+                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-400" : "text-muted"}`}>Viewport</p>
+                              <p className={`text-sm font-black ${darkMode ? "text-gray-200" : "text-inksoft"}`}>{tech.Mobile_Usability.meta?.viewport}</p>
                             </div>
-                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
-                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Horizontal Scroll</p>
-                              <p className={`text-sm font-black ${darkMode ? "text-gray-200" : "text-gray-700"}`}>{tech.Mobile_Usability.meta?.horizontalScroll}</p>
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
+                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-400" : "text-muted"}`}>Horizontal Scroll</p>
+                              <p className={`text-sm font-black ${darkMode ? "text-gray-200" : "text-inksoft"}`}>{tech.Mobile_Usability.meta?.horizontalScroll}</p>
                             </div>
-                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
-                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Tap Targets</p>
-                              <p className={`text-sm font-black ${darkMode ? "text-gray-200" : "text-gray-700"}`}>{tech.Mobile_Usability.meta?.tapTargets}</p>
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
+                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-400" : "text-muted"}`}>Tap Targets</p>
+                              <p className={`text-sm font-black ${darkMode ? "text-gray-200" : "text-inksoft"}`}>{tech.Mobile_Usability.meta?.tapTargets}</p>
                             </div>
-                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
-                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Legible Fonts</p>
-                              <p className={`text-sm font-black ${darkMode ? "text-gray-200" : "text-gray-700"}`}>{tech.Mobile_Usability.meta?.legibleFonts}</p>
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
+                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-400" : "text-muted"}`}>Legible Fonts</p>
+                              <p className={`text-sm font-black ${darkMode ? "text-gray-200" : "text-inksoft"}`}>{tech.Mobile_Usability.meta?.legibleFonts}</p>
                             </div>
                           </div>
                           <AffectedList
@@ -517,6 +527,7 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                       icon={Layers}
                       title="Rendering Performance"
                       metricData={tech.Rendering_Performance}
+                      paramKey="Rendering_Performance"
                       darkMode={darkMode}
                       isOpen={expandedDetails.renderingPerformance}
                       onToggle={() => toggleDetails('renderingPerformance')}
@@ -530,17 +541,17 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                       ) : (
                         <div className="flex flex-col gap-4">
                           <div className="grid grid-cols-2 gap-4">
-                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
-                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Layout Shift (CLS)</p>
-                              <p className={`text-xl font-black ${darkMode ? "text-gray-200" : "text-gray-700"}`}>{tech.Rendering_Performance.meta?.cls}</p>
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
+                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-400" : "text-muted"}`}>Layout Shift (CLS)</p>
+                              <p className={`text-xl font-black ${darkMode ? "text-gray-200" : "text-inksoft"}`}>{tech.Rendering_Performance.meta?.cls}</p>
                             </div>
-                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
-                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>Shifting Elements</p>
-                              <p className={`text-xl font-black ${darkMode ? "text-rose-300" : "text-rose-700"}`}>{tech.Rendering_Performance.meta?.layoutShiftElements}</p>
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
+                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-400" : "text-muted"}`}>Shifting Elements</p>
+                              <p className={`text-xl font-black ${darkMode ? "text-gray-200" : "text-inksoft"}`}>{tech.Rendering_Performance.meta?.layoutShiftElements}</p>
                             </div>
-                            <div className={`p-4 rounded-xl border col-span-2 ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
-                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-amber-400" : "text-amber-600"}`}>Unsized Images</p>
-                              <p className={`text-xl font-black ${darkMode ? "text-amber-300" : "text-amber-700"}`}>{tech.Rendering_Performance.meta?.unsizedImages}</p>
+                            <div className={`p-4 rounded-xl border col-span-2 ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
+                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-400" : "text-muted"}`}>Unsized Images</p>
+                              <p className={`text-xl font-black ${darkMode ? "text-gray-200" : "text-inksoft"}`}>{tech.Rendering_Performance.meta?.unsizedImages}</p>
                             </div>
                           </div>
                           <AffectedList
@@ -561,6 +572,7 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                       title="Mobile Load Speed"
                       icon={Clock}
                       metricData={tech.Mobile_Load_Speed}
+                      paramKey="Mobile_Load_Speed"
                       selectedSource="lab"
                       darkMode={darkMode}
                       isOpen={!!expandedDetails.mobileLoadSpeed}
@@ -587,6 +599,7 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                       icon={Globe}
                       title="Third-Party Script Optimization"
                       metricData={tech.Third_Party_Optimization}
+                      paramKey="Third_Party_Optimization"
                       darkMode={darkMode}
                       isOpen={expandedDetails.thirdPartyOptimization}
                       onToggle={() => toggleDetails('thirdPartyOptimization')}
@@ -600,21 +613,21 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                       ) : (
                         <div className="flex flex-col gap-4">
                           <div className="grid grid-cols-2 gap-4">
-                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
-                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Third-Party Scripts</p>
-                              <p className={`text-xl font-black ${darkMode ? "text-gray-200" : "text-gray-700"}`}>{tech.Third_Party_Optimization.meta?.thirdPartyScripts}</p>
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
+                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-400" : "text-muted"}`}>Third-Party Scripts</p>
+                              <p className={`text-xl font-black ${darkMode ? "text-gray-200" : "text-inksoft"}`}>{tech.Third_Party_Optimization.meta?.thirdPartyScripts}</p>
                             </div>
-                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
-                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>Async / Defer</p>
-                              <p className={`text-xl font-black ${darkMode ? "text-emerald-300" : "text-emerald-700"}`}>{tech.Third_Party_Optimization.meta?.asyncDeferCount}</p>
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
+                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-400" : "text-muted"}`}>Async / Defer</p>
+                              <p className={`text-xl font-black ${darkMode ? "text-gray-200" : "text-inksoft"}`}>{tech.Third_Party_Optimization.meta?.asyncDeferCount}</p>
                             </div>
-                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
-                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>Blocking</p>
-                              <p className={`text-xl font-black ${darkMode ? "text-rose-300" : "text-rose-700"}`}>{tech.Third_Party_Optimization.meta?.blockingCount}</p>
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
+                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-400" : "text-muted"}`}>Blocking</p>
+                              <p className={`text-xl font-black ${darkMode ? "text-gray-200" : "text-inksoft"}`}>{tech.Third_Party_Optimization.meta?.blockingCount}</p>
                             </div>
-                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
-                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-amber-400" : "text-amber-600"}`}>Main-Thread Block</p>
-                              <p className={`text-xl font-black ${darkMode ? "text-amber-300" : "text-amber-700"}`}>{tech.Third_Party_Optimization.meta?.thirdPartyBlockingMs}ms</p>
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
+                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-400" : "text-muted"}`}>Main-Thread Block</p>
+                              <p className={`text-xl font-black ${darkMode ? "text-gray-200" : "text-inksoft"}`}>{tech.Third_Party_Optimization.meta?.thirdPartyBlockingMs}ms</p>
                             </div>
                           </div>
                           <AffectedList
@@ -634,6 +647,7 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                       icon={ImageIcon}
                       title="Lazy Loading Implementation"
                       metricData={tech.Lazy_Loading}
+                      paramKey="Lazy_Loading"
                       darkMode={darkMode}
                       isOpen={expandedDetails.lazyLoading}
                       onToggle={() => toggleDetails('lazyLoading')}
@@ -647,21 +661,21 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                       ) : (
                         <div className="flex flex-col gap-4">
                           <div className="grid grid-cols-2 gap-4">
-                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
-                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Below-Fold Images</p>
-                              <p className={`text-xl font-black ${darkMode ? "text-gray-200" : "text-gray-700"}`}>{tech.Lazy_Loading.meta?.belowFoldImages}</p>
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
+                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-400" : "text-muted"}`}>Below-Fold Images</p>
+                              <p className={`text-xl font-black ${darkMode ? "text-gray-200" : "text-inksoft"}`}>{tech.Lazy_Loading.meta?.belowFoldImages}</p>
                             </div>
-                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
-                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>Lazy-Loaded</p>
-                              <p className={`text-xl font-black ${darkMode ? "text-emerald-300" : "text-emerald-700"}`}>{tech.Lazy_Loading.meta?.lazyImages}</p>
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
+                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-400" : "text-muted"}`}>Lazy-Loaded</p>
+                              <p className={`text-xl font-black ${darkMode ? "text-gray-200" : "text-inksoft"}`}>{tech.Lazy_Loading.meta?.lazyImages}</p>
                             </div>
-                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
-                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>Eager Images</p>
-                              <p className={`text-xl font-black ${darkMode ? "text-rose-300" : "text-rose-700"}`}>{tech.Lazy_Loading.meta?.eagerImages}</p>
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
+                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-400" : "text-muted"}`}>Eager Images</p>
+                              <p className={`text-xl font-black ${darkMode ? "text-gray-200" : "text-inksoft"}`}>{tech.Lazy_Loading.meta?.eagerImages}</p>
                             </div>
-                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
-                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-amber-400" : "text-amber-600"}`}>Iframes / Videos</p>
-                              <p className={`text-xl font-black ${darkMode ? "text-amber-300" : "text-amber-700"}`}>{tech.Lazy_Loading.meta?.belowFoldIframes} / {tech.Lazy_Loading.meta?.totalVideos}</p>
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
+                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-400" : "text-muted"}`}>Iframes / Videos</p>
+                              <p className={`text-xl font-black ${darkMode ? "text-gray-200" : "text-inksoft"}`}>{tech.Lazy_Loading.meta?.belowFoldIframes} / {tech.Lazy_Loading.meta?.totalVideos}</p>
                             </div>
                           </div>
                           <AffectedList
@@ -681,6 +695,7 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                       icon={Cpu}
                       title="JavaScript Execution Efficiency"
                       metricData={tech.JS_Execution}
+                      paramKey="JS_Execution"
                       darkMode={darkMode}
                       isOpen={expandedDetails.jsExecution}
                       onToggle={() => toggleDetails('jsExecution')}
@@ -694,13 +709,13 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                       ) : (
                         <div className="flex flex-col gap-4">
                           <div className="grid grid-cols-2 gap-4">
-                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
-                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>JS Execution Time</p>
-                              <p className={`text-xl font-black ${darkMode ? "text-gray-200" : "text-gray-700"}`}>{tech.JS_Execution.meta?.jsExecutionTime}</p>
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
+                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-400" : "text-muted"}`}>JS Execution Time</p>
+                              <p className={`text-xl font-black ${darkMode ? "text-gray-200" : "text-inksoft"}`}>{tech.JS_Execution.meta?.jsExecutionTime}</p>
                             </div>
-                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
-                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-amber-400" : "text-amber-600"}`}>Main-Thread Time</p>
-                              <p className={`text-xl font-black ${darkMode ? "text-amber-300" : "text-amber-700"}`}>{tech.JS_Execution.meta?.mainThreadTime}</p>
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
+                              <p className={`text-[10px] fontsemibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-400" : "text-muted"}`}>Main-Thread Time</p>
+                              <p className={`text-xl font-black ${darkMode ? "text-gray-200" : "text-inksoft"}`}>{tech.JS_Execution.meta?.mainThreadTime}</p>
                             </div>
                           </div>
                           <AffectedList
@@ -720,7 +735,7 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
               {/* Category 3: Asset & Optimizations (Gated) */}
               {assetsVisible && (
               <ReportRestrictionWrapper>
-                <div className="space-y-12">
+                <div className="space-y-8">
                   <Section title="Asset Distribution & Code Delivery Optimizations" icon={Sparkles} darkMode={darkMode}>
                     {tech.Compression && isVisibleForAudience('Compression', audienceMode) && (
                       <OptimizationCard
@@ -739,9 +754,9 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                       >
                         <div className="flex flex-col gap-4">
                           <div className="grid grid-cols-2 gap-4">
-                            <div className={`p-4 rounded-xl border col-span-2 ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                            <div className={`p-4 rounded-xl border col-span-2 ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
                               <div className="flex justify-between items-center">
-                                <p className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Overall Score</p>
+                                <p className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-muted"}`}>Overall Score</p>
                                 <ScoreBadge status={tech.Compression.status} value={tech.Compression.meta?.value} darkMode={darkMode} />
                               </div>
                             </div>
@@ -756,12 +771,12 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                           </div>
 
                           {tech.Compression.meta?.uncompressedResources && tech.Compression.meta.uncompressedResources.length > 0 && (
-                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
-                              <p className={`text-[10px] font-semibold uppercase tracking-wider mb-3 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Uncompressed Resources</p>
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
+                              <p className={`text-[10px] font-semibold uppercase tracking-wider mb-3 ${darkMode ? "text-gray-500" : "text-faint"}`}>Uncompressed Resources</p>
                               <div className="flex flex-col gap-2">
                                 {tech.Compression.meta.uncompressedResources.map((item, idx) => (
                                   <div key={idx} className="flex justify-between items-center">
-                                    <p className={`text-[10px] truncate max-w-[70%] font-mono ${darkMode ? "text-gray-300" : "text-gray-600"}`} title={item.url}>
+                                    <p className={`text-[10px] truncate max-w-[70%] font-mono ${darkMode ? "text-gray-300" : "text-muted"}`} title={item.url}>
                                       {item.fileName || item.url}
                                     </p>
                                     <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${darkMode ? "bg-rose-900/20 text-rose-400" : "bg-rose-100 text-rose-600"}`}>
@@ -793,9 +808,9 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                       >
                         <div className="flex flex-col gap-4">
                           <div className="grid grid-cols-2 gap-4">
-                            <div className={`p-4 rounded-xl border col-span-2 ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                            <div className={`p-4 rounded-xl border col-span-2 ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
                               <div className="flex justify-between items-center">
-                                <p className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Overall Score</p>
+                                <p className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-muted"}`}>Overall Score</p>
                                 <ScoreBadge status={tech.Caching.status} value={tech.Caching.meta?.value} darkMode={darkMode} />
                               </div>
                             </div>
@@ -810,12 +825,12 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                           </div>
 
                           {tech.Caching.meta?.uncachedResources && tech.Caching.meta.uncachedResources.length > 0 && (
-                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
-                              <p className={`text-[10px] font-semibold uppercase tracking-wider mb-3 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Uncached Resources</p>
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
+                              <p className={`text-[10px] font-semibold uppercase tracking-wider mb-3 ${darkMode ? "text-gray-500" : "text-faint"}`}>Uncached Resources</p>
                               <div className="flex flex-col gap-2">
                                 {tech.Caching.meta.uncachedResources.map((item, idx) => (
                                   <div key={idx} className="flex justify-between items-center">
-                                    <p className={`text-[10px] truncate max-w-[70%] font-mono ${darkMode ? "text-gray-300" : "text-gray-600"}`} title={item.url}>
+                                    <p className={`text-[10px] truncate max-w-[70%] font-mono ${darkMode ? "text-gray-300" : "text-muted"}`} title={item.url}>
                                       {item.fileName || item.url}
                                     </p>
                                     <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${darkMode ? "bg-rose-900/20 text-rose-400" : "bg-rose-100 text-rose-600"}`}>
@@ -848,9 +863,9 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                       >
                         <div className="flex flex-col gap-4">
                           <div className="grid grid-cols-2 gap-4">
-                            <div className={`p-4 rounded-xl border col-span-2 ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                            <div className={`p-4 rounded-xl border col-span-2 ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
                               <div className="flex justify-between items-center">
-                                <p className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Overall Score</p>
+                                <p className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-muted"}`}>Overall Score</p>
                                 <ScoreBadge status={tech.Redirect_Chains.status} value={tech.Redirect_Chains.meta?.value} darkMode={darkMode} />
                               </div>
                             </div>
@@ -865,12 +880,12 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                           </div>
 
                           {tech.Redirect_Chains.meta?.redirectChains && tech.Redirect_Chains.meta.redirectChains.length > 0 && (
-                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
-                              <p className={`text-[10px] font-semibold uppercase tracking-wider mb-3 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Redirect Chains</p>
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
+                              <p className={`text-[10px] font-semibold uppercase tracking-wider mb-3 ${darkMode ? "text-gray-500" : "text-faint"}`}>Redirect Chains</p>
                               <div className="flex flex-col gap-2">
                                 {tech.Redirect_Chains.meta.redirectChains.map((item, idx) => (
                                   <div key={idx} className="flex justify-between items-center">
-                                    <p className={`text-[10px] truncate max-w-[70%] font-mono ${darkMode ? "text-gray-300" : "text-gray-600"}`} title={item.url}>
+                                    <p className={`text-[10px] truncate max-w-[70%] font-mono ${darkMode ? "text-gray-300" : "text-muted"}`} title={item.url}>
                                       {item.fileName || item.url}
                                     </p>
                                     <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${darkMode ? "bg-rose-900/20 text-rose-400" : "bg-rose-100 text-rose-600"}`}>
@@ -902,29 +917,29 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                       >
                         <div className="flex flex-col gap-4">
                           <div className="grid grid-cols-2 gap-4">
-                            <div className={`p-4 rounded-xl border col-span-2 ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                            <div className={`p-4 rounded-xl border col-span-2 ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
                               <div className="flex justify-between items-center">
-                                <p className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Overall Score</p>
+                                <p className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-muted"}`}>Overall Score</p>
                                 <ScoreBadge status={tech.Render_Blocking.status} value={tech.Render_Blocking.meta?.value} darkMode={darkMode} />
                               </div>
                             </div>
-                            <div className={`p-3 rounded-xl border ${darkMode ? "bg-emerald-900/10 border-emerald-800/30" : "bg-emerald-50 border-emerald-100"}`}>
-                              <p className={`text-[10px] font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>Scripts</p>
-                              <p className={`text-xl font-black ${darkMode ? "text-emerald-300" : "text-emerald-700"}`}>{tech.Render_Blocking.meta?.renderBlockingCount}</p>
+                            <div className={`p-3 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
+                              <p className={`text-[10px] font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-400" : "text-muted"}`}>Scripts</p>
+                              <p className={`text-xl font-black ${darkMode ? "text-gray-200" : "text-inksoft"}`}>{tech.Render_Blocking.meta?.renderBlockingCount}</p>
                             </div>
-                            <div className={`p-3 rounded-xl border ${darkMode ? "bg-rose-900/10 border-rose-800/30" : "bg-rose-50 border-rose-100"}`}>
-                              <p className={`text-[10px] font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>Total Size</p>
-                              <p className={`text-xl font-black ${darkMode ? "text-rose-300" : "text-rose-700"}`}>{((tech.Render_Blocking.meta?.renderBlockingTime || 0) / 1000).toFixed(2)}s</p>
+                            <div className={`p-3 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
+                              <p className={`text-[10px] font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-400" : "text-muted"}`}>Total Size</p>
+                              <p className={`text-xl font-black ${darkMode ? "text-gray-200" : "text-inksoft"}`}>{((tech.Render_Blocking.meta?.renderBlockingTime || 0) / 1000).toFixed(2)}s</p>
                             </div>
                           </div>
 
                           {tech.Render_Blocking.meta?.renderBlockingResources && tech.Render_Blocking.meta.renderBlockingResources.length > 0 && (
-                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
-                              <p className={`text-[10px] font-semibold uppercase tracking-wider mb-3 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>Blocking Resources</p>
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
+                              <p className={`text-[10px] font-semibold uppercase tracking-wider mb-3 ${darkMode ? "text-gray-500" : "text-faint"}`}>Blocking Resources</p>
                               <div className="flex flex-col gap-2">
                                 {tech.Render_Blocking.meta.renderBlockingResources.map((item, idx) => (
                                   <div key={idx} className="flex justify-between items-center">
-                                    <p className={`text-[10px] truncate max-w-[70%] font-mono ${darkMode ? "text-gray-300" : "text-gray-600"}`} title={item.url}>
+                                    <p className={`text-[10px] truncate max-w-[70%] font-mono ${darkMode ? "text-gray-300" : "text-muted"}`} title={item.url}>
                                       {item.fileName || item.url}
                                     </p>
                                     <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${darkMode ? "bg-rose-900/20 text-rose-400" : "bg-rose-100 text-rose-600"}`}>
@@ -956,47 +971,47 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                       >
                         <div className="flex flex-col gap-4">
                           <div className="grid grid-cols-2 gap-4">
-                            <div className={`p-4 rounded-xl border col-span-2 ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                            <div className={`p-4 rounded-xl border col-span-2 ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
                               <div className="flex justify-between items-center">
-                                <p className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Overall Score</p>
+                                <p className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-muted"}`}>Overall Score</p>
                                 <ScoreBadge status={tech.Resource_Optimization.status} value={tech.Resource_Optimization.meta?.value} darkMode={darkMode} />
                               </div>
                             </div>
                             {/* Images Stats Group */}
-                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
                               <div className="flex justify-between items-center mb-3">
-                                <p className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Images</p>
+                                <p className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-muted"}`}>Images</p>
                                 <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${darkMode ? "bg-emerald-900/20 text-emerald-400" : "bg-emerald-50 text-emerald-600"}`}>
                                   {tech.Resource_Optimization.meta?.totalImages || 0} Total
                                 </span>
                               </div>
                               <div className="space-y-2">
                                 <div className="flex justify-between items-center">
-                                  <span className={`text-[11px] ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Optimized</span>
+                                  <span className={`text-[11px] ${darkMode ? "text-gray-400" : "text-muted"}`}>Optimized</span>
                                   <span className={`text-xs font-semibold ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>{tech.Resource_Optimization.meta?.optimizedImagesCount || 0}</span>
                                 </div>
                                 <div className="flex justify-between items-center">
-                                  <span className={`text-[11px] ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Heavy/Large</span>
+                                  <span className={`text-[11px] ${darkMode ? "text-gray-400" : "text-muted"}`}>Heavy/Large</span>
                                   <span className={`text-xs font-semibold ${darkMode ? "text-rose-400" : "text-rose-600"}`}>{tech.Resource_Optimization.meta?.unoptimizedImagesCount || 0}</span>
                                 </div>
                               </div>
                             </div>
 
                             {/* Scripts Stats Group */}
-                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-gray-50/50 border-gray-100"}`}>
+                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
                               <div className="flex justify-between items-center mb-3">
-                                <p className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Scripts</p>
+                                <p className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-muted"}`}>Scripts</p>
                                 <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${darkMode ? "bg-blue-900/20 text-blue-400" : "bg-blue-50 text-blue-600"}`}>
                                   {tech.Resource_Optimization.meta?.totalScripts || 0} Total
                                 </span>
                               </div>
                               <div className="space-y-2">
                                 <div className="flex justify-between items-center">
-                                  <span className={`text-[11px] ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Minified</span>
+                                  <span className={`text-[11px] ${darkMode ? "text-gray-400" : "text-muted"}`}>Minified</span>
                                   <span className={`text-xs font-semibold ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>{tech.Resource_Optimization.meta?.minifiedScriptsCount || 0}</span>
                                 </div>
                                 <div className="flex justify-between items-center">
-                                  <span className={`text-[11px] ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Unminified</span>
+                                  <span className={`text-[11px] ${darkMode ? "text-gray-400" : "text-muted"}`}>Unminified</span>
                                   <span className={`text-xs font-semibold ${darkMode ? "text-rose-400" : "text-rose-600"}`}>{tech.Resource_Optimization.meta?.unminifiedScriptsCount || 0}</span>
                                 </div>
                               </div>

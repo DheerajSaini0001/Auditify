@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from "react";
-import { Loader2, Search, Monitor, Smartphone, ChevronDown, Settings, AlertCircle } from "lucide-react";
+import { Loader2, Search, Monitor, Smartphone, ChevronDown, Settings, AlertCircle, ShieldCheck } from "lucide-react";
 import { useData } from "../context/DataContext.jsx";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ThemeContext } from "../context/ThemeContext.jsx";
@@ -32,19 +32,19 @@ const CustomDropdown = ({ value, onChange, options, icon, darkMode, disabled }) 
         onClick={() => !disabled && setIsOpen(!isOpen)}
         className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors border ${darkMode
           ? "hover:bg-slate-800 border-transparent hover:border-slate-700"
-          : "hover:bg-slate-50 border-transparent hover:border-slate-200"
+          : "hover:bg-cardsoft border-transparent hover:border-line"
           } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
       >
         {icon}
-        <span className={`text-sm font-medium ${darkMode ? "text-slate-300" : "text-slate-700"} truncate`}>
+        <span className={`text-sm font-medium ${darkMode ? "text-slate-300" : "text-inksoft"} truncate`}>
           {selectedLabel}
         </span>
-        <ChevronDown className={`w-3 h-3 transition-transform ${isOpen ? "rotate-180" : ""} ${darkMode ? "text-slate-500" : "text-slate-600"}`} />
+        <ChevronDown className={`w-3 h-3 transition-transform ${isOpen ? "rotate-180" : ""} ${darkMode ? "text-slate-500" : "text-muted"}`} />
       </div>
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className={`absolute top-full mt-2 left-0 w-max min-w-full z-[110] rounded-xl shadow-xl border overflow-hidden animate-in fade-in zoom-in-95 duration-200 ${darkMode ? "bg-slate-900 border-slate-700 text-slate-300" : "bg-white border-slate-100 text-slate-700"
+        <div className={`absolute top-full mt-2 left-0 w-max min-w-full z-[110] rounded-xl shadow-xl border overflow-hidden animate-in fade-in zoom-in-95 duration-200 ${darkMode ? "bg-slate-900 border-slate-700 text-slate-300" : "bg-card border-line text-inksoft"
           }`}>
           <div className="max-h-60 overflow-y-auto custom-scrollbar">
             {options.map((option) => (
@@ -56,8 +56,8 @@ const CustomDropdown = ({ value, onChange, options, icon, darkMode, disabled }) 
                 }}
                 className={`flex items-center gap-3 px-4 py-3 text-sm font-medium cursor-pointer transition-colors ${darkMode
                   ? "hover:bg-slate-800 hover:text-white"
-                  : "hover:bg-slate-50 hover:text-black"
-                  } ${value === option.value ? (darkMode ? "bg-slate-800 text-white" : "bg-slate-50 text-black") : ""}`}
+                  : "hover:bg-cardsoft hover:text-ink"
+                  } ${value === option.value ? (darkMode ? "bg-slate-800 text-white" : "bg-cardsoft text-ink") : ""}`}
               >
                 {/* Optional: Add check icon or dot for selected state */}
                 {value === option.value && <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>}
@@ -199,11 +199,11 @@ export default function InputForm() {
 
 
   // Styles
-  const baseClass = "flex flex-col items-center justify-start min-h-screen relative font-sans px-4 pt-24";
+  const baseClass = "flex flex-col items-center justify-start min-h-screen relative font-sans px-4 pt-14";
 
   const containerClass = darkMode
     ? `${baseClass} bg-[#0B1120] text-white`
-    : `${baseClass} bg-slate-50 text-slate-900`;
+    : `${baseClass} bg-surface text-ink`;
   return (
     <div className={containerClass}>
       {/* Background Grid Pattern */}
@@ -213,13 +213,13 @@ export default function InputForm() {
       <div className="relative z-10 w-full max-w-5xl px-4 flex flex-col items-center">
 
         {/* Header Section */}
-        <div className="text-center mb-12 space-y-5 animate-in fade-in slide-in-from-bottom-5 duration-700">
+        <div className="text-center mb-8 space-y-5 animate-in fade-in slide-in-from-bottom-5 duration-700">
 
           <h1 className="text-4xl md:text-6xl font-semibold tracking-tight">
             Analyze your <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500">Website Health</span>
           </h1>
 
-          <p className={`max-w-2xl mx-auto text-lg ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
+          <p className={`max-w-2xl mx-auto text-lg ${darkMode ? "text-slate-400" : "text-muted"}`}>
             Get a comprehensive professional audit of your site's Performance, SEO, Accessibility, and UX in seconds.
           </p>
         </div>
@@ -231,28 +231,28 @@ export default function InputForm() {
             flex flex-col lg:flex-row items-center p-2 rounded-2xl border transition-all duration-300
             ${darkMode
               ? "bg-slate-900/90 border-slate-700 shadow-2xl shadow-black/50 hover:border-slate-600"
-              : "bg-white border-slate-200 shadow-xl shadow-slate-200/50 hover:border-slate-300"
+              : "bg-card border-line shadow-xl shadow-slate-200/50 hover:border-line"
             }
           `}>
 
             {/* Main Input */}
             <div className="flex-1 w-full relative flex items-center px-4 h-14">
-              <Search className={`w-5 h-5 flex-shrink-0 ${darkMode ? "text-slate-500" : "text-slate-600"}`} />
+              <Search className={`w-5 h-5 flex-shrink-0 ${darkMode ? "text-slate-500" : "text-muted"}`} />
               <input
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 disabled={loading}
                 placeholder="Enter website URL (e.g. example.com)"
-                className={`w-full h-full bg-transparent border-none outline-none text-lg px-4 font-medium placeholder-slate-600 placeholder:text-base ${darkMode ? "text-white" : "text-slate-900"}`}
+                className={`w-full h-full bg-transparent border-none outline-none text-lg px-4 font-medium placeholder-slate-600 placeholder:text-base ${darkMode ? "text-white" : "text-ink"}`}
               />
             </div>
 
             {/* Divider */}
-            <div className={`hidden lg:block w-px h-8 ${darkMode ? "bg-slate-700" : "bg-slate-200"} mx-2`}></div>
+            <div className={`hidden lg:block w-px h-8 ${darkMode ? "bg-slate-700" : "bg-[#E7E0D2]"} mx-2`}></div>
 
             {/* Mobile Divider */}
-            <div className={`lg:hidden w-full h-px ${darkMode ? "bg-slate-700" : "bg-slate-200"} my-2`}></div>
+            <div className={`lg:hidden w-full h-px ${darkMode ? "bg-slate-700" : "bg-[#E7E0D2]"} my-2`}></div>
 
             {/* Controls Group */}
             <div className="flex w-full lg:w-auto items-center gap-2 px-2">
@@ -347,34 +347,37 @@ export default function InputForm() {
       {showCaptcha && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 backdrop-blur-md transition-all duration-300">
           <div className={`
-            ${darkMode ? "bg-slate-900 border-slate-700 shadow-emerald-500/10" : "bg-white border-slate-100 shadow-slate-200/50"}
+            ${darkMode ? "bg-slate-900 border-slate-700 shadow-emerald-500/10" : "bg-card border-line shadow-slate-200/50"}
             border border-solid rounded-[2.5rem] shadow-2xl p-8 flex flex-col items-center gap-6 max-w-sm w-full mx-4 animate-in zoom-in-95 duration-200
           `}>
-            <div className={`p-5 rounded-full ${darkMode ? "bg-emerald-500/10 text-emerald-400" : "bg-emerald-50 text-emerald-600"}`}>
-              <Monitor className="w-10 h-10" />
+            <div className="w-16 h-16 rounded-2xl bg-[#ea580c] flex items-center justify-center shadow-xl shadow-orange-600/20 rotate-6">
+              <ShieldCheck className="w-8 h-8 text-white" />
             </div>
 
             <div className="text-center space-y-2">
-              <h3 className={`text-2xl font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>Verify Security</h3>
-              <p className={`text-sm font-medium leading-relaxed ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
+              <h3 className={`text-2xl font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>Verify Security</h3>
+              <p className={`text-sm font-medium leading-relaxed ${darkMode ? "text-slate-400" : "text-muted"}`}>
                 Confirm you're human to generate your site health report.
               </p>
             </div>
 
-            <div className={`p-4 rounded-2xl w-full border ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
+            <form
+              onSubmit={(e) => { e.preventDefault(); handleSubmitWithCaptcha(); }}
+              className={`p-4 rounded-2xl w-full border ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-cardsoft border-line"}`}
+            >
               <MathCaptcha onAnswerChange={setCaptchaAnswer} error={captchaError} />
               <button
-                onClick={handleSubmitWithCaptcha}
+                type="submit"
                 disabled={loading || !captchaAnswer}
-                className="mt-4 w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl transition-all disabled:opacity-50"
+                className="mt-4 w-full py-3 bg-[#ea580c] hover:bg-[#c2410c] text-white font-semibold rounded-xl transition-all shadow-lg shadow-orange-600/20 active:scale-[0.98] disabled:opacity-50"
               >
                 {loading ? "Verifying..." : "Verify & Run Audit"}
               </button>
-            </div>
+            </form>
 
             <button
               onClick={() => setShowCaptcha(false)}
-              className={`text-xs font-semibold uppercase tracking-[0.2em] ${darkMode ? "text-slate-500 hover:text-white" : "text-slate-600 hover:text-slate-900"} transition-all duration-200 hover:scale-110 active:scale-95`}
+              className={`cursor-pointer text-[11px] font-semibold uppercase tracking-widest px-4 py-2 rounded-full transition-all duration-200 hover:scale-125 active:scale-95 ${darkMode ? "text-slate-500 hover:text-orange-400 hover:bg-white/5" : "text-faint hover:text-accent hover:bg-accentsoft"}`}
             >
               Cancel
             </button>

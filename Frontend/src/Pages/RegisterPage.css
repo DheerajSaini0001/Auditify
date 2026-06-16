@@ -1,30 +1,28 @@
 
 .register-page-container {
-    min-height: calc(100vh - 80px);
+    min-height: calc(100vh - 64px);
     width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     position: relative;
-    padding: 40px 20px;
+    padding: 20px;
     transition: background 0.3s ease;
     transform: translateZ(0); /* GPU acceleration */
     /* Removed overflow-y: auto to let main layout handle scroll */
 }
 
-/* Ensure flex centering doesn't clip content on small heights */
-@media (max-height: 850px) {
+/* Only top-align on genuinely short screens so nothing clips */
+@media (max-height: 680px) {
     .register-page-container {
         justify-content: flex-start;
-        padding-top: 60px;
+        padding-top: 24px;
     }
 }
 
 .register-page-container.light {
-    background: radial-gradient(circle at 0% 0%, rgba(16, 185, 129, 0.05) 0%, transparent 50%),
-                radial-gradient(circle at 100% 100%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
-                #fcfdfd;
+    background: #F7F3EA;
 }
 
 .register-page-container.dark {
@@ -67,7 +65,7 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: 60px;
+    padding: 44px;
     color: white;
     overflow: hidden;
 }
@@ -95,15 +93,15 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, rgba(5, 150, 105, 0.4) 0%, rgba(37, 99, 235, 0.4) 100%);
+    background: linear-gradient(135deg, rgba(234, 88, 12, 0.55) 0%, rgba(22, 33, 62, 0.55) 100%);
     z-index: 1;
 }
 
 .branding-title {
-    font-size: 42px;
+    font-size: 34px;
     font-weight: 800;
     line-height: 1.1;
-    margin-bottom: 20px;
+    margin-bottom: 14px;
     letter-spacing: -0.03em;
 }
 
@@ -118,13 +116,14 @@
 /* Right side: Form */
 .register-form-container {
     flex: 1;
-    padding: 60px;
+    padding: 36px 44px;
     display: flex;
     flex-direction: column;
+    justify-content: center;
 }
 
 .form-header {
-    margin-bottom: 32px;
+    margin-bottom: 18px;
 }
 
 .form-title {
@@ -161,9 +160,9 @@
     font-size: 14px;
     transition: all 0.2s ease;
     cursor: pointer;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #E7E0D2;
     background: #ffffff;
-    color: #1e293b;
+    color: #16213E;
 }
 
 .dark .social-button {
@@ -173,8 +172,8 @@
 }
 
 .social-button:hover {
-    background: #f8fafc;
-    border-color: #cbd5e1;
+    background: #F1EBDD;
+    border-color: #D9CEB8;
     transform: translateY(-2px);
 }
 
@@ -199,7 +198,7 @@
     content: "";
     flex: 1;
     height: 1px;
-    background: #e2e8f0;
+    background: #E7E0D2;
 }
 
 .dark .form-divider::before,
@@ -212,15 +211,15 @@
 }
 
 .input-group {
-    margin-bottom: 18px;
+    margin-bottom: 12px;
 }
 
 .input-label {
     display: block;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
-    margin-bottom: 8px;
-    color: #475569;
+    margin-bottom: 6px;
+    color: #5A6B87;
 }
 
 .dark .input-label {
@@ -242,9 +241,9 @@
 
 .register-input {
     width: 100%;
-    height: 52px;
+    height: 48px;
     padding: 0 16px 0 48px;
-    border-radius: 16px;
+    border-radius: 14px;
     font-size: 15px;
     font-weight: 500;
     transition: all 0.2s ease;
@@ -252,15 +251,15 @@
 }
 
 .register-input.light {
-    background: #f8fafc;
-    border: 1.5px solid #e2e8f0;
-    color: #1e293b;
+    background: #FDFBF6;
+    border: 1.5px solid #E7E0D2;
+    color: #16213E;
 }
 
 .register-input.light:focus {
     background: #ffffff;
-    border-color: #10b981;
-    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+    border-color: #EA580C;
+    box-shadow: 0 0 0 4px rgba(234, 88, 12, 0.12);
 }
 
 .register-input.dark {
@@ -271,20 +270,20 @@
 
 .register-input.dark:focus {
     background: rgba(255, 255, 255, 0.06);
-    border-color: #10b981;
-    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+    border-color: #EA580C;
+    box-shadow: 0 0 0 4px rgba(234, 88, 12, 0.2);
 }
 
 .register-input:focus + .input-field-icon,
 .input-field-wrapper:focus-within .input-field-icon {
-    color: #10b981;
+    color: #EA580C;
 }
 
 .register-submit-button {
     width: 100%;
-    height: 56px;
-    border-radius: 18px;
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    height: 50px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #EA580C 0%, #C2410C 100%);
     color: white;
     font-size: 16px;
     font-weight: 700;
@@ -295,14 +294,14 @@
     align-items: center;
     justify-content: center;
     gap: 10px;
-    box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2);
-    margin-top: 10px;
+    box-shadow: 0 10px 20px rgba(234, 88, 12, 0.25);
+    margin-top: 6px;
 }
 
 .register-submit-button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 15px 30px rgba(16, 185, 129, 0.3);
-    background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+    box-shadow: 0 15px 30px rgba(234, 88, 12, 0.35);
+    background: linear-gradient(135deg, #F97316 0%, #EA580C 100%);
 }
 
 .register-submit-button:active {
@@ -317,14 +316,14 @@
 
 .login-redirect {
     text-align: center;
-    margin-top: 32px;
+    margin-top: 16px;
     font-size: 14px;
     font-weight: 500;
-    color: #64748b;
+    color: #5A6B87;
 }
 
 .login-redirect a {
-    color: #10b981;
+    color: #EA580C;
     font-weight: 700;
     text-decoration: none;
     margin-left: 4px;
@@ -362,13 +361,13 @@
 .bg-blob-1 {
     top: -10%;
     left: -10%;
-    background: rgba(16, 185, 129, 0.2);
+    background: rgba(234, 88, 12, 0.18);
 }
 
 .bg-blob-2 {
     bottom: -10%;
     right: -10%;
-    background: rgba(59, 130, 246, 0.2);
+    background: rgba(22, 33, 62, 0.15);
     animation-delay: -7s;
 }
 
@@ -399,7 +398,7 @@
 }
 
 .register-page-container::-webkit-scrollbar-thumb {
-    background: rgba(16, 185, 129, 0.2);
+    background: rgba(234, 88, 12, 0.25);
     border-radius: 10px;
 }
 

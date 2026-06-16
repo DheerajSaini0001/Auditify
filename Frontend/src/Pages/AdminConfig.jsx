@@ -83,16 +83,16 @@ const AdminConfig = () => {
                 </button>
       
                 {createDropdownOpen && (
-                  <div className={`absolute top-full left-0 right-0 mt-1.5 rounded-xl shadow-xl z-50 py-1 animate-in fade-in slide-in-from-top-1 duration-150 border transition-all duration-300 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+                  <div className={`absolute top-full left-0 right-0 mt-1.5 rounded-xl shadow-xl z-50 py-1 animate-in fade-in slide-in-from-top-1 duration-150 border transition-all duration-300 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-card border-line'}`}>
                     <button
                       onClick={() => { setCreateDropdownOpen(false); navigate("/dashboard/add-website"); }}
-                      className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                      className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-inksoft hover:bg-cardsoft'}`}
                     >
                       Add Google Search Console Site
                     </button>
                     <button
                       onClick={() => { setCreateDropdownOpen(false); navigate("/bulk-audit"); }}
-                      className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                      className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-inksoft hover:bg-cardsoft'}`}
                     >
                       Quick Manual Audit Page
                     </button>
@@ -102,16 +102,16 @@ const AdminConfig = () => {
 
         {/* Search project box */}
         <div className="relative">
-          <Search className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors duration-300 ${darkMode ? 'text-slate-400' : 'text-slate-455'}`} size={14} />
+          <Search className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors duration-300 ${darkMode ? 'text-slate-400' : 'text-faint'}`} size={14} />
           <input
             id="project-search-input"
             type="text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search projects..."
-            className={`w-full pl-9 pr-8 py-2 border rounded-xl text-xs font-medium focus:outline-none focus:border-emerald-500/50 transition-colors duration-300 ${darkMode ? 'bg-slate-850 border-slate-700 text-slate-100 placeholder-slate-500' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'}`}
+            className={`w-full pl-9 pr-8 py-2 border rounded-xl text-xs font-medium focus:outline-none focus:border-emerald-500/50 transition-colors duration-300 ${darkMode ? 'bg-slate-850 border-slate-700 text-slate-100 placeholder-slate-500' : 'bg-cardsoft border-line text-inksoft placeholder-faint'}`}
           />
-          <span className={`absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] font-black border px-1 py-0.5 rounded leading-none transition-colors duration-300 ${darkMode ? 'text-slate-400 bg-slate-800/80 border-slate-700/50' : 'text-slate-505 bg-slate-200/50 border-slate-300/30'}`}>
+          <span className={`absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] font-black border px-1 py-0.5 rounded leading-none transition-colors duration-300 ${darkMode ? 'text-slate-400 bg-slate-800/80 border-slate-700/50' : 'text-muted bg-surface-2 border-linesoft'}`}>
             ⌘K
           </span>
         </div>
@@ -120,7 +120,7 @@ const AdminConfig = () => {
         <nav className="flex flex-col gap-1 mt-2">
           <button
             onClick={() => navigate("/dashboard")}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-505 hover:text-slate-800 hover:bg-slate-50'}`}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-muted hover:text-ink hover:bg-cardsoft'}`}
           >
             <LayoutDashboard size={16} />
             <span>Projects</span>
@@ -130,7 +130,7 @@ const AdminConfig = () => {
 
           <button
             onClick={() => navigate("/audit-history")}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-505 hover:text-slate-800 hover:bg-slate-50'}`}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-muted hover:text-ink hover:bg-cardsoft'}`}
           >
             <FileText size={16} />
             <span>Report History</span>
@@ -140,12 +140,12 @@ const AdminConfig = () => {
 
           <button
             onClick={() => navigate('/dashboard?tab=starred')}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-550 hover:text-slate-800 hover:bg-slate-50'}`}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-muted hover:text-ink hover:bg-cardsoft'}`}
           >
             <Star size={16} />
             <span>Starred</span>
             {starredIds.length > 0 && (
-              <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${darkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-600'}`}>
+              <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${darkMode ? 'bg-slate-800 text-slate-400' : 'bg-cardsoft text-muted'}`}>
                 {starredIds.length}
               </span>
             )}
@@ -154,7 +154,7 @@ const AdminConfig = () => {
           {(user?.role === 'admin' || user?.role === 'super_admin') && (
             <button
               onClick={() => navigate("/admin")}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-505 hover:text-slate-800 hover:bg-slate-50'}`}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-muted hover:text-ink hover:bg-cardsoft'}`}
             >
               <ShieldCheck size={16} className="text-blue-500 shrink-0" />
               <span>Admin Panel</span>
@@ -171,18 +171,18 @@ const AdminConfig = () => {
             </button>
           )}
 
-          <div className={`my-1.5 border-t transition-colors duration-300 ${darkMode ? 'border-slate-800' : 'border-slate-100'}`}></div>
+          <div className={`my-1.5 border-t transition-colors duration-300 ${darkMode ? 'border-slate-800' : 'border-linesoft'}`}></div>
 
           <button
             onClick={() => toggleTheme()}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-505 hover:text-slate-800 hover:bg-slate-50'}`}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-muted hover:text-ink hover:bg-cardsoft'}`}
           >
             <div className="flex items-center gap-3">
               {darkMode ? <Sun size={16} className="text-amber-400 shrink-0" /> : <Moon size={16} className="text-indigo-500 shrink-0" />}
               <span>{darkMode ? "Light Mode" : "Dark Mode"}</span>
             </div>
-            <div className={`w-8 h-4 rounded-full relative transition-colors duration-300 ${darkMode ? "bg-amber-400/20" : "bg-slate-200"}`}>
-              <div className={`absolute top-0.5 w-3 h-3 rounded-full transition-all duration-300 ${darkMode ? "right-0.5 bg-amber-400" : "left-0.5 bg-slate-400"}`}></div>
+            <div className={`w-8 h-4 rounded-full relative transition-colors duration-300 ${darkMode ? "bg-amber-400/20" : "bg-line"}`}>
+              <div className={`absolute top-0.5 w-3 h-3 rounded-full transition-all duration-300 ${darkMode ? "right-0.5 bg-amber-400" : "left-0.5 bg-faint"}`}></div>
             </div>
           </button>
         </nav>
@@ -191,7 +191,7 @@ const AdminConfig = () => {
       </div>
 
       {/* Premium promotional block */}
-      <div className={`p-4 border-t transition-colors duration-300 ${darkMode ? 'border-slate-800' : 'border-slate-100'}`}>
+      <div className={`p-4 border-t transition-colors duration-300 ${darkMode ? 'border-slate-800' : 'border-linesoft'}`}>
         <div className={`p-4 rounded-2xl border flex flex-col gap-3 transition-colors duration-300 ${darkMode ? 'bg-emerald-950/20 border-emerald-900/30' : 'bg-emerald-500/10 border-emerald-500/20 shadow-emerald-500/5'}`}>
           <div className={`flex items-center gap-2 transition-colors duration-300 ${darkMode ? 'text-emerald-400' : 'text-emerald-800'}`}>
             <Lock size={14} className={`transition-colors duration-300 ${darkMode ? 'fill-emerald-400/20 text-emerald-400' : 'fill-emerald-600/20 text-emerald-700'}`} />
@@ -407,16 +407,16 @@ const AdminConfig = () => {
   const categoryGroups = [...new Set(configs.map(c => c.category || 'general'))];
 
   // ── Styles ──
-  const card = dk ? 'bg-[#0a0a0f] border-white/[0.06]' : 'bg-white border-slate-200 shadow-sm';
+  const card = dk ? 'bg-[#0a0a0f] border-white/[0.06]' : 'bg-card border-line shadow-sm';
   const inputCls = dk
     ? 'bg-transparent border-white/[0.08] text-white placeholder-white/20 focus:border-indigo-500/50 focus:ring-indigo-500/20'
-    : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:ring-indigo-500/20 shadow-sm';
+    : 'bg-card border-line text-ink placeholder-faint focus:border-accent focus:ring-accent/20 shadow-sm';
 
   return (
-    <div className={`w-full min-h-[calc(100vh-4rem)] flex flex-col md:flex-row font-sans transition-colors duration-300 ${darkMode ? 'bg-slate-950 text-slate-50 dark' : 'bg-slate-50 text-slate-900'}`}>
+    <div className={`w-full min-h-[calc(100vh-4rem)] flex flex-col md:flex-row font-sans transition-colors duration-300 ${darkMode ? 'bg-slate-950 text-slate-50 dark' : 'bg-surface text-ink'}`}>
 
       {/* ── DESKTOP SIDEBAR ── */}
-      <aside className={`hidden md:flex flex-col w-60 top-0 shrink-0 border-r justify-between transition-colors duration-300 sticky top-0 h-[calc(100vh-4rem)] ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}>
+      <aside className={`hidden md:flex flex-col w-60 top-0 shrink-0 border-r justify-between transition-colors duration-300 sticky top-0 h-[calc(100vh-4rem)] ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-card border-linesoft'}`}>
         <SidebarContent />
       </aside>
 
@@ -424,11 +424,11 @@ const AdminConfig = () => {
       <aside className={`
         fixed inset-y-0 left-0 z-50 w-64 border-r flex flex-col justify-between pt-1 transform transition-transform duration-300 ease-in-out md:hidden
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        transition-colors duration-300 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}
+        transition-colors duration-300 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-card border-linesoft'}
       `}>
-        <div className={`flex justify-between items-center p-4 border-b transition-colors duration-300 ${darkMode ? 'border-slate-800' : 'border-slate-100'}`}>
-          <span className="text-xs font-black uppercase tracking-widest text-slate-500">Menu Options</span>
-          <button onClick={() => setSidebarOpen(false)} className={`p-1 rounded-lg transition-colors ${darkMode ? 'hover:bg-slate-800 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>
+        <div className={`flex justify-between items-center p-4 border-b transition-colors duration-300 ${darkMode ? 'border-slate-800' : 'border-linesoft'}`}>
+          <span className="text-xs font-black uppercase tracking-widest text-muted">Menu Options</span>
+          <button onClick={() => setSidebarOpen(false)} className={`p-1 rounded-lg transition-colors ${darkMode ? 'hover:bg-slate-800 text-white' : 'hover:bg-cardsoft text-muted'}`}>
             <X size={16} />
           </button>
         </div>
@@ -450,7 +450,7 @@ const AdminConfig = () => {
         <div className="max-w-7xl mx-auto w-full">
 
           {/* ── Header ── */}
-          <header className="flex flex-col lg:flex-row items-start lg:items-center gap-6 mb-10">
+          <header className="flex flex-col lg:flex-row items-start lg:items-center gap-6 mb-7">
             <div className="flex items-center gap-4 flex-1 w-full">
               <div className={`p-4 rounded-2xl border ${dk ? 'bg-indigo-500/10 border-indigo-500/20' : 'bg-indigo-50 border-indigo-100'}`}>
                 <ShieldCheck size={28} className="text-indigo-500" />
@@ -461,13 +461,13 @@ const AdminConfig = () => {
                   {/* Mobile Sidebar Toggle Button */}
                   <button
                     onClick={() => setSidebarOpen(true)}
-                    className={`md:hidden flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                    className={`md:hidden flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800' : 'bg-card border-line text-muted hover:bg-cardsoft'}`}
                   >
                     <Menu size={14} />
                     <span>Menu</span>
                   </button>
                 </div>
-                <p className={`text-sm mt-1 ${dk ? 'text-white/30' : 'text-slate-400'}`}>
+                <p className={`text-sm mt-1 ${dk ? 'text-white/30' : 'text-faint'}`}>
                   AES-256 encrypted • Hot reload • Version controlled
                 </p>
               </div>
@@ -477,21 +477,21 @@ const AdminConfig = () => {
               <button
                 onClick={handleRefreshCache}
                 disabled={refreshing}
-                className={`flex items-center gap-2 px-5 py-3 rounded-xl border text-xs font-semibold uppercase tracking-wider transition-all ${dk ? 'border-white/10 hover:bg-white/5 text-white/50 hover:text-white' : 'border-slate-200 hover:bg-slate-100 text-slate-500'}`}
+                className={`flex items-center gap-2 px-5 py-3 rounded-xl border text-xs font-semibold uppercase tracking-wider transition-all ${dk ? 'border-white/10 hover:bg-white/5 text-white/50 hover:text-white' : 'border-line hover:bg-cardsoft text-muted'}`}
               >
                 <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
                 Sync Cache
               </button>
               <button
                 onClick={handleExport}
-                className={`flex items-center gap-2 px-5 py-3 rounded-xl border text-xs font-semibold uppercase tracking-wider transition-all ${dk ? 'border-white/10 hover:bg-white/5 text-white/50 hover:text-white' : 'border-slate-200 hover:bg-slate-100 text-slate-500'}`}
+                className={`flex items-center gap-2 px-5 py-3 rounded-xl border text-xs font-semibold uppercase tracking-wider transition-all ${dk ? 'border-white/10 hover:bg-white/5 text-white/50 hover:text-white' : 'border-line hover:bg-cardsoft text-muted'}`}
               >
                 <Download size={14} />
                 Export
               </button>
               <button
                 onClick={() => handleOpenModal()}
-                className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-xs uppercase tracking-wider transition-all active:scale-95 ${dk ? 'bg-indigo-600 hover:bg-indigo-500 text-white border border-indigo-500/50' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/20'}`}
+                className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-xs uppercase tracking-wider transition-all active:scale-95 ${dk ? 'bg-indigo-600 hover:bg-indigo-500 text-white border border-indigo-500/50' : 'bg-accent hover:bg-accenthover text-white shadow-lg shadow-accent/20'}`}
               >
                 <Plus size={14} strokeWidth={3} />
                 Add Secret
@@ -500,7 +500,7 @@ const AdminConfig = () => {
           </header>
 
           {/* ── Stats Row ── */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
             <StatCard label="Total Configs" value={configs.length} icon={Database} color="#6366f1" dk={dk} />
             <StatCard label="Sensitive" value={sensitiveCount} icon={Lock} color="#ef4444" dk={dk} />
             <StatCard label="Categories" value={categoryGroups.length} icon={Filter} color="#f59e0b" dk={dk} />
@@ -508,7 +508,7 @@ const AdminConfig = () => {
           </div>
 
           {/* ── Tab Navigation ── */}
-          <div className={`flex items-center gap-1 p-1.5 rounded-2xl border mb-8 w-fit ${dk ? 'bg-white/[0.02] border-white/[0.06]' : 'bg-slate-100 border-slate-200'}`}>
+          <div className={`flex items-center gap-1 p-1.5 rounded-2xl border mb-6 w-fit ${dk ? 'bg-white/[0.02] border-white/[0.06]' : 'bg-surface-2 border-line'}`}>
             {[
               { id: 'configs', label: 'Configurations', icon: Settings },
               { id: 'audit', label: 'Audit Trail', icon: Activity },
@@ -517,8 +517,8 @@ const AdminConfig = () => {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all ${activeTab === tab.id
-                  ? (dk ? 'bg-white/10 text-white' : 'bg-white text-slate-900 shadow-sm')
-                  : (dk ? 'text-white/30 hover:text-white/60' : 'text-slate-400 hover:text-slate-600')
+                  ? (dk ? 'bg-white/10 text-white' : 'bg-card text-ink shadow-sm')
+                  : (dk ? 'text-white/30 hover:text-white/60' : 'text-faint hover:text-muted')
                   }`}
               >
                 <tab.icon size={14} />
@@ -534,7 +534,7 @@ const AdminConfig = () => {
                 {/* Filters */}
                 <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 mb-6">
                   <div className="relative flex-1">
-                    <Search className={`absolute left-4 top-1/2 -translate-y-1/2 ${dk ? 'text-white/20' : 'text-slate-400'}`} size={16} />
+                    <Search className={`absolute left-4 top-1/2 -translate-y-1/2 ${dk ? 'text-white/20' : 'text-faint'}`} size={16} />
                     <input
                       type="text"
                       placeholder="Search by key name..."
@@ -559,17 +559,17 @@ const AdminConfig = () => {
 
                 {/* Config List */}
                 {loading ? (
-                  <div className="flex items-center justify-center py-20">
+                  <div className="flex items-center justify-center py-12">
                     <RefreshCw size={24} className="animate-spin text-indigo-500" />
                   </div>
                 ) : filtered.length === 0 ? (
-                  <div className={`rounded-2xl border py-20 text-center ${card}`}>
-                    <Database size={40} className={`mx-auto mb-4 ${dk ? 'text-white/10' : 'text-slate-200'}`} />
-                    <p className={`text-sm font-medium ${dk ? 'text-white/20' : 'text-slate-400'}`}>No configurations found</p>
+                  <div className={`rounded-2xl border py-12 text-center ${card}`}>
+                    <Database size={40} className={`mx-auto mb-4 ${dk ? 'text-white/10' : 'text-faint'}`} />
+                    <p className={`text-sm font-medium ${dk ? 'text-white/20' : 'text-muted'}`}>No configurations found</p>
                   </div>
                 ) : (
                   <div className={`rounded-2xl border overflow-hidden ${card}`}>
-                    <div className={`divide-y ${dk ? 'divide-white/[0.04]' : 'divide-slate-100'}`}>
+                    <div className={`divide-y ${dk ? 'divide-white/[0.04]' : 'divide-linesoft'}`}>
                       {filtered.map((config, idx) => (
                         <ConfigRow
                           key={config.key}
@@ -607,17 +607,17 @@ const AdminConfig = () => {
           <AnimatePresence>
             {modalOpen && (
               <ModalOverlay onClose={() => setModalOpen(false)} dk={dk}>
-                <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
                     <div className={`p-3 rounded-xl ${dk ? 'bg-indigo-500/10 text-indigo-400' : 'bg-indigo-50 text-indigo-600'}`}>
                       {isEditing ? <Settings size={22} /> : <Plus size={22} />}
                     </div>
                     <div>
                       <h2 className="text-xl font-black tracking-tight">{isEditing ? 'Update Configuration' : 'Create Configuration'}</h2>
-                      <p className={`text-xs mt-0.5 ${dk ? 'text-white/30' : 'text-slate-400'}`}>Values are AES-256 encrypted before storage</p>
+                      <p className={`text-xs mt-0.5 ${dk ? 'text-white/30' : 'text-faint'}`}>Values are AES-256 encrypted before storage</p>
                     </div>
                   </div>
-                  <button onClick={() => setModalOpen(false)} className={`p-2.5 rounded-xl transition-colors ${dk ? 'hover:bg-white/5' : 'hover:bg-slate-100'}`}>
+                  <button onClick={() => setModalOpen(false)} className={`p-2.5 rounded-xl transition-colors ${dk ? 'hover:bg-white/5' : 'hover:bg-cardsoft'}`}>
                     <X size={20} className="opacity-40" />
                   </button>
                 </div>
@@ -681,15 +681,15 @@ const AdminConfig = () => {
                   </div>
 
                   {/* Sensitive Toggle */}
-                  <div className={`flex items-center justify-between py-4 px-4 rounded-xl border ${dk ? 'border-white/[0.06] bg-white/[0.02]' : 'border-slate-100 bg-slate-50'}`}>
+                  <div className={`flex items-center justify-between py-4 px-4 rounded-xl border ${dk ? 'border-white/[0.06] bg-white/[0.02]' : 'border-linesoft bg-cardsoft'}`}>
                     <div>
                       <p className="font-semibold text-sm">Sensitive Value</p>
-                      <p className={`text-xs mt-0.5 ${dk ? 'text-white/30' : 'text-slate-400'}`}>Masked in API responses & audit logs</p>
+                      <p className={`text-xs mt-0.5 ${dk ? 'text-white/30' : 'text-faint'}`}>Masked in API responses & audit logs</p>
                     </div>
                     <button
                       type="button"
                       onClick={() => setModalData({ ...modalData, isSensitive: !modalData.isSensitive })}
-                      className={`w-12 h-7 rounded-full p-1 transition-colors duration-300 ${modalData.isSensitive ? 'bg-indigo-600' : (dk ? 'bg-white/10' : 'bg-slate-300')}`}
+                      className={`w-12 h-7 rounded-full p-1 transition-colors duration-300 ${modalData.isSensitive ? 'bg-indigo-600' : (dk ? 'bg-white/10' : 'bg-line')}`}
                     >
                       <div className={`w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-300 flex items-center justify-center ${modalData.isSensitive ? 'translate-x-5' : 'translate-x-0'}`}>
                         {modalData.isSensitive ? <Lock size={10} className="text-indigo-600" /> : <Unlock size={10} className="text-slate-400" />}
@@ -700,7 +700,7 @@ const AdminConfig = () => {
                   <button
                     type="submit"
                     disabled={saving}
-                    className={`w-full py-4 rounded-xl font-semibold text-sm uppercase tracking-wider transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3 ${dk ? 'bg-indigo-600 hover:bg-indigo-500 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg'}`}
+                    className={`w-full py-4 rounded-xl font-semibold text-sm uppercase tracking-wider transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3 ${dk ? 'bg-indigo-600 hover:bg-indigo-500 text-white' : 'bg-accent hover:bg-accenthover text-white shadow-lg'}`}
                   >
                     {saving ? <RefreshCw className="animate-spin" size={16} /> : <Save size={16} />}
                     {isEditing ? 'Update Configuration' : 'Create Configuration'}
@@ -721,10 +721,10 @@ const AdminConfig = () => {
                     </div>
                     <div>
                       <h2 className="text-xl font-black tracking-tight">Version History</h2>
-                      <p className={`text-xs font-mono mt-0.5 ${dk ? 'text-white/40' : 'text-slate-400'}`}>{historyKey}</p>
+                      <p className={`text-xs font-mono mt-0.5 ${dk ? 'text-white/40' : 'text-faint'}`}>{historyKey}</p>
                     </div>
                   </div>
-                  <button onClick={() => setHistoryModalOpen(false)} className={`p-2.5 rounded-xl transition-colors ${dk ? 'hover:bg-white/5' : 'hover:bg-slate-100'}`}>
+                  <button onClick={() => setHistoryModalOpen(false)} className={`p-2.5 rounded-xl transition-colors ${dk ? 'hover:bg-white/5' : 'hover:bg-cardsoft'}`}>
                     <X size={20} className="opacity-40" />
                   </button>
                 </div>
@@ -735,26 +735,26 @@ const AdminConfig = () => {
                   </div>
                 ) : versions.length === 0 ? (
                   <div className="text-center py-12">
-                    <History size={32} className={`mx-auto mb-3 ${dk ? 'text-white/10' : 'text-slate-200'}`} />
-                    <p className={`text-sm ${dk ? 'text-white/30' : 'text-slate-400'}`}>No previous versions recorded yet</p>
+                    <History size={32} className={`mx-auto mb-3 ${dk ? 'text-white/10' : 'text-faint'}`} />
+                    <p className={`text-sm ${dk ? 'text-white/30' : 'text-muted'}`}>No previous versions recorded yet</p>
                   </div>
                 ) : (
                   <div className="space-y-3 max-h-96 overflow-y-auto pr-1 custom-scrollbar">
                     {versions.map(v => (
-                      <div key={v._id} className={`flex items-center justify-between p-4 rounded-xl border transition-colors ${dk ? 'border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04]' : 'border-slate-100 bg-slate-50 hover:bg-slate-100'}`}>
+                      <div key={v._id} className={`flex items-center justify-between p-4 rounded-xl border transition-colors ${dk ? 'border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04]' : 'border-linesoft bg-cardsoft hover:bg-surface-2'}`}>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             <span className={`text-xs font-black px-2 py-0.5 rounded-md ${dk ? 'bg-indigo-500/20 text-indigo-400' : 'bg-indigo-100 text-indigo-700'}`}>v{v.version}</span>
                             {v.isSensitive && <Lock size={10} className="text-amber-500" />}
-                            <span className={`text-xs ${dk ? 'text-white/20' : 'text-slate-400'}`}>
+                            <span className={`text-xs ${dk ? 'text-white/20' : 'text-faint'}`}>
                               {new Date(v.createdAt).toLocaleString()}
                             </span>
                           </div>
-                          <p className={`text-xs font-mono truncate ${dk ? 'text-white/40' : 'text-slate-500'}`}>
+                          <p className={`text-xs font-mono truncate ${dk ? 'text-white/40' : 'text-muted'}`}>
                             {v.value}
                           </p>
                           {v.changedBy && (
-                            <p className={`text-[10px] mt-1 ${dk ? 'text-white/15' : 'text-slate-300'}`}>
+                            <p className={`text-[10px] mt-1 ${dk ? 'text-white/15' : 'text-faint'}`}>
                               by {v.changedBy.name || v.changedBy.email}
                             </p>
                           )}
@@ -783,13 +783,13 @@ const AdminConfig = () => {
 // ── Sub-Components ──────────────────────────────────────────────────
 
 const StatCard = ({ label, value, icon: Icon, color, dk }) => (
-  <div className={`p-5 rounded-2xl border transition-colors ${dk ? 'bg-[#0a0a0f] border-white/[0.06]' : 'bg-white border-slate-200 shadow-sm'}`}>
+  <div className={`p-5 rounded-2xl border transition-colors ${dk ? 'bg-[#0a0a0f] border-white/[0.06]' : 'bg-card border-line shadow-sm'}`}>
     <div className="flex items-center justify-between">
       <div>
-        <p className={`text-[10px] uppercase font-semibold tracking-wider mb-1 ${dk ? 'text-white/25' : 'text-slate-400'}`}>{label}</p>
+        <p className={`text-[10px] uppercase font-semibold tracking-wider mb-1 ${dk ? 'text-white/25' : 'text-muted'}`}>{label}</p>
         <p className="text-2xl font-black" style={{ color }}>{value}</p>
       </div>
-      <div className={`p-3 rounded-xl ${dk ? 'bg-white/[0.03]' : 'bg-slate-50'}`}>
+      <div className={`p-3 rounded-xl ${dk ? 'bg-white/[0.03]' : 'bg-cardsoft'}`}>
         <Icon size={20} style={{ color }} />
       </div>
     </div>
@@ -803,20 +803,20 @@ const SelectFilter = ({ value, onChange, options, dk }) => (
       onChange={e => onChange(e.target.value)}
       className={`appearance-none pl-4 pr-10 py-3 rounded-xl border text-xs font-semibold uppercase tracking-wider cursor-pointer focus:outline-none focus:ring-2 transition-all ${dk
         ? 'bg-transparent border-white/[0.08] text-white/60 focus:border-indigo-500/50 focus:ring-indigo-500/20'
-        : 'bg-white border-slate-200 text-slate-600 focus:border-indigo-500 focus:ring-indigo-500/20 shadow-sm'
+        : 'bg-card border-line text-muted focus:border-accent focus:ring-accent/20 shadow-sm'
         }`}
     >
       {options.map(o => (
-        <option key={o.value} value={o.value} className={dk ? 'bg-[#111]' : 'bg-white'}>{o.label}</option>
+        <option key={o.value} value={o.value} className={dk ? 'bg-[#111]' : 'bg-card'}>{o.label}</option>
       ))}
     </select>
-    <ChevronDown size={14} className={`absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none ${dk ? 'text-white/20' : 'text-slate-400'}`} />
+    <ChevronDown size={14} className={`absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none ${dk ? 'text-white/20' : 'text-faint'}`} />
   </div>
 );
 
 const FormField = ({ label, children, dk }) => (
   <div>
-    <label className={`text-[10px] uppercase font-semibold tracking-wider mb-2 block ${dk ? 'text-white/30' : 'text-slate-400'}`}>{label}</label>
+    <label className={`text-[10px] uppercase font-semibold tracking-wider mb-2 block ${dk ? 'text-white/30' : 'text-muted'}`}>{label}</label>
     {children}
   </div>
 );
@@ -835,7 +835,7 @@ const ModalOverlay = ({ onClose, dk, children }) => (
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95, y: 20 }}
       transition={{ duration: 0.2 }}
-      className={`relative w-full max-w-lg rounded-2xl border p-6 md:p-8 shadow-2xl max-h-[90vh] overflow-y-auto ${dk ? 'bg-[#0c0c12] border-white/[0.08]' : 'bg-white border-slate-200'}`}
+      className={`relative w-full max-w-lg rounded-2xl border p-6 md:p-8 shadow-2xl max-h-[90vh] overflow-y-auto ${dk ? 'bg-[#0c0c12] border-white/[0.08]' : 'bg-card border-line'}`}
     >
       {children}
     </motion.div>
@@ -848,7 +848,7 @@ const ConfigRow = ({ config, idx, total, dk, revealedValue, onReveal, openMenu, 
   const catColor = getCategoryColor(config.category);
 
   return (
-    <div className={`group relative px-6 py-5 transition-colors ${dk ? 'hover:bg-white/[0.02]' : 'hover:bg-slate-50/80'}`}>
+    <div className={`group relative px-6 py-5 transition-colors ${dk ? 'hover:bg-white/[0.02]' : 'hover:bg-cardsoft'}`}>
       <div className="flex flex-col md:flex-row md:items-center gap-4">
 
         {/* Key + Badges */}
@@ -873,7 +873,7 @@ const ConfigRow = ({ config, idx, total, dk, revealedValue, onReveal, openMenu, 
                   {config.environment}
                 </span>
               )}
-              <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-md ${dk ? 'bg-white/5 text-white/25' : 'bg-slate-100 text-slate-400'}`}>
+              <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-md ${dk ? 'bg-white/5 text-white/25' : 'bg-cardsoft text-muted'}`}>
                 v{config.version}
               </span>
             </div>
@@ -884,14 +884,14 @@ const ConfigRow = ({ config, idx, total, dk, revealedValue, onReveal, openMenu, 
         <div className="flex-1 flex items-center gap-2">
           <button
             onClick={onReveal}
-            className={`p-2 rounded-lg transition-colors flex-shrink-0 ${dk ? 'hover:bg-white/5 text-white/30' : 'hover:bg-slate-100 text-slate-400'}`}
+            className={`p-2 rounded-lg transition-colors flex-shrink-0 ${dk ? 'hover:bg-white/5 text-white/30' : 'hover:bg-cardsoft text-faint'}`}
             title={isRevealed ? 'Hide value' : 'Reveal value'}
           >
             {isRevealed ? <EyeOff size={15} /> : <Eye size={15} />}
           </button>
           <div className={`flex-1 px-3 py-2 rounded-lg border font-mono text-xs truncate ${dk
             ? `border-white/[0.05] ${isRevealed ? 'bg-indigo-500/5 text-indigo-300 border-indigo-500/20' : 'bg-white/[0.02] text-white/25'}`
-            : `${isRevealed ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-slate-50 text-slate-400 border-slate-100'}`
+            : `${isRevealed ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-cardsoft text-faint border-linesoft'}`
             }`}>
             {displayValue}
           </div>
@@ -901,11 +901,11 @@ const ConfigRow = ({ config, idx, total, dk, revealedValue, onReveal, openMenu, 
         {/* Meta + Actions */}
         <div className="flex items-center gap-4 md:w-[200px] justify-end">
           <div className="text-right">
-            <p className={`text-[10px] font-semibold whitespace-nowrap ${dk ? 'text-white/20' : 'text-slate-300'}`}>
+            <p className={`text-[10px] font-semibold whitespace-nowrap ${dk ? 'text-white/20' : 'text-faint'}`}>
               {config.updatedAt ? new Date(config.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}
             </p>
             {config.description && (
-              <p className={`text-[9px] truncate max-w-[100px] ${dk ? 'text-white/10' : 'text-slate-300'}`} title={config.description}>
+              <p className={`text-[9px] truncate max-w-[100px] ${dk ? 'text-white/10' : 'text-faint'}`} title={config.description}>
                 {config.description}
               </p>
             )}
@@ -915,7 +915,7 @@ const ConfigRow = ({ config, idx, total, dk, revealedValue, onReveal, openMenu, 
           <div className="relative">
             <button
               onClick={() => setOpenMenu(openMenu === config._id ? null : config._id)}
-              className={`p-2 rounded-lg border transition-colors ${dk ? 'border-white/[0.06] hover:bg-white/5' : 'border-slate-200 hover:bg-slate-50'}`}
+              className={`p-2 rounded-lg border transition-colors ${dk ? 'border-white/[0.06] hover:bg-white/5' : 'border-line hover:bg-cardsoft'}`}
             >
               <MoreVertical size={16} className="opacity-50" />
             </button>
@@ -928,11 +928,11 @@ const ConfigRow = ({ config, idx, total, dk, revealedValue, onReveal, openMenu, 
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
-                    className={`absolute right-0 ${idx > total - 3 && total > 2 ? 'bottom-full mb-2' : 'top-full mt-2'} w-48 z-[70] rounded-xl border shadow-2xl p-1.5 ${dk ? 'bg-[#111] border-white/[0.08]' : 'bg-white border-slate-200'}`}
+                    className={`absolute right-0 ${idx > total - 3 && total > 2 ? 'bottom-full mb-2' : 'top-full mt-2'} w-48 z-[70] rounded-xl border shadow-2xl p-1.5 ${dk ? 'bg-[#111] border-white/[0.08]' : 'bg-card border-line'}`}
                   >
                     <MenuButton icon={Settings} label="Edit" color="#6366f1" onClick={onEdit} dk={dk} />
                     <MenuButton icon={History} label="History" color="#f59e0b" onClick={onHistory} dk={dk} />
-                    <div className={`my-1 border-t ${dk ? 'border-white/[0.06]' : 'border-slate-100'}`} />
+                    <div className={`my-1 border-t ${dk ? 'border-white/[0.06]' : 'border-linesoft'}`} />
                     <MenuButton icon={Trash2} label="Delete" color="#ef4444" onClick={onDelete} dk={dk} />
                   </motion.div>
                 </>
@@ -948,7 +948,7 @@ const ConfigRow = ({ config, idx, total, dk, revealedValue, onReveal, openMenu, 
 const MenuButton = ({ icon: Icon, label, color, onClick, dk }) => (
   <button
     onClick={onClick}
-    className={`w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-2.5 text-xs font-semibold tracking-wide transition-colors ${dk ? 'hover:bg-white/5 text-white/50 hover:text-white' : 'hover:bg-slate-50 text-slate-600'}`}
+    className={`w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-2.5 text-xs font-semibold tracking-wide transition-colors ${dk ? 'hover:bg-white/5 text-white/50 hover:text-white' : 'hover:bg-cardsoft text-muted'}`}
   >
     <Icon size={14} style={{ color }} />
     {label}
@@ -958,7 +958,7 @@ const MenuButton = ({ icon: Icon, label, color, onClick, dk }) => (
 const AuditTrail = ({ logs, loading, pagination, onPageChange, dk }) => {
   if (loading) {
     return (
-      <div className="flex justify-center py-20">
+      <div className="flex justify-center py-12">
         <RefreshCw size={24} className="animate-spin text-indigo-500" />
       </div>
     );
@@ -966,19 +966,19 @@ const AuditTrail = ({ logs, loading, pagination, onPageChange, dk }) => {
 
   if (logs.length === 0) {
     return (
-      <div className={`rounded-2xl border py-20 text-center ${dk ? 'bg-[#0a0a0f] border-white/[0.06]' : 'bg-white border-slate-200'}`}>
-        <Activity size={40} className={`mx-auto mb-4 ${dk ? 'text-white/10' : 'text-slate-200'}`} />
-        <p className={`text-sm font-medium ${dk ? 'text-white/20' : 'text-slate-400'}`}>No audit logs recorded yet</p>
+      <div className={`rounded-2xl border py-12 text-center ${dk ? 'bg-[#0a0a0f] border-white/[0.06]' : 'bg-card border-line'}`}>
+        <Activity size={40} className={`mx-auto mb-4 ${dk ? 'text-white/10' : 'text-faint'}`} />
+        <p className={`text-sm font-medium ${dk ? 'text-white/20' : 'text-muted'}`}>No audit logs recorded yet</p>
       </div>
     );
   }
 
   return (
     <div>
-      <div className={`rounded-2xl border overflow-hidden ${dk ? 'bg-[#0a0a0f] border-white/[0.06]' : 'bg-white border-slate-200 shadow-sm'}`}>
-        <div className={`divide-y ${dk ? 'divide-white/[0.04]' : 'divide-slate-100'}`}>
+      <div className={`rounded-2xl border overflow-hidden ${dk ? 'bg-[#0a0a0f] border-white/[0.06]' : 'bg-card border-line shadow-sm'}`}>
+        <div className={`divide-y ${dk ? 'divide-white/[0.04]' : 'divide-linesoft'}`}>
           {logs.map(log => (
-            <div key={log._id} className={`px-6 py-4 flex items-start gap-4 transition-colors ${dk ? 'hover:bg-white/[0.02]' : 'hover:bg-slate-50'}`}>
+            <div key={log._id} className={`px-6 py-4 flex items-start gap-4 transition-colors ${dk ? 'hover:bg-white/[0.02]' : 'hover:bg-cardsoft'}`}>
               {/* Action Badge */}
               <div
                 className="w-2 h-2 rounded-full mt-2 flex-shrink-0"
@@ -996,23 +996,23 @@ const AuditTrail = ({ logs, loading, pagination, onPageChange, dk }) => {
                   >
                     {log.action}
                   </span>
-                  <span className={`text-sm font-mono font-semibold ${dk ? 'text-white/80' : 'text-slate-700'}`}>{log.key}</span>
+                  <span className={`text-sm font-mono font-semibold ${dk ? 'text-white/80' : 'text-inksoft'}`}>{log.key}</span>
                   {log.version && (
-                    <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded ${dk ? 'bg-white/5 text-white/20' : 'bg-slate-100 text-slate-400'}`}>
+                    <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded ${dk ? 'bg-white/5 text-white/20' : 'bg-cardsoft text-muted'}`}>
                       v{log.version}
                     </span>
                   )}
                 </div>
 
                 {(log.oldValue || log.newValue) && (
-                  <div className={`mt-2 text-xs font-mono ${dk ? 'text-white/20' : 'text-slate-400'}`}>
+                  <div className={`mt-2 text-xs font-mono ${dk ? 'text-white/20' : 'text-muted'}`}>
                     {log.oldValue && <span>{log.oldValue}</span>}
                     {log.oldValue && log.newValue && <span className="mx-2">→</span>}
                     {log.newValue && <span>{log.newValue}</span>}
                   </div>
                 )}
 
-                <div className={`flex items-center gap-3 mt-2 text-[10px] ${dk ? 'text-white/15' : 'text-slate-300'}`}>
+                <div className={`flex items-center gap-3 mt-2 text-[10px] ${dk ? 'text-white/15' : 'text-faint'}`}>
                   <span className="flex items-center gap-1">
                     <User size={10} />
                     {log.updatedBy?.name || log.updatedBy?.email || 'System'}
@@ -1042,7 +1042,7 @@ const AuditTrail = ({ logs, loading, pagination, onPageChange, dk }) => {
                 onClick={() => onPageChange(page)}
                 className={`w-9 h-9 rounded-lg text-xs font-semibold transition-all ${pagination.page === page
                   ? 'bg-indigo-600 text-white'
-                  : (dk ? 'bg-white/5 text-white/40 hover:bg-white/10' : 'bg-slate-100 text-slate-500 hover:bg-slate-200')
+                  : (dk ? 'bg-white/5 text-white/40 hover:bg-white/10' : 'bg-cardsoft text-muted hover:bg-surface-2')
                   }`}
               >
                 {page}
@@ -1050,7 +1050,7 @@ const AuditTrail = ({ logs, loading, pagination, onPageChange, dk }) => {
             );
           })}
           {pagination.totalPages > 5 && (
-            <span className={`text-xs ${dk ? 'text-white/20' : 'text-slate-400'}`}>... of {pagination.totalPages}</span>
+            <span className={`text-xs ${dk ? 'text-white/20' : 'text-muted'}`}>... of {pagination.totalPages}</span>
           )}
         </div>
       )}

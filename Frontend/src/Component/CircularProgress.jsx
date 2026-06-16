@@ -25,7 +25,7 @@ export default function CircularProgress({ value = 65, size = 120, stroke = 10 }
           stroke="currentColor"
           fill="transparent"
           strokeWidth={stroke}
-          className="text-gray-200 dark:text-gray-700 opacity-50"
+          className="text-line dark:text-gray-700 opacity-50"
           r={radius}
           cx={size / 2}
           cy={size / 2}

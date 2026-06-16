@@ -64,28 +64,28 @@ const CaptchaModal = ({
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm captcha-modal-overlay">
       <div
-        className={`relative w-full max-w-md p-8 rounded-3xl shadow-2xl transform transition-all captcha-modal-content ${darkMode ? 'bg-slate-900 border border-slate-800 text-white' : 'bg-white text-slate-900'
+        className={`relative w-full max-w-md p-8 rounded-3xl shadow-2xl transform transition-all captcha-modal-content ${darkMode ? 'bg-slate-900 border border-slate-800 text-white' : 'bg-card text-ink'
           }`}
       >
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          className="absolute top-4 right-4 p-2 rounded-full hover:bg-cardsoft dark:hover:bg-slate-800 transition-colors"
         >
-          <X size={20} className="text-slate-400" />
+          <X size={20} className="text-faint" />
         </button>
 
         <div className="flex flex-col items-center text-center mb-6">
-          <div className={`p-4 rounded-full mb-4 ${darkMode ? 'bg-blue-500/10' : 'bg-blue-50'}`}>
-            <ShieldCheck className="w-10 h-10 text-blue-500" />
+          <div className={`p-4 rounded-full mb-4 ${darkMode ? 'bg-blue-500/10' : 'bg-accentsoft'}`}>
+            <ShieldCheck className="w-10 h-10 text-accent" />
           </div>
           <h2 className="text-2xl font-semibold mb-2">{title}</h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm">
+          <p className="text-muted dark:text-slate-400 text-sm">
             {description}
           </p>
         </div>
 
         <form onSubmit={handleVerify} className="space-y-6">
-          <div className={`p-1 rounded-2xl ${darkMode ? 'bg-slate-800/50' : 'bg-slate-50'}`}>
+          <div className={`p-1 rounded-2xl ${darkMode ? 'bg-slate-800/50' : 'bg-cardsoft'}`}>
             <MathCaptcha
               onAnswerChange={(val, id) => { setCaptchaAnswer(val); setCaptchaId(id); }}
             />
@@ -96,7 +96,7 @@ const CaptchaModal = ({
             disabled={verifying || !captchaAnswer || isVerified}
             className={`w-full py-4 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all duration-300 ${isVerified
               ? 'bg-emerald-500 text-white'
-              : 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/20 active:scale-95'
+              : 'bg-accent hover:bg-accenthover text-white shadow-lg shadow-blue-500/20 active:scale-95'
               } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             {verifying ? (
@@ -112,7 +112,7 @@ const CaptchaModal = ({
           </button>
         </form>
 
-        <p className="mt-6 text-center text-xs text-slate-400 uppercase tracking-widest font-semibold">
+        <p className="mt-6 text-center text-xs text-faint uppercase tracking-widest font-semibold">
           Secure Verification Powered by Dealer Pulse
         </p>
       </div>

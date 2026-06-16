@@ -39,13 +39,13 @@ const MetricCard = ({ value, suffix, label, sublabel, icon: Icon, accentColor, d
             className={`relative flex flex-col gap-4 p-6 rounded-2xl border
                 ${darkMode
                     ? 'bg-white/[0.03] border-white/8 hover:border-white/14'
-                    : 'bg-white border-slate-200 hover:border-slate-300 shadow-sm'}
+                    : 'bg-card border-line hover:border-line shadow-sm'}
                 transition-colors duration-300`}
         >
             {/* Top row */}
             <div className="flex items-center justify-between">
                 <p className={`text-xs font-semibold uppercase tracking-[0.2em]
-                    ${darkMode ? 'text-white' : 'text-slate-500'}`}>
+                    ${darkMode ? 'text-white' : 'text-muted'}`}>
                     {label}
                 </p>
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center"
@@ -57,7 +57,7 @@ const MetricCard = ({ value, suffix, label, sublabel, icon: Icon, accentColor, d
             {/* Number */}
             <div className="flex items-baseline gap-0.5">
                 <span className={`text-5xl font-black tabular-nums tracking-tight
-                    ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                    ${darkMode ? 'text-white' : 'text-ink'}`}>
                     {counted}
                 </span>
                 {suffix && (
@@ -67,7 +67,7 @@ const MetricCard = ({ value, suffix, label, sublabel, icon: Icon, accentColor, d
 
             {/* Sublabel */}
             <p className={`text-sm leading-relaxed
-                ${darkMode ? 'text-white/90' : 'text-slate-600'}`}>
+                ${darkMode ? 'text-white/90' : 'text-muted'}`}>
                 {sublabel}
             </p>
         </motion.div>
@@ -101,15 +101,19 @@ const MetricsBanner = () => {
     return (
         <section
             ref={sectionRef}
-            className="relative py-20 transition-colors duration-500 bg-transparent overflow-hidden"
+            className="relative pt-16 pb-10 transition-colors duration-500 bg-surface overflow-hidden"
         >
-            {/* Background Image */}
-            <div
-                className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat bg-fixed"
-                style={{ backgroundImage: `url(${metricsBg})` }}
-            />
-            {/* Bluish overlay to ensure text remains readable in both themes */}
-            <div className={`absolute inset-0 z-0 transition-colors duration-500 ${darkMode ? 'bg-blue-900/90' : 'bg-blue-100/85'}`} />
+            {/* Dark theme keeps the photographic background + blue overlay.
+                Light theme uses the plain cream surface (no image). */}
+            {darkMode && (
+                <>
+                    <div
+                        className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat bg-fixed"
+                        style={{ backgroundImage: `url(${metricsBg})` }}
+                    />
+                    <div className="absolute inset-0 z-0 bg-blue-900/90 transition-colors duration-500" />
+                </>
+            )}
 
             <div className="container mx-auto px-6 max-w-7xl space-y-12 relative z-10">
 
@@ -126,7 +130,7 @@ const MetricsBanner = () => {
                             DealerPulse at a Glance
                         </p>
                         <h2 className={`text-3xl lg:text-4xl font-black tracking-tight leading-tight
-                            ${darkMode ? 'text-white' : 'text-slate-900'}`}
+                            ${darkMode ? 'text-white' : 'text-ink'}`}
                             style={{ fontFamily: "'Syne', sans-serif" }}>
                             Built for dealers who take{' '}
                             <span style={{ color: '#ea580c' }}>website performance seriously.</span>
@@ -144,7 +148,7 @@ const MetricsBanner = () => {
                                 className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border
                                     ${darkMode
                                         ? 'bg-white/4 border-white/8 text-white'
-                                        : 'bg-white border-slate-200 text-slate-600 shadow-sm'}`}
+                                        : 'bg-card border-line text-muted shadow-sm'}`}
                             >
                                 <span className="text-orange-350">{d.icon}</span>
                                 {d.label}
@@ -161,7 +165,7 @@ const MetricsBanner = () => {
                 </div>
 
                 {/* Divider */}
-                <div className={`w-full h-px ${darkMode ? 'bg-white/8' : 'bg-slate-200'}`} />
+                <div className={`w-full h-px ${darkMode ? 'bg-white/8' : 'bg-line'}`} />
             </div>
         </section>
     );

@@ -30,9 +30,11 @@ export const DEALER_PARAMS = new Set([
     //  URL structure/slugs, title/meta uniqueness, internal linking → developer.)
 
     // ── Technical Performance ────────────────────────────────────────────────
-    // Page speed the shopper actually feels on key pages. (Core Web Vitals metrics —
-    // LCP/INP/CLS/FCP/TBT/SI — and asset/caching/render internals → developer.)
+    // Page speed the shopper actually feels + the headline scores a dealer recognizes.
+    // (Raw Core Web Vitals — LCP/INP/CLS/FCP/TBT/SI — and dev internals like lazy
+    // loading, third-party scripts, JS execution, caching → developer.)
     "Inventory_Load_Time", "Service_Load_Time",
+    "PageSpeed_Score", "Mobile_Load_Speed", "Rendering_Performance",
 
     // ── Accessibility ────────────────────────────────────────────────────────
     // Understandable, ADA-relevant basics. (ARIA roles, keyboard/focus order, tab
@@ -124,6 +126,8 @@ export const SECTION_PARAMS = {
         "LCP", "INP", "FID", "CLS", "FCP", "TTFB", "TBT", "SI",
         "Inventory_Load_Time", "Service_Load_Time", "Compression", "Caching",
         "Redirect_Chains", "Render_Blocking", "Resource_Optimization",
+        "PageSpeed_Score", "Mobile_Load_Speed", "Rendering_Performance",
+        "Lazy_Loading", "Third_Party_Optimization", "JS_Execution",
     ],
     onPageSEO: [
         "Title", "H1", "Meta_Description", "Content_Relevance", "Content_Freshness",

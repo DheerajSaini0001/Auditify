@@ -130,11 +130,11 @@ const RegisterPage = () => {
         {/* Right Side: Form */}
         <div className="register-form-container">
           <div className="form-header">
-            <h2 className={`form-title ${darkMode ? 'text-white' : 'text-slate-900'}`}>Create Account</h2>
+            <h2 className={`form-title ${darkMode ? 'text-white' : 'text-ink'}`}>Create Account</h2>
             <p className="form-subtitle">Fill in the details to get started</p>
           </div>
 
-          <form className="register-form" onSubmit={handleSubmit}>
+          <form className="register-form" onSubmit={handleSubmit} autoComplete="off">
             <div className="input-group">
               <label className="input-label">Full Name</label>
               <div className="input-field-wrapper">
@@ -142,6 +142,7 @@ const RegisterPage = () => {
                   name="name"
                   type="text"
                   required
+                  autoComplete="off"
                   className={`register-input ${darkMode ? 'dark' : 'light'}`}
                   placeholder="Enter your name"
                   value={formData.name}
@@ -158,6 +159,7 @@ const RegisterPage = () => {
                   name="email"
                   type="email"
                   required
+                  autoComplete="off"
                   className={`register-input ${darkMode ? 'dark' : 'light'}`}
                   placeholder="name@company.com"
                   value={formData.email}
@@ -174,6 +176,7 @@ const RegisterPage = () => {
                   name="password"
                   type={showPassword ? 'text' : 'password'}
                   required
+                  autoComplete="new-password"
                   className={`register-input ${darkMode ? 'dark' : 'light'}`}
                   placeholder="••••••••"
                   value={formData.password}
@@ -183,7 +186,7 @@ const RegisterPage = () => {
                 <button 
                   type="button" 
                   onClick={() => setShowPassword(!showPassword)} 
-                  className="absolute right-4 text-gray-400 hover:text-emerald-500 transition-colors"
+                  className="absolute right-4 text-faint hover:text-emerald-500 transition-colors"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -198,7 +201,7 @@ const RegisterPage = () => {
                         className={`flex-1 rounded-full transition-all duration-500 ${
                           strength >= level
                             ? strength <= 2 ? 'bg-rose-500' : strength === 3 ? 'bg-amber-500' : 'bg-emerald-500'
-                            : darkMode ? "bg-white/10" : 'bg-slate-100'
+                            : darkMode ? "bg-white/10" : 'bg-cardsoft'
                         }`}
                       ></div>
                     ))}
@@ -214,6 +217,7 @@ const RegisterPage = () => {
                   name="confirmPassword"
                   type={showPassword ? 'text' : 'password'}
                   required
+                  autoComplete="new-password"
                   className={`register-input ${darkMode ? 'dark' : 'light'}`}
                   placeholder="••••••••"
                   value={formData.confirmPassword}

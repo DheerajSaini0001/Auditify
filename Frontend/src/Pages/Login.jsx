@@ -47,7 +47,7 @@ const Login = () => {
   };
 
   return (
-    <div className={`flex items-center justify-center min-h-screen transition-colors duration-300 ${darkMode ? 'bg-[#0a0a10]' : 'bg-slate-50'}`}>
+    <div className={`flex items-center justify-center min-h-screen transition-colors duration-300 ${darkMode ? 'bg-[#0a0a10]' : 'bg-surface'}`}>
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className={`absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-[100px] ${darkMode ? 'bg-blue-600/10' : 'bg-blue-400/20'}`} />
         <div className={`absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-[100px] ${darkMode ? 'bg-purple-600/10' : 'bg-purple-400/20'}`} />
@@ -56,15 +56,15 @@ const Login = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className={`w-full max-w-md p-8 backdrop-blur-xl border rounded-3xl shadow-2xl z-10 transition-colors ${darkMode ? 'bg-[#16161e]/80 border-white/5' : 'bg-white/90 border-slate-200 shadow-slate-200/50'
+        className={`w-full max-w-md p-8 backdrop-blur-xl border rounded-3xl shadow-2xl z-10 transition-colors ${darkMode ? 'bg-[#16161e]/80 border-white/5' : 'bg-card/90 border-line shadow-slate-200/50'
           }`}
       >
         <header className="flex flex-col items-center mb-8">
           <div className="w-16 h-16 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-blue-600/20">
             <LogIn className="text-white w-8 h-8" />
           </div>
-          <h1 className={`text-3xl font-semibold mb-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>Welcome Back</h1>
-          <p className={darkMode ? 'text-gray-400' : 'text-slate-500'}>Sign in to your Dealer Pulse account</p>
+          <h1 className={`text-3xl font-semibold mb-2 ${darkMode ? 'text-white' : 'text-ink'}`}>Welcome Back</h1>
+          <p className={darkMode ? 'text-gray-400' : 'text-muted'}>Sign in to your Dealer Pulse account</p>
         </header>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -83,7 +83,7 @@ const Login = () => {
           )}
 
           <div className="space-y-2">
-            <label className={`text-sm font-medium ml-1 ${darkMode ? 'text-gray-300' : 'text-slate-700'}`}>Email Address</label>
+            <label className={`text-sm font-medium ml-1 ${darkMode ? 'text-gray-300' : 'text-inksoft'}`}>Email Address</label>
             <div className="relative group">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-blue-500 transition-colors" size={20} />
               <input
@@ -91,7 +91,7 @@ const Login = () => {
                 required
                 className={`w-full pl-12 pr-4 py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all ${darkMode
                   ? 'bg-[#1e1e26] border-white/5 text-white placeholder:text-gray-600'
-                  : 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400'
+                  : 'bg-cardsoft border-line text-ink placeholder:text-faint'
                   }`}
                 placeholder="name@example.com"
                 value={email}
@@ -102,8 +102,8 @@ const Login = () => {
 
           <div className="space-y-2">
             <div className="flex items-center justify-between ml-1">
-              <label className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-slate-700'}`}>Password</label>
-              <a href="#" className={`text-xs transition-colors ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}></a>
+              <label className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-inksoft'}`}>Password</label>
+              <a href="#" className={`text-xs transition-colors ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-accent hover:text-accenthover'}`}></a>
             </div>
             <div className="relative group">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-blue-500 transition-colors" size={20} />
@@ -112,7 +112,7 @@ const Login = () => {
                 required
                 className={`w-full pl-12 pr-12 py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all ${darkMode
                   ? 'bg-[#1e1e26] border-white/5 text-white placeholder:text-gray-600'
-                  : 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400'
+                  : 'bg-cardsoft border-line text-ink placeholder:text-faint'
                   }`}
                 placeholder="••••••••"
                 value={password}
@@ -144,12 +144,12 @@ const Login = () => {
             </button>
         </form>
 
-        <div className={`mt-8 text-center ${darkMode ? 'text-gray-400' : 'text-slate-500'}`}>
+        <div className={`mt-8 text-center ${darkMode ? 'text-gray-400' : 'text-muted'}`}>
           Don't have an account? {' '}
           <Link
             to="/register"
             state={{ from: location.state?.from }}
-            className={`font-semibold transition-colors ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
+            className={`font-semibold transition-colors ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-accent hover:text-accenthover'}`}
           >
             Create Account
           </Link>

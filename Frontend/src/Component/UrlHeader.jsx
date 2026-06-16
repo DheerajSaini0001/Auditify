@@ -11,7 +11,7 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
   const currentDevice = data?.device || "Desktop";
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const { setIsAiChatOpen, setAiChatContext, audienceMode } = useData();
+  const { setIsAiChatOpen, setAiChatContext, audienceMode, setAudienceMode } = useData();
   const location = useLocation();
 
   // Auto-trigger actions after login redirect
@@ -95,21 +95,21 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
   const formattedUrl = displayUrl.length > 45 ? `${displayUrl.substring(0, 42)}...` : displayUrl;
 
   return (
-    <div className={`relative p-6 md:p-8 ${hideBorder ? "" : "border-b"} ${darkMode ? "border-slate-800 bg-slate-900/50" : "border-slate-100 bg-slate-50/80"}`}>
+    <div className={`relative p-6 md:p-8 ${hideBorder ? "" : "border-b"} ${darkMode ? "border-slate-800 bg-slate-900/50" : "border-line bg-surface-2/80"}`}>
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 min-w-0 w-full">
 
         {/* Left: URL Section */}
         <div className="space-y-2 w-full lg:flex-1 min-w-0">
           <div className="flex items-center gap-2 opacity-60">
-            <Globe className={`w-3.5 h-3.5 ${darkMode ? "text-slate-200" : "text-slate-500"}`} />
-            <span className={`text-xs font-semibold uppercase tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>Audit Report For</span>
+            <Globe className={`w-3.5 h-3.5 ${darkMode ? "text-slate-200" : "text-muted"}`} />
+            <span className={`text-xs font-semibold uppercase tracking-widest ${darkMode ? "text-slate-200" : "text-muted"}`}>Audit Report For</span>
           </div>
           <div className="flex items-center gap-3 group min-w-0 w-full">
             <a
               href={data?.url || "#"}
               target="_blank"
               rel="noopener noreferrer"
-              className={`text-2xl md:text-3xl font-semibold truncate hover:underline underline-offset-4 decoration-2 decoration-transparent hover:decoration-current transition-all ${darkMode ? "text-white" : "text-slate-900"}`}
+              className={`text-2xl md:text-3xl font-semibold truncate hover:underline underline-offset-4 decoration-2 decoration-transparent hover:decoration-current transition-all ${darkMode ? "text-white" : "text-ink"}`}
               title={data?.url || ""}
             >
               {formattedUrl}
@@ -121,7 +121,7 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
         {/* Middle: Average Score */}
         {typeof data?.score === 'number' && (
           <div className="flex items-center justify-center w-full lg:flex-1 min-w-0 order-3 lg:order-2 mt-4 lg:mt-0">
-            <div className={`flex items-center gap-3 px-5 py-2 rounded-2xl border shadow-sm transition-all ${darkMode ? "bg-slate-800/50 border-slate-700/50" : "bg-white border-slate-200/50"}`}>
+            <div className={`flex items-center gap-3 px-5 py-2 rounded-2xl border shadow-sm transition-all ${darkMode ? "bg-slate-800/50 border-slate-700/50" : "bg-card border-line/50"}`}>
               <div className={`text-2xl font-black ${
                 data.score >= 90 ? "text-emerald-500" : 
                 data.score >= 50 ? "text-amber-500" : "text-red-500"
@@ -129,8 +129,8 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
                 {data.score.toFixed(0)}%
               </div>
               <div className="flex flex-col">
-                <span className={`text-[10px] font-bold uppercase tracking-widest ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Overall</span>
-                <span className={`text-xs font-medium ${darkMode ? "text-slate-300" : "text-slate-700"}`}>Average</span>
+                <span className={`text-[10px] font-bold uppercase tracking-widest ${darkMode ? "text-slate-400" : "text-muted"}`}>Overall</span>
+                <span className={`text-xs font-medium ${darkMode ? "text-slate-300" : "text-inksoft"}`}>Average</span>
               </div>
             </div>
           </div>
@@ -138,11 +138,30 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
 
         {/* Right: Metadata Badges */}
         <div className="flex flex-wrap items-center gap-3 w-full lg:flex-1 lg:justify-end order-2 lg:order-3">
+          {/* Dealer / Developer toggle — only for single-section reports, which have no
+              sidebar (full audits get the toggle from the Sidebar instead). */}
+          {data?.report !== "All" && (
+            <div className={`flex items-center gap-1 p-1 rounded-full border ${darkMode ? "bg-slate-800/50 border-slate-700/50" : "bg-surface-2/50 border-line/50"}`}>
+              {["dealer", "developer"].map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setAudienceMode(m)}
+                  aria-pressed={audienceMode === m}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold capitalize transition-all ${audienceMode === m
+                    ? "bg-accent text-white shadow-sm"
+                    : (darkMode ? "text-slate-300 hover:text-white" : "text-muted hover:text-ink")}`}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+          )}
+
           {/* AI Summary Button */}
           {data?.status === "success" && sectionData && (
             <button
               onClick={handleGetAISummary}
-              className={`flex items-center gap-2 px-6 py-2 rounded-xl font-semibold bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all transition-all`}
+              className={`flex items-center gap-2 px-6 py-2 rounded-xl font-semibold bg-accent hover:bg-accenthover text-white shadow-lg shadow-accent/20 hover:scale-105 active:scale-95 transition-all transition-all`}
             >
               <Sparkles className="w-4 h-4" />
               <span>Ask AI</span>
@@ -150,20 +169,20 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
           )}
 
           {/* Device Badge */}
-          <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border transition-colors ${darkMode ? "bg-slate-800/50 border-slate-700/50 text-slate-300" : "bg-slate-100/50 border-slate-200/50 text-slate-600"}`}>
+          <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border transition-colors ${darkMode ? "bg-slate-800/50 border-slate-700/50 text-slate-300" : "bg-surface-2/50 border-line/50 text-muted"}`}>
             {currentDevice === "Mobile" ? <Smartphone className="w-4 h-4" /> : <Monitor className="w-4 h-4" />}
             <span>{currentDevice}</span>
           </div>
 
           {/* Report Type Badge */}
-          <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border transition-colors ${darkMode ? "bg-slate-800/50 border-slate-700/50 text-slate-300" : "bg-slate-100/50 border-slate-200/50 text-slate-600"}`}>
+          <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border transition-colors ${darkMode ? "bg-slate-800/50 border-slate-700/50 text-slate-300" : "bg-surface-2/50 border-line/50 text-muted"}`}>
             <Layers className="w-4 h-4" />
             <span>{data?.report === "All" ? "Full Audit" : (data?.report || "Full Audit")}</span>
           </div>
 
           {/* Time Badge (if available) */}
           {data?.timeTaken && (
-            <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border transition-colors ${darkMode ? "bg-slate-800/50 border-slate-700/50 text-slate-300" : "bg-slate-100/50 border-slate-200/50 text-slate-600"}`}>
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border transition-colors ${darkMode ? "bg-slate-800/50 border-slate-700/50 text-slate-300" : "bg-surface-2/50 border-line/50 text-muted"}`}>
               <Clock className="w-4 h-4" />
               <span>{data.timeTaken}</span>
             </div>
@@ -174,7 +193,7 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
             <button
               onClick={handleDownloadPDF}
               className={`flex items-center gap-2 px-6 py-2 rounded-xl font-semibold text-white shadow-lg transition-all active:scale-95 transform hover:-translate-y-0.5 ${isAuthenticated
-                ? "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-emerald-500/20"
+                ? "bg-gradient-to-r from-[#16213E] to-[#2A3656] hover:from-[#1F2D52] hover:to-[#374468] shadow-[#16213E]/25"
                 : "bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-500 hover:to-slate-600 shadow-slate-500/20"
                 }`}
             >
@@ -188,7 +207,7 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
           {/* Back to List Button (if from bulk audit) */}
           {data?.fromBulkAudit && (
             <Link to="/bulk-audit">
-              <button className="flex items-center gap-2 px-6 py-2 rounded-xl font-semibold text-white shadow-lg shadow-blue-500/20 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 transition-all active:scale-95 transform hover:-translate-y-0.5">
+              <button className="flex items-center gap-2 px-6 py-2 rounded-xl font-semibold text-white shadow-lg shadow-accent/20 bg-accent hover:bg-accenthover transition-all active:scale-95 transform hover:-translate-y-0.5">
                 <NotebookPen className="w-4 h-4" />
                 <span>Back to List</span>
               </button>

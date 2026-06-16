@@ -16,6 +16,20 @@ import NotADealership from "./NotADealership";
 import { Loader2 } from "lucide-react";
 
 import ReportRestrictionWrapper from "../Component/ReportRestrictionWrapper.jsx";
+import MoreParamsFooter from "../Component/reusablecomponent/MoreParamsFooter";
+
+// Single-section report `data.report` string → parameterAudience.js section key, so the
+// "N more parameters in Developer mode" footer can be shown on single-section reports
+// too (the full-audit footer lives in MainLayout, keyed on the section route).
+const REPORT_TO_SECTION_KEY = {
+  "Technical Performance": "technicalPerformance",
+  "On Page SEO": "onPageSEO",
+  "Accessibility": "accessibility",
+  "Security/Compliance": "securityOrCompliance",
+  "UX & Content Structure": "UXOrContentStructure",
+  "Conversion & Lead Flow": "conversionAndLeadFlow",
+  "AIO (AI-Optimization) Readiness": "aioReadiness",
+};
 
 const ReportLayout = () => {
   const { data, clearData, fetchSingleReport, fetchBulkPageReport, pollingState } = useData();
@@ -115,7 +129,7 @@ const ReportLayout = () => {
 
   if (isFetching) {
     return (
-      <div className={`flex h-screen w-full items-center justify-center ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}>
+      <div className={`flex h-screen w-full items-center justify-center ${darkMode ? "bg-gray-900" : "bg-surface"}`}>
         <Loader2 className="h-10 w-10 animate-spin text-emerald-500" />
       </div>
     );
@@ -159,7 +173,7 @@ const ReportLayout = () => {
   }
 
   return (
-    <div className={`w-full ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}>
+    <div className={`w-full ${darkMode ? "bg-gray-900" : "bg-surface"}`}>
       
       {/* =================================================
           SCENARIO 1: DASHBOARD VIEW ("All")
@@ -183,11 +197,11 @@ const ReportLayout = () => {
       ================================================== */}
       {data && data.report !== "All" && (
         <div
-          className={`flex w-full justify-center ${darkMode ? "text-gray-100" : "text-gray-800"
+          className={`flex w-full justify-center ${darkMode ? "text-gray-100" : "text-ink"
             }`}
         >
           {/* ✅ Max width container for better readability on large screens */}
-          <main className="flex-1 flex flex-col w-full max-w-7xl space-y-6 sm:space-y-8 mt-10">
+          <main className="flex-1 flex flex-col w-full max-w-7xl space-y-6 sm:space-y-6 mt-7">
             {/* Report Components */}
             <div className="w-full">
               {data.report === "Technical Performance" && (
@@ -214,6 +228,12 @@ const ReportLayout = () => {
             </div>
           </main>
         </div>
+      )}
+
+      {/* Single-section reports have no sidebar footer — show the "more params in
+          Developer mode" prompt here (self-hides in developer mode / when nothing hidden). */}
+      {data && data.report !== "All" && REPORT_TO_SECTION_KEY[data.report] && (
+        <MoreParamsFooter sectionKey={REPORT_TO_SECTION_KEY[data.report]} darkMode={darkMode} />
       )}
     </div>
   );

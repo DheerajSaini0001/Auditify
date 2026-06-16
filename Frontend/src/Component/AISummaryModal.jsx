@@ -56,27 +56,27 @@ export function AISummaryModal({ isOpen, onClose, sectionName, sectionData, audi
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          className={`relative w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl border ${darkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"
+          className={`relative w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl border ${darkMode ? "bg-slate-900 border-slate-800" : "bg-card border-line"
             }`}
         >
           {/* Header */}
-          <div className={`p-6 flex items-center justify-between border-b ${darkMode ? "border-slate-800" : "border-slate-100"}`}>
+          <div className={`p-6 flex items-center justify-between border-b ${darkMode ? "border-slate-800" : "border-line"}`}>
             <div className="flex items-center gap-3">
               <div className={`p-2.5 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/20`}>
                 <Sparkles className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h3 className={`text-xl font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
+                <h3 className={`text-xl font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>
                   AI Strategic Overview
                 </h3>
-                <p className={`text-xs font-semibold uppercase tracking-widest ${darkMode ? "text-blue-400" : "text-blue-600"}`}>
+                <p className={`text-xs font-semibold uppercase tracking-widest ${darkMode ? "text-blue-400" : "text-accent"}`}>
                   Section: {sectionName}
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className={`p-2 rounded-xl transition-all ${darkMode ? "hover:bg-slate-800 text-slate-400" : "hover:bg-slate-100 text-slate-500"
+              className={`p-2 rounded-xl transition-all ${darkMode ? "hover:bg-slate-800 text-slate-400" : "hover:bg-surface-2 text-muted"
                 }`}
             >
               <X className="w-5 h-5" />
@@ -86,12 +86,12 @@ export function AISummaryModal({ isOpen, onClose, sectionName, sectionData, audi
           {/* Body */}
           <div className="p-8">
             {loading ? (
-              <div className="flex flex-col items-center justify-center py-12 space-y-4">
+              <div className="flex flex-col items-center justify-center py-8 space-y-4">
                 <div className="relative">
                   <div className="absolute inset-0 blur-2xl bg-blue-500/20 rounded-full animate-pulse"></div>
                   <Loader2 className="w-10 h-10 animate-spin text-blue-500 relative z-10" />
                 </div>
-                <p className={`text-sm font-semibold tracking-tight animate-pulse ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
+                <p className={`text-sm font-semibold tracking-tight animate-pulse ${darkMode ? "text-slate-400" : "text-muted"}`}>
                   Synthesizing audit data with AI Intelligence...
                 </p>
               </div>
@@ -112,7 +112,7 @@ export function AISummaryModal({ isOpen, onClose, sectionName, sectionData, audi
                         <p className="text-xs md:text-sm leading-relaxed opacity-90 font-medium">
                           Your Google Gemini API key has exceeded its daily free-tier limit of **20 requests**.
                         </p>
-                        <div className={`p-3 rounded-lg border text-[11px] leading-relaxed font-mono ${darkMode ? "bg-slate-950/40 border-slate-800 text-slate-400" : "bg-slate-100/50 border-slate-200 text-slate-700"
+                        <div className={`p-3 rounded-lg border text-[11px] leading-relaxed font-mono ${darkMode ? "bg-slate-950/40 border-slate-800 text-slate-400" : "bg-surface-2 border-line text-inksoft"
                           }`}>
                           💡 **How to solve this**: Transition your project from Free Tier to Pay-As-You-Go in Google AI Studio to unlock unlimited audits and immediate responses.
                         </div>
@@ -177,15 +177,15 @@ export function AISummaryModal({ isOpen, onClose, sectionName, sectionData, audi
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.3 }}
-                    className={`flex gap-4 p-5 rounded-2xl border transition-all ${darkMode ? "bg-blue-500/10 border-blue-500/20 shadow-[0_4px_20px_-5px_rgba(59,130,246,0.3)] scale-[1.02]" : "bg-blue-50 border-blue-200 shadow-md"
+                    className={`flex gap-4 p-5 rounded-2xl border transition-all ${darkMode ? "bg-blue-500/10 border-blue-500/20 shadow-[0_4px_20px_-5px_rgba(59,130,246,0.3)] scale-[1.02]" : "bg-accentsoft border-accent/30 shadow-md"
                       }`}
                   >
                     <div className="mt-1 flex-shrink-0">
-                      <Lightbulb className="w-6 h-6 text-blue-500 shadow-glow" />
+                      <Lightbulb className={`w-6 h-6 shadow-glow ${darkMode ? "text-blue-500" : "text-accent"}`} />
                     </div>
                     <div>
-                      <h4 className={`text-[10px] font-black uppercase tracking-[0.2em] mb-1.5 ${darkMode ? "text-blue-400" : "text-blue-600 font-semibold"}`}>Strategist Recommended Action</h4>
-                      <p className={`text-sm md:text-base font-semibold leading-relaxed ${darkMode ? "text-white" : "text-blue-900"}`}>
+                      <h4 className={`text-[10px] font-black uppercase tracking-[0.2em] mb-1.5 ${darkMode ? "text-blue-400" : "text-accent font-semibold"}`}>Strategist Recommended Action</h4>
+                      <p className={`text-sm md:text-base font-semibold leading-relaxed ${darkMode ? "text-white" : "text-ink"}`}>
                         {summary.action}
                       </p>
                     </div>
@@ -201,10 +201,10 @@ export function AISummaryModal({ isOpen, onClose, sectionName, sectionData, audi
           </div>
 
           {/* Footer */}
-          <div className={`p-6 flex justify-end gap-3 border-t ${darkMode ? "border-slate-800" : "border-slate-100"}`}>
+          <div className={`p-6 flex justify-end gap-3 border-t ${darkMode ? "border-slate-800" : "border-line"}`}>
             <button
               onClick={onClose}
-              className={`px-6 py-2.5 rounded-xl font-semibold text-sm transition-all ${darkMode ? "bg-slate-800 hover:bg-slate-700 text-white" : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+              className={`px-6 py-2.5 rounded-xl font-semibold text-sm transition-all ${darkMode ? "bg-slate-800 hover:bg-slate-700 text-white" : "bg-surface-2 hover:bg-cardsoft text-inksoft"
                 }`}
             >
               Close Insights

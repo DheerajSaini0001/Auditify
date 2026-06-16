@@ -54,7 +54,7 @@ const UxShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
 
   return (
     <div className="flex flex-col items-center justify-center py-8 px-4 animate-in fade-in zoom-in duration-500 min-h-[350px]">
-      <div className={`w-full max-w-xl rounded-[32px] p-8 flex flex-col items-center text-center transition-all duration-500 ${darkMode ? "bg-slate-800/40 border border-slate-700/50" : "bg-slate-100/60 border border-slate-200/50"}`}>
+      <div className={`w-full max-w-xl rounded-[32px] p-8 flex flex-col items-center text-center transition-all duration-500 ${darkMode ? "bg-slate-800/40 border border-slate-700/50" : "bg-cardsoft border border-line"}`}>
         {/* Icon Container (Circle) */}
         <div className={`w-20 h-20 rounded-full flex items-center justify-center shadow-xl transition-all duration-500 ${darkMode ? "bg-slate-900 shadow-black/40 text-white" : "bg-[#1e293b] shadow-slate-400/30 text-white"}`}>
           <div className="animate-pulse">
@@ -66,17 +66,17 @@ const UxShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
         </div>
 
         {/* Title */}
-        <h2 className={`mt-6 text-2xl font-semibold tracking-tight transition-all duration-500 ${darkMode ? "text-white" : "text-slate-900"}`}>
+        <h2 className={`mt-6 text-2xl font-semibold tracking-tight transition-all duration-500 ${darkMode ? "text-white" : "text-ink"}`}>
           {step.title}
         </h2>
 
         {/* Description */}
-        <p className={`mt-4 text-base leading-relaxed max-w-sm mx-auto transition-all duration-500 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
+        <p className={`mt-4 text-base leading-relaxed max-w-sm mx-auto transition-all duration-500 ${darkMode ? "text-slate-400" : "text-muted"}`}>
           {step.text}
         </p>
 
         {/* Processing State */}
-        <div className="mt-8 flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
+        <div className="mt-8 flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 text-accent dark:text-blue-400">
           <Loader2 className="w-3.5 h-3.5 animate-spin" />
           <span className="text-xs font-semibold uppercase tracking-wider">Processing</span>
         </div>
@@ -106,9 +106,9 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
   const recommendations = info.howToOvercomeFailure || [];
 
   // Simple Colors
-  const cardBg = darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200";
-  const textColor = darkMode ? "text-gray-100" : "text-gray-900";
-  const subTextColor = darkMode ? "text-gray-400" : "text-gray-500";
+  const cardBg = darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-line";
+  const textColor = darkMode ? "text-gray-100" : "text-ink";
+  const subTextColor = darkMode ? "text-gray-400" : "text-muted";
 
   let statusBg = "bg-rose-500";
   let statusBorder = "border-rose-500";
@@ -134,8 +134,8 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
       <div className="p-5 space-y-4">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"} group-hover:scale-110 transition-transform duration-300`}>
-              <Icon size={24} className={darkMode ? "text-blue-400" : "text-blue-600"} />
+            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-accentsoft"} group-hover:scale-110 transition-transform duration-300`}>
+              <Icon size={24} className={darkMode ? "text-blue-400" : "text-accent"} />
             </div>
             <div>
               <h3 className={`font-semibold text-lg ${textColor}`}>{title}</h3>
@@ -146,7 +146,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
                 {meta?.infoOnly && (
                   <span
                     title="Informational — not included in the section score"
-                    className={`text-[9px] font-semibold px-2 py-0.5 rounded-full border uppercase tracking-wide ${darkMode ? "bg-slate-700/50 text-slate-300 border-slate-600" : "bg-slate-100 text-slate-500 border-slate-300"}`}
+                    className={`text-[9px] font-semibold px-2 py-0.5 rounded-full border uppercase tracking-wide ${darkMode ? "bg-slate-700/50 text-slate-300 border-slate-600" : "bg-cardsoft text-muted border-line"}`}
                   >
                     Info · not scored
                   </span>
@@ -161,7 +161,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
                   e.stopPropagation();
                   setIsOpen(!isOpen);
                 }}
-                className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-1 rounded transition-colors ${isOpen ? (darkMode ? "bg-slate-700 text-slate-200" : "bg-slate-200 text-slate-800") : (darkMode ? "text-gray-400 hover:text-white hover:bg-gray-800" : "text-gray-500 hover:text-gray-900 hover:bg-gray-100")}`}
+                className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-1 rounded transition-colors ${isOpen ? (darkMode ? "bg-slate-700 text-slate-200" : "bg-cardsoft text-ink") : (darkMode ? "text-gray-400 hover:text-white hover:bg-gray-800" : "text-muted hover:text-ink hover:bg-cardsoft")}`}
                 title="Toggle Analysis"
               >
                 {isOpen ? "Hide Detail" : "View Detail"}
@@ -174,7 +174,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
                   e.stopPropagation();
                   onInfo({ ...info, icon: Icon });
                 }}
-                className={`p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}
+                className={`p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-faint hover:text-ink"}`}
                 title="View Methodology"
               >
                 <Info size={18} />
@@ -185,15 +185,15 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
 
 
 
-        <div className={`mt-4 p-4 rounded-lg flex items-start gap-3 ${darkMode ? "bg-slate-800/50" : "bg-slate-50"}`}>
+        <div className={`mt-4 p-4 rounded-lg flex items-start gap-3 ${darkMode ? "bg-slate-800/50" : "bg-cardsoft"}`}>
           <div className={`mt-0.5 p-1.5 rounded-full flex-shrink-0 ${isPassed ? "bg-emerald-500/10 text-emerald-500" : isWarning ? "bg-amber-500/10 text-amber-500" : "bg-rose-500/10 text-rose-500"}`}>
             {isPassed ? <CheckCircle size={14} /> : isWarning ? <AlertTriangle size={14} /> : <XCircle size={14} />}
           </div>
           <div>
-            <h4 className={`text-xs font-semibold uppercase tracking-wide mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
+            <h4 className={`text-xs font-semibold uppercase tracking-wide mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>
               Key Insight
             </h4>
-            <p className={`text-sm font-medium leading-relaxed ${darkMode ? "text-slate-200" : "text-slate-700"}`}>
+            <p className={`text-sm font-medium leading-relaxed ${darkMode ? "text-slate-200" : "text-inksoft"}`}>
               {description}
             </p>
           </div>
@@ -223,24 +223,24 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
             {type === "Text_Readability" && meta?.overallStats && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h5 className={`text-xs font-semibold uppercase tracking-wider ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Page Target</h5>
-                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded ${darkMode ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-700"}`}>
+                  <h5 className={`text-xs font-semibold uppercase tracking-wider ${darkMode ? "text-slate-400" : "text-muted"}`}>Page Target</h5>
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded ${darkMode ? "bg-blue-500/20 text-blue-400" : "bg-accentsoft text-accent"}`}>
                     {meta.pageType} ({meta.targetMin}-{meta.targetMax})
                   </span>
                 </div>
                 <div>
-                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Readability Index</h5>
-                  <div className={`mt-1 p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Readability Index</h5>
+                  <div className={`mt-1 p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                     <span>Complexity Score:</span>
                     <span>{meta.overallStats.score?.toFixed(1)} / 100</span>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                     <p className="opacity-70 mb-1">Sentences</p>
                     <p className="font-semibold">{meta.overallStats.sentenceCount} found</p>
                   </div>
-                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                     <p className="opacity-70 mb-1">Avg Length</p>
                     <p className="font-semibold">{meta.overallStats.ASL?.toFixed(1)} words</p>
                   </div>
@@ -256,7 +256,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
                     <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1.5 custom-scrollbar">
                       {meta.problematicContent.map((item, idx) => (
                         <div key={idx} className={`group relative p-2.5 rounded-lg border transition-all duration-300 hover:scale-[1.01] ${darkMode ? "bg-rose-500/5 border-rose-500/20 hover:bg-rose-500/10" : "bg-rose-50/50 border-rose-100 hover:bg-rose-50"}`}>
-                          <p className={`text-[11px] leading-relaxed italic mb-1.5 ${darkMode ? "text-slate-200" : "text-slate-700"}`}>
+                          <p className={`text-[11px] leading-relaxed italic mb-1.5 ${darkMode ? "text-slate-200" : "text-inksoft"}`}>
                             "{item.text}"
                           </p>
                           <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-tight ${darkMode ? "bg-rose-500/20 text-rose-300" : "bg-rose-100 text-rose-700"}`}>
@@ -279,15 +279,15 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
             {type === "UX_Content_Hierarchy_Clarity" && meta && (
               <div className="space-y-3">
                 <div>
-                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Heading Distro</h5>
-                  <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Heading Distro</h5>
+                  <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                     <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-indigo-400"></span>
                     <span className="break-all">{meta.h1Count} H1 found | {meta.totalHeadings} total tags</span>
                   </div>
                 </div>
                 <div>
-                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Sequence Logic</h5>
-                  <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Sequence Logic</h5>
+                  <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                     <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${meta.isSequential ? "bg-emerald-400" : "bg-rose-400"}`}></span>
                     <span className="break-all">{meta.isSequential ? "Perfect Nesting" : "Non-sequential levels detected"}</span>
                   </div>
@@ -297,8 +297,8 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
 
             {type === "Section_Labeling_Clarity" && meta && (
               <div>
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Semantic Clarity</h5>
-                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Semantic Clarity</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-emerald-400"></span>
                   <span className="break-all">{meta.labeledCount} of {meta.totalSections} sections correctly labeled</span>
                 </div>
@@ -308,13 +308,13 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
             {type === "Content_Density_Balance" && meta && (
               <div className="space-y-3">
                 <div>
-                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Visual Load</h5>
-                  <div className={`mt-1 p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Visual Load</h5>
+                  <div className={`mt-1 p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                     <span>Density Score:</span>
                     <span>{meta.densityScore?.toFixed(2)} pts</span>
                   </div>
                 </div>
-                <div className={`p-2 rounded border font-mono text-[10px] flex justify-between ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <div className={`p-2 rounded border font-mono text-[10px] flex justify-between ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className="opacity-70">Text Volume:</span>
                   <span className="font-semibold">{meta.charCount?.toLocaleString()} chars</span>
                 </div>
@@ -325,14 +325,14 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
             {type === "Navigation_Discoverability" && meta && (
               <div className="space-y-3">
                 <div>
-                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Discovery Assets</h5>
+                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Discovery Assets</h5>
                   <div className="grid grid-cols-1 gap-1.5 mt-2">
                     {[
                       { l: "Global Nav", v: meta.hasNavMenu },
                       { l: "Mobile Menu", v: meta.hasHamburger }
                     ].map((item, i) => (
-                      <div key={i} className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
-                        <span className={darkMode ? "text-slate-300" : "text-slate-600"}>{item.l}:</span>
+                      <div key={i} className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-cardsoft border-line"}`}>
+                        <span className={darkMode ? "text-slate-300" : "text-muted"}>{item.l}:</span>
                         <span className={item.v ? "text-emerald-500 font-semibold" : "text-rose-500 font-semibold"}>{item.v ? "ACTIVE" : "MISSING"}</span>
                       </div>
                     ))}
@@ -341,10 +341,10 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
 
                 {/* Site Search — three-dimension breakdown */}
                 <div>
-                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 flex items-center justify-between ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
+                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 flex items-center justify-between ${darkMode ? "text-slate-400" : "text-muted"}`}>
                     <span>Site Search</span>
                     {meta.search?.present && meta.search?.type && (
-                      <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded ${darkMode ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-700"}`}>
+                      <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded ${darkMode ? "bg-blue-500/20 text-blue-400" : "bg-accentsoft text-accent"}`}>
                         {meta.search.type.toUpperCase()}
                       </span>
                     )}
@@ -355,8 +355,8 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
                       { l: "Discoverable", v: !!meta.search?.discoverable },
                       { l: "Functional", v: !!meta.search?.functional }
                     ].map((item, i) => (
-                      <div key={i} className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
-                        <span className={darkMode ? "text-slate-300" : "text-slate-600"}>{item.l}:</span>
+                      <div key={i} className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-cardsoft border-line"}`}>
+                        <span className={darkMode ? "text-slate-300" : "text-muted"}>{item.l}:</span>
                         <span className={item.v ? "text-emerald-500 font-semibold" : "text-rose-500 font-semibold"}>{item.v ? "YES" : "NO"}</span>
                       </div>
                     ))}
@@ -367,8 +367,8 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
 
             {type === "Breadcrumbs" && meta && (
               <div>
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Path Anchors</h5>
-                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Path Anchors</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-blue-400"></span>
                   <span className="break-all">{meta.isHomepage ? "Homepage (Exempt)" : (status === 'pass' ? "Secondary Path Active" : "No path trail found")}</span>
                 </div>
@@ -377,8 +377,8 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
 
             {type === "In_Page_Navigation" && meta && (
               <div>
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Local Routing</h5>
-                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Local Routing</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-blue-400"></span>
                   <span className="break-all">{meta.anchorLinks} Skip-links | Top-scroll: {meta.backToTop ? "Yes" : "No"}</span>
                 </div>
@@ -388,8 +388,8 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
             {type === "Inventory_Filtering" && meta && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h5 className={`text-xs font-semibold uppercase tracking-wider ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Filtering Quality</h5>
-                  <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wide ${meta.context === 'srp' ? (darkMode ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-700") : (darkMode ? "bg-slate-600/30 text-slate-300" : "bg-slate-200 text-slate-600")}`}>
+                  <h5 className={`text-xs font-semibold uppercase tracking-wider ${darkMode ? "text-slate-400" : "text-muted"}`}>Filtering Quality</h5>
+                  <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wide ${meta.context === 'srp' ? (darkMode ? "bg-blue-500/20 text-blue-400" : "bg-accentsoft text-accent") : (darkMode ? "bg-slate-600/30 text-slate-300" : "bg-cardsoft text-muted")}`}>
                     {meta.context === 'srp' ? 'Inventory Page' : meta.context === 'homepage' ? 'Homepage Finder · Info' : 'N/A'}
                   </span>
                 </div>
@@ -398,12 +398,12 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
                 {meta.context === 'srp' && (
                   <>
                     <div>
-                      <p className={`text-[10px] mb-1.5 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Core facets detected ({meta.coreFacetsFound?.length || 0}/6)</p>
+                      <p className={`text-[10px] mb-1.5 ${darkMode ? "text-slate-400" : "text-muted"}`}>Core facets detected ({meta.coreFacetsFound?.length || 0}/6)</p>
                       <div className="flex flex-wrap gap-1.5">
                         {["make", "model", "year", "price", "mileage", "bodyType"].map((f) => {
                           const on = meta.coreFacetsFound?.includes(f);
                           return (
-                            <span key={f} className={`text-[9px] font-semibold px-2 py-0.5 rounded-full border ${on ? (darkMode ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" : "bg-emerald-50 text-emerald-600 border-emerald-200") : (darkMode ? "bg-slate-800/50 text-slate-500 border-slate-700" : "bg-slate-50 text-slate-400 border-slate-200")}`}>
+                            <span key={f} className={`text-[9px] font-semibold px-2 py-0.5 rounded-full border ${on ? (darkMode ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" : "bg-emerald-50 text-emerald-600 border-emerald-200") : (darkMode ? "bg-slate-800/50 text-slate-500 border-slate-700" : "bg-cardsoft text-faint border-line")}`}>
                               {f === "bodyType" ? "body" : f}
                             </span>
                           );
@@ -418,8 +418,8 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
                         { l: "Sort control", v: meta.feedback?.hasSort },
                         { l: "Range sliders", v: meta.mechanismRich }
                       ].map((item, i) => (
-                        <div key={i} className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
-                          <span className={darkMode ? "text-slate-300" : "text-slate-600"}>{item.l}:</span>
+                        <div key={i} className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-cardsoft border-line"}`}>
+                          <span className={darkMode ? "text-slate-300" : "text-muted"}>{item.l}:</span>
                           <span className={item.v ? "text-emerald-500 font-semibold" : "text-rose-500 font-semibold"}>{item.v ? "YES" : "NO"}</span>
                         </div>
                       ))}
@@ -429,7 +429,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
 
                 {/* Homepage: finder widget summary */}
                 {meta.context === 'homepage' && (
-                  <div className={`p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <div className={`p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                     <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${meta.homepageFinder ? "bg-emerald-400" : "bg-rose-400"}`}></span>
                     <span className="break-all">
                       {meta.homepageFinder ? `Finder widget: ${(meta.finderFacets || []).join(', ') || 'make/model'}` : "No homepage inventory finder detected"}
@@ -441,7 +441,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
 
             {type === "No_Results_UX" && meta && (
               <div className="space-y-2">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>
                   {meta.observed ? "Empty-State Recovery" : "Fallback Infrastructure"}
                 </h5>
                 <div className="grid grid-cols-2 gap-2">
@@ -451,8 +451,8 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
                     { l: "Alternatives", v: meta.hasAlternatives },
                     { l: "Contact CTA", v: meta.hasCTA }
                   ].map((item, i) => (
-                    <div key={i} className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
-                      <span className={darkMode ? "text-slate-300" : "text-slate-600"}>{item.l}:</span>
+                    <div key={i} className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-cardsoft border-line"}`}>
+                      <span className={darkMode ? "text-slate-300" : "text-muted"}>{item.l}:</span>
                       <span className={item.v ? "text-emerald-500 font-semibold" : "text-rose-500 font-semibold"}>{item.v ? "YES" : "NO"}</span>
                     </div>
                   ))}
@@ -462,25 +462,25 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
 
             {type === "Certifications_Awards" && meta && (
               <div>
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Trust Signals ({meta.found?.length || 0})</h5>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Trust Signals ({meta.found?.length || 0})</h5>
                 {meta.found?.length > 0 ? (
                   <div className="flex flex-wrap gap-1.5 mt-2">
                     {meta.found.map((f, i) => (
                       <span key={i} className={`text-[9px] font-semibold px-2 py-0.5 rounded-full border ${darkMode ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" : "bg-emerald-50 text-emerald-600 border-emerald-200"}`}>{f}</span>
                     ))}
                     {meta.badgeImgs > 0 && (
-                      <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full border ${darkMode ? "bg-blue-500/15 text-blue-400 border-blue-500/30" : "bg-blue-50 text-blue-600 border-blue-200"}`}>{meta.badgeImgs} badge img</span>
+                      <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full border ${darkMode ? "bg-blue-500/15 text-blue-400 border-blue-500/30" : "bg-accentsoft text-accent border-accent/30"}`}>{meta.badgeImgs} badge img</span>
                     )}
                   </div>
                 ) : (
-                  <div className={`mt-1 p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-400" : "bg-slate-50 border-slate-200 text-slate-500"}`}>No certifications / awards detected</div>
+                  <div className={`mt-1 p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-400" : "bg-cardsoft border-line text-muted"}`}>No certifications / awards detected</div>
                 )}
               </div>
             )}
 
             {type === "Pricing_Transparency" && meta && !meta.notApplicable && (
               <div>
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Transparency Signals</h5>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Transparency Signals</h5>
                 <div className="grid grid-cols-2 gap-2 mt-2">
                   {[
                     { l: "Real Prices", v: meta.showsRealPrices },
@@ -489,8 +489,8 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
                     { l: "Financing Info", v: meta.financing },
                     { l: "No Hidden Fees", v: meta.noHidden }
                   ].map((item, i) => (
-                    <div key={i} className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
-                      <span className={darkMode ? "text-slate-300" : "text-slate-600"}>{item.l}:</span>
+                    <div key={i} className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-cardsoft border-line"}`}>
+                      <span className={darkMode ? "text-slate-300" : "text-muted"}>{item.l}:</span>
                       <span className={item.v ? "text-emerald-500 font-semibold" : "text-rose-500 font-semibold"}>{item.v ? "YES" : "NO"}</span>
                     </div>
                   ))}
@@ -500,7 +500,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
 
             {type === "Vehicle_History" && meta && !meta.notApplicable && (
               <div>
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>History Reports</h5>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>History Reports</h5>
                 <div className="grid grid-cols-2 gap-2 mt-2">
                   {[
                     { l: "CARFAX", v: meta.carfax },
@@ -508,8 +508,8 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
                     { l: "Report Links", v: meta.reportLinks > 0 },
                     { l: "History Language", v: meta.historyLang }
                   ].map((item, i) => (
-                    <div key={i} className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
-                      <span className={darkMode ? "text-slate-300" : "text-slate-600"}>{item.l}:</span>
+                    <div key={i} className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-cardsoft border-line"}`}>
+                      <span className={darkMode ? "text-slate-300" : "text-muted"}>{item.l}:</span>
                       <span className={item.v ? "text-emerald-500 font-semibold" : "text-rose-500 font-semibold"}>{item.v ? "YES" : "NO"}</span>
                     </div>
                   ))}
@@ -519,21 +519,21 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
 
             {type === "Staff_Profiles" && meta && (
               <div className="space-y-2">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Team Presence</h5>
-                <div className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Team Presence</h5>
+                <div className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className="opacity-70">Team / Staff page:</span>
                   <span className={meta.hasTeamLink ? "text-emerald-500 font-semibold" : "text-rose-500 font-semibold"}>{meta.hasTeamLink ? "LINKED" : "MISSING"}</span>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
-                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                     <p className="opacity-70 mb-1">Profiles</p>
                     <p className="font-semibold">{meta.profileCount || 0}</p>
                   </div>
-                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                     <p className="opacity-70 mb-1">Photos</p>
                     <p className="font-semibold">{meta.withPhoto || 0}</p>
                   </div>
-                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                     <p className="opacity-70 mb-1">Contact</p>
                     <p className="font-semibold">{meta.withContact || 0}</p>
                   </div>
@@ -543,18 +543,18 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
 
             {type === "Page_to_Page_Flow" && meta && (
               <div className="space-y-2">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Traversal Map</h5>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Traversal Map</h5>
                 <div className="grid grid-cols-2 gap-2">
-                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                     <p className="opacity-70 mb-1">Next Steps</p>
                     <p className="font-semibold">{meta.nextStepCTAs} Buttons Found</p>
                   </div>
-                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                     <p className="opacity-70 mb-1">Inter-linking</p>
                     <p className="font-semibold">{meta.internalLinks} Internal links</p>
                   </div>
                 </div>
-                <div className={`p-2 rounded border font-mono text-[10px] flex justify-between ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <div className={`p-2 rounded border font-mono text-[10px] flex justify-between ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className="opacity-70">Site Footer:</span>
                   <span className={meta.hasFooter ? "text-emerald-500 font-semibold" : "text-rose-500 font-semibold"}>{meta.hasFooter ? "ACTIVE" : "MISSING"}</span>
                 </div>
@@ -564,8 +564,8 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
             {/* 3. Interactive Experience Section */}
             {type === "Interactive_Click_Feedback" && meta && (
               <div className="space-y-2">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>State Response</h5>
-                <div className={`p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>State Response</h5>
+                <div className={`p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${meta.withFeedback === meta.totalInteractive ? "bg-emerald-400" : "bg-amber-400"}`}></span>
                   <span className="break-all">{meta.withFeedback} of {meta.totalInteractive} assets react</span>
                 </div>
@@ -573,12 +573,12 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
                 {meta.elements?.length > 0 && (
                   <div className="grid grid-cols-1 gap-1 max-h-[80px] overflow-y-auto pr-1 custom-scrollbar border-t border-dashed border-slate-700/30 pt-2">
                     {meta.elements.map((el, idx) => (
-                      <div key={idx} className={`flex items-center justify-between gap-2 p-1 rounded border text-[9px] ${darkMode ? "bg-slate-800/30 border-slate-700/50" : "bg-slate-50 border-slate-200/50"}`}>
+                      <div key={idx} className={`flex items-center justify-between gap-2 p-1 rounded border text-[9px] ${darkMode ? "bg-slate-800/30 border-slate-700/50" : "bg-cardsoft border-linesoft"}`}>
                         <div className="flex items-center gap-1.5 min-w-0">
-                          <span className={`font-semibold opacity-60 uppercase scale-90 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
+                          <span className={`font-semibold opacity-60 uppercase scale-90 ${darkMode ? "text-slate-400" : "text-muted"}`}>
                             {el.tag}
                           </span>
-                          <p className={`font-medium truncate ${darkMode ? "text-slate-200" : "text-slate-700"}`}>
+                          <p className={`font-medium truncate ${darkMode ? "text-slate-200" : "text-inksoft"}`}>
                             {el.text || 'Unnamed'}
                           </p>
                         </div>
@@ -596,16 +596,16 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
 
             {type === "Loading_Feedback" && meta?.summary && (
               <div>
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Async Signals</h5>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Async Signals</h5>
                 <div className="grid grid-cols-1 gap-1.5 mt-2">
                   {[
                     { l: "Spinners", v: meta.summary.spinners },
                     { l: "Skeletons", v: meta.summary.skeletons },
                     { l: "Text Indicators", v: meta.summary.textLoading?.length || 0 }
                   ].map((item, i) => (
-                    <div key={i} className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
-                      <span className={darkMode ? "text-slate-300" : "text-slate-600"}>{item.l}:</span>
-                      <span className={item.v > 0 ? "text-emerald-500 font-semibold" : "text-slate-400"}>{item.v} detected</span>
+                    <div key={i} className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-cardsoft border-line"}`}>
+                      <span className={darkMode ? "text-slate-300" : "text-muted"}>{item.l}:</span>
+                      <span className={item.v > 0 ? "text-emerald-500 font-semibold" : "text-faint"}>{item.v} detected</span>
                     </div>
                   ))}
                 </div>
@@ -614,17 +614,17 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
 
             {type === "Broken_Links" && meta && (
               <div className="space-y-3">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>URL Health</h5>
-                <div className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>URL Health</h5>
+                <div className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className="opacity-70">Results:</span>
                   <span className={meta.brokenCount > 0 ? "text-rose-500 font-semibold" : "text-emerald-500 font-semibold"}>{meta.brokenCount} Broken / {meta.totalChecked} Checked</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                     <p className="opacity-70 mb-1">Internal</p>
                     <p className="font-semibold">{meta.totalInternal} links</p>
                   </div>
-                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                     <p className="opacity-70 mb-1">External</p>
                     <p className="font-semibold">{meta.totalExternal} links</p>
                   </div>
@@ -641,7 +641,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
                       {meta.brokenLinks.map((link, idx) => (
                         <div key={idx} className={`p-2 rounded-lg border flex items-start justify-between gap-2.5 text-[10px] transition-colors ${darkMode ? "bg-rose-500/5 border-rose-500/20 hover:bg-rose-500/10" : "bg-rose-50 border-rose-100 hover:bg-rose-100"}`}>
                           <div className="flex-1 min-w-0">
-                            <p className={`font-semibold truncate text-[10px] mb-0.5 ${darkMode ? "text-slate-200" : "text-slate-800"}`}>
+                            <p className={`font-semibold truncate text-[10px] mb-0.5 ${darkMode ? "text-slate-200" : "text-ink"}`}>
                               {link.text || 'Anchor Link'}
                             </p>
                             <p className="truncate opacity-60 font-mono text-[8px]">{link.url}</p>
@@ -660,21 +660,21 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
             {/* 4. Mobile Layout & Stability Section */}
             {type === "Above_the_Fold_Content" && meta && (
               <div className="space-y-3">
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Initial Exposure</h5>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Initial Exposure</h5>
                 <div className="grid grid-cols-2 gap-2">
-                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                     <p className="opacity-70 mb-1">ATF Score</p>
                     <p className="font-semibold text-indigo-500">{meta.atfScore}%</p>
                   </div>
-                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                     <p className="opacity-70 mb-1">Viewport</p>
                     <p className="font-semibold">{meta.viewportHeight}px</p>
                   </div>
-                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                     <p className="opacity-70 mb-1">Visible Assets</p>
                     <p className="font-semibold">{meta.importantVisible}</p>
                   </div>
-                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                     <p className="opacity-70 mb-1">Total Assets</p>
                     <p className="font-semibold">{meta.totalImportant}</p>
                   </div>
@@ -684,8 +684,8 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
 
             {type === "Sticky_Header_Usage" && meta && (
               <div>
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Viewport Footprint</h5>
-                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Viewport Footprint</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-blue-400"></span>
                   <span className="break-all">{meta.height}px height used (Max: {meta.limit}px)</span>
                 </div>
@@ -694,15 +694,15 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
 
             {type === "Intrusive_Interstitials" && meta && (
               <div>
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Obstruction Level</h5>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Obstruction Level</h5>
                 <div className="grid grid-cols-1 gap-1.5 mt-2">
                   {[
                     { l: "Full Overlay", v: meta.hasOverlay },
                     { l: "Scroll Block", v: meta.hasScrollBlock },
                     { l: "Modal Shield", v: meta.hasModal }
                   ].map((item, i) => (
-                    <div key={i} className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
-                      <span className={darkMode ? "text-slate-300" : "text-slate-600"}>{item.l}:</span>
+                    <div key={i} className={`p-2 rounded border flex items-center justify-between font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-cardsoft border-line"}`}>
+                      <span className={darkMode ? "text-slate-300" : "text-muted"}>{item.l}:</span>
                       <span className={item.v ? "text-rose-500 font-semibold" : "text-emerald-500 font-semibold"}>{item.v ? "ACTIVE" : "NONE"}</span>
                     </div>
                   ))}
@@ -712,8 +712,8 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
 
             {type === "Layout_Consistency" && meta && (
               <div>
-                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Grid Engine</h5>
-                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Grid Engine</h5>
+                <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                   <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-emerald-400"></span>
                   <span className="break-all">{meta.hasFlexOrGrid ? "Modern Flex/Grid Layout" : "Legacy Structural Pattern"}</span>
                 </div>
@@ -723,23 +723,23 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
             {type === "Mobile_Experience" && meta && (
               <div className="space-y-2">
                 <div>
-                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Responsive Viewport</h5>
-                  <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Responsive Viewport</h5>
+                  <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                     <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${meta.hasDeviceWidth ? "bg-emerald-500" : "bg-rose-500"}`}></span>
                     <span className="break-all">{meta.hasDeviceWidth ? "width=device-width set" : meta.hasViewportMeta ? "viewport meta present, no device-width" : "no viewport meta"}</span>
                   </div>
                 </div>
                 <div>
-                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Horizontal Overflow</h5>
-                  <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Horizontal Overflow</h5>
+                  <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                     <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${meta.horizontalOverflow ? "bg-rose-500" : "bg-emerald-500"}`}></span>
                     <span className="break-all">{meta.horizontalOverflow ? `Overflows by ${meta.overflowBy}px${meta.offenders && meta.offenders.length ? ` (${meta.offenders.join(", ")})` : ""}` : "None"}</span>
                   </div>
                 </div>
                 {meta.responsiveImageRatio !== null && meta.responsiveImageRatio !== undefined && (
                   <div>
-                    <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Responsive Images</h5>
-                    <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                    <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Responsive Images</h5>
+                    <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                       <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-400"></span>
                       <span className="break-all">{meta.responsiveImages}/{meta.imagesTotal} ({meta.responsiveImageRatio}%) · {meta.mediaQueryCount} media queries</span>
                     </div>
@@ -752,8 +752,8 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
               <div className="space-y-2">
                 {meta.touchTargetPct !== null && meta.touchTargetPct !== undefined && (
                   <div>
-                    <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Tap Targets ≥ 44px</h5>
-                    <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                    <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Tap Targets ≥ 44px</h5>
+                    <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                       <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${meta.touchTargetPct >= 80 ? "bg-emerald-500" : "bg-rose-500"}`}></span>
                       <span className="break-all">{meta.adequateTargets}/{meta.totalTargets} ({meta.touchTargetPct}%)</span>
                     </div>
@@ -761,8 +761,8 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
                 )}
                 {meta.legibleTextPct !== null && meta.legibleTextPct !== undefined && (
                   <div>
-                    <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Legible Text ≥ 12px</h5>
-                    <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                    <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Legible Text ≥ 12px</h5>
+                    <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                       <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${meta.legibleTextPct >= 90 ? "bg-emerald-500" : "bg-amber-500"}`}></span>
                       <span className="break-all">{meta.legibleText}/{meta.textTotal} ({meta.legibleTextPct}%)</span>
                     </div>
@@ -770,8 +770,8 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
                 )}
                 {!meta.notMeasurable && (
                   <div>
-                    <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Thumb Reach</h5>
-                    <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                    <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Thumb Reach</h5>
+                    <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                       <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${meta.thumbReachOk ? "bg-emerald-500" : "bg-amber-500"}`}></span>
                       <span className="break-all">{meta.thumbReachOk ? "Reachable sticky / mobile nav" : "No reachable sticky or mobile nav"}</span>
                     </div>
@@ -779,8 +779,8 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
                 )}
                 {meta.smallExamples && meta.smallExamples.length > 0 && (
                   <div>
-                    <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Smallest Tap Targets</h5>
-                    <div className={`mt-1 p-2 rounded border flex flex-col gap-1 font-mono text-[10px] max-h-[120px] overflow-y-auto ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                    <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Smallest Tap Targets</h5>
+                    <div className={`mt-1 p-2 rounded border flex flex-col gap-1 font-mono text-[10px] max-h-[120px] overflow-y-auto ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
                       {meta.smallExamples.map((ex, i) => (
                         <div key={i} className="flex gap-2 items-start">
                           <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1 bg-slate-400"></span>
@@ -799,12 +799,12 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
 
         {/* Expanded Analysis Content */}
         {isOpen && (
-          <div className={`mt-3 p-3 rounded-lg text-xs leading-relaxed border animate-in slide-in-from-top-2 duration-200 ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-white border-slate-200 text-slate-600"}`}>
+          <div className={`mt-3 p-3 rounded-lg text-xs leading-relaxed border animate-in slide-in-from-top-2 duration-200 ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
 
             {/* Cause */}
             {(analysis?.cause || reasons.length > 0) && (
               <div className="mb-4">
-                <p className={`font-semibold mb-1 ${darkMode ? "text-slate-200" : "text-slate-700"}`}>Cause:</p>
+                <p className={`font-semibold mb-1 ${darkMode ? "text-slate-200" : "text-inksoft"}`}>Cause:</p>
                 <div className="pl-1 opacity-90">
                   {analysis?.cause ? (
                     <p>{analysis.cause}</p>
@@ -853,10 +853,10 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
 const Section = ({ title, icon: Icon, children, darkMode }) => (
   <div className="space-y-4">
     <div className="flex items-center gap-3 px-2">
-      <div className={`p-2 rounded-lg ${darkMode ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-600"}`}>
+      <div className={`p-2 rounded-lg ${darkMode ? "bg-blue-500/20 text-blue-400" : "bg-accentsoft text-accent"}`}>
         <Icon size={20} />
       </div>
-      <h2 className={`text-xl font-semibold ${darkMode ? "text-white" : "text-gray-900"}`}>
+      <h2 className={`text-xl font-semibold ${darkMode ? "text-white" : "text-ink"}`}>
         {title}
       </h2>
     </div>
@@ -895,10 +895,10 @@ const UX_Content_Structure_Inner = React.memo(({ data, loading, darkMode }) => {
 
   if (!data?.UXOrContentStructure) {
     return (
-      <div className={`w-full ${darkMode ? "bg-gray-900" : "bg-gray-50"} transition-colors duration-300`}>
+      <div className={`w-full ${darkMode ? "bg-gray-900" : "bg-surface"} transition-colors duration-300`}>
         <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-6`}>
           {/* ✅ Card 1: URL Header Card */}
-          <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
+          <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-card border border-line shadow-xl shadow-slate-200/50"}`}>
             <UrlHeader
               data={data}
               darkMode={darkMode}
@@ -910,11 +910,11 @@ const UX_Content_Structure_Inner = React.memo(({ data, loading, darkMode }) => {
           </div>
 
           {/* ✅ Card 2: Overview / Preview Card */}
-          <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
+          <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-card border border-line shadow-xl shadow-slate-200/50"}`}>
             <div className={`flex flex-col xl:flex-row ${data?.report === "All" ? "" : "min-h-[300px]"}`}>
               {/* Left Panel: Live Preview (Only if not All) */}
               {data?.report !== "All" && (
-                <div className={`w-full xl:w-[45%] p-3 lg:p-4 flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
+                <div className={`w-full xl:w-[45%] p-3 lg:p-4 flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-cardsoft border-linesoft"}`}>
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/5 blur-3xl rounded-full pointer-events-none"></div>
                   <div className="w-full relative z-10">
                     <LivePreview data={data} loading={loading} variant="plain" />
@@ -932,8 +932,8 @@ const UX_Content_Structure_Inner = React.memo(({ data, loading, darkMode }) => {
     );
   }
 
-  const mainBg = darkMode ? "bg-gray-900" : "bg-gray-50";
-  const textColor = darkMode ? "text-white" : "text-gray-900";
+  const mainBg = darkMode ? "bg-gray-900" : "bg-surface";
+  const textColor = darkMode ? "text-white" : "text-ink";
 
   const metrics = Object.keys(results).filter(k => {
     const metric = results[k];
@@ -1008,7 +1008,7 @@ const UX_Content_Structure_Inner = React.memo(({ data, loading, darkMode }) => {
       <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-6`}>
 
         {/* ✅ Card 1: URL Header Card */}
-        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
+        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-card border border-line shadow-xl shadow-slate-200/50"}`}>
           <UrlHeader
             data={data}
             darkMode={darkMode}
@@ -1020,12 +1020,12 @@ const UX_Content_Structure_Inner = React.memo(({ data, loading, darkMode }) => {
         </div>
 
         {/* ✅ Card 2: Overview / Preview Card */}
-        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/40 border border-slate-200 shadow-xl shadow-slate-200/50"}`}>
+        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-card border border-line shadow-xl shadow-slate-200/50"}`}>
           <div className={`flex flex-col xl:flex-row ${data.report === "All" ? "" : "min-h-[300px]"}`}>
 
             {/* Left Panel: Live Preview (Only if not All) */}
             {data.report !== "All" && (
-              <div className={`w-full xl:w-[45%] ${data.report === "All" ? "p-6 lg:p-10" : "p-3 lg:p-4"} flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
+              <div className={`w-full xl:w-[45%] ${data.report === "All" ? "p-6 lg:p-10" : "p-3 lg:p-4"} flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-cardsoft border-linesoft"}`}>
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/5 blur-3xl rounded-full pointer-events-none"></div>
                 <div className="w-full relative z-10">
                   <LivePreview data={data} loading={loading} variant="plain" />
@@ -1035,22 +1035,22 @@ const UX_Content_Structure_Inner = React.memo(({ data, loading, darkMode }) => {
 
             {/* Right Panel: Metrics & Score */}
             <div className={`flex-1 ${data.report === "All" ? "px-6 pb-4 pt-2 lg:px-10 lg:pt-2" : "px-6 pb-4 pt-4 lg:px-12 lg:pt-6"} flex flex-col justify-center`}>
-              <div className={`w-full ${data.report === "All" ? "" : "max-w-2xl mx-auto"} ${data.report === "All" ? "space-y-10" : "space-y-8"}`}>
+              <div className={`w-full ${data.report === "All" ? "" : "max-w-2xl mx-auto"} ${data.report === "All" ? "space-y-7" : "space-y-6"}`}>
 
                 {/* Top Content Area */}
-                <div className={`flex flex-col md:flex-row items-center ${data.report === "All" ? "gap-10 md:gap-14 justify-between" : "gap-8 md:gap-12 justify-center"}`}>
+                <div className={`flex flex-col md:flex-row items-center ${data.report === "All" ? "gap-7 md:gap-9 justify-between" : "gap-8 md:gap-8 justify-center"}`}>
 
                   {/* Text Content */}
                   <div className={`flex-1 ${data.report === "All" ? "space-y-5" : "space-y-4"} text-left order-2 md:order-1`}>
                     <div className={`${data.report === "All" ? "space-y-2" : "space-y-1.5"}`}>
-                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-blue-100/50 text-blue-600 border border-blue-200"}`}>
+                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-accentsoft text-accent border border-accent/20"}`}>
                         <Layout className="w-3.5 h-3.5" />
                         <span>UX Audit</span>
                       </div>
-                      <h3 className={`${data.report === "All" ? "text-3xl lg:text-5xl" : "text-2xl lg:text-4xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
-                        UX & <span className="text-blue-500">Content</span>
+                      <h3 className={`${data.report === "All" ? "text-3xl lg:text-5xl" : "text-2xl lg:text-4xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>
+                        UX & <span className={darkMode ? "text-blue-500" : "text-accent"}>Content</span>
                       </h3>
-                      <p className={`text-sm leading-relaxed opacity-70 ${darkMode ? "text-slate-300" : "text-slate-600"}`}>
+                      <p className={`text-sm leading-relaxed opacity-70 ${darkMode ? "text-slate-300" : "text-muted"}`}>
                         Detailed performance breakdown of user experience and content organization.
                       </p>
                     </div>
@@ -1060,21 +1060,21 @@ const UX_Content_Structure_Inner = React.memo(({ data, loading, darkMode }) => {
                       <div className={`flex flex-wrap items-center ${data.report === "All" ? "gap-5" : "gap-4"}`}>
                         <div className="flex items-center gap-2">
                           <CheckCircle size={18} className="text-emerald-500" />
-                          <span className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{passedCount} Passed</span>
+                          <span className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-muted"}`}>{passedCount} Passed</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <AlertTriangle size={18} className="text-amber-500" />
-                          <span className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{warningCount} Warning</span>
+                          <span className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-muted"}`}>{warningCount} Warning</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <XCircle size={18} className="text-rose-500" />
-                          <span className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-slate-500"}`}>{failedCount} Failed</span>
+                          <span className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-muted"}`}>{failedCount} Failed</span>
                         </div>
                       </div>
                       <div className={`w-px h-4 ${darkMode ? "bg-slate-800" : "bg-slate-200 hidden md:block"}`}></div>
                       <button
                         onClick={() => setSelectedMetricInfo(scoreCalculationInfo)}
-                        className={`flex items-center gap-2 text-sm font-semibold transition-all ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-700"}`}
+                        className={`flex items-center gap-2 text-sm font-semibold transition-all ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-accent hover:text-accenthover"}`}
                       >
                         <Info size={16} />
                         <span className="border-b border-transparent hover:border-current">Metric Methodology</span>
@@ -1087,7 +1087,7 @@ const UX_Content_Structure_Inner = React.memo(({ data, loading, darkMode }) => {
                     <div className={`absolute -inset-8 rounded-full blur-3xl opacity-25 transition-opacity duration-700 group-hover:opacity-40 ${overallScore >= 80 ? "bg-emerald-500" : "bg-amber-500"}`}></div>
                     <CircularProgress value={overallScore} size={data.report === "All" ? 180 : 150} stroke={14} />
                     <div className="absolute inset-0 flex items-center justify-center flex-col gap-0.5">
-                      <span className={`${data.report === "All" ? "text-5xl" : "text-3xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>{overallScore}%</span>
+                      <span className={`${data.report === "All" ? "text-5xl" : "text-3xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>{overallScore}%</span>
                       <span className="text-[11px] font-semibold uppercase tracking-[0.2em] opacity-50">SCORE</span>
                     </div>
                   </div>
@@ -1100,7 +1100,7 @@ const UX_Content_Structure_Inner = React.memo(({ data, loading, darkMode }) => {
 
         {/* Filtered Sections */}
         <ReportRestrictionWrapper>
-          <div className="space-y-12">
+          <div className="space-y-8">
             {sectionDefinitions.map((section, idx) => {
               const visibleKeys = section.keys.filter((key) => isVisibleForAudience(key, audienceMode));
               if (visibleKeys.length === 0) return null;

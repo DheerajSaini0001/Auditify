@@ -39,7 +39,7 @@ const LandingPage = () => {
     }, [fetchData, navigate, loading]);
 
     return (
-        <div className={`relative w-full overflow-x-hidden transition-colors duration-500 ${darkMode ? 'bg-[#0A0520] text-white' : 'bg-slate-50 text-slate-900'}`}>
+        <div className={`relative w-full overflow-x-hidden transition-colors duration-500 ${darkMode ? 'bg-[#0A0520] text-white' : 'bg-surface text-ink'}`}>
             {/* Reading Progress Bar */}
             <motion.div
                 className="fixed top-0 left-0 right-0 h-1.5 bg-[#ea580c] z-[100] origin-left"

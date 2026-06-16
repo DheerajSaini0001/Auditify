@@ -12,7 +12,7 @@ const SkeletonLoader = ({ className, count = 1 }) => {
                     key={i}
                     className={`
             animate-pulse rounded-lg 
-            ${darkMode ? "bg-slate-800" : "bg-slate-200"} 
+            ${darkMode ? "bg-slate-800" : "bg-cardsoft"}
             ${className}
           `}
                 />

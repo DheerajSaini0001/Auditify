@@ -6,6 +6,8 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: var(--app-surface, #F7F3EA);
+  color: var(--app-ink, #16213E);
 }
 
 input, button, textarea, select {
@@ -13,6 +15,12 @@ input, button, textarea, select {
 }
 
 @import "tailwindcss";
+
+/* Bind the `dark:` variant to the app's `.dark` class on <html> (set by
+   ThemeContext) instead of the OS `prefers-color-scheme`. Without this,
+   `dark:` utilities followed the operating system and fought the in-app
+   light/dark toggle. */
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
   --font-sans: 'Inter', sans-serif;
@@ -27,6 +35,62 @@ input, button, textarea, select {
       transform: translateX(100%);
     }
   }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Semantic colour tokens (theme-responsive)
+   Light theme = cream / navy / orange brand palette.
+   Dark theme  = existing dark look (unchanged).
+   Use the generated utilities (bg-surface, text-ink, text-muted,
+   border-line, bg-card, bg-accent, …) instead of hardcoded colours.
+   ───────────────────────────────────────────────────────────── */
+:root,
+.light {
+  --app-surface: #F7F3EA;        /* page background (cream)            */
+  --app-surface-2: #F1EBDD;      /* slightly deeper cream sections     */
+  --app-card: #FFFFFF;           /* cards / panels                     */
+  --app-card-soft: #FDFBF6;      /* subtle card / inset                */
+  --app-ink: #16213E;            /* headings / primary text (navy)     */
+  --app-ink-soft: #2A3656;       /* strong body text                   */
+  --app-muted: #5A6B87;          /* secondary text (slate-blue)        */
+  --app-faint: #8A97AD;          /* tertiary / placeholder text        */
+  --app-line: #E7E0D2;           /* borders / dividers (warm)          */
+  --app-line-soft: #EFE9DC;      /* subtle borders                     */
+  --app-accent: #EA580C;         /* brand orange                       */
+  --app-accent-hover: #C2410C;   /* orange hover                       */
+  --app-accent-soft: #FBE8DD;    /* orange tint background             */
+}
+
+.dark {
+  --app-surface: #0A0520;
+  --app-surface-2: #0B1120;
+  --app-card: #0B1120;
+  --app-card-soft: #131A2E;
+  --app-ink: #FFFFFF;
+  --app-ink-soft: #E2E8F0;       /* slate-200 */
+  --app-muted: #94A3B8;          /* slate-400 */
+  --app-faint: #64748B;          /* slate-500 */
+  --app-line: #1E293B;           /* slate-800 */
+  --app-line-soft: #233044;
+  --app-accent: #EA580C;
+  --app-accent-hover: #C2410C;
+  --app-accent-soft: rgba(234, 88, 12, 0.15);
+}
+
+@theme inline {
+  --color-surface: var(--app-surface);
+  --color-surface-2: var(--app-surface-2);
+  --color-card: var(--app-card);
+  --color-cardsoft: var(--app-card-soft);
+  --color-ink: var(--app-ink);
+  --color-inksoft: var(--app-ink-soft);
+  --color-muted: var(--app-muted);
+  --color-faint: var(--app-faint);
+  --color-line: var(--app-line);
+  --color-linesoft: var(--app-line-soft);
+  --color-accent: var(--app-accent);
+  --color-accenthover: var(--app-accent-hover);
+  --color-accentsoft: var(--app-accent-soft);
 }
 
 @media (max-width: 600px) {

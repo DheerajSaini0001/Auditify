@@ -19,8 +19,8 @@ const Tooltip = ({ children, content, darkMode }) => {
                         transition={{ duration: 0.2, ease: "easeOut" }}
                         className={`absolute right-0 bottom-full mb-3 z-[100] w-72 p-4 rounded-xl shadow-2xl border backdrop-blur-md ${
                             darkMode 
-                                ? "bg-slate-900/95 border-slate-700 text-slate-200" 
-                                : "bg-white/95 border-slate-200 text-slate-700"
+                                ? "bg-slate-900/95 border-slate-700 text-slate-200"
+                                : "bg-card/95 border-line text-muted"
                         }`}
                     >
                         <div className="space-y-3">
@@ -28,7 +28,7 @@ const Tooltip = ({ children, content, darkMode }) => {
                         </div>
                         {/* Tooltip Arrow */}
                         <div className={`absolute -bottom-1.5 right-4 w-3 h-3 rotate-45 border-r border-b ${
-                            darkMode ? "bg-slate-900 border-slate-700" : "bg-white border-slate-200"
+                            darkMode ? "bg-slate-900 border-slate-700" : "bg-card border-line"
                         }`} />
                     </motion.div>
                 )}

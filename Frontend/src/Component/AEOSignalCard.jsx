@@ -223,16 +223,16 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
     const hasRichDetail = breakdownEntries.length > 0 || improvements.length > 0;
 
     return (
-        <div className={`relative overflow-hidden rounded-[2rem] border transition-all duration-500 p-8 flex flex-col gap-6 ${darkMode ? "bg-slate-900 border-slate-800 shadow-xl" : "bg-white border-gray-100 shadow-sm shadow-slate-200 hover:shadow-md"}`}>
+        <div className={`relative overflow-hidden rounded-[2rem] border transition-all duration-500 p-8 flex flex-col gap-6 ${darkMode ? "bg-slate-900 border-slate-800 shadow-xl" : "bg-card border-line shadow-sm shadow-slate-200 hover:shadow-md"}`}>
 
             {/* Header Area */}
             <div className="flex items-start justify-between">
                 <div className="flex items-center gap-5">
-                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-transform duration-500 group-hover:scale-105 ${darkMode ? "bg-slate-800" : "bg-slate-50 border border-slate-100 shadow-inner"}`}>
+                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-transform duration-500 group-hover:scale-105 ${darkMode ? "bg-slate-800" : "bg-cardsoft border border-line shadow-inner"}`}>
                         <Icon size={28} className={darkMode ? "text-indigo-400" : "text-indigo-600"} strokeWidth={2.5} />
                     </div>
                     <div className="flex flex-col gap-1.5">
-                        <h3 className={`text-xl font-black tracking-tight ${darkMode ? "text-slate-100" : "text-slate-900"}`}>{title}</h3>
+                        <h3 className={`text-xl font-black tracking-tight ${darkMode ? "text-slate-100" : "text-ink"}`}>{title}</h3>
                         <div className={`w-fit px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${statusColor}`}>
                             {status}
                         </div>
@@ -244,8 +244,8 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
                         <button
                             onClick={() => setShowDetails(!showDetails)}
                             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${showDetails
-                                ? (darkMode ? "bg-slate-700 text-white" : "bg-slate-200 text-slate-800 shadow-sm")
-                                : (darkMode ? "bg-slate-800/50 text-slate-400 hover:text-white" : "bg-transparent text-slate-400 hover:text-indigo-600")}`}
+                                ? (darkMode ? "bg-slate-700 text-white" : "bg-cardsoft text-ink shadow-sm")
+                                : (darkMode ? "bg-slate-800/50 text-slate-400 hover:text-white" : "bg-transparent text-faint hover:text-indigo-600")}`}
                         >
                             {showDetails ? "Hide Detail" : "View Detail"}
                             {showDetails ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
@@ -264,7 +264,7 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
                                     thresholds: info.thresholds || data?.threshold || "N/A"
                                 });
                             }}
-                            className={`p-2 rounded-lg transition-colors ${darkMode ? "bg-slate-800 text-slate-500 hover:text-indigo-400" : "bg-slate-50 text-slate-400 hover:text-indigo-600 border border-slate-100"}`}
+                            className={`p-2 rounded-lg transition-colors ${darkMode ? "bg-slate-800 text-slate-500 hover:text-indigo-400" : "bg-cardsoft text-faint hover:text-indigo-600 border border-line"}`}
                         >
                             <Info size={18} />
                         </button>
@@ -276,7 +276,7 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
 
             {/* Status Detail Section */}
             <div className="flex flex-col gap-3">
-                <span className={`text-[10px] font-black uppercase tracking-[0.2em] opacity-40 ${darkMode ? "text-white" : "text-slate-900"}`}>Status Detail</span>
+                <span className={`text-[10px] font-black uppercase tracking-[0.2em] opacity-40 ${darkMode ? "text-white" : "text-ink"}`}>Status Detail</span>
                 <div className={`p-6 rounded-2xl border transition-all duration-500 ${boxBg}`}>
                     <p className={`text-sm md:text-base font-black tracking-tight ${boxText}`}>
                         {getStatusDetail(signal, data, score < 100)}
@@ -291,7 +291,7 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
                         <>
                             {/* Score Breakdown — which components are dragging the score down */}
                             {breakdownEntries.length > 0 && (
-                                <div className={`p-5 rounded-2xl border ${darkMode ? "bg-slate-950 border-slate-800" : "bg-slate-50 border-slate-200"}`}>
+                                <div className={`p-5 rounded-2xl border ${darkMode ? "bg-slate-950 border-slate-800" : "bg-cardsoft border-line"}`}>
                                     <span className="text-[9px] font-black uppercase tracking-widest opacity-40">Score Breakdown</span>
                                     <div className="flex flex-col gap-2.5 mt-3">
                                         {breakdownEntries.map(([key, val]) => {
@@ -301,10 +301,10 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
                                             return (
                                                 <div key={key} className="flex flex-col gap-1">
                                                     <div className="flex justify-between text-[11px] font-semibold">
-                                                        <span className={darkMode ? "text-slate-300" : "text-slate-700"}>{prettyLabel(key)}</span>
+                                                        <span className={darkMode ? "text-slate-300" : "text-inksoft"}>{prettyLabel(key)}</span>
                                                         <span className={low ? "text-amber-500" : "text-emerald-500"}>{val}{max ? `/${max}` : ""}</span>
                                                     </div>
-                                                    <div className="h-1.5 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-800">
+                                                    <div className="h-1.5 rounded-full overflow-hidden bg-surface-2 dark:bg-slate-800">
                                                         <div className="h-full rounded-full" style={{ width: `${pct}%`, background: low ? "#f59e0b" : "#10b981" }} />
                                                     </div>
                                                 </div>
@@ -322,7 +322,7 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
                                 </div>
                                 <ul className="flex flex-col gap-2">
                                     {improvements.map((tip, i) => (
-                                        <li key={i} className={`flex gap-2 text-[11px] leading-snug font-semibold ${darkMode ? "text-slate-300" : "text-slate-700"}`}>
+                                        <li key={i} className={`flex gap-2 text-[11px] leading-snug font-semibold ${darkMode ? "text-slate-300" : "text-inksoft"}`}>
                                             <span className="text-indigo-500 mt-0.5">→</span>
                                             <span>{tip}</span>
                                         </li>
@@ -333,13 +333,13 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* Current vs Target */}
-                            <div className={`p-5 rounded-2xl border ${darkMode ? "bg-slate-950 border-slate-800" : "bg-slate-50 border-slate-200"}`}>
+                            <div className={`p-5 rounded-2xl border ${darkMode ? "bg-slate-950 border-slate-800" : "bg-cardsoft border-line"}`}>
                                 <div className="flex flex-col gap-4">
                                     <div className="space-y-1.5">
                                         <span className="text-[9px] font-black uppercase tracking-widest opacity-40">Current Status</span>
                                         <div className="flex items-center gap-2">
                                             <div className="w-1.5 h-1.5 rounded-full bg-rose-500"></div>
-                                            <span className={`text-xs font-black ${darkMode ? "text-white" : "text-slate-900"}`}>
+                                            <span className={`text-xs font-black ${darkMode ? "text-white" : "text-ink"}`}>
                                                 {signal === 'aeoSchema' ? (data?.count === 0 ? 'Zero Markup' : (data?.types?.length > 2 ? 'Multi-Type' : 'Partial Types')) :
                                                     signal === 'llmsTxt' ? (data?.exists ? 'Header Issue' : 'File Missing') :
                                                         signal === 'markdownHeaders' ? `Score: ${data?.score}%` :
@@ -352,7 +352,7 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
                                         <span className="text-[9px] font-black uppercase tracking-widest opacity-40">Remediation Action</span>
                                         <div className="flex items-center gap-2">
                                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
-                                            <span className={`text-xs font-black ${darkMode ? "text-white" : "text-slate-900"}`}>
+                                            <span className={`text-xs font-black ${darkMode ? "text-white" : "text-ink"}`}>
                                                 {signal === 'aeoSchema' ? "Inject FAQPage Schema" :
                                                     signal === 'llmsTxt' ? "Initialize /llms.txt" :
                                                         signal === 'markdownHeaders' ? "Fix Heading Hierarchy" :
@@ -369,7 +369,7 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
                                     <Brain size={14} className="text-indigo-500" />
                                     <span className="text-[10px] font-black uppercase tracking-widest text-indigo-500">AEO Engine Impact</span>
                                 </div>
-                                <p className={`text-[11px] leading-snug font-semibold ${darkMode ? "text-slate-300" : "text-slate-700"}`}>
+                                <p className={`text-[11px] leading-snug font-semibold ${darkMode ? "text-slate-300" : "text-inksoft"}`}>
                                     Failing this signal reduces AI selection probability by ~70% across premium engines.
                                 </p>
                             </div>

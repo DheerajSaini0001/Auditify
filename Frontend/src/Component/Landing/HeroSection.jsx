@@ -1,4 +1,5 @@
 import React, { useState, useRef, useContext, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -47,20 +48,18 @@ const CustomDropdown = ({ value, onChange, options, icon, darkMode, disabled }) 
                 disabled={disabled}
                 onClick={() => !disabled && setIsOpen(!isOpen)}
                 className={`
-                    flex items-center gap-2 px-3 h-10 rounded-xl cursor-pointer transition-all duration-200 group/drop border text-white
-                    ${darkMode
-                        ? "bg-white/5 border-white/8 hover:bg-white/10 hover:border-[#ea580c]/20"
-                        : "bg-slate-50 border-slate-200 hover:bg-white hover:border-[#ea580c]/40"}
+                    flex items-center gap-2 px-4 h-11 rounded-xl cursor-pointer transition-all duration-200 group/drop border
+                    bg-[#FB8C4B] border-[#FB8C4B] hover:bg-[#F97316] hover:border-[#F97316] shadow-sm shadow-orange-500/20
                     ${disabled ? "opacity-100 cursor-not-allowed" : "active:scale-[0.97]"}
                 `}
             >
-                <span className={`flex-shrink-0 transition-colors ${darkMode ? 'text-slate-white group-hover/drop:text-white' : 'text-white group-hover/drop:text-white'}`}>
-                    {React.cloneElement(icon, { size: 14 })}
+                <span className="flex-shrink-0 transition-colors text-white">
+                    {React.cloneElement(icon, { size: 16 })}
                 </span>
-                <span className={`text-[10px] font-semibold uppercase tracking-widest truncate max-w-[72px] ${darkMode ? 'text-white group-hover/drop:text-white' : 'text-white group-hover/drop:text-white'}`}>
+                <span className="text-[13px] font-semibold uppercase tracking-wide truncate max-w-[110px] text-white">
                     {selectedLabel}
                 </span>
-                <ChevronDown className={`w-3 h-3 transition-transform duration-300 ${isOpen ? "rotate-180 text-white" : darkMode ? "text-white" : "text-white"}`} />
+                <ChevronDown className={`w-3 h-3 transition-transform duration-300 text-white ${isOpen ? "rotate-180" : ""}`} />
             </button>
 
             <AnimatePresence>
@@ -73,7 +72,7 @@ const CustomDropdown = ({ value, onChange, options, icon, darkMode, disabled }) 
                         className={`absolute top-full mt-3 right-0 w-64 z-[1000] rounded-[1.5rem] shadow-2xl border overflow-hidden backdrop-blur-2xl p-2 
                             ${darkMode
                                 ? "bg-slate-900/90 border-white/10 shadow-black/40"
-                                : "bg-white/90 border-slate-200/60 shadow-slate-200/50"
+                                : "bg-card/90 border-line/60 shadow-line/50"
                             }
                         `}
                     >
@@ -87,7 +86,7 @@ const CustomDropdown = ({ value, onChange, options, icon, darkMode, disabled }) 
                                         w-full flex items-center justify-between px-4 py-3 text-[11px] font-semibold tracking-wide rounded-xl transition-all duration-200
                                         ${value === opt.value
                                             ? (darkMode ? "bg-[#ea580c]/20 text-orange-400" : "bg-[#ea580c]/10 text-[#ea580c]")
-                                            : (darkMode ? "text-slate-400 hover:bg-white/5 hover:text-white" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900")}
+                                            : (darkMode ? "text-slate-400 hover:bg-white/5 hover:text-white" : "text-muted hover:bg-cardsoft hover:text-ink")}
                                     `}
                                 >
                                     <span className="truncate pr-2">{opt.label}</span>
@@ -148,8 +147,8 @@ const ScoreRing = ({ score, color, label, delay = 0 }) => {
 
     return (
         <div className="relative flex flex-col items-center justify-center">
-            <div className="relative mb-4">
-                <svg width="88" height="88" viewBox="0 0 88 88" className="-rotate-90 drop-shadow-md">
+            <div className="relative mb-3">
+                <svg width="78" height="78" viewBox="0 0 88 88" className="-rotate-90 drop-shadow-md">
                     <circle cx="44" cy="44" r={r} strokeWidth="8" fill="none" stroke="rgba(255,255,255,0.05)" />
                     <motion.circle
                         cx="44" cy="44" r={r} strokeWidth="8" fill="none"
@@ -164,7 +163,7 @@ const ScoreRing = ({ score, color, label, delay = 0 }) => {
                     {currentScore}
                 </span>
             </div>
-            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-ink">
                 {label}
             </span>
         </div>
@@ -202,7 +201,7 @@ const TypingURL = () => {
     }, [currentUrl, isDeleting, urlIndex, urls]);
 
     return (
-        <span className="text-white text-[13px] font-medium tracking-wide">
+        <span className="text-ink text-[13px] font-medium tracking-wide">
             {currentUrl}<span className="animate-pulse opacity-70">|</span>
         </span>
     );
@@ -317,37 +316,37 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
     const item = { hidden: { opacity: 0, y: 22 }, show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } } };
 
     return (
-        <section className={`relative min-h-[92vh] flex items-center justify-center pt-28 pb-24 transition-colors duration-500 z-[40]`}
-           style={{
+        <section className={`relative -mt-[2px] flex items-center justify-center pt-4 lg:pt-6 pb-6 transition-colors duration-500 z-[40] ${darkMode ? '' : 'bg-surface'}`}
+           style={darkMode ? {
   background: 'linear-gradient(to right, #1E3A8A, #1E47C3)',
-}}
+} : undefined}
         >
 
 
-            <div className="container mx-auto px-6 relative z-10 flex flex-col lg:flex-row items-center gap-20 max-w-7xl">
+            <div className="container mx-auto px-5 sm:px-6 relative z-10 flex flex-col lg:flex-row items-center gap-8 md:gap-10 lg:gap-12 xl:gap-14 max-w-7xl">
 
                 {/* ── LEFT: Copy + Form ── */}
                 <motion.div
                     variants={container}
                     initial="hidden"
                     animate="show"
-                    className="flex-[1.15] text-center lg:text-left space-y-9"
+                    className="flex-[1.15] text-center lg:text-left space-y-5"
                 >
                     {/* Badge */}
                     <motion.div variants={item} className="flex justify-center lg:justify-start">
-                        <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-semibold uppercase tracking-[0.22em] border bg-[#ea580c]/15 border-[#ea580c]/30 text-orange-200">
+                        <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-semibold uppercase tracking-[0.22em] border bg-[#ea580c]/15 border-[#ea580c]/30 ${darkMode ? 'text-orange-200' : 'text-accent'}`}>
                             <span className="w-1.5 h-1.5 rounded-full bg-[#ea580c] animate-pulse inline-block" />
                             Dealer Website Audit Platform
                         </span>
                     </motion.div>
 
                     {/* Headline */}
-                    <motion.div variants={item} className="space-y-4">
-                        <h2 className="text-xl lg:text-[3.5rem] font-extrabold leading-[1.05] tracking-[-0.03em] text-white">
+                    <motion.div variants={item} className="space-y-3">
+                        <h2 className="text-[clamp(2rem,4.6vw,3.25rem)] font-extrabold leading-[1.05] tracking-[-0.03em] text-ink">
                             Your Dealership,{" "}
                             <br className="hidden lg:block" />
                             <span className="relative inline-block">
-                                <span className="text-xl lg:text-[3.5rem] font-extrabold leading-[1.05] tracking-[-0.03em] text-[#EA580B]">
+                                <span className="text-[clamp(2rem,4.6vw,3.25rem)] font-extrabold leading-[1.05] tracking-[-0.03em] text-[#EA580B]">
                                     Fully Audited.
                                 </span>
                                 {/* Underline accent */}
@@ -357,7 +356,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                             </span>
                         </h2>
 
-                        <p className="text-lg lg:text-xl font-medium leading-relaxed max-w-xl mx-auto lg:mx-0 text-white">
+                        <p className="text-[clamp(0.95rem,1.4vw,1.125rem)] font-medium leading-relaxed max-w-xl mx-auto lg:mx-0 text-inksoft">
                             Turn clicks into showroom sales. Scan your website in seconds across seven critical automotive performance dimensions — from Core Web Vitals to AI-Search readiness.
                         </p>
                     </motion.div>
@@ -372,7 +371,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                                 initial={{ opacity: 0, scale: 0.85 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ delay: 0.4 + i * 0.06 }}
-                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold border bg-white/5 border-white/10 text-white"
+                                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold border ${darkMode ? 'bg-white/5 border-white/10 text-white' : 'bg-card border-line text-inksoft'}`}
                             >
                                 <span className="text-orange-400">{a.icon}</span>
                                 {a.label}
@@ -392,12 +391,12 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                                 : { boxShadow: '0 40px 100px rgba(0,0,0,0.5)' }
                             }
                             transition={{ duration: 0.3 }}
-                            className="relative z-10 rounded-[2.5rem] border p-7 space-y-5 bg-[#566ACB]/70 border-white/8 backdrop-blur-2xl"
+                            className={`relative z-10 rounded-[2rem] border p-5 space-y-4 backdrop-blur-2xl ${darkMode ? 'bg-[#566ACB]/70 border-white/8' : 'bg-card border-line'}`}
                         >
                             {/* Input row */}
-                            <div className="flex items-center px-4 h-14 gap-3">
+                            <div className="flex items-center px-4 h-12 gap-3">
                                 <Globe className={`flex-shrink-0 w-4 h-4 transition-colors duration-300
-                                    ${focused ? 'text-white' : 'text-white'}`}
+                                    ${darkMode ? 'text-white' : 'text-muted'}`}
                                 />
                                 <input
                                     type="text"
@@ -409,12 +408,12 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                                     onBlur={() => setFocused(false)}
                                     placeholder="Enter your website URL — e.g. yoursite.com"
                                     disabled={isLoading}
-                                    className="flex-1 bg-transparent outline-none text-[15px] font-medium text-white placeholder:text-gray-400"
+                                    className={`flex-1 bg-transparent outline-none text-[15px] font-medium placeholder:text-faint ${darkMode ? 'text-white' : 'text-ink'}`}
                                 />
                             </div>
 
                             {/* Divider + Options row */}
-                            <div className="flex flex-wrap lg:flex-nowrap items-center gap-3 text-white">
+                            <div className={`flex flex-wrap lg:flex-nowrap items-center gap-3 ${darkMode ? 'text-white' : 'text-ink'}`}>
                                 <CustomDropdown
                                     value={device}
                                     onChange={setDevice}
@@ -423,7 +422,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                                         { value: "Mobile", label: "Mobile" },
                                     ]}
                                     icon={device === "Desktop" ? <Monitor /> : <Smartphone />}
-                                    darkMode={true}
+                                    darkMode={darkMode}
                                     disabled={isLoading}
                                 />
                                 <CustomDropdown
@@ -440,7 +439,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                                         { value: "AIO (AI-Optimization) Readiness", label: "AIO (AI-Search) Readiness" },
                                     ]}
                                     icon={<Settings />}
-                                    darkMode={true}
+                                    darkMode={darkMode}
                                     disabled={isLoading}
                                 />
 
@@ -451,7 +450,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
 transition-all duration-300 active:scale-95
 ${
   isLoading || !url.trim()
-    ? "bg-slate-800 border-slate-700 text-slate-500 cursor-not-allowed"
+    ? (darkMode ? "bg-slate-800 border-slate-700 text-slate-500 cursor-not-allowed" : "bg-surface-2 border-line text-faint cursor-not-allowed")
     : "bg-[#EA580B] border-[#EA580B] text-white hover:bg-[#C2410C] hover:border-[#C2410C] shadow-lg shadow-orange-600/25 hover:shadow-orange-500/40 hover:-translate-y-0.5"
 }`}
                                 >
@@ -489,7 +488,7 @@ ${
                         className="flex flex-wrap items-center justify-center lg:justify-start gap-6"
                     >
 
-                        <span className="text-xs font-semibold text-white">·</span>
+                        <span className={`text-xs font-semibold ${darkMode ? 'text-white' : 'text-muted'}`}>·</span>
 
                     </motion.div>
                 </motion.div>
@@ -499,9 +498,9 @@ ${
                     initial={{ opacity: 0, x: 50, y: 10 }}
                     animate={{ opacity: 1, x: 0, y: 0 }}
                     transition={{ duration: 0.9, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                    className="flex-1 hidden lg:block relative w-full max-w-lg mx-auto"
+                    className="flex-1 hidden lg:block relative w-full max-w-md xl:max-w-lg mx-auto"
                 >
-                    <div className="relative z-10 rounded-[1.5rem] border border-white/5 p-6 space-y-6 bg-[#3D58C1] shadow-[0_40px_100px_rgba(0,0,0,0.5)] overflow-hidden">
+                    <div className={`relative z-10 rounded-[1.5rem] border p-5 space-y-4 shadow-[0_50px_90px_-20px_rgba(0,0,0,0.5)] overflow-hidden ${darkMode ? 'border-white/5 bg-[#3D58C1]' : 'border-line bg-surface-2'}`}>
                         {/* Subtle inner glow */}
                         <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none" />
 
@@ -512,7 +511,7 @@ ${
                                 <div className="w-2.5 h-2.5 rounded-full bg-[#EAB308]" />
                                 <div className="w-2.5 h-2.5 rounded-full bg-[#16A34A]" />
                             </div>
-                            <div className="h-7 w-52 rounded-[0.4rem] bg-[#566ACB] flex items-center px-4 shadow-inner shadow-black/20 border border-white/5">
+                            <div className={`h-7 w-52 rounded-[0.4rem] flex items-center px-4 shadow-inner shadow-black/20 border ${darkMode ? 'bg-[#566ACB] border-white/5' : 'bg-card border-line'}`}>
                                 <TypingURL />
                             </div>
                         </div>
@@ -531,16 +530,16 @@ ${
 
                         {/* Score rings */}
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="rounded-[1.25rem] bg-[#566ACB] py-7 flex flex-col items-center justify-center shadow-lg shadow-black/20">
+                            <div className={`rounded-[1.25rem] py-5 flex flex-col items-center justify-center shadow-lg shadow-black/20 ${darkMode ? 'bg-[#566ACB]' : 'bg-cardsoft'}`}>
                                 <ScoreRing score={94} color="#E1701A" label="SEO SCORE" delay={0.5} />
                             </div>
-                            <div className="rounded-[1.25rem] bg-[#566ACB] py-7 flex flex-col items-center justify-center shadow-lg shadow-black/20">
+                            <div className={`rounded-[1.25rem] py-5 flex flex-col items-center justify-center shadow-lg shadow-black/20 ${darkMode ? 'bg-[#566ACB]' : 'bg-cardsoft'}`}>
                                 <ScoreRing score={88} color="#4D77FF" label="AI Optimization" delay={0.7} />
                             </div>
                         </div>
 
                         {/* Mini metric bars */}
-                        <div className="rounded-[1.25rem] border border-white/[0.03] p-5 pb-6 space-y-4 bg-[#566ACB] shadow-lg shadow-black/20">
+                        <div className={`rounded-[1.25rem] border p-4 space-y-3 shadow-lg shadow-black/20 ${darkMode ? 'border-white/[0.03] bg-[#566ACB]' : 'border-line bg-cardsoft'}`}>
                             {[
                                 { label: "Accessibility", pct: 78, color: "#A855F7" },
                                 { label: "Security", pct: 91, color: "#E1701A" },
@@ -548,10 +547,10 @@ ${
                             ].map((m, i) => (
                                 <div key={m.label} className="space-y-2">
                                     <div className="flex justify-between text-[11px] font-semibold tracking-wide">
-                                        <span className="text-white">{m.label}</span>
+                                        <span className={darkMode ? 'text-white' : 'text-ink'}>{m.label}</span>
                                         <span style={{ color: m.color }}>{m.pct}</span>
                                     </div>
-                                    <div className="h-1.5 rounded-full overflow-hidden bg-[#0B0D1B]">
+                                    <div className={`h-1.5 rounded-full overflow-hidden ${darkMode ? 'bg-[#0B0D1B]' : 'bg-line'}`}>
                                         <motion.div
                                             initial={{ width: 0 }}
                                             animate={{ width: `${m.pct}%` }}
@@ -565,13 +564,13 @@ ${
                         </div>
 
                         {/* Footer badge */}
-                        <div className="flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-full border border-white/10 bg-transparent">
+                        <div className={`flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-full border bg-transparent ${darkMode ? 'border-white/10' : 'border-line'}`}>
                             <span className="text-[#E1701A] text-[13px] drop-shadow-[0_0_8px_rgba(225,112,26,0.6)]">⚡</span>
-                            <span className="text-[10px] font-semibold text-white tracking-wider flex gap-2">
+                            <span className={`text-[10px] font-semibold tracking-wider flex gap-2 ${darkMode ? 'text-white' : 'text-inksoft'}`}>
                                 <span>7 audit dimensions</span>
-                                <span className="text-white">•</span>
+                                <span className={darkMode ? 'text-white' : 'text-faint'}>•</span>
                                 <span>Real-time analysis</span>
-                                <span className="text-white">•</span>
+                                <span className={darkMode ? 'text-white' : 'text-faint'}>•</span>
                                 <span>Dealer-focused insights</span>
                             </span>
                         </div>
@@ -579,24 +578,26 @@ ${
                 </motion.div>
             </div>
 
-            {/* ── CAPTCHA Modal ── */}
+            {/* ── CAPTCHA Modal (portaled to body so it escapes the hero's
+                 stacking context and centers on the full viewport) ── */}
+            {createPortal(
             <AnimatePresence>
                 {showCaptcha && (
-                    <div className="fixed inset-0 z-[200] flex items-center justify-center px-4">
+                    <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 overflow-y-auto">
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={() => setShowCaptcha(false)}
-                            className="absolute inset-0 bg-slate-950/75 backdrop-blur-xl"
+                            className="fixed inset-0 bg-slate-950/75 backdrop-blur-xl"
                         />
                         <motion.div
                             initial={{ scale: 0.92, opacity: 0, y: 24 }}
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             exit={{ scale: 0.92, opacity: 0, y: 24 }}
                             transition={{ type: "spring", damping: 22, stiffness: 280 }}
-                            className={`relative p-8 lg:p-12 rounded-[3rem] border shadow-2xl flex flex-col items-center gap-8 max-w-md w-full
-                                ${darkMode ? 'bg-slate-900 border-white/8' : 'bg-white border-slate-100'}`}
+                            className={`relative my-auto p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] border shadow-2xl flex flex-col items-center gap-5 sm:gap-6 max-w-md w-full max-h-[90vh] overflow-y-auto
+                                ${darkMode ? 'bg-slate-900 border-white/8' : 'bg-card border-line'}`}
                         >
 
 
@@ -605,15 +606,15 @@ ${
                             </div>
 
                             <div className="text-center space-y-2">
-                                <h3 className={`text-2xl font-black tracking-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                <h3 className={`text-2xl font-black tracking-tight ${darkMode ? 'text-white' : 'text-ink'}`}>
                                     Quick Verification
                                 </h3>
-                                <p className={`text-sm leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                                <p className={`text-sm leading-relaxed ${darkMode ? 'text-slate-400' : 'text-muted'}`}>
                                     Solve a simple math question to confirm you're not a bot — then your audit begins instantly.
                                 </p>
                             </div>
 
-                            <form onSubmit={handleSubmitWithCaptcha} className={`w-full rounded-2xl border p-5 space-y-4 ${darkMode ? 'bg-white/4 border-white/8' : 'bg-slate-50 border-slate-200'}`}>
+                            <form onSubmit={handleSubmitWithCaptcha} className={`w-full rounded-2xl border p-5 space-y-4 ${darkMode ? 'bg-white/4 border-white/8' : 'bg-cardsoft border-line'}`}>
                                 <MathCaptcha
                                     autoFocus
                                     onAnswerChange={(val, id) => { setCaptchaAnswer(val); setCaptchaId(id); }}
@@ -631,15 +632,17 @@ ${
 
                             <button
                                 onClick={() => setShowCaptcha(false)}
-                                className={`text-[11px] font-semibold uppercase tracking-widest transition-colors
-                                    ${darkMode ? 'text-slate-600 hover:text-slate-300' : 'text-slate-400 hover:text-slate-700'}`}
+                                className={`cursor-pointer text-[11px] font-semibold uppercase tracking-widest px-4 py-2 rounded-full transition-all duration-200 hover:scale-125 active:scale-95
+                                    ${darkMode ? 'text-slate-500 hover:text-orange-400 hover:bg-white/5' : 'text-faint hover:text-accent hover:bg-accentsoft'}`}
                             >
                                 Cancel
                             </button>
                         </motion.div>
                     </div>
                 )}
-            </AnimatePresence>
+            </AnimatePresence>,
+            document.body
+            )}
         </section>
     );
 };

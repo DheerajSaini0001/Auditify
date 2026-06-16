@@ -9,13 +9,13 @@ export default function Footer() {
   const darkMode = theme === "dark";
 
   return (
-    <footer className={`relative overflow-hidden transition-colors duration-500 border-t ${darkMode ? 'bg-[#060B18] border-white/5 text-slate-500' : 'bg-white border-slate-200 text-slate-700'}`}>
+    <footer className={`relative overflow-hidden transition-colors duration-500 border-t ${darkMode ? 'bg-[#060B18] border-white/5 text-slate-500' : 'bg-surface border-line text-muted'}`}>
 
       {/* Subtle Background Glow */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[80%] h-32 bg-emerald-500/5 blur-[100px] pointer-events-none"></div>
 
-      <div className="max-w-7xl mx-auto px-6 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+      <div className="max-w-7xl mx-auto px-6 py-10">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-8">
 
           {/* Brand Column */}
           <div className="md:col-span-1 space-y-6">
@@ -30,7 +30,7 @@ export default function Footer() {
 
           {/* Links Columns */}
           <div className="space-y-6">
-            <h4 className={`text-xs font-black uppercase tracking-[0.2em] ${darkMode ? 'text-white' : 'text-slate-900'}`}>Product</h4>
+            <h4 className={`text-xs font-black uppercase tracking-[0.2em] ${darkMode ? 'text-white' : 'text-ink'}`}>Product</h4>
             <ul className="space-y-4 text-sm font-semibold">
               <li><Link to="/" className="hover:text-emerald-500 transition-colors">Audit Engine</Link></li>
               <li><Link to="/bulk-audit" className="hover:text-emerald-500 transition-colors">Bulk Analysis</Link></li>
@@ -39,7 +39,7 @@ export default function Footer() {
           </div>
 
           <div className="space-y-6">
-            <h4 className={`text-xs font-black uppercase tracking-[0.2em] ${darkMode ? 'text-white' : 'text-slate-900'}`}>Company</h4>
+            <h4 className={`text-xs font-black uppercase tracking-[0.2em] ${darkMode ? 'text-white' : 'text-ink'}`}>Company</h4>
             <ul className="space-y-4 text-sm font-semibold">
               <li><Link to="/about" className="hover:text-emerald-500 transition-colors">About Us</Link></li>
               <li><Link to="/services" className="hover:text-emerald-500 transition-colors">Services</Link></li>
@@ -48,7 +48,7 @@ export default function Footer() {
           </div>
 
           <div className="space-y-6">
-            <h4 className={`text-xs font-black uppercase tracking-[0.2em] ${darkMode ? 'text-white' : 'text-slate-900'}`}>Resources</h4>
+            <h4 className={`text-xs font-black uppercase tracking-[0.2em] ${darkMode ? 'text-white' : 'text-ink'}`}>Resources</h4>
             <ul className="space-y-4 text-sm font-semibold">
               <li><Link to="/documentation" className="hover:text-emerald-500 transition-colors">Documentation</Link></li>
               <li><Link to="/help" className="hover:text-emerald-500 transition-colors">Help Center</Link></li>
@@ -57,10 +57,10 @@ export default function Footer() {
 
         </div>
 
-        <div className={`pt-8 border-t flex flex-col md:flex-row justify-between items-center gap-6 ${darkMode ? 'border-white/5' : 'border-slate-100'}`}>
+        <div className={`pt-6 border-t flex flex-col md:flex-row justify-between items-center gap-6 ${darkMode ? 'border-white/5' : 'border-linesoft'}`}>
           <div className="text-[12px] font-black uppercase tracking-widest flex items-center gap-2">
-            <span className={darkMode ? 'text-slate-600' : 'text-slate-500'}>&copy; {new Date().getFullYear()}</span>
-            <a href="https://www.sltechsoft.com" target="_blank" rel="noopener noreferrer" className={`hover:text-emerald-500 transition-colors ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+            <span className={darkMode ? 'text-slate-600' : 'text-faint'}>&copy; {new Date().getFullYear()}</span>
+            <a href="https://www.sltechsoft.com" target="_blank" rel="noopener noreferrer" className={`hover:text-emerald-500 transition-colors ${darkMode ? 'text-white' : 'text-ink'}`}>
               Success Ladder Technologies
             </a>
           </div>

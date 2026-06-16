@@ -9,22 +9,22 @@ export default function BulkAuditDrillDown({ issue, pages, onBack, darkMode }) {
                 <div className="flex items-center gap-4">
                     <button
                         onClick={onBack}
-                        className={`p-2 rounded-full transition-colors ${darkMode ? "hover:bg-slate-800 text-slate-400" : "hover:bg-slate-100 text-slate-600"}`}
+                        className={`p-2 rounded-full transition-colors ${darkMode ? "hover:bg-slate-800 text-slate-400" : "hover:bg-surface-2 text-muted"}`}
                     >
                         <ArrowLeft className="w-5 h-5" />
                     </button>
                     <div>
                         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-emerald-500">
                             <span>Issues</span>
-                            <span className="text-slate-500">/</span>
-                            <span className={darkMode ? "text-slate-300" : "text-slate-700"}>{issue.title}</span>
+                            <span className="text-muted">/</span>
+                            <span className={darkMode ? "text-slate-300" : "text-inksoft"}>{issue.title}</span>
                         </div>
-                        <h2 className={`text-2xl font-black ${darkMode ? "text-white" : "text-slate-900"}`}>{issue.title}</h2>
+                        <h2 className={`text-2xl font-black ${darkMode ? "text-white" : "text-ink"}`}>{issue.title}</h2>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <button className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${darkMode ? "bg-slate-900 border-slate-700 text-slate-300 hover:border-slate-600" : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"}`}>
+                    <button className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${darkMode ? "bg-slate-900 border-slate-700 text-slate-300 hover:border-slate-600" : "bg-card border-line text-muted hover:border-line"}`}>
                         <Download className="w-4 h-4" />
                         Export
                     </button>
@@ -35,9 +35,9 @@ export default function BulkAuditDrillDown({ issue, pages, onBack, darkMode }) {
             </div>
 
             {/* Filter Bar Mockup */}
-            <div className={`p-4 rounded-2xl border flex flex-wrap items-center gap-4 ${darkMode ? "bg-slate-900/50 border-slate-800" : "bg-white border-slate-100 shadow-sm"}`}>
-                <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border flex-grow max-w-md ${darkMode ? "bg-slate-800 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
-                    <Search className="w-4 h-4 text-slate-500" />
+            <div className={`p-4 rounded-2xl border flex flex-wrap items-center gap-4 ${darkMode ? "bg-slate-900/50 border-slate-800" : "bg-card border-line shadow-sm"}`}>
+                <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border flex-grow max-w-md ${darkMode ? "bg-slate-800 border-slate-700" : "bg-cardsoft border-line"}`}>
+                    <Search className="w-4 h-4 text-muted" />
                     <input
                         type="text"
                         placeholder="Filter by URL or phrase..."
@@ -46,7 +46,7 @@ export default function BulkAuditDrillDown({ issue, pages, onBack, darkMode }) {
                 </div>
                 <div className="flex gap-2">
                     {["All URLs", "Indexable", "Non-indexable"].map((tab) => (
-                        <button key={tab} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${tab === 'All URLs' ? 'bg-emerald-500 text-white' : (darkMode ? 'bg-slate-800 text-slate-400 hover:text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200')}`}>
+                        <button key={tab} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${tab === 'All URLs' ? 'bg-emerald-500 text-white' : (darkMode ? 'bg-slate-800 text-slate-400 hover:text-white' : 'bg-surface-2 text-muted hover:bg-surface-2')}`}>
                             {tab}
                         </button>
                     ))}
@@ -54,11 +54,11 @@ export default function BulkAuditDrillDown({ issue, pages, onBack, darkMode }) {
             </div>
 
             {/* Table */}
-            <div className={`rounded-2xl border overflow-hidden ${darkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-100 shadow-xl"}`}>
+            <div className={`rounded-2xl border overflow-hidden ${darkMode ? "bg-slate-900 border-slate-800" : "bg-card border-line shadow-xl"}`}>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className={`border-b ${darkMode ? "bg-slate-800/50 border-slate-800 text-slate-400" : "bg-slate-50 border-slate-200 text-slate-500"}`}>
+                            <tr className={`border-b ${darkMode ? "bg-slate-800/50 border-slate-800 text-slate-400" : "bg-surface-2 border-line text-muted"}`}>
                                 <th className="px-6 py-4 text-xs font-black uppercase tracking-wider">URL</th>
                                 <th className="px-6 py-4 text-xs font-black uppercase tracking-wider">Status</th>
                                 <th className="px-6 py-4 text-xs font-black uppercase tracking-wider">Depth</th>
@@ -67,7 +67,7 @@ export default function BulkAuditDrillDown({ issue, pages, onBack, darkMode }) {
                                 <th className="px-6 py-4 text-xs font-black uppercase tracking-wider text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className={`divide-y ${darkMode ? "divide-slate-800" : "divide-slate-100"}`}>
+                        <tbody className={`divide-y ${darkMode ? "divide-slate-800" : "divide-line"}`}>
                             {pages.map((page, idx) => {
                                 const isBroken = page.technicalPerformance?.status >= 400 || page.status === 'failed';
                                 const httpStatus = page.technicalPerformance?.status || (page.status === 'failed' ? 404 : 200);
@@ -78,18 +78,18 @@ export default function BulkAuditDrillDown({ issue, pages, onBack, darkMode }) {
                                 const inlinks = Math.floor(Math.random() * 50);
 
                                 return (
-                                    <tr key={idx} className={`group transition-colors ${darkMode ? "hover:bg-slate-800/30" : "hover:bg-slate-50/50"}`}>
+                                    <tr key={idx} className={`group transition-colors ${darkMode ? "hover:bg-slate-800/30" : "hover:bg-surface-2/50"}`}>
                                         <td className="px-6 py-5">
                                             <div className="flex items-center gap-3">
-                                                <div className={`p-2 rounded-lg ${darkMode ? "bg-slate-800" : "bg-slate-100"}`}>
-                                                    <Globe className={`w-4 h-4 ${darkMode ? "text-slate-400" : "text-slate-500"}`} />
+                                                <div className={`p-2 rounded-lg ${darkMode ? "bg-slate-800" : "bg-surface-2"}`}>
+                                                    <Globe className={`w-4 h-4 ${darkMode ? "text-slate-400" : "text-muted"}`} />
                                                 </div>
                                                 <div className="flex flex-col min-w-0">
-                                                    <span className={`text-sm font-semibold truncate max-w-[200px] lg:max-w-md ${darkMode ? "text-slate-200" : "text-slate-800"}`}>
+                                                    <span className={`text-sm font-semibold truncate max-w-[200px] lg:max-w-md ${darkMode ? "text-slate-200" : "text-inksoft"}`}>
                                                         {page.url}
                                                     </span>
                                                     <div className="flex items-center gap-2 mt-1">
-                                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">HTML</span>
+                                                        <span className="text-[10px] font-black uppercase tracking-widest text-muted">HTML</span>
                                                         {isBroken && <span className="text-[10px] font-black uppercase tracking-widest text-red-500">Broken</span>}
                                                     </div>
                                                 </div>
@@ -103,7 +103,7 @@ export default function BulkAuditDrillDown({ issue, pages, onBack, darkMode }) {
                                             </div>
                                         </td>
                                         <td className="px-6 py-5">
-                                            <span className={`text-sm font-semibold ${darkMode ? "text-slate-300" : "text-slate-600"}`}>
+                                            <span className={`text-sm font-semibold ${darkMode ? "text-slate-300" : "text-muted"}`}>
                                                 {depth}
                                             </span>
                                         </td>
@@ -114,13 +114,13 @@ export default function BulkAuditDrillDown({ issue, pages, onBack, darkMode }) {
                                                 ) : (
                                                     <ShieldAlert className="w-4 h-4 text-amber-500" />
                                                 )}
-                                                <span className={`text-xs font-semibold ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
+                                                <span className={`text-xs font-semibold ${darkMode ? "text-slate-400" : "text-muted"}`}>
                                                     {isIndexable ? "Yes" : "No"}
                                                 </span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-5">
-                                            <span className={`text-sm font-semibold ${darkMode ? "text-slate-300" : "text-slate-600"}`}>
+                                            <span className={`text-sm font-semibold ${darkMode ? "text-slate-300" : "text-muted"}`}>
                                                 {inlinks}
                                             </span>
                                         </td>
@@ -129,7 +129,7 @@ export default function BulkAuditDrillDown({ issue, pages, onBack, darkMode }) {
                                                 href={page.url}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className={`p-2 rounded-lg inline-flex items-center transition-colors ${darkMode ? "bg-slate-800 text-slate-400 hover:text-emerald-400" : "bg-slate-100 text-slate-500 hover:text-emerald-600"}`}
+                                                className={`p-2 rounded-lg inline-flex items-center transition-colors ${darkMode ? "bg-slate-800 text-slate-400 hover:text-emerald-400" : "bg-surface-2 text-muted hover:text-emerald-600"}`}
                                             >
                                                 <ExternalLink className="w-4 h-4" />
                                             </a>
@@ -143,9 +143,9 @@ export default function BulkAuditDrillDown({ issue, pages, onBack, darkMode }) {
 
                 {/* Empty State */}
                 {pages.length === 0 && (
-                    <div className="py-20 text-center">
-                        <FileText className={`w-12 h-12 mx-auto mb-4 ${darkMode ? "text-slate-700" : "text-slate-200"}`} />
-                        <h3 className={`text-lg font-semibold ${darkMode ? "text-slate-400" : "text-slate-600"}`}>No pages found for this issue</h3>
+                    <div className="py-12 text-center">
+                        <FileText className={`w-12 h-12 mx-auto mb-4 ${darkMode ? "text-slate-700" : "text-faint"}`} />
+                        <h3 className={`text-lg font-semibold ${darkMode ? "text-slate-400" : "text-muted"}`}>No pages found for this issue</h3>
                     </div>
                 )}
             </div>

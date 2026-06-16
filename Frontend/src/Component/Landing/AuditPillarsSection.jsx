@@ -26,7 +26,7 @@ const PillarCard = ({ icon: Icon, title, tag, description, color, index, darkMod
                 ${isWide ? 'lg:flex-row lg:items-stretch' : ''}
                 ${darkMode
                     ? 'bg-white/[0.02] border-white/8 hover:border-white/14'
-                    : 'bg-white border-slate-200 hover:border-slate-300 shadow-sm'}
+                    : 'bg-card border-line hover:border-line shadow-sm'}
                 transition-colors duration-300`}
         >
             {/* Left / Main content */}
@@ -40,7 +40,7 @@ const PillarCard = ({ icon: Icon, title, tag, description, color, index, darkMod
                     <span className={`text-[9px] font-semibold uppercase tracking-[0.2em] px-3 py-1 rounded-full border
                         ${darkMode
                             ? 'bg-white/4 border-white/8 text-slate-500'
-                            : 'bg-slate-50 border-slate-200 text-slate-500'}`}>
+                            : 'bg-cardsoft border-line text-muted'}`}>
                         {tag}
                     </span>
                 </div>
@@ -48,12 +48,12 @@ const PillarCard = ({ icon: Icon, title, tag, description, color, index, darkMod
                 {/* Text */}
                 <div className="space-y-2">
                     <h3 className={`text-lg font-semibold leading-snug
-                        ${darkMode ? 'text-white' : 'text-slate-900'}`}
+                        ${darkMode ? 'text-white' : 'text-ink'}`}
                         style={{ fontFamily: "'Syne', sans-serif" }}>
                         {title}
                     </h3>
                     <p className={`text-sm leading-relaxed
-                        ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                        ${darkMode ? 'text-slate-500' : 'text-muted'}`}>
                         {description}
                     </p>
                 </div>
@@ -62,7 +62,7 @@ const PillarCard = ({ icon: Icon, title, tag, description, color, index, darkMod
             {/* Wide card right panel — simple stats */}
             {isWide && (
                 <div className={`lg:w-72 flex flex-col justify-center gap-4 lg:pl-8
-                    ${darkMode ? 'lg:border-l border-white/6' : 'lg:border-l border-slate-100'}`}>
+                    ${darkMode ? 'lg:border-l border-white/6' : 'lg:border-l border-linesoft'}`}>
                     {[
                         { label: 'Form Completion Rate', value: '94%', bar: 94 },
                         { label: 'CRM Webhook Health', value: '100%', bar: 100 },
@@ -70,10 +70,10 @@ const PillarCard = ({ icon: Icon, title, tag, description, color, index, darkMod
                     ].map((stat) => (
                         <div key={stat.label} className="space-y-1.5">
                             <div className="flex justify-between items-center">
-                                <span className={`text-xs ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>{stat.label}</span>
+                                <span className={`text-xs ${darkMode ? 'text-slate-500' : 'text-muted'}`}>{stat.label}</span>
                                 <span className={`text-xs font-semibold ${c.text}`}>{stat.value}</span>
                             </div>
-                            <div className={`h-1 rounded-full w-full ${darkMode ? 'bg-white/6' : 'bg-slate-100'}`}>
+                            <div className={`h-1 rounded-full w-full ${darkMode ? 'bg-white/6' : 'bg-surface-2'}`}>
                                 <motion.div
                                     initial={{ width: 0 }}
                                     whileInView={{ width: `${stat.bar}%` }}
@@ -108,7 +108,7 @@ const AuditPillarsSection = () => {
     return (
         <section
             id="features"
-            className={`py-24 transition-colors duration-500 ${darkMode ? 'bg-[#07070f]' : 'bg-[#f0f2f7]'}`}
+            className={`pt-12 pb-20 transition-colors duration-500 ${darkMode ? 'bg-[#07070f]' : 'bg-surface'}`}
         >
             <div className="container mx-auto px-6 max-w-7xl">
 
@@ -132,7 +132,7 @@ const AuditPillarsSection = () => {
                             viewport={{ once: true }}
                             transition={{ duration: 0.6, delay: 0.1 }}
                             className={`text-4xl lg:text-5xl font-black tracking-tight leading-[1.05]
-                                ${darkMode ? 'text-white' : 'text-slate-900'}`}
+                                ${darkMode ? 'text-white' : 'text-ink'}`}
                             style={{ fontFamily: "'Syne', sans-serif" }}
                         >
                             The Dimensions of{' '}
@@ -146,7 +146,7 @@ const AuditPillarsSection = () => {
                         viewport={{ once: true }}
                         transition={{ delay: 0.2 }}
                         className={`lg:max-w-[240px] text-sm leading-relaxed
-                            ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}
+                            ${darkMode ? 'text-slate-400' : 'text-muted'}`}
                     >
                         Comprehensive scanning across 7 critical channels to guarantee peak visibility.
                     </motion.p>

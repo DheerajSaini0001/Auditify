@@ -12,9 +12,9 @@ const PageHeader = ({
     variant = "default" // "default" or "iconic"
 }) => {
     return (
-        <header className="relative text-center space-y-8 mb-16 px-4 pt-12">
+        <header className="relative text-center space-y-6 mb-10 px-4 pt-8">
             {/* Background Decoration */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-64 bg-gradient-to-r from-emerald-500/5 via-teal-500/5 to-blue-500/5 blur-[100px] pointer-events-none -z-10"></div>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-64 bg-gradient-to-r from-[#ea580c]/8 via-[#f97316]/6 to-[#ea580c]/8 blur-[100px] pointer-events-none -z-10"></div>
 
             {logo && (
                 <motion.div 
@@ -32,8 +32,8 @@ const PageHeader = ({
                     animate={{ opacity: 1, y: 0 }}
                     className={`inline-flex items-center gap-2 px-6 py-2 rounded-full border shadow-xl backdrop-blur-md transition-all duration-500 ${
                         darkMode 
-                            ? "bg-slate-900/40 border-emerald-500/20 text-emerald-400 shadow-emerald-500/10" 
-                            : "bg-white/80 border-emerald-100 text-emerald-600 shadow-slate-200"
+                            ? "bg-slate-900/40 border-[#ea580c]/25 text-orange-400 shadow-orange-500/10"
+                            : "bg-white/80 border-[#ea580c]/20 text-accent shadow-slate-200"
                     }`}
                 >
                     {Icon && <Icon size={16} className="animate-pulse" />}
@@ -61,12 +61,12 @@ const PageHeader = ({
                 transition={{ delay: 0.1 }}
                 className="space-y-4"
             >
-                <h1 className={`text-5xl md:text-8xl font-black tracking-tighter leading-[0.9] ${darkMode ? "text-white" : "text-slate-900"}`}>
+                <h1 className={`text-5xl md:text-8xl font-black tracking-tighter leading-[0.9] ${darkMode ? "text-white" : "text-ink"}`}>
                     {title}
                     {titleAccent && (
                         <>
                             <br />
-                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-teal-400 to-blue-500 drop-shadow-2xl">
+                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#EA580C] via-[#F97316] to-[#FB923C] drop-shadow-2xl">
                                 {titleAccent}
                             </span>
                         </>
@@ -74,7 +74,7 @@ const PageHeader = ({
                 </h1>
                 
                 {subtitle && (
-                    <p className={`text-lg md:text-xl max-w-2xl mx-auto font-medium leading-relaxed ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
+                    <p className={`text-lg md:text-xl max-w-2xl mx-auto font-medium leading-relaxed ${darkMode ? "text-slate-400" : "text-muted"}`}>
                         {subtitle}
                     </p>
                 )}
@@ -85,7 +85,7 @@ const PageHeader = ({
                 initial={{ width: 0 }}
                 animate={{ width: "80px" }}
                 transition={{ delay: 0.5, duration: 1 }}
-                className={`h-1.5 mx-auto rounded-full bg-gradient-to-r from-emerald-500 to-blue-500 mt-8 shadow-lg shadow-emerald-500/20`}
+                className={`h-1.5 mx-auto rounded-full bg-gradient-to-r from-[#EA580C] to-[#F97316] mt-8 shadow-lg shadow-orange-500/20`}
             ></motion.div>
         </header>
     );

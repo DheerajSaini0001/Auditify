@@ -24,7 +24,7 @@ export default function NotADealership({ darkMode, data, onButtonClick }) {
   return (
     <div
       className={`relative flex flex-col items-center justify-center min-h-[80vh] overflow-hidden px-6 transition-colors duration-300 ${
-        darkMode ? "bg-gray-900 text-gray-100" : "bg-gray-50 text-gray-800"
+        darkMode ? "bg-gray-900 text-gray-100" : "bg-surface text-inksoft"
       }`}
     >
       {/* Background Glow */}
@@ -47,14 +47,14 @@ export default function NotADealership({ darkMode, data, onButtonClick }) {
           }`}
         >
           <CarFront className="w-12 h-12" />
-          <Ban className="w-6 h-6 absolute -bottom-1 -right-1 text-rose-500 bg-white dark:bg-gray-900 rounded-full" />
+          <Ban className="w-6 h-6 absolute -bottom-1 -right-1 text-rose-500 bg-card dark:bg-gray-900 rounded-full" />
         </div>
 
-        <h1 className={`text-2xl sm:text-3xl font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
+        <h1 className={`text-2xl sm:text-3xl font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>
           Not a Dealership Website
         </h1>
 
-        <p className={`mt-4 text-base leading-relaxed ${darkMode ? "text-slate-300" : "text-slate-600"}`}>
+        <p className={`mt-4 text-base leading-relaxed ${darkMode ? "text-slate-300" : "text-muted"}`}>
           Sorry, this website does not appear to belong to a car dealership, so an
           audit cannot be performed.
         </p>
@@ -62,14 +62,14 @@ export default function NotADealership({ darkMode, data, onButtonClick }) {
         {/* URL chip */}
         <div
           className={`mt-5 inline-flex items-center max-w-full gap-2 px-4 py-2 rounded-full text-sm font-medium ${
-            darkMode ? "bg-slate-800 text-slate-300 border border-slate-700" : "bg-white text-slate-600 border border-slate-200"
+            darkMode ? "bg-slate-800 text-slate-300 border border-slate-700" : "bg-card text-muted border border-line"
           }`}
         >
           <span className="truncate">{url}</span>
         </div>
 
         {reason && (
-          <p className={`mt-4 text-xs ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
+          <p className={`mt-4 text-xs ${darkMode ? "text-slate-500" : "text-faint"}`}>
             Reason: {reason}
           </p>
         )}

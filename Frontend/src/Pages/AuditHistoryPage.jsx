@@ -75,16 +75,16 @@ const AuditHistoryPage = () => {
                  </button>
        
                  {createDropdownOpen && (
-                   <div className={`absolute top-full left-0 right-0 mt-1.5 rounded-xl shadow-xl z-50 py-1 animate-in fade-in slide-in-from-top-1 duration-150 border transition-all duration-300 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+                   <div className={`absolute top-full left-0 right-0 mt-1.5 rounded-xl shadow-xl z-50 py-1 animate-in fade-in slide-in-from-top-1 duration-150 border transition-all duration-300 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-card border-line'}`}>
                      <button
                        onClick={() => { setCreateDropdownOpen(false); navigate("/dashboard/add-website"); }}
-                       className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                       className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-inksoft hover:bg-cardsoft'}`}
                      >
                        Add Google Search Console Site
                      </button>
                      <button
                        onClick={() => { setCreateDropdownOpen(false); navigate("/bulk-audit"); }}
-                       className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                       className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-inksoft hover:bg-cardsoft'}`}
                      >
                        Quick Manual Audit Page
                      </button>
@@ -94,16 +94,16 @@ const AuditHistoryPage = () => {
 
         {/* Search project box */}
         <div className="relative">
-          <Search className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors duration-300 ${darkMode ? 'text-slate-400' : 'text-slate-455'}`} size={14} />
+          <Search className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors duration-300 ${darkMode ? 'text-slate-400' : 'text-faint'}`} size={14} />
           <input
             id="project-search-input"
             type="text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search projects..."
-            className={`w-full pl-9 pr-8 py-2 border rounded-xl text-xs font-medium focus:outline-none focus:border-emerald-500/50 transition-colors duration-300 ${darkMode ? 'bg-slate-850 border-slate-700 text-slate-100 placeholder-slate-500' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'}`}
+            className={`w-full pl-9 pr-8 py-2 border rounded-xl text-xs font-medium focus:outline-none focus:border-emerald-500/50 transition-colors duration-300 ${darkMode ? 'bg-slate-850 border-slate-700 text-slate-100 placeholder-slate-500' : 'bg-cardsoft border-line text-inksoft placeholder-faint'}`}
           />
-          <span className={`absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] font-black border px-1 py-0.5 rounded leading-none transition-colors duration-300 ${darkMode ? 'text-slate-400 bg-slate-800/80 border-slate-700/50' : 'text-slate-500 bg-slate-200/50 border-slate-300/30'}`}>
+          <span className={`absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] font-black border px-1 py-0.5 rounded leading-none transition-colors duration-300 ${darkMode ? 'text-slate-400 bg-slate-800/80 border-slate-700/50' : 'text-muted bg-slate-200/50 border-slate-300/30'}`}>
             ⌘K
           </span>
         </div>
@@ -112,7 +112,7 @@ const AuditHistoryPage = () => {
         <nav className="flex flex-col gap-1 mt-2">
           <button
             onClick={() => navigate("/dashboard")}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-muted hover:text-inksoft hover:bg-cardsoft'}`}
           >
             <LayoutDashboard size={16} />
             <span>Projects</span>
@@ -132,12 +132,12 @@ const AuditHistoryPage = () => {
 
           <button
             onClick={() => navigate('/dashboard?tab=starred')}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-muted hover:text-inksoft hover:bg-cardsoft'}`}
           >
             <Star size={16} />
             <span>Starred</span>
             {starredIds.length > 0 && (
-              <span className={`ml-auto text-[10px] font-black px-1.5 py-0.5 rounded-full ${darkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
+              <span className={`ml-auto text-[10px] font-black px-1.5 py-0.5 rounded-full ${darkMode ? 'bg-slate-800 text-slate-400' : 'bg-cardsoft text-muted'}`}>
                 {starredIds.length}
               </span>
             )}
@@ -146,7 +146,7 @@ const AuditHistoryPage = () => {
           {(user?.role === 'admin' || user?.role === 'super_admin') && (
             <button
               onClick={() => navigate("/admin")}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-muted hover:text-inksoft hover:bg-cardsoft'}`}
             >
               <ShieldCheck size={16} className="text-blue-500 shrink-0" />
               <span>Admin Panel</span>
@@ -156,18 +156,18 @@ const AuditHistoryPage = () => {
           {user?.role === 'super_admin' && (
             <button
               onClick={() => navigate("/admin/setup")}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-muted hover:text-inksoft hover:bg-cardsoft'}`}
             >
               <Settings size={16} className="text-indigo-500 shrink-0" />
               <span>System Setup</span>
             </button>
           )}
 
-          <div className={`my-1.5 border-t transition-colors duration-300 ${darkMode ? 'border-slate-800' : 'border-slate-100'}`}></div>
+          <div className={`my-1.5 border-t transition-colors duration-300 ${darkMode ? 'border-slate-800' : 'border-line'}`}></div>
 
           <button
             onClick={() => toggleTheme()}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-muted hover:text-inksoft hover:bg-cardsoft'}`}
           >
             <div className="flex items-center gap-3">
               {darkMode ? <Sun size={16} className="text-amber-400 shrink-0" /> : <Moon size={16} className="text-indigo-500 shrink-0" />}
@@ -183,7 +183,7 @@ const AuditHistoryPage = () => {
       </div>
 
       {/* Premium promotional block */}
-      <div className={`p-4 border-t transition-colors duration-300 ${darkMode ? 'border-slate-800' : 'border-slate-100'}`}>
+      <div className={`p-4 border-t transition-colors duration-300 ${darkMode ? 'border-slate-800' : 'border-line'}`}>
         <div className={`p-4 rounded-2xl border flex flex-col gap-3 transition-colors duration-300 ${darkMode ? 'bg-emerald-950/20 border-emerald-900/30' : 'bg-emerald-500/10 border-emerald-500/20 shadow-emerald-500/5'}`}>
           <div className={`flex items-center gap-2 transition-colors duration-300 ${darkMode ? 'text-emerald-400' : 'text-emerald-800'}`}>
             <Lock size={14} className={`transition-colors duration-300 ${darkMode ? 'fill-emerald-400/20 text-emerald-400' : 'fill-emerald-600/20 text-emerald-700'}`} />
@@ -341,10 +341,10 @@ const AuditHistoryPage = () => {
   };
 
   return (
-    <div className={`w-full min-h-[calc(100vh-4rem)] flex flex-col md:flex-row font-sans transition-colors duration-300 ${darkMode ? 'bg-slate-950 text-slate-50 dark' : 'bg-slate-50 text-slate-900'}`}>
+    <div className={`w-full min-h-[calc(100vh-4rem)] flex flex-col md:flex-row font-sans transition-colors duration-300 ${darkMode ? 'bg-slate-950 text-slate-50 dark' : 'bg-surface text-ink'}`}>
 
       {/* ── DESKTOP SIDEBAR ── */}
-      <aside className={`hidden md:flex flex-col w-60 shrink-0 border-r justify-between transition-colors duration-300 sticky top-0 h-[calc(100vh-4rem)] ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}>
+      <aside className={`hidden md:flex flex-col w-60 shrink-0 border-r justify-between transition-colors duration-300 sticky top-0 h-[calc(100vh-4rem)] ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-card border-line'}`}>
         <SidebarContent />
       </aside>
 
@@ -352,11 +352,11 @@ const AuditHistoryPage = () => {
       <aside className={`
         fixed inset-y-0 left-0 z-50 w-64 border-r flex flex-col justify-between pt-1 transform transition-transform duration-300 ease-in-out md:hidden
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        transition-colors duration-300 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}
+        transition-colors duration-300 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-card border-line'}
       `}>
-        <div className={`flex justify-between items-center p-4 border-b transition-colors duration-300 ${darkMode ? 'border-slate-800' : 'border-slate-100'}`}>
-          <span className="text-xs font-black uppercase tracking-widest text-slate-500">Menu Options</span>
-          <button onClick={() => setSidebarOpen(false)} className={`p-1 rounded-lg transition-colors ${darkMode ? 'hover:bg-slate-800 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>
+        <div className={`flex justify-between items-center p-4 border-b transition-colors duration-300 ${darkMode ? 'border-slate-800' : 'border-line'}`}>
+          <span className="text-xs font-black uppercase tracking-widest text-muted">Menu Options</span>
+          <button onClick={() => setSidebarOpen(false)} className={`p-1 rounded-lg transition-colors ${darkMode ? 'hover:bg-slate-800 text-white' : 'hover:bg-cardsoft text-muted'}`}>
             <X size={16} />
           </button>
         </div>
@@ -378,7 +378,7 @@ const AuditHistoryPage = () => {
         <div className="max-w-7xl mx-auto w-full">
 
           {/* Header section with Search & User Profile */}
-          <div className="mb-10 space-y-8">
+          <div className="mb-7 space-y-6">
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -394,25 +394,25 @@ const AuditHistoryPage = () => {
                   </span>
                 </div>
                 <div className="flex items-center justify-between md:justify-start gap-4">
-                  <h1 className={`text-4xl font-semibold tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>
+                  <h1 className={`text-4xl font-semibold tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>
                     Audit <span className="text-indigo-600">History</span>
                   </h1>
                   {/* Mobile Sidebar Toggle Button */}
                   <button
                     onClick={() => setSidebarOpen(true)}
-                    className={`md:hidden flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                    className={`md:hidden flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800' : 'bg-card border-line text-muted hover:bg-cardsoft'}`}
                   >
                     <Menu size={14} />
                     <span>Menu</span>
                   </button>
                 </div>
-                <p className={`text-lg mt-2 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
+                <p className={`text-lg mt-2 ${darkMode ? "text-slate-400" : "text-muted"}`}>
                   Your complete performance tracking database.
                 </p>
               </div>
 
               <div className="relative w-full md:w-96 group">
-                <div className={`absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors ${darkMode ? "text-slate-500 group-focus-within:text-indigo-400" : "text-slate-400 group-focus-within:text-indigo-600"}`}>
+                <div className={`absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors ${darkMode ? "text-slate-500 group-focus-within:text-indigo-400" : "text-faint group-focus-within:text-indigo-600"}`}>
                   {loading ? <Loader2 size={20} className="animate-spin" /> : <Search size={20} />}
                 </div>
                 <input
@@ -420,7 +420,7 @@ const AuditHistoryPage = () => {
                   placeholder="Search by URL..."
                   className={`block w-full pl-12 pr-12 py-4 rounded-2xl border-none outline-none transition-all shadow-xl font-medium ${darkMode
                     ? "bg-slate-800/50 text-white placeholder-slate-500 focus:ring-2 focus:ring-indigo-500/50"
-                    : "bg-white text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500/30"
+                    : "bg-card text-ink placeholder-faint focus:ring-2 focus:ring-indigo-500/30"
                     }`}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -428,7 +428,7 @@ const AuditHistoryPage = () => {
                 {searchTerm && (
                   <button
                     onClick={() => setSearchTerm('')}
-                    className={`absolute inset-y-0 right-0 pr-4 flex items-center transition-colors ${darkMode ? "text-slate-500 hover:text-white" : "text-slate-400 hover:text-slate-900"}`}
+                    className={`absolute inset-y-0 right-0 pr-4 flex items-center transition-colors ${darkMode ? "text-slate-500 hover:text-white" : "text-faint hover:text-ink"}`}
                   >
                     <X size={18} />
                   </button>
@@ -441,38 +441,38 @@ const AuditHistoryPage = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`relative overflow-hidden rounded-[2.5rem] shadow-2xl border transition-colors ${darkMode ? "bg-slate-900/50 border-slate-800" : "bg-white border-slate-200"
+            className={`relative overflow-hidden rounded-[2.5rem] shadow-2xl border transition-colors ${darkMode ? "bg-slate-900/50 border-slate-800" : "bg-card border-line"
               }`}
           >
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className={`border-b transition-colors ${darkMode ? "border-slate-800 bg-slate-900/80" : "border-slate-100 bg-slate-50/50"}`}>
-                    <th className="px-8 py-6 text-xs font-semibold uppercase tracking-widest text-slate-500">Date</th>
-                    <th className="px-8 py-6 text-xs font-semibold uppercase tracking-widest text-slate-500">Website URL & Device</th>
-                    <th className="px-8 py-6 text-xs font-semibold uppercase tracking-widest text-slate-500">Audit Type</th>
-                    <th className="px-8 py-6 text-xs font-semibold uppercase tracking-widest text-slate-500">Performance Score</th>
-                    <th className="px-8 py-6 text-xs font-semibold uppercase tracking-widest text-slate-500">Status</th>
-                    <th className="px-8 py-6 text-xs font-semibold uppercase tracking-widest text-slate-500 text-right">Actions</th>
+                  <tr className={`border-b transition-colors ${darkMode ? "border-slate-800 bg-slate-900/80" : "border-line bg-surface-2/50"}`}>
+                    <th className="px-8 py-6 text-xs font-semibold uppercase tracking-widest text-muted">Date</th>
+                    <th className="px-8 py-6 text-xs font-semibold uppercase tracking-widest text-muted">Website URL & Device</th>
+                    <th className="px-8 py-6 text-xs font-semibold uppercase tracking-widest text-muted">Audit Type</th>
+                    <th className="px-8 py-6 text-xs font-semibold uppercase tracking-widest text-muted">Performance Score</th>
+                    <th className="px-8 py-6 text-xs font-semibold uppercase tracking-widest text-muted">Status</th>
+                    <th className="px-8 py-6 text-xs font-semibold uppercase tracking-widest text-muted text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className={`divide-y transition-colors ${darkMode ? "divide-slate-800" : "divide-slate-100"}`}>
+                <tbody className={`divide-y transition-colors ${darkMode ? "divide-slate-800" : "divide-line"}`}>
                   {loading ? (
                     [...Array(5)].map((_, i) => (
                       <tr key={i} className="animate-pulse">
                         <td colSpan="6" className="px-8 py-6">
-                          <div className={`h-12 rounded-2xl ${darkMode ? "bg-slate-800" : "bg-slate-100"}`} />
+                          <div className={`h-12 rounded-2xl ${darkMode ? "bg-slate-800" : "bg-cardsoft"}`} />
                         </td>
                       </tr>
                     ))
                   ) : audits.length === 0 ? (
                     <tr>
-                      <td colSpan="6" className="px-8 py-24 text-center">
+                      <td colSpan="6" className="px-8 py-14 text-center">
                         <div className="flex flex-col items-center gap-4">
-                          <div className={`w-16 h-16 rounded-full flex items-center justify-center ${darkMode ? "bg-slate-800 text-slate-600" : "bg-slate-100 text-slate-400"}`}>
+                          <div className={`w-16 h-16 rounded-full flex items-center justify-center ${darkMode ? "bg-slate-800 text-slate-600" : "bg-cardsoft text-faint"}`}>
                             <Globe size={32} />
                           </div>
-                          <p className={`font-medium ${darkMode ? "text-slate-500" : "text-slate-500"}`}>No audits found matching your criteria.</p>
+                          <p className={`font-medium ${darkMode ? "text-slate-500" : "text-muted"}`}>No audits found matching your criteria.</p>
                         </div>
                       </td>
                     </tr>
@@ -488,7 +488,7 @@ const AuditHistoryPage = () => {
                       >
                         <td className="px-8 py-6">
                           <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-lg ${darkMode ? "bg-slate-800 text-slate-400" : "bg-slate-100 text-slate-500"}`}>
+                            <div className={`p-2 rounded-lg ${darkMode ? "bg-slate-800 text-slate-400" : "bg-cardsoft text-muted"}`}>
                               <Calendar size={16} />
                             </div>
                             <span className="font-semibold text-sm">
@@ -500,11 +500,11 @@ const AuditHistoryPage = () => {
                           <div className="flex flex-col">
                             <div className="flex items-center gap-2 mb-1">
                               <Globe size={14} className="text-indigo-500" />
-                              <span className={`font-semibold text-sm truncate max-w-[250px] ${darkMode ? "text-slate-200" : "text-slate-800"}`}>
+                              <span className={`font-semibold text-sm truncate max-w-[250px] ${darkMode ? "text-slate-200" : "text-inksoft"}`}>
                                 {audit.url}
                               </span>
                             </div>
-                            <span className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
+                            <span className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? "text-slate-500" : "text-faint"}`}>
                               {audit.device || 'Desktop'} Profile
                             </span>
                           </div>
@@ -522,7 +522,7 @@ const AuditHistoryPage = () => {
                         <td className="px-8 py-6">
                           {audit.status === 'success' ? (
                             <div className="flex items-center gap-4">
-                              <div className="flex-1 h-2 w-24 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                              <div className="flex-1 h-2 w-24 bg-cardsoft dark:bg-slate-800 rounded-full overflow-hidden">
                                 <motion.div
                                   initial={{ width: 0 }}
                                   animate={{ width: `${audit.score}%` }}
@@ -536,7 +536,7 @@ const AuditHistoryPage = () => {
                               </span>
                             </div>
                           ) : (
-                            <span className={`text-xs font-semibold uppercase ${darkMode ? "text-slate-600" : "text-slate-300"}`}>
+                            <span className={`text-xs font-semibold uppercase ${darkMode ? "text-slate-600" : "text-faint"}`}>
                               Data Pending
                             </span>
                           )}
@@ -613,7 +613,7 @@ const AuditHistoryPage = () => {
                                   }}
                                   className={`p-2.5 rounded-xl transition-all shadow-lg border ${darkMode
                                     ? "bg-slate-800 hover:bg-indigo-600 text-slate-400 hover:text-white border-slate-700"
-                                    : "bg-white hover:bg-indigo-50 text-slate-500 hover:text-indigo-600 border-slate-200"
+                                    : "bg-card hover:bg-indigo-50 text-muted hover:text-indigo-600 border-line"
                                     }`}
                                   title="View Report"
                                 >
@@ -696,7 +696,7 @@ const AuditHistoryPage = () => {
                                   }}
                                   className={`p-2.5 rounded-xl transition-all shadow-lg border ${darkMode
                                     ? "bg-slate-800 hover:bg-emerald-600 text-slate-400 hover:text-white border-slate-700"
-                                    : "bg-white hover:bg-emerald-50 text-slate-500 hover:text-emerald-600 border-slate-200"
+                                    : "bg-card hover:bg-emerald-50 text-muted hover:text-emerald-600 border-line"
                                     }`}
                                   title="Download PDF"
                                 >
@@ -715,9 +715,9 @@ const AuditHistoryPage = () => {
 
             {/* Pagination */}
             {!loading && audits.length > 0 && (
-              <div className={`px-8 py-6 flex items-center justify-between border-t transition-colors ${darkMode ? "border-slate-800 bg-slate-900/50" : "border-slate-100 bg-slate-50/50"}`}>
-                <p className={`text-sm font-medium ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
-                  Showing <span className={darkMode ? "text-white" : "text-slate-900"}>{(currentPage - 1) * itemsPerPage + 1}</span> to <span className={darkMode ? "text-white" : "text-slate-900"}>{Math.min(currentPage * itemsPerPage, totalAudits)}</span> of <span className={darkMode ? "text-white" : "text-slate-900"}>{totalAudits}</span> audits
+              <div className={`px-8 py-6 flex items-center justify-between border-t transition-colors ${darkMode ? "border-slate-800 bg-slate-900/50" : "border-line bg-surface-2/50"}`}>
+                <p className={`text-sm font-medium ${darkMode ? "text-slate-400" : "text-muted"}`}>
+                  Showing <span className={darkMode ? "text-white" : "text-ink"}>{(currentPage - 1) * itemsPerPage + 1}</span> to <span className={darkMode ? "text-white" : "text-ink"}>{Math.min(currentPage * itemsPerPage, totalAudits)}</span> of <span className={darkMode ? "text-white" : "text-ink"}>{totalAudits}</span> audits
                 </p>
 
                 <div className="flex items-center gap-2">
@@ -727,7 +727,7 @@ const AuditHistoryPage = () => {
                     disabled={currentPage === 1}
                     className={`p-2 rounded-xl transition-all ${currentPage === 1
                       ? "opacity-30 cursor-not-allowed"
-                      : darkMode ? "hover:bg-slate-800 text-white" : "hover:bg-white text-slate-600 shadow-sm border border-slate-200"
+                      : darkMode ? "hover:bg-slate-800 text-white" : "hover:bg-card text-muted shadow-sm border border-line"
                       }`}
                   >
                     <ChevronLeft size={20} />
@@ -761,7 +761,7 @@ const AuditHistoryPage = () => {
                           return (
                             <span
                               key={page}
-                              className={`w-10 h-10 flex items-center justify-center text-sm font-semibold select-none ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}
+                              className={`w-10 h-10 flex items-center justify-center text-sm font-semibold select-none ${darkMode ? 'text-slate-500' : 'text-faint'}`}
                             >
                               …
                             </span>
@@ -775,7 +775,7 @@ const AuditHistoryPage = () => {
                               ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
                               : darkMode
                                 ? "hover:bg-slate-800 text-slate-400"
-                                : "hover:bg-white text-slate-600 border border-transparent hover:border-slate-200"
+                                : "hover:bg-card text-muted border border-transparent hover:border-line"
                               }`}
                           >
                             {page}
@@ -791,7 +791,7 @@ const AuditHistoryPage = () => {
                     disabled={currentPage === totalPages}
                     className={`p-2 rounded-xl transition-all ${currentPage === totalPages
                       ? "opacity-30 cursor-not-allowed"
-                      : darkMode ? "hover:bg-slate-800 text-white" : "hover:bg-white text-slate-600 shadow-sm border border-slate-200"
+                      : darkMode ? "hover:bg-slate-800 text-white" : "hover:bg-card text-muted shadow-sm border border-line"
                       }`}
                   >
                     <ChevronRight size={20} />

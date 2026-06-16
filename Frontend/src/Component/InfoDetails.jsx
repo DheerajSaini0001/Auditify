@@ -371,25 +371,36 @@ export const InfoDetails = {
     },
     Mobile_Usability: {
         title: "Mobile Usability",
-        whatThisParameterIs: "Checks whether the page is genuinely usable on a phone: responsive layout (no horizontal scrolling), tap targets large enough to press, legible text, and a correctly configured viewport.",
-        whatItCalculates: "We render the page in a real mobile-emulated browser (iPhone viewport, touch enabled) and inspect the live DOM. Four sub-checks are scored and summed to 100: Viewport meta (25), Responsive/no horizontal overflow (30), Tap-target sizing — interactive elements ≥44×44px (30), and Legible fonts ≥12px (15).",
-        whyItMatters: "The majority of dealership traffic is mobile. If buttons are too small, text is unreadable, or the page scrolls sideways, shoppers bounce — and Google's mobile-first index ranks the mobile experience, not the desktop one.",
+
+        whatThisParameterIs:
+            "We check whether the page is genuinely comfortable to use on a phone: responsive layout with no horizontal scrolling, properly configured mobile viewport, tap targets large enough for touch, legible text, and navigation that is easy to reach with one hand.",
+
+        whatItCalculates:
+            "We render the page in a real mobile-emulated browser (iPhone viewport with touch enabled) and inspect the live DOM. Five sub-checks are scored and summed to 100: Viewport meta configuration (20), Responsive layout/no horizontal overflow (25), Tap-target sizing — interactive elements at least 44×44px (30), Legible font sizes of at least 12px (15), and Thumb reach — presence of a reachable mobile menu, sticky navigation, or key actions positioned for one-handed use (10).",
+
+        whyItMatters:
+            "Most dealership traffic comes from mobile devices. If users must zoom to read text, struggle to tap buttons, scroll horizontally, or reach important navigation, they are more likely to abandon the page. A strong mobile experience improves engagement, lead generation, and mobile-first search performance.",
+
         thresholds: {
-            good: "≥ 90% (responsive, tappable, legible)",
-            needsImprovement: "50% – 89%",
-            poor: "< 50%"
+            good: "≥ 90% — responsive, tappable, legible, and easy to navigate one-handed",
+            needsImprovement: "50% – 89% — some mobile usability issues present",
+            poor: "< 50% — significant friction for mobile users"
         },
+
         actualReasonsForFailure: [
-            "Missing or zoom-blocking viewport meta tag",
-            "Content wider than the screen (horizontal scrolling)",
-            "Buttons/links smaller than 44×44px and too close together",
-            "Body text rendered below 12px"
+            "Missing or incorrectly configured viewport meta tag",
+            "Content wider than the viewport causing horizontal scrolling",
+            "Buttons, links, or form controls smaller than 44×44px",
+            "Text rendered below 12px and difficult to read",
+            "Important navigation or actions are difficult to reach one-handed"
         ],
+
         howToOvercomeFailure: [
-            'Add <meta name="viewport" content="width=device-width, initial-scale=1"> and allow zoom',
-            "Make wide elements fluid (max-width:100%) to remove horizontal scroll",
-            "Enlarge tap targets to at least 44×44px with adequate spacing",
-            "Use a base body font size of at least 16px"
+            'Add <meta name="viewport" content="width=device-width, initial-scale=1">',
+            "Ensure layouts, images, and containers are fully responsive with no horizontal overflow",
+            "Increase tap targets to at least 44×44px and provide adequate spacing",
+            "Use body text of at least 16px and never below 12px",
+            "Provide reachable mobile navigation such as a well-positioned menu, sticky header, or bottom action bar"
         ]
     },
     Mobile_Load_Speed: {
@@ -3100,27 +3111,6 @@ export const InfoDetails = {
             "Add <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
             "Remove fixed-width elements that push the page wider than the screen",
             "Serve responsive images (srcset/sizes) and use CSS media queries to adapt the layout"
-        ]
-    },
-    Mobile_Usability: {
-        title: "Mobile Usability",
-        whatThisParameterIs: "We check whether the page is comfortable to use one-handed on a phone — big enough tap targets, legible text, and reachable navigation.",
-        whatItCalculates: "We measure three things on the rendered page: (1) tap targets at least 44×44px, per Apple HIG / WCAG 2.5.5 (55%); (2) text at a legible size of at least 12px (30%); and (3) thumb reach — a reachable sticky bar or mobile menu for one-handed use (15%). On desktop reports this is shown for context but not scored.",
-        whyItMatters: "Small buttons cause mis-taps, tiny text forces zooming, and out-of-reach menus frustrate one-handed users. Touch ergonomics directly affect whether mobile shoppers can complete a lead form or call.",
-        thresholds: {
-            good: "Score ≥ 75 — large tap targets, legible text, reachable nav",
-            needsImprovement: "Score 45–74 — some small targets or text",
-            poor: "Score < 45 — many tap targets or text too small for touch"
-        },
-        actualReasonsForFailure: [
-            "Tap targets are smaller than 44×44px, causing mis-taps",
-            "Text is below a legible size and forces zooming",
-            "No reachable sticky or mobile navigation for one-handed use"
-        ],
-        howToOvercomeFailure: [
-            "Size tap targets at least 44×44px with adequate spacing between them",
-            "Keep body text at 16px (never below 12px)",
-            "Provide a reachable sticky header or bottom navigation bar on mobile"
         ]
     },
     In_Page_Navigation: {

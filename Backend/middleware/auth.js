@@ -60,7 +60,12 @@ const tryAuthenticate = (req, res, next) => {
     try {
       const jwtSecret = configService.getConfig('JWT_SECRET');
       const decoded = jwt.verify(token, jwtSecret);
-      req.user = decoded; // { userId, role }
+      // Only real user tokens carry a userId. Ignore other valid-but-non-user
+      // tokens (e.g. the guest-audit grant) so they can't be passed off as a
+      // logged-in user via the Authorization header.
+      if (decoded?.userId) {
+        req.user = decoded; // { userId, role }
+      }
     } catch (error) {
       // Ignore token errors for optional authentication
     }

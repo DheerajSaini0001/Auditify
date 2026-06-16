@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 const otpSchema = new mongoose.Schema({
   email:     { type: String, required: true },
   otp:       { type: String, required: true },   // bcrypt-hashed 6-digit code
-  purpose:   { type: String, enum: ['email_verify'], default: 'email_verify' },
+  purpose:   { type: String, enum: ['email_verify', 'guest_audit'], default: 'email_verify' },
   expiresAt: { type: Date, required: true },     // Date.now() + 10 minutes
   attempts:  { type: Number, default: 0 }        // max 5 wrong attempts then invalidate
 }, { timestamps: true });

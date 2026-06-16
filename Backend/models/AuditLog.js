@@ -7,6 +7,12 @@ const auditLogSchema = new mongoose.Schema(
       ref: "User",
       default: null,
     },
+    // Email a guest verified via the OTP gate before running this audit
+    // (null for logged-in users, who are attributed via userId instead).
+    guestEmail: {
+      type: String,
+      default: null,
+    },
     sessionId: {
       type: String,
       required: true,

@@ -87,7 +87,8 @@ export const startAudit = async (req, res) => {
       
       // Save an AuditLog so it appears in User's history even though it was cached
       const auditLog = new AuditLog({
-        userId: req.user?.userId || null, 
+        userId: req.user?.userId || null,
+        guestEmail: req.guestEmail || null,
         sessionId: req.tracking?.sessionId || 'N/A',
         ip: req.tracking?.ip || '0.0.0.0',
         country: req.tracking?.country,
@@ -174,6 +175,7 @@ export const startAudit = async (req, res) => {
           // Log the cached audit run
           const auditLog = new AuditLog({
             userId: req.user?.userId || null,
+            guestEmail: req.guestEmail || null,
             sessionId: req.tracking?.sessionId || 'N/A',
             ip: req.tracking?.ip || '0.0.0.0',
             url: url,
@@ -214,7 +216,8 @@ export const startAudit = async (req, res) => {
 
     // Create a pending AuditLog entry asynchronously
     const auditLog = new AuditLog({
-      userId: req.user?.userId || null, 
+      userId: req.user?.userId || null,
+      guestEmail: req.guestEmail || null,
       sessionId: req.tracking?.sessionId || 'N/A',
       ip: req.tracking?.ip || '0.0.0.0',
       country: req.tracking?.country || 'unknown',

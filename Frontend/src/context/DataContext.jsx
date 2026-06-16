@@ -68,6 +68,15 @@ export const DataProvider = ({ children }) => {
     }
   }, [data]);
 
+  // 👥 Reset to Dealer view whenever a DIFFERENT report loads, so every new audit
+  // opens in Dealer mode regardless of the last toggle. Keyed on data._id (a string),
+  // so live-poll refreshes of the SAME report don't reset it — a manual switch to
+  // Developer stays put while viewing that one report, and only snaps back to Dealer
+  // when another audit/report is opened.
+  useEffect(() => {
+    setAudienceMode("dealer");
+  }, [data?._id]);
+
   const [loading, setLoading] = useState(false);
   const [intervalId, setIntervalId] = useState(null);
 

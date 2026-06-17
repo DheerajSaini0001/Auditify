@@ -9,7 +9,7 @@ import {
   Search, FileText, Link, Image as ImageIcon, Video,
   Layout, FileCode, Lock, Copy, List, Tag, Globe,
   CheckCircle, AlertTriangle, XCircle, Info, Loader2, ArrowRight,
-  ChevronDown, ChevronUp, ExternalLink, Box, Check, ShieldCheck, MapPin, Clock, Linkedin
+  ChevronDown, ChevronUp, ExternalLink, Box, Check, ShieldCheck, MapPin, Clock, Linkedin, AlertCircle
 } from "lucide-react";
 import {
   SiFacebook, SiX, SiInstagram, SiYoutube, SiPinterest,
@@ -2643,9 +2643,37 @@ const LocalSEOCard = ({ data, darkMode, onInfo, className = "" }) => {
   const parameters = Array.isArray(meta?.parameters) ? meta.parameters : [];
   const location = meta?.location;
 
+  // Which sub-signals have their "why / where" detail panel expanded (keyed by param key).
+  const [openParam, setOpenParam] = React.useState({});
+  const toggleParam = (k) => setOpenParam((o) => ({ ...o, [k]: !o[k] }));
+
   const scoreColor = score10 >= 7 ? "text-emerald-500" : score10 >= 4 ? "text-amber-500" : "text-red-500";
   const statColor = (s) => (s === "pass" ? "text-emerald-500" : s === "warning" ? "text-amber-500" : "text-red-500");
   const StatIcon = (s) => (s === "pass" ? CheckCircle : s === "warning" ? AlertTriangle : XCircle);
+
+  // Format a 10-digit phone for display; pass anything else through untouched.
+  const fmtPhone = (d) => {
+    const s = String(d ?? "").replace(/\D/g, "");
+    return s.length === 10 ? `(${s.slice(0, 3)}) ${s.slice(3, 6)}-${s.slice(6)}` : String(d ?? "");
+  };
+
+  // Build the concrete "where the error is" lines from whatever specifics the backend
+  // attached to this sub-signal (NAP phone mismatch, missing fields, page checked…).
+  const getIssueSpecifics = (p) => {
+    const out = [];
+    if (p.key === "NAP_Consistency" && p.schemaPhone && Array.isArray(p.phones) &&
+        p.phones.length && !p.phones.includes(p.schemaPhone)) {
+      out.push({ label: "Phone in schema", value: fmtPhone(p.schemaPhone) });
+      out.push({ label: "Phone on page", value: p.phones.map(fmtPhone).join(", ") });
+    }
+    if (Array.isArray(p.missing) && p.missing.length) out.push({ label: "Missing", value: p.missing.join(", ") });
+    if (p.inspected) out.push({ label: "Page checked", value: p.inspected });
+    if (p.location) out.push({ label: "Target location", value: p.location });
+    if (typeof p.cityHits === "number") out.push({ label: "City mentions found", value: String(p.cityHits) });
+    if (typeof p.count === "number") out.push({ label: "Location pages found", value: String(p.count) });
+    if (p.rating) out.push({ label: "Rating in schema", value: `${p.rating}${p.reviewCount ? ` (${p.reviewCount} reviews)` : ""}` });
+    return out;
+  };
 
   return (
     <SEOCard
@@ -2678,25 +2706,87 @@ const LocalSEOCard = ({ data, darkMode, onInfo, className = "" }) => {
         {parameters.map((p, i) => {
           const Icon = StatIcon(p.status);
           const found = Array.isArray(p.found) ? p.found : [];
+          const key = p.key || String(i);
+          const isOpen = !!openParam[key];
+          const hasIssue = p.status !== "pass";       // warning or fail → show the "!" button
+          const specifics = getIssueSpecifics(p);
+          const labelText = `Why this ${p.status === "warning" ? "warning" : "failed"}`;
           return (
-            <div key={p.key || i} className={`p-2.5 rounded ${darkMode ? "bg-gray-900" : "bg-cardsoft border border-line"}`}>
+            <div key={key} className={`p-2.5 rounded ${darkMode ? "bg-gray-900" : "bg-cardsoft border border-line"}`}>
               <div className="flex items-center justify-between gap-2">
                 <span className={`text-xs font-semibold ${darkMode ? "text-gray-200" : "text-ink"}`}>{p.label}</span>
-                <span className={`inline-flex items-center gap-1 text-xs font-semibold ${statColor(p.status)}`}>
-                  <Icon size={12} className="shrink-0" /> {p.score}%
-                </span>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className={`inline-flex items-center gap-1 text-xs font-semibold ${statColor(p.status)}`}>
+                    <Icon size={12} className="shrink-0" /> {p.score}%
+                  </span>
+                  {hasIssue && (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); toggleParam(key); }}
+                      title="Why this happened — see the actual issue"
+                      aria-label={`${labelText} for ${p.label}`}
+                      aria-expanded={isOpen}
+                      className={`flex items-center justify-center w-5 h-5 rounded-full border transition-colors ${
+                        isOpen
+                          ? (p.status === "warning" ? "bg-amber-500 border-amber-500 text-white" : "bg-red-500 border-red-500 text-white")
+                          : `${statColor(p.status)} ${darkMode ? "border-gray-600 hover:bg-gray-800" : "border-line hover:bg-surface-2"}`
+                      }`}
+                    >
+                      <AlertCircle size={12} className="shrink-0" />
+                    </button>
+                  )}
+                </div>
               </div>
               <div className={`text-[11px] mt-0.5 ${darkMode ? "text-gray-400" : "text-muted"}`}>{p.details}</div>
               {found.length > 0 && (
                 <div className="mt-1 flex flex-wrap gap-1">
-                  {found.slice(0, 4).map((f, j) => (
-                    <span
-                      key={j}
-                      className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded ${darkMode ? "bg-gray-800 text-gray-300 border border-gray-700" : "bg-card text-muted border border-line"}`}
-                    >
-                      <Check size={9} className="text-emerald-500 shrink-0" /> {f}
-                    </span>
-                  ))}
+                  {found.slice(0, 4).map((f, j) => {
+                    const warn = /^[⚠!]/.test(String(f));
+                    return (
+                      <span
+                        key={j}
+                        className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border ${
+                          warn
+                            ? (darkMode ? "bg-amber-500/10 text-amber-300 border-amber-500/30" : "bg-amber-50 text-amber-700 border-amber-200")
+                            : (darkMode ? "bg-gray-800 text-gray-300 border-gray-700" : "bg-card text-muted border-line")
+                        }`}
+                      >
+                        {warn
+                          ? <AlertTriangle size={9} className="text-amber-500 shrink-0" />
+                          : <Check size={9} className="text-emerald-500 shrink-0" />}
+                        {String(f).replace(/^[⚠!]\s*/, "")}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Why / Where the error is / How to fix — revealed by the "!" button */}
+              {hasIssue && isOpen && (
+                <div className={`mt-2 pt-2 border-t border-dashed space-y-2 ${darkMode ? "border-gray-700" : "border-line"}`}>
+                  <div>
+                    <div className={`text-[9px] font-semibold uppercase tracking-wider mb-0.5 ${darkMode ? "text-gray-500" : "text-faint"}`}>{labelText}</div>
+                    <div className={`text-[11px] leading-relaxed ${darkMode ? "text-gray-300" : "text-inksoft"}`}>{p.why_this_occurred || p.details}</div>
+                  </div>
+                  {specifics.length > 0 && (
+                    <div>
+                      <div className={`text-[9px] font-semibold uppercase tracking-wider mb-0.5 ${darkMode ? "text-gray-500" : "text-faint"}`}>Where the issue is</div>
+                      <ul className="space-y-0.5">
+                        {specifics.map((s, k) => (
+                          <li key={k} className={`text-[11px] flex flex-wrap gap-1.5 ${darkMode ? "text-gray-300" : "text-inksoft"}`}>
+                            <span className={`font-semibold ${statColor(p.status)}`}>{s.label}:</span>
+                            <span className="break-all">{s.value}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {p.how_to_fix && (
+                    <div>
+                      <div className={`text-[9px] font-semibold uppercase tracking-wider mb-0.5 ${darkMode ? "text-gray-500" : "text-faint"}`}>How to fix</div>
+                      <div className={`text-[11px] leading-relaxed ${darkMode ? "text-emerald-300/90" : "text-emerald-700"}`}>{p.how_to_fix}</div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

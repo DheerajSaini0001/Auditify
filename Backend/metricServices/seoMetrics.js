@@ -1531,10 +1531,22 @@ const checkSocial = ($) => {
       "pinterest.com": "pinterest", "tiktok.com": "tiktok", "reddit.com": "reddit", "snapchat.com": "snapchat",
       "medium.com": "medium", "yelp.com": "yelp"
     };
+    if (!u || typeof u !== "string") return null;
+    const raw = u.trim();
+    // Ignore anchors, mailto/tel/javascript and other non-navigational links outright.
+    if (/^(#|mailto:|tel:|sms:|javascript:|data:)/i.test(raw)) return null;
+    let hostname;
     try {
-      const h = new URL(u, "https://x.com").hostname.replace(/^www\./, "").toLowerCase();
-      for (const d in map) if (h.includes(d)) return map[d];
-    } catch (e) {}
+      // Only accept absolute (http/https) or protocol-relative URLs. Relative paths
+      // (e.g. "/about", "?q=1") must NOT be resolved against a social base — doing so
+      // misclassifies every internal link as that base's platform.
+      if (/^\/\//.test(raw)) hostname = new URL("https:" + raw).hostname;
+      else if (/^https?:\/\//i.test(raw)) hostname = new URL(raw).hostname;
+      else return null;
+    } catch (e) { return null; }
+    hostname = hostname.replace(/^www\./, "").toLowerCase();
+    // Exact host or subdomain match only — avoids substring false positives like "notfacebook.com".
+    for (const d in map) if (hostname === d || hostname.endsWith("." + d)) return map[d];
     return null;
   };
   const normProfile = (u) => {

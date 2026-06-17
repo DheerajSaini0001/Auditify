@@ -7,7 +7,6 @@ import LivePreview from '../Component/LivePreview';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { isVisibleForAudience } from '../config/parameterAudience';
-import { Lock } from 'lucide-react';
 
 // AEO "Core Signal Breakdown" signal keys (must match the AEOSignalCard `signal` props).
 const AEO_SIGNAL_KEYS = [
@@ -41,16 +40,6 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
     // (per-signal classification still honored via isVisibleForAudience).
     const showSignalBreakdown = AEO_SIGNAL_KEYS.some((s) => isVisibleForAudience(s, audienceMode));
 
-    const auditId = auditData?._id;
-    const intendedPath = auditId ? `/report/${auditId}` : null;
-
-    const handleLogin = () => {
-      if (auditId) {
-        savePostAuthIntent(auditId, `/report/${auditId}`);
-      }
-      navigate("/login", { state: { from: intendedPath } });
-    };
-    
     const [streamedAeo, setStreamedAeo] = React.useState(null);
     const [streamStatus, setStreamStatus] = React.useState("Initializing AEO Engine...");
     const [isStreaming, setIsStreaming] = React.useState(false);
@@ -230,27 +219,8 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
 
      
 
-            {/* Gated Sections */}
-            {!isAuthenticated ? (
-                <div className={`relative overflow-hidden rounded-[3.5rem] border p-12 text-center flex flex-col items-center justify-center mt-8 ${darkMode ? "bg-slate-900/50 border-slate-800" : "bg-card border-line"}`}>
-                    <div className="absolute inset-0 filter blur-[15px] opacity-20 pointer-events-none flex flex-col gap-4 p-8">
-                        <div className="h-20 bg-slate-400 rounded-xl w-full"></div>
-                        <div className="h-40 bg-slate-400 rounded-xl w-full"></div>
-                    </div>
-                    <div className="relative z-10 flex flex-col items-center max-w-md mx-auto py-8">
-                        <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-6 shadow-xl ${darkMode ? "bg-indigo-500/20 text-indigo-400" : "bg-indigo-100 text-indigo-600"}`}>
-                            <Lock className="w-10 h-10" />
-                        </div>
-                        <h3 className={`text-2xl font-black tracking-tight mb-4 ${darkMode ? "text-white" : "text-ink"}`}>Login to unlock full AEO insights</h3>
-                        <p className={`text-base mb-8 ${darkMode ? "text-slate-400" : "text-muted"}`}>
-                            Get deep dive analysis into your Core Signal Breakdown and a personalized Action Plan for generative AI search.
-                        </p>
-                        <button onClick={handleLogin} className="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-full transition-colors shadow-lg shadow-indigo-500/30">
-                            Login to unlock full AEO insights
-                        </button>
-                    </div>
-                </div>
-            ) : (
+            {/* AEO insights are open to everyone — guests included (login gate removed). */}
+            {(
                 <>
                     {/* Signal Breakdown (developer-only by default) */}
                     {showSignalBreakdown && (

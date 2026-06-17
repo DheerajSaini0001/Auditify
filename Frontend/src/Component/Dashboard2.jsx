@@ -18,9 +18,6 @@ import LivePreview from "./LivePreview";
 import UrlHeader from "./UrlHeader";
 import { useData } from "../context/DataContext";
 import { useAuth } from "../context/AuthContext";
-import AEOPage from "../Pages/AEOPage";
-import { Lock } from "lucide-react";
-import { savePostAuthIntent } from "../utils/intentStore";
 
 // Presentational component wrapped in React.memo
 const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, clearData, darkMode, isAuthenticated }) {
@@ -85,23 +82,6 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
       data[section.key].Percentage !== null
     ).length;
   }, [data, sectionMappings]);
-
-  const auditId = data?._id;
-  const intendedPath = auditId ? `/report/${auditId}` : null;
-
-  const handleLogin = () => {
-    if (auditId) {
-      savePostAuthIntent(auditId, `/report/${auditId}`);
-    }
-    navigate("/login", { state: { from: intendedPath } });
-  };
-
-  const handleRegister = () => {
-    if (auditId) {
-      savePostAuthIntent(auditId, `/report/${auditId}`);
-    }
-    navigate("/register", { state: { from: intendedPath } });
-  };
 
   const isAuditComplete = completedSections === sectionMappings.length;
   const isLoadingView = loading || !isAuditComplete;
@@ -231,13 +211,13 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
           <UrlHeader data={data} darkMode={darkMode} hideBorder={true} />
         </div>
 
-        {/* ✅ Card 2: Overview / Preview Card (Only for Authenticated Users now) */}
-        {isAuthenticated && (
+        {/* ✅ Card 2: Overview / Preview Card — visible to everyone (guests included) */}
+        {true && (
           <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${cardClass}`}>
             <div className="flex flex-col xl:flex-row min-h-[300px]">
 
               {/* Left Panel: Live Preview (Widened) */}
-              <div className={`w-full ${isAuthenticated ? "xl:w-1/2 border-b xl:border-b-0 xl:border-r" : "max-w-5xl mx-auto"} p-6 flex items-center justify-center relative overflow-hidden ${darkMode ? "bg-slate-900/30 border-slate-800" : "bg-cardsoft border-line"}`}>
+              <div className={`w-full xl:w-1/2 border-b xl:border-b-0 xl:border-r p-6 flex items-center justify-center relative overflow-hidden ${darkMode ? "bg-slate-900/30 border-slate-800" : "bg-cardsoft border-line"}`}>
                 {/* Decorative Background Blob */}
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/5 blur-3xl rounded-full pointer-events-none"></div>
 
@@ -246,8 +226,8 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
                 </div>
               </div>
 
-              {/* Right Panel: Metrics & Score (Only for Authenticated) */}
-              {isAuthenticated && (
+              {/* Right Panel: Metrics & Score — visible to everyone */}
+              {true && (
                 <div className="flex-1 p-8 lg:p-12 flex flex-col justify-center">
 
                   {(loading || !isAuditComplete) ? (
@@ -369,45 +349,12 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
           </div>
         )}
 
-        {/* ✅ Guest View: AEO Page + Locked Cards */}
-        {!isAuthenticated && (
-          <div className="space-y-6 animate-in fade-in duration-700">
-            {/* AEO Component handles its own loading */}
-            <div className="mt-8">
-              <AEOPage auditData={data} darkMode={darkMode} onInfo={() => { }} />
-            </div>
-
-            {/* 6 Locked Blurred Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-              {['Technical Performance', 'On-Page SEO', 'Accessibility', 'Security/Compliance', 'UX & Content Structure', 'Conversion & Lead Flow'].map((name, i) => (
-                <div key={i} onClick={handleLogin} className={`relative overflow-hidden rounded-2xl border p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:-translate-y-1 hover:shadow-xl ${darkMode ? 'bg-slate-900/80 border-slate-700' : 'bg-card border-line'}`}>
-                  {/* Blur content underneath */}
-                  <div className="opacity-30 flex flex-col items-center z-0 filter blur-[4px]">
-                    <div className="w-16 h-16 rounded-full bg-slate-300 dark:bg-slate-700 mb-4"></div>
-                    <div className="h-4 w-32 bg-slate-300 dark:bg-slate-700 rounded mb-2"></div>
-                    <div className="h-3 w-24 bg-slate-300 dark:bg-slate-700 rounded"></div>
-                  </div>
-
-                  {/* Lock overlay */}
-                  <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/20 dark:bg-slate-900/40 backdrop-blur-[6px]">
-                    <div className="w-12 h-12 rounded-full bg-slate-800 dark:bg-white flex items-center justify-center mb-4 shadow-xl">
-                      <Lock className="w-5 h-5 text-white dark:text-slate-900" />
-                    </div>
-                    <h4 className={`font-semibold text-lg mb-1 ${darkMode ? 'text-white' : 'text-ink'}`}>{name}</h4>
-                    <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">Sign up to unlock this report</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* CTA Banner */}
-         
-          </div>
-        )}
+        {/* Guest lock removed — reports are open to everyone, so guests see the
+            same full Overview + Category grid as authenticated users. */}
 
 
-        {/* ✅ Detailed Metrics Grid & Charts (Only when loaded & Authenticated) */}
-        {isAuthenticated && !loading && isAuditComplete && (
+        {/* ✅ Detailed Metrics Grid & Charts — visible to everyone once loaded */}
+        {!loading && isAuditComplete && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
             {/* Category Breakdown - Production Ready */}

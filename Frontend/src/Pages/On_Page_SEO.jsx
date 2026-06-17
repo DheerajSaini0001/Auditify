@@ -9,8 +9,12 @@ import {
   Search, FileText, Link, Image as ImageIcon, Video,
   Layout, FileCode, Lock, Copy, List, Tag, Globe,
   CheckCircle, AlertTriangle, XCircle, Info, Loader2, ArrowRight,
-  ChevronDown, ChevronUp, ExternalLink, Box, Check, ShieldCheck, MapPin, Clock
+  ChevronDown, ChevronUp, ExternalLink, Box, Check, ShieldCheck, MapPin, Clock, Linkedin
 } from "lucide-react";
+import {
+  SiFacebook, SiX, SiInstagram, SiYoutube, SiPinterest,
+  SiTiktok, SiReddit, SiSnapchat, SiMedium, SiYelp
+} from "react-icons/si";
 import MetricInfoModal from "../Component/MetricInfoModal";
 import ParameterInfoModal from "../Component/ParameterInfoModal";
 import { InfoDetails } from "../Component/InfoDetails";
@@ -2989,6 +2993,23 @@ const TwitterCardCard = ({ data, darkMode, onInfo, className = "" }) => {
   );
 };
 
+// Brand logo + official colour for each social platform the backend detects.
+// `Icon` is the brand logo, `bg` the chip background (solid brand colour, or the
+// Instagram gradient), `fg` the logo colour drawn on top.
+const SOCIAL_BRANDS = [
+  { match: ["facebook.com", "fb.com"],  name: "Facebook",  Icon: SiFacebook,  bg: "#1877F2", fg: "#FFFFFF" },
+  { match: ["twitter.com", "x.com"],    name: "X",         Icon: SiX,         bg: "#000000", fg: "#FFFFFF" },
+  { match: ["linkedin.com"],            name: "LinkedIn",  Icon: Linkedin,    bg: "#0A66C2", fg: "#FFFFFF" },
+  { match: ["instagram.com"],           name: "Instagram", Icon: SiInstagram, bg: "linear-gradient(45deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5)", fg: "#FFFFFF" },
+  { match: ["youtube.com", "youtu.be"], name: "YouTube",   Icon: SiYoutube,   bg: "#FF0000", fg: "#FFFFFF" },
+  { match: ["pinterest.com"],           name: "Pinterest", Icon: SiPinterest, bg: "#BD081C", fg: "#FFFFFF" },
+  { match: ["tiktok.com"],              name: "TikTok",    Icon: SiTiktok,    bg: "#000000", fg: "#FFFFFF" },
+  { match: ["reddit.com"],              name: "Reddit",    Icon: SiReddit,    bg: "#FF4500", fg: "#FFFFFF" },
+  { match: ["snapchat.com"],            name: "Snapchat",  Icon: SiSnapchat,  bg: "#FFFC00", fg: "#000000" },
+  { match: ["medium.com"],              name: "Medium",    Icon: SiMedium,    bg: "#000000", fg: "#FFFFFF" },
+  { match: ["yelp.com"],                name: "Yelp",      Icon: SiYelp,      bg: "#FF1A1A", fg: "#FFFFFF" },
+];
+
 const SocialProfilesCard = ({ data, darkMode, onInfo, className = "" }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
@@ -2996,14 +3017,13 @@ const SocialProfilesCard = ({ data, darkMode, onInfo, className = "" }) => {
   const isPassed = status === "pass";
   const [showDetails, setShowDetails] = React.useState(false);
 
+  // Match a link to its brand; fall back to a neutral chip with a generic link icon.
   const getPlatformInfo = (url) => {
-    const u = url.toLowerCase();
-    if (u.includes('facebook.com')) return { name: 'Facebook', color: 'text-blue-500 bg-blue-500/10 border-blue-500/20' };
-    if (u.includes('twitter.com') || u.includes('x.com')) return { name: 'Twitter / X', color: 'text-cyan-500 bg-cyan-500/10 border-cyan-500/20' };
-    if (u.includes('linkedin.com')) return { name: 'LinkedIn', color: 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20' };
-    if (u.includes('instagram.com')) return { name: 'Instagram', color: 'text-pink-500 bg-pink-500/10 border-pink-500/20' };
-    if (u.includes('youtube.com')) return { name: 'YouTube', color: 'text-red-500 bg-red-500/10 border-red-500/20' };
-    return { name: 'Social Profile', color: 'text-gray-500 bg-gray-500/10 border-gray-500/20' };
+    const u = (url || "").toLowerCase();
+    return (
+      SOCIAL_BRANDS.find((b) => b.match.some((d) => u.includes(d))) ||
+      { name: "Social Profile", Icon: Link, bg: darkMode ? "#4B5563" : "#6B7280", fg: "#FFFFFF" }
+    );
   };
 
   // Safely derive a display hostname; tolerates protocol-less / relative links.
@@ -3055,11 +3075,12 @@ const SocialProfilesCard = ({ data, darkMode, onInfo, className = "" }) => {
             {meta.links?.length > 0 ? (
               meta.links.map((link, i) => {
                 const info = getPlatformInfo(link);
+                const BrandIcon = info.Icon;
                 return (
                   <a key={i} href={link} target="_blank" rel="noopener noreferrer" className={`flex items-center justify-between p-2.5 rounded-lg border group/link transition-all ${darkMode ? "bg-gray-900/40 border-gray-700/50 hover:bg-gray-700/50" : "bg-cardsoft border-line hover:bg-surface-2 hover:border-line"}`}>
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className={`p-1.5 rounded ${info.color}`}>
-                        <Link size={14} />
+                      <div className="flex items-center justify-center w-8 h-8 rounded-lg ring-1 ring-black/5 dark:ring-white/10 shadow-sm flex-shrink-0 group-hover/link:scale-105 transition-transform" style={{ background: info.bg }}>
+                        <BrandIcon size={16} color={info.fg} style={{ color: info.fg }} />
                       </div>
                       <div className="flex flex-col min-w-0">
                         <span className={`text-[10px] font-semibold uppercase tracking-tight opacity-60`}>{info.name}</span>

@@ -42,17 +42,15 @@ import AIChatWidget from "./Component/AIChatWidget";
 import AIChatOverlay from "./Component/AIChatOverlay";
 
 import ReportRestrictionWrapper from "./Component/ReportRestrictionWrapper.jsx";
-import GuestReportPage from "./Component/GuestReportPage.jsx";
 import { useAuth } from "./context/AuthContext.jsx";
 import { useData } from "./context/DataContext.jsx";
 import CanonicalTag from "./Component/CanonicalTag.jsx";
 import GuestRoute from "./Component/GuestRoute";
 
 /**
- * Wraps a report route for unauthenticated users:
- * - If there IS audit data in context → render the real page
- *   (ReportRestrictionWrapper inside it will show the blurred gate)
- * - If there is NO data → show GuestReportPage (placeholder + lock card)
+ * Wraps a report route. Reports are open to everyone — guests included, with no
+ * auth lock. On a fresh load / refresh it restores the report by fetching the id
+ * from the URL; the report page renders its own loading shimmer until that lands.
  */
 const GuestRouteWrapper = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -70,12 +68,8 @@ const GuestRouteWrapper = ({ children }) => {
 
   if (isLoading || isFetching) return null; // Wait silently for auth resolution
 
-  // Not logged in but data exists → show real page (inner restriction handles gating)
-  if (!isAuthenticated && data) return children;
-
-  // Not logged in and no data → show placeholder gate page
-  if (!isAuthenticated) return <GuestReportPage />;
-
+  // Reports are open to everyone — guests included. No auth lock. The report pages
+  // render their own loading shimmer until the data fetched above arrives.
   return children;
 };
 
@@ -124,7 +118,7 @@ function AppContentInner() {
           <Route path="/report" element={<ReportLayout />} />
           <Route path="/report/:id" element={<ReportLayout />} />
 
-          {/* Individual Report Pages - Gated for unauthenticated users */}
+          {/* Individual Report Pages - open to everyone, guests included */}
           <Route path="/technical-performance/:id?" element={<GuestRouteWrapper><Technical_Performance /></GuestRouteWrapper>} />
           <Route path="/on-page-seo/:id?" element={<GuestRouteWrapper><On_Page_SEO /></GuestRouteWrapper>} />
           <Route path="/accessibility/:id?" element={<GuestRouteWrapper><Accessibility /></GuestRouteWrapper>} />

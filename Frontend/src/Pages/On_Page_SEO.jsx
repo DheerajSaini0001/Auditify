@@ -2360,20 +2360,87 @@ const ServiceContentQualityCard = ({ data, darkMode, onInfo, className = "" }) =
   const checks = meta?.checks || {};
   const failureReasons = Array.isArray(meta?.failureReasons) ? meta.failureReasons : [];
 
+  // Which check rows have their "why marks were deducted" panel expanded.
+  const [openRow, setOpenRow] = React.useState({});
+  const toggleRow = (k) => setOpenRow((o) => ({ ...o, [k]: !o[k] }));
+
   const scoreColor = score10 >= 7 ? "text-emerald-500" : score10 >= 4 ? "text-amber-500" : "text-red-500";
   const markColor = (m) => (m >= 2 ? "text-emerald-500" : m === 1 ? "text-amber-500" : "text-red-500");
 
+  // Per-check explanation of where marks were lost (each check is scored 0–2),
+  // derived from the raw signals the backend attaches to each check object.
+  const explainCheck = (key, c) => {
+    const mark = c?.mark ?? 0;
+    const max = c?.max ?? 2;
+    if (key === "serviceDescription") {
+      const aspects = [
+        { label: "Explains what the service is", ok: !!c?.hasWhat },
+        { label: "Covers benefits / why choose", ok: !!c?.hasBenefits },
+        { label: "Identifies the target audience", ok: !!c?.hasWho },
+      ];
+      const have = aspects.filter((a) => a.ok).length;
+      return {
+        why: `Full marks need at least 2 of these 3 aspects — ${have} of 3 present.`,
+        breakdown: aspects,
+        fix: 'Describe what the service is, list its benefits, and say who it is for (e.g. "ideal for…").',
+      };
+    }
+    if (key === "contentLength") {
+      const wc = c?.wordCount ?? 0;
+      return {
+        why: mark === 1
+          ? `${wc} words — above 75 but below the 150-word target for full marks.`
+          : `Only ${wc} words — below the 75-word minimum.`,
+        breakdown: [
+          { label: "At least 75 words (1 mark)", ok: wc >= 75 },
+          { label: "At least 150 words (2 marks)", ok: wc >= 150 },
+        ],
+        fix: "Expand the page past 150 words of genuine, specific service content.",
+      };
+    }
+    if (key === "booking") {
+      return {
+        why: mark === 1
+          ? `Only a generic contact form was found (${c?.formCount ?? 0} form${(c?.formCount ?? 0) === 1 ? "" : "s"}) — no dedicated booking/appointment option.`
+          : "No booking option or contact form was found.",
+        breakdown: [
+          { label: "Has a contact form", ok: (c?.formCount ?? 0) > 0 },
+          { label: "Dedicated booking / appointment system", ok: mark >= 2 },
+        ],
+        fix: 'Add a clear "Book an appointment" / scheduling option (a booking form or a tool like Calendly).',
+      };
+    }
+    if (key === "preServiceInfo") {
+      const LABELS = {
+        process: "Process / how it works",
+        timeline: "Timeline / turnaround",
+        pricing: "Pricing / quote",
+        requirements: "Requirements / what to bring",
+        faq: "FAQ",
+      };
+      const found = Array.isArray(c?.sectionsFound) ? c.sectionsFound : [];
+      return {
+        why: mark === 1
+          ? `Only 1 section found (${found.map((s) => LABELS[s] || s).join(", ")}). Full marks need at least 2.`
+          : "No process, timeline, pricing, requirements or FAQ section was found.",
+        breakdown: Object.keys(LABELS).map((s) => ({ label: LABELS[s], ok: found.includes(s) })),
+        fix: "Add at least two of: process/how-it-works, timeline, pricing, requirements, or an FAQ.",
+      };
+    }
+    return { why: `Scored ${mark}/${max}.`, breakdown: [], fix: "" };
+  };
+
   const checkRows = serviceFound ? [
-    { label: "Service Description", c: checks.serviceDescription, sub: (c) => {
+    { key: "serviceDescription", label: "Service Description", c: checks.serviceDescription, sub: (c) => {
         const parts = [];
         if (c?.hasWhat) parts.push("what");
         if (c?.hasBenefits) parts.push("benefits");
         if (c?.hasWho) parts.push("audience");
         return parts.length ? `Explains: ${parts.join(", ")}` : "Missing key explanation";
       } },
-    { label: "Content Length", c: checks.contentLength, sub: (c) => `${c?.wordCount ?? 0} words` },
-    { label: "Appointment / Booking", c: checks.booking, sub: (c) => c?.type || "—" },
-    { label: "Pre-Service Info", c: checks.preServiceInfo, sub: (c) => (c?.sectionsFound?.length ? c.sectionsFound.join(", ") : "None found") },
+    { key: "contentLength", label: "Content Length", c: checks.contentLength, sub: (c) => `${c?.wordCount ?? 0} words` },
+    { key: "booking", label: "Appointment / Booking", c: checks.booking, sub: (c) => c?.type || "—" },
+    { key: "preServiceInfo", label: "Pre-Service Info", c: checks.preServiceInfo, sub: (c) => (c?.sectionsFound?.length ? c.sectionsFound.join(", ") : "None found") },
   ] : [];
 
   return (
@@ -2420,15 +2487,74 @@ const ServiceContentQualityCard = ({ data, darkMode, onInfo, className = "" }) =
           </div>
 
           <div className="space-y-2">
-            {checkRows.map((row, i) => (
-              <div key={i} className={`p-2 rounded ${darkMode ? "bg-gray-900" : "bg-cardsoft border border-line"}`}>
-                <div className="flex items-center justify-between">
-                  <span className={`text-xs font-semibold ${darkMode ? "text-gray-200" : "text-ink"}`}>{row.label}</span>
-                  <span className={`text-xs font-semibold ${markColor(row.c?.mark ?? 0)}`}>{row.c?.mark ?? 0}/{row.c?.max ?? 2}</span>
+            {checkRows.map((row, i) => {
+              const mark = row.c?.mark ?? 0;
+              const max = row.c?.max ?? 2;
+              const lost = Math.max(0, max - mark);
+              const deducted = lost > 0;
+              const isOpen = !!openRow[row.key];
+              const ex = deducted ? explainCheck(row.key, row.c) : null;
+              return (
+                <div key={row.key || i} className={`p-2 rounded ${darkMode ? "bg-gray-900" : "bg-cardsoft border border-line"}`}>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className={`text-xs font-semibold ${darkMode ? "text-gray-200" : "text-ink"}`}>{row.label}</span>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className={`text-xs font-semibold ${markColor(mark)}`}>{mark}/{max}</span>
+                      {deducted && (
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); toggleRow(row.key); }}
+                          title={`Why ${lost} mark${lost === 1 ? "" : "s"} deducted`}
+                          aria-label={`Why ${row.label} lost ${lost} mark${lost === 1 ? "" : "s"}`}
+                          aria-expanded={isOpen}
+                          className={`flex items-center justify-center w-5 h-5 rounded-full border transition-colors ${
+                            isOpen
+                              ? (mark === 1 ? "bg-amber-500 border-amber-500 text-white" : "bg-red-500 border-red-500 text-white")
+                              : `${markColor(mark)} ${darkMode ? "border-gray-600 hover:bg-gray-800" : "border-line hover:bg-surface-2"}`
+                          }`}
+                        >
+                          <AlertCircle size={12} className="shrink-0" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className={`text-[10px] mt-0.5 ${darkMode ? "text-gray-500" : "text-faint"}`}>{row.sub(row.c)}</div>
+
+                  {/* Why marks were deducted — revealed by the "!" button */}
+                  {deducted && isOpen && ex && (
+                    <div className={`mt-2 pt-2 border-t border-dashed space-y-2 ${darkMode ? "border-gray-700" : "border-line"}`}>
+                      <div>
+                        <div className={`text-[9px] font-semibold uppercase tracking-wider mb-0.5 ${markColor(mark)}`}>
+                          {lost} of {max} mark{lost === 1 ? "" : "s"} deducted
+                        </div>
+                        <div className={`text-[11px] leading-relaxed ${darkMode ? "text-gray-300" : "text-inksoft"}`}>{ex.why}</div>
+                      </div>
+                      {ex.breakdown.length > 0 && (
+                        <div>
+                          <div className={`text-[9px] font-semibold uppercase tracking-wider mb-0.5 ${darkMode ? "text-gray-500" : "text-faint"}`}>What we checked</div>
+                          <ul className="space-y-0.5">
+                            {ex.breakdown.map((b, k) => (
+                              <li key={k} className="text-[11px] flex items-start gap-1.5">
+                                {b.ok
+                                  ? <Check size={11} className="text-emerald-500 shrink-0 mt-0.5" />
+                                  : <XCircle size={11} className="text-red-500 shrink-0 mt-0.5" />}
+                                <span className={b.ok ? (darkMode ? "text-gray-300" : "text-inksoft") : (darkMode ? "text-gray-500" : "text-faint")}>{b.label}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {ex.fix && (
+                        <div>
+                          <div className={`text-[9px] font-semibold uppercase tracking-wider mb-0.5 ${darkMode ? "text-gray-500" : "text-faint"}`}>How to get full marks</div>
+                          <div className={`text-[11px] leading-relaxed ${darkMode ? "text-emerald-300/90" : "text-emerald-700"}`}>{ex.fix}</div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <div className={`text-[10px] mt-0.5 ${darkMode ? "text-gray-500" : "text-faint"}`}>{row.sub(row.c)}</div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {failureReasons.length > 0 && (
@@ -2456,8 +2582,57 @@ const ContentDepthQualityCard = ({ data, darkMode, onInfo, className = "" }) => 
   const pages = Array.isArray(meta?.pages) ? meta.pages : [];
   const failureReasons = Array.isArray(meta?.failureReasons) ? meta.failureReasons : [];
 
+  // Which analyzed pages have their "why marks were deducted" panel expanded.
+  const [openRow, setOpenRow] = React.useState({});
+  const toggleRow = (k) => setOpenRow((o) => ({ ...o, [k]: !o[k] }));
+
   const scoreColor = score10 >= 7 ? "text-emerald-500" : score10 >= 4 ? "text-amber-500" : "text-red-500";
   const markColor = (m) => (m >= 2 ? "text-emerald-500" : m === 1 ? "text-amber-500" : "text-red-500");
+
+  // Short, clickable path for a page URL (falls back to the raw string).
+  const prettyPath = (u) => {
+    try { const x = new URL(u); return (x.pathname === "/" ? x.hostname : x.pathname) + x.search; }
+    catch { return String(u || ""); }
+  };
+
+  // Per-page explanation of where each of the 3 marks (Relevance, Depth,
+  // Uniqueness — each 0–2) was lost, from the signals attached to the page.
+  const explainPage = (p) => {
+    const wc = p.wordCount ?? 0;
+    const th = p.threshold ?? 150;
+    const sim = p.similarity;
+    return [
+      {
+        label: "Relevance",
+        mark: p.relevance ?? 0,
+        why: (p.relevance ?? 0) >= 2
+          ? "Strong dealer-specific signals (brand, location, contact, history)."
+          : p.specialPass === false
+            ? "Capped — the page is missing the business content required for its type."
+            : (p.relevance ?? 0) === 1
+              ? "Only a few dealer-specific signals — needs 3+ of: brand, location, phone/email, founding year, business name."
+              : "Content looks generic or templated with no dealer-specific signals.",
+      },
+      {
+        label: "Depth",
+        mark: p.depth ?? 0,
+        why: (p.depth ?? 0) >= 2
+          ? `${wc} words — meets the ${th}-word target for this page type.`
+          : (p.depth ?? 0) === 1
+            ? `${wc} words — below the ${th}-word target (needs ${th}+ for full marks).`
+            : `Only ${wc} words — well below the ${th}-word target.`,
+      },
+      {
+        label: "Uniqueness",
+        mark: p.uniqueness ?? 0,
+        why: (p.uniqueness ?? 0) >= 2
+          ? (sim == null ? "No near-duplicate content found across analyzed pages." : `Only ${sim}% similar to other pages.`)
+          : (p.uniqueness ?? 0) === 1
+            ? `${sim}% similar to another analyzed page (need under 30% for full marks).`
+            : `${sim}% similar to another analyzed page — content appears duplicated.`,
+      },
+    ];
+  };
 
   return (
     <SEOCard
@@ -2505,22 +2680,85 @@ const ContentDepthQualityCard = ({ data, darkMode, onInfo, className = "" }) => 
                 </tr>
               </thead>
               <tbody>
-                {pages.map((p, i) => (
-                  <tr key={i} className={`border-t ${darkMode ? "border-gray-800" : "border-line"}`}>
-                    <td className="py-1.5 pr-2">
-                      <div className={`font-semibold ${darkMode ? "text-gray-200" : "text-ink"}`}>{p.typeLabel || p.type}</div>
-                      {p.loaded ? (
-                        <div className="opacity-50 truncate max-w-[160px]">{p.wordCount} words{p.similarity != null ? ` · ${p.similarity}% sim` : ""}</div>
-                      ) : (
-                        <div className="text-red-500">not loaded</div>
+                {pages.map((p, i) => {
+                  const key = p.url || String(i);
+                  const deducted = p.loaded && (p.score10 ?? 0) < 10;
+                  const isOpen = !!openRow[key];
+                  const items = deducted ? explainPage(p) : [];
+                  return (
+                    <React.Fragment key={key}>
+                      <tr className={`border-t ${darkMode ? "border-gray-800" : "border-line"}`}>
+                        <td className="py-1.5 pr-2 align-top">
+                          <div className="flex items-center gap-1.5">
+                            <span className={`font-semibold ${darkMode ? "text-gray-200" : "text-ink"}`}>{p.typeLabel || p.type}</span>
+                            {deducted && (
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); toggleRow(key); }}
+                                title="Why marks were deducted on this page"
+                                aria-label={`Why ${p.typeLabel || p.type} lost marks`}
+                                aria-expanded={isOpen}
+                                className={`flex items-center justify-center w-4 h-4 rounded-full border transition-colors shrink-0 ${
+                                  isOpen
+                                    ? "bg-amber-500 border-amber-500 text-white"
+                                    : `text-amber-500 ${darkMode ? "border-gray-600 hover:bg-gray-800" : "border-line hover:bg-surface-2"}`
+                                }`}
+                              >
+                                <AlertCircle size={10} className="shrink-0" />
+                              </button>
+                            )}
+                          </div>
+                          {p.url && (
+                            <a
+                              href={p.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              title={p.url}
+                              className={`block truncate max-w-[180px] text-[10px] hover:underline ${darkMode ? "text-blue-400" : "text-accent"}`}
+                            >
+                              {prettyPath(p.url)}
+                            </a>
+                          )}
+                          {p.loaded ? (
+                            <div className="opacity-50 truncate max-w-[180px]">{p.wordCount} words{p.similarity != null ? ` · ${p.similarity}% sim` : ""}</div>
+                          ) : (
+                            <div className="text-red-500">not loaded</div>
+                          )}
+                        </td>
+                        <td className={`py-1.5 px-1 text-center font-semibold align-top ${markColor(p.relevance ?? 0)}`}>{p.loaded ? `${p.relevance}/2` : "—"}</td>
+                        <td className={`py-1.5 px-1 text-center font-semibold align-top ${markColor(p.depth ?? 0)}`}>{p.loaded ? `${p.depth}/2` : "—"}</td>
+                        <td className={`py-1.5 px-1 text-center font-semibold align-top ${markColor(p.uniqueness ?? 0)}`}>{p.loaded ? `${p.uniqueness}/2` : "—"}</td>
+                        <td className={`py-1.5 pl-1 text-right font-semibold align-top ${p.loaded ? markColor(Math.round((p.score10 ?? 0) / 5)) : ""}`}>{p.loaded ? `${p.score10}/10` : "0"}</td>
+                      </tr>
+                      {deducted && isOpen && (
+                        <tr className={darkMode ? "bg-gray-900/40" : "bg-cardsoft"}>
+                          <td colSpan={5} className="px-2 pb-2">
+                            <div className={`rounded-lg border border-dashed p-2 space-y-2 ${darkMode ? "border-gray-700" : "border-line"}`}>
+                              <div className="text-[9px] font-semibold uppercase tracking-wider text-amber-500">Why marks were deducted</div>
+                              <ul className="space-y-1.5">
+                                {items.map((it, k) => (
+                                  <li key={k}>
+                                    <div className="flex items-center justify-between gap-2">
+                                      <span className={`text-[11px] font-semibold ${darkMode ? "text-gray-200" : "text-ink"}`}>{it.label}</span>
+                                      <span className={`text-[11px] font-semibold ${markColor(it.mark)}`}>{it.mark}/2</span>
+                                    </div>
+                                    <div className={`text-[10px] leading-relaxed ${darkMode ? "text-gray-400" : "text-muted"}`}>{it.why}</div>
+                                  </li>
+                                ))}
+                              </ul>
+                              <div>
+                                <div className={`text-[9px] font-semibold uppercase tracking-wider mb-0.5 ${darkMode ? "text-gray-500" : "text-faint"}`}>How to get full marks</div>
+                                <div className={`text-[10px] leading-relaxed ${darkMode ? "text-emerald-300/90" : "text-emerald-700"}`}>
+                                  Add dealer-specific detail (names, locations, brands, history), exceed the {p.threshold ?? 150}-word target, and keep this page's content distinct from others.
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
                       )}
-                    </td>
-                    <td className={`py-1.5 px-1 text-center font-semibold ${markColor(p.relevance ?? 0)}`}>{p.loaded ? `${p.relevance}/2` : "—"}</td>
-                    <td className={`py-1.5 px-1 text-center font-semibold ${markColor(p.depth ?? 0)}`}>{p.loaded ? `${p.depth}/2` : "—"}</td>
-                    <td className={`py-1.5 px-1 text-center font-semibold ${markColor(p.uniqueness ?? 0)}`}>{p.loaded ? `${p.uniqueness}/2` : "—"}</td>
-                    <td className={`py-1.5 pl-1 text-right font-semibold ${p.loaded ? markColor(Math.round((p.score10 ?? 0) / 5)) : ""}`}>{p.loaded ? `${p.score10}/10` : "0"}</td>
-                  </tr>
-                ))}
+                    </React.Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>

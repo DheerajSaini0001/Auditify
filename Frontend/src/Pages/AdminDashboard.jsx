@@ -1044,7 +1044,7 @@ const AdminDashboard = () => {
                                   </div>
                                 </td>
                                 <td className="px-8 py-5">
-                                  <p className="font-black text-xs">{item.userId?.email || 'Guest Session'}</p>
+                                  <p className="font-black text-xs">{item.userId?.email || item.guestEmail || 'Guest Session'}</p>
                                   <p className="text-[9px] text-gray-500 font-mono font-semibold">{item.ip || '0.0.0.0'}</p>
                                 </td>
                                 <td className="px-8 py-5 text-center">

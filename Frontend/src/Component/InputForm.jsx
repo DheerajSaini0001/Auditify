@@ -1,11 +1,11 @@
 import React, { useState, useContext, useEffect } from "react";
-import { Loader2, Search, Monitor, Smartphone, ChevronDown, Settings, AlertCircle, ShieldCheck } from "lucide-react";
+import { Loader2, Search, Monitor, Smartphone, ChevronDown, Settings, AlertCircle } from "lucide-react";
 import { useData } from "../context/DataContext.jsx";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ThemeContext } from "../context/ThemeContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import Assets from "../assets/Assets.js";
-import MathCaptcha from "./MathCaptcha.jsx";
+import AuditEmailVerifyModal from "./AuditEmailVerifyModal.jsx";
 import { useRef } from "react";
 
 // Custom Dropdown Component
@@ -82,10 +82,8 @@ export default function InputForm() {
   const [report, setReport] = useState("All");
   const [error, setError] = useState(null);
 
-  // Math CAPTCHA State
-  const [showCaptcha, setShowCaptcha] = useState(false);
-  const [captchaAnswer, setCaptchaAnswer] = useState('');
-  const [captchaError, setCaptchaError] = useState('');
+  // Email-verification gate state (replaces CAPTCHA for guests)
+  const [showVerify, setShowVerify] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -115,8 +113,8 @@ export default function InputForm() {
           await fetchData(urlToFetch, device, report, null);
           isAuditStarting.current = false;
         } else {
-          // Guest user: just show captcha modal for the URL
-          setShowCaptcha(true);
+          // Guest user: ask them to verify their email before the audit runs.
+          setShowVerify(true);
         }
       };
 
@@ -129,7 +127,7 @@ export default function InputForm() {
       setDevice(location.state.device);
       setReport(location.state.report);
       setError("This specific audit record is no longer available. Re-run it now.");
-      setShowCaptcha(true);
+      setShowVerify(true);
 
       // Clear state to prevent loop if user reloads
       window.history.replaceState({}, document.title);
@@ -146,20 +144,17 @@ export default function InputForm() {
       return;
     }
 
-    // Skip CAPTCHA for authenticated users
+    // Skip email verification for authenticated users
     if (user) {
       runAudit(null);
       return;
     }
 
-    // Open verification modal
-    setShowCaptcha(true);
-    setCaptchaError('');
-    setCaptchaAnswer('');
+    // Open the email-verification modal for guests
+    setShowVerify(true);
   };
 
-  const runAudit = async (answer) => {
-    setShowCaptcha(false);
+  const runAudit = async (auditToken) => {
     setError(null);
 
     // Auto-prefix protocol if missing
@@ -168,25 +163,22 @@ export default function InputForm() {
       urlToFetch = `https://${urlToFetch}`;
     }
 
-    const result = await fetchData(urlToFetch, device, report, answer ? parseInt(answer) : null);
+    const result = await fetchData(urlToFetch, device, report, auditToken || null);
 
     if (!result?.success) {
-      if (result?.error?.includes('CAPTCHA')) {
-        setShowCaptcha(true);
-        setCaptchaError(result.error);
-        setCaptchaAnswer('');
+      // Grant missing/expired — re-open the email-verification modal.
+      if (/verify your email|email verification/i.test(result?.error || '')) {
+        setShowVerify(true);
       } else {
         setError(result?.error || "An unknown error occurred.");
       }
     }
   };
 
-  const handleSubmitWithCaptcha = () => {
-    if (!captchaAnswer && captchaAnswer !== 0 && captchaAnswer !== '0') {
-      setCaptchaError("Please enter an answer.");
-      return;
-    }
-    runAudit(captchaAnswer);
+  // Called by the modal once the OTP is confirmed; runs the audit with the grant.
+  const handleVerified = (auditToken) => {
+    setShowVerify(false);
+    runAudit(auditToken);
   };
 
   // ⭐ FINAL FIX → CLEAN NAVIGATION
@@ -343,47 +335,14 @@ export default function InputForm() {
 
       </div>
 
-      {/* reCAPTCHA v2 Modal Overlay */}
-      {showCaptcha && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 backdrop-blur-md transition-all duration-300">
-          <div className={`
-            ${darkMode ? "bg-slate-900 border-slate-700 shadow-emerald-500/10" : "bg-card border-line shadow-slate-200/50"}
-            border border-solid rounded-[2.5rem] shadow-2xl p-8 flex flex-col items-center gap-6 max-w-sm w-full mx-4 animate-in zoom-in-95 duration-200
-          `}>
-            <div className="w-16 h-16 rounded-2xl bg-[#ea580c] flex items-center justify-center shadow-xl shadow-orange-600/20 rotate-6">
-              <ShieldCheck className="w-8 h-8 text-white" />
-            </div>
-
-            <div className="text-center space-y-2">
-              <h3 className={`text-2xl font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>Verify Security</h3>
-              <p className={`text-sm font-medium leading-relaxed ${darkMode ? "text-slate-400" : "text-muted"}`}>
-                Confirm you're human to generate your site health report.
-              </p>
-            </div>
-
-            <form
-              onSubmit={(e) => { e.preventDefault(); handleSubmitWithCaptcha(); }}
-              className={`p-4 rounded-2xl w-full border ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-cardsoft border-line"}`}
-            >
-              <MathCaptcha onAnswerChange={setCaptchaAnswer} error={captchaError} />
-              <button
-                type="submit"
-                disabled={loading || !captchaAnswer}
-                className="mt-4 w-full py-3 bg-[#ea580c] hover:bg-[#c2410c] text-white font-semibold rounded-xl transition-all shadow-lg shadow-orange-600/20 active:scale-[0.98] disabled:opacity-50"
-              >
-                {loading ? "Verifying..." : "Verify & Run Audit"}
-              </button>
-            </form>
-
-            <button
-              onClick={() => setShowCaptcha(false)}
-              className={`cursor-pointer text-[11px] font-semibold uppercase tracking-widest px-4 py-2 rounded-full transition-all duration-200 hover:scale-125 active:scale-95 ${darkMode ? "text-slate-500 hover:text-orange-400 hover:bg-white/5" : "text-faint hover:text-accent hover:bg-accentsoft"}`}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Email-verification modal (replaces CAPTCHA for guest audits) */}
+      <AuditEmailVerifyModal
+        isOpen={showVerify}
+        onClose={() => setShowVerify(false)}
+        onVerified={handleVerified}
+        darkMode={darkMode}
+        isLoading={loading}
+      />
     </div>
   );
 }

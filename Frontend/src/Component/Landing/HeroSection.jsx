@@ -1,13 +1,12 @@
 import React, { useState, useRef, useContext, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Monitor, Smartphone, Search, Zap, Loader2, AlertCircle,
-    ChevronDown, Settings, ShieldCheck, ArrowRight, Star,
+    ChevronDown, Settings, ArrowRight, Star,
     BarChart2, Globe, Lock, Eye, TrendingUp, Cpu, Layers
 } from 'lucide-react';
-import MathCaptcha from "../../Component/MathCaptcha.jsx";
+import AuditEmailVerifyModal from "../../Component/AuditEmailVerifyModal.jsx";
 import { ThemeContext } from '../../context/ThemeContext.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 
@@ -218,10 +217,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
     const [url, setUrl] = useState('');
     const [device, setDevice] = useState('Mobile');
     const [report, setReport] = useState('All');
-    const [showCaptcha, setShowCaptcha] = useState(false);
-    const [captchaAnswer, setCaptchaAnswer] = useState('');
-    const [captchaId, setCaptchaId] = useState('');
-    const [captchaError, setCaptchaError] = useState('');
+    const [showVerify, setShowVerify] = useState(false);
     const [localError, setLocalError] = useState(null);
     const [focused, setFocused] = useState(false);
 
@@ -258,7 +254,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                 // Clear the search query parameters silently from the address bar without disrupting the async React state triggers
                 window.history.replaceState(null, '', window.location.pathname);
             } else {
-                setShowCaptcha(true);
+                setShowVerify(true);
             }
         }
     }, [location.search, navigate, location.pathname, user]);
@@ -278,34 +274,25 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
             return;
         }
 
-        setShowCaptcha(true);
-        setCaptchaError('');
-        setCaptchaAnswer('');
-        setCaptchaId('');
+        setShowVerify(true);
     };
 
-    const handleSubmitWithCaptcha = (e) => {
-        e?.preventDefault();
-        if (isLoading) return;
-        if (!captchaAnswer && captchaAnswer !== 0 && captchaAnswer !== '0') {
-            setCaptchaError("Please complete the verification.");
-            return;
-        }
-        setCaptchaError('');
-        setShowCaptcha(false);
+    // Called by the email-verification modal once the OTP is confirmed: it hands
+    // back a short-lived audit grant token, which we pass straight to the audit.
+    const handleVerified = (auditToken) => {
+        setShowVerify(false);
         let urlToFetch = url.trim();
         if (!/^https?:\/\//i.test(urlToFetch)) urlToFetch = `https://${urlToFetch}`;
-        onSubmit(urlToFetch, device, report, parseInt(captchaAnswer), captchaId);
+        onSubmit(urlToFetch, device, report, auditToken);
 
         // Clear the search query parameters silently from the address bar
         window.history.replaceState(null, '', window.location.pathname);
     };
 
+    // If the audit is rejected because the grant is missing/expired, re-open the modal.
     useEffect(() => {
-        if (externalError && /captcha/i.test(externalError)) {
-            setShowCaptcha(true);
-            setCaptchaError(externalError);
-            setCaptchaAnswer('');
+        if (externalError && /verify your email|email verification/i.test(externalError)) {
+            setShowVerify(true);
         }
     }, [externalError]);
 
@@ -578,71 +565,15 @@ ${
                 </motion.div>
             </div>
 
-            {/* ── CAPTCHA Modal (portaled to body so it escapes the hero's
-                 stacking context and centers on the full viewport) ── */}
-            {createPortal(
-            <AnimatePresence>
-                {showCaptcha && (
-                    <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 overflow-y-auto">
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={() => setShowCaptcha(false)}
-                            className="fixed inset-0 bg-slate-950/75 backdrop-blur-xl"
-                        />
-                        <motion.div
-                            initial={{ scale: 0.92, opacity: 0, y: 24 }}
-                            animate={{ scale: 1, opacity: 1, y: 0 }}
-                            exit={{ scale: 0.92, opacity: 0, y: 24 }}
-                            transition={{ type: "spring", damping: 22, stiffness: 280 }}
-                            className={`relative my-auto p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] border shadow-2xl flex flex-col items-center gap-5 sm:gap-6 max-w-md w-full max-h-[90vh] overflow-y-auto
-                                ${darkMode ? 'bg-slate-900 border-white/8' : 'bg-card border-line'}`}
-                        >
-
-
-                            <div className="w-16 h-16 rounded-2xl bg-[#ea580c] flex items-center justify-center shadow-xl shadow-orange-600/20 rotate-6">
-                                <ShieldCheck className="w-8 h-8 text-white" />
-                            </div>
-
-                            <div className="text-center space-y-2">
-                                <h3 className={`text-2xl font-black tracking-tight ${darkMode ? 'text-white' : 'text-ink'}`}>
-                                    Quick Verification
-                                </h3>
-                                <p className={`text-sm leading-relaxed ${darkMode ? 'text-slate-400' : 'text-muted'}`}>
-                                    Solve a simple math question to confirm you're not a bot — then your audit begins instantly.
-                                </p>
-                            </div>
-
-                            <form onSubmit={handleSubmitWithCaptcha} className={`w-full rounded-2xl border p-5 space-y-4 ${darkMode ? 'bg-white/4 border-white/8' : 'bg-cardsoft border-line'}`}>
-                                <MathCaptcha
-                                    autoFocus
-                                    onAnswerChange={(val, id) => { setCaptchaAnswer(val); setCaptchaId(id); }}
-                                    error={captchaError}
-                                />
-                                <button
-                                    type="submit"
-                                    disabled={isLoading || !captchaAnswer}
-                                    className="w-full py-3 bg-[#ea580c] hover:bg-[#c2410c] text-white font-semibold rounded-xl
-                                        transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-orange-600/20 active:scale-[0.98]"
-                                >
-                                    {isLoading ? "Verifying…" : "Verify & Start Audit"}
-                                </button>
-                            </form>
-
-                            <button
-                                onClick={() => setShowCaptcha(false)}
-                                className={`cursor-pointer text-[11px] font-semibold uppercase tracking-widest px-4 py-2 rounded-full transition-all duration-200 hover:scale-125 active:scale-95
-                                    ${darkMode ? 'text-slate-500 hover:text-orange-400 hover:bg-white/5' : 'text-faint hover:text-accent hover:bg-accentsoft'}`}
-                            >
-                                Cancel
-                            </button>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>,
-            document.body
-            )}
+            {/* ── Email-verification modal (replaces CAPTCHA for guest audits).
+                 Self-portals to body so it escapes the hero's stacking context. ── */}
+            <AuditEmailVerifyModal
+                isOpen={showVerify}
+                onClose={() => setShowVerify(false)}
+                onVerified={handleVerified}
+                darkMode={darkMode}
+                isLoading={isLoading}
+            />
         </section>
     );
 };

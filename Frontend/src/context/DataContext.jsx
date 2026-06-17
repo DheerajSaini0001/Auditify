@@ -100,7 +100,10 @@ export const DataProvider = ({ children }) => {
   };
 
   // 🚀 FETCH DATA
-  const fetchData = async (inputValue, device, report, captchaAnswer, captchaId, force = false) => {
+  // `auditToken` is the short-lived grant a guest receives after verifying their
+  // email via OTP (replaces the old captchaAnswer/captchaId). It's null for
+  // logged-in users, whose audit is authorized by their Bearer token instead.
+  const fetchData = async (inputValue, device, report, auditToken = null, force = false) => {
     if (loading) return { success: false, error: "An audit is already in progress." };
     if (!inputValue) return { success: false, error: "URL is empty" };
 
@@ -128,8 +131,7 @@ export const DataProvider = ({ children }) => {
           url: inputValue,
           device,
           report,
-          captchaAnswer,
-          captchaId, // Added
+          auditToken, // guest email-verification grant (null when logged in)
           screenResolution,
           force
         })

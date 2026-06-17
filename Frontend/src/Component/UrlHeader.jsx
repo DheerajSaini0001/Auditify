@@ -26,19 +26,7 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
   }, [isAuthenticated, location.state, data?.status]);
 
   const handleDownloadPDF = () => {
-    // Guest guard — redirect to login
-    if (!isAuthenticated) {
-      toast("Please log in to download the PDF report.", {
-        icon: "🔒",
-        duration: 3000,
-      });
-
-      if (data?._id) {
-        savePostAuthIntent(data._id, `/report/${data._id}`, 'download');
-      }
-      navigate("/login", { state: { from: location.pathname } });
-      return;
-    }
+    // Guests may download too (they verified their email via OTP before the audit).
     if (!data?._id) return toast.error("Report ID missing");
 
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:2000';
@@ -192,12 +180,9 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
           {data?.status === "success" && (
             <button
               onClick={handleDownloadPDF}
-              className={`flex items-center gap-2 px-6 py-2 rounded-xl font-semibold text-white shadow-lg transition-all active:scale-95 transform hover:-translate-y-0.5 ${isAuthenticated
-                ? "bg-gradient-to-r from-[#16213E] to-[#2A3656] hover:from-[#1F2D52] hover:to-[#374468] shadow-[#16213E]/25"
-                : "bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-500 hover:to-slate-600 shadow-slate-500/20"
-                }`}
+              className="flex items-center gap-2 px-6 py-2 rounded-xl font-semibold text-white shadow-lg transition-all active:scale-95 transform hover:-translate-y-0.5 bg-gradient-to-r from-[#16213E] to-[#2A3656] hover:from-[#1F2D52] hover:to-[#374468] shadow-[#16213E]/25"
             >
-              {isAuthenticated ? <Download className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+              <Download className="w-4 h-4" />
               <span>Download {audienceMode === "dealer" ? "Dealer" : "Developer"} Report</span>
             </button>
           )}

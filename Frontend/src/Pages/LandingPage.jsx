@@ -26,11 +26,11 @@ const LandingPage = () => {
         restDelta: 0.001
     });
 
-    const handleAuditSubmit = React.useCallback(async (url, device, report = "All", captchaAnswer = null, captchaId = null) => {
+    const handleAuditSubmit = React.useCallback(async (url, device, report = "All", auditToken = null) => {
         if (loading) return;
         setError(null);
-        
-        const result = await fetchData(url, device, report, captchaAnswer, captchaId);
+
+        const result = await fetchData(url, device, report, auditToken);
         if (result?.success) {
             navigate(`/report/${result.id}`);
         } else {

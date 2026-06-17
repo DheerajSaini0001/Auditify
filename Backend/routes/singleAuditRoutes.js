@@ -4,7 +4,7 @@ import { requestAuditOTP, verifyAuditOTP } from "../controllers/guestAuditContro
 import { generatePDFReport } from "../controllers/pdfController.js";
 import rateLimit from "express-rate-limit";
 import guestAuditGate from "../middleware/auditGate.js";
-import { verifyToken, tryAuthenticate } from "../middleware/auth.js";
+import { tryAuthenticate } from "../middleware/auth.js";
 import { auditOtpRequestLimiter, otpLimiter } from "../middleware/rateLimiter.js";
 
 const router = express.Router();
@@ -28,8 +28,10 @@ router.post("/verify-otp", otpLimiter, verifyAuditOTP);
 // Start Audit — logged-in users pass; guests must present a verified-email grant.
 router.post("/audit", auditLimiter, tryAuthenticate, guestAuditGate, startAudit);
 
-// Export PDF
-router.get("/:id/export/pdf", verifyToken, generatePDFReport);
+// Export PDF — guests may export their own report (the controller scopes access
+// by report id when there's no authenticated user); logged-in users are scoped
+// to their own reports as before.
+router.get("/:id/export/pdf", tryAuthenticate, generatePDFReport);
 
 // Get Single Audit Status
 router.get("/:singleAuditId/status", tryAuthenticate, getReportStatusById);

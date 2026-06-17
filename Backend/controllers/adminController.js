@@ -201,7 +201,8 @@ export const getAuditLogs = async (req, res) => {
 
       query.$or = [
           { url: { $regex: safe, $options: 'i' } },
-          { userId: { $in: userIds } }
+          { userId: { $in: userIds } },
+          { guestEmail: { $regex: safe, $options: 'i' } }
       ];
     }
 

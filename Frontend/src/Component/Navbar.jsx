@@ -153,29 +153,17 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
           {/* Right Section: Actions */}
           <div className="flex items-center gap-3">
 
-            {/* New Audit or Back to Bulk - Hidden on Home Page */}
+            {/* New Audit - Hidden on Home Page */}
             {location.pathname !== "/" && (
-              data?.fromBulkAudit ? (
-                <button
-                  onClick={() => navigate("/bulk-audit")}
-                  className={`hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-white shadow-lg transition-all 
-                  bg-orange-600 hover:bg-orange-350 hover:scale-[1.02] active:scale-[0.98]
-                  shadow-orange-350/20`}
-                >
-                  <NotebookPen className="w-4 h-4" />
-                  <span>Back to List</span>
-                </button>
-              ) : (
-                <button
-                  onClick={handleGoHome}
-                  className={`hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-white shadow-lg transition-all 
-                  bg-orange-600 hover:bg-orange-350 hover:scale-[1.02] active:scale-[0.98]
-                  shadow-orange-350/20`}
-                >
-                  <Plus className="w-5 h-5" />
-                  <span>Start New Audit</span>
-                </button>
-              )
+              <button
+                onClick={handleGoHome}
+                className={`hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-white shadow-lg transition-all
+                bg-orange-600 hover:bg-orange-350 hover:scale-[1.02] active:scale-[0.98]
+                shadow-orange-350/20`}
+              >
+                <Plus className="w-5 h-5" />
+                <span>Start New Audit</span>
+              </button>
             )}
 
             {/* Auth Actions */}

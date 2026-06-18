@@ -11,7 +11,7 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
   const currentDevice = data?.device || "Desktop";
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const { setIsAiChatOpen, setAiChatContext, audienceMode, setAudienceMode } = useData();
+  const { setIsAiChatOpen, setAiChatContext } = useData();
   const location = useLocation();
 
   // Auto-trigger actions after login redirect
@@ -33,7 +33,7 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
     toast.promise(
       (async () => {
         const token = localStorage.getItem('dealerpulse_token');
-        const response = await fetch(`${API_URL}/single-audit/${data._id}/export/pdf?mode=${audienceMode}`, {
+        const response = await fetch(`${API_URL}/single-audit/${data._id}/export/pdf`, {
           headers: {
             ...(token ? { 'Authorization': `Bearer ${token}` } : {})
           }
@@ -44,7 +44,7 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `Dealerpulse-Report-${data.url?.replace(/[^a-z0-9]/gi, '-')}-${audienceMode}.pdf`;
+        link.download = `Dealerpulse-Report-${data.url?.replace(/[^a-z0-9]/gi, '-')}.pdf`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -126,25 +126,6 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
 
         {/* Right: Metadata Badges */}
         <div className="flex flex-wrap items-center gap-3 w-full lg:flex-1 lg:justify-end order-2 lg:order-3">
-          {/* Dealer / Developer toggle — only for single-section reports, which have no
-              sidebar (full audits get the toggle from the Sidebar instead). */}
-          {data?.report !== "All" && (
-            <div className={`flex items-center gap-1 p-1 rounded-full border ${darkMode ? "bg-slate-800/50 border-slate-700/50" : "bg-surface-2/50 border-line/50"}`}>
-              {["dealer", "developer"].map((m) => (
-                <button
-                  key={m}
-                  onClick={() => setAudienceMode(m)}
-                  aria-pressed={audienceMode === m}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold capitalize transition-all ${audienceMode === m
-                    ? "bg-accent text-white shadow-sm"
-                    : (darkMode ? "text-slate-300 hover:text-white" : "text-muted hover:text-ink")}`}
-                >
-                  {m}
-                </button>
-              ))}
-            </div>
-          )}
-
           {/* AI Summary Button */}
           {data?.status === "success" && sectionData && (
             <button
@@ -182,21 +163,14 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
               onClick={handleDownloadPDF}
               className="flex items-center gap-2 px-6 py-2 rounded-xl font-semibold text-white shadow-lg transition-all active:scale-95 transform hover:-translate-y-0.5 bg-gradient-to-r from-[#16213E] to-[#2A3656] hover:from-[#1F2D52] hover:to-[#374468] shadow-[#16213E]/25"
             >
+<<<<<<< Updated upstream
               <Download className="w-4 h-4" />
               <span>Download {audienceMode === "dealer" ? "Dealer" : "Developer"} Report</span>
+=======
+              {isAuthenticated ? <Download className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+              <span>Download Report</span>
+>>>>>>> Stashed changes
             </button>
-          )}
-
-
-
-          {/* Back to List Button (if from bulk audit) */}
-          {data?.fromBulkAudit && (
-            <Link to="/bulk-audit">
-              <button className="flex items-center gap-2 px-6 py-2 rounded-xl font-semibold text-white shadow-lg shadow-accent/20 bg-accent hover:bg-accenthover transition-all active:scale-95 transform hover:-translate-y-0.5">
-                <NotebookPen className="w-4 h-4" />
-                <span>Back to List</span>
-              </button>
-            </Link>
           )}
         </div>
       </div>

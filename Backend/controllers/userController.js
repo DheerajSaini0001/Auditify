@@ -2,7 +2,6 @@ import User from '../models/User.js';
 import ActivityLog from '../models/ActivityLog.js';
 import AuditLog from '../models/AuditLog.js';
 import SingleAuditReport from '../models/singleAuditReport.js';
-import BulkAuditReport from '../models/bulkAuditReport.js';
 import auditStore from '../utils/auditStore.js';
 
 export const getHistory = async (req, res) => {
@@ -11,27 +10,21 @@ export const getHistory = async (req, res) => {
     const userId = req.user.userId;
 
     // AuditLog is a permanent log of every audit ever run; the actual reports live in
-    // SingleAuditReport / BulkAuditReport and are deleted by a Mongo TTL after a few
-    // hours. So we only show history rows whose report STILL EXISTS — otherwise the
-    // count (e.g. "47 results") includes long-gone reports the user can't open.
+    // SingleAuditReport and are deleted by a Mongo TTL after a few hours. So we only
+    // show history rows whose report STILL EXISTS — otherwise the count (e.g. "47
+    // results") includes long-gone reports the user can't open.
     //
     // A report "exists" if it's in Mongo OR still held in the in-memory auditStore
     // (in-progress, or completed-but-not-yet-flushed). We union both so e.g. 3 buffered
     // + 4 in Mongo correctly shows 7.
-    const [singleIds, bulkIds] = await Promise.all([
-      SingleAuditReport.find({ userId }).distinct('_id'),
-      BulkAuditReport.find({ userId }).distinct('_id'),
-    ]);
+    const singleIds = await SingleAuditReport.find({ userId }).distinct('_id');
     const memoryIds = auditStore.liveReportIdsForUser(userId);
     const existingSingleIds = [...singleIds, ...memoryIds];
 
     const query = {
       userId,
       status: { $in: ['success', 'pending', 'failed'] },
-      $or: [
-        { reportId: { $in: existingSingleIds } },
-        { parentBulkAuditId: { $in: bulkIds } },
-      ],
+      reportId: { $in: existingSingleIds },
     };
 
     if (search && typeof search === 'string') {

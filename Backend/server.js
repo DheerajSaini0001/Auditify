@@ -8,7 +8,6 @@ import logger from "./utils/logger.js";
 import passport from "passport";
 
 import singleAuditRoutes from "./routes/singleAuditRoutes.js";
-import bulkAuditRoutes from "./routes/bulkAuditRoutes.js";
 import aiExplainRoutes from "./routes/aiExplainRoutes.js";
 import websiteRoutes from "./routes/websiteRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
@@ -148,7 +147,6 @@ const startServer = async () => {
   app.get("/api/screenshot/view/:auditId", getScreenshotImage);
 
   app.use("/single-audit", singleAuditRoutes);
-  app.use("/bulk-audit", bulkAuditRoutes);
   app.use("/api/ai", aiExplainRoutes);
 
   // ── 10. Health ──

@@ -226,7 +226,7 @@ const doc = new Document({
         ["controllers/adminController.js", "Escape regex input"],
         ["controllers/pdfController.js", "HTML-escape dynamic PDF content"],
         ["controllers/singleAuditController.js", "SSRF + ownership on screenshot"],
-        ["controllers/aeoController.js / bulkAuditController.js", "SSRF guard; IDOR fix"],
+        ["controllers/aeoController.js", "SSRF guard; IDOR fix"],
         ["routes/authRoutes.js, aeoRoutes.js, aiExplainRoutes.js, singleAuditRoutes.js", "Apply limiters / auth"],
         ["utils/encryption.js", "Require valid encryption key"],
         ["utils/generateOTP.js", "crypto.randomInt"],

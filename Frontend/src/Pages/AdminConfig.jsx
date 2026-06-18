@@ -90,12 +90,6 @@ const AdminConfig = () => {
                     >
                       Add Google Search Console Site
                     </button>
-                    <button
-                      onClick={() => { setCreateDropdownOpen(false); navigate("/bulk-audit"); }}
-                      className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-inksoft hover:bg-cardsoft'}`}
-                    >
-                      Quick Manual Audit Page
-                    </button>
                   </div>
                 )}
               </div>

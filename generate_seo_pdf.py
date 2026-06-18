@@ -123,7 +123,7 @@ class Cover(Flowable):
         rows = [
             ("SOURCE FILE", "Backend/metricServices/seoMetrics.js  (~3,838 lines)"),
             ("ENTRY POINT", "seoMetrics(url, $, page)   ·   line 3689"),
-            ("CALLED FROM", "workers/singleAuditWorker.js  ·  workers/bulkAuditWorker.js"),
+            ("CALLED FROM", "workers/singleAuditWorker.js"),
             ("WEIGHTED PARAMETERS", "23 scored   +   4 display-only   +   1 dead weight"),
         ]
         ty = cy - 7 * mm

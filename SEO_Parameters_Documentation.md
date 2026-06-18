@@ -2,7 +2,7 @@
 
 > Source of truth: `Backend/metricServices/seoMetrics.js` (single file, ~3838 lines).
 > Entry point: `export default async function seoMetrics(url, $, page)` at line 3689.
-> Called from: `Backend/workers/singleAuditWorker.js` and `Backend/workers/bulkAuditWorker.js`.
+> Called from: `Backend/workers/singleAuditWorker.js`.
 
 ---
 

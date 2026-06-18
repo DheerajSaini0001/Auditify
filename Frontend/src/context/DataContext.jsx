@@ -30,11 +30,10 @@ export const DataProvider = ({ children }) => {
   const [isAiChatOpen, setIsAiChatOpen] = useState(false);
   const [aiChatContext, setAiChatContext] = useState(null);
 
-  // 👥 AUDIENCE MODE ('dealer' | 'developer') — controls which parameters show
-  // across all report sections and which PDF gets downloaded. ALWAYS defaults to
-  // 'dealer' on a fresh load (the primary audience); the toggle changes it for the
-  // current session only — we intentionally do NOT persist it, so every page load /
-  // new audit starts in Dealer view.
+  // 👥 AUDIENCE MODE — the report now has a SINGLE mode that shows every parameter,
+  // so this no longer affects what's displayed or downloaded (the dealer/developer
+  // toggle has been removed). It's kept only so existing call sites that still read
+  // it from context keep working; the visibility helpers ignore its value.
   const [audienceMode, setAudienceMode] = useState("dealer");
 
   // 🛡️ HELPER: Safe LocalStorage with Cleanup
@@ -196,84 +195,6 @@ export const DataProvider = ({ children }) => {
     setIntervalId(newInterval);
   };
 
-  // 🚀 BULK AUDIT: DISCOVER
-  const discoverUrls = async (url, maxPages, captchaAnswer, captchaId) => {
-    try {
-      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
-      const token = localStorage.getItem('dealerpulse_token');
-
-      const res = await fetch(`${API_URL}/bulk-audit/discover`, {
-        method: "POST",
-        credentials: "include",
-        headers: { 
-          "Content-Type": "application/json",
-          ...(token && { "Authorization": `Bearer ${token}` })
-        },
-        body: JSON.stringify({ url, maxPages, captchaAnswer, captchaId }),
-      });
-
-      return await handleResponse(res);
-
-    } catch (error) {
-      return { success: false, error: error.message };
-    }
-  };
-
-  // 🚀 BULK AUDIT: START
-  const startBulkAudit = async (url, selectedUrls, device, report, captchaAnswer, captchaId) => {
-    try {
-      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
-      const token = localStorage.getItem('dealerpulse_token');
-      const screenResolution = `${window.screen.width}x${window.screen.height}`;
-
-      const res = await fetch(`${API_URL}/bulk-audit/audit`, {
-        method: "POST",
-        credentials: "include",
-        headers: { 
-          "Content-Type": "application/json",
-          ...(token && { "Authorization": `Bearer ${token}` })
-        },
-        body: JSON.stringify({ 
-          url: url, 
-          selectedUrls, 
-          device, 
-          report, 
-          captchaAnswer,
-          captchaId,
-          screenResolution
-        }),
-      });
-
-      return await handleResponse(res);
-
-    } catch (error) {
-      return { success: false, error: error.message };
-    }
-  };
-
-  // 🚀 BULK AUDIT: AUTO DISCOVER & START
-  const autoBulkAudit = async (url, maxPages, device, report, captchaAnswer, captchaId) => {
-    try {
-      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
-      const token = localStorage.getItem('dealerpulse_token');
-
-      const res = await fetch(`${API_URL}/bulk-audit/auto-audit`, {
-        method: "POST",
-        credentials: "include",
-        headers: { 
-          "Content-Type": "application/json",
-          ...(token && { "Authorization": `Bearer ${token}` })
-        },
-        body: JSON.stringify({ url, maxPages, device, report, captchaAnswer, captchaId }),
-      });
-
-      return await handleResponse(res);
-
-    } catch (error) {
-      return { success: false, error: error.message };
-    }
-  };
-
   // 🚀 SINGLE AUDIT: GET BY ID
   const fetchSingleReport = useCallback(async (id) => {
     try {
@@ -297,47 +218,6 @@ export const DataProvider = ({ children }) => {
       return { success: false, error: error.message };
     }
   }, []);
-
-  // 🚀 BULK AUDIT: COMPLETED STATUS
-  const getBulkAuditStatus = async (bulkAuditId) => {
-    try {
-      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
-      const res = await fetch(`${API_URL}/bulk-audit/${bulkAuditId}`, { credentials: 'include' });
-
-      const result = await handleResponse(res);
-      if (!result.success) {
-        // Pass status code for polling logic
-        return { ...result, status: res.status };
-      }
-      return result;
-
-    } catch (error) {
-      return { success: false, error: error.message };
-    }
-  };
-
-  const fetchBulkPageReport = async (bulkId, pageUrl) => {
-    try {
-      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
-      const token = localStorage.getItem('dealerpulse_token');
-      const res = await fetch(`${API_URL}/bulk-audit/${bulkId}/page?url=${encodeURIComponent(pageUrl)}`, { 
-        credentials: 'include',
-        headers: {
-          ...(token && { "Authorization": `Bearer ${token}` })
-        }
-      });
-
-      const result = await handleResponse(res);
-      if (result.success) {
-        result.data = withNormalizedStatus(result.data);
-        setData(result.data);
-        safeLocalStorageSet(`dealerpulse_audit_${result.data._id}`, JSON.stringify(result.data));
-      }
-      return result;
-    } catch (error) {
-      return { success: false, error: error.message };
-    }
-  };
 
   // 🧹 CLEAR
   const clearData = () => {
@@ -379,7 +259,7 @@ export const DataProvider = ({ children }) => {
   return (
     <DataContext.Provider
       value={{ 
-        data, setData, loading, fetchData, clearData, discoverUrls, startBulkAudit, autoBulkAudit, getBulkAuditStatus, fetchSingleReport, getAuditById, fetchBulkPageReport,
+        data, setData, loading, fetchData, clearData, fetchSingleReport, getAuditById,
         isAiChatOpen, setIsAiChatOpen, aiChatContext, setAiChatContext,
         audienceMode, setAudienceMode,
         pollingState, setPollingState

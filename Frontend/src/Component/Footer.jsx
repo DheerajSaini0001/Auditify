@@ -33,7 +33,6 @@ export default function Footer() {
             <h4 className={`text-xs font-black uppercase tracking-[0.2em] ${darkMode ? 'text-white' : 'text-ink'}`}>Product</h4>
             <ul className="space-y-4 text-sm font-semibold">
               <li><Link to="/" className="hover:text-emerald-500 transition-colors">Audit Engine</Link></li>
-              <li><Link to="/bulk-audit" className="hover:text-emerald-500 transition-colors">Bulk Analysis</Link></li>
               <li><Link to="/dashboard" className="hover:text-emerald-500 transition-colors">Personal Dashboard</Link></li>
             </ul>
           </div>

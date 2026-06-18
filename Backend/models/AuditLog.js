@@ -58,11 +58,6 @@ const auditLogSchema = new mongoose.Schema(
       ref: "SingleAuditReport",
       default: null,
     },
-    parentBulkAuditId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "BulkAuditReport",
-      default: null,
-    },
     reportType: {
       type: String,
       default: "All",

@@ -489,11 +489,6 @@ const DashboardPage = () => {
       targetUrl = `${proto}${targetUrl}`;
     }
 
-    if (scope === "Entire site") {
-      navigate(`/bulk-audit?url=${encodeURIComponent(targetUrl)}&auto=true&device=${directDevice}&report=${directReport}`);
-      return;
-    }
-
     setDirectAuditing(true);
     toast.loading(`Starting audit for ${targetUrl}...`, { id: 'direct-audit-toast' });
 
@@ -623,12 +618,6 @@ const DashboardPage = () => {
                 className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-inksoft hover:bg-surface-2'}`}
               >
                 Add Google Search Console Site
-              </button>
-              <button
-                onClick={() => { setCreateDropdownOpen(false); navigate("/bulk-audit"); }}
-                className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-inksoft hover:bg-surface-2'}`}
-              >
-                Quick Manual Audit Page
               </button>
             </div>
           )}
@@ -914,7 +903,7 @@ const DashboardPage = () => {
 
             {scopeOpen && (
               <div className={`absolute top-full right-0 mt-1.5 rounded-xl shadow-xl z-50 py-1 w-44 border animate-in fade-in slide-in-from-top-1 duration-150 transition-colors duration-300 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-card border-line'}`}>
-                {["Homepage (Fast)", "Entire site"].map(s => (
+                {["Homepage (Fast)"].map(s => (
                   <button
                     key={s}
                     onClick={() => { setScope(s); setScopeOpen(false); }}
@@ -1288,22 +1277,12 @@ const DashboardPage = () => {
                             <button
                               onClick={() => {
                                 setActiveMenuId(null);
-                                navigate(`/bulk-audit?url=https://${proj.url}&auto=true`);
+                                handleSingleAudit(proj._id, proj.url);
                               }}
                               className={`w-full text-left px-4 py-2 text-xs font-semibold flex items-center gap-2 transition-colors duration-200 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-surface-2 text-inksoft'}`}
                             >
                               <Zap size={12} className="text-emerald-500" />
                               <span>Re-Audit Website</span>
-                            </button>
-                            <button
-                              onClick={() => {
-                                setActiveMenuId(null);
-                                navigate(`/bulk-audit?url=https://${proj.url}&auto=true`);
-                              }}
-                              className={`w-full text-left px-4 py-2 text-xs font-semibold flex items-center gap-2 transition-colors duration-200 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-surface-2 text-inksoft'}`}
-                            >
-                              <History size={12} className="text-indigo-500" />
-                              <span>Run Bulk Audit</span>
                             </button>
 
                             <div className={`border-t my-1 transition-colors duration-300 ${darkMode ? 'border-slate-700' : 'border-line'}`} />
@@ -1485,7 +1464,7 @@ const DashboardPage = () => {
                         </div>
                         <div className="text-left">
                           <h4 className={`text-[13px] font-semibold transition-colors duration-300 ${darkMode ? 'text-white' : 'text-ink'}`}>No Audit Data Available</h4>
-                          <p className={`text-[11px] font-semibold mt-0.5 leading-relaxed transition-colors duration-300 ${darkMode ? 'text-slate-400' : 'text-muted'}`}>Choose how you want to audit this property — run a quick single-page audit or a full site bulk audit.</p>
+                          <p className={`text-[11px] font-semibold mt-0.5 leading-relaxed transition-colors duration-300 ${darkMode ? 'text-slate-400' : 'text-muted'}`}>Run a quick single-page audit of this property's homepage.</p>
                         </div>
                       </div>
 
@@ -1509,18 +1488,6 @@ const DashboardPage = () => {
                             <div className={`text-[9px] font-semibold uppercase tracking-wider ${darkMode ? 'text-slate-500' : 'text-faint'}`}>
                               {auditingProjectId === proj._id ? 'Please wait' : 'Homepage only · Fast'}
                             </div>
-                          </div>
-                        </button>
-
-                        {/* Bulk Audit */}
-                        <button
-                          onClick={() => navigate(`/bulk-audit?url=https://${proj.url}&auto=true`)}
-                          className="flex items-center justify-center gap-2 flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold transition-all duration-300 active:scale-[0.98] shadow-md shadow-emerald-600/10"
-                        >
-                          <History size={13} className="fill-emerald-100/20" />
-                          <div className="text-left">
-                            <div className="font-semibold">Run Bulk Audit</div>
-                            <div className="text-[9px] font-semibold uppercase tracking-wider text-emerald-200">All pages · Comprehensive</div>
                           </div>
                         </button>
                       </div>

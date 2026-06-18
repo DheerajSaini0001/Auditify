@@ -82,12 +82,6 @@ const AuditHistoryPage = () => {
                      >
                        Add Google Search Console Site
                      </button>
-                     <button
-                       onClick={() => { setCreateDropdownOpen(false); navigate("/bulk-audit"); }}
-                       className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-inksoft hover:bg-cardsoft'}`}
-                     >
-                       Quick Manual Audit Page
-                     </button>
                    </div>
                  )}
                </div>
@@ -585,26 +579,17 @@ const AuditHistoryPage = () => {
                                 <button
                                   onClick={() => {
                                     // ONLY open report
-                                    if (audit.reportId || audit.parentBulkAuditId) {
+                                    if (audit.reportId) {
                                       const params = new URLSearchParams({
                                         url: audit.url || "",
                                         device: audit.device || "Desktop",
                                         report: audit.reportType || "All"
                                       });
 
-                                      if (audit.parentBulkAuditId) {
-                                        params.set("bulkId", audit.parentBulkAuditId);
-
-                                        window.open(
-                                          `/report?${params.toString()}`,
-                                          '_blank'
-                                        );
-                                      } else {
-                                        window.open(
-                                          `/report/${audit.reportId}?${params.toString()}`,
-                                          '_blank'
-                                        );
-                                      }
+                                      window.open(
+                                        `/report/${audit.reportId}?${params.toString()}`,
+                                        '_blank'
+                                      );
                                     } else {
                                       toast.error(
                                         "Report details are currently unavailable."
@@ -623,11 +608,7 @@ const AuditHistoryPage = () => {
                                 <button
                                   onClick={() => {
                                     // ONLY download PDF
-                                    const rId =
-                                      audit.reportId ||
-                                      (audit.parentBulkAuditId
-                                        ? `${audit.parentBulkAuditId}_${window.btoa(audit.url)}`
-                                        : null);
+                                    const rId = audit.reportId || null;
 
                                     if (!rId) {
                                       return toast.error(

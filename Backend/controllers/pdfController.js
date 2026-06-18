@@ -1,64 +1,26 @@
 import SingleAuditReport from "../models/singleAuditReport.js";
-import BulkAuditReport from "../models/bulkAuditReport.js";
 import ActivityLog from "../models/ActivityLog.js";
 import { chromium } from "playwright";
 import auditStore from "../utils/auditStore.js";
 import logger from "../utils/logger.js";
-import { DEALER_PARAMS } from "../config/parameterAudience.js";
 
 export const generatePDFReport = async (req, res) => {
   try {
     const { id } = req.params;
-    // 👥 Audience mode: 'dealer' → dealer-relevant params only; anything else → full report.
-    const mode = req.query.mode === "dealer" ? "dealer" : "developer";
-    const isDealer = mode === "dealer";
     let report;
 
-    // Handle Virtual ID for Bulk Audit Pages (format: bulkAuditId_base64Url)
-    if (id.includes('_')) {
-        const [bulkAuditId, b64Url] = id.split('_');
-        const url = Buffer.from(b64Url, 'base64').toString('utf8');
-        
-        const bulkQuery = { _id: bulkAuditId };
-        if (req.user && req.user.role !== 'admin' && req.user.role !== 'super_admin') {
-            bulkQuery.userId = req.user.userId;
-        }
-
-        const bulkAudit = await BulkAuditReport.findOne(bulkQuery);
-        if (!bulkAudit) {
-            return res.status(404).json({ error: "Bulk audit not found or access denied" });
-        }
-
-        const pageData = bulkAudit.pages.find(p => p.url === url);
-        if (!pageData) {
-            return res.status(404).json({ error: "Page report not found in bulk audit" });
-        }
-
-        if (pageData.status !== "completed") {
-            return res.status(400).json({ error: "Audit is not completed yet" });
-        }
-
-        // Reshape to match PDF generation expectations
-        report = {
-            ...pageData.toObject(),
-            device: bulkAudit.device,
-            report: bulkAudit.report,
-            createdAt: pageData.completedAt || bulkAudit.createdAt
-        };
+    // A completed report may still be buffered in memory (not yet flushed to Mongo).
+    const live = auditStore.get(id);
+    if (live) {
+        const allowed = !(req.user && req.user.role !== 'admin' && req.user.role !== 'super_admin')
+            || String(live.userId || "") === String(req.user.userId || "");
+        report = allowed ? live : null;
     } else {
-        // A completed report may still be buffered in memory (not yet flushed to Mongo).
-        const live = auditStore.get(id);
-        if (live) {
-            const allowed = !(req.user && req.user.role !== 'admin' && req.user.role !== 'super_admin')
-                || String(live.userId || "") === String(req.user.userId || "");
-            report = allowed ? live : null;
-        } else {
-            const query = { _id: id };
-            if (req.user && req.user.role !== 'admin' && req.user.role !== 'super_admin') {
-                query.userId = req.user.userId;
-            }
-            report = await SingleAuditReport.findOne(query);
+        const query = { _id: id };
+        if (req.user && req.user.role !== 'admin' && req.user.role !== 'super_admin') {
+            query.userId = req.user.userId;
         }
+        report = await SingleAuditReport.findOne(query);
     }
 
     if (!report) {
@@ -90,9 +52,9 @@ export const generatePDFReport = async (req, res) => {
     let dynamicContent = "";
     let sectionNum = 0;
 
-    // Skip top-level non-metric keys, and (in dealer mode) any param outside DEALER_PARAMS.
+    // Skip top-level non-metric keys; every parameter is included in the report.
     const SKIP_KEYS = ['Percentage', 'Section_Score', 'score', 'grade'];
-    const isMetricVisible = (mKey) => !SKIP_KEYS.includes(mKey) && (!isDealer || DEALER_PARAMS.has(mKey));
+    const isMetricVisible = (mKey) => !SKIP_KEYS.includes(mKey);
 
     // Escape any value that ends up in the PDF HTML. Report fields derive from
     // the scanned site's content (recommendations, causes, details) and the
@@ -113,7 +75,7 @@ export const generatePDFReport = async (req, res) => {
     sections.forEach((sec) => {
         const data = report[sec.key];
         if (data && typeof data === 'object') {
-            // In dealer mode, skip a whole section that has no dealer-relevant params.
+            // Skip a whole section that has no renderable metric keys.
             const hasVisible = Object.keys(data).some(isMetricVisible);
             if (!hasVisible) return;
 
@@ -439,7 +401,7 @@ export const generatePDFReport = async (req, res) => {
             <div class="url-info">
                 <h1>${escapeHtml(report.url)}</h1>
                 <p>Audit Date: ${new Date(report.createdAt).toLocaleDateString()}</p>
-                <p>Device: ${escapeHtml(report.device)} | Report Type: ${escapeHtml(report.report)} | View: ${isDealer ? "Dealer" : "Developer"}</p>
+                <p>Device: ${escapeHtml(report.device)} | Report Type: ${escapeHtml(report.report)}</p>
             </div>
         </div>
 
@@ -542,7 +504,7 @@ export const generatePDFReport = async (req, res) => {
     res.contentType("application/pdf");
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename=Dealer Pulse-Report-${report.url.replace(/[^a-z0-9]/gi, "-")}-${mode}.pdf`
+      `attachment; filename=Dealer Pulse-Report-${report.url.replace(/[^a-z0-9]/gi, "-")}.pdf`
     );
 
     // Activity Log for analytics (Admin Dashboard)

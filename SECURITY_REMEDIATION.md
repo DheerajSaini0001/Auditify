@@ -85,7 +85,7 @@ After upgrading, smoke-test PDF export (jspdf) and routing (react-router) before
 
 | # | Issue | Fix | File(s) |
 |---|---|---|---|
-| C | SSRF — bypassable hostname blocklist | New DNS-resolving guard that blocks private/reserved/loopback/link-local + cloud-metadata (169.254.169.254), decimal/hex/IPv6/IPv4-mapped encodings, embedded credentials, non-http(s). Applied to every URL-fetching entry point. | `utils/ssrfGuard.js` (new); `controllers/singleAuditController.js`, `bulkAuditController.js`, `aeoController.js` |
+| C | SSRF — bypassable hostname blocklist | New DNS-resolving guard that blocks private/reserved/loopback/link-local + cloud-metadata (169.254.169.254), decimal/hex/IPv6/IPv4-mapped encodings, embedded credentials, non-http(s). Applied to every URL-fetching entry point. | `utils/ssrfGuard.js` (new); `controllers/singleAuditController.js`, `aeoController.js` |
 | C | `/api/ai/*` & `/api/aeo/*` unauthenticated → billing/LLM abuse, resource drain | Added rate limiters + `tryAuthenticate` so abuse is bounded and per-user ownership applies. | `routes/aiExplainRoutes.js`, `routes/aeoRoutes.js` |
 | C | AEO report IDOR (`getAEOReport`) | Fails closed: returns 401 without a user, scopes the query to the owner otherwise. | `controllers/aeoController.js` |
 | C | Hardcoded AES key fallback | Removed; app now refuses to start without a valid `CONFIG_ENCRYPTION_KEY`. | `utils/encryption.js` |

@@ -3,7 +3,6 @@ import { Routes, Route, useParams } from "react-router-dom";
 
 import Homepage from "./Pages/LandingPage";
 import AboutPage from "./Pages/AboutPage";
-import BulkAudit from "./Pages/BulkAudit";
 import Technical_Performance from "./Pages/Technical_Performance";
 import On_Page_SEO from "./Pages/On_Page_SEO";
 import Accessibility from "./Pages/Accessibility";
@@ -107,10 +106,6 @@ function AppContentInner() {
             </ProtectedRoute>
           } />
           <Route path="/dashboard/add-website" element={<AddWebsitePage />} />
-
-          <Route path="/bulk-audit" element={<BulkAudit />} />
-
-          <Route path="/bulk-audit/:id" element={<BulkAudit />} />
 
           <Route path="/audit-history" element={<AuditHistoryPage />} />
 

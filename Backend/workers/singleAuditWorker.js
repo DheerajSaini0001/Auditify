@@ -10,8 +10,6 @@ import aioReadiness from "../metricServices/aioReadiness.js";
 import AEOService from "../metricServices/aeoService.js";
 import Puppeteer_Cheerio from "../utils/puppeteer_cheerio.js";
 import { checkWebsiteExists } from "../utils/fastFetch.js";
-import { detectDealership } from "../utils/dealershipDetector.js";
-import * as cheerio from "cheerio";
 import { performance } from "perf_hooks";
 import logger from "../utils/logger.js";
 
@@ -144,39 +142,12 @@ const OverAll = (A, B, C, D, E, F, G) => {
       return;
     }
 
-    // [NEW] — DEALERSHIP DETECTION GATE (runs FIRST, BEFORE the audit)
-    // A fast, lightweight page fetch is classified up front. If the site is
-    // definitively NOT a dealership, we record the verdict and STOP here —
-    // the heavy audit (render wait, screenshot, metrics) never starts, so the
-    // user never sees an audit begin and then get terminated mid-way.
-    // Reuses the html/status already fetched by the existence gate above, so the
-    // detector reads raw HTML without launching Chromium or re-fetching. If that
-    // markup was blocked/empty, detection is inconclusive and we fall through to
-    // the full-render audit below (which has proper bot-bypass handling).
-    let preDetection = null;
-    try {
-      preDetection = await detectDealership({ url, $: cheerio.load(existence.html || ""), statusCode: existence.status });
-    } catch (gateErr) {
-      logger.warn(`[Worker] Pre-audit dealership check failed — will re-check after full load: ${gateErr.message}`);
-    }
-    // "Inconclusive" = the quick fetch couldn't evaluate (blocked / challenge /
-    // empty). We FAIL OPEN — never reject on inconclusive; fall through to the
-    // full-render audit (which has proper bot-protection handling).
-    const preInconclusive = !preDetection || preDetection.inconclusive;
-
-    if (preDetection && preDetection.isDealership === false && !preInconclusive) {
-      logger.info(`🚫 Audit gated (pre-check) — not a dealership: ${url}`);
-      finish({
-        status: "completed",
-        isDealership: false,
-        dealershipDetection: preDetection,
-        error: `NOT A DEALERSHIP WEBSITE — ${preDetection.reason}`,
-        score: 0,
-        grade: "F",
-        timeTaken: `${((performance.now() - start) / 1000).toFixed(0)}s`,
-      });
-      return;
-    }
+    // [CHANGE] — Dealership detection check bypassed to allow auditing any website.
+    // Set isDealership to true upfront so frontend knows it is allowed.
+    postProgress({
+      isDealership: true,
+      dealershipDetection: null,
+    });
 
     const { browser: b, page, response, $, screenshot, isBotProtected } = await Puppeteer_Cheerio(url, device, { auditId: currentAuditId, onProgress: postProgress });
     browser = b;
@@ -208,40 +179,7 @@ const OverAll = (A, B, C, D, E, F, G) => {
       return;
     }
 
-    // [NEW] — DEALERSHIP DETECTION GATE (fallback, full-render)
-    // Only re-runs detection when the fast pre-check above was inconclusive
-    // (site was blocked/empty for the lightweight fetch). The fully-rendered page
-    // gives a reliable final verdict. If the pre-check already decided, reuse it.
-    let detection = preInconclusive ? null : preDetection;
-    if (!detection) {
-      detection = await safeMetric("Dealership Detection", () =>
-        detectDealership({ url, $, page, response })
-      );
-    }
-    // FAIL OPEN: only block on a CONFIDENT negative. If detection is inconclusive
-    // (challenge/blocked/empty even after full render) we proceed with the audit
-    // rather than wrongly reject a real dealership.
-    if (detection && detection.isDealership === false && !detection.inconclusive) {
-      logger.info(`🚫 Audit gated — not a dealership: ${url}`);
-      finish({
-        status: "completed",
-        isDealership: false,
-        dealershipDetection: detection,
-        error: `NOT A DEALERSHIP WEBSITE — ${detection.reason}`,
-        score: 0,
-        grade: "F",
-        timeTaken: `${((performance.now() - start) / 1000).toFixed(0)}s`,
-      });
-      return;
-    }
-    // Confirmed dealership (or inconclusive/unavailable — proceeding either way).
-    // Only record a positive flag for a CONFIRMED dealership; leave it null
-    // (unknown) when detection was inconclusive so we don't mislabel the report.
-    const confirmedDealer = !!(detection && detection.isDealership === true);
-    postProgress({
-      isDealership: confirmedDealer ? true : null,
-      dealershipDetection: confirmedDealer ? detection : null,
-    });
+    // Fallback dealership gate removed.
 
     if (report !== "All") {
       let result;

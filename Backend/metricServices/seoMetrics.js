@@ -3171,48 +3171,49 @@ const checkContentDepthQuality = async (url, $, page, sitemapContent = null) => 
       .filter((t) => t.length > 3)
       .map((t) => t.toLowerCase());
 
-    // Gather + dedupe same-origin candidates.
-    const candidateSet = new Set();
-    const fromSitemap = await tuUrlsFromSitemap(sitemapContent, page);
-    [...fromSitemap, ...tuUrlsFromHomepage($, url)].forEach((c) => {
-      try {
-        const abs = new URL(c, url);
-        if (abs.origin === origin) {
+    // ── Source candidate URLs SITEMAP-FIRST, homepage nav only as a fallback. ──
+    // Each source is classified separately so a sitemap URL is always preferred
+    // over a navigation link of the same type.
+    const toSameOrigin = (list) => {
+      const out = [];
+      const seen = new Set();
+      for (const c of list || []) {
+        try {
+          const abs = new URL(c, url);
+          if (abs.origin !== origin) continue;
           abs.hash = "";
-          candidateSet.add(abs.href);
-        }
-      } catch {
-        // skip
+          if (!seen.has(abs.href)) { seen.add(abs.href); out.push(abs.href); }
+        } catch { /* skip invalid href */ }
       }
-    });
-
-    // Classify into page types.
-    const byType = {};
-    for (const u of candidateSet) {
-      const type = tuClassifyPageType(u);
-      if (!type) continue;
-      (byType[type] = byType[type] || []).push(u);
-    }
-
-    // Select target pages: one per type, then fill with extra VDP/SRP (for
-    // uniqueness comparison), capped at 6 fetches.
-    const pickShortest = (arr) => arr.slice().sort((a, b) => a.length - b.length)[0];
-    const targets = [];
-    ["contact", "about", "tradein", "service", "srp", "vdp"].forEach((t) => {
-      if (byType[t]?.length) targets.push({ type: t, url: pickShortest(byType[t]) });
-    });
-    const used = new Set(targets.map((x) => x.url));
-    for (const t of ["vdp", "srp"]) {
-      for (const u of byType[t] || []) {
-        if (targets.length >= 6) break;
-        if (!used.has(u)) {
-          targets.push({ type: t, url: u });
-          used.add(u);
-        }
+      return out;
+    };
+    const classifyByType = (urls) => {
+      const m = {};
+      for (const u of urls) {
+        const t = tuClassifyPageType(u);
+        if (!t) continue;
+        (m[t] = m[t] || []).push(u);
       }
-    }
+      return m;
+    };
+    const sitemapByType = classifyByType(toSameOrigin(await tuUrlsFromSitemap(sitemapContent, page)));
+    const homepageByType = classifyByType(toSameOrigin(tuUrlsFromHomepage($, url)));
 
-    if (!targets.length) {
+    // Ordered candidates for a type: sitemap URLs first (shortest = most
+    // canonical first), then homepage URLs, deduped.
+    const byLength = (a, b) => a.length - b.length;
+    const candidatesFor = (t) => {
+      const out = [];
+      const seen = new Set();
+      for (const u of [...(sitemapByType[t] || []).slice().sort(byLength),
+                       ...(homepageByType[t] || []).slice().sort(byLength)]) {
+        if (!seen.has(u)) { seen.add(u); out.push(u); }
+      }
+      return out;
+    };
+
+    const TYPES = ["contact", "about", "tradein", "service", "srp", "vdp"];
+    if (!TYPES.some((t) => candidatesFor(t).length)) {
       return evaluateParameter(0.5, "No target content pages found", {
         score10: 0, maxScore: 10, pagesAnalyzed: 0, pages: [],
         failureReasons: ["No target pages (SRP, VDP, Service, Trade-In, About, Contact) found to analyze"],
@@ -3223,28 +3224,54 @@ const checkContentDepthQuality = async (url, $, page, sitemapContent = null) => 
       });
     }
 
-    // Fetch + extract content for each target.
-    const pages = [];
-    for (const tgt of targets) {
-      const html = await tuFetchRaw(tgt.url, page);
-      if (!html) {
-        pages.push({ ...tgt, loaded: false });
-        continue;
-      }
+    // Turn a fetched HTML doc into a scored-page input object.
+    const extractPage = (type, pageUrl, html) => {
       const $b = cheerio.load(html);
       $b('script, style, noscript, header, footer, nav, [role=navigation], [class*="cookie" i], [id*="cookie" i], [class*="consent" i], [id*="consent" i], [class*="gdpr" i]').remove();
       const text = ($b("body").text() || "").replace(/\s+/g, " ").trim();
       const headings = $b("h1,h2,h3,h4,h5,h6").map((i, el) => $b(el).text().trim()).get().join(" | ");
       const tokens = text.toLowerCase().split(/\s+/).filter((w) => /[a-z0-9]/i.test(w));
-      const wordCount = tokens.length;
-      pages.push({
-        ...tgt,
-        loaded: true,
-        text,
-        headings,
-        wordCount,
-        fp: tuFingerprint(tokens.slice(0, 2000)),
-      });
+      return { type, url: pageUrl, loaded: true, text, headings, wordCount: tokens.length, fp: tuFingerprint(tokens.slice(0, 2000)) };
+    };
+
+    // Fetch + extract, capped at 6 pages. For each type we try its candidates in
+    // order and keep the FIRST that actually loads — so a dead URL that happens to
+    // be in the sitemap (e.g. a 404 "/vehicle") is skipped in favour of a working
+    // same-type page (e.g. "/vehicles"). Probing is capped per type.
+    const MAX_PAGES = 6;
+    const PROBE_PER_TYPE = 3;
+    const pages = [];
+    const usedUrls = new Set();
+
+    for (const t of TYPES) {
+      if (pages.length >= MAX_PAGES) break;
+      let firstTried = null, added = false, tries = 0;
+      for (const u of candidatesFor(t)) {
+        if (usedUrls.has(u) || tries >= PROBE_PER_TYPE) continue;
+        usedUrls.add(u);
+        if (firstTried === null) firstTried = u;
+        tries++;
+        const html = await tuFetchRaw(u, page);
+        if (html) { pages.push(extractPage(t, u, html)); added = true; break; }
+      }
+      // Every candidate we tried failed to load → record the attempt so the
+      // report still shows what was tried (as "not loaded").
+      if (!added && firstTried) pages.push({ type: t, url: firstTried, loaded: false });
+    }
+
+    // Fill extra VDP/SRP pages (needed for the uniqueness comparison), validating
+    // each fetch and bounding how many dead URLs we probe.
+    let extraTries = 0;
+    for (const t of ["vdp", "srp"]) {
+      for (const u of candidatesFor(t)) {
+        if (pages.length >= MAX_PAGES || extraTries >= 5) break;
+        if (usedUrls.has(u)) continue;
+        usedUrls.add(u);
+        extraTries++;
+        const html = await tuFetchRaw(u, page);
+        if (html) pages.push(extractPage(t, u, html));
+      }
+      if (pages.length >= MAX_PAGES || extraTries >= 5) break;
     }
 
     // Score each page.

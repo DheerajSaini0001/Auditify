@@ -141,17 +141,6 @@ export default function Sidebar({ darkMode }) {
                 const reportId = data._id;
                 if (!reportId) return toast.error("Report ID not found");
 
-<<<<<<< Updated upstream
-                const toastId = toast.loading('Preparing professional PDF report...');
-                try {
-                  const token = localStorage.getItem('dealerpulse_token');
-                  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:2000';
-                  const response = await fetch(`${API_URL}/single-audit/${reportId}/export/pdf?mode=${audienceMode}`, {
-                    headers: {
-                      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-                    }
-                  });
-=======
                   const toastId = toast.loading('Preparing professional PDF report...');
                   try {
                     const token = localStorage.getItem('dealerpulse_token');
@@ -161,24 +150,9 @@ export default function Sidebar({ darkMode }) {
                         ...(token ? { 'Authorization': `Bearer ${token}` } : {})
                       }
                     });
->>>>>>> Stashed changes
 
                   if (!response.ok) throw new Error('Failed to generate PDF');
 
-<<<<<<< Updated upstream
-                  const blob = await response.blob();
-                  const url = window.URL.createObjectURL(blob);
-                  const link = document.createElement('a');
-                  link.href = url;
-                  link.download = `DealerPulse-Report-${data.url.replace(/[^a-z0-9]/gi, '-')}-${audienceMode}.pdf`;
-                  document.body.appendChild(link);
-                  link.click();
-                  link.remove();
-                  window.URL.revokeObjectURL(url);
-                  toast.success('Report downloaded!', { id: toastId });
-                } catch (error) {
-                  toast.error('Failed to generate PDF', { id: toastId });
-=======
                     const blob = await response.blob();
                     const url = window.URL.createObjectURL(blob);
                     const link = document.createElement('a');
@@ -192,14 +166,8 @@ export default function Sidebar({ darkMode }) {
                   } catch (error) {
                     toast.error('Failed to generate PDF', { id: toastId });
                   }
-                } else {
-                  if (data?._id) {
-                    savePostAuthIntent(data._id, `/report/${data._id}`);
-                  }
-                  navigate("/login", { state: { from: location.pathname } });
->>>>>>> Stashed changes
                 }
-              }}
+              }
               className={`group w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white shadow-md shadow-black/10 transition-all hover:shadow-black/20 active:scale-[0.98] ${darkMode ? "bg-slate-700 hover:bg-slate-600" : "bg-[#16213E] hover:bg-[#2A3656]"}`}
             >
               <FileText className="w-4 h-4" />

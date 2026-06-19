@@ -118,7 +118,7 @@ const MATCH_ORDER = [
   {
     key: "trade",
     test: (p) =>
-      /(trade-?in|value-your|whats?-?my-?(trade|car)|sell-us|cash-offer|apprais|kelley|kbb|trade-?value|instant-?offer)/.test(p),
+      /(trade-?in|value-(your|my)|whats?-?my-?(trade|car|vehicle)|sell-?(my|your|us)|we-(buy|want|pay)|cash-offer|apprais|kelley|kbb|trade-?value|instant-?offer)/.test(p),
   },
   { key: "lease", test: (p) => /lease/.test(p) },
   {

@@ -20,8 +20,8 @@ import logger from "./logger.js";
  *
  * The discovered URLs are then bucketed into the fixed dealership page types the
  * checklist UI shows: Home, Inventory (SRP), Vehicle Detail (VDP), Special
- * Offers, Trade-In, Lease Specials, Finance, Service & Repair, Parts &
- * Accessories, About, and Content.
+ * Offers, Trade-In, Lease Specials, Finance, Service & Parts, About, and
+ * Content.
  *
  * SECURITY: every URL fetched here is run through validateUrlSafety first. This
  * matters because robots.txt `Sitemap:` lines and sitemap-index children are
@@ -126,8 +126,9 @@ const MATCH_ORDER = [
     test: (p) =>
       /(financ|credit-app|credit-application|pre-?approv|get-?(pre-?)?approved|payment-calc|loan|auto-loan|apply-?(for|online|now|today)?)/.test(p),
   },
-  { key: "service", test: (p) => /(service|repair|maintenance|oil-change|brakes?|express-lane)/.test(p) },
-  { key: "parts", test: (p) => /(parts|accessor|tires?\b|wheels?\b)/.test(p) },
+  // Service & Parts — fixed-ops pages (service, repair, maintenance, collision)
+  // merged with the parts/accessories department into one category.
+  { key: "service", test: (p) => /(service|repair|maintenance|oil-change|brakes?|express-lane|collision|body-shop|detailing|parts|accessor|tires?\b|wheels?\b)/.test(p) },
   { key: "specials", test: (p) => /(special|offer|deal|incentive|saving|clearance|promo|rebate)/.test(p) },
   { key: "srp", test: (p) => isSrp(p) },
   {
@@ -135,7 +136,8 @@ const MATCH_ORDER = [
     test: (p) =>
       /(about|dealership|our-story|our-team|meet-(the|our)|staff|why-(us|buy|choose)|who-we-are|our-history|hours-and-direction)/.test(p),
   },
-  { key: "content", test: (p) => /(blog|news|articles?|resources?|research|reviews?|tips|guides?|community|car-care|learn)/.test(p) },
+  // Content / Blog — incl. FAQ and How-To pages.
+  { key: "content", test: (p) => /(blog|news|articles?|resources?|research|reviews?|tips|guides?|community|car-care|learn|faqs?|frequently-asked|how-?tos?|how-do-i)/.test(p) },
 ];
 
 // The fixed checklist the UI renders, in the order the dealer expects to see it.
@@ -147,10 +149,9 @@ const DISPLAY = [
   { key: "trade", label: "Trade-In Tool", hint: "Value-your-trade" },
   { key: "lease", label: "Lease Specials", hint: "Lease deals" },
   { key: "finance", label: "Finance", hint: "Financing / credit application" },
-  { key: "service", label: "Service & Repair", hint: "Service center / scheduling" },
-  { key: "parts", label: "Parts & Accessories", hint: "Parts center" },
+  { key: "service", label: "Service & Parts", hint: "Service, repair, parts & accessories" },
   { key: "about", label: "About", hint: "About the dealership" },
-  { key: "content", label: "Content", hint: "Blog / news / resources" },
+  { key: "content", label: "Content", hint: "Blog, news, FAQ & how-to" },
 ];
 
 const normPath = (pathname) => (pathname.toLowerCase().replace(/\/+$/, "") || "/");

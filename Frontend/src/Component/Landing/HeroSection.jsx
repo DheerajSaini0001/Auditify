@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     Monitor, Smartphone, Search, Loader2, AlertCircle, ChevronDown, Settings, ArrowRight,
     Globe, CheckCircle2, MinusCircle, Sparkles,
-    Home, LayoutGrid, Car, Tag, Repeat, Key, CreditCard, Wrench, Cog, Info, Newspaper,
+    Home, LayoutGrid, Car, Tag, Repeat, Key, CreditCard, Wrench, Info, Newspaper,
 } from 'lucide-react';
 import AuditEmailVerifyModal from "../../Component/AuditEmailVerifyModal.jsx";
 import { ThemeContext } from '../../context/ThemeContext.jsx';
@@ -24,10 +24,9 @@ const PAGE_TYPES = [
     { key: 'trade', label: 'Trade-In Tool', desc: 'KBB-style valuation, lead capture', Icon: Repeat },
     { key: 'lease', label: 'Lease Specials', desc: 'Lease offers + calculator', Icon: Key },
     { key: 'finance', label: 'Finance / Credit', desc: 'Credit app + payment calculator', Icon: CreditCard },
-    { key: 'service', label: 'Service & Repair', desc: 'Appt booking + service menu', Icon: Wrench },
-    { key: 'parts', label: 'Parts & Accessories', desc: 'Parts catalog + order form', Icon: Cog },
+    { key: 'service', label: 'Service & Parts', desc: 'Service, repair, parts & accessories', Icon: Wrench },
     { key: 'about', label: 'About / Contact', desc: 'Hours, staff, directions', Icon: Info },
-    { key: 'content', label: 'Content / Blog', desc: 'Blog, news, resources', Icon: Newspaper },
+    { key: 'content', label: 'Content / Blog', desc: 'Blog, news, FAQ, how-to', Icon: Newspaper },
 ];
 
 const prettyPath = (url) => {

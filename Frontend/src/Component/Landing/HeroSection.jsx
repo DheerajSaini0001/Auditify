@@ -12,6 +12,11 @@ import { useAuth } from '../../context/AuthContext.jsx';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
 
+// In dev, guests skip the email-verification modal and run straight from the URL.
+// The backend mirrors this (guestAuditGate bypasses when NODE_ENV !== 'production').
+// Production builds set import.meta.env.DEV = false, so the gate stays on there.
+const SKIP_EMAIL_VERIFY = import.meta.env.DEV;
+
 /* ─────────────────────────────────────────
    Fixed dealership page-type catalog (Screen 01).
    `key` matches the backend discovery categories[].key.
@@ -240,7 +245,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         e?.preventDefault?.();
         setLocalError(null);
         if (!url.trim()) { setLocalError("Please enter a URL to get started."); return; }
-        if (user) { beginFlow(null); return; }
+        if (user || SKIP_EMAIL_VERIFY) { beginFlow(null); return; }
         setShowVerify(true);
     };
 
@@ -278,7 +283,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         if (queryReport) setReport(queryReport);
         isAutoStarting.current = true;
 
-        if (user || localStorage.getItem('dealerpulse_token')) {
+        if (user || SKIP_EMAIL_VERIFY || localStorage.getItem('dealerpulse_token')) {
             beginFlow(null, queryUrl);
             window.history.replaceState(null, '', window.location.pathname);
         } else {

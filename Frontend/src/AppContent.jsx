@@ -21,6 +21,7 @@ import AddWebsitePage from "./Pages/AddWebsitePage";
 import AdminDashboard from "./Pages/AdminDashboard";
 import AdminConfig from "./Pages/AdminConfig";
 import ReportLayout from "./Pages/ReportLayout.jsx";
+import AuditSummaryPage from "./Pages/AuditSummaryPage.jsx";
 import NotFound from "./Pages/NotFound.jsx";
 import DocsPage from "./Pages/DocsPage";
 import HelpCenterPage from "./Pages/HelpCenterPage";
@@ -111,6 +112,9 @@ function AppContentInner() {
 
           <Route path="/report" element={<ReportLayout />} />
           <Route path="/report/:id" element={<ReportLayout />} />
+
+          {/* Intermediate multi-page audit summary + page-type heatmap (open to all) */}
+          <Route path="/audit-summary" element={<AuditSummaryPage />} />
 
           {/* Individual Report Pages - open to everyone, guests included */}
           <Route path="/technical-performance/:id?" element={<GuestRouteWrapper><Technical_Performance /></GuestRouteWrapper>} />

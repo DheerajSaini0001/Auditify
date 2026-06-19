@@ -31,9 +31,16 @@ import logger from "./logger.js";
  * a poll can land on an instance that never saw the audit.
  */
 
-const BATCH_SIZE = parseInt(process.env.AUDIT_WRITE_BATCH_SIZE || "5", 10);
+// One audit run now fans out into up to 10 page audits (the full dealer page-type
+// set) that all complete within a few seconds of each other. Size the batch to a
+// whole site so those reports persist in a single insertMany instead of being split.
+const BATCH_SIZE = parseInt(process.env.AUDIT_WRITE_BATCH_SIZE || "10", 10);
 const MEM_TTL_MS = parseInt(process.env.AUDIT_MEM_TTL_MS || `${60 * 60 * 1000}`, 10); // 1 hour
 const SWEEP_INTERVAL_MS = 5 * 60 * 1000; // sweep every 5 minutes
+// Safety net for the larger batch: flush whatever is buffered shortly after activity
+// quiets down, so a site that produces fewer than BATCH_SIZE reports (e.g. 7 found
+// pages) doesn't sit memory-only until the next run or the hourly sweep.
+const IDLE_FLUSH_MS = parseInt(process.env.AUDIT_IDLE_FLUSH_MS || "4000", 10);
 
 // Fields that carry a computed metric result (used for basic result logging).
 const METRIC_KEYS = [
@@ -156,6 +163,7 @@ function complete(id, patch = {}) {
     );
   }
   flushIfNeeded();
+  scheduleIdleFlush();
   return doc;
 }
 
@@ -221,6 +229,20 @@ function flushIfNeeded() {
     // fire-and-forget; errors handled inside flush()
     flush().catch((err) => logger.error("auditStore flush error", err));
   }
+}
+
+// Debounced "activity has settled" flush. The first buffered report arms a single
+// timer; by the time it fires, the rest of that site's parallel reports have landed
+// and flush() writes them all together. flush() no-ops if the threshold already
+// drained the buffer, so this is harmless when BATCH_SIZE is reached on its own.
+let idleFlushTimer = null;
+function scheduleIdleFlush() {
+  if (idleFlushTimer) return;
+  idleFlushTimer = setTimeout(() => {
+    idleFlushTimer = null;
+    if (pendingWrites.length) flush().catch((err) => logger.error("auditStore idle flush error", err));
+  }, IDLE_FLUSH_MS);
+  if (idleFlushTimer.unref) idleFlushTimer.unref();
 }
 
 /**

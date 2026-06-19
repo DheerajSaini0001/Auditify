@@ -51,6 +51,22 @@ const normalizeUrl = (raw) => {
     return u;
 };
 
+// Short, card-sized labels for each backend audit stage (the verbose, emoji-prefixed
+// strings the status endpoint returns are too long for a small card). Keyed by the
+// raw status the worker streams; falls back to the server message, then a generic line.
+const STAGE_LABELS = {
+    inprogress: 'Starting audit',
+    launching: 'Launching browser',
+    navigating: 'Opening your website',
+    waiting_for_render: 'Rendering the page',
+    screenshot_ready: 'Crawling the page',
+    extracting_data: 'Scoring sections',
+    completed: 'Report generated',
+    success: 'Report generated',
+    failed: 'Audit failed',
+};
+const stageLabel = (rawStatus, fallback) => STAGE_LABELS[rawStatus] || fallback || 'Analyzing…';
+
 /* ─────────────────────────────────────────
    Custom Dropdown (device / report scope)
 ───────────────────────────────────────── */
@@ -119,26 +135,37 @@ const CustomDropdown = ({ value, onChange, options, icon, darkMode, disabled }) 
 /* ─────────────────────────────────────────
    One page-type card
 ───────────────────────────────────────── */
-const PageCard = ({ def, phase, cat, darkMode, dimmed }) => {
+const PageCard = ({ def, phase, cat, darkMode, dimmed, audit }) => {
     const { Icon, label, desc } = def;
     const detecting = phase === 'detecting';
     const done = phase === 'done';
     const found = done && cat?.found;
     const missing = done && cat && !cat.found;
 
+    // Per-page audit overlay (set once "Run Full Audit" fires for this page).
+    const auditing = audit?.status === 'pending';
+    const audited = audit?.status === 'success';
+    const auditFailed = audit?.status === 'failed';
+
+    // A category can resolve to several pages (VDP sample, separate new/used SRPs).
+    const pageCount = cat?.pages?.length || (found ? 1 : 0);
+
     return (
         <div
             className={`relative flex flex-col gap-1.5 p-4 rounded-2xl border transition-all duration-300
                 ${darkMode ? 'bg-white/[0.04] border-white/10' : 'bg-card border-line'}
-                ${found ? 'ring-1 ring-emerald-500/40' : ''}
+                ${audited ? 'ring-1 ring-emerald-500/60' : auditing ? 'ring-1 ring-[#ea580c]/50' : found ? 'ring-1 ring-emerald-500/40' : ''}
                 ${dimmed ? 'opacity-40' : ''}`}
         >
-            {/* status badge top-right */}
+            {/* status badge top-right — audit state takes priority once it begins */}
             <div className="absolute top-3 right-3">
-                {detecting ? <Loader2 className="w-4 h-4 animate-spin text-[#ea580c]" />
-                    : found ? <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                        : missing ? <MinusCircle className="w-4 h-4 text-slate-400" />
-                            : <span className={`block w-4 h-4 rounded-full border-2 ${darkMode ? 'border-white/20' : 'border-line'}`} />}
+                {auditing ? <Loader2 className="w-4 h-4 animate-spin text-[#ea580c]" />
+                    : audited ? <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                        : auditFailed ? <AlertCircle className="w-4 h-4 text-rose-500" />
+                            : detecting ? <Loader2 className="w-4 h-4 animate-spin text-[#ea580c]" />
+                                : found ? <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                                    : missing ? <MinusCircle className="w-4 h-4 text-slate-400" />
+                                        : <span className={`block w-4 h-4 rounded-full border-2 ${darkMode ? 'border-white/20' : 'border-line'}`} />}
             </div>
 
             <div className={`flex items-center justify-center w-9 h-9 rounded-lg mb-0.5
@@ -155,21 +182,54 @@ const PageCard = ({ def, phase, cat, darkMode, dimmed }) => {
                 {detecting && <span className="text-[10px] font-semibold uppercase tracking-wider text-[#ea580c]">Detecting…</span>}
                 {found && (
                     <div className="space-y-0.5">
-                        <span className="block text-[10px] font-semibold uppercase tracking-wider text-emerald-500">✓ Auto-detected</span>
-                        <a
-                            href={cat.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={`block text-[11px] font-medium truncate hover:underline ${darkMode ? 'text-emerald-300' : 'text-emerald-600'}`}
-                            title={cat.url}
-                        >
-                            {prettyUrl(cat.url)}
-                        </a>
+                        <span className="block text-[10px] font-semibold uppercase tracking-wider text-emerald-500">
+                            ✓ Auto-detected{pageCount > 1 ? ` · ${pageCount} pages` : ''}
+                        </span>
+                        {(cat.pages?.length ? cat.pages : [{ url: cat.url }]).map((pg, i) => (
+                            <a
+                                key={pg.url || i}
+                                href={pg.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={`block text-[11px] font-medium truncate hover:underline ${darkMode ? 'text-emerald-300' : 'text-emerald-600'}`}
+                                title={pg.label ? `${pg.label} — ${pg.url}` : pg.url}
+                            >
+                                {pg.label && <span className="font-semibold">{pg.label}: </span>}
+                                {prettyUrl(pg.url)}
+                            </a>
+                        ))}
                     </div>
                 )}
                 {missing && <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Not found</span>}
                 {phase === 'idle' && <span className="text-[10px] font-semibold uppercase tracking-wider text-faint">Auto-detect</span>}
             </div>
+
+            {/* Audit progress row — appears below detection once the batch starts.
+                Shows live stage text (Launching browser → Rendering → Scoring…) so each
+                card mirrors the progress the old single-audit loading screen displayed. */}
+            {audit && (
+                <div className="mt-1.5 pt-1.5 border-t border-dashed border-current/10 min-h-[16px]">
+                    {auditing && (
+                        <div className="space-y-0.5">
+                            <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-[#ea580c]">
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                                Auditing{audit.progress ? ` · ${audit.progress}%` : '…'}
+                            </span>
+                            {audit.stage && (
+                                <span className={`block text-[10px] leading-snug truncate ${darkMode ? 'text-orange-300/80' : 'text-[#ea580c]/80'}`} title={audit.stage}>
+                                    {audit.stage}
+                                </span>
+                            )}
+                        </div>
+                    )}
+                    {audited && (
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-500">
+                            ✓ {audit.total > 1 ? `${audit.total} reports generated` : 'Report generated'}
+                        </span>
+                    )}
+                    {auditFailed && <span className="text-[10px] font-semibold uppercase tracking-wider text-rose-500">Audit failed</span>}
+                </div>
+            )}
         </div>
     );
 };
@@ -194,11 +254,26 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
     const [detectError, setDetectError] = useState(null);
     const auditTokenRef = useRef(null);               // guest grant, reused for the audit
 
+    // Parallel per-page audit state. `auditState[pageKey] = { status, id, progress, url, error }`
+    // where status is pending | success | failed. `batchRunning` guards re-entry; once the
+    // batch starts we stay on this page and surface progress on each card (no navigation).
+    const [auditState, setAuditState] = useState({});
+    const [batchRunning, setBatchRunning] = useState(false);
+    const cancelledRef = useRef(false);
+    // Reset on mount and only cancel on a real unmount. Without the reset, React
+    // StrictMode's dev double-mount (mount → cleanup → remount) would leave the ref
+    // stuck `true`, freezing every poll loop before it runs a single iteration.
+    useEffect(() => {
+        cancelledRef.current = false;
+        return () => { cancelledRef.current = true; };
+    }, []);
+
     // Optional "focus on specific page types" scope (defaults: all selected)
     const [scopes, setScopes] = useState(() => PAGE_TYPES.map((p) => p.key));
     const allSelected = scopes.length === PAGE_TYPES.length;
 
     const location = useLocation();
+    const navigate = useNavigate();
     const isAutoStarting = useRef(false);
 
     const catMap = useMemo(
@@ -249,10 +324,136 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         setShowVerify(true);
     };
 
-    // Step 2 — "Run Full Audit": hand off to the parent, which starts the audit + routes to the report.
-    const handleFullAudit = () => {
-        onSubmit(normalizeUrl(url), device, report, auditTokenRef.current);
+    // Collapse the backend's many in-flight stages to the 3 states a card cares about.
+    const normStatus = (raw) =>
+        raw === 'success' || raw === 'completed' ? 'success'
+            : raw === 'failed' ? 'failed'
+                : 'pending';
+
+    // Flatten the detected categories into one audit task per page. A category may
+    // own several pages now (VDP = a 5-car sample, SRP = separate new/used listings),
+    // so each task gets a unique `auditKey` and a display `label` that disambiguates
+    // the samples (e.g. "Vehicle Detail / VDP — Used 1"). `catKey` keeps the task tied
+    // back to its card for aggregate progress.
+    const buildTargets = () =>
+        (discovery?.categories || [])
+            .filter((c) => c.found && scopes.includes(c.key))
+            .flatMap((c) => {
+                const pages = (c.pages && c.pages.length ? c.pages : (c.url ? [{ url: c.url }] : []))
+                    .filter((pg) => pg.url);
+                const multi = pages.length > 1;
+                return pages.map((pg, i) => ({
+                    auditKey: `${c.key}__${i}`,
+                    catKey: c.key,
+                    url: pg.url,
+                    label: multi && pg.label ? `${c.label} — ${pg.label}` : c.label,
+                }));
+            });
+
+    // Audit ONE page: start it, then poll its status until terminal. State lives
+    // under the task's unique `auditKey` so every page updates independently; the
+    // resolved { catKey, auditKey, label, url, id, status } is handed to the summary.
+    const auditOnePage = async (target) => {
+        const { auditKey, catKey, label, url: targetUrl } = target;
+        setAuditState((prev) => ({ ...prev, [auditKey]: { catKey, label, status: 'pending', id: null, progress: 0, url: targetUrl, stage: 'Starting audit' } }));
+
+        const bearer = localStorage.getItem('dealerpulse_token');
+        const headers = { 'Content-Type': 'application/json', ...(bearer && { Authorization: `Bearer ${bearer}` }) };
+        const endpoint = bearer ? '/api/user/audit' : '/single-audit/audit';
+
+        try {
+            const res = await fetch(`${API_URL}${endpoint}`, {
+                method: 'POST',
+                credentials: 'include',
+                headers,
+                body: JSON.stringify({
+                    url: targetUrl,
+                    device,
+                    report,
+                    auditToken: auditTokenRef.current,
+                    screenResolution: `${window.screen.width}x${window.screen.height}`,
+                }),
+            });
+            let data = {};
+            try { data = await res.json(); } catch { /* empty */ }
+
+            if (!res.ok || !data._id) {
+                setAuditState((prev) => ({ ...prev, [auditKey]: { ...prev[auditKey], status: 'failed', error: data.error || data.message || `Failed (${res.status})` } }));
+                return { catKey, auditKey, label, url: targetUrl, id: null, status: 'failed' };
+            }
+
+            const id = data._id;
+            let status = normStatus(data.status);
+            setAuditState((prev) => ({ ...prev, [auditKey]: { ...prev[auditKey], id, status } }));
+
+            // Poll this report until it's generated (or fails). Each page polls
+            // independently. We poll quickly the first time (so even a fast/cached
+            // audit surfaces at least one progress update before it finishes), then
+            // settle into a steady 2.5s cadence.
+            let firstPoll = true;
+            while (status === 'pending' && !cancelledRef.current) {
+                await new Promise((r) => setTimeout(r, firstPoll ? 1000 : 2500));
+                firstPoll = false;
+                if (cancelledRef.current) return { catKey, auditKey, label, url: targetUrl, id, status };
+                try {
+                    const sres = await fetch(`${API_URL}/single-audit/${id}/status`, {
+                        credentials: 'include',
+                        headers: { ...(bearer && { Authorization: `Bearer ${bearer}` }) },
+                    });
+                    const sdata = await sres.json();
+                    status = normStatus(sdata.status);
+                    // The backend returns a clean, section-aware message (e.g.
+                    // "Analyzing your site — 3/7 sections scored"); prefer it, and fall
+                    // back to the raw-status label map only if it's ever missing.
+                    const stage = (sdata.message && String(sdata.message).trim()) || stageLabel(sdata.status);
+                    setAuditState((prev) => ({
+                        ...prev,
+                        [auditKey]: {
+                            ...prev[auditKey],
+                            status,
+                            progress: sdata.progress ?? prev[auditKey]?.progress ?? 0,
+                            stage,
+                        },
+                    }));
+                } catch { /* transient poll error — keep trying */ }
+            }
+            return { catKey, auditKey, label, url: targetUrl, id, status };
+        } catch {
+            setAuditState((prev) => ({ ...prev, [auditKey]: { ...prev[auditKey], status: 'failed', error: 'Could not reach the server.' } }));
+            return { catKey, auditKey, label, url: targetUrl, id: null, status: 'failed' };
+        }
+    };
+
+    // Step 2 — "Run Full Audit on These Pages": kick off an audit for every detected
+    // page IN PARALLEL (including the VDP sample + each inventory listing), surfacing
+    // per-card progress on this screen. Once every report is generated, hand the set
+    // to the intermediate Audit Summary page (overall score + page-type heatmap).
+    const handleFullAudit = async () => {
+        if (batchRunning) return;
+        const targets = buildTargets();
+        if (!targets.length) return;
+
+        setBatchRunning(true);
         window.history.replaceState(null, '', window.location.pathname);
+
+        const results = await Promise.all(targets.map(auditOnePage));
+        setBatchRunning(false);
+        if (cancelledRef.current) return;
+
+        // Keep pages that produced a report id (drop hard failures with no report).
+        const pages = results
+            .filter((r) => r && r.id)
+            .map((r) => ({ key: r.catKey, label: r.label, url: r.url, id: r.id, status: r.status }));
+        if (!pages.length) return;
+
+        // Let the freshly-completed ("✓ Report generated") cards land for a beat before
+        // handing off, so the run doesn't appear to jump straight to the summary.
+        await new Promise((r) => setTimeout(r, 1100));
+        if (cancelledRef.current) return;
+
+        const payload = { siteUrl: normalizeUrl(url), device, report, pages, createdAt: Date.now() };
+        try { sessionStorage.setItem('auditSummary', JSON.stringify(payload)); } catch { /* quota */ }
+        navigate('/audit-summary', { state: payload });
     };
 
     // Modal success → store grant, then detect.
@@ -305,6 +506,36 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
     const visibleTypes = PAGE_TYPES.filter((p) => scopes.includes(p.key));
     const foundCount = discovery?.categories?.filter((c) => c.found).length ?? 0;
     const sourceLabel = { sitemap: 'XML sitemap', robots: 'robots.txt → sitemap', crawl: 'link crawl', none: 'direct check' };
+
+    // Group the individual page-audit tasks by their card (catKey). The card uses
+    // this to surface each page's own status + a "view report" link the instant
+    // that page finishes — independent of the rest of the batch.
+    const tasksByCat = useMemo(() => {
+        const m = {};
+        for (const t of Object.values(auditState)) {
+            if (!t?.catKey) continue;
+            (m[t.catKey] = m[t.catKey] || []).push(t);
+        }
+        return m;
+    }, [auditState]);
+
+    // A category can fan out into several page audits (VDP sample, separate SRPs).
+    // Roll the individual task states up to one aggregate per card: combined %,
+    // a "done/total pages" stage, and a status that stays 'pending' until all land.
+    const auditByCat = useMemo(() => {
+        const agg = {};
+        for (const [catKey, tasks] of Object.entries(tasksByCat)) {
+            const total = tasks.length;
+            const done = tasks.filter((t) => t.status === 'success').length;
+            const failed = tasks.filter((t) => t.status === 'failed').length;
+            const pending = total - done - failed;
+            const progress = Math.round(tasks.reduce((s, t) => s + (t.progress || 0), 0) / total);
+            const status = pending > 0 ? 'pending' : done > 0 ? 'success' : 'failed';
+            const stage = total > 1 ? `${done}/${total} pages done` : tasks[0]?.stage;
+            agg[catKey] = { status, progress, stage, total, done, failed };
+        }
+        return agg;
+    }, [auditState]);
 
     const runBtnDisabled = isLoading || phase === 'detecting' || !url.trim();
 
@@ -388,10 +619,10 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                                 <button
                                     type="button"
                                     onClick={handleFullAudit}
-                                    disabled={isLoading}
+                                    disabled={batchRunning}
                                     className="ml-auto flex items-center gap-2 px-6 h-12 rounded-xl font-semibold text-[14px] tracking-tight shrink-0 border transition-all duration-300 active:scale-95 bg-gradient-to-r from-emerald-500 to-teal-600 border-emerald-500 text-white hover:from-emerald-400 hover:to-teal-500 shadow-lg shadow-emerald-600/25 hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed"
                                 >
-                                    {isLoading ? <><Loader2 className="animate-spin w-5 h-5" /> Starting…</> : <>Run Full Audit <ArrowRight size={16} /></>}
+                                    {batchRunning ? <><Loader2 className="animate-spin w-5 h-5" /> Auditing…</> : <>Run Full Audit <ArrowRight size={16} /></>}
                                 </button>
                             )}
                         </div>
@@ -470,7 +701,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                     >
                         {visibleTypes.map((def) => (
                             <motion.div key={def.key} variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}>
-                                <PageCard def={def} phase={phase} cat={catMap[def.key]} darkMode={darkMode} dimmed={false} />
+                                <PageCard def={def} phase={phase} cat={catMap[def.key]} darkMode={darkMode} dimmed={false} audit={auditByCat[def.key]} />
                             </motion.div>
                         ))}
                     </motion.div>
@@ -481,10 +712,10 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                             <button
                                 type="button"
                                 onClick={handleFullAudit}
-                                disabled={isLoading}
+                                disabled={batchRunning}
                                 className="flex items-center gap-2 px-8 py-3.5 rounded-xl font-semibold text-white shadow-lg transition-all bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 hover:shadow-emerald-500/25 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
                             >
-                                {isLoading ? <><Loader2 className="w-5 h-5 animate-spin" /> Starting audit…</> : <>Run Full Audit on These Pages <ArrowRight className="w-5 h-5" /></>}
+                                {batchRunning ? <><Loader2 className="w-5 h-5 animate-spin" /> Auditing pages…</> : <>Run Full Audit on These Pages <ArrowRight className="w-5 h-5" /></>}
                             </button>
                         </div>
                     )}

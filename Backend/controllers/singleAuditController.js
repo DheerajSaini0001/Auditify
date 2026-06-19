@@ -421,55 +421,70 @@ export const getReportStatusById = async (req, res) => {
       return res.status(404).json({ message: "Report not found or access denied" });
     }
 
-    // Memory first (no DB read on the in-progress 3s poll), then Mongo with a
-    // status-only projection and the same cooldown+retry as the full fetch.
-    const { doc: report, ok } = await resolveReport(req, id, "_id status screenshotUrl error");
+    // Memory first (no DB read on the in-progress 3s poll), then Mongo. We also need
+    // each section's Percentage so progress can track SECTION COMPLETION — the status
+    // field only moves through the browser/crawl phases, then sits still through the
+    // (longest) scoring phase, so on its own it stalls the bar. Project just the
+    // Percentage sub-fields (cheap) — never the full section objects or screenshot.
+    const { doc: report, ok } = await resolveReport(
+      req,
+      id,
+      "_id status screenshotUrl error technicalPerformance.Percentage onPageSEO.Percentage " +
+      "accessibility.Percentage securityOrCompliance.Percentage UXOrContentStructure.Percentage " +
+      "conversionAndLeadFlow.Percentage aioReadiness.Percentage"
+    );
     if (!report || !ok) {
       return res.status(404).json({ message: "Report not found or access denied" });
     }
 
+    // How many of the 7 dimensions have finished scoring. These stream in as the worker
+    // completes each metric, so this climbs steadily even while `status` is unchanged.
+    const SECTION_KEYS = [
+      "technicalPerformance", "onPageSEO", "accessibility", "securityOrCompliance",
+      "UXOrContentStructure", "conversionAndLeadFlow", "aioReadiness",
+    ];
+    const total = SECTION_KEYS.length;
+    const completedSections = SECTION_KEYS.filter(
+      (k) => report[k] && typeof report[k].Percentage === "number"
+    ).length;
+
+    // Browser/crawl phases own the first ~45%; section completion drives 45 → 100%.
+    // Mirrors the dashboard loading model so a page's progress never freezes mid-run.
+    const PHASES = {
+      launching: [10, "Launching browser"],
+      navigating: [20, "Opening your website"],
+      waiting_for_render: [30, "Rendering the page"],
+      screenshot_ready: [40, "Capturing the page"],
+      extracting_data: [45, "Scoring sections"],
+    };
+
     let progress = 0;
     let message = "";
-    switch (report.status) {
-      case "launching":
-        progress = 15;
-        message = "🚀 Launching browser...";
-        break;
-      case "navigating":
-        progress = 35;
-        message = "⏳ Navigating to URL...";
-        break;
-      case "waiting_for_render":
-        progress = 55;
-        message = "⏳ Waiting for website to fully load... (~20s)";
-        break;
-      case "screenshot_ready":
-        progress = 75;
-        message = "✅ Website loaded successfully — crawling this page";
-        break;
-      case "extracting_data":
-        progress = 90;
-        message = "🧠 Extracting audit data...";
-        break;
-      case "completed":
-        progress = 100;
-        message = "✅ Audit completed successfully!";
-        break;
-      case "failed":
-        progress = 100;
-        message = report.error || "❌ Audit failed";
-        break;
-      default:
-        progress = 0;
-        message = "Initializing...";
+    if (report.status === "failed") {
+      progress = 100;
+      message = report.error || "Audit failed";
+    } else if (report.status === "completed") {
+      progress = 100;
+      message = "Audit completed";
+    } else if (completedSections > 0) {
+      progress = Math.min(99, 45 + Math.round((completedSections / total) * 55));
+      message = `Analyzing your site — ${completedSections}/${total} sections scored`;
+    } else if (PHASES[report.status]) {
+      progress = PHASES[report.status][0];
+      message = PHASES[report.status][1];
+    } else {
+      progress = 8;
+      message = "Starting audit";
     }
 
-    res.status(200).json({ 
-      _id: report._id, 
-      status: report.status, 
-      screenshotUrl: report.screenshotUrl, 
-      progress, 
-      message 
+    res.status(200).json({
+      _id: report._id,
+      status: report.status,
+      screenshotUrl: report.screenshotUrl,
+      progress,
+      message,
+      completedSections,
+      totalSections: total,
     });
   } catch (error) {
     logger.error("Error fetching report status", error);

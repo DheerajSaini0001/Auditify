@@ -54,15 +54,61 @@ const MAX_CRAWL_PAGES = 60;
 // A VIN is 17 chars and never uses I, O, or Q — a strong VDP signal.
 const VIN_RE = /\b[a-hj-npr-z0-9]{17}\b/i;
 
-// VDP (single-vehicle page) detection, also reused to mine a VDP off an SRP.
+// A model year, 1900–2099.
+const YEAR = "(?:19|20)\\d{2}";
+
+// Automotive makes (mainstream, luxury, EV, and still-listed legacy brands),
+// with common abbreviations and hyphen variants. Anchoring year-slug VDP rules to
+// a real make keeps a non-vehicle page that merely carries a year (e.g.
+// "/2024-memorial-day-sale") from being mistaken for a vehicle detail page.
+const MAKE =
+  "(?:acura|alfa-?romeo|aston-?martin|audi|bentley|bmw|buick|cadillac|chevrolet|chevy|chrysler|dodge|ferrari|fiat|ford|genesis|gmc|honda|hummer|hyundai|infiniti|isuzu|jaguar|jeep|kia|lamborghini|land-?rover|lexus|lincoln|lotus|lucid|maserati|maybach|mazda|mclaren|mercedes(?:-?benz)?|mercury|mini|mitsubishi|nissan|oldsmobile|polestar|pontiac|porsche|ram|rivian|rolls-?royce|saab|saturn|scion|smart|subaru|suzuki|tesla|toyota|vinfast|volkswagen|vw|volvo)";
+
+// ── VDP (single-vehicle page) signals. A VDP always pins down ONE specific car,
+// so every rule keys off a single-vehicle marker: a VIN, a stock/vehicle id, an
+// explicit "details" segment, or a year+make in the slug. URL-only (never reads
+// the page); precompiled so classifying a large pool stays cheap. ──────────────
+const VDP_QUERY_RE = /[?&](?:vin|vehicleid|vehicle_id|vid|stocknumber|stocknum)=/i;
+const VDP_DETAIL_RE = /\/(vehicle-?details?|vehicle-?info(?:rmation)?|vdp|car-?details?|cardetails?)(\/|$)/;
+const VDP_ID_RE = /\/(vehicle|vehicles|listing|listings|detail|details|auto|car)\/\d{3,}(\/|$)/;
+const VDP_FOLDER_YEAR_RE = new RegExp(`\\/(?:inventory|vehicles?|new|used|certified|cpo|pre-?owned|auto)\\/[^/]*\\b${YEAR}\\b[^/]*\\/?$`);
+const VDP_YEAR_MAKE_RE = new RegExp(`\\/(?:[a-z0-9]+-)*${YEAR}-${MAKE}-`, "i"); // /2024-toyota-camry…
+const VDP_MAKE_YEAR_RE = new RegExp(`\\/${MAKE}-[a-z0-9-]*${YEAR}\\b`, "i");    // /toyota-camry-2024…
+
+// VDP detection, also reused to mine a VDP off an SRP. `path` is the normalized
+// (lowercased, no trailing slash) pathname; `url` is the full lowercased URL.
 const isVdp = (path, url) =>
-  /[?&]vin=/.test(url) ||
+  VDP_QUERY_RE.test(url) ||
   VIN_RE.test(path) ||
-  /\/(vehicle-details|vehicledetails|vdp)(\/|$)/.test(path) ||
-  // a detail page under inventory/new/used containing a model-year
-  /\/(inventory|vehicles?|new|used|certified|cpo|auto)\/[^/]*\b(19|20)\d{2}\b[^/]*\/?$/.test(path) ||
-  // year-make-model style slug, e.g. /2024-toyota-camry-le-…
-  /\/[a-z0-9]*-?(19|20)\d{2}-[a-z0-9][a-z0-9-]+\/?$/.test(path);
+  VDP_DETAIL_RE.test(path) ||
+  VDP_ID_RE.test(path) ||
+  VDP_FOLDER_YEAR_RE.test(path) ||
+  VDP_YEAR_MAKE_RE.test(path) ||
+  VDP_MAKE_YEAR_RE.test(path);
+
+// ── SRP (inventory listing / search-results) signals. A listing/landing page for
+// MANY vehicles — no single-car identifier. VDP is tested first in MATCH_ORDER, so
+// any slug carrying a VIN or year+make is already claimed as a VDP before this. ──
+const SRP_KEYWORDS_RE = new RegExp(
+  [
+    "inventory",                                                     // *-inventory, inventory-*
+    "showroom",
+    "for-?sale",                                                     // cars-for-sale, vehicles-for-sale
+    "pre-?owned",
+    "(?:new|used|certified|cpo|all|our|current|featured|available|shop|browse|view|search)-?(?:cars?|vehicles?|trucks?|suvs?|inventory|listings?)",
+    "(?:vehicle|car|auto)-?(?:search|finder|listings?)",
+    "search-?(?:new|used|inventory|vehicles?|cars?)",
+    "search(?:new|used)",                                            // Dealer.com / CDK: searchnew, searchused
+    "vehiclesearchresults",
+    "searchresults",
+  ].join("|")
+);
+// Bare category folders: /new  /used  /certified  /cpo  /pre-owned  /vehicles  /trucks …
+const SRP_FOLDER_RE = /^\/(new|used|certified|cpo|pre-?owned|vehicles?|cars?|trucks?|suvs?|sedans?|coupes?|vans?|minivans?|crossovers?|hatchbacks?|wagons?|convertibles?|hybrids?|electric|commercial(?:-vehicles?)?|fleet)\/?$/;
+// Model-filtered listings: /new/<make>  /used/<make>/<model>  /inventory/<make> … (no year ⇒ not a VDP)
+const SRP_MODEL_RE = new RegExp(`^\\/(?:new|used|certified|cpo|pre-?owned|inventory|vehicles)\\/${MAKE}(?:[-/]|$)`, "i");
+
+const isSrp = (p) => SRP_KEYWORDS_RE.test(p) || SRP_FOLDER_RE.test(p) || SRP_MODEL_RE.test(p);
 
 // ── Category matchers, in priority order. First match wins for a given URL, so
 // department-specific pages (service-specials, parts-specials, lease-specials)
@@ -83,12 +129,7 @@ const MATCH_ORDER = [
   { key: "service", test: (p) => /(service|repair|maintenance|oil-change|brakes?|express-lane)/.test(p) },
   { key: "parts", test: (p) => /(parts|accessor|tires?\b|wheels?\b)/.test(p) },
   { key: "specials", test: (p) => /(special|offer|deal|incentive|saving|clearance|promo|rebate)/.test(p) },
-  {
-    key: "srp",
-    test: (p) =>
-      /(inventory|showroom|cars?-for-sale|for-sale|pre-?owned|new-cars?|used-cars?|all-inventory|vehicle-search|view-inventory|browse)/.test(p) ||
-      /^\/(new|used|certified|cpo|vehicles?)\/?$/.test(p),
-  },
+  { key: "srp", test: (p) => isSrp(p) },
   {
     key: "about",
     test: (p) =>
@@ -113,6 +154,41 @@ const DISPLAY = [
 ];
 
 const normPath = (pathname) => (pathname.toLowerCase().replace(/\/+$/, "") || "/");
+
+// Resolve a URL to its checklist category (first match in MATCH_ORDER wins), or
+// null if it matches none. Shared by rankCandidates (bucketing) and the sitemap
+// early-exit check so both agree on exactly what counts as an SRP / VDP.
+function categoryOf(raw) {
+  let path, lower;
+  try {
+    const url = new URL(raw);
+    path = normPath(url.pathname);
+    lower = raw.toLowerCase();
+  } catch {
+    return null;
+  }
+  for (const def of MATCH_ORDER) {
+    if (def.test(path, lower)) return { key: def.key, path, lower };
+  }
+  return null;
+}
+
+// True once the pool already holds BOTH an inventory (SRP) page and a
+// vehicle-detail (VDP) page. Those two are what the large inventory sitemaps
+// exist to serve, so once we have one of each there's nothing the remaining
+// sitemaps can add that we still need — callers use this to stop reading early.
+function poolHasSrpAndVdp(pool) {
+  let srp = false;
+  let vdp = false;
+  for (const raw of pool) {
+    const c = categoryOf(raw);
+    if (!c) continue;
+    if (c.key === "srp") srp = true;
+    else if (c.key === "vdp") vdp = true;
+    if (srp && vdp) return true;
+  }
+  return false;
+}
 
 // SSRF-guarded GET. Returns empty/!ok on any block, error, or unsafe target.
 async function safeGet(url) {
@@ -147,6 +223,9 @@ async function collectFromSitemap(sitemapUrl, pool, depth = 0) {
       if (count++ >= MAX_CHILD_SITEMAPS || pool.size >= MAX_SITEMAP_URLS) break;
       const loc = sm?.loc?.[0];
       if (loc) await collectFromSitemap(loc.trim(), pool, depth + 1);
+      // Stop opening further child sitemaps the moment we have an inventory
+      // (SRP) page and a vehicle-detail (VDP) page — no need to read all of them.
+      if (poolHasSrpAndVdp(pool)) break;
     }
   }
 
@@ -227,25 +306,15 @@ const isDeadStatus = (status) => status === 404 || status === 410;
 function rankCandidates(pool) {
   const byCat = {};
   for (const raw of pool) {
-    let path, lower;
-    try {
-      const url = new URL(raw);
-      path = normPath(url.pathname);
-      lower = raw.toLowerCase();
-    } catch {
-      continue;
-    }
-    for (const def of MATCH_ORDER) {
-      if (def.test(path, lower)) {
-        const segs = path.split("/").filter(Boolean).length;
-        const score =
-          def.key === "vdp"
-            ? (/[?&]vin=/.test(lower) || VIN_RE.test(path) ? 0 : 1)
-            : segs * 1000 + path.length;
-        (byCat[def.key] = byCat[def.key] || []).push({ url: raw, score });
-        break; // first matching category wins for this URL
-      }
-    }
+    const c = categoryOf(raw);
+    if (!c) continue;
+    const { key, path, lower } = c;
+    const segs = path.split("/").filter(Boolean).length;
+    const score =
+      key === "vdp"
+        ? (/[?&]vin=/.test(lower) || VIN_RE.test(path) ? 0 : 1)
+        : segs * 1000 + path.length;
+    (byCat[key] = byCat[key] || []).push({ url: raw, score });
   }
   for (const key of Object.keys(byCat)) byCat[key].sort((a, b) => a.score - b.score);
   return byCat;
@@ -321,6 +390,9 @@ export async function discoverDealerPages(rawUrl) {
         sitemapUrl = sm;
         source = "robots";
       }
+      // Stop opening further robots.txt Sitemap: entries once we already have an
+      // inventory (SRP) and a vehicle-detail (VDP) page.
+      if (poolHasSrpAndVdp(pool)) break;
     }
     steps.push(
       robotsSitemaps.length

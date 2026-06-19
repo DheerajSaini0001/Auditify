@@ -94,18 +94,23 @@ export const requestAuditOTP = async (req, res) => {
       expiresAt: new Date(Date.now() + OTP_TTL_MS),
     });
 
-    await sendEmail({
-      to: email,
-      subject: 'Your Dealerpulse audit verification code',
-      html: otpEmailHtml(rawOTP),
-    });
-
-    logger.info(`[GuestAudit] Verification code sent to ${email}`);
-    return res.status(200).json({
+    // Respond as soon as the code is persisted — don't block the request on the
+    // SMTP round-trip (the slow part). The code is already valid in Mongo, so the
+    // user can enter it the instant the email lands; we dispatch it in background.
+    res.status(200).json({
       success: true,
       message: 'Verification code sent. Please check your email.',
       email,
     });
+
+    sendEmail({
+      to: email,
+      subject: 'Your Dealerpulse audit verification code',
+      html: otpEmailHtml(rawOTP),
+    })
+      .then(() => logger.info(`[GuestAudit] Verification code sent to ${email}`))
+      .catch((err) => logger.error(`[GuestAudit] Failed to send code to ${email}`, new Error(err.message)));
+    return;
   } catch (err) {
     logger.error('[GuestAudit] requestAuditOTP failed', new Error(err.message));
     return res.status(500).json({ success: false, message: 'Could not send verification code. Please try again.' });

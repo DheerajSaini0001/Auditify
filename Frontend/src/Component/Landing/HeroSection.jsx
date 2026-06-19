@@ -1,30 +1,54 @@
-import React, { useState, useRef, useContext, useEffect } from 'react';
+import React, { useState, useRef, useContext, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Monitor, Smartphone, Search, Zap, Loader2, AlertCircle,
-    ChevronDown, Settings, ArrowRight, Star,
-    BarChart2, Globe, Lock, Eye, TrendingUp, Cpu, Layers
+    Monitor, Smartphone, Search, Loader2, AlertCircle, ChevronDown, Settings, ArrowRight,
+    Globe, CheckCircle2, MinusCircle, Sparkles,
+    Home, LayoutGrid, Car, Tag, Repeat, Key, CreditCard, Wrench, Cog, Info, Newspaper,
 } from 'lucide-react';
 import AuditEmailVerifyModal from "../../Component/AuditEmailVerifyModal.jsx";
 import { ThemeContext } from '../../context/ThemeContext.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 
-/* ─────────────────────────────────────────
-   Audit type metadata – shown in the badge strip
-───────────────────────────────────────── */
-const AUDIT_TYPES = [
-    { icon: <TrendingUp size={13} />, label: "Speed & Vitals" },
-    { icon: <Search size={13} />, label: "Dealer SEO" },
-    { icon: <Eye size={13} />, label: "ADA Compliance" },
-    { icon: <Lock size={13} />, label: "Security Shield" },
-    { icon: <Layers size={13} />, label: "Inventory UX" },
-    { icon: <TrendingUp size={13} />, label: "Lead Flow" },
-    { icon: <Cpu size={13} />, label: "AI Search" },
-];
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
 
 /* ─────────────────────────────────────────
-   Custom Dropdown
+   Fixed dealership page-type catalog (Screen 01).
+   `key` matches the backend discovery categories[].key.
+───────────────────────────────────────── */
+const PAGE_TYPES = [
+    { key: 'home', label: 'Home Page', desc: 'Hero, brand, primary CTAs', Icon: Home },
+    { key: 'srp', label: 'Inventory / SRP', desc: 'Search results page, filters', Icon: LayoutGrid },
+    { key: 'vdp', label: 'Vehicle Detail / VDP', desc: 'Per-car detail + lead form', Icon: Car },
+    { key: 'specials', label: 'Special Offers', desc: 'Manufacturer + dealer specials', Icon: Tag },
+    { key: 'trade', label: 'Trade-In Tool', desc: 'KBB-style valuation, lead capture', Icon: Repeat },
+    { key: 'lease', label: 'Lease Specials', desc: 'Lease offers + calculator', Icon: Key },
+    { key: 'finance', label: 'Finance / Credit', desc: 'Credit app + payment calculator', Icon: CreditCard },
+    { key: 'service', label: 'Service & Repair', desc: 'Appt booking + service menu', Icon: Wrench },
+    { key: 'parts', label: 'Parts & Accessories', desc: 'Parts catalog + order form', Icon: Cog },
+    { key: 'about', label: 'About / Contact', desc: 'Hours, staff, directions', Icon: Info },
+    { key: 'content', label: 'Content / Blog', desc: 'Blog, news, resources', Icon: Newspaper },
+];
+
+const prettyPath = (url) => {
+    try { const u = new URL(url); return (u.pathname + u.search).replace(/\/$/, "") || "/"; }
+    catch { return url; }
+};
+
+// Full URL without the protocol (host + path), for printing on a detected card.
+const prettyUrl = (url) => {
+    try { const u = new URL(url); return (u.host + u.pathname + u.search).replace(/\/$/, ""); }
+    catch { return (url || "").replace(/^https?:\/\//, ""); }
+};
+
+const normalizeUrl = (raw) => {
+    let u = (raw || '').trim();
+    if (u && !/^https?:\/\//i.test(u)) u = `https://${u}`;
+    return u;
+};
+
+/* ─────────────────────────────────────────
+   Custom Dropdown (device / report scope)
 ───────────────────────────────────────── */
 const CustomDropdown = ({ value, onChange, options, icon, darkMode, disabled }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -46,18 +70,12 @@ const CustomDropdown = ({ value, onChange, options, icon, darkMode, disabled }) 
                 type="button"
                 disabled={disabled}
                 onClick={() => !disabled && setIsOpen(!isOpen)}
-                className={`
-                    flex items-center gap-2 px-4 h-11 rounded-xl cursor-pointer transition-all duration-200 group/drop border
+                className={`flex items-center gap-2 px-4 h-11 rounded-xl cursor-pointer transition-all duration-200 border
                     bg-[#FB8C4B] border-[#FB8C4B] hover:bg-[#F97316] hover:border-[#F97316] shadow-sm shadow-orange-500/20
-                    ${disabled ? "opacity-100 cursor-not-allowed" : "active:scale-[0.97]"}
-                `}
+                    ${disabled ? "opacity-60 cursor-not-allowed" : "active:scale-[0.97]"}`}
             >
-                <span className="flex-shrink-0 transition-colors text-white">
-                    {React.cloneElement(icon, { size: 16 })}
-                </span>
-                <span className="text-[13px] font-semibold uppercase tracking-wide truncate max-w-[110px] text-white">
-                    {selectedLabel}
-                </span>
+                <span className="flex-shrink-0 text-white">{React.cloneElement(icon, { size: 16 })}</span>
+                <span className="text-[13px] font-semibold uppercase tracking-wide truncate max-w-[110px] text-white">{selectedLabel}</span>
                 <ChevronDown className={`w-3 h-3 transition-transform duration-300 text-white ${isOpen ? "rotate-180" : ""}`} />
             </button>
 
@@ -68,12 +86,8 @@ const CustomDropdown = ({ value, onChange, options, icon, darkMode, disabled }) 
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 10 }}
                         transition={{ type: "spring", damping: 20, stiffness: 300 }}
-                        className={`absolute top-full mt-3 right-0 w-64 z-[1000] rounded-[1.5rem] shadow-2xl border overflow-hidden backdrop-blur-2xl p-2 
-                            ${darkMode
-                                ? "bg-slate-900/90 border-white/10 shadow-black/40"
-                                : "bg-card/90 border-line/60 shadow-line/50"
-                            }
-                        `}
+                        className={`absolute top-full mt-3 left-0 w-64 z-[1000] rounded-[1.5rem] shadow-2xl border overflow-hidden backdrop-blur-2xl p-2
+                            ${darkMode ? "bg-slate-900/90 border-white/10" : "bg-card/90 border-line/60"}`}
                     >
                         <div className="max-h-72 overflow-y-auto custom-scrollbar space-y-1">
                             {options.map((opt) => (
@@ -81,20 +95,13 @@ const CustomDropdown = ({ value, onChange, options, icon, darkMode, disabled }) 
                                     key={opt.value}
                                     type="button"
                                     onClick={() => { onChange(opt.value); setIsOpen(false); }}
-                                    className={`
-                                        w-full flex items-center justify-between px-4 py-3 text-[11px] font-semibold tracking-wide rounded-xl transition-all duration-200
+                                    className={`w-full flex items-center justify-between px-4 py-3 text-[11px] font-semibold tracking-wide rounded-xl transition-all duration-200
                                         ${value === opt.value
                                             ? (darkMode ? "bg-[#ea580c]/20 text-orange-400" : "bg-[#ea580c]/10 text-[#ea580c]")
-                                            : (darkMode ? "text-slate-400 hover:bg-white/5 hover:text-white" : "text-muted hover:bg-cardsoft hover:text-ink")}
-                                    `}
+                                            : (darkMode ? "text-slate-400 hover:bg-white/5 hover:text-white" : "text-muted hover:bg-cardsoft hover:text-ink")}`}
                                 >
                                     <span className="truncate pr-2">{opt.label}</span>
-                                    {value === opt.value && (
-                                        <motion.div
-                                            layoutId="active-dot"
-                                            className="w-1.5 h-1.5 rounded-full bg-[#ea580c]"
-                                        />
-                                    )}
+                                    {value === opt.value && <span className="w-1.5 h-1.5 rounded-full bg-[#ea580c]" />}
                                 </button>
                             ))}
                         </div>
@@ -106,108 +113,65 @@ const CustomDropdown = ({ value, onChange, options, icon, darkMode, disabled }) 
 };
 
 /* ─────────────────────────────────────────
-   Animated Score Circle
+   One page-type card
 ───────────────────────────────────────── */
-const ScoreRing = ({ score, color, label, delay = 0 }) => {
-    const r = 36;
-    const circ = 2 * Math.PI * r;
-    const offset = circ - (score / 100) * circ;
-    const [currentScore, setCurrentScore] = useState(0);
-
-    useEffect(() => {
-        let startTime;
-        let animationFrame;
-        const duration = 1500; // 1.5s
-        const delayMs = delay * 1000;
-
-        const updateScore = (timestamp) => {
-            if (!startTime) startTime = timestamp;
-            const elapsed = timestamp - startTime;
-
-            if (elapsed < delayMs) {
-                animationFrame = requestAnimationFrame(updateScore);
-                return;
-            }
-
-            const activeElapsed = elapsed - delayMs;
-            const progress = Math.min(activeElapsed / duration, 1);
-            const easeOutProgress = 1 - Math.pow(1 - progress, 3);
-
-            setCurrentScore(Math.floor(easeOutProgress * score));
-
-            if (progress < 1) {
-                animationFrame = requestAnimationFrame(updateScore);
-            }
-        };
-
-        animationFrame = requestAnimationFrame(updateScore);
-        return () => cancelAnimationFrame(animationFrame);
-    }, [score, delay]);
+const PageCard = ({ def, phase, cat, darkMode, dimmed }) => {
+    const { Icon, label, desc } = def;
+    const detecting = phase === 'detecting';
+    const done = phase === 'done';
+    const found = done && cat?.found;
+    const missing = done && cat && !cat.found;
 
     return (
-        <div className="relative flex flex-col items-center justify-center">
-            <div className="relative mb-3">
-                <svg width="78" height="78" viewBox="0 0 88 88" className="-rotate-90 drop-shadow-md">
-                    <circle cx="44" cy="44" r={r} strokeWidth="8" fill="none" stroke="rgba(255,255,255,0.05)" />
-                    <motion.circle
-                        cx="44" cy="44" r={r} strokeWidth="8" fill="none"
-                        strokeLinecap="round" strokeDasharray={circ}
-                        initial={{ strokeDashoffset: circ }}
-                        animate={{ strokeDashoffset: offset }}
-                        transition={{ duration: 1.5, delay, ease: "easeOut" }}
-                        stroke="#20C45F"
-                    />
-                </svg>
-                <span className="absolute inset-0 flex items-center justify-center text-[28px] font-black tracking-tight drop-shadow-sm " >
-                    {currentScore}
-                </span>
+        <div
+            className={`relative flex flex-col gap-1.5 p-4 rounded-2xl border transition-all duration-300
+                ${darkMode ? 'bg-white/[0.04] border-white/10' : 'bg-card border-line'}
+                ${found ? 'ring-1 ring-emerald-500/40' : ''}
+                ${dimmed ? 'opacity-40' : ''}`}
+        >
+            {/* status badge top-right */}
+            <div className="absolute top-3 right-3">
+                {detecting ? <Loader2 className="w-4 h-4 animate-spin text-[#ea580c]" />
+                    : found ? <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                        : missing ? <MinusCircle className="w-4 h-4 text-slate-400" />
+                            : <span className={`block w-4 h-4 rounded-full border-2 ${darkMode ? 'border-white/20' : 'border-line'}`} />}
             </div>
-            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-ink">
-                {label}
-            </span>
+
+            <div className={`flex items-center justify-center w-9 h-9 rounded-lg mb-0.5
+                ${found ? 'bg-emerald-500/10 text-emerald-500'
+                    : detecting ? 'bg-[#ea580c]/10 text-[#ea580c]'
+                        : darkMode ? 'bg-white/5 text-slate-300' : 'bg-cardsoft text-inksoft'}`}>
+                <Icon className="w-5 h-5" />
+            </div>
+
+            <h4 className={`text-sm font-bold leading-tight pr-5 ${darkMode ? 'text-white' : 'text-ink'}`}>{label}</h4>
+            <p className={`text-[11px] leading-snug ${darkMode ? 'text-slate-400' : 'text-muted'}`}>{desc}</p>
+
+            <div className="mt-1 min-h-[16px]">
+                {detecting && <span className="text-[10px] font-semibold uppercase tracking-wider text-[#ea580c]">Detecting…</span>}
+                {found && (
+                    <div className="space-y-0.5">
+                        <span className="block text-[10px] font-semibold uppercase tracking-wider text-emerald-500">✓ Auto-detected</span>
+                        <a
+                            href={cat.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`block text-[11px] font-medium truncate hover:underline ${darkMode ? 'text-emerald-300' : 'text-emerald-600'}`}
+                            title={cat.url}
+                        >
+                            {prettyUrl(cat.url)}
+                        </a>
+                    </div>
+                )}
+                {missing && <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Not found</span>}
+                {phase === 'idle' && <span className="text-[10px] font-semibold uppercase tracking-wider text-faint">Auto-detect</span>}
+            </div>
         </div>
     );
 };
 
 /* ─────────────────────────────────────────
-   Typing URL Component
-───────────────────────────────────────── */
-const TypingURL = () => {
-    const urls = ["YourWebsite.com", "AcmeMotors.com", "AutoDealer.net"];
-    const [currentUrl, setCurrentUrl] = useState('');
-    const [urlIndex, setUrlIndex] = useState(0);
-    const [isDeleting, setIsDeleting] = useState(false);
-
-    useEffect(() => {
-        let timeout;
-        const targetUrl = urls[urlIndex];
-
-        if (!isDeleting) {
-            if (currentUrl.length < targetUrl.length) {
-                timeout = setTimeout(() => setCurrentUrl(targetUrl.slice(0, currentUrl.length + 1)), 80 + Math.random() * 50);
-            } else {
-                timeout = setTimeout(() => setIsDeleting(true), 2500);
-            }
-        } else {
-            if (currentUrl.length > 0) {
-                timeout = setTimeout(() => setCurrentUrl(targetUrl.slice(0, currentUrl.length - 1)), 40);
-            } else {
-                setIsDeleting(false);
-                setUrlIndex((prev) => (prev + 1) % urls.length);
-            }
-        }
-        return () => clearTimeout(timeout);
-    }, [currentUrl, isDeleting, urlIndex, urls]);
-
-    return (
-        <span className="text-ink text-[13px] font-medium tracking-wide">
-            {currentUrl}<span className="animate-pulse opacity-70">|</span>
-        </span>
-    );
-};
-
-/* ─────────────────────────────────────────
-   Main Hero
+   Screen 01 — Audit Input
 ───────────────────────────────────────── */
 const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
     const { theme } = useContext(ThemeContext);
@@ -219,360 +183,316 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
     const [report, setReport] = useState('All');
     const [showVerify, setShowVerify] = useState(false);
     const [localError, setLocalError] = useState(null);
-    const [focused, setFocused] = useState(false);
 
-    const navigate = useNavigate();
+    // Discovery state
+    const [phase, setPhase] = useState('idle');       // idle | detecting | done
+    const [discovery, setDiscovery] = useState(null);
+    const [detectError, setDetectError] = useState(null);
+    const auditTokenRef = useRef(null);               // guest grant, reused for the audit
+
+    // Optional "focus on specific page types" scope (defaults: all selected)
+    const [scopes, setScopes] = useState(() => PAGE_TYPES.map((p) => p.key));
+    const allSelected = scopes.length === PAGE_TYPES.length;
+
     const location = useLocation();
     const isAutoStarting = useRef(false);
 
-    useEffect(() => {
-        const params = new URLSearchParams(location.search);
-        const queryUrl = params.get("url");
-        const queryDevice = params.get("device");
-        const queryReport = params.get("report");
+    const catMap = useMemo(
+        () => Object.fromEntries((discovery?.categories || []).map((c) => [c.key, c])),
+        [discovery]
+    );
 
-        if (queryUrl && !isAutoStarting.current) {
-            // Normalize device to match backend expectation ('Desktop' or 'Mobile')
-            let deviceToUse = queryDevice || device;
-            if (deviceToUse) {
-                deviceToUse = deviceToUse.charAt(0).toUpperCase() + deviceToUse.slice(1).toLowerCase();
-            }
-            if (deviceToUse !== 'Desktop' && deviceToUse !== 'Mobile') deviceToUse = 'Desktop';
-
-            setUrl(queryUrl);
-            setDevice(deviceToUse);
-            if (queryReport) setReport(queryReport);
-
-            isAutoStarting.current = true;
-
-            // If logged in, skip captcha and run
-            if (user || localStorage.getItem('dealerpulse_token')) {
-                let urlToFetch = queryUrl.trim();
-                if (!/^https?:\/\//i.test(urlToFetch)) urlToFetch = `https://${urlToFetch}`;
-                onSubmit(urlToFetch, deviceToUse, queryReport || report, null);
-
-                // Clear the search query parameters silently from the address bar without disrupting the async React state triggers
-                window.history.replaceState(null, '', window.location.pathname);
-            } else {
-                setShowVerify(true);
-            }
+    // Run page discovery (sitemap → robots.txt → crawl) against the entered URL.
+    const detect = async (urlToScan, token) => {
+        setPhase('detecting');
+        setDiscovery(null);
+        setDetectError(null);
+        try {
+            const bearer = localStorage.getItem('dealerpulse_token');
+            const res = await fetch(`${API_URL}/single-audit/discover`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(bearer && { Authorization: `Bearer ${bearer}` }),
+                    ...(token && { 'x-audit-token': token }),
+                },
+                body: JSON.stringify({ url: urlToScan }),
+            });
+            let data = {};
+            try { data = await res.json(); } catch { /* empty */ }
+            if (!res.ok) setDetectError(data?.error || data?.message || `Detection failed (${res.status}).`);
+            else setDiscovery(data);
+        } catch {
+            setDetectError('Could not reach the server to detect pages.');
+        } finally {
+            setPhase('done');
         }
-    }, [location.search, navigate, location.pathname, user]);
+    };
 
-    const handleInitialSubmit = (e) => {
-        e.preventDefault();
+    // Step 1 — "Run Audit": validate, gate guests behind email verification, then detect.
+    const beginFlow = (token, rawUrl) => {
+        const urlToScan = normalizeUrl(rawUrl ?? url);
+        auditTokenRef.current = token || null;
+        detect(urlToScan, token || null);
+    };
+
+    const handleRun = (e) => {
+        e?.preventDefault?.();
         setLocalError(null);
-        if (!url.trim()) {
-            setLocalError("Please enter a URL to get started.");
-            return;
-        }
-
-        if (user) {
-            let urlToFetch = url.trim();
-            if (!/^https?:\/\//i.test(urlToFetch)) urlToFetch = `https://${urlToFetch}`;
-            onSubmit(urlToFetch, device, report, null);
-            return;
-        }
-
+        if (!url.trim()) { setLocalError("Please enter a URL to get started."); return; }
+        if (user) { beginFlow(null); return; }
         setShowVerify(true);
     };
 
-    // Called by the email-verification modal once the OTP is confirmed: it hands
-    // back a short-lived audit grant token, which we pass straight to the audit.
-    const handleVerified = (auditToken) => {
-        setShowVerify(false);
-        let urlToFetch = url.trim();
-        if (!/^https?:\/\//i.test(urlToFetch)) urlToFetch = `https://${urlToFetch}`;
-        onSubmit(urlToFetch, device, report, auditToken);
-
-        // Clear the search query parameters silently from the address bar
+    // Step 2 — "Run Full Audit": hand off to the parent, which starts the audit + routes to the report.
+    const handleFullAudit = () => {
+        onSubmit(normalizeUrl(url), device, report, auditTokenRef.current);
         window.history.replaceState(null, '', window.location.pathname);
     };
 
-    // If the audit is rejected because the grant is missing/expired, re-open the modal.
+    // Modal success → store grant, then detect.
+    const handleVerified = (auditToken) => {
+        setShowVerify(false);
+        beginFlow(auditToken);
+    };
+
+    // Changing the URL invalidates a previous scan.
+    const onUrlChange = (v) => {
+        setUrl(v);
+        if (phase !== 'idle') { setPhase('idle'); setDiscovery(null); setDetectError(null); }
+    };
+
+    // Deep link: ?url= auto-starts the flow (logged-in detect immediately; guests verify first).
     useEffect(() => {
-        if (externalError && /verify your email|email verification/i.test(externalError)) {
+        const params = new URLSearchParams(location.search);
+        const queryUrl = params.get("url");
+        if (!queryUrl || isAutoStarting.current) return;
+
+        let deviceToUse = params.get("device") || device;
+        deviceToUse = deviceToUse.charAt(0).toUpperCase() + deviceToUse.slice(1).toLowerCase();
+        if (deviceToUse !== 'Desktop' && deviceToUse !== 'Mobile') deviceToUse = 'Desktop';
+        const queryReport = params.get("report");
+
+        setUrl(queryUrl);
+        setDevice(deviceToUse);
+        if (queryReport) setReport(queryReport);
+        isAutoStarting.current = true;
+
+        if (user || localStorage.getItem('dealerpulse_token')) {
+            beginFlow(null, queryUrl);
+            window.history.replaceState(null, '', window.location.pathname);
+        } else {
             setShowVerify(true);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [location.search, user]);
+
+    // Audit rejected for a missing/expired grant → re-open the verify modal.
+    useEffect(() => {
+        if (externalError && /verify your email|email verification/i.test(externalError)) setShowVerify(true);
     }, [externalError]);
 
     const error = externalError || localError;
 
-    /* ── stagger variants ── */
-    const container = { hidden: {}, show: { transition: { staggerChildren: 0.1 } } };
-    const item = { hidden: { opacity: 0, y: 22 }, show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } } };
+    const toggleScope = (key) =>
+        setScopes((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
+
+    const visibleTypes = PAGE_TYPES.filter((p) => scopes.includes(p.key));
+    const foundCount = discovery?.categories?.filter((c) => c.found).length ?? 0;
+    const sourceLabel = { sitemap: 'XML sitemap', robots: 'robots.txt → sitemap', crawl: 'link crawl', none: 'direct check' };
+
+    const runBtnDisabled = isLoading || phase === 'detecting' || !url.trim();
 
     return (
-        <section className={`relative -mt-[2px] flex items-center justify-center pt-4 lg:pt-6 pb-6 transition-colors duration-500 z-[40] ${darkMode ? '' : 'bg-surface'}`}
-           style={darkMode ? {
-  background: 'linear-gradient(to right, #1E3A8A, #1E47C3)',
-} : undefined}
+        <section
+            className={`relative flex flex-col items-center pt-10 pb-16 px-5 sm:px-6 transition-colors duration-500 ${darkMode ? '' : 'bg-surface'}`}
+            style={darkMode ? { background: 'linear-gradient(to bottom, #0B1120, #0A0520)' } : undefined}
         >
+            <div className="w-full max-w-6xl mx-auto">
 
+                {/* ── Hero copy ── */}
+                <div className="text-center max-w-3xl mx-auto space-y-4">
+                    <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-semibold uppercase tracking-[0.22em] border bg-[#ea580c]/15 border-[#ea580c]/30 ${darkMode ? 'text-orange-200' : 'text-accent'}`}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#ea580c] animate-pulse inline-block" />
+                        Dealer Website Audit Platform
+                    </span>
 
-            <div className="container mx-auto px-5 sm:px-6 relative z-10 flex flex-col lg:flex-row items-center gap-8 md:gap-10 lg:gap-12 xl:gap-14 max-w-7xl">
+                    <h1 className={`text-[clamp(2rem,4.6vw,3.25rem)] font-extrabold leading-[1.05] tracking-[-0.03em] ${darkMode ? 'text-white' : 'text-ink'}`}>
+                        Audit any dealer site in{" "}
+                        <span className="text-[#EA580B]">48 hours</span>
+                    </h1>
 
-                {/* ── LEFT: Copy + Form ── */}
-                <motion.div
-                    variants={container}
-                    initial="hidden"
-                    animate="show"
-                    className="flex-[1.15] text-center lg:text-left space-y-5"
-                >
-                    {/* Badge */}
-                    <motion.div variants={item} className="flex justify-center lg:justify-start">
-                        <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-semibold uppercase tracking-[0.22em] border bg-[#ea580c]/15 border-[#ea580c]/30 ${darkMode ? 'text-orange-200' : 'text-accent'}`}>
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#ea580c] animate-pulse inline-block" />
-                            Dealer Website Audit Platform
-                        </span>
-                    </motion.div>
+                    <p className={`text-[clamp(0.95rem,1.4vw,1.125rem)] font-medium leading-relaxed max-w-2xl mx-auto ${darkMode ? 'text-slate-300' : 'text-inksoft'}`}>
+                        Drop a URL. We crawl the right pages, score them on 7 dealer-specific parameters,
+                        and hand back a fix list ranked by impact.
+                    </p>
+                </div>
 
-                    {/* Headline */}
-                    <motion.div variants={item} className="space-y-3">
-                        <h2 className="text-[clamp(2rem,4.6vw,3.25rem)] font-extrabold leading-[1.05] tracking-[-0.03em] text-ink">
-                            Your Dealership,{" "}
-                            <br className="hidden lg:block" />
-                            <span className="relative inline-block">
-                                <span className="text-[clamp(2rem,4.6vw,3.25rem)] font-extrabold leading-[1.05] tracking-[-0.03em] text-[#EA580B]">
-                                    Fully Audited.
-                                </span>
-                                {/* Underline accent */}
-                                <svg className="absolute -bottom-1 left-0 w-full" height="6" viewBox="0 0 300 6" fill="none" preserveAspectRatio="none">
-                                    <path d="M0 5 Q75 1 150 4 T300 3" stroke="#ea580c" strokeWidth="2" strokeLinecap="round" fill="none" vectorEffect="non-scaling-stroke" />
-                                </svg>
-                            </span>
-                        </h2>
+                {/* ── URL input form ── */}
+                <form onSubmit={handleRun} className="relative max-w-3xl mx-auto mt-8 z-[60]">
+                    <div className={`rounded-[2rem] border p-4 sm:p-5 backdrop-blur-2xl shadow-2xl shadow-black/20 ${darkMode ? 'bg-[#111a33]/80 border-white/10' : 'bg-card border-line'}`}>
+                        <div className="flex items-center px-3 h-12 gap-3">
+                            <Globe className={`flex-shrink-0 w-4 h-4 ${darkMode ? 'text-slate-400' : 'text-muted'}`} />
+                            <input
+                                type="text"
+                                autoComplete="off"
+                                spellCheck="false"
+                                value={url}
+                                onChange={(e) => onUrlChange(e.target.value)}
+                                placeholder="https://yourdealership.com"
+                                disabled={isLoading}
+                                className={`flex-1 bg-transparent outline-none text-[15px] font-medium placeholder:text-faint ${darkMode ? 'text-white' : 'text-ink'}`}
+                            />
+                        </div>
 
-                        <p className="text-[clamp(0.95rem,1.4vw,1.125rem)] font-medium leading-relaxed max-w-xl mx-auto lg:mx-0 text-inksoft">
-                            Turn clicks into showroom sales. Scan your website in seconds across seven critical automotive performance dimensions — from Core Web Vitals to AI-Search readiness.
-                        </p>
-                    </motion.div>
+                        <div className={`flex flex-wrap lg:flex-nowrap items-center gap-3 mt-3 ${darkMode ? 'text-white' : 'text-ink'}`}>
+                            <CustomDropdown
+                                value={device} onChange={setDevice}
+                                options={[{ value: "Desktop", label: "Desktop" }, { value: "Mobile", label: "Mobile" }]}
+                                icon={device === "Desktop" ? <Monitor /> : <Smartphone />}
+                                darkMode={darkMode} disabled={isLoading}
+                            />
+                            <CustomDropdown
+                                value={report} onChange={setReport}
+                                options={[
+                                    { value: "All", label: "Full Audit (All 7)" },
+                                    { value: "Technical Performance", label: "Technical Performance" },
+                                    { value: "On Page SEO", label: "On Page SEO" },
+                                    { value: "Accessibility", label: "Accessibility" },
+                                    { value: "Security/Compliance", label: "Security/Compliance" },
+                                    { value: "UX & Content Structure", label: "UX & Content Structure" },
+                                    { value: "Conversion & Lead Flow", label: "Conversion & Lead Flow" },
+                                    { value: "AIO (AI-Optimization) Readiness", label: "AIO (AI-Search) Readiness" },
+                                ]}
+                                icon={<Settings />} darkMode={darkMode} disabled={isLoading}
+                            />
 
-                    {/* Audit type pills */}
-                    <motion.div variants={item}
-                        className="flex flex-wrap justify-center lg:justify-start gap-2"
-                    >
-                        {AUDIT_TYPES.map((a, i) => (
-                            <motion.span
-                                key={a.label}
-                                initial={{ opacity: 0, scale: 0.85 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ delay: 0.4 + i * 0.06 }}
-                                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold border ${darkMode ? 'bg-white/5 border-white/10 text-white' : 'bg-card border-line text-inksoft'}`}
+                            {/* Primary button: Run Audit (detect) → Run Full Audit (audit) */}
+                            {phase !== 'done' ? (
+                                <button
+                                    type="submit"
+                                    disabled={runBtnDisabled}
+                                    className={`ml-auto flex items-center gap-2 px-6 h-12 rounded-xl font-semibold text-[14px] tracking-tight shrink-0 border transition-all duration-300 active:scale-95
+                                        ${runBtnDisabled
+                                            ? (darkMode ? "bg-slate-800 border-slate-700 text-slate-500 cursor-not-allowed" : "bg-cardsoft border-line text-faint cursor-not-allowed")
+                                            : "bg-[#EA580B] border-[#EA580B] text-white hover:bg-[#C2410C] hover:border-[#C2410C] shadow-lg shadow-orange-600/25 hover:-translate-y-0.5"}`}
+                                >
+                                    {phase === 'detecting' ? <><Loader2 className="animate-spin w-5 h-5" /> Scanning…</> : <>Run Audit <ArrowRight size={16} /></>}
+                                </button>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={handleFullAudit}
+                                    disabled={isLoading}
+                                    className="ml-auto flex items-center gap-2 px-6 h-12 rounded-xl font-semibold text-[14px] tracking-tight shrink-0 border transition-all duration-300 active:scale-95 bg-gradient-to-r from-emerald-500 to-teal-600 border-emerald-500 text-white hover:from-emerald-400 hover:to-teal-500 shadow-lg shadow-emerald-600/25 hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed"
+                                >
+                                    {isLoading ? <><Loader2 className="animate-spin w-5 h-5" /> Starting…</> : <>Run Full Audit <ArrowRight size={16} /></>}
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Auto-detect callout */}
+                    <p className={`mt-3 flex items-center justify-center gap-2 text-xs font-medium ${darkMode ? 'text-slate-400' : 'text-muted'}`}>
+                        <Sparkles className="w-3.5 h-3.5 text-[#ea580c]" />
+                        One URL → we auto-detect all {PAGE_TYPES.length} dealer page types below.
+                    </p>
+
+                    <AnimatePresence>
+                        {error && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+                                className="mt-3 flex items-center gap-2.5 px-4 py-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm font-medium"
                             >
-                                <span className="text-orange-400">{a.icon}</span>
-                                {a.label}
-                            </motion.span>
+                                <AlertCircle size={16} className="flex-shrink-0" />{error}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </form>
+
+                {/* ── Auto-detect section ── */}
+                <div className="mt-12">
+                    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-5">
+                        <div>
+                            <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-ink'}`}>
+                                {phase === 'done'
+                                    ? `Detected ${foundCount} of ${PAGE_TYPES.length} key pages on your site`
+                                    : "We'll auto-detect and audit these pages on your site"}
+                            </h3>
+                            {phase === 'done' && discovery && (
+                                <p className={`text-xs mt-1 ${darkMode ? 'text-slate-400' : 'text-muted'}`}>
+                                    via {sourceLabel[discovery.source] || discovery.source}
+                                    {discovery.sitemapUrl ? ` · ${prettyPath(discovery.sitemapUrl)}` : ''}
+                                </p>
+                            )}
+                            {phase === 'done' && detectError && (
+                                <p className="text-xs mt-1 text-amber-500">{detectError} — you can still run the full audit.</p>
+                            )}
+                        </div>
+
+                        {/* Focus scope */}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className={`text-[11px] font-semibold uppercase tracking-wider mr-1 ${darkMode ? 'text-slate-500' : 'text-faint'}`}>Focus:</span>
+                            <button
+                                type="button"
+                                onClick={() => setScopes(PAGE_TYPES.map((p) => p.key))}
+                                className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-colors
+                                    ${allSelected ? 'bg-[#ea580c]/15 border-[#ea580c]/30 text-[#ea580c]' : darkMode ? 'border-white/10 text-slate-400 hover:bg-white/5' : 'border-line text-muted hover:bg-cardsoft'}`}
+                            >
+                                All
+                            </button>
+                            {PAGE_TYPES.map((p) => {
+                                const on = scopes.includes(p.key) && !allSelected;
+                                return (
+                                    <button
+                                        key={p.key}
+                                        type="button"
+                                        onClick={() => toggleScope(p.key)}
+                                        className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-colors
+                                            ${on ? 'bg-[#ea580c]/15 border-[#ea580c]/30 text-[#ea580c]' : darkMode ? 'border-white/10 text-slate-400 hover:bg-white/5' : 'border-line text-muted hover:bg-cardsoft'}`}
+                                    >
+                                        {p.label.split(' / ')[0]}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    <motion.div
+                        initial="hidden" animate="show"
+                        variants={{ hidden: {}, show: { transition: { staggerChildren: 0.04 } } }}
+                        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"
+                    >
+                        {visibleTypes.map((def) => (
+                            <motion.div key={def.key} variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}>
+                                <PageCard def={def} phase={phase} cat={catMap[def.key]} darkMode={darkMode} dimmed={false} />
+                            </motion.div>
                         ))}
                     </motion.div>
 
-                    {/* ── URL Input Form ── */}
-                    <motion.form
-                        variants={item}
-                        onSubmit={handleInitialSubmit}
-                        className="relative max-w-2xl mx-auto lg:mx-0 z-[60]"
-                    >
-                        <motion.div
-                            animate={focused
-                                ? { boxShadow: '0 0 0 2px rgba(234,88,12,0.35), 0 40px 100px rgba(0,0,0,0.6)' }
-                                : { boxShadow: '0 40px 100px rgba(0,0,0,0.5)' }
-                            }
-                            transition={{ duration: 0.3 }}
-                            className={`relative z-10 rounded-[2rem] border p-5 space-y-4 backdrop-blur-2xl ${darkMode ? 'bg-[#566ACB]/70 border-white/8' : 'bg-card border-line'}`}
-                        >
-                            {/* Input row */}
-                            <div className="flex items-center px-4 h-12 gap-3">
-                                <Globe className={`flex-shrink-0 w-4 h-4 transition-colors duration-300
-                                    ${darkMode ? 'text-white' : 'text-muted'}`}
-                                />
-                                <input
-                                    type="text"
-                                    autoComplete="off"
-                                    spellCheck="false"
-                                    value={url}
-                                    onChange={(e) => setUrl(e.target.value)}
-                                    onFocus={() => setFocused(true)}
-                                    onBlur={() => setFocused(false)}
-                                    placeholder="Enter your website URL — e.g. yoursite.com"
-                                    disabled={isLoading}
-                                    className={`flex-1 bg-transparent outline-none text-[15px] font-medium placeholder:text-faint ${darkMode ? 'text-white' : 'text-ink'}`}
-                                />
-                            </div>
-
-                            {/* Divider + Options row */}
-                            <div className={`flex flex-wrap lg:flex-nowrap items-center gap-3 ${darkMode ? 'text-white' : 'text-ink'}`}>
-                                <CustomDropdown
-                                    value={device}
-                                    onChange={setDevice}
-                                    options={[
-                                        { value: "Desktop", label: "Desktop" },
-                                        { value: "Mobile", label: "Mobile" },
-                                    ]}
-                                    icon={device === "Desktop" ? <Monitor /> : <Smartphone />}
-                                    darkMode={darkMode}
-                                    disabled={isLoading}
-                                />
-                                <CustomDropdown
-                                    value={report}
-                                    onChange={setReport}
-                                    options={[
-                                        { value: "All", label: "Full  Audit (All 7)" },
-                                        { value: "Technical Performance", label: "Technical Performance" },
-                                        { value: "On Page SEO", label: "On Page SEO" },
-                                        { value: "Accessibility", label: "Accessibility" },
-                                        { value: "Security/Compliance", label: "Security/Compliance" },
-                                        { value: "UX & Content Structure", label: "UX & Content Structure" },
-                                        { value: "Conversion & Lead Flow", label: "Conversion & Lead Flow" },
-                                        { value: "AIO (AI-Optimization) Readiness", label: "AIO (AI-Search) Readiness" },
-                                    ]}
-                                    icon={<Settings />}
-                                    darkMode={darkMode}
-                                    disabled={isLoading}
-                                />
-
-                                <button
-                                    type="submit"
-                                    disabled={isLoading || !url.trim()}
-             className={`ml-auto flex items-center gap-2 px-6 h-12 rounded-xl font-semibold text-[14px] tracking-tight shrink-0 border
-transition-all duration-300 active:scale-95
-${
-  isLoading || !url.trim()
-    ? (darkMode ? "bg-slate-800 border-slate-700 text-slate-500 cursor-not-allowed" : "bg-surface-2 border-line text-faint cursor-not-allowed")
-    : "bg-[#EA580B] border-[#EA580B] text-white hover:bg-[#C2410C] hover:border-[#C2410C] shadow-lg shadow-orange-600/25 hover:shadow-orange-500/40 hover:-translate-y-0.5"
-}`}
-                                >
-                                    {isLoading ? (
-                                        <Loader2 className="animate-spin w-5 h-5" />
-                                    ) : (
-                                        <>
-                                            Run Audit
-                                            <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
-                                        </>
-                                    )}
-                                </button>
-                            </div>
-                        </motion.div>
-
-                        {/* Error */}
-                        <AnimatePresence>
-                            {error && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: -8 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -8 }}
-                                    className="mt-3 flex items-center gap-2.5 px-4 py-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm font-medium"
-                                >
-                                    <AlertCircle size={16} className="flex-shrink-0" />
-                                    {error}
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </motion.form>
-
-                    {/* Social proof */}
-                    <motion.div
-                        variants={item}
-                        className="flex flex-wrap items-center justify-center lg:justify-start gap-6"
-                    >
-
-                        <span className={`text-xs font-semibold ${darkMode ? 'text-white' : 'text-muted'}`}>·</span>
-
-                    </motion.div>
-                </motion.div>
-
-                {/* ── RIGHT: Dashboard mockup ── */}
-                <motion.div
-                    initial={{ opacity: 0, x: 50, y: 10 }}
-                    animate={{ opacity: 1, x: 0, y: 0 }}
-                    transition={{ duration: 0.9, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                    className="flex-1 hidden lg:block relative w-full max-w-md xl:max-w-lg mx-auto"
-                >
-                    <div className={`relative z-10 rounded-[1.5rem] border p-5 space-y-4 shadow-[0_50px_90px_-20px_rgba(0,0,0,0.5)] overflow-hidden ${darkMode ? 'border-white/5 bg-[#3D58C1]' : 'border-line bg-surface-2'}`}>
-                        {/* Subtle inner glow */}
-                        <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none" />
-
-                        {/* Browser chrome */}
-                        <div className="flex items-center gap-4 pl-1">
-                            <div className="flex items-center gap-2">
-                                <div className="w-2.5 h-2.5 rounded-full bg-[#E35460]" />
-                                <div className="w-2.5 h-2.5 rounded-full bg-[#EAB308]" />
-                                <div className="w-2.5 h-2.5 rounded-full bg-[#16A34A]" />
-                            </div>
-                            <div className={`h-7 w-52 rounded-[0.4rem] flex items-center px-4 shadow-inner shadow-black/20 border ${darkMode ? 'bg-[#566ACB] border-white/5' : 'bg-card border-line'}`}>
-                                <TypingURL />
-                            </div>
+                    {/* Bottom CTA once detected */}
+                    {phase === 'done' && (
+                        <div className="flex justify-center mt-8">
+                            <button
+                                type="button"
+                                onClick={handleFullAudit}
+                                disabled={isLoading}
+                                className="flex items-center gap-2 px-8 py-3.5 rounded-xl font-semibold text-white shadow-lg transition-all bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 hover:shadow-emerald-500/25 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+                            >
+                                {isLoading ? <><Loader2 className="w-5 h-5 animate-spin" /> Starting audit…</> : <>Run Full Audit on These Pages <ArrowRight className="w-5 h-5" /></>}
+                            </button>
                         </div>
-
-                        {/* Header row (skeleton lines) */}
-                        <div className="flex items-center justify-between pt-1">
-                            <div className="space-y-2.5">
-                            
-                            </div>
-                            <div className="flex gap-1 items-end h-5 mr-1 opacity-80">
-                                <div className="w-[3px] h-3 bg-[#E1701A] rounded-[1px]" />
-                                <div className="w-[3px] h-5 bg-[#E1701A] rounded-[1px]" />
-                                <div className="w-[3px] h-4 bg-[#E1701A] rounded-[1px]" />
-                            </div>
-                        </div>
-
-                        {/* Score rings */}
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className={`rounded-[1.25rem] py-5 flex flex-col items-center justify-center shadow-lg shadow-black/20 ${darkMode ? 'bg-[#566ACB]' : 'bg-cardsoft'}`}>
-                                <ScoreRing score={94} color="#E1701A" label="SEO SCORE" delay={0.5} />
-                            </div>
-                            <div className={`rounded-[1.25rem] py-5 flex flex-col items-center justify-center shadow-lg shadow-black/20 ${darkMode ? 'bg-[#566ACB]' : 'bg-cardsoft'}`}>
-                                <ScoreRing score={88} color="#4D77FF" label="AI Optimization" delay={0.7} />
-                            </div>
-                        </div>
-
-                        {/* Mini metric bars */}
-                        <div className={`rounded-[1.25rem] border p-4 space-y-3 shadow-lg shadow-black/20 ${darkMode ? 'border-white/[0.03] bg-[#566ACB]' : 'border-line bg-cardsoft'}`}>
-                            {[
-                                { label: "Accessibility", pct: 78, color: "#A855F7" },
-                                { label: "Security", pct: 91, color: "#E1701A" },
-                                { label: "AIO Readiness", pct: 63, color: "#EAB308" },
-                            ].map((m, i) => (
-                                <div key={m.label} className="space-y-2">
-                                    <div className="flex justify-between text-[11px] font-semibold tracking-wide">
-                                        <span className={darkMode ? 'text-white' : 'text-ink'}>{m.label}</span>
-                                        <span style={{ color: m.color }}>{m.pct}</span>
-                                    </div>
-                                    <div className={`h-1.5 rounded-full overflow-hidden ${darkMode ? 'bg-[#0B0D1B]' : 'bg-line'}`}>
-                                        <motion.div
-                                            initial={{ width: 0 }}
-                                            animate={{ width: `${m.pct}%` }}
-                                            transition={{ duration: 1.2, delay: 0.8 + (i * 0.15), ease: "easeOut" }}
-                                            className="h-full rounded-full"
-                                            style={{ background: m.color }}
-                                        />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Footer badge */}
-                        <div className={`flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-full border bg-transparent ${darkMode ? 'border-white/10' : 'border-line'}`}>
-                            <span className="text-[#E1701A] text-[13px] drop-shadow-[0_0_8px_rgba(225,112,26,0.6)]">⚡</span>
-                            <span className={`text-[10px] font-semibold tracking-wider flex gap-2 ${darkMode ? 'text-white' : 'text-inksoft'}`}>
-                                <span>7 audit dimensions</span>
-                                <span className={darkMode ? 'text-white' : 'text-faint'}>•</span>
-                                <span>Real-time analysis</span>
-                                <span className={darkMode ? 'text-white' : 'text-faint'}>•</span>
-                                <span>Dealer-focused insights</span>
-                            </span>
-                        </div>
-                    </div>
-                </motion.div>
+                    )}
+                </div>
             </div>
 
-            {/* ── Email-verification modal (replaces CAPTCHA for guest audits).
-                 Self-portals to body so it escapes the hero's stacking context. ── */}
             <AuditEmailVerifyModal
                 isOpen={showVerify}
                 onClose={() => setShowVerify(false)}
                 onVerified={handleVerified}
                 darkMode={darkMode}
-                isLoading={isLoading}
+                isLoading={phase === 'detecting'}
             />
         </section>
     );

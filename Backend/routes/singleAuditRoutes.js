@@ -1,5 +1,6 @@
 import express from "express";
 import { startAudit, getReportById, getReportStatusById } from "../controllers/singleAuditController.js";
+import { discover } from "../controllers/discoveryController.js";
 import { requestAuditOTP, verifyAuditOTP } from "../controllers/guestAuditController.js";
 import { generatePDFReport } from "../controllers/pdfController.js";
 import rateLimit from "express-rate-limit";
@@ -17,6 +18,17 @@ const auditLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Discovery is lighter than a full audit (no Chromium worker on the happy path),
+// but still fans out HTTP requests — bound it on its own counter so it can't be
+// abused and so it never starves the audit limiter.
+const discoverLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 Minutes
+  max: 40,
+  message: { error: "Too many discovery requests, Please wait 15 minutes." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // ── Guest email-verification gate (replaces CAPTCHA for not-logged-in users) ──
 // Step 1: send a verification code to the entered email.
 router.post("/request-otp", auditOtpRequestLimiter, requestAuditOTP);
@@ -24,6 +36,10 @@ router.post("/request-otp", auditOtpRequestLimiter, requestAuditOTP);
 router.post("/resend-otp", auditOtpRequestLimiter, requestAuditOTP);
 // Step 2: verify the code → returns a short-lived audit grant token.
 router.post("/verify-otp", otpLimiter, verifyAuditOTP);
+
+// Discover the dealer's main pages (sitemap → robots.txt → crawl). Same gate as
+// /audit, so guests reuse the email-verification grant they already hold.
+router.post("/discover", discoverLimiter, tryAuthenticate, guestAuditGate, discover);
 
 // Start Audit — logged-in users pass; guests must present a verified-email grant.
 router.post("/audit", auditLimiter, tryAuthenticate, guestAuditGate, startAudit);

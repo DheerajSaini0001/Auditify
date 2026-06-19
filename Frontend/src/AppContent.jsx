@@ -109,7 +109,6 @@ function AppContentInner() {
 
           <Route path="/audit-history" element={<AuditHistoryPage />} />
 
-
           <Route path="/report" element={<ReportLayout />} />
           <Route path="/report/:id" element={<ReportLayout />} />
 

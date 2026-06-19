@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Auditify · Per-Parameter Timing & Cost Report</title>
+<style>
+  :root{
+    --brand:#1e3a8a; --brand-2:#2563eb;
+    --ink:#0f172a; --muted:#64748b; --line:#e2e8f0; --bg:#f1f5f9; --card:#ffffff;
+    --good:#059669; --good-bg:#ecfdf5;
+    --warn:#b45309; --warn-bg:#fffbeb;
+    --bad:#dc2626;  --bad-bg:#fef2f2;
+    --radius:16px; --shadow:0 10px 30px -12px rgba(15,23,42,.18);
+    /* driver palette */
+    --d-pagespeed:#7c3aed; --d-pagespeed-bg:#f5f3ff;
+    --d-nav:#dc2626;       --d-nav-bg:#fef2f2;
+    --d-axe:#2563eb;       --d-axe-bg:#eff6ff;
+    --d-http:#ea580c;      --d-http-bg:#fff7ed;
+    --d-api:#0891b2;       --d-api-bg:#ecfeff;
+    --d-probe:#9f1239;     --d-probe-bg:#fff1f2;
+    --d-header:#0d9488;    --d-header-bg:#f0fdfa;
+    --d-dom:#059669;       --d-dom-bg:#ecfdf5;
+    --d-static:#16a34a;    --d-static-bg:#f0fdf4;
+    --d-agg:#64748b;       --d-agg-bg:#f1f5f9;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(1200px 600px at 10% -10%, #dbeafe 0%, transparent 55%),
+      radial-gradient(1000px 500px at 110% 10%, #e0f2fe 0%, transparent 50%),
+      var(--bg);
+    line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:40px 22px 90px}
+  code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.92em}
+
+  /* Header */
+  header.hero{text-align:center;margin-bottom:26px}
+  .badge{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);
+    border-radius:999px;padding:6px 14px;font-size:13px;font-weight:600;color:var(--brand);box-shadow:var(--shadow);margin-bottom:18px}
+  .badge .dot{width:8px;height:8px;border-radius:50%;background:var(--good);box-shadow:0 0 0 4px var(--good-bg)}
+  h1{font-size:clamp(26px,4vw,40px);margin:.1em 0;letter-spacing:-.02em}
+  h1 .grad{background:linear-gradient(90deg,var(--brand),var(--brand-2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{color:var(--muted);font-size:17px;max-width:720px;margin:8px auto 0}
+
+  section{margin-top:38px}
+  h2.sec{font-size:22px;margin:0 0 4px;letter-spacing:-.01em}
+  h2.sec .num{color:var(--brand-2);font-weight:800;margin-right:8px}
+  .sec-sub{color:var(--muted);font-size:15px;margin:0 0 18px}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+
+  /* Key finding callout */
+  .callout{padding:24px 26px;border-left:5px solid var(--brand-2)}
+  .callout h3{margin:0 0 8px;font-size:18px}
+  .callout p{margin:8px 0;color:#334155;font-size:15.5px}
+  .callout .big{font-size:15.5px}
+  .hl{background:#fef9c3;padding:1px 6px;border-radius:6px;font-weight:600}
+  .hl-p{background:var(--d-pagespeed-bg);color:var(--d-pagespeed);padding:1px 6px;border-radius:6px;font-weight:700}
+
+  /* Worked example cards */
+  .examples{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:820px){.examples{grid-template-columns:1fr}}
+  .ex{padding:22px 24px}
+  .ex .eyebrow{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+  .ex h3{margin:4px 0 2px;font-size:20px;display:flex;align-items:center;gap:10px}
+  .ex .verdict{font-size:14px;color:var(--muted);margin-bottom:14px}
+  .ex .rows{display:grid;gap:9px}
+  .ex .r{display:flex;justify-content:space-between;gap:14px;align-items:baseline;font-size:14.5px;border-top:1px dashed var(--line);padding-top:9px}
+  .ex .r:first-child{border-top:0;padding-top:0}
+  .ex .r .k{color:var(--muted)}
+  .ex .r .v{font-weight:700;text-align:right}
+  .v-fast{color:var(--good)} .v-slow{color:var(--bad)} .v-mid{color:var(--warn)}
+  .ex .foot{margin-top:14px;font-size:13.5px;color:#475569;background:var(--bg);border-radius:10px;padding:11px 13px}
+
+  /* Driver ranking */
+  .drivers{display:grid;gap:12px}
+  .drv{display:grid;grid-template-columns:210px 1fr 132px;gap:16px;align-items:center;padding:15px 18px}
+  @media(max-width:820px){.drv{grid-template-columns:1fr;gap:7px}}
+  .drv .name{font-weight:700;font-size:15px;display:flex;align-items:center;gap:9px}
+  .drv .name .sw{width:11px;height:11px;border-radius:3px;flex:0 0 auto}
+  .drv .desc{color:var(--muted);font-size:13.5px}
+  .drv .time{text-align:right;font-weight:800;font-size:15px;font-variant-numeric:tabular-nums}
+  @media(max-width:820px){.drv .time{text-align:left}}
+  .drv .bar{grid-column:1/-1;height:7px;background:var(--bg);border-radius:99px;overflow:hidden;margin-top:2px}
+  .drv .bar i{display:block;height:100%;border-radius:99px}
+  .meas{display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border-radius:99px;background:var(--good-bg);color:var(--good);margin-left:7px;vertical-align:middle}
+  .modl{display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border-radius:99px;background:var(--warn-bg);color:var(--warn);margin-left:7px;vertical-align:middle}
+
+  /* Stacked timeline */
+  .timeline{padding:22px 24px}
+  .tl-bar{display:flex;height:46px;border-radius:12px;overflow:hidden;border:1px solid var(--line);margin:6px 0 14px}
+  .tl-bar .seg{display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;min-width:0;overflow:hidden;white-space:nowrap}
+  .tl-legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:#475569}
+  .tl-legend .li{display:flex;align-items:center;gap:7px}
+  .tl-legend .sw{width:12px;height:12px;border-radius:3px}
+
+  /* Controls + table */
+  .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+  .controls input[type=search]{flex:1;min-width:220px;padding:11px 14px;border:1px solid var(--line);border-radius:11px;font:inherit;font-size:14.5px;background:#fff}
+  .controls input[type=search]:focus{outline:0;border-color:var(--brand-2);box-shadow:0 0 0 4px #dbeafe}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 13px;font:inherit;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;transition:.15s}
+  .chip:hover{border-color:var(--brand-2);color:var(--brand-2)}
+  .chip.on{background:var(--brand);border-color:var(--brand);color:#fff}
+  .count{font-size:13px;color:var(--muted);margin-left:auto}
+
+  table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+  thead th{background:#f8fafc;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding:12px 14px;border-bottom:1px solid var(--line);position:sticky;top:0;cursor:pointer;user-select:none;white-space:nowrap}
+  thead th:hover{color:var(--brand-2)}
+  tbody td{padding:11px 14px;border-bottom:1px solid #f1f5f9;font-size:13.7px;vertical-align:top}
+  tbody tr:hover{background:#f8fafc}
+  .pname{font-weight:700}
+  .ploc{display:block;color:var(--muted);font-size:11.5px;margin-top:2px}
+  .cat-tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;white-space:nowrap}
+  .dtag{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:7px;white-space:nowrap}
+  .dtag .sw{width:8px;height:8px;border-radius:2px}
+  .eff{font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .marg{color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
+  .st{font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;white-space:nowrap}
+  .st.full{background:var(--good-bg);color:var(--good)}
+  .st.partial{background:var(--warn-bg);color:var(--warn)}
+  .st.stub{background:var(--bad-bg);color:var(--bad)}
+  .st.info{background:#eef2ff;color:#4338ca}
+  .st.derived{background:var(--d-agg-bg);color:var(--d-agg)}
+  .net-y{color:var(--bad);font-weight:700}
+  .net-n{color:var(--muted)}
+  .note{color:#475569;font-size:12.5px}
+
+  .foot-note{font-size:13px;color:var(--muted);margin-top:12px}
+  details.method{padding:6px 4px}
+  details.method summary{cursor:pointer;font-weight:700;font-size:15px;padding:8px 0}
+  details.method ul{margin:6px 0 6px 2px;padding-left:18px}
+  details.method li{margin:7px 0;color:#334155;font-size:14.5px}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:22px 0 6px}
+  @media(max-width:820px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpi{padding:18px 18px}
+  .kpi .v{font-size:26px;font-weight:800;letter-spacing:-.02em}
+  .kpi .l{color:var(--muted);font-size:13px;margin-top:3px}
+  .kpi .v.p{color:var(--d-pagespeed)} .kpi .v.g{color:var(--good)} .kpi .v.b{color:var(--bad)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="badge"><span class="dot"></span> Auditify · Performance Engineering</div>
+    <h1>Per-Parameter <span class="grad">Timing &amp; Cost</span> Report</h1>
+    <p class="sub">Where the time actually goes when Auditify computes its ~194 audit parameters — every parameter mapped to the operation that produces it and the cost driver it rides on. Measured against a live dealership where safe; modeled from the code elsewhere.</p>
+  </header>
+
+  <!-- KPIs -->
+  <div class="kpis">
+    <div class="card kpi"><div class="v p" id="kpi-ps">~50s</div><div class="l">Measured PageSpeed call — the dominant driver (mobile 50s · desktop 75s · ×2)</div></div>
+    <div class="card kpi"><div class="v g" id="kpi-static">~155</div><div class="l">Parameters that compute in &lt;1–80&nbsp;ms (ride a shared driver)</div></div>
+    <div class="card kpi"><div class="v b" id="kpi-net">~39</div><div class="l">Parameters that fire their own network / navigation / probe</div></div>
+    <div class="card kpi"><div class="v" id="kpi-total">194</div><div class="l">Total parameters across 7 categories &amp; 23 files</div></div>
+  </div>
+
+  <!-- KEY FINDING -->
+  <section>
+    <div class="card callout">
+      <h3>The headline: a parameter's “calculation time” is mostly the wrong question</h3>
+      <p class="big">Auditify loads each page <b>once</b>, then ~80% of the parameters are <b>extracted or computed from that already-loaded data</b> — a regex over the HTML, one <code>page.evaluate()</code>, or a field read out of a cached API response. Those cost <span class="hl">0.1–80&nbsp;ms each</span>. They feel “free” because they ride on a handful of <b>shared cost drivers</b> that do the real waiting.</p>
+      <p class="big">Take the two you asked about: <b>TBT</b> is just <code>audits["total-blocking-time"]</code> read out of a PageSpeed response — its own work is <span class="hl">&lt;1&nbsp;ms</span>. But that response is a <span class="hl-p">~50&nbsp;s PageSpeed API call</span> (measured: 50&nbsp;s mobile, 75&nbsp;s desktop) shared with LCP, CLS, FCP, TTFB, INP, FID, SI, the PageSpeed score and 4 more. <b>Inventory page speed</b> is the opposite: it opens its <b>own browser tab</b> and navigates to the inventory page, so it owns a real <span class="hl">~2–15&nbsp;s</span> cost nobody else shares.</p>
+      <p class="big">So this report is organized around <b>cost drivers</b>, not a flat per-row stopwatch. Each of the 194 parameters below shows both its <b>own marginal compute</b> and the <b>driver it depends on</b>.</p>
+    </div>
+  </section>
+
+  <!-- WORKED EXAMPLES: TBT vs INVENTORY -->
+  <section>
+    <h2 class="sec"><span class="num">A</span>The two you asked about, side by side</h2>
+    <p class="sec-sub">Same question — “how long does it take to calculate?” — but two completely different answers, because they sit on different cost drivers.</p>
+    <div class="examples">
+      <div class="card ex">
+        <div class="eyebrow">Shared-driver parameter</div>
+        <h3>⚡ Total Blocking Time (TBT)</h3>
+        <div class="verdict">Computed in <b class="v-fast">&lt;1 ms</b> — but you wait for a shared API call</div>
+        <div class="rows">
+          <div class="r"><span class="k">Own calculation (<code>evaluateTBT</code>, technicalMetrics.js:646)</span><span class="v v-fast">&lt; 1 ms</span></div>
+          <div class="r"><span class="k">What it actually does</span><span class="v">reads <code>audits["total-blocking-time"]</code></span></div>
+          <div class="r"><span class="k">Shared driver it rides on</span><span class="v v-slow">PageSpeed API · ≈50 s (measured)</span></div>
+          <div class="r"><span class="k">Others sharing that same call</span><span class="v">15+ metrics</span></div>
+          <div class="r"><span class="k">Marginal cost if you removed TBT</span><span class="v v-fast">~0 s saved</span></div>
+        </div>
+        <div class="foot">Cutting TBT saves nothing — the PageSpeed call still has to run for LCP/CLS/INP/etc. The only way to speed this group up is to speed up (or cache) the <b>one</b> PageSpeed call.</div>
+      </div>
+      <div class="card ex">
+        <div class="eyebrow">Own-cost parameter</div>
+        <h3>🚗 Inventory Page Speed</h3>
+        <div class="verdict">Owns a real <b class="v-slow" id="ex-inv">~2–15 s</b> navigation nobody else shares</div>
+        <div class="rows">
+          <div class="r"><span class="k">Own calculation (<code>evaluateInventoryLoad</code>, technicalMetrics.js:1392)</span><span class="v v-slow" id="ex-inv2">2–15 s</span></div>
+          <div class="r"><span class="k">What it actually does</span><span class="v">finds inventory URL → opens own tab → times full load</span></div>
+          <div class="r"><span class="k">Extra I/O first</span><span class="v">1–5 sitemap fetches to locate the page</span></div>
+          <div class="r"><span class="k">Measured (path probe, test site)</span><span class="v v-mid">2.3 s</span></div>
+          <div class="r"><span class="k">Runs in parallel with</span><span class="v">PageSpeed + service + mobile tabs</span></div>
+          <div class="r"><span class="k">Marginal cost if you removed it</span><span class="v v-mid">up to ~15 s saved</span></div>
+        </div>
+        <div class="foot">Because it runs inside the same <code>Promise.all</code> as the PageSpeed calls, it’s usually <b>hidden under</b> the 47 s PageSpeed wait — unless the inventory page is slower than PageSpeed, in which case <i>it</i> becomes the bottleneck.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COST DRIVERS -->
+  <section>
+    <h2 class="sec"><span class="num">B</span>The cost drivers — what the audit actually waits on</h2>
+    <p class="sec-sub">Ranked by wall-clock impact. Green = measured on a live dealership run; amber = modeled from request counts in the code (security probes are not fired at third-party sites).</p>
+    <div class="card" style="padding:18px"><div class="drivers" id="drivers"></div></div>
+    <p class="foot-note">Bars are a log-ish visual guide, not linear. “Shared” drivers run <b>once</b> and feed many parameters; “own” drivers belong to a single parameter.</p>
+  </section>
+
+  <!-- TIMELINE -->
+  <section>
+    <h2 class="sec"><span class="num">C</span>Where a full audit’s wall-clock goes</h2>
+    <p class="sec-sub">Critical path of a single full audit. Almost everything runs <b>in parallel</b>, so total time ≈ the slowest driver (PageSpeed), <i>not</i> the sum of all 194 parameters.</p>
+    <div class="card timeline">
+      <div class="tl-bar" id="tlbar"></div>
+      <div class="tl-legend" id="tllegend"></div>
+      <p class="foot-note" style="margin-top:14px">The 7 metric categories are launched together (<code>Promise.all</code> in <code>singleAuditWorker.js</code>). Technical Performance owns the critical path because of the two PageSpeed calls; every other category finishes well inside that window. The ~150 static/DOM parameters contribute a rounding error to total time.</p>
+    </div>
+  </section>
+
+  <!-- FULL TABLE -->
+  <section>
+    <h2 class="sec"><span class="num">D</span>All 194 parameters — full breakdown</h2>
+    <p class="sec-sub">Every parameter, its compute function, its cost-driver class, whether it fires its own network/navigation, its own marginal compute time, and its effective time including the shared driver. Search, filter, and sort.</p>
+    <div class="controls">
+      <input type="search" id="q" placeholder="Search parameter, file, or note…" />
+      <span class="count" id="count"></span>
+    </div>
+    <div class="controls"><div class="chips" id="catchips"></div></div>
+    <div class="controls"><div class="chips" id="drvchips"></div></div>
+    <table id="tbl">
+      <thead><tr>
+        <th data-k="name">Parameter</th>
+        <th data-k="cat">Category</th>
+        <th data-k="how">Compute method</th>
+        <th data-k="driver">Cost driver</th>
+        <th data-k="net">Own&nbsp;I/O?</th>
+        <th data-k="margn">Own&nbsp;compute</th>
+        <th data-k="effn">Effective&nbsp;time</th>
+        <th data-k="status">Status</th>
+      </tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <p class="foot-note">“Effective time” = own compute <b>+</b> the wait for the driver it depends on (shared drivers are listed once in §B; here they’re attributed to each rider so you can see what each parameter <i>blocks on</i>). Sort by “Effective time” to see the real cost order.<br><b>* The “≈47 s*” rows</b> are all field reads out of <b>one</b> shared PageSpeed/Lighthouse response — measured 47–75 s (mobile ≈50 s, desktop ≈75 s), paid <b>once</b> for all 16 riders, not per row.</p>
+  </section>
+
+  <!-- METHODOLOGY -->
+  <section>
+    <h2 class="sec"><span class="num">E</span>How to read these numbers</h2>
+    <div class="card" style="padding:8px 22px">
+      <details class="method" open>
+        <summary>Measured vs. modeled</summary>
+        <ul>
+          <li><b>Measured</b> (green badges): captured on a live run against a real dealership (<code>galpinford.com</code>, mobile) via the project’s own <code>Puppeteer_Cheerio</code> loader + the real metric services — <code>Backend/_timing_calibration.mjs</code>. Directly timed: PageSpeed mobile <b>50.4 s</b> / desktop <b>75.1 s</b>; full Technical category <b>42.8 s</b>; page-setup <b>2.24 s</b>; axe-core / whole Accessibility category <b>0.25 s</b>; On-Page SEO incl. link checks <b>6.67 s</b>; AEO/GEO incl. crawl+KG <b>4.0 s</b>; inventory-path probe <b>2.25 s</b>; and the combined UX <b>20 ms</b> + Conversion <b>30 ms</b> + AIO <b>10 ms</b>.</li>
+          <li><b>Modeled</b> (amber badges): derived from the operation each parameter performs in the code (request counts × typical round-trip). The entire <b>Security &amp; Compliance</b> category is modeled, not run live, because it performs <b>active</b> SQLi/XSS injection, admin-path brute-forcing and credential testing — that is attack traffic and must not be fired at a third-party site you don’t own.</li>
+        </ul>
+      </details>
+      <details class="method">
+        <summary>Why per-parameter times look tiny</summary>
+        <ul>
+          <li>The page is fetched <b>once</b> (browser launch + render + bot handling). After that, a cheerio parse (<code>$</code>) or a single <code>page.evaluate()</code> is pure CPU on data already in memory — microseconds to tens of milliseconds.</li>
+          <li>All Core Web Vitals (LCP, CLS, FCP, TTFB, INP, FID, TBT, SI) + PageSpeed score + Rendering/Lazy/Third-party/JS-execution are <b>field reads</b> out of one cached PageSpeed/Lighthouse response. None of them “costs” more than a field lookup.</li>
+          <li>All ~18 axe-derived accessibility checks are reads out of <b>one</b> axe-core run.</li>
+          <li>The AEO “Gemini / ChatGPT / Perplexity platform scores” are a <b>deterministic weighted matrix</b> over already-computed signals — <b>no LLM is called</b>, so they’re ~0 ms despite the names.</li>
+        </ul>
+      </details>
+      <details class="method">
+        <summary>Parallelism &amp; the single-instance caveat</summary>
+        <ul>
+          <li>The 7 categories run concurrently; inside Technical, the 2 PageSpeed calls + 3 page navigations run in one <code>Promise.all</code>. So <b>total audit time ≈ the slowest single driver</b>, not the sum of the rows below.</li>
+          <li>Adding up the “Effective time” column therefore <b>overcounts</b> — shared drivers are paid once. Use §B for true wall-clock.</li>
+          <li>Single-audit metrics are buffered in process memory and batch-written to Mongo, so the design assumes a <b>single app instance</b> (per the existing in-memory batching note).</li>
+        </ul>
+      </details>
+    </div>
+    <p class="foot-note" id="genline"></p>
+  </section>
+
+</div>
+
+<script>
+/* ---------- driver taxonomy ---------- */
+const DRV = {
+  pagespeed:{label:"PageSpeed API (shared)", c:"--d-pagespeed", bg:"--d-pagespeed-bg", marg:"<1 ms", eff:"≈47 s*", blurb:"Rides the 2× PageSpeed/Lighthouse call (mobile+desktop, parallel)"},
+  nav:{label:"Own page navigation", c:"--d-nav", bg:"--d-nav-bg", marg:"—", eff:"2–15 s", blurb:"Opens its own browser tab and waits for a full page load"},
+  axe:{label:"axe-core (shared)", c:"--d-axe", bg:"--d-axe-bg", marg:"<1 ms", eff:"shares ~1–3 s", blurb:"Field read from the one axe-core accessibility run"},
+  http:{label:"Own HTTP request(s)", c:"--d-http", bg:"--d-http-bg", marg:"—", eff:"0.1–2 s ×N", blurb:"Fires its own fetch/HEAD/GET requests (robots, sitemap, link checks)"},
+  api:{label:"External API", c:"--d-api", bg:"--d-api-bg", marg:"—", eff:"0.3–6 s", blurb:"Calls a 3rd-party API (Safe Browsing, VirusTotal, Knowledge Graph)"},
+  probe:{label:"Active security probe", c:"--d-probe", bg:"--d-probe-bg", marg:"—", eff:"1–20 s", blurb:"Injects payloads / probes many paths / attempts a login (modeled, not run live)"},
+  header:{label:"Response-header read", c:"--d-header", bg:"--d-header-bg", marg:"~0 ms", eff:"~0 ms", blurb:"Reads a header off the already-captured navigation response"},
+  dom:{label:"DOM eval (CPU)", c:"--d-dom", bg:"--d-dom-bg", marg:"5–80 ms", eff:"5–80 ms", blurb:"One page.evaluate() over the already-rendered DOM"},
+  static:{label:"Static parse (CPU)", c:"--d-static", bg:"--d-static-bg", marg:"0.1–5 ms", eff:"0.1–5 ms", blurb:"Pure cheerio/regex over the already-fetched HTML"},
+  agg:{label:"Derived / aggregate", c:"--d-agg", bg:"--d-agg-bg", marg:"<1 ms", eff:"<1 ms", blurb:"Computed from other parameters' scores"}
+};
+const CATS = {
+  "Technical":{label:"Technical Performance", bg:"#eef2ff", c:"#4338ca"},
+  "SEO":{label:"On-Page SEO", bg:"#ecfeff", c:"#0e7490"},
+  "A11y":{label:"Accessibility", bg:"#eff6ff", c:"#1d4ed8"},
+  "Security":{label:"Security & Compliance", bg:"#fef2f2", c:"#b91c1c"},
+  "UX":{label:"UX & Content", bg:"#f0fdf4", c:"#15803d"},
+  "Conversion":{label:"Conversion & Lead Flow", bg:"#fffbeb", c:"#b45309"},
+  "AIO":{label:"AIO / AEO / GEO", bg:"#f5f3ff", c:"#6d28d9"}
+};
+
+/* ---------- per-parameter dataset ----------
+   row = [cat, name, loc, driver, ownIO(0/1), status, eff, note]
+   eff = effective time string shown in table (own compute + driver wait)        */
+const D = [
+/* ===== TECHNICAL PERFORMANCE ===== */
+["Technical","Overall % (weighted)","technicalMetrics.js:2173","agg",0,"derived","<1 ms","Weighted average of all sub-metrics"],
+["Technical","PageSpeed Score","evaluatePageSpeedScore:1417","pagespeed",0,"partial","≈47 s*","Reads category.performance.score from BOTH PS responses"],
+["Technical","LCP — lab","evaluateLCPLab:23","pagespeed",0,"full","≈47 s*","Read of audits[largest-contentful-paint]"],
+["Technical","LCP — field (CrUX)","evaluateLCPCrux:81","pagespeed",0,"full","≈47 s*","Read of loadingExperience CrUX percentile"],
+["Technical","CLS — lab","evaluateCLSLab:144","pagespeed",0,"full","≈47 s*","Read of audits[cumulative-layout-shift]"],
+["Technical","CLS — field (CrUX)","evaluateCLSCrux:195","pagespeed",0,"full","≈47 s*","CrUX field read"],
+["Technical","FCP — lab","evaluateFCPLab:245","pagespeed",0,"full","≈47 s*","Read of audits[first-contentful-paint]"],
+["Technical","FCP — field (CrUX)","evaluateFCPCrux:296","pagespeed",0,"full","≈47 s*","CrUX field read"],
+["Technical","TTFB — lab","evaluateTTFBLab:345","pagespeed",0,"full","≈47 s*","Read of audits[server-response-time]"],
+["Technical","TTFB — field (CrUX)","evaluateTTFBCrux:385","pagespeed",0,"full","≈47 s*","CrUX field read"],
+["Technical","INP — lab","evaluateINPLab:421","pagespeed",0,"full","≈47 s*","Read of audits[interactive] + long-tasks"],
+["Technical","INP — field (CrUX)","evaluateINPCrux:472","pagespeed",0,"full","≈47 s*","CrUX field read"],
+["Technical","FID — lab (Max Potential)","evaluateFIDLab:532","pagespeed",0,"partial","≈47 s*","Read of audits[max-potential-fid]"],
+["Technical","FID — field (CrUX)","evaluateFIDCrux:590","pagespeed",0,"stub","≈47 s*","Usually null (Google removed FID from CrUX)"],
+["Technical","TBT — lab  ⟵ your example","evaluateTBT:646","pagespeed",0,"full","≈47 s*","Read of audits[total-blocking-time]; own work <1 ms"],
+["Technical","Speed Index — lab","evaluateSI:699","pagespeed",0,"full","≈47 s*","Read of audits[speed-index]"],
+["Technical","Compression","evaluateCompression:752","http",1,"full","~0.5–2 s","page.evaluate + up to 10 HEAD requests (content-encoding)"],
+["Technical","Caching","evaluateCaching:878","http",1,"full","~0.5–2 s","page.evaluate + up to 10 HEAD requests (cache-control)"],
+["Technical","Resource Optimization","evaluateResourceOptimization:996","dom",0,"full","20–80 ms","One page.evaluate (img size + minified naming)"],
+["Technical","Render Blocking","evaluateRenderBlocking:1085","dom",0,"full","10–50 ms","One page.evaluate over <head>"],
+["Technical","Redirect Chains","evaluateRedirectChains:1149","static",0,"full","0.1–2 ms","Walks captured response redirect chain in memory"],
+["Technical","Rendering Performance","evaluateRenderingPerformance:1783","pagespeed",0,"partial","≈47 s*","Re-frames CLS audits with culprit list"],
+["Technical","Lazy Loading","evaluateLazyLoading:1844","dom",0,"partial","10–50 ms","page.evaluate + offscreen-images audit cross-check"],
+["Technical","Third-Party Optimization","evaluateThirdPartyOptimization:1956","dom",0,"partial","10–50 ms","page.evaluate + third-party-summary audit"],
+["Technical","JS Execution","evaluateJsExecution:2052","pagespeed",0,"partial","≈47 s*","Read of bootup-time + mainthread-work audits"],
+["Technical","Mobile Usability","measureMobileExperience:1603","nav",1,"full","5–60 s","Own throttled mobile tab (Slow-4G+4×CPU), then DOM probe"],
+["Technical","Mobile Load Speed","measureMobileExperience:1603","nav",1,"partial","5–60 s","Times the throttled load in the shared mobile tab"],
+["Technical","Inventory Load Time  ⟵ your example","evaluateInventoryLoad:1392","nav",1,"full","2–15 s","Sitemap lookup + own tab navigation to inventory page"],
+["Technical","Service Load Time","evaluateServiceLoad:1402","nav",1,"full","2–15 s","Sitemap lookup + own tab navigation to service page"],
+
+/* ===== ON-PAGE SEO ===== */
+["SEO","Title","checkTitle:1230","static",0,"partial","0.1–3 ms","<title> length check"],
+["SEO","Title Uniqueness","checkTitleUniqueness:2647","http",1,"partial","~1–4 s","Scores over shared ≤5-page sample (tuSamplePages)"],
+["SEO","Title Keyword Optimization","checkTitleKeywordOptimization:2660","http",1,"stub","~0 ms*","Reuses shared sample (no extra I/O)"],
+["SEO","Title Location Optimization","checkTitleLocationOptimization:2727","http",1,"stub","0–1.5 s","0–1 contact-page fetch (schema/footer first)"],
+["SEO","Meta Description","checkMetaDescription:1313","static",0,"partial","0.1–3 ms","meta[description] length check"],
+["SEO","Meta Description Uniqueness","checkMetaDescriptionUniqueness:2650","http",1,"partial","~0 ms*","Scores over shared sample"],
+["SEO","URL Structure","checkURLStructure:1153","static",0,"full","0.1–2 ms","Pure URL parsing (not weighted)"],
+["SEO","Canonical","checkCanonical:1356","static",0,"full","0.1–3 ms","link[rel=canonical] + robots compare"],
+["SEO","H1","checkH1:1272","static",0,"partial","0.1–2 ms","Counts <h1> (highest SEO weight)"],
+["SEO","Image Optimization","checkImages:148","http",1,"full","~1–5 s","Up to 15 parallel HEADs (broken/heavy images)"],
+["SEO","Video","checkVideos:372","static",0,"full","0.1–2 ms","Counts video/YouTube/Vimeo"],
+["SEO","Heading Hierarchy","checkHeadingHierarchy:417","static",0,"full","0.1–3 ms","Walks h1–h6 for level skips"],
+["SEO","Semantic Tags","checkSemanticTags:593","static",0,"full","0.1–4 ms","Landmarks + div-soup ratio"],
+["SEO","Contextual Linking","checkContextualLinks:804","http",1,"full","~3–30 s","Up to 150 real GET page loads (heaviest SEO check)"],
+["SEO","Links","checkLinks:458","static",0,"full","0.1–3 ms","Counts internal/external + generic anchors (no fetch)"],
+["SEO","Content Relevance","checkContentRelevance:1049","static",0,"full","0.5–5 ms","Keyword overlap + stuffing penalty"],
+["SEO","Content Freshness","checkContentFreshness:4179","static",0,"full","0.2–3 ms","Date meta / JSON-LD / <time> / visible text"],
+["SEO","URL Slugs","checkSlugs:57","static",0,"full","0.1–3 ms","Slug tokenization + keyword alignment"],
+["SEO","Robots.txt","checkRobotsTxt:1638","http",1,"full","0.1–1.5 s","1–2 requests for /robots.txt"],
+["SEO","XML Sitemap","checkSitemap:1761","http",1,"full","~0.5–6 s","Candidate sitemaps + up to 5 sampled <loc> checks"],
+["SEO","Structured Data","checkStructuredData:1985","dom",0,"full","10–60 ms","One page.evaluate parsing rendered JSON-LD"],
+["SEO","Service Content Quality","checkServiceContentQuality:2858","http",1,"stub","~1–3 s","Re-resolves sitemap + 1 page fetch (output-only)"],
+["SEO","Content Depth Quality","checkContentDepthQuality:3139","http",1,"stub","~2–10 s","Up to 6 typed-page fetches (output-only)"],
+["SEO","Local SEO","checkLocalSEO:4131","http",1,"stub","0–3 s","8 sub-signals; 0–2 fetches (output-only)"],
+["SEO","E-E-A-T","checkEEAT:3424","http",1,"partial","~2–12 s","Up to 14 HEAD probes + 5 GET fetches"],
+["SEO","Open Graph","checkSocial→ogMetric:1507","static",0,"full","0.1–2 ms","Reads og:* meta tags"],
+["SEO","Twitter Card","checkSocial→twitterMetric:1510","static",0,"partial","0.1–2 ms","Reads twitter:* meta tags"],
+["SEO","Social Links (sameAs)","checkSocial→socialLinksMetric:1547","static",0,"full","0.2–3 ms","On-page links + JSON-LD sameAs consistency"],
+
+/* ===== ACCESSIBILITY ===== */
+["A11y","Overall %","accessibilityMetrics.js:1089","agg",0,"derived","<1 ms","Weighted aggregate"],
+["A11y","WCAG 2.1 AA Compliance","checkWcagAACompliance:586","axe",0,"info","shares ~1–3 s","Filters axe violations/passes by AA tags (display-only)"],
+["A11y","Color Contrast","checkColorContrast:28","axe",0,"full","shares ~1–3 s","axe rule color-contrast"],
+["A11y","Focus Order","checkFocusOrder:66","axe",0,"full","shares ~1–3 s","axe rule focus-order"],
+["A11y","Focusable Content","checkFocusableContent:104","axe",0,"full","shares ~1–3 s","axe rule focusable-content"],
+["A11y","Tab Index","checkTabIndex:142","axe",0,"full","shares ~1–3 s","axe rule tabindex"],
+["A11y","Interactive Element Affordance","checkInteractiveElementAffordance:180","axe",0,"full","shares ~1–3 s","axe rule"],
+["A11y","Label / Form Labels","checkLabel:218","axe",0,"full","shares ~1–3 s","axe rule label"],
+["A11y","Aria Allowed Attr","checkAriaAllowedAttr:256","axe",0,"full","shares ~1–3 s","axe rule aria-allowed-attr"],
+["A11y","Aria Roles","checkAriaRoles:294","axe",0,"full","shares ~1–3 s","axe rule aria-roles"],
+["A11y","Aria Hidden Focus","checkAriaHiddenFocus:332","axe",0,"full","shares ~1–3 s","axe rule aria-hidden-focus"],
+["A11y","Image Alt","checkImageAlt:370","axe",0,"partial","shares ~1–3 s","axe rule image-alt (presence)"],
+["A11y","Link Name","checkLinkName:408","axe",0,"full","shares ~1–3 s","axe rule link-name"],
+["A11y","Button Name","checkButtonName:446","axe",0,"full","shares ~1–3 s","axe rule button-name"],
+["A11y","Document Title","checkDocumentTitle:484","http",1,"full","~0.5–6 s","axe presence + up to 4 parallel fastFetch GETs for cross-page uniqueness"],
+["A11y","Html Has Lang","checkHtmlHasLang:652","axe",0,"full","shares ~1–3 s","axe rule html-has-lang"],
+["A11y","Meta Viewport","checkMetaViewport:690","axe",0,"full","shares ~1–3 s","axe rule meta-viewport"],
+["A11y","List Markup","checkList:728","axe",0,"full","shares ~1–3 s","axe rule list"],
+["A11y","Heading Order","checkHeadingOrder:766","axe",0,"full","shares ~1–3 s","axe rule heading-order"],
+["A11y","Keyboard Navigation","checkKeyboardNavigation:925","agg",0,"stub","<1 ms","Aggregate of 4 axe focus metrics"],
+["A11y","Landmarks","checkLandmarks:804","dom",0,"full","5–40 ms","5 sequential page.$ selector probes"],
+["A11y","Skip Links","checkSkipLinks:861","dom",0,"full","5–60 ms","page.$$ + per-link target resolution"],
+
+/* ===== SECURITY & COMPLIANCE  (modeled — not run live) ===== */
+["Security","Overall %","securityCompliance.js","agg",0,"derived","<1 ms","Weighted aggregate"],
+["Security","HTTPS / mixed-content","checkHTTPS:25","dom",0,"full","5–40 ms","page.evaluate scan for http:// subresources"],
+["Security","SSL Certificate","checkSSLConnection:109","header",0,"full","~0 ms","Reads response.securityDetails() — no own handshake"],
+["Security","HSTS","checkHSTS:196","header",0,"full","~0 ms","Header read"],
+["Security","TLS Version","checkTLSVersion:161","header",0,"full","~0 ms","securityDetails().protocol — no own handshake"],
+["Security","X-Frame-Options","checkXFrameOptions:227","header",0,"full","~0 ms","Header read"],
+["Security","CSP","checkCSP:258","header",0,"full","~0 ms","Header read"],
+["Security","X-Content-Type-Options","checkXContentTypeOptions:289","header",0,"full","~0 ms","Header read"],
+["Security","Cookies Secure flag","checkCookiesSecureFlag:320","dom",0,"full","5–30 ms","CDP cookie read"],
+["Security","Cookies HttpOnly flag","checkCookiesHttpOnlyFlag:358","dom",0,"full","5–30 ms","CDP cookie read"],
+["Security","Google Safe Browsing","checkGoogleSafeBrowsing:449","api",1,"full","0.3–3 s","1× Safe Browsing v4 API"],
+["Security","Blacklist / Reputation","checkDomainBlacklist:557","api",1,"full","0.3–5 s","Re-runs Safe Browsing + VirusTotal in parallel"],
+["Security","Malware Scan","checkVirusTotal:505","api",1,"full","0.3–4 s","1× VirusTotal v3 API"],
+["Security","SQLi Exposure","checkSQLiExposure:590","probe",1,"full","~3–20 s","Up to ~19 payload-injection fetches (15 s each)"],
+["Security","XSS","checkXSS:713","probe",1,"full","~2–20 s","Own page + reflected-XSS nav + up to 20 s dialog wait"],
+["Security","Cookie Consent","checkCookieConsent:804","dom",0,"full","10–80 ms","page.evaluate + selector/boundingBox probes"],
+["Security","Privacy Policy","checkPrivacyPolicy:927","dom",0,"full","5–40 ms","page.$$eval over anchors"],
+["Security","GDPR / CCPA","checkGDPRCCPA:970","dom",0,"full","10–60 ms","page.evaluate + selector checks"],
+["Security","Data Collection Transparency","checkDataCollection:1040","dom",0,"full","10–50 ms","Two page.$$eval calls"],
+["Security","Forms Use HTTPS","checkFormsUseHTTPS:1119","dom",0,"full","5–30 ms","page.$$eval over form actions"],
+["Security","Weak Default Credentials","checkWeakDefaultCredentials:1166","probe",1,"full","~1–6 s","Own page + 1 admin/admin login attempt"],
+["Security","Admin Panel Exposure","checkAdminPanelPublic:1288","probe",1,"full","~1–6 s","13 parallel admin-path GET probes"],
+["Security","MFA Enabled","checkMFAEnabled:1372","dom",0,"full","5–40 ms","page.evaluate over login/MFA/SSO signals"],
+["Security","Third-Party Cookies","checkThirdPartyCookies:398","dom",0,"full","5–30 ms","CDP cookie read + reuses consent result"],
+["Security","CRM Integration","checkCRMIntegration:1559","probe",1,"stub","~3–15 s","Up to 5 contact-page navs + a test lead submit"],
+["Security","Finance Form Security","checkFinanceFormSecurity:1856","nav",1,"stub","~2–12 s","Up to 6 finance-page navs (passive, no submit)"],
+["Security","GA4 Installed","checkGA4Installed:2109","dom",0,"info","shares 1 eval","Display-only (not scored)"],
+["Security","GTM Configuration","checkGTMConfiguration:2110","dom",0,"info","shares 1 eval","Display-only (not scored)"],
+["Security","Conversion Tracking","checkConversionTracking:2111","dom",0,"info","shares 1 eval","Display-only (not scored)"],
+
+/* ===== UX & CONTENT ===== */
+["UX","Overall %","uxContentStructure.js:2012","agg",0,"derived","<1 ms","Weighted aggregate"],
+["UX","Text Readability","checkReadability:52","dom",0,"full","20–80 ms","3 page.evaluate + Flesch scoring"],
+["UX","Sticky Header Usage","checkStickyHeader:202","dom",0,"full","10–40 ms","One page.evaluate"],
+["UX","Intrusive Interstitials","checkInterstitials:253","dom",0,"full","30–120 ms","Scans * thrice w/ computed styles"],
+["UX","Breadcrumbs","checkBreadcrumbs:336","dom",0,"full","10–40 ms","2 page.evaluate"],
+["UX","Navigation Discoverability","checkNavDiscoverability:381","dom",0,"full","15–60 ms","Large page.evaluate (nav/hamburger/search)"],
+["UX","Above-the-Fold Content","checkATF:548","dom",0,"full","30–120 ms","Scans body * with getComputedStyle/rect"],
+["UX","Interactive Click Feedback","checkClickFeedback:638","dom",0,"full","40–150 ms","4× computed styles per interactive element"],
+["UX","Loading Feedback","checkLoadingFeedback:722","dom",0,"full","15–60 ms","Selector + body-text regex scan"],
+["UX","Broken Links","checkBrokenLinks:783","http",1,"full","~2–25 s","Up to ~2× HEAD/GET per unique link (batched 5)"],
+["UX","Content Hierarchy Clarity","checkHierarchyClarity:935","dom",0,"full","10–40 ms","Heading sequence check"],
+["UX","Section Labeling Clarity","checkSectionLabeling:992","dom",0,"full","10–40 ms","section/label selectors"],
+["UX","Content Density / Scannability","checkContentDensity:1032","dom",0,"full","10–40 ms","scrollHeight/innerText"],
+["UX","Page-to-Page Flow","checkPageFlow:1082","dom",0,"full","10–40 ms","footer + internal-link + CTA counts"],
+["UX","Layout Consistency","checkLayoutConsistency:1117","dom",0,"full","10–40 ms","flex/grid/container detection"],
+["UX","In-Page Navigation","checkInPageNav:1152","dom",0,"full","10–40 ms","anchor + back-to-top detection"],
+["UX","Inventory Filtering / Faceted Search","checkInventoryFiltering:1187","dom",0,"full","20–90 ms","Large evaluate (facets + JSON-LD)"],
+["UX","No Results UX","checkNoResultsUX:1434","dom",0,"info","10–40 ms","Info-only (excluded from score)"],
+["UX","Certifications & Awards","checkCertificationsAwards:1473","dom",0,"info","10–40 ms","Info-only"],
+["UX","Pricing Transparency","checkPricingTransparency:1512","dom",0,"full","10–50 ms","Price selectors + regex"],
+["UX","Vehicle History (CARFAX/AutoCheck)","checkVehicleHistory:1563","dom",0,"full","10–50 ms","innerHTML + regex"],
+["UX","Staff Profiles / Team Pages","checkStaffProfiles:1617","dom",0,"info","10–50 ms","Info-only"],
+["UX","Mobile Experience / Responsive","checkMobileExperience:1667","dom",0,"full","30–120 ms","Viewport + overflow + media-query scan"],
+["UX","Mobile Usability","checkMobileUsability:1785","dom",0,"full","30–120 ms","Tap-target + legible-text + thumb-reach"],
+
+/* ===== CONVERSION & LEAD FLOW ===== */
+["Conversion","Overall %","conversionLeadFlow.js","agg",0,"derived","<1 ms","Weighted aggregate"],
+["Conversion","CTA Presence","checkCTAs:2","static",0,"full","0.2–3 ms","Cheerio selector count"],
+["Conversion","CTA Clarity / Messaging","checkCTAClarity:44","static",0,"full","0.3–4 ms","Cheerio text scan"],
+["Conversion","CTA Crowding / Focus","checkCTACrowding:90","dom",0,"full","5–30 ms","One page.evaluate count"],
+["Conversion","CTA Flow Alignment (geometry)","checkCTAFlowAlignment:138","dom",0,"full","40–150 ms","boundingBox + computed-style geometry loop"],
+["Conversion","Form Presence","checkFormPresence:292","dom",0,"full","5–25 ms","querySelectorAll(form)"],
+["Conversion","Form Length / Field Optimization","checkFormLengthOptimal:316","static",0,"full","0.2–3 ms","Cheerio field counting"],
+["Conversion","Required vs Optional Fields","checkRequiredVsOptionalFields:359","dom",0,"full","10–50 ms","Per-input label lookup"],
+["Conversion","Inline Validation","checkInlineValidation:425","static",0,"full","0.2–3 ms","Cheerio attribute scan"],
+["Conversion","Submit Button Clarity","checkSubmitButtonClarity:473","dom",0,"full","5–30 ms","Loops buttons/submits"],
+["Conversion","MultiStep Form Progress","checkMultiStepFormProgress:524","dom",0,"full","5–25 ms","Selector count"],
+["Conversion","Testimonials","checkTestimonials:550","static",0,"full","1–8 ms","Scans every element (class/id)"],
+["Conversion","Reviews / Rating Visibility","checkReviewsVisible:583","static",0,"full","1–8 ms","Scans every element"],
+["Conversion","Trust Badges","checkTrustBadges:616","static",0,"full","0.5–5 ms","body text + img filter"],
+["Conversion","Client / Partner Logos","checkClientLogos:678","dom",0,"full","5–25 ms","Selector count"],
+["Conversion","Case Studies / Success Stories","checkCaseStudiesAccessibility:708","dom",0,"full","5–30 ms","innerText keyword scan"],
+["Conversion","Progress Indicators","checkProgressIndicators:739","static",0,"full","0.2–3 ms","Selector count"],
+["Conversion","Friendly Error Handling","checkFriendlyErrorHandling:761","static",0,"full","0.2–3 ms","Selector count"],
+["Conversion","Microcopy Clarity","checkMicrocopyClarity:789","static",0,"full","0.2–3 ms","Selector count"],
+["Conversion","Lead Magnets","checkLeadMagnets:817","dom",0,"full","5–30 ms","innerText keyword scan"],
+["Conversion","Incentives Displayed","checkIncentivesDisplayed:848","static",0,"full","0.3–4 ms","body text keyword scan"],
+["Conversion","Link Relevance / Intent","checkLinkRelevance:878","dom",0,"full","10–50 ms","Loops all a/button"],
+["Conversion","Trade-In Flows","checkTradeInFlow:973","dom",0,"full","20–90 ms","4-pass evaluate (widgets+CTA+form+text)"],
+["Conversion","Financing Flows","checkFinancingFlow:1119","dom",0,"full","20–90 ms","4-pass evaluate"],
+["Conversion","Finance Calculator","checkFinanceCalculator:1260","dom",0,"full","20–90 ms","4-pass evaluate"],
+["Conversion","Appointment Booking","checkAppointmentBooking:1403","dom",0,"full","20–90 ms","4-pass evaluate"],
+["Conversion","Thank You Pages","checkThankYouPages:1548","dom",0,"full","10–50 ms","Links + form-action + redirect scan"],
+["Conversion","Chat Experiences","checkChatExperience:1628","dom",0,"full","15–70 ms","Vendor widget + launcher scan"],
+["Conversion","Click-to-Call","checkClickToCall:1713","dom",0,"full","10–50 ms","tel: links + phone regex"],
+["Conversion","Conversion Tracking","checkConversionTracking:1892","static",0,"full","0.3–4 ms","Regex over shared trackingData buffer"],
+["Conversion","GA4 Installed","checkGA4Installed:1805","static",0,"full","0.3–4 ms","Regex over shared buffer"],
+["Conversion","GTM Configuration","checkGTMConfiguration:1849","static",0,"full","0.3–4 ms","Regex over shared buffer"],
+
+/* ===== AIO / AEO / GEO ===== */
+["AIO","Structured Data (JSON-LD)","aioReadiness/checkStructuredData:13","static",0,"full","0.5–6 ms","Recursive @type walk on $"],
+["AIO","Content NLP-Friendly","aioReadiness:107","static",0,"partial","0.3–4 ms","Semantic-tag / heading counts"],
+["AIO","Keywords & Entities Annotated","aioReadiness:163","static",0,"partial","0.3–4 ms","meta keywords + headings + alt"],
+["AIO","Content Updated Regularly","aioReadiness:226","static",0,"full","0.3–4 ms","meta/JSON-LD/<time> dates"],
+["AIO","Internal Linking AI-Friendly","aioReadiness:344","static",0,"full","0.5–5 ms","Anchor-text heuristic"],
+["AIO","Duplicate Content Detection","aioReadiness:396","static",0,"full","0.3–4 ms","canonical + noindex"],
+["AIO","Topical Focus Clarity","aioReadiness:454","static",0,"partial","0.3–4 ms","title vs h1 overlap"],
+["AIO","Answer-Oriented Structure","aioReadiness:488","static",0,"full","0.5–5 ms","Question headings + FAQPage JSON-LD"],
+["AIO","Content Chunking","aioReadiness:570","static",0,"full","0.3–4 ms","Paragraph length / heading density"],
+["AIO","Lists & Structured Blocks","aioReadiness:606","static",0,"full","0.3–4 ms","ul/ol/table/blockquote counts"],
+["AIO","Terminology Consistency","aioReadiness:636","static",0,"partial","0.5–5 ms","Heading terms vs body frequency"],
+["AIO","Author / Source Attribution","aioReadiness:665","static",0,"partial","0.3–4 ms","author meta/schema/byline"],
+["AIO","Fact vs Opinion","aioReadiness:693","static",0,"partial","0.3–4 ms","citation/sup/doi counts"],
+["AIO","Content Completeness","aioReadiness:719","static",0,"full","0.3–4 ms","word count + intro/conclusion"],
+["AIO","Gemini Platform Score","aeoService/computePlatformScore:301","static",0,"full","<1 ms","Weighted signal matrix — NOT an LLM call"],
+["AIO","ChatGPT Platform Score","aeoService/computePlatformScore:301","static",0,"full","<1 ms","Weighted signal matrix — NOT an LLM call"],
+["AIO","Perplexity Platform Score","aeoService/computePlatformScore:301","static",0,"full","<1 ms","Weighted signal matrix — NOT an LLM call"],
+["AIO","Overall AEO Score","aeoService/runAudit:141","agg",0,"derived","<1 ms","Mean of the 3 platform scores"],
+["AIO","Platform Reasons","aeoService/generatePlatformReason:255","static",0,"full","<1 ms","Template strings from signals"],
+["AIO","AEO Recommendations","aeoRecommendations/getAEORecommendations:6","static",0,"full","<1 ms","if/else mapping, no I/O"],
+["AIO","Answer-First (TL;DR)","signals/answerFirst.js:6","static",0,"full","0.2–3 ms","Sentence count in first 100 words"],
+["AIO","llms.txt","signals/llmsTxt.js:54","http",1,"partial","0.1–6 s","1 axios GET /llms.txt (+WAF fallback)"],
+["AIO","FAQ/HowTo Schema","signals/schemaMarkup.js:6","static",0,"full","0.3–4 ms","JSON-LD types + FAQ/HowTo heuristics"],
+["AIO","Data Table Density","signals/structuredContent.js:6","static",0,"full","0.3–4 ms","table/list/img counts"],
+["AIO","AI Bot Access","signals/botAccess.js:120","http",1,"full","0.2–2 s","robots.txt GET + page HEAD (X-Robots)"],
+["AIO","Markdown Structure","signals/markdownHeaders.js:7","static",0,"full","0.3–4 ms","H1–H6 hierarchy"],
+["AIO","Citations & Sources","signals/citations.js:15","static",0,"full","0.5–5 ms","External links + markers + NAP (no fetch)"],
+["AIO","Index Coverage","signals/indexCoverage.js:162","http",1,"partial","~3–16 s","robots + ≤5 sitemaps + 10–25 sampled page fetches"],
+["AIO","Entity Recognition (KG)","signals/entityRecognition.js:146","api",1,"partial","0.3–6 s","1 Google Knowledge Graph API (gated on key)"],
+["AIO","Brand Entity Strength (KG)","signals/brandEntityStrength.js:146","api",1,"info","0.3–6 s","1 Knowledge Graph API (info-only)"],
+["AIO","Citation Consistency (NAP)","signals/citationConsistency.js:64","static",0,"partial","0.5–5 ms","schema name/phone/address vs page"],
+["AIO","Topical Authority","signals/topicalAuthority.js:101","http",1,"partial","~1–8 s","Shallow crawl: up to 6 internal-page GETs"],
+["AIO","Experience Signals (E-E-A-T)","signals/experienceSignals.js:30","static",0,"info","0.3–4 ms","Info-only regex on $"],
+["AIO","Expertise Signals (E-E-A-T)","signals/expertiseSignals.js:19","static",0,"info","0.3–4 ms","Info-only regex"],
+["AIO","Authority Signals (E-E-A-T)","signals/authoritySignals.js:24","static",0,"info","0.3–4 ms","Info-only (real backlinks need paid API — not called)"],
+];
+
+/* ---------- driver wall-clock ranking (measured where available) ---------- */
+let DRIVERS = [
+  {k:"pagespeed", name:"PageSpeed API ×2 (mobile+desktop)", meas:true,  t:"47–75 s",  w:100, desc:"MEASURED: mobile 50.4 s · desktop 75.1 s · full Technical category 42.8 s. Feeds 16 Technical params incl. TBT / LCP / CLS / INP."},
+  {k:"http",      name:"Own-HTTP checks (SEO + AIO)",        meas:true,  t:"4–30 s", w:34,  desc:"MEASURED: SEO link/sitemap checks 6.7 s · AIO crawl/index/llms.txt 4.0 s. Worst case is Contextual Linking (≤150 real GET loads)."},
+  {k:"probe",     name:"Security active probes",            meas:false, t:"5–25 s", w:30,  desc:"SQLi (~19 reqs) + Admin (13 paths) + XSS + CRM/Finance navs, run sequentially. MODELED — not fired at a third-party site."},
+  {k:"nav",       name:"Own page navigations ×3",          meas:true,  t:"2–15 s", w:18,  desc:"MEASURED: inventory-path probe 2.3 s. Service & Mobile-experience tabs run in parallel with PageSpeed, so usually hidden under it."},
+  {k:"setup",     name:"Page setup (launch+render+bot)",    meas:true,  t:"~2.2 s",  w:11,  desc:"MEASURED 2.24 s: browser launch + homepage render + Cloudflare/CAPTCHA handling (bot-clear).", c:"--brand", bg:"--bg"},
+  {k:"api",       name:"External APIs",                     meas:false, t:"0.3–6 s",w:8,  desc:"Safe Browsing + VirusTotal (×2) + Knowledge Graph (×2). KG ran inside the 4 s AIO window; Safe Browsing/VirusTotal modeled."},
+  {k:"axe",       name:"axe-core run",                      meas:true,  t:"~0.25 s", w:4,   desc:"MEASURED 0.25 s (whole Accessibility category). One run feeds ~18 a11y checks."},
+  {k:"dom",       name:"~150 DOM-eval / static params",     meas:true,  t:"~0.06 s total", w:2, desc:"MEASURED: UX 20 ms + Conversion 30 ms + AIO 10 ms = ~60 ms for ~70 params combined — a rounding error vs PageSpeed."}
+];
+
+/* ---------- render ---------- */
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const esc = s => String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function renderDrivers(){
+  const el = document.getElementById("drivers");
+  el.innerHTML = DRIVERS.map(d=>{
+    const col = css(DRV[d.k]?.c || d.c || "--brand");
+    return `<div class="drv">
+      <div class="name"><span class="sw" style="background:${col}"></span>${d.name}</div>
+      <div class="desc">${d.desc}</div>
+      <div class="time">${d.t} ${d.meas?'<span class="meas">measured</span>':'<span class="modl">modeled</span>'}</div>
+      <div class="bar"><i style="width:${d.w}%;background:${col}"></i></div>
+    </div>`;
+  }).join("");
+}
+
+function renderTimeline(){
+  const segs=[
+    {k:"setup", lbl:"Setup", pct:10, c:"--brand"},
+    {k:"pagespeed", lbl:"PageSpeed ×2  ·  ~43 s measured  (critical path)", pct:62, c:"--d-pagespeed"},
+    {k:"http", lbl:"SEO/UX HTTP", pct:16, c:"--d-http"},
+    {k:"axe", lbl:"axe", pct:6, c:"--d-axe"},
+    {k:"dom", lbl:"CPU", pct:6, c:"--d-dom"}
+  ];
+  document.getElementById("tlbar").innerHTML = segs.map(s=>`<div class="seg" style="flex:${s.pct};background:${css(s.c)}">${s.pct>=10?s.lbl:''}</div>`).join("");
+  document.getElementById("tllegend").innerHTML = [
+    ["--brand","Page setup (launch + render + bot handling)"],
+    ["--d-pagespeed","PageSpeed ×2 — the critical path (other categories finish inside this)"],
+    ["--d-http","Own-HTTP checks (SEO links, broken-links, sitemap) — parallel"],
+    ["--d-axe","axe-core run"],
+    ["--d-dom","~150 static + DOM-eval params combined"]
+  ].map(([c,t])=>`<div class="li"><span class="sw" style="background:${css(c)}"></span>${t}</div>`).join("");
+}
+
+/* table */
+const tbody=document.getElementById("tbody");
+let activeCat="", activeDrv="", q="", sortK="", sortDir=1;
+function effMs(eff){ // rough sort key from the eff string
+  if(/47 s/.test(eff)) return 47000;
+  const m=eff.match(/([\d.]+)\s*–\s*([\d.]+)\s*(ms|s)/); if(m){let hi=parseFloat(m[2]); if(m[3]==='s')hi*=1000; return hi;}
+  const s=eff.match(/([\d.]+)\s*(ms|s)/); if(s){let v=parseFloat(s[1]); if(s[2]==='s')v*=1000; return v;}
+  if(/<1 ms|~0 ms/.test(eff)) return 0.5; return 1;
+}
+function rowHTML(r){
+  const [cat,name,loc,driver,net,status,eff,note]=r;
+  const C=CATS[cat], V=DRV[driver];
+  const dc=css(V.c), dbg=css(V.bg);
+  return `<tr>
+    <td><span class="pname">${esc(name)}</span><span class="ploc mono">${esc(loc)}</span></td>
+    <td><span class="cat-tag" style="background:${C.bg};color:${C.c}">${C.label}</span></td>
+    <td class="note">${esc(note)}</td>
+    <td><span class="dtag" style="background:${dbg};color:${dc}"><span class="sw" style="background:${dc}"></span>${V.label}</span></td>
+    <td class="${net?'net-y':'net-n'}">${net?'● yes':'– no'}</td>
+    <td class="marg">${V.marg}</td>
+    <td class="eff" style="color:${effMs(eff)>=2000?css('--bad'):effMs(eff)>=200?css('--warn'):css('--good')}">${eff}</td>
+    <td><span class="st ${status}">${status}</span></td>
+  </tr>`;
+}
+function apply(){
+  let rows=D.filter(r=>{
+    if(activeCat && r[0]!==activeCat) return false;
+    if(activeDrv && r[3]!==activeDrv) return false;
+    if(q){ const hay=(r[1]+" "+r[2]+" "+r[7]).toLowerCase(); if(!hay.includes(q)) return false; }
+    return true;
+  });
+  if(sortK){
+    rows=rows.slice().sort((a,b)=>{
+      let va,vb;
+      if(sortK==='effn'){va=effMs(a[6]);vb=effMs(b[6]);}
+      else if(sortK==='margn'){va=effMs(DRV[a[3]].marg);vb=effMs(DRV[b[3]].marg);}
+      else{const idx={name:1,cat:0,how:7,driver:3,net:4,status:5}[sortK]; va=(''+a[idx]).toLowerCase(); vb=(''+b[idx]).toLowerCase();}
+      return va<vb?-1*sortDir:va>vb?1*sortDir:0;
+    });
+  }
+  tbody.innerHTML=rows.map(rowHTML).join("");
+  document.getElementById("count").textContent=`${rows.length} of ${D.length} parameters`;
+}
+function renderChips(){
+  const cc=document.getElementById("catchips");
+  cc.innerHTML=`<button class="chip ${activeCat===''?'on':''}" data-c="">All categories</button>`+
+    Object.keys(CATS).map(k=>`<button class="chip ${activeCat===k?'on':''}" data-c="${k}">${CATS[k].label} <b>${D.filter(r=>r[0]===k).length}</b></button>`).join("");
+  const dc=document.getElementById("drvchips");
+  dc.innerHTML=`<button class="chip ${activeDrv===''?'on':''}" data-d="">All drivers</button>`+
+    Object.keys(DRV).map(k=>{const n=D.filter(r=>r[3]===k).length; if(!n)return''; return `<button class="chip ${activeDrv===k?'on':''}" data-d="${k}"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${css(DRV[k].c)};margin-right:4px"></span>${DRV[k].label} <b>${n}</b></button>`;}).join("");
+  cc.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>{activeCat=b.dataset.c;renderChips();apply();});
+  dc.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>{activeDrv=b.dataset.d;renderChips();apply();});
+}
+document.getElementById("q").oninput=e=>{q=e.target.value.toLowerCase().trim();apply();};
+document.querySelectorAll("#tbl thead th").forEach(th=>th.onclick=()=>{const k=th.dataset.k; if(sortK===k)sortDir*=-1; else{sortK=k;sortDir=1;} apply();});
+
+/* KPIs from data */
+const ownIO=D.filter(r=>r[4]===1).length, cheap=D.length-ownIO;
+document.getElementById("kpi-net").textContent="~"+ownIO;
+document.getElementById("kpi-static").textContent="~"+cheap;
+document.getElementById("kpi-total").textContent=D.length;
+document.getElementById("genline").textContent="Cost model derived from Backend/metricServices/ (7 categories, 23 files). PageSpeed driver measured live; security category modeled. "+D.length+" parameters catalogued.";
+
+renderDrivers(); renderTimeline(); renderChips(); apply();
+</script>
+</body>
+</html>

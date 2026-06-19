@@ -179,6 +179,19 @@ const CATEGORY_PROBE_PATHS = {
 
 const normPath = (pathname) => (pathname.toLowerCase().replace(/\/+$/, "") || "/");
 
+// New vs. used/CPO condition inferred from the URL path. Only applied to URLs we've
+// already classified as SRP/VDP, so a segment like "used"/"new" is a reliable signal
+// (boundary-anchored so "news"/"focused" don't false-match). null = condition unknown.
+const USED_COND_RE = /(?:^|[-/])(?:used|cpo|certified|certified-pre-?owned|pre-?owned)(?:[-/]|$)/i;
+const NEW_COND_RE = /(?:^|[-/])new(?:[-/]|$)/i;
+const conditionOf = (rawUrl) => {
+  let path;
+  try { path = normPath(new URL(rawUrl).pathname); } catch { return null; }
+  if (USED_COND_RE.test(path)) return "used";
+  if (NEW_COND_RE.test(path)) return "new";
+  return null;
+};
+
 // Resolve a URL to its checklist category (first match in MATCH_ORDER wins), or
 // null if it matches none. Shared by rankCandidates (bucketing) and the sitemap
 // early-exit check so both agree on exactly what counts as an SRP / VDP.
@@ -198,21 +211,28 @@ function categoryOf(raw) {
   return null;
 }
 
-// True once the pool already holds BOTH an inventory (SRP) page and a
-// vehicle-detail (VDP) page. Those two are what the large inventory sitemaps
-// exist to serve, so once we have one of each there's nothing the remaining
-// sitemaps can add that we still need — callers use this to stop reading early.
-function poolHasSrpAndVdp(pool) {
-  let srp = false;
-  let vdp = false;
+// True once the pool holds enough inventory to satisfy the sampling rules: an SRP
+// story (either a separate new + used pair, or a single combined listing) AND at
+// least 5 VDP candidates to sample from. Only then is there nothing more the
+// remaining inventory sitemaps can add — callers use this to stop reading early.
+// (A site that exposes only one condition never trips the "pair" branch, so it
+// just keeps reading the rest of the bounded sitemap set, which is fine.)
+const VDP_SAMPLE_SIZE = 5;
+function poolHasEnoughInventory(pool) {
+  let newSrp = false, usedSrp = false, genSrp = false, vdpCount = 0;
   for (const raw of pool) {
     const c = categoryOf(raw);
     if (!c) continue;
-    if (c.key === "srp") srp = true;
-    else if (c.key === "vdp") vdp = true;
-    if (srp && vdp) return true;
+    if (c.key === "vdp") { vdpCount++; continue; }
+    if (c.key === "srp") {
+      const cond = conditionOf(raw);
+      if (cond === "new") newSrp = true;
+      else if (cond === "used") usedSrp = true;
+      else genSrp = true;
+    }
   }
-  return false;
+  const srpReady = (newSrp && usedSrp) || genSrp;
+  return srpReady && vdpCount >= VDP_SAMPLE_SIZE;
 }
 
 // SSRF-guarded GET. Returns empty/!ok on any block, error, or unsafe target.
@@ -250,7 +270,7 @@ async function collectFromSitemap(sitemapUrl, pool, depth = 0) {
       if (loc) await collectFromSitemap(loc.trim(), pool, depth + 1);
       // Stop opening further child sitemaps the moment we have an inventory
       // (SRP) page and a vehicle-detail (VDP) page — no need to read all of them.
-      if (poolHasSrpAndVdp(pool)) break;
+      if (poolHasEnoughInventory(pool)) break;
     }
   }
 
@@ -355,46 +375,88 @@ async function firstLiveUrl(candidates, max = 3) {
   return null;
 }
 
-// Probe a single guessed path. Returns the final (post-redirect) URL when it
-// resolves to a real, distinct page, else null. Unlike firstLiveUrl this is
-// strict — a guessed slug must answer 2xx/3xx, and we reject a redirect that
-// lands back on the homepage (the common "unknown path → /" soft handler), so a
-// guess can't masquerade as a real category page. SSRF-guarded.
-async function probePath(url) {
-  const safe = await validateUrlSafety(url);
-  if (!safe.ok) return null;
-  try {
-    const res = await axios.get(url, { ...AXIOS_OPTS, timeout: 7000 });
-    if (res.status < 200 || res.status >= 400) return null;
-    const finalUrl = res.request?.res?.responseUrl || url;
-    if (normPath(new URL(finalUrl).pathname) === "/") return null; // redirected to home → not a real match
-    return finalUrl;
-  } catch {
-    return null;
+// Fisher–Yates shuffle (new array) — VDP sampling is meant to be random.
+function shuffled(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
   }
+  return a;
 }
 
-// For every category still missing after the sitemap/crawl pass, probe its
-// conventional paths and keep the first that resolves to a real page. Categories
-// are probed concurrently; within a category the hub-first order is preserved.
-// Mutates `picks` in place and returns the keys it filled.
-async function probeMissingCategories(origin, picks) {
-  const missing = Object.keys(CATEGORY_PROBE_PATHS).filter((k) => !picks[k]);
-  const filled = [];
-  const results = await Promise.all(
-    missing.map(async (key) => {
-      const found = await Promise.all(CATEGORY_PROBE_PATHS[key].map((p) => probePath(origin + p)));
-      const hit = found.find(Boolean) || null;       // hub-first: first listed live path wins
-      return [key, hit];
-    })
-  );
-  for (const [key, url] of results) {
-    if (url) {
-      picks[key] = url;
-      filled.push(key);
-    }
+// Status-check {url,...} entries in parallel; keep only the ones that aren't a
+// dead 404/410, preserving input order.
+async function keepLive(items) {
+  const checked = await Promise.all(items.map(async (it) => [it, await checkStatus(it.url)]));
+  return checked.filter(([, s]) => !isDeadStatus(s)).map(([it]) => it);
+}
+
+// SRP plan: when a dealer keeps NEW and USED inventory on separate listing pages,
+// audit both; otherwise audit the single combined/whatever listing. `byCat.srp` is
+// already ranked best-hub-first, so index [0] of each condition group is the pick.
+async function planSrp(byCat) {
+  const all = (byCat.srp || []).map((c) => ({ url: c.url, cond: conditionOf(c.url) }));
+  const fresh = all.filter((s) => s.cond === "new");
+  const used = all.filter((s) => s.cond === "used");
+  const general = all.filter((s) => s.cond === null);
+
+  let plan;
+  if (fresh.length && used.length) {
+    plan = [
+      { url: fresh[0].url, cond: "new", label: "New Inventory" },
+      { url: used[0].url, cond: "used", label: "Used Inventory" },
+    ];
+  } else {
+    const best = general[0] || fresh[0] || used[0];
+    plan = best ? [{ url: best.url, cond: best.cond, label: "Inventory" }] : [];
   }
-  return filled;
+  return keepLive(plan);
+}
+
+// VDP plan: a random sample of up to 5 vehicle-detail pages. If the site has BOTH
+// new and used cars, weight it 3 used + 2 new (per spec); otherwise take 5 of
+// whatever exists. VDPs are frequently dynamic / missing from sitemaps, so we also
+// mine candidates off each SRP page (tagging them with the SRP's condition). Picks
+// are liveness-checked, with spares over-sampled to backfill any dead links.
+async function sampleVdps(byCat, srpPages, origin) {
+  let pool = (byCat.vdp || []).map((c) => ({ url: c.url, cond: conditionOf(c.url) }));
+
+  for (const srp of srpPages) {
+    if (pool.length >= 60) break;
+    try {
+      const r = await safeGet(srp.url);
+      if (!r.ok || !r.data) continue;
+      const links = new Set();
+      extractLinks(r.data, srp.url, origin, links, 250);
+      for (const u of links) {
+        if (isVdp(normPath(new URL(u).pathname), u.toLowerCase())) {
+          pool.push({ url: u, cond: conditionOf(u) || srp.cond || null });
+        }
+      }
+    } catch { /* best-effort mining only */ }
+  }
+
+  // Dedupe by URL (mining can re-surface sitemap entries); first tag wins.
+  const seen = new Set();
+  pool = pool.filter((v) => (seen.has(v.url) ? false : seen.add(v.url)));
+
+  const used = shuffled(pool.filter((v) => v.cond === "used"));
+  const fresh = shuffled(pool.filter((v) => v.cond === "new"));
+  const unknown = shuffled(pool.filter((v) => v.cond === null));
+
+  let plan;
+  if (used.length && fresh.length) plan = [...used.slice(0, 3), ...fresh.slice(0, 2)];
+  else if (used.length) plan = used.slice(0, VDP_SAMPLE_SIZE);
+  else if (fresh.length) plan = fresh.slice(0, VDP_SAMPLE_SIZE);
+  else plan = unknown.slice(0, VDP_SAMPLE_SIZE);
+
+  // Over-sample spares (kept in new/used-preference order) so dead links can be
+  // backfilled, then keep the first 5 live ones.
+  const chosen = new Set(plan.map((v) => v.url));
+  const spares = [...used, ...fresh, ...unknown].filter((v) => !chosen.has(v.url));
+  const live = await keepLive([...plan, ...spares].slice(0, VDP_SAMPLE_SIZE + 4));
+  return live.slice(0, VDP_SAMPLE_SIZE);
 }
 
 /**
@@ -459,7 +521,7 @@ export async function discoverDealerPages(rawUrl) {
       }
       // Stop opening further robots.txt Sitemap: entries once we already have an
       // inventory (SRP) and a vehicle-detail (VDP) page.
-      if (poolHasSrpAndVdp(pool)) break;
+      if (poolHasEnoughInventory(pool)) break;
     }
     steps.push(
       robotsSitemaps.length
@@ -507,67 +569,57 @@ export async function discoverDealerPages(rawUrl) {
         : "Could not crawl any links",
   });
 
-  // ── Categorize, then validate each category's link by HTTP status ──
-  // A sitemap can list URLs that now 404. For each category we walk its ranked
-  // candidates and keep the first that isn't a dead 404/410 link (e.g. if
-  // /vehicle is gone but /vehicles is live, /vehicles is what we add).
+  // ── Categorize, then resolve each category's page(s) ──
+  // A sitemap can list URLs that now 404. For the single-URL categories we walk
+  // their ranked candidates and keep the first that isn't a dead 404/410 link.
+  // SRP and VDP can fan out (see planSrp / sampleVdps) so they're resolved apart.
   const ranked = rankCandidates(pool);
+
+  const SINGLE_KEYS = Object.keys(ranked).filter((k) => k !== "srp" && k !== "vdp");
   const picks = {};
   const resolved = await Promise.all(
-    Object.keys(ranked).map(async (key) => [key, await firstLiveUrl(ranked[key])])
+    SINGLE_KEYS.map(async (key) => [key, await firstLiveUrl(ranked[key])])
   );
   for (const [key, url] of resolved) if (url) picks[key] = url;
 
-  // ── Fallback: probe conventional paths for any category still missing ──
-  // A page can exist on the site yet be absent from the sitemap and unlinked from
-  // the homepage — reachable only via a secondary route. Dealership sites use
-  // highly conventional slugs, so probing the known path finds it directly. Run
-  // before VDP mining so a probe-found SRP can still seed the VDP search below.
-  const missingBefore = Object.keys(CATEGORY_PROBE_PATHS).filter((k) => !picks[k]);
-  if (missingBefore.length) {
-    const filled = await probeMissingCategories(origin, picks);
-    steps.push({
-      key: "probe",
-      label: "Path probe",
-      status: filled.length ? "used" : "missing",
-      detail: filled.length
-        ? `Found ${filled.length} page(s) by probing common paths: ${filled.join(", ")}`
-        : "No additional pages found at common paths",
+  // SRP: both new + used listing pages when separate, else the single page.
+  const srpPages = await planSrp(ranked);
+  // VDP: a 5-car sample (3 used + 2 new when both exist), mined off the SRP(s) too.
+  const vdpPages = await sampleVdps(ranked, srpPages, origin);
+
+  // Build the per-category page lists the audit will fan out over. Each entry is
+  // { url, label, condition } — `label` distinguishes the multiple SRP/VDP samples.
+  const pagesByKey = {};
+  for (const key of Object.keys(picks)) {
+    pagesByKey[key] = [{ url: picks[key], label: null, condition: null }];
+  }
+  if (srpPages.length) {
+    pagesByKey.srp = srpPages.map((s) => ({ url: s.url, label: s.label, condition: s.cond || null }));
+  }
+  if (vdpPages.length) {
+    const perCond = {};
+    pagesByKey.vdp = vdpPages.map((v) => {
+      const pretty = v.cond === "used" ? "Used" : v.cond === "new" ? "New" : "Vehicle";
+      perCond[pretty] = (perCond[pretty] || 0) + 1;
+      return { url: v.url, label: `${pretty} ${perCond[pretty]}`, condition: v.cond || null };
     });
   }
 
-  // VDPs are often dynamic and absent from sitemaps. If we found a (live) SRP but
-  // no VDP, fetch the SRP once and mine the first live vehicle link off it.
-  if (!picks.vdp && picks.srp) {
-    try {
-      const r = await safeGet(picks.srp);
-      if (r.ok && r.data) {
-        const links = new Set();
-        extractLinks(r.data, picks.srp, origin, links, 250);
-        let tries = 0;
-        for (const u of links) {
-          if (tries >= 5) break; // bound the per-VDP status checks
-          if (isVdp(normPath(new URL(u).pathname), u.toLowerCase())) {
-            tries++;
-            if (!isDeadStatus(await checkStatus(u))) {
-              picks.vdp = u;
-              break;
-            }
-          }
-        }
-      }
-    } catch {
-      /* best-effort only */
+  const categories = DISPLAY.map((d) => {
+    if (d.key === "home") {
+      const homeUrl = `${baseUrl}/`;
+      return { key: d.key, label: d.label, hint: d.hint, url: homeUrl, found: true, pages: [{ url: homeUrl, label: null, condition: null }] };
     }
-  }
-
-  const categories = DISPLAY.map((d) => ({
-    key: d.key,
-    label: d.label,
-    hint: d.hint,
-    url: d.key === "home" ? `${baseUrl}/` : picks[d.key] || null,
-    found: d.key === "home" ? true : Boolean(picks[d.key]),
-  }));
+    const pages = pagesByKey[d.key] || [];
+    return {
+      key: d.key,
+      label: d.label,
+      hint: d.hint,
+      url: pages[0]?.url || null,
+      found: pages.length > 0,
+      pages,
+    };
+  });
 
   const result = {
     url: baseUrl,
@@ -577,6 +629,7 @@ export async function discoverDealerPages(rawUrl) {
     totalDiscovered: pool.size,
     foundCount: categories.filter((c) => c.found).length,
     totalCategories: categories.length,
+    totalPages: categories.reduce((n, c) => n + (c.pages?.length || 0), 0),
     steps,
     categories,
   };

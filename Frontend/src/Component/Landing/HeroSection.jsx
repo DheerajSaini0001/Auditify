@@ -236,6 +236,14 @@ const PageCard = ({ def, phase, cat, darkMode, dimmed, audit, pageAudits, inScop
     // A category can resolve to several pages (VDP sample, separate new/used SRPs).
     const pageCount = cat?.pages?.length || (found ? 1 : 0);
 
+    // Per-page audit overlay (set once "Run Full Audit" fires for this page).
+    const auditing = audit?.status === 'pending';
+    const audited = audit?.status === 'success';
+    const auditFailed = audit?.status === 'failed';
+
+    // A category can resolve to several pages (VDP sample, separate new/used SRPs).
+    const pageCount = cat?.pages?.length || (found ? 1 : 0);
+
     return (
         <div
             className={`relative flex flex-col gap-1.5 p-4 rounded-2xl border transition-all duration-300

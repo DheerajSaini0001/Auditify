@@ -236,9 +236,6 @@ const PageCard = ({ def, phase, cat, darkMode, dimmed, audit, pageAudits, inScop
     const audited = audit?.status === 'success';
     const auditFailed = audit?.status === 'failed';
 
-    // A category can resolve to several pages (VDP sample, separate new/used SRPs).
-    const pageCount = cat?.pages?.length || (found ? 1 : 0);
-
     return (
         <div
             className={`relative flex flex-col gap-1.5 p-4 rounded-2xl border transition-all duration-300

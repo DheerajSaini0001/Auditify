@@ -110,6 +110,13 @@ const SRP_MODEL_RE = new RegExp(`^\\/(?:new|used|certified|cpo|pre-?owned|invent
 
 const isSrp = (p) => SRP_KEYWORDS_RE.test(p) || SRP_FOLDER_RE.test(p) || SRP_MODEL_RE.test(p);
 
+// Legal / utility / account pages that are never one of the dealership
+// categories. Checked before MATCH_ORDER so a substring collision can't
+// mis-bucket them — e.g. "/terms-of-service/" must NOT count as the Service
+// department, and "/sitemap/" / "/thank-you/" aren't real pages we surface.
+const EXCLUDE_RE =
+  /\/(privacy(?:-policy)?|terms(?:-of-service|-of-use|-and-conditions)?|tos|legal|disclaimers?|accessibility|cookies?(?:-policy)?|do-not-sell|sitemap|site-map|thank-?you|404|login|sign-?in|register|my-account|account|cart|wishlist|saved-vehicles?)(?:\/|$)/;
+
 // ── Category matchers, in priority order. First match wins for a given URL, so
 // department-specific pages (service-specials, parts-specials, lease-specials)
 // are claimed by their department before the generic "specials" bucket. ───────
@@ -124,7 +131,7 @@ const MATCH_ORDER = [
   {
     key: "finance",
     test: (p) =>
-      /(financ|credit-app|credit-application|pre-?approv|get-?(pre-?)?approved|payment-calc|loan|auto-loan|apply-?(for|online|now|today)?)/.test(p),
+      /(financ|credit-app|credit-application|700-?credit|pre-?approv|get-?(pre-?)?approved|payment-calc|loan|auto-loan|apply-?(for|online|now|today)?)/.test(p),
   },
   // Service & Parts — fixed-ops pages (service, repair, maintenance, collision)
   // merged with the parts/accessories department into one category.
@@ -154,6 +161,22 @@ const DISPLAY = [
   { key: "content", label: "Content", hint: "Blog, news, FAQ & how-to" },
 ];
 
+// Conventional URL slugs per category, hub-first. Dealership sites overwhelmingly
+// use these paths, so when a page exists but is absent from the sitemap AND not
+// linked from the homepage (reachable only by a secondary route), probing the
+// known path finds it directly. `home` and `vdp` are intentionally absent —
+// home is synthesized, and a VDP is dynamic (mined off an SRP, not guessable).
+const CATEGORY_PROBE_PATHS = {
+  srp: ["/inventory", "/new-inventory", "/used-inventory", "/new-vehicles", "/used-vehicles", "/vehicles", "/used", "/pre-owned"],
+  specials: ["/specials", "/offers", "/current-offers", "/new-vehicle-specials", "/deals", "/incentives", "/manufacturer-specials", "/dealer-specials"],
+  trade: ["/value-your-trade", "/trade-in", "/value-your-trade-in", "/trade-in-value", "/sell-us-your-car", "/whats-my-trade", "/kbb-trade-in-value", "/trade-appraisal"],
+  lease: ["/lease-specials", "/lease-deals", "/lease-offers", "/leasing", "/lease", "/specials/lease"],
+  finance: ["/finance", "/financing", "/finance-center", "/apply-for-financing", "/credit-application", "/apply-online", "/get-pre-approved", "/finance-application"],
+  service: ["/service", "/service-center", "/schedule-service", "/service-and-parts", "/parts", "/parts-center", "/service-specials", "/order-parts"],
+  about: ["/about-us", "/about", "/meet-our-team", "/our-team", "/staff", "/contact-us", "/contact", "/hours-and-directions"],
+  content: ["/blog", "/news", "/resources", "/car-care-tips", "/faq", "/faqs", "/reviews"],
+};
+
 const normPath = (pathname) => (pathname.toLowerCase().replace(/\/+$/, "") || "/");
 
 // Resolve a URL to its checklist category (first match in MATCH_ORDER wins), or
@@ -168,6 +191,7 @@ function categoryOf(raw) {
   } catch {
     return null;
   }
+  if (EXCLUDE_RE.test(path)) return null; // legal/utility page — never a category
   for (const def of MATCH_ORDER) {
     if (def.test(path, lower)) return { key: def.key, path, lower };
   }
@@ -331,6 +355,48 @@ async function firstLiveUrl(candidates, max = 3) {
   return null;
 }
 
+// Probe a single guessed path. Returns the final (post-redirect) URL when it
+// resolves to a real, distinct page, else null. Unlike firstLiveUrl this is
+// strict — a guessed slug must answer 2xx/3xx, and we reject a redirect that
+// lands back on the homepage (the common "unknown path → /" soft handler), so a
+// guess can't masquerade as a real category page. SSRF-guarded.
+async function probePath(url) {
+  const safe = await validateUrlSafety(url);
+  if (!safe.ok) return null;
+  try {
+    const res = await axios.get(url, { ...AXIOS_OPTS, timeout: 7000 });
+    if (res.status < 200 || res.status >= 400) return null;
+    const finalUrl = res.request?.res?.responseUrl || url;
+    if (normPath(new URL(finalUrl).pathname) === "/") return null; // redirected to home → not a real match
+    return finalUrl;
+  } catch {
+    return null;
+  }
+}
+
+// For every category still missing after the sitemap/crawl pass, probe its
+// conventional paths and keep the first that resolves to a real page. Categories
+// are probed concurrently; within a category the hub-first order is preserved.
+// Mutates `picks` in place and returns the keys it filled.
+async function probeMissingCategories(origin, picks) {
+  const missing = Object.keys(CATEGORY_PROBE_PATHS).filter((k) => !picks[k]);
+  const filled = [];
+  const results = await Promise.all(
+    missing.map(async (key) => {
+      const found = await Promise.all(CATEGORY_PROBE_PATHS[key].map((p) => probePath(origin + p)));
+      const hit = found.find(Boolean) || null;       // hub-first: first listed live path wins
+      return [key, hit];
+    })
+  );
+  for (const [key, url] of results) {
+    if (url) {
+      picks[key] = url;
+      filled.push(key);
+    }
+  }
+  return filled;
+}
+
 /**
  * Discover the dealership's main pages.
  * @param {string} rawUrl  the dealer URL the user entered
@@ -412,30 +478,34 @@ export async function discoverDealerPages(rawUrl) {
     steps.push({ key: "robots", label: "robots.txt", status: "skipped", detail: "Sitemap already found" });
   }
 
-  // ── Step 3: link crawl ──
-  if (pool.size === 0) {
-    let links = await axiosCrawl(baseUrl, origin, MAX_CRAWL_PAGES);
-    // Homepage blocked or JS-only → escalate to the Playwright crawler, which
-    // also retries the sitemap through a real browser (beats bot protection).
-    if (links.length < 5) {
-      try {
-        const browserLinks = await discoverPages(baseUrl, MAX_CRAWL_PAGES);
-        links = [...new Set([...links, ...browserLinks])];
-      } catch (err) {
-        logger.error(`[discovery] browser crawl failed: ${err.message}`);
-      }
+  // ── Step 3: link crawl — ALWAYS run a lightweight homepage scan and merge it
+  // into the pool, even when the sitemap succeeded. Nav/footer links surface
+  // category hubs that a sitemap can omit. Escalate to the Playwright crawler
+  // only when we still have almost nothing (bot-protected / JS-only site). ──
+  const beforeCrawl = pool.size;
+  let links = await axiosCrawl(baseUrl, origin, MAX_CRAWL_PAGES);
+  if (links.length < 5 && pool.size < 5) {
+    try {
+      const browserLinks = await discoverPages(baseUrl, MAX_CRAWL_PAGES);
+      links = [...new Set([...links, ...browserLinks])];
+    } catch (err) {
+      logger.error(`[discovery] browser crawl failed: ${err.message}`);
     }
-    links.forEach((l) => pool.add(l));
-    if (pool.size > 0) source = "crawl";
-    steps.push({
-      key: "crawl",
-      label: "Link crawl",
-      status: pool.size ? "used" : "failed",
-      detail: pool.size ? `Crawled ${pool.size} internal links` : "Could not crawl any links",
-    });
-  } else {
-    steps.push({ key: "crawl", label: "Link crawl", status: "skipped", detail: "Sitemap provided the pages" });
   }
+  links.forEach((l) => pool.add(l));
+  const crawlAdded = pool.size - beforeCrawl;
+  if (pool.size > 0 && source === "none") source = "crawl";
+  steps.push({
+    key: "crawl",
+    label: "Link crawl",
+    status: crawlAdded > 0 ? "used" : pool.size ? "skipped" : "failed",
+    detail:
+      crawlAdded > 0
+        ? `Crawled the homepage and added ${crawlAdded} link(s)`
+        : pool.size
+        ? "Homepage crawl added nothing new"
+        : "Could not crawl any links",
+  });
 
   // ── Categorize, then validate each category's link by HTTP status ──
   // A sitemap can list URLs that now 404. For each category we walk its ranked
@@ -447,6 +517,24 @@ export async function discoverDealerPages(rawUrl) {
     Object.keys(ranked).map(async (key) => [key, await firstLiveUrl(ranked[key])])
   );
   for (const [key, url] of resolved) if (url) picks[key] = url;
+
+  // ── Fallback: probe conventional paths for any category still missing ──
+  // A page can exist on the site yet be absent from the sitemap and unlinked from
+  // the homepage — reachable only via a secondary route. Dealership sites use
+  // highly conventional slugs, so probing the known path finds it directly. Run
+  // before VDP mining so a probe-found SRP can still seed the VDP search below.
+  const missingBefore = Object.keys(CATEGORY_PROBE_PATHS).filter((k) => !picks[k]);
+  if (missingBefore.length) {
+    const filled = await probeMissingCategories(origin, picks);
+    steps.push({
+      key: "probe",
+      label: "Path probe",
+      status: filled.length ? "used" : "missing",
+      detail: filled.length
+        ? `Found ${filled.length} page(s) by probing common paths: ${filled.join(", ")}`
+        : "No additional pages found at common paths",
+    });
+  }
 
   // VDPs are often dynamic and absent from sitemaps. If we found a (live) SRP but
   // no VDP, fetch the SRP once and mine the first live vehicle link off it.

@@ -151,7 +151,10 @@ const checkImages = async ($, base_url) => {
     const total = images.length;
 
     if (total === 0) {
-      return evaluateParameter(1, "No images found", { total: 0 });
+      // Spec rule 6: image-SEO doesn't apply to a page with no images, so flag
+      // it N/A (present:false) to drop it from the weighted denominator rather
+      // than award an undeserved 100.
+      return evaluateParameter(1, "No images found", { total: 0, present: false });
     }
 
     let withAlt = 0;
@@ -1236,26 +1239,34 @@ const checkTitle = ($) => {
   let explanation = "";
   let recommendation = "";
 
-  if (!exists) {
+  if (!exists || titleLength === 0) {
     score = 0;
-    explanation = "The document is missing a <title> tag in the <head> section.";
-    recommendation = "Add a <title> tag with a descriptive title inside the <head> section.";
-  } else if (titleLength === 0) {
-    score = 0;
-    explanation = "The <title> tag is present but contains no text.";
-    recommendation = "Add descriptive text that summarizes the page content within the <title> tag.";
-  } else if (titleLength < 30) {
-    score = 0.5;
-    explanation = `The title is ${titleLength} characters long, which is considered too short.`;
-    recommendation = "Expand the title to at least 30 characters. Include primary keywords and your brand name.";
-  } else if (titleLength > 60) {
-    score = 0.5;
-    explanation = `The title is ${titleLength} characters long, which exceeds the recommended limit.`;
-    recommendation = "Shorten the title to approx. 60 characters to prevent truncation in search engine results (SERPs).";
+    explanation = exists
+      ? "The <title> tag is present but contains no text."
+      : "The document is missing a <title> tag in the <head> section.";
+    recommendation = "Add a descriptive <title> (50–60 characters) with the primary keyword near the front and the brand name as a suffix.";
   } else {
-    score = 1;
-    explanation = "The title length is within the optimal range (30-60 characters).";
-    recommendation = "No substantial changes needed. Ensure the title remains relevant to the page content.";
+    // Graded length curve (spec rule 1: continuous, not pass/fail). Optimal
+    // 50–60 chars = 1.0; shorter wastes SERP space, longer truncates.
+    if (titleLength >= 50 && titleLength <= 60) score = 1;
+    else if (titleLength >= 40 && titleLength < 50) score = 0.9;
+    else if (titleLength >= 30 && titleLength < 40) score = 0.8;
+    else if (titleLength >= 20 && titleLength < 30) score = 0.65;
+    else if (titleLength < 20) score = 0.5;
+    else if (titleLength > 60 && titleLength <= 65) score = 0.9;
+    else if (titleLength > 65 && titleLength <= 75) score = 0.7;
+    else score = 0.5; // > 75 — truncates badly in SERPs
+
+    if (score === 1) {
+      explanation = `The title length (${titleLength} chars) is within the optimal 50–60 character range.`;
+      recommendation = "No substantial changes needed. Keep the primary keyword near the front and the brand as a suffix.";
+    } else if (titleLength < 50) {
+      explanation = `The title is ${titleLength} characters — shorter than the optimal 50–60 range, leaving SERP space unused.`;
+      recommendation = "Expand toward 50–60 characters, e.g. \"{Year} {Make} {Model} for Sale in {City} | {Dealer}\".";
+    } else {
+      explanation = `The title is ${titleLength} characters — beyond the ~60-character SERP display limit, so it will be truncated.`;
+      recommendation = "Trim to ~60 characters so the full title shows in search results; keep the primary keyword in the visible portion.";
+    }
   }
 
   const details = score === 1 ? "Title tag is optimized" : "Title tag requires attention";
@@ -1320,26 +1331,31 @@ const checkMetaDescription = ($) => {
   let explanation = "";
   let recommendation = "";
 
-  if (!exists) {
+  if (!exists || metaDescLength === 0) {
     score = 0;
-    explanation = "The document is missing a meta description tag.";
-    recommendation = "Add a <meta name=\"description\" content=\"...\"> tag to the <head> of your page.";
-  } else if (metaDescLength === 0) {
-    score = 0;
-    explanation = "The meta description tag exists but the content attribute is empty.";
-    recommendation = "Add a concise summary of the page content to the content attribute.";
-  } else if (metaDescLength < 50) {
-    score = 0.5;
-    explanation = `The meta description is ${metaDescLength} characters long, which is too short to be effective.`;
-    recommendation = "Expand the description to at least 50 characters to better summarize the page for search engines.";
-  } else if (metaDescLength > 160) {
-    score = 0.5;
-    explanation = `The meta description is ${metaDescLength} characters long, which exceeds the recommended limit.`;
-    recommendation = "Shorten the description to around 155-160 characters to prevent truncation in search results.";
+    explanation = exists
+      ? "The meta description tag exists but the content attribute is empty."
+      : "The document is missing a meta description tag.";
+    recommendation = "Add a unique 120–160 character <meta name=\"description\"> that summarizes the page and includes a primary keyword and call to action.";
   } else {
-    score = 1;
-    explanation = "The meta description length is within the optimal range (50-160 characters).";
-    recommendation = "Ensure the description accurately reflects the page content and includes a call to action if appropriate.";
+    // Graded length curve (spec rule 1). Optimal 120–160 chars = 1.0.
+    if (metaDescLength >= 120 && metaDescLength <= 160) score = 1;
+    else if (metaDescLength >= 90 && metaDescLength < 120) score = 0.9;
+    else if (metaDescLength >= 50 && metaDescLength < 90) score = 0.75;
+    else if (metaDescLength < 50) score = 0.5;
+    else if (metaDescLength > 160 && metaDescLength <= 180) score = 0.85;
+    else score = 0.6; // > 180 — truncates in SERPs
+
+    if (score === 1) {
+      explanation = "The meta description length is within the optimal 120–160 character range.";
+      recommendation = "Ensure it accurately reflects the page content and includes a call to action if appropriate.";
+    } else if (metaDescLength < 120) {
+      explanation = `The meta description is ${metaDescLength} characters — shorter than the optimal 120–160 range, so it under-uses the SERP snippet.`;
+      recommendation = "Expand toward 120–160 characters with a compelling, keyword-relevant summary and a call to action.";
+    } else {
+      explanation = `The meta description is ${metaDescLength} characters — beyond ~160, so search engines will truncate it.`;
+      recommendation = "Trim to ~155–160 characters so the full snippet displays.";
+    }
   }
 
   const details = score === 1 ? "Meta description is optimized" : "Meta description requires attention";
@@ -1647,7 +1663,7 @@ const checkSocial = ($) => {
   return { ogMetric, twitterMetric, socialLinksMetric };
 };
 
-const checkRobotsTxt = async (url, page) => {
+const checkRobotsTxt = async (url, page, $ = null) => {
   try {
     const robotsUrl = new URL("/robots.txt", url).href;
 
@@ -1748,17 +1764,42 @@ const checkRobotsTxt = async (url, page) => {
       }
     }
 
-    const explanation = exists
+    let explanation = exists
       ? "Robots.txt file detected and analyzed for crawler access rules."
       : "Robots.txt is missing. Crawlers may index sensitive or unwanted pages.";
 
-    const recommendation = exists
+    let recommendation = exists
       ? "Ensure important pages are allowed and only sensitive or duplicate URLs are disallowed."
       : "Add a robots.txt file at the root to control crawler behavior.";
+
+    // ── Page-level robots-meta index intent (spec §2.2: "Robots meta + robots.txt intent") ──
+    // An accidental noindex/nofollow on a normally-indexable template is
+    // catastrophic and invisible to users, so it dominates this parameter.
+    const metaRobots = (($ && $('meta[name="robots"]').attr("content")) || "").toLowerCase();
+    const googlebot = (($ && $('meta[name="googlebot"]').attr("content")) || "").toLowerCase();
+    const directives = `${metaRobots} ${googlebot}`;
+    const hasNoindex = /\bnoindex\b/.test(directives) || /\bnone\b/.test(directives);
+    const hasNofollow = /\bnofollow\b/.test(directives) || /\bnone\b/.test(directives);
+
+    if (hasNoindex) {
+      score = Math.min(score, 0.3); // catastrophic if this page should be indexed
+      details = "Page is set to noindex";
+      explanation = "A robots meta tag sets this page to noindex, telling search engines to drop it from their index. If this is a money page (home/VDP/SRP) this is catastrophic and usually unintended.";
+      recommendation = "Remove the noindex directive from this page unless it is deliberately a thin/duplicate page. Reserve noindex for thin filter combinations and utility pages only.";
+    } else if (hasNofollow) {
+      score = Math.min(score, 0.6);
+      details = exists ? "Page links set to nofollow" : "Robots.txt missing · links nofollowed";
+      explanation = "A robots meta tag applies nofollow to this page, so search engines won't follow its links — this can strip internal-link equity and slow inventory crawling.";
+      recommendation = "Remove the page-level nofollow so internal links (SRP→VDP, related vehicles) pass crawl signals.";
+    }
 
     return evaluateParameter(score, details, {
       content,
       exists: exists ? 1 : 0,
+      metaRobots: metaRobots || null,
+      googlebot: googlebot || null,
+      hasNoindex,
+      hasNofollow,
       why_this_occurred: explanation,
       how_to_fix: recommendation,
     });
@@ -4292,6 +4333,225 @@ const checkContentFreshness = ($) => {
   });
 };
 
+// ── Viewport meta (spec §2.2 · Common · Low · 3%) ───────────────────────────
+// Mobile-readiness arm; shares evidence with the Accessibility "zoom" check.
+const checkViewport = ($) => {
+  const tag = $('meta[name="viewport"]');
+  const exists = tag.length > 0;
+  const content = exists ? (tag.attr("content") || "").toLowerCase().trim() : "";
+
+  if (!exists || !content) {
+    return evaluateParameter(0, exists ? "Viewport meta empty" : "Viewport meta missing", {
+      exists, content: content || null, hasDeviceWidth: false, zoomDisabled: false,
+      why_this_occurred: exists
+        ? "A <meta name=\"viewport\"> tag is present but its content is empty, so mobile browsers fall back to a desktop-width layout."
+        : "The page has no <meta name=\"viewport\"> tag, so mobile browsers render it at desktop width — failing Google's mobile-first indexing.",
+      how_to_fix: "Add <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"> to the <head>.",
+    });
+  }
+
+  const hasDeviceWidth = /width\s*=\s*device-width/.test(content);
+  const initialScaleMatch = content.match(/initial-scale\s*=\s*([\d.]+)/);
+  const hasInitialScale1 = !!initialScaleMatch && parseFloat(initialScaleMatch[1]) === 1;
+  const userScalableNo = /user-scalable\s*=\s*(no|0)\b/.test(content);
+  const maxScaleMatch = content.match(/maximum-scale\s*=\s*([\d.]+)/);
+  const zoomCapped = !!maxScaleMatch && parseFloat(maxScaleMatch[1]) < 2;
+  const zoomDisabled = userScalableNo || zoomCapped;
+
+  let score;
+  if (!hasDeviceWidth) score = 0.5;          // present but not responsive-correct
+  else if (!hasInitialScale1) score = 0.85;  // device-width but odd/absent initial-scale
+  else score = 1;
+  if (zoomDisabled) score = Math.min(score, 0.5); // blocking pinch-zoom is a mobile-UX/a11y fault
+
+  const issues = [];
+  if (!hasDeviceWidth) issues.push("missing width=device-width");
+  if (!hasInitialScale1) issues.push("initial-scale not set to 1");
+  if (zoomDisabled) issues.push("pinch-zoom disabled (user-scalable=no / maximum-scale<2)");
+
+  return evaluateParameter(parseFloat(score.toFixed(2)),
+    score === 1 ? "Responsive viewport configured" : `Viewport issues: ${issues.join(", ")}`, {
+    exists, content, hasDeviceWidth, hasInitialScale1, zoomDisabled,
+    why_this_occurred: score === 1
+      ? "The viewport is set to width=device-width with initial-scale=1 and allows zoom — correct for mobile-first indexing."
+      : `The viewport meta has issues: ${issues.join(", ")}.`,
+    how_to_fix: score === 1
+      ? "No changes needed."
+      : "Use <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">; do not set user-scalable=no or maximum-scale below 2 (it blocks zoom and fails accessibility).",
+  });
+};
+
+// Shared VDP-URL matcher (mirrors tuClassifyPageType's vdp heuristics).
+const tuIsVdpPath = (p) =>
+  TU_VIN_RE.test(p) ||
+  (/\/(vehicle|vehicles|vdp|inventory)\//.test(p) && /\d{4,}/.test(p)) ||
+  (/-\d{4}-/.test(p) && /\/(new|used|inventory|vehicle)/.test(p));
+
+// ── SRP → VDP internal links (spec §5.2 SRP · +6% · crawl depth to inventory) ──
+const checkSrpToVdpLinks = ($, url) => {
+  let baseHost = "";
+  try { baseHost = new URL(url).hostname.replace(/^www\./, ""); } catch {}
+  const vdpLinks = new Set();
+  $("a[href]").each((i, el) => {
+    const href = $(el).attr("href");
+    if (!href) return;
+    try {
+      const abs = new URL(href, url);
+      if (abs.hostname.replace(/^www\./, "") !== baseHost) return;
+      if (tuIsVdpPath(abs.pathname)) vdpLinks.add(abs.href);
+    } catch {}
+  });
+  const count = vdpLinks.size;
+
+  let score, why, fix;
+  if (count === 0) {
+    score = 0.2;
+    why = "No crawlable links to vehicle detail pages were found on this inventory page. If vehicle cards open via JavaScript (onclick) instead of <a href>, search engines and AI crawlers can't reach the inventory.";
+    fix = "Render each vehicle card as a real <a href> link to its VDP so crawlers can discover and index every vehicle.";
+  } else if (count < 10) {
+    score = 0.6;
+    why = `Only ${count} vehicle-detail link(s) were found. A healthy results page links to the full set of vehicles so crawlers can reach all inventory.`;
+    fix = "Ensure every result card links to its VDP with a crawlable <a href>, and that pagination / 'load more' exposes the rest as links.";
+  } else {
+    score = 1;
+    why = `${count} crawlable links to vehicle detail pages — inventory is reachable for indexing.`;
+    fix = "No changes needed; keep VDP links as crawlable <a href> elements.";
+  }
+  return evaluateParameter(parseFloat(score.toFixed(2)),
+    score === 1 ? `${count} SRP→VDP links` : "SRP→VDP linking needs attention", {
+    vdpLinkCount: count, examples: [...vdpLinks].slice(0, 12),
+    why_this_occurred: why, how_to_fix: fix,
+  });
+};
+
+// ── SRP pagination & faceted index control (spec §2.2 SRP add-on · +8%) ──────
+const checkSrpIndexControl = ($, url) => {
+  let parsed; try { parsed = new URL(url); } catch { parsed = null; }
+  const canonicalEl = $('head link[rel="canonical"]');
+  const canonical = (canonicalEl.attr("href") || "").trim();
+  const hasCanonical = canonicalEl.length > 0 && !!canonical;
+  const robotsContent = (($('meta[name="robots"]').attr("content") || "") + " " + ($('meta[name="googlebot"]').attr("content") || "")).toLowerCase();
+  const hasNoindex = /noindex/.test(robotsContent);
+  const hasRelNext = $('link[rel="next"]').length > 0;
+  const hasRelPrev = $('link[rel="prev"]').length > 0;
+  const params = parsed ? [...parsed.searchParams.keys()] : [];
+  const isPageParam = params.some(k => /^(page|p|pg|start|offset)$/i.test(k)) || /\/page\/\d+/i.test(parsed?.pathname || "");
+  const isPaginated = hasRelNext || hasRelPrev || isPageParam;
+  const filterParams = params.filter(k => !/^(page|p|pg|start|offset)$/i.test(k));
+  const hasFilters = filterParams.length > 0;
+
+  let selfCanonical = false, canonicalStripsParams = false;
+  if (hasCanonical && parsed) {
+    try {
+      const c = new URL(canonical, url);
+      const norm = (u) => u.hostname.replace(/^www\./, "") + u.pathname.replace(/\/$/, "");
+      selfCanonical = norm(c) === norm(parsed) && c.search === parsed.search;
+      canonicalStripsParams = norm(c) === norm(parsed) && !!parsed.search && !c.search;
+    } catch {}
+  }
+
+  let score = 0; const issues = [];
+  if (hasCanonical) score += 0.4; else issues.push("no canonical tag");
+  if (!hasFilters) score += 0.3;                                   // clean SRP, nothing to control
+  else if (canonicalStripsParams || hasNoindex) score += 0.3;      // filters consolidated / de-indexed
+  else { score += 0.1; issues.push("filter parameters are indexable & self-canonical (index-bloat risk)"); }
+  if (!isPaginated) score += 0.3;
+  else if (hasRelNext || hasRelPrev || selfCanonical) score += 0.3; // paginated pages self-canonical / rel next-prev
+  else { score += 0.1; issues.push("paginated page doesn't self-canonicalize or use rel=next/prev"); }
+  score = parseFloat(Math.max(0, Math.min(1, score)).toFixed(2));
+
+  return evaluateParameter(score,
+    score >= 0.9 ? "Pagination & faceted indexing well-controlled" : `Index-control issues: ${issues.join(", ")}`, {
+    hasCanonical, selfCanonical, canonicalStripsParams, hasNoindex,
+    isPaginated, hasRelNext, hasRelPrev, hasFilters, filterParams: filterParams.slice(0, 10), issues,
+    why_this_occurred: issues.length
+      ? `Inventory index-control issues: ${issues.join(", ")}. Uncontrolled filter/sort URLs and mis-canonicalized pagination create thousands of near-duplicate pages that waste crawl budget.`
+      : "Filter parameters and pagination are handled so search engines index one clean version of each results page.",
+    how_to_fix: issues.length
+      ? "Self-canonical page 1, keep a consistent parameter order, noindex thin filter combinations, and use rel=next/prev (or a view-all page) instead of canonicalizing every page to page 1."
+      : "No changes needed.",
+  });
+};
+
+// ── VDP unique description / duplicate-vs-OEM (spec §2.2 VDP add-on · +12%) ──
+// Fingerprints the vehicle description and compares it against sibling VDPs;
+// high similarity ⇒ templated/OEM copy reused across the catalogue (duplicate
+// content — the #1 VDP ranking killer). Thin copy is itself a failure.
+const checkVdpUniqueness = async (url, $, page, sitemapContent = null) => {
+  try {
+    const $scope = $("main").length ? $("main") : $("body");
+    const ownText = tuNormalizeText($scope.text() || "").slice(0, 5000);
+    const ownWords = cleanText(ownText);
+    const wordCount = ownWords.length;
+    const ownPrint = tuFingerprint(ownWords);
+    const hasFiller = TU_FILLER_RE.test(ownText.toLowerCase());
+
+    if (wordCount < 40) {
+      return evaluateParameter(0.3, "Thin VDP description", {
+        present: true, wordCount, comparedAgainst: 0, maxSimilarity: null, hasFiller,
+        why_this_occurred: `The vehicle description has only ~${wordCount} content words — too thin to rank and typically just the spec table or OEM boilerplate.`,
+        how_to_fix: "Write a unique 100+ word description per vehicle covering its condition, options and a local selling point — not the manufacturer's stock copy.",
+      });
+    }
+
+    // Sibling VDP URLs (sitemap-first, homepage fallback), excluding self.
+    let candidates = await tuUrlsFromSitemap(sitemapContent, page);
+    if (!candidates.length) candidates = tuUrlsFromHomepage($, url);
+    let selfHref = url; try { selfHref = new URL(url).href; } catch {}
+    const otherVdps = [...new Set(candidates.filter((c) => {
+      try {
+        const abs = new URL(c, url);
+        return tuIsVdpPath(abs.pathname) && abs.href !== selfHref;
+      } catch { return false; }
+    }))];
+    const sample = tuPickRandom(otherVdps, 3);
+
+    let maxSim = 0; const comparisons = [];
+    for (const other of sample) {
+      const abs = new URL(other, url).href;
+      const html = await tuFetchRaw(abs, page);
+      if (!html) continue;
+      const otherWords = cleanText(tuExtractBodyText(html));
+      if (otherWords.length < 20) continue;
+      const sim = tuJaccard(ownPrint, tuFingerprint(otherWords));
+      comparisons.push({ url: abs, similarity: parseFloat(sim.toFixed(2)) });
+      if (sim > maxSim) maxSim = sim;
+    }
+
+    let score;
+    if (!comparisons.length) {
+      // No siblings to compare → score on depth + filler only (still applicable).
+      score = hasFiller ? 0.5 : (wordCount >= 100 ? 0.85 : 0.7);
+    } else {
+      score = 1 - maxSim;          // 0 similarity → 1.0; 0.7 similarity → 0.3
+      if (hasFiller) score -= 0.15;
+      if (wordCount < 100) score -= 0.1;
+      score = Math.max(0.1, Math.min(1, score));
+    }
+    score = parseFloat(score.toFixed(2));
+
+    const dup = comparisons.length > 0 && maxSim >= 0.5;
+    return evaluateParameter(score,
+      score >= 0.9 ? "Unique vehicle description"
+        : dup ? "Description largely duplicated across vehicles" : "Vehicle description could be more unique", {
+      present: true, wordCount, comparedAgainst: comparisons.length,
+      maxSimilarity: comparisons.length ? parseFloat(maxSim.toFixed(2)) : null,
+      comparisons, hasFiller,
+      why_this_occurred: dup
+        ? `This description is ~${Math.round(maxSim * 100)}% similar to other vehicles on the site — the same templated/OEM copy is reused across VDPs, which search engines treat as duplicate content.`
+        : hasFiller
+          ? "The description leans on generic boilerplate phrasing rather than vehicle-specific detail."
+          : (comparisons.length ? "The description is sufficiently distinct from the sibling VDPs sampled." : "The description has reasonable depth (no sibling VDPs were available to compare against)."),
+      how_to_fix: (dup || hasFiller || wordCount < 100)
+        ? "Write a unique, 100+ word description per vehicle (condition, options, history, local selling points). Don't paste the manufacturer's stock description used on every trim."
+        : "No changes needed; keep descriptions vehicle-specific.",
+    });
+  } catch (e) {
+    // Treat as N/A so it drops from the weighted denominator (spec rule 6).
+    return evaluateParameter(0, "VDP uniqueness check failed", { present: false, error: e.message });
+  }
+};
+
 export default async function seoMetrics(url, $, page) {
 
   const titleMetric = checkTitle($);
@@ -4300,7 +4560,7 @@ export default async function seoMetrics(url, $, page) {
   const canonicalMetric = checkCanonical($, url);
   const h1Metric = checkH1($);
   const imageMetric = await checkImages($, url);
-  const videoMetric = checkVideos($);
+  // Video HIDDEN: not an On-Page SEO parameter in the spec (§2.2).
   const hierarchyMetric = checkHeadingHierarchy($);
   const semanticMetric = await checkSemanticTags($);
   const contextualMetric = await checkContextualLinks($, url);
@@ -4309,9 +4569,9 @@ export default async function seoMetrics(url, $, page) {
 
 
   const contentRelevanceMetric = checkContentRelevance($, titleMetric.meta.title, metaDescMetric.meta.description);
-  const contentFreshnessMetric = checkContentFreshness($);
+  // Content_Freshness HIDDEN (rule 4): double-counts AIO "content freshness markers".
   const slugMetric = checkSlugs(url, $);
-  const robotsMetric = await checkRobotsTxt(url, page);
+  const robotsMetric = await checkRobotsTxt(url, page, $);
   const sitemapMetric = await checkSitemap(url, robotsMetric?.meta?.content, page);
   // Sample eligible internal pages once, then score title & meta-desc uniqueness.
   const uniquenessSample = await tuSamplePages(url, $, page, sitemapMetric?.meta?.content);
@@ -4326,93 +4586,122 @@ export default async function seoMetrics(url, $, page) {
     titleMetric?.meta?.title,
     structuredDataMetric?.meta?.content
   );
-  // Standalone 0–10 service-page quality score (output-only, not weighted).
-  const serviceContentMetric = await checkServiceContentQuality(url, $, page, sitemapMetric?.meta?.content);
-  // Standalone 0–10 content depth/uniqueness/relevance score (output-only).
-  const contentDepthMetric = await checkContentDepthQuality(url, $, page, sitemapMetric?.meta?.content);
-  // E-E-A-T (Experience, Expertise, Authoritativeness, Trust) 0–10 score (weighted).
-  const eeatMetric = await checkEEAT(url, $, page, sitemapMetric?.meta?.content);
-  // Local SEO signals (8 sub-signals). Output-only — not weighted into Percentage.
-  const localSEOMetric = await checkLocalSEO(
-    url,
-    $,
-    page,
-    structuredDataMetric?.meta?.content,
-    titleMetric?.meta?.title,
-    metaDescMetric?.meta?.description
-  );
+  // HIDDEN — not On-Page SEO parameters in the spec (§2.2). Their checks are left
+  // in place (dead code) for whichever section claims them in its rebuild:
+  //   Service_Content_Quality / Content_Depth_Quality — output-only diagnostics
+  //   EEAT → AEO   ·   Local_SEO → AEO/local
+  // (checkStructuredData above stays CALLED only because Title_Location depends on it.)
 
   const { ogMetric, twitterMetric, socialLinksMetric } = checkSocial($);
 
+  // ── Common + page-type-specific extras (spec §2.2 add-ons / §5.2) ──
+  // Viewport applies to every page; the VDP/SRP add-ons are computed only on
+  // their page type and added to the weight set below (renormalizing the
+  // common params downward for that page type, per spec §5.2).
+  const viewportMetric = checkViewport($);
+  const pageType = tuClassifyPageType(url);
+  const vdpUniquenessMetric = pageType === "vdp"
+    ? await checkVdpUniqueness(url, $, page, sitemapMetric?.meta?.content)
+    : null;
+  const srpIndexMetric = pageType === "srp" ? checkSrpIndexControl($, url) : null;
+  const srpVdpLinksMetric = pageType === "srp" ? checkSrpToVdpLinks($, url) : null;
+
+  // ── Spec-aligned On-Page SEO weights (AUDIT_FRAMEWORK_SPECIFICATION.md §2.2 / §5.1) ──
+  // The product splits some spec parameters into sub-cards whose weights SUM to
+  // that spec parameter's within-section weight:
+  //   Meta title 15%  → Title(7) + Uniqueness(3) + Keyword(3) + Location(2)
+  //   Heading 11%     → H1(7) + Heading_Hierarchy(4)
+  //   Meta desc 9%    → Meta_Description(6) + Meta_Description_Uniqueness(3)
+  //   URL 8%          → URL_Structure(5) + URL_Slugs(3)
+  //   Internal link 7%→ Contextual_Linking(4) + Links(3)
+  //   Open Graph 6%   → Open_Graph(3) + Twitter_Card(2) + Social_Links(1)
+  //   Canonical 11 · Robots meta+intent 8 · Image 8 · Content relevance 6 · Semantic 5
+  //
+  // HIDDEN (rule-4 standing decision — double-counted in the already-existing
+  // AIO/AEO sections, so NOT weighted and NOT returned): Structured_Data
+  // (AIO structured-data validity), Content_Freshness (AIO freshness markers),
+  // EEAT (AEO E-E-A-T). checkStructuredData stays COMPUTED because Title_Location
+  // and Local_SEO depend on its parsed schema, but it is dropped from the return.
+  // INFORMATIONAL (weight 0, still returned/shown — mis-sectioned, relocation
+  // deferred): Sitemap (→ Technical), Video (not in spec). Output-only already:
+  // URL_Structure is dual — weighted here AND shown; Service/Content_Depth/Local_SEO.
   const weights = {
-    Title: 0.04,
-    Title_Uniqueness: 0.04,
-    Title_Keyword_Optimization: 0.04,
-    Title_Location_Optimization: 0.03,
-    Meta_Description: 0.05,
+    Title: 0.07,
+    Title_Uniqueness: 0.03,
+    Title_Keyword_Optimization: 0.03,
+    Title_Location_Optimization: 0.02,
+    Canonical: 0.11,
+    H1: 0.07,
+    Heading_Hierarchy: 0.04,
+    Meta_Description: 0.06,
     Meta_Description_Uniqueness: 0.03,
-    H1: 0.10,
-    Content_Relevance: 0.10,
-    Content_Freshness: 0.04,
-    Duplicate_Content: 0.02,
-    Image: 0.08,
-    Canonical: 0.08,
-    Contextual_Linking: 0.08,
-    Sitemap: 0.05,
-    Robots_Txt: 0.04,
-    Structured_Data: 0.06,
-    Heading_Hierarchy: 0.03,
+    Robots_Txt: 0.08,
+    URL_Structure: 0.05,
     URL_Slugs: 0.03,
+    Image: 0.08,
+    Contextual_Linking: 0.04,
     Links: 0.03,
-    Semantic_Tags: 0.01,
-    Video: 0.01,
-    Open_Graph: 0.02,
+    Open_Graph: 0.03,
     Twitter_Card: 0.02,
     Social_Links: 0.01,
-    EEAT: 0.08
+    Content_Relevance: 0.06,
+    Semantic_Tags: 0.05,
+    Viewport: 0.03,
   };
+
+  // Page-type-specific add-ons (spec §5.2) — only weighted on the relevant page
+  // type. Adding their weight here automatically renormalizes the common params
+  // downward via the Σ-weight division below.
+  if (vdpUniquenessMetric) weights.VDP_Content_Uniqueness = 0.12; // VDP unique-vs-OEM
+  if (srpIndexMetric) weights.SRP_Index_Control = 0.08;           // SRP pagination/faceted
+  if (srpVdpLinksMetric) weights.SRP_To_VDP_Links = 0.06;         // SRP→VDP crawl depth
 
   const getScore = (metric) => metric?.score || 0;
 
-  const weightedScore =
-    (getScore(titleMetric) * weights.Title) +
-    (getScore(titleUniquenessMetric) * weights.Title_Uniqueness) +
-    (getScore(titleKeywordMetric) * weights.Title_Keyword_Optimization) +
-    (getScore(titleLocationMetric) * weights.Title_Location_Optimization) +
-    (getScore(metaDescMetric) * weights.Meta_Description) +
-    (getScore(metaDescUniquenessMetric) * weights.Meta_Description_Uniqueness) +
-    (getScore(h1Metric) * weights.H1) +
-    (contentRelevanceMetric.percentage * weights.Content_Relevance) +
-    (getScore(contentFreshnessMetric) * weights.Content_Freshness) +
-    (getScore(imageMetric) * weights.Image) +
-    (getScore(canonicalMetric) * weights.Canonical) +
-    (getScore(contextualMetric) * weights.Contextual_Linking) +
-    (getScore(sitemapMetric) * weights.Sitemap) +
-    (getScore(robotsMetric) * weights.Robots_Txt) +
-    (getScore(structuredDataMetric) * weights.Structured_Data) +
-    (getScore(hierarchyMetric) * weights.Heading_Hierarchy) +
-    (getScore(slugMetric) * weights.URL_Slugs) +
-    (getScore(linksMetric) * weights.Links) +
-    (getScore(semanticMetric) * weights.Semantic_Tags) +
-    (getScore(videoMetric) * weights.Video) +
-    (getScore(ogMetric) * weights.Open_Graph) +
-    (getScore(twitterMetric) * weights.Twitter_Card) +
-    (getScore(socialLinksMetric) * weights.Social_Links) +
-    (getScore(eeatMetric) * weights.EEAT);
+  // Map each weighted key to its metric object and its 0–100 score.
+  // Content_Relevance reports a 0–100 `percentage` rather than `score`.
+  const metricOf = {
+    Title: titleMetric,
+    Title_Uniqueness: titleUniquenessMetric,
+    Title_Keyword_Optimization: titleKeywordMetric,
+    Title_Location_Optimization: titleLocationMetric,
+    Canonical: canonicalMetric,
+    H1: h1Metric,
+    Heading_Hierarchy: hierarchyMetric,
+    Meta_Description: metaDescMetric,
+    Meta_Description_Uniqueness: metaDescUniquenessMetric,
+    Robots_Txt: robotsMetric,
+    URL_Structure: urlStructureMetric,
+    URL_Slugs: slugMetric,
+    Image: imageMetric,
+    Contextual_Linking: contextualMetric,
+    Links: linksMetric,
+    Open_Graph: ogMetric,
+    Twitter_Card: twitterMetric,
+    Social_Links: socialLinksMetric,
+    Content_Relevance: contentRelevanceMetric,
+    Semantic_Tags: semanticMetric,
+    Viewport: viewportMetric,
+  };
+  if (vdpUniquenessMetric) metricOf.VDP_Content_Uniqueness = vdpUniquenessMetric;
+  if (srpIndexMetric) metricOf.SRP_Index_Control = srpIndexMetric;
+  if (srpVdpLinksMetric) metricOf.SRP_To_VDP_Links = srpVdpLinksMetric;
+  const scoreOf = (key) =>
+    key === "Content_Relevance" ? (contentRelevanceMetric.percentage || 0) : getScore(metricOf[key]);
 
-  // Normalize by the sum of weights actually used above (Duplicate_Content and
-  // URL_Structure are defined in the map but NOT weighted, so we can't blindly
-  // sum Object.values). Dividing by this total proportionally rescales every
-  // weight to sum to 1.0, putting the score on a true 0–100 scale.
-  const totalWeight =
-    weights.Title + weights.Title_Uniqueness + weights.Title_Keyword_Optimization +
-    weights.Title_Location_Optimization + weights.Meta_Description + weights.Meta_Description_Uniqueness +
-    weights.H1 + weights.Content_Relevance + weights.Content_Freshness + weights.Image + weights.Canonical +
-    weights.Contextual_Linking + weights.Sitemap + weights.Robots_Txt + weights.Structured_Data +
-    weights.Heading_Hierarchy + weights.URL_Slugs + weights.Links + weights.Semantic_Tags +
-    weights.Video + weights.Open_Graph + weights.Twitter_Card + weights.Social_Links + weights.EEAT;
+  // Spec rule 6 — renormalize N/A: a parameter flagged meta.present === false
+  // (e.g. Image on a page with no images) is dropped from BOTH numerator and
+  // denominator, not scored 0. Dividing by the *included* weight rescales the
+  // applicable set to a true 0–100 scale.
+  let weightedScore = 0;
+  let totalWeight = 0;
+  for (const key of Object.keys(weights)) {
+    if (metricOf[key]?.meta?.present === false) continue;
+    weightedScore += scoreOf(key) * weights[key];
+    totalWeight += weights[key];
+  }
 
-  const actualPercentage = parseFloat((weightedScore / totalWeight).toFixed(0));
+  const actualPercentage = totalWeight > 0 ? parseFloat((weightedScore / totalWeight).toFixed(0)) : 0;
 
   return {
     Title: titleMetric,
@@ -4425,24 +4714,25 @@ export default async function seoMetrics(url, $, page) {
     Canonical: canonicalMetric,
     H1: h1Metric,
     Image: imageMetric,
-    Video: videoMetric,
     Heading_Hierarchy: hierarchyMetric,
     Semantic_Tags: semanticMetric,
     Contextual_Linking: contextualMetric,
     Links: linksMetric,
     Content_Relevance: contentRelevanceMetric,
-    Content_Freshness: contentFreshnessMetric,
     URL_Slugs: slugMetric,
     Robots_Txt: robotsMetric,
-    Sitemap: sitemapMetric,
-    Structured_Data: structuredDataMetric,
-    Service_Content_Quality: serviceContentMetric,
-    Content_Depth_Quality: contentDepthMetric,
-    Local_SEO: localSEOMetric,
     Open_Graph: ogMetric,
     Twitter_Card: twitterMetric,
     Social_Links: socialLinksMetric,
-    EEAT: eeatMetric,
+    Viewport: viewportMetric,
+    // Page-type-specific (present only on the relevant page type).
+    ...(vdpUniquenessMetric ? { VDP_Content_Uniqueness: vdpUniquenessMetric } : {}),
+    ...(srpIndexMetric ? { SRP_Index_Control: srpIndexMetric } : {}),
+    ...(srpVdpLinksMetric ? { SRP_To_VDP_Links: srpVdpLinksMetric } : {}),
     Percentage: actualPercentage,
+    // Spec §0.5 — every section carries a confidence enum. On-Page SEO is scored
+    // entirely from DOM/markup inference (titles, headings, meta tags, link graph),
+    // so the whole section is `heuristic` (not field/lab measurement).
+    Confidence: "heuristic",
   };
 }

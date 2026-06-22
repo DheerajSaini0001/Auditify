@@ -1133,6 +1133,90 @@ export const InfoDetails = {
             "Use a sitemap index for large sites; add image/hreflang entries where relevant"
         ]
     },
+    Viewport: {
+        title: "Viewport Meta",
+        whatThisParameterIs: "The viewport meta tag tells mobile browsers how to size and scale the page. It's what makes a site display correctly on phones instead of a zoomed-out desktop layout.",
+        whatItCalculates: "We read <meta name=\"viewport\"> and check it sets width=device-width with initial-scale=1, and that it does NOT disable pinch-zoom (user-scalable=no or maximum-scale below 2).",
+        whyItMatters: "Google uses mobile-first indexing — a missing or broken viewport means a poor mobile experience and weaker rankings. Disabling zoom also fails accessibility (WCAG 1.4.4).",
+        thresholds: {
+            good: "width=device-width, initial-scale=1, zoom allowed (1.0)",
+            needsImprovement: "Present but missing device-width / zoom disabled (0.5)",
+            poor: "No viewport meta tag (0)"
+        },
+        actualReasonsForFailure: [
+            "No <meta name=\"viewport\"> tag in the <head>",
+            "Tag missing width=device-width",
+            "Pinch-zoom disabled via user-scalable=no or maximum-scale=1"
+        ],
+        howToOvercomeFailure: [
+            "Add <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
+            "Never set user-scalable=no or maximum-scale below 2",
+            "Test the page on a real mobile device or emulator"
+        ]
+    },
+    VDP_Content_Uniqueness: {
+        title: "Vehicle Description Uniqueness",
+        whatThisParameterIs: "Checks whether a vehicle detail page (VDP) has a genuinely unique description instead of the manufacturer's stock copy reused across every similar vehicle.",
+        whatItCalculates: "We fingerprint this page's description and compare it against a sample of other VDPs on the site (similarity), and flag thin content (<40 words) and generic boilerplate phrasing.",
+        whyItMatters: "Duplicate, templated, or OEM-boilerplate descriptions are the #1 VDP ranking killer — search engines pick one version and bury the rest, so most of your inventory never ranks.",
+        thresholds: {
+            good: "Distinct, 100+ word description (low similarity to other VDPs)",
+            needsImprovement: "Some duplication or thin/generic copy",
+            poor: "Largely duplicated across vehicles, or very thin"
+        },
+        actualReasonsForFailure: [
+            "Same templated/OEM description reused across many vehicles",
+            "Description is thin (<100 words) or just a spec table",
+            "Generic boilerplate phrasing instead of vehicle-specific detail"
+        ],
+        howToOvercomeFailure: [
+            "Write a unique 100+ word description for each vehicle",
+            "Cover condition, options, history and a local selling point",
+            "Avoid pasting the manufacturer's stock copy used on every trim"
+        ]
+    },
+    SRP_Index_Control: {
+        title: "Pagination & Faceted Index Control",
+        whatThisParameterIs: "On an inventory/search results page (SRP), checks that filter, sort, and pagination URLs are handled so search engines index one clean version instead of thousands of near-duplicates.",
+        whatItCalculates: "We inspect the canonical tag, robots meta, rel=next/prev, and the URL's filter/page parameters to see whether facets are consolidated (canonical/noindex) and pagination self-canonicalizes.",
+        whyItMatters: "Faceted filters generate endless URL combinations. Without index control they bloat the index and waste crawl budget, starving your real inventory pages of crawl attention.",
+        thresholds: {
+            good: "Canonical present, filters consolidated/noindexed, pagination self-canonical or rel=next/prev",
+            needsImprovement: "Indexable filter parameters or mis-canonicalized pagination",
+            poor: "No canonical and uncontrolled filter/pagination URLs"
+        },
+        actualReasonsForFailure: [
+            "Filter/sort parameters are indexable and self-canonical (index bloat)",
+            "Paginated pages canonicalize to page 1 (deep items lost) or lack rel=next/prev",
+            "No canonical tag on the results page"
+        ],
+        howToOvercomeFailure: [
+            "Self-canonical page 1 and keep a consistent parameter order",
+            "noindex thin filter combinations",
+            "Use rel=next/prev or a view-all page instead of canonicalizing every page to page 1"
+        ]
+    },
+    SRP_To_VDP_Links: {
+        title: "Inventory Link Depth (SRP→VDP)",
+        whatThisParameterIs: "Checks that the inventory/search results page links to individual vehicle detail pages with real, crawlable links so search engines can reach every vehicle.",
+        whatItCalculates: "We count crawlable <a href> links on the page that point to vehicle detail page URLs (VIN or /vehicle/.../year patterns).",
+        whyItMatters: "If vehicle cards open via JavaScript (onclick) instead of links, crawlers and AI agents can't discover the inventory — most of your vehicles never get indexed and can't appear in search or AI answers.",
+        thresholds: {
+            good: "10+ crawlable links to vehicle detail pages",
+            needsImprovement: "Few (1–9) VDP links found",
+            poor: "No crawlable VDP links (JS-only cards)"
+        },
+        actualReasonsForFailure: [
+            "Vehicle cards use JavaScript onclick instead of <a href>",
+            "Only a handful of vehicles link to their detail page",
+            "Pagination / 'load more' doesn't expose vehicles as links"
+        ],
+        howToOvercomeFailure: [
+            "Render every vehicle card as a real <a href> to its VDP",
+            "Ensure pagination exposes the full result set as crawlable links",
+            "Avoid hiding inventory behind client-side-only rendering"
+        ]
+    },
 
     Title_Uniqueness: {
         title: "Title Uniqueness",

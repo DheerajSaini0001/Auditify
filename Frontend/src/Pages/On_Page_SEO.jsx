@@ -9,7 +9,8 @@ import {
   Search, FileText, Link, Image as ImageIcon, Video,
   Layout, FileCode, Lock, Copy, List, Tag, Globe,
   CheckCircle, AlertTriangle, XCircle, Info, Loader2, ArrowRight,
-  ChevronDown, ChevronUp, ExternalLink, Box, Check, ShieldCheck, MapPin, Clock, Linkedin, AlertCircle
+  ChevronDown, ChevronUp, ExternalLink, Box, Check, ShieldCheck, MapPin, Clock, Linkedin, AlertCircle,
+  Smartphone, Car
 } from "lucide-react";
 import {
   SiFacebook, SiX, SiInstagram, SiYoutube, SiPinterest,
@@ -3492,6 +3493,192 @@ const SocialProfilesCard = ({ data, darkMode, onInfo, className = "" }) => {
 };
 
 // ------------------------------------------------------
+// Viewport Meta Card (mobile-readiness)
+// ------------------------------------------------------
+const ViewportCard = ({ data, darkMode, onInfo }) => {
+  const meta = data?.meta || {};
+  const score = data?.score || 0;
+  const isPassed = (data?.status || "fail") === "pass";
+  return (
+    <SEOCard
+      title="Viewport Meta"
+      icon={Smartphone}
+      iconColor="text-teal-400"
+      score={score}
+      status={getStatusFromScore(score)}
+      statusText={isPassed ? "Responsive" : "Needs Attention"}
+      meta={meta}
+      analysis={data?.analysis}
+      metricKey="Viewport"
+      darkMode={darkMode}
+      onInfo={onInfo}
+      className="col-span-1"
+      getStatusFromScore={getStatusFromScore}
+      InfoDetails={InfoDetails}
+    >
+      <div>
+        <h4 className={`text-xs font-semibold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-500" : "text-faint"}`}>
+          Viewport Content
+        </h4>
+        <div className={`p-3 rounded-lg border font-mono text-xs break-all ${darkMode ? "bg-gray-900 border-gray-700 text-gray-300" : "bg-cardsoft border-line text-muted"}`}>
+          {meta.content || <span className="italic opacity-50">No viewport meta tag found</span>}
+        </div>
+        <div className="flex flex-wrap gap-1.5 mt-3">
+          <span className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${meta.hasDeviceWidth ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-rose-500/10 text-rose-500 border-rose-500/20"}`}>
+            {meta.hasDeviceWidth ? "device-width ✓" : "no device-width"}
+          </span>
+          {meta.zoomDisabled && (
+            <span className="px-2 py-0.5 rounded text-[10px] font-semibold border bg-rose-500/10 text-rose-500 border-rose-500/20">Zoom disabled</span>
+          )}
+        </div>
+      </div>
+    </SEOCard>
+  );
+};
+
+// ------------------------------------------------------
+// VDP Description Uniqueness Card (page-specific: VDP)
+// ------------------------------------------------------
+const VdpUniquenessCard = ({ data, darkMode, onInfo, resolveLink, className = "" }) => {
+  const meta = data?.meta || {};
+  const score = data?.score || 0;
+  const isPassed = (data?.status || "fail") === "pass";
+  return (
+    <SEOCard
+      title="Vehicle Description Uniqueness"
+      icon={Car}
+      iconColor="text-orange-400"
+      score={score}
+      status={getStatusFromScore(score)}
+      statusText={isPassed ? "Unique" : "Needs Attention"}
+      meta={meta}
+      analysis={data?.analysis}
+      metricKey="VDP_Content_Uniqueness"
+      darkMode={darkMode}
+      onInfo={onInfo}
+      className={className}
+      headerInfo={meta.wordCount != null ? `(${meta.wordCount} words)` : undefined}
+      getStatusFromScore={getStatusFromScore}
+      InfoDetails={InfoDetails}
+    >
+      <div className="grid grid-cols-3 gap-2 text-center">
+        <div className={`p-2 rounded border ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-cardsoft border-line"}`}>
+          <div className={`text-lg font-semibold ${meta.wordCount >= 100 ? "text-emerald-500" : "text-amber-500"}`}>{meta.wordCount ?? "—"}</div>
+          <div className="text-[10px] uppercase font-semibold tracking-wider opacity-60">Words</div>
+        </div>
+        <div className={`p-2 rounded border ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-cardsoft border-line"}`}>
+          <div className={`text-lg font-semibold ${(meta.maxSimilarity ?? 0) < 0.5 ? "text-emerald-500" : "text-rose-500"}`}>{meta.maxSimilarity != null ? Math.round(meta.maxSimilarity * 100) + "%" : "—"}</div>
+          <div className="text-[10px] uppercase font-semibold tracking-wider opacity-60">Max Similarity</div>
+        </div>
+        <div className={`p-2 rounded border ${darkMode ? "bg-gray-900/50 border-gray-700" : "bg-cardsoft border-line"}`}>
+          <div className={`text-lg font-semibold ${darkMode ? "text-white" : "text-ink"}`}>{meta.comparedAgainst ?? 0}</div>
+          <div className="text-[10px] uppercase font-semibold tracking-wider opacity-60">VDPs Compared</div>
+        </div>
+      </div>
+      {meta.comparisons?.length > 0 && (
+        <div className="space-y-1 mt-2">
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-amber-500">Compared Against</div>
+          {meta.comparisons.map((c, i) => (
+            <a key={i} href={resolveLink ? resolveLink(c.url) : c.url} target="_blank" rel="noopener noreferrer"
+              className="flex items-center justify-between gap-2 hover:bg-black/5 dark:hover:bg-white/5 p-1 -mx-1 rounded transition-colors group/link">
+              <div className="truncate opacity-70 font-mono text-[10px] group-hover/link:text-blue-500">{c.url}</div>
+              <div className={`font-semibold whitespace-nowrap text-[10px] ${c.similarity >= 0.5 ? "text-rose-500" : "text-emerald-500"}`}>{Math.round(c.similarity * 100)}%</div>
+            </a>
+          ))}
+        </div>
+      )}
+    </SEOCard>
+  );
+};
+
+// ------------------------------------------------------
+// SRP Pagination & Faceted Index Control Card (page-specific: SRP)
+// ------------------------------------------------------
+const SrpIndexControlCard = ({ data, darkMode, onInfo, className = "" }) => {
+  const meta = data?.meta || {};
+  const score = data?.score || 0;
+  const isPassed = (data?.status || "fail") === "pass";
+  const chip = (ok, label) => (
+    <span className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${ok ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-amber-500/10 text-amber-500 border-amber-500/20"}`}>{label}</span>
+  );
+  return (
+    <SEOCard
+      title="Pagination & Faceted Control"
+      icon={List}
+      iconColor="text-cyan-400"
+      score={score}
+      status={getStatusFromScore(score)}
+      statusText={isPassed ? "Controlled" : "Index-Bloat Risk"}
+      meta={meta}
+      analysis={data?.analysis}
+      metricKey="SRP_Index_Control"
+      darkMode={darkMode}
+      onInfo={onInfo}
+      className={className}
+      getStatusFromScore={getStatusFromScore}
+      InfoDetails={InfoDetails}
+    >
+      <div className="flex flex-wrap gap-1.5">
+        {chip(meta.hasCanonical, meta.hasCanonical ? "Canonical ✓" : "No canonical")}
+        {meta.hasFilters && chip(meta.canonicalStripsParams || meta.hasNoindex, meta.canonicalStripsParams ? "Filters consolidated" : meta.hasNoindex ? "Filters noindexed" : "Filters indexable")}
+        {meta.isPaginated && chip(meta.hasRelNext || meta.hasRelPrev || meta.selfCanonical, meta.hasRelNext || meta.hasRelPrev ? "rel=next/prev" : meta.selfCanonical ? "Self-canonical page" : "Pagination uncontrolled")}
+        {!meta.hasFilters && !meta.isPaginated && chip(true, "Clean results URL")}
+      </div>
+      {meta.filterParams?.length > 0 && (
+        <div className="text-[10px] mt-2">
+          <span className="font-semibold uppercase tracking-wider text-faint">Filter params: </span>
+          <span className="font-mono opacity-70">{meta.filterParams.join(", ")}</span>
+        </div>
+      )}
+    </SEOCard>
+  );
+};
+
+// ------------------------------------------------------
+// SRP→VDP Internal Links Card (page-specific: SRP)
+// ------------------------------------------------------
+const SrpVdpLinksCard = ({ data, darkMode, onInfo, resolveLink, className = "" }) => {
+  const meta = data?.meta || {};
+  const score = data?.score || 0;
+  const isPassed = (data?.status || "fail") === "pass";
+  return (
+    <SEOCard
+      title="Inventory Link Depth (SRP→VDP)"
+      icon={Link}
+      iconColor="text-amber-400"
+      score={score}
+      status={getStatusFromScore(score)}
+      statusText={isPassed ? "Crawlable" : "Needs Attention"}
+      meta={meta}
+      analysis={data?.analysis}
+      metricKey="SRP_To_VDP_Links"
+      darkMode={darkMode}
+      onInfo={onInfo}
+      className={className}
+      headerInfo={`(${meta.vdpLinkCount ?? 0} VDP links)`}
+      getStatusFromScore={getStatusFromScore}
+      InfoDetails={InfoDetails}
+    >
+      {meta.examples?.length > 0 ? (
+        <div className="space-y-1">
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-emerald-500">Sample Vehicle Links</div>
+          <div className="space-y-1 max-h-32 overflow-y-auto custom-scrollbar">
+            {meta.examples.map((href, i) => (
+              <a key={i} href={resolveLink ? resolveLink(href) : href} target="_blank" rel="noopener noreferrer"
+                className="block truncate opacity-70 font-mono text-[10px] hover:text-blue-500 hover:underline">{href}</a>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="text-xs p-3 rounded border border-rose-500/20 bg-rose-500/5 text-rose-500">
+          No crawlable links to vehicle detail pages were found.
+        </div>
+      )}
+    </SEOCard>
+  );
+};
+
+// ------------------------------------------------------
 const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading, darkMode }) {
   const [selectedMetricInfo, setSelectedMetricInfo] = React.useState(null);
   const [selectedParameterInfo, setSelectedParameterInfo] = React.useState(null);
@@ -3544,7 +3731,11 @@ const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading,
       seo.Structured_Data,
       seo.Open_Graph,
       seo.Twitter_Card,
-      seo.Social_Links
+      seo.Social_Links,
+      seo.Viewport,
+      seo.VDP_Content_Uniqueness,
+      seo.SRP_Index_Control,
+      seo.SRP_To_VDP_Links
     ].filter(Boolean);
 
     let passed = 0;
@@ -3644,9 +3835,20 @@ const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading,
                   {/* Text Content */}
                   <div className={`flex-1 ${data.report === "All" ? "space-y-5" : "space-y-4"} text-left order-2 md:order-1`}>
                     <div className={`${data.report === "All" ? "space-y-2" : "space-y-1.5"}`}>
-                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-accentsoft text-accent border border-accent/20"}`}>
-                        <Search className="w-3.5 h-3.5" />
-                        <span>SEO Audit</span>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-accentsoft text-accent border border-accent/20"}`}>
+                          <Search className="w-3.5 h-3.5" />
+                          <span>SEO Audit</span>
+                        </div>
+                        {seo.Confidence && (
+                          <span
+                            title="On-Page SEO is scored from page markup/DOM inference — not field or lab measurement."
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "bg-slate-700/60 text-slate-300 border border-slate-600" : "bg-surface-2 text-muted border border-line"}`}
+                          >
+                            <Info className="w-3 h-3" />
+                            {seo.Confidence} signal
+                          </span>
+                        )}
                       </div>
                       <h3 className={`${data.report === "All" ? "text-3xl lg:text-5xl" : "text-2xl lg:text-4xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>
                         On-Page <span className="text-accent">SEO</span>
@@ -3685,7 +3887,7 @@ const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading,
 
                   {/* Circular Progress */}
                   <div className="relative flex-shrink-0 group cursor-default order-1 md:order-2">
-                    <div className={`absolute -inset-8 rounded-full blur-3xl opacity-25 transition-opacity duration-700 group-hover:opacity-40 ${overallScore >= 80 ? "bg-emerald-500" : "bg-amber-500"}`}></div>
+                    <div className={`absolute -inset-8 rounded-full blur-3xl opacity-25 transition-opacity duration-700 group-hover:opacity-40 ${overallScore >= 75 ? "bg-emerald-500" : overallScore >= 25 ? "bg-amber-500" : "bg-rose-500"}`}></div>
                     <CircularProgress value={overallScore} size={data.report === "All" ? 180 : 150} stroke={14} />
                     <div className="absolute inset-0 flex items-center justify-center flex-col gap-0.5">
                       <span className={`${data.report === "All" ? "text-5xl" : "text-3xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>{overallScore}%</span>
@@ -3793,7 +3995,7 @@ const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading,
                 onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Robots_Txt, icon: FileCode })}
               />
               )}
-              {vis('Sitemap') && (
+              {seo.Sitemap && vis('Sitemap') && (
               <SitemapCard
                 data={seo.Sitemap}
                 darkMode={darkMode}
@@ -3836,7 +4038,7 @@ const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading,
                   onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Title_Location_Optimization, icon: Globe })}
                 />
               )}
-              {vis('Structured_Data') && (
+              {seo.Structured_Data && vis('Structured_Data') && (
               <StructuredDataCard
                 data={seo.Structured_Data}
                 darkMode={darkMode}
@@ -3897,7 +4099,45 @@ const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading,
                 className="lg:col-span-3"
               />
               )}
+
+              {seo.Viewport && vis('Viewport') && (
+                <ViewportCard
+                  data={seo.Viewport}
+                  darkMode={darkMode}
+                  onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Viewport, icon: Smartphone })}
+                />
+              )}
             </Section>
+            )}
+
+            {/* Inventory & Vehicle Signals (page-specific: VDP / SRP) */}
+            {(seo.VDP_Content_Uniqueness || seo.SRP_Index_Control || seo.SRP_To_VDP_Links) && (
+              <Section title="Inventory & Vehicle Signals" icon={Car} darkMode={darkMode} gridClasses="grid-cols-1 md:grid-cols-2">
+                {seo.VDP_Content_Uniqueness && vis('VDP_Content_Uniqueness') && (
+                  <VdpUniquenessCard
+                    data={seo.VDP_Content_Uniqueness}
+                    darkMode={darkMode}
+                    resolveLink={resolveLink}
+                    onInfo={() => setSelectedParameterInfo({ ...InfoDetails.VDP_Content_Uniqueness, icon: Car })}
+                    className="md:col-span-2"
+                  />
+                )}
+                {seo.SRP_Index_Control && vis('SRP_Index_Control') && (
+                  <SrpIndexControlCard
+                    data={seo.SRP_Index_Control}
+                    darkMode={darkMode}
+                    onInfo={() => setSelectedParameterInfo({ ...InfoDetails.SRP_Index_Control, icon: List })}
+                  />
+                )}
+                {seo.SRP_To_VDP_Links && vis('SRP_To_VDP_Links') && (
+                  <SrpVdpLinksCard
+                    data={seo.SRP_To_VDP_Links}
+                    darkMode={darkMode}
+                    resolveLink={resolveLink}
+                    onInfo={() => setSelectedParameterInfo({ ...InfoDetails.SRP_To_VDP_Links, icon: Link })}
+                  />
+                )}
+              </Section>
             )}
 
             {/* Social & Authority */}

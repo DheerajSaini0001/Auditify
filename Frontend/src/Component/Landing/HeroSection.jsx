@@ -34,6 +34,29 @@ const PAGE_TYPES = [
     { key: 'content', label: 'Content / Blog', desc: 'Blog, news, FAQ, how-to', Icon: Newspaper },
 ];
 
+/* ─────────────────────────────────────────
+   Audit report sections (Screen 01 report-scope checklist).
+   `value` matches the backend section names; "all selected" → a full audit.
+───────────────────────────────────────── */
+const SECTIONS = [
+    { value: 'Technical Performance', label: 'Technical Performance' },
+    { value: 'On Page SEO', label: 'On Page SEO' },
+    { value: 'Accessibility', label: 'Accessibility' },
+    { value: 'Security/Compliance', label: 'Security/Compliance' },
+    { value: 'UX & Content Structure', label: 'UX & Content Structure' },
+    { value: 'Conversion & Lead Flow', label: 'Conversion & Lead Flow' },
+    { value: 'AIO (AI-Optimization) Readiness', label: 'AIO (AI-Search) Readiness' },
+];
+
+// Collapse a section selection into the `report` value the backend expects:
+// all (or none) → "All" full audit; exactly one → that section; a partial subset
+// → a comma-joined list the worker/report page splits back apart.
+const sectionsToReport = (selected) => {
+    if (selected.length === 0 || selected.length === SECTIONS.length) return 'All';
+    if (selected.length === 1) return selected[0];
+    return selected.join(',');
+};
+
 const prettyPath = (url) => {
     try { const u = new URL(url); return (u.pathname + u.search).replace(/\/$/, "") || "/"; }
     catch { return url; }
@@ -136,7 +159,7 @@ const CustomDropdown = ({ value, onChange, options, icon, darkMode, disabled }) 
    Multi-select dropdown — choose which page types are included in the audit.
    Defaults to all selected; the button shows the live count.
 ───────────────────────────────────────── */
-const MultiSelectDropdown = ({ selected, options, onToggle, onSetAll, icon, darkMode, disabled }) => {
+const MultiSelectDropdown = ({ selected, options, onToggle, onSetAll, icon, darkMode, disabled, getLabel }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
 
@@ -149,7 +172,9 @@ const MultiSelectDropdown = ({ selected, options, onToggle, onSetAll, icon, dark
     }, []);
 
     const allSelected = selected.length === options.length;
-    const label = allSelected ? "All Pages" : selected.length === 0 ? "No Pages" : `${selected.length} Pages`;
+    const label = getLabel
+        ? getLabel(selected, options)
+        : allSelected ? "All Pages" : selected.length === 0 ? "No Pages" : `${selected.length} Pages`;
 
     return (
         <div className="relative" ref={dropdownRef}>
@@ -339,7 +364,10 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
 
     const [url, setUrl] = useState('');
     const [device, setDevice] = useState('Mobile');
-    const [report, setReport] = useState('All');
+    // Which audit sections to run (defaults to all → full audit). The report-scope
+    // checklist drives this; `report` is the backend value derived from it.
+    const [reportSections, setReportSections] = useState(() => SECTIONS.map((s) => s.value));
+    const report = useMemo(() => sectionsToReport(reportSections), [reportSections]);
     const [showVerify, setShowVerify] = useState(false);
     const [localError, setLocalError] = useState(null);
 
@@ -529,6 +557,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
     // to the intermediate Audit Summary page (overall score + page-type heatmap).
     const handleFullAudit = async () => {
         if (batchRunning) return;
+        if (reportSections.length === 0) { setLocalError("Select at least one audit section to run."); return; }
         const targets = buildTargets();
         if (!targets.length) return;
 
@@ -580,7 +609,13 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
 
         setUrl(queryUrl);
         setDevice(deviceToUse);
-        if (queryReport) setReport(queryReport);
+        // ?report= may be "All", a single section, or a comma-joined subset.
+        if (queryReport) {
+            const next = queryReport === 'All'
+                ? SECTIONS.map((s) => s.value)
+                : queryReport.split(',').map((s) => s.trim()).filter((v) => SECTIONS.some((s) => s.value === v));
+            if (next.length) setReportSections(next);
+        }
         isAutoStarting.current = true;
 
         if (user || SKIP_EMAIL_VERIFY || localStorage.getItem('dealerpulse_token')) {
@@ -616,6 +651,12 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         setScopes(all ? PAGE_TYPES.map((p) => p.key) : []);
         invalidateDetection();
     };
+
+    // Report-section checklist. Section choice only affects what the audit scores
+    // (not which pages are discovered), so it never invalidates an existing scan.
+    const toggleSection = (val) =>
+        setReportSections((prev) => (prev.includes(val) ? prev.filter((v) => v !== val) : [...prev, val]));
+    const setAllSections = (all) => setReportSections(all ? SECTIONS.map((s) => s.value) : []);
 
     const visibleTypes = PAGE_TYPES;
     const foundCount = discovery?.categories?.filter((c) => c.found).length ?? 0;
@@ -715,19 +756,16 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                                 icon={device === "Desktop" ? <Monitor /> : <Smartphone />}
                                 darkMode={darkMode} disabled={isLoading}
                             />
-                            <CustomDropdown
-                                value={report} onChange={setReport}
-                                options={[
-                                    { value: "All", label: "Full Audit (All 7)" },
-                                    { value: "Technical Performance", label: "Technical Performance" },
-                                    { value: "On Page SEO", label: "On Page SEO" },
-                                    { value: "Accessibility", label: "Accessibility" },
-                                    { value: "Security/Compliance", label: "Security/Compliance" },
-                                    { value: "UX & Content Structure", label: "UX & Content Structure" },
-                                    { value: "Conversion & Lead Flow", label: "Conversion & Lead Flow" },
-                                    { value: "AIO (AI-Optimization) Readiness", label: "AIO (AI-Search) Readiness" },
-                                ]}
-                                icon={<Settings />} darkMode={darkMode} disabled={isLoading}
+                            <MultiSelectDropdown
+                                selected={reportSections}
+                                options={SECTIONS}
+                                onToggle={toggleSection}
+                                onSetAll={setAllSections}
+                                getLabel={(sel) =>
+                                    sel.length === SECTIONS.length ? "Full Audit (All 7)"
+                                        : sel.length === 0 ? "No Sections"
+                                            : `${sel.length} Section${sel.length > 1 ? "s" : ""}`}
+                                icon={<Settings />} darkMode={darkMode} disabled={isLoading || batchRunning}
                             />
                             <MultiSelectDropdown
                                 selected={scopes}
@@ -755,7 +793,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                                 <button
                                     type="button"
                                     onClick={handleFullAudit}
-                                    disabled={batchRunning}
+                                    disabled={batchRunning || reportSections.length === 0}
                                     className="ml-auto flex items-center gap-2 px-6 h-12 rounded-xl font-semibold text-[14px] tracking-tight shrink-0 border transition-all duration-300 active:scale-95 bg-gradient-to-r from-emerald-500 to-teal-600 border-emerald-500 text-white hover:from-emerald-400 hover:to-teal-500 shadow-lg shadow-emerald-600/25 hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed"
                                 >
                                     {batchRunning ? <><Loader2 className="animate-spin w-5 h-5" /> Auditing…</> : <>Run Full Audit <ArrowRight size={16} /></>}

@@ -15,6 +15,28 @@ import logger from "../utils/logger.js";
 
 const { url, device, report, auditId } = workerData;
 
+// `report` is one of: "All" (full audit), a single section name, or a comma-joined
+// list of section names — a custom subset chosen via the report-scope checklist.
+// Parse it once so the worker can branch between the single / subset / full paths.
+const requestedSections = report === "All"
+  ? null
+  : String(report).split(",").map((s) => s.trim()).filter(Boolean);
+const isSubset = Array.isArray(requestedSections) && requestedSections.length > 1;
+
+// Display names for the sectionScore rollup (match OverAll's labels).
+const SECTION_DISPLAY_NAMES = {
+  "Technical Performance": "Technical Performance",
+  "On Page SEO": "On-Page SEO",
+  "Accessibility": "Accessibility",
+  "Security/Compliance": "Security/Compliance",
+  "UX & Content Structure": "UX & Content Structure",
+  "Conversion & Lead Flow": "Conversion & Lead Flow",
+  "AIO (AI-Optimization) Readiness": "AIO Readiness",
+};
+
+const gradeFor = (score) =>
+  score >= 90 ? "A+" : score >= 80 ? "A" : score >= 70 ? "B" : score >= 60 ? "C" : score >= 50 ? "D" : "F";
+
 // [NEW] — This worker is DB-FREE. It never opens a Mongo connection. Instead it
 // streams progress and the final result to the main thread, which owns the
 // in-memory audit store and batches writes to MongoDB. These two helpers replace
@@ -180,6 +202,82 @@ const OverAll = (A, B, C, D, E, F, G) => {
     }
 
     // Fallback dealership gate removed.
+
+    // ── Custom subset (2–6 sections chosen via the checklist) ──
+    // Run only the selected metrics in parallel — each streams its own section the
+    // moment it lands (like the full audit), then we roll the selected scores up to
+    // a combined score/grade. A single section still uses the focused path below.
+    if (isSubset) {
+      // One runner per section: runs the metric, streams its result, returns the
+      // field name + percentage so we can build the final patch + score rollup.
+      const sectionRunners = {
+        "Technical Performance": async () => {
+          const r = await safeMetric("Technical Performance", () => technicalMetrics(url, device, page, response, browser));
+          postProgress({ technicalPerformance: r });
+          return { field: "technicalPerformance", value: r, pct: r?.Percentage || 0 };
+        },
+        "On Page SEO": async () => {
+          const r = await safeMetric("On Page SEO", () => seoMetrics(url, $, page));
+          postProgress({ onPageSEO: r, siteSchema: r?.Schema });
+          return { field: "onPageSEO", value: r, pct: r?.Percentage || 0, extra: { siteSchema: r?.Schema } };
+        },
+        "Accessibility": async () => {
+          const r = await safeMetric("Accessibility", () => accessibilityMetrics(page, $));
+          postProgress({ accessibility: r });
+          return { field: "accessibility", value: r, pct: r?.Percentage || 0 };
+        },
+        "Security/Compliance": async () => {
+          const r = await safeMetric("Security/Compliance", () => securityCompliance(url, page, response, browser));
+          postProgress({ securityOrCompliance: r });
+          return { field: "securityOrCompliance", value: r, pct: r?.Percentage || 0 };
+        },
+        "UX & Content Structure": async () => {
+          const r = await safeMetric("UX & Content Structure", () => uxContentStructure(device, page));
+          postProgress({ UXOrContentStructure: r });
+          return { field: "UXOrContentStructure", value: r, pct: r?.Percentage || 0 };
+        },
+        "Conversion & Lead Flow": async () => {
+          const r = await safeMetric("Conversion & Lead Flow", () => conversionLeadFlow(page, $));
+          postProgress({ conversionAndLeadFlow: r });
+          return { field: "conversionAndLeadFlow", value: r, pct: r?.Percentage || 0 };
+        },
+        "AIO (AI-Optimization) Readiness": async () => {
+          const r = await safeMetric("AIO Readiness", () => aioReadiness(url, page, $));
+          // Mirror the full-audit path: AEO uses 100 as the technical placeholder and
+          // is promoted to a TOP-LEVEL `aeo` field (not nested) so the report renders
+          // it directly instead of re-running the slow live stream.
+          const aeoRes = await safeMetric("AEO (AIO)", () => AEOService.runAudit(url, $, null, 100));
+          postProgress({ aioReadiness: r, aioCompatibilityBadge: r?.AIO_Compatibility_Badge, aeo: aeoRes });
+          return { field: "aioReadiness", value: r, pct: r?.Percentage || 0, extra: { aioCompatibilityBadge: r?.AIO_Compatibility_Badge, aeo: aeoRes } };
+        },
+      };
+
+      const selected = requestedSections.filter((s) => sectionRunners[s]);
+      const results = (await Promise.all(selected.map((s) => sectionRunners[s]())));
+
+      const updateData = {
+        status: "completed",
+        timeTaken: `${((performance.now() - start) / 1000).toFixed(0)}s`,
+      };
+      let sum = 0;
+      const sectionScores = [];
+      for (let i = 0; i < results.length; i++) {
+        const res = results[i];
+        if (!res) continue;
+        updateData[res.field] = res.value;
+        if (res.extra) Object.assign(updateData, res.extra);
+        sum += res.pct;
+        sectionScores.push({ name: SECTION_DISPLAY_NAMES[selected[i]] || selected[i], score: res.pct });
+      }
+      const avg = results.length ? sum / results.length : 0;
+      updateData.score = Number(avg.toFixed(1));
+      updateData.grade = gradeFor(avg);
+      updateData.sectionScore = sectionScores;
+
+      finish(updateData);
+      logger.info(`🧠 Worker Completed (subset: ${selected.join(", ")}) for URL: ${url}`);
+      return;
+    }
 
     if (report !== "All") {
       let result;

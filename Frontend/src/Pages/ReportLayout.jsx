@@ -113,6 +113,15 @@ const ReportLayout = () => {
   const stableData = data;
   const stableLoading = isFetching || isReloading;
 
+  // `data.report` is "All", a single section name, or a comma-joined subset chosen
+  // via the report-scope checklist. Split it into the list of sections to render.
+  const reportSections = useMemo(
+    () => (data?.report && data.report !== "All"
+      ? String(data.report).split(",").map((s) => s.trim()).filter(Boolean)
+      : []),
+    [data?.report]
+  );
+
   if (isFetching) {
     return (
       <div className={`flex h-screen w-full items-center justify-center ${darkMode ? "bg-gray-900" : "bg-surface"}`}>
@@ -179,7 +188,9 @@ const ReportLayout = () => {
       )}
 
       {/* =================================================
-          SCENARIO 2: SINGLE REPORT VIEW
+          SCENARIO 2: SINGLE / CUSTOM-SUBSET REPORT VIEW
+          `data.report` is a single section name or a comma-joined subset chosen
+          via the report-scope checklist. Render each selected section, stacked.
       ================================================== */}
       {data && data.report !== "All" && (
         <div
@@ -189,26 +200,26 @@ const ReportLayout = () => {
           {/* ✅ Max width container for better readability on large screens */}
           <main className="flex-1 flex flex-col w-full max-w-7xl space-y-6 sm:space-y-6 mt-7">
             {/* Report Components */}
-            <div className="w-full">
-              {data.report === "Technical Performance" && (
+            <div className="w-full space-y-6 sm:space-y-8">
+              {reportSections.includes("Technical Performance") && (
                 <Technical_Performance darkMode={darkMode} data={stableData} loading={stableLoading} />
               )}
-              {data.report === "On Page SEO" && (
+              {reportSections.includes("On Page SEO") && (
                 <On_Page_SEO darkMode={darkMode} data={stableData} loading={stableLoading} />
               )}
-              {data.report === "Accessibility" && (
+              {reportSections.includes("Accessibility") && (
                 <Accessibility darkMode={darkMode} data={stableData} loading={stableLoading} />
               )}
-              {data.report === "Security/Compliance" && (
+              {reportSections.includes("Security/Compliance") && (
                 <Security_Compilance darkMode={darkMode} data={stableData} loading={stableLoading} />
               )}
-              {data.report === "UX & Content Structure" && (
+              {reportSections.includes("UX & Content Structure") && (
                 <UX_Content_Structure darkMode={darkMode} data={stableData} loading={stableLoading} />
               )}
-              {data.report === "Conversion & Lead Flow" && (
+              {reportSections.includes("Conversion & Lead Flow") && (
                 <Conversion_Lead_Flow darkMode={darkMode} data={stableData} loading={stableLoading} />
               )}
-              {data.report === "AIO (AI-Optimization) Readiness" && (
+              {reportSections.includes("AIO (AI-Optimization) Readiness") && (
                 <AIO darkMode={darkMode} data={stableData} loading={stableLoading} />
               )}
             </div>

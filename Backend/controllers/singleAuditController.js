@@ -127,8 +127,13 @@ export const startAudit = async (req, res) => {
       return res.status(200).json(existing);
     }
  
-    // ⭐ ENHANCEMENT: Extract section from existing "Full Audit"
+    // ⭐ ENHANCEMENT: Extract one OR MORE sections from an existing "Full Audit".
+    // `report` is a single section name or a comma-joined subset chosen via the
+    // report-scope checklist; if a completed full audit already holds every
+    // requested section, we clone those fields out instead of re-running a worker.
     if (report !== "All") {
+      const sections = String(report).split(",").map((s) => s.trim()).filter(Boolean);
+
       // Prefer an in-memory completed full audit; fall back to Mongo.
       let fullAudit = auditStore.findCompletedFullAudit({ url, device, userId: req.user?.userId || null });
       if (!fullAudit) {
@@ -140,38 +145,46 @@ export const startAudit = async (req, res) => {
           status: "completed"
         }).sort({ createdAt: -1 });
       }
- 
+
       if (fullAudit) {
-        const fieldName = reportFieldMap[report];
-        if (fieldName && fullAudit[fieldName]) {
-          logger.info(`✨ Section Reuse: Extracting ${report} from existing Full Audit for: ${url}`);
- 
-          const sectionScore = fullAudit[fieldName].Percentage || 0;
-          const sectionGrade = sectionScore >= 90 ? "A+" : sectionScore >= 80 ? "A" : sectionScore >= 70 ? "B" : sectionScore >= 60 ? "C" : sectionScore >= 50 ? "D" : "F";
- 
+        const fields = sections.map((s) => reportFieldMap[s]);
+        // Only reuse when EVERY requested section is present in the full audit.
+        const allPresent = fields.length > 0 && fields.every((f) => f && fullAudit[f]);
+        if (allPresent) {
+          logger.info(`✨ Section Reuse: Extracting [${sections.join(", ")}] from existing Full Audit for: ${url}`);
+
           const newSectionReport = new SingleAuditReport({
             url: fullAudit.url,
             device: fullAudit.device,
             report: report,
             status: "completed",
-            [fieldName]: fullAudit[fieldName],
-            score: sectionScore,
-            grade: sectionGrade,
             screenshot: fullAudit.screenshot,
             timeTaken: "0s (cached)",
             isBotProtected: fullAudit.isBotProtected,
             userId: req.user?.userId || null
           });
- 
-          // Include sub-dependencies
-          if (report === "On Page SEO") newSectionReport.siteSchema = fullAudit.siteSchema;
-          if (report === "AIO (AI-Optimization) Readiness") {
-            newSectionReport.aioCompatibilityBadge = fullAudit.aioCompatibilityBadge;
-            newSectionReport.aeo = fullAudit.aeo;
+
+          let sum = 0;
+          for (const section of sections) {
+            const fieldName = reportFieldMap[section];
+            newSectionReport[fieldName] = fullAudit[fieldName];
+            sum += fullAudit[fieldName]?.Percentage || 0;
+
+            // Include each section's sub-dependencies.
+            if (section === "On Page SEO") newSectionReport.siteSchema = fullAudit.siteSchema;
+            if (section === "AIO (AI-Optimization) Readiness") {
+              newSectionReport.aioCompatibilityBadge = fullAudit.aioCompatibilityBadge;
+              newSectionReport.aeo = fullAudit.aeo;
+            }
           }
- 
+
+          const sectionScore = Number((sum / sections.length).toFixed(1));
+          const sectionGrade = sectionScore >= 90 ? "A+" : sectionScore >= 80 ? "A" : sectionScore >= 70 ? "B" : sectionScore >= 60 ? "C" : sectionScore >= 50 ? "D" : "F";
+          newSectionReport.score = sectionScore;
+          newSectionReport.grade = sectionGrade;
+
           await newSectionReport.save();
- 
+
           // Log the cached audit run
           const auditLog = new AuditLog({
             userId: req.user?.userId || null,
@@ -187,7 +200,7 @@ export const startAudit = async (req, res) => {
             actions: ["visited", "audit_section_extracted"],
           });
           auditLog.save().catch(err => logger.error("Error saving extracted AuditLog", err));
- 
+
           return res.status(200).json(newSectionReport);
         }
       }

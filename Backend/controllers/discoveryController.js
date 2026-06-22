@@ -13,7 +13,7 @@ import logger from "../utils/logger.js";
  */
 export const discover = async (req, res) => {
   try {
-    let { url } = req.body || {};
+    let { url, scopes } = req.body || {};
     if (!url || typeof url !== "string" || !url.trim()) {
       return res.status(400).json({ error: "Missing required field: url" });
     }
@@ -21,7 +21,13 @@ export const discover = async (req, res) => {
     url = url.trim();
     if (!/^https?:\/\//i.test(url)) url = "https://" + url;
 
-    const result = await discoverDealerPages(url);
+    // Optional: restrict discovery to the page types the user kept selected in the
+    // form. When omitted (or not an array), every page type is discovered as before.
+    const scopeList = Array.isArray(scopes)
+      ? scopes.filter((s) => typeof s === "string")
+      : null;
+
+    const result = await discoverDealerPages(url, scopeList);
     return res.status(200).json(result);
   } catch (err) {
     if (err?.code === "UNSAFE_URL") {

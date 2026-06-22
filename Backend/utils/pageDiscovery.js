@@ -438,9 +438,17 @@ async function sampleVdps(byCat, srpPages, origin) {
 /**
  * Discover the dealership's main pages.
  * @param {string} rawUrl  the dealer URL the user entered
+ * @param {string[]|null} scopes  page-type keys to discover; null = all of them.
+ *   Out-of-scope categories skip the expensive resolution (live-status checks,
+ *   SRP planning, VDP sampling) so the backend does no work for pages the user
+ *   excluded in the form.
  * @returns {Promise<object>} discovery result (source, steps, categories, …)
  */
-export async function discoverDealerPages(rawUrl) {
+export async function discoverDealerPages(rawUrl, scopes = null) {
+  // A category is in scope when no filter was passed, or the filter includes it.
+  const scopeSet = Array.isArray(scopes) && scopes.length ? new Set(scopes) : null;
+  const inScope = (key) => !scopeSet || scopeSet.has(key);
+
   // Defensive: accept a bare domain ("machens.com") even though the controller
   // normally prefixes the protocol — otherwise new URL() would throw.
   let input = (rawUrl || "").trim();
@@ -547,7 +555,9 @@ export async function discoverDealerPages(rawUrl) {
   // SRP and VDP can fan out (see planSrp / sampleVdps) so they're resolved apart.
   const ranked = rankCandidates(pool);
 
-  const SINGLE_KEYS = Object.keys(ranked).filter((k) => k !== "srp" && k !== "vdp");
+  // Only resolve the categories the user kept in scope — out-of-scope ones skip the
+  // live-status checks / SRP planning / VDP sampling entirely (no wasted backend work).
+  const SINGLE_KEYS = Object.keys(ranked).filter((k) => k !== "srp" && k !== "vdp" && inScope(k));
   const picks = {};
   const resolved = await Promise.all(
     SINGLE_KEYS.map(async (key) => [key, await firstLiveUrl(ranked[key])])
@@ -555,9 +565,9 @@ export async function discoverDealerPages(rawUrl) {
   for (const [key, url] of resolved) if (url) picks[key] = url;
 
   // SRP: both new + used listing pages when separate, else the single page.
-  const srpPages = await planSrp(ranked);
+  const srpPages = inScope("srp") ? await planSrp(ranked) : [];
   // VDP: a 5-car sample (3 used + 2 new when both exist), mined off the SRP(s) too.
-  const vdpPages = await sampleVdps(ranked, srpPages, origin);
+  const vdpPages = inScope("vdp") ? await sampleVdps(ranked, srpPages, origin) : [];
 
   // Build the per-category page lists the audit will fan out over. Each entry is
   // { url, label, condition } — `label` distinguishes the multiple SRP/VDP samples.
@@ -578,9 +588,13 @@ export async function discoverDealerPages(rawUrl) {
   }
 
   const categories = DISPLAY.map((d) => {
+    // Excluded in the form → not resolved. Flag it so the UI can say "Not included".
+    if (!inScope(d.key)) {
+      return { key: d.key, label: d.label, hint: d.hint, url: null, found: false, inScope: false, pages: [] };
+    }
     if (d.key === "home") {
       const homeUrl = `${baseUrl}/`;
-      return { key: d.key, label: d.label, hint: d.hint, url: homeUrl, found: true, pages: [{ url: homeUrl, label: null, condition: null }] };
+      return { key: d.key, label: d.label, hint: d.hint, url: homeUrl, found: true, inScope: true, pages: [{ url: homeUrl, label: null, condition: null }] };
     }
     const pages = pagesByKey[d.key] || [];
     return {
@@ -589,6 +603,7 @@ export async function discoverDealerPages(rawUrl) {
       hint: d.hint,
       url: pages[0]?.url || null,
       found: pages.length > 0,
+      inScope: true,
       pages,
     };
   });

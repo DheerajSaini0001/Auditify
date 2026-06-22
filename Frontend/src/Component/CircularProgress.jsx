@@ -1,21 +1,14 @@
 import React from "react";
+import { scoreRing } from "../utils/statusColors";
 
 export default function CircularProgress({ value = 65, size = 120, stroke = 10 }) {
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (value / 100) * circumference;
 
-  // Determine color based on score
-  let colorClass = "text-red-500";
-  let shadowClass = "drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]"; // Red glow
-
-  if (value >= 90) {
-    colorClass = "text-green-500";
-    shadowClass = "drop-shadow-[0_0_10px_rgba(34,197,94,0.5)]"; // Green glow
-  } else if (value >= 50) {
-    colorClass = "text-yellow-500";
-    shadowClass = "drop-shadow-[0_0_10px_rgba(234,179,8,0.5)]"; // Yellow glow
-  }
+  // Colour from the canonical score band (<25 red · 25–74 amber · ≥75 green),
+  // so the ring matches every other status colour in the app.
+  const { color: colorClass, glow: shadowClass } = scoreRing(value);
 
   return (
     <div className="relative flex items-center justify-center">

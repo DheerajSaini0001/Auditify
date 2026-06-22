@@ -5,6 +5,7 @@ import MetricAnalysisDetails from "./MetricAnalysisDetails";
 import AskAIButton from "../AskAIButton";
 import Tooltip from "./Tooltip";
 import { isActionableParam } from "../../config/parameterAudience";
+import { statusText, statusBadge, statusLabelText } from "../../utils/statusColors";
 
 const MetricCard = ({
     title,
@@ -44,38 +45,9 @@ const MetricCard = ({
             : needsData.lab || needsData;
 
     const status = activeData.status || "fail";
-    const statusBadgeColor =
-        (status === "pass")
-            ? darkMode
-                ? "bg-emerald-900/30 text-emerald-400 border-emerald-800"
-                : "bg-emerald-50 text-emerald-600 border-emerald-100"
-            : (status === "needs_improvement" || status === "warning")
-                ? darkMode
-                    ? "bg-amber-900/30 text-amber-400 border-amber-800"
-                    : "bg-amber-50 text-amber-600 border-amber-100"
-                : darkMode
-                    ? "bg-rose-900/30 text-rose-400 border-rose-800"
-                    : "bg-rose-50 text-rose-600 border-rose-100";
-
-    const statusText =
-        (status === "pass")
-            ? "Passed"
-            : (status === "warning")
-                ? "Warning"
-                : "Poor";
-
-    const valueColor =
-        (status === "pass")
-            ? darkMode
-                ? "text-emerald-400"
-                : "text-emerald-600"
-            : (status === "warning")
-                ? darkMode
-                    ? "text-amber-400"
-                    : "text-amber-600"
-                : darkMode
-                    ? "text-rose-400"
-                    : "text-rose-600";
+    const statusBadgeColor = statusBadge(status, darkMode);
+    const statusLabel = statusLabelText(status);
+    const valueColor = statusText(status, darkMode, "value");
 
     const cardBg = darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-line";
     const textColor = darkMode ? "text-gray-100" : "text-ink";
@@ -101,7 +73,7 @@ const MetricCard = ({
                             <span
                                 className={`text-xs font-semibold px-2.5 py-1 rounded-md border ${statusBadgeColor}`}
                             >
-                                {statusText}
+                                {statusLabel}
                             </span>
 
                         </div>

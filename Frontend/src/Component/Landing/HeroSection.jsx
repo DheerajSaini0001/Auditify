@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Monitor, Smartphone, Search, Loader2, AlertCircle, ChevronDown, Settings, ArrowRight,
-    Globe, CheckCircle2, MinusCircle, Sparkles,
+    Globe, CheckCircle2, MinusCircle, Sparkles, ExternalLink, Check, ListChecks,
     Home, LayoutGrid, Car, Tag, Repeat, Key, CreditCard, Wrench, Info, Newspaper,
 } from 'lucide-react';
 import AuditEmailVerifyModal from "../../Component/AuditEmailVerifyModal.jsx";
@@ -133,14 +133,100 @@ const CustomDropdown = ({ value, onChange, options, icon, darkMode, disabled }) 
 };
 
 /* ─────────────────────────────────────────
+   Multi-select dropdown — choose which page types are included in the audit.
+   Defaults to all selected; the button shows the live count.
+───────────────────────────────────────── */
+const MultiSelectDropdown = ({ selected, options, onToggle, onSetAll, icon, darkMode, disabled }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setIsOpen(false);
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    const allSelected = selected.length === options.length;
+    const label = allSelected ? "All Pages" : selected.length === 0 ? "No Pages" : `${selected.length} Pages`;
+
+    return (
+        <div className="relative" ref={dropdownRef}>
+            <button
+                type="button"
+                disabled={disabled}
+                onClick={() => !disabled && setIsOpen(!isOpen)}
+                className={`flex items-center gap-2 px-4 h-11 rounded-xl cursor-pointer transition-all duration-200 border
+                    bg-[#FB8C4B] border-[#FB8C4B] hover:bg-[#F97316] hover:border-[#F97316] shadow-sm shadow-orange-500/20
+                    ${disabled ? "opacity-60 cursor-not-allowed" : "active:scale-[0.97]"}`}
+            >
+                <span className="flex-shrink-0 text-white">{React.cloneElement(icon, { size: 16 })}</span>
+                <span className="text-[13px] font-semibold uppercase tracking-wide truncate max-w-[110px] text-white">{label}</span>
+                <ChevronDown className={`w-3 h-3 transition-transform duration-300 text-white ${isOpen ? "rotate-180" : ""}`} />
+            </button>
+
+            <AnimatePresence>
+                {isOpen && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                        transition={{ type: "spring", damping: 20, stiffness: 300 }}
+                        className={`absolute top-full mt-3 left-0 w-64 z-[1000] rounded-[1.5rem] shadow-2xl border overflow-hidden backdrop-blur-2xl p-2
+                            ${darkMode ? "bg-slate-900/90 border-white/10" : "bg-card/90 border-line/60"}`}
+                    >
+                        {/* Select-all / clear toggle */}
+                        <button
+                            type="button"
+                            onClick={() => onSetAll(!allSelected)}
+                            className={`w-full flex items-center justify-between px-4 py-2.5 mb-1 text-[11px] font-bold uppercase tracking-wider rounded-xl transition-all duration-200
+                                ${darkMode ? "text-orange-400 hover:bg-white/5" : "text-[#ea580c] hover:bg-cardsoft"}`}
+                        >
+                            <span>{allSelected ? "Clear all" : "Select all"}</span>
+                            <span className="font-semibold">{selected.length}/{options.length}</span>
+                        </button>
+
+                        <div className="max-h-72 overflow-y-auto custom-scrollbar space-y-1">
+                            {options.map((opt) => {
+                                const on = selected.includes(opt.value);
+                                return (
+                                    <button
+                                        key={opt.value}
+                                        type="button"
+                                        onClick={() => onToggle(opt.value)}
+                                        className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-[12px] font-semibold tracking-wide rounded-xl transition-all duration-200
+                                            ${on
+                                                ? (darkMode ? "bg-[#ea580c]/20 text-orange-400" : "bg-[#ea580c]/10 text-[#ea580c]")
+                                                : (darkMode ? "text-slate-400 hover:bg-white/5 hover:text-white" : "text-muted hover:bg-cardsoft hover:text-ink")}`}
+                                    >
+                                        <span className={`flex items-center justify-center w-4 h-4 rounded border flex-shrink-0 transition-colors
+                                            ${on ? "bg-[#ea580c] border-[#ea580c]" : darkMode ? "border-white/20" : "border-line"}`}>
+                                            {on && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+                                        </span>
+                                        <span className="truncate text-left">{opt.label}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+};
+
+/* ─────────────────────────────────────────
    One page-type card
 ───────────────────────────────────────── */
-const PageCard = ({ def, phase, cat, darkMode, dimmed, audit }) => {
+const PageCard = ({ def, phase, cat, darkMode, dimmed, audit, pageAudits, inScope = true }) => {
     const { Icon, label, desc } = def;
-    const detecting = phase === 'detecting';
+    // Deselected in the dropdown → never detected or audited, in any phase.
+    const excluded = !inScope;
+    const detecting = phase === 'detecting' && !excluded;
     const done = phase === 'done';
-    const found = done && cat?.found;
-    const missing = done && cat && !cat.found;
+    const found = done && cat?.found && !excluded;
+    const missing = done && cat && !cat.found && !excluded;
 
     // Per-page audit overlay (set once "Run Full Audit" fires for this page).
     const auditing = audit?.status === 'pending';
@@ -164,7 +250,7 @@ const PageCard = ({ def, phase, cat, darkMode, dimmed, audit }) => {
                         : auditFailed ? <AlertCircle className="w-4 h-4 text-rose-500" />
                             : detecting ? <Loader2 className="w-4 h-4 animate-spin text-[#ea580c]" />
                                 : found ? <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                                    : missing ? <MinusCircle className="w-4 h-4 text-slate-400" />
+                                    : (missing || excluded) ? <MinusCircle className="w-4 h-4 text-slate-400" />
                                         : <span className={`block w-4 h-4 rounded-full border-2 ${darkMode ? 'border-white/20' : 'border-line'}`} />}
             </div>
 
@@ -185,23 +271,32 @@ const PageCard = ({ def, phase, cat, darkMode, dimmed, audit }) => {
                         <span className="block text-[10px] font-semibold uppercase tracking-wider text-emerald-500">
                             ✓ Auto-detected{pageCount > 1 ? ` · ${pageCount} pages` : ''}
                         </span>
-                        {(cat.pages?.length ? cat.pages : [{ url: cat.url }]).map((pg, i) => (
-                            <a
-                                key={pg.url || i}
-                                href={pg.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={`block text-[11px] font-medium truncate hover:underline ${darkMode ? 'text-emerald-300' : 'text-emerald-600'}`}
-                                title={pg.label ? `${pg.label} — ${pg.url}` : pg.url}
-                            >
-                                {pg.label && <span className="font-semibold">{pg.label}: </span>}
-                                {prettyUrl(pg.url)}
-                            </a>
-                        ))}
+                        {(cat.pages?.length ? cat.pages : [{ url: cat.url }]).map((pg, i) => {
+                            // Once THIS page's report is generated, point its link at the
+                            // report and open it in a new tab — the current tab (and the rest
+                            // of the running batch) stays put.
+                            const pa = pageAudits?.[i];
+                            const ready = pa?.status === 'success' && pa.id;
+                            return (
+                                <a
+                                    key={pg.url || i}
+                                    href={ready ? `/report/${pa.id}` : pg.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={`group flex items-center gap-1 text-[11px] font-medium truncate hover:underline ${darkMode ? 'text-emerald-300' : 'text-emerald-600'}`}
+                                    title={ready ? `View report — ${pg.url}` : (pg.label ? `${pg.label} — ${pg.url}` : pg.url)}
+                                >
+                                    {pg.label && <span className="font-semibold flex-shrink-0">{pg.label}:</span>}
+                                    <span className="truncate">{ready ? 'View report' : prettyUrl(pg.url)}</span>
+                                    {ready && <ExternalLink className="w-3 h-3 flex-shrink-0" />}
+                                </a>
+                            );
+                        })}
                     </div>
                 )}
                 {missing && <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Not found</span>}
-                {phase === 'idle' && <span className="text-[10px] font-semibold uppercase tracking-wider text-faint">Auto-detect</span>}
+                {excluded && <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Not included</span>}
+                {phase === 'idle' && !excluded && <span className="text-[10px] font-semibold uppercase tracking-wider text-faint">Auto-detect</span>}
             </div>
 
             {/* Audit progress row — appears below detection once the batch starts.
@@ -248,6 +343,11 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
     const [showVerify, setShowVerify] = useState(false);
     const [localError, setLocalError] = useState(null);
 
+    // Which dealer page types to include in the audit (defaults to all). The
+    // multi-select dropdown in the form drives this; only selected types are
+    // audited on "Run Full Audit", and unselected cards are dimmed.
+    const [scopes, setScopes] = useState(() => PAGE_TYPES.map((p) => p.key));
+
     // Discovery state
     const [phase, setPhase] = useState('idle');       // idle | detecting | done
     const [discovery, setDiscovery] = useState(null);
@@ -268,9 +368,6 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         return () => { cancelledRef.current = true; };
     }, []);
 
-    // Optional "focus on specific page types" scope (defaults: all selected)
-    const [scopes, setScopes] = useState(() => PAGE_TYPES.map((p) => p.key));
-    const allSelected = scopes.length === PAGE_TYPES.length;
 
     const location = useLocation();
     const navigate = useNavigate();
@@ -296,7 +393,9 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                     ...(bearer && { Authorization: `Bearer ${bearer}` }),
                     ...(token && { 'x-audit-token': token }),
                 },
-                body: JSON.stringify({ url: urlToScan }),
+                // Only discover the page types the user kept selected — the backend
+                // skips all resolution work (status checks, SRP/VDP sampling) for the rest.
+                body: JSON.stringify({ url: urlToScan, scopes }),
             });
             let data = {};
             try { data = await res.json(); } catch { /* empty */ }
@@ -500,10 +599,25 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
 
     const error = externalError || localError;
 
-    const toggleScope = (key) =>
+    // Discovery is scoped, so a finished scan is stale once the selection changes —
+    // drop it back to idle (and clear any audit state) so the user re-runs "Run Audit"
+    // with the new scope and the backend only works on the pages they kept.
+    const invalidateDetection = () => {
+        if (phase !== 'idle') setPhase('idle');
+        setDiscovery(null);
+        setDetectError(null);
+        setAuditState({});
+    };
+    const toggleScope = (key) => {
         setScopes((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
+        invalidateDetection();
+    };
+    const setAllScopes = (all) => {
+        setScopes(all ? PAGE_TYPES.map((p) => p.key) : []);
+        invalidateDetection();
+    };
 
-    const visibleTypes = PAGE_TYPES.filter((p) => scopes.includes(p.key));
+    const visibleTypes = PAGE_TYPES;
     const foundCount = discovery?.categories?.filter((c) => c.found).length ?? 0;
     const sourceLabel = { sitemap: 'XML sitemap', robots: 'robots.txt → sitemap', crawl: 'link crawl', none: 'direct check' };
 
@@ -535,6 +649,19 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
             agg[catKey] = { status, progress, stage, total, done, failed };
         }
         return agg;
+    }, [auditState]);
+
+    // Per-page audit state indexed by category + page position, so each card link can
+    // flip to its finished report (new tab) the moment that one page completes —
+    // independently of the rest of the batch, which keeps running.
+    const pageAuditsByCat = useMemo(() => {
+        const m = {};
+        for (const [auditKey, t] of Object.entries(auditState)) {
+            if (!t?.catKey) continue;
+            const idx = Number(auditKey.split('__')[1]);
+            (m[t.catKey] = m[t.catKey] || [])[idx] = t;
+        }
+        return m;
     }, [auditState]);
 
     const runBtnDisabled = isLoading || phase === 'detecting' || !url.trim();
@@ -602,6 +729,15 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                                 ]}
                                 icon={<Settings />} darkMode={darkMode} disabled={isLoading}
                             />
+                            <MultiSelectDropdown
+                                selected={scopes}
+                                options={PAGE_TYPES.map((p) => ({ value: p.key, label: p.label }))}
+                                onToggle={toggleScope}
+                                onSetAll={setAllScopes}
+                                icon={<ListChecks />}
+                                darkMode={darkMode}
+                                disabled={isLoading || batchRunning}
+                            />
 
                             {/* Primary button: Run Audit (detect) → Run Full Audit (audit) */}
                             {phase !== 'done' ? (
@@ -648,50 +784,21 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
 
                 {/* ── Auto-detect section ── */}
                 <div className="mt-12">
-                    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-5">
-                        <div>
-                            <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-ink'}`}>
-                                {phase === 'done'
-                                    ? `Detected ${foundCount} of ${PAGE_TYPES.length} key pages on your site`
-                                    : "We'll auto-detect and audit these pages on your site"}
-                            </h3>
-                            {phase === 'done' && discovery && (
-                                <p className={`text-xs mt-1 ${darkMode ? 'text-slate-400' : 'text-muted'}`}>
-                                    via {sourceLabel[discovery.source] || discovery.source}
-                                    {discovery.sitemapUrl ? ` · ${prettyPath(discovery.sitemapUrl)}` : ''}
-                                </p>
-                            )}
-                            {phase === 'done' && detectError && (
-                                <p className="text-xs mt-1 text-amber-500">{detectError} — you can still run the full audit.</p>
-                            )}
-                        </div>
-
-                        {/* Focus scope */}
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className={`text-[11px] font-semibold uppercase tracking-wider mr-1 ${darkMode ? 'text-slate-500' : 'text-faint'}`}>Focus:</span>
-                            <button
-                                type="button"
-                                onClick={() => setScopes(PAGE_TYPES.map((p) => p.key))}
-                                className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-colors
-                                    ${allSelected ? 'bg-[#ea580c]/15 border-[#ea580c]/30 text-[#ea580c]' : darkMode ? 'border-white/10 text-slate-400 hover:bg-white/5' : 'border-line text-muted hover:bg-cardsoft'}`}
-                            >
-                                All
-                            </button>
-                            {PAGE_TYPES.map((p) => {
-                                const on = scopes.includes(p.key) && !allSelected;
-                                return (
-                                    <button
-                                        key={p.key}
-                                        type="button"
-                                        onClick={() => toggleScope(p.key)}
-                                        className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-colors
-                                            ${on ? 'bg-[#ea580c]/15 border-[#ea580c]/30 text-[#ea580c]' : darkMode ? 'border-white/10 text-slate-400 hover:bg-white/5' : 'border-line text-muted hover:bg-cardsoft'}`}
-                                    >
-                                        {p.label.split(' / ')[0]}
-                                    </button>
-                                );
-                            })}
-                        </div>
+                    <div className="mb-5">
+                        <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-ink'}`}>
+                            {phase === 'done'
+                                ? `Detected ${foundCount} of ${PAGE_TYPES.length} key pages on your site`
+                                : "We'll auto-detect and audit these pages on your site"}
+                        </h3>
+                        {phase === 'done' && discovery && (
+                            <p className={`text-xs mt-1 ${darkMode ? 'text-slate-400' : 'text-muted'}`}>
+                                via {sourceLabel[discovery.source] || discovery.source}
+                                {discovery.sitemapUrl ? ` · ${prettyPath(discovery.sitemapUrl)}` : ''}
+                            </p>
+                        )}
+                        {phase === 'done' && detectError && (
+                            <p className="text-xs mt-1 text-amber-500">{detectError} — you can still run the full audit.</p>
+                        )}
                     </div>
 
                     <motion.div
@@ -701,7 +808,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                     >
                         {visibleTypes.map((def) => (
                             <motion.div key={def.key} variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}>
-                                <PageCard def={def} phase={phase} cat={catMap[def.key]} darkMode={darkMode} dimmed={false} audit={auditByCat[def.key]} />
+                                <PageCard def={def} phase={phase} cat={catMap[def.key]} darkMode={darkMode} dimmed={!scopes.includes(def.key)} inScope={scopes.includes(def.key)} audit={auditByCat[def.key]} pageAudits={pageAuditsByCat[def.key]} />
                             </motion.div>
                         ))}
                     </motion.div>

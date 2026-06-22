@@ -2,10 +2,32 @@ import googleAPI from "../utils/googleAPI.js";
 import fetch from "node-fetch";
 import * as cheerio from "cheerio";
 
+// Abramowitz-Stegun erf approximation (max err ~1.5e-7) — needed for the log-normal CDF.
+function erf(x) {
+  const sign = x < 0 ? -1 : 1;
+  x = Math.abs(x);
+  const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741, a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+  const t = 1 / (1 + p * x);
+  const y = 1 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+  return sign * y;
+}
+
+// Spec §0.3 rule 1 — "graded, not binary". Lighthouse-style LOG-NORMAL scoring for
+// latency/CWV metrics (lower-is-better). The two control points are reused from each
+// metric's existing thresholds: `good` is the p10 point (scores ~90) and `poor` is the
+// median (scores 50); the tail decays smoothly toward 0. This reproduces the spec's
+// worked example (LCP 2.6s → ~88) instead of the old linear cliff (which gave 93/0).
+// The constant 0.9061938024368232 = √2·erf⁻¹(0.8), which fixes CDF(p10)=0.9.
 function calculateScore(observed, good, poor) {
-  if (observed <= good) return 100;
-  if (observed >= poor) return 0;
-  return parseFloat((((poor - observed) / (poor - good)) * 100).toFixed(0));
+  const value = Number(observed) || 0;
+  if (value <= 0) return 100;
+  const p10 = good, median = poor; // good < poor for every lower-is-better metric here
+  const location = Math.log(median);
+  const shape = Math.abs(Math.log(p10) - location) / (Math.SQRT2 * 0.9061938024368232);
+  if (!(shape > 0)) return value <= median ? 100 : 0; // degenerate guard
+  const standardizedX = (Math.log(value) - location) / (Math.SQRT2 * shape);
+  const score = (1 - erf(standardizedX)) / 2;
+  return Math.max(0, Math.min(100, Math.round(score * 100)));
 }
 
 function calculateStatus(value, goodThreshold, needsImprovementThreshold) {
@@ -418,53 +440,59 @@ const evaluateTTFBCrux = (cruxMetrics) => {
 };
 
 // INP - Interaction to Next Paint
+// INP is a FIELD-only metric — Lighthouse produces no lab INP. The old code mislabeled
+// Time-to-Interactive (TTI) as "INP" (e.g. 8.4s → a scary 39 that wasn't even what the
+// score used). Per spec §2.1, Total Blocking Time IS the lab proxy for INP, so when
+// there's no CrUX field INP we present the responsiveness estimate FROM TBT — matching
+// exactly what the INP·TBT parameter weights, with honest "lab estimate" labeling.
 const evaluateINPLab = (audits) => {
-  const labValue = parseFloat((audits["interactive"]?.numericValue || 0).toFixed(0));
-  const labScore = calculateScore(labValue, 3800, 7300);
-  const labStatus = calculateStatus(labValue, 3800, 7300);
+  const tbtMs = parseFloat((audits["total-blocking-time"]?.numericValue || 0).toFixed(0));
+  const labScore = calculateScore(tbtMs, 200, 600);
+  const labStatus = calculateStatus(tbtMs, 200, 600);
 
   const causes = [];
   const recommendations = [];
 
   if (labStatus !== "pass") {
-    // Check Long Tasks
     const longTasks = audits["long-tasks"]?.details?.items || [];
     if (longTasks.length > 0) {
-      causes.push(`${longTasks.length} Long Tasks detected on main thread`);
-      recommendations.push("Defer heavy JS execution and break up long tasks.");
+      causes.push(`${longTasks.length} long tasks blocking the main thread`);
+      recommendations.push("Break up long JavaScript tasks so the page can respond to interactions.");
     }
 
-    // Check Bootup Time
-    const bootup = audits["bootup-time"]?.numericValue || 0;
-    if (bootup > 2000) {
-      causes.push("High JavaScript bootup time");
-      recommendations.push("Reduce initial JS payload and code-split bundles.");
+    const thirdParty = audits["third-party-summary"]?.details?.items || [];
+    if (thirdParty.length > 0) {
+      causes.push("Third-party scripts occupying the main thread");
+      recommendations.push("Defer or lazy-load non-essential third-party scripts.");
     }
 
-    // Main thread work
-    const mainThread = audits["mainthread-work-breakdown"]?.numericValue || 0;
-    if (mainThread > 4000) {
-      causes.push("Excessive main thread work");
-      recommendations.push("Optimize third-party scripts and minimize main thread activity.");
+    const domSize = audits["dom-size"]?.numericValue || 0;
+    if (domSize > 1500) {
+      causes.push("Large DOM increasing style/layout cost per interaction");
+      recommendations.push("Reduce DOM size to speed up interaction handling.");
     }
 
     if (causes.length === 0) {
-      causes.push("Input delay due to background tasks");
-      recommendations.push("Profile 'Interaction' cost in DevTools.");
+      causes.push("Main-thread blocking time is high");
+      recommendations.push("Minimize main-thread work and split long tasks.");
     }
   }
 
   return {
     score: labScore,
     status: labStatus,
-    details: labStatus === "pass" ? "Interaction responsiveness is good." : `Responsiveness is low (${msToSec(labValue)}).`,
+    // labProxy flag lets the UI show "no field data — estimated from TBT" honestly.
+    details: labStatus === "pass"
+      ? "Estimated responsiveness is good (lab proxy from Total Blocking Time)."
+      : `Estimated responsiveness is low (lab proxy from Total Blocking Time: ${msToSec(tbtMs)}).`,
     meta: {
-      value: msToSec(labValue),
-      thresholds: { Good: "0-3.8s", Warning: "3.8-7.3s", Poor: "7.3s+" }
+      value: `${msToSec(tbtMs)} (lab est.)`,
+      labProxy: "TBT",
+      thresholds: { Good: "0-0.2s", Warning: "0.2-0.6s", Poor: "0.6s+" }
     },
     analysis: labStatus === "pass" ? null : {
-      cause: causes[0] || "Input delay due to background tasks",
-      recommendation: recommendations[0] || "Profile 'Interaction' cost in DevTools."
+      cause: causes[0] || "Main-thread blocking time is high",
+      recommendation: recommendations[0] || "Minimize main-thread work and split long tasks."
     }
   };
 };
@@ -1156,10 +1184,12 @@ const evaluateRedirectChains = (response) => {
   }
   const redirectDetails = chain.map(req => req.url()).concat(response.url());
   const hops = chain.length;
-  const score = hops <= 1 ? 100 : 0;
+  // Spec §2.1 — graded, not binary: 0 hops = 100, 1 = 85, 2 = 60, ≥3 decays below 40.
+  const score = hops === 0 ? 100 : hops === 1 ? 85 : hops === 2 ? 60 : Math.max(0, 40 - (hops - 3) * 15);
 
   let status = "pass";
-  if (hops > 1) status = "fail";
+  if (hops === 2) status = "warning";
+  if (hops > 2) status = "fail";
 
   const causes = [];
   const recommendations = [];
@@ -2105,22 +2135,29 @@ const evaluateJsExecution = (audits) => {
 };
 
 // MAIN FUNCTION
+//
+// Rebuilt to AUDIT_FRAMEWORK_SPECIFICATION §2.1 (Technical). Changes vs. the old engine:
+//   • Rule 2 (field beats lab, never both): each Core Web Vital is weighted ONCE —
+//     CrUX field p75 when present (confidence: field), else the lab estimate
+//     (confidence: lab). INP/TBT collapse to one slot (CrUX INP, else lab TBT).
+//   • Rule 1 (graded): scoring is log-normal (see calculateScore) + graded redirect.
+//   • Spec weights-in-section: LCP 22 / INP·TBT 20 / CLS 18 / FCP 8 / TTFB 8 / SI 6 /
+//     Render-blocking 5 / Resource-opt 5 / Compression 4 / Caching 4 / Redirect 3.
+//   • Rule 4 + delegated decision: deprecated/duplicate/diagnostic signals (FID,
+//     Mobile Usability, Inventory/Service page-load, Rendering/Lazy/Third-party/JS)
+//     are no longer computed or returned — they double-counted CWV or were retired.
+//   • §0.5 confidence flag surfaced per-CWV and as a section-level summary.
 export default async function technicalMetrics(url, device, page, response, browser) {
 
   // The audited device drives every lab/field metric below; the OTHER device is
-  // requested too, purely to surface the official Lighthouse Performance score for
-  // both Mobile and Desktop. Inventory/service/mobile-experience timings each run in
-  // their own browser tab and all of this runs in parallel with the (slow) PageSpeed
-  // requests, so the shared page other metrics use in parallel is never touched.
+  // requested too, purely to surface the official (informational) Lighthouse
+  // Performance score for both Mobile and Desktop.
   const wantDevice = String(device || "mobile").toLowerCase() === "desktop" ? "desktop" : "mobile";
   const otherDevice = wantDevice === "desktop" ? "mobile" : "desktop";
 
-  const [primaryData, otherData, inventoryLoad, serviceLoad, mobileExp] = await Promise.all([
+  const [primaryData, otherData] = await Promise.all([
     googleAPI(url, wantDevice),
     googleAPI(url, otherDevice),
-    evaluateInventoryLoad(url, device, page, browser),
-    evaluateServiceLoad(url, device, page, browser),
-    measureMobileExperience({ url, page, browser }),
   ]);
   const data = primaryData;
   const audits = data?.lighthouseResult?.audits || {};
@@ -2129,8 +2166,7 @@ export default async function technicalMetrics(url, device, page, response, brow
   const mobileData = wantDevice === "mobile" ? primaryData : otherData;
   const desktopData = wantDevice === "desktop" ? primaryData : otherData;
   const pageSpeedScore = evaluatePageSpeedScore(mobileData, desktopData);
-  const mobileLoadSpeed = mobileExp.mobileLoadSpeed;
-  const mobileUsability = mobileExp.mobileUsability;
+
   const lcpLab = evaluateLCPLab(audits);
   const lcpCrux = evaluateLCPCrux(audits, cruxMetrics);
   const clsLab = evaluateCLSLab(audits);
@@ -2141,8 +2177,6 @@ export default async function technicalMetrics(url, device, page, response, brow
   const ttfbCrux = evaluateTTFBCrux(cruxMetrics);
   const inpLab = evaluateINPLab(audits);
   const inpCrux = evaluateINPCrux(audits, cruxMetrics);
-  const fidLab = evaluateFIDLab(audits);
-  const fidCrux = evaluateFIDCrux(audits, cruxMetrics);
   const tbt = evaluateTBT(audits);
   const si = evaluateSI(audits);
   const compression = await evaluateCompression(page);
@@ -2150,82 +2184,62 @@ export default async function technicalMetrics(url, device, page, response, brow
   const resourceOptimization = await evaluateResourceOptimization(page);
   const renderBlocking = await evaluateRenderBlocking(page);
   const redirect = evaluateRedirectChains(response);
-  const renderingPerformance = evaluateRenderingPerformance(audits);
-  const lazyLoading = await evaluateLazyLoading(audits, page);
-  const thirdPartyOptimization = await evaluateThirdPartyOptimization(audits, page);
-  const jsExecution = evaluateJsExecution(audits);
+
   const getScore = (metric) => metric?.score || 0;
-  // A metric counts toward the weighted total only if it was actually measured —
-  // `notCalculated()` results are flagged `meta.notScored` so a failed measurement is
-  // shown (with its reason) but never penalizes the score as a real 0.
-  const scored = (metric) => !!metric && !metric?.meta?.notScored;
-  // FID uses the best available source: real-user CrUX when Google still reports it,
-  // otherwise the lab Max Potential FID (always present in Lighthouse).
-  const fidPrimary = fidCrux || fidLab;
-  const hasFID = !!fidPrimary;
-  // Weighted average over the metrics that could actually be measured. Each entry
-  // contributes its `weight` only when `present`, and the total is normalized by the
-  // sum of present weights — so the Technical % is always on a 0-100 scale no matter
-  // which optional signals (CrUX field data, FID, the timed/mobile pages) exist.
-  // Weights preserve the original relative importance; the three mobile/rendering
-  // metrics are folded in at 5 each. PageSpeed Score is intentionally excluded — it
-  // is itself an aggregate of the vitals below and would double-count them.
+
+  // Rule 2 — pick field-or-lab per CWV and weight it ONCE. `confidence` records which.
+  const lcpPick = lcpCrux || lcpLab;
+  const clsPick = clsCrux || clsLab;
+  const fcpPick = fcpCrux || fcpLab;
+  const ttfbPick = ttfbCrux || ttfbLab;
+  // INP·TBT is one parameter: real-user INP (field) if available, else lab TBT.
+  const inpTbtPick = inpCrux || tbt;
+  const lcpConf = lcpCrux ? "field" : "lab";
+  const clsConf = clsCrux ? "field" : "lab";
+  const fcpConf = fcpCrux ? "field" : "lab";
+  const ttfbConf = ttfbCrux ? "field" : "lab";
+  const inpTbtConf = inpCrux ? "field" : "lab";
+
+  // Weighted section average over APPLICABLE params only (renormalized by present
+  // weight, so a missing CrUX metric is covered by its lab fallback, never zeroed).
   const components = [
-    { score: getScore(lcpLab),    weight: 7, present: true },
-    { score: getScore(lcpCrux),   weight: 8, present: !!lcpCrux },
-    { score: getScore(inpLab),    weight: 7, present: true },
-    { score: getScore(inpCrux),   weight: 8, present: !!inpCrux },
-    { score: getScore(clsLab),    weight: 7, present: true },
-    { score: getScore(clsCrux),   weight: 8, present: !!clsCrux },
-    { score: getScore(fcpLab),    weight: 3, present: true },
-    { score: getScore(fcpCrux),   weight: 3, present: !!fcpCrux },
-    { score: getScore(ttfbLab),   weight: 4, present: true },
-    { score: getScore(ttfbCrux),  weight: 4, present: !!ttfbCrux },
-    { score: getScore(fidPrimary), weight: 4, present: hasFID },
-    { score: getScore(tbt),       weight: 6, present: true },
-    { score: getScore(si),        weight: 6, present: true },
-    { score: getScore(compression),          weight: 5, present: true },
-    { score: getScore(caching),              weight: 5, present: true },
-    { score: getScore(resourceOptimization), weight: 6, present: true },
-    { score: getScore(renderBlocking),       weight: 5, present: true },
-    { score: getScore(redirect),             weight: 4, present: true },
-    { score: getScore(inventoryLoad),        weight: 5, present: scored(inventoryLoad) },
-    { score: getScore(serviceLoad),          weight: 5, present: scored(serviceLoad) },
-    { score: getScore(mobileUsability),      weight: 5, present: scored(mobileUsability) },
-    { score: getScore(renderingPerformance), weight: 5, present: scored(renderingPerformance) },
-    { score: getScore(mobileLoadSpeed),      weight: 5, present: scored(mobileLoadSpeed) },
-    { score: getScore(lazyLoading),          weight: 5, present: scored(lazyLoading) },
-    { score: getScore(thirdPartyOptimization), weight: 5, present: scored(thirdPartyOptimization) },
-    { score: getScore(jsExecution),          weight: 5, present: scored(jsExecution) },
+    { score: getScore(lcpPick),              weight: 22, present: true },
+    { score: getScore(inpTbtPick),           weight: 20, present: true },
+    { score: getScore(clsPick),              weight: 18, present: true },
+    { score: getScore(fcpPick),              weight: 8,  present: true },
+    { score: getScore(ttfbPick),             weight: 8,  present: true },
+    { score: getScore(si),                   weight: 6,  present: true },
+    { score: getScore(renderBlocking),       weight: 5,  present: true },
+    { score: getScore(resourceOptimization), weight: 5,  present: true },
+    { score: getScore(compression),          weight: 4,  present: true },
+    { score: getScore(caching),              weight: 4,  present: true },
+    { score: getScore(redirect),             weight: 3,  present: true },
   ];
   const presentComponents = components.filter((c) => c.present);
   const totalWeight = presentComponents.reduce((s, c) => s + c.weight, 0);
   const actualPercentage = totalWeight === 0 ? 0 : parseFloat(
     (presentComponents.reduce((s, c) => s + c.score * c.weight, 0) / totalWeight).toFixed(0)
   );
+
+  // §5.3 — the section carries the LOWEST confidence of its weighted CWV. Field only
+  // when every core vital came from CrUX; otherwise lab (an estimate of the field).
+  const sectionConfidence = (lcpCrux && clsCrux && inpCrux) ? "field" : "lab";
+
   return {
     Percentage: actualPercentage,
+    Confidence: sectionConfidence,
     PageSpeed_Score: pageSpeedScore,
-    LCP: { lab: lcpLab, crux: lcpCrux },
-    CLS: { lab: clsLab, crux: clsCrux },
-    FCP: { lab: fcpLab, crux: fcpCrux },
-    TTFB: { lab: ttfbLab, crux: ttfbCrux },
-    INP: { lab: inpLab, crux: inpCrux },
-    FID: (fidLab || fidCrux) ? { lab: fidLab, crux: fidCrux } : null,
-    TBT: { lab: tbt, crux: null },
-    SI: { lab: si, crux: null },
+    LCP: { lab: lcpLab, crux: lcpCrux, source: lcpConf, confidence: lcpConf },
+    CLS: { lab: clsLab, crux: clsCrux, source: clsConf, confidence: clsConf },
+    FCP: { lab: fcpLab, crux: fcpCrux, source: fcpConf, confidence: fcpConf },
+    TTFB: { lab: ttfbLab, crux: ttfbCrux, source: ttfbConf, confidence: ttfbConf },
+    INP: { lab: inpLab, crux: inpCrux, source: inpTbtConf, confidence: inpTbtConf },
+    TBT: { lab: tbt, crux: null, confidence: "lab" },
+    SI: { lab: si, crux: null, confidence: "lab" },
     Compression: compression,
     Caching: caching,
     Resource_Optimization: resourceOptimization,
     Render_Blocking: renderBlocking,
-    Rendering_Performance: renderingPerformance,
-    Lazy_Loading: lazyLoading,
-    Third_Party_Optimization: thirdPartyOptimization,
-    JS_Execution: jsExecution,
     Redirect_Chains: redirect,
-    Mobile_Usability: mobileUsability,
-    Mobile_Load_Speed: mobileLoadSpeed,
-    Inventory_Load_Time: inventoryLoad,
-    Service_Load_Time: serviceLoad,
   };
 }

@@ -5,6 +5,7 @@ import MetricAnalysisDetails from './MetricAnalysisDetails';
 import Tooltip from './Tooltip';
 import AskAIButton from '../AskAIButton';
 import { isActionableParam } from '../../config/parameterAudience';
+import { statusBadge, statusLabelText } from '../../utils/statusColors';
 
 const OptimizationCard = ({
     icon: Icon,
@@ -133,25 +134,13 @@ const OptimizationCard = ({
     );
 };
 
-// Helper function for theme styles
-const getThemeStyles = (darkMode, status) => {
-    const cardBg = darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-line";
-    const textColor = darkMode ? "text-gray-100" : "text-ink";
-    const subTextColor = darkMode ? "text-gray-400" : "text-muted";
-
-    let statusBadgeColor, statusText;
-
-    if (status === "pass") {
-        statusBadgeColor = darkMode ? "bg-emerald-900/30 text-emerald-400 border-emerald-800" : "bg-emerald-50 text-emerald-600 border-emerald-100";
-        statusText = "Passed";
-    } else if (status === "warning") {
-        statusBadgeColor = darkMode ? "bg-amber-900/30 text-amber-400 border-amber-800" : "bg-amber-50 text-amber-600 border-amber-100";
-        statusText = "Warning";
-    } else {
-        statusBadgeColor = darkMode ? "bg-rose-900/30 text-rose-400 border-rose-800" : "bg-rose-50 text-rose-600 border-rose-100";
-        statusText = "Poor";
-    }
-
-    return { cardBg, textColor, subTextColor, statusBadgeColor, statusText };
-};
+// Helper function for theme styles. Chrome (card/text) stays on theme tokens; the
+// status badge + label come from the shared status-colour source of truth.
+const getThemeStyles = (darkMode, status) => ({
+    cardBg: darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-line",
+    textColor: darkMode ? "text-gray-100" : "text-ink",
+    subTextColor: darkMode ? "text-gray-400" : "text-muted",
+    statusBadgeColor: statusBadge(status, darkMode),
+    statusText: statusLabelText(status),
+});
 export default OptimizationCard;

@@ -228,11 +228,6 @@ const PageCard = ({ def, phase, cat, darkMode, dimmed, audit, pageAudits, inScop
     const found = done && cat?.found && !excluded;
     const missing = done && cat && !cat.found && !excluded;
 
-    // Per-page audit overlay (set once "Run Full Audit" fires for this page).
-    const auditing = audit?.status === 'pending';
-    const audited = audit?.status === 'success';
-    const auditFailed = audit?.status === 'failed';
-
     // A category can resolve to several pages (VDP sample, separate new/used SRPs).
     const pageCount = cat?.pages?.length || (found ? 1 : 0);
 

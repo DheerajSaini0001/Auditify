@@ -36,6 +36,26 @@ function calculateStatus(value, goodThreshold, needsImprovementThreshold) {
   return "fail";
 }
 
+// Standard result for a metric that genuinely could not be measured (missing upstream
+// Lighthouse/CrUX data, a blocked/failed render, or an API/quota failure). score/status
+// are null so it is excluded from any weighted total rather than counted as a 0, and
+// meta.notScored tells the frontend to render the "Why this wasn't calculated" banner
+// (MetricExtras.NotCalculatedNote) using `details` + `analysis.recommendation`.
+function notCalculated(reason, recommendation) {
+  return {
+    score: null,
+    status: null,
+    details: reason,
+    analysis: { recommendation },
+    meta: {
+      value: "Not measured",
+      notScored: true,
+      reason,
+      informational: true,
+    },
+  };
+}
+
 // Format a millisecond value as seconds for display (e.g. 1800 -> "1.8s", 234 -> "0.23s").
 // Used by the latency Core Web Vitals (FCP, INP, FID, TBT) whose value + threshold scale
 // are surfaced in seconds. Scoring still runs on the raw ms numbers above.

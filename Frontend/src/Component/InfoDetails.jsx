@@ -3061,24 +3061,26 @@ export const InfoDetails = {
         ]
     },
     Mobile_Experience: {
-        title: "Mobile Experience / Responsive Layout",
-        whatThisParameterIs: "We check whether your page genuinely adapts to small screens, rather than just guessing from CSS structure.",
-        whatItCalculates: "Using the rendered page, we score four signals: (1) a responsive viewport meta tag with width=device-width (30%); (2) no horizontal overflow — content never spills wider than the screen (35%); (3) responsive images using srcset/sizes/<picture> (20%); and (4) CSS media queries driving the layout (15%).",
-        whyItMatters: "If a page forces sideways scrolling or ignores the device width, mobile shoppers pinch, zoom, and leave. Most dealership traffic is mobile, so a layout that truly adapts is essential to keep visitors and conversions.",
+        title: "Mobile Experience",
+        whatThisParameterIs: "We check whether your page genuinely works on small screens — both that the layout adapts (responsive) and that it's comfortable for touch (large tap targets, legible text). This single parameter absorbs the retired 'Mobile Usability' check.",
+        whatItCalculates: "Responsive layout signals: a viewport meta tag with width=device-width, no horizontal overflow, responsive images (srcset/sizes/<picture>) and CSS media queries. On mobile we additionally blend in touch ergonomics — tap targets ≥44px, legible text ≥12px and a reachable sticky/mobile nav for one-handed use. (On desktop, touch-target sizing isn't a fair signal, so it's shown for information only.)",
+        whyItMatters: "If a page forces sideways scrolling, ignores the device width, or has tiny tap targets and text, mobile shoppers pinch, zoom, mis-tap and leave. Most dealership traffic is mobile, so a layout that truly adapts and is easy to use with a thumb is essential to keep visitors and conversions.",
         thresholds: {
-            good: "Score ≥ 75 — responsive viewport, no overflow, responsive techniques in use",
-            needsImprovement: "Score 45–74 — partially responsive with gaps",
-            poor: "Score < 45 — does not adapt to mobile screens"
+            good: "Score ≥ 75 — responsive viewport, no overflow, and large tap targets / legible text",
+            needsImprovement: "Score 45–74 — partially responsive or some touch-ergonomics gaps",
+            poor: "Score < 45 — does not adapt to mobile screens or is hard to use by touch"
         },
         actualReasonsForFailure: [
             "Missing viewport meta tag or no width=device-width",
             "Content overflows the viewport, causing horizontal scroll",
-            "Images aren't served responsively and no media queries adapt the layout"
+            "Images aren't served responsively and no media queries adapt the layout",
+            "Tap targets smaller than 44px or body text below a legible size"
         ],
         howToOvercomeFailure: [
             "Add <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
             "Remove fixed-width elements that push the page wider than the screen",
-            "Serve responsive images (srcset/sizes) and use CSS media queries to adapt the layout"
+            "Serve responsive images (srcset/sizes) and use CSS media queries to adapt the layout",
+            "Make tap targets ≥44×44px and keep body text at 16px (never below 12px)"
         ]
     },
     In_Page_Navigation: {
@@ -3103,6 +3105,53 @@ export const InfoDetails = {
         ]
     },
 
+    Hierarchy_Flow_Clarity: {
+        title: "Hierarchy & Flow Clarity",
+        whatThisParameterIs: "We check whether the page is easy to scan and moves visitors forward — a clear heading structure, clearly labeled sections, and a logical path to the next step.",
+        whatItCalculates: "One combined score from three signals: heading hierarchy (a single H1 with sequential H2/H3 levels, 45%), section labeling (each major section has a heading or aria-label, 35%), and onward flow (a footer, enough internal links, and a clear next-step action, 20%).",
+        whyItMatters: "Headings and labels act as signposts that let busy shoppers scan and find what they need in seconds, and a logical flow keeps them moving toward an enquiry instead of hitting a dead end. Weak structure forces extra cognitive effort and drives exits.",
+        thresholds: {
+            good: "Score ≥ 75 — one clear H1, labeled sections and an obvious next step",
+            needsImprovement: "Score 45–74 — some sections unlabeled or the flow has gaps",
+            poor: "Score < 45 — no clear heading structure and dead-end flow"
+        },
+        actualReasonsForFailure: [
+            "Missing H1, multiple H1s, or headings that skip levels",
+            "Major sections have no descriptive heading or label",
+            "No footer or no clear 'what's next' action for the visitor",
+            "Too few internal links to guide users onward"
+        ],
+        howToOvercomeFailure: [
+            "Use exactly one descriptive H1 with sequential H2/H3 sub-headings",
+            "Give every major section a visible heading or aria-label",
+            "Add a consistent footer and a clear next-step CTA on every page",
+            "Link to related pages so visitors always have a logical next move"
+        ]
+    },
+    Vehicle_Image_Gallery: {
+        title: "Vehicle Image Gallery Quality",
+        whatThisParameterIs: "On a vehicle-detail page we check whether the photo gallery gives shoppers the confidence to enquire — enough real photos, described properly, and served efficiently.",
+        whatItCalculates: "On a VDP we grade five things: photo count (8+ is ideal, 40%), alt text on photos (20%), lazy-loading so the page stays fast (15%), responsive serving via srcset/sizes/<picture> (15%), and a real-vs-stock heuristic that penalizes placeholder/stock imagery (10%). Non-VDP pages are treated as not-applicable.",
+        whyItMatters: "Photos are the single biggest factor in online vehicle shopping. Listings with many real, high-quality images get far more engagement and leads; thin galleries or obvious stock photos make buyers doubt the car and move on.",
+        thresholds: {
+            good: "8+ real photos with alt text, lazy-loaded and responsively served",
+            needsImprovement: "Some photos but too few, missing alt text, or not optimized",
+            poor: "Very few photos, or mostly stock/placeholder imagery"
+        },
+        actualReasonsForFailure: [
+            "Fewer than 8 photos on the vehicle gallery",
+            "Photos have no descriptive alt text",
+            "Images aren't lazy-loaded, slowing the page",
+            "The listing appears to use stock or placeholder images"
+        ],
+        howToOvercomeFailure: [
+            "Show 8+ real photos per vehicle: exterior angles, interior, odometer and any damage",
+            "Add descriptive alt text to every gallery image",
+            "Lazy-load gallery images and serve responsive sizes (srcset/sizes)",
+            "Replace stock/placeholder photos with actual photos of the specific vehicle"
+        ]
+    },
+
     // Methodologies (UX & Content )
     UX_And_Content_Methodology: {
         icon: Smartphone,
@@ -3111,8 +3160,8 @@ export const InfoDetails = {
         guideLink: "https://developers.google.com/search/mobile-sites",
         whatThisMetricIs: (
             <div className="space-y-2">
-                <p>This is a 15-point 'health check' that measures how easy and pleasant your website feels for visitors.</p>
-                <p>It checks everything from how easy your text is to read, to whether your buttons are easy to find and your page layout is organized.</p>
+                <p>This is a multi-point 'health check' that measures how easy and pleasant your website feels for visitors.</p>
+                <p>It checks everything from how easy your text is to read, to whether your buttons are easy to find and your page layout is organized — plus page-specific checks on inventory and vehicle pages (filtering, no-results recovery and the vehicle photo gallery).</p>
             </div>
         ),
         whyItMatters: (
@@ -3153,13 +3202,13 @@ export const InfoDetails = {
                     <span className="font-semibold">Provide immediate visual cues:</span> Ensure buttons 'glow' or change color when touched and show loading signs during waits (Click Feedback & Loading Feedback).
                 </li>
                 <li>
-                    <span className="font-semibold">Organize with clear signposts:</span> Use descriptive section titles and a consistent layout system to help users skim your page (Section Labeling & Layout Consistency).
+                    <span className="font-semibold">Organize with clear signposts:</span> Use a single H1, sequential sub-headings and descriptive section titles, with a logical onward flow (Hierarchy & Flow Clarity), plus a consistent layout system (Layout Consistency).
                 </li>
                 <li>
                     <span className="font-semibold">Optimize content density:</span> Balance your text with white space to avoid 'wall-of-text' fatigue (Content Density).
                 </li>
                 <li>
-                    <span className="font-semibold">Guide the user journey:</span> Use a helpful footer and navigation shortcuts like 'Back to Top' buttons on long pages (Flow & In-Page Nav).
+                    <span className="font-semibold">Guide the user journey:</span> Provide navigation shortcuts like 'Back to Top' on long pages (In-Page Nav), and on inventory pages make filtering and the vehicle gallery shine (Inventory Filtering & Vehicle Gallery).
                 </li>
                 <li>
                     <span className="font-semibold">Keep headers compact:</span> Ensure your top menu doesn't take up too much vertical space on mobile devices (Sticky Header).
@@ -3168,14 +3217,14 @@ export const InfoDetails = {
         ),
         howThisScoreIsCalculated: (
             <div className="space-y-2">
-                <p>We perform 15 specialized checks across three tiers of importance. Each check is scored against industry standards for readability, accessibility, and navigational logic.</p>
-                <p>The final percentage is a weighted average where critical blockers (like broken links or pop-ups) have a higher impact on your score than minor layout polishing.</p>
+                <p>We perform a set of specialized checks across three tiers of importance, scored against industry standards for readability, accessibility, and navigational logic. Page-specific checks (inventory filtering, no-results recovery, vehicle gallery) only count on the page types where they apply, and the remaining weights are renormalized so each page is graded fairly.</p>
+                <p>The final percentage is a weighted average where high-impact issues (broken links, intrusive pop-ups, navigation discoverability) carry more weight than minor layout polishing.</p>
             </div>
         ),
         weightage: [
-            { param: "Critical Experience (Blockers, First Impression, Broken Links)", weight: "32%" },
-            { param: "Engagement & Logic (Readability, Feedback, Nav Discoverability)", weight: "50%" },
-            { param: "Support & Layout (Header Size, Breadcrumbs, Consistency)", weight: "18%" }
+            { param: "High-impact (Interstitials, Broken Links, Nav Discoverability)", weight: "33%" },
+            { param: "Core experience (Readability, ATF, Mobile, Hierarchy & Flow, Feedback)", weight: "46%" },
+            { param: "Support & layout (Density, Layout, Sticky header, page-specific)", weight: "21%" }
         ]
     },
 

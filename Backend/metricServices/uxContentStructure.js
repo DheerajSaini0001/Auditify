@@ -339,15 +339,18 @@ async function checkBreadcrumbs(page) {
   });
 
   if (isHomepage) {
+    // Spec §2.5: Breadcrumbs are page-specific (SRP/VDP/Service/Blog) — not applicable on the
+    // homepage. Return no score so it drops out of the weighted denominator (rule-6 N/A renorm)
+    // and is hidden in the UI rather than auto-passing and inflating the section.
     return {
-      score: 100,
+      infoOnly: true,
       status: 'pass',
-      details: 'Breadcrumbs are not required on the homepage.',
+      details: 'Breadcrumbs are not applicable on the homepage.',
       analysis: {
         cause: "The page is a root-level homepage.",
-        recommendation: "Breadcrumbs are not necessary here. Maintain clearly visible primary navigation."
+        recommendation: "Breadcrumbs are evaluated on inner pages (inventory, vehicle, service, blog). Maintain clearly visible primary navigation here."
       },
-      meta: { isHomepage: true }
+      meta: { isHomepage: true, notApplicable: true, infoOnly: true }
     };
   }
 
@@ -1158,8 +1161,22 @@ async function checkInPageNav(page, deviceType) {
     return { anchorLinks, backToTop, hasLongPage };
   }, deviceType);
 
-  let status = 'pass';
-  if (navData.hasLongPage && navData.anchorLinks === 0 && !navData.backToTop) status = 'warning';
+  // Spec §2.5: In-page navigation is page-specific (VDP / Blog / long pages). On short pages it
+  // is not applicable — drop from the weighted denominator (rule-6 N/A renorm) and hide.
+  if (!navData.hasLongPage) {
+    return {
+      infoOnly: true,
+      status: 'pass',
+      details: "This page is short enough that in-page jump links / back-to-top aren't needed.",
+      analysis: {
+        cause: "In-page navigation aids are evaluated on long pages (vehicle detail, blog, spec-heavy articles).",
+        recommendation: "On long-form pages, add a table of contents / anchor links and a 'Back to Top' button."
+      },
+      meta: { ...navData, notApplicable: true, infoOnly: true }
+    };
+  }
+
+  let status = navData.anchorLinks === 0 && !navData.backToTop ? 'warning' : 'pass';
   const score = status === 'pass' ? 100 : 60;
 
   let analysis = {
@@ -1430,8 +1447,11 @@ async function checkInventoryFiltering(page) {
   };
 }
 
-// No Results UX / Alternative Suggestions (info-only — a zero-result state can rarely be observed in a single-page audit)
-async function checkNoResultsUX(page) {
+// No Results UX / Alternative Suggestions
+// Spec §2.5: page-specific, +0.06 on SRP/Search. Weighted when the page is an inventory/search
+// results page (isSrp); informational elsewhere (a zero-result state can rarely be observed in a
+// single-page audit, so off-SRP it stays info-only and out of the weighted denominator).
+async function checkNoResultsUX(page, isSrp = false) {
   const data = await page.evaluate(() => {
     const text = (document.body.innerText || '').toLowerCase();
     const noResultsState = /(no|0|zero)\s+(results|vehicles|cars|matches|listings)\b|no (vehicles|results|matches) found|couldn'?t find|nothing (found|matched)|no matching (vehicles|results)|your search (returned|found) no/.test(text);
@@ -1466,7 +1486,17 @@ async function checkNoResultsUX(page) {
     };
   }
 
-  return { score, status, details, analysis, meta: { observed: data.noResultsState, hasSuggestions: data.hasSuggestions, hasReset: data.hasReset, hasAlternatives: data.hasAlternatives, hasCTA: data.hasCTA, infoOnly: true }, infoOnly: true };
+  // On an inventory/search-results page this is a real, weighted signal (the SRP's dead-end
+  // recovery readiness). Off-SRP we can't fairly observe an empty state → informational only.
+  const infoOnly = !isSrp;
+  return {
+    score,
+    status,
+    details,
+    analysis,
+    meta: { observed: data.noResultsState, isSrp, hasSuggestions: data.hasSuggestions, hasReset: data.hasReset, hasAlternatives: data.hasAlternatives, hasCTA: data.hasCTA, hasSearchSuggest: data.hasSearchSuggest, infoOnly },
+    infoOnly
+  };
 }
 
 // Certifications & Awards (info-only — overlaps the AEO Expertise Signals param)
@@ -1916,100 +1946,370 @@ async function checkMobileUsability(page, deviceType) {
   };
 }
 
+// ---------------------------------------------------------------------------------------------
+// Hierarchy & flow clarity — spec §2.5 merge of "Content Hierarchy Clarity", "Section Labeling
+// Clarity" and "Page-to-Page Flow" into ONE parameter (Part 4: these three overlap heavily).
+// Sub-signals: heading hierarchy (45%), section labeling (35%), page-to-page flow (20%).
+// ---------------------------------------------------------------------------------------------
+async function checkHierarchyFlowClarity(page) {
+  const d = await page.evaluate(() => {
+    // 1. Heading hierarchy
+    const headings = Array.from(document.querySelectorAll('h1, h2, h3, h4, h5, h6'));
+    const h1Count = headings.filter(h => h.tagName === 'H1').length;
+    let isSequential = true;
+    for (let i = 0; i < headings.length - 1; i++) {
+      const cur = parseInt(headings[i].tagName[1]);
+      const nxt = parseInt(headings[i + 1].tagName[1]);
+      if (nxt > cur + 1) isSequential = false;
+    }
+
+    // 2. Section labeling
+    const sections = Array.from(document.querySelectorAll('section, article, .section, .block'));
+    const labeledCount = sections.filter(s => s.querySelector('h1, h2, h3, h4') || s.getAttribute('aria-label')).length;
+
+    // 3. Page-to-page flow
+    const hasFooter = !!document.querySelector('footer');
+    const hostname = window.location.hostname;
+    const internalLinks = Array.from(document.querySelectorAll('a')).filter(a => {
+      try { return a.href.includes(hostname); } catch (e) { return false; }
+    }).length;
+    const nextStepCTAs = Array.from(document.querySelectorAll('button, a.btn')).length;
+
+    return { h1Count, totalHeadings: headings.length, isSequential, totalSections: sections.length, labeledCount, hasFooter, internalLinks, nextStepCTAs };
+  });
+
+  // --- Sub-scores (0-100) ---
+  let headingScore = 100;
+  if (d.totalHeadings === 0) headingScore = 0;
+  else {
+    if (d.h1Count !== 1) headingScore -= 30;
+    if (!d.isSequential) headingScore -= 25;
+    headingScore = Math.max(0, headingScore);
+  }
+  const labelingScore = d.totalSections > 0 ? Math.round((d.labeledCount / d.totalSections) * 100) : 100;
+  const flowSignals = (d.hasFooter ? 1 : 0) + (d.internalLinks > 2 ? 1 : 0) + (d.nextStepCTAs > 0 ? 1 : 0);
+  const flowScore = Math.round((flowSignals / 3) * 100);
+
+  const score = Math.round(0.45 * headingScore + 0.35 * labelingScore + 0.20 * flowScore);
+  const status = score >= 75 ? 'pass' : score >= 45 ? 'warning' : 'fail';
+
+  const weak = [];
+  if (headingScore < 75) weak.push(d.totalHeadings === 0 ? 'no headings' : d.h1Count !== 1 ? `${d.h1Count} H1 tags` : 'heading levels skip');
+  if (labelingScore < 75) weak.push(`only ${d.labeledCount}/${d.totalSections} sections labeled`);
+  if (flowScore < 75) weak.push(!d.hasFooter ? 'no footer' : d.nextStepCTAs === 0 ? 'no next-step CTAs' : 'few internal links');
+
+  let analysis;
+  if (status === 'pass') {
+    analysis = {
+      cause: "The page has a clear heading hierarchy, labeled sections and a logical onward flow, so visitors can scan and move forward easily.",
+      recommendation: "Keep a single descriptive H1, label every major section with a heading, and always offer a clear next step."
+    };
+  } else {
+    analysis = {
+      cause: `Structure & flow gaps: ${weak.join('; ') || 'the page is hard to scan or leads to a dead end'}.`,
+      recommendation: "Use exactly one H1 with sequential H2/H3 sub-headings, give every major section a visible heading, and add a footer plus a clear 'what's next' action so users never hit a dead end."
+    };
+  }
+
+  return {
+    score,
+    status,
+    details: `${d.h1Count} H1 / ${d.totalHeadings} headings, ${d.labeledCount}/${d.totalSections} sections labeled, ${d.nextStepCTAs} next-step links.`,
+    analysis,
+    meta: {
+      h1Count: d.h1Count,
+      totalHeadings: d.totalHeadings,
+      isSequential: d.isSequential,
+      totalSections: d.totalSections,
+      labeledCount: d.labeledCount,
+      hasFooter: d.hasFooter,
+      internalLinks: d.internalLinks,
+      nextStepCTAs: d.nextStepCTAs,
+      breakdown: { headingScore, labelingScore, flowScore }
+    }
+  };
+}
+
+// ---------------------------------------------------------------------------------------------
+// Vehicle image gallery quality — spec §2.5 page-specific (VDP, +0.10).
+// Grades photo count, alt text, lazy-loading, responsive serving and a real-vs-stock heuristic.
+// Informational (dropped from the denominator) when the page isn't a vehicle-detail page.
+// ---------------------------------------------------------------------------------------------
+async function checkVehicleGallery(page) {
+  const d = await page.evaluate(() => {
+    const path = window.location.pathname.toLowerCase();
+    const url = window.location.href.toLowerCase();
+    const text = (document.body.innerText || '').toLowerCase();
+
+    // --- VDP detection: a single-vehicle detail page (not an SRP / listing) ---
+    let vehicleSchema = false, itemListSchema = false;
+    for (const s of Array.from(document.querySelectorAll('script[type="application/ld+json"]'))) {
+      try {
+        const j = JSON.parse(s.innerText);
+        const arr = Array.isArray(j) ? j : [j];
+        for (const o of arr) {
+          const t = o && o['@type'];
+          const types = Array.isArray(t) ? t : [t];
+          if (types.some(x => ['Vehicle', 'Car', 'Motorcycle'].includes(x))) vehicleSchema = true;
+          if (types.some(x => x === 'ItemList')) itemListSchema = true;
+        }
+      } catch (e) { }
+    }
+    const vdpUrl = /\/vdp|\/vehicle\/|\/-id-|\/used\/[^/]+\/[^/]+|\/new\/[^/]+\/[^/]+/.test(path) || /vin=|stocknum|stock=|vehicleid/.test(url);
+    const hasVin = /\bvin\b/.test(text);
+    const hasStock = /\bstock\s?#|\bstock\s?number|\bstk#/.test(text);
+    const specWords = /mileage|odometer|drivetrain|transmission|exterior color|interior color|engine/.test(text);
+    const priceEls = document.querySelectorAll('[class*="price" i], [itemprop="price"]').length;
+
+    const isVdp = (vehicleSchema && !itemListSchema) ||
+      (vdpUrl && (hasVin || hasStock)) ||
+      (vdpUrl && priceEls >= 1 && specWords);
+
+    if (!isVdp) return { isVdp: false };
+
+    // --- Gallery detection ---
+    const gallerySel = '[class*="gallery" i], [class*="carousel" i], [class*="slider" i], [class*="slick" i], [class*="swiper" i], [class*="lightbox" i], [class*="photos" i], [class*="media-viewer" i]';
+    const galleryRoots = Array.from(document.querySelectorAll(gallerySel));
+    const gallerySet = new Set();
+    galleryRoots.forEach(r => r.querySelectorAll('img').forEach(i => gallerySet.add(i)));
+    const galleryImgs = Array.from(gallerySet);
+
+    // Fallback: substantial images on the page when no obvious gallery container exists.
+    const bigImgs = Array.from(document.querySelectorAll('img')).filter(i => {
+      const r = i.getBoundingClientRect();
+      return (i.naturalWidth >= 400 || r.width >= 300);
+    });
+
+    const usedGallery = galleryImgs.length >= 3;
+    const imgs = (usedGallery ? galleryImgs : bigImgs).slice(0, 80);
+
+    let withAlt = 0, lazy = 0, responsive = 0, stockish = 0;
+    imgs.forEach(i => {
+      const alt = (i.getAttribute('alt') || '').trim();
+      if (alt.length >= 3) withAlt++;
+      if (i.getAttribute('loading') === 'lazy' || i.hasAttribute('data-src') || i.hasAttribute('data-lazy') || i.hasAttribute('data-srcset')) lazy++;
+      if (i.hasAttribute('srcset') || i.hasAttribute('sizes') || i.closest('picture')) responsive++;
+      const src = (i.getAttribute('src') || i.getAttribute('data-src') || '').toLowerCase();
+      if (/stock|placeholder|coming-?soon|no-?image|default|dummy/.test(src + ' ' + alt)) stockish++;
+    });
+
+    return { isVdp: true, count: imgs.length, withAlt, lazy, responsive, stockish, usedGallery };
+  });
+
+  if (!d.isVdp) {
+    return {
+      infoOnly: true,
+      status: 'pass',
+      details: "Vehicle image gallery quality is graded on vehicle-detail (VDP) pages.",
+      analysis: {
+        cause: "This isn't a single-vehicle detail page.",
+        recommendation: "Audit a VDP to grade gallery photo count, alt text, lazy-loading and real-vs-stock imagery."
+      },
+      meta: { notApplicable: true, infoOnly: true }
+    };
+  }
+
+  const n = d.count;
+  const countScore = n >= 8 ? 40 : n >= 4 ? 28 : n >= 1 ? 14 : 0;       // photo count (40)
+  const altScore = n ? Math.round((d.withAlt / n) * 20) : 0;            // alt text (20)
+  const lazyScore = n ? Math.round((Math.min(d.lazy, n) / n) * 15) : 0; // lazy-loading (15)
+  const resScore = n ? Math.round((d.responsive / n) * 15) : 0;         // responsive serving (15)
+  const realScore = n && (d.stockish / n) < 0.5 ? 10 : 0;              // real (not stock) photos (10)
+
+  const score = Math.max(0, Math.min(100, countScore + altScore + lazyScore + resScore + realScore));
+  const status = score >= 75 ? 'pass' : score >= 45 ? 'warning' : 'fail';
+
+  const issues = [];
+  if (n < 8) issues.push(`only ${n} gallery photo${n === 1 ? '' : 's'} (aim for 8+)`);
+  if (n && d.withAlt / n < 0.5) issues.push('most photos lack alt text');
+  if (n && d.lazy / n < 0.5) issues.push('photos not lazy-loaded');
+  if (n && d.stockish / n >= 0.5) issues.push('appears to use stock/placeholder images');
+
+  return {
+    score,
+    status,
+    details: `${n} vehicle photo${n === 1 ? '' : 's'} (${d.withAlt} with alt, ${d.lazy} lazy-loaded${d.stockish ? `, ${d.stockish} stock-like` : ''}).`,
+    analysis: status === 'pass'
+      ? {
+        cause: "The vehicle gallery has plenty of real, well-described photos served efficiently — exactly what shoppers want before they enquire.",
+        recommendation: "Keep 8+ real photos per vehicle with descriptive alt text and lazy-loading; add interior, odometer and damage close-ups."
+      }
+      : {
+        cause: `Gallery gaps: ${issues.join('; ') || 'the vehicle gallery is thin or poorly optimized'}.`,
+        recommendation: "Show 8+ real (not stock) photos per vehicle covering exterior angles, interior, odometer and any damage; add descriptive alt text and lazy-load images so the page stays fast."
+      },
+    meta: {
+      photoCount: n,
+      withAlt: d.withAlt,
+      lazyLoaded: d.lazy,
+      responsive: d.responsive,
+      stockLike: d.stockish,
+      usedGalleryContainer: d.usedGallery,
+      breakdown: { countScore, altScore, lazyScore, resScore, realScore }
+    }
+  };
+}
+
+// ---------------------------------------------------------------------------------------------
+// Mobile experience — spec §2.5 keeps ONE "Mobile experience" in UX that ABSORBS the retired
+// "Mobile Usability" (touch targets / legible text / thumb reach). On desktop, touch-target
+// sizing isn't a fair signal, so the score is responsive-only and usability is shown for info.
+// ---------------------------------------------------------------------------------------------
+async function checkMobileExperienceMerged(page, deviceType) {
+  const responsive = await checkMobileExperience(page, deviceType);
+  const usability = await checkMobileUsability(page, deviceType);
+
+  const usabilityMeasurable = !usability.infoOnly && !(usability.meta && usability.meta.notMeasurable);
+  let score, blended;
+  if (deviceType === 'mobile' && usabilityMeasurable) {
+    score = Math.round(0.6 * (responsive.score || 0) + 0.4 * (usability.score || 0));
+    blended = true;
+  } else {
+    score = responsive.score || 0;        // desktop (or unmeasurable touch UI) → responsive only
+    blended = false;
+  }
+  score = Math.max(0, Math.min(100, score));
+  const status = score >= 75 ? 'pass' : score >= 45 ? 'warning' : 'fail';
+
+  const meta = {
+    ...(responsive.meta || {}),
+    // fold the usability sub-signals into the single Mobile Experience card
+    touchTargetPct: usability.meta?.touchTargetPct,
+    adequateTargets: usability.meta?.adequateTargets,
+    totalTargets: usability.meta?.totalTargets,
+    tooSmallTargets: usability.meta?.tooSmallTargets,
+    smallExamples: usability.meta?.smallExamples,
+    legibleTextPct: usability.meta?.legibleTextPct,
+    legibleText: usability.meta?.legibleText,
+    textTotal: usability.meta?.textTotal,
+    tinyText: usability.meta?.tinyText,
+    thumbReachOk: usability.meta?.thumbReachOk,
+    hasMobileNav: usability.meta?.hasMobileNav,
+    hasStickyBar: usability.meta?.hasStickyBar,
+    responsiveScore: responsive.score,
+    usabilityScore: usability.score,
+    usabilityWeighted: blended,
+    score
+  };
+
+  // Combine the two analyses' causes when failing.
+  const causes = [responsive.analysis?.cause, blended ? usability.analysis?.cause : null].filter(Boolean);
+  let analysis = null;
+  if (status !== 'pass') {
+    analysis = {
+      cause: causes.join(' ') || "The page doesn't adapt cleanly to small screens.",
+      recommendation: "Add a width=device-width viewport, remove fixed-width elements that cause horizontal scroll, serve responsive images, use media queries, and make tap targets ≥44px with legible (≥16px) text for one-handed mobile use."
+    };
+  }
+
+  return {
+    score,
+    status,
+    details: status === 'pass'
+      ? (blended
+        ? "The layout adapts to the screen and is comfortable for touch: responsive viewport, no overflow, large tap targets and legible text."
+        : "The layout adapts to the screen: responsive viewport, no horizontal overflow, and responsive techniques in use.")
+      : (status === 'warning' ? "Mobile experience is partially optimized but has gaps." : "The layout does not adapt well to mobile screens."),
+    analysis,
+    meta
+  };
+}
+
 export default async function evaluateMobileUX(device, page) {
   const deviceType = device === 'Mobile' ? 'mobile' : 'desktop';
 
+  // --- Common parameters (spec §2.5) ---
   const readability = await checkReadability(page);
   const stickyHeader = await checkStickyHeader(page, deviceType);
   const interstitials = await checkInterstitials(page, deviceType);
-  const breadcrumbs = await checkBreadcrumbs(page);
   const navDiscoverability = await checkNavDiscoverability(page);
   const atf = await checkATF(page);
   const clickFeedback = await checkClickFeedback(page, deviceType);
   const loadingFeedback = await checkLoadingFeedback(page);
   const brokenLinks = await checkBrokenLinks(page);
-  const hierarchy = await checkHierarchyClarity(page);
-  const labeling = await checkSectionLabeling(page);
+  const hierarchyFlow = await checkHierarchyFlowClarity(page);          // merged param
   const density = await checkContentDensity(page, deviceType);
-  const flow = await checkPageFlow(page);
   const layout = await checkLayoutConsistency(page);
-  const mobileExperience = await checkMobileExperience(page, deviceType);
-  const mobileUsability = await checkMobileUsability(page, deviceType);
+  const mobileExperience = await checkMobileExperienceMerged(page, deviceType); // absorbs Mobile Usability
+
+  // --- Page-specific parameters (drop from the denominator when not applicable) ---
+  const breadcrumbs = await checkBreadcrumbs(page);
   const inPageNav = await checkInPageNav(page, deviceType);
   const inventoryFiltering = await checkInventoryFiltering(page);
-  const noResultsUX = await checkNoResultsUX(page);
-  const certificationsAwards = await checkCertificationsAwards(page);
-  const pricingTransparency = await checkPricingTransparency(page);
-  const vehicleHistory = await checkVehicleHistory(page);
-  const staffProfiles = await checkStaffProfiles(page);
+  const isSrp = inventoryFiltering?.meta?.context === 'srp';
+  const noResultsUX = await checkNoResultsUX(page, isSrp);
+  const vehicleGallery = await checkVehicleGallery(page);
+
+  // NOTE — Spec §2.5 RELOCATE/RECLASSIFY: Pricing Transparency, Vehicle History, Staff Profiles
+  // and Certifications & Awards belong to Conversion Flow / AEO, not UX. Per the standing rule-4
+  // decision they are hidden here (not computed, not returned) until those sections claim them;
+  // their evaluator functions are kept above as dead code.
 
   const results = {
     Text_Readability: readability,
-    Sticky_Header_Usage: stickyHeader,
     Intrusive_Interstitials: interstitials,
-    Breadcrumbs: breadcrumbs,
     Navigation_Discoverability: navDiscoverability,
     Above_the_Fold_Content: atf,
+    Broken_Links: brokenLinks,
+    Mobile_Experience: mobileExperience,
     Interactive_Click_Feedback: clickFeedback,
     Loading_Feedback: loadingFeedback,
-    Broken_Links: brokenLinks,
-    UX_Content_Hierarchy_Clarity: hierarchy,
-    Section_Labeling_Clarity: labeling,
+    Hierarchy_Flow_Clarity: hierarchyFlow,
     Content_Density_Balance: density,
-    Page_to_Page_Flow: flow,
     Layout_Consistency: layout,
-    Mobile_Experience: mobileExperience,
-    Mobile_Usability: mobileUsability,
+    Sticky_Header_Usage: stickyHeader,
     In_Page_Navigation: inPageNav,
+    Breadcrumbs: breadcrumbs,
     Inventory_Filtering: inventoryFiltering,
     No_Results_UX: noResultsUX,
-    Certifications_Awards: certificationsAwards,
-    Pricing_Transparency: pricingTransparency,
-    Vehicle_History: vehicleHistory,
-    Staff_Profiles: staffProfiles
+    Vehicle_Image_Gallery: vehicleGallery
+  };
+
+  // Spec §2.5 in-section weights. Page-specific add-ons only carry weight on their page type
+  // (elsewhere they return infoOnly / no score and are dropped). The renormalizing Σ-weight loop
+  // (Σ score×w / Σ w over present params) then auto-shrinks the common params for that page type.
+  const SPEC_WEIGHTS = {
+    // common
+    Text_Readability: 0.10,
+    Intrusive_Interstitials: 0.11,
+    Navigation_Discoverability: 0.11,
+    Above_the_Fold_Content: 0.09,
+    Broken_Links: 0.11,
+    Mobile_Experience: 0.09,
+    Interactive_Click_Feedback: 0.06,
+    Loading_Feedback: 0.05,
+    Hierarchy_Flow_Clarity: 0.07,
+    Content_Density_Balance: 0.05,
+    Layout_Consistency: 0.05,
+    Sticky_Header_Usage: 0.05,
+    // page-specific
+    In_Page_Navigation: 0.04,
+    Breadcrumbs: 0.05,
+    Inventory_Filtering: 0.10,
+    No_Results_UX: 0.06,
+    Vehicle_Image_Gallery: 0.10
   };
 
   let weightedSum = 0;
-  let totalPossibleWeight = 0;
-
-  const weights = {
-    Text_Readability: 2,
-    Sticky_Header_Usage: 1,
-    Intrusive_Interstitials: 3,
-    Breadcrumbs: 1,
-    Navigation_Discoverability: 3,
-    Above_the_Fold_Content: 3,
-    Interactive_Click_Feedback: 2,
-    Loading_Feedback: 2,
-    Broken_Links: 3,
-    UX_Content_Hierarchy_Clarity: 3,
-    Section_Labeling_Clarity: 2,
-    Content_Density_Balance: 2,
-    Page_to_Page_Flow: 2,
-    Layout_Consistency: 1,
-    Mobile_Experience: 3,
-    Mobile_Usability: 3,
-    In_Page_Navigation: 1,
-    Inventory_Filtering: 3,
-    Pricing_Transparency: 3,
-    Vehicle_History: 2
-    // No_Results_UX, Certifications_Awards, Staff_Profiles are info-only (always carry infoOnly:true) — excluded from the weighted score.
-  };
+  let totalWeight = 0;
 
   for (const [key, result] of Object.entries(results)) {
-    // Info-only params (e.g. context-not-applicable signals) are displayed but excluded from the weighted score.
+    // Info-only / not-applicable params are displayed but excluded from the weighted score
+    // (rule-6 N/A renormalization — they drop out of the denominator entirely).
     if (!result || result.infoOnly) continue;
-    const weight = weights[key] || 1;
-    const score = Math.max(0, Math.min(100, result.score || 0));
-
-    weightedSum += (score * weight);
-    totalPossibleWeight += (100 * weight);
+    if ((result.score ?? undefined) === undefined) continue;
+    const weight = SPEC_WEIGHTS[key] || 0;
+    if (!weight) continue;
+    const score = Math.max(0, Math.min(100, result.score));
+    weightedSum += score * weight;
+    totalWeight += weight;
   }
 
-  const overallScore = totalPossibleWeight > 0 ? Math.round((weightedSum / totalPossibleWeight) * 100) : 0;
+  const overallScore = totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 0;
 
   return {
     Percentage: overallScore,
+    Confidence: 'heuristic',
     ...results
   };
 }

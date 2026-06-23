@@ -29,20 +29,14 @@ const iconMap = {
   Interactive_Click_Feedback: MousePointer2,
   Loading_Feedback: Loader2,
   Broken_Links: Unlink,
-  UX_Content_Hierarchy_Clarity: ListTree,
-  Section_Labeling_Clarity: AlignLeft,
+  Hierarchy_Flow_Clarity: ListTree,
   Content_Density_Balance: Grid3X3,
-  Page_to_Page_Flow: Repeat,
   Layout_Consistency: AppWindow,
   Mobile_Experience: Smartphone,
-  Mobile_Usability: Touchpad,
   In_Page_Navigation: Anchor,
   Inventory_Filtering: SlidersHorizontal,
   No_Results_UX: SearchX,
-  Certifications_Awards: Award,
-  Pricing_Transparency: DollarSign,
-  Vehicle_History: FileText,
-  Staff_Profiles: Users
+  Vehicle_Image_Gallery: ImageIcon
 };
 
 const uxEducationalContent = InfoDetails;
@@ -276,20 +270,35 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
               </div>
             )}
 
-            {type === "UX_Content_Hierarchy_Clarity" && meta && (
+            {type === "Hierarchy_Flow_Clarity" && meta && (
               <div className="space-y-3">
                 <div>
-                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Heading Distro</h5>
+                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Heading Hierarchy</h5>
                   <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
-                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-indigo-400"></span>
-                    <span className="break-all">{meta.h1Count} H1 found | {meta.totalHeadings} total tags</span>
+                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${meta.h1Count === 1 && meta.isSequential ? "bg-emerald-400" : "bg-amber-400"}`}></span>
+                    <span className="break-all">{meta.h1Count} H1 / {meta.totalHeadings} headings · {meta.isSequential ? "sequential" : "skips levels"}</span>
                   </div>
                 </div>
                 <div>
-                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Sequence Logic</h5>
+                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Section Labeling</h5>
                   <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${meta.isSequential ? "bg-emerald-400" : "bg-rose-400"}`}></span>
-                    <span className="break-all">{meta.isSequential ? "Perfect Nesting" : "Non-sequential levels detected"}</span>
+                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-blue-400"></span>
+                    <span className="break-all">{meta.labeledCount} of {meta.totalSections} sections labeled</span>
+                  </div>
+                </div>
+                <div>
+                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Onward Flow</h5>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { l: "Footer", v: meta.hasFooter ? "Yes" : "No", ok: meta.hasFooter },
+                      { l: "Internal links", v: meta.internalLinks, ok: meta.internalLinks > 2 },
+                      { l: "Next steps", v: meta.nextStepCTAs, ok: meta.nextStepCTAs > 0 }
+                    ].map((item, i) => (
+                      <div key={i} className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
+                        <p className="opacity-70 mb-1">{item.l}</p>
+                        <p className={`font-semibold ${item.ok ? "text-emerald-500" : "text-rose-500"}`}>{item.v}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -745,51 +754,68 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
                     </div>
                   </div>
                 )}
+
+                {/* Touch ergonomics — absorbed "Mobile Usability" (spec §2.5). Weighted only on mobile. */}
+                {(meta.touchTargetPct !== null && meta.touchTargetPct !== undefined) || (meta.legibleTextPct !== null && meta.legibleTextPct !== undefined) ? (
+                  <div className="pt-2 mt-1 border-t border-dashed border-slate-700/30">
+                    <h5 className={`text-xs font-semibold uppercase tracking-wider mb-2 flex items-center justify-between ${darkMode ? "text-slate-400" : "text-muted"}`}>
+                      <span>Touch Ergonomics</span>
+                      {meta.usabilityWeighted === false && (
+                        <span className={`text-[8px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wide ${darkMode ? "bg-slate-700/50 text-slate-400" : "bg-cardsoft text-muted"}`}>desktop · info</span>
+                      )}
+                    </h5>
+                    <div className="grid grid-cols-2 gap-2">
+                      {meta.touchTargetPct !== null && meta.touchTargetPct !== undefined && (
+                        <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
+                          <p className="opacity-70 mb-1">Tap targets ≥44px</p>
+                          <p className={`font-semibold ${meta.touchTargetPct >= 80 ? "text-emerald-500" : "text-rose-500"}`}>{meta.adequateTargets}/{meta.totalTargets} ({meta.touchTargetPct}%)</p>
+                        </div>
+                      )}
+                      {meta.legibleTextPct !== null && meta.legibleTextPct !== undefined && (
+                        <div className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
+                          <p className="opacity-70 mb-1">Legible text ≥12px</p>
+                          <p className={`font-semibold ${meta.legibleTextPct >= 90 ? "text-emerald-500" : "text-amber-500"}`}>{meta.legibleText}/{meta.textTotal} ({meta.legibleTextPct}%)</p>
+                        </div>
+                      )}
+                    </div>
+                    <div className={`mt-2 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${meta.thumbReachOk ? "bg-emerald-500" : "bg-amber-500"}`}></span>
+                      <span className="break-all">{meta.thumbReachOk ? "Reachable sticky / mobile nav (thumb reach)" : "No reachable sticky or mobile nav"}</span>
+                    </div>
+                    {meta.smallExamples && meta.smallExamples.length > 0 && (
+                      <div className={`mt-2 p-2 rounded border flex flex-col gap-1 font-mono text-[10px] max-h-[120px] overflow-y-auto ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
+                        <p className="opacity-70 mb-0.5">Smallest tap targets:</p>
+                        {meta.smallExamples.map((ex, i) => (
+                          <div key={i} className="flex gap-2 items-start">
+                            <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1 bg-slate-400"></span>
+                            <span className="break-all">{ex}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : null}
               </div>
             )}
 
-            {type === "Mobile_Usability" && meta && (
-              <div className="space-y-2">
-                {meta.touchTargetPct !== null && meta.touchTargetPct !== undefined && (
-                  <div>
-                    <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Tap Targets ≥ 44px</h5>
-                    <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${meta.touchTargetPct >= 80 ? "bg-emerald-500" : "bg-rose-500"}`}></span>
-                      <span className="break-all">{meta.adequateTargets}/{meta.totalTargets} ({meta.touchTargetPct}%)</span>
-                    </div>
+            {type === "Vehicle_Image_Gallery" && meta && !meta.notApplicable && (
+              <div className="space-y-3">
+                <div>
+                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Gallery Quality</h5>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { l: "Photos", v: meta.photoCount, ok: meta.photoCount >= 8 },
+                      { l: "With alt text", v: `${meta.withAlt}/${meta.photoCount}`, ok: meta.photoCount && meta.withAlt / meta.photoCount >= 0.5 },
+                      { l: "Lazy-loaded", v: `${meta.lazyLoaded}/${meta.photoCount}`, ok: meta.photoCount && meta.lazyLoaded / meta.photoCount >= 0.5 },
+                      { l: "Stock-like", v: meta.stockLike, ok: meta.photoCount && meta.stockLike / meta.photoCount < 0.5 }
+                    ].map((item, i) => (
+                      <div key={i} className={`p-2 rounded border font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
+                        <p className="opacity-70 mb-1">{item.l}</p>
+                        <p className={`font-semibold ${item.ok ? "text-emerald-500" : "text-rose-500"}`}>{item.v}</p>
+                      </div>
+                    ))}
                   </div>
-                )}
-                {meta.legibleTextPct !== null && meta.legibleTextPct !== undefined && (
-                  <div>
-                    <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Legible Text ≥ 12px</h5>
-                    <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${meta.legibleTextPct >= 90 ? "bg-emerald-500" : "bg-amber-500"}`}></span>
-                      <span className="break-all">{meta.legibleText}/{meta.textTotal} ({meta.legibleTextPct}%)</span>
-                    </div>
-                  </div>
-                )}
-                {!meta.notMeasurable && (
-                  <div>
-                    <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Thumb Reach</h5>
-                    <div className={`mt-1 p-2 rounded border flex items-center gap-2 font-mono text-[10px] ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${meta.thumbReachOk ? "bg-emerald-500" : "bg-amber-500"}`}></span>
-                      <span className="break-all">{meta.thumbReachOk ? "Reachable sticky / mobile nav" : "No reachable sticky or mobile nav"}</span>
-                    </div>
-                  </div>
-                )}
-                {meta.smallExamples && meta.smallExamples.length > 0 && (
-                  <div>
-                    <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Smallest Tap Targets</h5>
-                    <div className={`mt-1 p-2 rounded border flex flex-col gap-1 font-mono text-[10px] max-h-[120px] overflow-y-auto ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
-                      {meta.smallExamples.map((ex, i) => (
-                        <div key={i} className="flex gap-2 items-start">
-                          <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1 bg-slate-400"></span>
-                          <span className="break-all">{ex}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                </div>
               </div>
             )}
           </div>
@@ -957,34 +983,32 @@ const UX_Content_Structure_Inner = React.memo(({ data, loading, darkMode }) => {
   // Define column spans for metrics with potentially large content
   const spanMap = {
     Text_Readability: "md:col-span-2",
-    UX_Content_Hierarchy_Clarity: "md:col-span-2",
+    Hierarchy_Flow_Clarity: "md:col-span-2",
     Above_the_Fold_Content: "md:col-span-2",
     Navigation_Discoverability: "md:col-span-2",
     In_Page_Navigation: "md:col-span-2",
     Broken_Links: "md:col-span-2",
-    Page_to_Page_Flow: "md:col-span-2",
     Inventory_Filtering: "md:col-span-2",
   };
 
   const detailedKeys = [
     "Text_Readability",
-    "UX_Content_Hierarchy_Clarity",
+    "Hierarchy_Flow_Clarity",
     "Navigation_Discoverability",
     "In_Page_Navigation",
-    "Broken_Links",
-    "Page_to_Page_Flow"
+    "Broken_Links"
   ];
 
   const sectionDefinitions = [
     {
       title: "Content & Readability",
       icon: BookOpen,
-      keys: ["Text_Readability", "UX_Content_Hierarchy_Clarity", "Section_Labeling_Clarity", "Content_Density_Balance"]
+      keys: ["Text_Readability", "Hierarchy_Flow_Clarity", "Content_Density_Balance"]
     },
     {
       title: "Navigation & Flow",
       icon: Compass,
-      keys: ["Navigation_Discoverability", "Inventory_Filtering", "No_Results_UX", "Breadcrumbs", "In_Page_Navigation", "Page_to_Page_Flow"]
+      keys: ["Navigation_Discoverability", "Breadcrumbs", "In_Page_Navigation"]
     },
     {
       title: "Interactive Experience",
@@ -994,12 +1018,12 @@ const UX_Content_Structure_Inner = React.memo(({ data, loading, darkMode }) => {
     {
       title: "Mobile Layout & Stability",
       icon: Smartphone,
-      keys: ["Mobile_Experience", "Mobile_Usability", "Above_the_Fold_Content", "Sticky_Header_Usage", "Intrusive_Interstitials", "Layout_Consistency"]
+      keys: ["Mobile_Experience", "Above_the_Fold_Content", "Sticky_Header_Usage", "Intrusive_Interstitials", "Layout_Consistency"]
     },
     {
-      title: "Trust & Transparency",
-      icon: ShieldCheck,
-      keys: ["Certifications_Awards", "Pricing_Transparency", "Vehicle_History", "Staff_Profiles"]
+      title: "Inventory & Vehicle Signals",
+      icon: SlidersHorizontal,
+      keys: ["Inventory_Filtering", "No_Results_UX", "Vehicle_Image_Gallery"]
     }
   ];
 

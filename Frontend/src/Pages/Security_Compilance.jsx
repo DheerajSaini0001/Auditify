@@ -6,11 +6,10 @@ import { useData } from "../context/DataContext";
 import { ThemeContext } from "../context/ThemeContext";
 import LivePreview from "../Component/LivePreview";
 import {
-  Shield, Lock, Globe, AlertTriangle, CheckCircle, XCircle,
-  Info, Server, Eye, FileText, AlertOctagon, Smartphone,
-  Layout, Code, Terminal, Bug, MapPin, Share2, CalendarClock,
-  Database, EyeOff, MousePointer, Bell, Key, Globe2, Layers, ShieldCheck, Search, Loader2, CreditCard,
-  BarChart3, Tag, PhoneCall
+  Shield, Lock, AlertTriangle, CheckCircle, XCircle,
+  Info, Server, Eye, FileText, Smartphone,
+  Layout, Code, Bug, Share2, CalendarClock,
+  Database, Key, Globe2, Layers, ShieldCheck, Loader2, CreditCard
 } from "lucide-react";
 import MetricInfoModal from "../Component/MetricInfoModal";
 import ParameterInfoModal from "../Component/ParameterInfoModal";
@@ -27,35 +26,20 @@ const iconMap = {
   X_Frame_Options: Layout,
   CSP: Code,
   X_Content_Type_Options: FileText,
-  Cookies_Secure: Lock,
-  Cookies_HttpOnly: EyeOff,
-  Google_Safe_Browsing: Search,
-  Blacklist: AlertOctagon,
-  Malware_Scan: Bug,
+  Cookie_Flags: Lock,
+  Reputation: ShieldCheck,
   SQLi_Exposure: Database,
   XSS: Code,
   Cookie_Consent: Info,
   Privacy_Policy: FileText,
+  Privacy_Compliance: Globe2,
+  Legal_Disclaimers: FileText,
   Forms_Use_HTTPS: Lock,
-  GDPR_CCPA: Globe2,
-  Data_Collection: Database,
   Weak_Default_Credentials: Key,
   MFA_Enabled: Smartphone,
   Admin_Panel_Public: Eye,
-  Viewport_Meta_Tag: Smartphone,
-  HTML_Doctype: Code,
-  Character_Encoding: Globe,
-  Browser_Console_Errors: Terminal,
-  Geolocation_Request: MapPin,
-  Input_Paste_Allowed: MousePointer,
-  Notification_Request: Bell,
   Third_Party_Cookies: Share2,
-  Deprecated_APIs: AlertTriangle,
-  CRM_Integration: Database,
   Finance_Form_Security: CreditCard,
-  GA4_Installed: BarChart3,
-  GTM_Configuration: Tag,
-  Conversion_Tracking: PhoneCall,
 };
 
 const educationalContent = InfoDetails;
@@ -111,6 +95,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
   const { status, details, meta, analysis } = data || {};
   const isPassed = status === "pass";
   const isWarning = status === "warning";
+  const isNA = status === "not_applicable" || data?.infoOnly;
   const [showAnalysis, setShowAnalysis] = React.useState(false);
 
   const Icon = iconMap[metricKey] || Shield;
@@ -133,6 +118,9 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
   } else if (isWarning) {
     statusColor = darkMode ? "text-amber-400 bg-amber-500/10 border-amber-500/20" : "text-amber-600 bg-amber-50 border-amber-100";
     statusText = "Warning";
+  } else if (isNA) {
+    statusColor = darkMode ? "text-slate-400 bg-slate-500/10 border-slate-500/20" : "text-slate-600 bg-slate-100 border-slate-200";
+    statusText = "Not Applicable";
   }
 
   const hasMetaDetails = meta && Object.keys(meta).some(k => k !== 'count' && k !== 'value');
@@ -147,13 +135,23 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             </div>
             <div>
               <h3 className={`font-semibold text-lg ${textColor}`}>{title}</h3>
-              <p className={`text-xs font-medium mt-1 px-2 py-0.5 rounded-full w-fit border ${statusColor}`}>
-                {statusText}
-              </p>
+              <div className="flex items-center gap-1.5 mt-1">
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full w-fit border ${statusColor}`}>
+                  {statusText}
+                </span>
+                {data?.confidence && (
+                  <span
+                    title="Measurement confidence: field = real-data API, measured = transport/header/cert, heuristic = DOM inference"
+                    className={`text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full border ${darkMode ? "text-slate-400 border-slate-600 bg-slate-700/40" : "text-slate-500 border-slate-200 bg-slate-100"}`}
+                  >
+                    {data.confidence}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {!isPassed && isActionableParam(metricKey) && (
+            {!isPassed && !isNA && isActionableParam(metricKey) && (
               <button
                 onClick={() => setShowAnalysis(!showAnalysis)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all duration-300 ${showAnalysis
@@ -195,10 +193,12 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             </div>
             <div className={`p-3 rounded-lg border transition-all duration-300 ${isPassed ? (darkMode ? "bg-emerald-500/5 border-emerald-500/10" : "bg-emerald-50/50 border-emerald-100") :
               isWarning ? (darkMode ? "bg-amber-500/5 border-amber-500/20" : "bg-amber-50/50 border-amber-100") :
+                isNA ? (darkMode ? "bg-slate-500/5 border-slate-500/20" : "bg-slate-50 border-slate-200") :
                 (darkMode ? "bg-rose-500/5 border-rose-500/20" : "bg-rose-50/50 border-rose-100")
               }`}>
               <p className={`text-sm font-semibold leading-relaxed ${isPassed ? "text-emerald-600 dark:text-emerald-400" :
                 isWarning ? "text-amber-600 dark:text-amber-400" :
+                  isNA ? "text-slate-500 dark:text-slate-400" :
                   "text-rose-600 dark:text-rose-400"
                 }`}>
                 {details || "No details available"}
@@ -207,7 +207,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
           </div>
 
           {/* Ask AI Button */}
-          {!isPassed && (
+          {!isPassed && !isNA && (
             <AskAIButton
               finding={{
                 type: 'Security & Compliance',
@@ -339,52 +339,6 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             </div>
           )}
 
-          {metricKey === "Cookies_Secure" && meta?.cookies && (() => {
-            const total = meta.cookies.length || 0;
-            const insecureCount = meta.insecureCookies?.length || 0;
-            const secureCount = total - insecureCount;
-
-            return (
-              <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-line bg-cardsoft"} space-y-1.5`}>
-                <div className="flex justify-between items-center">
-                  <span className={`font-medium ${darkMode ? "text-gray-400" : "text-muted"}`}>Total Cookies:</span>
-                  <span className={`font-semibold ${darkMode ? "text-gray-200" : "text-inksoft"}`}>{total}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className={`font-medium ${darkMode ? "text-gray-400" : "text-muted"}`}>Secure (HTTPS only):</span>
-                  <span className="text-emerald-500 font-semibold">{secureCount}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className={`font-medium ${darkMode ? "text-gray-400" : "text-muted"}`}>Insecure (Missing Flag):</span>
-                  <span className={`${insecureCount > 0 ? "text-rose-500" : "text-gray-500"} font-semibold`}>{insecureCount}</span>
-                </div>
-              </div>
-            );
-          })()}
-
-          {metricKey === "Cookies_HttpOnly" && meta?.cookies && (() => {
-            const total = meta.cookies.length || 0;
-            const exposedCount = meta.scriptAccessibleCookies?.length || 0;
-            const protectedCount = total - exposedCount;
-
-            return (
-              <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-line bg-cardsoft"} space-y-1.5`}>
-                <div className="flex justify-between items-center">
-                  <span className={`font-medium ${darkMode ? "text-gray-400" : "text-muted"}`}>Total Cookies:</span>
-                  <span className={`font-semibold ${darkMode ? "text-gray-200" : "text-inksoft"}`}>{total}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className={`font-medium ${darkMode ? "text-gray-400" : "text-muted"}`}>HttpOnly (No JS Access):</span>
-                  <span className="text-emerald-500 font-semibold">{protectedCount}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className={`font-medium ${darkMode ? "text-gray-400" : "text-muted"}`}>Exposed (Standard):</span>
-                  <span className={`${exposedCount > 0 ? "text-rose-500" : "text-gray-500"} font-semibold`}>{exposedCount}</span>
-                </div>
-              </div>
-            );
-          })()}
-
           {metricKey === "Third_Party_Cookies" && meta?.thirdPartyCookies && (() => {
             const total = meta.thirdPartyCookies?.length || 0;
             const domainCount = Array.isArray(meta.uniqueDomains)
@@ -413,47 +367,6 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
               </div>
             );
           })()}
-
-          {metricKey === "Google_Safe_Browsing" && meta?.matches && (
-            <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-line bg-cardsoft"}`}>
-              <div className="flex justify-between items-center">
-                <span className={`font-medium ${darkMode ? "text-gray-400" : "text-muted"}`}>Security Matches:</span>
-                <span className={`font-semibold ${meta.matches.length > 0 ? "text-rose-500" : "text-emerald-500"}`}>{meta.matches.length} Threats</span>
-              </div>
-            </div>
-          )}
-
-          {metricKey === "Malware_Scan" && meta?.stats && (
-            <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-line bg-cardsoft"} space-y-1.5`}>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                <div className="flex justify-between">
-                  <span className="opacity-60">Malicious:</span>
-                  <span className={`font-semibold ${meta.stats.malicious > 0 ? "text-rose-500" : "text-emerald-500"}`}>{meta.stats.malicious}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="opacity-60">Suspicious:</span>
-                  <span className={`font-semibold ${meta.stats.suspicious > 0 ? "text-amber-500" : "text-emerald-500"}`}>{meta.stats.suspicious}</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {metricKey === "Blacklist" && meta && (meta.googleSafeBrowsing || meta.virusTotal) && (
-            <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-line bg-cardsoft"} space-y-1.5`}>
-              <div className="flex justify-between items-center">
-                <span className={`font-medium ${darkMode ? "text-gray-400" : "text-muted"}`}>Safe Browsing:</span>
-                <span className={`font-semibold ${meta.googleSafeBrowsing?.status === "pass" ? "text-emerald-500" : "text-rose-500"}`}>
-                  {meta.googleSafeBrowsing?.status === "pass" ? "Clean" : "Flagged"}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className={`font-medium ${darkMode ? "text-gray-400" : "text-muted"}`}>VirusTotal:</span>
-                <span className={`font-semibold ${meta.virusTotal?.status === "pass" ? "text-emerald-500" : "text-rose-500"}`}>
-                  {meta.virusTotal?.status === "pass" ? "Clean" : "Flagged"}
-                </span>
-              </div>
-            </div>
-          )}
 
           {(metricKey === "SQLi_Exposure" || metricKey === "XSS") && data?.payload && (
             <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-line bg-cardsoft"}`}>
@@ -495,13 +408,95 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             </div>
           )}
 
+          {metricKey === "SSL_Expiry" && meta?.validTo && (
+            <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-line bg-cardsoft"} space-y-1.5`}>
+              <div className="flex justify-between items-center">
+                <span className={`font-medium ${darkMode ? "text-gray-400" : "text-muted"}`}>Expires:</span>
+                <code className={`px-1.5 py-0.5 rounded font-mono font-semibold ${darkMode ? "bg-blue-500/10 text-blue-400" : "bg-accentsoft text-accent"}`}>{new Date(meta.validTo).toLocaleDateString()}</code>
+              </div>
+              {typeof meta.daysUntilExpiry === "number" && (
+                <div className="flex justify-between items-center">
+                  <span className={`font-medium ${darkMode ? "text-gray-400" : "text-muted"}`}>Days Left:</span>
+                  <span className={`font-semibold ${meta.daysUntilExpiry < 14 ? "text-rose-500" : meta.daysUntilExpiry < 30 ? "text-amber-500" : "text-emerald-500"}`}>{meta.daysUntilExpiry}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {metricKey === "Reputation" && meta && (meta.googleSafeBrowsing || meta.virusTotal) && (
+            <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-line bg-cardsoft"} space-y-1.5`}>
+              {["googleSafeBrowsing", "virusTotal"].map((src) => {
+                const r = meta[src];
+                if (!r) return null;
+                const label = src === "googleSafeBrowsing" ? "Safe Browsing" : "VirusTotal";
+                const txt = r.status === "pass" ? "Clean" : r.status === "fail" ? "Flagged" : "N/A";
+                const col = r.status === "pass" ? "text-emerald-500" : r.status === "fail" ? "text-rose-500" : "text-slate-400";
+                return (
+                  <div key={src} className="flex justify-between items-center">
+                    <span className={`font-medium ${darkMode ? "text-gray-400" : "text-muted"}`}>{label}:</span>
+                    <span className={`font-semibold ${col}`}>{txt}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {metricKey === "Cookie_Flags" && meta?.cookies && (() => {
+            const total = meta.total ?? meta.cookies.length ?? 0;
+            const rows = [
+              ["Total Cookies", total, false],
+              ["Missing Secure", meta.insecureCookies?.length || 0, true],
+              ["Missing HttpOnly", meta.scriptAccessibleCookies?.length || 0, true],
+              ["Missing SameSite", meta.noSameSiteCookies?.length || 0, true],
+            ];
+            return (
+              <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-line bg-cardsoft"} space-y-1.5`}>
+                {rows.map(([label, val, bad]) => (
+                  <div key={label} className="flex justify-between items-center">
+                    <span className={`font-medium ${darkMode ? "text-gray-400" : "text-muted"}`}>{label}:</span>
+                    <span className={`font-semibold ${bad ? (val > 0 ? "text-rose-500" : "text-emerald-500") : (darkMode ? "text-gray-200" : "text-inksoft")}`}>{val}</span>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+
+          {metricKey === "Privacy_Compliance" && meta && (
+            <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-line bg-cardsoft"} space-y-1.5`}>
+              <div className="flex justify-between items-center">
+                <span className={`font-medium ${darkMode ? "text-gray-400" : "text-muted"}`}>GDPR/CCPA Notice:</span>
+                <span className={`font-semibold ${meta.gdprPass ? "text-emerald-500" : "text-rose-500"}`}>{meta.gdprPass ? "Found" : "Missing"}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className={`font-medium ${darkMode ? "text-gray-400" : "text-muted"}`}>Data Disclosure:</span>
+                <span className={`font-semibold ${meta.dcPass ? "text-emerald-500" : "text-rose-500"}`}>{meta.dcPass ? "Found" : "Missing"}</span>
+              </div>
+            </div>
+          )}
+
+          {metricKey === "Legal_Disclaimers" && meta?.pageType && (
+            <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-line bg-cardsoft"} space-y-1.5`}>
+              <div className="flex justify-between items-center">
+                <span className={`font-medium ${darkMode ? "text-gray-400" : "text-muted"}`}>Page Type:</span>
+                <code className={`px-1.5 py-0.5 rounded font-mono font-semibold uppercase ${darkMode ? "bg-blue-500/10 text-blue-400" : "bg-accentsoft text-accent"}`}>{meta.pageType}</code>
+              </div>
+              {meta.details && Object.entries(meta.details).map(([label, present]) => (
+                <div key={label} className="flex justify-between items-center gap-2">
+                  <span className={`font-medium truncate ${darkMode ? "text-gray-400" : "text-muted"}`}>{label}:</span>
+                  <span className={`font-semibold flex items-center gap-1 flex-shrink-0 ${present ? "text-emerald-500" : "text-rose-500"}`}>
+                    {present ? <CheckCircle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                    {present ? "Present" : "Missing"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
           {meta?.breakdown?.length > 0 && (() => {
             const detected = meta.detectedProviders?.length
               ? { label: "Detected Provider", items: meta.detectedProviders }
-              : meta.detectedCRMs?.length
-                ? { label: "Detected CRM", items: meta.detectedCRMs }
-                : null;
-            const scoreLabel = metricKey === "Finance_Form_Security" ? "PCI Score" : metricKey === "CRM_Integration" ? "Lead Transfer Score" : "Score";
+              : null;
+            const scoreLabel = metricKey === "Finance_Form_Security" ? "PCI Score" : "Score";
             const missing = (meta.maxScore ?? 10) - (meta.rawScore ?? 0);
             return (
               <div className={`mt-3 p-2 rounded border border-dashed text-xs space-y-2 ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-line bg-cardsoft"}`}>
@@ -549,50 +544,6 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             );
           })()}
 
-          {(metricKey === "GA4_Installed" && meta?.measurementIds?.length > 0) && (
-            <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-line bg-cardsoft"}`}>
-              <span className={`font-medium block mb-1 ${darkMode ? "text-gray-400" : "text-muted"}`}>GA4 Measurement ID:</span>
-              <div className="flex flex-wrap gap-1.5">
-                {meta.measurementIds.map((id, i) => (
-                  <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-mono ${darkMode ? "bg-emerald-500/10 text-emerald-300" : "bg-emerald-50 text-emerald-700"}`}>{id}</span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {(metricKey === "GTM_Configuration" && meta?.containerIds?.length > 0) && (
-            <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-line bg-cardsoft"}`}>
-              <span className={`font-medium block mb-1 ${darkMode ? "text-gray-400" : "text-muted"}`}>GTM Container ID:</span>
-              <div className="flex flex-wrap gap-1.5">
-                {meta.containerIds.map((id, i) => (
-                  <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-mono ${darkMode ? "bg-emerald-500/10 text-emerald-300" : "bg-emerald-50 text-emerald-700"}`}>{id}</span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {metricKey === "Conversion_Tracking" && meta && (
-            <div className={`mt-3 p-2 rounded border border-dashed text-xs space-y-2 ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-line bg-cardsoft"}`}>
-              <div className="grid grid-cols-2 gap-2">
-                <div className={`p-1.5 rounded ${darkMode ? "bg-gray-900/60" : "bg-card border border-linesoft"}`}>
-                  <div className="text-[10px] opacity-70">Form tracking</div>
-                  <div className={`text-[10px] font-semibold ${meta.formTracking ? "text-emerald-500" : "text-rose-500"}`}>{meta.formTracking ? "Detected" : "Missing"}</div>
-                </div>
-                <div className={`p-1.5 rounded ${darkMode ? "bg-gray-900/60" : "bg-card border border-linesoft"}`}>
-                  <div className="text-[10px] opacity-70">Call tracking{meta.telLinks > 0 ? ` (${meta.telLinks} tel)` : ""}</div>
-                  <div className={`text-[10px] font-semibold ${meta.callTracking ? "text-emerald-500" : "text-rose-500"}`}>{meta.callTracking ? "Detected" : "Missing"}</div>
-                </div>
-              </div>
-              {meta.signals?.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {meta.signals.map((s, i) => (
-                    <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-mono ${darkMode ? "bg-emerald-500/10 text-emerald-300" : "bg-emerald-50 text-emerald-700"}`}>{s}</span>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
           {metricKey === "MFA_Enabled" && meta && (
             <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-line bg-cardsoft"} space-y-1.5`}>
               <div className="flex justify-between items-center">
@@ -613,17 +564,6 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
                   <span className={`font-semibold italic truncate ${darkMode ? "text-emerald-300" : "text-emerald-700"}`}>{meta.mfaKeyword || meta.ssoKeyword}</span>
                 </div>
               )}
-            </div>
-          )}
-
-          {metricKey === "GDPR_CCPA" && meta && (meta.foundKeyword || meta.foundSelector) && (
-            <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-line bg-cardsoft"}`}>
-              <div className="flex flex-col gap-1">
-                <span className={`font-medium ${darkMode ? "text-gray-400" : "text-muted"}`}>Compliance Indicator:</span>
-                <div className={`p-1.5 rounded truncate italic text-[10px] ${darkMode ? "bg-gray-900/80 text-emerald-300" : "bg-emerald-50 text-emerald-700"}`}>
-                  {meta.foundKeyword || meta.foundSelector}
-                </div>
-              </div>
             </div>
           )}
 
@@ -649,16 +589,6 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             </div>
           )}
 
-          {metricKey === "Data_Collection" && meta && (meta.foundLink || meta.foundHeading) && (
-            <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-line bg-cardsoft"}`}>
-              <div className="flex flex-col gap-1">
-                <span className={`font-medium ${darkMode ? "text-gray-400" : "text-muted"}`}>Disclosure Evidence:</span>
-                <div className={`p-1.5 rounded truncate italic text-[10px] ${darkMode ? "bg-gray-900/80 text-emerald-300" : "bg-emerald-50 text-emerald-700"}`}>
-                  {meta.foundLink || meta.foundHeading}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
 
@@ -701,38 +631,6 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
                       ))}
                     </ul>
                   )}
-                </div>
-              )}
-
-              {metricKey === "Cookies_HttpOnly" && meta?.scriptAccessibleCookies?.length > 0 && (
-                <div>
-                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 text-rose-500`}>Exposed Cookies (JS Accessible)</h5>
-                  <div className={`mt-1 p-2 rounded max-h-32 overflow-y-auto custom-scrollbar border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-line"}`}>
-                    <ul className="space-y-1">
-                      {meta.scriptAccessibleCookies.map((cookieName, idx) => (
-                        <li key={idx} className={`text-[10px] font-mono flex items-center gap-2 ${darkMode ? "text-gray-300" : "text-muted"}`}>
-                          <span className="w-1.5 h-1.5 bg-rose-500 rounded-full flex-shrink-0"></span>
-                          <span className="break-all">{cookieName}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              )}
-
-              {metricKey === "Cookies_Secure" && meta?.insecureCookies?.length > 0 && (
-                <div>
-                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 text-rose-500`}>Insecure Cookies (HTTP Only)</h5>
-                  <div className={`mt-1 p-2 rounded max-h-32 overflow-y-auto custom-scrollbar border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-line"}`}>
-                    <ul className="space-y-1">
-                      {meta.insecureCookies.map((cookieName, idx) => (
-                        <li key={idx} className={`text-[10px] font-mono flex items-center gap-2 ${darkMode ? "text-gray-300" : "text-muted"}`}>
-                          <span className="w-1.5 h-1.5 bg-rose-500 rounded-full flex-shrink-0"></span>
-                          <span className="break-all">{cookieName}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
                 </div>
               )}
 
@@ -828,46 +726,6 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
                 </div>
               )}
 
-              {metricKey === "Google_Safe_Browsing" && meta?.matches?.length > 0 && (
-                <div>
-                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 text-rose-500`}>Detected Threats</h5>
-                  <div className={`mt-1 p-2 rounded max-h-32 overflow-y-auto custom-scrollbar border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-line"}`}>
-                    <ul className="space-y-2">
-                      {meta.matches.map((match, idx) => (
-                        <li key={idx} className={`p-2 rounded border flex flex-col gap-1 ${darkMode ? "bg-rose-500/10 border-rose-500/20" : "bg-rose-50 border-rose-100"}`}>
-                          <div className="flex justify-between items-center text-[10px]">
-                            <span className="font-semibold uppercase text-rose-500 flex items-center gap-2">
-                              <span className="w-1.5 h-1.5 bg-rose-500 rounded-full"></span>
-                              {match.threatType}
-                            </span>
-                            <span className={`opacity-70 ${darkMode ? "text-gray-400" : "text-gray-600"}`}>{match.platformType}</span>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              )}
-
-              {metricKey === "Malware_Scan" && meta?.stats && (
-                <div>
-                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 text-blue-500`}>Security Vendor Stats</h5>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { label: 'Malicious', val: meta.stats.malicious, color: 'text-rose-500' },
-                      { label: 'Suspicious', val: meta.stats.suspicious, color: 'text-amber-500' },
-                      { label: 'Harmless', val: meta.stats.harmless, color: 'text-emerald-500' },
-                      { label: 'Undetected', val: meta.stats.undetected, color: 'text-gray-400' }
-                    ].map(s => (
-                      <div key={s.label} className={`p-1.5 rounded flex justify-between items-center ${darkMode ? "bg-gray-800" : "bg-gray-50"}`}>
-                        <span className="text-[10px] opacity-70">{s.label}</span>
-                        <span className={`text-[10px] font-semibold ${s.color}`}>{s.val}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {metricKey === "Admin_Panel_Public" && meta?.url && (
                 <div>
                   <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 text-rose-500`}>Exposed URL</h5>
@@ -903,59 +761,6 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
                     <span className="w-1.5 h-1.5 bg-rose-500 rounded-full flex-shrink-0"></span>
                     {meta.credentials}
                   </div>
-                </div>
-              )}
-
-              {metricKey === "CRM_Integration" && meta && (
-                <div className="space-y-2">
-                  {meta.checkedUrl && (
-                    <div>
-                      <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-300" : "text-muted"}`}>Page Tested</h5>
-                      <a href={meta.checkedUrl} target="_blank" rel="noopener noreferrer" className={`block p-2 rounded text-[10px] font-mono break-all hover:underline ${darkMode ? "bg-gray-800 text-blue-400" : "bg-accentsoft text-accent"}`}>
-                        {meta.checkedUrl}
-                      </a>
-                    </div>
-                  )}
-                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-300" : "text-muted"}`}>Lead Transfer Breakdown</h5>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className={`p-2 rounded border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-linesoft"}`}>
-                      <div className="text-[10px] opacity-70">CRM Evidence</div>
-                      <div className={`text-[10px] font-semibold ${meta.crmEvidenceFound ? "text-emerald-500" : "text-rose-500"}`}>{meta.crmEvidenceFound ? "+3 Found" : "0"}</div>
-                    </div>
-                    <div className={`p-2 rounded border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-linesoft"}`}>
-                      <div className="text-[10px] opacity-70">Lead Endpoint</div>
-                      <div className={`text-[10px] font-semibold ${meta.leadEndpointDetected ? "text-emerald-500" : "text-rose-500"}`}>{meta.leadEndpointDetected ? "+5 Detected" : "0"}</div>
-                    </div>
-                    <div className={`p-2 rounded border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-linesoft"}`}>
-                      <div className="text-[10px] opacity-70">Submission</div>
-                      <div className={`text-[10px] font-semibold ${meta.successfulResponse ? "text-emerald-500" : "text-rose-500"}`}>{meta.successfulResponse ? "+2 Success" : "0"}</div>
-                    </div>
-                  </div>
-                  {meta.detectedCRMs?.length > 0 && (
-                    <div>
-                      <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 text-emerald-500`}>Detected CRM</h5>
-                      <div className="flex flex-wrap gap-1.5">
-                        {meta.detectedCRMs.map((crm, idx) => (
-                          <span key={idx} className={`px-2 py-0.5 rounded text-[10px] font-mono ${darkMode ? "bg-emerald-500/10 text-emerald-300" : "bg-emerald-50 text-emerald-700"}`}>{crm}</span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {meta.leadEndpoints?.length > 0 && (
-                    <div>
-                      <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-300" : "text-muted"}`}>Lead Endpoints</h5>
-                      <div className={`mt-1 p-2 rounded max-h-32 overflow-y-auto custom-scrollbar border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-line"}`}>
-                        <ul className="space-y-1.5">
-                          {meta.leadEndpoints.map((ep, idx) => (
-                            <li key={idx} className={`p-2 rounded text-[10px] font-mono flex items-center gap-2 border border-dashed ${darkMode ? "bg-gray-900/50 border-gray-700 text-gray-300" : "bg-gray-50 border-gray-200 text-gray-600"}`}>
-                              <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full flex-shrink-0"></span>
-                              <span className="break-all">{ep.method} {ep.url}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
 
@@ -1011,16 +816,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
                 </div>
               )}
 
-              {metricKey === "GDPR_CCPA" && meta && (meta.foundKeyword || meta.ssoFound) && (
-                <div>
-                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 text-emerald-500`}>Evidence Found</h5>
-                  <div className={`p-2 rounded text-[10px] italic ${darkMode ? "bg-gray-800 text-gray-300" : "bg-emerald-50 text-emerald-700"}`}>
-                    "{meta.foundKeyword || meta.ssoFound}"
-                  </div>
-                </div>
-              )}
-
-              {(metricKey === "Privacy_Policy" || metricKey === "Data_Collection") && meta?.foundLink && (
+              {metricKey === "Privacy_Policy" && meta?.foundLink && (
                 <div>
                   <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 text-emerald-500`}>Detected Link</h5>
                   <a href={meta.foundLink} target="_blank" rel="noopener noreferrer" className={`block p-2 rounded text-[10px] font-mono break-all hover:underline ${darkMode ? "bg-gray-800 text-blue-400" : "bg-accentsoft text-accent"}`}>
@@ -1041,30 +837,6 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
                         </span>
                       ))}
                     </div>
-                  </div>
-                </div>
-              )}
-
-              {metricKey === "Blacklist" && meta && (meta.googleSafeBrowsing || meta.virusTotal) && (
-                <div className="space-y-2">
-                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 text-rose-500`}>Blacklist Sources</h5>
-                  <div className="grid grid-cols-2 gap-2">
-                    {meta.googleSafeBrowsing && (
-                      <div className={`p-2 rounded border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-linesoft"}`}>
-                        <div className="text-[10px] opacity-70">Google Safe</div>
-                        <div className={`text-[10px] font-semibold ${meta.googleSafeBrowsing.status === 'pass' ? 'text-emerald-500' : 'text-rose-500'}`}>
-                          {meta.googleSafeBrowsing.status === 'pass' ? 'Clean' : 'Flagged'}
-                        </div>
-                      </div>
-                    )}
-                    {meta.virusTotal && (
-                      <div className={`p-2 rounded border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-linesoft"}`}>
-                        <div className="text-[10px] opacity-70">VirusTotal</div>
-                        <div className={`text-[10px] font-semibold ${meta.virusTotal.status === 'pass' ? 'text-emerald-500' : 'text-rose-500'}`}>
-                          {meta.virusTotal.status === 'pass' ? 'Clean' : 'Flagged'}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
               )}
@@ -1254,6 +1026,18 @@ const Security_Compilance_Inner = React.memo(function Security_Compilance_Inner(
                       <p className={`text-sm leading-relaxed opacity-70 ${darkMode ? "text-slate-300" : "text-muted"}`}>
                         Comprehensive analysis of your web application's security posture.
                       </p>
+                      {metric?.Confidence && (
+                        <div className="flex flex-wrap items-center gap-1.5 pt-1" title={metric?.Note || ""}>
+                          <span className={`inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${darkMode ? "text-slate-300 border-slate-700 bg-slate-800/60" : "text-slate-600 border-slate-200 bg-slate-100"}`}>
+                            <Info className="w-3 h-3" /> Confidence: {metric.Confidence}
+                          </span>
+                          {metric?.Coverage && (
+                            <span className={`text-[10px] leading-snug opacity-70 ${darkMode ? "text-slate-400" : "text-muted"}`}>
+                              {metric.Coverage}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     <div className={`flex flex-wrap items-center ${data.report === "All" ? "gap-6" : "gap-5"}`}>
@@ -1302,14 +1086,12 @@ const Security_Compilance_Inner = React.memo(function Security_Compilance_Inner(
           <div className="space-y-8">
             {(() => {
               const visible = (keys) => keys.filter((k) => metric[k] && isVisibleForAudience(k, audienceMode));
-              const networkKeys = visible(["HTTPS", "SSL", "TLS_Version", "HSTS"]);
-              const vulnKeys = visible(["SQLi_Exposure", "XSS", "Google_Safe_Browsing", "Blacklist", "Malware_Scan"]);
+              const networkKeys = visible(["HTTPS", "SSL", "SSL_Expiry", "TLS_Version", "HSTS"]);
+              const vulnKeys = visible(["Reputation", "SQLi_Exposure", "XSS"]);
               const accessKeys = visible(["Weak_Default_Credentials", "MFA_Enabled", "Admin_Panel_Public", "Forms_Use_HTTPS"]);
-              const headerKeys = visible(["CSP", "X_Frame_Options", "X_Content_Type_Options", "Cookies_Secure", "Cookies_HttpOnly"]);
-              const complianceKeys = visible(["Cookie_Consent", "GDPR_CCPA", "Privacy_Policy", "Data_Collection", "Third_Party_Cookies"]);
-              const crmKeys = visible(["CRM_Integration"]);
-              const financeKeys = visible(["Finance_Form_Security"]);
-              const analyticsKeys = visible(["GA4_Installed", "GTM_Configuration", "Conversion_Tracking"]);
+              const headerKeys = visible(["CSP", "X_Frame_Options", "X_Content_Type_Options", "Cookie_Flags", "Third_Party_Cookies"]);
+              const complianceKeys = visible(["Cookie_Consent", "Privacy_Compliance", "Privacy_Policy"]);
+              const financeKeys = visible(["Finance_Form_Security", "Legal_Disclaimers"]);
               const card = (key) => <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />;
               return (
                 <>
@@ -1328,14 +1110,8 @@ const Security_Compilance_Inner = React.memo(function Security_Compilance_Inner(
                   {complianceKeys.length > 0 && (
                     <Section title="Compliance & Privacy" icon={Globe2} darkMode={darkMode}>{complianceKeys.map(card)}</Section>
                   )}
-                  {crmKeys.length > 0 && (
-                    <Section title="CRM Integration (Lead Transfer)" icon={Database} darkMode={darkMode}>{crmKeys.map(card)}</Section>
-                  )}
                   {financeKeys.length > 0 && (
-                    <Section title="Finance Form Security (PCI)" icon={CreditCard} darkMode={darkMode}>{financeKeys.map(card)}</Section>
-                  )}
-                  {analyticsKeys.length > 0 && (
-                    <Section title="Analytics & Conversion Tracking" icon={BarChart3} darkMode={darkMode}>{analyticsKeys.map(card)}</Section>
+                    <Section title="Finance & Legal Compliance" icon={CreditCard} darkMode={darkMode}>{financeKeys.map(card)}</Section>
                   )}
                 </>
               );

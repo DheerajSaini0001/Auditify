@@ -1,10 +1,9 @@
-securityCompliance.mjs
+// securityCompliance.js
 import dotenv from "dotenv";
 import fetch from "node-fetch";
 import { URL } from "url";
 import { waitForChallengeResolution } from "../utils/puppeteer_cheerio.js";
 import configService from "../services/configService.js";
-import { collectTrackingData, checkGA4Installed, checkGTMConfiguration, checkConversionTracking } from "./conversionLeadFlow.js";
 
 dotenv.config();
 
@@ -105,13 +104,17 @@ async function checkHTTPS(url, page) {
   };
 }
 
-// SSL (Secure Sockets Layer) Connection
+// SSL/TLS certificate validity (spec §2.4 — Critical).
+// If the browser established the HTTPS response at all, the chain validated and the host
+// matched (a security error would have surfaced otherwise); we additionally confirm the
+// certificate validity window. Expiry-window grading is a SEPARATE param (checkSSLExpiry).
 async function checkSSLConnection(response) {
-  if (!response) return { score: 0, status: "fail", details: "No response available for SSL check", meta: {}, analysis: { cause: "No response received.", recommendation: "Check server connectivity." } };
+  if (!response) return { score: 0, status: "fail", confidence: "measured", details: "No response available for SSL check", meta: {}, analysis: { cause: "No response received.", recommendation: "Check server connectivity." } };
   if (!response.ok()) {
     return {
       score: 0,
       status: "fail",
+      confidence: "measured",
       details: `SSL connection failed (Status: ${response.status()})`,
       meta: {
         httpStatus: response.status()
@@ -122,38 +125,62 @@ async function checkSSLConnection(response) {
       }
     };
   }
-  const securityDetails = await response.securityDetails();
+  let securityDetails = null;
+  try { securityDetails = await response.securityDetails(); } catch (e) {}
   const validTo = securityDetails && securityDetails.validTo ? new Date(securityDetails.validTo * 1000).toISOString() : null;
+  const validFrom = securityDetails && securityDetails.validFrom ? new Date(securityDetails.validFrom * 1000).toISOString() : null;
+  const issuer = securityDetails?.issuer || null;
+  const subjectName = securityDetails?.subjectName || null;
 
-  if (validTo) {
-    const expiryDate = new Date(validTo);
-    const daysUntilExpiry = Math.floor((expiryDate - new Date()) / (1000 * 60 * 60 * 24));
+  const now = Date.now();
+  const expired = validTo ? new Date(validTo).getTime() < now : false;
+  const notYetValid = validFrom ? new Date(validFrom).getTime() > now : false;
 
-    if (daysUntilExpiry < 30) {
-      return {
-        score: 75,
-        status: "warning",
-        details: `SSL connection established, but certificate expires soon (in ${daysUntilExpiry} days)`,
-        meta: {
-          validTo,
-          daysUntilExpiry
-        },
-        analysis: {
-          cause: "The SSL certificate is valid but nearing expiration.",
-          recommendation: "Renew the SSL certificate soon to avoid service interruption."
-        }
-      };
-    }
+  if (expired || notYetValid) {
+    return {
+      score: 0,
+      status: "fail",
+      confidence: "measured",
+      details: expired ? "SSL certificate has expired" : "SSL certificate is not yet valid",
+      meta: { validTo, validFrom, issuer, subjectName },
+      analysis: {
+        cause: expired ? "The SSL certificate has expired." : "The SSL certificate's validity period has not started.",
+        recommendation: "Install a current, valid SSL certificate from a trusted certificate authority."
+      }
+    };
   }
 
   return {
     score: 100,
     status: "pass",
-    details: "SSL connection established",
-    meta: {
-      validTo
-    },
+    confidence: "measured",
+    details: "Valid SSL certificate (trusted chain, host match)",
+    meta: { validTo, validFrom, issuer, subjectName },
     analysis: null
+  };
+}
+
+// SSL expiry window (spec §2.4 — High). Days remaining, graded: <14d warn-hard, <30d warn, expired fail.
+async function checkSSLExpiry(response) {
+  if (!response) return { score: 0, status: "fail", confidence: "measured", details: "No response available for SSL expiry check", meta: {}, analysis: { cause: "No response received.", recommendation: "Check server connectivity." } };
+  let securityDetails = null;
+  try { securityDetails = await response.securityDetails(); } catch (e) {}
+  const validTo = securityDetails && securityDetails.validTo ? new Date(securityDetails.validTo * 1000).toISOString() : null;
+  if (!validTo) {
+    // No certificate window available (e.g. HTTP page) — renormalized out, not scored.
+    return { score: 100, status: "not_applicable", infoOnly: true, confidence: "measured", details: "Certificate expiry not available", meta: {}, analysis: null };
+  }
+  const days = Math.floor((new Date(validTo).getTime() - Date.now()) / 86400000);
+  let score, status, analysis = null;
+  if (days < 0) { score = 0; status = "fail"; analysis = { cause: "The SSL certificate has expired.", recommendation: "Renew the SSL certificate immediately and enable auto-renewal." }; }
+  else if (days < 14) { score = 50; status = "warning"; analysis = { cause: `The SSL certificate expires very soon (in ${days} day(s)).`, recommendation: "Renew now and enable auto-renewal to avoid an outage." }; }
+  else if (days < 30) { score = 80; status = "warning"; analysis = { cause: `The SSL certificate expires in ${days} days.`, recommendation: "Renew soon; enable auto-renewal." }; }
+  else { score = 100; status = "pass"; }
+  return {
+    score, status, confidence: "measured",
+    details: days < 0 ? "SSL certificate has expired" : `SSL certificate valid for ${days} more day(s)`,
+    meta: { validTo, daysUntilExpiry: days },
+    analysis
   };
 }
 
@@ -254,33 +281,72 @@ function checkXFrameOptions(response) {
   };
 }
 
-// CSP (Content Security Policy)
+// CSP (Content Security Policy) — graded by directive coverage & safety (spec §2.4, High).
+// Presence alone is not enough: 'unsafe-inline'/'unsafe-eval'/wildcards gut the protection,
+// while default-src/script-src + object-src 'none' + frame-ancestors make it effective.
 function checkCSP(response) {
-  if (!response) return { score: 0, status: "fail", details: "No response available for CSP check", meta: {}, analysis: { cause: "No response received.", recommendation: "Check server connectivity." } };
+  if (!response) return { score: 0, status: "fail", confidence: "measured", details: "No response available for CSP check", meta: {}, analysis: { cause: "No response received.", recommendation: "Check server connectivity." } };
 
   const headers = response.headers();
   const cspVal = headers['content-security-policy'];
+  const cspRO = headers['content-security-policy-report-only'];
 
-  if (cspVal) {
+  if (!cspVal) {
+    if (cspRO) {
+      return {
+        score: 30, status: "warning", confidence: "measured",
+        details: "Only a report-only CSP is set (monitoring, not enforced)",
+        meta: { value: cspRO, reportOnly: true },
+        analysis: {
+          cause: "A Content-Security-Policy-Report-Only header is present, which logs violations but does not block attacks.",
+          recommendation: "Promote the policy to an enforced 'Content-Security-Policy' header once reported violations are resolved."
+        }
+      };
+    }
     return {
-      score: 100,
-      status: "pass",
-      details: "CSP header is present",
-      meta: {
-        value: cspVal
-      },
-      analysis: null
+      score: 0, status: "fail", confidence: "measured",
+      details: "CSP header is missing", meta: {},
+      analysis: {
+        cause: "The Content-Security-Policy (CSP) header is missing.",
+        recommendation: "Implement a CSP with a restrictive default-src/script-src, object-src 'none', and frame-ancestors to mitigate XSS and clickjacking."
+      }
     };
   }
 
+  const lower = cspVal.toLowerCase();
+  const directiveMap = {};
+  lower.split(';').map(d => d.trim()).filter(Boolean).forEach(d => {
+    const [name, ...vals] = d.split(/\s+/);
+    directiveMap[name] = vals.join(' ');
+  });
+  const has = (d) => Object.prototype.hasOwnProperty.call(directiveMap, d);
+  const scriptSrc = directiveMap['script-src'] ?? directiveMap['default-src'] ?? '';
+  const hasBasePolicy = has('default-src') || has('script-src');
+
+  const unsafeInline = /'unsafe-inline'/.test(scriptSrc);
+  const unsafeEval = /'unsafe-eval'/.test(scriptSrc);
+  const wildcardScript = /(^|\s)\*(\s|$)/.test(scriptSrc) || /(^|\s)https?:(\s|$)/.test(scriptSrc);
+  const usesNonceOrHash = /'nonce-|'sha(256|384|512)-/.test(scriptSrc);
+
+  let score = 40; // present at all
+  const weaknesses = [];
+  if (hasBasePolicy) score += 15; else weaknesses.push("no default-src/script-src directive");
+  if (has('object-src') && /'none'/.test(directiveMap['object-src'] || '')) score += 10; else weaknesses.push("object-src 'none' not set");
+  if (has('frame-ancestors')) score += 10; else weaknesses.push("no frame-ancestors (clickjacking) directive");
+  if (has('base-uri')) score += 5;
+  if (!unsafeInline || usesNonceOrHash) score += 12; else weaknesses.push("script-src allows 'unsafe-inline'");
+  if (!unsafeEval) score += 5; else weaknesses.push("script-src allows 'unsafe-eval'");
+  if (!wildcardScript) score += 3; else weaknesses.push("script sources use a wildcard");
+  if (score > 100) score = 100;
+
+  const status = score >= 80 ? "pass" : score >= 50 ? "warning" : "fail";
   return {
-    score: 0,
-    status: "fail",
-    details: "CSP header is missing",
-    meta: {},
-    analysis: {
-      cause: "The Content-Security-Policy (CSP) header is missing.",
-      recommendation: "Implement a robust CSP header to prevent XSS and data injection attacks."
+    score, status, confidence: "measured",
+    details: status === "pass" ? "CSP present with strong directive coverage" : `CSP present but weak: ${weaknesses.join(", ")}`,
+    meta: { value: cspVal, directives: Object.keys(directiveMap), unsafeInline, unsafeEval, wildcardScript, usesNonceOrHash, weaknesses },
+    analysis: status === "pass" ? null : {
+      cause: `The Content-Security-Policy is present but not robust: ${weaknesses.join("; ")}.`,
+      recommendation: "Tighten the CSP: restrictive default-src/script-src, prefer nonces/hashes over 'unsafe-inline', remove 'unsafe-eval' and wildcards, and add object-src 'none' and frame-ancestors."
     }
   };
 }
@@ -312,82 +378,6 @@ function checkXContentTypeOptions(response) {
     analysis: {
       cause: "The X-Content-Type-Options header is missing.",
       recommendation: "Add the 'X-Content-Type-Options: nosniff' header to prevent MIME type sniffing."
-    }
-  };
-}
-
-// Cookies - Secure Flag
-async function checkCookiesSecureFlag(page) {
-  const cookies = await page.context().cookies();
-
-  if (!cookies.length) {
-    return {
-      score: 100,
-      status: "pass",
-      details: "No cookies found - Safe",
-      meta: {
-        cookies: []
-      },
-      analysis: null
-    };
-  }
-
-  // Check if *all* cookies have the Secure flag
-  const allSecure = cookies.every((c) => c.secure);
-  const insecureCookies = cookies.filter(c => !c.secure).map(c => c.name);
-
-  return {
-    score: allSecure ? 100 : 0,
-    status: allSecure ? "pass" : "fail",
-    details: allSecure
-      ? "All cookies have the Secure flag"
-      : `Secure flag missing on: ${insecureCookies.join(", ")}`,
-    meta: {
-      cookies,
-      insecureCookies,
-      allSecure
-    },
-    analysis: allSecure ? null : {
-      cause: "Some cookies are set without the 'Secure' flag, allowing them to be sent over unencrypted connections.",
-      recommendation: "Ensure all cookies are set with the 'Secure' attribute so they are only sent over HTTPS."
-    }
-  };
-}
-
-// Cookies - HttpOnly Flag
-async function checkCookiesHttpOnlyFlag(page) {
-  const cookies = await page.context().cookies();
-
-  if (!cookies.length) {
-    return {
-      score: 100,
-      status: "pass",
-      details: "No cookies found - Safe",
-      meta: {
-        cookies: []
-      },
-      analysis: null
-    };
-  }
-
-  // Check if *all* cookies have the HttpOnly flag
-  const allHttpOnly = cookies.every((c) => c.httpOnly);
-  const scriptAccessibleCookies = cookies.filter(c => !c.httpOnly).map(c => c.name);
-
-  return {
-    score: allHttpOnly ? 100 : 0,
-    status: allHttpOnly ? "pass" : "fail",
-    details: allHttpOnly
-      ? "All cookies have the HttpOnly flag"
-      : `HttpOnly flag missing on: ${scriptAccessibleCookies.join(", ")}`,
-    meta: {
-      cookies,
-      scriptAccessibleCookies,
-      allHttpOnly
-    },
-    analysis: allHttpOnly ? null : {
-      cause: "Some cookies are set without the 'HttpOnly' flag, making them accessible to client-side scripts.",
-      recommendation: "Set the 'HttpOnly' attribute on sensitive cookies to prevent access via XSS."
     }
   };
 }
@@ -553,39 +543,6 @@ async function checkVirusTotal(domain) {
   }
 }
 
-// Domain Blacklist
-async function checkDomainBlacklist(domain, url) {
-  const [googleSafeBrowsing, virusTotal] = await Promise.all([
-    checkGoogleSafeBrowsing(url),
-    checkVirusTotal(domain),
-  ]);
-
-  const isGoogleSafe = googleSafeBrowsing.status === "pass";
-  const isVirusTotalSafe = virusTotal.status === "pass";
-  const allSafe = isGoogleSafe && isVirusTotalSafe;
-
-  let details = "Domain not found in blacklists";
-  if (!allSafe) {
-    if (!isGoogleSafe && !isVirusTotalSafe) details = "Domain found in both Google Safe Browsing and VirusTotal blacklists";
-    else if (!isGoogleSafe) details = "Domain found in Google Safe Browsing blacklist";
-    else details = "Domain found in VirusTotal blacklist";
-  }
-
-  return {
-    score: allSafe ? 100 : 0,
-    status: allSafe ? "pass" : "fail",
-    details,
-    meta: {
-      googleSafeBrowsing,
-      virusTotal
-    },
-    analysis: allSafe ? null : {
-      cause: "The domain or URL is listed in one or more security blacklists (Google Safe Browsing or VirusTotal).",
-      recommendation: "Review the detailed reports from Google and VirusTotal. Request a review from the respective services after cleaning up any malware or security issues."
-    }
-  };
-}
-
 // SQL Injection
 async function checkSQLiExposure(urlString, options = {}) {
   const { timeout = 15000, lengthDiffThreshold = 0.25 } = options;
@@ -662,14 +619,16 @@ async function checkSQLiExposure(urlString, options = {}) {
         return {
           score: 0,
           status: "fail",
-          details: `SQL injection vulnerability detected with payload: ${p}`,
+          confidence: "heuristic",
+          details: `Possible SQL injection surface — database error echoed for payload: ${p}`,
           meta: {
             payload: p,
-            param: param
+            param: param,
+            indicator: "sql-error-message"
           },
           analysis: {
-            cause: "The application exposed a database error message in response to the injected payload.",
-            recommendation: "Ensure all user inputs are sanitized and use parameterized queries (Prepared Statements) to prevent SQL injection."
+            cause: "The application echoed a database error message in response to an injected payload — a strong surface indicator of SQL injection (not a confirmed exploit).",
+            recommendation: "Ensure all user inputs are sanitized, use parameterized queries (prepared statements), and never expose raw database errors to clients."
           }
         };
       }
@@ -679,17 +638,19 @@ async function checkSQLiExposure(urlString, options = {}) {
         const diff = Math.abs(length - baselineLength) / baselineLength;
         if (diff >= lengthDiffThreshold && res.status >= 200 && res.status < 400) {
           return {
-            score: 0,
-            status: "fail",
-            details: `Significant response length difference with payload: ${p}`,
+            score: 40,
+            status: "warning",
+            confidence: "heuristic",
+            details: `Response length changed notably with payload: ${p} (weak blind-SQLi surface indicator)`,
             meta: {
               payload: p,
               param: param,
-              diff: diff
+              diff: diff,
+              indicator: "response-length-diff"
             },
             analysis: {
-              cause: "Response length changed significantly with SQL injection payload, suggesting potential blind SQL injection.",
-              recommendation: "Ensure application handles invalid input gracefully without altering response structure unpredictably."
+              cause: "Response length changed significantly with an injected payload. This is a weak surface indicator of possible blind SQL injection — not a confirmed vulnerability (content can also vary for benign reasons).",
+              recommendation: "Verify the endpoint with manual testing; ensure the application handles invalid input gracefully and uses parameterized queries."
             }
           };
         }
@@ -1823,6 +1784,14 @@ const FINANCE_PROVIDERS = [
   { name: "Santander / Chrysler Capital", patterns: ["santanderconsumerusa.com", "chryslercapital.com"] },
   { name: "Westlake", patterns: ["westlakefinancial.com", "westlake"] },
   { name: "Credit Bureaus", patterns: ["transunion.com", "equifax.com", "experian.com"] },
+  // Trade-in valuation providers (a trade-in page's "trusted provider" — Finance-form PII
+  // security also applies to Trade-In per spec §2.4, and these are its equivalent of a lender).
+  { name: "Kelley Blue Book", patterns: ["kbb.com", "kelleybluebook"] },
+  { name: "Black Book", patterns: ["blackbook.com", "blackbookcdx"] },
+  { name: "TradePending", patterns: ["tradepending.com", "tradepending"] },
+  { name: "Edmunds", patterns: ["edmunds.com"] },
+  { name: "AccuTrade", patterns: ["accu-trade.com", "accutrade"] },
+  { name: "TrueCar / ALG", patterns: ["truecar.com"] },
 ];
 
 function matchFinanceProvider(haystack) {
@@ -1834,16 +1803,17 @@ function matchFinanceProvider(haystack) {
   return null;
 }
 
-// Find the finance / credit-application page from the homepage links.
+// Find the finance / credit-application OR trade-in page from the homepage links.
+// Finance-form PII security applies to both Finance and Trade-In page types (spec §2.4).
 async function discoverFinanceUrl(page) {
   try {
     return await page.evaluate(() => {
       const bad = (raw) => /^(mailto:|tel:|javascript:|#)/i.test(raw || "");
-      const kw = /financ|credit[-_ ]?app|get[-_ ]?approved|pre[-_ ]?approv|apply.*financ|auto.*loan/i;
+      const kw = /financ|credit[-_ ]?app|get[-_ ]?approved|pre[-_ ]?approv|apply.*financ|auto.*loan|value[-_ ]?your[-_ ]?trade|value[-_ ]?my[-_ ]?trade|trade[-_ ]?in|trade[-_ ]?appraisal/i;
       const links = Array.from(document.querySelectorAll("a[href]"))
         .map((a) => ({ href: a.href, raw: a.getAttribute("href") || "", text: (a.textContent || "").trim().toLowerCase() }))
         .filter((l) => l.href && !bad(l.raw));
-      const byHref = links.find((l) => /financ|credit[-_ ]?app|pre[-_ ]?approv|get[-_ ]?approved/i.test(l.href));
+      const byHref = links.find((l) => /financ|credit[-_ ]?app|pre[-_ ]?approv|get[-_ ]?approved|value[-_ ]?your[-_ ]?trade|trade[-_ ]?in|trade[-_ ]?appraisal/i.test(l.href));
       if (byHref) return byHref.href;
       const byText = links.find((l) => kw.test(l.text));
       return byText ? byText.href : null;
@@ -1880,6 +1850,11 @@ async function checkFinanceFormSecurity(url, page, browser) {
     pushUniq(origin + "/credit-application");
     pushUniq(origin + "/apply-for-financing");
     pushUniq(origin + "/finance-application");
+    // Trade-In page types (spec §2.4 — Finance-form PII security also applies to Trade-In)
+    pushUniq(origin + "/value-your-trade");
+    pushUniq(origin + "/trade-in");
+    pushUniq(origin + "/trade");
+    pushUniq(origin + "/value-trade");
 
     scanPage = await browser.newPage();
 
@@ -1898,7 +1873,10 @@ async function checkFinanceFormSecurity(url, page, browser) {
           const title = lower(document.title);
           const hay = title + " " + bodyText;
           const financeKw = ["financ", "credit application", "credit app", "auto loan", "car loan", "pre-approval", "preapprov", "get approved", "down payment", "monthly payment", "apply for financ"];
+          const tradeInKw = ["value your trade", "value my trade", "trade-in", "trade in value", "trade appraisal", "what's my car worth", "whats my car worth", "instant cash offer", "appraise my"];
           const isFinancePage = financeKw.some((k) => hay.includes(k));
+          const isTradeInPage = tradeInKw.some((k) => hay.includes(k));
+          const pageKind = isFinancePage ? "finance" : isTradeInPage ? "trade-in" : null;
 
           const sensSel = "input[name*='ssn' i], input[id*='ssn' i], input[name*='social' i], input[autocomplete*='cc-' i], input[name*='card' i], input[id*='card' i], input[name*='routing' i], input[name*='account' i], input[name*='bank' i]";
           const forms = Array.from(document.querySelectorAll("form")).map((f) => ({
@@ -1923,28 +1901,29 @@ async function checkFinanceFormSecurity(url, page, browser) {
           const hasTerms = /terms|conditions/.test(linkText);
           const secureMessaging = /secure|encrypt|256-bit|\bssl\b|your information is protected|safe and secure|secure application/.test(bodyText);
 
-          return { protocol: location.protocol, isFinancePage, forms, fieldTokens, providerHaystack, hasPrivacy, hasTerms, secureMessaging };
+          return { protocol: location.protocol, isFinancePage, isTradeInPage, pageKind, forms, fieldTokens, providerHaystack, hasPrivacy, hasTerms, secureMessaging };
         });
-        if (d && d.isFinancePage) { data = d; meta.checkedUrl = scanPage.url(); break; }
+        if (d && (d.isFinancePage || d.isTradeInPage)) { data = d; meta.checkedUrl = scanPage.url(); break; }
       } catch (e) {
         continue;
       }
     }
 
     if (!data) {
-      // No finance / credit-application page → Not Applicable (neutral score).
+      // No finance / credit-application or trade-in page → Not Applicable (neutral score).
       meta.rawScore = 0;
       meta.missingPoints = 0;
       return {
         score: 100,
         status: "not_applicable",
-        details: "No finance / credit application page found on the site",
+        details: "No finance / credit-application or trade-in page found on the site",
         meta,
         analysis: null,
       };
     }
 
     meta.financePageFound = true;
+    meta.pageKind = data.pageKind || "finance";
 
     const isInsecure = (action) => {
       if (!action) return false; // empty/relative action on an HTTPS page is fine
@@ -1990,12 +1969,13 @@ async function checkFinanceFormSecurity(url, page, browser) {
     meta.rawScore = rawScore;
     meta.missingPoints = meta.maxScore - rawScore;
 
+    const kindLabel = meta.pageKind === "trade-in" ? "trade-in" : "finance / credit-application";
     meta.breakdown = [
       {
         label: "Page served over HTTPS",
         points: POINTS.https,
         earned: meta.httpsSecure,
-        detail: meta.httpsSecure ? "Finance page loads over HTTPS." : "Serve the finance / credit-application page over HTTPS with a valid SSL certificate.",
+        detail: meta.httpsSecure ? `The ${kindLabel} page loads over HTTPS.` : `Serve the ${kindLabel} page over HTTPS with a valid SSL certificate.`,
       },
       {
         label: "Sensitive data handled securely",
@@ -2006,10 +1986,14 @@ async function checkFinanceFormSecurity(url, page, browser) {
           : `Sensitive fields (${meta.sensitiveFields.join(", ")}) are collected over an insecure connection. Collect them only over HTTPS, or hand off to a PCI-compliant provider.`,
       },
       {
-        label: "Trusted finance provider",
+        label: "Trusted finance / valuation provider",
         points: POINTS.provider,
         earned: meta.detectedProviders.length > 0,
-        detail: meta.detectedProviders.length ? `Detected: ${meta.detectedProviders.join(", ")}` : "No trusted finance / lending provider detected. Process credit applications through a PCI-compliant provider (RouteOne, Dealertrack, CreditIQ, Stripe, PayPal).",
+        detail: meta.detectedProviders.length
+          ? `Detected: ${meta.detectedProviders.join(", ")}`
+          : (meta.pageKind === "trade-in"
+              ? "No trusted valuation provider detected. Power trade-in values through a reputable provider (Kelley Blue Book, Black Book, TradePending, AccuTrade)."
+              : "No trusted finance / lending provider detected. Process credit applications through a PCI-compliant provider (RouteOne, Dealertrack, CreditIQ, Stripe, PayPal)."),
       },
       {
         label: "Secure submission endpoint",
@@ -2026,23 +2010,24 @@ async function checkFinanceFormSecurity(url, page, browser) {
     ];
 
     const where = meta.checkedUrl ? ` (tested ${meta.checkedUrl})` : "";
+    const pciLabel = meta.pageKind === "trade-in" ? "Trade-in form security" : "Finance form security";
     let status, details, analysis;
     if (rawScore >= 8) {
       status = "pass";
-      details = `Finance form security is strong — ${rawScore}/10${where}`;
+      details = `${pciLabel} is strong — ${rawScore}/10${where}`;
       analysis = null;
     } else if (rawScore >= 5) {
       status = "warning";
-      details = `Finance form security is partial — ${rawScore}/10${where}`;
+      details = `${pciLabel} is partial — ${rawScore}/10${where}`;
       analysis = {
-        cause: "The finance / credit-application page is missing one or more PCI best practices (see the per-item breakdown).",
+        cause: `The ${kindLabel} page is missing one or more PCI best practices (see the per-item breakdown).`,
         recommendation: "Address the unearned items: enforce HTTPS end-to-end, delegate sensitive data to a PCI-compliant provider, and add clear privacy/terms/secure-application messaging.",
       };
     } else {
       status = "fail";
-      details = `Finance form security is weak — ${rawScore}/10${where}`;
+      details = `${pciLabel} is weak — ${rawScore}/10${where}`;
       analysis = {
-        cause: "The finance / credit-application page collects or submits financial data without adequate PCI safeguards.",
+        cause: `The ${kindLabel} page collects or submits sensitive data without adequate PCI safeguards.`,
         recommendation: "Serve the page over HTTPS, never collect raw SSN/card/bank data outside a PCI-compliant provider, ensure the submission endpoint is HTTPS, and surface privacy/terms/secure-application signals.",
       };
     }
@@ -2061,176 +2046,380 @@ async function checkFinanceFormSecurity(url, page, browser) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Reputation (composite gate) — spec §4.4 collapses Safe Browsing / Blacklist /
+// Malware into ONE weighted signal; the individual sources stay as evidence in meta.
+// ---------------------------------------------------------------------------
+async function checkReputation(domain, url) {
+  const [safeBrowsing, virusTotal] = await Promise.all([
+    checkGoogleSafeBrowsing(url),
+    checkVirusTotal(domain),
+  ]);
+
+  const sbSkipped = /key missing/i.test(safeBrowsing?.details || "");
+  const vtSkipped = /key missing/i.test(virusTotal?.details || "");
+  const sbFlagged = safeBrowsing?.status === "fail";
+  const vtFlagged = virusTotal?.status === "fail";
+  const anyError = safeBrowsing?.status === "error" || virusTotal?.status === "error";
+  const flagged = sbFlagged || vtFlagged;
+
+  // Neither reputation API configured → cannot assess → info-only (renormalized out).
+  if (sbSkipped && vtSkipped) {
+    return {
+      score: 100, status: "not_applicable", infoOnly: true, confidence: "field",
+      details: "Reputation APIs not configured (Safe Browsing / VirusTotal keys missing)",
+      meta: { googleSafeBrowsing: safeBrowsing, virusTotal, flagged: null },
+      analysis: null
+    };
+  }
+
+  if (flagged) {
+    const who = [sbFlagged ? "Google Safe Browsing" : null, vtFlagged ? "VirusTotal" : null].filter(Boolean).join(" + ");
+    return {
+      score: 0, status: "fail", confidence: "field", gateFlag: true,
+      details: `Domain/URL flagged by ${who}`,
+      meta: { googleSafeBrowsing: safeBrowsing, virusTotal, flagged: true },
+      analysis: {
+        cause: "The domain or URL is listed as unsafe (malware / phishing / unwanted software) by a reputation service.",
+        recommendation: "Investigate and clean the site, then request a review via Google Search Console Security Issues and VirusTotal."
+      }
+    };
+  }
+
+  return {
+    score: 100, status: "pass", confidence: "field",
+    details: anyError ? "No active reputation flags (some sources unavailable)" : "Not flagged by Safe Browsing or VirusTotal",
+    meta: { googleSafeBrowsing: safeBrowsing, virusTotal, flagged: false },
+    analysis: null
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Cookie flags — Secure / HttpOnly / SameSite, scored as one parameter (spec §4.3).
+// ---------------------------------------------------------------------------
+async function checkCookieFlags(page) {
+  const cookies = await page.context().cookies();
+  if (!cookies.length) {
+    return { score: 100, status: "pass", confidence: "measured", details: "No cookies set", meta: { cookies: [], total: 0 }, analysis: null };
+  }
+  const total = cookies.length;
+  const insecure = cookies.filter(c => !c.secure).map(c => c.name);
+  const scriptAccessible = cookies.filter(c => !c.httpOnly).map(c => c.name);
+  // Puppeteer sameSite: 'Strict' | 'Lax' | 'None' | undefined. Missing or bare 'None' is weak.
+  const noSameSite = cookies.filter(c => !c.sameSite || c.sameSite === "None").map(c => c.name);
+
+  const secureRatio = (total - insecure.length) / total;
+  const httpOnlyRatio = (total - scriptAccessible.length) / total;
+  const sameSiteRatio = (total - noSameSite.length) / total;
+  // Secure & HttpOnly are the protective flags; SameSite (CSRF) weighted lighter.
+  const score = Math.round((secureRatio * 0.4 + httpOnlyRatio * 0.4 + sameSiteRatio * 0.2) * 100);
+  const status = score >= 80 ? "pass" : score >= 50 ? "warning" : "fail";
+
+  const problems = [];
+  if (insecure.length) problems.push(`${insecure.length} missing Secure`);
+  if (scriptAccessible.length) problems.push(`${scriptAccessible.length} missing HttpOnly`);
+  if (noSameSite.length) problems.push(`${noSameSite.length} missing SameSite`);
+
+  return {
+    score, status, confidence: "measured",
+    details: problems.length ? `Cookie flag gaps: ${problems.join(", ")} (of ${total})` : `All ${total} cookies set Secure, HttpOnly, and SameSite`,
+    meta: { cookies, total, insecureCookies: insecure, scriptAccessibleCookies: scriptAccessible, noSameSiteCookies: noSameSite, secureRatio, httpOnlyRatio, sameSiteRatio },
+    analysis: status === "pass" ? null : {
+      cause: "Some cookies are missing protective flags (Secure prevents transmission over HTTP; HttpOnly blocks script/XSS theft; SameSite mitigates CSRF).",
+      recommendation: "Set Secure, HttpOnly, and SameSite=Lax/Strict on every cookie that does not require third-party cross-site access."
+    }
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Privacy compliance — GDPR/CCPA rights notice + data-collection disclosure, as one param.
+// ---------------------------------------------------------------------------
+async function checkPrivacyCompliance(page) {
+  const gdpr = await checkGDPRCCPA(page);
+  const dataCollection = await checkDataCollection(page);
+  const gdprPass = gdpr?.status === "pass";
+  const dcPass = dataCollection?.status === "pass";
+
+  let score, status, analysis = null;
+  if (gdprPass && dcPass) { score = 100; status = "pass"; }
+  else if (gdprPass || dcPass) {
+    score = 70; status = "warning";
+    analysis = {
+      cause: gdprPass ? "A GDPR/CCPA rights notice was found, but no explicit data-collection disclosure." : "A data-collection disclosure was found, but no GDPR/CCPA rights notice.",
+      recommendation: "Provide both a GDPR/CCPA rights notice (e.g. 'Do Not Sell My Personal Information') and a clear data-collection disclosure."
+    };
+  } else {
+    score = 0; status = "fail";
+    analysis = {
+      cause: "No GDPR/CCPA rights notice or data-collection disclosure was found.",
+      recommendation: "Add explicit privacy-rights language (GDPR/CCPA) and a data-collection disclosure, typically in the privacy policy and footer."
+    };
+  }
+  return {
+    score, status, confidence: "heuristic",
+    details: status === "pass" ? "GDPR/CCPA notice and data-collection disclosure present" : status === "warning" ? "Partial privacy disclosure" : "No GDPR/CCPA or data-collection disclosure found",
+    meta: { gdpr: gdpr?.meta || null, dataCollection: dataCollection?.meta || null, gdprPass, dcPass, foundKeyword: gdpr?.meta?.foundKeyword || null, foundSelector: gdpr?.meta?.foundSelector || null },
+    analysis
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Legal / financial disclaimers (Reg-Z / Reg-M / FTC) — page-specific
+// (Finance / Offers / Lease / VDP). On a single-URL audit: score the audited page if it
+// is one of those types, else discover such a page from links and score the first that loads.
+// N/A (renormalized out) when no such page exists.
+// ---------------------------------------------------------------------------
+const DISCLAIMER_GROUPS = {
+  finance: { label: "Finance terms (Reg-Z)", terms: ["apr", "annual percentage rate", "with approved credit", "on approved credit", "w.a.c", "wac", "o.a.c", "finance charge", "qualified buyers", "qualified credit", "subject to credit approval"] },
+  lease: { label: "Lease terms (Reg-M)", terms: ["due at signing", "capitalized cost", "cap cost", "residual", "money factor", "total of payments", "lease term", "lessee", "acquisition fee", "disposition fee", "excess mileage", "security deposit"] },
+  price: { label: "Price disclaimer (FTC)", terms: ["plus tax", "plus tax and", "tax, title", "title and license", "doc fee", "documentation fee", "does not include", "see dealer for details", "see dealer for complete details", "dealer for details", "prior sale", "excludes tax", "additional fees", "fees not included"] },
+  expiry: { label: "Offer expiry", terms: ["offer ends", "offer expires", "valid through", "valid until", "must take delivery", "while supplies last", "ends on", "by the end of"] },
+};
+
+function classifyDisclaimerPageType(urlPath, hay) {
+  const p = (urlPath || "").toLowerCase();
+  const h = hay || "";
+  if (/lease/.test(p) || /due at signing|money factor|capitalized cost/.test(h)) return "lease";
+  if (/financ|credit[-_]?app|pre[-_]?approv/.test(p) || /credit application|apr financing|auto loan|estimate your payment/.test(h)) return "finance";
+  if (/special|offer|incentive|rebate|deal/.test(p)) return "offers";
+  if (/\/(vehicle|inventory|vdp|used|new)\//.test(p) || /\bvin:?\b|stock\s*#|\bmsrp\b/.test(h)) return "vdp";
+  return null;
+}
+
+async function scanDisclaimerText(scanPage) {
+  return await scanPage.evaluate(() => {
+    const title = (document.title || "").toLowerCase();
+    const body = (document.body ? document.body.innerText : "").toLowerCase();
+    // Disclaimer copy usually lives in fine print / footnotes / footer.
+    const fineSel = "small, sup, .disclaimer, .disclaimers, .legal, .fine-print, [class*='disclaimer' i], [class*='legal' i], [id*='disclaimer' i], footer";
+    const fineText = Array.from(document.querySelectorAll(fineSel)).map(el => (el.innerText || "")).join(" \n ").toLowerCase();
+    return { bodyText: (title + " " + body).slice(0, 20000), fineText: fineText.slice(0, 20000) };
+  });
+}
+
+async function checkLegalDisclaimers(url, page, browser) {
+  const meta = { checkedUrl: null, pageType: null, groupsFound: [], groupsRequired: [], details: {} };
+  let scanPage = null;
+  try {
+    // Is the AUDITED page itself a finance/offers/lease/VDP page?
+    const hereHay = await page.evaluate(() => ((document.title || "") + " " + (document.body ? document.body.innerText : "")).toLowerCase().slice(0, 8000)).catch(() => "");
+    let pageType = classifyDisclaimerPageType(new URL(page.url()).pathname, hereHay);
+    let targetPage = null;
+
+    if (pageType) { targetPage = page; meta.checkedUrl = page.url(); }
+    else {
+      // Discover a relevant page from links.
+      const link = await page.evaluate(() => {
+        const bad = (raw) => /^(mailto:|tel:|javascript:|#)/i.test(raw || "");
+        const kw = /financ|credit[-_ ]?app|special|offer|incentive|rebate|lease/i;
+        const links = Array.from(document.querySelectorAll("a[href]"))
+          .map(a => ({ href: a.href, raw: a.getAttribute("href") || "", text: (a.textContent || "").toLowerCase() }))
+          .filter(l => l.href && !bad(l.raw));
+        const m = links.find(l => kw.test(l.href)) || links.find(l => kw.test(l.text));
+        return m ? m.href : null;
+      }).catch(() => null);
+
+      const origin = new URL(page.url()).origin;
+      const candidates = [];
+      const push = (u) => { if (u && !candidates.includes(u)) candidates.push(u); };
+      push(link); push(origin + "/specials"); push(origin + "/offers"); push(origin + "/finance"); push(origin + "/lease-specials");
+
+      scanPage = await browser.newPage();
+      for (let i = 0; i < candidates.length; i++) {
+        const cand = candidates[i];
+        try {
+          const resp = await scanPage.goto(cand, { waitUntil: "domcontentloaded", timeout: 30000 });
+          if (resp && resp.status() >= 400) continue;
+          await waitForChallengeResolution(scanPage, 12000).catch(() => {});
+          const hay = await scanPage.evaluate(() => ((document.title || "") + " " + (document.body ? document.body.innerText : "")).toLowerCase().slice(0, 8000)).catch(() => "");
+          const pt = classifyDisclaimerPageType(new URL(scanPage.url()).pathname, hay);
+          if (pt) { pageType = pt; targetPage = scanPage; meta.checkedUrl = scanPage.url(); break; }
+        } catch (e) { continue; }
+      }
+    }
+
+    if (!pageType || !targetPage) {
+      return { score: 100, status: "not_applicable", infoOnly: true, confidence: "heuristic", details: "No finance / offers / lease / VDP page found to assess legal disclaimers", meta, analysis: null };
+    }
+    meta.pageType = pageType;
+
+    const scan = await scanDisclaimerText(targetPage);
+    const haystack = scan.bodyText + " \n " + scan.fineText;
+    const groupHit = (g) => DISCLAIMER_GROUPS[g].terms.some(t => haystack.includes(t));
+
+    const requiredByType = { finance: ["finance", "price"], lease: ["lease", "price"], offers: ["price", "expiry"], vdp: ["price"] };
+    const required = requiredByType[pageType] || ["price"];
+    meta.groupsRequired = required.map(g => DISCLAIMER_GROUPS[g].label);
+
+    const allGroups = ["finance", "lease", "price", "expiry"];
+    const found = allGroups.filter(groupHit);
+    meta.groupsFound = found.map(g => DISCLAIMER_GROUPS[g].label);
+    allGroups.forEach(g => { meta.details[DISCLAIMER_GROUPS[g].label] = groupHit(g); });
+
+    const requiredFound = required.filter(groupHit).length;
+    let score = Math.round((requiredFound / required.length) * 100);
+    if (score < 100) {
+      const optionalBonus = found.filter(g => !required.includes(g)).length * 5;
+      score = Math.min(100, score + optionalBonus);
+    }
+    const status = score >= 80 ? "pass" : score >= 40 ? "warning" : "fail";
+    const missing = required.filter(g => !groupHit(g)).map(g => DISCLAIMER_GROUPS[g].label);
+
+    return {
+      score, status, confidence: "heuristic",
+      details: missing.length ? `Missing ${pageType} disclaimers: ${missing.join(", ")}` : `Required ${pageType} disclaimers present`,
+      meta,
+      analysis: status === "pass" ? null : {
+        cause: `The ${pageType} page is missing required legal/financial disclaimers (${missing.join(", ")}). Reg-Z (finance), Reg-M (lease), and FTC advertising rules require clear, conspicuous terms.`,
+        recommendation: pageType === "lease"
+          ? "Add Reg-M lease disclosures: capitalized cost, residual, money factor, due-at-signing, and total of payments — legibly, not buried."
+          : pageType === "finance"
+            ? "Add Reg-Z finance disclosures: APR, finance terms, and 'with approved credit' qualifiers, clearly and conspicuously."
+            : "Add FTC price/offer disclaimers: tax/title/doc-fee exclusions, 'see dealer for details', and offer expiry dates."
+      }
+    };
+  } catch (error) {
+    return { score: 100, status: "not_applicable", infoOnly: true, confidence: "heuristic", details: `Legal disclaimers check skipped: ${error.message}`, meta, analysis: null };
+  } finally {
+    if (scanPage) await scanPage.close().catch(() => {});
+  }
+}
+
 export default async function securityCompliance(url, page, response, browser) {
 
   const domain = Domain(url);
+
+  // Transport
   const httpsResult = await checkHTTPS(url, page);
   const sslResult = await checkSSLConnection(response);
+  const sslExpiryResult = await checkSSLExpiry(response);
   const tlsVersionResult = await checkTLSVersion(response);
   const hstsResult = checkHSTS(response);
 
+  // Headers
   const xFrameOptionsResult = checkXFrameOptions(response);
   const cspResult = checkCSP(response);
   const xContentTypeOptionsResult = checkXContentTypeOptions(response);
 
-  const cookieSecureResult = await checkCookiesSecureFlag(page);
-  const cookieHttpOnlyResult = await checkCookiesHttpOnlyFlag(page);
+  // Cookies
+  const cookieFlagsResult = await checkCookieFlags(page);
 
-  const safeBrowsingResult = await checkGoogleSafeBrowsing(url);
-  const blacklistResult = await checkDomainBlacklist(domain, url);
-  const malwareScanResult = await checkVirusTotal(domain);
+  // Reputation — composite gate (Safe Browsing + VirusTotal folded into one; spec §4.4)
+  const reputationResult = await checkReputation(domain, url);
 
+  // App-exposure (heuristic surface indicators)
   const sqliExposureResult = await checkSQLiExposure(url);
-
-  const cookieConsentResult = await checkCookieConsent(page);
-  const privacyPolicyResult = await checkPrivacyPolicy(page);
-  const thirdPartyCookiesResult = await checkThirdPartyCookies(url, page, cookieConsentResult, privacyPolicyResult);
-  const gdprCcpaResult = await checkGDPRCCPA(page);
-  const dataCollectionResult = await checkDataCollection(page);
-
+  const xssVulnerabilityResult = await checkXSS(url, browser);
   const formsUseHTTPSResult = await checkFormsUseHTTPS(page);
   const weakDefaultCredsResult = await checkWeakDefaultCredentials(page, browser);
   const mfaEnabledResult = await checkMFAEnabled(page);
   const adminPanelPublicResult = await checkAdminPanelPublic(url);
 
-  const xssVulnerabilityResult = await checkXSS(url, browser);
+  // Privacy / legal
+  const cookieConsentResult = await checkCookieConsent(page);
+  const privacyPolicyResult = await checkPrivacyPolicy(page);
+  const thirdPartyCookiesResult = await checkThirdPartyCookies(url, page, cookieConsentResult, privacyPolicyResult);
+  const privacyComplianceResult = await checkPrivacyCompliance(page);
 
-  const crmIntegrationResult = await checkCRMIntegration(url, page, browser);
-
+  // Page-specific
   const financeFormSecurityResult = await checkFinanceFormSecurity(url, page, browser);
+  const legalDisclaimersResult = await checkLegalDisclaimers(url, page, browser);
 
-  // Analytics & conversion tracking — shown in the Security section for visibility.
-  // These are DISPLAY-ONLY here (not added to `results`/weights below) so they
-  // don't distort the security score with non-security signals. The same checks
-  // are scored in the Conversion & Lead Flow module.
-  let ga4Result = null, gtmResult = null, conversionTrackingResult = null;
-  try {
-    const trackingData = await collectTrackingData(page);
-    ga4Result = checkGA4Installed(trackingData);
-    gtmResult = checkGTMConfiguration(trackingData);
-    conversionTrackingResult = checkConversionTracking(trackingData);
-  } catch (e) {
-    // Tracking detection is best-effort; never fail the security audit over it.
+  // NOTE: GA4 / GTM / Conversion Tracking and CRM lead-transfer are NOT part of the
+  // Security section (spec §2.4 relocates them to Conversion Flow). They are no longer
+  // computed or surfaced here. CRM detection (checkCRMIntegration + CRM_SIGNATURES) still
+  // lives in this file pending relocation to the Conversion & Lead Flow module (§2.6).
+
+  // ── Spec §2.4 weighting. Fractional spec weights ×100, renormalized over the
+  // applicable set (N/A params dropped, not zeroed — rule 6). Confidence per param:
+  // field = reputation API, measured = transport/header/cert, heuristic = DOM/behavioural.
+  const weighted = [
+    // Transport
+    { key: "HTTPS", metric: httpsResult, weight: 13, confidence: "measured", gate: "https" },
+    { key: "SSL", metric: sslResult, weight: 7, confidence: "measured" },
+    { key: "SSL_Expiry", metric: sslExpiryResult, weight: 4, confidence: "measured" },
+    { key: "TLS_Version", metric: tlsVersionResult, weight: 5, confidence: "measured" },
+    { key: "HSTS", metric: hstsResult, weight: 5, confidence: "measured" },
+    // Headers
+    { key: "CSP", metric: cspResult, weight: 9, confidence: "measured" },
+    { key: "X_Frame_Options", metric: xFrameOptionsResult, weight: 4, confidence: "measured" },
+    { key: "X_Content_Type_Options", metric: xContentTypeOptionsResult, weight: 3, confidence: "measured" },
+    // Cookies
+    { key: "Cookie_Flags", metric: cookieFlagsResult, weight: 5, confidence: "measured" },
+    { key: "Third_Party_Cookies", metric: thirdPartyCookiesResult, weight: 2, confidence: "measured" },
+    // Reputation (gate)
+    { key: "Reputation", metric: reputationResult, weight: 9, confidence: "field", gate: "reputation" },
+    // App-exposure (heuristic surface indicators)
+    { key: "SQLi_Exposure", metric: sqliExposureResult, weight: 4, confidence: "heuristic" },
+    { key: "XSS", metric: xssVulnerabilityResult, weight: 4, confidence: "heuristic" },
+    { key: "Forms_Use_HTTPS", metric: formsUseHTTPSResult, weight: 4, confidence: "heuristic" },
+    // Admin exposure / weak creds / MFA — spec groups as one High (≈0.04); split across the three.
+    { key: "Weak_Default_Credentials", metric: weakDefaultCredsResult, weight: 2, confidence: "heuristic" },
+    { key: "Admin_Panel_Public", metric: adminPanelPublicResult, weight: 1, confidence: "heuristic" },
+    { key: "MFA_Enabled", metric: mfaEnabledResult, weight: 1, confidence: "heuristic" },
+    // Privacy / legal
+    { key: "Cookie_Consent", metric: cookieConsentResult, weight: 3, confidence: "heuristic" },
+    { key: "Privacy_Policy", metric: privacyPolicyResult, weight: 3, confidence: "heuristic" },
+    { key: "Privacy_Compliance", metric: privacyComplianceResult, weight: 4, confidence: "heuristic" },
+    // Page-specific (renormalized out when no such page exists)
+    { key: "Finance_Form_Security", metric: financeFormSecurityResult, weight: 10, confidence: "heuristic" },
+    { key: "Legal_Disclaimers", metric: legalDisclaimersResult, weight: 8, confidence: "heuristic" },
+  ];
+
+  const CONF_RANK = { heuristic: 1, estimate: 1, lab: 2, measured: 2, field: 3 };
+  let totalWeight = 0, earned = 0;
+  let noHttps = false, reputationFlagged = false;
+  let lowestConf = "field";
+  for (const w of weighted) {
+    const m = w.metric;
+    // N/A / info-only params drop out of the denominator (rule 6).
+    if (!m || m.infoOnly || m.status === "not_applicable" || typeof m.score !== "number") continue;
+    m.confidence = m.confidence || w.confidence; // stamp for the UI
+    totalWeight += w.weight;
+    earned += (m.score / 100) * w.weight;
+    if (CONF_RANK[m.confidence] < CONF_RANK[lowestConf]) lowestConf = m.confidence;
+    if (w.gate === "https" && m.score === 0) noHttps = true;
+    if (w.gate === "reputation" && m.status === "fail") reputationFlagged = true;
   }
 
-  // Weights: Critical=10, Severe=8-9, High=7, Medium=4-6, Low=1-3
-  const weights = {
-    // Critical Infrastructure & Vulnerabilities
-    HTTPS: 10,
-    SSL: 10,
-    SQLi_Exposure: 10,
-    XSS: 10,
-    Weak_Default_Credentials: 10,
-    Google_Safe_Browsing: 10,
-    Blacklist: 10,
-    Malware_Scan: 10,
-
-    // Severe Risks
-    Admin_Panel_Public: 9,
-    Forms_Use_HTTPS: 8,
-    CSP: 8,
-
-    // High Importance / Best Practices
-    TLS_Version: 7,
-    HSTS: 7,
-    Cookies_Secure: 7,
-    Cookies_HttpOnly: 7,
-
-    // Medium Importance / Defense in Depth
-    MFA_Enabled: 6,
-    X_Frame_Options: 5,
-    X_Content_Type_Options: 5,
-
-    // Compliance & Privacy
-    Cookie_Consent: 4,
-    GDPR_CCPA: 4,
-    Privacy_Policy: 4,
-
-    // Low / Informational
-    Data_Collection: 3,
-    Third_Party_Cookies: 3,
-
-    // Business Integration (Lead Transfer)
-    CRM_Integration: 5,
-
-    // Finance / PCI
-    Finance_Form_Security: 7,
-  };
-
-  const results = {
-    HTTPS: httpsResult,
-    SSL: sslResult,
-    HSTS: hstsResult,
-    TLS_Version: tlsVersionResult,
-    X_Frame_Options: xFrameOptionsResult,
-    CSP: cspResult,
-    X_Content_Type_Options: xContentTypeOptionsResult,
-    Cookies_Secure: cookieSecureResult,
-    Cookies_HttpOnly: cookieHttpOnlyResult,
-    Google_Safe_Browsing: safeBrowsingResult,
-    Blacklist: blacklistResult,
-    Malware_Scan: malwareScanResult,
-    SQLi_Exposure: sqliExposureResult,
-    XSS: xssVulnerabilityResult,
-    Cookie_Consent: cookieConsentResult,
-    Privacy_Policy: privacyPolicyResult,
-    Forms_Use_HTTPS: formsUseHTTPSResult,
-    GDPR_CCPA: gdprCcpaResult,
-    Data_Collection: dataCollectionResult,
-    Weak_Default_Credentials: weakDefaultCredsResult,
-    MFA_Enabled: mfaEnabledResult,
-    Admin_Panel_Public: adminPanelPublicResult,
-    Third_Party_Cookies: thirdPartyCookiesResult,
-    CRM_Integration: crmIntegrationResult,
-    Finance_Form_Security: financeFormSecurityResult,
-  };
-
-  let totalWeightedScore = 0;
-  let maxWeightedScore = 0;
-
-  for (const key in results) {
-    const result = results[key];
-    // Info-only / not-applicable params (e.g. MFA on a site with no login) are displayed but not scored.
-    if (!result || result.infoOnly) continue;
-    const weight = weights[key] || 1;
-    totalWeightedScore += (result.score || 0) * weight;
-    maxWeightedScore += 100 * weight;
-  }
-
-  const totalPercentage = parseFloat(((totalWeightedScore / maxWeightedScore) * 100).toFixed(0));
+  let pct = totalWeight > 0 ? parseFloat(((earned / totalWeight) * 100).toFixed(0)) : 0;
+  // Gates (spec §2.4 / §5.3): transport + reputation dominate the section.
+  if (noHttps) pct = Math.min(pct, 30);
+  if (reputationFlagged) pct = Math.min(pct, 25);
 
   return {
-    Percentage: totalPercentage,
+    Percentage: pct,
+    Confidence: lowestConf,
+    Coverage: "Transport, headers, cookies, reputation, app-exposure and privacy/legal. Injection and credential checks are non-invasive surface indicators, not proof of vulnerability.",
+    Note: "Reputation requires API keys (Safe Browsing / VirusTotal); transport, header and certificate checks are measured; injection, admin and privacy checks are heuristic. Page-specific finance/disclaimer checks are renormalized out when no such page exists.",
+    // Transport
     HTTPS: httpsResult,
     SSL: sslResult,
-    HSTS: hstsResult,
+    SSL_Expiry: sslExpiryResult,
     TLS_Version: tlsVersionResult,
-    X_Frame_Options: xFrameOptionsResult,
+    HSTS: hstsResult,
+    // Headers
     CSP: cspResult,
+    X_Frame_Options: xFrameOptionsResult,
     X_Content_Type_Options: xContentTypeOptionsResult,
-    Cookies_Secure: cookieSecureResult,
-    Cookies_HttpOnly: cookieHttpOnlyResult,
-    Google_Safe_Browsing: safeBrowsingResult,
-    Blacklist: blacklistResult,
-    Malware_Scan: malwareScanResult,
+    // Cookies
+    Cookie_Flags: cookieFlagsResult,
+    Third_Party_Cookies: thirdPartyCookiesResult,
+    // Reputation (composite gate; Safe Browsing + VirusTotal in meta)
+    Reputation: reputationResult,
+    // App-exposure
     SQLi_Exposure: sqliExposureResult,
     XSS: xssVulnerabilityResult,
+    Forms_Use_HTTPS: formsUseHTTPSResult,
+    Weak_Default_Credentials: weakDefaultCredsResult,
+    Admin_Panel_Public: adminPanelPublicResult,
+    MFA_Enabled: mfaEnabledResult,
+    // Privacy / legal
     Cookie_Consent: cookieConsentResult,
     Privacy_Policy: privacyPolicyResult,
-    Forms_Use_HTTPS: formsUseHTTPSResult,
-    GDPR_CCPA: gdprCcpaResult,
-    Data_Collection: dataCollectionResult,
-    Weak_Default_Credentials: weakDefaultCredsResult,
-    MFA_Enabled: mfaEnabledResult,
-    Admin_Panel_Public: adminPanelPublicResult,
-    Third_Party_Cookies: thirdPartyCookiesResult,
-    CRM_Integration: crmIntegrationResult,
+    Privacy_Compliance: privacyComplianceResult,
+    // Page-specific
     Finance_Form_Security: financeFormSecurityResult,
-    // Display-only (not part of the weighted security score)
-    GA4_Installed: ga4Result,
-    GTM_Configuration: gtmResult,
-    Conversion_Tracking: conversionTrackingResult,
+    Legal_Disclaimers: legalDisclaimersResult,
   };
-
-
 }

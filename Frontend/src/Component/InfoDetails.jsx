@@ -2325,46 +2325,6 @@ export const InfoDetails = {
             "Restrict the 'script-src' directive to trusted sources only"
         ]
     },
-    Cookies_Secure: {
-        title: "Secure Cookies",
-        whatThisParameterIs: "The 'Secure' flag tells the browser to only send cookies over an encrypted HTTPS connection.",
-        whatItCalculates: "It verifies if all cookies set by the page have the 'Secure' attribute.",
-        whyItMatters: "Marking cookies as 'Secure' ensures that sensitive login data is never sent over an unencrypted connection where it could be stolen.",
-        thresholds: {
-            good: "All cookies are secure",
-            poor: "Some cookies missing 'Secure' flag"
-        },
-        actualReasonsForFailure: [
-            "One or more cookies are set without the 'Secure' flag",
-            "Cookies are being sent over an unencrypted (HTTP) connection",
-            "Session cookies are exposed to interception"
-        ],
-        howToOvercomeFailure: [
-            "Ensure all application cookies are set with the 'Secure' attribute",
-            "Enforce HTTPS site-wide so that secure cookies are always transmittable",
-            "Audit third-party scripts that may be setting insecure cookies"
-        ]
-    },
-    Cookies_HttpOnly: {
-        title: "HttpOnly Cookies",
-        whatThisParameterIs: "The 'HttpOnly' flag prevents website scripts from touching your sensitive cookies, adding an extra layer of protection.",
-        whatItCalculates: "It verifies if all cookies set by the page have the 'HttpOnly' attribute.",
-        whyItMatters: "The 'HttpOnly' flag acts as a shield, preventing scripts from stealing your session cookies even if a hacker finds a way to run code on your page.",
-        thresholds: {
-            good: "All cookies are HttpOnly",
-            poor: "Some cookies missing 'HttpOnly' flag"
-        },
-        actualReasonsForFailure: [
-            "Some cookies are set without the 'HttpOnly' flag, making them accessible to JavaScript",
-            "Potentially sensitive session identifiers are accessible to client-side scripts",
-            "Insecure cookie configuration increases risk of session hijacking"
-        ],
-        howToOvercomeFailure: [
-            "Set the 'HttpOnly' attribute on all sensitive cookies, especially session IDs",
-            "Limit the scope of cookies using the 'Path' and 'Domain' attributes",
-            "Configure your application framework to default to HttpOnly for all cookies"
-        ]
-    },
     SQLi_Exposure: {
         title: "SQL Injection Exposure",
         whatThisParameterIs: "This check looks for 'holes' in your website that could allow hackers to sneak into your database and steal information.",
@@ -2487,66 +2447,6 @@ export const InfoDetails = {
             "Note: a post-login MFA step may not be visible to an unauthenticated scan"
         ]
     },
-    Google_Safe_Browsing: {
-        title: "Google Safe Browsing",
-        whatThisParameterIs: "Google Safe Browsing checks if your site has been 'red-flagged' by Google for containing dangerous software or scams.",
-        whatItCalculates: "It queries the Google Safe Browsing API to check for active threat flags against the URL.",
-        whyItMatters: "If Google flags your site as dangerous, they will block almost all your traffic with a giant warning—fixing this protects your reputation and traffic.",
-        thresholds: {
-            good: "URL not flagged by Google Safe Browsing",
-            poor: "URL flagged as unsafe (Malware/Phishing)"
-        },
-        actualReasonsForFailure: [
-            "The URL is currently flagged as unsafe (malware or phishing) in Google's database",
-            "The API request to Google Safe Browsing failed, preventing a definitive check",
-            "Matches for social engineering or unwanted software were found for this domain"
-        ],
-        howToOvercomeFailure: [
-            "Check the 'Security Issues' report in Google Search Console for specific details",
-            "Remove all malicious content, injected scripts, and compromised files immediately",
-            "Request a security review from Google after the site has been fully cleaned"
-        ]
-    },
-    Blacklist: {
-        title: "Domain Blacklist Status",
-        whatThisParameterIs: "Domain Blacklist Status shows if your website has been added to a 'do not visit' list used by security companies worldwide.",
-        whatItCalculates: "It cross-references the domain and URL against aggregated reputation and security databases.",
-        whyItMatters: "Being blacklisted means your site is marked as 'untrustworthy' by the internet's security systems, which can kill your traffic and business.",
-        thresholds: {
-            good: "Domain not present on major security blacklists",
-            poor: "Domain or URL found in one or more blacklists"
-        },
-        actualReasonsForFailure: [
-            "The domain or URL is listed in the Google Safe Browsing or VirusTotal blacklist",
-            "One or more security vendors have flagged this domain as malicious",
-            "The domain has been associated with past malware hosting or phishing activity"
-        ],
-        howToOvercomeFailure: [
-            "Review detailed security reports from Google and VirusTotal to find the root cause",
-            "Remove any malicious files or server configurations that triggered the blacklist",
-            "Request delisting from each service individually after resolving the security issues"
-        ]
-    },
-    Malware_Scan: {
-        title: "Malware Detection",
-        whatThisParameterIs: "Malware Detection scans your site for hidden 'viruses' or digital traps that could harm your visitors' computers.",
-        whatItCalculates: "It queries the VirusTotal API to check for malicious or suspicious detections from dozens of security vendors.",
-        whyItMatters: "Regular scans ensure your site isn't secretly spreading viruses to your visitors, which would permanently damage their trust in your brand.",
-        thresholds: {
-            good: "No malicious signatures detected",
-            poor: "Malicious signatures detected by security vendors"
-        },
-        actualReasonsForFailure: [
-            "One or more security vendors have flagged the domain as containing malicious content",
-            "The scan detected signatures consistent with malware, trojans, or webshells",
-            "The domain is listed as 'malicious' or 'suspicious' by VirusTotal vendors"
-        ],
-        howToOvercomeFailure: [
-            "Investigate the specific detections listed on VirusTotal for your domain",
-            "Conduct a full server-side scan of your files and database for malicious code",
-            "Harden your server security and update all CMS, themes, and plugins"
-        ]
-    },
     Forms_Use_HTTPS: {
         title: "Secure Form Submission",
         whatThisParameterIs: "Secure Form Submission ensures that any info someone types into your forms (like a password) is sent safely and privately.",
@@ -2565,46 +2465,6 @@ export const InfoDetails = {
             "Update the 'action' attribute of all <form> tags to use absolute HTTPS URLs",
             "Ensure the entire page is served over HTTPS to avoid protocol mismatch",
             "Use relative paths for form actions if your entire site is forced to HTTPS"
-        ]
-    },
-    GDPR_CCPA: {
-        title: "GDPR / CCPA Compliance",
-        whatThisParameterIs: "This check looks for signs that your site respects global privacy laws, giving users control over their data.",
-        whatItCalculates: "It scans page text for keywords like 'GDPR' or 'CCPA' and detects standard compliance widgets (CMPs).",
-        whyItMatters: "Following privacy laws isn't just about avoiding fines—it's about showing your global audience that you respect their personal rights.",
-        thresholds: {
-            good: "GDPR/CCPA notice or standard compliance widgets detected",
-            poor: "No GDPR/CCPA mention or compliant widgets found"
-        },
-        actualReasonsForFailure: [
-            "No specific text mentioning GDPR, CCPA, or user data rights was found on the page",
-            "Standard compliance widgets or platform selectors were not detected",
-            "Information about data rights is missing or not easily discoverable"
-        ],
-        howToOvercomeFailure: [
-            "Ensure your site explicitly mentions GDPR and CCPA compliance in its privacy sections",
-            "Implement a compliant Consent Management Platform (CMP) or visible link to 'Do Not Sell'",
-            "Clear and explicit mention of data handling rights should be accessible to all users"
-        ]
-    },
-    Data_Collection: {
-        title: "Data Collection Disclosure",
-        whatThisParameterIs: "Data Collection Disclosure ensures you are being honest with your visitors about what information you are collecting from them.",
-        whatItCalculates: "It scans visible links and headings for explicit mentions of 'Data Collection' or 'Information We Collect'.",
-        whyItMatters: "Honesty is the best policy. Being clear about what data you collect builds a strong, honest relationship with your customers.",
-        thresholds: {
-            good: "Explicit data collection disclosure found",
-            poor: "No visible details about data collection were found"
-        },
-        actualReasonsForFailure: [
-            "No visible links or headings were found that explicitly mention data collection or usage",
-            "Disclosure is buried or missing standard keywords like 'Information We Collect'",
-            "The site lacks a dedicated section explaining its data gathering practices"
-        ],
-        howToOvercomeFailure: [
-            "Add a clearly marked section in your privacy policy detailing what data is collected",
-            "Ensure that headers or links related to 'Data Usage' are visible in the footer or menu",
-            "Be transparent about third-party data sharing and cookie collection"
         ]
     },
     Weak_Default_Credentials: {

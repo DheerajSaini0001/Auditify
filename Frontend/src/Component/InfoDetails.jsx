@@ -310,6 +310,30 @@ export const InfoDetails = {
 
 
 
+    AI_Agentic_Browsing: {
+        title: "AI Agentic Browsing (Experimental)",
+        whatThisParameterIs: "How ready your site is for AI AGENTS — not human readers — to navigate and TRANSACT on (search inventory, value a trade, book service) on a shopper's behalf. This is a brand-new, emerging signal (Lighthouse 13.3, 2026).",
+        whatItCalculates: "We inspect the live DOM for WebMCP — the standard that lets a site expose machine-callable 'tools' to agents. The scored arm is WebMCP readiness: registered tools (declarative HTML + imperative JS) and the share of key forms annotated with valid schema. Three more signals are shown but NOT folded into the score because they're already counted elsewhere: agent accessibility (a11y tree integrity), stability (CLS), and an llms.txt summary file.",
+        whyItMatters: "AI agents are starting to shop and book on behalf of users ('find me a 2024 RAV4 under $35k and schedule a test drive'). A site an agent can parse and act on will win agent-mediated traffic. Almost no dealer has this yet — which makes early adoption a competitive moat.",
+        thresholds: {
+            good: "≥ 75% — WebMCP tools registered and key forms annotated",
+            needsImprovement: "25% – 74% — partial WebMCP coverage",
+            poor: "< 25% — no machine-callable tools for agents"
+        },
+        actualReasonsForFailure: [
+            "No WebMCP tools registered (declarative or imperative)",
+            "Lead/search forms have no machine-readable agent annotation",
+            "Invalid or malformed WebMCP tool schema",
+            "Actions are reachable only via JavaScript with no agent affordance"
+        ],
+        howToOvercomeFailure: [
+            "Register WebMCP tools for core actions (inventory search, trade valuation, service booking)",
+            "Annotate key forms declaratively so agents can fill and submit them",
+            "Publish valid WebMCP tool schemas",
+            "Add an /llms.txt summary and keep the accessibility tree well-formed for agents"
+        ]
+    },
+
     // Answer Engine Optimization (AEO) Signals
     answerFirst: {
         title: "Answer-First Policy",
@@ -671,6 +695,7 @@ export const InfoDetails = {
             { param: "Compression (Gzip/Brotli)", weight: "4" },
             { param: "Caching Policy", weight: "4" },
             { param: "Redirect Chains", weight: "3" },
+            { param: "AI Agentic Browsing — WebMCP arm (Experimental)", weight: "6 (agent-accessibility, CLS & llms.txt shown but not folded in)" },
             { param: "PageSpeed Score (Lighthouse, Mobile & Desktop)", weight: "Informational — shown, not scored" }
         ]
     },
@@ -2096,6 +2121,110 @@ export const InfoDetails = {
             "Ensure the server is configured to support modern TLS handshakes"
         ]
     },
+    SSL_Expiry: {
+        title: "SSL Certificate Expiry",
+        whatThisParameterIs: "This checks how many days are left before your SSL certificate expires.",
+        whatItCalculates: "It reads the certificate's validity window and grades the days remaining: more than 30 days is healthy, under 14 days is urgent, and an expired certificate is a failure.",
+        whyItMatters: "An expired SSL certificate makes every browser show a full-page 'Not Secure' warning that blocks visitors entirely — an instant, total loss of traffic and trust until it is renewed.",
+        thresholds: {
+            good: "More than 30 days until expiry",
+            needsImprovement: "Under 30 days (renew soon); under 14 days is urgent",
+            poor: "The certificate has already expired"
+        },
+        actualReasonsForFailure: [
+            "The SSL certificate has expired",
+            "The certificate expires within the next 14 days",
+            "Auto-renewal is not configured, risking a lapse"
+        ],
+        howToOvercomeFailure: [
+            "Renew the SSL certificate before it expires",
+            "Enable automatic renewal (e.g. with Let's Encrypt / your CDN)",
+            "Set a calendar reminder and monitoring alert for expiry"
+        ]
+    },
+    Reputation: {
+        title: "Domain Reputation",
+        whatThisParameterIs: "This checks whether your domain or URL is flagged as dangerous by major threat-intelligence services.",
+        whatItCalculates: "It cross-references your site against Google Safe Browsing and VirusTotal. The two sources are combined into one reputation signal; if either flags the site, this fails and caps the overall security score (a reputation gate).",
+        whyItMatters: "If your site is flagged for malware or phishing, browsers and search engines show scary interstitial warnings that drive away virtually all visitors — and removal can take days. It is the single most damaging security issue.",
+        thresholds: {
+            good: "Not flagged by any reputation source",
+            poor: "Flagged for malware, phishing, or unwanted software"
+        },
+        actualReasonsForFailure: [
+            "The domain is listed in Google Safe Browsing for malware or social engineering",
+            "VirusTotal vendors flag the domain as malicious or suspicious",
+            "The site has been compromised and is serving harmful content"
+        ],
+        howToOvercomeFailure: [
+            "Scan for and remove malware or injected/compromised content",
+            "Request a review in Google Search Console (Security Issues) once cleaned",
+            "Submit a re-analysis / removal request on VirusTotal after remediation"
+        ]
+    },
+    Cookie_Flags: {
+        title: "Cookie Security Flags",
+        whatThisParameterIs: "This checks whether your cookies carry the protective flags that keep them safe: Secure, HttpOnly, and SameSite.",
+        whatItCalculates: "It inspects every cookie and grades the share that set each flag — Secure (HTTPS-only), HttpOnly (hidden from scripts), and SameSite (cross-site/CSRF protection). The result is a weighted blend, with Secure and HttpOnly counting most.",
+        whyItMatters: "Cookies often hold session and login tokens. Without Secure they can leak over HTTP, without HttpOnly they can be stolen by malicious scripts (XSS), and without SameSite they expose users to cross-site request forgery.",
+        thresholds: {
+            good: "All cookies set Secure, HttpOnly, and SameSite",
+            needsImprovement: "Some cookies are missing one or more flags",
+            poor: "Most cookies lack protective flags"
+        },
+        actualReasonsForFailure: [
+            "Cookies are missing the 'Secure' flag and can travel over HTTP",
+            "Cookies are missing 'HttpOnly' and are readable by JavaScript",
+            "Cookies are missing 'SameSite', leaving them open to CSRF"
+        ],
+        howToOvercomeFailure: [
+            "Set Secure, HttpOnly, and SameSite=Lax/Strict on all session cookies",
+            "Only omit HttpOnly when a cookie genuinely must be read by scripts",
+            "Use SameSite=None; Secure only for cookies that need cross-site access"
+        ]
+    },
+    Privacy_Compliance: {
+        title: "Privacy Compliance (GDPR/CCPA)",
+        whatThisParameterIs: "This checks whether your site discloses users' privacy rights and explains what data it collects.",
+        whatItCalculates: "It looks for two things together: a GDPR/CCPA rights notice (e.g. 'Do Not Sell My Personal Information') and a clear data-collection disclosure. Both present scores full; one present is partial; neither is a failure.",
+        whyItMatters: "Privacy laws like GDPR and CCPA require clear disclosure of data practices and user rights. Missing notices expose dealerships to regulatory fines and erode customer trust.",
+        thresholds: {
+            good: "Both a rights notice and a data-collection disclosure are present",
+            needsImprovement: "Only one of the two is present",
+            poor: "No privacy-rights notice or data-collection disclosure found"
+        },
+        actualReasonsForFailure: [
+            "No GDPR/CCPA rights language (e.g. 'Do Not Sell My Personal Information')",
+            "No clear disclosure of what personal data is collected and why",
+            "Compliance text or preference center is missing entirely"
+        ],
+        howToOvercomeFailure: [
+            "Add explicit GDPR/CCPA rights language and a 'Do Not Sell' option where applicable",
+            "Publish a clear data-collection disclosure in the privacy policy and footer",
+            "Provide a cookie/privacy preference center for managing consent"
+        ]
+    },
+    Legal_Disclaimers: {
+        title: "Legal & Financial Disclaimers",
+        whatThisParameterIs: "On finance, offers, lease, and vehicle pages this checks for the legally required pricing and financing disclaimers.",
+        whatItCalculates: "It identifies whether the page is a finance, offers, lease, or vehicle page (auditing it directly or discovering one from your links), then grades coverage of the disclaimers that page type requires — Reg-Z finance terms, Reg-M lease terms, FTC price disclaimers, and offer expiry. It is skipped (Not Applicable) when no such page exists.",
+        whyItMatters: "Federal rules (Truth-in-Lending / Reg-Z, the Consumer Leasing Act / Reg-M, and FTC advertising rules) require clear, conspicuous disclosure of APR, lease terms, fees, and offer limits. Missing disclaimers expose dealerships to regulatory action and consumer complaints.",
+        thresholds: {
+            good: "All disclaimers required for the page type are present",
+            needsImprovement: "Some required disclaimers are present but others are missing",
+            poor: "Required legal/financial disclaimers are absent"
+        },
+        actualReasonsForFailure: [
+            "Finance pages omit APR / 'with approved credit' (Reg-Z) terms",
+            "Lease pages omit Reg-M terms (cap cost, residual, money factor, due at signing)",
+            "Offer/price pages omit tax/title/fee exclusions or an offer expiry date"
+        ],
+        howToOvercomeFailure: [
+            "Add Reg-Z finance disclosures (APR, finance terms, approved-credit qualifiers)",
+            "Add Reg-M lease disclosures (capitalized cost, residual, money factor, due at signing, total of payments)",
+            "Add FTC price/offer disclaimers (tax/title/doc-fee exclusions, 'see dealer for details', expiry dates)"
+        ]
+    },
     TLS_Version: {
         title: "TLS Version",
         whatThisParameterIs: "TLS is the technology that powers your secure connection. Using the latest version ensures you have the strongest protection against modern hackers.",
@@ -2621,16 +2750,19 @@ export const InfoDetails = {
         ),
         howThisScoreIsCalculated: (
             <div className="space-y-2">
-                <p>We calculate this score by performing an automated security audit that cross-references your site against 20+ critical security parameters and vulnerability databases.</p>
-                <p>Each check is assigned a weight based on its severity—from critical threats like SQL Injection and Malware (high weight) to best-practice headers and privacy signals (lower weight). The final score reflects the overall risk profile of your web environment.</p>
+                <p>We score each parameter 0–100 (graded, not just pass/fail) and combine them in a weighted average. Parameters that don't apply to your page — for example finance-form or disclaimer checks when no such page exists — are dropped from the calculation rather than counted as zero, so the score reflects only what's relevant.</p>
+                <p>Two foundations act as <strong>gates</strong>: a site served without HTTPS is capped at 30, and a domain flagged for malware/phishing is capped at 25 — no amount of good headers can offset a broken foundation.</p>
+                <p>Every result carries a <strong>confidence</strong> label: <em>field</em> (real reputation-API data), <em>measured</em> (transport, header and certificate facts), or <em>heuristic</em> (DOM inference). Injection and credential checks are non-invasive surface indicators, not proof of a vulnerability.</p>
             </div>
         ),
         weightage: [
-            { param: "Critical Vulnerabilities & Malware", weight: "30%" },
-            { param: "Encryption & Transport Security", weight: "20%" },
-            { param: "Authentication & Access Control", weight: "20%" },
-            { param: "Browser Hardening & Security Headers", weight: "19%" },
-            { param: "Data Privacy & Legal Compliance", weight: "11%" }
+            { param: "Transport & Encryption (HTTPS gate, SSL, expiry, TLS, HSTS)", weight: "37%" },
+            { param: "Security Headers (CSP, X-Frame-Options, X-Content-Type)", weight: "17%" },
+            { param: "App-Exposure (SQLi, XSS, forms, admin, creds, MFA)", weight: "17%" },
+            { param: "Privacy & Legal (consent, policy, GDPR/CCPA)", weight: "11%" },
+            { param: "Reputation gate (Safe Browsing + VirusTotal)", weight: "10%" },
+            { param: "Cookies (Secure/HttpOnly/SameSite, third-party)", weight: "8%" },
+            { param: "Page-specific (Finance PCI, Reg-Z/Reg-M/FTC disclaimers) — when present", weight: "+ added" }
         ]
     },
 

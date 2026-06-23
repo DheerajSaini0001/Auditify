@@ -2154,6 +2154,106 @@ const evaluateJsExecution = (audits) => {
   };
 };
 
+// AI Agentic Browsing (spec Part 3) — how ready the page is for AI AGENTS (not human
+// readers) to read, understand and TRANSACT on. Lighthouse 13.3's agentic category isn't
+// available to us, so we score it heuristically from the live DOM. Per spec, ONLY the
+// genuinely-new WebMCP arm is folded into the score (small weight); agent-accessibility,
+// stability (CLS) and llms.txt are surfaced as informational sub-scores because they are
+// already owned by Accessibility / Technical CLS / AEO. Experimental, confidence: lab.
+const evaluateAgenticBrowsing = async (page, url, clsPick) => {
+  let dom = {
+    apiPresent: false, declarativeTools: 0, totalForms: 0, annotatedForms: 0,
+    schemaValid: null, totalInteractive: 0, namedInteractive: 0, landmarks: 0,
+  };
+  try {
+    dom = await page.evaluate(() => {
+      // Imperative WebMCP / model-context API surface.
+      const apiPresent = !!(navigator.modelContext || window.mcp || window.webmcp || window.agent || window.__WEBMCP__);
+      // Declarative tool registrations (HTML-defined).
+      const mcpScripts = Array.from(document.querySelectorAll('script[type*="mcp"]'));
+      const toolEls = Array.from(document.querySelectorAll('tool, [data-mcp-tool], [mcp-tool], [data-webmcp], [data-agent-tool]'));
+      const forms = Array.from(document.querySelectorAll('form'));
+      const annotatedForms = forms.filter((f) =>
+        f.hasAttribute('data-mcp') || f.hasAttribute('data-webmcp') || f.hasAttribute('mcp-tool') ||
+        f.hasAttribute('data-agent-tool') || !!f.querySelector('[data-mcp-tool],[mcp-tool],[data-webmcp]')
+      ).length;
+      let schemaValid = null;
+      if (mcpScripts.length) {
+        schemaValid = mcpScripts.every((s) => { try { JSON.parse(s.textContent || ''); return true; } catch { return false; } });
+      }
+      // Agent accessibility: share of interactive elements with an accessible name.
+      const interactive = Array.from(document.querySelectorAll('a[href], button, input:not([type="hidden"]), select, textarea, [role="button"], [role="link"]'));
+      let named = 0;
+      for (const el of interactive) {
+        const name = el.getAttribute('aria-label') || el.getAttribute('aria-labelledby') || el.getAttribute('title') ||
+          (el.textContent || '').trim() || el.getAttribute('alt') || el.getAttribute('value') || el.getAttribute('placeholder') ||
+          ((el.labels && el.labels.length) ? 'labelled' : '');
+        if (name && String(name).trim()) named++;
+      }
+      const landmarks = document.querySelectorAll('main, nav, header, footer, [role="main"], [role="navigation"], [role="banner"], [role="contentinfo"]').length;
+      return {
+        apiPresent,
+        declarativeTools: toolEls.length + mcpScripts.length,
+        totalForms: forms.length,
+        annotatedForms,
+        schemaValid,
+        totalInteractive: interactive.length,
+        namedInteractive: named,
+        landmarks,
+      };
+    });
+  } catch { /* page.evaluate failed — keep defaults (scores 0) */ }
+
+  // WebMCP readiness — the ONLY arm folded into the Technical score.
+  const registeredTools = dom.declarativeTools + (dom.apiPresent ? 1 : 0);
+  const hasSurface = dom.apiPresent || dom.declarativeTools > 0 || dom.annotatedForms > 0;
+  let webmcpScore = 0;
+  if (hasSurface) {
+    const formCoverage = dom.totalForms ? dom.annotatedForms / dom.totalForms : (registeredTools > 0 ? 1 : 0);
+    const toolScore = registeredTools > 0 ? 1 : 0;
+    const schemaPenalty = dom.schemaValid === false ? 0.5 : 1;
+    webmcpScore = Math.round(100 * (0.6 * formCoverage + 0.4 * toolScore) * schemaPenalty);
+  }
+
+  // Informational sub-scores (not folded in — owned by other sections).
+  const agentAccessibility = dom.totalInteractive ? Math.round((dom.namedInteractive / dom.totalInteractive) * 100) : 100;
+  const agentStability = clsPick?.score ?? null;
+  const origin = (() => { try { return new URL(url).origin; } catch { return null; } })();
+  const llmsRaw = origin ? await fetchTextWithTimeout(`${origin}/llms.txt`, 8000) : null;
+  const hasLlmsTxt = !!(llmsRaw && llmsRaw.trim().length > 0 && !/<html/i.test(llmsRaw.slice(0, 200)));
+
+  const status = webmcpScore >= 75 ? "pass" : webmcpScore >= 25 ? "warning" : "fail";
+
+  return {
+    score: webmcpScore,
+    status,
+    experimental: true,
+    confidence: "lab",
+    details: webmcpScore > 0
+      ? `WebMCP agent tooling detected (${dom.annotatedForms}/${dom.totalForms} forms annotated).`
+      : "No WebMCP agent tooling found — an emerging, early-mover signal most sites don't have yet.",
+    meta: {
+      value: `${webmcpScore}%`,
+      experimental: true,
+      registeredTools,
+      apiPresent: dom.apiPresent,
+      totalForms: dom.totalForms,
+      annotatedForms: dom.annotatedForms,
+      schemaValid: dom.schemaValid,
+      // informational sub-scores (shown, not weighted here):
+      agentAccessibility,
+      agentStability,
+      llmsTxt: hasLlmsTxt,
+      landmarks: dom.landmarks,
+      thresholds: { Good: "≥75%", Warning: "25–74%", Poor: "<25%" },
+    },
+    analysis: status === "pass" ? null : {
+      cause: "The site exposes no machine-callable tools (WebMCP) for AI agents to search inventory, value a trade, or book service.",
+      recommendation: "Adopt WebMCP — annotate key forms/actions declaratively and register agent tools. Early adoption is a competitive moat while the standard is new.",
+    },
+  };
+};
+
 // MAIN FUNCTION
 //
 // Rebuilt to AUDIT_FRAMEWORK_SPECIFICATION §2.1 (Technical). Changes vs. the old engine:
@@ -2214,6 +2314,8 @@ export default async function technicalMetrics(url, device, page, response, brow
   const ttfbPick = ttfbCrux || ttfbLab;
   // INP·TBT is one parameter: real-user INP (field) if available, else lab TBT.
   const inpTbtPick = inpCrux || tbt;
+  // AI Agentic Browsing (experimental) — WebMCP arm scored, CLS reused for stability.
+  const agentic = await evaluateAgenticBrowsing(page, url, clsPick);
   const lcpConf = lcpCrux ? "field" : "lab";
   const clsConf = clsCrux ? "field" : "lab";
   const fcpConf = fcpCrux ? "field" : "lab";
@@ -2234,6 +2336,8 @@ export default async function technicalMetrics(url, device, page, response, brow
     { score: getScore(compression),          weight: 4,  present: true },
     { score: getScore(caching),              weight: 4,  present: true },
     { score: getScore(redirect),             weight: 3,  present: true },
+    // Experimental frontier signal (spec Part 3) — WebMCP arm only, small weight.
+    { score: getScore(agentic),              weight: 6,  present: true },
   ];
   const presentComponents = components.filter((c) => c.present);
   const totalWeight = presentComponents.reduce((s, c) => s + c.weight, 0);
@@ -2261,5 +2365,6 @@ export default async function technicalMetrics(url, device, page, response, brow
     Resource_Optimization: resourceOptimization,
     Render_Blocking: renderBlocking,
     Redirect_Chains: redirect,
+    AI_Agentic_Browsing: agentic,
   };
 }

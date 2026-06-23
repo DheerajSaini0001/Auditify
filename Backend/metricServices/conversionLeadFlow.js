@@ -1952,115 +1952,423 @@ export function checkConversionTracking(data) {
   };
 }
 
-export default async function conversionLeadFlow(page, $) {
+// ---------------------------------------------------------------------------
+// CRM Integration (site-wide) — spec §2.6 "CRM vendor script + form action wired".
+// Lightweight DOM/script detection (the heavy network/submission probe lives in
+// Security; here it is a Low-weight measurability signal that fits the (page,$)
+// signature). Relocated from Security §2.4 (GA4/GTM/Conversion already moved).
+// ---------------------------------------------------------------------------
+const CRM_VENDOR_SIGNATURES = [
+  // Marketing / generic CRMs
+  "hubspot", "force.com", "salesforce", "pardot", "marketo", "mktoresp",
+  "act-on.com", "salesloft", "/web-to-lead", "leadform", "lead-capture",
+  // Automotive / dealership CRMs
+  "vinsolutions", "dealersocket", "eleadcrm", "elead", "dealer.com",
+  "dealerinspire", "gocrm.ai", "gocrm.io", "selly", "leadperfection",
+  "cdkglobal", "promax", "carnow", "activix",
+];
+export function checkCRMIntegration(data, $) {
+  const hay = (data.scriptSrcs.join(" ") + " " + data.inline + " " + data.html).toLowerCase();
+  const detected = [...new Set(CRM_VENDOR_SIGNATURES.filter((v) => hay.includes(v)))];
 
+  // Form actions wired to a CRM endpoint (stronger signal than just an SDK on the page).
+  const formActions = [];
+  try {
+    $("form").each((_, f) => {
+      const action = ($(f).attr("action") || "").toLowerCase();
+      if (action && CRM_VENDOR_SIGNATURES.some((v) => action.includes(v))) {
+        if (formActions.length < 5) formActions.push(action);
+      }
+    });
+  } catch (e) { /* cheerio optional */ }
+
+  const hasFormWired = formActions.length > 0;
+
+  if (detected.length && hasFormWired) {
+    return {
+      score: 100,
+      status: "pass",
+      details: `CRM integration detected (${detected.join(", ")}) with a lead form wired to it.`,
+      meta: { detectedCRMs: detected, formActions },
+      analysis: null,
+    };
+  }
+
+  if (detected.length) {
+    return {
+      score: 50,
+      status: "warning",
+      details: `CRM script/SDK detected (${detected.join(", ")}) but no lead form action wired to it was found.`,
+      meta: { detectedCRMs: detected, formActions: [] },
+      analysis: {
+        cause: "A CRM vendor script is present, but no on-page form action posts directly to the CRM — leads may be relayed server-side (not verifiable from the browser) or not captured at all.",
+        recommendation: "Wire your lead forms to the CRM (a client-side form action or API) so submissions are reliably captured by VinSolutions / DealerSocket / eLead / HubSpot.",
+      },
+    };
+  }
+
+  return {
+    score: 0,
+    status: "fail",
+    details: "No CRM integration (vendor script or wired form action) detected.",
+    meta: { detectedCRMs: [], formActions: [] },
+    analysis: {
+      cause: "No recognized CRM vendor script (VinSolutions, DealerSocket, eLead, HubSpot, etc.) or CRM-wired form action was found on the page.",
+      recommendation: "Connect your lead forms to a CRM so inquiries flow straight into your sales process. Add the CRM's official form embed/SDK and point form submissions at it.",
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Pricing Transparency (page-specific: VDP / Offers / Lease / Finance) — spec §2.6.
+// Actual price/payment shown (not "call for price"); fees disclosed. Claimed from
+// UX §2.5 (relocated here). Self-flags N/A (dropped from denominator) when the page
+// shows no pricing at all.
+// ---------------------------------------------------------------------------
+async function checkPricingTransparency(page) {
+  const data = await page.evaluate(() => {
+    const text = (document.body.innerText || '').toLowerCase();
+    const priceEls = document.querySelectorAll('[class*="price" i], [itemprop="price"]').length;
+    const dollarCount = (text.match(/\$\s?\d/g) || []).length;
+    const hasPriceLabels = /\bmsrp\b|sale price|our price|internet price|selling price|list price|asking price/.test(text);
+    const callForPrice = /call for price|contact (us )?for price|price on request|please call|inquire for price/.test(text);
+
+    const feeDisclosure = /\bdoc(umentation)? fee|dealer fee|processing fee|destination (charge|fee)|no hidden fees|no dealer fees|plus (tax|fees|tax and fees)|out[- ]the[- ]door|price includes|price excludes|additional fees may/.test(text);
+    const noHidden = /no hidden fees|no dealer fees|no surprise|transparent pricing|upfront pricing|no markup/.test(text);
+    const disclaimer = /disclaimer|price does not include|does not include tax|see dealer for details|plus applicable|tax, title|excludes tax/.test(text);
+    const financing = /monthly payment|estimated payment|\/mo\b|\bapr\b|financing available|payment calculator|as low as \$/.test(text);
+
+    const hasAnyPrice = priceEls > 0 || dollarCount >= 2 || hasPriceLabels;
+    return { priceEls, dollarCount, hasPriceLabels, callForPrice, feeDisclosure, noHidden, disclaimer, financing, hasAnyPrice };
+  });
+
+  if (!data.hasAnyPrice && !data.callForPrice) {
+    return {
+      status: 'pass',
+      details: "No pricing is shown on this page, so pricing transparency isn't applicable here.",
+      analysis: { cause: "Pricing transparency is evaluated where vehicle prices/payments appear (VDP, Offers, Lease, Finance).", recommendation: "Audit a vehicle-detail, offers or finance page to grade price and fee transparency." },
+      meta: { notApplicable: true, infoOnly: true },
+      infoOnly: true
+    };
+  }
+
+  const showsRealPrices = (data.priceEls > 0 || data.dollarCount >= 2 || data.hasPriceLabels) && !(data.callForPrice && data.dollarCount < 2);
+  const score = Math.max(0, Math.min(100,
+    (showsRealPrices ? 30 : 0) +
+    (data.feeDisclosure ? 30 : 0) +
+    (data.disclaimer ? 15 : 0) +
+    (data.financing ? 15 : 0) +
+    (data.noHidden ? 10 : 0)
+  ));
+  const status = score >= 80 ? 'pass' : (score >= 40 ? 'warning' : 'fail');
+
+  let analysis;
+  if (status === 'pass') analysis = { cause: "Prices are shown openly with fee disclosure, building buyer trust before they ever call.", recommendation: "Keep fees and disclaimers visible next to price; consider an out-the-door price estimator." };
+  else if (status === 'warning') analysis = { cause: `Pricing is partly transparent${!data.feeDisclosure ? ' but fees/taxes are not disclosed' : ''}${!data.financing ? '; no payment estimate' : ''}.`, recommendation: "Disclose doc/dealer fees and taxes near the price, add a monthly-payment estimate, and state 'no hidden fees' if true." };
+  else analysis = { cause: data.callForPrice ? "Prices are largely hidden behind 'call for price', which erodes trust." : "Prices appear but fees and disclaimers are not disclosed.", recommendation: "Show actual prices (not just 'call for price'), disclose all fees and taxes, and add financing/payment estimates." };
+
+  return {
+    score, status,
+    details: `${showsRealPrices ? 'Prices shown' : 'Prices hidden / call-for-price'}; fee disclosure: ${data.feeDisclosure ? 'yes' : 'no'}, financing: ${data.financing ? 'yes' : 'no'}.`,
+    analysis,
+    meta: { showsRealPrices, callForPrice: data.callForPrice, feeDisclosure: data.feeDisclosure, noHidden: data.noHidden, disclaimer: data.disclaimer, financing: data.financing }
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Vehicle History — CARFAX / AutoCheck (page-specific: VDP) — spec §2.6. Claimed
+// from UX §2.5 (relocated here). Self-flags N/A for new-only / non-inventory pages.
+// ---------------------------------------------------------------------------
+async function checkVehicleHistory(page) {
+  const data = await page.evaluate(() => {
+    const text = (document.body.innerText || '').toLowerCase();
+    const url = window.location.pathname.toLowerCase();
+    const html = document.documentElement.innerHTML.toLowerCase();
+
+    const usedUrl = /\/used|\/pre-owned|\/preowned|\/cpo|\/certified/.test(url);
+    const usedText = /\bused\b|pre-owned|pre owned|certified pre-owned|\bcpo\b/.test(text);
+    const newOnlyUrl = /\/new(-|\/|$)/.test(url) && !usedUrl;
+
+    const priceEls = document.querySelectorAll('[class*="price" i], [itemprop="price"]').length;
+    const vehicleContext = usedUrl || usedText || /\/inventory|\/vehicles|\/vdp|\/cars/.test(url) || priceEls >= 2 || /\b(vin|stock\s?#|mileage|odometer)\b/.test(text);
+
+    const carfax = /carfax/.test(html);
+    const autocheck = /autocheck/.test(html);
+    const reportLinks = document.querySelectorAll('a[href*="carfax" i], a[href*="autocheck" i]').length;
+    const historyLang = /vehicle history report|free (vehicle )?history|history report|accident[- ]free|no accidents|\bone[- ]owner\b|\b1[- ]owner\b|clean (title|history)|\bclean carfax\b/.test(text);
+
+    return { usedUrl, usedText, newOnlyUrl, vehicleContext, carfax, autocheck, reportLinks, historyLang };
+  });
+
+  const isUsedContext = data.usedUrl || data.usedText;
+
+  if (!data.vehicleContext || (data.newOnlyUrl && !isUsedContext)) {
+    return {
+      status: 'pass',
+      details: data.newOnlyUrl ? "New-vehicle context — history reports don't apply to new cars." : "No used-vehicle inventory context on this page; history reports not applicable.",
+      analysis: { cause: "CARFAX/AutoCheck history is only expected on used / certified pre-owned vehicles.", recommendation: "Audit a used or CPO vehicle-detail page to grade history-report availability." },
+      meta: { notApplicable: true, context: data.newOnlyUrl ? 'new' : 'non-inventory', infoOnly: true },
+      infoOnly: true
+    };
+  }
+
+  const hasReport = data.carfax || data.autocheck;
+  const score = Math.max(0, Math.min(100,
+    (hasReport ? 55 : 0) +
+    (data.reportLinks > 0 ? 20 : 0) +
+    (data.historyLang ? 25 : 0)
+  ));
+  const status = score >= 80 ? 'pass' : (score >= 40 ? 'warning' : 'fail');
+  const providers = [data.carfax && 'CARFAX', data.autocheck && 'AutoCheck'].filter(Boolean).join(' & ');
+
+  return {
+    score, status,
+    details: `${hasReport ? `${providers} present` : 'No CARFAX/AutoCheck detected'}${data.reportLinks ? `, ${data.reportLinks} report link(s)` : ''}.`,
+    analysis: {
+      cause: hasReport ? "Vehicle history reports are surfaced, reassuring used-car buyers about condition and ownership." : "Used vehicles are shown without visible CARFAX/AutoCheck history reports, a major trust gap for pre-owned shoppers.",
+      recommendation: "Provide a free CARFAX or AutoCheck report link on every used/CPO listing and highlight 'accident-free' / 'one-owner' / 'clean title' where applicable."
+    },
+    meta: { context: isUsedContext ? 'used' : 'inventory', carfax: data.carfax, autocheck: data.autocheck, reportLinks: data.reportLinks, historyLang: data.historyLang }
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Certifications & Awards (common) — OEM/award/financing-partner credibility marks.
+// Spec §2.6 folds this into the "Client logos / case studies / certifications &
+// awards" param. Claimed from UX §2.5 (where it was info-only); WEIGHTED here.
+// ---------------------------------------------------------------------------
+async function checkCertificationsAwards(page) {
+  const data = await page.evaluate(() => {
+    const text = (document.body.innerText || '').toLowerCase();
+    const imgAlts = Array.from(document.querySelectorAll('img')).map(i => (i.getAttribute('alt') || '').toLowerCase());
+    const altText = imgAlts.join(' ');
+    const haystack = text + ' ' + altText + ' ' + document.body.className.toLowerCase();
+
+    const signals = {
+      certified: /\bcertified\b|\bcertification\b|certified pre-owned|\bcpo\b/,
+      bbb: /\bbbb\b|better business bureau|accredited business/,
+      award: /\baward(s|ed)?\b|dealer of the year|president'?s award|mark of excellence|top rated|top-rated|best dealer/,
+      ratings: /dealerrater|cars\.com award|edmunds|kelley blue book|\bkbb\b|google reviews|5[- ]?star|five[- ]?star/,
+      manufacturer: /(toyota|honda|ford|chevrolet|nissan|bmw|mercedes|hyundai|kia|subaru|gmc|jeep|ram|lexus|audi|volkswagen|mazda) certified/,
+      ase: /\base certified\b|ase[- ]certified/
+    };
+    const found = Object.keys(signals).filter(k => signals[k].test(haystack));
+    const badgeImgs = imgAlts.filter(a => /certified|award|bbb|accredited|5[- ]?star|dealerrater|excellence/.test(a)).length;
+
+    return { found, badgeImgs };
+  });
+
+  const distinct = data.found.length;
+  let score = distinct === 0 ? 20 : distinct === 1 ? 55 : distinct === 2 ? 75 : 100;
+  if (data.badgeImgs > 0 && score < 100) score = Math.min(100, score + 10);
+  const status = score >= 80 ? 'pass' : (score >= 40 ? 'warning' : 'fail');
+
+  return {
+    score, status,
+    details: distinct ? `Trust signals found: ${data.found.join(', ')}${data.badgeImgs ? ` (+${data.badgeImgs} badge image${data.badgeImgs > 1 ? 's' : ''})` : ''}.` : "No certifications, accreditations or awards detected on this page.",
+    analysis: {
+      cause: distinct >= 2 ? "The page surfaces multiple credibility signals (certifications/awards) that build buyer trust." : "Few or no third-party credibility signals (certifications, BBB, awards, ratings) are visible.",
+      recommendation: "Display manufacturer certifications, BBB accreditation, award badges (Dealer of the Year, DealerRater) and star ratings prominently near the top of key pages."
+    },
+    meta: { found: data.found, badgeImgs: data.badgeImgs }
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Page-type classifier (mirrors seoMetrics tuClassifyPageType, plus finance /
+// offers / lease detection needed for §2.6 page-specific gating).
+// ---------------------------------------------------------------------------
+function cvfClassifyPageType(u) {
+  let path;
+  try { path = new URL(u).pathname.toLowerCase(); } catch { return "home"; }
+  const full = (u || "").toLowerCase();
+  if (/\/contact/.test(path)) return "contact";
+  if (/finance|financing|credit-app|credit-application|get-(pre-?)?approved|pre-?approval|apply-for-(financing|credit)/.test(path)) return "finance";
+  if (/lease/.test(path)) return "lease";
+  if (/offers|specials|deals|promotions|incentives|coupons/.test(path)) return "offers";
+  if (/trade.?in|value-(your|my)-(trade|car|vehicle|auto)|sell-(us-|my-|your-)+(car|vehicle|auto)|appraisal/.test(path)) return "tradein";
+  if (/service|schedule-service|auto-repair|maintenance/.test(path)) return "service";
+  if (/\/about|meet-the-team|our-story|dealership-info|who-we-are/.test(path)) return "about";
+  if (/\/vdp|\/vehicle\/|\/-id-/.test(path)) return "vdp";
+  if (/\/(new|used|certified|cpo)\/[^/]+\/[^/]+/.test(path)) return "vdp";
+  if (/vin=|stocknum|stock=|vehicleid/.test(full)) return "vdp";
+  if (/inventory|\/new\b|\/used\b|\/search|vehicles?(\/|$)|for-sale|cars-for-sale/.test(path)) return "srp";
+  return "home";
+}
+
+// Spec §2.6 in-section weights (decimals). The product splits some spec params into
+// sub-cards whose weights SUM to the spec param weight (same pattern as On-Page §2.2):
+//   CTA effectiveness 0.18 = Presence .07 + Clarity .05 + Flow .06
+//   Form length / required-vs-optional 0.08 = Form_Length .04 + Required_vs_Optional .04
+//   Submit clarity / multi-step 0.04 = Submit .025 + MultiStep .015
+//   Friendly error / microcopy 0.04 = Friendly .02 + Microcopy .02
+//   Testimonials / reviews 0.07 = Testimonials .04 + Reviews .03
+//   Logos / case studies / certs 0.03 = Client_Logos .01 + Case_Studies .01 + Certifications .01
+const CONVERSION_SPEC_WEIGHTS = {
+  // CTA effectiveness (common) — 0.18
+  CTA_Presence: 0.07, CTA_Clarity: 0.05, CTA_Flow_Alignment: 0.06,
+  CTA_Crowding: 0.05,
+  // Forms (page-specific) — Form_Presence 0.09; quality 0.08 + 0.05 + 0.04 + 0.04 + 0.03
+  Form_Presence: 0.09,
+  Form_Length: 0.04, Required_vs_Optional_Fields: 0.04,
+  Inline_Validation: 0.05,
+  Submit_Button_Clarity: 0.025, MultiStep_Form_Progress: 0.015,
+  Friendly_Error_Handling: 0.02, Microcopy_Clarity: 0.02,
+  Thank_You_Pages: 0.03,
+  // Trust / social proof (common) — 0.05 / 0.07 / 0.03
+  Trust_Badges: 0.05,
+  Testimonials: 0.04, Reviews: 0.03,
+  Client_Logos: 0.01, Case_Studies_Accessibility: 0.01, Certifications_Awards: 0.01,
+  // Commercial (page-specific)
+  Pricing_Transparency: 0.06,
+  Vehicle_History: 0.04,
+  // Engagement (common)
+  Click_To_Call: 0.04,
+  Chat_Experience: 0.03,
+  Lead_Magnets: 0.02,
+  // Analytics (site-wide)
+  GA4_Installed: 0.05, GTM_Configuration: 0.03, Conversion_Tracking: 0.04, CRM_Integration: 0.02,
+  // Page-specific lead tools (add-ons; only scored on their page type)
+  TradeIn_Flow: 0.15,
+  Financing_Flow: 0.10,
+  Finance_Calculator: 0.10,
+  Appointment_Booking: 0.12,
+  Incentives_Displayed: 0.06,
+};
+
+export default async function conversionLeadFlow(page, $) {
+  const url = (() => { try { return page.url(); } catch { return ""; } })();
+  const pageType = cvfClassifyPageType(url);
+
+  const isTradeIn = pageType === "tradein";
+  const isFinance = pageType === "finance";
+  const isService = pageType === "service";
+  const isVdp = pageType === "vdp";
+  const isOffers = pageType === "offers";
+  const isLease = pageType === "lease";
+  // Spec: Form presence applies on Trade-In, Finance, Contact, Service (N/A elsewhere).
+  const isFormPage = ["tradein", "finance", "contact", "service"].includes(pageType);
+
+  // ---- Analytics / measurability (site-wide) ----
   const trackingData = await collectTrackingData(page);
   const checkGA4Score = checkGA4Installed(trackingData);
   const checkGTMScore = checkGTMConfiguration(trackingData);
   const checkConversionTrackingScore = checkConversionTracking(trackingData);
+  const checkCRMScore = checkCRMIntegration(trackingData, $);
 
-
+  // ---- CTA effectiveness (common) ----
   const checkCTAsScore = checkCTAs($);
   const checkCTAClarityScore = checkCTAClarity($);
   const checkCTACrowdingScore = await checkCTACrowding(page);
   const checkCTAFlowAlignmentScore = await checkCTAFlowAlignment(page, $);
 
+  // ---- Forms ----
   const checkFormPresenceScore = await checkFormPresence(page);
+  const formCount = checkFormPresenceScore?.meta?.count || 0;
+  const hasForms = formCount > 0;
   const checkFormLengthOptimalScore = checkFormLengthOptimal($);
   const checkRequiredVsOptionalFieldsScore = await checkRequiredVsOptionalFields(page);
   const checkInlineValidationScore = checkInlineValidation($);
   const checkSubmitButtonClarityScore = await checkSubmitButtonClarity(page);
   const checkMultiStepFormProgressScore = await checkMultiStepFormProgress(page);
-
-  const checkTestimonialsScore = checkTestimonials($);
-  const checkReviewsVisibleScore = checkReviewsVisible($);
-  const checkTrustBadgesScore = checkTrustBadges($);
-  const checkClientLogosScore = await checkClientLogos(page);
-  const checkCaseStudiesAccessibilityScore = await checkCaseStudiesAccessibility(page);
-
-  const checkProgressIndicatorsScore = checkProgressIndicators($);
   const checkFriendlyErrorHandlingScore = checkFriendlyErrorHandling($);
   const checkMicrocopyClarityScore = checkMicrocopyClarity($);
-
-  const checkLeadMagnetsScore = await checkLeadMagnets(page);
-  const checkIncentivesDisplayedScore = checkIncentivesDisplayed($);
-  const checkLinkRelevanceScore = await checkLinkRelevance(page);
-
-  // Dealer Lead Flows
-  const checkTradeInFlowScore = await checkTradeInFlow(page, $);
-  const checkFinancingFlowScore = await checkFinancingFlow(page, $);
-  const checkFinanceCalculatorScore = await checkFinanceCalculator(page, $);
-  const checkAppointmentBookingScore = await checkAppointmentBooking(page, $);
   const checkThankYouPagesScore = await checkThankYouPages(page, $);
-  const checkChatExperienceScore = await checkChatExperience(page, $);
+
+  // ---- Trust / social proof (common) ----
+  const checkTrustBadgesScore = checkTrustBadges($);
+  const checkTestimonialsScore = checkTestimonials($);
+  const checkReviewsVisibleScore = checkReviewsVisible($);
+  const checkClientLogosScore = await checkClientLogos(page);
+  const checkCaseStudiesAccessibilityScore = await checkCaseStudiesAccessibility(page);
+  const checkCertificationsAwardsScore = await checkCertificationsAwards(page);
+
+  // ---- Commercial (page-specific) ----
+  const checkPricingTransparencyScore = (isVdp || isOffers || isLease || isFinance) ? await checkPricingTransparency(page) : null;
+  const checkVehicleHistoryScore = isVdp ? await checkVehicleHistory(page) : null;
+
+  // ---- Engagement (common) ----
   const checkClickToCallScore = await checkClickToCall(page, $);
+  const checkChatExperienceScore = await checkChatExperience(page, $);
+  const checkLeadMagnetsScore = await checkLeadMagnets(page);
 
+  // ---- Page-specific lead tools (only run where they apply) ----
+  const checkTradeInFlowScore = isTradeIn ? await checkTradeInFlow(page, $) : null;
+  const checkFinancingFlowScore = isFinance ? await checkFinancingFlow(page, $) : null;       // user decision: keep, page-specific Finance
+  const checkFinanceCalculatorScore = (isFinance || isVdp) ? await checkFinanceCalculator(page, $) : null;
+  const checkAppointmentBookingScore = isService ? await checkAppointmentBooking(page, $) : null;
+  const checkIncentivesDisplayedScore = (isService || isOffers) ? checkIncentivesDisplayed($) : null;
 
-  // Weights
-  const weights = {
-    CTA_Presence: 5, Form_Presence: 5,
-    CTA_Clarity: 4, Trust_Badges: 4, Inline_Validation: 4, Friendly_Error_Handling: 4,
-    Testimonials: 4, Reviews: 4,
-    Form_Length: 3, Submit_Button_Clarity: 3, Required_vs_Optional_Fields: 3, CTA_Flow_Alignment: 3,
-    Lead_Magnets: 2, Microcopy_Clarity: 2, Incentives_Displayed: 2, CTA_Crowding: 2,
-    Client_Logos: 1, Case_Studies_Accessibility: 1, MultiStep_Form_Progress: 1, Progress_Indicators: 1,
-    Link_Relevance: 5,
-    TradeIn_Flow: 4, Financing_Flow: 4, Finance_Calculator: 3, Appointment_Booking: 4,
-    Thank_You_Pages: 2, Chat_Experience: 3, Click_To_Call: 3,
-    Conversion_Tracking: 5, GA4_Installed: 4, GTM_Configuration: 3,
-  };
-
-  const metricsMap = {
+  // Applicable metric set. Page-specific & form-quality params are `null` where they
+  // don't apply (omitted → dropped from the denominator, spec rule 6). NOTE: Link_Relevance
+  // (folded into CTA effectiveness / funnel alignment) and Progress_Indicators (duplicate of
+  // MultiStep_Form_Progress) are HIDDEN per spec Part 4 rule 4 — no longer computed/returned.
+  const candidateMap = {
     CTA_Presence: checkCTAsScore,
     CTA_Clarity: checkCTAClarityScore,
     CTA_Crowding: checkCTACrowdingScore,
     CTA_Flow_Alignment: checkCTAFlowAlignmentScore,
-    Form_Presence: checkFormPresenceScore,
-    Form_Length: checkFormLengthOptimalScore,
-    Required_vs_Optional_Fields: checkRequiredVsOptionalFieldsScore,
-    Inline_Validation: checkInlineValidationScore,
-    Submit_Button_Clarity: checkSubmitButtonClarityScore,
-    MultiStep_Form_Progress: checkMultiStepFormProgressScore,
+
+    Form_Presence: isFormPage ? checkFormPresenceScore : null,
+    Form_Length: hasForms ? checkFormLengthOptimalScore : null,
+    Required_vs_Optional_Fields: hasForms ? checkRequiredVsOptionalFieldsScore : null,
+    Inline_Validation: hasForms ? checkInlineValidationScore : null,
+    Submit_Button_Clarity: hasForms ? checkSubmitButtonClarityScore : null,
+    MultiStep_Form_Progress: hasForms ? checkMultiStepFormProgressScore : null,
+    Friendly_Error_Handling: hasForms ? checkFriendlyErrorHandlingScore : null,
+    Microcopy_Clarity: hasForms ? checkMicrocopyClarityScore : null,
+    Thank_You_Pages: hasForms ? checkThankYouPagesScore : null,
+
+    Trust_Badges: hasForms ? checkTrustBadgesScore : null,   // spec: trust badges near PII forms
     Testimonials: checkTestimonialsScore,
     Reviews: checkReviewsVisibleScore,
-    Trust_Badges: checkTrustBadgesScore,
     Client_Logos: checkClientLogosScore,
     Case_Studies_Accessibility: checkCaseStudiesAccessibilityScore,
+    Certifications_Awards: checkCertificationsAwardsScore,
+
+    Pricing_Transparency: checkPricingTransparencyScore,
+    Vehicle_History: checkVehicleHistoryScore,
+
+    Click_To_Call: checkClickToCallScore,
+    Chat_Experience: checkChatExperienceScore,
     Lead_Magnets: checkLeadMagnetsScore,
-    Progress_Indicators: checkProgressIndicatorsScore,
-    Friendly_Error_Handling: checkFriendlyErrorHandlingScore,
-    Microcopy_Clarity: checkMicrocopyClarityScore,
-    Incentives_Displayed: checkIncentivesDisplayedScore,
-    Link_Relevance: checkLinkRelevanceScore,
+
+    GA4_Installed: checkGA4Score,
+    GTM_Configuration: checkGTMScore,
+    Conversion_Tracking: checkConversionTrackingScore,
+    CRM_Integration: checkCRMScore,
+
     TradeIn_Flow: checkTradeInFlowScore,
     Financing_Flow: checkFinancingFlowScore,
     Finance_Calculator: checkFinanceCalculatorScore,
     Appointment_Booking: checkAppointmentBookingScore,
-    Thank_You_Pages: checkThankYouPagesScore,
-    Chat_Experience: checkChatExperienceScore,
-    Click_To_Call: checkClickToCallScore,
-    GA4_Installed: checkGA4Score,
-    GTM_Configuration: checkGTMScore,
-    Conversion_Tracking: checkConversionTrackingScore,
+    Incentives_Displayed: checkIncentivesDisplayedScore,
   };
 
+  // Renormalize: section = Σ(score × w) / Σ(w) over APPLICABLE, non-N/A params only.
   let totalWeight = 0;
   let earnedScore = 0;
+  const metricsMap = {};
 
-  for (const [key, metric] of Object.entries(metricsMap)) {
-    const weight = weights[key] || 1;
+  for (const [key, metric] of Object.entries(candidateMap)) {
+    if (!metric) continue;                                            // not applicable on this page type
+    if (metric.infoOnly === true || metric.meta?.notApplicable === true) continue; // self-flagged N/A → drop
+    const weight = CONVERSION_SPEC_WEIGHTS[key] ?? 0.02;
+    const s = typeof metric.score === "number"
+      ? metric.score
+      : (metric.status === "pass" ? 100 : metric.status === "warning" ? 50 : 0);
     totalWeight += weight;
-    if (metric.score === 100) {
-      earnedScore += weight;
-    } else if (metric.score === 50) {
-      earnedScore += weight * 0.5;
-    }
+    earnedScore += weight * (s / 100);
+    metricsMap[key] = metric;
   }
 
   const actualPercentage = totalWeight > 0 ? parseFloat(((earnedScore / totalWeight) * 100).toFixed(0)) : 0;
 
   return {
     Percentage: actualPercentage,
+    Confidence: "heuristic",                          // spec §0.5 — all conversion signals are DOM heuristics
+    pageType,
+    parametersScored: Object.keys(metricsMap).length,
     ...metricsMap
   };
 }

@@ -2510,12 +2510,12 @@ export const InfoDetails = {
     CRM_Integration: {
         title: "CRM Integration (Lead Transfer)",
         whatThisParameterIs: "This check verifies that your contact/lead forms are actually connected to a CRM, so the inquiries visitors submit are captured instead of disappearing into a void.",
-        whatItCalculates: "It scans your forms (action URLs, hidden fields) and page scripts for known CRM signatures (HubSpot, Salesforce, VinSolutions, DealerSocket, Elead, Zoho and others), then submits a clearly-labelled test lead and watches the network for a CRM lead endpoint and a successful (HTTP 200/201) response. Scored out of 10: CRM evidence (+3), lead endpoint detected (+5), successful submission (+2).",
+        whatItCalculates: "It scans the rendered page's scripts and form actions for known CRM signatures (HubSpot, Salesforce/Pardot, Marketo, VinSolutions, DealerSocket, eLead, goCRM, Selly and others). A CRM script plus a lead form wired to it scores fully; a CRM script with no wired form scores partially; neither fails. This is a lightweight measurability signal (low weight) — deeper, server-side lead routing isn't observable from the browser.",
         whyItMatters: "A beautiful contact form is worthless if the leads never reach your sales team. A broken or unconnected form means every inquiry is a customer you paid to attract and then silently lost.",
         thresholds: {
-            good: "Lead endpoint detected and the test submission returned HTTP 200/201",
-            needsImprovement: "CRM evidence or a lead endpoint was found, but a successful submission could not be confirmed",
-            poor: "A contact/lead form exists but no CRM integration was detected"
+            good: "A CRM vendor script is present and a lead form is wired to it",
+            needsImprovement: "A CRM script/SDK is present but no on-page form action posts to it",
+            poor: "No CRM vendor script or wired form action was detected"
         },
         actualReasonsForFailure: [
             "The contact form is not wired to any CRM — submissions go nowhere or only to an inbox",
@@ -2782,7 +2782,7 @@ export const InfoDetails = {
     Certifications_Awards: {
         title: "Certifications & Awards",
         whatThisParameterIs: "We look for trust signals like manufacturer certifications, BBB accreditation, dealer awards and review-site badges that tell shoppers you're a credible, reputable dealership.",
-        whatItCalculates: "We scan page text, image alt-text and badges for credibility signals — 'certified', BBB, 'Dealer of the Year', DealerRater/KBB/Google ratings, manufacturer-certified and ASE — and count how many distinct ones appear. This is shown for information and doesn't affect the score.",
+        whatItCalculates: "We scan page text, image alt-text and badges for credibility signals — 'certified', BBB, 'Dealer of the Year', DealerRater/KBB/Google ratings, manufacturer-certified and ASE — and count how many distinct ones appear. More distinct credibility signals score higher.",
         whyItMatters: "Buying a car is a high-trust, high-value decision. Recognizable certifications and awards reassure shoppers that you're legitimate and well-reviewed, which lifts confidence and conversion before they ever contact you.",
         thresholds: {
             good: "Several credibility signals (certifications, awards, accreditations) are visible",
@@ -3932,14 +3932,18 @@ export const InfoDetails = {
         howThisScoreIsCalculated: (
             <div className="space-y-2">
                 <p>Think of this score as a "mystery shopper" report for your website. We automatically scan your page to see how easy it is for a stranger to become a customer.</p>
-                <p>We give top points for the essentials—like clear buttons and short forms—because these matter most. We also look for trust signals like reviews and security badges.</p>
+                <p>We give top points for the essentials—like clear buttons (CTA effectiveness) and short, well-validated forms—because these matter most. We also look for trust signals like reviews, certifications and security badges, and for analytics/CRM so leads are actually measured and captured.</p>
+                <p>Parameters that don't apply to the page you audited (forms on a page with no forms, a trade-in tool off the trade-in page, pricing on a non-pricing page) are dropped and the remaining weights are renormalized — so the score reflects only what that page should be judged on. Page-specific lead tools (trade-in valuation, payment calculator, service booking, pricing transparency, vehicle history) are added on their relevant page types. All signals are measured heuristically from the rendered DOM (Confidence: heuristic).</p>
                 <p>If your forms are too long, your buttons are hidden, or users can't tell if you're trustworthy, your score goes down.</p>
             </div>
         ),
         weightage: [
-            { param: "Call-to-Actions & Forms", weight: "50%" },
-            { param: "Trust & Credibility", weight: "25%" },
-            { param: "User Flow & Experience", weight: "25%" }
+            { param: "CTA effectiveness + crowding", weight: "23%" },
+            { param: "Forms (presence, length, validation, errors, confirmation)", weight: "~29% on form pages" },
+            { param: "Trust & social proof (reviews, badges, logos, certifications)", weight: "15%" },
+            { param: "Analytics & CRM measurability (GA4/GTM/Conversion/CRM)", weight: "14%" },
+            { param: "Engagement (click-to-call, chat, lead magnets)", weight: "9%" },
+            { param: "Page-specific tools & pricing (trade-in, calculator, booking, pricing, vehicle history)", weight: "added where applicable" }
         ]
     },
 
@@ -4153,6 +4157,27 @@ export const InfoDetails = {
             "Use a 'Callout' block for your most important takeaway"
         ]
     },
+    Structured_Content: {
+        title: "Structured Content",
+        whatThisParameterIs: "A combined view of how 'machine-parseable' your content layout is — short chunks of text plus lists, tables, and callout blocks that AI can extract cleanly.",
+        whatItCalculates: "It blends two signals: paragraph chunking (aiming for sub-80-word blocks with frequent headings) and the presence of lists, tables, and blockquotes that expose data points.",
+        whyItMatters: "AI loves structure. Short chunks and lists/tables let answer engines pull facts into summaries and comparison tables. This card is shown for guidance only — it is informational and does not affect your AIO score (it overlaps the AEO 'Structured content' signal, which is scored there).",
+        thresholds: {
+            good: "Bite-sized paragraphs with lists/tables breaking up the content",
+            needsImprovement: "Some dense paragraphs or few structured blocks",
+            poor: "Walls of text with no lists or tables"
+        },
+        actualReasonsForFailure: [
+            "Paragraphs longer than 80 words with no breaks",
+            "No bulleted/numbered lists or data tables on the page",
+            "Important facts buried inside long prose"
+        ],
+        howToOvercomeFailure: [
+            "Break long paragraphs into 40–60 word chunks",
+            "Turn 3+ key points into a bulleted list",
+            "Use a table for specs or comparisons, and a callout for the key takeaway"
+        ]
+    },
     Terminology_Consistency: {
         title: "Terminology Consistency",
         whatThisParameterIs: "It verifies that the main terms used in your headings are consistently supported and explained within your body text.",
@@ -4226,7 +4251,7 @@ export const InfoDetails = {
         whatThisMetricIs: (
             <div className="space-y-2">
                 <p>This score measures how easy it is for Artificial Intelligence (like ChatGPT, Perplexity, or Google Gemini) to find, understand, and use your content to answer user questions.</p>
-                <p>We audit <span className="font-semibold text-indigo-400">14 critical AIO signals</span>—ranging from hidden "Identity Code" to content chunking—combined with <span className="font-semibold text-indigo-400">Answer Engine Optimization (AEO)</span> specific logic for the top 3 AI platforms.</p>
+                <p>We score <span className="font-semibold text-indigo-400">8 weighted AIO signals</span> (structured-data validity, NLP-friendly content, answer-oriented structure, duplicate-content readiness, keyword/entity annotation, freshness, AI-friendly internal linking, and topical focus) plus a couple of <span className="font-semibold text-indigo-400">informational</span> checks—combined with <span className="font-semibold text-indigo-400">Answer Engine Optimization (AEO)</span> specific logic for the top 3 AI platforms.</p>
             </div>
         ),
         whyItMatters: (
@@ -4276,7 +4301,7 @@ export const InfoDetails = {
         ),
         howThisScoreIsCalculated: (
             <div className="space-y-4">
-                <p>Our audit engine analyzes <span className="font-semibold">14 backend parameters</span> categorized into Identity, Freshness, Readability, and Trust. We then apply platform-specific weighted offsets for the Big 3 AI platforms.</p>
+                <p>The AIO foundation score is a <span className="font-semibold">weighted average</span> of 8 parameters scored 0–100 each (spec §2.7 weights below): <code>Σ(score × weight) ÷ Σ(weight)</code>, renormalized when a parameter is not applicable. Structured-content and terminology checks are shown for guidance but are <span className="font-semibold">informational (not scored)</span> to avoid double-counting AEO. This foundation score is then averaged with the AEO platform score for the headline number, with platform-specific weighting for the Big 3 AI engines.</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2 p-4 bg-indigo-50/10 rounded-xl border border-indigo-500/20 italic text-[11px]">
                     <div><span className="font-semibold text-blue-400">Gemini</span>: Weights Schema & Search Bot status.</div>
                     <div><span className="font-semibold text-emerald-400">ChatGPT</span>: Weights llms.txt & Markdown structure.</div>
@@ -4286,10 +4311,15 @@ export const InfoDetails = {
             </div>
         ),
         weightage: [
-            { param: "Identity & Authority (Schema, Citations, EEAT)", weight: "30%" },
-            { param: "Readability & Chunking (Bullet-points, Tables)", weight: "30%" },
-            { param: "AEO Platform Scoring (Gemini, ChatGPT, Perplexity)", weight: "25%" },
-            { param: "Freshness & Search Alignment (Updates, Intents)", weight: "15%" }
+            { param: "Structured-data validity", weight: "20%" },
+            { param: "NLP-friendly content", weight: "16%" },
+            { param: "Answer-oriented structure", weight: "12%" },
+            { param: "Duplicate-content readiness", weight: "12%" },
+            { param: "Keyword / entity annotation", weight: "10%" },
+            { param: "Content freshness markers", weight: "10%" },
+            { param: "AI-friendly internal linking", weight: "10%" },
+            { param: "Topical focus clarity", weight: "10%" },
+            { param: "Structured content · Terminology", weight: "Informational" }
         ]
     },
 

@@ -9,7 +9,7 @@ import {
   CheckCircle, XCircle, AlertTriangle, Info,
   MousePointerClick, FileText, ShieldCheck, LayoutTemplate,
   MessageSquare, Zap, Target, CreditCard, Users, Activity, Loader2, ChevronDown, ChevronUp, Car, Landmark, Calculator, CalendarCheck,
-  PartyPopper, Bot, PhoneCall, Phone, BarChart3, Tag
+  PartyPopper, Bot, PhoneCall, Phone, BarChart3, Tag, DollarSign, Award, Database, FileClock
 } from "lucide-react";
 import MetricInfoModal from "../Component/MetricInfoModal";
 import ParameterInfoModal from "../Component/ParameterInfoModal";
@@ -48,6 +48,10 @@ const iconMap = {
   GA4_Installed: BarChart3,
   GTM_Configuration: Tag,
   Conversion_Tracking: PhoneCall,
+  CRM_Integration: Database,
+  Certifications_Awards: Award,
+  Pricing_Transparency: DollarSign,
+  Vehicle_History: FileClock,
 };
 
 const educationalContent = InfoDetails;
@@ -1006,9 +1010,17 @@ const Conversion_Lead_Flow_Inner = React.memo(({ data, loading, darkMode }) => {
 
                   <div className={`flex-1 ${data.report === "All" ? "space-y-5" : "space-y-4"} text-left order-2 md:order-1`}>
                     <div className={`${data.report === "All" ? "space-y-2" : "space-y-1.5"}`}>
-                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-accentsoft text-accent border border-accent/20"}`}>
-                        <Target className="w-3.5 h-3.5" />
-                        <span>Conversion Audit</span>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-accentsoft text-accent border border-accent/20"}`}>
+                          <Target className="w-3.5 h-3.5" />
+                          <span>Conversion Audit</span>
+                        </div>
+                        {flow.Confidence && (
+                          <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "bg-slate-800 text-slate-300 border border-slate-700" : "bg-surface-2 text-muted border border-line"}`} title="Conversion signals are measured from the rendered DOM (heuristic confidence). Page-specific parameters are scored only where they apply and renormalized.">
+                            <Info className="w-3.5 h-3.5" />
+                            <span>Confidence: {flow.Confidence}{flow.pageType ? ` · ${flow.pageType}` : ""}</span>
+                          </div>
+                        )}
                       </div>
                       <h3 className={`${data.report === "All" ? "text-3xl lg:text-5xl" : "text-2xl lg:text-4xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>
                         Conversion & <span className={darkMode ? "text-blue-500" : "text-accent"}>Lead Flow</span>
@@ -1064,11 +1076,12 @@ const Conversion_Lead_Flow_Inner = React.memo(({ data, loading, darkMode }) => {
           <div className="space-y-6">
             {(() => {
               const visible = (keys) => keys.filter((k) => flow[k] && isVisibleForAudience(k, audienceMode));
-              const ctaKeys = visible(["CTA_Presence", "CTA_Clarity", "CTA_Crowding", "CTA_Flow_Alignment", "Submit_Button_Clarity", "Link_Relevance"]);
-              const analyticsKeys = visible(["GA4_Installed", "GTM_Configuration", "Conversion_Tracking"]);
+              const ctaKeys = visible(["CTA_Presence", "CTA_Clarity", "CTA_Crowding", "CTA_Flow_Alignment"]);
+              const analyticsKeys = visible(["GA4_Installed", "GTM_Configuration", "Conversion_Tracking", "CRM_Integration"]);
               const leadKeys = visible(["Form_Presence", "Lead_Magnets", "Incentives_Displayed", "Form_Length"]);
-              const trustKeys = visible(["Testimonials", "Reviews", "Trust_Badges", "Client_Logos", "Case_Studies_Accessibility"]);
-              const frictionKeys = visible(["Required_vs_Optional_Fields", "Inline_Validation", "Friendly_Error_Handling", "Microcopy_Clarity", "MultiStep_Form_Progress", "Progress_Indicators", "Thank_You_Pages"]);
+              const trustKeys = visible(["Testimonials", "Reviews", "Trust_Badges", "Client_Logos", "Case_Studies_Accessibility", "Certifications_Awards"]);
+              const commercialKeys = visible(["Pricing_Transparency", "Vehicle_History"]);
+              const frictionKeys = visible(["Required_vs_Optional_Fields", "Inline_Validation", "Submit_Button_Clarity", "Friendly_Error_Handling", "Microcopy_Clarity", "MultiStep_Form_Progress", "Thank_You_Pages"]);
               const dealerKeys = visible(["TradeIn_Flow", "Financing_Flow", "Finance_Calculator", "Appointment_Booking"]);
               const contactKeys = visible(["Click_To_Call", "Chat_Experience"]);
               return (
@@ -1107,6 +1120,14 @@ const Conversion_Lead_Flow_Inner = React.memo(({ data, loading, darkMode }) => {
                   {trustKeys.length > 0 && (
                     <Section title="Trust & Social Proof" icon={ShieldCheck} darkMode={darkMode}>
                       {trustKeys.map((key) => (
+                        <MetricCard key={key} metricKey={key} data={flow[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
+                      ))}
+                    </Section>
+                  )}
+
+                  {commercialKeys.length > 0 && (
+                    <Section title="Pricing & Vehicle Trust" icon={DollarSign} darkMode={darkMode}>
+                      {commercialKeys.map((key) => (
                         <MetricCard key={key} metricKey={key} data={flow[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
                       ))}
                     </Section>

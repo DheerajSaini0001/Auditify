@@ -287,7 +287,9 @@ export const generatePDF = (data) => {
 
         // Section Parameters & Core Web Vitals (Lab vs Field)
         Object.entries(sectionData).forEach(([k, v]) => {
-            if (['Percentage', 'Real_User_Experience', 'Schema', 'siteSchema', 'Section_Score', 'score', 'grade'].includes(k)) return;
+            // Keyboard sub-checks are folded into Keyboard_Navigation (Accessibility §2.3) — don't list them separately.
+            if (['Percentage', 'Confidence', 'Coverage', 'Note', 'Real_User_Experience', 'Schema', 'siteSchema', 'Section_Score', 'score', 'grade',
+                 'Focus_Order', 'Focusable_Content', 'Tab_Index', 'Aria_Hidden_Focus'].includes(k)) return;
 
             // Helper to process a single metric object (supports nested lab/crux)
             const processMetric = (metric, subName = "") => {
@@ -295,7 +297,11 @@ export const generatePDF = (data) => {
 
                 const name = subName ? `${cleanKey(k)} (${subName})` : cleanKey(k);
                 const valDetails = metric.details || metric.Details || (metric.value != null ? String(metric.value) : "");
-                const valStatus = (metric.status || metric.Status || (metric.score >= 90 ? 'Pass' : (metric.score >= 50 ? 'Warning' : 'Fail')));
+                // Renormalized-N/A metrics carry a null score/status — show as N/A, not Fail.
+                const isNotScored = metric.meta?.notScored || metric.score === null || metric.score === undefined;
+                const valStatus = isNotScored
+                    ? 'N/A'
+                    : (metric.status || metric.Status || (metric.score >= 90 ? 'Pass' : (metric.score >= 50 ? 'Warning' : 'Fail')));
                 const statusClean = cleanKey(valStatus);
                 const isIssue = cleanedStatusIsIssue(statusClean);
 

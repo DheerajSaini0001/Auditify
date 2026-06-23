@@ -1899,6 +1899,112 @@ export const InfoDetails = {
         ]
     },
 
+    Target_Size: {
+        title: "Target Size",
+        whatThisParameterIs: "Target Size is how big your buttons and links are. Bigger tap targets are far easier to hit accurately, especially on a phone.",
+        whatItCalculates: "We measure the rendered size of every interactive control and report the share that meet WCAG 2.2's 24×24 CSS-pixel minimum (Success Criterion 2.5.8).",
+        whyItMatters: "Tiny tap targets cause mis-taps and frustration — a serious problem for the mobile shoppers who make up most dealership traffic, and for users with motor impairments.",
+        thresholds: {
+            good: "All targets ≥ 24×24px (ideally 44×44 for primary CTAs)",
+            needsImprovement: "Some targets between the minimum and recommended size",
+            poor: "Many controls smaller than 24×24px"
+        },
+        actualReasonsForFailure: [
+            "Icon buttons, close (×) buttons, or links rendered smaller than 24×24px",
+            "Tightly packed links/buttons with no spacing between them",
+            "Compact navigation or footer links on mobile"
+        ],
+        howToOvercomeFailure: [
+            "Increase padding so interactive controls are at least 24×24 CSS px",
+            "Use 44×44px for primary calls-to-action on touch screens",
+            "Add spacing between adjacent small targets"
+        ]
+    },
+    Reflow: {
+        title: "Reflow",
+        whatThisParameterIs: "Reflow means your page rearranges to fit a narrow screen without forcing the user to scroll sideways to read.",
+        whatItCalculates: "We shrink the viewport to 320 CSS pixels and check that content does not require horizontal scrolling (WCAG 2.2 Success Criterion 1.4.10).",
+        whyItMatters: "When a page overflows sideways, mobile users and people who zoom in to 400% have to scroll in two directions to read a single line — an exhausting, error-prone experience.",
+        thresholds: {
+            good: "No horizontal scroll at 320px width",
+            needsImprovement: "Minor overflow (≤ 80px)",
+            poor: "Significant horizontal overflow"
+        },
+        actualReasonsForFailure: [
+            "Fixed-width containers, images, or tables wider than the screen",
+            "Large inline media without max-width:100%",
+            "Absolute pixel widths instead of responsive units"
+        ],
+        howToOvercomeFailure: [
+            "Use responsive units (%, max-width:100%) instead of fixed pixel widths",
+            "Wrap wide tables in a container with overflow-x:auto",
+            "Test the layout at a 320px viewport and 400% zoom"
+        ]
+    },
+    Text_Spacing: {
+        title: "Text Spacing",
+        whatThisParameterIs: "Text Spacing checks that your content still reads correctly when a visitor increases the space between lines, letters, and words.",
+        whatItCalculates: "We apply WCAG 2.2's text-spacing overrides (line-height 1.5, letter-spacing 0.12em, word-spacing 0.16em) and look for text that gets clipped or cut off (Success Criterion 1.4.12). This is an informational check — confirm visually.",
+        whyItMatters: "Many people with dyslexia or low vision increase spacing to read comfortably. If your containers have fixed heights, that text gets chopped off and becomes unreadable.",
+        thresholds: {
+            good: "Content survives spacing overrides without clipping",
+            needsImprovement: "A few containers clip their text",
+            poor: "Widespread clipping under increased spacing"
+        },
+        actualReasonsForFailure: [
+            "Fixed-height text containers with overflow:hidden",
+            "Buttons or cards sized to exact text dimensions",
+            "Truncated content that can't expand"
+        ],
+        howToOvercomeFailure: [
+            "Avoid fixed heights on elements that contain text",
+            "Let containers grow with their content",
+            "Avoid overflow:hidden on body copy"
+        ]
+    },
+    Focus_Not_Obscured: {
+        title: "Focus Not Obscured",
+        whatThisParameterIs: "This checks that when a keyboard user tabs to an element, it isn't hidden behind a sticky header or banner.",
+        whatItCalculates: "We detect sticky/fixed headers and check whether the page reserves space (scroll-padding) so focused elements stay visible (WCAG 2.2 Success Criterion 2.4.11). Informational — confirm by tabbing through.",
+        whyItMatters: "If the element you've tabbed to scrolls underneath a sticky header, keyboard users lose track of where they are and can't see what they're about to activate.",
+        thresholds: {
+            good: "No sticky header, or scroll-padding keeps focus visible",
+            needsImprovement: "Sticky header with no scroll offset",
+            poor: "Focused elements consistently hidden behind a header"
+        },
+        actualReasonsForFailure: [
+            "A fixed/sticky header overlaps focused content",
+            "No scroll-padding-top to offset the header height",
+            "Focused elements scroll underneath the header"
+        ],
+        howToOvercomeFailure: [
+            "Add scroll-padding-top equal to the sticky header height on the root element",
+            "Use scroll-margin-top on focusable targets",
+            "Manually tab through the page to confirm focus stays visible"
+        ]
+    },
+    Reduced_Motion: {
+        title: "Reduced Motion",
+        whatThisParameterIs: "Reduced Motion checks whether your site respects a visitor's system setting that asks for less animation.",
+        whatItCalculates: "We detect animations, transitions, and autoplaying media, then check for a @media (prefers-reduced-motion: reduce) rule that tones them down. Informational.",
+        whyItMatters: "Animations, parallax, and autoplay carousels can trigger nausea, dizziness, or migraines for people with vestibular disorders. Honoring their preference makes the site usable for them.",
+        thresholds: {
+            good: "No significant motion, or a reduced-motion media query is present",
+            needsImprovement: "Motion present without a reduced-motion query",
+            poor: "Heavy autoplay/animation with no accommodation"
+        },
+        actualReasonsForFailure: [
+            "Animations or autoplay carousels with no reduced-motion fallback",
+            "No @media (prefers-reduced-motion: reduce) rule defined",
+            "Auto-playing video or marquee effects"
+        ],
+        howToOvercomeFailure: [
+            "Add a @media (prefers-reduced-motion: reduce) block that disables non-essential animation",
+            "Avoid autoplaying motion, or provide a pause control",
+            "Keep essential animation subtle and brief"
+        ]
+    },
+
     // Methodologies (Accessibility)
     Accessibility_Methodology: {
         icon: Eye,
@@ -1934,15 +2040,16 @@ export const InfoDetails = {
         ),
         howThisScoreIsCalculated: (
             <div className="space-y-2">
-                <p>The Accessibility score is a weighted average of 19 distinct checks, prioritizing high-impact issues like color contrast, keyboard navigation, and form labeling.</p>
-                <p>Each check contributes to the total score based on the severity of findings: Passing checks earn 100%, warnings (moderate issues) earn 50%, and critical failures earn 0%.</p>
+                <p>Each check is scored <span className="font-semibold">on a graded curve</span> — the share of accessibility-tree nodes that pass — rather than a flat pass/fail, so one bad element no longer collapses an entire check.</p>
+                <p>Checks roll up by <span className="font-semibold">severity × instance</span>: Critical issues (contrast, form labels, keyboard, language) weigh ×3, Serious issues (alt text, names, ARIA, target size, reflow) ×2, and Moderate issues ×1. A single Critical failure caps the section at 70, a Serious failure at 85.</p>
+                <p>Checks that don't apply (e.g. form labels on a page with no inputs) are removed from the math, not scored zero. Automated checks cover only ~30–40% of WCAG, so the score is <span className="font-semibold">capped below 100</span> and reported with <span className="font-semibold">heuristic</span> confidence — manual review is still required.</p>
             </div>
         ),
         weightage: [
-            { param: "Visual Labels & Contrast", weight: "34%" },
-            { param: "Navigation & Focus Order", weight: "31%" },
-            { param: "Interactive Elements & Names", weight: "18%" },
-            { param: "ARIA Roles & Semantics", weight: "17%" }
+            { param: "Critical (contrast, labels, keyboard, lang)", weight: "×3" },
+            { param: "Serious (alt, names, ARIA, target size, reflow)", weight: "×2" },
+            { param: "Moderate (headings, landmarks, lists, skip link)", weight: "×1" },
+            { param: "WCAG 2.2 manual-review checks", weight: "Info only" }
         ]
     },
 

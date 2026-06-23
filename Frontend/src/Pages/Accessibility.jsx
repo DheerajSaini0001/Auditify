@@ -42,6 +42,11 @@ const iconMap = {
   Meta_Viewport: Layout,
   List: Layout,
   Heading_Order: Type,
+  Target_Size: MousePointer,
+  Reflow: Layout,
+  Text_Spacing: Type,
+  Focus_Not_Obscured: Focus,
+  Reduced_Motion: Eye,
 };
 
 const educationalContent = InfoDetails;
@@ -96,8 +101,11 @@ const AccessibilityShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
 // Simplified Metric Card
 const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
   const { score, details, meta, analysis } = data || {};
-  const isPassed = score === 100 || data?.status === "pass";
-  const isWarning = !isPassed && (score === 50 || data?.status === "warning");
+  // Scores are now graded (e.g. 88), so drive colour off `status`, not score === 100/50.
+  const isNA = meta?.notScored || score === null || score === undefined;
+  const isPassed = !isNA && (data?.status === "pass" || score === 100);
+  const isWarning = !isNA && !isPassed && (data?.status === "warning" || score === 50);
+  const isInfo = meta?.informational || data?.infoOnly;
   const [showDetails, setShowDetails] = React.useState(false);
 
   const Icon = iconMap[metricKey] || CheckCircle;
@@ -109,13 +117,14 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
   const colors = {
     emerald: { light: "text-emerald-600", dark: "text-emerald-400", border: "border-l-emerald-500", bg: "bg-emerald-50 text-emerald-700 border-emerald-100" },
     amber: { light: "text-amber-600", dark: "text-amber-400", border: "border-l-amber-500", bg: "bg-amber-50 text-amber-700 border-amber-100" },
-    rose: { light: "text-rose-600", dark: "text-rose-400", border: "border-l-rose-500", bg: "bg-rose-50 text-rose-700 border-rose-100" }
+    rose: { light: "text-rose-600", dark: "text-rose-400", border: "border-l-rose-500", bg: "bg-rose-50 text-rose-700 border-rose-100" },
+    slate: { light: "text-slate-500", dark: "text-slate-400", border: "border-l-slate-400", bg: "bg-slate-100 text-slate-600 border-slate-200" }
   };
 
-  const statusType = isPassed ? "emerald" : (isWarning ? "amber" : "rose");
-  const themeColors = colors[statusType];
+  const statusType = isNA ? "slate" : (isPassed ? "emerald" : (isWarning ? "amber" : "rose"));
+  const themeColors = colors[statusType] || colors.emerald;
   const cardBg = darkMode ? "bg-gray-800/80 border-gray-700" : "bg-card border-line";
-  const statusLabel = isPassed ? "Passed" : (isWarning ? "Warning" : "Failed");
+  const statusLabel = isNA ? "Not Applicable" : (isPassed ? "Passed" : (isWarning ? "Warning" : "Failed"));
 
   return (
     <div className={`relative overflow-hidden rounded-2xl border ${cardBg} shadow-sm hover:shadow-md transition-all duration-300 flex flex-col`}>
@@ -141,7 +150,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
           </div>
 
           <div className="flex items-center gap-2 mt-1">
-            {isActionableParam(metricKey) && (!isPassed || meta?.failedNodes || meta?.present || meta?.missing) && (
+            {isActionableParam(metricKey) && !isNA && (!isPassed || meta?.failedNodes || meta?.present || meta?.missing || meta?.offenders) && (
               <button
                 onClick={(e) => { e.stopPropagation(); setShowDetails(!showDetails); }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-semibold uppercase tracking-wider transition-all ${darkMode ? "bg-slate-700/50 text-slate-300 hover:bg-slate-700" : "bg-cardsoft text-muted hover:bg-surface-2"}`}
@@ -177,9 +186,14 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             Current Status
           </h4>
           <div className={`p-5 rounded-2xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
-            <p className={`text-base font-semibold ${isPassed ? "text-emerald-500" : "text-rose-500"}`}>
+            <p className={`text-base font-semibold ${isNA ? "text-slate-500" : isPassed ? "text-emerald-500" : isWarning ? "text-amber-500" : "text-rose-500"}`}>
               {details || "Audit Passed"}
             </p>
+            {(isInfo || isNA) && (
+              <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider opacity-50">
+                {isNA ? "Not applicable on this page — excluded from the score" : "Informational — not counted in the score"}
+              </p>
+            )}
             {meta?.count !== undefined && !isPassed && (
               <p className="mt-1 text-[11px] font-semibold uppercase tracking-tight opacity-40">
                 {meta.count} elements affected
@@ -244,7 +258,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
         )}
 
         {/* Ask AI Button */}
-        {!isPassed && (
+        {!isPassed && !isNA && (
           <AskAIButton
             finding={{
               type: 'Accessibility',
@@ -523,10 +537,16 @@ const Accessibility_Inner = React.memo(function Accessibility_Inner({ data, load
     );
   }
 
-  const allMetrics = Object.values(metric).filter(val => typeof val === 'object' && val !== null && 'score' in val);
-  const passedCount = allMetrics.filter(m => m.score === 100).length;
-  const warningCount = allMetrics.filter(m => m.score === 50).length;
-  const failedCount = allMetrics.filter(m => m.score < 50).length;
+  // Keyboard sub-checks are folded into Keyboard_Navigation and not rendered as
+  // their own cards, so exclude them from the header tally to avoid double-counting.
+  const HIDDEN_FROM_TALLY = new Set(["Focus_Order", "Focusable_Content", "Tab_Index", "Aria_Hidden_Focus"]);
+  const allMetrics = Object.entries(metric)
+    .filter(([k, val]) => typeof val === 'object' && val !== null && 'score' in val && !HIDDEN_FROM_TALLY.has(k))
+    .map(([, val]) => val);
+  // Graded scores → tally by status, not exact score values.
+  const passedCount = allMetrics.filter(m => m.status === "pass").length;
+  const warningCount = allMetrics.filter(m => m.status === "warning").length;
+  const failedCount = allMetrics.filter(m => m.status === "fail").length;
 
   return (
     <div className={`w-full min-h-screen ${darkMode ? "bg-gray-900" : "bg-surface"} transition-colors duration-300`}>
@@ -585,7 +605,7 @@ const Accessibility_Inner = React.memo(function Accessibility_Inner({ data, load
                       <div className={`${data.report === "All" ? "space-y-2" : "space-y-1.5"}`}>
                         <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-accentsoft text-accent border border-accentsoft"}`}>
                           <ShieldCheck className="w-3.5 h-3.5" />
-                          <span>WCAG 2.1 Audit</span>
+                          <span>WCAG 2.2 AA Audit</span>
                         </div>
                         <h3 className={`${data.report === "All" ? "text-3xl lg:text-5xl" : "text-2xl lg:text-4xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>
                           Accessibility <span className="text-blue-500">Health</span>
@@ -593,6 +613,12 @@ const Accessibility_Inner = React.memo(function Accessibility_Inner({ data, load
                         <p className={`text-sm leading-relaxed opacity-70 ${darkMode ? "text-slate-300" : "text-muted"}`}>
                           Comprehensive analysis of your website's accessibility, ensuring an inclusive experience for all users.
                         </p>
+                        {metric?.Coverage && (
+                          <div className={`inline-flex items-start gap-2 mt-1 px-3 py-1.5 rounded-lg text-[11px] font-medium ${darkMode ? "bg-slate-800/60 text-slate-400 border border-slate-700/50" : "bg-cardsoft text-muted border border-line"}`}>
+                            <Info className="w-3.5 h-3.5 mt-0.5 shrink-0 opacity-70" />
+                            <span>{metric.Coverage} Automated checks ≈ 30–40% of WCAG, so the score is capped below 100 (confidence: {metric?.Confidence || "heuristic"}). Manual review still required.</span>
+                          </div>
+                        )}
                       </div>
 
                       <div className={`flex flex-wrap items-center ${data.report === "All" ? "gap-6" : "gap-5"}`}>
@@ -642,14 +668,18 @@ const Accessibility_Inner = React.memo(function Accessibility_Inner({ data, load
           <div className="space-y-8">
             {(() => {
               const visible = (keys) => keys.filter((k) => metric[k] && isVisibleForAudience(k, audienceMode));
-              const visualKeys = visible(["Color_Contrast", "Image_Alt", "Meta_Viewport"]);
-              const interactionKeys = visible(["Keyboard_Navigation", "Focusable_Content", "Focus_Order", "Tab_Index", "Skip_Links", "Interactive_Element_Affordance", "Aria_Hidden_Focus"]);
+              const visualKeys = visible(["Color_Contrast", "Image_Alt", "Meta_Viewport", "Target_Size", "Reflow", "Text_Spacing", "Reduced_Motion"]);
+              // Focus_Order / Focusable_Content / Tab_Index / Aria_Hidden_Focus are the
+              // sub-checks folded into the single Keyboard_Navigation parameter (spec §2.3
+              // treats keyboard as ONE param) — kept in the payload for the composite
+              // breakdown, but NOT rendered as standalone cards (no double-counted display).
+              const interactionKeys = visible(["Keyboard_Navigation", "Skip_Links", "Interactive_Element_Affordance", "Focus_Not_Obscured"]);
               const rolesKeys = visible(["Label", "Button_Name", "Link_Name", "Aria_Roles", "Landmarks", "Document_Title", "Html_Has_Lang", "List", "Heading_Order", "Aria_Allowed_Attr"]);
               const card = (k) => <MetricCard key={k} metricKey={k} data={metric[k]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />;
               return (
                 <>
                   {metric.WCAG_AA_Compliance && isVisibleForAudience("WCAG_AA_Compliance", audienceMode) && (
-                    <Section title="WCAG 2.1 AA Compliance" icon={ShieldCheck} darkMode={darkMode}>
+                    <Section title="WCAG 2.2 AA Compliance" icon={ShieldCheck} darkMode={darkMode}>
                       <MetricCard metricKey="WCAG_AA_Compliance" data={metric.WCAG_AA_Compliance} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
                     </Section>
                   )}

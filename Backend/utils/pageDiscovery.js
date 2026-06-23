@@ -51,6 +51,13 @@ const MAX_CHILD_SITEMAPS = 15;
 const MAX_SITEMAP_DEPTH = 2;
 const MAX_CRAWL_PAGES = 60;
 
+// Names of child sitemaps that hold the (potentially huge) inventory/VDP feeds.
+// Once we have enough inventory we skip *these* specifically, but keep reading the
+// small informational sitemaps (menu/page/contact/about) so the dealer's About,
+// Contact, Finance, Service and Content pages aren't lost to the early-exit.
+const INVENTORY_SITEMAP_HINT =
+  /(inventory|vdp|vehicles?|listing|stock|\bsrp\b|preowned|pre-owned|used|new-?cars?|cpo)/i;
+
 // A VIN is 17 chars and never uses I, O, or Q — a strong VDP signal.
 const VIN_RE = /\b[a-hj-npr-z0-9]{17}\b/i;
 
@@ -141,7 +148,7 @@ const MATCH_ORDER = [
   {
     key: "about",
     test: (p) =>
-      /(about|dealership|our-story|our-team|meet-(the|our)|staff|why-(us|buy|choose)|who-we-are|our-history|hours-and-direction)/.test(p),
+      /(about|dealership|our-story|our-team|meet-(the|our)|staff|why-(us|buy|choose)|who-we-are|our-history|contact|get-?directions?|directions?|locations?|hours|find-us|visit-us|leadership|our-people|hours-and-direction)/.test(p),
   },
   // Content / Blog — incl. FAQ and How-To pages.
   { key: "content", test: (p) => /(blog|news|articles?|resources?|research|reviews?|tips|guides?|community|car-care|learn|faqs?|frequently-asked|how-?tos?|how-do-i)/.test(p) },
@@ -264,13 +271,19 @@ async function collectFromSitemap(sitemapUrl, pool, depth = 0) {
 
   if (parsed.sitemapindex?.sitemap && depth < MAX_SITEMAP_DEPTH) {
     let count = 0;
+    let inventorySatisfied = false;
     for (const sm of parsed.sitemapindex.sitemap) {
       if (count++ >= MAX_CHILD_SITEMAPS || pool.size >= MAX_SITEMAP_URLS) break;
       const loc = sm?.loc?.[0];
-      if (loc) await collectFromSitemap(loc.trim(), pool, depth + 1);
-      // Stop opening further child sitemaps the moment we have an inventory
-      // (SRP) page and a vehicle-detail (VDP) page — no need to read all of them.
-      if (poolHasEnoughInventory(pool)) break;
+      if (!loc) continue;
+      const child = loc.trim();
+      // Once we have enough inventory, skip the remaining *inventory/VDP* child
+      // sitemaps (these are the big ones we don't need more of) — but keep reading
+      // the small informational sitemaps (menu/page/contact/about/specials) so the
+      // dealer's About, Contact, Finance, Service and Content pages survive.
+      if (inventorySatisfied && INVENTORY_SITEMAP_HINT.test(child)) continue;
+      await collectFromSitemap(child, pool, depth + 1);
+      if (!inventorySatisfied && poolHasEnoughInventory(pool)) inventorySatisfied = true;
     }
   }
 

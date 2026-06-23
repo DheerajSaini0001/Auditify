@@ -36,6 +36,7 @@ const iconMap = {
 
   Topical_Focus_Clarity: Compass,
   Answer_Oriented_Structure: HelpCircle,
+  Structured_Content: Layers,
   Content_Chunking: Layers,
   Lists_Structured_Blocks: List,
   Terminology_Consistency: Network,
@@ -100,7 +101,7 @@ const AIOShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
 };
 
 const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
-  const { score, status, details, meta, analysis, qanda } = data || {};
+  const { score, status, details, meta, analysis, qanda, infoOnly } = data || {};
   const [showAnalysis, setShowAnalysis] = React.useState(false);
 
   // Three-tier status: green (100 / near 100), amber (partial), red (0 / near 0).
@@ -136,9 +137,16 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             </div>
             <div>
               <h3 className={`font-semibold text-lg ${textColor}`}>{title}</h3>
-              <p className={`text-xs font-medium mt-1 px-2 py-0.5 rounded-full w-fit border ${statusColor}`}>
-                {isPassed ? "Ready" : isWarning ? "Partially Ready" : "Optimization Needed"}
-              </p>
+              <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                <p className={`text-xs font-medium px-2 py-0.5 rounded-full w-fit border ${statusColor}`}>
+                  {isPassed ? "Ready" : isWarning ? "Partially Ready" : "Optimization Needed"}
+                </p>
+                {infoOnly && (
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full w-fit border ${darkMode ? "bg-slate-700/40 text-slate-300 border-slate-600" : "bg-cardsoft text-muted border-line"}`}>
+                    Informational · not scored
+                  </span>
+                )}
+              </div>
             </div>
           </div>
           <div className="flex justify-end items-center gap-2">
@@ -400,6 +408,35 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             </div>
           )}
 
+          {/* Structured Content (merged: chunking + lists/tables) */}
+          {metricKey === "Structured_Content" && (
+            <div className="flex flex-col gap-2">
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { label: 'Lists', val: meta?.listCount },
+                  { label: 'Tables', val: meta?.tableCount },
+                  { label: 'Quotes', val: meta?.blockquoteCount }
+                ].map((item, i) => (
+                  <div key={i} className={`flex flex-col items-center p-2 rounded-lg border ${darkMode ? 'bg-slate-900/50 border-slate-800 text-slate-300' : 'bg-cardsoft border-line text-muted'}`}>
+                    <span className="text-sm font-black">{item.val ?? 0}</span>
+                    <span className="text-[8px] font-semibold uppercase opacity-50 tracking-tighter">{item.label}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className={`p-2.5 rounded-lg border text-center ${darkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-cardsoft border-line'}`}>
+                  <span className={`block text-[9px] font-semibold opacity-50 uppercase ${darkMode ? "text-slate-400" : "text-muted"}`}>Dense Ps</span>
+                  <span className="text-sm font-black text-amber-500">{meta?.longParagraphs ?? 0}</span>
+                </div>
+                <div className={`p-2.5 rounded-lg border text-center ${darkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-cardsoft border-line'}`}>
+                  <span className={`block text-[9px] font-semibold opacity-50 uppercase ${darkMode ? "text-slate-400" : "text-muted"}`}>Density</span>
+                  <span className={`text-sm font-black ${darkMode ? "text-slate-200" : "text-inksoft"}`}>{meta?.headingDensity} P/H</span>
+                </div>
+              </div>
+              <div className={`text-[9px] font-semibold opacity-50 text-center uppercase tracking-widest ${darkMode ? "text-slate-400" : "text-muted"}`}>Structure: {meta?.totalParagraphs} Paragraphs Total</div>
+            </div>
+          )}
+
           {/* Content Chunking */}
           {metricKey === "Content_Chunking" && (
             <div className="flex flex-col gap-2">
@@ -617,7 +654,7 @@ const AIO_Inner = React.memo(({ data, loading, darkMode }) => {
   const hasAioData = aio && Object.keys(aio).length > 0;
   const isAioLoading = loading || !data || data.status === "pending" || !hasAioData;
 
-  const allMetrics = Object.values(aio).filter(val => typeof val === 'object' && val !== null && 'score' in val);
+  const allMetrics = Object.values(aio).filter(val => typeof val === 'object' && val !== null && 'score' in val && !val.infoOnly);
   const passedCount = allMetrics.filter(m => m.status === "pass").length;
   const warningCount = allMetrics.filter(m => m.status === "warning").length;
   const failedCount = allMetrics.filter(m => m.status === "fail").length;
@@ -759,9 +796,9 @@ const AIO_Inner = React.memo(({ data, loading, darkMode }) => {
               {(() => {
                 const visible = (keys) => keys.filter((k) => aio[k] && isVisibleForAudience(k, audienceMode));
                 const foundationKeys = visible(["Structured_Data", "Duplicate_Content_Detection_Ready", "Internal_Linking_AI_Friendly", "Content_Updated_Regularly"]);
-                const semanticKeys = visible(["Content_NLP_Friendly", "Keywords_Entities_Annotated", "Topical_Focus_Clarity", "Terminology_Consistency", "Content_Completeness"]);
+                const semanticKeys = visible(["Content_NLP_Friendly", "Keywords_Entities_Annotated", "Topical_Focus_Clarity", "Terminology_Consistency"]);
                 const answerVisible = aio["Answer_Oriented_Structure"] && isVisibleForAudience("Answer_Oriented_Structure", audienceMode);
-                const eeatKeys = visible(["Content_Chunking", "Lists_Structured_Blocks", "Author_Source_Attribution", "Fact_Vs_Opinion"]);
+                const eeatKeys = visible(["Structured_Content"]);
                 const card = (key) => <MetricCard key={key} metricKey={key} data={aio[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />;
                 return (
                   <>
@@ -774,7 +811,7 @@ const AIO_Inner = React.memo(({ data, loading, darkMode }) => {
                     )}
 
                     {(answerVisible || eeatKeys.length > 0) && (
-                      <Section title="E-E-A-T & Answer Optimization" icon={HelpCircle} darkMode={darkMode}>
+                      <Section title="Answer & Structured Content" icon={HelpCircle} darkMode={darkMode}>
                         {/* Answer Oriented Structure spans full width because it contains detailed Q&A pairs */}
                         {answerVisible && (
                           <div className="md:col-span-2">

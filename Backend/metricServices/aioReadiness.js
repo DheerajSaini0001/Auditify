@@ -367,16 +367,23 @@ function checkInternalLinkingAIFriendly($, domain) {
   let cause = "";
   let recommendation = "";
 
+  // Graded: descriptive-anchor ratio drives the score (crawlable <a href> + descriptive text).
+  const ratio = internalLinks > 0 ? descriptiveLinks / internalLinks : 0;
   if (internalLinks === 0) {
     score = 0;
     status = "fail";
     cause = "No internal links found on the page.";
     recommendation = "Add internal links to help AI models navigate and understand page relationships.";
-  } else if (descriptiveLinks < internalLinks * 0.5) {
-    score = 50;
+  } else if (ratio < 0.5) {
+    score = Math.round(40 + ratio * 80); // 40–80 band
     status = "warning";
     cause = "Multiple internal links use generic or non-descriptive anchor text.";
     recommendation = "Use keyword-rich anchor text instead of 'click here' to provide better context for AI.";
+  } else if (ratio < 0.8) {
+    score = Math.round(60 + ratio * 40); // 92–96 band
+    status = "warning";
+    cause = "Some internal links use generic or non-descriptive anchor text.";
+    recommendation = "Tighten the remaining generic anchors into descriptive, keyword-rich text.";
   }
 
   return {
@@ -462,7 +469,18 @@ function checkTopicalFocusClarity($, url) {
   const h1Words = getKeywords(h1);
 
   const overlap = titleWords.filter(w => h1Words.includes(w));
-  const hasStrongFocus = overlap.length >= 2 || (titleWords.length > 0 && h1.includes(titleWords[0]));
+  const firstWordMatch = titleWords.length > 0 && h1.includes(titleWords[0]);
+
+  // Graded: strong (≥2 shared entities) → moderate (1 shared / first-word match) → weak.
+  let score, status;
+  if (overlap.length >= 2) {
+    score = 100; status = "pass";
+  } else if (overlap.length === 1 || firstWordMatch) {
+    score = 75; status = "warning";
+  } else {
+    score = 50; status = "warning";
+  }
+  const hasStrongFocus = status === "pass";
 
   let cause = "";
   let recommendation = "";
@@ -472,8 +490,8 @@ function checkTopicalFocusClarity($, url) {
   }
 
   return {
-    score: hasStrongFocus ? 100 : 50,
-    status: hasStrongFocus ? "pass" : "warning",
+    score,
+    status,
     details: hasStrongFocus ? "Strong topical focus detected." : "Title and H1 alignment could be stronger.",
     qanda: {
       question: "Does the page maintain a clear and consistent topical focus?",
@@ -540,29 +558,43 @@ function checkAnswerOrientedStructure($) {
     } catch (e) { }
   });
 
+  const hasSchema = foundPairs.some(p => p.type === 'schema');
   const isAnswerOriented = foundPairs.length > 0;
+
+  // Graded: FAQ schema or ≥3 self-contained Q→A pairs → strong; 1–2 → partial; none → weak.
+  let score, status;
+  if (hasSchema || foundPairs.length >= 3) {
+    score = 100; status = "pass";
+  } else if (foundPairs.length >= 1) {
+    score = 75; status = "warning";
+  } else {
+    score = 50; status = "warning";
+  }
 
   let cause = "";
   let recommendation = "";
   if (!isAnswerOriented) {
     cause = "No question-based headings or FAQ schema detected.";
     recommendation = "Structure your content to directly answer user queries using natural language questions in H2/H3 tags.";
+  } else if (status === "warning") {
+    cause = "Only a few question→answer blocks were found.";
+    recommendation = "Add more question-style H2/H3 headings each followed by a concise, self-contained answer (and FAQPage schema).";
   }
 
   return {
-    score: isAnswerOriented ? 100 : 50,
-    status: isAnswerOriented ? "pass" : "warning",
-    details: isAnswerOriented ? "Content is structured to answer specific queries." : "Content layout is not query-optimized.",
+    score,
+    status,
+    details: status === "pass" ? "Content is structured to answer specific queries." : "Content layout is not fully query-optimized.",
     qanda: {
       question: "Is the content structured to directly answer user questions?",
       answer: isAnswerOriented ? "Yes, the content follows an answer-oriented structure with clear questions and concise responses." : "No, the content does not offer direct query-answer pairs, making it harder for 'Answer Engines' to cite you."
     },
     meta: {
-      hasFAQ: foundPairs.some(p => p.type === 'schema'),
+      hasFAQ: hasSchema,
       questionHeadingsCount: foundPairs.filter(p => p.type === 'heading').length,
       pairs: foundPairs.slice(0, 6) // Return top 6 discovered pairs
     },
-    analysis: isAnswerOriented ? null : { cause, recommendation }
+    analysis: status === "pass" ? null : { cause, recommendation }
   };
 }
 
@@ -744,80 +776,112 @@ function checkContentCompleteness($) {
   };
 }
 
+// Structured content — merge of Content Chunking + Lists/Tables (spec §2.7 "keep the
+// strongest, merge the rest"). INFORMATIONAL (weight 0): overlaps AEO "Structured content".
+function checkStructuredContent($) {
+  const chunking = checkContentChunking($);
+  const lists = checkListsStructuredBlocks($);
+
+  const score = Math.round((chunking.score + lists.score) / 2);
+  const status = score >= 80 ? "pass" : score >= 40 ? "warning" : "fail";
+
+  const causes = [chunking.analysis?.cause, lists.analysis?.cause].filter(Boolean);
+  const recs = [chunking.analysis?.recommendation, lists.analysis?.recommendation].filter(Boolean);
+
+  return {
+    score,
+    status,
+    infoOnly: true,
+    details: status === "pass"
+      ? "Content is well-chunked with lists/tables for clean AI extraction."
+      : "Content structure could be more machine-parseable (chunks, lists, tables).",
+    qanda: {
+      question: "Is content broken into machine-parseable chunks, lists, and tables?",
+      answer: status === "pass"
+        ? "Yes, short chunks plus lists/tables let AI extract facts cleanly."
+        : "Partially — dense paragraphs or missing lists/tables make extraction harder for AI."
+    },
+    meta: {
+      listCount: lists.meta.listCount,
+      tableCount: lists.meta.tableCount,
+      blockquoteCount: lists.meta.blockquoteCount,
+      longParagraphs: chunking.meta.longParagraphs,
+      totalParagraphs: chunking.meta.totalParagraphs,
+      headingDensity: chunking.meta.headingDensity
+    },
+    analysis: status === "pass" ? null : {
+      cause: causes.join(" ") || "Content structure could be more machine-parseable.",
+      recommendation: recs.join(" ") || "Use short chunks (40–60 words), bulleted lists, and tables to expose data points to AI."
+    }
+  };
+}
+
 export default async function aioReadiness(url, page, $) {
 
   const domain = Domain(url);
-  const structuredData = checkStructuredData($);
+
+  // ── Weighted parameters (spec §2.7 — in-section weights sum to 1.00) ──
+  const structuredData = checkStructuredData($);                       // validity / matches content
   const contentNLPFriendly = checkContentNLPFriendly($);
+  const answerOrientedStructure = checkAnswerOrientedStructure($);
+  const duplicateContentDetectionReady = checkDuplicateContentDetectionReady($);
   const keywordsEntitiesAnnotated = checkKeywordsEntitiesAnnotated($);
   const contentUpdatedRegularly = checkContentUpdatedRegularly($);
   const internalLinkingAIFriendly = checkInternalLinkingAIFriendly($, domain);
-  const duplicateContentDetectionReady = checkDuplicateContentDetectionReady($);
-
   const topicalFocusClarity = checkTopicalFocusClarity($, url);
-  const answerOrientedStructure = checkAnswerOrientedStructure($);
-  const contentChunking = checkContentChunking($);
-  const listsStructuredBlocks = checkListsStructuredBlocks($);
-  const terminologyConsistency = checkTerminologyConsistency($);
-  const authorSourceAttribution = checkAuthorSourceAttribution($);
-  const factVsOpinion = checkFactVsOpinion($);
-  const contentCompleteness = checkContentCompleteness($);
 
-  // Weights
+  // ── Informational only (weight 0; spec §2.7 "keep the strongest, merge the rest") ──
+  const structuredContent = checkStructuredContent($);                 // merge: chunking + lists/tables
+  const terminologyConsistency = { ...checkTerminologyConsistency($), infoOnly: true };
+
+  // Spec §2.7 in-section weights (decimals; sum 1.00 over the 8 weighted params).
   const weights = {
-    Structured_Data: 3,
-    Content_NLP_Friendly: 3,
-    Keywords_Entities_Annotated: 2,
-    Content_Updated_Regularly: 2,
-    Internal_Linking_AI_Friendly: 2,
-    Duplicate_Content_Detection_Ready: 1,
-    Topical_Focus_Clarity: 3,
-    Answer_Oriented_Structure: 3,
-    Content_Chunking: 2,
-    Lists_Structured_Blocks: 2,
-    Terminology_Consistency: 1,
-    Author_Source_Attribution: 2,
-    Fact_Vs_Opinion: 2,
-    Content_Completeness: 2
+    Structured_Data: 0.20,
+    Content_NLP_Friendly: 0.16,
+    Answer_Oriented_Structure: 0.12,
+    Duplicate_Content_Detection_Ready: 0.12,
+    Keywords_Entities_Annotated: 0.10,
+    Content_Updated_Regularly: 0.10,
+    Internal_Linking_AI_Friendly: 0.10,
+    Topical_Focus_Clarity: 0.10
   };
 
   const metricsMap = {
     Structured_Data: structuredData,
     Content_NLP_Friendly: contentNLPFriendly,
+    Answer_Oriented_Structure: answerOrientedStructure,
+    Duplicate_Content_Detection_Ready: duplicateContentDetectionReady,
     Keywords_Entities_Annotated: keywordsEntitiesAnnotated,
     Content_Updated_Regularly: contentUpdatedRegularly,
     Internal_Linking_AI_Friendly: internalLinkingAIFriendly,
-    Duplicate_Content_Detection_Ready: duplicateContentDetectionReady,
     Topical_Focus_Clarity: topicalFocusClarity,
-    Answer_Oriented_Structure: answerOrientedStructure,
-    Content_Chunking: contentChunking,
-    Lists_Structured_Blocks: listsStructuredBlocks,
-    Terminology_Consistency: terminologyConsistency,
-    Author_Source_Attribution: authorSourceAttribution,
-    Fact_Vs_Opinion: factVsOpinion,
-    Content_Completeness: contentCompleteness
+    // informational (excluded from scoring)
+    Structured_Content: structuredContent,
+    Terminology_Consistency: terminologyConsistency
   };
 
+  // Weighted aggregate over applicable params, graded (uses metric.score directly).
+  // Rule 6: any param flagged present:false is dropped from the denominator (renormalized).
   let totalWeight = 0;
-  let earnedScore = 0;
-
-  for (const [key, metric] of Object.entries(metricsMap)) {
-    const weight = weights[key] || 1;
-    totalWeight += weight;
-    if (metric.score === 100) {
-      earnedScore += weight;
-    } else if (metric.score === 50) {
-      earnedScore += weight * 0.5;
-    }
+  let earned = 0;
+  let scored = 0;
+  for (const [key, w] of Object.entries(weights)) {
+    const m = metricsMap[key];
+    if (!m || m.present === false) continue;
+    const s = typeof m.score === "number" ? m.score : 0;
+    totalWeight += w;
+    earned += s * w;
+    scored++;
   }
 
-  const actualPercentage = totalWeight > 0 ? parseFloat(((earnedScore / totalWeight) * 100).toFixed(0)) : 0;
-
-  let badge = actualPercentage >= 50 ? "Yes" : "No";
+  const actualPercentage = totalWeight > 0 ? Math.round(earned / totalWeight) : 0;
+  const badge = actualPercentage >= 50 ? "Yes" : "No";
 
   return {
     Percentage: actualPercentage,
     AIO_Compatibility_Badge: badge,
+    Confidence: "heuristic",
+    parametersScored: scored,
     ...metricsMap
   };
 }

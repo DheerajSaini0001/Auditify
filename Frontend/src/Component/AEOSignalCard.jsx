@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-    Brain, Info, ChevronDown, ChevronUp, AlertCircle, CheckCircle,
+    Brain, Info, ChevronDown, ChevronUp,
     MessageCircle, Database, ShieldCheck, FileText, Layout,
     Table, Link, Activity, Award, MapPin, Network, Camera, GraduationCap, Megaphone
 } from 'lucide-react';
@@ -84,18 +84,33 @@ const getCurrentData = (signal, data) => {
             const c = data?.counts || {};
             return { label: 'Heading Structure', mono: true, value: `H1: ${c.h1 ?? 0}     H2: ${c.h2 ?? 0}     H3: ${c.h3 ?? 0}` };
         }
-        case 'structuredContent':
+        case 'structuredContent': {
+            const rows = [
+                { label: 'Tables', count: data?.tables ?? 0 },
+                { label: 'Lists', count: data?.lists ?? 0 },
+                { label: 'Images', count: data?.images ?? 0 },
+            ];
             return {
                 label: 'Structured Elements',
-                mono: true,
-                value: `${data?.tables ?? 0} tables   •   ${data?.lists ?? 0} lists   •   ${data?.images ?? 0} images`,
+                plain: true,
+                value: (
+                    <div className="flex flex-col gap-2.5">
+                        {rows.map((r) => (
+                            <div key={r.label} className="flex items-center justify-between gap-3">
+                                <span className="text-sm font-semibold">{r.label}</span>
+                                <span className="text-sm font-bold">{r.count}</span>
+                            </div>
+                        ))}
+                    </div>
+                ),
             };
+        }
         case 'answerFirst':
             return {
-                label: 'Opening Answer',
-                value: data?.found
-                    ? `${data?.sentenceCount ?? 0} sentence(s) detected at the top of the page`
-                    : 'No clear opening text found',
+                label: 'Page Opening',
+                value: data?.preview
+                    ? `“${data.preview}”`
+                    : <span className="italic opacity-50">No clear opening text found</span>,
             };
         case 'citations': {
             const b = data?.breakdown || {};
@@ -119,11 +134,47 @@ const getCurrentData = (signal, data) => {
                 value: o.found ? `${o.name || 'Organization'} (${o.type || 'Organization'})` : 'No Organization / LocalBusiness schema found',
             };
         }
-        case 'citationConsistency':
+        case 'citationConsistency': {
+            const b = data?.breakdown || {};
+            // Per field → 0 (not found), 0.5 (found but inconsistent/partial), 1 (found & consistent).
+            // Backend bands: nameConsistency 0/5/15-20, phoneConsistency 0/5/25, addressCompleteness 0/8/15.
+            const toVal = (raw, midBand) => (raw === 0 ? 0 : raw === midBand ? 0.5 : 1);
+            const nameVal = toVal(b.nameConsistency ?? 0, 5);
+            const phoneVal = toVal(b.phoneConsistency ?? 0, 5);
+            const addrVal = toVal(b.addressCompleteness ?? 0, 8);
+            const rows = [
+                { label: 'Name', detail: data?.schemaName || (nameVal ? 'Found' : 'Not found'), val: nameVal },
+                { label: 'Phone', detail: phoneVal === 0 ? 'Not found' : phoneVal === 0.5 ? `Conflicting (${data?.distinctPhoneCount ?? 0} numbers)` : 'Found', val: phoneVal },
+                { label: 'Address', detail: addrVal === 0 ? 'Not found' : addrVal === 0.5 ? 'Partial' : 'Found', val: addrVal },
+            ];
+            const badgeTone = (v) => (v === 1
+                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                : v === 0.5
+                    ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                    : 'bg-rose-500/10 text-rose-600 dark:text-rose-400');
+            const textTone = (v) => (v === 1
+                ? 'text-emerald-600 dark:text-emerald-400'
+                : v === 0.5
+                    ? 'text-amber-600 dark:text-amber-400'
+                    : 'text-rose-600 dark:text-rose-400');
             return {
                 label: 'Contact Info (NAP)',
-                value: `Name: ${data?.schemaName || '—'}     •     Phone: ${data?.hasSchemaPhone ? 'yes' : 'no'}     •     Address: ${data?.hasSchemaAddress ? 'yes' : 'no'}`,
+                plain: true,
+                value: (
+                    <div className="flex flex-col gap-2.5">
+                        {rows.map((r) => (
+                            <div key={r.label} className="flex items-center justify-between gap-3">
+                                <span className="text-sm font-semibold">{r.label}</span>
+                                <div className="flex items-center gap-2">
+                                    <span className={`text-xs font-medium ${textTone(r.val)}`}>{r.detail}</span>
+                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${badgeTone(r.val)}`}>{r.val}</span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ),
             };
+        }
         case 'topicalAuthority':
             return { label: 'Content Depth', value: `~${data?.wordCount ?? 0} words on this page` };
         case 'brandEntityStrength':
@@ -219,6 +270,10 @@ const getLegacySuggestions = (signal, data, score) => {
             if ((data?.lists || 0) === 0) s.push('Use <ul>/<ol> lists for features, steps, and comparisons.');
             if (!s.length && score < 100) s.push('Increase structured-data density (tables and lists) for RAG-based engines.');
             break;
+        case 'answerFirst':
+            if ((data?.sentenceCount ?? 0) === 0) s.push('Add a clear opening — put a short, direct answer in the first 1–2 sentences at the top.');
+            else s.push('Lead with a short, direct answer in the first 1–2 sentences so AI can grab it fast.');
+            break;
         case 'citations':
             s.push('Link to reputable external sources and add citation markers — Perplexity and factual engines prioritize cited content.');
             break;
@@ -248,8 +303,6 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
         status = "Failed";
         statusColor = "text-rose-500 bg-rose-500/10 border-rose-500/20";
     }
-
-    const isFailed = score < T1;
 
     // ── Data-driven detail (breakdown bars + "How to improve") for ALL signals ──
     const breakdownMax = BREAKDOWN_MAX[signal] || {};
@@ -328,7 +381,7 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
                 return (
                     <div className="flex flex-col gap-3">
                         <span className={`text-[10px] font-black uppercase tracking-[0.2em] opacity-40 ${darkMode ? "text-white" : "text-ink"}`}>{cur.label}</span>
-                        <div className={`p-6 rounded-2xl border ${darkMode ? "bg-slate-950 border-slate-800 text-slate-200" : "bg-cardsoft border-line text-inksoft"} ${cur.mono ? "font-mono text-xs break-all leading-relaxed" : "font-serif text-sm leading-relaxed"}`}>
+                        <div className={`p-6 rounded-2xl border ${darkMode ? "bg-slate-950 border-slate-800 text-slate-200" : "bg-cardsoft border-line text-inksoft"} ${cur.mono ? "font-mono text-xs break-all leading-relaxed" : cur.plain ? "text-sm" : "font-serif text-sm leading-relaxed"}`}>
                             {cur.value}
                         </div>
                     </div>
@@ -431,15 +484,6 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
 
 
 
-            {/* Action Area */}
-            <div className="pt-2 border-t border-slate-800/10 dark:border-slate-100/10">
-                {!isFailed && status === "Passed" ? (
-                    <div className="flex items-center gap-3 py-2">
-                        <CheckCircle className="text-emerald-500" size={18} />
-                        <span className="text-xs font-semibold text-emerald-600 uppercase tracking-widest">Optimized & Confirmed</span>
-                    </div>
-                ) : null}
-            </div>
         </div>
     );
 };

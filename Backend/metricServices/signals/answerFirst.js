@@ -32,11 +32,17 @@ const analyzeAnswerFirst = ($) => {
         score = 0;
     }
 
+    // The actual opening text of the page (first ~50 words), so the UI can show
+    // what the page currently leads with — like a meta-description preview.
+    const words = text.split(/\s+/).filter(Boolean);
+    const preview = words.slice(0, 50).join(' ') + (words.length > 50 ? '…' : '');
+
     return {
         signal: "answerFirst",
         score: score,
         sentenceCount: sentenceCount,
-        found: sentenceCount > 0
+        found: sentenceCount > 0,
+        preview,
     };
 };
 

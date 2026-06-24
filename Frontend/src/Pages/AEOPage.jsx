@@ -304,6 +304,17 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
                                 // the weighted score (rule-6 N/A). Common + informational always show.
                                 if (p && p.applicable === false && !c.info) return null;
 
+                                // Schema Markup here is the FAQ/HowTo check. On page types that don't
+                                // need FAQ/HowTo (home, about/contact, generic, listing, etc.) it just
+                                // auto-passes and adds noise — hide it unless real FAQ/HowTo schema or
+                                // content is actually present on the page.
+                                if (c.paramKey === 'Schema_Markup') {
+                                    const FAQ_HOWTO_PAGES = ['content', 'finance', 'service', 'vdp'];
+                                    const d = aeo.signals?.schema?.details || {};
+                                    const hasRealFaqHowTo = d.hasFAQSchema || d.hasHowToSchema || d.hasFAQContent || d.hasHowToContent;
+                                    if (!FAQ_HOWTO_PAGES.includes(aeo.pageType) && !hasRealFaqHowTo) return null;
+                                }
+
                                 // Resolve the param score (prefer the backend scorecard) and the
                                 // detail data (real signal, or a derived builder for params with
                                 // no dedicated analyzer).

@@ -1,6 +1,6 @@
 // AI Agentic Browsing (WebMCP) lives in the AIO section per spec Part 3 + §5.1.
 // The evaluator is defined in technicalMetrics.js (reuses its fetch helper) and imported here.
-import { evaluateAgenticBrowsing } from "./technicalMetrics.js";
+
 
 function Domain(urlString) {
   try {

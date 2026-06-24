@@ -12,6 +12,7 @@ import Puppeteer_Cheerio from "../utils/puppeteer_cheerio.js";
 import { checkWebsiteExists } from "../utils/fastFetch.js";
 import { performance } from "perf_hooks";
 import logger from "../utils/logger.js";
+import { classifyPageType, computePageScore, computePageScoreFromMap } from "../utils/sectionWeights.js";
 
 const { url, device, report, auditId } = workerData;
 
@@ -115,27 +116,26 @@ async function safeMetric(name, fn) {
   }
 }
 
-const OverAll = (A, B, C, D, E, F, G, H) => {
-  A ||= 0; B ||= 0; C ||= 0; D ||= 0; E ||= 0; F ||= 0; G ||= 0; H ||= 0;
-  const total = (A + B + C + D + E + F + G + H) / 8;
+// Page score = section scores weighted by the audited page's type (spec §5.4 + §5.6),
+// not a flat /8. Missing sections (a section that errored in a full audit) are coerced
+// to 0 so they still count against the page; genuinely N/A sections (subset audits) are
+// handled by the subset path, which renormalizes them out.
+const OverAll = (pcts, pageType) => {
+  const arr = pcts.map((v) => (typeof v === "number" ? v : 0));
+  const total = computePageScore(arr, pageType);
 
   return {
-    totalScore: Number(total.toFixed(1)),
-    grade:
-      total >= 90 ? "A+" :
-        total >= 80 ? "A" :
-          total >= 70 ? "B" :
-            total >= 60 ? "C" :
-              total >= 50 ? "D" : "F",
+    totalScore: total,
+    grade: gradeFor(total),
     sectionScores: [
-      { name: "Technical Performance", score: A },
-      { name: "On-Page SEO", score: B },
-      { name: "Accessibility", score: C },
-      { name: "Security/Compliance", score: D },
-      { name: "UX & Content Structure", score: E },
-      { name: "Conversion & Lead Flow", score: F },
-      { name: "AIO Readiness", score: G },
-      { name: "AEO", score: H },
+      { name: "Technical Performance", score: arr[0] },
+      { name: "On-Page SEO", score: arr[1] },
+      { name: "Accessibility", score: arr[2] },
+      { name: "Security/Compliance", score: arr[3] },
+      { name: "UX & Content Structure", score: arr[4] },
+      { name: "Conversion & Lead Flow", score: arr[5] },
+      { name: "AIO Readiness", score: arr[6] },
+      { name: "AEO", score: arr[7] },
     ],
   };
 };
@@ -205,6 +205,13 @@ const OverAll = (A, B, C, D, E, F, G, H) => {
 
     // Fallback dealership gate removed.
 
+    // Page type drives the per-section weighting of the page score (spec §5.6).
+    // Use the post-redirect URL (page.url()) so a /finance → /credit-app redirect
+    // is classified by where the browser actually landed.
+    let finalUrl = url;
+    try { const u = typeof page?.url === "function" ? page.url() : null; if (u) finalUrl = u; } catch { /* keep url */ }
+    const pageType = classifyPageType(finalUrl);
+
     // ── Custom subset (2–6 sections chosen via the checklist) ──
     // Run only the selected metrics in parallel — each streams its own section the
     // moment it lands (like the full audit), then we roll the selected scores up to
@@ -263,18 +270,20 @@ const OverAll = (A, B, C, D, E, F, G, H) => {
         status: "completed",
         timeTaken: `${((performance.now() - start) / 1000).toFixed(0)}s`,
       };
-      let sum = 0;
+      // Weighted page score over the SELECTED sections only, renormalized by the
+      // page-type tilt (spec §5.4): unselected sections are N/A and drop out.
+      const pctBySection = {};
       const sectionScores = [];
       for (let i = 0; i < results.length; i++) {
         const res = results[i];
         if (!res) continue;
         updateData[res.field] = res.value;
         if (res.extra) Object.assign(updateData, res.extra);
-        sum += res.pct;
+        pctBySection[selected[i]] = res.pct;
         sectionScores.push({ name: SECTION_DISPLAY_NAMES[selected[i]] || selected[i], score: res.pct });
       }
-      const avg = results.length ? sum / results.length : 0;
-      updateData.score = Number(avg.toFixed(1));
+      const avg = computePageScoreFromMap(pctBySection, pageType);
+      updateData.score = avg;
       updateData.grade = gradeFor(avg);
       updateData.sectionScore = sectionScores;
 
@@ -411,7 +420,7 @@ const OverAll = (A, B, C, D, E, F, G, H) => {
     const G = G_Res?.Percentage || 0;
     const H = aeoRes?.Percentage || 0;
 
-    const overall = OverAll(A, B, C, D, E, F, G, H);
+    const overall = OverAll([A, B, C, D, E, F, G, H], pageType);
 
     const timeTaken = ((performance.now() - start) / 1000).toFixed(0);
 

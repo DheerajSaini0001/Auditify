@@ -1979,13 +1979,14 @@ async function checkHierarchyFlowClarity(page) {
   });
 
   // --- Sub-scores (0-100) ---
-  let headingScore = 100;
-  if (d.totalHeadings === 0) headingScore = 0;
-  else {
-    if (d.h1Count !== 1) headingScore -= 30;
-    if (!d.isSequential) headingScore -= 25;
-    headingScore = Math.max(0, headingScore);
-  }
+  // Heading sub-signal measures SCANNABILITY — does the page use headings to break
+  // content into digestible blocks — NOT tag-order correctness. H1-count and
+  // level-skip are owned (and weighted) by On-Page SEO `Heading_Hierarchy` and
+  // Accessibility `Heading_Order`; re-scoring them here was a Bucket-3 triple-count.
+  let headingScore;
+  if (d.totalHeadings === 0) headingScore = 0;        // nothing to scan by
+  else if (d.totalHeadings === 1) headingScore = 70;  // one heading barely chunks the page
+  else headingScore = 100;                            // multiple headings = scannable structure
   const labelingScore = d.totalSections > 0 ? Math.round((d.labeledCount / d.totalSections) * 100) : 100;
   const flowSignals = (d.hasFooter ? 1 : 0) + (d.internalLinks > 2 ? 1 : 0) + (d.nextStepCTAs > 0 ? 1 : 0);
   const flowScore = Math.round((flowSignals / 3) * 100);
@@ -1994,20 +1995,20 @@ async function checkHierarchyFlowClarity(page) {
   const status = score >= 75 ? 'pass' : score >= 45 ? 'warning' : 'fail';
 
   const weak = [];
-  if (headingScore < 75) weak.push(d.totalHeadings === 0 ? 'no headings' : d.h1Count !== 1 ? `${d.h1Count} H1 tags` : 'heading levels skip');
+  if (headingScore < 75) weak.push(d.totalHeadings === 0 ? 'no headings to scan by' : 'too few headings to break up content');
   if (labelingScore < 75) weak.push(`only ${d.labeledCount}/${d.totalSections} sections labeled`);
   if (flowScore < 75) weak.push(!d.hasFooter ? 'no footer' : d.nextStepCTAs === 0 ? 'no next-step CTAs' : 'few internal links');
 
   let analysis;
   if (status === 'pass') {
     analysis = {
-      cause: "The page has a clear heading hierarchy, labeled sections and a logical onward flow, so visitors can scan and move forward easily.",
-      recommendation: "Keep a single descriptive H1, label every major section with a heading, and always offer a clear next step."
+      cause: "The page breaks content into headed, labeled sections with a logical onward flow, so visitors can scan and move forward easily.",
+      recommendation: "Keep using headings to chunk content, label every major section, and always offer a clear next step."
     };
   } else {
     analysis = {
       cause: `Structure & flow gaps: ${weak.join('; ') || 'the page is hard to scan or leads to a dead end'}.`,
-      recommendation: "Use exactly one H1 with sequential H2/H3 sub-headings, give every major section a visible heading, and add a footer plus a clear 'what's next' action so users never hit a dead end."
+      recommendation: "Break content into scannable sections with headings, give every major section a visible heading, and add a footer plus a clear 'what's next' action so users never hit a dead end."
     };
   }
 

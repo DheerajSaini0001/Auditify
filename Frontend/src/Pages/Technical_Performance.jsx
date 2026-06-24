@@ -438,11 +438,11 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
               </Section>
               )}
 
-              {/* PageSpeed & AI Agent Readiness */}
-              {(tech.PageSpeed_Score || tech.AI_Agentic_Browsing) && (
+              {/* PageSpeed (AI Agentic Browsing moved to the AIO section per spec §5.1) */}
+              {tech.PageSpeed_Score && (
                 <Section
-                  title="PageSpeed & AI Agent Readiness"
-                  subtitle="Official Lighthouse score and how ready the site is for AI agents"
+                  title="PageSpeed Score"
+                  subtitle="Official Lighthouse performance score"
                   icon={Smartphone}
                   darkMode={darkMode}
                   shouldAlignStart={isMobileExpanded}
@@ -475,59 +475,6 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                           </div>
                         </div>
                       )}
-                    </OptimizationCard>
-                  )}
-
-                  {tech.AI_Agentic_Browsing && (
-                    <OptimizationCard
-                      icon={Bot}
-                      title="AI Agentic Browsing"
-                      metricData={tech.AI_Agentic_Browsing}
-                      paramKey="AI_Agentic_Browsing"
-                      darkMode={darkMode}
-                      isOpen={expandedDetails.agenticBrowsing}
-                      onToggle={() => toggleDetails('agenticBrowsing')}
-                      description={metricExplanations.AI_Agentic_Browsing.whatThisParameterIs}
-                      whyItMatters={metricExplanations.AI_Agentic_Browsing.whyItMatters}
-                      fallbackCauses={metricExplanations.AI_Agentic_Browsing.actualReasonsForFailure}
-                      fallbackRecommendations={metricExplanations.AI_Agentic_Browsing.howToOvercomeFailure}
-                      onInfoClick={() => setSelectedParameterInfo({ title: "AI Agentic Browsing", icon: Bot, ...metricExplanations.AI_Agentic_Browsing, metricData: tech.AI_Agentic_Browsing })}
-                      displayValue={tech.AI_Agentic_Browsing.meta?.value}
-                    >
-                      <div className="flex flex-col gap-4">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${darkMode ? "bg-amber-900/30 text-amber-400" : "bg-amber-50 text-amber-600"}`}>Experimental</span>
-                          <span className={`text-[10px] ${darkMode ? "text-gray-500" : "text-faint"}`}>WebMCP readiness is the only arm folded into the score</span>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
-                            <p className={`text-[10px] font-semibold uppercase tracking-wider mb-1 ${statusText(tech.AI_Agentic_Browsing.status, darkMode, "label")}`}>WebMCP Readiness</p>
-                            <p className={`text-xl font-black ${statusText(tech.AI_Agentic_Browsing.status, darkMode, "value")}`}>{tech.AI_Agentic_Browsing.meta?.value}</p>
-                          </div>
-                          <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
-                            <p className={`text-[10px] font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-400" : "text-muted"}`}>Forms Annotated</p>
-                            <p className={`text-xl font-black ${darkMode ? "text-gray-200" : "text-inksoft"}`}>{tech.AI_Agentic_Browsing.meta?.annotatedForms ?? 0}/{tech.AI_Agentic_Browsing.meta?.totalForms ?? 0}</p>
-                          </div>
-                        </div>
-                        {/* Informational sub-scores — counted in other sections, shown here for context */}
-                        <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
-                          <p className={`text-[10px] font-semibold uppercase tracking-wider mb-3 ${darkMode ? "text-gray-500" : "text-faint"}`}>Informational · counted in other sections</p>
-                          <div className="grid grid-cols-3 gap-3">
-                            <div>
-                              <p className={`text-[10px] ${darkMode ? "text-gray-500" : "text-faint"}`}>Agent A11y</p>
-                              <p className={`text-sm font-black ${darkMode ? "text-gray-200" : "text-inksoft"}`}>{tech.AI_Agentic_Browsing.meta?.agentAccessibility ?? "—"}%</p>
-                            </div>
-                            <div>
-                              <p className={`text-[10px] ${darkMode ? "text-gray-500" : "text-faint"}`}>Stability (CLS)</p>
-                              <p className={`text-sm font-black ${darkMode ? "text-gray-200" : "text-inksoft"}`}>{tech.AI_Agentic_Browsing.meta?.agentStability ?? "—"}</p>
-                            </div>
-                            <div>
-                              <p className={`text-[10px] ${darkMode ? "text-gray-500" : "text-faint"}`}>llms.txt</p>
-                              <p className={`text-sm font-black ${tech.AI_Agentic_Browsing.meta?.llmsTxt ? (darkMode ? "text-emerald-400" : "text-emerald-600") : (darkMode ? "text-gray-400" : "text-faint")}`}>{tech.AI_Agentic_Browsing.meta?.llmsTxt ? "Present" : "Missing"}</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
                     </OptimizationCard>
                   )}
 

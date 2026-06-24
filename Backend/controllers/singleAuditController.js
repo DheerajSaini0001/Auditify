@@ -9,6 +9,7 @@ import { checkWebsiteExists } from "../utils/fastFetch.js";
 import { validateUrlSafety } from "../utils/ssrfGuard.js";
 import auditStore from "../utils/auditStore.js";
 import logger from "../utils/logger.js";
+import { classifyPageType, computePageScoreFromMap } from "../utils/sectionWeights.js";
  
 const reportFieldMap = {
   "Technical Performance": "technicalPerformance",
@@ -165,11 +166,11 @@ export const startAudit = async (req, res) => {
             userId: req.user?.userId || null
           });
 
-          let sum = 0;
+          const pctBySection = {};
           for (const section of sections) {
             const fieldName = reportFieldMap[section];
             newSectionReport[fieldName] = fullAudit[fieldName];
-            sum += fullAudit[fieldName]?.Percentage || 0;
+            pctBySection[section] = fullAudit[fieldName]?.Percentage || 0;
 
             // Include each section's sub-dependencies.
             if (section === "On Page SEO") newSectionReport.siteSchema = fullAudit.siteSchema;
@@ -178,7 +179,9 @@ export const startAudit = async (req, res) => {
             }
           }
 
-          const sectionScore = Number((sum / sections.length).toFixed(1));
+          // Weighted by the page-type tilt over the extracted sections (spec §5.4),
+          // matching what a fresh subset audit of this URL would produce.
+          const sectionScore = computePageScoreFromMap(pctBySection, classifyPageType(url));
           const sectionGrade = sectionScore >= 90 ? "A+" : sectionScore >= 80 ? "A" : sectionScore >= 70 ? "B" : sectionScore >= 60 ? "C" : sectionScore >= 50 ? "D" : "F";
           newSectionReport.score = sectionScore;
           newSectionReport.grade = sectionGrade;

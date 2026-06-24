@@ -761,7 +761,6 @@ export const InfoDetails = {
             { param: "Compression (Gzip/Brotli)", weight: "4" },
             { param: "Caching Policy", weight: "4" },
             { param: "Redirect Chains", weight: "3" },
-            { param: "AI Agentic Browsing — WebMCP arm (Experimental)", weight: "6 (agent-accessibility, CLS & llms.txt shown but not folded in)" },
             { param: "PageSpeed Score (Lighthouse, Mobile & Desktop)", weight: "Informational — shown, not scored" }
         ]
     },
@@ -4317,7 +4316,7 @@ export const InfoDetails = {
         whatThisMetricIs: (
             <div className="space-y-2">
                 <p>This score measures how easy it is for Artificial Intelligence (like ChatGPT, Perplexity, or Google Gemini) to find, understand, and use your content to answer user questions.</p>
-                <p>We score <span className="font-semibold text-indigo-400">8 weighted AIO signals</span> (structured-data validity, NLP-friendly content, answer-oriented structure, duplicate-content readiness, keyword/entity annotation, freshness, AI-friendly internal linking, and topical focus) plus a couple of <span className="font-semibold text-indigo-400">informational</span> checks—combined with <span className="font-semibold text-indigo-400">Answer Engine Optimization (AEO)</span> specific logic for the top 3 AI platforms.</p>
+                <p>We score <span className="font-semibold text-indigo-400">8 weighted AIO signals</span> (structured-data validity, NLP-friendly content, answer-oriented structure, keyword/entity annotation, freshness, AI-friendly internal linking, topical focus, and AI agentic browsing / WebMCP) plus a few <span className="font-semibold text-indigo-400">informational</span> checks (duplicate-content readiness, structured content, terminology consistency)—combined with <span className="font-semibold text-indigo-400">Answer Engine Optimization (AEO)</span> specific logic for the top 3 AI platforms.</p>
             </div>
         ),
         whyItMatters: (
@@ -4380,12 +4379,12 @@ export const InfoDetails = {
             { param: "Structured-data validity", weight: "20%" },
             { param: "NLP-friendly content", weight: "16%" },
             { param: "Answer-oriented structure", weight: "12%" },
-            { param: "Duplicate-content readiness", weight: "12%" },
             { param: "Keyword / entity annotation", weight: "10%" },
             { param: "Content freshness markers", weight: "10%" },
             { param: "AI-friendly internal linking", weight: "10%" },
             { param: "Topical focus clarity", weight: "10%" },
-            { param: "Structured content · Terminology", weight: "Informational" }
+            { param: "AI Agentic Browsing — WebMCP arm (experimental)", weight: "6%" },
+            { param: "Duplicate-content readiness · Structured content · Terminology", weight: "Informational" }
         ]
     },
 

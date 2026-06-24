@@ -12,7 +12,7 @@ import {
   Users, Target, FlaskConical, MessageCircle,
   Brain, Cpu, Network, Loader2,
   Compass, HelpCircle, Layers, List, UserCheck, CheckSquare, BookOpen, ShieldCheck, AlertCircle,
-  ChevronDown, ChevronUp
+  ChevronDown, ChevronUp, Bot
 } from "lucide-react";
 import MetricInfoModal from "../Component/MetricInfoModal";
 import ParameterInfoModal from "../Component/ParameterInfoModal";
@@ -47,6 +47,7 @@ const iconMap = {
   aeoSchema: Database,
   structuredContent: Layers,
   botAccess: ShieldCheck,
+  AI_Agentic_Browsing: Bot,
 };
 
 const educationalContent = InfoDetails;
@@ -775,7 +776,7 @@ const AIO_Inner = React.memo(({ data, loading, darkMode }) => {
             <div className="space-y-6 mt-6">
               {(() => {
                 const visible = (keys) => keys.filter((k) => aio[k] && isVisibleForAudience(k, audienceMode));
-                const foundationKeys = visible(["Structured_Data", "Duplicate_Content_Detection_Ready", "Internal_Linking_AI_Friendly", "Content_Updated_Regularly"]);
+                const foundationKeys = visible(["Structured_Data", "Duplicate_Content_Detection_Ready", "Internal_Linking_AI_Friendly", "Content_Updated_Regularly", "AI_Agentic_Browsing"]);
                 const semanticKeys = visible(["Content_NLP_Friendly", "Keywords_Entities_Annotated", "Topical_Focus_Clarity", "Terminology_Consistency"]);
                 const answerVisible = aio["Answer_Oriented_Structure"] && isVisibleForAudience("Answer_Oriented_Structure", audienceMode);
                 const eeatKeys = visible(["Structured_Content"]);

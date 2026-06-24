@@ -1,3 +1,7 @@
+// AI Agentic Browsing (WebMCP) lives in the AIO section per spec Part 3 + §5.1.
+// The evaluator is defined in technicalMetrics.js (reuses its fetch helper) and imported here.
+import { evaluateAgenticBrowsing } from "./technicalMetrics.js";
+
 function Domain(urlString) {
   try {
     const u = new URL(urlString);
@@ -820,42 +824,54 @@ export default async function aioReadiness(url, page, $) {
 
   const domain = Domain(url);
 
-  // ── Weighted parameters (spec §2.7 — in-section weights sum to 1.00) ──
+  // ── Weighted parameters (spec §2.7) ──
   const structuredData = checkStructuredData($);                       // validity / matches content
   const contentNLPFriendly = checkContentNLPFriendly($);
   const answerOrientedStructure = checkAnswerOrientedStructure($);
-  const duplicateContentDetectionReady = checkDuplicateContentDetectionReady($);
   const keywordsEntitiesAnnotated = checkKeywordsEntitiesAnnotated($);
   const contentUpdatedRegularly = checkContentUpdatedRegularly($);
   const internalLinkingAIFriendly = checkInternalLinkingAIFriendly($, domain);
   const topicalFocusClarity = checkTopicalFocusClarity($, url);
+  // AI Agentic Browsing — WebMCP readiness arm (spec Part 3 + §5.1, ~6% in AIO).
+  // page may be absent on some call paths; the evaluator guards page.evaluate internally.
+  const aiAgenticBrowsing = await evaluateAgenticBrowsing(page, url, null);
 
   // ── Informational only (weight 0; spec §2.7 "keep the strongest, merge the rest") ──
   const structuredContent = checkStructuredContent($);                 // merge: chunking + lists/tables
   const terminologyConsistency = { ...checkTerminologyConsistency($), infoOnly: true };
+  // Duplicate-content readiness (canonical / noindex) is INFO-ONLY here (Bucket-3 de-dup):
+  // it scored 100 for mere canonical presence, which On-Page SEO `Canonical` already owns
+  // and grades far more thoroughly (self-reference, parameterized-variant canonicalization,
+  // noindex conflict, pagination). A single-page audit cannot observe the only facet that
+  // would be distinct (one resolvable version across filter/param variants), so per the
+  // no-double-counting rule (spec §0.3 rule 4) this stays surfaced but unweighted.
+  const duplicateContentDetectionReady = { ...checkDuplicateContentDetectionReady($), infoOnly: true };
 
-  // Spec §2.7 in-section weights (decimals; sum 1.00 over the 8 weighted params).
+  // Spec §2.7 + §5.1 in-section weights (decimals; renormalized at roll-up).
+  // AI Agentic Browsing (WebMCP) is the only NEW arm weighted (~0.06); its agent-a11y,
+  // CLS and llms.txt sub-scores stay informational (owned by A11y/Technical/AEO).
   const weights = {
     Structured_Data: 0.20,
     Content_NLP_Friendly: 0.16,
     Answer_Oriented_Structure: 0.12,
-    Duplicate_Content_Detection_Ready: 0.12,
     Keywords_Entities_Annotated: 0.10,
     Content_Updated_Regularly: 0.10,
     Internal_Linking_AI_Friendly: 0.10,
-    Topical_Focus_Clarity: 0.10
+    Topical_Focus_Clarity: 0.10,
+    AI_Agentic_Browsing: 0.06
   };
 
   const metricsMap = {
     Structured_Data: structuredData,
     Content_NLP_Friendly: contentNLPFriendly,
     Answer_Oriented_Structure: answerOrientedStructure,
-    Duplicate_Content_Detection_Ready: duplicateContentDetectionReady,
     Keywords_Entities_Annotated: keywordsEntitiesAnnotated,
     Content_Updated_Regularly: contentUpdatedRegularly,
     Internal_Linking_AI_Friendly: internalLinkingAIFriendly,
     Topical_Focus_Clarity: topicalFocusClarity,
+    AI_Agentic_Browsing: aiAgenticBrowsing,
     // informational (excluded from scoring)
+    Duplicate_Content_Detection_Ready: duplicateContentDetectionReady,
     Structured_Content: structuredContent,
     Terminology_Consistency: terminologyConsistency
   };

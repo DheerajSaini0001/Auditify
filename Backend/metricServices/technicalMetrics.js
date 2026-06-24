@@ -2160,7 +2160,9 @@ const evaluateJsExecution = (audits) => {
 // genuinely-new WebMCP arm is folded into the score (small weight); agent-accessibility,
 // stability (CLS) and llms.txt are surfaced as informational sub-scores because they are
 // already owned by Accessibility / Technical CLS / AEO. Experimental, confidence: lab.
-const evaluateAgenticBrowsing = async (page, url, clsPick) => {
+// Exported so the AIO section can own it (spec Part 3 + §5.1 place WebMCP in AIO,
+// NOT Technical). Kept defined here because it reuses this module's fetchTextWithTimeout.
+export const evaluateAgenticBrowsing = async (page, url, clsPick) => {
   let dom = {
     apiPresent: false, declarativeTools: 0, totalForms: 0, annotatedForms: 0,
     schemaValid: null, totalInteractive: 0, namedInteractive: 0, landmarks: 0,
@@ -2314,8 +2316,8 @@ export default async function technicalMetrics(url, device, page, response, brow
   const ttfbPick = ttfbCrux || ttfbLab;
   // INP·TBT is one parameter: real-user INP (field) if available, else lab TBT.
   const inpTbtPick = inpCrux || tbt;
-  // AI Agentic Browsing (experimental) — WebMCP arm scored, CLS reused for stability.
-  const agentic = await evaluateAgenticBrowsing(page, url, clsPick);
+  // NOTE: AI Agentic Browsing (WebMCP) is scored in the AIO section (spec Part 3 + §5.1),
+  // not here — it measures machine-interactability, not delivery performance.
   const lcpConf = lcpCrux ? "field" : "lab";
   const clsConf = clsCrux ? "field" : "lab";
   const fcpConf = fcpCrux ? "field" : "lab";
@@ -2336,8 +2338,6 @@ export default async function technicalMetrics(url, device, page, response, brow
     { score: getScore(compression),          weight: 4,  present: true },
     { score: getScore(caching),              weight: 4,  present: true },
     { score: getScore(redirect),             weight: 3,  present: true },
-    // Experimental frontier signal (spec Part 3) — WebMCP arm only, small weight.
-    { score: getScore(agentic),              weight: 6,  present: true },
   ];
   const presentComponents = components.filter((c) => c.present);
   const totalWeight = presentComponents.reduce((s, c) => s + c.weight, 0);
@@ -2365,6 +2365,5 @@ export default async function technicalMetrics(url, device, page, response, brow
     Resource_Optimization: resourceOptimization,
     Render_Blocking: renderBlocking,
     Redirect_Chains: redirect,
-    AI_Agentic_Browsing: agentic,
   };
 }

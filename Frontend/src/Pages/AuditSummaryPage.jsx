@@ -105,18 +105,58 @@ const AuditSummaryPage = () => {
 
     const rows = useMemo(() => payload?.pages || [], [payload]);
 
-    // Aggregate site score = importance-weighted site rollup math (§5.6)
+    // Mean of the numeric values only (rounded); null when nothing loaded.
+    const meanOf = (vals) => {
+        const nums = vals.filter((v) => typeof v === "number");
+        return nums.length ? Math.round(nums.reduce((a, b) => a + b, 0) / nums.length) : null;
+    };
+
+    // Collapse each page-type into ONE display row. A category that was sampled
+    // across several pages (VDP = 5 cars, SRP = new/used) is shown as a single
+    // averaged row instead of N separate rows: every section cell is the mean of
+    // the samples' Percentages, and the overall is the mean of their scores. We
+    // still audit all the samples — they're just merged into one VDP/SRP report here.
+    const displayRows = useMemo(() => {
+        const order = [];
+        const byKey = new Map();
+        for (const p of rows) {
+            if (!byKey.has(p.key)) { byKey.set(p.key, []); order.push(p.key); }
+            byKey.get(p.key).push(p);
+        }
+        return order.map((key) => {
+            const members = byKey.get(key);
+            const reps = members.map((m) => reports[m.id]).filter(Boolean);
+            const scores = {};
+            SECTIONS.forEach((s) => { scores[s.key] = meanOf(reps.map((r) => r?.[s.key]?.Percentage)); });
+            const overall = meanOf(reps.map((r) => r?.score));
+            // Strip the "— Used 1 / New" sample suffix so the merged row reads cleanly.
+            const baseLabel = (members[0].label || "").split(" — ")[0] || members[0].label;
+            // When the backend merged the samples, there's one entry carrying `mergedFrom`;
+            // otherwise (fallback) we averaged N member reports client-side here.
+            const mergedFrom = members[0]?.mergedFrom || members.length;
+            return {
+                key,
+                label: baseLabel,
+                memberCount: members.length,
+                mergedFrom,
+                id: members[0].id,   // drill-in opens the averaged (merged) report
+                scores,
+                overall,
+            };
+        });
+    }, [rows, reports]);
+
+    // Aggregate site score = importance-weighted site rollup math (§5.6), over the
+    // collapsed rows (so a 5-car VDP counts ONCE, as its average — not 5×).
     const { siteScore, siteGrade } = useMemo(() => {
         let totalImportance = 0;
         let weightedScoreSum = 0;
         let validPagesCount = 0;
 
-        rows.forEach((p) => {
-            const report = reports[p.id];
-            if (report && typeof report.score === "number") {
-                const pageType = p.key || report.pageType || "generic";
-                const importance = PAGE_IMPORTANCE[pageType] ?? 1.0;
-                weightedScoreSum += report.score * importance;
+        displayRows.forEach((r) => {
+            if (typeof r.overall === "number") {
+                const importance = PAGE_IMPORTANCE[r.key] ?? 1.0;
+                weightedScoreSum += r.overall * importance;
                 totalImportance += importance;
                 validPagesCount++;
             }
@@ -128,17 +168,16 @@ const AuditSummaryPage = () => {
 
         const avg = Math.round(weightedScoreSum / totalImportance);
         return { siteScore: avg, siteGrade: gradeFor(avg) };
-    }, [rows, reports]);
+    }, [displayRows]);
 
-    // Issue breakdown derived from every cell across the grid.
+    // Issue breakdown derived from every cell across the (collapsed) grid.
     const breakdown = useMemo(() => {
         const acc = { strong: 0, mid: 0, low: 0, na: 0 };
-        rows.forEach((p) => {
-            const rep = reports[p.id];
-            SECTIONS.forEach((s) => acc[tierOf(rep?.[s.key]?.Percentage)]++);
+        displayRows.forEach((r) => {
+            SECTIONS.forEach((s) => acc[tierOf(r.scores[s.key])]++);
         });
         return acc;
-    }, [rows, reports]);
+    }, [displayRows]);
 
     const cardClass = darkMode
         ? "bg-slate-900 border border-slate-800 shadow-xl shadow-black/20"
@@ -193,7 +232,7 @@ const AuditSummaryPage = () => {
                             <div>
                                 <div className={`text-5xl font-black leading-none ${siteScore >= 75 ? "text-emerald-500" : siteScore >= 55 ? "text-amber-500" : "text-red-500"}`}>{siteGrade}</div>
                                 <p className={`mt-2 text-sm ${darkMode ? "text-slate-400" : "text-muted"}`}>
-                                    Averaged across {rows.length} audited page{rows.length === 1 ? "" : "s"}.
+                                    Averaged across {displayRows.length} audited page type{displayRows.length === 1 ? "" : "s"}.
                                 </p>
                             </div>
                         </div>
@@ -201,7 +240,7 @@ const AuditSummaryPage = () => {
 
                     {/* Issue breakdown */}
                     <div className={`rounded-3xl p-7 lg:col-span-2 ${cardClass}`}>
-                        <span className={`block text-[10px] font-semibold uppercase tracking-widest ${darkMode ? "text-slate-500" : "text-faint"}`}>Across {rows.length * SECTIONS.length} checks</span>
+                        <span className={`block text-[10px] font-semibold uppercase tracking-widest ${darkMode ? "text-slate-500" : "text-faint"}`}>Across {displayRows.length * SECTIONS.length} checks</span>
                         <div className="grid grid-cols-3 gap-4 mt-4">
                             {[
                                 { label: "Critical", n: breakdown.low, dot: "bg-red-500", text: "text-red-500" },
@@ -226,7 +265,7 @@ const AuditSummaryPage = () => {
                         <div>
                             <h2 className={`text-xl font-bold ${darkMode ? "text-white" : "text-ink"}`}>Page-Type Heatmap</h2>
                             <p className={`text-sm mt-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>
-                                {rows.length} pages × {SECTIONS.length} dimensions — click any cell to drill into that section
+                                {displayRows.length} page types × {SECTIONS.length} dimensions — click any cell to drill into that section
                             </p>
                         </div>
                         {/* Legend */}
@@ -261,23 +300,23 @@ const AuditSummaryPage = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {rows.map((p) => (
-                                        <tr key={p.id}>
+                                    {displayRows.map((row) => (
+                                        <tr key={row.key}>
                                             {/* page label (the other edge) */}
                                             <th
                                                 className={`sticky left-0 z-10 pr-3 text-right text-sm font-semibold whitespace-nowrap ${darkMode ? "bg-slate-900 text-slate-200" : "bg-card text-ink"}`}
                                             >
-                                                {p.label}
+                                                {row.label}
                                             </th>
 
                                             {SECTIONS.map((s) => {
-                                                const score = cellScore(p.id, s.key);
+                                                const score = row.scores[s.key];
                                                 const tier = tierOf(score);
                                                 return (
                                                     <td key={s.key} className="p-0">
                                                         <button
-                                                            onClick={() => openCell(p.id, s.link)}
-                                                            title={`${p.label} · ${s.label}${score != null ? ` — ${score}` : " — N/A"}`}
+                                                            onClick={() => openCell(row.id, s.link)}
+                                                            title={`${row.label} · ${s.label}${score != null ? ` — ${score}` : " — N/A"}`}
                                                             className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl flex items-center justify-center text-sm font-bold transition-all hover:scale-105 hover:ring-2 hover:ring-offset-1 hover:ring-[#ea580c] focus:outline-none
                                                                 ${darkMode ? "ring-offset-slate-900" : "ring-offset-card"}
                                                                 ${tier === "na"
@@ -293,8 +332,8 @@ const AuditSummaryPage = () => {
                                             {/* All-sections cell → full report */}
                                             <td className="p-0">
                                                 <button
-                                                    onClick={() => openAll(p.id)}
-                                                    title={`${p.label} · full report`}
+                                                    onClick={() => openAll(row.id)}
+                                                    title={`${row.label} · full report`}
                                                     className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl flex items-center justify-center transition-all hover:scale-105 hover:ring-2 hover:ring-offset-1 hover:ring-[#ea580c] focus:outline-none
                                                         ${darkMode ? "bg-slate-800 text-slate-300 ring-offset-slate-900 hover:text-white" : "bg-cardsoft text-inksoft ring-offset-card hover:text-ink"}`}
                                                 >

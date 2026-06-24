@@ -32,6 +32,19 @@ export default function Sidebar({ darkMode }) {
   // sections to load — avoid showing endless loading spinners.
   const notDealership = data?.isDealership === false;
 
+  // Batch context (set by the Audit Summary): lets us link to the NEXT audited
+  // page's report straight from the sidebar so the user can walk the page set.
+  const batch = React.useMemo(() => {
+    try { return JSON.parse(sessionStorage.getItem("auditSummary") || "null"); }
+    catch { return null; }
+  }, []);
+  const nextPage = React.useMemo(() => {
+    const pages = batch?.pages;
+    if (!Array.isArray(pages) || !data?._id) return null;
+    const i = pages.findIndex((p) => String(p.id) === String(data._id));
+    return (i >= 0 && i + 1 < pages.length) ? pages[i + 1] : null;
+  }, [batch, data?._id]);
+
   const handleGoHome = () => {
     clearData();
     navigate("/", { replace: true });
@@ -135,6 +148,21 @@ export default function Sidebar({ darkMode }) {
 
       {/* Footer / Actions */}
       <div className={`p-3 border-t space-y-3 ${darkMode ? "border-slate-800 bg-[#0B1120]" : "border-linesoft bg-surface"}`}>
+        {/* Next audited page in the batch (when this report came from an Audit Summary). */}
+        {nextPage && (
+          <Link
+            to={`/report/${nextPage.id}`}
+            replace
+            title={`Next page: ${nextPage.label}`}
+            className={`group flex items-center justify-between gap-2 w-full px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${darkMode ? "bg-slate-800 text-slate-200 hover:bg-slate-700" : "bg-cardsoft text-inksoft hover:bg-emerald-50 hover:text-emerald-700"}`}
+          >
+            <span className="flex items-center gap-2 min-w-0">
+              <span className={`text-[10px] font-bold uppercase tracking-wider shrink-0 ${darkMode ? "text-slate-500" : "text-faint"}`}>Next</span>
+              <span className="truncate">{nextPage.label}</span>
+            </span>
+            <ChevronRight className="w-4 h-4 shrink-0 opacity-60 group-hover:translate-x-0.5 transition-transform" />
+          </Link>
+        )}
         {data?.sectionScore ? (
           <>
             <button

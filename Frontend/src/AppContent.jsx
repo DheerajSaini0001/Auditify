@@ -36,6 +36,7 @@ import AuditHistoryPage from "./Pages/AuditHistoryPage";
 
 import { ThemeProvider, ThemeContext } from "./context/ThemeContext.jsx";
 import ProtectedRoute from "./Component/ProtectedRoute.jsx";
+import SectionNavFooter from "./Component/SectionNavFooter.jsx";
 import { Toaster } from 'react-hot-toast';
 
 import MainLayout from "./Component/MainLayout";
@@ -118,14 +119,14 @@ function AppContentInner() {
           <Route path="/audit-summary" element={<AuditSummaryPage />} />
 
           {/* Individual Report Pages - open to everyone, guests included */}
-          <Route path="/technical-performance/:id?" element={<GuestRouteWrapper><Technical_Performance /></GuestRouteWrapper>} />
-          <Route path="/on-page-seo/:id?" element={<GuestRouteWrapper><On_Page_SEO /></GuestRouteWrapper>} />
-          <Route path="/accessibility/:id?" element={<GuestRouteWrapper><Accessibility /></GuestRouteWrapper>} />
-          <Route path="/ux-content-structure/:id?" element={<GuestRouteWrapper><UX_Content_Structure /></GuestRouteWrapper>} />
-          <Route path="/security-compliance/:id?" element={<GuestRouteWrapper><Security_Compilance /></GuestRouteWrapper>} />
-          <Route path="/conversion-lead-flow/:id?" element={<GuestRouteWrapper><Conversion_Lead_Flow /></GuestRouteWrapper>} />
-          <Route path="/aio/:id?" element={<GuestRouteWrapper><AIO /></GuestRouteWrapper>} />
-          <Route path="/aeo/:id?" element={<GuestRouteWrapper><AEO /></GuestRouteWrapper>} />
+          <Route path="/technical-performance/:id?" element={<GuestRouteWrapper><Technical_Performance /><SectionNavFooter currentKey="technicalPerformance" /></GuestRouteWrapper>} />
+          <Route path="/on-page-seo/:id?" element={<GuestRouteWrapper><On_Page_SEO /><SectionNavFooter currentKey="onPageSEO" /></GuestRouteWrapper>} />
+          <Route path="/accessibility/:id?" element={<GuestRouteWrapper><Accessibility /><SectionNavFooter currentKey="accessibility" /></GuestRouteWrapper>} />
+          <Route path="/ux-content-structure/:id?" element={<GuestRouteWrapper><UX_Content_Structure /><SectionNavFooter currentKey="UXOrContentStructure" /></GuestRouteWrapper>} />
+          <Route path="/security-compliance/:id?" element={<GuestRouteWrapper><Security_Compilance /><SectionNavFooter currentKey="securityOrCompliance" /></GuestRouteWrapper>} />
+          <Route path="/conversion-lead-flow/:id?" element={<GuestRouteWrapper><Conversion_Lead_Flow /><SectionNavFooter currentKey="conversionAndLeadFlow" /></GuestRouteWrapper>} />
+          <Route path="/aio/:id?" element={<GuestRouteWrapper><AIO /><SectionNavFooter currentKey="aioReadiness" /></GuestRouteWrapper>} />
+          <Route path="/aeo/:id?" element={<GuestRouteWrapper><AEO /><SectionNavFooter currentKey="aeo" /></GuestRouteWrapper>} />
 
           {/* Admin Routes */}
           <Route path="/admin" element={

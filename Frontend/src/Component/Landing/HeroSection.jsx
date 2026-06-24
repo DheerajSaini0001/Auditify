@@ -568,10 +568,47 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         setBatchRunning(false);
         if (cancelledRef.current) return;
 
-        // Keep pages that produced a report id (drop hard failures with no report).
-        const pages = results
-            .filter((r) => r && r.id)
-            .map((r) => ({ key: r.catKey, label: r.label, url: r.url, id: r.id, status: r.status }));
+        // Group successful results by category. A category sampled across several pages
+        // (VDP = 5 cars, SRP = new/used) is merged server-side into ONE averaged report,
+        // so the summary shows a single row whose drill-in IS that averaged report.
+        const ok = results.filter((r) => r && r.id && r.status !== 'failed');
+        const byCat = [];
+        const catIndex = new Map();
+        for (const r of ok) {
+            if (!catIndex.has(r.catKey)) { catIndex.set(r.catKey, byCat.length); byCat.push({ catKey: r.catKey, items: [] }); }
+            byCat[catIndex.get(r.catKey)].items.push(r);
+        }
+
+        const bearer = localStorage.getItem('dealerpulse_token');
+        const mergeHeaders = { 'Content-Type': 'application/json', ...(bearer && { Authorization: `Bearer ${bearer}` }) };
+
+        const pages = [];
+        for (const { catKey, items } of byCat) {
+            if (items.length === 1) {
+                const r = items[0];
+                pages.push({ key: catKey, label: r.label, url: r.url, id: r.id, status: r.status });
+                continue;
+            }
+            // Multiple samples → merge into one averaged report.
+            const baseLabel = (items[0].label || '').split(' — ')[0] || items[0].label;
+            try {
+                const mres = await fetch(`${API_URL}/single-audit/merge`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: mergeHeaders,
+                    body: JSON.stringify({ ids: items.map((it) => it.id), pageType: catKey, auditToken: auditTokenRef.current }),
+                });
+                const mdata = await mres.json().catch(() => ({}));
+                if (mres.ok && mdata._id) {
+                    pages.push({ key: catKey, label: baseLabel, url: items[0].url, id: mdata._id, status: 'success', mergedFrom: mdata.mergedFrom || items.length });
+                } else {
+                    // Merge failed — fall back to listing the samples individually.
+                    items.forEach((r) => pages.push({ key: catKey, label: r.label, url: r.url, id: r.id, status: r.status }));
+                }
+            } catch {
+                items.forEach((r) => pages.push({ key: catKey, label: r.label, url: r.url, id: r.id, status: r.status }));
+            }
+        }
         if (!pages.length) return;
 
         // Let the freshly-completed ("✓ Report generated") cards land for a beat before
@@ -727,7 +764,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                     </h1>
 
                     <p className={`text-[clamp(0.95rem,1.4vw,1.125rem)] font-medium leading-relaxed max-w-2xl mx-auto ${darkMode ? 'text-slate-300' : 'text-inksoft'}`}>
-                        Drop a URL. We crawl the right pages, score them on 7 dealer-specific parameters,
+                        Drop a URL. We crawl the right pages, score them on 8 dealer-specific parameters,
                         and hand back a fix list ranked by impact.
                     </p>
                 </div>

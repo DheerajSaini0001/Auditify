@@ -138,17 +138,17 @@ const OverAll = (A, B, C, D, E, F, G, H, pageType = "generic") => {
   const total = (A * w.tech + B * w.seo + C * w.a11y + D * w.sec + E * w.ux + F * w.conv + G * w.aio + H * w.aeo) / 100;
 
   return {
-    totalScore: total,
+    totalScore: Number(total.toFixed(1)),
     grade: gradeFor(total),
     sectionScores: [
-      { name: "Technical Performance", score: arr[0] },
-      { name: "On-Page SEO", score: arr[1] },
-      { name: "Accessibility", score: arr[2] },
-      { name: "Security/Compliance", score: arr[3] },
-      { name: "UX & Content Structure", score: arr[4] },
-      { name: "Conversion & Lead Flow", score: arr[5] },
-      { name: "AIO Readiness", score: arr[6] },
-      { name: "AEO", score: arr[7] },
+      { name: "Technical Performance", score: A },
+      { name: "On-Page SEO", score: B },
+      { name: "Accessibility", score: C },
+      { name: "Security/Compliance", score: D },
+      { name: "UX & Content Structure", score: E },
+      { name: "Conversion & Lead Flow", score: F },
+      { name: "AIO Readiness", score: G },
+      { name: "AEO", score: H },
     ],
   };
 };

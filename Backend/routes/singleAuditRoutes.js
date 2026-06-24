@@ -1,5 +1,5 @@
 import express from "express";
-import { startAudit, getReportById, getReportStatusById } from "../controllers/singleAuditController.js";
+import { startAudit, getReportById, getReportStatusById, mergeReports } from "../controllers/singleAuditController.js";
 import { discover } from "../controllers/discoveryController.js";
 import { requestAuditOTP, verifyAuditOTP } from "../controllers/guestAuditController.js";
 import { generatePDFReport } from "../controllers/pdfController.js";
@@ -43,6 +43,10 @@ router.post("/discover", discoverLimiter, tryAuthenticate, guestAuditGate, disco
 
 // Start Audit — logged-in users pass; guests must present a verified-email grant.
 router.post("/audit", auditLimiter, tryAuthenticate, guestAuditGate, startAudit);
+
+// Merge several sample reports (e.g. the 5 VDP samples) into ONE averaged report.
+// Same gate as /audit so guests reuse their email-verification grant.
+router.post("/merge", auditLimiter, tryAuthenticate, guestAuditGate, mergeReports);
 
 // Export PDF — guests may export their own report (the controller scopes access
 // by report id when there's no authenticated user); logged-in users are scoped

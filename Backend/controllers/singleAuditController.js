@@ -22,6 +22,62 @@ const reportFieldMap = {
   "AEO (Answer Engine Optimization)": "aeo"
 };
 
+// Section field ↔ display name, used by the merge rollup (mirrors the worker's OverAll labels).
+const MERGE_SECTIONS = [
+  { field: "technicalPerformance", display: "Technical Performance" },
+  { field: "onPageSEO", display: "On-Page SEO" },
+  { field: "accessibility", display: "Accessibility" },
+  { field: "securityOrCompliance", display: "Security/Compliance" },
+  { field: "UXOrContentStructure", display: "UX & Content Structure" },
+  { field: "conversionAndLeadFlow", display: "Conversion & Lead Flow" },
+  { field: "aioReadiness", display: "AIO Readiness" },
+  { field: "aeo", display: "AEO" },
+];
+
+const gradeForScore = (s) => {
+  const v = Number(s) || 0;
+  return v >= 90 ? "A+" : v >= 80 ? "A" : v >= 70 ? "B" : v >= 60 ? "C" : v >= 50 ? "D" : "F";
+};
+
+// Mean of the numeric values only (rounded); null when none are numbers.
+const avgScores = (vals) => {
+  const nums = vals.filter((v) => typeof v === "number");
+  return nums.length ? Math.round(nums.reduce((a, b) => a + b, 0) / nums.length) : null;
+};
+
+// Re-derive a parameter's pass/warn/fail from its averaged score so the card's status
+// can't contradict its (averaged) number. Uses the same bands as the summary heatmap
+// (Strong ≥75 / Needs work 55–74 / Critical <55). Non-standard statuses (not_applicable,
+// notCalculated, …) are preserved untouched.
+const statusFromScore = (score, original) => {
+  if (!["pass", "warning", "fail"].includes(original)) return original;
+  return score >= 75 ? "pass" : score >= 55 ? "warning" : "fail";
+};
+
+// Deep-average every numeric `score` across the aligned sample nodes (recursing into
+// nested sub-objects like keyboard composites), re-deriving `status` from the average.
+// Every other field (details, qanda, meta, analysis) is kept from `base` (a representative
+// sample) — those carry per-sample evidence/text that can't be meaningfully averaged.
+const mergeScores = (base, siblings) => {
+  if (!base || typeof base !== "object" || Array.isArray(base)) return base;
+  const out = { ...base };
+  if (typeof base.score === "number") {
+    const avg = avgScores(siblings.map((s) => (s && typeof s.score === "number" ? s.score : null)));
+    if (avg !== null) {
+      out.score = avg;
+      if (typeof base.status === "string") out.status = statusFromScore(avg, base.status);
+    }
+  }
+  for (const key of Object.keys(base)) {
+    if (key === "score" || key === "status") continue;
+    const child = base[key];
+    if (child && typeof child === "object" && !Array.isArray(child)) {
+      out[key] = mergeScores(child, siblings.map((s) => (s ? s[key] : undefined)));
+    }
+  }
+  return out;
+};
+
 export const startAudit = async (req, res) => {
 
   try {
@@ -507,6 +563,111 @@ export const getReportStatusById = async (req, res) => {
   } catch (error) {
     logger.error("Error fetching report status", error);
     res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+// POST /single-audit/merge  { ids: [reportId…], pageType?, label? }
+// Builds ONE averaged report from several sample reports (e.g. the 5 VDP samples):
+// each section keeps a representative sample's rich detail, but its headline Percentage
+// — and the overall score — become the MEAN across the samples. Saved as a new report so
+// the summary shows a single VDP row whose drill-in IS the averaged report. The samples'
+// own reports are left untouched (still individually addressable, just not surfaced).
+export const mergeReports = async (req, res) => {
+  try {
+    const { ids, pageType } = req.body || {};
+    if (!Array.isArray(ids) || ids.length < 2) {
+      return res.status(400).json({ error: "Provide at least two report ids to merge" });
+    }
+
+    // Resolve each (in-memory store first, then Mongo), enforcing per-user access.
+    const docs = [];
+    for (const id of ids) {
+      if (!mongoose.Types.ObjectId.isValid(id)) continue;
+      const doc = auditStore.get(id) || await SingleAuditReport.findById(id);
+      if (doc && canAccessReport(req, doc)) docs.push(doc);
+    }
+
+    // Prefer completed reports that actually carry section data; fall back to whatever resolved.
+    const usable = docs.filter(
+      (d) => d.status === "completed" &&
+        MERGE_SECTIONS.some(({ field }) => d[field] && typeof d[field].Percentage === "number")
+    );
+    const source = usable.length ? usable : docs;
+    if (!source.length) {
+      return res.status(404).json({ error: "No accessible, completed reports to merge" });
+    }
+
+    // Average the overall scores first, then choose the representative sample whose
+    // overall score is CLOSEST to that average — its non-numeric evidence (details,
+    // recommendations, meta) is what we keep, so the kept text reflects a typical
+    // sample rather than an arbitrary first one. All scores are still averaged below.
+    const overall = avgScores(source.map((d) => d.score));
+    const scoredSamples = source.filter((d) => typeof d.score === "number");
+    const base = (overall == null || !scoredSamples.length)
+      ? source[0]
+      : scoredSamples.reduce(
+          (best, d) => (Math.abs(d.score - overall) < Math.abs(best.score - overall) ? d : best),
+          scoredSamples[0]
+        );
+
+    const mergedId = new mongoose.Types.ObjectId();
+    const sectionScore = [];
+    const mergedDoc = {
+      _id: mergedId,
+      // Synthetic, unique URL so the {url,device,report} unique index never collides
+      // with an underlying sample report (or a re-run of this merge).
+      url: `${base.url}#merged-${mergedId.toString()}`,
+      device: base.device || "Desktop",
+      report: "All",
+      status: "completed",
+      pageType: pageType || base.pageType || "vdp",
+      timeTaken: `0s (merged)`,
+      screenshot: base.screenshot || null,
+      siteSchema: base.siteSchema || null,
+      isBotProtected: false,
+      userId: req.user?.userId || null,
+    };
+
+    for (const { field, display } of MERGE_SECTIONS) {
+      const sectionSamples = source.map((d) => d[field]).filter(Boolean);
+      if (!sectionSamples.length) { mergedDoc[field] = null; continue; }
+      const baseSection = base[field] || sectionSamples[0];
+
+      // Deep-average every parameter's score (+ re-derive its status); keep the
+      // representative sample's text/meta. Then overwrite the section headline
+      // Percentage with the mean so the section gauge matches its cards.
+      const mergedSection = mergeScores(baseSection, sectionSamples);
+      const avgPct = avgScores(sectionSamples.map((s) => s.Percentage));
+      mergedSection.Percentage = avgPct ?? baseSection.Percentage;
+      mergedSection.merged = true;
+      mergedSection.mergedFrom = sectionSamples.length;
+      // Keep AIO's compatibility badge consistent with the averaged headline.
+      if (field === "aioReadiness") {
+        mergedSection.AIO_Compatibility_Badge = mergedSection.Percentage >= 50 ? "Yes" : "No";
+      }
+      mergedDoc[field] = mergedSection;
+      sectionScore.push({ name: display, score: mergedSection.Percentage });
+    }
+
+    mergedDoc.aioCompatibilityBadge = mergedDoc.aioReadiness?.AIO_Compatibility_Badge || base.aioCompatibilityBadge || null;
+
+    mergedDoc.score = overall;
+    mergedDoc.grade = gradeForScore(overall);
+    mergedDoc.sectionScore = sectionScore;
+
+    await new SingleAuditReport(mergedDoc).save();
+
+    logger.info(`🧩 Merged ${source.length} reports → ${mergedId} (avg score ${overall})`);
+    return res.status(201).json({
+      _id: mergedId,
+      score: overall,
+      grade: mergedDoc.grade,
+      pageType: mergedDoc.pageType,
+      mergedFrom: source.length,
+    });
+  } catch (error) {
+    logger.error("Merge reports failed", error);
+    return res.status(500).json({ error: "Failed to merge reports", details: error.message });
   }
 };
 

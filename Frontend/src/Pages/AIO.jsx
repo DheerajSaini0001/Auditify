@@ -516,6 +516,43 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             </div>
           )}
 
+          {/* AI Agentic Browsing */}
+          {metricKey === "AI_Agentic_Browsing" && (
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${darkMode ? "bg-amber-900/30 text-amber-400" : "bg-amber-50 text-amber-600"}`}>Experimental</span>
+                <span className={`text-[10px] ${darkMode ? "text-gray-500" : "text-faint"}`}>WebMCP readiness is the only arm folded into the score</span>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
+                  <p className={`text-[10px] font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-slate-500" : "text-faint"}`}>WebMCP Readiness</p>
+                  <p className={`text-xl font-black ${darkMode ? "text-slate-200" : "text-ink"}`}>{meta?.value}</p>
+                </div>
+                <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
+                  <p className={`text-[10px] font-semibold uppercase tracking-wider mb-1 ${darkMode ? "text-gray-400" : "text-muted"}`}>Forms Annotated</p>
+                  <p className={`text-xl font-black ${darkMode ? "text-gray-200" : "text-inksoft"}`}>{meta?.annotatedForms ?? 0}/{meta?.totalForms ?? 0}</p>
+                </div>
+              </div>
+              <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
+                <p className={`text-[10px] font-semibold uppercase tracking-wider mb-3 ${darkMode ? "text-gray-500" : "text-faint"}`}>Informational · counted in other sections</p>
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <p className={`text-[10px] ${darkMode ? "text-gray-500" : "text-faint"}`}>Agent A11y</p>
+                    <p className={`text-sm font-black ${darkMode ? "text-gray-200" : "text-inksoft"}`}>{meta?.agentAccessibility ?? "—"}%</p>
+                  </div>
+                  <div>
+                    <p className={`text-[10px] ${darkMode ? "text-gray-500" : "text-faint"}`}>Stability (CLS)</p>
+                    <p className={`text-sm font-black ${darkMode ? "text-gray-200" : "text-inksoft"}`}>{meta?.agentStability ?? "—"}</p>
+                  </div>
+                  <div>
+                    <p className={`text-[10px] ${darkMode ? "text-gray-500" : "text-faint"}`}>llms.txt</p>
+                    <p className={`text-sm font-black ${meta?.llmsTxt ? (darkMode ? "text-emerald-400" : "text-emerald-600") : (darkMode ? "text-gray-400" : "text-faint")}`}>{meta?.llmsTxt ? "Present" : "Missing"}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Content Completeness */}
           {metricKey === "Content_Completeness" && (
             <div className="flex flex-col gap-2">
@@ -629,6 +666,7 @@ const AIO_Inner = React.memo(({ data, loading, darkMode }) => {
     { icon: <Zap className="w-8 h-8 text-teal-500" />, title: "Crawl Efficiency", text: "Measuring page load speed and API accessibility for AI bots..." },
     { icon: <Tag className="w-8 h-8 text-indigo-500" />, title: "Entity Recognition", text: "Scanning for named entities, keywords, and topic clusters..." },
     { icon: <Brain className="w-8 h-8 text-amber-500" />, title: "AI Optimization", text: "Checking for voice search compatibility and answer engine readiness..." },
+    { icon: <Bot className="w-8 h-8 text-rose-500" />, title: "Agentic Browsing", text: "Evaluating agent-driven navigation and form-filling capabilities..." },
   ], []);
 
   const [activeStep, setActiveStep] = React.useState(0);

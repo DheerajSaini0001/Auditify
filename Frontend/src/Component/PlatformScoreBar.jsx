@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronRight, Target, Shield, Gauge, Cpu, BarChart3, Activity } from 'lucide-react';
+import { ChevronDown, ChevronUp, Target, Gauge, Cpu, BarChart3, Activity, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 
 const PlatformScoreBar = ({ platforms, darkMode, platformKey = null, singleCard = false }) => {
     const [expandedPlatform, setExpandedPlatform] = useState(null);
@@ -38,123 +38,139 @@ const PlatformScoreBar = ({ platforms, darkMode, platformKey = null, singleCard 
         ? fullPlatformData.filter(p => p.key === platformKey)
         : fullPlatformData;
 
-    const parameterLabels = {
-        answerFirst: "Direct Answer Logic",
-        llmsTxt: "Manifest Analysis",
-        schema: "Structured Entity Markup",
-        structuredContent: "Information Density",
-        botAccess: "Crawler Accessibility",
-        pageSpeed: "Technical Performance",
-        markdownHeaders: "Document Hierarchy",
-        citations: "Authority Signals"
-    };
+    const ratingLabel = (s) => (s >= 80 ? 'Ready' : s >= 50 ? 'Almost There' : 'Needs Work');
+    const ratingPill = (s) => (s >= 80
+        ? "text-emerald-500 bg-emerald-500/10 border-emerald-500/20"
+        : s >= 50
+            ? "text-amber-500 bg-amber-500/10 border-amber-500/20"
+            : "text-rose-500 bg-rose-500/10 border-rose-500/20");
 
-    const platformRelevance = {
-        gemini: ['schema', 'botAccess', 'answerFirst', 'pageSpeed'],
-        chatgpt: ['llmsTxt', 'markdownHeaders', 'answerFirst', 'botAccess'],
-        perplexity: ['structuredContent', 'citations', 'pageSpeed']
-    };
+    const renderPlatformCard = (plat, idx) => {
+        const isOpen = expandedPlatform === plat.key;
+        return (
+            <div key={idx} className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group ${darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-line"}`}>
+                <div className="p-5 space-y-4">
 
-    const renderPlatformCard = (plat, idx) => (
-        <div key={idx} className={`relative p-8 rounded-2xl border transition-all duration-300 flex flex-col gap-6 ${darkMode ? "bg-slate-900 border-slate-800 shadow-xl" : "bg-card border-line shadow-sm hover:shadow-md"}`}>
-
-            {/* Header: Pro Identity */}
-            <div className="flex items-start justify-between">
-                <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-2">
-                        <span style={{ color: plat.color }}>{plat.icon}</span>
-                        <span className={`text-[11px] font-semibold uppercase tracking-wider ${darkMode ? "text-slate-500" : "text-faint"}`}>
-                            {plat.name} Analysis
-                        </span>
-                    </div>
-                    <h5 className={`text-2xl font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>{plat.name}</h5>
-                </div>
-
-                <div className="text-right">
-                    <div className="flex items-baseline justify-end gap-1">
-                        <span className={`text-4xl font-semibold tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>
-                            {plat.score}
-                        </span>
-                        <span className="text-xs font-semibold opacity-30">%</span>
-                    </div>
-                </div>
-            </div>
-
-            {/* Pro Progress Bar */}
-            <div className="h-2.5 w-full rounded-full bg-surface-2 dark:bg-slate-800 overflow-hidden relative">
-                <div
-                    style={{ width: `${plat.score}%`, backgroundColor: plat.color }}
-                    className="h-full rounded-full transition-all duration-1000 ease-out shadow-sm"
-                />
-            </div>
-
-            {/* Insight Label */}
-            <div className={`px-3 py-1.5 rounded-lg w-fit text-[10px] font-semibold uppercase tracking-widest border transition-colors ${plat.score >= 80 ? "bg-emerald-500/5 text-emerald-600 border-emerald-500/20" : plat.score >= 50 ? "bg-amber-500/5 text-amber-600 border-amber-500/20" : "bg-rose-500/5 text-rose-600 border-rose-500/20"}`}>
-                Engine Rating: {plat.score >= 80 ? 'Optimized' : plat.score >= 50 ? 'Average' : 'Critical'}
-            </div>
-
-            {/* Strategic Summary Box */}
-            <div className={`p-5 rounded-xl border-l-4 ${plat.score < 50
-                ? (darkMode ? "bg-rose-500/5 border-rose-500/40" : "bg-rose-50/50 border-rose-500/30")
-                : (darkMode ? "bg-slate-800/40 border-slate-700" : "bg-cardsoft border-line")}`}>
-
-                <div className="flex items-center gap-2 mb-3">
-                    <Shield size={14} className={plat.score < 50 ? "text-rose-500" : "text-faint"} />
-                    <span className={`text-[10px] font-semibold uppercase tracking-widest ${darkMode ? "text-slate-500" : "text-faint"}`}>
-                        Strategic Diagnostic
-                    </span>
-                </div>
-
-                <p className={`text-sm font-semibold leading-relaxed ${darkMode ? "text-slate-300" : "text-inksoft"}`}>
-                    {platforms[plat.key].reason}
-                </p>
-            </div>
-
-            {/* Minimal Toggle */}
-            <button
-                onClick={() => setExpandedPlatform(expandedPlatform === plat.key ? null : plat.key)}
-                className={`flex items-center justify-between w-full p-4 rounded-xl border transition-all ${expandedPlatform === plat.key
-                    ? (darkMode ? "bg-slate-800 border-slate-700 text-white" : "bg-surface-2 border-line text-ink")
-                    : (darkMode ? "bg-transparent border-slate-800 text-slate-400 hover:text-white" : "bg-transparent border-linesoft text-muted hover:text-ink")}`}
-            >
-                <span className="text-[10px] font-semibold uppercase tracking-widest">Technical Breakdown</span>
-                <ChevronRight size={14} className={`transition-transform duration-300 ${expandedPlatform === plat.key ? 'rotate-90' : ''}`} />
-            </button>
-
-            {/* Parameter Matrix */}
-            {expandedPlatform === plat.key && (
-                <div className={`p-6 rounded-xl space-y-6 animate-in slide-in-from-top-2 duration-300 ${darkMode ? "bg-slate-950/50 border border-slate-800" : "bg-card border border-line shadow-inner"}`}>
-                    <div className="flex items-center gap-2 opacity-40">
-                        <BarChart3 size={12} />
-                        <span className="text-[9px] font-semibold uppercase tracking-[0.2em]">Signal Distribution</span>
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-6">
-                        {Object.entries(platforms[plat.key].breakdown)
-                            .filter(([param]) => platformRelevance[plat.key]?.includes(param))
-                            .map(([param, points]) => (
-                                <div key={param} className="space-y-2">
-                                    <div className="flex items-center justify-between pointer-events-none">
-                                        <span className={`text-xs font-semibold ${darkMode ? "text-slate-200" : "text-inksoft"}`}>
-                                            {parameterLabels[param] || param}
-                                        </span>
-                                        <span className={`text-[10px] font-semibold ${points > 0 ? (darkMode ? "text-blue-400" : "text-accent") : "text-slate-500"}`}>
-                                            +{points} PTS
-                                        </span>
-                                    </div>
-                                    <div className={`h-1.5 rounded-full ${darkMode ? "bg-slate-800" : "bg-surface-2"}`}>
-                                        <div
-                                            className="h-full rounded-full transition-all duration-700"
-                                            style={{ width: `${(points / 40) * 100}%`, backgroundColor: plat.color }}
-                                        ></div>
-                                    </div>
+                    {/* Header — matches the standard title card; View Detail sits top-right */}
+                    <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-4">
+                            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-cardsoft"} group-hover:scale-110 transition-transform duration-300`}>
+                                <span style={{ color: plat.color }}>{plat.icon}</span>
+                            </div>
+                            <div>
+                                <h3 className={`font-semibold text-lg ${darkMode ? "text-gray-100" : "text-ink"}`}>{plat.name}</h3>
+                                <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                                    <p className={`text-xs font-medium px-2 py-0.5 rounded-full w-fit border ${ratingPill(plat.score)}`}>
+                                        {ratingLabel(plat.score)}
+                                    </p>
+                                    <span className={`text-xs font-semibold ${darkMode ? "text-slate-400" : "text-muted"}`}>{plat.score}%</span>
                                 </div>
-                            ))}
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={() => setExpandedPlatform(isOpen ? null : plat.key)}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-semibold uppercase tracking-wider transition-all duration-300 ${isOpen
+                                ? (darkMode ? "bg-slate-700 text-white" : "bg-cardsoft text-ink")
+                                : (darkMode ? "bg-slate-800/50 text-slate-400 hover:text-white" : "bg-cardsoft text-muted hover:text-ink")}`}
+                        >
+                            {isOpen ? 'Hide Detail' : 'View Detail'}
+                            {isOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                        </button>
                     </div>
+
+                    {/* Score bar */}
+                    <div className="h-2 w-full rounded-full bg-surface-2 dark:bg-slate-800 overflow-hidden">
+                        <div
+                            style={{ width: `${plat.score}%`, backgroundColor: plat.color }}
+                            className="h-full rounded-full transition-all duration-1000 ease-out"
+                        />
+                    </div>
+
+                    {/* Parameter Detail — failed and passed kept in separate groups */}
+                    {isOpen && (() => {
+                        const all = platforms[plat.key].parameters || [];
+                        const failed = all.filter((p) => !p.passed);
+                        const passed = all.filter((p) => p.passed);
+
+                        const renderRow = (p) => (
+                            <div
+                                key={p.key}
+                                className={`p-4 rounded-xl border ${p.passed
+                                    ? (darkMode ? "bg-slate-900/40 border-slate-800" : "bg-card border-line")
+                                    : (darkMode ? "bg-rose-500/5 border-rose-500/20" : "bg-rose-50/50 border-rose-100")}`}
+                            >
+                                {/* Parameter header: name + pass/fail */}
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="flex items-center gap-2">
+                                        {p.passed
+                                            ? <CheckCircle2 size={15} className="text-emerald-500 flex-shrink-0" />
+                                            : <XCircle size={15} className="text-rose-500 flex-shrink-0" />}
+                                        <span className={`text-xs font-semibold ${darkMode ? "text-slate-200" : "text-inksoft"}`}>
+                                            {p.label}
+                                        </span>
+                                    </div>
+                                    <span className={`text-[9px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full whitespace-nowrap ${p.passed
+                                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                        : "bg-rose-500/10 text-rose-600 dark:text-rose-400"}`}>
+                                        {p.passed ? 'Passed' : 'Not Passed'}
+                                    </span>
+                                </div>
+
+                                {/* What this parameter wants in order to pass (always shown) */}
+                                {p.requirement && (
+                                    <p className={`mt-2 text-[11px] leading-relaxed ${darkMode ? "text-slate-400" : "text-muted"}`}>
+                                        <span className="font-semibold opacity-70">Wants: </span>{p.requirement}
+                                    </p>
+                                )}
+
+                                {/* Cause — only when the parameter does not pass */}
+                                {!p.passed && p.cause && (
+                                    <div className={`mt-2 flex items-start gap-1.5 text-[11px] leading-relaxed ${darkMode ? "text-rose-300" : "text-rose-700"}`}>
+                                        <AlertCircle size={13} className="text-rose-500 flex-shrink-0 mt-0.5" />
+                                        <span><span className="font-semibold">Cause: </span>{p.cause}</span>
+                                    </div>
+                                )}
+                            </div>
+                        );
+
+                        const groupHeader = (icon, label, count, color) => (
+                            <div className="flex items-center gap-2">
+                                {icon}
+                                <span className={`text-[9px] font-semibold uppercase tracking-[0.2em] ${color}`}>{label}</span>
+                                <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${darkMode ? "bg-slate-800 text-slate-400" : "bg-surface-2 text-muted"}`}>{count}</span>
+                            </div>
+                        );
+
+                        return (
+                            <div className={`p-4 rounded-xl space-y-5 animate-in fade-in slide-in-from-top-2 duration-300 ${darkMode ? "bg-slate-950/50 border border-slate-800" : "bg-cardsoft border border-line"}`}>
+                                <div className="flex items-center gap-2 opacity-40">
+                                    <BarChart3 size={12} />
+                                    <span className="text-[9px] font-semibold uppercase tracking-[0.2em]">What This AI Checks</span>
+                                </div>
+
+                                {/* Needs Attention group */}
+                                {failed.length > 0 && (
+                                    <div className="space-y-3">
+                                        {groupHeader(<XCircle size={12} className="text-rose-500" />, 'Needs Attention', failed.length, "text-rose-500")}
+                                        <div className="flex flex-col gap-3">{failed.map(renderRow)}</div>
+                                    </div>
+                                )}
+
+                                {/* Passed group */}
+                                {passed.length > 0 && (
+                                    <div className="space-y-3">
+                                        {groupHeader(<CheckCircle2 size={12} className="text-emerald-500" />, 'Passed', passed.length, "text-emerald-500")}
+                                        <div className="flex flex-col gap-3">{passed.map(renderRow)}</div>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })()}
                 </div>
-            )}
-        </div>
-    );
+            </div>
+        );
+    };
 
     if (singleCard) {
         return renderPlatformCard(platformData[0], 0);
@@ -162,7 +178,7 @@ const PlatformScoreBar = ({ platforms, darkMode, platformKey = null, singleCard 
 
     return (
         <div className="space-y-6 mb-8">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {platformData.map((plat, idx) => renderPlatformCard(plat, idx))}
             </div>
 

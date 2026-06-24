@@ -12,9 +12,10 @@ import Puppeteer_Cheerio from "../utils/puppeteer_cheerio.js";
 import { checkWebsiteExists } from "../utils/fastFetch.js";
 import { performance } from "perf_hooks";
 import logger from "../utils/logger.js";
-import { classifyPageType, computePageScore, computePageScoreFromMap } from "../utils/sectionWeights.js";
+import { classifyPageType } from "../utils/pageClassifier.js";
 
-const { url, device, report, auditId } = workerData;
+const { url, device, report, auditId, pageType: initialPageType } = workerData;
+const pageType = initialPageType || classifyPageType(url);
 
 // `report` is one of: "All" (full audit), a single section name, or a comma-joined
 // list of section names — a custom subset chosen via the report-scope checklist.
@@ -116,13 +117,25 @@ async function safeMetric(name, fn) {
   }
 }
 
-// Page score = section scores weighted by the audited page's type (spec §5.4 + §5.6),
-// not a flat /8. Missing sections (a section that errored in a full audit) are coerced
-// to 0 so they still count against the page; genuinely N/A sections (subset audits) are
-// handled by the subset path, which renormalizes them out.
-const OverAll = (pcts, pageType) => {
-  const arr = pcts.map((v) => (typeof v === "number" ? v : 0));
-  const total = computePageScore(arr, pageType);
+const SECTION_WEIGHTS_BY_PAGE_TYPE = {
+  home:    { tech: 18, seo: 18, a11y: 10, sec: 12, ux: 12, conv: 14, aio: 8, aeo: 8 },
+  srp:     { tech: 20, seo: 20, a11y: 9,  sec: 8,  ux: 13, conv: 14, aio: 8, aeo: 8 },
+  vdp:     { tech: 18, seo: 18, a11y: 9,  sec: 8,  ux: 13, conv: 18, aio: 7, aeo: 9 },
+  specials:{ tech: 15, seo: 16, a11y: 9,  sec: 13, ux: 12, conv: 17, aio: 6, aeo: 12 },
+  lease:   { tech: 15, seo: 16, a11y: 9,  sec: 14, ux: 12, conv: 16, aio: 6, aeo: 12 },
+  trade:   { tech: 14, seo: 12, a11y: 11, sec: 16, ux: 13, conv: 22, aio: 6, aeo: 6 },
+  finance: { tech: 14, seo: 12, a11y: 11, sec: 22, ux: 11, conv: 18, aio: 6, aeo: 6 },
+  service: { tech: 16, seo: 16, a11y: 10, sec: 10, ux: 13, conv: 19, aio: 8, aeo: 8 },
+  about:   { tech: 14, seo: 16, a11y: 11, sec: 10, ux: 15, conv: 12, aio: 10,aeo: 12 },
+  content: { tech: 14, seo: 22, a11y: 11, sec: 9,  ux: 15, conv: 7,  aio: 10,aeo: 12 },
+  generic: { tech: 18, seo: 17, a11y: 10, sec: 12, ux: 13, conv: 15, aio: 8, aeo: 7 }
+};
+
+const OverAll = (A, B, C, D, E, F, G, H, pageType = "generic") => {
+  A ||= 0; B ||= 0; C ||= 0; D ||= 0; E ||= 0; F ||= 0; G ||= 0; H ||= 0;
+  
+  const w = SECTION_WEIGHTS_BY_PAGE_TYPE[pageType] || SECTION_WEIGHTS_BY_PAGE_TYPE.generic;
+  const total = (A * w.tech + B * w.seo + C * w.a11y + D * w.sec + E * w.ux + F * w.conv + G * w.aio + H * w.aeo) / 100;
 
   return {
     totalScore: total,
@@ -221,43 +234,43 @@ const OverAll = (pcts, pageType) => {
       // field name + percentage so we can build the final patch + score rollup.
       const sectionRunners = {
         "Technical Performance": async () => {
-          const r = await safeMetric("Technical Performance", () => technicalMetrics(url, device, page, response, browser));
+          const r = await safeMetric("Technical Performance", () => technicalMetrics(url, device, page, response, browser, pageType));
           postProgress({ technicalPerformance: r });
           return { field: "technicalPerformance", value: r, pct: r?.Percentage || 0 };
         },
         "On Page SEO": async () => {
-          const r = await safeMetric("On Page SEO", () => seoMetrics(url, $, page));
+          const r = await safeMetric("On Page SEO", () => seoMetrics(url, $, page, pageType));
           postProgress({ onPageSEO: r, siteSchema: r?.Schema });
           return { field: "onPageSEO", value: r, pct: r?.Percentage || 0, extra: { siteSchema: r?.Schema } };
         },
         "Accessibility": async () => {
-          const r = await safeMetric("Accessibility", () => accessibilityMetrics(page, $));
+          const r = await safeMetric("Accessibility", () => accessibilityMetrics(page, $, pageType));
           postProgress({ accessibility: r });
           return { field: "accessibility", value: r, pct: r?.Percentage || 0 };
         },
         "Security/Compliance": async () => {
-          const r = await safeMetric("Security/Compliance", () => securityCompliance(url, page, response, browser));
+          const r = await safeMetric("Security/Compliance", () => securityCompliance(url, page, response, browser, pageType));
           postProgress({ securityOrCompliance: r });
           return { field: "securityOrCompliance", value: r, pct: r?.Percentage || 0 };
         },
         "UX & Content Structure": async () => {
-          const r = await safeMetric("UX & Content Structure", () => uxContentStructure(device, page));
+          const r = await safeMetric("UX & Content Structure", () => uxContentStructure(device, page, pageType));
           postProgress({ UXOrContentStructure: r });
           return { field: "UXOrContentStructure", value: r, pct: r?.Percentage || 0 };
         },
         "Conversion & Lead Flow": async () => {
-          const r = await safeMetric("Conversion & Lead Flow", () => conversionLeadFlow(page, $));
+          const r = await safeMetric("Conversion & Lead Flow", () => conversionLeadFlow(page, $, pageType));
           postProgress({ conversionAndLeadFlow: r });
           return { field: "conversionAndLeadFlow", value: r, pct: r?.Percentage || 0 };
         },
         "AIO (AI-Optimization) Readiness": async () => {
-          const r = await safeMetric("AIO Readiness", () => aioReadiness(url, page, $));
+          const r = await safeMetric("AIO Readiness", () => aioReadiness(url, page, $, pageType));
           postProgress({ aioReadiness: r, aioCompatibilityBadge: r?.AIO_Compatibility_Badge });
           return { field: "aioReadiness", value: r, pct: r?.Percentage || 0, extra: { aioCompatibilityBadge: r?.AIO_Compatibility_Badge } };
         },
         "AEO (Answer Engine Optimization)": async () => {
           // AEO is a TOP-LEVEL `aeo` section field; headline is the spec-weighted Percentage.
-          const r = await safeMetric("AEO", () => AEOService.runAudit(url, $, null, 100));
+          const r = await safeMetric("AEO", () => AEOService.runAudit(url, $, null, 100, { pageType }));
           postProgress({ aeo: r });
           return { field: "aeo", value: r, pct: r?.Percentage || 0 };
         },
@@ -270,20 +283,37 @@ const OverAll = (pcts, pageType) => {
         status: "completed",
         timeTaken: `${((performance.now() - start) / 1000).toFixed(0)}s`,
       };
-      // Weighted page score over the SELECTED sections only, renormalized by the
-      // page-type tilt (spec §5.4): unselected sections are N/A and drop out.
-      const pctBySection = {};
+      
+      const w = SECTION_WEIGHTS_BY_PAGE_TYPE[pageType] || SECTION_WEIGHTS_BY_PAGE_TYPE.generic;
+      const keyMap = {
+        "Technical Performance": "tech",
+        "On Page SEO": "seo",
+        "Accessibility": "a11y",
+        "Security/Compliance": "sec",
+        "UX & Content Structure": "ux",
+        "Conversion & Lead Flow": "conv",
+        "AIO (AI-Optimization) Readiness": "aio",
+        "AEO (Answer Engine Optimization)": "aeo"
+      };
+
+      let sumOfScoresTimesWeights = 0;
+      let sumOfWeights = 0;
       const sectionScores = [];
       for (let i = 0; i < results.length; i++) {
         const res = results[i];
         if (!res) continue;
         updateData[res.field] = res.value;
         if (res.extra) Object.assign(updateData, res.extra);
-        pctBySection[selected[i]] = res.pct;
+        
+        const weightKey = keyMap[selected[i]];
+        const weightVal = w[weightKey] || 0;
+        sumOfScoresTimesWeights += res.pct * weightVal;
+        sumOfWeights += weightVal;
+        
         sectionScores.push({ name: SECTION_DISPLAY_NAMES[selected[i]] || selected[i], score: res.pct });
       }
-      const avg = computePageScoreFromMap(pctBySection, pageType);
-      updateData.score = avg;
+      const avg = sumOfWeights > 0 ? sumOfScoresTimesWeights / sumOfWeights : 0;
+      updateData.score = Number(avg.toFixed(1));
       updateData.grade = gradeFor(avg);
       updateData.sectionScore = sectionScores;
 
@@ -298,28 +328,28 @@ const OverAll = (pcts, pageType) => {
       // [NEW] — Each metric wrapped in safeMetric() to catch detached frame errors
       switch (report) {
         case "Technical Performance":
-          result = await safeMetric("Technical Performance", () => technicalMetrics(url, device, page, response, browser));
+          result = await safeMetric("Technical Performance", () => technicalMetrics(url, device, page, response, browser, pageType));
           break;
         case "On Page SEO":
-          result = await safeMetric("On Page SEO", () => seoMetrics(url, $, page));
+          result = await safeMetric("On Page SEO", () => seoMetrics(url, $, page, pageType));
           break;
         case "Accessibility":
-          result = await safeMetric("Accessibility", () => accessibilityMetrics(page, $));
+          result = await safeMetric("Accessibility", () => accessibilityMetrics(page, $, pageType));
           break;
         case "Security/Compliance":
-          result = await safeMetric("Security/Compliance", () => securityCompliance(url, page, response, browser));
+          result = await safeMetric("Security/Compliance", () => securityCompliance(url, page, response, browser, pageType));
           break;
         case "UX & Content Structure":
-          result = await safeMetric("UX & Content Structure", () => uxContentStructure(device, page));
+          result = await safeMetric("UX & Content Structure", () => uxContentStructure(device, page, pageType));
           break;
         case "Conversion & Lead Flow":
-          result = await safeMetric("Conversion & Lead Flow", () => conversionLeadFlow(page, $));
+          result = await safeMetric("Conversion & Lead Flow", () => conversionLeadFlow(page, $, pageType));
           break;
         case "AIO (AI-Optimization) Readiness":
-          result = await safeMetric("AIO Readiness", () => aioReadiness(url, page, $));
+          result = await safeMetric("AIO Readiness", () => aioReadiness(url, page, $, pageType));
           break;
         case "AEO (Answer Engine Optimization)":
-          result = await safeMetric("AEO", () => AEOService.runAudit(url, $, null, 100));
+          result = await safeMetric("AEO", () => AEOService.runAudit(url, $, null, 100, { pageType }));
           break;
       }
 
@@ -364,8 +394,8 @@ const OverAll = (pcts, pageType) => {
     }
 
     // [NEW] — Run AIO & AEO FIRST so guests get results instantly
-    const G_Res = await safeMetric("AIO Readiness", () => aioReadiness(url, page, $));
-    const aeoRes = await safeMetric("AEO", () => AEOService.runAudit(url, $, null, 100)); // Using 100 as placeholder for fast AEO return
+    const G_Res = await safeMetric("AIO Readiness", () => aioReadiness(url, page, $, pageType));
+    const aeoRes = await safeMetric("AEO", () => AEOService.runAudit(url, $, null, 100, { pageType })); // Using 100 as placeholder for fast AEO return
     postProgress({
       aioReadiness: G_Res,
       aioCompatibilityBadge: G_Res?.AIO_Compatibility_Badge,
@@ -379,32 +409,32 @@ const OverAll = (pcts, pageType) => {
     // Promise.all runs them concurrently instead of one-by-one.
     const [A_Res, B_Res, C_Res, D_Res, E_Res, F_Res] = await Promise.all([
       (async () => {
-        const r = await safeMetric("Technical Performance", () => technicalMetrics(url, device, page, response, browser));
+        const r = await safeMetric("Technical Performance", () => technicalMetrics(url, device, page, response, browser, pageType));
         postProgress({ technicalPerformance: r });
         return r;
       })(),
       (async () => {
-        const r = await safeMetric("On Page SEO", () => seoMetrics(url, $, page));
+        const r = await safeMetric("On Page SEO", () => seoMetrics(url, $, page, pageType));
         postProgress({ onPageSEO: r, siteSchema: r?.Schema });
         return r;
       })(),
       (async () => {
-        const r = await safeMetric("Accessibility", () => accessibilityMetrics(page, $));
+        const r = await safeMetric("Accessibility", () => accessibilityMetrics(page, $, pageType));
         postProgress({ accessibility: r });
         return r;
       })(),
       (async () => {
-        const r = await safeMetric("Security/Compliance", () => securityCompliance(url, page, response, browser));
+        const r = await safeMetric("Security/Compliance", () => securityCompliance(url, page, response, browser, pageType));
         postProgress({ securityOrCompliance: r });
         return r;
       })(),
       (async () => {
-        const r = await safeMetric("UX & Content Structure", () => uxContentStructure(device, page));
+        const r = await safeMetric("UX & Content Structure", () => uxContentStructure(device, page, pageType));
         postProgress({ UXOrContentStructure: r });
         return r;
       })(),
       (async () => {
-        const r = await safeMetric("Conversion & Lead Flow", () => conversionLeadFlow(page, $));
+        const r = await safeMetric("Conversion & Lead Flow", () => conversionLeadFlow(page, $, pageType));
         postProgress({ conversionAndLeadFlow: r });
         return r;
       })(),
@@ -420,7 +450,7 @@ const OverAll = (pcts, pageType) => {
     const G = G_Res?.Percentage || 0;
     const H = aeoRes?.Percentage || 0;
 
-    const overall = OverAll([A, B, C, D, E, F, G, H], pageType);
+    const overall = OverAll(A, B, C, D, E, F, G, H, pageType);
 
     const timeTaken = ((performance.now() - start) / 1000).toFixed(0);
 

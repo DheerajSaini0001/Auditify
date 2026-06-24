@@ -10,7 +10,7 @@ import {
   Server, Database, FileCode, Globe,
   ArrowRightLeft, Clock, Gauge, AlertTriangle,
   Info, ChevronDown, Sparkles, Briefcase, MousePointerClick, Car, Wrench,
-  Smartphone, Layers, Cpu, Bot
+  Smartphone, Layers, Cpu
 } from "lucide-react";
 import MetricInfoModal from "../Component/MetricInfoModal";
 import ParameterInfoModal from "../Component/ParameterInfoModal";
@@ -438,8 +438,8 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
               </Section>
               )}
 
-              {/* PageSpeed (AI Agentic Browsing moved to the AIO section per spec §5.1) */}
-              {tech.PageSpeed_Score && (
+              {/* PageSpeed & AI Agent Readiness */}
+              {(tech.PageSpeed_Score || tech.Mobile_Usability || tech.Mobile_Load_Speed || tech.Rendering_Performance) && (
                 <Section
                   title="PageSpeed Score"
                   subtitle="Official Lighthouse performance score"
@@ -477,6 +477,8 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                       )}
                     </OptimizationCard>
                   )}
+
+
 
                   {tech.Mobile_Usability && (
                     <OptimizationCard

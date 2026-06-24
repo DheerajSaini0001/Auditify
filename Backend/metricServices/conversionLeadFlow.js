@@ -1,3 +1,5 @@
+import { classifyPageType } from "../utils/pageClassifier.js";
+
 // Call to Action (CTA) Effectiveness
 function checkCTAs($) {
   const ctaSelectors = [
@@ -2174,27 +2176,7 @@ async function checkCertificationsAwards(page) {
   };
 }
 
-// ---------------------------------------------------------------------------
-// Page-type classifier (mirrors seoMetrics tuClassifyPageType, plus finance /
-// offers / lease detection needed for §2.6 page-specific gating).
-// ---------------------------------------------------------------------------
-function cvfClassifyPageType(u) {
-  let path;
-  try { path = new URL(u).pathname.toLowerCase(); } catch { return "home"; }
-  const full = (u || "").toLowerCase();
-  if (/\/contact/.test(path)) return "contact";
-  if (/finance|financing|credit-app|credit-application|get-(pre-?)?approved|pre-?approval|apply-for-(financing|credit)/.test(path)) return "finance";
-  if (/lease/.test(path)) return "lease";
-  if (/offers|specials|deals|promotions|incentives|coupons/.test(path)) return "offers";
-  if (/trade.?in|value-(your|my)-(trade|car|vehicle|auto)|sell-(us-|my-|your-)+(car|vehicle|auto)|appraisal/.test(path)) return "tradein";
-  if (/service|schedule-service|auto-repair|maintenance/.test(path)) return "service";
-  if (/\/about|meet-the-team|our-story|dealership-info|who-we-are/.test(path)) return "about";
-  if (/\/vdp|\/vehicle\/|\/-id-/.test(path)) return "vdp";
-  if (/\/(new|used|certified|cpo)\/[^/]+\/[^/]+/.test(path)) return "vdp";
-  if (/vin=|stocknum|stock=|vehicleid/.test(full)) return "vdp";
-  if (/inventory|\/new\b|\/used\b|\/search|vehicles?(\/|$)|for-sale|cars-for-sale/.test(path)) return "srp";
-  return "home";
-}
+// Unified page classifier is imported at the top of the file.
 
 // Spec §2.6 in-section weights (decimals). The product splits some spec params into
 // sub-cards whose weights SUM to the spec param weight (same pattern as On-Page §2.2):
@@ -2238,16 +2220,16 @@ const CONVERSION_SPEC_WEIGHTS = {
 
 export default async function conversionLeadFlow(page, $) {
   const url = (() => { try { return page.url(); } catch { return ""; } })();
-  const pageType = cvfClassifyPageType(url);
+  const pageType = classifyPageType(url);
 
-  const isTradeIn = pageType === "tradein";
+  const isTradeIn = pageType === "trade";
   const isFinance = pageType === "finance";
   const isService = pageType === "service";
   const isVdp = pageType === "vdp";
-  const isOffers = pageType === "offers";
+  const isOffers = pageType === "specials";
   const isLease = pageType === "lease";
   // Spec: Form presence applies on Trade-In, Finance, Contact, Service (N/A elsewhere).
-  const isFormPage = ["tradein", "finance", "contact", "service"].includes(pageType);
+  const isFormPage = ["trade", "finance", "about", "service"].includes(pageType);
 
   // ---- Analytics / measurability (site-wide) ----
   const trackingData = await collectTrackingData(page);

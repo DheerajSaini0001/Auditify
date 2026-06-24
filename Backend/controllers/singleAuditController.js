@@ -25,7 +25,7 @@ const reportFieldMap = {
 export const startAudit = async (req, res) => {
 
   try {
-    let { url, device, report, force } = req.body;
+    let { url, device, report, force, pageType } = req.body;
 
     if (!url || !device || !report) {
       return res.status(400).json({ error: "Missing required fields" });
@@ -228,6 +228,7 @@ export const startAudit = async (req, res) => {
       device,
       report,
       userId: req.user?.userId || null,
+      pageType: pageType || null,
     });
 
     // Create a pending AuditLog entry asynchronously
@@ -287,6 +288,7 @@ export const startAudit = async (req, res) => {
         device,
         report,
         auditId: newReport._id.toString(),
+        pageType: newReport.pageType || null,
       },
     });
 

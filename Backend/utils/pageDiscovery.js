@@ -4,6 +4,7 @@ import { parseStringPromise } from "xml2js";
 import { validateUrlSafety } from "./ssrfGuard.js";
 import discoverPages from "./sitemapCrawler.js"; // Playwright fallback (bot-protected / JS-only sites)
 import logger from "./logger.js";
+import { classifyPageType } from "./pageClassifier.js";
 
 /**
  * Dealership page discovery.
@@ -203,19 +204,18 @@ const conditionOf = (rawUrl) => {
 // null if it matches none. Shared by rankCandidates (bucketing) and the sitemap
 // early-exit check so both agree on exactly what counts as an SRP / VDP.
 function categoryOf(raw) {
+  const key = classifyPageType(raw);
+  if (key === "generic") return null;
   let path, lower;
   try {
     const url = new URL(raw);
     path = normPath(url.pathname);
     lower = raw.toLowerCase();
   } catch {
-    return null;
+    path = normPath(raw);
+    lower = String(raw).toLowerCase();
   }
-  if (EXCLUDE_RE.test(path)) return null; // legal/utility page — never a category
-  for (const def of MATCH_ORDER) {
-    if (def.test(path, lower)) return { key: def.key, path, lower };
-  }
-  return null;
+  return { key, path, lower };
 }
 
 // True once the pool holds enough inventory to satisfy the sampling rules: an SRP

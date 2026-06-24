@@ -17,6 +17,7 @@ import analyzeExperienceSignals from './signals/experienceSignals.js';
 import analyzeExpertiseSignals from './signals/expertiseSignals.js';
 import analyzeAuthoritySignals from './signals/authoritySignals.js';
 import logger from '../utils/logger.js';
+import { classifyPageType } from '../utils/pageClassifier.js';
 
 // Safety net: no single signal may stall the whole AEO. If one exceeds this budget
 // it resolves to a neutral fallback so the rest of the audit still completes.
@@ -64,23 +65,7 @@ const AEO_SECTION_WEIGHTS = {
     llmsTxt: 0.02,             // /llms.txt present & well-formed
 };
 
-// Page-type classifier (URL-driven, mirrors the other sections' classifiers) used
-// to gate the page-specific params. Falls back to "generic" so common params always score.
-const aeoClassifyPageType = (url = '') => {
-    let path = '';
-    try { path = new URL(url).pathname.toLowerCase(); } catch { path = String(url).toLowerCase(); }
-    if (path === '' || path === '/') return 'home';
-    if (/\/(about|our-story|who-we-are|meet-the-team|staff|team)\b/.test(path)) return 'about';
-    if (/\/(blog|article|news|post|story|guide|tips|resources)\b/.test(path)) return 'blog';
-    if (/\/(faq|faqs|questions|help|support)\b/.test(path)) return 'faq';
-    if (/\/(finance|financing|loan|lease|credit|pre-?approval|apply)\b/.test(path)) return 'finance';
-    if (/\/(service|service-center|maintenance|repair|schedule-service|book-service)\b/.test(path)) return 'service';
-    // VDP: a vehicle detail page usually has a year + make/model or an explicit /vehicle|/inventory/<id>.
-    if (/\/(19|20)\d{2}[-/]/.test(path) || /\/(vehicle|inventory|vehicles|vdp|used|new)\/[^/]+\/[^/]+/.test(path)) return 'vdp';
-    if (/\/(inventory|cars-for-sale|used-cars|new-cars|search|listings|showroom)\b/.test(path)) return 'srp';
-    if (/\/(contact|locations?|directions|hours)\b/.test(path)) return 'contact';
-    return 'generic';
-};
+// Unified page classifier imported from utils/pageClassifier.js holds the classification rules.
 
 // Derive an FAQ / Q&A-block sub-score from the schema signal's content detection
 // (it already inspects FAQPage schema + on-page FAQ markers) — no new analyzer.
@@ -104,6 +89,66 @@ const deriveSameAsScore = (entitySignal) => {
 
 const aeoParamStatus = (score) => (score >= 75 ? 'pass' : score >= 25 ? 'warning' : 'fail');
 
+// ─────────────────────────────────────────────────────────────────────────
+// Per-platform (Gemini / ChatGPT / Perplexity) parameter view.
+// Each platform card lists the parameters it actually scores. For every
+// parameter we describe WHAT IT WANTS to pass (the requirement, always shown),
+// and — only when the parameter does NOT pass — the concrete CAUSE.
+// Passed parameters carry no reason (that is the product requirement).
+// Note: deliberately no "Why / Why no" phrasing.
+
+// robots.txt user-agent that each engine actually crawls with.
+const PLATFORM_BOTS = { gemini: 'Google-Extended', chatgpt: 'GPTBot', perplexity: 'PerplexityBot' };
+const PLATFORM_DISPLAY = { gemini: 'Gemini', chatgpt: 'ChatGPT', perplexity: 'Perplexity' };
+
+// Plain-language label for each parameter as it appears on the platform card.
+const PARAM_LABELS = {
+    schema: 'Page Data Labels (Schema)',
+    answerFirst: 'Quick Answer at the Top',
+    botAccess: 'Lets AI Bots In',
+    structuredContent: 'Tables & Lists',
+    pageSpeed: 'Page Loading Speed',
+    llmsTxt: 'llms.txt File',
+    markdownHeaders: 'Clear Headings',
+    citations: 'Links to Sources',
+    indexCoverage: 'Findable in Search',
+    entityRecognition: 'Business Identity',
+    citationConsistency: 'Matching Contact Info',
+    topicalAuthority: 'Depth of Content',
+};
+
+// "What it wants to pass" — shown for every parameter, in simple words.
+const PARAM_REQUIREMENTS = {
+    schema: 'Add hidden data labels (schema) so AI can clearly tell what your page is about.',
+    answerFirst: 'Put a short, direct answer in the first few lines so AI can grab it fast.',
+    botAccess: 'Allow this AI’s bot in your robots.txt file so it can read the page.',
+    structuredContent: 'Show key data in real tables and lists, not inside pictures.',
+    pageSpeed: 'Make the page load fast — under about 2 seconds.',
+    llmsTxt: 'Add an llms.txt file on your site that tells AI what to read.',
+    markdownHeaders: 'Use clear headings and sub-headings so AI can follow the page.',
+    citations: 'Link to trusted outside sources so AI can check your facts.',
+    indexCoverage: 'Make sure your main pages can be found and are listed in your sitemap.',
+    entityRecognition: 'Add your business details (name and type) so AI knows who you are.',
+    citationConsistency: 'Use the same name, address, and phone everywhere.',
+    topicalAuthority: 'Cover your main topics in depth so AI sees you as an expert.',
+};
+
+// Simple-language cause shown ONLY when a parameter does not pass.
+const PARAM_CAUSES = {
+    schema: 'Your page is missing these hidden data labels (schema).',
+    answerFirst: 'There’s no short answer at the top — the page is too wordy for AI to pull a quick answer.',
+    pageSpeed: 'The page loads too slowly for AI to read it properly.',
+    llmsTxt: 'Missing an llms.txt file.',
+    markdownHeaders: 'The page doesn’t have clear headings for AI to follow.',
+    citations: 'Few or no links to trusted outside sources.',
+    indexCoverage: 'Your pages are hard to find or missing from your sitemap.',
+    entityRecognition: 'AI can’t clearly tell who your business is — business details are missing.',
+    citationConsistency: 'Your name, address, or phone don’t match across the page.',
+    topicalAuthority: 'Not enough depth on your topics to look like an expert.',
+};
+
+const PARAM_PASS_THRESHOLD = 75;
+
 /**
  * AEO Service Orchestrator
  * Calls each signal analyzer and computes platform-weighted scores.
@@ -113,12 +158,12 @@ class AEOService {
     // the applicable params; page-specific params (FAQ/Q&A, sameAs, E-E-A-T) drop out
     // of the denominator on page types where they don't apply (rule-6 N/A renorm).
     static computeSectionScore(signals, url) {
-        const pageType = aeoClassifyPageType(url);
+        const pageType = classifyPageType(url);
 
         // Page-specific applicability.
-        const faqApplies = ['faq', 'finance', 'service', 'vdp'].includes(pageType);
-        const eeatApplies = ['about', 'blog', 'service'].includes(pageType);
-        const sameAsApplies = ['home', 'about', 'contact'].includes(pageType);
+        const faqApplies = ['content', 'finance', 'service', 'vdp'].includes(pageType);
+        const eeatApplies = ['about', 'content', 'service'].includes(pageType);
+        const sameAsApplies = ['home', 'about'].includes(pageType);
 
         const eeatComposite = Math.round(
             ((signals.experienceSignals?.score || 0) +
@@ -276,10 +321,12 @@ class AEOService {
             platforms.perplexity.blocked = true;
         }
 
-        // Generate reasons for each platform using the user's provided terminology
-        platforms.gemini.reason = this.generatePlatformReason('gemini', signals, platforms.gemini.score);
-        platforms.chatgpt.reason = this.generatePlatformReason('chatgpt', signals, platforms.chatgpt.score);
-        platforms.perplexity.reason = this.generatePlatformReason('perplexity', signals, platforms.perplexity.score);
+        // Per-parameter detail (what each parameter wants + cause when not passed),
+        // plus a clean one-line summary derived from it.
+        for (const key of ['gemini', 'chatgpt', 'perplexity']) {
+            platforms[key].parameters = this.buildPlatformParameters(key, signals, aeoWeights[key]);
+            platforms[key].reason = this.generatePlatformReason(key, signals, platforms[key].score, platforms[key].parameters);
+        }
 
         // Compute overall score (average of 3 platforms)
         const overallScore = Math.round(
@@ -384,9 +431,10 @@ class AEOService {
             platforms.perplexity.blocked = true;
         }
 
-        platforms.gemini.reason = this.generatePlatformReason('gemini', signals, platforms.gemini.score);
-        platforms.chatgpt.reason = this.generatePlatformReason('chatgpt', signals, platforms.chatgpt.score);
-        platforms.perplexity.reason = this.generatePlatformReason('perplexity', signals, platforms.perplexity.score);
+        for (const key of ['gemini', 'chatgpt', 'perplexity']) {
+            platforms[key].parameters = this.buildPlatformParameters(key, signals, aeoWeights[key]);
+            platforms[key].reason = this.generatePlatformReason(key, signals, platforms[key].score, platforms[key].parameters);
+        }
 
         const overallScore = Math.round(
             (platforms.gemini.score + platforms.chatgpt.score + platforms.perplexity.score) / 3
@@ -412,50 +460,165 @@ class AEOService {
         };
     }
 
-    static generatePlatformReason(platform, signals, score) {
+    // Decide whether a parameter passes for this platform. Most params pass on the
+    // signal score; a few have a concrete state test (bot blocked / file present).
+    static isParamPassed(key, signals, platform) {
+        const score = typeof signals[key]?.score === 'number' ? signals[key].score : 0;
+        if (key === 'botAccess') {
+            return signals.botAccess?.bots?.[PLATFORM_BOTS[platform]] !== 'blocked';
+        }
+        if (key === 'llmsTxt') {
+            const l = signals.llmsTxt || {};
+            return !!l.exists && !l.isEmpty && (l.score ?? 0) >= PARAM_PASS_THRESHOLD;
+        }
+        return score >= PARAM_PASS_THRESHOLD;
+    }
+
+    // State-aware, plain-language cause for a FAILING parameter. Each branch reads the
+    // real signal data so the reason fits the actual state (missing → empty → present
+    // but weak / irrelevant), the same breakdown style used for llms.txt.
+    static causeFor(key, signals, platform) {
+        switch (key) {
+            case 'botAccess':
+                return `This AI’s bot (${PLATFORM_BOTS[platform]}) is blocked in your robots.txt, so ${PLATFORM_DISPLAY[platform]} can’t read the page.`;
+
+            case 'llmsTxt': {
+                const l = signals.llmsTxt || {};
+                if (!l.exists) {
+                    return l.invalidFormat === 'html'
+                        ? 'Your llms.txt link opens a normal web page, not a real text file. Add a plain llms.txt file.'
+                        : PARAM_CAUSES.llmsTxt; // "Missing an llms.txt file."
+                }
+                if (l.isEmpty) return 'Your llms.txt file is there but empty. Add your business name and links to your main pages.';
+                const d = l.details || {};
+                if (d.loremDetected) return 'Your llms.txt has placeholder (lorem ipsum) text. Replace it with real descriptions of your pages.';
+                if (d.brandMatch === false && (d.vocabOverlap ?? 0) === 0) return 'Your llms.txt content doesn’t match your site. Describe your real business and pages.';
+                return 'Your llms.txt is missing key parts — a clear title, a short summary, and links to your main pages.';
+            }
+
+            case 'structuredContent': {
+                const s = signals.structuredContent || {};
+                if (s.dataStuckInImages) {
+                    return platform === 'perplexity'
+                        ? 'Your data is stuck in images, not tables. Perplexity can’t easily read data shown as pictures.'
+                        : 'Your data is stuck in images instead of real tables AI can read.';
+                }
+                if ((s.tables ?? 0) === 0 && (s.lists ?? 0) === 0) return 'Your page has no tables or lists. Put key facts into simple tables and bullet lists.';
+                if ((s.tables ?? 0) === 0) return 'Your page has lists but no tables. Add tables for data like specs, prices, or comparisons.';
+                return 'Add more tables and lists so AI can read your key data easily.';
+            }
+
+            case 'schema': {
+                const d = signals.schema?.details || {};
+                if (d.faqNeeded || d.howToNeeded) return 'Your page has FAQ / how-to content but no schema labels on it. Add the matching schema so AI can read it.';
+                return 'Your page has no FAQ or how-to content for AI to label. Add a short FAQ section with schema.';
+            }
+
+            case 'answerFirst': {
+                const a = signals.answerFirst || {};
+                const sc = a.sentenceCount ?? 0;
+                if (!a.found || sc === 0) return 'There’s no clear text at the top of the page for AI to read as an answer.';
+                if (sc > 4) return 'The opening is too long-winded. Start with a 1–2 sentence direct answer.';
+                return 'The opening is a bit wordy. Tighten it to a 1–2 sentence direct answer at the very top.';
+            }
+
+            case 'pageSpeed': {
+                const ps = signals.pageSpeed?.score ?? 0;
+                if (ps === 0) return 'We couldn’t measure your page speed. Check that the page loads normally.';
+                if (ps < 40) return 'Your page is very slow to load, so AI may give up before reading it.';
+                return 'Your page loads a bit too slowly. Aim for under about 2 seconds.';
+            }
+
+            case 'markdownHeaders': {
+                const c = signals.markdownHeaders?.counts || {};
+                if ((c.h1 ?? 0) === 0) return 'Your page is missing a main heading (H1). Add one clear title at the top.';
+                if ((c.h1 ?? 0) > 1) return 'Your page has several main headings (H1). Use just one clear title.';
+                if ((c.h2 ?? 0) < 2) return 'Your page has too few sub-headings. Break the content into clear sections with sub-headings.';
+                return 'Your headings jump levels (like H2 to H4). Keep them in order so AI can follow the page.';
+            }
+
+            case 'citations': {
+                const b = signals.citations?.breakdown || {};
+                if ((b.citations ?? 0) === 0) return 'Your page doesn’t link to any trusted outside sources. Add links to back up your facts.';
+                if ((b.citations ?? 0) < 45) return 'Add more proof — link to a few trusted sources and include a “Sources” section.';
+                return 'Some trust details are missing (clear policies or contact / author info). Add them so AI trusts the page.';
+            }
+
+            case 'indexCoverage': {
+                const ic = signals.indexCoverage || {};
+                if (ic.sitemapFound === false) return 'No sitemap found, so engines have no map of your pages. Add an XML sitemap.';
+                return 'Some of your pages may not be set up to show in search. Make sure your main pages can be indexed and are in your sitemap.';
+            }
+
+            case 'entityRecognition': {
+                const e = signals.entityRecognition?.orgSchema || {};
+                if (!e.found) return 'Your site has no business details AI can read. Add Organization info (name, address, logo) so AI knows who you are.';
+                const miss = [];
+                if (!e.hasAddress) miss.push('a postal address');
+                if ((e.sameAsCount ?? 0) === 0) miss.push('links to your social / profile pages');
+                if (!e.hasLogo) miss.push('a logo');
+                return miss.length ? `Your business details are incomplete — missing ${miss.join(', ')}.` : 'Your business identity could be clearer for AI to recognize.';
+            }
+
+            case 'citationConsistency': {
+                const cc = signals.citationConsistency || {};
+                if ((cc.distinctPhoneCount ?? 0) > 1) return 'Your page shows more than one phone number. Pick one and use it everywhere.';
+                if (!cc.hasSchemaPhone) return 'No clear phone number AI can read. Add one in your business details.';
+                if (!cc.hasSchemaAddress) return 'No clear address AI can read. Add your full address in your business details.';
+                return 'Your name, address, and phone don’t fully match across the page. Use the exact same details everywhere.';
+            }
+
+            case 'topicalAuthority': {
+                const t = signals.topicalAuthority || {};
+                if ((t.wordCount ?? 0) < 200) return 'This page is thin on content. Add more depth on your main topics.';
+                return 'Not enough depth or related pages to look like an expert. Cover your topics more fully and link related pages.';
+            }
+
+            default:
+                return PARAM_CAUSES[key] || 'This parameter did not meet the threshold for this engine.';
+        }
+    }
+
+    // Build the per-parameter list for one platform card. Each entry says what the
+    // parameter wants (always) and — only if it did not pass — the state-aware cause.
+    static buildPlatformParameters(platform, signals, weights) {
+        // The parameters a platform actually scores are those with non-zero weight.
+        const relevant = Object.keys(weights).filter((k) => weights[k] > 0);
+
+        return relevant.map((key) => {
+            const score = typeof signals[key]?.score === 'number' ? signals[key].score : 0;
+            const passed = this.isParamPassed(key, signals, platform);
+            return {
+                key,
+                label: PARAM_LABELS[key] || key,
+                weight: weights[key],
+                score,
+                passed,
+                requirement: PARAM_REQUIREMENTS[key] || '',
+                // Passed parameters intentionally carry no reason.
+                cause: passed ? null : this.causeFor(key, signals, platform),
+            };
+        });
+    }
+
+    // Clean one-line card summary (no "Why / Why no" phrasing). Derived from the
+    // same parameter evaluation so the headline never contradicts the detail list.
+    static generatePlatformReason(platform, signals, score, parameters) {
         if (score === 0) {
-            const botName = platform === 'gemini' ? 'Google-Extended' : (platform === 'chatgpt' ? 'GPTBot' : 'PerplexityBot');
-            if (platform === 'chatgpt' && signals.llmsTxt.exists) {
-                return `⚠️ Configuration Conflict: Even though you have an /llms.txt file, your robots.txt is currently blocking GPTBot, resulting in 0% visibility.`;
+            const botName = PLATFORM_BOTS[platform];
+            if (platform === 'chatgpt' && signals.llmsTxt?.exists) {
+                return `You have an llms.txt file, but your robots.txt is blocking GPTBot — so visibility is 0%.`;
             }
             return `Visibility is 0% because ${botName} is blocked in your robots.txt.`;
         }
 
-        const reasons = [];
+        const params = parameters || this.buildPlatformParameters(platform, signals, aeoWeights[platform]);
+        const failingCauses = params.filter((p) => !p.passed && p.cause).map((p) => p.cause);
 
-        if (platform === 'gemini') {
-            const issues = [];
-            if (signals.botAccess.bots?.['Google-Extended'] === 'blocked') issues.push("Google-Extended is blocked in robots.txt.");
-            if (signals.schema.score < 40) issues.push("Missing FAQPage/Product schema.");
-            if (signals.pageSpeed.score < 80) issues.push("page load is too slow.");
-            
-            if (issues.length === 0) return "✅ Why: You have excellent JSON-LD Schema and your site loads in under 2 seconds.";
-            return `⚠️ Why no: ${issues.join(' ')}`;
+        if (failingCauses.length === 0) {
+            return 'This page is well set up for this AI engine.';
         }
-
-        if (platform === 'chatgpt') {
-            const issues = [];
-            if (signals.botAccess.bots?.['GPTBot'] === 'blocked') issues.push("GPTBot is blocked in robots.txt (Critical Visibility Issue).");
-            if (!signals.llmsTxt.exists) issues.push("Missing an llms.txt file.");
-            if (signals.answerFirst.score < 80) issues.push("Content structure is too 'wordy'—missing a TL;DR at the top.");
-            
-            if (issues.length === 0) return "✅ Why: Optimized for ChatGPT: Clear llms.txt found and concise 'Answer-First' summary detected.";
-            return `⚠️ Why no: ${issues.join(' ')}`;
-        }
-
-        if (platform === 'perplexity') {
-            const issues = [];
-            if (signals.botAccess.bots?.['PerplexityBot'] === 'blocked') issues.push("PerplexityBot is blocked in robots.txt.");
-            if (signals.structuredContent.dataStuckInImages) issues.push("Your data is stuck in images, not Markdown tables.");
-            else if (signals.structuredContent.tables === 0) issues.push("Data is unstructured (missing tables).");
-            
-            if (signals.citations.score < 70) issues.push("Low citation signals.");
-
-            if (issues.length === 0) return "✅ Why: Perplexity ready: Strong data tables and verifiable external citations detected.";
-            return `⚠️ Why no: ${issues.join(' ')} Perplexity cannot 'read' non-structured data easily.`;
-        }
-
-        return "Good overall signals detected.";
+        return failingCauses.join(' ');
     }
 
     static computePlatformScore(platformName, signals, weights) {

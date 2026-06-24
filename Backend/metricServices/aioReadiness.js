@@ -820,7 +820,119 @@ function checkStructuredContent($) {
   };
 }
 
-export default async function aioReadiness(url, page, $) {
+const fetchTextWithTimeout = async (target, timeoutMs = 10000) => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(target, {
+      signal: controller.signal,
+      redirect: "follow",
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      },
+    });
+    if (!res.ok) return null;
+    return await res.text();
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+};
+
+const evaluateAgenticBrowsing = async (page, url) => {
+  let dom = {
+    apiPresent: false, declarativeTools: 0, totalForms: 0, annotatedForms: 0,
+    schemaValid: null, totalInteractive: 0, namedInteractive: 0, landmarks: 0,
+  };
+  try {
+    dom = await page.evaluate(() => {
+      // Imperative WebMCP / model-context API surface.
+      const apiPresent = !!(navigator.modelContext || window.mcp || window.webmcp || window.agent || window.__WEBMCP__);
+      // Declarative tool registrations (HTML-defined).
+      const mcpScripts = Array.from(document.querySelectorAll('script[type*="mcp"]'));
+      const toolEls = Array.from(document.querySelectorAll('tool, [data-mcp-tool], [mcp-tool], [data-webmcp], [data-agent-tool]'));
+      const forms = Array.from(document.querySelectorAll('form'));
+      const annotatedForms = forms.filter((f) =>
+        f.hasAttribute('data-mcp') || f.hasAttribute('data-webmcp') || f.hasAttribute('mcp-tool') ||
+        f.hasAttribute('data-agent-tool') || !!f.querySelector('[data-mcp-tool],[mcp-tool],[data-webmcp]')
+      ).length;
+      let schemaValid = null;
+      if (mcpScripts.length) {
+        schemaValid = mcpScripts.every((s) => { try { JSON.parse(s.textContent || ''); return true; } catch { return false; } });
+      }
+      // Agent accessibility: share of interactive elements with an accessible name.
+      const interactive = Array.from(document.querySelectorAll('a[href], button, input:not([type="hidden"]), select, textarea, [role="button"], [role="link"]'));
+      let named = 0;
+      for (const el of interactive) {
+        const name = el.getAttribute('aria-label') || el.getAttribute('aria-labelledby') || el.getAttribute('title') ||
+          (el.textContent || '').trim() || el.getAttribute('alt') || el.getAttribute('value') || el.getAttribute('placeholder') ||
+          ((el.labels && el.labels.length) ? 'labelled' : '');
+        if (name && String(name).trim()) named++;
+      }
+      const landmarks = document.querySelectorAll('main, nav, header, footer, [role="main"], [role="navigation"], [role="banner"], [role="contentinfo"]').length;
+      return {
+        apiPresent,
+        declarativeTools: toolEls.length + mcpScripts.length,
+        totalForms: forms.length,
+        annotatedForms,
+        schemaValid,
+        totalInteractive: interactive.length,
+        namedInteractive: named,
+        landmarks,
+      };
+    });
+  } catch { /* page.evaluate failed — keep defaults (scores 0) */ }
+
+  const registeredTools = dom.declarativeTools + (dom.apiPresent ? 1 : 0);
+  const hasSurface = dom.apiPresent || dom.declarativeTools > 0 || dom.annotatedForms > 0;
+  let webmcpScore = 0;
+  if (hasSurface) {
+    const formCoverage = dom.totalForms ? dom.annotatedForms / dom.totalForms : (registeredTools > 0 ? 1 : 0);
+    const toolScore = registeredTools > 0 ? 1 : 0;
+    const schemaPenalty = dom.schemaValid === false ? 0.5 : 1;
+    webmcpScore = Math.round(100 * (0.6 * formCoverage + 0.4 * toolScore) * schemaPenalty);
+  }
+
+  // Informational sub-scores (not folded in — owned by other sections).
+  const agentAccessibility = dom.totalInteractive ? Math.round((dom.namedInteractive / dom.totalInteractive) * 100) : 100;
+  const origin = (() => { try { return new URL(url).origin; } catch { return null; } })();
+  const llmsRaw = origin ? await fetchTextWithTimeout(`${origin}/llms.txt`, 8000) : null;
+  const hasLlmsTxt = !!(llmsRaw && llmsRaw.trim().length > 0 && !/<html/i.test(llmsRaw.slice(0, 200)));
+
+  const status = webmcpScore >= 75 ? "pass" : webmcpScore >= 25 ? "warning" : "fail";
+
+  return {
+    score: webmcpScore,
+    status,
+    experimental: true,
+    confidence: "lab",
+    details: webmcpScore > 0
+      ? `WebMCP agent tooling detected (${dom.annotatedForms}/${dom.totalForms} forms annotated).`
+      : "No WebMCP agent tooling found — an emerging, early-mover signal most sites don't have yet.",
+    meta: {
+      value: `${webmcpScore}%`,
+      experimental: true,
+      registeredTools,
+      apiPresent: dom.apiPresent,
+      totalForms: dom.totalForms,
+      annotatedForms: dom.annotatedForms,
+      schemaValid: dom.schemaValid,
+      // informational sub-scores (shown, not weighted here):
+      agentAccessibility,
+      llmsTxt: hasLlmsTxt,
+      landmarks: dom.landmarks,
+      thresholds: { Good: "≥75%", Warning: "25–74%", Poor: "<25%" },
+    },
+    analysis: status === "pass" ? null : {
+      cause: "The site exposes no machine-callable tools (WebMCP) for AI agents to search inventory, value a trade, or book service.",
+      recommendation: "Adopt WebMCP — annotate key forms/actions declaratively and register agent tools. Early adoption is a competitive moat while the standard is new.",
+    },
+  };
+};
+
+export default async function aioReadiness(url, page, $, pageType = null) {
 
   const domain = Domain(url);
 
@@ -835,6 +947,12 @@ export default async function aioReadiness(url, page, $) {
   // AI Agentic Browsing — WebMCP readiness arm (spec Part 3 + §5.1, ~6% in AIO).
   // page may be absent on some call paths; the evaluator guards page.evaluate internally.
   const aiAgenticBrowsing = await evaluateAgenticBrowsing(page, url, null);
+
+  const isAgenticApplicable = !["about", "content"].includes(pageType);
+  const agenticResult = isAgenticApplicable
+    ? await evaluateAgenticBrowsing(page, url)
+    : { score: null, status: "not_applicable", details: "Not applicable on this page type." };
+  agenticResult.present = isAgenticApplicable;
 
   // ── Informational only (weight 0; spec §2.7 "keep the strongest, merge the rest") ──
   const structuredContent = checkStructuredContent($);                 // merge: chunking + lists/tables
@@ -869,7 +987,7 @@ export default async function aioReadiness(url, page, $) {
     Content_Updated_Regularly: contentUpdatedRegularly,
     Internal_Linking_AI_Friendly: internalLinkingAIFriendly,
     Topical_Focus_Clarity: topicalFocusClarity,
-    AI_Agentic_Browsing: aiAgenticBrowsing,
+    AI_Agentic_Browsing: agenticResult,
     // informational (excluded from scoring)
     Duplicate_Content_Detection_Ready: duplicateContentDetectionReady,
     Structured_Content: structuredContent,

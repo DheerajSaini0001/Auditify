@@ -268,7 +268,7 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
 
             {/* Platform Master Grid (Bottom Row) */}
             {isComplete && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {['gemini', 'chatgpt', 'perplexity'].map((platform) => (
                         <PlatformScoreBar
                             key={platform}

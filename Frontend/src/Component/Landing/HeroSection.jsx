@@ -500,6 +500,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                     report,
                     auditToken: auditTokenRef.current,
                     screenResolution: `${window.screen.width}x${window.screen.height}`,
+                    pageType: catKey,
                 }),
             });
             let data = {};

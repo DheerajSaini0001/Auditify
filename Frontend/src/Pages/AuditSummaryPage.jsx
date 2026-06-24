@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { ArrowRight, Loader2, ChevronLeft, FileText } from "lucide-react";
+import { Loader2, ChevronLeft, FileText } from "lucide-react";
 import { ThemeContext } from "../context/ThemeContext";
 import CircularProgress from "../Component/CircularProgress";
 
@@ -20,6 +20,19 @@ const SECTIONS = [
     { key: "securityOrCompliance", short: "Sec", label: "Security", link: "security-compliance" },
     { key: "aeo", short: "AEO", label: "Answer Engine", link: "aeo" },
 ];
+
+const PAGE_IMPORTANCE = {
+    home: 2.0,
+    vdp: 1.75,
+    srp: 1.5,
+    finance: 1.25,
+    trade: 1.25,
+    specials: 1.25,
+    lease: 1.25,
+    service: 1.0,
+    about: 0.75,
+    content: 0.75,
+};
 
 // Score → tier. Mirrors the heatmap legend: Strong ≥75, Needs work 55–74, Critical <55.
 const tierOf = (v) => (v == null ? "na" : v >= 75 ? "strong" : v >= 55 ? "mid" : "low");
@@ -92,13 +105,28 @@ const AuditSummaryPage = () => {
 
     const rows = useMemo(() => payload?.pages || [], [payload]);
 
-    // Aggregate site score = average of the per-page overall scores we could load.
+    // Aggregate site score = importance-weighted site rollup math (§5.6)
     const { siteScore, siteGrade } = useMemo(() => {
-        const scores = rows
-            .map((p) => reports[p.id]?.score)
-            .filter((s) => typeof s === "number");
-        if (!scores.length) return { siteScore: null, siteGrade: "—" };
-        const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+        let totalImportance = 0;
+        let weightedScoreSum = 0;
+        let validPagesCount = 0;
+
+        rows.forEach((p) => {
+            const report = reports[p.id];
+            if (report && typeof report.score === "number") {
+                const pageType = p.key || report.pageType || "generic";
+                const importance = PAGE_IMPORTANCE[pageType] ?? 1.0;
+                weightedScoreSum += report.score * importance;
+                totalImportance += importance;
+                validPagesCount++;
+            }
+        });
+
+        if (validPagesCount === 0 || totalImportance === 0) {
+            return { siteScore: null, siteGrade: "—" };
+        }
+
+        const avg = Math.round(weightedScoreSum / totalImportance);
         return { siteScore: avg, siteGrade: gradeFor(avg) };
     }, [rows, reports]);
 
@@ -281,23 +309,7 @@ const AuditSummaryPage = () => {
                     )}
                 </div>
 
-                {/* ── Footer actions ── */}
-                <div className="flex flex-wrap justify-end gap-3">
-                    <button
-                        onClick={() => navigate("/")}
-                        className={`px-5 py-2.5 rounded-xl text-sm font-semibold border transition-colors ${darkMode ? "border-slate-700 text-slate-300 hover:bg-slate-800" : "border-line text-muted hover:bg-cardsoft"}`}
-                    >
-                        Run another audit
-                    </button>
-                    {rows[0]?.id && (
-                        <button
-                            onClick={() => openAll(rows[0].id)}
-                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 shadow-lg shadow-emerald-600/25 transition-all"
-                        >
-                            Open full report <ArrowRight className="w-4 h-4" />
-                        </button>
-                    )}
-                </div>
+
             </div>
         </div>
     );

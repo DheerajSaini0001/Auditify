@@ -102,6 +102,16 @@ const analyzeLlmsTxt = async (url, $ = null) => {
             };
         }
 
+        // ── Present but empty (no usable content) ──
+        if (!body || !body.trim()) {
+            return {
+                signal: 'llmsTxt', score: 0, exists: true, isEmpty: true, url: llmsUrl, statusCode: 200,
+                breakdown: { present: 10, h1: 0, sections: 0, links: 0, summary: 0, sameDomain: 0, relevance: 0 },
+                issues: ['/llms.txt exists but is empty — add an H1 with your business name, a short > summary, and ## sections linking your key pages.'],
+                reason: '/llms.txt exists but is empty — there is nothing for engines to read.',
+            };
+        }
+
         // ── Validate Markdown structure ──
         const hasH1 = /^#(?!#)\s+\S/m.test(body);
         const h2Count = (body.match(/^##(?!#)\s+\S/gm) || []).length;

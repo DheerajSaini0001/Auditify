@@ -2154,107 +2154,141 @@ const evaluateJsExecution = (audits) => {
   };
 };
 
-// AI Agentic Browsing (spec Part 3) — how ready the page is for AI AGENTS (not human
-// readers) to read, understand and TRANSACT on. Lighthouse 13.3's agentic category isn't
-// available to us, so we score it heuristically from the live DOM. Per spec, ONLY the
-// genuinely-new WebMCP arm is folded into the score (small weight); agent-accessibility,
-// stability (CLS) and llms.txt are surfaced as informational sub-scores because they are
-// already owned by Accessibility / Technical CLS / AEO. Experimental, confidence: lab.
-// Exported so the AIO section can own it (spec Part 3 + §5.1 place WebMCP in AIO,
-// NOT Technical). Kept defined here because it reuses this module's fetchTextWithTimeout.
-export const evaluateAgenticBrowsing = async (page, url, clsPick) => {
-  let dom = {
-    apiPresent: false, declarativeTools: 0, totalForms: 0, annotatedForms: 0,
-    schemaValid: null, totalInteractive: 0, namedInteractive: 0, landmarks: 0,
-  };
-  try {
-    dom = await page.evaluate(() => {
-      // Imperative WebMCP / model-context API surface.
-      const apiPresent = !!(navigator.modelContext || window.mcp || window.webmcp || window.agent || window.__WEBMCP__);
-      // Declarative tool registrations (HTML-defined).
-      const mcpScripts = Array.from(document.querySelectorAll('script[type*="mcp"]'));
-      const toolEls = Array.from(document.querySelectorAll('tool, [data-mcp-tool], [mcp-tool], [data-webmcp], [data-agent-tool]'));
-      const forms = Array.from(document.querySelectorAll('form'));
-      const annotatedForms = forms.filter((f) =>
-        f.hasAttribute('data-mcp') || f.hasAttribute('data-webmcp') || f.hasAttribute('mcp-tool') ||
-        f.hasAttribute('data-agent-tool') || !!f.querySelector('[data-mcp-tool],[mcp-tool],[data-webmcp]')
-      ).length;
-      let schemaValid = null;
-      if (mcpScripts.length) {
-        schemaValid = mcpScripts.every((s) => { try { JSON.parse(s.textContent || ''); return true; } catch { return false; } });
-      }
-      // Agent accessibility: share of interactive elements with an accessible name.
-      const interactive = Array.from(document.querySelectorAll('a[href], button, input:not([type="hidden"]), select, textarea, [role="button"], [role="link"]'));
-      let named = 0;
-      for (const el of interactive) {
-        const name = el.getAttribute('aria-label') || el.getAttribute('aria-labelledby') || el.getAttribute('title') ||
-          (el.textContent || '').trim() || el.getAttribute('alt') || el.getAttribute('value') || el.getAttribute('placeholder') ||
-          ((el.labels && el.labels.length) ? 'labelled' : '');
-        if (name && String(name).trim()) named++;
-      }
-      const landmarks = document.querySelectorAll('main, nav, header, footer, [role="main"], [role="navigation"], [role="banner"], [role="contentinfo"]').length;
-      return {
-        apiPresent,
-        declarativeTools: toolEls.length + mcpScripts.length,
-        totalForms: forms.length,
-        annotatedForms,
-        schemaValid,
-        totalInteractive: interactive.length,
-        namedInteractive: named,
-        landmarks,
-      };
-    });
-  } catch { /* page.evaluate failed — keep defaults (scores 0) */ }
-
-  // WebMCP readiness — the ONLY arm folded into the Technical score.
-  const registeredTools = dom.declarativeTools + (dom.apiPresent ? 1 : 0);
-  const hasSurface = dom.apiPresent || dom.declarativeTools > 0 || dom.annotatedForms > 0;
-  let webmcpScore = 0;
-  if (hasSurface) {
-    const formCoverage = dom.totalForms ? dom.annotatedForms / dom.totalForms : (registeredTools > 0 ? 1 : 0);
-    const toolScore = registeredTools > 0 ? 1 : 0;
-    const schemaPenalty = dom.schemaValid === false ? 0.5 : 1;
-    webmcpScore = Math.round(100 * (0.6 * formCoverage + 0.4 * toolScore) * schemaPenalty);
+// Sold-vehicle / 404 handling (VDP/SRP specific) — tests how the website handles invalid
+// or expired inventory URLs (e.g. redirected to active inventory / homepage or returning a clean 404).
+async function evaluateSoldVehicleHandling(url, pageType) {
+  const meta = { checkedUrl: null, finalUrl: null, status: null, redirected: false, detectedKeywords: [] };
+  
+  if (pageType !== "vdp" && pageType !== "srp") {
+    return { score: null, status: "not_applicable", infoOnly: true, confidence: "heuristic", details: "Not applicable on this page type", meta, analysis: null };
   }
-
-  // Informational sub-scores (not folded in — owned by other sections).
-  const agentAccessibility = dom.totalInteractive ? Math.round((dom.namedInteractive / dom.totalInteractive) * 100) : 100;
-  const agentStability = clsPick?.score ?? null;
-  const origin = (() => { try { return new URL(url).origin; } catch { return null; } })();
-  const llmsRaw = origin ? await fetchTextWithTimeout(`${origin}/llms.txt`, 8000) : null;
-  const hasLlmsTxt = !!(llmsRaw && llmsRaw.trim().length > 0 && !/<html/i.test(llmsRaw.slice(0, 200)));
-
-  const status = webmcpScore >= 75 ? "pass" : webmcpScore >= 25 ? "warning" : "fail";
-
-  return {
-    score: webmcpScore,
-    status,
-    experimental: true,
-    confidence: "lab",
-    details: webmcpScore > 0
-      ? `WebMCP agent tooling detected (${dom.annotatedForms}/${dom.totalForms} forms annotated).`
-      : "No WebMCP agent tooling found — an emerging, early-mover signal most sites don't have yet.",
-    meta: {
-      value: `${webmcpScore}%`,
-      experimental: true,
-      registeredTools,
-      apiPresent: dom.apiPresent,
-      totalForms: dom.totalForms,
-      annotatedForms: dom.annotatedForms,
-      schemaValid: dom.schemaValid,
-      // informational sub-scores (shown, not weighted here):
-      agentAccessibility,
-      agentStability,
-      llmsTxt: hasLlmsTxt,
-      landmarks: dom.landmarks,
-      thresholds: { Good: "≥75%", Warning: "25–74%", Poor: "<25%" },
-    },
-    analysis: status === "pass" ? null : {
-      cause: "The site exposes no machine-callable tools (WebMCP) for AI agents to search inventory, value a trade, or book service.",
-      recommendation: "Adopt WebMCP — annotate key forms/actions declaratively and register agent tools. Early adoption is a competitive moat while the standard is new.",
-    },
-  };
-};
+  
+  let targetUrl = url;
+  try {
+    const parsed = new URL(url);
+    let pathname = parsed.pathname;
+    
+    // Look for 17-character VIN
+    const vinMatch = pathname.match(/\/([a-hj-npr-z0-9]{17})\b/i);
+    if (vinMatch) {
+      const vin = vinMatch[1];
+      const lastChar = vin.slice(-1);
+      const newLastChar = lastChar === "1" ? "2" : "1";
+      const mutatedVin = vin.slice(0, -1) + newLastChar;
+      pathname = pathname.replace(vin, mutatedVin);
+    } else {
+      // Look for 4+ digit stock/ID sequence
+      const digitMatch = pathname.match(/\/(\d{4,})\b/);
+      if (digitMatch) {
+        const digits = digitMatch[1];
+        const lastDigit = digits.slice(-1);
+        const newLastDigit = lastDigit === "1" ? "2" : "1";
+        const mutatedDigits = digits.slice(0, -1) + newLastDigit;
+        pathname = pathname.replace(digits, mutatedDigits);
+      } else {
+        pathname = pathname.replace(/\/?$/, "-nonexistent-vehicle-12345");
+      }
+    }
+    
+    parsed.pathname = pathname;
+    targetUrl = parsed.toString();
+  } catch (err) {
+    targetUrl = url + "-nonexistent-vehicle-12345";
+  }
+  
+  meta.checkedUrl = targetUrl;
+  
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 6000);
+  try {
+    const res = await fetch(targetUrl, {
+      signal: controller.signal,
+      redirect: "follow",
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      },
+    });
+    
+    const finalUrl = res.url;
+    meta.finalUrl = finalUrl;
+    meta.status = res.status;
+    
+    const originalPath = (new URL(url)).pathname.toLowerCase().replace(/\/+$/, "");
+    const finalPath = (new URL(finalUrl)).pathname.toLowerCase().replace(/\/+$/, "");
+    
+    if (finalPath !== originalPath && (finalPath.includes("/inventory") || finalPath.includes("/search") || finalPath.includes("/vehicles") || finalPath === "" || finalPath === "/")) {
+      meta.redirected = true;
+      const score = (finalPath === "" || finalPath === "/") ? 60 : 100;
+      return {
+        score,
+        status: score === 100 ? "pass" : "warning",
+        confidence: "heuristic",
+        details: `Redirected to inventory/SRP page: ${finalUrl}`,
+        meta,
+        analysis: score === 100 ? null : {
+          cause: "The mutated VDP URL redirects directly to the homepage instead of a specific SRP/inventory search results page.",
+          recommendation: "Configure 301 redirects to send visitors of expired inventory to a relevant make/model search page rather than the main homepage."
+        }
+      };
+    }
+    
+    if (res.status === 404 || res.status === 410) {
+      return {
+        score: 40,
+        status: "warning",
+        confidence: "heuristic",
+        details: "Server returned a hard 404 page, which wastes search crawler budget.",
+        meta,
+        analysis: {
+          cause: "The expired/removed vehicle URL returns a hard 404 error instead of redirecting.",
+          recommendation: "Implement 301 redirects to guide users and search bots to similar active inventory or search pages."
+        }
+      };
+    }
+    
+    const text = await res.text();
+    const lowerText = text.toLowerCase();
+    const soft404Keywords = ["no longer available", "vehicle sold", "sold", "not found", "error 404", "page not found", "vehicle is no longer", "inventory not found"];
+    const foundKeywords = soft404Keywords.filter(k => lowerText.includes(k));
+    meta.detectedKeywords = foundKeywords;
+    
+    if (foundKeywords.length > 0) {
+      return {
+        score: 0,
+        status: "fail",
+        confidence: "heuristic",
+        details: `Soft-404 detected. Server returned status 200 but page copy contains: "${foundKeywords[0]}"`,
+        meta,
+        analysis: {
+          cause: "The URL of the sold vehicle returns a 200 status but displays a 'no longer available' notice, creating a soft-404.",
+          recommendation: "Instead of serving a 200 page with sold messages, return a 301 redirect to a relevant SRP or in-stock alternative vehicle."
+        }
+      };
+    }
+    
+    return {
+      score: 100,
+      status: "pass",
+      confidence: "heuristic",
+      details: "URL resolved successfully, no soft-404 keywords detected.",
+      meta,
+      analysis: null
+    };
+    
+  } catch (e) {
+    return {
+      score: 40,
+      status: "warning",
+      confidence: "heuristic",
+      details: `Request timed out or failed (${e.message}). Treated as standard 404 handling.`,
+      meta,
+      analysis: null
+    };
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 // MAIN FUNCTION
 //
@@ -2269,7 +2303,7 @@ export const evaluateAgenticBrowsing = async (page, url, clsPick) => {
 //     Mobile Usability, Inventory/Service page-load, Rendering/Lazy/Third-party/JS)
 //     are no longer computed or returned — they double-counted CWV or were retired.
 //   • §0.5 confidence flag surfaced per-CWV and as a section-level summary.
-export default async function technicalMetrics(url, device, page, response, browser) {
+export default async function technicalMetrics(url, device, page, response, browser, pageType = null) {
 
   // The audited device drives every lab/field metric below; the OTHER device is
   // requested too, purely to surface the official (informational) Lighthouse
@@ -2316,8 +2350,8 @@ export default async function technicalMetrics(url, device, page, response, brow
   const ttfbPick = ttfbCrux || ttfbLab;
   // INP·TBT is one parameter: real-user INP (field) if available, else lab TBT.
   const inpTbtPick = inpCrux || tbt;
-  // NOTE: AI Agentic Browsing (WebMCP) is scored in the AIO section (spec Part 3 + §5.1),
-  // not here — it measures machine-interactability, not delivery performance.
+  
+  const soldVehicle = await evaluateSoldVehicleHandling(url, pageType);
   const lcpConf = lcpCrux ? "field" : "lab";
   const clsConf = clsCrux ? "field" : "lab";
   const fcpConf = fcpCrux ? "field" : "lab";
@@ -2338,6 +2372,7 @@ export default async function technicalMetrics(url, device, page, response, brow
     { score: getScore(compression),          weight: 4,  present: true },
     { score: getScore(caching),              weight: 4,  present: true },
     { score: getScore(redirect),             weight: 3,  present: true },
+    { score: getScore(soldVehicle),          weight: 5,  present: pageType === "vdp" || pageType === "srp" },
   ];
   const presentComponents = components.filter((c) => c.present);
   const totalWeight = presentComponents.reduce((s, c) => s + c.weight, 0);
@@ -2365,5 +2400,6 @@ export default async function technicalMetrics(url, device, page, response, brow
     Resource_Optimization: resourceOptimization,
     Render_Blocking: renderBlocking,
     Redirect_Chains: redirect,
+    Sold_Vehicle: soldVehicle,
   };
 }

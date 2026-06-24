@@ -1,9 +1,9 @@
-// securityCompliance.js
 import dotenv from "dotenv";
 import fetch from "node-fetch";
 import { URL } from "url";
 import { waitForChallengeResolution } from "../utils/puppeteer_cheerio.js";
 import configService from "../services/configService.js";
+import { classifyPageType } from "../utils/pageClassifier.js";
 
 dotenv.config();
 
@@ -1823,7 +1823,7 @@ async function discoverFinanceUrl(page) {
   }
 }
 
-async function checkFinanceFormSecurity(url, page, browser) {
+async function checkFinanceFormSecurity(url, page, browser, pageType = null) {
   const meta = {
     checkedUrl: null,
     financePageFound: false,
@@ -1837,93 +1837,53 @@ async function checkFinanceFormSecurity(url, page, browser) {
     maxScore: 10,
   };
   const POINTS = { https: 2, handling: 2, provider: 3, endpoint: 2, signals: 1 };
-  let scanPage = null;
+  
+  if (pageType !== "finance" && pageType !== "trade") {
+    return { score: null, status: "not_applicable", infoOnly: true, confidence: "heuristic", details: "Not applicable on this page type", meta, analysis: null };
+  }
+
+  meta.checkedUrl = page.url();
 
   try {
-    const discovered = await discoverFinanceUrl(page);
-    const origin = new URL(page.url()).origin;
-    const candidates = [];
-    const pushUniq = (u) => { if (u && !candidates.includes(u)) candidates.push(u); };
-    pushUniq(discovered);
-    pushUniq(origin + "/finance");
-    pushUniq(origin + "/financing");
-    pushUniq(origin + "/credit-application");
-    pushUniq(origin + "/apply-for-financing");
-    pushUniq(origin + "/finance-application");
-    // Trade-In page types (spec §2.4 — Finance-form PII security also applies to Trade-In)
-    pushUniq(origin + "/value-your-trade");
-    pushUniq(origin + "/trade-in");
-    pushUniq(origin + "/trade");
-    pushUniq(origin + "/value-trade");
+    const data = await page.evaluate(() => {
+      const lower = (s) => (s || "").toLowerCase();
+      const bodyText = lower(document.body ? document.body.innerText : "").slice(0, 8000);
+      const title = lower(document.title);
+      const hay = title + " " + bodyText;
+      const financeKw = ["financ", "credit application", "credit app", "auto loan", "car loan", "pre-approval", "preapprov", "get approved", "down payment", "monthly payment", "apply for financ"];
+      const tradeInKw = ["value your trade", "value my trade", "trade-in", "trade in value", "trade appraisal", "what's my car worth", "whats my car worth", "instant cash offer", "appraise my"];
+      const isFinancePage = financeKw.some((k) => hay.includes(k));
+      const isTradeInPage = tradeInKw.some((k) => hay.includes(k));
+      const pageKind = isFinancePage ? "finance" : isTradeInPage ? "trade-in" : null;
 
-    scanPage = await browser.newPage();
+      const sensSel = "input[name*='ssn' i], input[id*='ssn' i], input[name*='social' i], input[autocomplete*='cc-' i], input[name*='card' i], input[id*='card' i], input[name*='routing' i], input[name*='account' i], input[name*='bank' i]";
+      const forms = Array.from(document.querySelectorAll("form")).map((f) => ({
+        action: f.getAttribute("action") || "",
+        sensitive: !!f.querySelector(sensSel),
+      }));
 
-    // Navigate candidates until we land on a page that actually looks like a
-    // finance / credit-application page. If none qualify → Not Applicable.
-    let data = null;
-    for (let i = 0; i < candidates.length; i++) {
-      const cand = candidates[i];
-      try {
-        const resp = await scanPage.goto(cand, { waitUntil: "domcontentloaded", timeout: 30000 });
-        if (resp && resp.status() >= 400) continue;
-        await waitForChallengeResolution(scanPage, 12000).catch(() => {});
-        const d = await scanPage.evaluate(() => {
-          const lower = (s) => (s || "").toLowerCase();
-          const bodyText = lower(document.body ? document.body.innerText : "").slice(0, 8000);
-          const title = lower(document.title);
-          const hay = title + " " + bodyText;
-          const financeKw = ["financ", "credit application", "credit app", "auto loan", "car loan", "pre-approval", "preapprov", "get approved", "down payment", "monthly payment", "apply for financ"];
-          const tradeInKw = ["value your trade", "value my trade", "trade-in", "trade in value", "trade appraisal", "what's my car worth", "whats my car worth", "instant cash offer", "appraise my"];
-          const isFinancePage = financeKw.some((k) => hay.includes(k));
-          const isTradeInPage = tradeInKw.some((k) => hay.includes(k));
-          const pageKind = isFinancePage ? "finance" : isTradeInPage ? "trade-in" : null;
+      const fieldTokens = Array.from(document.querySelectorAll("input, select")).map((i) =>
+        [i.name, i.id, i.getAttribute("autocomplete"), i.getAttribute("placeholder"), i.getAttribute("aria-label")].filter(Boolean).join(" ")
+      );
 
-          const sensSel = "input[name*='ssn' i], input[id*='ssn' i], input[name*='social' i], input[autocomplete*='cc-' i], input[name*='card' i], input[id*='card' i], input[name*='routing' i], input[name*='account' i], input[name*='bank' i]";
-          const forms = Array.from(document.querySelectorAll("form")).map((f) => ({
-            action: f.getAttribute("action") || "",
-            sensitive: !!f.querySelector(sensSel),
-          }));
+      const providerHaystack = [
+        ...Array.from(document.querySelectorAll("script[src]")).map((s) => s.getAttribute("src")),
+        ...Array.from(document.querySelectorAll("iframe[src]")).map((f) => f.getAttribute("src")),
+        ...Array.from(document.querySelectorAll("form[action]")).map((f) => f.getAttribute("action")),
+        ...Array.from(document.querySelectorAll("a[href]")).map((a) => a.getAttribute("href")),
+      ].filter(Boolean);
 
-          const fieldTokens = Array.from(document.querySelectorAll("input, select")).map((i) =>
-            [i.name, i.id, i.getAttribute("autocomplete"), i.getAttribute("placeholder"), i.getAttribute("aria-label")].filter(Boolean).join(" ")
-          );
+      const linkText = Array.from(document.querySelectorAll("a"))
+        .map((a) => lower(a.textContent) + " " + lower(a.getAttribute("href") || "")).join(" ");
+      const hasPrivacy = /privacy/.test(linkText);
+      const hasTerms = /terms|conditions/.test(linkText);
+      const secureMessaging = /secure|encrypt|256-bit|\bssl\b|your information is protected|safe and secure|secure application/.test(bodyText);
 
-          const providerHaystack = [
-            ...Array.from(document.querySelectorAll("script[src]")).map((s) => s.getAttribute("src")),
-            ...Array.from(document.querySelectorAll("iframe[src]")).map((f) => f.getAttribute("src")),
-            ...Array.from(document.querySelectorAll("form[action]")).map((f) => f.getAttribute("action")),
-            ...Array.from(document.querySelectorAll("a[href]")).map((a) => a.getAttribute("href")),
-          ].filter(Boolean);
-
-          const linkText = Array.from(document.querySelectorAll("a"))
-            .map((a) => lower(a.textContent) + " " + lower(a.getAttribute("href") || "")).join(" ");
-          const hasPrivacy = /privacy/.test(linkText);
-          const hasTerms = /terms|conditions/.test(linkText);
-          const secureMessaging = /secure|encrypt|256-bit|\bssl\b|your information is protected|safe and secure|secure application/.test(bodyText);
-
-          return { protocol: location.protocol, isFinancePage, isTradeInPage, pageKind, forms, fieldTokens, providerHaystack, hasPrivacy, hasTerms, secureMessaging };
-        });
-        if (d && (d.isFinancePage || d.isTradeInPage)) { data = d; meta.checkedUrl = scanPage.url(); break; }
-      } catch (e) {
-        continue;
-      }
-    }
-
-    if (!data) {
-      // No finance / credit-application or trade-in page → Not Applicable (neutral score).
-      meta.rawScore = 0;
-      meta.missingPoints = 0;
-      return {
-        score: 100,
-        status: "not_applicable",
-        details: "No finance / credit-application or trade-in page found on the site",
-        meta,
-        analysis: null,
-      };
-    }
+      return { protocol: location.protocol, isFinancePage, isTradeInPage, pageKind, forms, fieldTokens, providerHaystack, hasPrivacy, hasTerms, secureMessaging };
+    });
 
     meta.financePageFound = true;
-    meta.pageKind = data.pageKind || "finance";
+    meta.pageKind = data.pageKind || (pageType === "trade" ? "trade-in" : "finance");
 
     const isInsecure = (action) => {
       if (!action) return false; // empty/relative action on an HTTPS page is fine
@@ -1999,50 +1959,30 @@ async function checkFinanceFormSecurity(url, page, browser) {
         label: "Secure submission endpoint",
         points: POINTS.endpoint,
         earned: meta.secureEndpoint,
-        detail: meta.secureEndpoint ? "The application form submits to an HTTPS endpoint." : "The form posts to an insecure (HTTP) endpoint. Point the form action to an HTTPS URL.",
+        detail: meta.secureEndpoint ? `All forms submit over HTTPS.` : `Configure forms to submit only over HTTPS secure endpoints.`,
       },
       {
-        label: "Security signals (privacy / terms / SSL)",
+        label: "Trust signals / disclaimers visible",
         points: POINTS.signals,
         earned: signalsEarned,
-        detail: signalsEarned ? `Present: ${signals.join(", ")}` : "Add at least two trust signals: a Privacy Policy link, a Terms link, and visible secure-application / SSL messaging.",
-      },
+        detail: signalsEarned ? `Visible signals: ${signals.join(", ")}` : `Include a privacy link, terms link, or secure message near the inputs.`,
+      }
     ];
 
-    const where = meta.checkedUrl ? ` (tested ${meta.checkedUrl})` : "";
-    const pciLabel = meta.pageKind === "trade-in" ? "Trade-in form security" : "Finance form security";
-    let status, details, analysis;
-    if (rawScore >= 8) {
-      status = "pass";
-      details = `${pciLabel} is strong — ${rawScore}/10${where}`;
-      analysis = null;
-    } else if (rawScore >= 5) {
-      status = "warning";
-      details = `${pciLabel} is partial — ${rawScore}/10${where}`;
+    const score = Math.round((rawScore / meta.maxScore) * 100);
+    const status = score >= 80 ? "pass" : score >= 40 ? "warning" : "fail";
+    
+    let analysis = null;
+    if (status !== "pass") {
       analysis = {
-        cause: `The ${kindLabel} page is missing one or more PCI best practices (see the per-item breakdown).`,
-        recommendation: "Address the unearned items: enforce HTTPS end-to-end, delegate sensitive data to a PCI-compliant provider, and add clear privacy/terms/secure-application messaging.",
-      };
-    } else {
-      status = "fail";
-      details = `${pciLabel} is weak — ${rawScore}/10${where}`;
-      analysis = {
-        cause: `The ${kindLabel} page collects or submits sensitive data without adequate PCI safeguards.`,
-        recommendation: "Serve the page over HTTPS, never collect raw SSN/card/bank data outside a PCI-compliant provider, ensure the submission endpoint is HTTPS, and surface privacy/terms/secure-application signals.",
+        cause: meta.httpsSecure ? "Some security details on the finance form (endpoints, trust signals, or third-party validation) are missing or insecure." : "The finance form is missing security elements.",
+        recommendation: "Ensure all finance/credit-app forms are served and submitted exclusively over HTTPS, display clear privacy policies and credentials, and power values via a trusted integration."
       };
     }
-
-    return { score: rawScore * 10, status, details, meta, analysis };
+    
+    return { score, status, confidence: "heuristic", details: `Finance form security audit: ${score}/100`, meta, analysis };
   } catch (error) {
-    return {
-      score: 0,
-      status: "error",
-      details: `Finance Form Security check failed: ${error.message}`,
-      meta,
-      analysis: { cause: error.message },
-    };
-  } finally {
-    if (scanPage) await scanPage.close().catch(() => {});
+    return { score: 100, status: "not_applicable", infoOnly: true, confidence: "heuristic", details: `Form security audit skipped: ${error.message}`, meta, analysis: null };
   }
 }
 
@@ -2197,57 +2137,22 @@ async function scanDisclaimerText(scanPage) {
   });
 }
 
-async function checkLegalDisclaimers(url, page, browser) {
+async function checkLegalDisclaimers(url, page, browser, pageType = null) {
   const meta = { checkedUrl: null, pageType: null, groupsFound: [], groupsRequired: [], details: {} };
-  let scanPage = null;
+  
+  if (pageType !== "finance" && pageType !== "specials" && pageType !== "lease" && pageType !== "vdp") {
+    return { score: 100, status: "not_applicable", infoOnly: true, confidence: "heuristic", details: "No finance / offers / lease / VDP page found to assess legal disclaimers", meta, analysis: null };
+  }
+
+  meta.pageType = pageType;
+  meta.checkedUrl = page.url();
+
   try {
-    // Is the AUDITED page itself a finance/offers/lease/VDP page?
-    const hereHay = await page.evaluate(() => ((document.title || "") + " " + (document.body ? document.body.innerText : "")).toLowerCase().slice(0, 8000)).catch(() => "");
-    let pageType = classifyDisclaimerPageType(new URL(page.url()).pathname, hereHay);
-    let targetPage = null;
-
-    if (pageType) { targetPage = page; meta.checkedUrl = page.url(); }
-    else {
-      // Discover a relevant page from links.
-      const link = await page.evaluate(() => {
-        const bad = (raw) => /^(mailto:|tel:|javascript:|#)/i.test(raw || "");
-        const kw = /financ|credit[-_ ]?app|special|offer|incentive|rebate|lease/i;
-        const links = Array.from(document.querySelectorAll("a[href]"))
-          .map(a => ({ href: a.href, raw: a.getAttribute("href") || "", text: (a.textContent || "").toLowerCase() }))
-          .filter(l => l.href && !bad(l.raw));
-        const m = links.find(l => kw.test(l.href)) || links.find(l => kw.test(l.text));
-        return m ? m.href : null;
-      }).catch(() => null);
-
-      const origin = new URL(page.url()).origin;
-      const candidates = [];
-      const push = (u) => { if (u && !candidates.includes(u)) candidates.push(u); };
-      push(link); push(origin + "/specials"); push(origin + "/offers"); push(origin + "/finance"); push(origin + "/lease-specials");
-
-      scanPage = await browser.newPage();
-      for (let i = 0; i < candidates.length; i++) {
-        const cand = candidates[i];
-        try {
-          const resp = await scanPage.goto(cand, { waitUntil: "domcontentloaded", timeout: 30000 });
-          if (resp && resp.status() >= 400) continue;
-          await waitForChallengeResolution(scanPage, 12000).catch(() => {});
-          const hay = await scanPage.evaluate(() => ((document.title || "") + " " + (document.body ? document.body.innerText : "")).toLowerCase().slice(0, 8000)).catch(() => "");
-          const pt = classifyDisclaimerPageType(new URL(scanPage.url()).pathname, hay);
-          if (pt) { pageType = pt; targetPage = scanPage; meta.checkedUrl = scanPage.url(); break; }
-        } catch (e) { continue; }
-      }
-    }
-
-    if (!pageType || !targetPage) {
-      return { score: 100, status: "not_applicable", infoOnly: true, confidence: "heuristic", details: "No finance / offers / lease / VDP page found to assess legal disclaimers", meta, analysis: null };
-    }
-    meta.pageType = pageType;
-
-    const scan = await scanDisclaimerText(targetPage);
+    const scan = await scanDisclaimerText(page);
     const haystack = scan.bodyText + " \n " + scan.fineText;
     const groupHit = (g) => DISCLAIMER_GROUPS[g].terms.some(t => haystack.includes(t));
 
-    const requiredByType = { finance: ["finance", "price"], lease: ["lease", "price"], offers: ["price", "expiry"], vdp: ["price"] };
+    const requiredByType = { finance: ["finance", "price"], specials: ["price", "expiry"], lease: ["lease", "price"], vdp: ["price"] };
     const required = requiredByType[pageType] || ["price"];
     meta.groupsRequired = required.map(g => DISCLAIMER_GROUPS[g].label);
 
@@ -2258,36 +2163,34 @@ async function checkLegalDisclaimers(url, page, browser) {
 
     const requiredFound = required.filter(groupHit).length;
     let score = Math.round((requiredFound / required.length) * 100);
-    if (score < 100) {
-      const optionalBonus = found.filter(g => !required.includes(g)).length * 5;
-      score = Math.min(100, score + optionalBonus);
-    }
     const status = score >= 80 ? "pass" : score >= 40 ? "warning" : "fail";
-    const missing = required.filter(g => !groupHit(g)).map(g => DISCLAIMER_GROUPS[g].label);
+
+    let analysis = null;
+    if (status !== "pass") {
+      const missing = required.filter(g => !groupHit(g)).map(g => DISCLAIMER_GROUPS[g].label);
+      analysis = {
+        cause: `Required disclaimers (${missing.join(", ")}) were not found on this ${pageType} page.`,
+        recommendation: `Add appropriate disclaimers (${missing.join(", ")}) in clear, legible print on the page, typically near pricing or calculation modules.`
+      };
+    }
 
     return {
-      score, status, confidence: "heuristic",
-      details: missing.length ? `Missing ${pageType} disclaimers: ${missing.join(", ")}` : `Required ${pageType} disclaimers present`,
+      score,
+      status,
+      confidence: "heuristic",
+      details: `Regulated disclaimers present: ${requiredFound}/${required.length} required groups found`,
       meta,
-      analysis: status === "pass" ? null : {
-        cause: `The ${pageType} page is missing required legal/financial disclaimers (${missing.join(", ")}). Reg-Z (finance), Reg-M (lease), and FTC advertising rules require clear, conspicuous terms.`,
-        recommendation: pageType === "lease"
-          ? "Add Reg-M lease disclosures: capitalized cost, residual, money factor, due-at-signing, and total of payments — legibly, not buried."
-          : pageType === "finance"
-            ? "Add Reg-Z finance disclosures: APR, finance terms, and 'with approved credit' qualifiers, clearly and conspicuously."
-            : "Add FTC price/offer disclaimers: tax/title/doc-fee exclusions, 'see dealer for details', and offer expiry dates."
-      }
+      analysis,
     };
   } catch (error) {
     return { score: 100, status: "not_applicable", infoOnly: true, confidence: "heuristic", details: `Legal disclaimers check skipped: ${error.message}`, meta, analysis: null };
-  } finally {
-    if (scanPage) await scanPage.close().catch(() => {});
   }
 }
 
-export default async function securityCompliance(url, page, response, browser) {
+export default async function securityCompliance(url, page, response, browser, pageType = null) {
 
   const domain = Domain(url);
+  const resolvedPageType = pageType || classifyPageType(url);
 
   // Transport
   const httpsResult = await checkHTTPS(url, page);
@@ -2322,8 +2225,8 @@ export default async function securityCompliance(url, page, response, browser) {
   const privacyComplianceResult = await checkPrivacyCompliance(page);
 
   // Page-specific
-  const financeFormSecurityResult = await checkFinanceFormSecurity(url, page, browser);
-  const legalDisclaimersResult = await checkLegalDisclaimers(url, page, browser);
+  const financeFormSecurityResult = await checkFinanceFormSecurity(url, page, browser, resolvedPageType);
+  const legalDisclaimersResult = await checkLegalDisclaimers(url, page, browser, resolvedPageType);
 
   // NOTE: GA4 / GTM / Conversion Tracking and CRM lead-transfer are NOT part of the
   // Security section (spec §2.4 relocates them to Conversion Flow). They are no longer

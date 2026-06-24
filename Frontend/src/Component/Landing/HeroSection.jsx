@@ -46,6 +46,7 @@ const SECTIONS = [
     { value: 'UX & Content Structure', label: 'UX & Content Structure' },
     { value: 'Conversion & Lead Flow', label: 'Conversion & Lead Flow' },
     { value: 'AIO (AI-Optimization) Readiness', label: 'AIO (AI-Search) Readiness' },
+    { value: 'AEO (Answer Engine Optimization)', label: 'AEO (Answer Engine)' },
 ];
 
 // Collapse a section selection into the `report` value the backend expects:

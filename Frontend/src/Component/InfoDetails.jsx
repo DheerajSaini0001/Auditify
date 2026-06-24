@@ -523,6 +523,72 @@ export const InfoDetails = {
         ]
     },
 
+    faqQa: {
+        title: "FAQ / Q&A Blocks",
+        whatThisParameterIs: "FAQ / Q&A Blocks checks for question-headed sections with concise answers, backed by FAQPage schema — the format answer engines lift directly into AI Overviews and voice results. (Page-specific: FAQ, Finance, Service and VDP pages.)",
+        whatItCalculates: "We reuse the schema-markup evidence: FAQPage JSON-LD present (best), on-page FAQ-style content detected (partial), or neither (low). Score grades how machine-readable your Q&A is.",
+        whyItMatters: "Question-headed sections with concise answers (plus FAQPage schema) are the cleanest path to being quoted — engines extract the Q&A pair directly into an answer.",
+        thresholds: {
+            good: "FAQPage schema present and wrapping real Q&A content",
+            needsImprovement: "FAQ-style content present but no FAQPage schema",
+            poor: "No FAQ / Q&A blocks detected"
+        },
+        actualReasonsForFailure: [
+            "No FAQ section on a page where buyers ask common questions",
+            "FAQ content present but not wrapped in FAQPage JSON-LD",
+            "Answers are long/buried rather than concise and question-headed"
+        ],
+        howToOvercomeFailure: [
+            "Add a concise FAQ section answering common buyer questions",
+            "Wrap each question/answer pair in FAQPage schema (JSON-LD)",
+            "Lead each answer with a direct, quotable sentence"
+        ]
+    },
+
+    sameAsValidation: {
+        title: "sameAs Validation",
+        whatThisParameterIs: "sameAs Validation checks the sameAs profile links in your Organization/LocalBusiness schema — the links that connect your site to your authoritative profiles for entity disambiguation. (Page-specific: Home / About.)",
+        whatItCalculates: "We count the distinct sameAs URLs declared in your Organization schema (0 → 1 → 2 → 3+). More authoritative, consistent profiles raise the score. (On-page extraction — resolution/name-match would need extra round-trips.)",
+        whyItMatters: "sameAs links let engines disambiguate your business from similarly-named ones and corroborate your identity across Google Business Profile, Facebook, LinkedIn, Yelp and DealerRater.",
+        thresholds: {
+            good: "3+ authoritative sameAs profile links declared",
+            needsImprovement: "1–2 sameAs links",
+            poor: "No sameAs links in Organization schema"
+        },
+        actualReasonsForFailure: [
+            "Organization schema has no sameAs array",
+            "Only one or two profiles linked",
+            "Linked profiles don't match the business identity"
+        ],
+        howToOvercomeFailure: [
+            "Add a sameAs array to your Organization/LocalBusiness JSON-LD",
+            "Link Google Business Profile, Facebook, LinkedIn, Yelp and DealerRater",
+            "Keep the linked profiles' name/address/phone consistent with the site"
+        ]
+    },
+
+    eeatComposite: {
+        title: "E-E-A-T (Experience · Expertise · Authority)",
+        whatThisParameterIs: "A single consolidated E-E-A-T score combining first-hand Experience, Expertise (credentials) and Authority (third-party validation). (Page-specific: About, Blog and Service pages, where editorial content lives.)",
+        whatItCalculates: "We average three on-page sub-signals: Experience (original media, testimonials, operator voice, staff), Expertise (certifications, awards, tenure, credentialed authors) and Authority (press mentions, authoritative links, trust badges, social proof).",
+        whyItMatters: "Google's E-E-A-T rewards content that comes from a real, qualified, recognized business. Together these signals raise trust and the likelihood an engine cites you over a generic competitor.",
+        thresholds: {
+            good: "Strong across experience, expertise and authority",
+            needsImprovement: "One or two of the three are weak",
+            poor: "Little demonstrable experience, expertise or authority"
+        },
+        actualReasonsForFailure: [
+            "Generic/stock content with no first-hand experience signals",
+            "No visible credentials, certifications, awards or author bios",
+            "No press mentions, authoritative links or trust badges"
+        ],
+        howToOvercomeFailure: [
+            "Add original photos/video, genuine testimonials and an authentic operator voice",
+            "Show certifications, awards, years in business and credentialed authors",
+            "Earn and surface press mentions, authoritative links and trust badges"
+        ]
+    },
+
     brandEntityStrength: {
         title: "Brand Entity Strength",
         whatThisParameterIs: "Brand Entity Strength grades how authoritative and established your brand is as an entity — sameAs breadth, Wikipedia/Knowledge Graph presence, review volume and brand completeness. (Informational meter — not separately weighted, to avoid double-counting Entity Recognition.)",

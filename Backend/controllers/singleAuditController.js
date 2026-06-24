@@ -17,7 +17,8 @@ const reportFieldMap = {
   "Security/Compliance": "securityOrCompliance",
   "UX & Content Structure": "UXOrContentStructure",
   "Conversion & Lead Flow": "conversionAndLeadFlow",
-  "AIO (AI-Optimization) Readiness": "aioReadiness"
+  "AIO (AI-Optimization) Readiness": "aioReadiness",
+  "AEO (Answer Engine Optimization)": "aeo"
 };
 
 export const startAudit = async (req, res) => {
@@ -174,7 +175,6 @@ export const startAudit = async (req, res) => {
             if (section === "On Page SEO") newSectionReport.siteSchema = fullAudit.siteSchema;
             if (section === "AIO (AI-Optimization) Readiness") {
               newSectionReport.aioCompatibilityBadge = fullAudit.aioCompatibilityBadge;
-              newSectionReport.aeo = fullAudit.aeo;
             }
           }
 
@@ -444,17 +444,17 @@ export const getReportStatusById = async (req, res) => {
       id,
       "_id status screenshotUrl error technicalPerformance.Percentage onPageSEO.Percentage " +
       "accessibility.Percentage securityOrCompliance.Percentage UXOrContentStructure.Percentage " +
-      "conversionAndLeadFlow.Percentage aioReadiness.Percentage"
+      "conversionAndLeadFlow.Percentage aioReadiness.Percentage aeo.Percentage"
     );
     if (!report || !ok) {
       return res.status(404).json({ message: "Report not found or access denied" });
     }
 
-    // How many of the 7 dimensions have finished scoring. These stream in as the worker
+    // How many of the 8 dimensions have finished scoring. These stream in as the worker
     // completes each metric, so this climbs steadily even while `status` is unchanged.
     const SECTION_KEYS = [
       "technicalPerformance", "onPageSEO", "accessibility", "securityOrCompliance",
-      "UXOrContentStructure", "conversionAndLeadFlow", "aioReadiness",
+      "UXOrContentStructure", "conversionAndLeadFlow", "aioReadiness", "aeo",
     ];
     const total = SECTION_KEYS.length;
     const completedSections = SECTION_KEYS.filter(

@@ -32,6 +32,7 @@ const SECTION_DISPLAY_NAMES = {
   "UX & Content Structure": "UX & Content Structure",
   "Conversion & Lead Flow": "Conversion & Lead Flow",
   "AIO (AI-Optimization) Readiness": "AIO Readiness",
+  "AEO (Answer Engine Optimization)": "AEO",
 };
 
 const gradeFor = (score) =>
@@ -114,9 +115,9 @@ async function safeMetric(name, fn) {
   }
 }
 
-const OverAll = (A, B, C, D, E, F, G) => {
-  A ||= 0; B ||= 0; C ||= 0; D ||= 0; E ||= 0; F ||= 0; G ||= 0;
-  const total = (A + B + C + D + E + F + G) / 7;
+const OverAll = (A, B, C, D, E, F, G, H) => {
+  A ||= 0; B ||= 0; C ||= 0; D ||= 0; E ||= 0; F ||= 0; G ||= 0; H ||= 0;
+  const total = (A + B + C + D + E + F + G + H) / 8;
 
   return {
     totalScore: Number(total.toFixed(1)),
@@ -134,6 +135,7 @@ const OverAll = (A, B, C, D, E, F, G) => {
       { name: "UX & Content Structure", score: E },
       { name: "Conversion & Lead Flow", score: F },
       { name: "AIO Readiness", score: G },
+      { name: "AEO", score: H },
     ],
   };
 };
@@ -243,12 +245,14 @@ const OverAll = (A, B, C, D, E, F, G) => {
         },
         "AIO (AI-Optimization) Readiness": async () => {
           const r = await safeMetric("AIO Readiness", () => aioReadiness(url, page, $));
-          // Mirror the full-audit path: AEO uses 100 as the technical placeholder and
-          // is promoted to a TOP-LEVEL `aeo` field (not nested) so the report renders
-          // it directly instead of re-running the slow live stream.
-          const aeoRes = await safeMetric("AEO (AIO)", () => AEOService.runAudit(url, $, null, 100));
-          postProgress({ aioReadiness: r, aioCompatibilityBadge: r?.AIO_Compatibility_Badge, aeo: aeoRes });
-          return { field: "aioReadiness", value: r, pct: r?.Percentage || 0, extra: { aioCompatibilityBadge: r?.AIO_Compatibility_Badge, aeo: aeoRes } };
+          postProgress({ aioReadiness: r, aioCompatibilityBadge: r?.AIO_Compatibility_Badge });
+          return { field: "aioReadiness", value: r, pct: r?.Percentage || 0, extra: { aioCompatibilityBadge: r?.AIO_Compatibility_Badge } };
+        },
+        "AEO (Answer Engine Optimization)": async () => {
+          // AEO is a TOP-LEVEL `aeo` section field; headline is the spec-weighted Percentage.
+          const r = await safeMetric("AEO", () => AEOService.runAudit(url, $, null, 100));
+          postProgress({ aeo: r });
+          return { field: "aeo", value: r, pct: r?.Percentage || 0 };
         },
       };
 
@@ -303,10 +307,10 @@ const OverAll = (A, B, C, D, E, F, G) => {
           result = await safeMetric("Conversion & Lead Flow", () => conversionLeadFlow(page, $));
           break;
         case "AIO (AI-Optimization) Readiness":
-          const techRes = await safeMetric("Technical Performance (AIO pre-req)", () => technicalMetrics(url, device, page, response, browser));
           result = await safeMetric("AIO Readiness", () => aioReadiness(url, page, $));
-          const aeoResultSingle = await safeMetric("AEO (AIO)", () => AEOService.runAudit(url, $, null, techRes?.Percentage || 100));
-          if (result) result.aeo = aeoResultSingle;
+          break;
+        case "AEO (Answer Engine Optimization)":
+          result = await safeMetric("AEO", () => AEOService.runAudit(url, $, null, 100));
           break;
       }
 
@@ -336,14 +340,12 @@ const OverAll = (A, B, C, D, E, F, G) => {
       if (report === "UX & Content Structure") updateData.UXOrContentStructure = result;
       if (report === "Conversion & Lead Flow") updateData.conversionAndLeadFlow = result;
       if (report === "AIO (AI-Optimization) Readiness") {
-        // Promote the already-computed AEO to a TOP-LEVEL `aeo` field (it was nested
-        // under result.aeo at compute time). Without this the report has no top-level
-        // `aeo`, so the frontend re-runs the whole AEO live via the slow Puppeteer
-        // stream and appears stuck. The full-audit path already sets top-level `aeo`.
-        updateData.aeo = result?.aeo || null;
-        if (result) delete result.aeo; // avoid storing it twice (also nested under aioReadiness)
         updateData.aioReadiness = result;
         updateData.aioCompatibilityBadge = result?.AIO_Compatibility_Badge;
+      }
+      // AEO is its own top-level `aeo` section field; its headline is the spec-weighted Percentage.
+      if (report === "AEO (Answer Engine Optimization)") {
+        updateData.aeo = result;
       }
 
       finish(updateData);
@@ -407,8 +409,9 @@ const OverAll = (A, B, C, D, E, F, G) => {
     const E = E_Res?.Percentage || 0;
     const F = F_Res?.Percentage || 0;
     const G = G_Res?.Percentage || 0;
+    const H = aeoRes?.Percentage || 0;
 
-    const overall = OverAll(A, B, C, D, E, F, G);
+    const overall = OverAll(A, B, C, D, E, F, G, H);
 
     const timeTaken = ((performance.now() - start) / 1000).toFixed(0);
 

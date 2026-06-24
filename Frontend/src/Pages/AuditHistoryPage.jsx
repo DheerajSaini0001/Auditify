@@ -326,6 +326,12 @@ const AuditHistoryPage = () => {
           label: 'AIO Readiness',
 
         };
+      case 'AEO (Answer Engine Optimization)':
+      case 'AEO':
+        return {
+          label: 'AEO',
+
+        };
       default:
         return {
           label: reportType,

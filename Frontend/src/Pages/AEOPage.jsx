@@ -8,15 +8,79 @@ import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { isVisibleForAudience } from '../config/parameterAudience';
 
-// AEO "Core Signal Breakdown" signal keys (must match the AEOSignalCard `signal` props).
-const AEO_SIGNAL_KEYS = [
-    "aeoSchema", "botAccess", "markdownHeaders", "llmsTxt", "structuredContent",
-    "citations", "indexCoverage", "entityRecognition", "brandEntityStrength",
-    "citationConsistency", "topicalAuthority", "experienceSignals",
-    "expertiseSignals", "authoritySignals",
-];
 import { useNavigate } from 'react-router-dom';
 import { savePostAuthIntent } from '../utils/intentStore';
+
+// ─────────────────────────────────────────────────────────────────────────
+// AEO parameter cards = the spec §2.8 parameter list, in spec order. This is the
+// SINGLE source of truth for which cards render. Each entry maps a spec param
+// (the backend `aeo.params` key — the weighted scorecard) to the underlying
+// signal that supplies rich detail. Params NOT in §2.8 are intentionally absent:
+//   • markdownHeaders  → owned by AIO §2.7 (structure), not an AEO param
+//   • experience/expertise/authority signals → consolidated into ONE E-E-A-T
+// Page-specific params (FAQ/Q&A, sameAs, E-E-A-T) render only where they apply
+// (aeo.params[key].applicable === false → dropped, matching the score). Brand
+// Entity Strength is informational (shown, weight 0).
+const AEO_PARAM_CARDS = [
+    { paramKey: 'Schema_Markup',            signal: 'aeoSchema',           sig: 'schema',              title: 'Schema Markup',                                 description: 'Page-appropriate JSON-LD (FAQ/HowTo/Vehicle/Offer/LocalBusiness) that AI engines parse to verify your content.' },
+    { paramKey: 'Answer_First_Structure',   signal: 'answerFirst',         sig: 'answerFirst',         title: 'Answer-First Structure',                        description: 'A direct, quotable answer in the first ~40–60 words / a TL;DR lead so engines can extract the nugget immediately.' },
+    { paramKey: 'Bot_Access',               signal: 'botAccess',           sig: 'botAccess',           title: 'Bot Access (Search Index Status)',              description: 'robots.txt / meta / X-Robots allow GPTBot, Google-Extended, PerplexityBot — scored per engine and averaged.' },
+    { paramKey: 'Structured_Content',       signal: 'structuredContent',   sig: 'structuredContent',   title: 'Structured Content',                            description: 'Machine-parseable spec/comparison tables and lists (not data trapped inside images).' },
+    { paramKey: 'FAQ_QA_Blocks',            signal: 'faqQa',               sig: null,                  title: 'FAQ / Q&A Blocks',                              description: 'Question-headed sections with concise answers plus FAQPage schema (FAQ / Finance / Service / VDP pages).' },
+    { paramKey: 'Entity_Recognition',       signal: 'entityRecognition',   sig: 'entityRecognition',   title: 'Entity Recognition',                            description: 'Organization/LocalBusiness schema + Knowledge Graph presence — how confidently engines identify the business.' },
+    { paramKey: 'Citation_NAP_Consistency', signal: 'citationConsistency', sig: 'citationConsistency', title: 'Citation / NAP Consistency',                    description: 'Name / address / phone identical on-page (and vs Google Business Profile).' },
+    { paramKey: 'Citations_Attribution',    signal: 'citations',           sig: 'citations',           title: 'Citations & Attribution',                       description: 'Links to authoritative sources (OEM, NHTSA, IIHS) and transparent attribution that RAG engines value.' },
+    { paramKey: 'Topical_Authority',        signal: 'topicalAuthority',    sig: 'topicalAuthority',    title: 'Topical Authority',                             description: 'Content depth and topic-cluster coverage around dealership topics.' },
+    { paramKey: 'Index_Coverage',           signal: 'indexCoverage',       sig: 'indexCoverage',       title: 'Index Coverage',                                description: 'Are key pages actually indexable (GSC real data, sitemap estimate fallback).' },
+    { paramKey: 'SameAs_Validation',        signal: 'sameAsValidation',    sig: null,                  title: 'sameAs Validation',                             description: 'Extracted sameAs profile links (GBP/Facebook/LinkedIn/Yelp/DealerRater) for entity disambiguation (Home / About).' },
+    { paramKey: 'EEAT_Composite',           signal: 'eeatComposite',       sig: null,                  title: 'E-E-A-T (Experience · Expertise · Authority)',  description: 'One consolidated E-E-A-T score — original media, credentials, team, reviews, mentions (About / Blog / Service).' },
+    { paramKey: 'Llms_Txt',                 signal: 'llmsTxt',             sig: 'llmsTxt',             title: 'llms.txt Standard',                             description: 'A well-formed /llms.txt manifest at the domain root.' },
+    { paramKey: 'Brand_Entity_Strength',    signal: 'brandEntityStrength', sig: 'brandEntityStrength', title: 'Brand Entity Strength',                         description: 'Brand-authority meter (sameAs breadth, KG/Wikipedia, review volume). Informational — overlaps Entity Recognition.', info: true },
+];
+
+// Signal keys still drive the dealer/dev visibility gate (now a no-op true).
+const AEO_SIGNAL_KEYS = AEO_PARAM_CARDS.map((c) => c.signal);
+
+// Derived-param detail builders (params with no dedicated analyzer — they reuse
+// existing signal evidence, mirroring the backend's deriveFaqScore/deriveSameAsScore
+// and the E-E-A-T composite).
+const buildFaqData = (schemaSig, score) => {
+    const d = schemaSig?.details || {};
+    const reason = d.hasFAQSchema
+        ? '✅ FAQPage schema detected — your Q&A is machine-readable for answer engines.'
+        : d.hasFAQContent
+            ? '⚠️ FAQ-style content found but no FAQPage schema — wrap your Q&A in FAQPage JSON-LD so engines can extract it.'
+            : 'No FAQ / Q&A blocks detected on this page.';
+    const issues = [];
+    if (!d.hasFAQSchema) issues.push('Add FAQPage schema (JSON-LD) around your question/answer pairs.');
+    if (!d.hasFAQContent) issues.push('Add a concise FAQ section answering common buyer questions.');
+    return { score, reason, issues };
+};
+
+const buildSameAsData = (entitySig, score) => {
+    const n = entitySig?.orgSchema?.sameAsCount || 0;
+    const reason = n >= 3
+        ? `✅ ${n} sameAs profile links found — strong entity disambiguation.`
+        : n > 0
+            ? `⚠️ Only ${n} sameAs link(s) — add more authoritative profiles for cross-verification.`
+            : 'No sameAs links in Organization schema — engines can\'t cross-verify your identity.';
+    const issues = n >= 3 ? [] : ['Add a sameAs array to your Organization/LocalBusiness JSON-LD linking GBP, Facebook, LinkedIn, Yelp and DealerRater.'];
+    return { score, reason, issues };
+};
+
+const buildEeatData = (signals, score) => {
+    const exp = signals.experienceSignals || {}, expt = signals.expertiseSignals || {}, auth = signals.authoritySignals || {};
+    const breakdown = { experience: exp.score ?? 0, expertise: expt.score ?? 0, authority: auth.score ?? 0 };
+    const issues = [
+        ...((exp.issues || []).slice(0, 1)),
+        ...((expt.issues || []).slice(0, 1)),
+        ...((auth.issues || []).slice(0, 1)),
+    ];
+    const reason = score >= 75
+        ? '✅ Strong E-E-A-T: first-hand experience, visible credentials, and third-party authority.'
+        : `⚠️ E-E-A-T composite ${score}/100 — experience ${breakdown.experience}, expertise ${breakdown.expertise}, authority ${breakdown.authority}.`;
+    return { score, breakdown, issues, reason };
+};
 
 const SignalSkeleton = ({ darkMode, title }) => (
     <div className={`relative overflow-hidden rounded-[2rem] border p-8 flex flex-col gap-6 ${darkMode ? "bg-slate-900/50 border-slate-800" : "bg-cardsoft border-line"}`}>
@@ -230,187 +294,52 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
                             <h2 className={`text-2xl font-semibold tracking-tight ${darkMode ? "text-slate-200" : "text-ink"}`}>Core Signal Breakdown</h2>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
-                            {aeo.signals?.schema ? (
-                                <AEOSignalCard
-                                    signal="aeoSchema"
-                                    score={aeo.signals.schema.score}
-                                    data={aeo.signals.schema}
-                                    title="FAQ & HowTo Schema"
-                                    description="Deep evaluation of Schema.org markup prioritized by Gemini (FAQPage/HowTo)."
-                                    darkMode={darkMode}
-                                    onInfo={onInfo}
-                                    url={auditData.url}
-                                />
-                            ) : <SignalSkeleton darkMode={darkMode} title="FAQ & HowTo Schema" />}
-                            
-                            {aeo.signals?.botAccess ? (
-                                <AEOSignalCard
-                                    signal="botAccess"
-                                    score={aeo.signals.botAccess.score}
-                                    data={aeo.signals.botAccess}
-                                    title="Search Index Status"
-                                    description="Visibility status for Google-Extended and Perplexity crawlers (Index/Noindex)."
-                                    darkMode={darkMode}
-                                    onInfo={onInfo}
-                                    url={auditData.url}
-                                />
-                            ) : <SignalSkeleton darkMode={darkMode} title="Search Index Status" />}
-                            
-                            {aeo.signals?.markdownHeaders ? (
-                                <AEOSignalCard
-                                    signal="markdownHeaders"
-                                    score={aeo.signals.markdownHeaders.score}
-                                    data={aeo.signals.markdownHeaders}
-                                    title="Markdown Structure"
-                                    description="Quality of H1-H3 hierarchy for clean LLM extraction (ChatGPT Priority)."
-                                    darkMode={darkMode}
-                                    onInfo={onInfo}
-                                    url={auditData.url}
-                                />
-                            ) : <SignalSkeleton darkMode={darkMode} title="Markdown Structure" />}
-                            
-                            {aeo.signals?.llmsTxt ? (
-                                <AEOSignalCard
-                                    signal="llmsTxt"
-                                    score={aeo.signals.llmsTxt.score}
-                                    data={aeo.signals.llmsTxt}
-                                    title="llms.txt Standard"
-                                    description="Presence of the /llms.txt manifest file used for OpenAI context mapping."
-                                    darkMode={darkMode}
-                                    onInfo={onInfo}
-                                    url={auditData.url}
-                                />
-                            ) : <SignalSkeleton darkMode={darkMode} title="llms.txt Standard" />}
-                            
-                            {aeo.signals?.structuredContent ? (
-                                <AEOSignalCard
-                                    signal="structuredContent"
-                                    score={aeo.signals.structuredContent.score}
-                                    data={aeo.signals.structuredContent}
-                                    title="Data Table Density"
-                                    description="Heuristic evaluation of tables and data blocks for RAG-based search engines."
-                                    darkMode={darkMode}
-                                    onInfo={onInfo}
-                                    url={auditData.url}
-                                />
-                            ) : <SignalSkeleton darkMode={darkMode} title="Data Table Density" />}
-                            
-                            {aeo.signals?.citations ? (
-                                <AEOSignalCard
-                                    signal="citations"
-                                    score={aeo.signals.citations.score}
-                                    data={aeo.signals.citations}
-                                    title="Trust Signals"
-                                    description="Citations & transparency — cited sources/references, policy pages (privacy/terms/contact/about), transparent contact & authorship, and trust basics (HTTPS, disclosures, dates)."
-                                    darkMode={darkMode}
-                                    onInfo={onInfo}
-                                    url={auditData.url}
-                                />
-                            ) : <SignalSkeleton darkMode={darkMode} title="Citations & Sources" />}
+                            {AEO_PARAM_CARDS.map((c) => {
+                                const params = aeo.params || {};
+                                const signals = aeo.signals || {};
+                                const p = params[c.paramKey];
 
-                            {aeo.signals?.indexCoverage ? (
-                                <AEOSignalCard
-                                    signal="indexCoverage"
-                                    score={aeo.signals.indexCoverage.score}
-                                    data={aeo.signals.indexCoverage}
-                                    title="Index Coverage"
-                                    description="Estimated share of your sitemap URLs that are indexable (HTTP 200, no noindex, self-canonical) — index eligibility for Google & AI engines."
-                                    darkMode={darkMode}
-                                    onInfo={onInfo}
-                                    url={auditData.url}
-                                />
-                            ) : <SignalSkeleton darkMode={darkMode} title="Index Coverage" />}
+                                // Page-specific params (FAQ/Q&A, sameAs, E-E-A-T) that don't apply
+                                // to this page type are dropped — matching how they're excluded from
+                                // the weighted score (rule-6 N/A). Common + informational always show.
+                                if (p && p.applicable === false && !c.info) return null;
 
-                            {aeo.signals?.entityRecognition ? (
-                                <AEOSignalCard
-                                    signal="entityRecognition"
-                                    score={aeo.signals.entityRecognition.score}
-                                    data={aeo.signals.entityRecognition}
-                                    title="Entity Recognition"
-                                    description="Organization/LocalBusiness schema + Knowledge Graph presence — how confidently search & AI engines can identify this business as an entity."
-                                    darkMode={darkMode}
-                                    onInfo={onInfo}
-                                    url={auditData.url}
-                                />
-                            ) : <SignalSkeleton darkMode={darkMode} title="Entity Recognition" />}
+                                // Resolve the param score (prefer the backend scorecard) and the
+                                // detail data (real signal, or a derived builder for params with
+                                // no dedicated analyzer).
+                                const score = typeof p?.score === 'number'
+                                    ? p.score
+                                    : (signals[c.sig]?.score ?? 0);
 
-                            {aeo.signals?.brandEntityStrength ? (
-                                <AEOSignalCard
-                                    signal="brandEntityStrength"
-                                    score={aeo.signals.brandEntityStrength.score}
-                                    data={aeo.signals.brandEntityStrength}
-                                    title="Brand Entity Strength"
-                                    description="How authoritative & established your brand is as an entity — sameAs breadth, Wikipedia/Knowledge Graph presence, review volume, and brand completeness."
-                                    darkMode={darkMode}
-                                    onInfo={onInfo}
-                                    url={auditData.url}
-                                />
-                            ) : <SignalSkeleton darkMode={darkMode} title="Brand Entity Strength" />}
+                                let data, ready;
+                                if (c.signal === 'faqQa') {
+                                    ready = !!signals.schema;
+                                    data = buildFaqData(signals.schema, score);
+                                } else if (c.signal === 'sameAsValidation') {
+                                    ready = !!signals.entityRecognition;
+                                    data = buildSameAsData(signals.entityRecognition, score);
+                                } else if (c.signal === 'eeatComposite') {
+                                    ready = !!(signals.experienceSignals || signals.expertiseSignals || signals.authoritySignals);
+                                    data = buildEeatData(signals, score);
+                                } else {
+                                    ready = !!signals[c.sig];
+                                    data = signals[c.sig];
+                                }
 
-                            {aeo.signals?.citationConsistency ? (
-                                <AEOSignalCard
-                                    signal="citationConsistency"
-                                    score={aeo.signals.citationConsistency.score}
-                                    data={aeo.signals.citationConsistency}
-                                    title="Citation Consistency"
-                                    description="NAP (Name/Address/Phone) & brand consistency — whether your identity details agree across schema, tel: links, and brand tags on the page."
-                                    darkMode={darkMode}
-                                    onInfo={onInfo}
-                                    url={auditData.url}
-                                />
-                            ) : <SignalSkeleton darkMode={darkMode} title="Citation Consistency" />}
-
-                            {aeo.signals?.topicalAuthority ? (
-                                <AEOSignalCard
-                                    signal="topicalAuthority"
-                                    score={aeo.signals.topicalAuthority.score}
-                                    data={aeo.signals.topicalAuthority}
-                                    title="Topical Authority"
-                                    description="Industry & local content depth — content depth, subtopic headings, internal topic-cluster links, automotive topic coverage, and local-authority signals."
-                                    darkMode={darkMode}
-                                    onInfo={onInfo}
-                                    url={auditData.url}
-                                />
-                            ) : <SignalSkeleton darkMode={darkMode} title="Topical Authority" />}
-
-                            {aeo.signals?.experienceSignals ? (
-                                <AEOSignalCard
-                                    signal="experienceSignals"
-                                    score={aeo.signals.experienceSignals.score}
-                                    data={aeo.signals.experienceSignals}
-                                    title="Experience Signals"
-                                    description="First-hand experience (E-E-A-T) — original media, genuine customer testimonials, an authentic operator voice, and real staff presence."
-                                    darkMode={darkMode}
-                                    onInfo={onInfo}
-                                    url={auditData.url}
-                                />
-                            ) : <SignalSkeleton darkMode={darkMode} title="Experience Signals" />}
-
-                            {aeo.signals?.expertiseSignals ? (
-                                <AEOSignalCard
-                                    signal="expertiseSignals"
-                                    score={aeo.signals.expertiseSignals.score}
-                                    data={aeo.signals.expertiseSignals}
-                                    title="Expertise Signals"
-                                    description="Credentials (E-E-A-T) — certifications & accreditations, awards/recognition, years in business, and credentialed author bylines."
-                                    darkMode={darkMode}
-                                    onInfo={onInfo}
-                                    url={auditData.url}
-                                />
-                            ) : <SignalSkeleton darkMode={darkMode} title="Expertise Signals" />}
-
-                            {aeo.signals?.authoritySignals ? (
-                                <AEOSignalCard
-                                    signal="authoritySignals"
-                                    score={aeo.signals.authoritySignals.score}
-                                    data={aeo.signals.authoritySignals}
-                                    title="Authority Signals"
-                                    description="Mentions & authority (E-E-A-T) — press/'as seen in' mentions, links to authoritative sources, third-party trust badges, and social proof. (On-page proxies; real backlinks need a paid SEO API.)"
-                                    darkMode={darkMode}
-                                    onInfo={onInfo}
-                                    url={auditData.url}
-                                />
-                            ) : <SignalSkeleton darkMode={darkMode} title="Authority Signals" />}
+                                return ready ? (
+                                    <AEOSignalCard
+                                        key={c.paramKey}
+                                        signal={c.signal}
+                                        score={score}
+                                        data={data}
+                                        title={c.title}
+                                        description={c.description}
+                                        darkMode={darkMode}
+                                        onInfo={onInfo}
+                                        url={auditData.url}
+                                    />
+                                ) : <SignalSkeleton key={c.paramKey} darkMode={darkMode} title={c.title} />;
+                            })}
                         </div>
                     </div>
                     )}

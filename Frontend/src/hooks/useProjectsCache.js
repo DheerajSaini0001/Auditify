@@ -85,6 +85,7 @@ export const useProjectsCache = (apiFetch) => {
                   onPage: r.UXOrContentStructure?.Percentage ?? Math.round(r.score) ?? 0,
                   conversion: r.conversionAndLeadFlow?.Percentage ?? Math.round(r.score) ?? 0,
                   aiReadiness: r.aioReadiness?.Percentage ?? Math.round(r.score) ?? 0,
+                  aeo: r.aeo?.Percentage ?? Math.round(r.score) ?? 0,
                   rating: r.grade || (r.score >= 90 ? "Excellent" : r.score >= 80 ? "Very Good" : r.score >= 70 ? "Good" : "Needs Improvement"),
                   auditId: r._id
                 };

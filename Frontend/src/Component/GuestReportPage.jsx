@@ -60,6 +60,13 @@ const ROUTE_META = {
     accent: "violet",
     score: 55,
   },
+  "/aeo": {
+    label: "Answer Engine Optimization",
+    badge: "AEO Audit",
+    color: "text-blue-400",
+    accent: "blue",
+    score: 58,
+  },
 };
 
 // Circular arc SVG for fake score

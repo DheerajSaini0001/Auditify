@@ -18,7 +18,6 @@ import MetricInfoModal from "../Component/MetricInfoModal";
 import ParameterInfoModal from "../Component/ParameterInfoModal";
 import { InfoDetails } from "../Component/InfoDetails";
 import AskAIButton from "../Component/AskAIButton";
-import AEOPage from "./AEOPage";
 import { isVisibleForAudience, isActionableParam } from "../config/parameterAudience";
 
 const iconMap = {
@@ -615,18 +614,9 @@ const Section = ({ title, icon: Icon, children, darkMode }) => (
 
 const AIO_Inner = React.memo(({ data, loading, darkMode }) => {
   const aio = data?.aioReadiness || {};
-  const aeo = data?.aeo || {};
 
-  // Calculate Combined AIO Readiness Score (Average of Foundation + Engine Scores)
-  const unifiedAioScore = useMemo(() => {
-    const foundationScore = aio?.Percentage || 0;
-    const engineScore = aeo?.overallScore || 0;
-
-    // If one is missing, use the other; otherwise average them
-    if (!foundationScore) return engineScore;
-    if (!engineScore) return foundationScore;
-    return Math.round((foundationScore + engineScore) / 2);
-  }, [aio?.Percentage, aeo?.overallScore]);
+  // AEO is now its own section (spec §2.8) — AIO no longer folds the engine score in.
+  const unifiedAioScore = aio?.Percentage || 0;
 
   const [selectedMetricInfo, setSelectedMetricInfo] = React.useState(null);
   const [selectedParameterInfo, setSelectedParameterInfo] = React.useState(null);
@@ -777,16 +767,6 @@ const AIO_Inner = React.memo(({ data, loading, darkMode }) => {
 
             </div>
           )}
-        </div>
-
-        {/* AEO Page Section (Contains own gating logic) */}
-        <div id="aeo-section" className="mt-10 animate-in slide-in-from-bottom-10 duration-1000">
-          <AEOPage
-            auditData={data}
-            darkMode={darkMode}
-            onInfo={(info) => setSelectedParameterInfo(info)}
-            hideScreenshot={data?.report === "All"}
-          />
         </div>
 
         {/* Gated Detailed Audit Sections */}

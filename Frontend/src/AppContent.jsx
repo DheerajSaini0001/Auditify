@@ -10,6 +10,7 @@ import UX_Content_Structure from "./Pages/UX_Content_Structure";
 import Conversion_Lead_Flow from "./Pages/Conversion_Lead_Flow";
 import Security_Compilance from "./Pages/Security_Compilance";
 import AIO from "./Pages/AIO";
+import AEO from "./Pages/AEO";
 import LoginPage from "./Pages/LoginPage";
 import RegisterPage from "./Pages/RegisterPage";
 import OtpVerifyPage from "./Pages/OtpVerifyPage";
@@ -124,6 +125,7 @@ function AppContentInner() {
           <Route path="/security-compliance/:id?" element={<GuestRouteWrapper><Security_Compilance /></GuestRouteWrapper>} />
           <Route path="/conversion-lead-flow/:id?" element={<GuestRouteWrapper><Conversion_Lead_Flow /></GuestRouteWrapper>} />
           <Route path="/aio/:id?" element={<GuestRouteWrapper><AIO /></GuestRouteWrapper>} />
+          <Route path="/aeo/:id?" element={<GuestRouteWrapper><AEO /></GuestRouteWrapper>} />
 
           {/* Admin Routes */}
           <Route path="/admin" element={

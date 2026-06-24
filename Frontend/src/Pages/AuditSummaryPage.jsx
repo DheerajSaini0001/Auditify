@@ -18,6 +18,7 @@ const SECTIONS = [
     { key: "technicalPerformance", short: "Perf", label: "Performance", link: "technical-performance" },
     { key: "conversionAndLeadFlow", short: "Lead", label: "Lead Capture", link: "conversion-lead-flow" },
     { key: "securityOrCompliance", short: "Sec", label: "Security", link: "security-compliance" },
+    { key: "aeo", short: "AEO", label: "Answer Engine", link: "aeo" },
 ];
 
 // Score → tier. Mirrors the heatmap legend: Strong ≥75, Needs work 55–74, Critical <55.

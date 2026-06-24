@@ -7,6 +7,7 @@ import {
   Layout,
   TrendingUp,
   Brain,
+  MessageSquareText,
   FileText,
   Loader2,
   ChevronRight,
@@ -45,6 +46,7 @@ export default function Sidebar({ darkMode }) {
     { key: "UXOrContentStructure", label: "UX & Content", path: "/ux-content-structure", icon: Layout },
     { key: "conversionAndLeadFlow", label: "Conversion Flow", path: "/conversion-lead-flow", icon: TrendingUp },
     { key: "aioReadiness", label: "AIO Readiness", path: "/aio", icon: Brain },
+    { key: "aeo", label: "AEO", path: "/aeo", icon: MessageSquareText },
   ];
 
   // Styles

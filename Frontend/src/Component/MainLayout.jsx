@@ -21,7 +21,8 @@ export default function MainLayout() {
         location.pathname.startsWith("/security-compliance") ||
         location.pathname.startsWith("/ux-content-structure") ||
         location.pathname.startsWith("/conversion-lead-flow") ||
-        location.pathname.startsWith("/aio");
+        location.pathname.startsWith("/aio") ||
+        location.pathname.startsWith("/aeo");
 
     const showSidebar = !!data && data.report === "All" && isReportPath;
 

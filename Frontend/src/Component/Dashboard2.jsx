@@ -31,9 +31,10 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
     { key: "UXOrContentStructure", name: "UX & Content", link: "ux-content-structure" },
     { key: "conversionAndLeadFlow", name: "Conversion & Lead Flow", link: "conversion-lead-flow" },
     { key: "aioReadiness", name: "AIO Readiness", link: "aio" },
+    { key: "aeo", name: "AEO", link: "aeo" },
   ], []);
 
-  // Rotating Audit Steps (Process for all 7 Metrics)
+  // Rotating Audit Steps (Process for all 8 Metrics)
   const auditSteps = useMemo(() => [
     {
       icon: <Server className="w-8 h-8 text-blue-500" />,

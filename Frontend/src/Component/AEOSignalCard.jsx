@@ -21,7 +21,11 @@ const iconMap = {
     topicalAuthority: Network,
     experienceSignals: Camera,
     expertiseSignals: GraduationCap,
-    authoritySignals: Megaphone
+    authoritySignals: Megaphone,
+    // Spec §2.8 params with no dedicated analyzer (derived) + the consolidated E-E-A-T.
+    faqQa: MessageCircle,
+    sameAsValidation: Link,
+    eeatComposite: Award,
 };
 
 // Per-component max points for the new signals — lets the detail panel show each
@@ -35,6 +39,7 @@ const BREAKDOWN_MAX = {
     authoritySignals: { pressMentions: 30, externalAuthority: 25, trustBadges: 25, socialProof: 20 },
     llmsTxt: { present: 10, h1: 20, sections: 15, links: 20, summary: 10, sameDomain: 5, relevance: 20 },
     citations: { citations: 45, policies: 20, contactTransparency: 20, trustBasics: 15 },
+    eeatComposite: { experience: 100, expertise: 100, authority: 100 },
 };
 
 // camelCase key → "Title Case" label.
@@ -130,6 +135,12 @@ const getWhyItMatters = (signal) => {
             return "E-E-A-T's 'Expertise' is about credentials. Visible certifications, awards, years in business, and credentialed authors tell engines the content comes from qualified professionals — raising trust and citation likelihood.";
         case 'authoritySignals':
             return "Authority is third-party validation — who vouches for you. Press mentions, authoritative outbound links, and trust badges signal that others recognize you. (True backlink authority is off-site and needs a dedicated SEO tool.)";
+        case 'faqQa':
+            return "Question-headed sections with concise answers (plus FAQPage schema) are the format answer engines lift directly into AI Overviews and voice results — the cleanest path to being quoted.";
+        case 'sameAsValidation':
+            return "sameAs links connect your site to your authoritative profiles (Google Business Profile, Facebook, LinkedIn, Yelp, DealerRater). They let engines disambiguate your business from similarly-named ones and corroborate your identity.";
+        case 'eeatComposite':
+            return "Google's E-E-A-T (Experience · Expertise · Authority · Trust) is one consolidated signal: original media + testimonials, visible credentials/tenure, and third-party mentions together tell engines the content comes from a real, qualified, recognized business worth citing.";
         default:
             return "This signal is a key weighted parameter in establishing your AEO Mastery score and engine visibility.";
     }

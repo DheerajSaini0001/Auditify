@@ -9,6 +9,7 @@ import Security_Compilance from "./Security_Compilance";
 import UX_Content_Structure from "./UX_Content_Structure";
 import Conversion_Lead_Flow from "./Conversion_Lead_Flow";
 import AIO from "./AIO";
+import AEO from "./AEO";
 import RawData from "./RawData";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import NotFound from "./NotFound";
@@ -221,6 +222,9 @@ const ReportLayout = () => {
               )}
               {reportSections.includes("AIO (AI-Optimization) Readiness") && (
                 <AIO darkMode={darkMode} data={stableData} loading={stableLoading} />
+              )}
+              {reportSections.includes("AEO (Answer Engine Optimization)") && (
+                <AEO darkMode={darkMode} data={stableData} loading={stableLoading} />
               )}
             </div>
           </main>

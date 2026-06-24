@@ -51,6 +51,7 @@ export const useAuditPolling = (inProgressAudits, apiFetch, updateProjectScore) 
             onPage: data.UXOrContentStructure?.Percentage ?? Math.round(data.score) ?? 0,
             conversion: data.conversionAndLeadFlow?.Percentage ?? Math.round(data.score) ?? 0,
             aiReadiness: data.aioReadiness?.Percentage ?? Math.round(data.score) ?? 0,
+            aeo: data.aeo?.Percentage ?? Math.round(data.score) ?? 0,
             rating: data.grade || (data.score >= 90 ? "Excellent" : data.score >= 80 ? "Very Good" : data.score >= 70 ? "Good" : "Needs Improvement"),
             auditId: data._id
           });

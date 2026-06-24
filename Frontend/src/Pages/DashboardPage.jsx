@@ -473,7 +473,8 @@ const DashboardPage = () => {
     { value: "Security/Compliance", label: "Security & Compliance" },
     { value: "UX & Content Structure", label: "UX & Content" },
     { value: "Conversion & Lead Flow", label: "Conversion & Lead Flow" },
-    { value: "AIO (AI-Optimization) Readiness", label: "AIO Readiness" }
+    { value: "AIO (AI-Optimization) Readiness", label: "AIO Readiness" },
+    { value: "AEO (Answer Engine Optimization)", label: "AEO (Answer Engine)" }
   ];
 
   const handleDirectAudit = async (e) => {

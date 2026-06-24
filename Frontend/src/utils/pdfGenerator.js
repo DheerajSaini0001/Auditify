@@ -55,7 +55,8 @@ export const filterRawData = (obj) => {
         'Security_or_Compliance', 'securityOrCompliance',
         'UX_or_Content_Structure', 'UXOrContentStructure',
         'Conversion_and_Lead_Flow', 'conversionAndLeadFlow',
-        'AIO_Readiness', 'aioReadiness'
+        'AIO_Readiness', 'aioReadiness',
+        'AEO', 'aeo'
     ];
     const metricIgnoredKeys = ['Warning', 'Improvements', 'Passed', 'Percentage'];
 
@@ -117,7 +118,8 @@ export const generatePDF = (data) => {
         { key: 'securityOrCompliance', alt: 'Security_or_Compliance', title: 'Security & Compliance' },
         { key: 'UXOrContentStructure', alt: 'UX_or_Content_Structure', title: 'UX & Content Structure' },
         { key: 'conversionAndLeadFlow', alt: 'Conversion_and_Lead_Flow', title: 'Conversion & Lead Flow' },
-        { key: 'aioReadiness', alt: 'AIO_Readiness', title: 'AIO Readiness' }
+        { key: 'aioReadiness', alt: 'AIO_Readiness', title: 'AIO Readiness' },
+        { key: 'aeo', alt: 'AEO', title: 'AEO (Answer Engine Optimization)' }
     ];
 
     // --- HELPERS ---

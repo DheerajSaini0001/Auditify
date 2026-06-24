@@ -88,6 +88,13 @@ const AIChatWidget = () => {
                 auditScore: data.conversionAndLeadFlow?.Percentage
             };
         }
+        if (path.includes('/aeo')) {
+            return {
+                sectionName: "AEO (Answer Engine Optimization)",
+                sectionData: data.aeo,
+                auditScore: data.aeo?.Percentage
+            };
+        }
         if (path.includes('/aio')) {
             return {
                 sectionName: "AIO Readiness",
@@ -146,6 +153,12 @@ const AIChatWidget = () => {
             return {
                 ...basePayload,
                 conversionAndLeadFlow: data.conversionAndLeadFlow
+            };
+        }
+        if (path.includes('/aeo')) {
+            return {
+                ...basePayload,
+                aeo: data.aeo
             };
         }
         if (path.includes('/aio')) {

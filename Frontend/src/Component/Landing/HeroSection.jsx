@@ -25,10 +25,8 @@ const PAGE_TYPES = [
     { key: 'home', label: 'Home Page', desc: 'Hero, brand, primary CTAs', Icon: Home },
     { key: 'srp', label: 'Inventory / SRP', desc: 'Search results page, filters', Icon: LayoutGrid },
     { key: 'vdp', label: 'Vehicle Detail / VDP', desc: 'Per-car detail + lead form', Icon: Car },
-    { key: 'specials', label: 'Special Offers', desc: 'Manufacturer + dealer specials', Icon: Tag },
     { key: 'trade', label: 'Trade-In Tool', desc: 'KBB-style valuation, lead capture', Icon: Repeat },
     { key: 'lease', label: 'Lease Specials', desc: 'Lease offers + calculator', Icon: Key },
-    { key: 'finance', label: 'Finance / Credit', desc: 'Credit app + payment calculator', Icon: CreditCard },
     { key: 'service', label: 'Service & Parts', desc: 'Service, repair, parts & accessories', Icon: Wrench },
     { key: 'about', label: 'About / Contact', desc: 'Hours, staff, directions', Icon: Info },
     { key: 'content', label: 'Content / Blog', desc: 'Blog, news, FAQ, how-to', Icon: Newspaper },
@@ -844,7 +842,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                     <motion.div
                         initial="hidden" animate="show"
                         variants={{ hidden: {}, show: { transition: { staggerChildren: 0.04 } } }}
-                        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"
+                        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"
                     >
                         {visibleTypes.map((def) => (
                             <motion.div key={def.key} variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}>

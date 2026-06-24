@@ -45,61 +45,103 @@ const BREAKDOWN_MAX = {
 // camelCase key → "Title Case" label.
 const prettyLabel = (k) => k.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase()).trim();
 
-const getStatusDetail = (signal, data, isFailed) => {
-    // Prioritize signal-specific reasons if provided
-    if (data?.reason) return data.reason;
-    if (data?.reasons && Array.isArray(data.reasons) && data.reasons.length > 0) {
-        return data.reasons[0];
-    }
-
-    if (!isFailed) return "Your page is perfectly optimized for this Answer Engine signal.";
-
+// The actual current data for each parameter — shown in a neutral box (like the
+// "Current Description" box on the Meta Description card), instead of a status sentence.
+// Returns { label, value, mono?, headerInfo? }. value may be a string or JSX.
+const getCurrentData = (signal, data) => {
     switch (signal) {
-        case 'aeoSchema':
-            return data?.count === 0
-                ? "Warning: No JSON-LD schema found. AI engines cannot verify your entity data."
-                : `Partial: Only ${data?.count} schema types detected. FAQPage or HowTo markup is recommended.`;
-        case 'botAccess':
-            const blocked = Object.entries(data?.bots || {}).filter(([_, s]) => s === 'blocked').map(([b]) => b);
-            return blocked.length > 0
-                ? `Blocked: ${blocked.join(', ')} are restricted in robots.txt.`
-                : "Accessibility: Bot access is allowed but indexing signals are weak.";
-        case 'llmsTxt':
-            return data?.exists
-                ? "Invalid: /llms.txt found but lacks standard context headers."
-                : "Missing: No /llms.txt manifest found for OpenAI context mapping.";
-        case 'markdownHeaders':
-            return `Unoptimized: Heading hierarchy issues detected (Score: ${data?.score}%). Proper H1->H2 flow is required.`;
+        case 'aeoSchema': {
+            const d = data?.details || {};
+            const found = [];
+            if (d.hasFAQSchema) found.push('FAQPage');
+            if (d.hasHowToSchema) found.push('HowTo');
+            if (d.hasFAQContent && !d.hasFAQSchema) found.push('FAQ content (no schema)');
+            return {
+                label: 'Detected Schema',
+                value: found.length ? found.join(', ') : 'No FAQ or HowTo schema found',
+                headerInfo: data?.message,
+            };
+        }
+        case 'botAccess': {
+            const bots = data?.bots || {};
+            const entries = Object.entries(bots);
+            return {
+                label: 'AI Bot Access',
+                mono: true,
+                value: entries.length
+                    ? entries.map(([b, s]) => `${b}: ${s}`).join('   •   ')
+                    : 'No AI-bot rules found in robots.txt',
+            };
+        }
+        case 'llmsTxt': {
+            let value;
+            if (!data?.exists) value = 'No llms.txt file found';
+            else if (data?.isEmpty) value = 'llms.txt found, but the file is empty';
+            else value = data?.url || 'llms.txt file found';
+            return { label: 'llms.txt File', value, mono: true };
+        }
+        case 'markdownHeaders': {
+            const c = data?.counts || {};
+            return { label: 'Heading Structure', mono: true, value: `H1: ${c.h1 ?? 0}     H2: ${c.h2 ?? 0}     H3: ${c.h3 ?? 0}` };
+        }
         case 'structuredContent':
-            return `Low Density: Only ${data?.tables || 0} tables and ${data?.lists || 0} lists found. AI agents prefer higher data density.`;
+            return {
+                label: 'Structured Elements',
+                mono: true,
+                value: `${data?.tables ?? 0} tables   •   ${data?.lists ?? 0} lists   •   ${data?.images ?? 0} images`,
+            };
         case 'answerFirst':
-            return `Timing Issue: Direct answer found in sentence ${data?.sentenceCount || 0}. AI models prefer answers in the first 1-2 sentences.`;
-        case 'citations':
-            return "Trust Gap: Low external citation signals. Perplexity and search engines value verifiable sources.";
+            return {
+                label: 'Opening Answer',
+                value: data?.found
+                    ? `${data?.sentenceCount ?? 0} sentence(s) detected at the top of the page`
+                    : 'No clear opening text found',
+            };
+        case 'citations': {
+            const b = data?.breakdown || {};
+            return {
+                label: 'Trust & Citations',
+                mono: true,
+                value: `Citations ${b.citations ?? 0}/45   •   Policies ${b.policies ?? 0}/20   •   Contact ${b.contactTransparency ?? 0}/20`,
+            };
+        }
         case 'indexCoverage':
-            return data?.sitemapFound
-                ? `Low Coverage: only ~${data?.estimatedCoverage ?? 0}% of sampled sitemap URLs are indexable (≈${data?.estimatedIndexed ?? 0} of ${data?.submitted ?? 0}).`
-                : "No Sitemap: no XML sitemap was found, so search/AI engines have no reliable map of pages to index.";
-        case 'entityRecognition':
-            return data?.orgSchema?.found
-                ? `Incomplete Identity: Organization schema found but missing fields. ${(data?.issues || []).join(' ')}`
-                : "No Entity Schema: no Organization/LocalBusiness JSON-LD — engines can't confidently recognize this business as an entity.";
-        case 'brandEntityStrength':
-            return `${data?.tier || 'Weak'} brand entity (${data?.score ?? 0}/100). ${(data?.issues || []).slice(0, 2).join(' ')}`;
+            return {
+                label: 'Index Coverage',
+                value: data?.sitemapFound
+                    ? `Sitemap found — ~${data?.estimatedCoverage ?? 0}% of sampled URLs are indexable (≈${data?.estimatedIndexed ?? 0} of ${data?.submitted ?? 0}).`
+                    : 'No XML sitemap found',
+            };
+        case 'entityRecognition': {
+            const o = data?.orgSchema || {};
+            return {
+                label: 'Business Identity',
+                value: o.found ? `${o.name || 'Organization'} (${o.type || 'Organization'})` : 'No Organization / LocalBusiness schema found',
+            };
+        }
         case 'citationConsistency':
-            return data?.distinctPhoneCount > 1
-                ? `Conflicting NAP: ${data.distinctPhoneCount} different phone numbers on the page. ${(data?.issues || []).slice(0, 1).join(' ')}`
-                : `NAP/brand consistency incomplete (${data?.score ?? 0}/100). ${(data?.issues || []).slice(0, 2).join(' ')}`;
+            return {
+                label: 'Contact Info (NAP)',
+                value: `Name: ${data?.schemaName || '—'}     •     Phone: ${data?.hasSchemaPhone ? 'yes' : 'no'}     •     Address: ${data?.hasSchemaAddress ? 'yes' : 'no'}`,
+            };
         case 'topicalAuthority':
-            return `Topical authority ${data?.score ?? 0}/100 — ~${data?.wordCount ?? 0} words, ${data?.internalLinkCount ?? 0} internal links, ${data?.industryTopicCount ?? 0} industry topics. ${(data?.issues || []).slice(0, 1).join(' ')}`;
-        case 'experienceSignals':
-            return `First-hand experience ${data?.score ?? 0}/100 — ${data?.imageCount ?? 0} images (${data?.altCoverage ?? 0}% alt), video: ${data?.hasVideo ? 'yes' : 'no'}. ${(data?.issues || []).slice(0, 1).join(' ')}`;
-        case 'expertiseSignals':
-            return `Expertise/credentials ${data?.score ?? 0}/100 — ${data?.certificationCount ?? 0} certification mention(s) detected. ${(data?.issues || []).slice(0, 1).join(' ')}`;
-        case 'authoritySignals':
-            return `Authority signals ${data?.score ?? 0}/100 — ${data?.externalAuthLinks ?? 0} authoritative link(s), ${data?.socialProfiles ?? 0} social profile(s). ${(data?.issues || []).slice(0, 1).join(' ')}`;
+            return { label: 'Content Depth', value: `~${data?.wordCount ?? 0} words on this page` };
+        case 'brandEntityStrength':
+            return { label: 'Brand Strength', value: `${data?.tier || 'Weak'} (${data?.score ?? 0}/100)` };
+        case 'eeatComposite': {
+            const b = data?.breakdown || {};
+            return {
+                label: 'E-E-A-T Breakdown',
+                mono: true,
+                value: `Experience ${b.experience ?? 0}   •   Expertise ${b.expertise ?? 0}   •   Authority ${b.authority ?? 0}`,
+            };
+        }
+        case 'faqQa':
+            return { label: 'FAQ / Q&A Blocks', value: `${data?.score ?? 0}/100 readiness` };
+        case 'sameAsValidation':
+            return { label: 'sameAs Profile Links', value: `${data?.score ?? 0}/100 — profile links for entity verification` };
         default:
-            return "Signal requires optimization for better AI indexing and extraction.";
+            return { label: 'Current Status', value: `${data?.score ?? 0}% ready` };
     }
 };
 
@@ -195,22 +237,16 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
     const T1 = 25;
     const T2 = 75;
 
-    let status, statusColor, boxBg, boxText;
+    let status, statusColor;
     if (score >= T2) {
         status = "Passed";
         statusColor = "text-emerald-500 bg-emerald-500/10 border-emerald-500/20";
-        boxBg = darkMode ? "bg-emerald-500/5 border-emerald-500/20" : "bg-emerald-50/50 border-emerald-100";
-        boxText = "text-emerald-600";
     } else if (score >= T1) {
         status = "Partial";
         statusColor = "text-amber-500 bg-amber-500/10 border-amber-500/20";
-        boxBg = darkMode ? "bg-amber-500/5 border-amber-500/20" : "bg-amber-50 border-amber-100";
-        boxText = "text-amber-600";
     } else {
         status = "Failed";
         statusColor = "text-rose-500 bg-rose-500/10 border-rose-500/20";
-        boxBg = darkMode ? "bg-rose-500/5 border-rose-500/20" : "bg-rose-50 border-rose-100";
-        boxText = "text-rose-600";
     }
 
     const isFailed = score < T1;
@@ -285,15 +321,19 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
 
 
 
-            {/* Status Detail Section */}
-            <div className="flex flex-col gap-3">
-                <span className={`text-[10px] font-black uppercase tracking-[0.2em] opacity-40 ${darkMode ? "text-white" : "text-ink"}`}>Status Detail</span>
-                <div className={`p-6 rounded-2xl border transition-all duration-500 ${boxBg}`}>
-                    <p className={`text-sm md:text-base font-black tracking-tight ${boxText}`}>
-                        {getStatusDetail(signal, data, score < 100)}
-                    </p>
-                </div>
-            </div>
+            {/* Current Data Section — shows the actual data for this parameter
+                (mirrors the "Current Description" box on the Meta Description card). */}
+            {(() => {
+                const cur = getCurrentData(signal, data);
+                return (
+                    <div className="flex flex-col gap-3">
+                        <span className={`text-[10px] font-black uppercase tracking-[0.2em] opacity-40 ${darkMode ? "text-white" : "text-ink"}`}>{cur.label}</span>
+                        <div className={`p-6 rounded-2xl border ${darkMode ? "bg-slate-950 border-slate-800 text-slate-200" : "bg-cardsoft border-line text-inksoft"} ${cur.mono ? "font-mono text-xs break-all leading-relaxed" : "font-serif text-sm leading-relaxed"}`}>
+                            {cur.value}
+                        </div>
+                    </div>
+                );
+            })()}
 
             {/* Expanded Content (Analysis & Remediation) */}
             {showDetails && (

@@ -238,7 +238,7 @@ const analyzeIndexCoverage = async (url) => {
         // Run the sample fetches but stop collecting at the overall deadline, scoring
         // from whatever genuinely completed — real partial data, never a fake fallback.
         const collected = [];
-        const tasks = intended.map((u) => limit(async () => { collected.push(await checkIndexable(u, perFetch)); }));
+        const tasks = intended.map((u) => limit(async () => { collected.push({ url: u, ...(await checkIndexable(u, perFetch)) }); }));
         await Promise.race([
             Promise.allSettled(tasks),
             new Promise((res) => setTimeout(res, Math.max(0, timeLeft()))),
@@ -282,6 +282,10 @@ const analyzeIndexCoverage = async (url) => {
         if (sampled < intended.length) issues.push(`Time-limited: sampled ${sampled} of ${intended.length} intended URLs (slow site).`);
         if (acc.truncated) issues.push(`Time-limited sitemap read: "${submitted}" submitted is a lower bound.`);
 
+        // The actual sampled page URLs that aren't indexable, with the reason — surfaced
+        // on the card so users can see exactly which pages need fixing.
+        const notIndexed = checks.filter((c) => !c.ok).map((c) => ({ url: c.url, reason: c.reason }));
+
         const reason = score >= 100
             ? `✅ Why: ~${estimatedCoverage}% of sampled sitemap URLs are indexable (HTTP 200, no noindex, self-canonical). ~${estimatedIndexed} of ${submitted}${acc.truncated ? '+' : ''} submitted pages are likely eligible.`
             : `⚠️ Why no: Only ~${estimatedCoverage}% of sampled sitemap URLs look indexable (~${estimatedIndexed} of ${submitted}${acc.truncated ? '+' : ''}). ${issues.join('; ')}`;
@@ -298,6 +302,7 @@ const analyzeIndexCoverage = async (url) => {
             estimatedIndexed,
             partial,
             issues,
+            notIndexed,
             reason,
         };
     } catch (error) {

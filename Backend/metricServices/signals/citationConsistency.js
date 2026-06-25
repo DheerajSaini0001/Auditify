@@ -52,6 +52,57 @@ const normPhone = (s) => {
 // Normalize a brand name for loose comparison.
 const normName = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
 
+// A real phone's national number is 10 digits, optionally with a country code
+// (+1 → 11, +91 → 12, leading 0 → 11). Anything else — times, prices, and
+// hour-ranges like "11.49 - 21.29" (8 digits) — is rejected.
+const isPhoneLikeDigits = (d) => {
+    if (d.length === 10) return true;
+    if (d.length === 11 && (d[0] === '0' || d[0] === '1')) return true;
+    if (d.length === 12 && d.startsWith('91')) return true;
+    return false;
+};
+
+// Pull the first plausible phone number out of a blob of text. Candidates that span
+// a numeric range (a hyphen with surrounding spaces, e.g. opening hours "11.49 - 21.29")
+// are skipped, and the remainder must have a valid 10-digit phone length.
+const PHONE_RE = /\(?\+?\d[\d\s().\-]{6,13}\d/g;
+const phoneFromText = (text) => {
+    const candidates = String(text || '').match(PHONE_RE) || [];
+    for (const c of candidates) {
+        if (/\d\s*[-–—]\s+\d|\d\s+[-–—]\s*\d/.test(c)) continue; // a "21 - 49" style range, not a phone
+        const digits = c.replace(/\D/g, '');
+        if (isPhoneLikeDigits(digits)) return c.replace(/\s+/g, ' ').trim();
+    }
+    return null;
+};
+
+// Find a phone shown to humans. Try the most specific sources first (tel: link, then
+// elements explicitly marked as phone/contact), and only fall back to the whole
+// footer/body — scanning broad containers first would catch address digits by mistake.
+const findPagePhone = ($) => {
+    if (!$) return null;
+    const tel = $('a[href^="tel:"]').first().attr('href');
+    if (tel) { const t = tel.replace(/^tel:/i, '').trim(); if (t) return t; }
+    const selectors = ['[itemprop="telephone"]', '[class*="phone" i]', '[class*="tel" i]', '[id*="phone" i]', '[class*="contact" i]', '[id*="contact" i]', 'footer', 'address'];
+    for (const sel of selectors) {
+        let found = null;
+        $(sel).each((_, el) => { if (found) return; found = phoneFromText($(el).text()); });
+        if (found) return found;
+    }
+    return phoneFromText($('body').text());
+};
+
+// Find a human-visible address: <address> tag → elements/areas marked as an address.
+const findPageAddress = ($) => {
+    if (!$) return null;
+    const el = $('address, [class*="address" i], [id*="address" i], [itemprop="address"]').first();
+    if (el.length) {
+        const t = el.text().replace(/\s+/g, ' ').trim();
+        if (t && t.length >= 8 && t.length <= 220) return t;
+    }
+    return null;
+};
+
 // Two brand names are "consistent" if one contains the other or they share a 3+ char token.
 const namesAgree = (a, b) => {
     const na = normName(a); const nb = normName(b);
@@ -143,6 +194,16 @@ const analyzeCitationConsistency = (url, $) => {
             ? '✅ Why: Consistent NAP — one matching name, address, and phone across schema, tel: links, and brand tags. Engines can state your details with confidence.'
             : `⚠️ Why no: NAP/brand consistency is incomplete (${score}/100). ${issues.join(' ')}`;
 
+        // Human-readable values to display the ACTUAL details (not just yes/no).
+        // Prefer the schema value; fall back to the phone/address shown on the page
+        // (tel: links, footer, contact / address blocks) so we still show real data.
+        const schemaAddressDisplay = addr
+            ? ['streetAddress', 'addressLocality', 'addressRegion', 'postalCode', 'addressCountry']
+                .map((k) => addr[k]).filter(hasValue).join(', ') || null
+            : (addrString || null);
+        const phoneDisplay = schemaPhone || phones[0] || findPagePhone($) || null;
+        const addressDisplay = schemaAddressDisplay || findPageAddress($) || null;
+
         return {
             signal: 'citationConsistency',
             score,
@@ -152,6 +213,8 @@ const analyzeCitationConsistency = (url, $) => {
             schemaName,
             hasSchemaAddress: Boolean(addr || addrString),
             hasSchemaPhone: Boolean(schemaPhone),
+            phoneDisplay,
+            addressDisplay,
             issues,
             reason,
         };

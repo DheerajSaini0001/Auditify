@@ -5,9 +5,13 @@
 
 const analyzeSchemaMarkup = ($, url = '') => {
     const schemaBlocks = [];
+    // The full JSON-LD markup found on the page — pretty-printed and surfaced on the
+    // card so users see the exact schema engines parse, not just the detected types.
+    const rawSchemas = [];
     $('script[type="application/ld+json"]').each((_, el) => {
         try {
             const parsed = JSON.parse($(el).html());
+            rawSchemas.push(JSON.stringify(parsed, null, 2));
             const extractTypes = (obj) => {
                 if (Array.isArray(obj)) {
                     obj.forEach(extractTypes);
@@ -146,7 +150,9 @@ const analyzeSchemaMarkup = ($, url = '') => {
             isListingPage,
             faqNeeded,
             howToNeeded,
-            reason
+            reason,
+            schemaTypes: [...new Set(schemaBlocks)],
+            rawSchemas
         }
     };
 };

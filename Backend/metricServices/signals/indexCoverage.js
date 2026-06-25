@@ -2,6 +2,10 @@ import axios from 'axios';
 import { parseStringPromise } from 'xml2js';
 import * as cheerio from 'cheerio';
 import pLimit from 'p-limit';
+import zlib from 'zlib';
+import { promisify } from 'util';
+
+const gunzip = promisify(zlib.gunzip);
 
 /**
  * Signal 8: Index Coverage (estimated from the public XML sitemap).
@@ -59,8 +63,35 @@ const fetchUrl = async (u, timeout = SITEMAP_TIMEOUT) => {
     return { status: res.status, data: res.data, headers: res.headers };
 };
 
-const isSameOrigin = (u, origin) => {
-    try { return new URL(u).origin === origin; } catch { return false; }
+// Compare by registrable host, ignoring a leading "www." and the protocol — so a
+// sitemap that lists https://www.cardekho.com/... still counts when the audited
+// origin is https://cardekho.com (and vice-versa). The old strict origin check
+// silently dropped every URL in that very common case → "0 of 0".
+const normHost = (h) => String(h || '').replace(/^www\./i, '').toLowerCase();
+const isSameSite = (u, host) => {
+    try { return normHost(new URL(u).hostname) === normHost(host); } catch { return false; }
+};
+
+// Fetch a sitemap as text, transparently decompressing gzipped sitemaps. Big sites
+// commonly serve child sitemaps as .xml.gz (Content-Type application/gzip, NOT
+// Content-Encoding: gzip), which axios does NOT auto-decompress — so reading them
+// as text yields binary garbage that xml2js can't parse (→ 0 URLs found).
+const fetchSitemapText = async (u, timeout = SITEMAP_TIMEOUT) => {
+    const res = await axios.get(u, {
+        timeout,
+        maxRedirects: 5,
+        maxContentLength: MAX_BYTES,
+        maxBodyLength: MAX_BYTES,
+        responseType: 'arraybuffer',
+        headers: { 'User-Agent': UA, Accept: '*/*' },
+        validateStatus: () => true,
+    });
+    let buf = Buffer.from(res.data);
+    // gzip magic bytes (0x1f 0x8b) or a .gz URL → decompress.
+    if ((buf[0] === 0x1f && buf[1] === 0x8b) || /\.gz(?:$|\?)/i.test(u)) {
+        try { buf = await gunzip(buf); } catch { /* not actually gzipped — keep raw */ }
+    }
+    return { status: res.status, data: buf.toString('utf8'), headers: res.headers };
 };
 
 const discoverSitemaps = async (origin, deadline) => {
@@ -88,7 +119,7 @@ const collectUrls = async (sitemapUrl, acc, deadline) => {
     if (Date.now() > deadline) { acc.truncated = true; return; }
     let parsed;
     try {
-        const r = await fetchUrl(sitemapUrl);
+        const r = await fetchSitemapText(sitemapUrl);
         if (r.status !== 200 || !r.data) return;
         parsed = await parseStringPromise(r.data);
     } catch { return; }
@@ -166,6 +197,7 @@ const analyzeIndexCoverage = async (url) => {
     const timeLeft = () => overallDeadline - Date.now();
     try {
         const origin = new URL(url).origin;
+        const originHost = new URL(url).hostname;
         const sitemaps = await discoverSitemaps(origin, discoveryDeadline);
 
         const acc = { urls: [], foundSitemap: false, truncated: false };
@@ -176,7 +208,7 @@ const analyzeIndexCoverage = async (url) => {
             if (acc.urls.length > 0 || acc.urls.length >= MAX_URLS_COUNT) break;
         }
 
-        const submittedUrls = [...new Set(acc.urls)].filter((u) => isSameOrigin(u, origin));
+        const submittedUrls = [...new Set(acc.urls)].filter((u) => isSameSite(u, originHost));
         const submitted = submittedUrls.length;
 
         if (!acc.foundSitemap || submitted === 0) {

@@ -206,6 +206,26 @@ function removeMatching({ url, device, report, userId }) {
 }
 
 /**
+ * Hard-remove specific reports by id from memory — both the `live` map AND the
+ * `pendingWrites` flush queue, so a buffered (not-yet-flushed) report can't be
+ * re-inserted into Mongo after the caller deletes it there. Used when merging the
+ * VDP samples into one master report and discarding the sources. Returns the count
+ * removed from `live`.
+ */
+function removeByIds(ids) {
+  const set = new Set((ids || []).map(idStr));
+  if (!set.size) return 0;
+  let removed = 0;
+  for (const key of [...live.keys()]) {
+    if (set.has(key)) { live.delete(key); removed++; }
+  }
+  for (let i = pendingWrites.length - 1; i >= 0; i--) {
+    if (set.has(idStr(pendingWrites[i]._id))) pendingWrites.splice(i, 1);
+  }
+  return removed;
+}
+
+/**
  * _ids of every report still held in memory for a user — both in-progress and
  * completed-but-not-yet-flushed (buffered). These have an AuditLog entry but no Mongo
  * report doc yet, so the history endpoint must union these with the Mongo ids to show
@@ -316,6 +336,7 @@ export default {
   findActiveDuplicate,
   findCompletedFullAudit,
   removeMatching,
+  removeByIds,
   liveReportIdsForUser,
   flush,
   flushAll,

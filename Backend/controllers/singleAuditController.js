@@ -657,6 +657,20 @@ export const mergeReports = async (req, res) => {
 
     await new SingleAuditReport(mergedDoc).save();
 
+    // Master report persisted → discard the source samples so Mongo holds ONE VDP report.
+    // Drop them from the in-memory store (incl. the pending-flush queue) FIRST so a batched
+    // flush can't re-insert them, then delete from Mongo. AuditLog rows are intentionally
+    // left as-is — the same state as when a report TTL-expires (the app already tolerates
+    // "log exists, report gone"). Only runs after the merged report saved successfully.
+    const sourceIds = docs.map((d) => d._id).filter(Boolean);
+    try {
+      auditStore.removeByIds(sourceIds);
+      const del = await SingleAuditReport.deleteMany({ _id: { $in: sourceIds } });
+      logger.info(`🧹 Merge ${mergedId}: removed ${del?.deletedCount ?? 0} source sample report(s) from Mongo`);
+    } catch (delErr) {
+      logger.warn(`Merge ${mergedId}: source-report cleanup failed (master kept)`, delErr);
+    }
+
     logger.info(`🧩 Merged ${source.length} reports → ${mergedId} (avg score ${overall})`);
     return res.status(201).json({
       _id: mergedId,

@@ -58,14 +58,15 @@ const buildFaqData = (schemaSig, score) => {
 };
 
 const buildSameAsData = (entitySig, score) => {
-    const n = entitySig?.orgSchema?.sameAsCount || 0;
+    const sameAs = Array.isArray(entitySig?.orgSchema?.sameAs) ? entitySig.orgSchema.sameAs : [];
+    const n = entitySig?.orgSchema?.sameAsCount ?? sameAs.length;
     const reason = n >= 3
         ? `✅ ${n} sameAs profile links found — strong entity disambiguation.`
         : n > 0
             ? `⚠️ Only ${n} sameAs link(s) — add more authoritative profiles for cross-verification.`
             : 'No sameAs links in Organization schema — engines can\'t cross-verify your identity.';
     const issues = n >= 3 ? [] : ['Add a sameAs array to your Organization/LocalBusiness JSON-LD linking GBP, Facebook, LinkedIn, Yelp and DealerRater.'];
-    return { score, reason, issues };
+    return { score, reason, issues, sameAs };
 };
 
 const buildEeatData = (signals, score) => {

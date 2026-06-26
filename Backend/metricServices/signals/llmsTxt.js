@@ -115,13 +115,21 @@ const analyzeLlmsTxt = async (url, $ = null) => {
         // ── Validate Markdown structure ──
         const hasH1 = /^#(?!#)\s+\S/m.test(body);
         const h2Count = (body.match(/^##(?!#)\s+\S/gm) || []).length;
-        const linkMatches = body.match(/\[[^\]]+\]\(([^)]+)\)/g) || [];
-        const linkCount = linkMatches.length;
         const hasSummary = /^>\s+\S/m.test(body);
 
+        // Count page links. Accept BOTH strict Markdown links `[name](url)` and the
+        // very common real-world style where pages are listed as bare URLs
+        // (`- Home: https://…`). Both give engines the same key-page map, so we don't
+        // penalize a useful, on-topic file just for skipping Markdown syntax.
+        const mdHrefs = (body.match(/\[[^\]]+\]\(([^)]+)\)/g) || [])
+            .map((lm) => (lm.match(/\(([^)]+)\)/) || [])[1] || '');
+        const bareHrefs = (body.match(/https?:\/\/[^\s<>")\]]+/g) || [])
+            .map((h) => h.replace(/[.,;:]+$/, ''));      // trim trailing punctuation
+        const allHrefs = [...new Set([...mdHrefs, ...bareHrefs].filter(Boolean))];
+        const linkCount = allHrefs.length;
+
         let sameDomainLinks = 0;
-        for (const lm of linkMatches) {
-            const href = (lm.match(/\(([^)]+)\)/) || [])[1] || '';
+        for (const href of allHrefs) {
             try {
                 const h = href.startsWith('/') ? siteHost : new URL(href).hostname.replace(/^www\./, '');
                 if (h === siteHost) sameDomainLinks += 1;
@@ -167,7 +175,7 @@ const analyzeLlmsTxt = async (url, $ = null) => {
         else if (relevance < 20) issues.push('Make the H1, summary, and link descriptions reflect your real brand and page content for better relevance.');
         if (!hasH1) issues.push('Add a single H1 (`# Your Business Name`) at the top — the spec requires it.');
         if (h2Count < 2) issues.push(`Organize links under ## sections (e.g. "## Inventory", "## Financing") — found ${h2Count}.`);
-        if (linkCount < 5) issues.push(`List more key pages as markdown links \`[name](url): description\` — found ${linkCount}.`);
+        if (linkCount < 5) issues.push(`List more key pages — as \`[name](url): description\` or \`- Name: https://url\` — found ${linkCount}.`);
         if (!hasSummary) issues.push('Add a one-line `>` blockquote summary under the H1.');
         if (sameDomainLinks < 1 && linkCount > 0) issues.push('Link to your own pages (same domain), not just external sites.');
 

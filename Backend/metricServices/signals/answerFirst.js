@@ -17,6 +17,10 @@ const analyzeAnswerFirst = ($) => {
     // Simple sentence count logic
     const sentences = first100Words.match(/[^.!?]+[.!?]+/g) || [];
     const sentenceCount = sentences.length;
+
+    // The actual sentence(s) detected at the top of the page — surfaced on the card
+    // so users see the exact opening text engines would lift, not just a count.
+    const openingSentences = sentences.map((s) => s.trim()).filter(Boolean);
     
     let score = 0;
     // AI models love short 1-2 sentence direct answers
@@ -42,7 +46,8 @@ const analyzeAnswerFirst = ($) => {
         score: score,
         sentenceCount: sentenceCount,
         found: sentenceCount > 0,
-        preview,
+        sentences: openingSentences,
+        openingText: first100Words
     };
 };
 

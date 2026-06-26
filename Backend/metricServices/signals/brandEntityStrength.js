@@ -51,8 +51,84 @@ const hasValue = (v) => {
 const toArray = (v) => (v == null ? [] : Array.isArray(v) ? v : [v]);
 const hostnameOf = (u) => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return null; } };
 
+const ADDRESS_FIELDS = ['streetAddress', 'addressLocality', 'addressRegion', 'postalCode', 'addressCountry'];
+
+// Does this value resolve to a REAL postal address? Handles three shapes:
+//   • inline PostalAddress object        { "@type":"PostalAddress", "streetAddress":… }
+//   • a plain address string             "56 Freeth St W, Ormiston QLD"
+//   • an @id reference to another node    { "@id":"https://site/#address" }  ← resolved via idMap
+const hasAddressValue = (val, idMap) => {
+    let a = Array.isArray(val) ? val[0] : val;
+    // A bare @id pointer with no inline fields → follow it to the referenced node.
+    if (a && typeof a === 'object' && a['@id'] && !ADDRESS_FIELDS.some((k) => hasValue(a[k]))) {
+        a = idMap[a['@id']] || a;
+    }
+    if (typeof a === 'string') return a.trim().length > 0;
+    if (a && typeof a === 'object') return ADDRESS_FIELDS.some((k) => hasValue(a[k]));
+    return false;
+};
+
 const AUTH_HOST = /(wikipedia\.org|wikidata\.org)/i;
 const SEMI_AUTH_HOST = /(crunchbase\.com|bbb\.org)/i;
+
+// Recognize the platform behind a profile URL so the report can show the actual
+// data — "Facebook: found", "Instagram: not found", etc.
+const PLATFORMS = [
+    { name: 'Facebook', re: /facebook\.com/i },
+    { name: 'Instagram', re: /instagram\.com/i },
+    { name: 'X (Twitter)', re: /(twitter\.com|x\.com)/i },
+    { name: 'LinkedIn', re: /linkedin\.com/i },
+    { name: 'YouTube', re: /(youtube\.com|youtu\.be)/i },
+    { name: 'TikTok', re: /tiktok\.com/i },
+    { name: 'Pinterest', re: /pinterest\./i },
+    { name: 'Yelp', re: /yelp\.com/i },
+    { name: 'Google Business', re: /(g\.page|google\.[a-z.]+\/maps|business\.google)/i },
+    { name: 'Wikipedia', re: /wikipedia\.org/i },
+    { name: 'Wikidata', re: /wikidata\.org/i },
+    { name: 'Crunchbase', re: /crunchbase\.com/i },
+    { name: 'BBB', re: /bbb\.org/i },
+];
+const platformOf = (u) => (PLATFORMS.find((p) => p.re.test(String(u))) || {}).name || null;
+
+// The major social platforms we always report on, found or not.
+const KNOWN_SOCIAL = ['Facebook', 'Instagram', 'X (Twitter)', 'LinkedIn', 'YouTube', 'Yelp'];
+
+// Build the concrete found/not-found view of every brand signal for the UI.
+const buildDetected = (brand, kg) => {
+    const sameAs = brand?.sameAs || [];
+    const byPlatform = {};
+    sameAs.forEach((u) => {
+        const p = platformOf(u);
+        if (p) (byPlatform[p] = byPlatform[p] || []).push(u);
+    });
+    const socialProfiles = KNOWN_SOCIAL.map((name) => ({
+        platform: name,
+        found: Boolean(byPlatform[name]?.length),
+        url: byPlatform[name]?.[0] || null,
+    }));
+    // Recognized profiles outside the major-social list (e.g. Pinterest, Crunchbase).
+    const otherProfiles = sameAs
+        .map((u) => ({ platform: platformOf(u), url: u }))
+        .filter((p) => p.platform && !KNOWN_SOCIAL.includes(p.platform) && !AUTH_HOST.test(p.url));
+
+    return {
+        socialProfiles,
+        otherProfiles,
+        sameAsCount: sameAs.length,
+        hasWikipedia: Boolean(brand?.hasWikipediaLink) || Boolean(kg?.hasWikipedia),
+        hasWikidata: sameAs.some((s) => /wikidata\.org/i.test(s)),
+        hasRating: Boolean(brand?.hasRating),
+        reviewCount: brand?.reviewCount || 0,
+        schema: {
+            name: Boolean(brand?.name),
+            logo: Boolean(brand?.hasLogo),
+            address: Boolean(brand?.hasAddress),
+            foundingDate: Boolean(brand?.hasFoundingDate),
+            description: Boolean(brand?.hasDescription),
+            award: Boolean(brand?.hasAward),
+        },
+    };
+};
 
 // Pull the richest identity entity and its brand-strength fields from JSON-LD.
 const extractBrand = ($) => {
@@ -60,6 +136,10 @@ const extractBrand = ($) => {
     $('script[type="application/ld+json"]').each((_, el) => {
         try { collectObjects(JSON.parse($(el).html()), objects); } catch { /* skip bad block */ }
     });
+
+    // Map every node by @id so address references can be resolved.
+    const idMap = {};
+    objects.forEach((o) => { if (o && o['@id']) idMap[o['@id']] = o; });
 
     const orgs = objects.filter((o) => typesOf(o).some(ORG_TYPE) && hasValue(o.name));
     if (!orgs.length) return null;
@@ -84,6 +164,9 @@ const extractBrand = ($) => {
         hasDescription: hasValue(org.description) || hasValue(org.slogan),
         hasAward: hasValue(org.award),
         hasLogo: hasValue(org.logo) || hasValue(org.image),
+        // Address from ANY business node (Organization, AutoDealer, LocalBusiness…),
+        // resolving @id references — the address often lives on a sibling node.
+        hasAddress: orgs.some((o) => hasAddressValue(o.address, idMap)),
     };
 };
 
@@ -160,6 +243,7 @@ const analyzeBrandEntityStrength = async (url, $, useKnowledgeGraph = true) => {
                 source: kg ? 'on-page+kg' : 'on-page',
                 tier: tierOf(score),
                 breakdown: { sameAs: 0, authoritative: kg?.found ? 10 : 0, reviews: 0, completeness: 0 },
+                detected: buildDetected(null, kg),
                 knowledgeGraph: kg,
                 issues: ['No Organization/LocalBusiness schema — no on-page brand signals to measure.'],
                 reason: '⚠️ Weak brand entity: no Organization schema, so there are no on-page brand-strength signals (sameAs, reviews, awards) to measure.',
@@ -195,6 +279,7 @@ const analyzeBrandEntityStrength = async (url, $, useKnowledgeGraph = true) => {
             breakdown: { sameAs, authoritative, reviews, completeness },
             sameAsCount: brand.sameAs.length,
             reviewCount: brand.reviewCount,
+            detected: buildDetected(brand, kg),
             knowledgeGraph: kg,
             issues,
             reason,

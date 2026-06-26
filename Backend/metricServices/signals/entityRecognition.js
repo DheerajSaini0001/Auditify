@@ -193,6 +193,7 @@ const analyzeEntityRecognition = async (url, $, useKnowledgeGraph = true) => {
                     hasAddress: orgEntity.hasAddress,
                     hasLogo: orgEntity.hasLogo,
                     sameAsCount: orgEntity.sameAs.length,
+                    sameAs: orgEntity.sameAs,
                 }
                 : { found: false },
             knowledgeGraph: kg,

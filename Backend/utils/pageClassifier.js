@@ -3,7 +3,10 @@ const YEAR = "(?:19|20)\\d{2}";
 const MAKE = "(?:acura|alfa-?romeo|aston-?martin|audi|bentley|bmw|buick|cadillac|chevrolet|chevy|chrysler|dodge|ferrari|fiat|ford|genesis|gmc|honda|hummer|hyundai|infiniti|isuzu|jaguar|jeep|kia|lamborghini|land-?rover|lexus|lincoln|lotus|lucid|maserati|maybach|mazda|mclaren|mercedes(?:-?benz)?|mercury|mini|mitsubishi|nissan|oldsmobile|polestar|pontiac|porsche|ram|rivian|rolls-?royce|saab|saturn|scion|smart|subaru|suzuki|tesla|toyota|vinfast|volkswagen|vw|volvo)";
 
 const VDP_QUERY_RE = /[?&](?:vin|vehicleid|vehicle_id|vid|stocknumber|stocknum)=/i;
-const VDP_DETAIL_RE = /\/(vehicle-?details?|vehicle-?info(?:rmation)?|vdp|car-?details?|cardetails?)(\/|$)/;
+// Terminator allows a file extension (.htm/.html — Dealer.com/CDK VDPs), a query
+// string (?vin=…), a path separator, or end-of-string, so "/vehicle-details.htm"
+// is recognized just like "/vehicle-details/".
+const VDP_DETAIL_RE = /\/(vehicle-?details?|vehicle-?info(?:rmation)?|vdp|car-?details?|cardetails?)(?:[/.?]|$)/;
 const VDP_ID_RE = /\/(vehicle|vehicles|listing|listings|detail|details|auto|car)\/\d{3,}(\/|$)/;
 const VDP_FOLDER_YEAR_RE = new RegExp(`\\/(?:inventory|vehicles?|new|used|certified|cpo|pre-?owned|auto)\\/[^/]*\\b${YEAR}\\b[^/]*\\/?$`);
 const VDP_YEAR_MAKE_RE = new RegExp(`\\/(?:[a-z0-9]+-)*${YEAR}-${MAKE}-`, "i");

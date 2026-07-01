@@ -2,7 +2,7 @@ import axios from "axios";
 import * as cheerio from "cheerio";
 import { parseStringPromise } from "xml2js";
 import { validateUrlSafety } from "./ssrfGuard.js";
-import discoverPages from "./sitemapCrawler.js"; // Playwright fallback (bot-protected / JS-only sites)
+import discoverPages, { fetchRenderedPageLinks } from "./sitemapCrawler.js"; // Playwright fallback (bot-protected / JS-only sites)
 import logger from "./logger.js";
 import { classifyPageType } from "./pageClassifier.js";
 
@@ -77,7 +77,10 @@ const MAKE =
 // explicit "details" segment, or a year+make in the slug. URL-only (never reads
 // the page); precompiled so classifying a large pool stays cheap. ──────────────
 const VDP_QUERY_RE = /[?&](?:vin|vehicleid|vehicle_id|vid|stocknumber|stocknum)=/i;
-const VDP_DETAIL_RE = /\/(vehicle-?details?|vehicle-?info(?:rmation)?|vdp|car-?details?|cardetails?)(\/|$)/;
+// Terminator allows a file extension (.htm/.html — Dealer.com/CDK VDPs), a query
+// string (?vin=…), a path separator, or end-of-string, so "/vehicle-details.htm"
+// is recognized just like "/vehicle-details/".
+const VDP_DETAIL_RE = /\/(vehicle-?details?|vehicle-?info(?:rmation)?|vdp|car-?details?|cardetails?)(?:[/.?]|$)/;
 const VDP_ID_RE = /\/(vehicle|vehicles|listing|listings|detail|details|auto|car)\/\d{3,}(\/|$)/;
 const VDP_FOLDER_YEAR_RE = new RegExp(`\\/(?:inventory|vehicles?|new|used|certified|cpo|pre-?owned|auto)\\/[^/]*\\b${YEAR}\\b[^/]*\\/?$`);
 const VDP_YEAR_MAKE_RE = new RegExp(`\\/(?:[a-z0-9]+-)*${YEAR}-${MAKE}-`, "i"); // /2024-toyota-camry…
@@ -302,7 +305,11 @@ async function sitemapsFromRobots(origin) {
 }
 
 // Extract same-origin, non-asset internal links from an HTML document.
-function extractLinks(html, baseUrl, origin, set, max) {
+// keepQuery: retain the query string. Off for the general crawl (avoids facet-filter
+// URL explosion), ON for VDP mining where the vehicle id lives in the query
+// (e.g. Dealer.com's /vehicle-details.htm?vin=…) — without it every car collapses
+// to the same query-less URL.
+function extractLinks(html, baseUrl, origin, set, max, { keepQuery = false } = {}) {
   const $ = cheerio.load(html);
   $("a[href]").each((_, el) => {
     if (set.size >= max) return false;
@@ -312,7 +319,7 @@ function extractLinks(html, baseUrl, origin, set, max) {
       const abs = new URL(href, baseUrl);
       if (abs.origin !== origin) return;
       if (/\.(pdf|jpe?g|png|gif|svg|webp|zip|mp4|mp3|docx?|xlsx?|css|js|json|xml|woff2?|ttf|eot|ico)$/i.test(abs.pathname)) return;
-      set.add(abs.origin + abs.pathname);
+      set.add(abs.origin + abs.pathname + (keepQuery ? abs.search : ""));
     } catch {
       /* ignore malformed hrefs */
     }
@@ -433,19 +440,43 @@ async function planSrp(byCat) {
 async function sampleVdps(byCat, srpPages, origin) {
   let pool = (byCat.vdp || []).map((c) => ({ url: c.url, cond: conditionOf(c.url) }));
 
-  for (const srp of srpPages) {
-    if (pool.length >= 60) break;
-    try {
-      const r = await safeGet(srp.url);
-      if (!r.ok || !r.data) continue;
-      const links = new Set();
-      extractLinks(r.data, srp.url, origin, links, 250);
-      for (const u of links) {
+  const addVdpLinks = (links, srp) => {
+    let added = 0;
+    for (const u of links) {
+      try {
         if (isVdp(normPath(new URL(u).pathname), u.toLowerCase())) {
           pool.push({ url: u, cond: conditionOf(u) || srp.cond || null });
+          added++;
         }
+      } catch { /* skip malformed */ }
+    }
+    return added;
+  };
+
+  for (const srp of srpPages) {
+    if (pool.length >= 60) break;
+    // First try a cheap axios fetch of the SRP.
+    let mined = 0;
+    try {
+      const r = await safeGet(srp.url);
+      if (r.ok && r.data) {
+        const links = new Set();
+        // keepQuery: VDP ids often live in the query string (?vin=…); without it
+        // every vehicle would dedupe to the same query-less path.
+        extractLinks(r.data, srp.url, origin, links, 250, { keepQuery: true });
+        mined = addVdpLinks(links, srp);
       }
     } catch { /* best-effort mining only */ }
+
+    // Fallback: axios was bot-blocked (403) or the listing is rendered client-side,
+    // so it yielded no vehicle links. Render the SRP with the stealth browser — it
+    // preserves query strings, so each car resolves to a distinct VDP URL.
+    if (mined === 0) {
+      try {
+        const rendered = await fetchRenderedPageLinks(srp.url);
+        addVdpLinks(rendered, srp);
+      } catch { /* best-effort */ }
+    }
   }
 
   // Dedupe by URL (mining can re-surface sitemap entries); first tag wins.

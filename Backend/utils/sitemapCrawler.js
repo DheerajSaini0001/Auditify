@@ -152,6 +152,34 @@ async function parseSitemap(page, xmlData, domain) {
     return urls;
 }
 
+/**
+ * Render ONE JS page with the stealth browser and return its same-origin internal
+ * links (query strings preserved). Used to mine VDP links off an SRP that plain
+ * axios can't read because the site is bot-protected (403) or renders its listing
+ * client-side. Returns [] on any failure so callers can fall back gracefully.
+ */
+export async function fetchRenderedPageLinks(url, maxLinks = 400) {
+  let browser;
+  try {
+    const origin = new URL(url).origin;
+    browser = await chromium.launch({
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+    });
+    const context = await browser.newContext({
+      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+    });
+    const page = await context.newPage();
+    const links = await extractInternalLinks(page, url, origin);
+    await browser.close();
+    return links.slice(0, maxLinks);
+  } catch (error) {
+    if (browser) await browser.close().catch(() => {});
+    console.error(`[fetchRenderedPageLinks] ${url}: ${error.message}`);
+    return [];
+  }
+}
+
 async function extractInternalLinks(page, url, domain) {
     const links = new Set();
     try {

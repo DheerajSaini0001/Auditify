@@ -11,6 +11,7 @@ import {
   FileText,
   Loader2,
   ChevronRight,
+  ArrowLeft,
   BarChart2,
   Plus,
   NotebookPen,
@@ -61,6 +62,18 @@ export default function Sidebar({ darkMode }) {
     { key: "aioReadiness", label: "AIO Readiness", path: "/aio", icon: Brain },
     { key: "aeo", label: "AEO", path: "/aeo", icon: MessageSquareText },
   ];
+
+  // Which section page is currently open? (-1 = Overview / non-section route.)
+  const activeIdx = menuItems.findIndex((item) => location.pathname.startsWith(item.path));
+
+  // When a section from Technical → AIO Readiness is open, "Next" walks to the next
+  // section present in this report. On Overview or AEO (the last section) there is no
+  // next section, so we fall back to the next audited page in the batch (nextPage).
+  const nextSection = React.useMemo(() => {
+    if (activeIdx < 0) return null;
+    return menuItems.slice(activeIdx + 1).find((s) => data?.[s.key]) || null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeIdx, data]);
 
   // Styles
   const sidebarClass = darkMode
@@ -148,17 +161,31 @@ export default function Sidebar({ darkMode }) {
 
       {/* Footer / Actions */}
       <div className={`p-3 border-t space-y-3 ${darkMode ? "border-slate-800 bg-[#0B1120]" : "border-linesoft bg-surface"}`}>
-        {/* Next audited page in the batch (when this report came from an Audit Summary). */}
-        {nextPage && (
+        {/* Back to the Audit Summary (only when this report came from a batch run). */}
+        {batch && (
           <Link
-            to={`/report/${nextPage.id}`}
+            to="/audit-summary"
+            state={batch}
+            title="Back to audit summary"
+            className={`group flex items-center gap-2 w-full px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${darkMode ? "bg-slate-800 text-slate-200 hover:bg-slate-700" : "bg-cardsoft text-inksoft hover:bg-emerald-50 hover:text-emerald-700"}`}
+          >
+            <ArrowLeft className="w-4 h-4 shrink-0 opacity-60 group-hover:-translate-x-0.5 transition-transform" />
+            <span className="truncate">Back to summary</span>
+          </Link>
+        )}
+
+        {/* "Next" walks the report: next section while a section page (Technical → AIO
+            Readiness) is open, else the next audited page in the batch (on Overview / AEO). */}
+        {(nextSection || nextPage) && (
+          <Link
+            to={nextSection ? `${nextSection.path}/${data._id}` : `/report/${nextPage.id}`}
             replace
-            title={`Next page: ${nextPage.label}`}
+            title={nextSection ? `Next section: ${nextSection.label}` : `Next page: ${nextPage.label}`}
             className={`group flex items-center justify-between gap-2 w-full px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${darkMode ? "bg-slate-800 text-slate-200 hover:bg-slate-700" : "bg-cardsoft text-inksoft hover:bg-emerald-50 hover:text-emerald-700"}`}
           >
             <span className="flex items-center gap-2 min-w-0">
               <span className={`text-[10px] font-bold uppercase tracking-wider shrink-0 ${darkMode ? "text-slate-500" : "text-faint"}`}>Next</span>
-              <span className="truncate">{nextPage.label}</span>
+              <span className="truncate">{nextSection ? nextSection.label : nextPage.label}</span>
             </span>
             <ChevronRight className="w-4 h-4 shrink-0 opacity-60 group-hover:translate-x-0.5 transition-transform" />
           </Link>

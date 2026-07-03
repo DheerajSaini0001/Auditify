@@ -5,6 +5,7 @@ import {
     Monitor, Smartphone, Search, Loader2, AlertCircle, ChevronDown, Settings, ArrowRight,
     Globe, CheckCircle2, MinusCircle, Sparkles, ExternalLink, Check, ListChecks,
     Home, LayoutGrid, Car, Tag, Repeat, Key, CreditCard, Wrench, Info, Newspaper,
+    Building2, MapPin, Megaphone,
 } from 'lucide-react';
 import AuditEmailVerifyModal from "../../Component/AuditEmailVerifyModal.jsx";
 import { ThemeContext } from '../../context/ThemeContext.jsx';
@@ -31,6 +32,25 @@ const PAGE_TYPES = [
     { key: 'about', label: 'About / Contact', desc: 'Hours, staff, directions', Icon: Info },
     { key: 'content', label: 'Content / Blog', desc: 'Blog, news, FAQ, how-to', Icon: Newspaper },
 ];
+
+/* ─────────────────────────────────────────
+   Corporate / OEM page-type catalog — shown instead of PAGE_TYPES once
+   discovery reports `siteType: "corporate"` (no dealer inventory of its own).
+───────────────────────────────────────── */
+const CORPORATE_PAGE_TYPES = [
+    { key: 'home', label: 'Home Page', desc: 'Hero, brand, primary CTAs', Icon: Home },
+    { key: 'models', label: 'Models & Lineup', desc: 'Vehicle lineup, research, build & price', Icon: LayoutGrid },
+    { key: 'locator', label: 'Dealer Locator', desc: 'Find a dealer near you', Icon: MapPin },
+    { key: 'press', label: 'Press & News', desc: 'Newsroom, media, investor relations', Icon: Megaphone },
+    { key: 'about', label: 'About / Corporate', desc: 'Company info, leadership, careers', Icon: Building2 },
+    { key: 'content', label: 'Content / Blog', desc: 'Blog, guides, FAQ', Icon: Newspaper },
+];
+
+// Union of both catalogs' keys — the SAFE default `scopes` selection before the
+// first scan, since we don't yet know which catalog (dealer or corporate)
+// applies. Once discovery resolves a siteType, scopes is intersected down to
+// that catalog's keys (see detect()).
+const ALL_PAGE_TYPE_KEYS = [...new Set([...PAGE_TYPES, ...CORPORATE_PAGE_TYPES].map((p) => p.key))];
 
 /* ─────────────────────────────────────────
    Audit report sections (Screen 01 report-scope checklist).
@@ -370,15 +390,24 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
     const [showVerify, setShowVerify] = useState(false);
     const [localError, setLocalError] = useState(null);
 
-    // Which dealer page types to include in the audit (defaults to all). The
-    // multi-select dropdown in the form drives this; only selected types are
-    // audited on "Run Full Audit", and unselected cards are dimmed.
-    const [scopes, setScopes] = useState(() => PAGE_TYPES.map((p) => p.key));
+    // Which page types to include in the audit (defaults to all, across BOTH
+    // catalogs — we don't know if this is a dealer or corporate site until the
+    // first scan resolves). The multi-select dropdown in the form drives this;
+    // only selected types are audited on "Run Full Audit", and unselected cards
+    // are dimmed. Intersected down to the resolved catalog's keys once known.
+    const [scopes, setScopes] = useState(() => ALL_PAGE_TYPE_KEYS);
+
+    // Detected site type ("dealer" | "corporate" | null before the first scan).
+    // Drives which page-type catalog (PAGE_TYPES vs CORPORATE_PAGE_TYPES) is shown.
+    const [siteType, setSiteType] = useState(null);
 
     // Discovery state
     const [phase, setPhase] = useState('idle');       // idle | detecting | done
     const [discovery, setDiscovery] = useState(null);
     const [detectError, setDetectError] = useState(null);
+    // True when the backend hard-rejected the URL (not a dealer/automotive
+    // corporate site) — distinct from a transient network/server error.
+    const [rejected, setRejected] = useState(false);
     const auditTokenRef = useRef(null);               // guest grant, reused for the audit
 
     // Parallel per-page audit state. `auditState[pageKey] = { status, id, progress, url, error }`
@@ -405,6 +434,10 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         [discovery]
     );
 
+    // Which catalog to render — swaps to the corporate one once a scan resolves
+    // siteType "corporate". Defaults to the dealer catalog before the first scan.
+    const visibleTypes = siteType === 'corporate' ? CORPORATE_PAGE_TYPES : PAGE_TYPES;
+
     // Run page discovery (sitemap → robots.txt → crawl) against the entered URL.
     const detect = async (urlToScan, token) => {
         setPhase('detecting');
@@ -420,14 +453,30 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                     ...(bearer && { Authorization: `Bearer ${bearer}` }),
                     ...(token && { 'x-audit-token': token }),
                 },
-                // Only discover the page types the user kept selected — the backend
-                // skips all resolution work (status checks, SRP/VDP sampling) for the rest.
+                // Before the first scan `scopes` is the union of both catalogs (we
+                // don't yet know which applies), so nothing is prematurely excluded.
                 body: JSON.stringify({ url: urlToScan, scopes }),
             });
             let data = {};
             try { data = await res.json(); } catch { /* empty */ }
-            if (!res.ok) setDetectError(data?.error || data?.message || `Detection failed (${res.status}).`);
-            else setDiscovery(data);
+            if (!res.ok) {
+                setDetectError(data?.error || data?.message || `Detection failed (${res.status}).`);
+                // The backend hard-rejects sites that aren't a dealer or automotive
+                // corporate/OEM site (siteType "unknown") — distinct from a transient
+                // network/server error, where a retry might actually help.
+                setRejected(data?.siteType === 'unknown');
+            } else {
+                setRejected(false);
+                setDiscovery(data);
+                setSiteType(data?.siteType || null);
+                // Now that the catalog is known, drop any selected key that belongs
+                // only to the OTHER catalog so the scope dropdown doesn't show a
+                // stale cross-catalog selection.
+                const resolvedKeys = new Set(
+                    (data?.siteType === 'corporate' ? CORPORATE_PAGE_TYPES : PAGE_TYPES).map((p) => p.key)
+                );
+                setScopes((prev) => prev.filter((k) => resolvedKeys.has(k)));
+            }
         } catch {
             setDetectError('Could not reach the server to detect pages.');
         } finally {
@@ -499,6 +548,9 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                     auditToken: auditTokenRef.current,
                     screenResolution: `${window.screen.width}x${window.screen.height}`,
                     pageType: catKey,
+                    // Reuse the siteType this same /discover scan already resolved —
+                    // the worker needs it to re-classify a redirected page correctly.
+                    siteType: siteType || undefined,
                 }),
             });
             let data = {};
@@ -678,6 +730,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         if (phase !== 'idle') setPhase('idle');
         setDiscovery(null);
         setDetectError(null);
+        setRejected(false);
         setAuditState({});
     };
     const toggleScope = (key) => {
@@ -685,7 +738,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         invalidateDetection();
     };
     const setAllScopes = (all) => {
-        setScopes(all ? PAGE_TYPES.map((p) => p.key) : []);
+        setScopes(all ? visibleTypes.map((p) => p.key) : []);
         invalidateDetection();
     };
 
@@ -695,7 +748,6 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         setReportSections((prev) => (prev.includes(val) ? prev.filter((v) => v !== val) : [...prev, val]));
     const setAllSections = (all) => setReportSections(all ? SECTIONS.map((s) => s.value) : []);
 
-    const visibleTypes = PAGE_TYPES;
     const foundCount = discovery?.categories?.filter((c) => c.found).length ?? 0;
     const sourceLabel = { sitemap: 'XML sitemap', robots: 'robots.txt → sitemap', crawl: 'link crawl', none: 'direct check' };
 
@@ -806,7 +858,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                             />
                             <MultiSelectDropdown
                                 selected={scopes}
-                                options={PAGE_TYPES.map((p) => ({ value: p.key, label: p.label }))}
+                                options={visibleTypes.map((p) => ({ value: p.key, label: p.label }))}
                                 onToggle={toggleScope}
                                 onSetAll={setAllScopes}
                                 icon={<ListChecks />}
@@ -814,8 +866,10 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                                 disabled={isLoading || batchRunning}
                             />
 
-                            {/* Primary button: Run Audit (detect) → Run Full Audit (audit) */}
-                            {phase !== 'done' ? (
+                            {/* Primary button: Run Audit (detect) → Run Full Audit (audit).
+                                Stays on "Run Audit" when rejected — there's nothing to run,
+                                the user needs to try a different URL. */}
+                            {phase !== 'done' || rejected ? (
                                 <button
                                     type="submit"
                                     disabled={runBtnDisabled}
@@ -842,7 +896,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                     {/* Auto-detect callout */}
                     <p className={`mt-3 flex items-center justify-center gap-2 text-xs font-medium ${darkMode ? 'text-slate-400' : 'text-muted'}`}>
                         <Sparkles className="w-3.5 h-3.5 text-[#ea580c]" />
-                        One URL → we auto-detect all {PAGE_TYPES.length} dealer page types below.
+                        One URL → we auto-detect all {visibleTypes.length} page types below.
                     </p>
 
                     <AnimatePresence>
@@ -860,36 +914,59 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                 {/* ── Auto-detect section ── */}
                 <div className="mt-12">
                     <div className="mb-5">
-                        <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-ink'}`}>
-                            {phase === 'done'
-                                ? `Detected ${foundCount} of ${PAGE_TYPES.length} key pages on your site`
-                                : "We'll auto-detect and audit these pages on your site"}
-                        </h3>
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                            <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-ink'}`}>
+                                {phase === 'done' && rejected
+                                    ? "This site isn't a dealership or automotive corporate/OEM website"
+                                    : phase === 'done'
+                                        ? `Detected ${foundCount} of ${visibleTypes.length} key pages on your site`
+                                        : "We'll auto-detect and audit these pages on your site"}
+                            </h3>
+                            {phase === 'done' && !rejected && siteType && (
+                                <span
+                                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wide border ${
+                                        siteType === 'corporate'
+                                            ? 'bg-sky-500/10 border-sky-500/30 text-sky-500'
+                                            : 'bg-[#ea580c]/10 border-[#ea580c]/30 text-[#ea580c]'
+                                    }`}
+                                >
+                                    {siteType === 'corporate' ? <Building2 size={12} /> : <Home size={12} />}
+                                    {siteType === 'corporate' ? 'Corporate / OEM site detected' : 'Dealer site detected'}
+                                </span>
+                            )}
+                        </div>
                         {phase === 'done' && discovery && (
                             <p className={`text-xs mt-1 ${darkMode ? 'text-slate-400' : 'text-muted'}`}>
                                 via {sourceLabel[discovery.source] || discovery.source}
                                 {discovery.sitemapUrl ? ` · ${prettyPath(discovery.sitemapUrl)}` : ''}
                             </p>
                         )}
-                        {phase === 'done' && detectError && (
+                        {phase === 'done' && detectError && rejected && (
+                            <p className="text-xs mt-1 text-rose-400">
+                                {detectError} Try a different URL — Auditify only audits dealership and automotive corporate/OEM websites.
+                            </p>
+                        )}
+                        {phase === 'done' && detectError && !rejected && (
                             <p className="text-xs mt-1 text-amber-500">{detectError} — you can still run the full audit.</p>
                         )}
                     </div>
 
-                    <motion.div
-                        initial="hidden" animate="show"
-                        variants={{ hidden: {}, show: { transition: { staggerChildren: 0.04 } } }}
-                        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"
-                    >
-                        {visibleTypes.map((def) => (
-                            <motion.div key={def.key} variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}>
-                                <PageCard def={def} phase={phase} cat={catMap[def.key]} darkMode={darkMode} dimmed={!scopes.includes(def.key)} inScope={scopes.includes(def.key)} audit={auditByCat[def.key]} pageAudits={pageAuditsByCat[def.key]} />
-                            </motion.div>
-                        ))}
-                    </motion.div>
+                    {!rejected && (
+                        <motion.div
+                            initial="hidden" animate="show"
+                            variants={{ hidden: {}, show: { transition: { staggerChildren: 0.04 } } }}
+                            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"
+                        >
+                            {visibleTypes.map((def) => (
+                                <motion.div key={def.key} variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}>
+                                    <PageCard def={def} phase={phase} cat={catMap[def.key]} darkMode={darkMode} dimmed={!scopes.includes(def.key)} inScope={scopes.includes(def.key)} audit={auditByCat[def.key]} pageAudits={pageAuditsByCat[def.key]} />
+                                </motion.div>
+                            ))}
+                        </motion.div>
+                    )}
 
                     {/* Bottom CTA once detected */}
-                    {phase === 'done' && (
+                    {phase === 'done' && !rejected && (
                         <div className="flex justify-center mt-8">
                             <button
                                 type="button"

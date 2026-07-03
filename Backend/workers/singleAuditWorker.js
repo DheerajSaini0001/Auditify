@@ -12,10 +12,14 @@ import Puppeteer_Cheerio from "../utils/puppeteer_cheerio.js";
 import { checkWebsiteExists } from "../utils/fastFetch.js";
 import { performance } from "perf_hooks";
 import logger from "../utils/logger.js";
-import { classifyPageType } from "../utils/pageClassifier.js";
+import { classifyPageType, classifyCorporatePageType } from "../utils/pageClassifier.js";
 
-const { url, device, report, auditId, pageType: initialPageType } = workerData;
-const pageType = initialPageType || classifyPageType(url);
+const { url, device, report, auditId, pageType: initialPageType, siteType } = workerData;
+// Corporate/OEM sites have no VDP/SRP/trade/lease/finance/service of their own —
+// classify against the corporate taxonomy instead. "unknown"/unset siteType
+// falls back to the dealer classifier, matching the app's original behavior.
+const classify = siteType === "corporate" ? classifyCorporatePageType : classifyPageType;
+const pageType = initialPageType || classify(url);
 
 // `report` is one of: "All" (full audit), a single section name, or a comma-joined
 // list of section names — a custom subset chosen via the report-scope checklist.
@@ -128,7 +132,15 @@ const SECTION_WEIGHTS_BY_PAGE_TYPE = {
   service: { tech: 16, seo: 16, a11y: 10, sec: 10, ux: 13, conv: 19, aio: 8, aeo: 8 },
   about:   { tech: 14, seo: 16, a11y: 11, sec: 10, ux: 15, conv: 12, aio: 10,aeo: 12 },
   content: { tech: 14, seo: 22, a11y: 11, sec: 9,  ux: 15, conv: 7,  aio: 10,aeo: 12 },
-  generic: { tech: 18, seo: 17, a11y: 10, sec: 12, ux: 13, conv: 15, aio: 8, aeo: 7 }
+  generic: { tech: 18, seo: 17, a11y: 10, sec: 12, ux: 13, conv: 15, aio: 8, aeo: 7 },
+  // Corporate/OEM page types (siteType "corporate" — no per-vehicle lead flow of
+  // its own, so Conversion weight drops and SEO/AEO — brand & answer-engine
+  // visibility — rise). `locator`'s "conversion" is successfully finding a
+  // dealer, so it keeps real Conversion weight tied to UX (map/store-finder
+  // usability). `about`/`content` reuse the existing dealer rows above.
+  models:  { tech: 18, seo: 20, a11y: 10, sec: 8,  ux: 14, conv: 10, aio: 9, aeo: 11 },
+  locator: { tech: 16, seo: 14, a11y: 10, sec: 8,  ux: 16, conv: 20, aio: 6, aeo: 10 },
+  press:   { tech: 14, seo: 18, a11y: 10, sec: 8,  ux: 14, conv: 6,  aio: 10,aeo: 20 },
 };
 
 const OverAll = (A, B, C, D, E, F, G, H, pageType = "generic") => {
@@ -223,7 +235,7 @@ const OverAll = (A, B, C, D, E, F, G, H, pageType = "generic") => {
     // is classified by where the browser actually landed.
     let finalUrl = url;
     try { const u = typeof page?.url === "function" ? page.url() : null; if (u) finalUrl = u; } catch { /* keep url */ }
-    const pageType = classifyPageType(finalUrl);
+    const pageType = classify(finalUrl);
 
     // ── Custom subset (2–6 sections chosen via the checklist) ──
     // Run only the selected metrics in parallel — each streams its own section the

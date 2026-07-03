@@ -186,6 +186,35 @@ const gracefulShutdown = async (signal) => {
 process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
 
+// ── Main-process crash safety net ──
+// singleAuditWorker.js (the worker_threads path) already has this exact
+// handler — mirrored here because site-type detection (discoveryController.js
+// / singleAuditController.js's fallback path) calls the SAME shared Playwright
+// browser pool (puppeteer_cheerio.js) directly on the MAIN process, not inside
+// a worker. Without this, a late/background CDP session error firing after a
+// page or context has already closed (confirmed under concurrent load — see
+// getSharedBrowser's activeContexts gating) would crash the entire server,
+// taking down every in-flight request, not just one audit. Detached-frame /
+// closed-session errors are expected during page teardown and are silently
+// suppressed; anything else is logged so it isn't silently lost.
+function handleProcessSafetyError(error) {
+  const msg = error?.message || (typeof error === "string" ? error : "");
+  const lmsg = msg.toLowerCase();
+  const isPageTeardownError =
+    lmsg.includes("detached") ||
+    lmsg.includes("session closed") ||
+    lmsg.includes("target closed") ||
+    lmsg.includes("context was destroyed") ||
+    lmsg.includes("frame is not ready") ||
+    lmsg.includes("cdpsession") ||
+    !error;
+  if (!isPageTeardownError) {
+    logger.warn("[Server] Uncaught safety exception/promise rejection (non-fatal):", error);
+  }
+}
+process.on("unhandledRejection", handleProcessSafetyError);
+process.on("uncaughtException", handleProcessSafetyError);
+
 startServer().catch(err => {
   logger.error("❌ Startup Error", err);
 });

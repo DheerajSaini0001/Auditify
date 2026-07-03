@@ -1,15 +1,43 @@
 import * as cheerio from "cheerio";
 import { parseStringPromise } from "xml2js";
-import { chromium } from "playwright-extra";
-import StealthPlugin from "puppeteer-extra-plugin-stealth";
+import { newStealthPage, detectChallenge, waitForChallengeResolution } from "./puppeteer_cheerio.js";
+import { createLimiter } from "./concurrencyLimiter.js";
 
-chromium.use(StealthPlugin());
+// Page discovery's browser usage was previously COMPLETELY unthrottled —
+// unlike site-type detection (see siteTypeDetector.js's browserLimiter),
+// which meant N concurrent audits could all drive heavy multi-page crawls
+// against the one shared Chromium process (see getSharedBrowser in
+// puppeteer_cheerio.js) at once. Under load-tested concurrency this produced
+// exactly the kind of multi-tens-of-seconds stalls that made large, JS-heavy
+// corporate sites (ford.com, bmwusa.com) time out — not a real block, just
+// contention for the shared browser. Tunable via env var; default mirrors
+// the site-type detector's conservative default.
+const discoveryBrowserLimiter = createLimiter(Number(process.env.PAGE_DISCOVERY_BROWSER_CONCURRENCY) || 4);
+
+// Once the homepage ALONE yields at least this many same-origin links, stop —
+// a real dealer/OEM homepage nav almost always already links to every major
+// section (inventory, service, about, trade-in, etc.). Recursing into MORE
+// pages beyond that mainly re-discovers the SAME site-wide nav with only a
+// handful of net-new links per extra page visited (confirmed on
+// fjmercedes.com: needed 90 page visits and 11 minutes to reach a 250-link
+// target this way, when the homepage alone already had every category).
+const HEALTHY_HOMEPAGE_LINK_COUNT = 20;
+// Separate from `maxPages` (which bounds total DISCOVERED links) — this bounds
+// how many pages we'll actually visit/render when the homepage alone wasn't
+// enough. Low on purpose: rendering each page costs real navigation time, so
+// a handful of secondary pages is the right budget for "homepage was thin,
+// try a bit harder" — not license for an unbounded site-wide crawl.
+const MAX_PAGES_TO_VISIT = 15;
 
 export default async function discoverPages(baseUrl, maxPages = 50) {
+    return discoveryBrowserLimiter.run(() => discoverPagesInner(baseUrl, maxPages));
+}
+
+async function discoverPagesInner(baseUrl, maxPages) {
     const discoveredUrls = new Set();
     const urlsToVisit = [baseUrl];
     const visitedUrls = new Set();
-    let browser;
+    let context;
 
     try {
         const normalizedBase = new URL(baseUrl);
@@ -17,24 +45,21 @@ export default async function discoverPages(baseUrl, maxPages = 50) {
 
         console.log(`🚀 Starting discovery for: ${domain}`);
 
-        browser = await chromium.launch({
-            headless: true,
-            args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
-        });
+        // Shared, already-warm, well-hardened stealth browser (same pool
+        // site-type detection uses) — instead of this crawler launching its
+        // own separate, minimally-stealthed, non-pooled browser per call.
+        const created = await newStealthPage("Desktop");
+        context = created.context;
+        const page = created.page;
 
-        const context = await browser.newContext({
-            userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
-        });
-        const page = await context.newPage();
-
-        // Step 1: Try to fetch sitemap.xml using Puppeteer
-        const sitemapUrls = await fetchSitemapUrls(page, domain);
+        // Step 1: Try to fetch sitemap.xml
+        const sitemapUrls = await fetchSitemapUrls(context, domain);
         sitemapUrls.forEach(url => discoveredUrls.add(url));
 
         console.log(`📍 Found ${sitemapUrls.length} URLs from sitemap`);
 
         if (discoveredUrls.size >= maxPages) {
-            await browser.close();
+            await context.close();
             return Array.from(discoveredUrls).slice(0, maxPages);
         }
 
@@ -63,10 +88,15 @@ export default async function discoverPages(baseUrl, maxPages = 50) {
                 console.error(`❌ Error crawling ${currentUrl}:`, error.message);
             }
 
-            if (visitedUrls.size > maxPages * 2) break;
+            // The homepage alone already gave us a healthy link set — stop
+            // rather than recursing into more pages that mostly re-discover
+            // the same site-wide nav (see HEALTHY_HOMEPAGE_LINK_COUNT above).
+            if (visitedUrls.size === 1 && discoveredUrls.size >= HEALTHY_HOMEPAGE_LINK_COUNT) break;
+
+            if (visitedUrls.size >= MAX_PAGES_TO_VISIT) break;
         }
 
-        await browser.close();
+        await context.close();
         const finalUrls = Array.from(discoveredUrls).slice(0, maxPages);
         console.log(`✅ Total pages discovered: ${finalUrls.length}`);
 
@@ -74,48 +104,69 @@ export default async function discoverPages(baseUrl, maxPages = 50) {
 
     } catch (error) {
         console.error("Error discovering pages:", error.message);
-        if (browser) await browser.close();
+        if (context) await context.close().catch(() => {});
         return [baseUrl];
     }
 }
 
-async function fetchSitemapUrls(page, domain) {
-    const sitemapUrls = [];
+// Try each candidate sitemap path in turn. If the FIRST one that responds is
+// challenge-protected and doesn't clear within one wait, don't keep retrying
+// the other candidates with their own full-length waits — they're the same
+// origin behind the same WAF, so a second or third attempt is exceedingly
+// unlikely to behave differently. That "retry every candidate at full cost"
+// pattern previously burned up to 3 minutes (3 × 60s waits) before ever
+// reaching the actual page crawl, on a site whose sitemap simply isn't
+// reachable at all.
+// Checked in PARALLEL, on separate short-lived pages from the same context —
+// a single Playwright page can only navigate once at a time, so the old
+// implementation reusing ONE page for all 3 candidates sequentially meant an
+// origin that times out on navigation (rather than 404ing fast) paid up to
+// 3 x 20s nav + 3 x 20s challenge-wait = up to 120s here alone. Confirmed
+// contributing to ford.com/bmwusa.com's residual latency after fixing the
+// equivalent axios-level sequential-candidate bug in pageDiscovery.js.
+async function fetchSitemapUrls(context, domain) {
     const possibleSitemaps = [
         `${domain}/sitemap.xml`,
         `${domain}/sitemap_index.xml`,
         `${domain}/sitemap-index.xml`,
     ];
 
-    for (const sitemapUrl of possibleSitemaps) {
-        try {
-            await page.goto(sitemapUrl, { waitUntil: "domcontentloaded", timeout: 50000 });
-            
-            // Handle bot verification
-            const { detectChallenge, waitForChallengeResolution } = await import('./puppeteer_cheerio.js');
-            if (await detectChallenge(page)) {
-                console.log(`🛡️ Sitemap challenge detected for ${sitemapUrl}, attempting bypass...`);
-                await waitForChallengeResolution(page, 60000); // Increased to 60s for production reliability
-            }
+    const attempts = await Promise.all(
+        possibleSitemaps.map((sitemapUrl) => fetchOneSitemapCandidate(context, sitemapUrl, domain))
+    );
 
-            const data = await page.content();
-            
-            // Cheerio can extract the text from the raw XML if it's served as text/xml
-            // but Puppeteer might wrap it in HTML tags. 
-            // We'll try to extract the innerText which should be the XML content
-            const content = await page.evaluate(() => document.body.innerText);
-            
-            if (content.includes('<urlset') || content.includes('<sitemapindex')) {
-                const urls = await parseSitemap(page, content, domain);
-                urls.forEach(url => sitemapUrls.push(url));
-                if (sitemapUrls.length > 0) break;
-            }
-        } catch (error) {
-            continue;
-        }
+    // First candidate (in priority order) that found anything wins.
+    for (const urls of attempts) {
+        if (urls.length) return [...new Set(urls)];
     }
+    return [];
+}
 
-    return [...new Set(sitemapUrls)];
+async function fetchOneSitemapCandidate(context, sitemapUrl, domain) {
+    let page;
+    try {
+        page = await context.newPage();
+        await page.goto(sitemapUrl, { waitUntil: "domcontentloaded", timeout: 20000 });
+
+        if (await detectChallenge(page)) {
+            console.log(`🛡️ Sitemap challenge detected for ${sitemapUrl}, attempting bypass...`);
+            await waitForChallengeResolution(page, 20000);
+            if (await detectChallenge(page)) {
+                console.log(`🛡️ Sitemap challenge did not clear for ${sitemapUrl}`);
+                return [];
+            }
+        }
+
+        const content = await page.evaluate(() => document.body.innerText);
+        if (content.includes('<urlset') || content.includes('<sitemapindex')) {
+            return await parseSitemap(page, content, domain);
+        }
+        return [];
+    } catch (error) {
+        return [];
+    } finally {
+        if (page) await page.close().catch(() => {});
+    }
 }
 
 async function parseSitemap(page, xmlData, domain) {
@@ -159,35 +210,40 @@ async function parseSitemap(page, xmlData, domain) {
  * client-side. Returns [] on any failure so callers can fall back gracefully.
  */
 export async function fetchRenderedPageLinks(url, maxLinks = 400) {
-  let browser;
+  return discoveryBrowserLimiter.run(() => fetchRenderedPageLinksInner(url, maxLinks));
+}
+
+async function fetchRenderedPageLinksInner(url, maxLinks) {
+  let context;
   try {
     const origin = new URL(url).origin;
-    browser = await chromium.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
-    });
-    const context = await browser.newContext({
-      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-    });
-    const page = await context.newPage();
-    const links = await extractInternalLinks(page, url, origin);
-    await browser.close();
+    const created = await newStealthPage("Desktop");
+    context = created.context;
+    const links = await extractInternalLinks(created.page, url, origin);
+    await context.close();
     return links.slice(0, maxLinks);
   } catch (error) {
-    if (browser) await browser.close().catch(() => {});
+    if (context) await context.close().catch(() => {});
     console.error(`[fetchRenderedPageLinks] ${url}: ${error.message}`);
     return [];
   }
 }
 
+// Renders `url` and returns its same-origin internal links. Now checks for a
+// bot-protection challenge and waits it out — previously this had NO
+// challenge handling at all, so a blocked page (which happens more easily
+// after several rapid prior navigations to the same origin) silently yielded
+// zero links with no indication anything was wrong.
 async function extractInternalLinks(page, url, domain) {
     const links = new Set();
     try {
-        await page.goto(url, { waitUntil: "domcontentloaded", timeout: 50000 });
-        
-        // Wait for rendering
-        await new Promise(resolve => resolve());
-        
+        await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
+
+        if (await detectChallenge(page)) {
+            console.log(`🛡️ Challenge detected while crawling ${url}, attempting bypass...`);
+            await waitForChallengeResolution(page, 20000);
+        }
+
         const html = await page.content();
         const $ = cheerio.load(html);
 
@@ -212,4 +268,3 @@ async function extractInternalLinks(page, url, domain) {
     }
     return Array.from(links);
 }
-

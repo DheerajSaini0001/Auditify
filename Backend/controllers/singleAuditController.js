@@ -9,7 +9,8 @@ import { checkWebsiteExists } from "../utils/fastFetch.js";
 import { validateUrlSafety } from "../utils/ssrfGuard.js";
 import auditStore from "../utils/auditStore.js";
 import logger from "../utils/logger.js";
-import { classifyPageType, computePageScoreFromMap } from "../utils/sectionWeights.js";
+import { classifyPageType, classifyCorporatePageType, computePageScoreFromMap } from "../utils/sectionWeights.js";
+import { detectSiteType } from "../utils/siteTypeDetector.js";
  
 const reportFieldMap = {
   "Technical Performance": "technicalPerformance",
@@ -81,7 +82,7 @@ const mergeScores = (base, siblings) => {
 export const startAudit = async (req, res) => {
 
   try {
-    let { url, device, report, force, pageType } = req.body;
+    let { url, device, report, force, pageType, siteType } = req.body;
 
     if (!url || !device || !report) {
       return res.status(400).json({ error: "Missing required fields" });
@@ -219,6 +220,7 @@ export const startAudit = async (req, res) => {
             screenshot: fullAudit.screenshot,
             timeTaken: "0s (cached)",
             isBotProtected: fullAudit.isBotProtected,
+            siteType: fullAudit.siteType || null,
             userId: req.user?.userId || null
           });
 
@@ -236,8 +238,10 @@ export const startAudit = async (req, res) => {
           }
 
           // Weighted by the page-type tilt over the extracted sections (spec §5.4),
-          // matching what a fresh subset audit of this URL would produce.
-          const sectionScore = computePageScoreFromMap(pctBySection, classifyPageType(url));
+          // matching what a fresh subset audit of this URL would produce. Reuse
+          // whichever siteType the original full audit was classified as.
+          const classify = fullAudit.siteType === "corporate" ? classifyCorporatePageType : classifyPageType;
+          const sectionScore = computePageScoreFromMap(pctBySection, classify(url));
           const sectionGrade = sectionScore >= 90 ? "A+" : sectionScore >= 80 ? "A" : sectionScore >= 70 ? "B" : sectionScore >= 60 ? "C" : sectionScore >= 50 ? "D" : "F";
           newSectionReport.score = sectionScore;
           newSectionReport.grade = sectionGrade;
@@ -273,7 +277,39 @@ export const startAudit = async (req, res) => {
     const raceCheck = await SingleAuditReport.findOne({ url, device, report, status: "inprogress", userId: req.user?.userId || null });
     if (raceCheck) return res.status(200).json(raceCheck);
 
-    logger.info(`➡️ Starting NEW Audit Request → ${url} | ${device} | ${report}`);
+    // The frontend already ran /single-audit/discover for this URL and knows the
+    // siteType from that single homepage fetch — trust it when supplied so we
+    // never re-fetch. Only direct API callers (or the merge/reuse paths) land
+    // here without one; fall back to detecting it ourselves.
+    //
+    // Product decision: Auditify only audits dealership and automotive
+    // corporate/OEM sites — "unknown" (including inconclusive) is REJECTED,
+    // not failed open. /single-audit/discover already enforces this same gate
+    // before a user ever reaches this endpoint through the normal UI flow;
+    // this is the defense-in-depth check for direct API callers and a stale
+    // or tampered client-supplied siteType.
+    let normalizedSiteType = siteType === "corporate" || siteType === "dealer" ? siteType : null;
+    if (!normalizedSiteType) {
+      const detection = await detectSiteType(url);
+      if (detection.siteType !== "dealer" && detection.siteType !== "corporate") {
+        logger.info(`🚫 Rejected audit — not a dealer or automotive corporate site: ${url} (${detection.reason})`);
+        return res.status(400).json({
+          error: "This doesn't look like a dealership or automotive corporate/OEM website. Auditify only audits dealer and automotive-corporate sites.",
+        });
+      }
+      normalizedSiteType = detection.siteType;
+      // detection.resolvedUrl may differ from what was submitted — e.g. a bare
+      // apex domain that fails outright (TLS/DNS-level) while "www." works.
+      // Classification already succeeded against the working hostname; the
+      // worker that's about to launch a real browser against `url` needs that
+      // same hostname or it repeats the identical failure.
+      if (detection.resolvedUrl && detection.resolvedUrl !== url) {
+        logger.info(`${url} didn't resolve directly — auditing ${detection.resolvedUrl} instead`);
+        url = detection.resolvedUrl;
+      }
+    }
+
+    logger.info(`➡️ Starting NEW Audit Request → ${url} | ${device} | ${report} | ${normalizedSiteType}`);
 
     // No DB write here. The report lives in memory until the worker finishes; the
     // main thread then batches it to Mongo. We generate the id up front so the
@@ -285,6 +321,7 @@ export const startAudit = async (req, res) => {
       report,
       userId: req.user?.userId || null,
       pageType: pageType || null,
+      siteType: normalizedSiteType,
     });
 
     // Create a pending AuditLog entry asynchronously
@@ -345,6 +382,7 @@ export const startAudit = async (req, res) => {
         report,
         auditId: newReport._id.toString(),
         pageType: newReport.pageType || null,
+        siteType: newReport.siteType || null,
       },
     });
 

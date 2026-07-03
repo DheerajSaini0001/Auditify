@@ -7,6 +7,7 @@ const SiteReportSchema = new mongoose.Schema(
     device: { type: String, required: true },
     status: { type: String, default: 'inprogress' },
     pageType: { type: String, default: null },
+    siteType: { type: String, default: null },
     siteSchema: { type: Array, default: null },
     timeTaken: { type: String, default: null },
     score: { type: Number, default: null },

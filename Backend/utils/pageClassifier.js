@@ -89,10 +89,69 @@ export function classifyPageType(rawUrl) {
   }
   
   if (EXCLUDE_RE.test(path)) return "generic"; // excluded page → generic
-  
+
   for (const def of MATCH_ORDER) {
     if (def.test(path, lower)) return def.key;
   }
-  
+
+  return "generic";
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Corporate / OEM page-type classifier — a sibling to classifyPageType() above,
+// used instead of it when the site was detected as siteType "corporate" (see
+// Backend/utils/siteTypeDetector.js). A corporate site has no per-vehicle
+// inventory of its own, so the dealer taxonomy (SRP/VDP/trade/lease/finance/
+// service) doesn't apply; this taxonomy covers what a manufacturer or
+// multi-dealer corporate site actually has instead.
+// ─────────────────────────────────────────────────────────────────────────────
+const CORPORATE_MATCH_ORDER = [
+  {
+    key: "locator",
+    test: (p) =>
+      /(find-a-dealer|find-dealer|dealer-locator|locate-a-dealer|find-a-(store|retailer)|store-locator|dealer-locations)/.test(p),
+  },
+  {
+    key: "press",
+    test: (p) =>
+      /(newsroom|press-room|press-releases?|media-(center|centre|room)|corporate-news)/.test(p),
+  },
+  {
+    key: "models",
+    test: (p) =>
+      /(build-and-price|build-your-own|build-price|configurator|\/configure|\/models|vehicle-lineup|our-lineup)/.test(p),
+  },
+  {
+    key: "about",
+    test: (p) =>
+      /(about|our-company|our-story|\bcompany\b|corporate|leadership|our-history|careers|sustainability|governance|who-we-are|investor-relations|investors)/.test(p),
+  },
+  { key: "content", test: (p) => /(blog|news|articles?|resources?|guides?|stories|faqs?|frequently-asked)/.test(p) },
+];
+
+export function classifyCorporatePageType(rawUrl) {
+  let path, lower;
+  try {
+    const url = new URL(rawUrl);
+    path = normPath(url.pathname);
+    lower = rawUrl.toLowerCase();
+
+    if (path === "/" || path === "") {
+      return "home";
+    }
+  } catch {
+    path = normPath(String(rawUrl));
+    lower = String(rawUrl).toLowerCase();
+    if (path === "/" || path === "") {
+      return "home";
+    }
+  }
+
+  if (EXCLUDE_RE.test(path)) return "generic";
+
+  for (const def of CORPORATE_MATCH_ORDER) {
+    if (def.test(path, lower)) return def.key;
+  }
+
   return "generic";
 }

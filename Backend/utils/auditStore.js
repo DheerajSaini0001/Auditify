@@ -64,7 +64,7 @@ function logMetricResults(auditId, patch) {
 // Only these keys are persisted (mirror of singleAuditReport schema). Anything else
 // on the in-memory object (e.g. updatedAt) is bookkeeping and not written.
 const SCHEMA_FIELDS = [
-  "_id", "url", "report", "device", "status", "pageType", "siteSchema", "timeTaken",
+  "_id", "url", "report", "device", "status", "pageType", "siteType", "siteSchema", "timeTaken",
   "score", "grade", "aioCompatibilityBadge", "sectionScore", "technicalPerformance",
   "onPageSEO", "accessibility", "securityOrCompliance", "UXOrContentStructure",
   "conversionAndLeadFlow", "aioReadiness", "aeo", "isBotProtected", "isDealership",
@@ -82,7 +82,7 @@ const idStr = (v) => (v == null ? "" : String(v));
 const sameUser = (a, b) => idStr(a) === idStr(b);
 
 /** Create a fresh in-progress report held only in memory (no DB write). */
-function createInProgress({ _id, url, device, report, userId, pageType }) {
+function createInProgress({ _id, url, device, report, userId, pageType, siteType }) {
   const now = new Date();
   const doc = {
     _id,
@@ -91,6 +91,7 @@ function createInProgress({ _id, url, device, report, userId, pageType }) {
     device,
     status: "inprogress",
     pageType: pageType || null,
+    siteType: siteType || null,
     siteSchema: null,
     timeTaken: null,
     score: null,

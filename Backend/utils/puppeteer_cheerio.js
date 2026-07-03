@@ -509,6 +509,316 @@ export async function waitForChallengeResolution(page, timeout = 30000) {
   return !await detectChallenge(page);
 }
 
+// --- Shared browser pool for fetchWithBotBypass ----------------------------
+// Launching a full Chromium process is by far the most expensive part of a
+// bot-bypass fetch (typically 0.5-3s, real CPU/RAM, and a brand-new OS
+// process per call) — wasteful when classification runs many fetches over
+// the life of the server. A Playwright BrowserContext, by contrast, is a
+// cheap, fully-isolated "profile" (its own cookies/storage/cache) inside an
+// already-running browser — creating and closing one costs ~10-50ms. So this
+// keeps ONE browser alive across calls and hands out a fresh context per
+// fetch, closing only the context when done. The browser is recycled after
+// RECYCLE_AFTER_USES fetches (long-lived Chromium processes slowly accumulate
+// memory) or if it's found disconnected (crashed) — either way the next
+// caller transparently gets a freshly-launched one.
+const BOT_BYPASS_LAUNCH_OPTIONS = {
+  headless: true,
+  args: [
+    "--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage",
+    "--disable-accelerated-2d-canvas", "--disable-gpu", "--hide-scrollbars",
+    "--mute-audio", "--disable-blink-features=AutomationControlled",
+    "--disable-features=IsolateOrigins,site-per-process", "--window-size=1920,1080",
+    "--ignore-certificate-errors", "--no-zygote", "--disable-infobars",
+    "--disable-automation", "--no-first-run", "--no-default-browser-check",
+    "--disable-renderer-backgrounding", "--disable-backgrounding-occluded-windows",
+    "--lang=en-US,en",
+  ],
+};
+const RECYCLE_AFTER_USES = 50;
+
+let sharedBrowser = null;
+let sharedBrowserUses = 0;
+// Count of contexts currently open against `sharedBrowser` (incremented on
+// creation, decremented via the context's own 'close' event — see
+// newStealthContext below). CRITICAL for safe recycling: closing the shared
+// browser while another concurrent caller still has an open context/page on
+// it crashes that caller with "Target page, context or browser has been
+// closed" and, being an unhandled rejection, can take down the whole Node
+// process. Confirmed in production-scale testing (100-site concurrent run)
+// — the old code recycled purely on a use-count threshold with no idea
+// whether anyone was still using the browser.
+let activeContexts = 0;
+// Serializes getSharedBrowser() calls so concurrent callers can't race the
+// check-then-close-then-launch sequence (one deciding to recycle while
+// another still believes the old browser is fine to reuse).
+let browserSetupPromise = null;
+
+async function getSharedBrowser() {
+  if (browserSetupPromise) return browserSetupPromise;
+
+  const isDead = sharedBrowser && !sharedBrowser.isConnected();
+  const dueForRecycle = sharedBrowser && sharedBrowserUses >= RECYCLE_AFTER_USES && activeContexts === 0;
+  if (sharedBrowser && !isDead && !dueForRecycle) {
+    return sharedBrowser;
+  }
+
+  browserSetupPromise = (async () => {
+    if (sharedBrowser) {
+      try { await sharedBrowser.close(); } catch (_) { /* already gone */ }
+      sharedBrowser = null;
+    }
+    const browser = await chromium.launch(BOT_BYPASS_LAUNCH_OPTIONS);
+    sharedBrowser = browser;
+    sharedBrowserUses = 0;
+    return browser;
+  })();
+
+  try {
+    return await browserSetupPromise;
+  } finally {
+    browserSetupPromise = null;
+  }
+}
+
+// Best-effort cleanup so the shared browser doesn't linger as a zombie
+// process if the app shuts down. Playwright/OS process-group teardown would
+// likely catch this anyway, but an explicit close is cheap insurance.
+for (const signal of ["SIGINT", "SIGTERM", "beforeExit"]) {
+  process.once(signal, () => {
+    if (sharedBrowser) { sharedBrowser.close().catch(() => {}); }
+  });
+}
+
+// Create a fresh, fully-stealthed context+page from the shared browser pool.
+// Extracted out of fetchWithBotBypass so OTHER crawlers (sitemapCrawler.js)
+// can get the SAME bot-bypass sophistication — and the SAME shared browser,
+// instead of each maintaining its own separate, weaker-stealth, non-pooled
+// `chromium.launch()` — rather than duplicating this setup. Caller MUST close
+// the returned `context` when done (never the browser — it's shared).
+async function newStealthContext(device = 'Desktop') {
+  const browser = await getSharedBrowser();
+  sharedBrowserUses++;
+
+  const userAgent = device === "Mobile"
+    ? "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Mobile Safari/537.36"
+    : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36";
+
+  const contextOptions = {
+    userAgent,
+    viewport: device === "Mobile" ? { width: 393, height: 852 } : { width: 1920, height: 1080 },
+    extraHTTPHeaders: {
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+      'Accept-Encoding': 'gzip, deflate, br',
+      'Cache-Control': 'max-age=0',
+      'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="125", "Google Chrome";v="125"',
+      'Sec-Ch-Ua-Mobile': device === "Mobile" ? '?1' : '?0',
+      'Sec-Ch-Ua-Platform': device === "Mobile" ? '"Android"' : '"Windows"',
+      'Sec-Fetch-Dest': 'document',
+      'Sec-Fetch-Mode': 'navigate',
+      'Sec-Fetch-Site': 'none',
+      'Sec-Fetch-User': '?1',
+      'Upgrade-Insecure-Requests': '1',
+      'Referer': 'https://www.google.com/',
+    },
+    ignoreHTTPSErrors: true,
+    locale: 'en-US',
+    timezoneId: 'America/New_York',
+  };
+  if (device === "Mobile") { contextOptions.hasTouch = true; contextOptions.isMobile = true; }
+  else { contextOptions.deviceScaleFactor = 2; }
+
+  const context = await browser.newContext(contextOptions);
+  activeContexts++;
+  // Decrement on close REGARDLESS of who closes it (caller's own finally
+  // block, or a crash) — this is what lets getSharedBrowser() above know
+  // it's actually safe to recycle.
+  context.on('close', () => { activeContexts = Math.max(0, activeContexts - 1); });
+  let page;
+  try {
+    page = await context.newPage();
+  } catch (err) {
+    await context.close().catch(() => {});
+    throw err;
+  }
+
+  // Same fingerprint-evasion suite the full-audit path (Puppeteer_Cheerio
+  // below) already uses — this lightweight classification path previously
+  // only spoofed 3 properties (webdriver/languages/plugins), a much weaker
+  // stealth level than the proven full-audit one, which is a real gap since
+  // site-type detection is the FIRST thing to touch a new domain and needs to
+  // survive the same WAFs. Wrapped so a single evasion failing can't abort
+  // the rest.
+  await page.addInitScript(() => {
+    const safe = (fn) => { try { fn(); } catch (_) { /* evasion best-effort */ } };
+
+    safe(() => Object.defineProperty(navigator, 'webdriver', { get: () => false }));
+    safe(() => Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] }));
+    safe(() => Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] }));
+    safe(() => Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => 8 }));
+    safe(() => Object.defineProperty(navigator, 'platform', { get: () => 'Win32' }));
+    safe(() => Object.defineProperty(navigator, 'vendor', { get: () => 'Google Inc.' }));
+    safe(() => Object.defineProperty(navigator, 'maxTouchPoints', { get: () => 0 }));
+
+    safe(() => {
+      if (!window.chrome) {
+        window.chrome = {
+          runtime: {},
+          app: { isInstalled: false, InstallState: { DISABLED: 'disabled', INSTALLED: 'installed', NOT_INSTALLED: 'not_installed' }, RunningState: { CANNOT_RUN: 'cannot_run', READY_TO_RUN: 'ready_to_run', RUNNING: 'running' } },
+          csi: function () { },
+          loadTimes: function () { },
+        };
+      }
+    });
+
+    safe(() => {
+      const originalQuery = window.navigator.permissions && window.navigator.permissions.query;
+      if (originalQuery) {
+        window.navigator.permissions.query = (parameters) =>
+          parameters && parameters.name === 'notifications'
+            ? Promise.resolve({ state: Notification.permission })
+            : originalQuery(parameters);
+      }
+    });
+
+    safe(() => {
+      Object.defineProperty(navigator, 'mimeTypes', {
+        get: () => [
+          { type: 'application/pdf', suffixes: 'pdf', description: 'Portable Document Format' },
+          { type: 'application/x-google-chrome-pdf', suffixes: 'pdf', description: 'Portable Document Format' },
+        ],
+      });
+    });
+
+    safe(() => {
+      const spoof = (proto) => {
+        if (!proto) return;
+        const getParameter = proto.getParameter;
+        proto.getParameter = function (parameter) {
+          if (parameter === 37445) return 'Intel Inc.';
+          if (parameter === 37446) return 'Intel Iris OpenGL Engine';
+          return getParameter.apply(this, [parameter]);
+        };
+      };
+      spoof(window.WebGLRenderingContext && window.WebGLRenderingContext.prototype);
+      spoof(window.WebGL2RenderingContext && window.WebGL2RenderingContext.prototype);
+    });
+
+    safe(() => {
+      if (window.outerWidth === 0) Object.defineProperty(window, 'outerWidth', { get: () => window.innerWidth });
+      if (window.outerHeight === 0) Object.defineProperty(window, 'outerHeight', { get: () => window.innerHeight + 74 });
+    });
+
+    safe(() => {
+      if (!navigator.connection) {
+        Object.defineProperty(navigator, 'connection', {
+          get: () => ({ effectiveType: '4g', rtt: 50, downlink: 10, saveData: false }),
+        });
+      }
+    });
+  });
+
+  return { context, page };
+}
+
+/**
+ * Get a fresh stealth context+page from the same shared browser pool
+ * fetchWithBotBypass uses — for other crawlers (sitemapCrawler.js) that need
+ * the same bot-bypass sophistication without reimplementing it. Caller MUST
+ * call `context.close()` when done (never close the browser itself).
+ *
+ * @param {string} [device]
+ * @returns {Promise<{context: object, page: object}>}
+ */
+export async function newStealthPage(device = 'Desktop') {
+  return newStealthContext(device);
+}
+
+/**
+ * Lightweight bot-bypass fetch — for callers that only need the rendered HTML
+ * (e.g. site-type classification), not a screenshot or a fully-loaded page.
+ * Reuses the same stealth launch config and challenge-resolution logic as
+ * Puppeteer_Cheerio below, but skips autoScroll/popup-handling/image-wait/
+ * screenshot capture — ~20-30s of work that classification doesn't need —
+ * and runs inside a shared, reused browser instance (see getSharedBrowser
+ * above) rather than launching a new one per call.
+ *
+ * Timeouts are tighter than the full-audit path, but this now uses the same
+ * clearance-cookie-aware reload-retry loop that path relies on — a Cloudflare
+ * managed challenge often issues its cf_clearance cookie within a few
+ * seconds, but the DOM the browser is currently looking at doesn't reflect
+ * that until the page reloads. A single wait-then-check (the old behavior)
+ * misses this and gives up right as the challenge actually clears; a reload
+ * catches it. Genuine unsolvable blocks (e.g. Tesla's PerimeterX, or a static
+ * 403 with no JS challenge at all) still won't clear no matter how many
+ * retries — those are a real, accepted limitation without IP rotation.
+ *
+ * @param {string} url
+ * @param {string} [device]
+ * @returns {Promise<{$: object, statusCode: number, isBotProtected: boolean}>}
+ *   No `browser` in the result — this function owns the shared browser's
+ *   lifecycle itself and only closes the per-call context, so there is
+ *   nothing left for the caller to close.
+ */
+export async function fetchWithBotBypass(url, device = 'Desktop') {
+  let context;
+  try {
+    const created = await newStealthContext(device);
+    context = created.context;
+    const page = created.page;
+
+    let response = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 15000 }).catch(() => null);
+    if (!response) {
+      response = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 10000 }).catch(() => null);
+    }
+
+    let isBotProtected = await detectChallenge(page);
+    if (isBotProtected) {
+      await waitForChallengeResolution(page, 15000);
+      isBotProtected = await detectChallenge(page);
+    }
+
+    const hasClearanceCookie = async () => {
+      try {
+        const cookies = await context.cookies();
+        return cookies.some((c) => /^(cf_clearance|__cf_bm|datadome|incap_ses|ak_bmsc)/i.test(c.name) && c.value);
+      } catch (_) {
+        return false;
+      }
+    };
+
+    // Up to 2 reload retries — mirrors the full-audit path's proven approach,
+    // scaled down to keep this lightweight path's worst case bounded (~60s
+    // total) so one blocked site can't monopolize a browserLimiter slot and
+    // back up the queue for other, likely-legitimate sites waiting behind it.
+    let botRetries = 0;
+    while (isBotProtected && botRetries < 2) {
+      botRetries++;
+      try {
+        await page.reload({ waitUntil: "domcontentloaded", timeout: 10000 });
+      } catch (_) { /* reload failure — fall through to re-check below */ }
+      try { await page.waitForTimeout(randInt(1000, 2000)); } catch (_) { }
+      await waitForChallengeResolution(page, 8000);
+      isBotProtected = await detectChallenge(page);
+
+      if (isBotProtected && (await hasClearanceCookie())) {
+        try { await page.reload({ waitUntil: "domcontentloaded", timeout: 10000 }); } catch (_) { }
+        isBotProtected = await detectChallenge(page);
+      }
+    }
+
+    const html = await safePageContent(page);
+    const statusCode = response ? response.status() : (html ? 200 : 0);
+    return { $: cheerio.load(html || "<html><body></body></html>"), statusCode, isBotProtected };
+  } catch (err) {
+    // Never throw — a failed classification-only fetch should just look
+    // "empty" to the caller, not crash the request.
+    return { $: cheerio.load("<html><body></body></html>"), statusCode: 0, isBotProtected: false };
+  } finally {
+    if (context) { try { await context.close(); } catch (_) { /* already closed */ } }
+  }
+}
+
 /**
  * @param {string} url
  * @param {string} device

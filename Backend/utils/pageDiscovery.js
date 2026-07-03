@@ -4,7 +4,7 @@ import { parseStringPromise } from "xml2js";
 import { validateUrlSafety } from "./ssrfGuard.js";
 import discoverPages, { fetchRenderedPageLinks } from "./sitemapCrawler.js"; // Playwright fallback (bot-protected / JS-only sites)
 import logger from "./logger.js";
-import { classifyPageType } from "./pageClassifier.js";
+import { classifyPageType, classifyCorporatePageType } from "./pageClassifier.js";
 
 /**
  * Dealership page discovery.
@@ -50,7 +50,15 @@ const AXIOS_OPTS = {
 const MAX_SITEMAP_URLS = 1500;
 const MAX_CHILD_SITEMAPS = 15;
 const MAX_SITEMAP_DEPTH = 2;
-const MAX_CRAWL_PAGES = 60;
+// Was 60 — too low for real dealer homepages with a large model/trim lineup
+// (a multi-brand luxury dealer's homepage nav alone can legitimately contain
+// 150+ distinct same-origin links, one per trim/model variant, ALL correctly
+// classified as "srp"). The old cap filled up entirely from the homepage's
+// own srp-variant links before the crawl ever reached later-in-the-DOM links
+// like Schedule Service / About / Trade-In — those categories were never
+// missing from the site, just never added to the pool at all. Confirmed via
+// fjmercedes.com: 178 real same-origin links on the homepage alone.
+const MAX_CRAWL_PAGES = 250;
 
 // Names of child sitemaps that hold the (potentially huge) inventory/VDP feeds.
 // Once we have enough inventory we skip *these* specifically, but keep reading the
@@ -170,6 +178,17 @@ const DISPLAY = [
   { key: "content", label: "Content", hint: "Blog, news, FAQ & how-to" },
 ];
 
+// The checklist the UI renders for a corporate/OEM site (siteType "corporate").
+// No SRP/VDP/trade/lease/service — a corporate site has no inventory of its own.
+const CORPORATE_DISPLAY = [
+  { key: "home", label: "Home", hint: "Homepage" },
+  { key: "models", label: "Models & Lineup", hint: "Vehicle lineup, research, build & price" },
+  { key: "locator", label: "Dealer Locator", hint: "Find a dealer near you" },
+  { key: "press", label: "Press & News", hint: "Newsroom, media, investor relations" },
+  { key: "about", label: "About & Corporate", hint: "Company info, leadership, careers, sustainability" },
+  { key: "content", label: "Content", hint: "Blog, guides & FAQ" },
+];
+
 // Conventional URL slugs per category, hub-first. Dealership sites overwhelmingly
 // use these paths, so when a page exists but is absent from the sitemap AND not
 // linked from the homepage (reachable only by a secondary route), probing the
@@ -204,8 +223,13 @@ const conditionOf = (rawUrl) => {
 // Resolve a URL to its checklist category (first match in MATCH_ORDER wins), or
 // null if it matches none. Shared by rankCandidates (bucketing) and the sitemap
 // early-exit check so both agree on exactly what counts as an SRP / VDP.
-function categoryOf(raw) {
-  const key = classifyPageType(raw);
+// `siteType` picks which taxonomy to classify against; the sitemap early-exit
+// heuristic (poolHasEnoughInventory) always calls this with the dealer default —
+// that's an "is there enough dealer inventory to stop reading" optimization and
+// is meaningless for a corporate site (which never has srp/vdp), so it simply
+// never early-exits there and falls back to the bounded read limits instead.
+function categoryOf(raw, siteType = "dealer") {
+  const key = siteType === "corporate" ? classifyCorporatePageType(raw) : classifyPageType(raw);
   if (key === "generic") return null;
   let path, lower;
   try {
@@ -275,9 +299,8 @@ async function collectFromSitemap(sitemapUrl, pool, depth = 0) {
     let inventorySatisfied = false;
     for (const sm of parsed.sitemapindex.sitemap) {
       if (count++ >= MAX_CHILD_SITEMAPS || pool.size >= MAX_SITEMAP_URLS) break;
-      const loc = sm?.loc?.[0];
-      if (!loc) continue;
-      const child = loc.trim();
+      const child = locText(sm?.loc?.[0]);
+      if (!child) continue;
       // Once we have enough inventory, skip the remaining *inventory/VDP* child
       // sitemaps (these are the big ones we don't need more of) — but keep reading
       // the small informational sitemaps (menu/page/contact/about/specials) so the
@@ -291,10 +314,20 @@ async function collectFromSitemap(sitemapUrl, pool, depth = 0) {
   if (parsed.urlset?.url) {
     for (const entry of parsed.urlset.url) {
       if (pool.size >= MAX_SITEMAP_URLS) break;
-      const loc = entry?.loc?.[0];
-      if (loc) pool.add(loc.trim());
+      const loc = locText(entry?.loc?.[0]);
+      if (loc) pool.add(loc);
     }
   }
+}
+
+// xml2js normally parses <loc>https://...</loc> as a plain string, but a
+// namespaced or attribute-bearing <loc> element (seen on bajajauto.com's
+// sitemap, which crashed with "loc.trim is not a function") parses as an
+// object with the text under `_` instead. Handle both shapes defensively.
+function locText(loc) {
+  if (typeof loc === "string") return loc.trim();
+  if (loc && typeof loc === "object" && typeof loc._ === "string") return loc._.trim();
+  return null;
 }
 
 // Pull `Sitemap:` directives out of robots.txt.
@@ -366,10 +399,10 @@ const isDeadStatus = (status) => status === 404 || status === 410;
 // Group pool URLs by category (first matching category wins per URL), with each
 // category's candidates ranked best-first: hub pages (fewest path segments /
 // shortest) lead, except VDP where a VIN page is preferred.
-function rankCandidates(pool) {
+function rankCandidates(pool, siteType = "dealer") {
   const byCat = {};
   for (const raw of pool) {
-    const c = categoryOf(raw);
+    const c = categoryOf(raw, siteType);
     if (!c) continue;
     const { key, path, lower } = c;
     const segs = path.split("/").filter(Boolean).length;
@@ -386,11 +419,17 @@ function rankCandidates(pool) {
 // Walk a category's ranked candidates and return the first whose link isn't a
 // dead 404/410 — so a stale sitemap entry (e.g. /vehicle) is skipped in favour
 // of a live one (e.g. /vehicles). Bounded so a category can't fan out forever.
+// Checked in PARALLEL, not sequentially — same reasoning as the sitemap-path
+// fix above. checkStatus's own HEAD-then-GET-fallback already costs up to 14s
+// per URL on an origin that tarpits plain HTTP (confirmed on ford.com); doing
+// that up to `max` times in a row per category was compounding it further.
+// Priority order is preserved: the lowest-index candidate that came back live
+// wins, regardless of which network call actually finished first.
 async function firstLiveUrl(candidates, max = 3) {
-  for (const c of candidates.slice(0, max)) {
-    if (!isDeadStatus(await checkStatus(c.url))) return c.url;
-  }
-  return null;
+  const slice = candidates.slice(0, max);
+  const statuses = await Promise.all(slice.map((c) => checkStatus(c.url)));
+  const liveIndex = statuses.findIndex((s) => !isDeadStatus(s));
+  return liveIndex === -1 ? null : slice[liveIndex].url;
 }
 
 // Fisher–Yates shuffle (new array) — VDP sampling is meant to be random.
@@ -502,15 +541,19 @@ async function sampleVdps(byCat, srpPages, origin) {
 }
 
 /**
- * Discover the dealership's main pages.
- * @param {string} rawUrl  the dealer URL the user entered
+ * Discover a site's main pages.
+ * @param {string} rawUrl  the URL the user entered
  * @param {string[]|null} scopes  page-type keys to discover; null = all of them.
  *   Out-of-scope categories skip the expensive resolution (live-status checks,
  *   SRP planning, VDP sampling) so the backend does no work for pages the user
  *   excluded in the form.
+ * @param {'dealer'|'corporate'} siteType  which taxonomy to discover against
+ *   (see Backend/utils/siteTypeDetector.js). Defaults to "dealer" — the
+ *   original, unchanged behavior — for "unknown"/unset siteType too, so nothing
+ *   regresses when the classifier can't confidently tell.
  * @returns {Promise<object>} discovery result (source, steps, categories, …)
  */
-export async function discoverDealerPages(rawUrl, scopes = null) {
+export async function discoverDealerPages(rawUrl, scopes = null, siteType = "dealer") {
   // A category is in scope when no filter was passed, or the filter includes it.
   const scopeSet = Array.isArray(scopes) && scopes.length ? new Set(scopes) : null;
   const inScope = (key) => !scopeSet || scopeSet.has(key);
@@ -536,6 +579,14 @@ export async function discoverDealerPages(rawUrl, scopes = null) {
   logger.info(`🧭 Page discovery starting for ${origin}`);
 
   // ── Step 1: XML sitemap (direct) ──
+  // Checked in PARALLEL, not sequentially — a site normally has exactly one
+  // real sitemap location, so awaiting each candidate path one at a time only
+  // pays off when most of them fail FAST (a quick 404). Some large corporate
+  // sites (confirmed on ford.com, bmwusa.com, lincoln.com) instead silently
+  // drop or tarpit plain axios requests, so every one of the 6 candidates ate
+  // its full ~12s timeout sequentially — ~72s wasted before ever reaching the
+  // browser-based crawl fallback below, which then succeeded in seconds. Now
+  // all 6 fire at once and the slowest one bounds the wait instead of the sum.
   const candidatePaths = [
     "/sitemap.xml",
     "/sitemap_index.xml",
@@ -544,14 +595,20 @@ export async function discoverDealerPages(rawUrl, scopes = null) {
     "/wp-sitemap.xml",
     "/sitemap/sitemap.xml",
   ];
-  for (const path of candidatePaths) {
-    const before = pool.size;
-    await collectFromSitemap(origin + path, pool);
-    if (pool.size > before) {
-      sitemapUrl = origin + path;
-      source = "sitemap";
-      break;
-    }
+  const sitemapAttempts = await Promise.all(
+    candidatePaths.map(async (path) => {
+      const attemptPool = new Set();
+      await collectFromSitemap(origin + path, attemptPool);
+      return { path, pool: attemptPool };
+    })
+  );
+  // First candidate (in the original priority order) that actually found
+  // something wins — matches the old sequential "first match wins" semantics.
+  const firstHit = sitemapAttempts.find((a) => a.pool.size > 0);
+  if (firstHit) {
+    firstHit.pool.forEach((u) => pool.add(u));
+    sitemapUrl = origin + firstHit.path;
+    source = "sitemap";
   }
   steps.push(
     sitemapUrl
@@ -560,27 +617,42 @@ export async function discoverDealerPages(rawUrl, scopes = null) {
   );
 
   // ── Step 2: robots.txt → Sitemap directive ──
+  // Directives are fetched in PARALLEL — same fix as Step 1. A robots.txt can
+  // list several Sitemap: lines (common for large corporate sites — ford.com
+  // lists 4+), and the old sequential loop meant each one ate a full ~12s
+  // timeout in turn on an origin that tarpits plain HTTP instead of failing
+  // fast. Confirmed as the single largest chunk of ford.com's discovery time
+  // (~49s of a ~93s total) before this fix. Results from every sitemap that
+  // found anything are merged (not just the first), matching the original
+  // "keep reading all of them" behavior — just no longer one at a time.
   if (pool.size === 0) {
     const robotsSitemaps = await sitemapsFromRobots(origin);
-    for (const sm of robotsSitemaps) {
-      const before = pool.size;
-      await collectFromSitemap(sm, pool);
-      if (pool.size > before) {
-        sitemapUrl = sm;
-        source = "robots";
+    let anyAdded = false;
+    if (robotsSitemaps.length) {
+      const attempts = await Promise.all(
+        robotsSitemaps.map(async (sm) => {
+          const attemptPool = new Set();
+          await collectFromSitemap(sm, attemptPool);
+          return { sm, pool: attemptPool };
+        })
+      );
+      for (const a of attempts) {
+        if (a.pool.size > 0) {
+          a.pool.forEach((u) => pool.add(u));
+          if (!sitemapUrl) sitemapUrl = a.sm;
+          anyAdded = true;
+          source = "robots";
+        }
       }
-      // Stop opening further robots.txt Sitemap: entries once we already have an
-      // inventory (SRP) and a vehicle-detail (VDP) page.
-      if (poolHasEnoughInventory(pool)) break;
     }
     steps.push(
       robotsSitemaps.length
         ? {
             key: "robots",
             label: "robots.txt",
-            status: sitemapUrl ? "found" : "missing",
+            status: anyAdded ? "found" : "missing",
             url: sitemapUrl || undefined,
-            detail: sitemapUrl
+            detail: anyAdded
               ? "Sitemap located via robots.txt"
               : "robots.txt declared a sitemap, but it was empty or unreachable",
           }
@@ -622,12 +694,17 @@ export async function discoverDealerPages(rawUrl, scopes = null) {
   // ── Categorize, then resolve each category's page(s) ──
   // A sitemap can list URLs that now 404. For the single-URL categories we walk
   // their ranked candidates and keep the first that isn't a dead 404/410 link.
-  // SRP and VDP can fan out (see planSrp / sampleVdps) so they're resolved apart.
-  const ranked = rankCandidates(pool);
+  // SRP and VDP can fan out (see planSrp / sampleVdps) so they're resolved apart —
+  // but that fan-out is a DEALER-only concept (inventory/vehicle sampling); a
+  // corporate site has no SRP/VDP category at all, so every one of its
+  // categories resolves like the dealer path's single-URL categories.
+  const isCorporate = siteType === "corporate";
+  const ranked = rankCandidates(pool, siteType);
+  const DISPLAY_TABLE = isCorporate ? CORPORATE_DISPLAY : DISPLAY;
 
   // Only resolve the categories the user kept in scope — out-of-scope ones skip the
   // live-status checks / SRP planning / VDP sampling entirely (no wasted backend work).
-  const SINGLE_KEYS = Object.keys(ranked).filter((k) => k !== "srp" && k !== "vdp" && inScope(k));
+  const SINGLE_KEYS = Object.keys(ranked).filter((k) => (isCorporate || (k !== "srp" && k !== "vdp")) && inScope(k));
   const picks = {};
   const resolved = await Promise.all(
     SINGLE_KEYS.map(async (key) => [key, await firstLiveUrl(ranked[key])])
@@ -635,9 +712,9 @@ export async function discoverDealerPages(rawUrl, scopes = null) {
   for (const [key, url] of resolved) if (url) picks[key] = url;
 
   // SRP: both new + used listing pages when separate, else the single page.
-  const srpPages = inScope("srp") ? await planSrp(ranked) : [];
+  const srpPages = !isCorporate && inScope("srp") ? await planSrp(ranked) : [];
   // VDP: a 5-car sample (3 used + 2 new when both exist), mined off the SRP(s) too.
-  const vdpPages = inScope("vdp") ? await sampleVdps(ranked, srpPages, origin) : [];
+  const vdpPages = !isCorporate && inScope("vdp") ? await sampleVdps(ranked, srpPages, origin) : [];
 
   // Build the per-category page lists the audit will fan out over. Each entry is
   // { url, label, condition } — `label` distinguishes the multiple SRP/VDP samples.
@@ -657,7 +734,7 @@ export async function discoverDealerPages(rawUrl, scopes = null) {
     });
   }
 
-  const categories = DISPLAY.map((d) => {
+  const categories = DISPLAY_TABLE.map((d) => {
     // Excluded in the form → not resolved. Flag it so the UI can say "Not included".
     if (!inScope(d.key)) {
       return { key: d.key, label: d.label, hint: d.hint, url: null, found: false, inScope: false, pages: [] };

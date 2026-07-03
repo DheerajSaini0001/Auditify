@@ -11,6 +11,12 @@
 // null/absent score — e.g. a subset audit — is dropped from the denominator).
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Corporate/OEM sites use pageClassifier.js's own corporate taxonomy (models/
+// locator/press/about/content) rather than a 4th duplicated regex set here —
+// re-exported so callers that already import classifyPageType from this module
+// (e.g. singleAuditController.js's section-reuse path) can pick the right one.
+export { classifyCorporatePageType } from "./pageClassifier.js";
+
 // Canonical section order (A..H) — matches singleAuditWorker's OverAll() ordering.
 export const SECTION_ORDER = [
   "Technical Performance",
@@ -38,6 +44,14 @@ export const SECTION_PAGE_WEIGHTS = {
   service: [16, 16, 10, 10, 13, 19, 8, 8],
   about:   [14, 16, 11, 10, 15, 12, 10, 12],
   blog:    [14, 22, 11,  9, 15,  7, 10, 12],
+  // Corporate/OEM page types (mirrors singleAuditWorker's SECTION_WEIGHTS_BY_PAGE_TYPE).
+  models:  [18, 20, 10,  8, 14, 10, 9, 11],
+  locator: [16, 14, 10,  8, 16, 20, 6, 10],
+  press:   [14, 18, 10,  8, 14,  6, 10, 20],
+  // classifyCorporatePageType (pageClassifier.js) labels its blog/news bucket
+  // "content", not "blog" — same weights as the dealer "blog" row above so the
+  // two classifiers' vocab differences don't change the actual tilt applied.
+  content: [14, 22, 11,  9, 15,  7, 10, 12],
 };
 
 // URL → page-type classifier (spec §1 / §5.6 columns). URL-pattern based, mirroring

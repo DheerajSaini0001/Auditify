@@ -71,28 +71,28 @@ const AdminConfig = () => {
       <div className="flex flex-col p-4 gap-4 overflow-y-auto">
         {/* Create Project Button */}
         <div className="relative">
-                <button
-                  onClick={() => setCreateDropdownOpen(!createDropdownOpen)}
-                  className="w-full flex items-center justify-between px-4 py-2.5 bg-orange-600 hover:bg-orange-350 text-white rounded-xl font-semibold text-sm transition-all shadow-md shadow-orange-600/10 active:scale-[0.98]"
-                >
-                  <div className="flex items-center gap-2">
-                    <Plus size={16} />
-                    <span>Create Project</span>
-                  </div>
-                  <ChevronDown size={14} className="opacity-80" />
-                </button>
-      
-                {createDropdownOpen && (
-                  <div className={`absolute top-full left-0 right-0 mt-1.5 rounded-xl shadow-xl z-50 py-1 animate-in fade-in slide-in-from-top-1 duration-150 border transition-all duration-300 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-card border-line'}`}>
-                    <button
-                      onClick={() => { setCreateDropdownOpen(false); navigate("/dashboard/add-website"); }}
-                      className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-inksoft hover:bg-cardsoft'}`}
-                    >
-                      Add Google Search Console Site
-                    </button>
-                  </div>
-                )}
-              </div>
+          <button
+            onClick={() => setCreateDropdownOpen(!createDropdownOpen)}
+            className="w-full flex items-center justify-between px-4 py-2.5 bg-orange-600 hover:bg-orange-350 text-white rounded-xl font-semibold text-sm transition-all shadow-md shadow-orange-600/10 active:scale-[0.98]"
+          >
+            <div className="flex items-center gap-2">
+              <Plus size={16} />
+              <span>Create Project</span>
+            </div>
+            <ChevronDown size={14} className="opacity-80" />
+          </button>
+
+          {createDropdownOpen && (
+            <div className={`absolute top-full left-0 right-0 mt-1.5 rounded-xl shadow-xl z-50 py-1 animate-in fade-in slide-in-from-top-1 duration-150 border transition-all duration-300 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-card border-line'}`}>
+              <button
+                onClick={() => { setCreateDropdownOpen(false); navigate("/dashboard/add-website"); }}
+                className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-inksoft hover:bg-cardsoft'}`}
+              >
+                Add Google Search Console Site
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Search project box */}
         <div className="relative">
@@ -181,7 +181,7 @@ const AdminConfig = () => {
           </button>
         </nav>
 
-     
+
       </div>
 
       {/* Premium promotional block */}
@@ -383,7 +383,7 @@ const AdminConfig = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Dealer Pulse-configs-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `Site Audit-configs-${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
     toast.success('Config keys exported');

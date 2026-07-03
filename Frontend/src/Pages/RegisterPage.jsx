@@ -19,7 +19,7 @@ const RegisterPage = () => {
   });
   const [captchaAnswer, setCaptchaAnswer] = useState('');
   const [captchaId, setCaptchaId] = useState('');
-  const [captchaKey, setCaptchaKey] = useState(0); 
+  const [captchaKey, setCaptchaKey] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isCaptchaModalOpen, setIsCaptchaModalOpen] = useState(false);
@@ -37,7 +37,7 @@ const RegisterPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     if (formData.password !== formData.confirmPassword) {
       toast.error('Passwords do not match');
       return;
@@ -56,7 +56,7 @@ const RegisterPage = () => {
     setCaptchaAnswer(verifiedAnswer);
     setCaptchaId(verifiedId);
     setIsCaptchaModalOpen(false);
-    
+
     // Now perform the actual registration
     performRegistration(verifiedAnswer, verifiedId);
   };
@@ -76,11 +76,11 @@ const RegisterPage = () => {
 
     if (ok) {
       toast.success(data.message);
-      navigate('/verify-otp', { 
-        state: { 
+      navigate('/verify-otp', {
+        state: {
           email: formData.email,
-          from: location.state?.from 
-        } 
+          from: location.state?.from
+        }
       });
     } else {
       toast.error(data.message || 'Registration failed');
@@ -110,19 +110,19 @@ const RegisterPage = () => {
       <div className={`register-wrapper ${darkMode ? 'dark' : 'light'}`}>
         {/* Left Side: Branding */}
         <div className="register-branding">
-          <img 
-            src="/Users/dheeraj/.gemini/antigravity/brain/395eb820-345b-4db5-9b19-dad312edc833/registration_branding_image_1777615204902.png" 
-            alt="Branding" 
-            className="branding-image-bg" 
+          <img
+            src="/Users/dheeraj/.gemini/antigravity/brain/395eb820-345b-4db5-9b19-dad312edc833/registration_branding_image_1777615204902.png"
+            alt="Branding"
+            className="branding-image-bg"
           />
           <div className="branding-overlay"></div>
           <div className="branding-content">
             <Link to="/">
-              <img src={Assets.Logo} alt="Dealer Pulse" className="h-12 w-auto mb-10 brightness-0 invert" />
+              <img src={Assets.Logo} alt="Site Audit" className="h-12 w-auto mb-10 brightness-0 invert" />
             </Link>
-            <h1 className="branding-title">Start Your Journey with Dealer Pulse</h1>
+            <h1 className="branding-title">Start Your Journey with Site Audit</h1>
             <p className="branding-subtitle">
-              Join thousands of professionals who use Dealer Pulse to optimize, secure, and scale their web presence with AI-driven insights.
+              Join thousands of professionals who use Site Audit to optimize, secure, and scale their web presence with AI-driven insights.
             </p>
           </div>
         </div>
@@ -183,26 +183,25 @@ const RegisterPage = () => {
                   onChange={handleChange}
                 />
                 <Lock className="input-field-icon" size={18} />
-                <button 
-                  type="button" 
-                  onClick={() => setShowPassword(!showPassword)} 
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-4 text-faint hover:text-emerald-500 transition-colors"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
-              
+
               {formData.password && (
                 <div className="mt-2 px-1">
                   <div className="flex gap-1 h-1">
                     {[1, 2, 3, 4].map((level) => (
                       <div
                         key={level}
-                        className={`flex-1 rounded-full transition-all duration-500 ${
-                          strength >= level
+                        className={`flex-1 rounded-full transition-all duration-500 ${strength >= level
                             ? strength <= 2 ? 'bg-rose-500' : strength === 3 ? 'bg-amber-500' : 'bg-emerald-500'
                             : darkMode ? "bg-white/10" : 'bg-cardsoft'
-                        }`}
+                          }`}
                       ></div>
                     ))}
                   </div>
@@ -249,7 +248,7 @@ const RegisterPage = () => {
       </div>
 
       {isCaptchaModalOpen && (
-        <CaptchaModal 
+        <CaptchaModal
           isOpen={isCaptchaModalOpen}
           onClose={() => setIsCaptchaModalOpen(false)}
           onVerify={handleCaptchaVerify}

@@ -77,7 +77,7 @@ const Register = () => {
             <UserPlus className="text-white w-8 h-8" />
           </div>
           <h1 className={`text-3xl font-semibold mb-2 ${darkMode ? 'text-white' : 'text-ink'}`}>Create Account</h1>
-          <p className={darkMode ? 'text-gray-400' : 'text-muted'}>Join Dealer Pulse and start auditing smarter</p>
+          <p className={darkMode ? 'text-gray-400' : 'text-muted'}>Join Site Audit and start auditing smarter</p>
         </header>
 
         <form onSubmit={handleSubmit} className="space-y-5">

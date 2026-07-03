@@ -38,8 +38,8 @@ const AISummaryBlock = ({ sectionName, sectionData, auditScore, url, darkMode })
 
     return (
         <div className={`mt-8 p-6 rounded-2xl border-2 transition-all ${darkMode
-                ? 'bg-blue-600/5 border-blue-500/20'
-                : 'bg-accentsoft border-line'
+            ? 'bg-blue-600/5 border-blue-500/20'
+            : 'bg-accentsoft border-line'
             }`}>
             <div className="flex items-center gap-3 mb-4">
                 <div className={`p-2 rounded-xl ${darkMode ? 'bg-blue-600/20 text-blue-400' : 'bg-accent text-white'}`}>
@@ -85,7 +85,7 @@ const AISummaryBlock = ({ sectionName, sectionData, auditScore, url, darkMode })
             {!loading && !error && (
                 <div className="mt-4 pt-4 border-t border-blue-500/10 flex items-center gap-2">
                     <span className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-blue-500/40' : 'text-accent'}`}>
-                        Dealer Pulse Intelligence Protocol v2.5.0
+                        Site Audit Intelligence Protocol v2.5.0
                     </span>
                 </div>
             )}

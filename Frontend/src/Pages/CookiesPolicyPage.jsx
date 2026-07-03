@@ -26,7 +26,7 @@ export default function CookiesPolicyPage() {
               icon={Cookie}
               title="Storage"
               titleAccent="Policies."
-              subtitle="Detailed explanation regarding how Dealer Pulse relies on local browser caches, JWT footprints, and telemetry cookies."
+              subtitle="Detailed explanation regarding how Site Audit relies on local browser caches, JWT footprints, and telemetry cookies."
               darkMode={darkMode}
             />
           </div>
@@ -48,7 +48,7 @@ export default function CookiesPolicyPage() {
             </div>
 
             <div className={`p-6 rounded-2xl text-sm font-medium border ${darkMode ? "bg-[#ea580c]/10 border-[#ea580c]/20 text-orange-400" : "bg-accentsoft border-[#ea580c]/20 text-accent"}`}>
-              By proceeding to operate the Dealer Pulse panel, you acknowledge the persistent placement of these critical utility scripts.
+              By proceeding to operate the Site Audit panel, you acknowledge the persistent placement of these critical utility scripts.
             </div>
 
           </div>

@@ -867,7 +867,7 @@ const checkContextualLinks = async ($, url) => {
 
     // ⚠️ Base checks
     if (totalContextual === 0) {
-      score = 0.5;
+      score = 0; // absent scores 0 (SCORING_FORMAT §7 rule 3); 0.5 is reserved for present-but-flawed
       issues.push("No contextual links found in main content.");
     } else if (totalContextual > 100) {
       score = 0.5;
@@ -992,7 +992,9 @@ if (uniqueLinks.length >= 5 && relatedRatio < 0.3) {
 
 const details = score === 1
   ? "Good contextual linking"
-  : "Contextual linking issues found";
+  : totalContextual === 0
+    ? "No contextual links in main content"
+    : "Contextual linking issues found";
 
 // 🧠 Explanation
 let explanation = "";
@@ -1290,7 +1292,7 @@ const checkH1 = ($) => {
   let recommendation = "";
 
   if (h1Count === 0) {
-    score = 0.5;
+    score = 0; // absent scores 0 (SCORING_FORMAT §7 rule 3)
     details = "Missing H1 tag";
     explanation = "No <h1> tag was found on the page.";
     recommendation = "Add exactly one <h1> tag that describes the main topic of the page. It's crucial for SEO and accessibility.";
@@ -1395,7 +1397,7 @@ const checkCanonical = ($, url) => {
   let noindexConflict = false;
 
   if (!exists) {
-    score = 0.5;
+    score = 0; // absent scores 0 (SCORING_FORMAT §7 rule 3)
     details = "Canonical tag missing";
     explanation = "No canonical tag was found in the <head> of the page.";
     recommendation = "Add a <link rel=\"canonical\" href=\"...\" /> pointing to the authoritative URL for this page to prevent duplicate-content issues.";
@@ -1517,7 +1519,8 @@ const checkSocial = ($) => {
   };
   const ogRequired = ["og:title", "og:image", "og:url"];
   const ogCount = ogRequired.reduce((acc, key) => acc + (ogTags[key] ? 1 : 0), 0);
-  let ogScore = ogCount === ogRequired.length ? 1 : 0.5; // WARNING for missing or incomplete
+  const ogPresent = Object.values(ogTags).some(Boolean);
+  let ogScore = ogCount === ogRequired.length ? 1 : ogPresent ? 0.5 : 0; // 0.5 only when present-but-incomplete; fully absent scores 0 (SCORING_FORMAT §7 rule 3)
   const ogMissing = ogRequired.filter(key => !ogTags[key]);
   const ogDetails = ogScore === 1 ? "Open Graph tags are optimized" : ogScore === 0.5 ? `Missing key OG tags: ${ogMissing.join(", ")}` : "No Open Graph tags found";
   const ogMetric = evaluateParameter(ogScore, ogDetails, { tags: ogTags, missing: ogMissing, parameter: "1 if og:title, og:image, og:url exist" });
@@ -1534,7 +1537,8 @@ const checkSocial = ($) => {
   };
   const twRequired = ["twitter:card", "twitter:title"];
   const twCount = twRequired.reduce((acc, key) => acc + (twTags[key] ? 1 : 0), 0);
-  let twScore = twCount === twRequired.length ? 1 : 0.5; // WARNING for missing or incomplete
+  const twPresent = Object.values(twTags).some(Boolean);
+  let twScore = twCount === twRequired.length ? 1 : twPresent ? 0.5 : 0; // 0.5 only when present-but-incomplete; fully absent scores 0 (SCORING_FORMAT §7 rule 3)
   const twMissing = twRequired.filter(key => !twTags[key]);
   const twDetails = twScore === 1 ? "Twitter Card tags are optimized" : twScore === 0.5 ? `Missing key Twitter tags: ${twMissing.join(", ")}` : "No Twitter Card tags found";
   const twitterMetric = evaluateParameter(twScore, twDetails, { tags: twTags, missing: twMissing, parameter: "1 if twitter:card and twitter:title exist" });
@@ -1618,7 +1622,7 @@ const checkSocial = ($) => {
 
   let linkScore, linkDetails, lExpl, lFix;
   if (!hasSocial && !hasSameAs) {
-    linkScore = 0.5;
+    linkScore = 0; // absent scores 0 (SCORING_FORMAT §7 rule 3)
     linkDetails = "No social profiles found";
     lExpl = "No social-media links or sameAs entries were found.";
     lFix = "Link your social profiles (footer) and declare them in Organization/LocalBusiness sameAs.";
@@ -1725,9 +1729,9 @@ const checkRobotsTxt = async (url, page, $ = null) => {
     let details = "Robots.txt check";
 
     if (!exists) {
-      score = 0.5;
+      score = 0; // absent scores 0 (SCORING_FORMAT §7 rule 3)
       details = "Robots.txt missing";
-    } 
+    }
     else if (!content || content.trim() === "") {
       score = 0.5;
       details = "Robots.txt empty";
@@ -1924,7 +1928,7 @@ const checkSitemap = async (url, robotsContent = null, page) => {
     let hasHreflang = false;
 
     if (!exists) {
-      score = 0.5;
+      score = 0; // absent scores 0 (SCORING_FORMAT §7 rule 3)
       details = "sitemap.xml missing";
       explanation = "No sitemap was found via robots.txt or the common default locations.";
       recommendation = "Create a sitemap.xml, list your important URLs with <lastmod>, and reference it in robots.txt.";
@@ -2045,7 +2049,8 @@ const checkStructuredData = async (page) => {
     });
 
     if (!result.hasData) {
-      return evaluateParameter(0.5, "Structured Data missing", {
+      // absent scores 0 (SCORING_FORMAT §7 rule 3); 0.5 is reserved for present-but-flawed markup
+      return evaluateParameter(0, "Structured Data missing", {
         content: [], types: "", exists: false, detectedTypes: [], otherTypes: [], validated: [], errorCount: 0,
         why_this_occurred: "No JSON-LD structured data found on the page.",
         how_to_fix: "Add Schema.org JSON-LD (Organization/LocalBusiness, Product/Vehicle, Offer, FAQPage, BreadcrumbList) so the page is eligible for rich results.",
@@ -4301,7 +4306,8 @@ const checkContentFreshness = ($) => {
   if (m) pushDate(m[2], 'visible-text');
 
   if (sources.length === 0) {
-    return evaluateParameter(0.5, "No content freshness signal found.", {
+    // absent scores 0 (SCORING_FORMAT §7 rule 3) — spec explicitly cites freshness "gives 50 with no timestamp at all"
+    return evaluateParameter(0, "No content freshness signal found.", {
       mostRecent: null, signalCount: 0,
       checked: "meta tags, JSON-LD dateModified/datePublished, <time>, visible 'last updated' text",
       why_this_occurred: "No update timestamp (meta tag, structured-data date, <time> element, or visible 'last updated' text) was found, so search engines can't tell how fresh this content is.",

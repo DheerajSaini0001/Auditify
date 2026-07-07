@@ -783,8 +783,15 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
     const T1 = 25;
     const T2 = 75;
 
+    // A crashed/timed-out probe carries score null (notCalculated) — it was left
+    // out of the score, so the card must say "Not Run", never "Failed".
+    const notCalculated = data?.notCalculated === true || typeof score !== "number";
+
     let status, statusColor;
-    if (score >= T2) {
+    if (notCalculated) {
+        status = "Not Run";
+        statusColor = "text-slate-500 bg-slate-500/10 border-slate-500/20";
+    } else if (score >= T2) {
         status = "Passed";
         statusColor = "text-emerald-500 bg-emerald-500/10 border-emerald-500/20";
     } else if (score >= T1) {
@@ -835,7 +842,7 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
                 </div>
 
                 <div className="flex items-center gap-3">
-                    {(score < 100 || status !== "Passed") && isActionableParam(signal) && !inlineBreakdown && (
+                    {!notCalculated && (score < 100 || status !== "Passed") && isActionableParam(signal) && !inlineBreakdown && (
                         <button
                             onClick={() => setShowDetails(!showDetails)}
                             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${showDetails
@@ -870,6 +877,16 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
             {/* Current Data Section — shows the actual data for this parameter
                 (mirrors the "Current Description" box on the Meta Description card). */}
             {(() => {
+                if (notCalculated) {
+                    return (
+                        <div className="flex flex-col gap-3">
+                            <span className={`text-[10px] font-black uppercase tracking-[0.2em] opacity-40 ${darkMode ? "text-white" : "text-ink"}`}>Check Skipped</span>
+                            <div className={`p-6 rounded-2xl border text-sm ${darkMode ? "bg-slate-950 border-slate-800 text-slate-400" : "bg-cardsoft border-line text-muted"}`}>
+                                This check could not run on this audit, so it was left out of the score entirely. Re-run the audit to measure it.
+                            </div>
+                        </div>
+                    );
+                }
                 const cur = getCurrentData(signal, data);
                 return (
                     <div className="flex flex-col gap-3">
@@ -882,7 +899,7 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
             })()}
 
             {/* Inline breakdown (no click) — OK parts and the parts that need work, separated. */}
-            {inlineBreakdown && (
+            {inlineBreakdown && !notCalculated && (
                 <div className="flex flex-col gap-5 pt-2 border-t border-slate-800/10 dark:border-slate-100/10">
                     {okRows.length > 0 && (
                         <div className="flex flex-col gap-2.5">
@@ -900,7 +917,7 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
             )}
 
             {/* Expanded Content — every part of this parameter, with what each one wants */}
-            {showDetails && !inlineBreakdown && (
+            {showDetails && !inlineBreakdown && !notCalculated && (
                 <div className="flex flex-col gap-3 animate-in fade-in slide-in-from-top-4 duration-500 pt-2 border-t border-slate-800/10 dark:border-slate-100/10">
                     <span className="text-[9px] font-black uppercase tracking-widest opacity-40">What each part needs</span>
                     <div className="flex flex-col gap-2.5">

@@ -102,7 +102,9 @@ const analyzeExperienceSignals = (url, $) => {
     } catch (error) {
         return {
             signal: 'experienceSignals',
-            score: 50,
+            // Crashed probe → not calculated, renormalized out (SCORING_FORMAT §7 policy 4).
+            score: null,
+            notCalculated: true,
             source: 'on-page',
             breakdown: { reviews: 0, media: 0, firstPerson: 0, people: 0 },
             issues: [`Experience signals check failed: ${error.message}`],

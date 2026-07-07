@@ -253,6 +253,13 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
                         </h1>
                     </div>
                     <p className="text-[1.1rem] font-medium text-muted">Measuring your site's readiness for the next generation of AI search.</p>
+                    <span
+                        title="This score is Auditify's own composite index for answer-engine readiness. No industry-standard external tool produces a comparable AEO score to cross-check against."
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider border ${darkMode ? "bg-slate-800/60 text-slate-400 border-slate-700" : "bg-cardsoft text-muted border-line"}`}
+                    >
+                        <span className={`w-1.5 h-1.5 rounded-full ${darkMode ? "bg-slate-500" : "bg-slate-400"}`} />
+                        Auditify Index · no external equivalent
+                    </span>
                 </div>
 
                 <div className="flex items-center gap-6">
@@ -344,7 +351,7 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
                                         signal={c.signal}
                                         score={score}
                                         data={data}
-                                        title={c.title}
+                                        title={c.info ? `${c.title} (Info-only)` : c.title}
                                         description={c.description}
                                         darkMode={darkMode}
                                         onInfo={onInfo}

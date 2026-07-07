@@ -605,7 +605,7 @@ export const getReportStatusById = async (req, res) => {
 };
 
 // POST /single-audit/merge  { ids: [reportId…], pageType?, label? }
-// Builds ONE averaged report from several sample reports (e.g. the 5 VDP samples):
+// Builds ONE averaged report from several sample reports (e.g. the VDP samples):
 // each section keeps a representative sample's rich detail, but its headline Percentage
 // — and the overall score — become the MEAN across the samples. Saved as a new report so
 // the summary shows a single VDP row whose drill-in IS the averaged report. The samples'
@@ -692,6 +692,7 @@ export const mergeReports = async (req, res) => {
     mergedDoc.score = overall;
     mergedDoc.grade = gradeForScore(overall);
     mergedDoc.sectionScore = sectionScore;
+    mergedDoc.mergedFrom = source.length;
 
     await new SingleAuditReport(mergedDoc).save();
 
@@ -720,6 +721,60 @@ export const mergeReports = async (req, res) => {
   } catch (error) {
     logger.error("Merge reports failed", error);
     return res.status(500).json({ error: "Failed to merge reports", details: error.message });
+  }
+};
+
+// Look up an existing merged (multi-sample averaged) report for a site + pageType,
+// so a repeat audit of the same site reuses the VDP/SRP average instead of
+// re-auditing every sample. Merged reports live under a synthetic
+// "<sampleUrl>#merged-<id>" URL (see mergeReports) and their source samples are
+// deleted after merging, so startAudit's {url,device,report} dedupe can never
+// find them — this endpoint matches by site HOST + pageType + device instead,
+// scoped per user exactly like the startAudit dedupe (guests share the
+// null-user pool). TTL expiry keeps hits fresh (reports self-delete after 3h).
+export const findMergedReport = async (req, res) => {
+  try {
+    const { url, pageType, device } = req.body || {};
+    if (!url || !pageType) {
+      return res.status(400).json({ error: "url and pageType are required" });
+    }
+
+    let host;
+    try {
+      host = new URL(/^https?:\/\//i.test(url) ? url : `https://${url}`).hostname.replace(/^www\./i, "");
+    } catch {
+      return res.status(400).json({ error: "Invalid url" });
+    }
+
+    const esc = host.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const query = {
+      // any sample URL on this site carrying the merge marker
+      url: { $regex: `^https?://(www\\.)?${esc}(/|:).*#merged-`, $options: "i" },
+      pageType,
+      status: "completed",
+      userId: req.user?.userId || null,
+    };
+    if (device) query.device = device;
+
+    const doc = await SingleAuditReport.findOne(query)
+      .sort({ createdAt: -1 })
+      .select("_id url device report pageType score grade mergedFrom createdAt");
+    if (!doc) return res.status(404).json({ error: "No merged report found for this site/pageType" });
+
+    logger.info(`♻️ Reusing merged ${pageType} report ${doc._id} for ${host} (no re-audit)`);
+    return res.status(200).json({
+      _id: doc._id,
+      pageType: doc.pageType,
+      device: doc.device,
+      report: doc.report,
+      score: doc.score,
+      grade: doc.grade,
+      mergedFrom: doc.mergedFrom || undefined,
+      createdAt: doc.createdAt,
+    });
+  } catch (error) {
+    logger.error("find-merged lookup failed", error);
+    return res.status(500).json({ error: "Failed to look up merged report" });
   }
 };
 

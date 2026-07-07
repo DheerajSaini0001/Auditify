@@ -1,0 +1,5010 @@
+{
+  "url": "https://www.koons.com",
+  "requestedPageType": null,
+  "isDealership": true,
+  "dealershipDetection": null,
+  "status": "completed",
+  "screenshotUrl": "/api/screenshot/view/koons.com__auto",
+  "isBotProtected": false,
+  "aioReadiness": {
+    "Percentage": 66,
+    "AIO_Compatibility_Badge": "Yes",
+    "Confidence": "heuristic",
+    "parametersScored": 8,
+    "Structured_Data": {
+      "score": 100,
+      "status": "pass",
+      "details": "Structured data detected and parsed.",
+      "qanda": {
+        "question": "Does the page use Structured Data (JSON-LD)?",
+        "answer": "Yes, valid code was found that describes your business entities to AI models."
+      },
+      "meta": {
+        "count": 1,
+        "types": [
+          "WebSite",
+          "WebPage",
+          "Organization",
+          "ImageObject"
+        ]
+      },
+      "analysis": null
+    },
+    "Content_NLP_Friendly": {
+      "score": 100,
+      "status": "pass",
+      "details": "Content structure is NLP-friendly.",
+      "qanda": {
+        "question": "Is the content structure optimized for Natural Language Processing?",
+        "answer": "Yes, the use of semantic HTML and hierarchical headings makes the content easily interpretable for AI."
+      },
+      "meta": {
+        "semanticTags": [
+          "article",
+          "section",
+          "header",
+          "footer",
+          "main"
+        ],
+        "headings": [
+          "h1",
+          "h2",
+          "h3"
+        ],
+        "hasParagraphs": true,
+        "hasLists": true
+      },
+      "analysis": null
+    },
+    "Answer_Oriented_Structure": {
+      "score": 100,
+      "status": "pass",
+      "details": "Content is structured to answer specific queries.",
+      "qanda": {
+        "question": "Is the content structured to directly answer user questions?",
+        "answer": "Yes, the content follows an answer-oriented structure with clear questions and concise responses."
+      },
+      "meta": {
+        "hasFAQ": false,
+        "questionHeadingsCount": 3,
+        "pairs": [
+          {
+            "type": "heading",
+            "question": "What's popular",
+            "answer": "Answer not found in immediate text."
+          },
+          {
+            "type": "heading",
+            "question": "Why Koons",
+            "answer": "Answer not found in immediate text."
+          },
+          {
+            "type": "heading",
+            "question": "Why 100,000+ people choose Koons",
+            "answer": "Answer not found in immediate text."
+          }
+        ]
+      },
+      "analysis": null
+    },
+    "Keywords_Entities_Annotated": {
+      "score": 50,
+      "status": "warning",
+      "details": "Partial keyword/entity annotations detected.",
+      "qanda": {
+        "question": "Are key entities and keywords properly annotated?",
+        "answer": "No, the lack of meta keywords or image alt texts makes it harder for AI to verify your entities."
+      },
+      "meta": {
+        "headingsCount": 9,
+        "imagesWithAlt": 20,
+        "totalImages": 20
+      },
+      "analysis": {
+        "cause": "Missing meta keywords tag.",
+        "recommendation": "Add essential keywords to the meta keywords tag for better entity association by AI crawlers."
+      }
+    },
+    "Content_Updated_Regularly": {
+      "score": 0,
+      "status": "fail",
+      "details": "No freshness signal found on the page.",
+      "qanda": {
+        "question": "Has the content been updated recently to maintain freshness?",
+        "answer": "No, the content appears outdated or lacks a clear update signal, which may reduce its priority in AI results."
+      },
+      "meta": {
+        "checked": "meta tags (last-modified, modified_time, etc.), JSON-LD (dateModified), time tags"
+      },
+      "analysis": {
+        "cause": "No content update timestamp found anywhere on the page (meta tags, time tags, or structured data).",
+        "recommendation": "Add <meta name='last-modified'>, <time datetime='...'>, or dateModified structured data to signal content freshness."
+      }
+    },
+    "Internal_Linking_AI_Friendly": {
+      "score": 88,
+      "status": "warning",
+      "details": "Internal links lack descriptive text.",
+      "qanda": {
+        "question": "Is the internal linking structure helpful for AI discovery?",
+        "answer": "No, links are either missing or use generic text that provides no context for the destination."
+      },
+      "meta": {
+        "internalLinks": 45,
+        "descriptiveLinks": 31,
+        "examples": [
+          "Brand Logo",
+          "Shop",
+          "Sell/Trade"
+        ]
+      },
+      "analysis": {
+        "cause": "Some internal links use generic or non-descriptive anchor text.",
+        "recommendation": "Tighten the remaining generic anchors into descriptive, keyword-rich text."
+      }
+    },
+    "Topical_Focus_Clarity": {
+      "score": 0,
+      "status": "fail",
+      "details": "No topical focus detected between title and H1.",
+      "qanda": {
+        "question": "Does the page maintain a clear and consistent topical focus?",
+        "answer": "No, there is a mismatch between your title and headings, which confuses AI about your primary focus."
+      },
+      "meta": {
+        "overlap": [],
+        "title": "koons - the #1 automotive dealer in the washington dc, virginia and maryland area",
+        "h1": "250 years of freedom"
+      },
+      "analysis": {
+        "cause": "No topical focus detected — the title and H1 heading share no primary keywords at all.",
+        "recommendation": "Rewrite your H1 heading to use the same primary entities as your page title so AI can identify a clear topical focus."
+      }
+    },
+    "AI_Agentic_Browsing": {
+      "score": 0,
+      "status": "fail",
+      "experimental": true,
+      "confidence": "lab",
+      "details": "No WebMCP agent tooling found — an emerging, early-mover signal most sites don't have yet.",
+      "meta": {
+        "value": "0%",
+        "experimental": true,
+        "registeredTools": 0,
+        "apiPresent": false,
+        "totalForms": 0,
+        "annotatedForms": 0,
+        "schemaValid": null,
+        "agentAccessibility": 100,
+        "llmsTxt": false,
+        "landmarks": 26,
+        "thresholds": {
+          "Good": "≥75%",
+          "Warning": "25–74%",
+          "Poor": "<25%"
+        }
+      },
+      "analysis": {
+        "cause": "The site exposes no machine-callable tools (WebMCP) for AI agents to search inventory, value a trade, or book service.",
+        "recommendation": "Adopt WebMCP — annotate key forms/actions declaratively and register agent tools. Early adoption is a competitive moat while the standard is new."
+      },
+      "present": true
+    },
+    "Duplicate_Content_Detection_Ready": {
+      "score": 100,
+      "status": "pass",
+      "details": "Canonical tag present.",
+      "qanda": {
+        "question": "Is the site protected against duplicate content issues?",
+        "answer": "Yes, canonical tags or noindex directives are correctly implemented to maintain content integrity."
+      },
+      "meta": {
+        "canonical": "https://www.koons.com/",
+        "hasNoindex": false
+      },
+      "analysis": null,
+      "infoOnly": true
+    },
+    "Structured_Content": {
+      "score": 100,
+      "status": "pass",
+      "infoOnly": true,
+      "details": "Content is well-chunked with lists/tables for clean AI extraction.",
+      "qanda": {
+        "question": "Is content broken into machine-parseable chunks, lists, and tables?",
+        "answer": "Yes, short chunks plus lists/tables let AI extract facts cleanly."
+      },
+      "meta": {
+        "listCount": 8,
+        "tableCount": 0,
+        "blockquoteCount": 0,
+        "longParagraphs": 1,
+        "totalParagraphs": 27,
+        "headingDensity": "1.1"
+      },
+      "analysis": null
+    },
+    "Terminology_Consistency": {
+      "score": 70,
+      "status": "warning",
+      "details": "Terminology alignment could be improved.",
+      "qanda": {
+        "question": "Is your industry terminology used consistently?",
+        "answer": "No, inconsistent terminology makes it harder for AI models to confidently categorize your expertise."
+      },
+      "meta": {
+        "keyTerms": [
+          "freedomcelebrate",
+          "america",
+          "birthday",
+          "locationsshop",
+          "brandshop"
+        ]
+      },
+      "analysis": {
+        "cause": "Primary terms in headings are not consistently used in the body text.",
+        "recommendation": "Maintain consistent terminology throughout the page to help AI models build a robust knowledge graph of your topic."
+      },
+      "infoOnly": true
+    }
+  },
+  "aioCompatibilityBadge": "Yes",
+  "aeo": {
+    "url": "https://www.koons.com",
+    "overallScore": 63,
+    "Percentage": 64,
+    "Confidence": "heuristic",
+    "pageType": "home",
+    "parametersScored": 11,
+    "params": {
+      "Schema_Markup": {
+        "score": 100,
+        "weight": 0.2,
+        "applicable": true,
+        "status": "pass"
+      },
+      "Answer_First_Structure": {
+        "score": 30,
+        "weight": 0.15,
+        "applicable": true,
+        "status": "warning"
+      },
+      "Bot_Access": {
+        "score": 100,
+        "weight": 0.11,
+        "applicable": true,
+        "status": "pass"
+      },
+      "Structured_Content": {
+        "score": 40,
+        "weight": 0.09,
+        "applicable": true,
+        "status": "warning"
+      },
+      "FAQ_QA_Blocks": {
+        "score": 50,
+        "weight": 0.07,
+        "applicable": false,
+        "status": "warning",
+        "infoOnly": true
+      },
+      "Entity_Recognition": {
+        "score": 80,
+        "weight": 0.07,
+        "applicable": true,
+        "status": "pass"
+      },
+      "Citation_NAP_Consistency": {
+        "score": 15,
+        "weight": 0.06,
+        "applicable": true,
+        "status": "fail"
+      },
+      "Citations_Attribution": {
+        "score": 65,
+        "weight": 0.05,
+        "applicable": true,
+        "status": "warning"
+      },
+      "Topical_Authority": {
+        "score": 77,
+        "weight": 0.05,
+        "applicable": true,
+        "status": "pass"
+      },
+      "Index_Coverage": {
+        "score": 100,
+        "weight": 0.04,
+        "applicable": true,
+        "status": "pass"
+      },
+      "SameAs_Validation": {
+        "score": 0,
+        "weight": 0.04,
+        "applicable": true,
+        "status": "fail"
+      },
+      "EEAT_Composite": {
+        "score": 53,
+        "weight": 0.1,
+        "applicable": false,
+        "status": "warning",
+        "infoOnly": true
+      },
+      "Llms_Txt": {
+        "score": 0,
+        "weight": 0.02,
+        "applicable": true,
+        "status": "fail"
+      },
+      "Brand_Entity_Strength": {
+        "score": 20,
+        "weight": 0,
+        "applicable": false,
+        "infoOnly": true,
+        "status": "fail"
+      },
+      "Markdown_Structure": {
+        "score": 100,
+        "weight": 0,
+        "applicable": false,
+        "infoOnly": true,
+        "status": "pass"
+      },
+      "Page_Speed": {
+        "score": 100,
+        "weight": 0,
+        "applicable": false,
+        "infoOnly": true,
+        "status": "pass"
+      }
+    },
+    "platforms": {
+      "gemini": {
+        "score": 83,
+        "breakdown": {
+          "schema": 30,
+          "pageSpeed": 20,
+          "botAccess": 5,
+          "answerFirst": 2,
+          "structuredContent": 4,
+          "indexCoverage": 10,
+          "entityRecognition": 8,
+          "citationConsistency": 1,
+          "topicalAuthority": 4,
+          "llmsTxt": 0,
+          "citations": 0
+        },
+        "parameters": [
+          {
+            "key": "schema",
+            "label": "Page Data Labels (Schema)",
+            "weight": 30,
+            "score": 100,
+            "passed": true,
+            "requirement": "Add hidden data labels (schema) so AI can clearly tell what your page is about.",
+            "cause": null
+          },
+          {
+            "key": "pageSpeed",
+            "label": "Page Loading Speed",
+            "weight": 20,
+            "score": 100,
+            "passed": true,
+            "requirement": "Make the page load fast — under about 2 seconds.",
+            "cause": null
+          },
+          {
+            "key": "botAccess",
+            "label": "Lets AI Bots In",
+            "weight": 5,
+            "score": 100,
+            "passed": true,
+            "requirement": "Allow this AI’s bot in your robots.txt file so it can read the page.",
+            "cause": null
+          },
+          {
+            "key": "answerFirst",
+            "label": "Quick Answer at the Top",
+            "weight": 5,
+            "score": 30,
+            "passed": false,
+            "requirement": "Put a short, direct answer in the first few lines so AI can grab it fast.",
+            "cause": "The opening is too long-winded. Start with a 1–2 sentence direct answer."
+          },
+          {
+            "key": "structuredContent",
+            "label": "Tables & Lists",
+            "weight": 10,
+            "score": 40,
+            "passed": false,
+            "requirement": "Show key data in real tables and lists, not inside pictures.",
+            "cause": "Your data is stuck in images instead of real tables AI can read."
+          },
+          {
+            "key": "indexCoverage",
+            "label": "Findable in Search",
+            "weight": 10,
+            "score": 100,
+            "passed": true,
+            "requirement": "Make sure your main pages can be found and are listed in your sitemap.",
+            "cause": null
+          },
+          {
+            "key": "entityRecognition",
+            "label": "Business Identity",
+            "weight": 10,
+            "score": 80,
+            "passed": true,
+            "requirement": "Add your business details (name and type) so AI knows who you are.",
+            "cause": null
+          },
+          {
+            "key": "citationConsistency",
+            "label": "Matching Contact Info",
+            "weight": 5,
+            "score": 15,
+            "passed": false,
+            "requirement": "Use the same name, address, and phone everywhere.",
+            "cause": "No clear phone number AI can read. Add one in your business details."
+          },
+          {
+            "key": "topicalAuthority",
+            "label": "Depth of Content",
+            "weight": 5,
+            "score": 77,
+            "passed": true,
+            "requirement": "Cover your main topics in depth so AI sees you as an expert.",
+            "cause": null
+          }
+        ],
+        "reason": "The opening is too long-winded. Start with a 1–2 sentence direct answer. Your data is stuck in images instead of real tables AI can read. No clear phone number AI can read. Add one in your business details."
+      },
+      "chatgpt": {
+        "score": 43,
+        "breakdown": {
+          "llmsTxt": 0,
+          "answerFirst": 5,
+          "markdownHeaders": 10,
+          "botAccess": 5,
+          "schema": 5,
+          "indexCoverage": 10,
+          "entityRecognition": 4,
+          "citationConsistency": 0,
+          "topicalAuthority": 4,
+          "structuredContent": 0,
+          "citations": 0,
+          "pageSpeed": 0
+        },
+        "parameters": [
+          {
+            "key": "llmsTxt",
+            "label": "llms.txt File",
+            "weight": 40,
+            "score": 0,
+            "passed": false,
+            "requirement": "Add an llms.txt file on your site that tells AI what to read.",
+            "cause": "Missing an llms.txt file."
+          },
+          {
+            "key": "answerFirst",
+            "label": "Quick Answer at the Top",
+            "weight": 17,
+            "score": 30,
+            "passed": false,
+            "requirement": "Put a short, direct answer in the first few lines so AI can grab it fast.",
+            "cause": "The opening is too long-winded. Start with a 1–2 sentence direct answer."
+          },
+          {
+            "key": "markdownHeaders",
+            "label": "Clear Headings",
+            "weight": 10,
+            "score": 100,
+            "passed": true,
+            "requirement": "Use clear headings and sub-headings so AI can follow the page.",
+            "cause": null
+          },
+          {
+            "key": "botAccess",
+            "label": "Lets AI Bots In",
+            "weight": 5,
+            "score": 100,
+            "passed": true,
+            "requirement": "Allow this AI’s bot in your robots.txt file so it can read the page.",
+            "cause": null
+          },
+          {
+            "key": "schema",
+            "label": "Page Data Labels (Schema)",
+            "weight": 5,
+            "score": 100,
+            "passed": true,
+            "requirement": "Add hidden data labels (schema) so AI can clearly tell what your page is about.",
+            "cause": null
+          },
+          {
+            "key": "indexCoverage",
+            "label": "Findable in Search",
+            "weight": 10,
+            "score": 100,
+            "passed": true,
+            "requirement": "Make sure your main pages can be found and are listed in your sitemap.",
+            "cause": null
+          },
+          {
+            "key": "entityRecognition",
+            "label": "Business Identity",
+            "weight": 5,
+            "score": 80,
+            "passed": true,
+            "requirement": "Add your business details (name and type) so AI knows who you are.",
+            "cause": null
+          },
+          {
+            "key": "citationConsistency",
+            "label": "Matching Contact Info",
+            "weight": 3,
+            "score": 15,
+            "passed": false,
+            "requirement": "Use the same name, address, and phone everywhere.",
+            "cause": "No clear phone number AI can read. Add one in your business details."
+          },
+          {
+            "key": "topicalAuthority",
+            "label": "Depth of Content",
+            "weight": 5,
+            "score": 77,
+            "passed": true,
+            "requirement": "Cover your main topics in depth so AI sees you as an expert.",
+            "cause": null
+          }
+        ],
+        "reason": "Missing an llms.txt file. The opening is too long-winded. Start with a 1–2 sentence direct answer. No clear phone number AI can read. Add one in your business details."
+      },
+      "perplexity": {
+        "score": 64,
+        "breakdown": {
+          "structuredContent": 16,
+          "citations": 13,
+          "pageSpeed": 10,
+          "botAccess": 5,
+          "indexCoverage": 10,
+          "entityRecognition": 4,
+          "citationConsistency": 0,
+          "topicalAuthority": 5,
+          "answerFirst": 0,
+          "schema": 0,
+          "llmsTxt": 0,
+          "markdownHeaders": 0
+        },
+        "parameters": [
+          {
+            "key": "structuredContent",
+            "label": "Tables & Lists",
+            "weight": 40,
+            "score": 40,
+            "passed": false,
+            "requirement": "Show key data in real tables and lists, not inside pictures.",
+            "cause": "Your data is stuck in images, not tables. Perplexity can’t easily read data shown as pictures."
+          },
+          {
+            "key": "citations",
+            "label": "Links to Sources",
+            "weight": 20,
+            "score": 65,
+            "passed": false,
+            "requirement": "Link to trusted outside sources so AI can check your facts.",
+            "cause": "Add more proof — link to a few trusted sources and include a “Sources” section."
+          },
+          {
+            "key": "pageSpeed",
+            "label": "Page Loading Speed",
+            "weight": 10,
+            "score": 100,
+            "passed": true,
+            "requirement": "Make the page load fast — under about 2 seconds.",
+            "cause": null
+          },
+          {
+            "key": "botAccess",
+            "label": "Lets AI Bots In",
+            "weight": 5,
+            "score": 100,
+            "passed": true,
+            "requirement": "Allow this AI’s bot in your robots.txt file so it can read the page.",
+            "cause": null
+          },
+          {
+            "key": "indexCoverage",
+            "label": "Findable in Search",
+            "weight": 10,
+            "score": 100,
+            "passed": true,
+            "requirement": "Make sure your main pages can be found and are listed in your sitemap.",
+            "cause": null
+          },
+          {
+            "key": "entityRecognition",
+            "label": "Business Identity",
+            "weight": 5,
+            "score": 80,
+            "passed": true,
+            "requirement": "Add your business details (name and type) so AI knows who you are.",
+            "cause": null
+          },
+          {
+            "key": "citationConsistency",
+            "label": "Matching Contact Info",
+            "weight": 3,
+            "score": 15,
+            "passed": false,
+            "requirement": "Use the same name, address, and phone everywhere.",
+            "cause": "No clear phone number AI can read. Add one in your business details."
+          },
+          {
+            "key": "topicalAuthority",
+            "label": "Depth of Content",
+            "weight": 7,
+            "score": 77,
+            "passed": true,
+            "requirement": "Cover your main topics in depth so AI sees you as an expert.",
+            "cause": null
+          }
+        ],
+        "reason": "Your data is stuck in images, not tables. Perplexity can’t easily read data shown as pictures. Add more proof — link to a few trusted sources and include a “Sources” section. No clear phone number AI can read. Add one in your business details."
+      }
+    },
+    "signals": {
+      "answerFirst": {
+        "signal": "answerFirst",
+        "score": 30,
+        "sentenceCount": 5,
+        "found": true,
+        "sentences": [
+          "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 image/svg+xml CoupeShop CoupesSUVShop SUVsTrucksShop TrucksHatchbackShop HatchbacksConvertibleShop Convertibles Electric carsDiscover our latest electric vehicles designed for comfortable driving, smart features, and low emissions.",
+          "Shop Electric CarsApple CarPlayExperience the latest in-car technology with Apple CarPlayShop vehicles with Apple CarPlayFuel-Efficient CarsDiscover fuel-efficient vehicles that help you save money and go farther every day.",
+          "Shop Fuel-Efficient CarsPopular SUVsShop our most popular SUVs with roomy interiors, modern features, and smooth driving.",
+          "Shop Popular SUVs Shop your wayShop for a car your way.",
+          "Online or in-store, with options for callbacks, virtual tours, and test drives."
+        ],
+        "openingText": "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 image/svg+xml CoupeShop CoupesSUVShop SUVsTrucksShop TrucksHatchbackShop HatchbacksConvertibleShop Convertibles Electric carsDiscover our latest electric vehicles designed for comfortable driving, smart features, and low emissions.Shop Electric CarsApple CarPlayExperience the latest in-car technology with Apple CarPlayShop vehicles with Apple CarPlayFuel-Efficient CarsDiscover fuel-efficient vehicles that help you save money and go farther every day.Shop Fuel-Efficient CarsPopular SUVsShop our most popular SUVs with roomy interiors, modern features, and smooth driving.Shop Popular SUVs Shop your wayShop for a car your way. Online or in-store, with options for callbacks, virtual tours, and test drives.Peace of mindEasy exchanges and free history reports to full protection plans and 0%"
+      },
+      "llmsTxt": {
+        "signal": "llmsTxt",
+        "score": 0,
+        "exists": false,
+        "url": "https://www.koons.com/llms.txt",
+        "statusCode": 404,
+        "breakdown": {
+          "present": 0,
+          "h1": 0,
+          "sections": 0,
+          "links": 0,
+          "summary": 0,
+          "sameDomain": 0
+        },
+        "issues": [
+          "No /llms.txt found. Create one at your domain root (llmstxt.org): an H1 with your business name, a short > summary, and ## sections linking your key pages."
+        ],
+        "reason": "⚠️ Why no: No /llms.txt manifest found — ChatGPT/LLM crawlers have no curated map of your key pages."
+      },
+      "schema": {
+        "signal": "schema",
+        "score": 100,
+        "status": "pass",
+        "message": "Contact or utility page — FAQ/HowTo schema not applicable. Full score awarded.",
+        "recommendation": null,
+        "details": {
+          "hasFAQSchema": false,
+          "hasHowToSchema": false,
+          "hasFAQContent": true,
+          "hasHowToContent": true,
+          "isProductOrServicePage": true,
+          "isListingPage": true,
+          "faqNeeded": true,
+          "howToNeeded": false,
+          "reason": "Page has FAQ-style content but missing FAQPage schema",
+          "schemaTypes": [
+            "WebSite",
+            "WebPage",
+            "Organization",
+            "ImageObject"
+          ],
+          "rawSchemas": [
+            "{\n  \"@context\": \"https://schema.org\",\n  \"@graph\": [\n    {\n      \"@type\": \"WebSite\",\n      \"@id\": \"https://www.koons.com/#website\",\n      \"url\": \"https://www.koons.com/\",\n      \"headline\": \"Koons - The #1 Automotive Dealer in the Washington DC, Virginia and Maryland Area\",\n      \"description\": \"Koons is the largest family-owned and operated car dealer that has served Washington, DC, Virginia and Maryland for 25 years. Volvo, Ford, Toyota, Jeep, Hyundai, Mercedes, Chrysler, Dodge, RAM, Chevrolet, GMC, Buick. Our experts will help you buy your next car and sell or trade your car.\"\n    },\n    {\n      \"@type\": \"WebPage\",\n      \"@id\": \"https://www.koons.com/#webpage\",\n      \"url\": \"https://www.koons.com/\",\n      \"name\": \"Koons - The #1 Automotive Dealer in the Washington DC, Virginia and Maryland Area\",\n      \"description\": \"Koons is the largest family-owned and operated car dealer that has served Washington, DC, Virginia and Maryland for 25 years. Volvo, Ford, Toyota, Jeep, Hyundai, Mercedes, Chrysler, Dodge, RAM, Chevrolet, GMC, Buick. Our experts will help you buy your next car and sell or trade your car.\",\n      \"isPartOf\": {\n        \"@id\": \"https://www.koons.com/#website\"\n      },\n      \"about\": {\n        \"@id\": \"https://www.koons.com/#organization\"\n      },\n      \"primaryImageOfPage\": {\n        \"@id\": \"https://www.koons.com/#primaryimage\"\n      }\n    },\n    {\n      \"@type\": \"Organization\",\n      \"@id\": \"https://www.koons.com/#organization\",\n      \"name\": \"Jim Koons Automotive\",\n      \"legalName\": \"Jim Koons Automotive Co\",\n      \"url\": \"https://www.koons.com/\",\n      \"description\": \"Koons is the largest family-owned and operated car dealer that has served Washington, DC, Virginia and Maryland for 25 years. Volvo, Ford, Toyota, Jeep, Hyundai, Mercedes, Chrysler, Dodge, RAM, Chevrolet, GMC, Buick. Our experts will help you buy your next car and sell or trade your car.\",\n      \"logo\": {\n        \"@type\": \"ImageObject\",\n        \"url\": \"https://cdn.sanity.io/images/ju3h49o8/exo/b30d6b8641317297541388dae2f73e36e345d545-647x154.svg\"\n      },\n      \"image\": \"https://cdn.sanity.io/images/ju3h49o8/koons/2f834a3c8f58ab4f4520da67fa82ca422164da77-3347x2063.jpg\"\n    },\n    {\n      \"@type\": \"ImageObject\",\n      \"@id\": \"https://www.koons.com/#primaryimage\",\n      \"url\": \"https://cdn.sanity.io/images/ju3h49o8/koons/2f834a3c8f58ab4f4520da67fa82ca422164da77-3347x2063.jpg\"\n    }\n  ]\n}"
+          ]
+        }
+      },
+      "structuredContent": {
+        "signal": "structuredContent",
+        "score": 40,
+        "tables": 0,
+        "lists": 8,
+        "images": 20,
+        "dataStuckInImages": true
+      },
+      "botAccess": {
+        "signal": "botAccess",
+        "score": 100,
+        "bots": {
+          "GPTBot": "allowed",
+          "Google-Extended": "allowed",
+          "PerplexityBot": "allowed"
+        },
+        "extraBots": {
+          "ClaudeBot": "allowed",
+          "anthropic-ai": "allowed",
+          "CCBot": "allowed",
+          "Bytespider": "allowed",
+          "Amazonbot": "allowed",
+          "Applebot-Extended": "allowed",
+          "Meta-ExternalAgent": "allowed",
+          "cohere-ai": "allowed",
+          "Google-CloudVertexBot": "allowed"
+        },
+        "isNoindexed": false,
+        "metaNoindex": false,
+        "xRobotsNoindex": false,
+        "robotsScore": 100,
+        "metaScore": 100,
+        "robotsFound": true,
+        "sitemapDeclared": true,
+        "crawlDelay": null,
+        "urlPath": "/",
+        "issues": [],
+        "reason": "✅ Why: All AI crawlers are allowed and the page is indexable (no noindex via meta or X-Robots-Tag)."
+      },
+      "markdownHeaders": {
+        "signal": "markdownHeaders",
+        "score": 100,
+        "counts": {
+          "h1": 1,
+          "h2": 8,
+          "h3": 17
+        },
+        "reasons": [],
+        "reason": "Your page is perfectly optimized for this Answer Engine signal."
+      },
+      "citations": {
+        "signal": "citations",
+        "score": 65,
+        "externalSources": 1,
+        "citationMarkers": 84,
+        "hasReferenceSection": false,
+        "breakdown": {
+          "citations": 24,
+          "policies": 20,
+          "contactTransparency": 6,
+          "trustBasics": 15
+        },
+        "transparency": {
+          "hasPrivacy": true,
+          "hasTerms": true,
+          "hasContact": true,
+          "hasAbout": true,
+          "hasTel": false,
+          "hasAddress": true,
+          "hasAuthor": false,
+          "isHttps": true,
+          "hasDisclosure": true,
+          "hasUpdated": true
+        },
+        "issues": [
+          "Cite reputable sources — 3+ outbound links, citation markers like [1], and a References/Sources section.",
+          "Show transparent contact/authorship: a click-to-call phone, author bylines."
+        ],
+        "reason": "⚠️ Why no: Trust signals incomplete (65/100). Cite reputable sources — 3+ outbound links, citation markers like [1], and a References/Sources section. Show transparent contact/authorship: a click-to-call phone, author bylines."
+      },
+      "indexCoverage": {
+        "signal": "indexCoverage",
+        "score": 100,
+        "source": "sitemap-estimate",
+        "sitemapFound": true,
+        "submitted": 5002,
+        "sampled": 25,
+        "indexable": 25,
+        "estimatedCoverage": 100,
+        "estimatedIndexed": 5002,
+        "partial": false,
+        "issues": [],
+        "notIndexed": [],
+        "reason": "✅ Why: ~100% of sampled sitemap URLs are indexable (HTTP 200, no noindex, self-canonical). ~5002 of 5002 submitted pages are likely eligible."
+      },
+      "entityRecognition": {
+        "signal": "entityRecognition",
+        "score": 80,
+        "source": "on-page+kg",
+        "orgSchema": {
+          "found": true,
+          "type": "Organization",
+          "name": "Jim Koons Automotive",
+          "hasAddress": false,
+          "hasLogo": true,
+          "sameAsCount": 0,
+          "sameAs": []
+        },
+        "knowledgeGraph": {
+          "checked": true,
+          "found": true,
+          "resultScore": 285.0119018554688,
+          "name": "Jim Koons Management Co Inc."
+        },
+        "issues": [
+          "Organization schema missing a postal address.",
+          "No sameAs links (social/Wikipedia profiles)."
+        ],
+        "reason": "⚠️ Why no: Organization schema present but incomplete. Organization schema missing a postal address. No sameAs links (social/Wikipedia profiles)."
+      },
+      "brandEntityStrength": {
+        "signal": "brandEntityStrength",
+        "score": 20,
+        "source": "on-page+kg",
+        "tier": "Weak",
+        "breakdown": {
+          "sameAs": 0,
+          "authoritative": 10,
+          "reviews": 0,
+          "completeness": 10
+        },
+        "sameAsCount": 0,
+        "reviewCount": 0,
+        "detected": {
+          "socialProfiles": [
+            {
+              "platform": "Facebook",
+              "found": false,
+              "url": null
+            },
+            {
+              "platform": "Instagram",
+              "found": false,
+              "url": null
+            },
+            {
+              "platform": "X (Twitter)",
+              "found": false,
+              "url": null
+            },
+            {
+              "platform": "LinkedIn",
+              "found": false,
+              "url": null
+            },
+            {
+              "platform": "YouTube",
+              "found": false,
+              "url": null
+            },
+            {
+              "platform": "Yelp",
+              "found": false,
+              "url": null
+            }
+          ],
+          "otherProfiles": [],
+          "sameAsCount": 0,
+          "hasWikipedia": false,
+          "hasWikidata": false,
+          "hasRating": false,
+          "reviewCount": 0,
+          "schema": {
+            "name": true,
+            "logo": true,
+            "address": false,
+            "foundingDate": false,
+            "description": true,
+            "award": false
+          }
+        },
+        "knowledgeGraph": {
+          "checked": true,
+          "found": true,
+          "resultScore": 285.0119018554688,
+          "name": "Jim Koons Management Co Inc.",
+          "hasWikipedia": false
+        },
+        "issues": [
+          "Only 0 sameAs profile link(s) — broaden your verified social/brand footprint.",
+          "No aggregateRating schema — review volume is a key trust signal."
+        ],
+        "reason": "⚠️ Weak brand entity (20/100). Only 0 sameAs profile link(s) — broaden your verified social/brand footprint. No aggregateRating schema — review volume is a key trust signal."
+      },
+      "citationConsistency": {
+        "signal": "citationConsistency",
+        "score": 15,
+        "source": "on-page",
+        "breakdown": {
+          "completeness": 10,
+          "phoneConsistency": 0,
+          "nameConsistency": 5,
+          "addressCompleteness": 0
+        },
+        "distinctPhoneCount": 0,
+        "schemaName": "Jim Koons Automotive",
+        "hasSchemaAddress": false,
+        "hasSchemaPhone": false,
+        "phoneDisplay": "216.246.58.74",
+        "addressDisplay": null,
+        "issues": [
+          "No phone number found in schema or tel: links.",
+          "Brand name differs across schema / og:site_name / title — standardize one exact name.",
+          "Schema missing postal address.",
+          "Schema missing telephone."
+        ],
+        "reason": "⚠️ Why no: NAP/brand consistency is incomplete (15/100). No phone number found in schema or tel: links. Brand name differs across schema / og:site_name / title — standardize one exact name. Schema missing postal address. Schema missing telephone."
+      },
+      "topicalAuthority": {
+        "signal": "topicalAuthority",
+        "score": 77,
+        "source": "on-page+crawl",
+        "breakdown": {
+          "depth": 16,
+          "headings": 15,
+          "internalLinks": 15,
+          "verifiedCluster": 6,
+          "industry": 20,
+          "local": 5
+        },
+        "wordCount": 494,
+        "headingCount": 25,
+        "internalLinkCount": 34,
+        "verifiedClusterPages": 1,
+        "industryTopicCount": 10,
+        "localSignals": 1,
+        "issues": [
+          "Weak local-authority signals (city/region terms, \"near me\", service area, map/directions)."
+        ],
+        "reason": "⚠️ Why no: Topical authority is incomplete (77/100). Weak local-authority signals (city/region terms, \"near me\", service area, map/directions)."
+      },
+      "experienceSignals": {
+        "signal": "experienceSignals",
+        "score": 72,
+        "source": "on-page",
+        "breakdown": {
+          "reviews": 13,
+          "media": 24,
+          "firstPerson": 25,
+          "people": 10
+        },
+        "imageCount": 20,
+        "altCoverage": 100,
+        "hasVideo": false,
+        "issues": [
+          "Add genuine customer testimonials with Review/aggregateRating schema to prove real customer experience.",
+          "Add original photos of your actual inventory, staff, and lot (with descriptive alt text), plus a walkaround video — not stock imagery.",
+          "Add a \"Meet our team\" section with real staff photos/bios (and Person schema) to show the humans behind the dealership."
+        ],
+        "reason": "⚠️ Experience signals are limited (72/100). Add genuine customer testimonials with Review/aggregateRating schema to prove real customer experience. Add original photos of your actual inventory, staff, and lot (with descriptive alt text), plus a walkaround video — not stock imagery."
+      },
+      "expertiseSignals": {
+        "signal": "expertiseSignals",
+        "score": 71,
+        "source": "on-page",
+        "breakdown": {
+          "credentials": 26,
+          "awards": 25,
+          "tenure": 20,
+          "authorExpertise": 0
+        },
+        "certificationCount": 2,
+        "issues": [
+          "Surface certifications/accreditations (ASE, manufacturer-certified, BBB accredited, licensed) prominently on the page.",
+          "Attribute content to credentialed people — author bylines with titles and Person/jobTitle schema."
+        ],
+        "reason": "⚠️ Expertise/credentials are thin (71/100). Surface certifications/accreditations (ASE, manufacturer-certified, BBB accredited, licensed) prominently on the page. Attribute content to credentialed people — author bylines with titles and Person/jobTitle schema."
+      },
+      "authoritySignals": {
+        "signal": "authoritySignals",
+        "score": 17,
+        "source": "on-page",
+        "breakdown": {
+          "pressMentions": 0,
+          "externalAuthority": 0,
+          "trustBadges": 17,
+          "socialProof": 0
+        },
+        "externalAuthLinks": 0,
+        "socialProfiles": 0,
+        "note": "On-page mention proxies — real backlinks/Domain Authority require a paid SEO API.",
+        "issues": [
+          "Add a press/\"as seen in\" section linking to any media coverage or local news mentions.",
+          "Cite/link authoritative sources (NHTSA, KBB, manufacturer, .gov/.edu) to associate with trusted entities.",
+          "Link all your social profiles (Facebook, Instagram, YouTube, LinkedIn) to broaden your verified footprint."
+        ],
+        "reason": "⚠️ Authority signals are limited (17/100). Add a press/\"as seen in\" section linking to any media coverage or local news mentions. Cite/link authoritative sources (NHTSA, KBB, manufacturer, .gov/.edu) to associate with trusted entities."
+      },
+      "pageSpeed": {
+        "score": 100
+      }
+    },
+    "recommendations": [
+      {
+        "priority": "High",
+        "title": "Replace Image Charts with HTML Tables",
+        "action": "Your comparison charts or data are'stuck' in images. Perplexity and AI crawlers cannot 'read' images reliably. Re-implement charts as <table> elements for better RAG extraction.",
+        "platform": "Perplexity",
+        "impact": 40
+      },
+      {
+        "priority": "Medium",
+        "title": "Add Direct Answer Block",
+        "action": "Add a 1-2 sentence direct answer (TL;DR) within the first 100 words of your content. AI models prioritize these 'Instant Answer' blocks for search snippets.",
+        "platform": "All",
+        "impact": 30
+      },
+      {
+        "priority": "High",
+        "title": "Create /llms.txt File",
+        "action": "Create a plain text file at the root of your domain at /llms.txt. Include: title, description, and links to key pages. See llmstxt.org for format.",
+        "platform": "ChatGPT",
+        "impact": 25
+      },
+      {
+        "priority": "Medium",
+        "title": "Add External Factual Sources",
+        "action": "Link to reputable 3rd party research or data sources. Use superscript style markers [1] or reference lists. Perplexity and factual AIs prioritize cited data.",
+        "platform": "Perplexity",
+        "impact": 20
+      },
+      {
+        "priority": "Medium",
+        "title": "Strengthen Your Entity Schema",
+        "action": "Your Organization schema is incomplete. Add the missing fields so engines can fully recognize your business as an entity. Issues: Organization schema missing a postal address.; No sameAs links (social/Wikipedia profiles)..",
+        "platform": "Gemini",
+        "impact": 15
+      },
+      {
+        "priority": "Medium",
+        "title": "Complete & Align Your NAP",
+        "action": "Citation consistency is 15/100. Ensure one canonical Name, Address, and Phone across your LocalBusiness schema, tel: links, and brand tags so search/AI engines can state your details confidently. No phone number found in schema or tel: links. Brand name differs across schema / og:site_name / title — standardize one exact name.",
+        "platform": "Gemini",
+        "impact": 12
+      },
+      {
+        "priority": "Medium",
+        "title": "Build Topical Authority",
+        "action": "Topical authority is 77/100. Deepen coverage of your core topics and tie them together: add comprehensive content, more subtopic headings, internal links to related pages (topic clusters), and clear local signals (city/region, service area). Weak local-authority signals (city/region terms, \"near me\", service area, map/directions).",
+        "platform": "All",
+        "impact": 12
+      },
+      {
+        "priority": "Low",
+        "title": "Switch to Active Voice",
+        "action": "Ensure your primary answers use active voice and objective facts rather than marketing prose. AI models prefer direct, factual statements.",
+        "platform": "All",
+        "impact": 10
+      },
+      {
+        "priority": "Medium",
+        "title": "Strengthen Your Brand Entity",
+        "action": "Brand entity strength is weak (20/100). Broaden your verified footprint and authority signals: add more sameAs profile links, pursue a Wikipedia/Wikidata presence, and expose aggregateRating (review counts) in schema. Only 0 sameAs profile link(s) — broaden your verified social/brand footprint. No aggregateRating schema — review volume is a key trust signal.",
+        "platform": "All",
+        "impact": 10
+      },
+      {
+        "priority": "Low",
+        "title": "Show First-Hand Experience",
+        "action": "Experience signals are 72/100. Demonstrate real, hands-on experience: original photos of your actual inventory/staff/lot with alt text, genuine customer testimonials, a walkaround video, and a first-person voice. Add genuine customer testimonials with Review/aggregateRating schema to prove real customer experience. Add original photos of your actual inventory, staff, and lot (with descriptive alt text), plus a walkaround video — not stock imagery.",
+        "platform": "All",
+        "impact": 10
+      },
+      {
+        "priority": "Low",
+        "title": "Surface Your Credentials",
+        "action": "Expertise signals are 71/100. Make your qualifications visible: certifications (ASE, manufacturer-certified, BBB accredited), awards/recognition, years in business, and credentialed author bylines. Surface certifications/accreditations (ASE, manufacturer-certified, BBB accredited, licensed) prominently on the page. Attribute content to credentialed people — author bylines with titles and Person/jobTitle schema.",
+        "platform": "All",
+        "impact": 10
+      },
+      {
+        "priority": "Medium",
+        "title": "Build Authority Signals",
+        "action": "Authority signals are 17/100. Add press/\"as seen in\" mentions, link to authoritative sources (NHTSA, KBB, .gov/.edu), display third-party trust badges (BBB, Google, DealerRater), and link all social profiles. (Real backlink growth needs off-site work / a paid SEO tool.) Add a press/\"as seen in\" section linking to any media coverage or local news mentions. Cite/link authoritative sources (NHTSA, KBB, manufacturer, .gov/.edu) to associate with trusted entities.",
+        "platform": "All",
+        "impact": 10
+      }
+    ],
+    "auditedAt": "2026-07-06T21:42:23.859Z"
+  },
+  "conversionAndLeadFlow": {
+    "Percentage": 79,
+    "Confidence": "heuristic",
+    "pageType": "home",
+    "parametersScored": 16,
+    "CTA_Presence": {
+      "score": 100,
+      "status": "pass",
+      "details": "CTAs are present and visible.",
+      "meta": {
+        "count": 16,
+        "selectors": [
+          "button (16)"
+        ]
+      },
+      "analysis": null
+    },
+    "CTA_Clarity": {
+      "score": 100,
+      "status": "pass",
+      "details": "CTAs use clear, actionable text.",
+      "meta": {
+        "count": 1,
+        "examples": [
+          "get an offer"
+        ],
+        "totalChecked": 39
+      },
+      "analysis": null
+    },
+    "CTA_Crowding": {
+      "score": 50,
+      "status": "warning",
+      "details": "Too many CTAs may confuse users.",
+      "meta": {
+        "count": 16,
+        "limit": 3
+      },
+      "analysis": {
+        "cause": "The number of CTA elements exceeds the recommended limit, potentially causing choice paralysis.",
+        "recommendation": "Focus on one or two primary actions to guide the user more effectively."
+      }
+    },
+    "CTA_Flow_Alignment": {
+      "score": 100,
+      "status": "pass",
+      "details": "CTAs are well-placed across the user's journey (above the fold and through the page).",
+      "meta": {
+        "compositeScore": 100,
+        "ctaCount": 7,
+        "aboveFoldCTA": true,
+        "distribution": {
+          "top": 3,
+          "middle": 2,
+          "bottom": 2
+        },
+        "isLongPage": true,
+        "endCTA": true,
+        "documentHeight": 5898,
+        "viewportHeight": 1080,
+        "examples": [
+          "Sell/Trade",
+          "Finance",
+          "Sell My Car",
+          "Schedule an appointment",
+          "Get an offer"
+        ]
+      },
+      "analysis": null
+    },
+    "Testimonials": {
+      "score": 100,
+      "status": "pass",
+      "details": "Testimonials section or elements detected.",
+      "meta": {
+        "count": 6,
+        "checkedKeywords": [
+          "testimonial",
+          "review",
+          "client-say",
+          "feedback",
+          "what people say"
+        ]
+      },
+      "analysis": null
+    },
+    "Reviews": {
+      "score": 100,
+      "status": "pass",
+      "details": "User reviews/ratings detected.",
+      "meta": {
+        "count": 6,
+        "checkedKeywords": [
+          "review",
+          "rating",
+          "stars",
+          "customer-review"
+        ]
+      },
+      "analysis": null
+    },
+    "Client_Logos": {
+      "score": 50,
+      "status": "warning",
+      "details": "No client logos detected.",
+      "meta": {
+        "count": 0,
+        "checkedSelectors": [
+          ".client-logo",
+          ".partner-logo",
+          ".logos img",
+          ".clients img",
+          ".trusted-by img"
+        ]
+      },
+      "analysis": {
+        "cause": "The page does not prominently feature logos of partners or previous clients.",
+        "recommendation": "Display a 'Logos' or 'Trusted By' section with well-known brands you've worked with to boost authority."
+      }
+    },
+    "Case_Studies_Accessibility": {
+      "score": 50,
+      "status": "warning",
+      "details": "No references to case studies or success stories found.",
+      "meta": {
+        "count": 0,
+        "checkedKeywords": [
+          "case study",
+          "case studies",
+          "success story",
+          "success stories",
+          "client success"
+        ]
+      },
+      "analysis": {
+        "cause": "No textual references to 'case studies' or 'success stories' were found in the page content.",
+        "recommendation": "Showcase real-world examples of your work through detailed case studies or success stories to build deep trust."
+      }
+    },
+    "Certifications_Awards": {
+      "score": 55,
+      "status": "warning",
+      "details": "Trust signals found: award.",
+      "analysis": {
+        "cause": "Few or no third-party credibility signals (certifications, BBB, awards, ratings) are visible.",
+        "recommendation": "Display manufacturer certifications, BBB accreditation, award badges (Dealer of the Year, DealerRater) and star ratings prominently near the top of key pages."
+      },
+      "meta": {
+        "found": [
+          "award"
+        ],
+        "badgeImgs": 0
+      }
+    },
+    "Click_To_Call": {
+      "score": 0,
+      "status": "fail",
+      "details": "No phone number or click-to-call link detected.",
+      "meta": {
+        "detectionType": "none",
+        "telCount": 0,
+        "telExamples": []
+      },
+      "analysis": {
+        "cause": "No tel: link or visible phone number was found on the page.",
+        "recommendation": "Display your dealership phone number prominently and make it a click-to-call (tel:) link so shoppers can reach you instantly."
+      }
+    },
+    "Chat_Experience": {
+      "score": 0,
+      "status": "fail",
+      "details": "No live chat or chatbot experience detected.",
+      "meta": {
+        "detectionType": "none",
+        "foundWidgets": [],
+        "ctaExamples": [],
+        "formFieldsDetected": [],
+        "matchedKeywords": []
+      },
+      "analysis": {
+        "cause": "No chat widget, chatbot, or chat launcher was found on the page.",
+        "recommendation": "Add a live chat or chatbot (Gubagoo, Podium, CarNow, Intercom) to answer shopper questions in real time and capture leads outside business hours."
+      }
+    },
+    "Lead_Magnets": {
+      "score": 100,
+      "status": "pass",
+      "details": "Lead magnets or high-value resources detected.",
+      "meta": {
+        "count": 1,
+        "checkedKeywords": [
+          "free ebook",
+          "guide",
+          "whitepaper",
+          "cheatsheet",
+          "download now",
+          "get my copy",
+          "resource library"
+        ],
+        "found": [
+          "guide"
+        ]
+      },
+      "analysis": null
+    },
+    "GA4_Installed": {
+      "score": 100,
+      "status": "pass",
+      "details": "GA4 detected (G-HG0VLWSM47)",
+      "meta": {
+        "measurementIds": [
+          "G-HG0VLWSM47"
+        ],
+        "method": "gtag.js",
+        "hasGtag": true
+      },
+      "analysis": null
+    },
+    "GTM_Configuration": {
+      "score": 100,
+      "status": "pass",
+      "details": "Google Tag Manager detected (GTM-T68LR9DM, GTM-TDM27NQ)",
+      "meta": {
+        "containerIds": [
+          "GTM-T68LR9DM",
+          "GTM-TDM27NQ"
+        ],
+        "hasDataLayer": true
+      },
+      "analysis": null
+    },
+    "Conversion_Tracking": {
+      "score": 100,
+      "status": "pass",
+      "details": "Form and call conversion tracking detected",
+      "meta": {
+        "formTracking": true,
+        "callTracking": true,
+        "signals": [
+          "form_submit event",
+          "invoca",
+          "phone conversion event"
+        ],
+        "telLinks": 0
+      },
+      "analysis": null
+    },
+    "CRM_Integration": {
+      "score": 50,
+      "status": "warning",
+      "details": "CRM script/SDK detected (carnow) but no lead form action wired to it was found.",
+      "meta": {
+        "detectedCRMs": [
+          "carnow"
+        ],
+        "formActions": []
+      },
+      "analysis": {
+        "cause": "A CRM vendor script is present, but no on-page form action posts directly to the CRM — leads may be relayed server-side (not verifiable from the browser) or not captured at all.",
+        "recommendation": "Wire your lead forms to the CRM (a client-side form action or API) so submissions are reliably captured by VinSolutions / DealerSocket / eLead / HubSpot."
+      }
+    }
+  },
+  "accessibility": {
+    "Percentage": 86,
+    "Graded_Percentage": 96,
+    "Score_Breakdown": {
+      "model": "severity-weighted deductions (rule-binary, AccessibilityChecker.org-aligned)",
+      "base": 90,
+      "totalDeduction": 3.8,
+      "effectiveDeduction": 3.8,
+      "perImpact": {
+        "critical": 12,
+        "serious": 6,
+        "moderate": 2.5,
+        "minor": 1
+      },
+      "widespreadMultiplier": {
+        "threshold": 10,
+        "factor": 1.5
+      },
+      "items": [
+        {
+          "rule": "landmark-unique",
+          "impact": "moderate",
+          "nodes": 2,
+          "deduction": 2.5
+        },
+        {
+          "rule": "Skip_Links",
+          "impact": "moderate",
+          "nodes": 0,
+          "deduction": 1.3
+        }
+      ]
+    },
+    "Confidence": "heuristic",
+    "Coverage": "Automated WCAG 2.2 AA coverage (~30–40% of success criteria).",
+    "Note": "Automated checks (axe-core + DOM probes) cover roughly 30–40% of WCAG 2.2 success criteria. A clean result is necessary but not sufficient for full Level AA conformance — manual review is still required. The headline score uses a severity-weighted deduction model (a rule with ANY failing node deducts in full, scaled by impact), aligned with industry checkers such as Lighthouse and AccessibilityChecker.org. The automated ceiling is 90 — the remaining 10 points require a passing manual review.",
+    "WCAG_AA_Compliance": {
+      "score": 100,
+      "status": "pass",
+      "infoOnly": true,
+      "details": "Passes all 28 axe-testable WCAG A/AA rules.",
+      "meta": {
+        "grade": "Conformant (automated checks)",
+        "score": 100,
+        "confidence": "heuristic",
+        "conformanceRatio": 100,
+        "passedRules": 28,
+        "violatedRuleCount": 0,
+        "byImpact": {
+          "critical": 0,
+          "serious": 0,
+          "moderate": 0,
+          "minor": 0
+        },
+        "violatedRules": [],
+        "note": "Automated checks (axe-core + DOM probes) cover roughly 30–40% of WCAG 2.2 success criteria. A clean result is necessary but not sufficient for full Level AA conformance — manual review is still required. The headline score uses a severity-weighted deduction model (a rule with ANY failing node deducts in full, scaled by impact), aligned with industry checkers such as Lighthouse and AccessibilityChecker.org. The automated ceiling is 90 — the remaining 10 points require a passing manual review."
+      },
+      "analysis": null
+    },
+    "Color_Contrast": {
+      "score": 100,
+      "status": "pass",
+      "details": "Text elements meet minimum contrast ratios (4.5:1 / 3:1).",
+      "meta": {
+        "threshold": "Body text ≥ 4.5:1, large text ≥ 3:1, UI/icons ≥ 3:1.",
+        "confidence": "heuristic"
+      },
+      "analysis": null
+    },
+    "Label": {
+      "score": null,
+      "status": null,
+      "details": "No form inputs on this page, so label coverage does not apply.",
+      "analysis": {
+        "recommendation": "When forms are added (contact, finance, trade-in), give every input a programmatic <label> or aria-label."
+      },
+      "meta": {
+        "value": "Not applicable",
+        "notScored": true,
+        "reason": "No form inputs on this page, so label coverage does not apply.",
+        "informational": true,
+        "confidence": "heuristic"
+      }
+    },
+    "Html_Has_Lang": {
+      "score": 100,
+      "status": "pass",
+      "details": "The <html> element has a valid lang attribute.",
+      "meta": {
+        "threshold": "Document language must be defined and valid (e.g., lang='en').",
+        "confidence": "heuristic"
+      },
+      "analysis": null
+    },
+    "Keyboard_Navigation": {
+      "score": 100,
+      "status": "pass",
+      "details": "Page is fully operable by keyboard (logical focus order, reachable content, natural tab order, no focus traps).",
+      "meta": {
+        "threshold": "All interactive content must be operable with a keyboard alone.",
+        "confidence": "heuristic",
+        "components": [
+          "Focus_Order",
+          "Focusable_Content",
+          "Tab_Index",
+          "Aria_Hidden_Focus"
+        ],
+        "breakdown": {
+          "Focus_Order": {
+            "score": 100,
+            "status": "pass",
+            "details": "Focus order follows a logical, sequential path."
+          },
+          "Focusable_Content": {
+            "score": 100,
+            "status": "pass",
+            "details": "All interactive elements are reachable via keyboard."
+          },
+          "Tab_Index": {
+            "score": 100,
+            "status": "pass",
+            "details": "No elements use positive tabindex."
+          },
+          "Aria_Hidden_Focus": {
+            "score": 100,
+            "status": "pass",
+            "details": "Hidden content (aria-hidden) contains no focusable elements."
+          }
+        }
+      },
+      "analysis": null
+    },
+    "Focus_Order": {
+      "score": 100,
+      "status": "pass",
+      "details": "Focus order follows a logical, sequential path.",
+      "meta": {
+        "threshold": "Tab order must match the visual layout.",
+        "confidence": "heuristic"
+      },
+      "analysis": null
+    },
+    "Focusable_Content": {
+      "score": 100,
+      "status": "pass",
+      "details": "All interactive elements are reachable via keyboard.",
+      "meta": {
+        "threshold": "All clickable items must be keyboard accessible.",
+        "confidence": "heuristic"
+      },
+      "analysis": null
+    },
+    "Tab_Index": {
+      "score": 100,
+      "status": "pass",
+      "details": "No elements use positive tabindex.",
+      "meta": {
+        "threshold": "Avoid custom tab orders for natural navigation.",
+        "confidence": "heuristic"
+      },
+      "analysis": null
+    },
+    "Aria_Hidden_Focus": {
+      "score": 100,
+      "status": "pass",
+      "details": "Hidden content (aria-hidden) contains no focusable elements.",
+      "meta": {
+        "threshold": "Hidden content must not trap keyboard focus.",
+        "confidence": "heuristic"
+      },
+      "analysis": null
+    },
+    "Image_Alt": {
+      "score": 100,
+      "status": "pass",
+      "details": "All images have valid alt text.",
+      "meta": {
+        "threshold": "All images must have text descriptions or be marked decorative.",
+        "confidence": "heuristic"
+      },
+      "analysis": null
+    },
+    "Link_Name": {
+      "score": 100,
+      "status": "pass",
+      "details": "All links have discernible text.",
+      "meta": {
+        "threshold": "All links must have clear, descriptive text.",
+        "confidence": "heuristic"
+      },
+      "analysis": null
+    },
+    "Button_Name": {
+      "score": 100,
+      "status": "pass",
+      "details": "All buttons have discernible text.",
+      "meta": {
+        "threshold": "All buttons must have clear, descriptive labels.",
+        "confidence": "heuristic"
+      },
+      "analysis": null
+    },
+    "Aria_Roles": {
+      "score": 100,
+      "status": "pass",
+      "details": "All ARIA roles are valid.",
+      "meta": {
+        "threshold": "Elements must be correctly identified (e.g., 'button').",
+        "confidence": "heuristic"
+      },
+      "analysis": null
+    },
+    "Aria_Allowed_Attr": {
+      "score": 100,
+      "status": "pass",
+      "details": "ARIA attributes are valid for their roles.",
+      "meta": {
+        "threshold": "Accessibility tags must match their intended use.",
+        "confidence": "heuristic"
+      },
+      "analysis": null
+    },
+    "Document_Title": {
+      "score": 100,
+      "status": "pass",
+      "details": "Page has a valid <title>, unique across 4 sampled page(s).",
+      "meta": {
+        "threshold": "Every page should have a unique, descriptive <title>.",
+        "confidence": "heuristic",
+        "currentTitle": "Koons - The #1 Automotive Dealer in the Washington DC, Virginia and Maryland Area",
+        "sampledPages": [
+          {
+            "url": "https://www.koons.com/shop",
+            "title": "Shop 8214 New and Used Vehicles for Sale at Jim Koons Automotive Co"
+          },
+          {
+            "url": "https://www.koons.com/sell-trade",
+            "title": "Sell or Trade My Car to Dealer in Virginia, Maryland and Washington, DC | Koons"
+          },
+          {
+            "url": "https://www.koons.com/finance",
+            "title": "Car Financing & Auto Loans in DC, MD & VA | Koons"
+          },
+          {
+            "url": "https://www.koons.com/service",
+            "title": "Schedule Vehicle Service | Koons Service Centers"
+          }
+        ],
+        "duplicates": [],
+        "checkedCount": 4,
+        "unique": true
+      },
+      "analysis": null
+    },
+    "Meta_Viewport": {
+      "score": 100,
+      "status": "pass",
+      "details": "Viewport allows user scaling.",
+      "meta": {
+        "threshold": "Users must be allowed to zoom in for readability (no user-scalable=no).",
+        "confidence": "heuristic"
+      },
+      "analysis": null
+    },
+    "Target_Size": {
+      "score": 100,
+      "status": "pass",
+      "details": "All 51 measured targets meet the 24×24px minimum.",
+      "meta": {
+        "threshold": "Tap/click targets should be at least 24×24 CSS px (WCAG 2.5.8).",
+        "confidence": "heuristic",
+        "total": 51
+      },
+      "analysis": null
+    },
+    "Reflow": {
+      "score": 100,
+      "status": "pass",
+      "details": "Content reflows cleanly at 320px with no horizontal scroll.",
+      "meta": {
+        "threshold": "Content must reflow without horizontal scrolling at 320 CSS px (WCAG 1.4.10).",
+        "confidence": "heuristic",
+        "scrollWidth": 320,
+        "viewport": 320
+      },
+      "analysis": null
+    },
+    "Heading_Order": {
+      "score": 100,
+      "status": "pass",
+      "details": "Headings follow a logical hierarchy (h1 → h2).",
+      "meta": {
+        "threshold": "Headings must follow a logical hierarchy (H1 → H2 → H3).",
+        "confidence": "heuristic"
+      },
+      "analysis": null
+    },
+    "Landmarks": {
+      "score": 100,
+      "status": "pass",
+      "details": "Landmarks found: Main Content, Navigation, Banner (Header), Content Info (Footer).",
+      "meta": {
+        "threshold": "Primary regions (Main, Nav, Header, Footer) must be present.",
+        "confidence": "heuristic",
+        "present": [
+          "Main Content",
+          "Navigation",
+          "Banner (Header)",
+          "Content Info (Footer)"
+        ],
+        "missing": [
+          "Complementary (Aside)"
+        ],
+        "count": 4
+      },
+      "analysis": null
+    },
+    "List": {
+      "score": 100,
+      "status": "pass",
+      "details": "All lists use valid structure (ul/ol/dl).",
+      "meta": {
+        "threshold": "Lists must be correctly structured for screen readers.",
+        "confidence": "heuristic"
+      },
+      "analysis": null
+    },
+    "Skip_Links": {
+      "score": 40,
+      "status": "warning",
+      "details": "No 'Skip to content' link found.",
+      "meta": {
+        "threshold": "A 'Skip to content' link helps keyboard users bypass nav.",
+        "confidence": "heuristic"
+      },
+      "analysis": {
+        "cause": "Keyboard users cannot bypass repetitive navigation to reach the main content.",
+        "recommendation": "Add a link with text 'Skip to content' pointing to <main id='content'>."
+      }
+    },
+    "Interactive_Element_Affordance": {
+      "score": null,
+      "status": null,
+      "details": "No non-semantic clickable elements detected to assess affordance.",
+      "analysis": {
+        "recommendation": "Continue using native <button>/<a> for interactive controls."
+      },
+      "meta": {
+        "value": "Not applicable",
+        "notScored": true,
+        "reason": "No non-semantic clickable elements detected to assess affordance.",
+        "informational": true,
+        "confidence": "heuristic"
+      }
+    },
+    "Text_Spacing": {
+      "score": 50,
+      "status": "warning",
+      "infoOnly": true,
+      "details": "5 element(s) clip their content under text-spacing overrides — verify manually.",
+      "meta": {
+        "threshold": "Text must not be clipped when users override line/letter/word spacing (WCAG 1.4.12).",
+        "confidence": "heuristic",
+        "informational": true,
+        "clipped": 5,
+        "offenders": [
+          {
+            "tag": "p",
+            "cls": "line-clamp"
+          },
+          {
+            "tag": "p",
+            "cls": "line-clamp"
+          },
+          {
+            "tag": "p",
+            "cls": "line-clamp"
+          },
+          {
+            "tag": "p",
+            "cls": "line-clamp"
+          },
+          {
+            "tag": "p",
+            "cls": "line-clamp"
+          }
+        ]
+      },
+      "analysis": {
+        "cause": "Containers with fixed heights and overflow:hidden cut off text when users increase spacing for readability.",
+        "recommendation": "Avoid fixed heights on text containers; allow them to grow, and avoid overflow:hidden on body copy."
+      }
+    },
+    "Focus_Not_Obscured": {
+      "score": 50,
+      "status": "warning",
+      "infoOnly": true,
+      "details": "Sticky header (80px) detected with no scroll-padding-top — focused elements may be hidden beneath it. Verify by tabbing.",
+      "meta": {
+        "threshold": "A focused element must not be fully hidden behind sticky headers (WCAG 2.4.11).",
+        "confidence": "heuristic",
+        "informational": true,
+        "stickyHeader": true,
+        "headerHeight": 80,
+        "scrollPadding": false
+      },
+      "analysis": {
+        "cause": "When a focused element scrolls under a sticky header, keyboard users lose track of where they are.",
+        "recommendation": "Add scroll-padding-top equal to the header height on the root element, or use scroll-margin on focus targets."
+      }
+    },
+    "Reduced_Motion": {
+      "score": 100,
+      "status": "pass",
+      "infoOnly": true,
+      "details": "Animation present and a prefers-reduced-motion media query is defined.",
+      "meta": {
+        "threshold": "Sites with animation should honor the prefers-reduced-motion setting.",
+        "confidence": "heuristic",
+        "informational": true,
+        "motion": true,
+        "reducedMotionRule": true,
+        "autoplay": 6
+      },
+      "analysis": null
+    }
+  },
+  "onPageSEO": {
+    "Title": {
+      "score": 50,
+      "status": "warning",
+      "details": "Title tag requires attention",
+      "meta": {
+        "title": "Koons - The #1 Automotive Dealer in the Washington DC, Virginia and Maryland Area",
+        "exists": true,
+        "length": 81,
+        "value": "50%"
+      },
+      "analysis": {
+        "cause": "The title is 81 characters — beyond the ~60-character SERP display limit, so it will be truncated.",
+        "recommendation": "Trim to ~60 characters so the full title shows in search results; keep the primary keyword in the visible portion."
+      }
+    },
+    "Title_Uniqueness": {
+      "score": 60,
+      "status": "warning",
+      "details": "Checked 5 pages — 3 unique (1 duplicate title(s), 1 missing title(s))",
+      "meta": {
+        "pagesChecked": 5,
+        "found": 4,
+        "uniqueCount": 3,
+        "duplicateCount": 1,
+        "missingCount": 1,
+        "values": [
+          "Sell or Trade My Car to Dealer in Virginia, Maryland and Washington, DC | Koons",
+          "Vehicle Protection & Repair Questions | Koons FAQ",
+          "Purchasing a Car Questions & Answers | Koons Car Buying FAQ",
+          "Sell or Trade My Car to Dealer in Virginia, Maryland and Washington, DC | Koons"
+        ],
+        "results": [
+          {
+            "url": "https://www.koons.com/sell-to-koons",
+            "value": "Sell or Trade My Car to Dealer in Virginia, Maryland and Washington, DC | Koons"
+          },
+          {
+            "url": "https://www.koons.com/buying-a-car-questions/vehicle-protection-repairs",
+            "value": "Vehicle Protection & Repair Questions | Koons FAQ"
+          },
+          {
+            "url": "https://www.koons.com/buying-a-car-questions/purchasing-car",
+            "value": "Purchasing a Car Questions & Answers | Koons Car Buying FAQ"
+          },
+          {
+            "url": "https://www.koons.com/koons-cares",
+            "value": null
+          },
+          {
+            "url": "https://www.koons.com/sell-trade",
+            "value": "Sell or Trade My Car to Dealer in Virginia, Maryland and Washington, DC | Koons"
+          }
+        ],
+        "statusLabel": "Fair",
+        "value": "60%"
+      },
+      "analysis": {
+        "cause": "Out of 5 sampled pages, only 3 title(s) were unique — 1 duplicate title(s) and 1 missing title(s). Duplicate or missing titles weaken keyword targeting and confuse search engines.",
+        "recommendation": "Give each page a distinct <title> tag that reflects its specific content, and ensure none are left empty."
+      }
+    },
+    "Title_Keyword_Optimization": {
+      "score": 80,
+      "status": "warning",
+      "details": "Checked 5 pages — 4 title(s) include the target keyword",
+      "meta": {
+        "pagesChecked": 5,
+        "optimizedCount": 4,
+        "results": [
+          {
+            "url": "https://www.koons.com/sell-to-koons",
+            "title": "Sell or Trade My Car to Dealer in Virginia, Maryland and Washington, DC | Koons",
+            "keyword": "sell koons",
+            "source": "url",
+            "optimized": true
+          },
+          {
+            "url": "https://www.koons.com/buying-a-car-questions/vehicle-protection-repairs",
+            "title": "Vehicle Protection & Repair Questions | Koons FAQ",
+            "keyword": "vehicle protection repairs",
+            "source": "url",
+            "optimized": true
+          },
+          {
+            "url": "https://www.koons.com/buying-a-car-questions/purchasing-car",
+            "title": "Purchasing a Car Questions & Answers | Koons Car Buying FAQ",
+            "keyword": "purchasing car",
+            "source": "url",
+            "optimized": true
+          },
+          {
+            "url": "https://www.koons.com/koons-cares",
+            "title": null,
+            "keyword": "koons cares",
+            "source": "url",
+            "optimized": false
+          },
+          {
+            "url": "https://www.koons.com/sell-trade",
+            "title": "Sell or Trade My Car to Dealer in Virginia, Maryland and Washington, DC | Koons",
+            "keyword": "sell trade",
+            "source": "url",
+            "optimized": true
+          }
+        ],
+        "statusLabel": "Good",
+        "value": "80%"
+      },
+      "analysis": {
+        "cause": "Only 4 of 5 sampled pages have a title that includes the page's target keyword (derived from the URL, H1 or main content). Titles missing their keyword rank weaker for the terms the page is about.",
+        "recommendation": "Include each page's primary keyword (what the page is actually about) near the start of its <title> tag."
+      }
+    },
+    "Title_Location_Optimization": {
+      "score": 50,
+      "status": "warning",
+      "details": "Dealership location could not be determined",
+      "meta": {
+        "title": "Koons - The #1 Automotive Dealer in the Washington DC, Virginia and Maryland Area",
+        "locationFound": false,
+        "statusLabel": "Inconclusive",
+        "value": "50%"
+      },
+      "analysis": {
+        "cause": "Could not determine the dealership's city/state from LocalBusiness schema, the footer, or a contact page.",
+        "recommendation": "Add a LocalBusiness schema with a complete postal address and display your city & state in the site footer."
+      }
+    },
+    "Meta_Description": {
+      "score": 60,
+      "status": "warning",
+      "details": "Meta description requires attention",
+      "meta": {
+        "description": "Koons is the largest family-owned and operated car dealer that has served Washington, DC, Virginia and Maryland for 25 years. Volvo, Ford, Toyota, Jeep, Hyundai, Mercedes, Chrysler, Dodge, RAM, Chevrolet, GMC, Buick. Our experts will help you buy your next car and sell or trade your car.",
+        "length": 288,
+        "exists": true,
+        "value": "60%"
+      },
+      "analysis": {
+        "cause": "The meta description is 288 characters — beyond ~160, so search engines will truncate it.",
+        "recommendation": "Trim to ~155–160 characters so the full snippet displays."
+      }
+    },
+    "Meta_Description_Uniqueness": {
+      "score": 60,
+      "status": "warning",
+      "details": "Checked 5 pages — 3 unique (1 duplicate meta description(s), 1 missing meta description(s))",
+      "meta": {
+        "pagesChecked": 5,
+        "found": 4,
+        "uniqueCount": 3,
+        "duplicateCount": 1,
+        "missingCount": 1,
+        "values": [
+          "Get an instant trade in offer value for your vehicle with our free trade in valuation tool. Koons will buy your car so you can trade it in and swap for something new or get cash for your car.",
+          "Get answers about vehicle protection plans, warranties, and repairs. Learn how to protect your car and keep it running smoothly with Koons service.",
+          "Have questions about purchasing a car? Learn about the buying process, paperwork, pricing, and what to expect when buying a vehicle at Koons.",
+          "Get an instant trade in offer value for your vehicle with our free trade in valuation tool. Koons will buy your car so you can trade it in and swap for something new or get cash for your car."
+        ],
+        "results": [
+          {
+            "url": "https://www.koons.com/sell-to-koons",
+            "value": "Get an instant trade in offer value for your vehicle with our free trade in valuation tool. Koons will buy your car so you can trade it in and swap for something new or get cash for your car."
+          },
+          {
+            "url": "https://www.koons.com/buying-a-car-questions/vehicle-protection-repairs",
+            "value": "Get answers about vehicle protection plans, warranties, and repairs. Learn how to protect your car and keep it running smoothly with Koons service."
+          },
+          {
+            "url": "https://www.koons.com/buying-a-car-questions/purchasing-car",
+            "value": "Have questions about purchasing a car? Learn about the buying process, paperwork, pricing, and what to expect when buying a vehicle at Koons."
+          },
+          {
+            "url": "https://www.koons.com/koons-cares",
+            "value": null
+          },
+          {
+            "url": "https://www.koons.com/sell-trade",
+            "value": "Get an instant trade in offer value for your vehicle with our free trade in valuation tool. Koons will buy your car so you can trade it in and swap for something new or get cash for your car."
+          }
+        ],
+        "statusLabel": "Fair",
+        "value": "60%"
+      },
+      "analysis": {
+        "cause": "Out of 5 sampled pages, only 3 meta description(s) were unique — 1 duplicate meta description(s) and 1 missing meta description(s). Duplicate or missing meta descriptions weaken keyword targeting and confuse search engines.",
+        "recommendation": "Give each page a distinct meta description that reflects its specific content, and ensure none are left empty."
+      }
+    },
+    "URL_Structure": {
+      "score": 100,
+      "status": "pass",
+      "details": "Clean root URL",
+      "meta": {
+        "url": "https://www.koons.com",
+        "path": "/",
+        "depth": 0,
+        "segments": [],
+        "length": 21,
+        "hierarchy": "root",
+        "hasFileExtension": false,
+        "hasDateInPath": false,
+        "nonDescriptiveSegments": [],
+        "issues": [],
+        "value": "100%"
+      },
+      "analysis": null
+    },
+    "Canonical": {
+      "score": 100,
+      "status": "pass",
+      "details": "Self-referencing canonical tag",
+      "meta": {
+        "canonical": "https://www.koons.com/",
+        "exists": 1,
+        "isSelfReferencing": true,
+        "inHead": true,
+        "hasNoindex": false,
+        "noindexConflict": false,
+        "isPaginated": false,
+        "isDeepPage": false,
+        "pageNum": null,
+        "hasRelNext": false,
+        "hasRelPrev": false,
+        "canonicalizesParams": false,
+        "paginationIssue": false,
+        "value": "100%"
+      },
+      "analysis": null
+    },
+    "H1": {
+      "score": 100,
+      "status": "pass",
+      "details": "Exactly one H1 tag found",
+      "meta": {
+        "count": 1,
+        "content": [
+          "250 Years of Freedom"
+        ],
+        "value": "100%"
+      },
+      "analysis": null
+    },
+    "Image": {
+      "score": 80,
+      "status": "warning",
+      "details": "Image optimization opportunities found",
+      "meta": {
+        "total": 20,
+        "withAlt": 20,
+        "meaningfulAlt": 16,
+        "withTitle": 0,
+        "missingAlt": [],
+        "missingTitle": [
+          {
+            "src": "/less/images/tr:w-16,f-avif,fo-middle,q-15/https://cdn.sanity.io/images/ju3h49o8/koons/2f834a3c8f58ab4f4520da67fa82ca422164da77-3347x2063.jpg"
+          },
+          {
+            "src": "/less/images/tr:w-4,f-avif,fo-middle,q-15/https://cdn.sanity.io/images/ju3h49o8/exo/116ada9d430a33260e5af65568fab3f4629fc7ff-290x108.webp"
+          },
+          {
+            "src": "/less/images/tr:w-4,f-avif,fo-middle,q-15/https://cdn.sanity.io/images/ju3h49o8/exo/b5858a254a1cc163ef1863184db89f9b382523b7-300x300.webp"
+          },
+          {
+            "src": "/less/images/tr:w-4,f-avif,fo-middle,q-15/https://cdn.sanity.io/images/ju3h49o8/exo/5d3ea30d46fedc6b1f8324e9c58cbfb6feb8edcf-300x300.webp"
+          },
+          {
+            "src": "/less/images/tr:w-4,f-avif,fo-middle,q-15/https://cdn.sanity.io/images/ju3h49o8/exo/618568960432425ed4f9d4fedd75cde6c8b5a011-249x40.webp"
+          },
+          {
+            "src": "/less/images/tr:w-4,f-avif,fo-middle,q-15/https://cdn.sanity.io/images/ju3h49o8/exo/8c5079c6b0c6297c9335a5dd28f77547d97cbe51-300x81.webp"
+          },
+          {
+            "src": "/less/images/tr:w-16,f-avif,fo-middle,q-15/https://cdn.sanity.io/images/ju3h49o8/koons/8b718dce414aeb87d8bc47c877f0810e890306f2-600x900.jpg"
+          },
+          {
+            "src": "/less/images/tr:w-16,f-avif,fo-middle,q-15/https://cdn.sanity.io/images/ju3h49o8/koons/7ebb5d196754b602b250dfe8888bbdced37b9ab5-600x900.jpg"
+          },
+          {
+            "src": "/less/images/tr:w-16,f-avif,fo-middle,q-15/https://cdn.sanity.io/images/ju3h49o8/koons/5be649da2f75973a6d2e0bb1f08c0250a9fbe500-600x900.jpg"
+          },
+          {
+            "src": "/less/images/tr:w-16,f-avif,fo-middle,q-15/https://cdn.sanity.io/images/ju3h49o8/koons/f13b95982fb05642191d9d9142b723580d42e78a-800x1200.jpg"
+          },
+          {
+            "src": "/less/images/tr:w-16,f-avif,fo-middle,q-15/https://cdn.sanity.io/images/ju3h49o8/koons/28c721f6fb2922d11db30d5af1ab61abc9f2b056-600x900.jpg"
+          },
+          {
+            "src": "/less/images/tr:w-16,f-avif,fo-middle,q-15/https://cdn.sanity.io/images/ju3h49o8/koons/ae324227170d59cd88d7baa95ae1c11a26586363-600x900.jpg"
+          },
+          {
+            "src": "/less/images/tr:w-16,f-avif,fo-middle,q-15/https://cdn.sanity.io/images/ju3h49o8/koons/6411fad99c261caccacf82bcd14f9d72fc725c1e-600x900.jpg"
+          },
+          {
+            "src": "/less/images/tr:w-16,f-avif,fo-middle,q-15/https://cdn.sanity.io/images/ju3h49o8/koons/e97059a1213636d6c2b1d68702961d0d50458302-600x900.jpg"
+          },
+          {
+            "src": "/less/images/tr:w-16,f-avif,fo-middle,q-15/https://cdn.sanity.io/images/ju3h49o8/koons/b0d092e37a8dfaca4daffd49d3fc3923a72a540c-600x900.jpg"
+          },
+          {
+            "src": "/less/images/tr:w-16,f-avif,fo-middle,q-15/https://cdn.sanity.io/images/ju3h49o8/koons/6c209d36854e72d94b9410f8a344288cbffd6bbb-1440x1080.jpg"
+          },
+          {
+            "src": "/less/images/tr:w-16,f-avif,fo-middle,q-15/https://cdn.sanity.io/images/ju3h49o8/koons/9664548ca995f37670eda75df25e6d3459b9e10e-1440x1080.jpg"
+          },
+          {
+            "src": "/less/images/tr:w-16,f-avif,fo-middle,q-15/https://cdn.sanity.io/images/ju3h49o8/koons/e5b9f9ddbea0eaf026a565f9c2e789b50604c776-600x900.jpg"
+          },
+          {
+            "src": "/less/images/tr:w-16,f-avif,fo-middle,q-15/https://cdn.sanity.io/images/ju3h49o8/koons/8b718dce414aeb87d8bc47c877f0810e890306f2-600x900.jpg"
+          },
+          {
+            "src": "/less/images/tr:w-16,f-avif,fo-middle,q-15/https://cdn.sanity.io/images/ju3h49o8/koons/cf2897d24f81236e60667a819549671977789107-600x900.jpg"
+          }
+        ],
+        "largeImages": [],
+        "broken_images_count": 0,
+        "broken_images": [],
+        "nextGenCount": 5,
+        "nextGenPct": 25,
+        "lazyCount": 19,
+        "lazyPct": 95,
+        "responsiveCount": 0,
+        "descriptiveNameCount": 15,
+        "namingDenom": 20,
+        "namingPct": 75,
+        "legacyExamples": [],
+        "badNameExamples": [
+          "2f834a3c8f58ab4f4520da67fa82ca422164da77-3347x2063",
+          "b5858a254a1cc163ef1863184db89f9b382523b7-300x300",
+          "f13b95982fb05642191d9d9142b723580d42e78a-800x1200",
+          "e97059a1213636d6c2b1d68702961d0d50458302-600x900",
+          "cf2897d24f81236e60667a819549671977789107-600x900"
+        ],
+        "value": "80%"
+      },
+      "analysis": {
+        "cause": "Issues found: 4 weak Alt text, 15 images not next-gen (WebP/AVIF), 5 non-descriptive file names.",
+        "recommendation": "Fix broken images, add descriptive Alt text, serve WebP/AVIF, lazy-load below-the-fold images, use keyword-rich file names, and compress large images."
+      }
+    },
+    "Heading_Hierarchy": {
+      "score": 100,
+      "status": "pass",
+      "details": "Proper hierarchy",
+      "meta": {
+        "counts": {
+          "h1": 1,
+          "h2": 8,
+          "h3": 17,
+          "h4": 0,
+          "h5": 0,
+          "h6": 0
+        },
+        "headings": [
+          {
+            "tag": "h1",
+            "text": "250 Years of Freedom"
+          },
+          {
+            "tag": "h2",
+            "text": "Celebrate America’s Birthday with Huge Deals at All Koons Locations"
+          },
+          {
+            "tag": "h2",
+            "text": "Shop by Brand"
+          },
+          {
+            "tag": "h3",
+            "text": "Choose from all of your favorite brands."
+          },
+          {
+            "tag": "h2",
+            "text": "Shop by body style"
+          },
+          {
+            "tag": "h3",
+            "text": "Trucks, sedans, SUVs, convertibles - we have it all."
+          },
+          {
+            "tag": "h3",
+            "text": "Coupe"
+          },
+          {
+            "tag": "h3",
+            "text": "SUV"
+          },
+          {
+            "tag": "h3",
+            "text": "Trucks"
+          },
+          {
+            "tag": "h3",
+            "text": "Hatchback"
+          },
+          {
+            "tag": "h3",
+            "text": "Convertible"
+          },
+          {
+            "tag": "h2",
+            "text": "What's popular"
+          },
+          {
+            "tag": "h3",
+            "text": "Electric cars"
+          },
+          {
+            "tag": "h3",
+            "text": "Apple CarPlay"
+          },
+          {
+            "tag": "h3",
+            "text": "Fuel-Efficient Cars"
+          },
+          {
+            "tag": "h3",
+            "text": "Popular SUVs"
+          },
+          {
+            "tag": "h2",
+            "text": "Koons Service"
+          },
+          {
+            "tag": "h3",
+            "text": "The DMVs #1 service experience"
+          },
+          {
+            "tag": "h2",
+            "text": "Sell or Trade"
+          },
+          {
+            "tag": "h3",
+            "text": "Get paid today for your car. We'll even pick it up."
+          },
+          {
+            "tag": "h2",
+            "text": "Why Koons"
+          },
+          {
+            "tag": "h3",
+            "text": "Shop your way"
+          },
+          {
+            "tag": "h3",
+            "text": "Peace of mind"
+          },
+          {
+            "tag": "h3",
+            "text": "Our people"
+          },
+          {
+            "tag": "h2",
+            "text": "Why 100,000+ people choose Koons"
+          },
+          {
+            "tag": "h3",
+            "text": "Your community. Real experiences."
+          }
+        ],
+        "issues": [],
+        "value": "100%"
+      },
+      "analysis": null
+    },
+    "Semantic_Tags": {
+      "score": 100,
+      "status": "pass",
+      "details": "Strong semantic structure",
+      "meta": {
+        "main": 1,
+        "nav": 5,
+        "article": 21,
+        "section": 18,
+        "header": 15,
+        "footer": 5,
+        "aside": 0,
+        "found": [
+          "main",
+          "nav",
+          "article",
+          "section",
+          "header",
+          "footer"
+        ],
+        "missing": [
+          "aside"
+        ],
+        "potentialReplacements": [],
+        "ariaLandmarks": {
+          "main": 1,
+          "navigation": 0,
+          "banner": 1,
+          "contentinfo": 1
+        },
+        "sectioningCount": 39,
+        "sectioningWithHeadings": 30,
+        "sectionsWithoutHeadings": [
+          "section",
+          "section.footer-top-left",
+          "section.footer-bottom-left.back-to-top-desktop-container",
+          "section.footer-top-right",
+          "section.footer-section",
+          "section.footer-section",
+          "section.footer-bottom-right",
+          "section.footer-meta-info",
+          "section.back-to-top-mobile-container"
+        ],
+        "semanticCount": 117,
+        "divCount": 33,
+        "semanticRatio": 0.78,
+        "semanticScore": 0.95,
+        "issues": [],
+        "value": "100%"
+      },
+      "analysis": null
+    },
+    "Contextual_Linking": {
+      "score": 50,
+      "status": "warning",
+      "details": "Contextual linking issues found",
+      "meta": {
+        "totalContextual": 21,
+        "totalMenu": 11,
+        "contextual_ratio": "0.66",
+        "related_ratio": "0.29",
+        "related_count": 6,
+        "related_examples": [
+          {
+            "href": "/shop/coupe",
+            "anchor": "Shop Coupes",
+            "shared": [
+              "coupe"
+            ]
+          },
+          {
+            "href": "/shop/suv",
+            "anchor": "Shop SUVs",
+            "shared": [
+              "suvs",
+              "suv"
+            ]
+          },
+          {
+            "href": "/shop/truck",
+            "anchor": "Shop Trucks",
+            "shared": [
+              "trucks"
+            ]
+          },
+          {
+            "href": "/shop/hatchback",
+            "anchor": "Shop Hatchbacks",
+            "shared": [
+              "hatchback"
+            ]
+          },
+          {
+            "href": "/shop/convertible",
+            "anchor": "Shop Convertibles",
+            "shared": [
+              "convertibles",
+              "convertible"
+            ]
+          },
+          {
+            "href": "/shop/electric",
+            "anchor": "Shop Electric Cars",
+            "shared": [
+              "electric",
+              "cars"
+            ]
+          }
+        ],
+        "unrelated_examples": [
+          {
+            "href": "/shop",
+            "anchor": "Shop Sale"
+          },
+          {
+            "href": "/shop?make=Toyota",
+            "anchor": ""
+          },
+          {
+            "href": "/shop?make=Ford",
+            "anchor": ""
+          },
+          {
+            "href": "/shop?make=Chevrolet",
+            "anchor": ""
+          },
+          {
+            "href": "/shop?make=Buick",
+            "anchor": ""
+          },
+          {
+            "href": "/shop?make=GMC",
+            "anchor": ""
+          },
+          {
+            "href": "/shop?make=Chrysler",
+            "anchor": ""
+          },
+          {
+            "href": "/shop?make=Dodge",
+            "anchor": ""
+          }
+        ],
+        "topic_terms": [
+          "koons",
+          "automotive",
+          "dealer",
+          "washington",
+          "virginia",
+          "maryland",
+          "area",
+          "years",
+          "freedom",
+          "celebrate",
+          "america",
+          "birthday",
+          "huge",
+          "deals",
+          "locations",
+          "brand",
+          "choose",
+          "favorite",
+          "brands",
+          "body"
+        ],
+        "foundLinks": [
+          "/shop",
+          "/shop?make=Toyota",
+          "/shop?make=Ford",
+          "/shop?make=Chevrolet",
+          "/shop?make=Buick",
+          "/shop?make=GMC",
+          "/shop?make=Chrysler",
+          "/shop?make=Dodge",
+          "/shop?make=Jeep",
+          "/shop?make=RAM",
+          "/shop?make=Hyundai",
+          "/shop?make=Kia",
+          "/shop?make=BMW",
+          "/shop?make=Acura",
+          "/shop?make=MINI",
+          "/shop/coupe",
+          "/shop/suv",
+          "/shop/truck",
+          "/shop/hatchback",
+          "/shop/convertible",
+          "/shop/electric"
+        ],
+        "missingLinks": [
+          "/",
+          "/sell-trade",
+          "/finance",
+          "/service",
+          "/about",
+          "/koons-customer-buying-car-reviews",
+          "/work-with-us",
+          "/locations",
+          "/terms-and-privacy"
+        ],
+        "broken_links_count": 0,
+        "broken_links": [],
+        "issues": [
+          "Important pages not linked contextually.",
+          "Only 29% of in-content links are topically related to this page."
+        ],
+        "value": "50%"
+      },
+      "analysis": {
+        "cause": "Most in-content links point to topically unrelated pages.",
+        "recommendation": "Link to pages that share this page's topic (e.g. related models, services, or guides) to build topical clusters."
+      }
+    },
+    "Links": {
+      "score": 50,
+      "status": "warning",
+      "details": "Generic anchor text found",
+      "meta": {
+        "total": 46,
+        "internal": 45,
+        "external": 1,
+        "unique": 36,
+        "bad_links_count": 0,
+        "bad_links": [],
+        "internalLinks": [
+          {
+            "href": "/",
+            "text": "Brand Logo",
+            "target": "_self"
+          },
+          {
+            "href": "/shop",
+            "text": "Shop",
+            "target": "_self"
+          },
+          {
+            "href": "/sell-trade",
+            "text": "Sell/Trade",
+            "target": "_self"
+          },
+          {
+            "href": "/finance",
+            "text": "Finance",
+            "target": "_self"
+          },
+          {
+            "href": "/service",
+            "text": "Service",
+            "target": "_self"
+          },
+          {
+            "href": "/shop",
+            "text": "Shop Sale",
+            "target": "_self"
+          },
+          {
+            "href": "/sell-trade",
+            "text": "Sell My Car",
+            "target": "_self"
+          },
+          {
+            "href": "/shop?make=Toyota",
+            "text": "[No Text]",
+            "target": "_self"
+          },
+          {
+            "href": "/shop?make=Ford",
+            "text": "[No Text]",
+            "target": "_self"
+          },
+          {
+            "href": "/shop?make=Chevrolet",
+            "text": "[No Text]",
+            "target": "_self"
+          },
+          {
+            "href": "/shop?make=Buick",
+            "text": "[No Text]",
+            "target": "_self"
+          },
+          {
+            "href": "/shop?make=GMC",
+            "text": "[No Text]",
+            "target": "_self"
+          },
+          {
+            "href": "/shop?make=Chrysler",
+            "text": "[No Text]",
+            "target": "_self"
+          },
+          {
+            "href": "/shop?make=Dodge",
+            "text": "[No Text]",
+            "target": "_self"
+          },
+          {
+            "href": "/shop?make=Jeep",
+            "text": "[No Text]",
+            "target": "_self"
+          },
+          {
+            "href": "/shop?make=RAM",
+            "text": "[No Text]",
+            "target": "_self"
+          },
+          {
+            "href": "/shop?make=Hyundai",
+            "text": "[No Text]",
+            "target": "_self"
+          },
+          {
+            "href": "/shop?make=Kia",
+            "text": "[No Text]",
+            "target": "_self"
+          },
+          {
+            "href": "/shop?make=Mercedes-Benz",
+            "text": "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",
+            "target": "_self"
+          },
+          {
+            "href": "/shop?make=BMW",
+            "text": "[No Text]",
+            "target": "_self"
+          },
+          {
+            "href": "/shop?make=Acura",
+            "text": "[No Text]",
+            "target": "_self"
+          },
+          {
+            "href": "/shop?make=Volvo",
+            "text": "image/svg+xml",
+            "target": "_self"
+          },
+          {
+            "href": "/shop?make=MINI",
+            "text": "[No Text]",
+            "target": "_self"
+          },
+          {
+            "href": "/shop/coupe",
+            "text": "Shop Coupes",
+            "target": "_self"
+          },
+          {
+            "href": "/shop/suv",
+            "text": "Shop SUVs",
+            "target": "_self"
+          },
+          {
+            "href": "/shop/truck",
+            "text": "Shop Trucks",
+            "target": "_self"
+          },
+          {
+            "href": "/shop/hatchback",
+            "text": "Shop Hatchbacks",
+            "target": "_self"
+          },
+          {
+            "href": "/shop/convertible",
+            "text": "Shop Convertibles",
+            "target": "_self"
+          },
+          {
+            "href": "/shop/electric",
+            "text": "Shop Electric Cars",
+            "target": "_self"
+          },
+          {
+            "href": "/shop/apple-carplay",
+            "text": "Shop vehicles with Apple CarPlay",
+            "target": "_self"
+          },
+          {
+            "href": "/shop?fuel_type=hybrid%2Cflex-fuel",
+            "text": "Shop Fuel-Efficient Cars",
+            "target": "_self"
+          },
+          {
+            "href": "/shop?body=suv",
+            "text": "Shop Popular SUVs",
+            "target": "_self"
+          },
+          {
+            "href": "/service",
+            "text": "Schedule an appointment",
+            "target": "_self"
+          },
+          {
+            "href": "/sell-trade",
+            "text": "Get an offer",
+            "target": "_self"
+          },
+          {
+            "href": "/",
+            "text": "Page Footer",
+            "target": "_self"
+          },
+          {
+            "href": "/shop",
+            "text": "Shop Cars",
+            "target": "_self"
+          },
+          {
+            "href": "/sell-trade",
+            "text": "Sell/Trade",
+            "target": "_self"
+          },
+          {
+            "href": "/finance",
+            "text": "Finance",
+            "target": "_self"
+          },
+          {
+            "href": "/service",
+            "text": "Service",
+            "target": "_self"
+          },
+          {
+            "href": "/about",
+            "text": "Our Story",
+            "target": "_self"
+          },
+          {
+            "href": "/koons-customer-buying-car-reviews",
+            "text": "Reviews",
+            "target": "_self"
+          },
+          {
+            "href": "/work-with-us",
+            "text": "Careers",
+            "target": "_self"
+          },
+          {
+            "href": "/locations",
+            "text": "Locations",
+            "target": "_self"
+          },
+          {
+            "href": "/terms-and-privacy",
+            "text": "Terms of Use",
+            "target": "_self"
+          },
+          {
+            "href": "/terms-and-privacy",
+            "text": "Privacy Policy",
+            "target": "_self"
+          }
+        ],
+        "externalLinks": [
+          {
+            "href": "https://www.autogenius.io/",
+            "text": "Auto Genius",
+            "target": "_blank"
+          }
+        ],
+        "value": "50%"
+      },
+      "analysis": {
+        "cause": "The page has a strong link profile with descriptive anchor text.",
+        "recommendation": "Maintain descriptive links and proper internal linking."
+      }
+    },
+    "Content_Relevance": {
+      "score": "LOW",
+      "percentage": 26,
+      "matchedKeywords": [
+        "koons",
+        "automotive",
+        "dealer",
+        "car",
+        "years",
+        "toyota",
+        "you",
+        "trade"
+      ],
+      "missingKeywords": [
+        "washington",
+        "virginia",
+        "maryland",
+        "area",
+        "largest",
+        "family",
+        "owned",
+        "operated",
+        "served",
+        "volvo",
+        "ford",
+        "jeep",
+        "hyundai",
+        "mercedes",
+        "chrysler",
+        "dodge",
+        "ram",
+        "chevrolet",
+        "gmc",
+        "buick",
+        "experts",
+        "next",
+        "sell"
+      ],
+      "reason": "Match Status: 26% Match (8/31).",
+      "status": "fail",
+      "details": "Topic Alignment: 8/31 keywords found."
+    },
+    "URL_Slugs": {
+      "score": 100,
+      "status": "pass",
+      "details": "Root URL",
+      "meta": {
+        "slug": "/",
+        "valid": true,
+        "value": "100%"
+      },
+      "analysis": null
+    },
+    "Robots_Txt": {
+      "score": 100,
+      "status": "pass",
+      "details": "Proper robots.txt",
+      "meta": {
+        "content": "# As a condition of accessing this website, you agree to\n# abide by the following content signals:\n#\n# (a) If a content-signal = yes, you may collect content\n#     for the corresponding use.\n# (b) If a content-signal = no, you may not collect content\n#     for the corresponding use.\n# (c) If the website operator does not include a content\n#     signal for a corresponding use, the website operator\n#     neither grants nor restricts permission via content signal\n#     with respect to the corresponding use.\n#\n# The content signals and their meanings are:\n#\n# search: building a search index and providing search\n#   results (e.g., returning hyperlinks and short excerpts\n#   from your website's contents). Search does not include\n#   providing AI-generated search summaries.\n# ai-input: inputting content into one or more AI models\n#   (e.g., retrieval augmented generation, grounding, or other\n#   real-time taking of content for generative AI search\n#   answers).\n# ai-train: training or fine-tuning AI models.\n#\n# ANY RESTRICTIONS EXPRESSED VIA CONTENT SIGNALS ARE EXPRESS\n# RESERVATIONS OF RIGHTS UNDER ARTICLE 4 OF THE EUROPEAN\n# UNION DIRECTIVE 2019/790 ON COPYRIGHT AND RELATED RIGHTS\n# IN THE DIGITAL SINGLE MARKET.\n\nUser-Agent: *\nContent-Signal: ai-train=yes, search=yes, ai-input=yes\nAllow: /\nSitemap: https://www.koons.com/sitemap.xml",
+        "exists": 1,
+        "metaRobots": null,
+        "googlebot": null,
+        "hasNoindex": false,
+        "hasNofollow": false,
+        "value": "100%"
+      },
+      "analysis": null
+    },
+    "Open_Graph": {
+      "score": 50,
+      "status": "warning",
+      "details": "Missing key OG tags: og:image",
+      "meta": {
+        "tags": {
+          "og:site_name": "Koons.com",
+          "og:type": "website",
+          "og:image": "",
+          "og:title": "Koons - The #1 Automotive Dealer in the Washington DC, Virginia and Maryland Area",
+          "og:description": "Koons is the largest family-owned and operated car dealer that has served Washington, DC, Virginia and Maryland for 25 years. Volvo, Ford, Toyota, Jeep, Hyundai, Mercedes, Chrysler, Dodge, RAM, Chevrolet, GMC, Buick. Our experts will help you buy your next car and sell or trade your car.",
+          "og:url": "https://www.koons.com/"
+        },
+        "missing": [
+          "og:image"
+        ],
+        "parameter": "1 if og:title, og:image, og:url exist",
+        "value": "50%"
+      },
+      "analysis": {
+        "cause": "Issue detected with this metric.",
+        "recommendation": "Follow SEO best practices to improve this score."
+      }
+    },
+    "Twitter_Card": {
+      "score": 50,
+      "status": "warning",
+      "details": "Missing key Twitter tags: twitter:card",
+      "meta": {
+        "tags": {
+          "twitter:site": "Koons.com",
+          "twitter:card": "",
+          "twitter:title": "Koons - The #1 Automotive Dealer in the Washington DC, Virginia and Maryland Area",
+          "twitter:description": "Koons is the largest family-owned and operated car dealer that has served Washington, DC, Virginia and Maryland for 25 years. Volvo, Ford, Toyota, Jeep, Hyundai, Mercedes, Chrysler, Dodge, RAM, Chevrolet, GMC, Buick. Our experts will help you buy your next car and sell or trade your car."
+        },
+        "missing": [
+          "twitter:card"
+        ],
+        "parameter": "1 if twitter:card and twitter:title exist",
+        "value": "50%"
+      },
+      "analysis": {
+        "cause": "Issue detected with this metric.",
+        "recommendation": "Follow SEO best practices to improve this score."
+      }
+    },
+    "Social_Links": {
+      "score": 0,
+      "status": "fail",
+      "details": "No social profiles found",
+      "meta": {
+        "links": [],
+        "count": 0,
+        "profiles": [],
+        "platforms": [],
+        "platformCount": 0,
+        "sameAs": [],
+        "sameAsCount": 0,
+        "sameAsPlatforms": [],
+        "missingFromSameAs": [],
+        "sameAsOnly": [],
+        "conflicts": [],
+        "value": "0%"
+      },
+      "analysis": {
+        "cause": "No social-media links or sameAs entries were found.",
+        "recommendation": "Link your social profiles (footer) and declare them in Organization/LocalBusiness sameAs."
+      }
+    },
+    "Viewport": {
+      "score": 100,
+      "status": "pass",
+      "details": "Responsive viewport configured",
+      "meta": {
+        "exists": true,
+        "content": "width=device-width, initial-scale=1, minimum-scale=1, viewport-fit=cover, height=device-height",
+        "hasDeviceWidth": true,
+        "hasInitialScale1": true,
+        "zoomDisabled": false,
+        "value": "100%"
+      },
+      "analysis": null
+    },
+    "Percentage": 76,
+    "Confidence": "heuristic"
+  },
+  "UXOrContentStructure": {
+    "Percentage": 79,
+    "Confidence": "heuristic",
+    "Text_Readability": {
+      "score": 48.34623529411766,
+      "status": "warning",
+      "details": "This Article/Blog has a readability score of 48 out of 100, which is a bit complex for your readers.",
+      "analysis": {
+        "cause": "The content is slightly more complex than ideal for this page type.",
+        "recommendation": "Consider breaking up long sentences and replacing particularly complex words with simpler alternatives."
+      },
+      "meta": {
+        "pageType": "Article/Blog",
+        "targetMin": 50,
+        "targetMax": 70,
+        "problematicContent": [
+          {
+            "text": "Discover our latest electric vehicles designed for comfortable driving, smart features, and low emissions.",
+            "score": 17.382142857142867,
+            "reason": "Complex vocabulary (avg 2.1 syllables/word). Words like: comfortable",
+            "stats": {
+              "ASL": 14,
+              "ASW": 2.0714285714285716
+            }
+          },
+          {
+            "text": "Experience the latest in-car technology with Apple CarPlay",
+            "score": 18.940000000000026,
+            "reason": "Complex vocabulary (avg 2.1 syllables/word). Words like: technology",
+            "stats": {
+              "ASL": 8,
+              "ASW": 2.125
+            }
+          },
+          {
+            "text": "Discover fuel-efficient vehicles that help you save money and go farther every day.",
+            "score": 37.455384615384645,
+            "reason": "Complex vocabulary (avg 1.8 syllables/word). Words like: fuelefficient",
+            "stats": {
+              "ASL": 13,
+              "ASW": 1.8461538461538463
+            }
+          },
+          {
+            "text": "Easy exchanges and free history reports to full protection plans and 0% repair financing.",
+            "score": 47.59642857142859,
+            "reason": "Complex vocabulary (avg 1.7 syllables/word)",
+            "stats": {
+              "ASL": 14,
+              "ASW": 1.7142857142857142
+            }
+          },
+          {
+            "text": "Our award-winning, multilingual, and experienced team is dedicated to making every visit exceptional.",
+            "score": -1.5907692307691832,
+            "reason": "Complex vocabulary (avg 2.3 syllables/word). Words like: awardwinning, multilingual, exceptional",
+            "stats": {
+              "ASL": 13,
+              "ASW": 2.3076923076923075
+            }
+          },
+          {
+            "text": "Mr. Rami was a wonderful sales consultant and really helped guide us throughout the process! Everyone from the different departments including managem...",
+            "score": 32.504999999999995,
+            "reason": "Complex vocabulary (avg 1.9 syllables/word). Words like: management, professional, communication",
+            "stats": {
+              "ASL": 12,
+              "ASW": 1.9166666666666667
+            }
+          }
+        ],
+        "overallStats": {
+          "score": 48.34623529411766,
+          "ASL": 17.647058823529413,
+          "ASW": 1.6616666666666666,
+          "sentenceCount": 34,
+          "wordCount": 600,
+          "syllableCount": 997
+        }
+      }
+    },
+    "Intrusive_Interstitials": {
+      "score": 100,
+      "status": "pass",
+      "details": "No annoying pop-ups or full-screen overlays were found.",
+      "analysis": {
+        "cause": "No intrusive interstitials found.",
+        "recommendation": "Continue to avoid full-screen pop-ups that block the user's primary task."
+      },
+      "meta": {
+        "hasOverlay": true,
+        "hasScrollBlock": false,
+        "hasModal": false
+      }
+    },
+    "Navigation_Discoverability": {
+      "score": 63,
+      "status": "warning",
+      "details": "Found: Navigation Menu, No Icon, Search (decorative, discoverable).",
+      "analysis": {
+        "cause": "Some navigation discoverability is weak — a search affordance is visible but looks decorative (no working form or input behind it).",
+        "recommendation": "Surface a functional search bar in the header (not the footer) and ensure the menu is obvious so shoppers can jump straight to inventory."
+      },
+      "meta": {
+        "hasHamburger": false,
+        "hasSearch": true,
+        "hasNavMenu": true,
+        "search": {
+          "present": true,
+          "type": "trigger",
+          "discoverable": true,
+          "functional": false,
+          "inHeader": true,
+          "topOffset": 12,
+          "score": 23
+        }
+      }
+    },
+    "Above_the_Fold_Content": {
+      "score": 25,
+      "status": "warning",
+      "details": "About 25% of your most important content (titles, images, and buttons) is visible before any scrolling is needed.",
+      "analysis": {
+        "cause": "Important content is partially obscured or pushed down the page.",
+        "recommendation": "Reduce large hero images or white space at the top to bring value-driven content into view sooner."
+      },
+      "meta": {
+        "viewportHeight": 1080,
+        "importantVisible": 34,
+        "totalImportant": 142,
+        "atfScore": 25,
+        "elements": [
+          {
+            "tag": "A",
+            "text": "Brand Logo",
+            "top": 24,
+            "weight": 3
+          },
+          {
+            "tag": "NAV",
+            "text": "Shop\nSell/Trade\nFinance\nService\nMore",
+            "top": 14,
+            "weight": 4
+          },
+          {
+            "tag": "A",
+            "text": "Shop",
+            "top": 14,
+            "weight": 3
+          },
+          {
+            "tag": "A",
+            "text": "Sell/Trade",
+            "top": 14,
+            "weight": 3
+          },
+          {
+            "tag": "A",
+            "text": "Finance",
+            "top": 14,
+            "weight": 3
+          },
+          {
+            "tag": "A",
+            "text": "Service",
+            "top": 14,
+            "weight": 3
+          },
+          {
+            "tag": "BUTTON",
+            "text": "More",
+            "top": 14,
+            "weight": 7
+          },
+          {
+            "tag": "BUTTON",
+            "text": "Search",
+            "top": 12,
+            "weight": 7
+          },
+          {
+            "tag": "BUTTON",
+            "text": "Language",
+            "top": 12,
+            "weight": 7
+          },
+          {
+            "tag": "IMG",
+            "text": "2f834a3c8f58ab4f4520da67fa82ca422164da77-3347x2063.jpg",
+            "top": 80,
+            "weight": 5
+          },
+          {
+            "tag": "H1",
+            "text": "250 Years of Freedom",
+            "top": 144,
+            "weight": 10
+          },
+          {
+            "tag": "H2",
+            "text": "Celebrate America’s Birthday with Huge Deals at Al",
+            "top": 216,
+            "weight": 8
+          },
+          {
+            "tag": "A",
+            "text": "Shop Sale",
+            "top": 259,
+            "weight": 3
+          },
+          {
+            "tag": "A",
+            "text": "Sell My Car",
+            "top": 259,
+            "weight": 3
+          },
+          {
+            "tag": "H2",
+            "text": "Shop by Brand",
+            "top": 928,
+            "weight": 8
+          },
+          {
+            "tag": "H3",
+            "text": "Choose from all of your favorite brands.",
+            "top": 990,
+            "weight": 6
+          },
+          {
+            "tag": "A",
+            "text": "[A]",
+            "top": 1050,
+            "weight": 3
+          },
+          {
+            "tag": "A",
+            "text": "[A]",
+            "top": 1050,
+            "weight": 3
+          },
+          {
+            "tag": "A",
+            "text": "[A]",
+            "top": 1050,
+            "weight": 3
+          },
+          {
+            "tag": "A",
+            "text": "[A]",
+            "top": 1050,
+            "weight": 3
+          },
+          {
+            "tag": "A",
+            "text": "[A]",
+            "top": 1050,
+            "weight": 3
+          },
+          {
+            "tag": "A",
+            "text": "[A]",
+            "top": 1050,
+            "weight": 3
+          },
+          {
+            "tag": "A",
+            "text": "[A]",
+            "top": 1050,
+            "weight": 3
+          },
+          {
+            "tag": "A",
+            "text": "[A]",
+            "top": 1050,
+            "weight": 3
+          },
+          {
+            "tag": "A",
+            "text": "[A]",
+            "top": 1050,
+            "weight": 3
+          },
+          {
+            "tag": "A",
+            "text": "[A]",
+            "top": 1050,
+            "weight": 3
+          },
+          {
+            "tag": "A",
+            "text": "[A]",
+            "top": 1050,
+            "weight": 3
+          },
+          {
+            "tag": "A",
+            "text": "[A]",
+            "top": 1050,
+            "weight": 3
+          },
+          {
+            "tag": "A",
+            "text": "[A]",
+            "top": 1050,
+            "weight": 3
+          },
+          {
+            "tag": "A",
+            "text": "[A]",
+            "top": 1050,
+            "weight": 3
+          },
+          {
+            "tag": "A",
+            "text": "[A]",
+            "top": 1050,
+            "weight": 3
+          },
+          {
+            "tag": "A",
+            "text": "[A]",
+            "top": 1050,
+            "weight": 3
+          },
+          {
+            "tag": "BUTTON",
+            "text": "[BUTTON]",
+            "top": 985,
+            "weight": 7
+          },
+          {
+            "tag": "BUTTON",
+            "text": "[BUTTON]",
+            "top": 985,
+            "weight": 7
+          }
+        ]
+      }
+    },
+    "Broken_Links": {
+      "score": 100,
+      "status": "pass",
+      "details": "Every link on your page works perfectly.",
+      "analysis": {
+        "cause": "All links on the page are valid and accessible.",
+        "recommendation": "Periodic link audits are recommended to ensure external links remain active."
+      },
+      "meta": {
+        "brokenCount": 0,
+        "brokenLinks": [],
+        "totalChecked": 36,
+        "totalInternal": 35,
+        "totalExternal": 1
+      }
+    },
+    "Mobile_Experience": {
+      "score": 100,
+      "status": "pass",
+      "details": "The layout adapts to the screen: responsive viewport, no horizontal overflow, and responsive techniques in use.",
+      "analysis": null,
+      "meta": {
+        "hasViewportMeta": true,
+        "viewportContent": "width=device-width, initial-scale=1, minimum-scale=1, viewport-fit=cover, height=device-height",
+        "hasDeviceWidth": true,
+        "horizontalOverflow": false,
+        "overflowBy": 0,
+        "offenders": [],
+        "imagesTotal": 20,
+        "responsiveImages": 20,
+        "responsiveImageRatio": 100,
+        "mediaQueryCount": 53,
+        "score": 100,
+        "touchTargetPct": 53,
+        "adequateTargets": 32,
+        "totalTargets": 60,
+        "tooSmallTargets": 28,
+        "smallExamples": [
+          "Brand Logo (162x32)",
+          "Shop Sale (129x40)",
+          "Sell My Car (138x40)",
+          "previous (40x40)",
+          "next (40x40)"
+        ],
+        "legibleTextPct": 100,
+        "legibleText": 156,
+        "textTotal": 156,
+        "tinyText": 0,
+        "thumbReachOk": true,
+        "hasMobileNav": false,
+        "hasStickyBar": true,
+        "responsiveScore": 100,
+        "usabilityScore": 74,
+        "usabilityWeighted": false
+      }
+    },
+    "Interactive_Click_Feedback": {
+      "score": 100,
+      "status": "pass",
+      "details": "We tested 459 interactive items, and 459 of them responded clearly to touch or clicks.",
+      "analysis": {
+        "cause": "Most interactive elements provide clear visual feedback on interaction.",
+        "recommendation": "Continue using hover and active states to make the UI feel responsive."
+      },
+      "meta": {
+        "missingPointerCursor": 0,
+        "totalInteractive": 459,
+        "withFeedback": 459,
+        "withHover": 459,
+        "withActive": 459,
+        "elements": [
+          {
+            "tag": "A",
+            "text": "Brand Logo",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "FIGURE",
+            "text": "Brand Logo",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "svg",
+            "text": "",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "path",
+            "text": "",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "path",
+            "text": "",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "path",
+            "text": "",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "path",
+            "text": "",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "FIGCAPTION",
+            "text": "Brand Logo",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "A",
+            "text": "Shop",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "A",
+            "text": "Sell/Trade",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "A",
+            "text": "Finance",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "A",
+            "text": "Service",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "BUTTON",
+            "text": "More",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "svg",
+            "text": "",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "path",
+            "text": "",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "BUTTON",
+            "text": "Search",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "FIGURE",
+            "text": "Search",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "svg",
+            "text": "",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "path",
+            "text": "",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "FIGCAPTION",
+            "text": "Search",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "BUTTON",
+            "text": "Language",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "FIGURE",
+            "text": "Language",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "svg",
+            "text": "",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "circle",
+            "text": "",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "ellipse",
+            "text": "",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "ellipse",
+            "text": "",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "FIGCAPTION",
+            "text": "Language",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "BUTTON",
+            "text": "",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "FIGURE",
+            "text": "",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "svg",
+            "text": "",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "path",
+            "text": "",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "A",
+            "text": "Shop Sale",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "SPAN",
+            "text": "Shop Sale",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "SPAN",
+            "text": "Shop Sale",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "A",
+            "text": "Sell My Car",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "SPAN",
+            "text": "Sell My Car",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "SPAN",
+            "text": "Sell My Car",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "A",
+            "text": "",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "FIGURE",
+            "text": "",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "svg",
+            "text": "",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "g",
+            "text": "",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "rect",
+            "text": "",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "g",
+            "text": "",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "path",
+            "text": "",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "path",
+            "text": "",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "A",
+            "text": "",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "FIGURE",
+            "text": "",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "PICTURE",
+            "text": "",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "SOURCE",
+            "text": "",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "IMG",
+            "text": "",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          }
+        ]
+      }
+    },
+    "Loading_Feedback": {
+      "score": 50,
+      "status": "warning",
+      "details": "We found 0 visual signals (like icons and shimmers) that show the page is loading.",
+      "analysis": {
+        "cause": "Only simple text indicators were found, which can be easily missed.",
+        "recommendation": "Upgrade text-based loading messages to more prominent visual indicators like spinners or shimmer effects."
+      },
+      "meta": {
+        "hasLoadingFeedback": true,
+        "summary": {
+          "spinners": 0,
+          "skeletons": 0,
+          "loadingText": 1
+        },
+        "textIndicators": [
+          {
+            "text": ";(function(){\n              var __create=Object.cr",
+            "tag": "SCRIPT"
+          }
+        ]
+      }
+    },
+    "Hierarchy_Flow_Clarity": {
+      "score": 87,
+      "status": "pass",
+      "details": "1 H1 / 26 headings, 24/39 sections labeled, 16 next-step links.",
+      "analysis": {
+        "cause": "The page breaks content into headed, labeled sections with a logical onward flow, so visitors can scan and move forward easily.",
+        "recommendation": "Keep using headings to chunk content, label every major section, and always offer a clear next step."
+      },
+      "meta": {
+        "h1Count": 1,
+        "totalHeadings": 26,
+        "isSequential": true,
+        "totalSections": 39,
+        "labeledCount": 24,
+        "hasFooter": true,
+        "internalLinks": 45,
+        "nextStepCTAs": 16,
+        "breakdown": {
+          "headingScore": 100,
+          "labelingScore": 62,
+          "flowScore": 100
+        }
+      }
+    },
+    "Content_Density_Balance": {
+      "score": 100,
+      "status": "pass",
+      "details": "The balance of text and 'breathing room' on your page is rated as comfortable.",
+      "analysis": {
+        "cause": "The amount of content per screen feels balanced and breathable.",
+        "recommendation": "Maintain the current balance of text and whitespace."
+      },
+      "meta": {
+        "densityScore": 0.6943641912512716,
+        "scrollFactor": 5.461111111111111
+      }
+    },
+    "Layout_Consistency": {
+      "score": 100,
+      "status": "pass",
+      "details": "Your page layout uses organized, modern design patterns.",
+      "analysis": {
+        "cause": "The layout uses modern structural patterns indicating consistent spacing.",
+        "recommendation": "Ensure grid gutters and margins remain uniform across different screen sizes."
+      },
+      "meta": {
+        "hasFlexOrGrid": true
+      }
+    },
+    "Sticky_Header_Usage": {
+      "score": 100,
+      "status": "pass",
+      "details": "Your top menu takes up 80 pixels of screen space, while the recommended limit is 100 pixels.",
+      "analysis": {
+        "cause": "The sticky header height is within optimal limits.",
+        "recommendation": "Keep the header compact to ensure maximum content visibility."
+      },
+      "meta": {
+        "height": 80,
+        "limit": 100
+      }
+    },
+    "In_Page_Navigation": {
+      "score": 60,
+      "status": "warning",
+      "details": "Found 0 jump links and no 'Back to Top' button on this long page.",
+      "analysis": {
+        "cause": "The page is long but lacks in-page navigation shortcuts.",
+        "recommendation": "Add a 'Table of Contents' or 'Back to Top' button to help users navigate long vertical layouts."
+      },
+      "meta": {
+        "anchorLinks": 0,
+        "backToTop": false,
+        "hasLongPage": true
+      }
+    },
+    "Breadcrumbs": {
+      "infoOnly": true,
+      "status": "pass",
+      "details": "Breadcrumbs are not applicable on the homepage.",
+      "analysis": {
+        "cause": "The page is a root-level homepage.",
+        "recommendation": "Breadcrumbs are evaluated on inner pages (inventory, vehicle, service, blog). Maintain clearly visible primary navigation here."
+      },
+      "meta": {
+        "isHomepage": true,
+        "notApplicable": true,
+        "infoOnly": true
+      }
+    },
+    "Inventory_Filtering": {
+      "score": 30,
+      "status": "fail",
+      "details": "No homepage inventory finder widget detected. Full faceted filtering is graded on inventory pages.",
+      "analysis": {
+        "cause": "Shoppers have no homepage shortcut to start narrowing inventory by make/model/price.",
+        "recommendation": "Add a prominent 'Find Your Vehicle' finder with at least Make, Model and Price so visitors can begin filtering from the homepage."
+      },
+      "meta": {
+        "context": "homepage",
+        "homepageFinder": false,
+        "finderFacets": [],
+        "counts": {
+          "selects": 0,
+          "checkboxes": 0,
+          "radios": 0,
+          "ranges": 0,
+          "containers": 0
+        },
+        "infoOnly": true
+      },
+      "infoOnly": true
+    },
+    "No_Results_UX": {
+      "score": 40,
+      "status": "warning",
+      "details": "No zero-result state on this page; graded available fallback infrastructure (recommendations / search suggestions).",
+      "analysis": {
+        "cause": "A no-results page couldn't be observed during this single-page audit, so this is informational only.",
+        "recommendation": "Ensure that when a search returns nothing, users see suggestions, a clear-filters option, alternative vehicles and a contact CTA instead of a blank page."
+      },
+      "meta": {
+        "observed": false,
+        "isSrp": false,
+        "hasSuggestions": true,
+        "hasReset": false,
+        "hasAlternatives": false,
+        "hasCTA": false,
+        "hasSearchSuggest": false,
+        "infoOnly": true
+      },
+      "infoOnly": true
+    },
+    "Vehicle_Image_Gallery": {
+      "infoOnly": true,
+      "status": "pass",
+      "details": "Vehicle image gallery quality is graded on vehicle-detail (VDP) pages.",
+      "analysis": {
+        "cause": "This isn't a single-vehicle detail page.",
+        "recommendation": "Audit a VDP to grade gallery photo count, alt text, lazy-loading and real-vs-stock imagery."
+      },
+      "meta": {
+        "notApplicable": true,
+        "infoOnly": true
+      }
+    }
+  },
+  "technicalPerformance": {
+    "Percentage": 100,
+    "Graded_Percentage": 87,
+    "Score_Breakdown": {
+      "model": "exact Lighthouse Performance formula (SCORING_FORMAT.md §8.1)",
+      "source": "Lighthouse categories.performance.score (PSI, audited device)",
+      "weights": {
+        "FCP": 10,
+        "Speed_Index": 10,
+        "LCP": 25,
+        "TBT": 30,
+        "CLS": 25
+      },
+      "device": "desktop"
+    },
+    "Confidence": "lab",
+    "PageSpeed_Score": {
+      "score": 96,
+      "status": "pass",
+      "details": "Official Lighthouse Performance score is strong (Mobile 96/100, Desktop 100/100).",
+      "meta": {
+        "value": "96/100",
+        "mobileScore": "96/100",
+        "desktopScore": "100/100",
+        "mobileStatus": "pass",
+        "desktopStatus": "pass",
+        "source": "Lighthouse categories.performance.score",
+        "informational": true,
+        "thresholds": {
+          "Good": "90-100",
+          "Warning": "50-89",
+          "Poor": "0-49"
+        }
+      },
+      "analysis": null
+    },
+    "Delivery_Hygiene": {
+      "score": 84,
+      "status": "pass",
+      "infoOnly": true,
+      "confidence": "lab",
+      "details": "Delivery hygiene needs work: Resource Optimization, Caching.",
+      "meta": {
+        "informational": true,
+        "breakdown": {
+          "TTFB": {
+            "score": 94,
+            "status": "pass"
+          },
+          "Render_Blocking": {
+            "score": 100,
+            "status": "pass"
+          },
+          "Resource_Optimization": {
+            "score": 49,
+            "status": "fail"
+          },
+          "Compression": {
+            "score": 100,
+            "status": "pass"
+          },
+          "Caching": {
+            "score": 60,
+            "status": "warning"
+          },
+          "Redirect_Chains": {
+            "score": 100,
+            "status": "pass"
+          }
+        },
+        "note": "Composite of the delivery checks (TTFB, render-blocking, asset optimization, compression, caching, redirects) that PageSpeed Insights reports as diagnostics but does not score. Shown separately so the headline stays comparable to PSI."
+      },
+      "analysis": {
+        "cause": "One or more delivery checks outside Lighthouse's scored metrics are failing.",
+        "recommendation": "Fix the failing checks below — they improve real-world speed even though they don't move the Lighthouse score directly."
+      }
+    },
+    "LCP": {
+      "lab": {
+        "score": 100,
+        "status": "pass",
+        "details": "LCP is within optimal range.",
+        "meta": {
+          "value": "0.56s",
+          "lcpElement": "Unknown element",
+          "thresholds": {
+            "Good": "0-2.5s",
+            "Warning": "2.5-4s",
+            "Poor": "4s+"
+          }
+        },
+        "analysis": null
+      },
+      "crux": {
+        "score": 100,
+        "status": "pass",
+        "details": "LCP (Real Users) is within optimal range.",
+        "meta": {
+          "value": "1.18s",
+          "p75": true,
+          "thresholds": {
+            "Good": "0-2.5s",
+            "Warning": "2.5-4s",
+            "Poor": "4s+"
+          }
+        },
+        "analysis": null
+      },
+      "source": "field",
+      "confidence": "field"
+    },
+    "CLS": {
+      "lab": {
+        "score": 100,
+        "status": "pass",
+        "details": "Visual stability is excellent.",
+        "meta": {
+          "value": 0,
+          "thresholds": {
+            "Good": "0-0.1",
+            "Warning": "0.1-0.25",
+            "Poor": "0.25+"
+          }
+        },
+        "analysis": null
+      },
+      "crux": null,
+      "source": "lab",
+      "confidence": "lab"
+    },
+    "FCP": {
+      "lab": {
+        "score": 100,
+        "status": "pass",
+        "details": "First Paint timing is good.",
+        "meta": {
+          "value": "0.46s",
+          "thresholds": {
+            "Good": "0-1.8s",
+            "Warning": "1.8-3s",
+            "Poor": "3s+"
+          }
+        },
+        "analysis": null
+      },
+      "crux": {
+        "score": 100,
+        "status": "pass",
+        "details": "Real-world First Paint is optimal.",
+        "meta": {
+          "value": "0.99s",
+          "p75": true,
+          "thresholds": {
+            "Good": "0-1.8s",
+            "Warning": "1.8-3s",
+            "Poor": "3s+"
+          }
+        },
+        "analysis": null
+      },
+      "source": "field",
+      "confidence": "field"
+    },
+    "TTFB": {
+      "lab": {
+        "score": 100,
+        "status": "pass",
+        "details": "Server response time is excellent.",
+        "meta": {
+          "value": "0.04s",
+          "thresholds": {
+            "Good": "0-0.8s",
+            "Warning": "0.8-1.8s",
+            "Poor": "1.8s+"
+          }
+        },
+        "analysis": null
+      },
+      "crux": {
+        "score": 94,
+        "status": "pass",
+        "details": "Real-world server response is good.",
+        "meta": {
+          "value": "0.68s",
+          "p75": true,
+          "thresholds": {
+            "Good": "0-0.8s",
+            "Warning": "0.8-1.8s",
+            "Poor": "1.8s+"
+          }
+        },
+        "analysis": null
+      },
+      "source": "field",
+      "confidence": "field"
+    },
+    "INP": {
+      "lab": {
+        "score": 100,
+        "status": "pass",
+        "details": "Estimated responsiveness is good (lab proxy from Total Blocking Time).",
+        "meta": {
+          "value": "0s (lab est.)",
+          "labProxy": "TBT",
+          "thresholds": {
+            "Good": "0-0.2s",
+            "Warning": "0.2-0.6s",
+            "Poor": "0.6s+"
+          }
+        },
+        "analysis": null
+      },
+      "crux": {
+        "score": 57,
+        "status": "warning",
+        "details": "Real users face input delays (0.44s).",
+        "meta": {
+          "value": "0.44s",
+          "p75": true,
+          "thresholds": {
+            "Good": "0-0.2s",
+            "Warning": "0.2-0.5s",
+            "Poor": "0.5s+"
+          }
+        },
+        "analysis": {
+          "cause": "Input delay on real-world devices",
+          "recommendation": "Optimize event handlers and avoid blocking main thread."
+        }
+      },
+      "source": "field",
+      "confidence": "field"
+    },
+    "TBT": {
+      "lab": {
+        "score": 100,
+        "status": "pass",
+        "details": "Main thread is clear.",
+        "meta": {
+          "value": "0s",
+          "thresholds": {
+            "Good": "0-0.2s",
+            "Warning": "0.2-0.6s",
+            "Poor": "0.6s+"
+          }
+        },
+        "analysis": null
+      },
+      "crux": null,
+      "confidence": "lab"
+    },
+    "SI": {
+      "lab": {
+        "score": 100,
+        "status": "pass",
+        "details": "Visual load speed is optimal.",
+        "meta": {
+          "value": "0.65s",
+          "thresholds": {
+            "Good": "0-3.4s",
+            "Warning": "3.4-5.8s",
+            "Poor": "5.8s+"
+          }
+        },
+        "analysis": null
+      },
+      "crux": null,
+      "confidence": "lab"
+    },
+    "Compression": {
+      "score": 100,
+      "status": "pass",
+      "details": "All text resources are compressed.",
+      "meta": {
+        "value": "100%",
+        "total": 7,
+        "compressedCount": 7,
+        "uncompressedCount": 0,
+        "target": "Use gzip or brotli compression",
+        "uncompressedResources": [],
+        "thresholds": {
+          "Good": "100%",
+          "Warning": "70-99%",
+          "Poor": "<70%"
+        }
+      },
+      "analysis": null
+    },
+    "Caching": {
+      "score": 60,
+      "status": "warning",
+      "details": "Caching issues found in 4 resources.",
+      "meta": {
+        "value": "60%",
+        "total": 10,
+        "cachedCount": 6,
+        "uncachedCount": 4,
+        "target": "≥ 7 days",
+        "uncachedResources": [
+          {
+            "url": "https://www.koons.com/2d0098d4-9a52-4b0b-9f47-25c706fd3e64/sdk/3.31.4/modern/js-integrations/GoogleTagManager.min.js",
+            "fileName": "GoogleTagManager.min.js",
+            "cachePolicy": "max-age=14400"
+          },
+          {
+            "url": "https://www.koons.com/2d0098d4-9a52-4b0b-9f47-25c706fd3e64/sdk/3.31.4/modern/js-integrations/GoogleTagManager.min.js",
+            "fileName": "GoogleTagManager.min.js",
+            "cachePolicy": "max-age=14400"
+          },
+          {
+            "url": "https://www.koons.com/2d0098d4-9a52-4b0b-9f47-25c706fd3e64/sdk/3.31.4/modern/js-integrations/GA4.min.js",
+            "fileName": "GA4.min.js",
+            "cachePolicy": "max-age=14400"
+          },
+          {
+            "url": "https://www.koons.com/2d0098d4-9a52-4b0b-9f47-25c706fd3e64/sdk/v3/modern/rsa.min.js",
+            "fileName": "rsa.min.js",
+            "cachePolicy": "no-store"
+          }
+        ],
+        "thresholds": {
+          "Good": "≥90%",
+          "Warning": "50-89%",
+          "Poor": "<50%"
+        }
+      },
+      "analysis": {
+        "cause": "4 resources with short or missing cache policy",
+        "recommendation": "Set a long `max-age` (e.g. 1 year) for static assets."
+      }
+    },
+    "Resource_Optimization": {
+      "score": 49,
+      "status": "fail",
+      "details": "Asset optimization opportunities found.",
+      "meta": {
+        "value": "49%",
+        "totalImages": 20,
+        "optimizedImagesCount": 8,
+        "unoptimizedImagesCount": 12,
+        "totalScripts": 7,
+        "minifiedScriptsCount": 4,
+        "unminifiedScriptsCount": 3,
+        "target": "Optimized Assets",
+        "unoptimizedImages": [
+          {
+            "url": "https://www.koons.com/less/images/tr:w-16,f-avif,fo-middle,q-15/https://cdn.sanity.io/images/ju3h49o8/koons/8b718dce414aeb87d8bc47c877f0810e890306f2-600x900.jpg",
+            "type": "Image",
+            "details": "Displayed: 367x550px, Natural: 960x1440px"
+          },
+          {
+            "url": "https://www.koons.com/less/images/tr:w-16,f-avif,fo-middle,q-15/https://cdn.sanity.io/images/ju3h49o8/koons/7ebb5d196754b602b250dfe8888bbdced37b9ab5-600x900.jpg",
+            "type": "Image",
+            "details": "Displayed: 367x550px, Natural: 960x1440px"
+          },
+          {
+            "url": "https://www.koons.com/less/images/tr:w-16,f-avif,fo-middle,q-15/https://cdn.sanity.io/images/ju3h49o8/koons/5be649da2f75973a6d2e0bb1f08c0250a9fbe500-600x900.jpg",
+            "type": "Image",
+            "details": "Displayed: 367x550px, Natural: 960x1440px"
+          },
+          {
+            "url": "https://www.koons.com/less/images/tr:w-16,f-avif,fo-middle,q-15/https://cdn.sanity.io/images/ju3h49o8/koons/f13b95982fb05642191d9d9142b723580d42e78a-800x1200.jpg",
+            "type": "Image",
+            "details": "Displayed: 367x550px, Natural: 960x1440px"
+          },
+          {
+            "url": "https://www.koons.com/less/images/tr:w-16,f-avif,fo-middle,q-15/https://cdn.sanity.io/images/ju3h49o8/koons/28c721f6fb2922d11db30d5af1ab61abc9f2b056-600x900.jpg",
+            "type": "Image",
+            "details": "Displayed: 367x550px, Natural: 960x1440px"
+          },
+          {
+            "url": "https://www.koons.com/less/images/tr:w-16,f-avif,fo-middle,q-15/https://cdn.sanity.io/images/ju3h49o8/koons/ae324227170d59cd88d7baa95ae1c11a26586363-600x900.jpg",
+            "type": "Image",
+            "details": "Displayed: 367x550px, Natural: 960x1440px"
+          },
+          {
+            "url": "https://www.koons.com/less/images/tr:w-16,f-avif,fo-middle,q-15/https://cdn.sanity.io/images/ju3h49o8/koons/6411fad99c261caccacf82bcd14f9d72fc725c1e-600x900.jpg",
+            "type": "Image",
+            "details": "Displayed: 367x550px, Natural: 960x1440px"
+          },
+          {
+            "url": "https://www.koons.com/less/images/tr:w-16,f-avif,fo-middle,q-15/https://cdn.sanity.io/images/ju3h49o8/koons/e97059a1213636d6c2b1d68702961d0d50458302-600x900.jpg",
+            "type": "Image",
+            "details": "Displayed: 367x550px, Natural: 960x1440px"
+          },
+          {
+            "url": "https://www.koons.com/less/images/tr:w-16,f-avif,fo-middle,q-15/https://cdn.sanity.io/images/ju3h49o8/koons/b0d092e37a8dfaca4daffd49d3fc3923a72a540c-600x900.jpg",
+            "type": "Image",
+            "details": "Displayed: 367x550px, Natural: 960x1440px"
+          },
+          {
+            "url": "https://www.koons.com/less/images/tr:w-16,f-avif,fo-middle,q-15/https://cdn.sanity.io/images/ju3h49o8/koons/e5b9f9ddbea0eaf026a565f9c2e789b50604c776-600x900.jpg",
+            "type": "Image",
+            "details": "Displayed: 367x550px, Natural: 960x1440px"
+          },
+          {
+            "url": "https://www.koons.com/less/images/tr:w-16,f-avif,fo-middle,q-15/https://cdn.sanity.io/images/ju3h49o8/koons/8b718dce414aeb87d8bc47c877f0810e890306f2-600x900.jpg",
+            "type": "Image",
+            "details": "Displayed: 367x550px, Natural: 960x1440px"
+          },
+          {
+            "url": "https://www.koons.com/less/images/tr:w-16,f-avif,fo-middle,q-15/https://cdn.sanity.io/images/ju3h49o8/koons/cf2897d24f81236e60667a819549671977789107-600x900.jpg",
+            "type": "Image",
+            "details": "Displayed: 367x550px, Natural: 960x1440px"
+          }
+        ],
+        "unminifiedScripts": [
+          {
+            "url": "https://www.googletagmanager.com/gtag/js?id=G-HG0VLWSM47",
+            "type": "Script",
+            "details": "Status: Unminified, Loading: async"
+          },
+          {
+            "url": "https://www.googletagmanager.com/gtm.js?id=GTM-T68LR9DM&gtm_cookies_win=x",
+            "type": "Script",
+            "details": "Status: Unminified, Loading: async"
+          },
+          {
+            "url": "https://www.googletagmanager.com/gtm.js?id=GTM-TDM27NQ&gtm_cookies_win=x",
+            "type": "Script",
+            "details": "Status: Unminified, Loading: async"
+          }
+        ],
+        "thresholds": {
+          "Good": "≥90%",
+          "Warning": "50-89%",
+          "Poor": "<50%"
+        }
+      },
+      "analysis": {
+        "cause": "12 images are larger than their display size",
+        "recommendation": "Resize images to match their specific display dimensions."
+      }
+    },
+    "Render_Blocking": {
+      "score": 100,
+      "status": "pass",
+      "details": "No render-blocking resources.",
+      "meta": {
+        "value": "100%",
+        "target": "0 Blocking Resources",
+        "blockingCount": 0,
+        "blockingResources": [],
+        "thresholds": {
+          "Good": "100%",
+          "Warning": "50-99%",
+          "Poor": "<50%"
+        }
+      },
+      "analysis": null
+    },
+    "Redirect_Chains": {
+      "score": 100,
+      "status": "pass",
+      "details": "URL redirect structure is efficient.",
+      "meta": {
+        "value": "100%",
+        "hops": 0,
+        "redirectDetails": [
+          "https://www.koons.com/"
+        ],
+        "target": "≤ 1 hop",
+        "thresholds": {
+          "Good": "≤ 1 hop",
+          "Poor": "> 1 hop"
+        }
+      },
+      "analysis": null
+    },
+    "Sold_Vehicle": {
+      "score": null,
+      "status": "not_applicable",
+      "infoOnly": true,
+      "confidence": "heuristic",
+      "details": "Not applicable on this page type",
+      "meta": {
+        "checkedUrl": null,
+        "finalUrl": null,
+        "status": null,
+        "redirected": false,
+        "detectedKeywords": []
+      },
+      "analysis": null
+    }
+  },
+  "securityOrCompliance": {
+    "Percentage": 64,
+    "Graded_Percentage": 62,
+    "Score_Breakdown": {
+      "model": "deduction from 100 in spec points (SCORING_FORMAT.md §8.4); gates preserved",
+      "base": 100,
+      "totalDeduction": 35.6,
+      "gates": {
+        "noHttpsCap30": false,
+        "reputationCap25": false
+      },
+      "items": [
+        {
+          "control": "HSTS",
+          "score": 0,
+          "deduction": 5
+        },
+        {
+          "control": "CSP",
+          "score": 0,
+          "deduction": 9
+        },
+        {
+          "control": "X_Frame_Options",
+          "score": 0,
+          "deduction": 4
+        },
+        {
+          "control": "X_Content_Type_Options",
+          "score": 0,
+          "deduction": 3
+        },
+        {
+          "control": "Referrer_Policy",
+          "score": 0,
+          "deduction": 2
+        },
+        {
+          "control": "Permissions_Policy",
+          "score": 0,
+          "deduction": 2
+        },
+        {
+          "control": "Cookie_Flags",
+          "score": 27,
+          "deduction": 3.6
+        },
+        {
+          "control": "Cookie_Consent",
+          "score": 0,
+          "deduction": 3
+        },
+        {
+          "control": "Privacy_Compliance",
+          "score": 0,
+          "deduction": 4
+        }
+      ]
+    },
+    "Header_Security": {
+      "score": 10,
+      "status": "fail",
+      "infoOnly": true,
+      "confidence": "measured",
+      "details": "Header security grade F (10/100): CSP missing; HSTS missing; X-Frame-Options missing (no frame-ancestors fallback); X-Content-Type-Options missing; Referrer-Policy missing; Permissions-Policy missing; Cookies missing Secure/HttpOnly/SameSite flags.",
+      "meta": {
+        "informational": true,
+        "grade": "F",
+        "baseline": 100,
+        "deductions": [
+          {
+            "test": "CSP missing",
+            "deduction": 25
+          },
+          {
+            "test": "HSTS missing",
+            "deduction": 20
+          },
+          {
+            "test": "X-Frame-Options missing (no frame-ancestors fallback)",
+            "deduction": 20
+          },
+          {
+            "test": "X-Content-Type-Options missing",
+            "deduction": 5
+          },
+          {
+            "test": "Referrer-Policy missing",
+            "deduction": 5
+          },
+          {
+            "test": "Permissions-Policy missing",
+            "deduction": 5
+          },
+          {
+            "test": "Cookies missing Secure/HttpOnly/SameSite flags",
+            "deduction": 10
+          }
+        ],
+        "note": "Observatory-style deduction sub-grade over the tests external checkers (SecurityHeaders.com, Mozilla HTTP Observatory) also run. Compare THIS grade — not the section headline — against those tools. Bonuses (scores above 100) are not modeled, so A+ requires a perfect base score."
+      },
+      "analysis": {
+        "cause": "One or more transport/header hardening tests that external security checkers grade on are failing.",
+        "recommendation": "Fix in order of deduction size: enforce CSP, HSTS, anti-framing (XFO or frame-ancestors), then Referrer-Policy, Permissions-Policy, X-Content-Type-Options and cookie flags."
+      }
+    },
+    "Confidence": "heuristic",
+    "Coverage": "Transport, headers, cookies, reputation, app-exposure and privacy/legal. Injection and credential checks are non-invasive surface indicators, not proof of vulnerability.",
+    "Note": "Reputation requires API keys (Safe Browsing / VirusTotal); transport, header and certificate checks are measured; injection, admin and privacy checks are heuristic. Page-specific finance/disclaimer checks are renormalized out when no such page exists.",
+    "HTTPS": {
+      "score": 100,
+      "status": "pass",
+      "details": "Served over HTTPS with no mixed content",
+      "meta": {
+        "protocol": "https:",
+        "finalUrl": "https://www.koons.com/",
+        "mixedContent": {
+          "active": [],
+          "passive": []
+        },
+        "activeCount": 0,
+        "passiveCount": 0
+      },
+      "analysis": null,
+      "confidence": "measured"
+    },
+    "SSL": {
+      "score": 100,
+      "status": "pass",
+      "confidence": "measured",
+      "details": "Valid SSL certificate (trusted chain, host match)",
+      "meta": {
+        "validTo": "2026-09-25T00:37:01.000Z",
+        "validFrom": "2026-06-26T23:37:09.000Z",
+        "issuer": "WE1",
+        "subjectName": "www.koons.com"
+      },
+      "analysis": null
+    },
+    "SSL_Expiry": {
+      "score": 100,
+      "status": "pass",
+      "confidence": "measured",
+      "details": "SSL certificate valid for 80 more day(s)",
+      "meta": {
+        "validTo": "2026-09-25T00:37:01.000Z",
+        "daysUntilExpiry": 80
+      },
+      "analysis": null
+    },
+    "TLS_Version": {
+      "score": 100,
+      "status": "pass",
+      "details": "Strong TLS version: TLS 1.3",
+      "meta": {
+        "version": "TLS 1.3"
+      },
+      "analysis": null,
+      "confidence": "measured"
+    },
+    "HSTS": {
+      "score": 0,
+      "status": "fail",
+      "details": "HSTS header is missing",
+      "meta": {},
+      "analysis": {
+        "cause": "The HTTP Strict Transport Security (HSTS) header is missing.",
+        "recommendation": "Add the 'Strict-Transport-Security' header to enforce HTTPS connections."
+      },
+      "confidence": "measured"
+    },
+    "CSP": {
+      "score": 0,
+      "status": "fail",
+      "confidence": "measured",
+      "details": "CSP header is missing",
+      "meta": {},
+      "analysis": {
+        "cause": "The Content-Security-Policy (CSP) header is missing.",
+        "recommendation": "Implement a CSP with a restrictive default-src/script-src, object-src 'none', and frame-ancestors to mitigate XSS and clickjacking."
+      }
+    },
+    "X_Frame_Options": {
+      "score": 0,
+      "status": "fail",
+      "details": "X-Frame-Options header is missing",
+      "meta": {},
+      "analysis": {
+        "cause": "The X-Frame-Options header is missing, making the site vulnerable to clickjacking.",
+        "recommendation": "Set the 'X-Frame-Options' header to 'DENY' or 'SAMEORIGIN'."
+      },
+      "confidence": "measured"
+    },
+    "X_Content_Type_Options": {
+      "score": 0,
+      "status": "fail",
+      "details": "X-Content-Type-Options header is missing",
+      "meta": {},
+      "analysis": {
+        "cause": "The X-Content-Type-Options header is missing.",
+        "recommendation": "Add the 'X-Content-Type-Options: nosniff' header to prevent MIME type sniffing."
+      },
+      "confidence": "measured"
+    },
+    "Referrer_Policy": {
+      "score": 0,
+      "status": "fail",
+      "details": "Referrer-Policy header is missing",
+      "meta": {},
+      "analysis": {
+        "cause": "Without a Referrer-Policy, browsers may send full page URLs (including query strings) to third-party sites users navigate to.",
+        "recommendation": "Add 'Referrer-Policy: strict-origin-when-cross-origin' (or stricter, e.g. 'same-origin')."
+      },
+      "confidence": "measured"
+    },
+    "Permissions_Policy": {
+      "score": 0,
+      "status": "fail",
+      "details": "Permissions-Policy header is missing",
+      "meta": {},
+      "analysis": {
+        "cause": "Without a Permissions-Policy, embedded third-party content can request powerful features (camera, geolocation, payment) by default.",
+        "recommendation": "Add a Permissions-Policy that disables features you don't use, e.g. 'camera=(), microphone=(), geolocation=()'."
+      },
+      "confidence": "measured"
+    },
+    "Cookie_Flags": {
+      "score": 27,
+      "status": "fail",
+      "confidence": "measured",
+      "details": "Cookie flag gaps: 5 missing Secure, 6 missing HttpOnly (of 6)",
+      "meta": {
+        "cookies": [
+          {
+            "name": "exo-locale",
+            "value": "en_US",
+            "domain": "www.koons.com",
+            "path": "/",
+            "expires": 1817934133.724614,
+            "httpOnly": false,
+            "secure": true,
+            "sameSite": "Lax"
+          },
+          {
+            "name": "exo-user-uuid",
+            "value": "f5211542-180a-4baf-bdfe-a1108ec6c59c",
+            "domain": "www.koons.com",
+            "path": "/",
+            "expires": 1814910128,
+            "httpOnly": false,
+            "secure": false,
+            "sameSite": "Lax"
+          },
+          {
+            "name": "rl_anonymous_id",
+            "value": "RS_ENC_v3_ImFkNjg0NTI4LWU1YzctNGMzYS05NDNiLTk3OWMwNDdiM2M4NSI%3D",
+            "domain": ".koons.com",
+            "path": "/",
+            "expires": 1814910137,
+            "httpOnly": false,
+            "secure": false,
+            "sameSite": "Lax"
+          },
+          {
+            "name": "rl_page_init_referrer",
+            "value": "RS_ENC_v3_Imh0dHBzOi8vd3d3Lmdvb2dsZS5jb20vIg%3D%3D",
+            "domain": ".koons.com",
+            "path": "/",
+            "expires": 1814910137,
+            "httpOnly": false,
+            "secure": false,
+            "sameSite": "Lax"
+          },
+          {
+            "name": "rl_page_init_referring_domain",
+            "value": "RS_ENC_v3_Ind3dy5nb29nbGUuY29tIg%3D%3D",
+            "domain": ".koons.com",
+            "path": "/",
+            "expires": 1814910137,
+            "httpOnly": false,
+            "secure": false,
+            "sameSite": "Lax"
+          },
+          {
+            "name": "rl_session",
+            "value": "RS_ENC_v3_eyJpZCI6MTc4MzM3NDEzNzMxNywiZXhwaXJlc0F0IjoxNzgzMzc1OTM3MzMzLCJ0aW1lb3V0IjoxODAwMDAwLCJhdXRvVHJhY2siOnRydWUsInNlc3Npb25TdGFydCI6ZmFsc2V9",
+            "domain": ".koons.com",
+            "path": "/",
+            "expires": 1814910137,
+            "httpOnly": false,
+            "secure": false,
+            "sameSite": "Lax"
+          }
+        ],
+        "total": 6,
+        "insecureCookies": [
+          "exo-user-uuid",
+          "rl_anonymous_id",
+          "rl_page_init_referrer",
+          "rl_page_init_referring_domain",
+          "rl_session"
+        ],
+        "scriptAccessibleCookies": [
+          "exo-locale",
+          "exo-user-uuid",
+          "rl_anonymous_id",
+          "rl_page_init_referrer",
+          "rl_page_init_referring_domain",
+          "rl_session"
+        ],
+        "noSameSiteCookies": [],
+        "secureRatio": 0.16666666666666666,
+        "httpOnlyRatio": 0,
+        "sameSiteRatio": 1
+      },
+      "analysis": {
+        "cause": "Some cookies are missing protective flags (Secure prevents transmission over HTTP; HttpOnly blocks script/XSS theft; SameSite mitigates CSRF).",
+        "recommendation": "Set Secure, HttpOnly, and SameSite=Lax/Strict on every cookie that does not require third-party cross-site access."
+      }
+    },
+    "Third_Party_Cookies": {
+      "score": 100,
+      "status": "pass",
+      "details": "No third-party cookies detected",
+      "meta": {
+        "thirdPartyCookies": [],
+        "uniqueDomains": [],
+        "disclosed": null
+      },
+      "analysis": null,
+      "confidence": "measured"
+    },
+    "Reputation": {
+      "score": 100,
+      "status": "pass",
+      "confidence": "field",
+      "details": "Not flagged by Safe Browsing or VirusTotal",
+      "meta": {
+        "googleSafeBrowsing": {
+          "score": 100,
+          "status": "pass",
+          "details": "URL not flagged by Google Safe Browsing",
+          "meta": {
+            "matches": []
+          },
+          "analysis": null
+        },
+        "virusTotal": {
+          "score": 100,
+          "status": "pass",
+          "details": "No malicious or suspicious detections",
+          "meta": {
+            "stats": {
+              "malicious": 0,
+              "suspicious": 0,
+              "undetected": 35,
+              "harmless": 56,
+              "timeout": 0
+            }
+          },
+          "analysis": null
+        },
+        "flagged": false
+      },
+      "analysis": null
+    },
+    "SQLi_Exposure": {
+      "score": 100,
+      "status": "pass",
+      "details": "No SQL injection vulnerabilities detected (Basic Scan)",
+      "meta": {
+        "testedParams": [
+          "q",
+          "id",
+          "search"
+        ],
+        "payloadCount": 6
+      },
+      "analysis": null,
+      "confidence": "heuristic"
+    },
+    "XSS": {
+      "score": 100,
+      "status": "pass",
+      "details": "XSS payload not reflected or executed",
+      "meta": {
+        "payload": "<script>alert('XSS')</script>",
+        "triggered": false,
+        "reflected": false
+      },
+      "analysis": null,
+      "confidence": "heuristic"
+    },
+    "Forms_Use_HTTPS": {
+      "score": 100,
+      "status": "pass",
+      "details": "No forms found",
+      "meta": {
+        "formsCount": 0
+      },
+      "analysis": null,
+      "confidence": "heuristic"
+    },
+    "Weak_Default_Credentials": {
+      "score": 100,
+      "status": "pass",
+      "details": "No login form detected",
+      "meta": {
+        "scanType": "active",
+        "formDetected": false
+      },
+      "analysis": null,
+      "confidence": "heuristic"
+    },
+    "Admin_Panel_Public": {
+      "score": 100,
+      "status": "pass",
+      "details": "No public admin panels found",
+      "meta": {
+        "pathsChecked": 13
+      },
+      "analysis": null,
+      "confidence": "heuristic"
+    },
+    "MFA_Enabled": {
+      "score": 100,
+      "status": "not_applicable",
+      "infoOnly": true,
+      "details": "No customer login / authentication surface found — MFA not applicable.",
+      "meta": {
+        "hasAuthSurface": false
+      },
+      "analysis": null
+    },
+    "Cookie_Consent": {
+      "score": 0,
+      "status": "fail",
+      "details": "Tracking detected but no visible cookie consent banner found",
+      "meta": {
+        "trackingData": {
+          "hasTracking": true,
+          "detectedTrackers": [
+            "https://www.googletagmanager.com/gtag/js?id=g-hg0vlwsm47",
+            "https://www.googletagmanager.com/gtm.js?id=gtm-t68lr9dm&gtm_cookies_win=x",
+            "https://www.googletagmanager.com/gtm.js?id=gtm-tdm27nq&gtm_cookies_win=x",
+            "https://www.koons.com/2d0098d4-9a52-4b0b-9f47-25c706fd3e64/sdk/3.31.4/modern/js-integrations/googletagmanager.min.js"
+          ],
+          "cookiesUsed": true,
+          "cookieString": "exo-locale=en_US; exo-user-uuid=f5211542-180a-4baf-bdfe-a1108ec6c59c; rl_anonymous_id=RS_ENC_v3_ImFkNjg0NTI4LWU1YzctNGMzYS05NDNiLTk3OWMwNDdiM2M4NSI%3D; rl_page_init_referrer=RS_ENC_v3_Imh0dHBzOi8vd3d3Lmdvb2dsZS5jb20vIg%3D%3D; rl_page_init_referring_domain=RS_ENC_v3_Ind3dy5nb29nbGUuY29tIg%3D%3D; rl_session=RS_ENC_v3_eyJpZCI6MTc4MzM3NDEzNzMxNywiZXhwaXJlc0F0IjoxNzgzMzc1OTQ5NTUwLCJ0aW1lb3V0IjoxODAwMDAwLCJhdXRvVHJhY2siOnRydWUsInNlc3Npb25TdGFydCI6ZmFsc2V9"
+        }
+      },
+      "analysis": {
+        "cause": "Tracking scripts or cookies detected but no consent banner present.",
+        "recommendation": "Implement a visible cookie consent banner compliant with GDPR/CCPA."
+      },
+      "confidence": "heuristic"
+    },
+    "Privacy_Policy": {
+      "score": 100,
+      "status": "pass",
+      "details": "Visible Privacy Policy link found",
+      "meta": {
+        "foundLink": "https://www.koons.com/terms-and-privacy"
+      },
+      "analysis": null,
+      "confidence": "heuristic"
+    },
+    "Privacy_Compliance": {
+      "score": 0,
+      "status": "fail",
+      "confidence": "heuristic",
+      "details": "No GDPR/CCPA or data-collection disclosure found",
+      "meta": {
+        "gdpr": {},
+        "dataCollection": {},
+        "gdprPass": false,
+        "dcPass": false,
+        "foundKeyword": null,
+        "foundSelector": null
+      },
+      "analysis": {
+        "cause": "No GDPR/CCPA rights notice or data-collection disclosure was found.",
+        "recommendation": "Add explicit privacy-rights language (GDPR/CCPA) and a data-collection disclosure, typically in the privacy policy and footer."
+      }
+    },
+    "Finance_Form_Security": {
+      "score": null,
+      "status": "not_applicable",
+      "infoOnly": true,
+      "confidence": "heuristic",
+      "details": "Not applicable on this page type",
+      "meta": {
+        "checkedUrl": null,
+        "financePageFound": false,
+        "httpsSecure": false,
+        "sensitiveFields": [],
+        "sensitiveDataHandledSecurely": false,
+        "detectedProviders": [],
+        "secureEndpoint": false,
+        "securitySignals": [],
+        "rawScore": 0,
+        "maxScore": 10
+      },
+      "analysis": null
+    },
+    "Legal_Disclaimers": {
+      "score": 100,
+      "status": "not_applicable",
+      "infoOnly": true,
+      "confidence": "heuristic",
+      "details": "No finance / offers / lease / VDP page found to assess legal disclaimers",
+      "meta": {
+        "checkedUrl": null,
+        "pageType": null,
+        "groupsFound": [],
+        "groupsRequired": [],
+        "details": {}
+      },
+      "analysis": null
+    }
+  },
+  "timeTaken": "34s",
+  "score": 78.9,
+  "grade": "B",
+  "sectionScore": [
+    {
+      "name": "Technical Performance",
+      "score": 100
+    },
+    {
+      "name": "On-Page SEO",
+      "score": 76
+    },
+    {
+      "name": "Accessibility",
+      "score": 86
+    },
+    {
+      "name": "Security/Compliance",
+      "score": 64
+    },
+    {
+      "name": "UX & Content Structure",
+      "score": 79
+    },
+    {
+      "name": "Conversion & Lead Flow",
+      "score": 79
+    },
+    {
+      "name": "AIO Readiness",
+      "score": 66
+    },
+    {
+      "name": "AEO",
+      "score": 64
+    }
+  ],
+  "batchStatus": "completed",
+  "elapsedSec": 36
+}

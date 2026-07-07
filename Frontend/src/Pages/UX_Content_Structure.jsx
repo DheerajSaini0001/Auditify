@@ -89,7 +89,7 @@ const UxShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
   );
 };
 
-const MetricCard = ({ title, description, score, status, analysis, meta, darkMode, icon: Icon, type, className, onInfo }) => {
+const MetricCard = ({ title, description, score, status, analysis, meta, infoOnly, darkMode, icon: Icon, type, className, onInfo }) => {
   const isPassed = status === 'pass' || score === 100;
   const isWarning = status === 'warning' || score === 50;
   const [isOpen, setIsOpen] = useState(false);
@@ -132,19 +132,14 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
               <Icon size={24} className={darkMode ? "text-blue-400" : "text-accent"} />
             </div>
             <div>
-              <h3 className={`font-semibold text-lg ${textColor}`}>{title}</h3>
+              <h3 className={`font-semibold text-lg ${textColor}`}>
+                {title}
+                {(infoOnly || meta?.infoOnly) && <span className={`font-medium ${darkMode ? "text-gray-400" : "text-muted"}`} title="Informational — not included in the section score"> (Info-only)</span>}
+              </h3>
               <div className="flex items-center gap-2 mt-1">
                 <p className={`text-xs font-medium px-2 py-0.5 rounded-full w-fit border ${statusColor}`}>
                   {statusLabel}
                 </p>
-                {meta?.infoOnly && (
-                  <span
-                    title="Informational — not included in the section score"
-                    className={`text-[9px] font-semibold px-2 py-0.5 rounded-full border uppercase tracking-wide ${darkMode ? "bg-slate-700/50 text-slate-300 border-slate-600" : "bg-cardsoft text-muted border-line"}`}
-                  >
-                    Info · not scored
-                  </span>
-                )}
               </div>
             </div>
           </div>
@@ -825,13 +820,13 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
 
         {/* Expanded Analysis Content */}
         {isOpen && (
-          <div className={`mt-3 p-3 rounded-lg text-xs leading-relaxed border animate-in slide-in-from-top-2 duration-200 ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-cardsoft border-line text-muted"}`}>
+          <div className={`mt-3 p-3 rounded-lg text-sm leading-relaxed border animate-in slide-in-from-top-2 duration-200 ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-200" : "bg-cardsoft border-line text-inksoft"}`}>
 
             {/* Cause */}
             {(analysis?.cause || reasons.length > 0) && (
               <div className="mb-4">
-                <p className={`font-semibold mb-1 ${darkMode ? "text-slate-200" : "text-inksoft"}`}>Cause:</p>
-                <div className="pl-1 opacity-90">
+                <p className={`font-semibold mb-1 ${darkMode ? "text-slate-100" : "text-ink"}`}>Cause:</p>
+                <div className="pl-1">
                   {analysis?.cause ? (
                     <p>{analysis.cause}</p>
                   ) : (
@@ -852,7 +847,7 @@ const MetricCard = ({ title, description, score, status, analysis, meta, darkMod
             {(analysis?.recommendation || recommendations.length > 0) && (
               <div>
                 <p className={`font-semibold mb-1 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>Recommendation:</p>
-                <div className="pl-1 opacity-90">
+                <div className="pl-1">
                   {analysis?.recommendation ? (
                     <p>{analysis.recommendation}</p>
                   ) : (
@@ -1077,6 +1072,13 @@ const UX_Content_Structure_Inner = React.memo(({ data, loading, darkMode }) => {
                       <p className={`text-sm leading-relaxed opacity-70 ${darkMode ? "text-slate-300" : "text-muted"}`}>
                         Detailed performance breakdown of user experience and content organization.
                       </p>
+                      <span
+                        title="This score is Auditify's own composite index. Each check's threshold cites public guidance (Google, WCAG, UX research), but no industry-standard external tool produces a comparable UX score to cross-check against."
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider border ${darkMode ? "bg-slate-800/60 text-slate-400 border-slate-700" : "bg-cardsoft text-muted border-line"}`}
+                      >
+                        <span className={`w-1.5 h-1.5 rounded-full ${darkMode ? "bg-slate-500" : "bg-slate-400"}`} />
+                        Auditify Index · no external equivalent
+                      </span>
                     </div>
 
                     {/* Stats & Tools */}
@@ -1144,6 +1146,7 @@ const UX_Content_Structure_Inner = React.memo(({ data, loading, darkMode }) => {
                       score={getScoreValue(key)}
                       status={getStatus(key)}
                       meta={metric.Meta || metric.meta}
+                      infoOnly={metric.infoOnly || (metric.Meta || metric.meta)?.infoOnly}
                       analysis={metric.Analysis || metric.analysis}
                       darkMode={darkMode}
                       icon={iconMap[key] || Layout}

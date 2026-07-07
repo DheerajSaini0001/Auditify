@@ -32,26 +32,32 @@ export const SECTION_ORDER = [
 // Spec §5.6 — each row is [Tech, OnPage, A11y, Security, UX, Conversion, AIO, AEO]
 // and every row sums to 100. `generic` = the spec base weights (fallback when the
 // page type can't be classified).
+//
+// AI-forward weighting (July 2026 product decision): AIO+AEO carry ~20 combined
+// on customer-facing dealer pages (AEO leads — reach/visibility in answer
+// engines), funded by Accessibility/UX. Transactional pages (trade-in, finance)
+// stay lower (~16) — bots don't fill out credit apps. This is a strategic,
+// forward-looking tilt (AI referral growth), not a current-traffic-share claim.
 export const SECTION_PAGE_WEIGHTS = {
-  generic: [18, 17, 10, 12, 13, 15, 8, 7],
-  home:    [18, 18, 10, 12, 12, 14, 8, 8],
-  srp:     [20, 20,  9,  8, 13, 14, 8, 8],
-  vdp:     [18, 18,  9,  8, 13, 18, 7, 9],
-  offers:  [15, 16,  9, 13, 12, 17, 6, 12],
-  lease:   [15, 16,  9, 14, 12, 16, 6, 12],
-  tradein: [14, 12, 11, 16, 13, 22, 6, 6],
-  finance: [14, 12, 11, 22, 11, 18, 6, 6],
-  service: [16, 16, 10, 10, 13, 19, 8, 8],
+  generic: [18, 17,  8, 12, 11, 14, 8, 12],
+  home:    [18, 18,  8, 12, 10, 14, 8, 12],
+  srp:     [20, 20,  7,  8, 11, 14, 8, 12],
+  vdp:     [18, 18,  8,  8, 11, 18, 7, 12],
+  offers:  [15, 16,  8, 13, 11, 17, 8, 12],
+  lease:   [15, 16,  8, 14, 11, 16, 8, 12],
+  tradein: [14, 12,  9, 16, 11, 22, 7, 9],
+  finance: [14, 12,  9, 22,  9, 18, 7, 9],
+  service: [16, 16,  8, 10, 11, 19, 8, 12],
   about:   [14, 16, 11, 10, 15, 12, 10, 12],
-  blog:    [14, 22, 11,  9, 15,  7, 10, 12],
+  blog:    [14, 22,  9,  9, 15,  7, 10, 14],
   // Corporate/OEM page types (mirrors singleAuditWorker's SECTION_WEIGHTS_BY_PAGE_TYPE).
   models:  [18, 20, 10,  8, 14, 10, 9, 11],
-  locator: [16, 14, 10,  8, 16, 20, 6, 10],
+  locator: [16, 14,  8,  8, 14, 20, 8, 12],
   press:   [14, 18, 10,  8, 14,  6, 10, 20],
   // classifyCorporatePageType (pageClassifier.js) labels its blog/news bucket
   // "content", not "blog" — same weights as the dealer "blog" row above so the
   // two classifiers' vocab differences don't change the actual tilt applied.
-  content: [14, 22, 11,  9, 15,  7, 10, 12],
+  content: [14, 22,  9,  9, 15,  7, 10, 14],
 };
 
 // URL → page-type classifier (spec §1 / §5.6 columns). URL-pattern based, mirroring

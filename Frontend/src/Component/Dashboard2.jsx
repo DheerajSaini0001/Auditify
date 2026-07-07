@@ -306,42 +306,6 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
                         </div>
                       </div>
 
-                      <div className={`w-full h-px ${darkMode ? "bg-slate-800/60" : "bg-line"}`}></div>
-
-                      {/* AIO Readiness Card - Production Polished */}
-                      <div
-                        onClick={() => navigate(data?._id ? `/aio/${data._id}` : '/aio')}
-                        className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 cursor-pointer ${darkMode ? "bg-slate-800/20 border-slate-700/50 hover:bg-slate-800/40 hover:border-slate-600" : "bg-card border-line hover:border-slate-300 hover:shadow-md"}`}
-                      >
-                        {/* Hover Gradient Line */}
-                        <div className={`absolute top-0 left-0 w-1 h-full transition-all duration-300 ${data.aioCompatibilityBadge === "High" ? "bg-emerald-500" : "bg-amber-500"}`}></div>
-
-                        <div className="p-5 flex items-center justify-between pl-7">
-                          <div className="flex items-center gap-5">
-                            <div className={`p-3.5 rounded-full ${data.aioCompatibilityBadge === "High" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-amber-500/10 text-amber-600 dark:text-amber-400"}`}>
-                              <Bot className="w-6 h-6" />
-                            </div>
-                            <div>
-                              <h4 className={`font-semibold text-base mb-1 ${darkMode ? "text-white" : "text-ink"}`}>AIO & GEO Readiness</h4>
-                              <p className={`text-sm ${darkMode ? "text-slate-400" : "text-muted"}`}>
-                                {data.aioCompatibilityBadge === "High"
-                                  ? "Content is structure-optimized for AI engines (ChatGPT, Gemini) coverage."
-                                  : "Optimization required for better visibility in Generative AI results."}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-3">
-                            <span className={`text-lg font-semibold ${data.aioCompatibilityBadge === "High" ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
-                              {data.aioCompatibilityBadge || "N/A"}
-                            </span>
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${darkMode ? "bg-slate-800 group-hover:bg-slate-700" : "bg-surface-2 group-hover:bg-slate-200"}`}>
-                              <ArrowRight className={`w-4 h-4 transition-transform duration-300 group-hover:translate-x-1 ${darkMode ? "text-slate-400" : "text-muted"}`} />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
                     </div>
                   )}
                 </div>
@@ -349,6 +313,78 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
             </div>
           </div>
         )}
+
+        {/* ✅ AI Visibility hero — AEO headline + per-engine reach. Top billing for the
+            AI story: how visible this dealer is to Gemini / ChatGPT / Perplexity. */}
+        {!loading && isAuditComplete && data?.aeo && (() => {
+          const aiScore = Math.round(data.aeo?.Percentage ?? 0);
+          // Signal-card colour rule: <25 red, 25–74 orange, ≥75 green.
+          const aiRing = aiScore >= 75 ? "#10b981" : aiScore >= 25 ? "#f59e0b" : "#ef4444";
+          const platforms = [
+            { key: "gemini", title: "Google Gemini", color: "#4285F4" },
+            { key: "chatgpt", title: "OpenAI ChatGPT", color: "#10A37F" },
+            { key: "perplexity", title: "Perplexity", color: "#A259FF" },
+          ];
+          return (
+            <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${cardClass}`}>
+              <div className="p-8 lg:p-10 flex flex-col lg:flex-row items-center gap-10">
+
+                {/* Headline gauge */}
+                <div className="flex items-center gap-7 flex-shrink-0">
+                  <div className="relative">
+                    <CircularProgress value={aiScore} size={140} stroke={12} color={aiRing} />
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
+                      <span className={`text-3xl font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>{aiScore}%</span>
+                      <span className={`text-[10px] font-semibold uppercase tracking-widest ${darkMode ? "text-slate-500" : "text-faint"}`}>AI SCORE</span>
+                    </div>
+                  </div>
+                  <div className="max-w-sm">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Bot className="w-5 h-5 text-accent" />
+                      <h3 className={`text-2xl font-semibold tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>AI Visibility Score</h3>
+                    </div>
+                    <p className={`text-sm leading-relaxed ${darkMode ? "text-slate-400" : "text-muted"}`}>
+                      How visible this website is to AI answer engines — the search channel your
+                      next customers are switching to. Per-engine reach shown alongside.
+                    </p>
+                    {typeof data?.aioReadiness?.Percentage === "number" && (
+                      <span className={`mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${darkMode ? "border-slate-700 text-slate-300" : "border-line text-inksoft"}`}>
+                        AIO Readiness {Math.round(data.aioReadiness.Percentage)}%
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Per-engine gauges */}
+                <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {platforms.map((p) => {
+                    const score = Math.round(data.aeo?.platforms?.[p.key]?.score ?? 0);
+                    return (
+                      <div key={p.key} className={`rounded-2xl border p-5 flex flex-col items-center text-center ${darkMode ? "bg-slate-800/30 border-slate-700" : "bg-cardsoft border-linesoft"}`}>
+                        <div className="relative mb-3">
+                          <CircularProgress value={score} size={90} stroke={8} color={p.color} />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className={`text-lg font-black ${darkMode ? "text-white" : "text-ink"}`}>{score}%</span>
+                          </div>
+                        </div>
+                        <span className={`text-sm font-semibold ${darkMode ? "text-slate-200" : "text-inksoft"}`}>{p.title}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Drill-in */}
+                <button
+                  onClick={() => navigate(data?._id ? `/aeo/${data._id}` : "/aeo")}
+                  className={`group flex-shrink-0 inline-flex items-center gap-2 px-5 py-3 rounded-full text-sm font-semibold border transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg ${darkMode ? "bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700" : "bg-accent text-white border-transparent hover:opacity-90"}`}
+                >
+                  View AI report
+                  <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+                </button>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Guest lock removed — reports are open to everyone, so guests see the
             same full Overview + Category grid as authenticated users. */}

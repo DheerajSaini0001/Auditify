@@ -190,7 +190,9 @@ const analyzeTopicalAuthority = async (url, $, useCrawl = true) => {
     } catch (error) {
         return {
             signal: 'topicalAuthority',
-            score: 50,
+            // Crashed probe → not calculated, renormalized out (SCORING_FORMAT §7 policy 4).
+            score: null,
+            notCalculated: true,
             source: 'on-page',
             breakdown: { depth: 0, headings: 0, internalLinks: 0, verifiedCluster: 0, industry: 0, local: 0 },
             issues: [`Topical authority check failed: ${error.message}`],

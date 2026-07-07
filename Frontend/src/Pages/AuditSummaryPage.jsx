@@ -34,6 +34,15 @@ const PAGE_IMPORTANCE = {
     content: 0.75,
 };
 
+// Fixed heatmap row order (dealer catalog first, then the corporate-only keys).
+// Rows always render in this sequence regardless of discovery/completion order;
+// any unknown key falls to the end in its arrival order.
+const ROW_ORDER = ["home", "srp", "vdp", "trade", "lease", "service", "about", "content", "models", "locator", "press"];
+const rowRank = (key) => {
+    const i = ROW_ORDER.indexOf(key);
+    return i === -1 ? ROW_ORDER.length : i;
+};
+
 // Score → tier. Mirrors the heatmap legend: Strong ≥75, Needs work 55–74, Critical <55.
 const tierOf = (v) => (v == null ? "na" : v >= 75 ? "strong" : v >= 55 ? "mid" : "low");
 
@@ -46,6 +55,17 @@ const TIER_BG = {
 const prettyHost = (u) => {
     try { return new URL(u).host.replace(/^www\./, ""); }
     catch { return (u || "").replace(/^https?:\/\//, "").replace(/^www\./, ""); }
+};
+
+// Compact display form of an audited page URL (shown under each heatmap row
+// label): host + path, no protocol/www, no trailing slash. The homepage
+// collapses to just the host.
+const prettyPageUrl = (u) => {
+    try {
+        const url = new URL(u);
+        const path = (url.pathname + url.search).replace(/\/$/, "");
+        return url.host.replace(/^www\./, "") + path;
+    } catch { return (u || "").replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/$/, ""); }
 };
 
 const gradeFor = (score) => {
@@ -112,7 +132,7 @@ const AuditSummaryPage = () => {
     };
 
     // Collapse each page-type into ONE display row. A category that was sampled
-    // across several pages (VDP = 5 cars, SRP = new/used) is shown as a single
+    // across several pages (VDP = 2 cars, SRP = new/used) is shown as a single
     // averaged row instead of N separate rows: every section cell is the mean of
     // the samples' Percentages, and the overall is the mean of their scores. We
     // still audit all the samples — they're just merged into one VDP/SRP report here.
@@ -123,6 +143,9 @@ const AuditSummaryPage = () => {
             if (!byKey.has(p.key)) { byKey.set(p.key, []); order.push(p.key); }
             byKey.get(p.key).push(p);
         }
+        // Canonical row order: Home → SRP → VDP → Trade-In → Lease → Service →
+        // About → Content (stable sort keeps unknown keys in arrival order at the end).
+        order.sort((a, b) => rowRank(a) - rowRank(b));
         return order.map((key) => {
             const members = byKey.get(key);
             const reps = members.map((m) => reports[m.id]).filter(Boolean);
@@ -140,6 +163,11 @@ const AuditSummaryPage = () => {
                 memberCount: members.length,
                 mergedFrom,
                 id: members[0].id,   // drill-in opens the averaged (merged) report
+                // The audited page URL(s) — shown under the row label. A merged
+                // row keeps its first sample as the representative link and lists
+                // the rest in the tooltip.
+                url: members[0].url || null,
+                urls: members.map((m) => m.url).filter(Boolean),
                 scores,
                 overall,
             };
@@ -147,7 +175,7 @@ const AuditSummaryPage = () => {
     }, [rows, reports]);
 
     // Aggregate site score = importance-weighted site rollup math (§5.6), over the
-    // collapsed rows (so a 5-car VDP counts ONCE, as its average — not 5×).
+    // collapsed rows (so a multi-car VDP counts ONCE, as its average).
     const { siteScore, siteGrade } = useMemo(() => {
         let totalImportance = 0;
         let weightedScoreSum = 0;
@@ -302,11 +330,22 @@ const AuditSummaryPage = () => {
                                 <tbody>
                                     {displayRows.map((row) => (
                                         <tr key={row.key}>
-                                            {/* page label (the other edge) */}
+                                            {/* page label (the other edge) + the audited page's link */}
                                             <th
-                                                className={`sticky left-0 z-10 pr-3 text-right text-sm font-semibold whitespace-nowrap ${darkMode ? "bg-slate-900 text-slate-200" : "bg-card text-ink"}`}
+                                                className={`sticky left-0 z-10 pr-3 text-right text-sm font-semibold whitespace-nowrap align-middle ${darkMode ? "bg-slate-900 text-slate-200" : "bg-card text-ink"}`}
                                             >
-                                                {row.label}
+                                                <div>{row.label}</div>
+                                                {row.url && (
+                                                    <a
+                                                        href={row.url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        title={row.urls.length > 1 ? row.urls.join("\n") : row.url}
+                                                        className={`block ml-auto max-w-[240px] whitespace-normal break-all leading-snug text-[10px] font-normal underline-offset-2 hover:underline ${darkMode ? "text-slate-500 hover:text-blue-400" : "text-faint hover:text-accent"}`}
+                                                    >
+                                                        {prettyPageUrl(row.url)}{row.urls.length > 1 ? ` +${row.urls.length - 1}` : ""}
+                                                    </a>
+                                                )}
                                             </th>
 
                                             {SECTIONS.map((s) => {

@@ -245,11 +245,11 @@ function categoryOf(raw, siteType = "dealer") {
 
 // True once the pool holds enough inventory to satisfy the sampling rules: an SRP
 // story (either a separate new + used pair, or a single combined listing) AND at
-// least 5 VDP candidates to sample from. Only then is there nothing more the
-// remaining inventory sitemaps can add — callers use this to stop reading early.
-// (A site that exposes only one condition never trips the "pair" branch, so it
-// just keeps reading the rest of the bounded sitemap set, which is fine.)
-const VDP_SAMPLE_SIZE = 5;
+// least VDP_SAMPLE_SIZE VDP candidates to sample from. Only then is there nothing
+// more the remaining inventory sitemaps can add — callers use this to stop reading
+// early. (A site that exposes only one condition never trips the "pair" branch, so
+// it just keeps reading the rest of the bounded sitemap set, which is fine.)
+const VDP_SAMPLE_SIZE = 2;
 function poolHasEnoughInventory(pool) {
   let newSrp = false, usedSrp = false, genSrp = false, vdpCount = 0;
   for (const raw of pool) {
@@ -471,8 +471,8 @@ async function planSrp(byCat) {
   return keepLive(plan);
 }
 
-// VDP plan: a random sample of up to 5 vehicle-detail pages. If the site has BOTH
-// new and used cars, weight it 3 used + 2 new (per spec); otherwise take 5 of
+// VDP plan: a random sample of up to VDP_SAMPLE_SIZE (2) vehicle-detail pages. If
+// the site has BOTH new and used cars, take 1 used + 1 new; otherwise take 2 of
 // whatever exists. VDPs are frequently dynamic / missing from sitemaps, so we also
 // mine candidates off each SRP page (tagging them with the SRP's condition). Picks
 // are liveness-checked, with spares over-sampled to backfill any dead links.
@@ -527,13 +527,13 @@ async function sampleVdps(byCat, srpPages, origin) {
   const unknown = shuffled(pool.filter((v) => v.cond === null));
 
   let plan;
-  if (used.length && fresh.length) plan = [...used.slice(0, 3), ...fresh.slice(0, 2)];
+  if (used.length && fresh.length) plan = [...used.slice(0, 1), ...fresh.slice(0, 1)];
   else if (used.length) plan = used.slice(0, VDP_SAMPLE_SIZE);
   else if (fresh.length) plan = fresh.slice(0, VDP_SAMPLE_SIZE);
   else plan = unknown.slice(0, VDP_SAMPLE_SIZE);
 
   // Over-sample spares (kept in new/used-preference order) so dead links can be
-  // backfilled, then keep the first 5 live ones.
+  // backfilled, then keep the first VDP_SAMPLE_SIZE live ones.
   const chosen = new Set(plan.map((v) => v.url));
   const spares = [...used, ...fresh, ...unknown].filter((v) => !chosen.has(v.url));
   const live = await keepLive([...plan, ...spares].slice(0, VDP_SAMPLE_SIZE + 4));
@@ -713,7 +713,7 @@ export async function discoverDealerPages(rawUrl, scopes = null, siteType = "dea
 
   // SRP: both new + used listing pages when separate, else the single page.
   const srpPages = !isCorporate && inScope("srp") ? await planSrp(ranked) : [];
-  // VDP: a 5-car sample (3 used + 2 new when both exist), mined off the SRP(s) too.
+  // VDP: a 2-car sample (1 used + 1 new when both exist), mined off the SRP(s) too.
   const vdpPages = !isCorporate && inScope("vdp") ? await sampleVdps(ranked, srpPages, origin) : [];
 
   // Build the per-category page lists the audit will fan out over. Each entry is

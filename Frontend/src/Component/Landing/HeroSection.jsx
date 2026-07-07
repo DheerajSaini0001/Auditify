@@ -366,7 +366,16 @@ const PageCard = ({ def, phase, cat, darkMode, dimmed, audit, pageAudits, inScop
                             ✓ {audit.total > 1 ? `${audit.total} reports generated` : 'Report generated'}
                         </span>
                     )}
-                    {auditFailed && <span className="text-[10px] font-semibold uppercase tracking-wider text-rose-500">Audit failed</span>}
+                    {auditFailed && (
+                        <div className="space-y-0.5">
+                            <span className="text-[10px] font-semibold uppercase tracking-wider text-rose-500">Audit failed</span>
+                            {audit.error && (
+                                <span className="block text-[10px] leading-snug text-rose-400/90" title={audit.error}>
+                                    {audit.error}
+                                </span>
+                            )}
+                        </div>
+                    )}
                 </div>
             )}
         </div>
@@ -408,6 +417,9 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
     // True when the backend hard-rejected the URL (not a dealer/automotive
     // corporate site) — distinct from a transient network/server error.
     const [rejected, setRejected] = useState(false);
+    // True when the per-IP report budget is exhausted (429 REPORT_LIMIT_EXCEEDED)
+    // — nothing can run until the window rolls over, so don't imply otherwise.
+    const [budgetBlocked, setBudgetBlocked] = useState(false);
     const auditTokenRef = useRef(null);               // guest grant, reused for the audit
 
     // Parallel per-page audit state. `auditState[pageKey] = { status, id, progress, url, error }`
@@ -428,6 +440,9 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
     const location = useLocation();
     const navigate = useNavigate();
     const isAutoStarting = useRef(false);
+    // The discovery object the batch was auto-started for — so each completed
+    // scan auto-runs exactly once (a re-scan produces a new object and re-arms).
+    const autoAuditRanFor = useRef(null);
 
     const catMap = useMemo(
         () => Object.fromEntries((discovery?.categories || []).map((c) => [c.key, c])),
@@ -465,8 +480,10 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                 // corporate/OEM site (siteType "unknown") — distinct from a transient
                 // network/server error, where a retry might actually help.
                 setRejected(data?.siteType === 'unknown');
+                setBudgetBlocked(data?.code === 'REPORT_LIMIT_EXCEEDED');
             } else {
                 setRejected(false);
+                setBudgetBlocked(false);
                 setDiscovery(data);
                 setSiteType(data?.siteType || null);
                 // Now that the catalog is known, drop any selected key that belongs
@@ -506,7 +523,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                 : 'pending';
 
     // Flatten the detected categories into one audit task per page. A category may
-    // own several pages now (VDP = a 5-car sample, SRP = separate new/used listings),
+    // own several pages now (VDP = a 2-car sample, SRP = separate new/used listings),
     // so each task gets a unique `auditKey` and a display `label` that disambiguates
     // the samples (e.g. "Vehicle Detail / VDP — Used 1"). `catKey` keeps the task tied
     // back to its card for aggregate progress.
@@ -616,12 +633,53 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         setBatchRunning(true);
         window.history.replaceState(null, '', window.location.pathname);
 
-        const results = await Promise.all(targets.map(auditOnePage));
+        const bearer0 = localStorage.getItem('dealerpulse_token');
+        const lookupHeaders = { 'Content-Type': 'application/json', ...(bearer0 && { Authorization: `Bearer ${bearer0}` }) };
+
+        // Multi-sample categories (VDP, SRP) can't reuse via the normal per-URL
+        // dedupe: their sample URLs are freshly discovered each run, the sample
+        // reports are deleted after merging, and the merged report lives under a
+        // synthetic "#merged-" URL. So before auditing the samples, ask the
+        // backend for an existing merged report for this site + pageType — a hit
+        // means the whole category resolves instantly, exactly like the
+        // single-page cache hits.
+        const byCatTargets = {};
+        for (const t of targets) (byCatTargets[t.catKey] = byCatTargets[t.catKey] || []).push(t);
+        const reusedPages = [];
+        const reusedCats = new Set();
+        await Promise.all(
+            Object.entries(byCatTargets)
+                .filter(([, list]) => list.length > 1)
+                .map(async ([catKey, list]) => {
+                    try {
+                        const res = await fetch(`${API_URL}/single-audit/find-merged`, {
+                            method: 'POST',
+                            credentials: 'include',
+                            headers: lookupHeaders,
+                            body: JSON.stringify({ url: normalizeUrl(url), pageType: catKey, device, auditToken: auditTokenRef.current }),
+                        });
+                        const data = await res.json().catch(() => ({}));
+                        if (res.ok && data._id) {
+                            reusedCats.add(catKey);
+                            const baseLabel = (list[0].label || '').split(' — ')[0] || list[0].label;
+                            reusedPages.push({ key: catKey, label: baseLabel, url: list[0].url, id: data._id, status: 'success', mergedFrom: data.mergedFrom });
+                            // Surface the instant cache hit on the category's card.
+                            setAuditState((prev) => ({
+                                ...prev,
+                                [`${catKey}__cached`]: { catKey, label: baseLabel, status: 'success', id: data._id, progress: 100, url: list[0].url, stage: 'Loaded from a recent audit' },
+                            }));
+                        }
+                    } catch { /* lookup is best-effort — fall through to a full audit */ }
+                })
+        );
+
+        const runTargets = targets.filter((t) => !reusedCats.has(t.catKey));
+        const results = await Promise.all(runTargets.map(auditOnePage));
         setBatchRunning(false);
         if (cancelledRef.current) return;
 
         // Group successful results by category. A category sampled across several pages
-        // (VDP = 5 cars, SRP = new/used) is merged server-side into ONE averaged report,
+        // (VDP = 2 cars, SRP = new/used) is merged server-side into ONE averaged report,
         // so the summary shows a single row whose drill-in IS that averaged report.
         const ok = results.filter((r) => r && r.id && r.status !== 'failed');
         const byCat = [];
@@ -634,7 +692,8 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         const bearer = localStorage.getItem('dealerpulse_token');
         const mergeHeaders = { 'Content-Type': 'application/json', ...(bearer && { Authorization: `Bearer ${bearer}` }) };
 
-        const pages = [];
+        // Categories resolved from the merged-report cache skip auditing entirely.
+        const pages = [...reusedPages];
         for (const { catKey, items } of byCat) {
             if (items.length === 1) {
                 const r = items[0];
@@ -672,6 +731,22 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         try { sessionStorage.setItem('auditSummary', JSON.stringify(payload)); } catch { /* quota */ }
         navigate('/audit-summary', { state: payload });
     };
+
+    // Auto-start: once discovery lands successfully, kick off the full audit
+    // immediately instead of waiting for a click on "Run Full Audit on These
+    // Pages". Runs exactly once per completed scan — invalidateDetection()
+    // (scope change / new URL) clears `discovery`, so the next scan re-arms.
+    // The button stays rendered as a visible progress state and manual retry.
+    useEffect(() => {
+        if (phase !== 'done' || !discovery || rejected || budgetBlocked || batchRunning) return;
+        if (autoAuditRanFor.current === discovery) return;
+        if (reportSections.length === 0) return; // nothing selected to score — leave it manual
+        const anyFound = (discovery.categories || []).some((c) => c.found && scopes.includes(c.key));
+        if (!anyFound) return;
+        autoAuditRanFor.current = discovery;
+        handleFullAudit();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [phase, discovery, rejected, budgetBlocked]);
 
     // Modal success → store grant, then detect.
     const handleVerified = (auditToken) => {
@@ -731,6 +806,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         setDiscovery(null);
         setDetectError(null);
         setRejected(false);
+        setBudgetBlocked(false);
         setAuditState({});
     };
     const toggleScope = (key) => {
@@ -776,7 +852,12 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
             const progress = Math.round(tasks.reduce((s, t) => s + (t.progress || 0), 0) / total);
             const status = pending > 0 ? 'pending' : done > 0 ? 'success' : 'failed';
             const stage = total > 1 ? `${done}/${total} pages done` : tasks[0]?.stage;
-            agg[catKey] = { status, progress, stage, total, done, failed };
+            // Surface WHY it failed: a start-request rejection stores `error`
+            // (e.g. the rate-limit message); a worker failure leaves the backend's
+            // error text as the last polled `stage`.
+            const failedTask = failed > 0 ? tasks.find((t) => t.status === 'failed') : null;
+            const error = failedTask ? (failedTask.error || failedTask.stage) : null;
+            agg[catKey] = { status, progress, stage, total, done, failed, error };
         }
         return agg;
     }, [auditState]);
@@ -947,7 +1028,9 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                             </p>
                         )}
                         {phase === 'done' && detectError && !rejected && (
-                            <p className="text-xs mt-1 text-amber-500">{detectError} — you can still run the full audit.</p>
+                            <p className={`text-xs mt-1 ${budgetBlocked ? 'text-rose-400' : 'text-amber-500'}`}>
+                                {detectError}{!budgetBlocked && ' — you can still run the full audit.'}
+                            </p>
                         )}
                     </div>
 

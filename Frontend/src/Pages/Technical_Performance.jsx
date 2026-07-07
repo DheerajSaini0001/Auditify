@@ -97,7 +97,10 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
 
   const metric = data || {};
   const tech = metric.technicalPerformance || {};
-  const overallScore = tech?.Percentage || 0;
+  const overallScore = tech?.Percentage ?? 0;
+  // "Not Run": PageSpeed returned no data after retries, so the section has no headline
+  // (null Percentage) and is excluded from the overall. Show that instead of a fake 0%.
+  const notRun = !!data?.technicalPerformance && (tech?.Percentage === null || tech?.Percentage === undefined);
   const mainBg = darkMode ? "bg-gray-900" : "bg-surface";
 
   const anyVisible = (keys) => keys.some((k) => tech[k] && isVisibleForAudience(k, audienceMode));
@@ -175,10 +178,18 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                         <p className={`text-sm leading-relaxed opacity-70 animate-in fade-in slide-in-from-left-8 duration-700 delay-150 ${darkMode ? "text-slate-300" : "text-muted"}`}>
                           Core vitals and speed configurations analysis for a faster user experience.
                         </p>
+                        {/* Not Run: PageSpeed couldn't analyze the site, so there is no
+                            performance score to show — explain rather than imply a 0%. */}
+                        {notRun && (
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider border ${darkMode ? "bg-amber-900/30 text-amber-400 border-amber-800" : "bg-amber-50 text-amber-600 border-amber-100"}`}>
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                            Not Run · PageSpeed unavailable
+                          </span>
+                        )}
                         {/* Confidence (spec §0.5): tell the user whether Core Web Vitals came
                             from real users (CrUX field) or are a lab estimate, so the score is
                             never over-claimed as real-world when it isn't. */}
-                        {tech.Confidence && (
+                        {!notRun && tech.Confidence && (
                           <span
                             title={tech.Confidence === "field"
                               ? "Core Web Vitals scored from real-user field data (Chrome UX Report, p75)."
@@ -192,6 +203,25 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                             <span className={`w-1.5 h-1.5 rounded-full ${tech.Confidence === "field" ? "bg-emerald-500" : "bg-amber-500"}`} />
                             {tech.Confidence === "field" ? "Real-user field data" : "Lab estimate · no field data"}
                           </span>
+                        )}
+                        {!notRun && tech.Score_Breakdown && (
+                          <div className={`inline-flex items-start gap-2 mt-1 px-3 py-1.5 rounded-lg text-[11px] font-medium ${darkMode ? "bg-slate-800/60 text-slate-400 border border-slate-700/50" : "bg-cardsoft text-muted border border-line"}`}>
+                            <Info className="w-3.5 h-3.5 mt-0.5 shrink-0 opacity-70" />
+                            <span>
+                              Score uses the official Lighthouse Performance formula (FCP 10% · SI 10% · LCP 25% · TBT 30% · CLS 25%) — directly comparable to PageSpeed Insights (±10 between runs is normal).
+                              {typeof tech?.Delivery_Hygiene?.score === "number" && (
+                                <> Delivery hygiene (not scored by Lighthouse): {tech.Delivery_Hygiene.score}%.</>
+                              )}
+                            </span>
+                          </div>
+                        )}
+                        {notRun && (
+                          <div className={`inline-flex items-start gap-2 mt-1 px-3 py-1.5 rounded-lg text-[11px] font-medium ${darkMode ? "bg-amber-900/20 text-amber-300 border border-amber-800/50" : "bg-amber-50 text-amber-700 border border-amber-100"}`}>
+                            <Info className="w-3.5 h-3.5 mt-0.5 shrink-0 opacity-70" />
+                            <span>
+                              Google PageSpeed returned no data for this URL (after retries), so Core Web Vitals could not be measured. This section is excluded from the overall score rather than counted as 0. The delivery checks below still ran on the live page.
+                            </span>
+                          </div>
                         )}
                       </div>
 
@@ -211,11 +241,20 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
 
                     {/* Circular Progress */}
                     <div className="relative flex-shrink-0 group cursor-default order-1 md:order-2">
-                      <div className={`absolute -inset-8 rounded-full blur-3xl opacity-25 transition-opacity duration-700 group-hover:opacity-40 ${statusSolidBg(scoreToStatus(overallScore))}`}></div>
-                      <CircularProgress value={overallScore} size={data?.report === "All" ? 180 : 150} stroke={14} />
+                      <div className={`absolute -inset-8 rounded-full blur-3xl opacity-25 transition-opacity duration-700 group-hover:opacity-40 ${notRun ? "bg-amber-400" : statusSolidBg(scoreToStatus(overallScore))}`}></div>
+                      <CircularProgress value={notRun ? 0 : overallScore} size={data?.report === "All" ? 180 : 150} stroke={14} />
                       <div className="absolute inset-0 flex items-center justify-center flex-col gap-0.5">
-                        <span className={`${data?.report === "All" ? "text-5xl" : "text-3xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>{overallScore}%</span>
-                        <span className="text-[11px] font-semibold uppercase tracking-[0.2em] opacity-50">SCORE</span>
+                        {notRun ? (
+                          <>
+                            <span className={`${data?.report === "All" ? "text-3xl" : "text-2xl"} font-black tracking-tight ${darkMode ? "text-amber-400" : "text-amber-500"}`}>N/A</span>
+                            <span className="text-[10px] font-semibold uppercase tracking-[0.15em] opacity-60 text-center px-4">Not Run</span>
+                          </>
+                        ) : (
+                          <>
+                            <span className={`${data?.report === "All" ? "text-5xl" : "text-3xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>{overallScore}%</span>
+                            <span className="text-[11px] font-semibold uppercase tracking-[0.2em] opacity-50">SCORE</span>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -782,23 +821,6 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                             </div>
                           </div>
 
-                          {tech.Compression.meta?.uncompressedResources && tech.Compression.meta.uncompressedResources.length > 0 && (
-                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
-                              <p className={`text-[10px] font-semibold uppercase tracking-wider mb-3 ${darkMode ? "text-gray-500" : "text-faint"}`}>Uncompressed Resources</p>
-                              <div className="flex flex-col gap-2">
-                                {tech.Compression.meta.uncompressedResources.map((item, idx) => (
-                                  <div key={idx} className="flex justify-between items-center">
-                                    <p className={`text-[10px] truncate max-w-[70%] font-mono ${darkMode ? "text-gray-300" : "text-muted"}`} title={item.url}>
-                                      {item.fileName || item.url}
-                                    </p>
-                                    <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${darkMode ? "bg-rose-900/20 text-rose-400" : "bg-rose-100 text-rose-600"}`}>
-                                      Encoding: {item.currentEncoding || 'None'}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
                         </div>
                       </OptimizationCard>
                     )}
@@ -836,23 +858,6 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                             </div>
                           </div>
 
-                          {tech.Caching.meta?.uncachedResources && tech.Caching.meta.uncachedResources.length > 0 && (
-                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
-                              <p className={`text-[10px] font-semibold uppercase tracking-wider mb-3 ${darkMode ? "text-gray-500" : "text-faint"}`}>Uncached Resources</p>
-                              <div className="flex flex-col gap-2">
-                                {tech.Caching.meta.uncachedResources.map((item, idx) => (
-                                  <div key={idx} className="flex justify-between items-center">
-                                    <p className={`text-[10px] truncate max-w-[70%] font-mono ${darkMode ? "text-gray-300" : "text-muted"}`} title={item.url}>
-                                      {item.fileName || item.url}
-                                    </p>
-                                    <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${darkMode ? "bg-rose-900/20 text-rose-400" : "bg-rose-100 text-rose-600"}`}>
-                                      Policy: {item.cachePolicy || 'None'}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
                         </div>
                       </OptimizationCard>
                     )}
@@ -886,20 +891,6 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                             </div>
                           </div>
 
-                          {/* Full request path to the final 200 (only meaningful when a redirect occurred). */}
-                          {tech.Redirect_Chains.meta?.redirectDetails && tech.Redirect_Chains.meta.redirectDetails.length > 1 && (
-                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
-                              <p className={`text-[10px] font-semibold uppercase tracking-wider mb-3 ${darkMode ? "text-gray-500" : "text-faint"}`}>Redirect Path</p>
-                              <div className="flex flex-col gap-2">
-                                {tech.Redirect_Chains.meta.redirectDetails.map((u, idx, arr) => (
-                                  <div key={idx} className="flex items-center gap-2">
-                                    <span className={`text-[10px] font-semibold w-5 h-5 flex items-center justify-center rounded-full flex-shrink-0 ${idx === arr.length - 1 ? (darkMode ? "bg-emerald-900/30 text-emerald-400" : "bg-emerald-100 text-emerald-600") : (darkMode ? "bg-amber-900/30 text-amber-400" : "bg-amber-100 text-amber-600")}`}>{idx + 1}</span>
-                                    <p className={`text-[10px] truncate font-mono ${darkMode ? "text-gray-300" : "text-muted"}`} title={u}>{u}</p>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
                         </div>
                       </OptimizationCard>
                     )}
@@ -932,23 +923,6 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                             </div>
                           </div>
 
-                          {tech.Render_Blocking.meta?.blockingResources && tech.Render_Blocking.meta.blockingResources.length > 0 && (
-                            <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
-                              <p className={`text-[10px] font-semibold uppercase tracking-wider mb-3 ${darkMode ? "text-gray-500" : "text-faint"}`}>Blocking Resources</p>
-                              <div className="flex flex-col gap-2.5">
-                                {tech.Render_Blocking.meta.blockingResources.map((item, idx) => (
-                                  <div key={idx} className="flex flex-col gap-0.5">
-                                    <p className={`text-[10px] truncate font-mono ${darkMode ? "text-gray-300" : "text-muted"}`} title={item.url}>
-                                      {item.url}
-                                    </p>
-                                    {item.details && (
-                                      <p className={`text-[10px] ${darkMode ? "text-gray-500" : "text-faint"}`}>{item.details}</p>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
                         </div>
                       </OptimizationCard>
                     )}

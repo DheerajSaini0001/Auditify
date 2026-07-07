@@ -287,9 +287,11 @@ const analyzeBrandEntityStrength = async (url, $, useKnowledgeGraph = true) => {
     } catch (error) {
         return {
             signal: 'brandEntityStrength',
-            score: 50,
+            // Crashed probe → not calculated, renormalized out (SCORING_FORMAT §7 policy 4).
+            score: null,
+            notCalculated: true,
             source: 'on-page',
-            tier: 'Moderate',
+            tier: 'Unknown',
             breakdown: { sameAs: 0, authoritative: 0, reviews: 0, completeness: 0 },
             knowledgeGraph: null,
             issues: [`Brand entity strength check failed: ${error.message}`],

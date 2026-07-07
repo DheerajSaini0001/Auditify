@@ -201,10 +201,11 @@ const analyzeEntityRecognition = async (url, $, useKnowledgeGraph = true) => {
             reason,
         };
     } catch (error) {
-        // Neutral score on unexpected failure (don't unfairly tank the audit).
+        // Crashed probe → not calculated, renormalized out (SCORING_FORMAT §7 policy 4).
         return {
             signal: 'entityRecognition',
-            score: 50,
+            score: null,
+            notCalculated: true,
             source: 'on-page',
             orgSchema: { found: false },
             knowledgeGraph: null,

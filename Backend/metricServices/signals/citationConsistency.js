@@ -221,7 +221,9 @@ const analyzeCitationConsistency = (url, $) => {
     } catch (error) {
         return {
             signal: 'citationConsistency',
-            score: 50,
+            // Crashed probe → not calculated, renormalized out (SCORING_FORMAT §7 policy 4).
+            score: null,
+            notCalculated: true,
             source: 'on-page',
             breakdown: { completeness: 0, phoneConsistency: 0, nameConsistency: 0, addressCompleteness: 0 },
             issues: [`Citation consistency check failed: ${error.message}`],

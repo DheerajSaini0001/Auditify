@@ -140,6 +140,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             <div className="space-y-1.5 flex-1 min-w-0">
               <h3 className={`font-semibold text-lg tracking-tight ${darkMode ? "text-white" : "text-ink"} truncate`}>
                 {title}
+                {isInfo && !isNA && <span className={`font-medium ${darkMode ? "text-slate-400" : "text-muted"}`} title="Informational — not counted in the section score"> (Info-only)</span>}
               </h3>
               <div className="flex items-center gap-3">
                 <div className={`px-2.5 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider ${darkMode ? `bg-${statusType}-500/10 text-${statusType}-400` : themeColors.bg}`}>
@@ -203,7 +204,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
         </div>
 
         {/* WCAG 2.1 AA Compliance summary */}
-        {metricKey === "WCAG_AA_Compliance" && meta && (
+        {metricKey === "WCAG_AA_Compliance" && meta?.grade && (
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-2">
               <div className={`p-3 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
@@ -350,33 +351,33 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             {/* Cause & Recommendation */}
             <div className={`p-4 rounded-xl space-y-4 border ${darkMode ? "bg-blue-500/5 border-blue-500/20" : "bg-accentsoft border-accentsoft"}`}>
               {(analysis?.cause || reasons.length > 0) && (
-                <div className="space-y-1">
-                  <span className="text-[9px] font-black uppercase tracking-widest text-blue-500">Root Cause:</span>
+                <div className="space-y-1.5">
+                  <span className="text-xs font-black uppercase tracking-widest text-blue-500">Root Cause:</span>
                   {analysis?.cause ? (
-                    <p className={`text-xs font-semibold leading-relaxed ${darkMode ? "text-slate-300" : "text-inksoft"}`}>{analysis.cause}</p>
+                    <p className={`text-sm font-medium leading-relaxed ${darkMode ? "text-slate-200" : "text-inksoft"}`}>{analysis.cause}</p>
                   ) : (
                     <ul className="space-y-1.5 list-disc list-inside">
                       {reasons.map((reason, idx) => (
-                        <li key={idx} className={`text-xs leading-relaxed ${darkMode ? "text-slate-300" : "text-inksoft"}`}>{reason}</li>
+                        <li key={idx} className={`text-sm leading-relaxed ${darkMode ? "text-slate-200" : "text-inksoft"}`}>{reason}</li>
                       ))}
                     </ul>
                   )}
                 </div>
               )}
               {(analysis?.recommendation || recommendations.length > 0) && (
-                <div className="space-y-1">
-                  <span className="text-[9px] font-black uppercase tracking-widest text-blue-500">Fix Action Plan:</span>
+                <div className="space-y-1.5">
+                  <span className="text-xs font-black uppercase tracking-widest text-blue-500">Fix Action Plan:</span>
                   {analysis?.recommendation ? (
                     <div className="flex gap-2 items-start">
                       <ShieldCheck size={14} className="mt-0.5 text-blue-500 shrink-0" />
-                      <p className={`text-xs font-semibold leading-relaxed ${darkMode ? "text-slate-200" : "text-ink"}`}>{analysis.recommendation}</p>
+                      <p className={`text-sm font-medium leading-relaxed ${darkMode ? "text-slate-100" : "text-ink"}`}>{analysis.recommendation}</p>
                     </div>
                   ) : (
                     <ul className="space-y-2">
                       {recommendations.map((rec, idx) => (
                         <li key={idx} className="flex gap-2 items-start">
                           <ShieldCheck size={14} className="mt-0.5 text-blue-500 shrink-0" />
-                          <p className={`text-xs font-semibold leading-relaxed ${darkMode ? "text-slate-200" : "text-ink"}`}>{rec}</p>
+                          <p className={`text-sm font-medium leading-relaxed ${darkMode ? "text-slate-100" : "text-ink"}`}>{rec}</p>
                         </li>
                       ))}
                     </ul>
@@ -616,7 +617,12 @@ const Accessibility_Inner = React.memo(function Accessibility_Inner({ data, load
                         {metric?.Coverage && (
                           <div className={`inline-flex items-start gap-2 mt-1 px-3 py-1.5 rounded-lg text-[11px] font-medium ${darkMode ? "bg-slate-800/60 text-slate-400 border border-slate-700/50" : "bg-cardsoft text-muted border border-line"}`}>
                             <Info className="w-3.5 h-3.5 mt-0.5 shrink-0 opacity-70" />
-                            <span>{metric.Coverage} Automated checks ≈ 30–40% of WCAG, so the score is capped below 100 (confidence: {metric?.Confidence || "heuristic"}). Manual review still required.</span>
+                            <span>
+                              {metric.Coverage} Score uses severity-weighted deductions per failing WCAG rule (aligned with industry checkers) from an automated ceiling of 90 — the last 10 points require manual review (confidence: {metric?.Confidence || "heuristic"}).
+                              {typeof metric?.Graded_Percentage === "number" && (
+                                <> Page-level element pass rate: {metric.Graded_Percentage}%.</>
+                              )}
+                            </span>
                           </div>
                         )}
                       </div>

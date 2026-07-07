@@ -10,6 +10,19 @@ const __dirname = path.dirname(__filename);
 const LOG_DIR = path.resolve(__dirname, "..", "logs");
 const LOG_LEVELS = { DEBUG: "DEBUG", INFO: "INFO", WARN: "WARN", ERROR: "ERROR" };
 
+// Numeric severity so we can threshold. Higher = more severe.
+const LEVEL_ORDER = { DEBUG: 10, INFO: 20, WARN: 30, ERROR: 40 };
+
+// Two independent thresholds so the console stays scannable while the file keeps the
+// full trail for forensics:
+//   • CONSOLE_LOG_LEVEL (default INFO) — what prints to the terminal. Set to WARN to
+//     see only problems, or DEBUG when actively debugging.
+//   • FILE_LOG_LEVEL   (default DEBUG) — what's persisted to logs/app-*.log (keep everything).
+const resolveLevel = (val, fallback) =>
+  LEVEL_ORDER[String(val || "").toUpperCase()] ?? LEVEL_ORDER[fallback];
+const CONSOLE_MIN = resolveLevel(process.env.CONSOLE_LOG_LEVEL || process.env.LOG_LEVEL, "INFO");
+const FILE_MIN = resolveLevel(process.env.FILE_LOG_LEVEL, "DEBUG");
+
 // Keep only this many days of log files (0 = unlimited)
 const MAX_LOG_DAYS = 30;
 
@@ -96,24 +109,30 @@ function formatConsoleEntry(level, message, meta) {
  * Write a log entry to both console and log file.
  */
 function writeLog(level, message, meta) {
-  // Console output
-  const consoleEntry = formatConsoleEntry(level, message, meta);
-  if (level === "ERROR") {
-    console.error(consoleEntry);
-  } else if (level === "WARN") {
-    console.warn(consoleEntry);
-  } else {
-    console.log(consoleEntry);
+  const severity = LEVEL_ORDER[level] ?? LEVEL_ORDER.INFO;
+
+  // Console output — only if it meets the console threshold (keeps the terminal scannable).
+  if (severity >= CONSOLE_MIN) {
+    const consoleEntry = formatConsoleEntry(level, message, meta);
+    if (level === "ERROR") {
+      console.error(consoleEntry);
+    } else if (level === "WARN") {
+      console.warn(consoleEntry);
+    } else {
+      console.log(consoleEntry);
+    }
   }
 
-  // File output (async, fire-and-forget to avoid blocking)
-  const fileEntry = formatFileEntry(level, message, meta);
-  const logFile = getLogFilePath();
-  fs.appendFile(logFile, fileEntry + "\n", (err) => {
-    if (err) {
-      console.error(`[LOGGER] Failed to write to log file: ${err.message}`);
-    }
-  });
+  // File output (async, fire-and-forget) — only if it meets the file threshold.
+  if (severity >= FILE_MIN) {
+    const fileEntry = formatFileEntry(level, message, meta);
+    const logFile = getLogFilePath();
+    fs.appendFile(logFile, fileEntry + "\n", (err) => {
+      if (err) {
+        console.error(`[LOGGER] Failed to write to log file: ${err.message}`);
+      }
+    });
+  }
 }
 
 /**

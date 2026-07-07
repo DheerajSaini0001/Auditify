@@ -53,7 +53,7 @@ export const generatePDFReport = async (req, res) => {
     let sectionNum = 0;
 
     // Skip top-level non-metric keys; every parameter is included in the report.
-    const SKIP_KEYS = ['Percentage', 'Section_Score', 'score', 'grade'];
+    const SKIP_KEYS = ['Percentage', 'Section_Score', 'score', 'grade', 'Graded_Percentage', 'Score_Breakdown'];
     const isMetricVisible = (mKey) => !SKIP_KEYS.includes(mKey);
 
     // Escape any value that ends up in the PDF HTML. Report fields derive from

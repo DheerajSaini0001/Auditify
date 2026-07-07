@@ -4,6 +4,7 @@ import * as userController from '../controllers/userController.js';
 import { startAudit, getReportById } from '../controllers/singleAuditController.js';
 import { verifyToken, checkRole } from '../middleware/auth.js';
 import captchaValidator from '../middleware/captchaValidator.js';
+import { chargeReportBudget } from '../middleware/reportBudget.js';
 
 const router = express.Router();
 
@@ -19,12 +20,14 @@ const validate = (req, res, next) => {
 router.use(verifyToken);
 router.use(checkRole('user', 'admin'));
 
-// Audit
+// Audit — same per-IP report budget as the guest surface (5 site runs / 15 min;
+// a whole batch counts once), charged only after validation so bad input is free.
 router.post('/audit', [
   body('url').isURL({ require_protocol: true }).withMessage('Valid URL with http/https required'),
   body('device').isIn(['Desktop', 'Mobile']).withMessage('Invalid device type'),
   validate,
   captchaValidator,
+  chargeReportBudget,
 ], startAudit);
 
 router.get('/report/:singleAuditId', getReportById);

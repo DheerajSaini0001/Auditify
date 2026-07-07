@@ -121,47 +121,60 @@ async function safeMetric(name, fn) {
   }
 }
 
+// AI-forward weighting (July 2026 product decision, mirrors utils/sectionWeights.js):
+// AIO+AEO ≈ 20 combined on customer-facing pages (AEO leads), funded by A11y/UX;
+// transactional pages (trade/finance) stay ~16. Keep BOTH tables in sync.
 const SECTION_WEIGHTS_BY_PAGE_TYPE = {
-  home:    { tech: 18, seo: 18, a11y: 10, sec: 12, ux: 12, conv: 14, aio: 8, aeo: 8 },
-  srp:     { tech: 20, seo: 20, a11y: 9,  sec: 8,  ux: 13, conv: 14, aio: 8, aeo: 8 },
-  vdp:     { tech: 18, seo: 18, a11y: 9,  sec: 8,  ux: 13, conv: 18, aio: 7, aeo: 9 },
-  specials:{ tech: 15, seo: 16, a11y: 9,  sec: 13, ux: 12, conv: 17, aio: 6, aeo: 12 },
-  lease:   { tech: 15, seo: 16, a11y: 9,  sec: 14, ux: 12, conv: 16, aio: 6, aeo: 12 },
-  trade:   { tech: 14, seo: 12, a11y: 11, sec: 16, ux: 13, conv: 22, aio: 6, aeo: 6 },
-  finance: { tech: 14, seo: 12, a11y: 11, sec: 22, ux: 11, conv: 18, aio: 6, aeo: 6 },
-  service: { tech: 16, seo: 16, a11y: 10, sec: 10, ux: 13, conv: 19, aio: 8, aeo: 8 },
+  home:    { tech: 18, seo: 18, a11y: 8,  sec: 12, ux: 10, conv: 14, aio: 8, aeo: 12 },
+  srp:     { tech: 20, seo: 20, a11y: 7,  sec: 8,  ux: 11, conv: 14, aio: 8, aeo: 12 },
+  vdp:     { tech: 18, seo: 18, a11y: 8,  sec: 8,  ux: 11, conv: 18, aio: 7, aeo: 12 },
+  specials:{ tech: 15, seo: 16, a11y: 8,  sec: 13, ux: 11, conv: 17, aio: 8, aeo: 12 },
+  lease:   { tech: 15, seo: 16, a11y: 8,  sec: 14, ux: 11, conv: 16, aio: 8, aeo: 12 },
+  trade:   { tech: 14, seo: 12, a11y: 9,  sec: 16, ux: 11, conv: 22, aio: 7, aeo: 9 },
+  finance: { tech: 14, seo: 12, a11y: 9,  sec: 22, ux: 9,  conv: 18, aio: 7, aeo: 9 },
+  service: { tech: 16, seo: 16, a11y: 8,  sec: 10, ux: 11, conv: 19, aio: 8, aeo: 12 },
   about:   { tech: 14, seo: 16, a11y: 11, sec: 10, ux: 15, conv: 12, aio: 10,aeo: 12 },
-  content: { tech: 14, seo: 22, a11y: 11, sec: 9,  ux: 15, conv: 7,  aio: 10,aeo: 12 },
-  generic: { tech: 18, seo: 17, a11y: 10, sec: 12, ux: 13, conv: 15, aio: 8, aeo: 7 },
+  content: { tech: 14, seo: 22, a11y: 9,  sec: 9,  ux: 15, conv: 7,  aio: 10,aeo: 14 },
+  generic: { tech: 18, seo: 17, a11y: 8,  sec: 12, ux: 11, conv: 14, aio: 8, aeo: 12 },
   // Corporate/OEM page types (siteType "corporate" — no per-vehicle lead flow of
   // its own, so Conversion weight drops and SEO/AEO — brand & answer-engine
   // visibility — rise). `locator`'s "conversion" is successfully finding a
   // dealer, so it keeps real Conversion weight tied to UX (map/store-finder
   // usability). `about`/`content` reuse the existing dealer rows above.
   models:  { tech: 18, seo: 20, a11y: 10, sec: 8,  ux: 14, conv: 10, aio: 9, aeo: 11 },
-  locator: { tech: 16, seo: 14, a11y: 10, sec: 8,  ux: 16, conv: 20, aio: 6, aeo: 10 },
+  locator: { tech: 16, seo: 14, a11y: 8,  sec: 8,  ux: 14, conv: 20, aio: 8, aeo: 12 },
   press:   { tech: 14, seo: 18, a11y: 10, sec: 8,  ux: 14, conv: 6,  aio: 10,aeo: 20 },
 };
 
 const OverAll = (A, B, C, D, E, F, G, H, pageType = "generic") => {
-  A ||= 0; B ||= 0; C ||= 0; D ||= 0; E ||= 0; F ||= 0; G ||= 0; H ||= 0;
-  
   const w = SECTION_WEIGHTS_BY_PAGE_TYPE[pageType] || SECTION_WEIGHTS_BY_PAGE_TYPE.generic;
-  const total = (A * w.tech + B * w.seo + C * w.a11y + D * w.sec + E * w.ux + F * w.conv + G * w.aio + H * w.aeo) / 100;
+
+  // A section score of null = "Not Run" (e.g. PageSpeed unavailable → Technical). It is
+  // EXCLUDED from the overall and the remaining section weights are renormalized, rather
+  // than counted as 0 — a measurement gap shouldn't be scored as a real failure.
+  const parts = [
+    { name: "Technical Performance", score: A, weight: w.tech },
+    { name: "On-Page SEO", score: B, weight: w.seo },
+    { name: "Accessibility", score: C, weight: w.a11y },
+    { name: "Security/Compliance", score: D, weight: w.sec },
+    { name: "UX & Content Structure", score: E, weight: w.ux },
+    { name: "Conversion & Lead Flow", score: F, weight: w.conv },
+    { name: "AIO Readiness", score: G, weight: w.aio },
+    { name: "AEO", score: H, weight: w.aeo },
+  ];
+
+  let sum = 0, wsum = 0;
+  for (const p of parts) {
+    if (p.score === null || p.score === undefined) continue; // Not Run — renormalize out
+    sum += p.score * p.weight;
+    wsum += p.weight;
+  }
+  const total = wsum > 0 ? sum / wsum : 0;
 
   return {
     totalScore: Number(total.toFixed(1)),
     grade: gradeFor(total),
-    sectionScores: [
-      { name: "Technical Performance", score: A },
-      { name: "On-Page SEO", score: B },
-      { name: "Accessibility", score: C },
-      { name: "Security/Compliance", score: D },
-      { name: "UX & Content Structure", score: E },
-      { name: "Conversion & Lead Flow", score: F },
-      { name: "AIO Readiness", score: G },
-      { name: "AEO", score: H },
-    ],
+    sectionScores: parts.map((p) => ({ name: p.name, score: p.score ?? null })),
   };
 };
 
@@ -248,43 +261,43 @@ const OverAll = (A, B, C, D, E, F, G, H, pageType = "generic") => {
         "Technical Performance": async () => {
           const r = await safeMetric("Technical Performance", () => technicalMetrics(url, device, page, response, browser, pageType));
           postProgress({ technicalPerformance: r });
-          return { field: "technicalPerformance", value: r, pct: r?.Percentage || 0 };
+          return { field: "technicalPerformance", value: r, pct: r?.Percentage ?? null };
         },
         "On Page SEO": async () => {
           const r = await safeMetric("On Page SEO", () => seoMetrics(url, $, page, pageType));
           postProgress({ onPageSEO: r, siteSchema: r?.Schema });
-          return { field: "onPageSEO", value: r, pct: r?.Percentage || 0, extra: { siteSchema: r?.Schema } };
+          return { field: "onPageSEO", value: r, pct: r?.Percentage ?? null, extra: { siteSchema: r?.Schema } };
         },
         "Accessibility": async () => {
           const r = await safeMetric("Accessibility", () => accessibilityMetrics(page, $, pageType));
           postProgress({ accessibility: r });
-          return { field: "accessibility", value: r, pct: r?.Percentage || 0 };
+          return { field: "accessibility", value: r, pct: r?.Percentage ?? null };
         },
         "Security/Compliance": async () => {
           const r = await safeMetric("Security/Compliance", () => securityCompliance(url, page, response, browser, pageType));
           postProgress({ securityOrCompliance: r });
-          return { field: "securityOrCompliance", value: r, pct: r?.Percentage || 0 };
+          return { field: "securityOrCompliance", value: r, pct: r?.Percentage ?? null };
         },
         "UX & Content Structure": async () => {
           const r = await safeMetric("UX & Content Structure", () => uxContentStructure(device, page, pageType));
           postProgress({ UXOrContentStructure: r });
-          return { field: "UXOrContentStructure", value: r, pct: r?.Percentage || 0 };
+          return { field: "UXOrContentStructure", value: r, pct: r?.Percentage ?? null };
         },
         "Conversion & Lead Flow": async () => {
           const r = await safeMetric("Conversion & Lead Flow", () => conversionLeadFlow(page, $, pageType));
           postProgress({ conversionAndLeadFlow: r });
-          return { field: "conversionAndLeadFlow", value: r, pct: r?.Percentage || 0 };
+          return { field: "conversionAndLeadFlow", value: r, pct: r?.Percentage ?? null };
         },
         "AIO (AI-Optimization) Readiness": async () => {
           const r = await safeMetric("AIO Readiness", () => aioReadiness(url, page, $, pageType));
           postProgress({ aioReadiness: r, aioCompatibilityBadge: r?.AIO_Compatibility_Badge });
-          return { field: "aioReadiness", value: r, pct: r?.Percentage || 0, extra: { aioCompatibilityBadge: r?.AIO_Compatibility_Badge } };
+          return { field: "aioReadiness", value: r, pct: r?.Percentage ?? null, extra: { aioCompatibilityBadge: r?.AIO_Compatibility_Badge } };
         },
         "AEO (Answer Engine Optimization)": async () => {
           // AEO is a TOP-LEVEL `aeo` section field; headline is the spec-weighted Percentage.
           const r = await safeMetric("AEO", () => AEOService.runAudit(url, $, null, 100, { pageType }));
           postProgress({ aeo: r });
-          return { field: "aeo", value: r, pct: r?.Percentage || 0 };
+          return { field: "aeo", value: r, pct: r?.Percentage ?? null };
         },
       };
 
@@ -319,15 +332,26 @@ const OverAll = (A, B, C, D, E, F, G, H, pageType = "generic") => {
         
         const weightKey = keyMap[selected[i]];
         const weightVal = w[weightKey] || 0;
+        const name = SECTION_DISPLAY_NAMES[selected[i]] || selected[i];
+        // null pct = "Not Run" (e.g. PageSpeed unavailable) — excluded from the weighted
+        // average and renormalized, not counted as 0.
+        if (res.pct === null || res.pct === undefined) {
+          sectionScores.push({ name, score: null });
+          continue;
+        }
         sumOfScoresTimesWeights += res.pct * weightVal;
         sumOfWeights += weightVal;
-        
-        sectionScores.push({ name: SECTION_DISPLAY_NAMES[selected[i]] || selected[i], score: res.pct });
+        sectionScores.push({ name, score: res.pct });
       }
       const avg = sumOfWeights > 0 ? sumOfScoresTimesWeights / sumOfWeights : 0;
       updateData.score = Number(avg.toFixed(1));
       updateData.grade = gradeFor(avg);
       updateData.sectionScore = sectionScores;
+
+      const notRunSections = sectionScores.filter((s) => s.score === null).map((s) => s.name);
+      if (notRunSections.length) {
+        logger.warn(`[Overall] ${notRunSections.length} section(s) Not Run — excluded & renormalized: ${notRunSections.join(", ")} | overall=${updateData.score} (${url})`);
+      }
 
       finish(updateData);
       logger.info(`🧠 Worker Completed (subset: ${selected.join(", ")}) for URL: ${url}`);
@@ -453,16 +477,25 @@ const OverAll = (A, B, C, D, E, F, G, H, pageType = "generic") => {
     ]);
 
     // Extract percentages for overall score calculation
-    const A = A_Res?.Percentage || 0;
-    const B = B_Res?.Percentage || 0;
-    const C = C_Res?.Percentage || 0;
-    const D = D_Res?.Percentage || 0;
-    const E = E_Res?.Percentage || 0;
-    const F = F_Res?.Percentage || 0;
-    const G = G_Res?.Percentage || 0;
-    const H = aeoRes?.Percentage || 0;
+    // `?? null` (not `|| 0`) so a "Not Run" section (null Percentage) is excluded and
+    // renormalized in OverAll rather than counted as a real 0. A legit 0 is preserved.
+    const A = A_Res?.Percentage ?? null;
+    const B = B_Res?.Percentage ?? null;
+    const C = C_Res?.Percentage ?? null;
+    const D = D_Res?.Percentage ?? null;
+    const E = E_Res?.Percentage ?? null;
+    const F = F_Res?.Percentage ?? null;
+    const G = G_Res?.Percentage ?? null;
+    const H = aeoRes?.Percentage ?? null;
 
     const overall = OverAll(A, B, C, D, E, F, G, H, pageType);
+
+    // Surface any "Not Run" sections so the overall-score math is auditable — these were
+    // renormalized out (not counted as 0). Pairs with the [PageSpeed]/[Technical] trail.
+    const notRunSections = overall.sectionScores.filter((s) => s.score === null).map((s) => s.name);
+    if (notRunSections.length) {
+      logger.warn(`[Overall] ${notRunSections.length} section(s) Not Run — excluded & renormalized: ${notRunSections.join(", ")} | overall=${overall.totalScore} (${url})`);
+    }
 
     const timeTaken = ((performance.now() - start) / 1000).toFixed(0);
 

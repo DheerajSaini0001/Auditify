@@ -136,16 +136,14 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
               <Icon size={24} className={darkMode ? "text-indigo-400" : "text-indigo-600"} />
             </div>
             <div>
-              <h3 className={`font-semibold text-lg ${textColor}`}>{title}</h3>
+              <h3 className={`font-semibold text-lg ${textColor}`}>
+                {title}
+                {infoOnly && <span className={`font-medium ${subTextColor}`} title="Informational — not included in the section score"> (Info-only)</span>}
+              </h3>
               <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                 <p className={`text-xs font-medium px-2 py-0.5 rounded-full w-fit border ${statusColor}`}>
                   {isPassed ? "Ready" : isWarning ? "Partially Ready" : "Optimization Needed"}
                 </p>
-                {infoOnly && (
-                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full w-fit border ${darkMode ? "bg-slate-700/40 text-slate-300 border-slate-600" : "bg-cardsoft text-muted border-line"}`}>
-                    Informational · not scored
-                  </span>
-                )}
               </div>
             </div>
           </div>
@@ -582,8 +580,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
                 <div className="flex items-start gap-2">
                   <AlertCircle size={14} className="text-rose-500 mt-0.5" />
                   <div>
-                    <h4 className="text-[10px] font-semibold uppercase tracking-wider text-rose-500 mb-1">Why This Occurred</h4>
-                    <div className={`text-xs leading-relaxed ${darkMode ? "text-gray-300" : "text-inksoft"}`}>
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-rose-500 mb-1.5">Why This Occurred</h4>
+                    <div className={`text-sm leading-relaxed ${darkMode ? "text-gray-200" : "text-inksoft"}`}>
                       {analysis?.cause ? (
                         <p>{analysis.cause}</p>
                       ) : (
@@ -607,8 +605,8 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
                 <div className="flex items-start gap-2">
                   <CheckCircle size={14} className="text-emerald-500 mt-0.5" />
                   <div>
-                    <h4 className="text-[10px] font-semibold uppercase tracking-wider text-emerald-500 mb-1">How to Fix</h4>
-                    <div className={`text-xs leading-relaxed ${darkMode ? "text-gray-300" : "text-inksoft"}`}>
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-emerald-500 mb-1.5">How to Fix</h4>
+                    <div className={`text-sm leading-relaxed ${darkMode ? "text-gray-200" : "text-inksoft"}`}>
                       {analysis?.recommendation ? (
                         <p>{analysis.recommendation}</p>
                       ) : (
@@ -737,6 +735,13 @@ const AIO_Inner = React.memo(({ data, loading, darkMode }) => {
                         <p className={`text-sm leading-relaxed opacity-70 ${darkMode ? "text-slate-300" : "text-muted"}`}>
                           Evaluation of your website's readiness for Artificial Intelligence optimization and crawlers.
                         </p>
+                        <span
+                          title="This score is Auditify's own composite index for AI-readiness. No industry-standard external tool produces a comparable AIO score to cross-check against."
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider border ${darkMode ? "bg-slate-800/60 text-slate-400 border-slate-700" : "bg-cardsoft text-muted border-line"}`}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full ${darkMode ? "bg-slate-500" : "bg-slate-400"}`} />
+                          Auditify Index · no external equivalent
+                        </span>
                       </div>
 
                       {/* Stats & Tools */}

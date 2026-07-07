@@ -53,7 +53,8 @@ const analyzeExpertiseSignals = (url, $) => {
 
         return { signal: 'expertiseSignals', score, source: 'on-page', breakdown, certificationCount: certHits, issues, reason };
     } catch (error) {
-        return { signal: 'expertiseSignals', score: 50, source: 'on-page', breakdown: { credentials: 0, awards: 0, tenure: 0, authorExpertise: 0 }, issues: [`Expertise signals check failed: ${error.message}`], error: error.message };
+        // Crashed probe → not calculated, renormalized out (SCORING_FORMAT §7 policy 4).
+        return { signal: 'expertiseSignals', score: null, notCalculated: true, source: 'on-page', breakdown: { credentials: 0, awards: 0, tenure: 0, authorExpertise: 0 }, issues: [`Expertise signals check failed: ${error.message}`], error: error.message };
     }
 };
 

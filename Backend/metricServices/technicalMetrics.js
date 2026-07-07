@@ -1,6 +1,7 @@
 import googleAPI from "../utils/googleAPI.js";
 import fetch from "node-fetch";
 import * as cheerio from "cheerio";
+import logger from "../utils/logger.js";
 
 // Abramowitz-Stegun erf approximation (max err ~1.5e-7) — needed for the log-normal CDF.
 function erf(x) {
@@ -917,7 +918,10 @@ const evaluateCompression = async (page) => {
               "Bandwidth waste due to uncompressed assets",
             recommendation:
               recommendations[0] ||
-              "Enable Gzip or Brotli compression on your web server."
+              "Enable Gzip or Brotli compression on your web server.",
+            // full lists — the singular fields above only carry the first entry
+            causes,
+            recommendations
           }
   };
 };
@@ -1035,7 +1039,9 @@ const evaluateCaching = async (page) => {
             cause: causes[0] || "Short or missing cache policies",
             recommendation:
               recommendations[0] ||
-              "Set a long max-age (e.g. 1 year) for static assets."
+              "Set a long max-age (e.g. 1 year) for static assets.",
+            causes,
+            recommendations
           }
   };
 };
@@ -1124,14 +1130,22 @@ const evaluateResourceOptimization = async (page) => {
     },
     analysis: status === "pass" ? null : {
       cause: causes[0] || "Unoptimized assets",
-      recommendation: recommendations[0] || "Compress and minify your site resources."
+      recommendation: recommendations[0] || "Compress and minify your site resources.",
+      causes,
+      recommendations
     }
   };
 };
 
-// Render Blocking Resources
-const evaluateRenderBlocking = async (page) => {
-  const blockingResources = await page.evaluate(() => {
+// Render Blocking Resources — spec §2.1: "count + estimated savings (ms); score
+// inversely to blocking ms". Primary source is Lighthouse's render-blocking-resources
+// audit, which measures how many milliseconds of first paint each blocking file
+// actually costs — so fixing ANY one file moves the score by its real cost. When the
+// PSI audit is unavailable we fall back to the DOM count on an exponential decay
+// (100 × 0.9^count), which also never dead-zones at 0 the way the old
+// `100 − 10 × count` floor did.
+const evaluateRenderBlocking = async (page, audits) => {
+  const domBlocking = await page.evaluate(() => {
     const links = Array.from(document.querySelectorAll('head link[rel="stylesheet"]'));
     const scripts = Array.from(document.querySelectorAll('head script[src]'));
 
@@ -1155,21 +1169,46 @@ const evaluateRenderBlocking = async (page) => {
     return [...blockingLinks, ...blockingScripts];
   });
 
-  const blockingCount = blockingResources.length;
-  const score = blockingCount === 0 ? 100 : Math.max(0, 100 - (blockingCount * 10));
+  const lhAudit = audits?.["render-blocking-resources"];
+  const lhItems = lhAudit?.details?.items || [];
+  const blockingMs = typeof lhAudit?.numericValue === "number"
+    ? Math.round(lhAudit.numericValue)
+    : (lhItems.length ? Math.round(lhItems.reduce((s, it) => s + (it.wastedMs || 0), 0)) : null);
+
+  let blockingResources, blockingCount, score, source;
+  if (blockingMs !== null) {
+    // Lighthouse only lists files that measurably delay paint, with the ms each costs.
+    blockingResources = lhItems.map(it => ({
+      url: it.url,
+      details: `Delays first paint by ~${Math.round(it.wastedMs || 0)}ms (${Math.round((it.totalBytes || 0) / 1024)}KB)`,
+    }));
+    blockingCount = lhItems.length;
+    // Same log-normal curve as the CWV metrics: 0ms = 100, ~300ms ≈ 90, 1200ms = 50.
+    score = calculateScore(blockingMs, 300, 1200);
+    source = "Lighthouse render-blocking-resources (measured ms)";
+  } else {
+    blockingResources = domBlocking;
+    blockingCount = domBlocking.length;
+    score = Math.round(100 * Math.pow(0.9, blockingCount));
+    source = "DOM head scan (PSI audit unavailable)";
+  }
 
   let status = "pass";
-  if (score < 100) status = "warning";
+  if (score < 90) status = "warning";
   if (score < 50) status = "fail";
 
   const causes = [];
   const recommendations = [];
 
   if (status !== "pass") {
-    causes.push(`${blockingCount} render-blocking resources found`);
+    causes.push(
+      blockingMs !== null
+        ? `${blockingCount} render-blocking resources delay first paint by ~${blockingMs}ms`
+        : `${blockingCount} render-blocking resources found`
+    );
     recommendations.push("Defer non-critical JavaScript and inline critical CSS.");
 
-    if (blockingResources.some(u => u.url.endsWith(".css"))) {
+    if (blockingResources.some(u => (u.url || "").includes(".css"))) {
       causes.push("Blocking CSS files delaying paint");
       recommendations.push("Load non-critical CSS asynchronously.");
     }
@@ -1178,17 +1217,27 @@ const evaluateRenderBlocking = async (page) => {
   return {
     score: score,
     status,
-    details: status === "pass" ? "No render-blocking resources." : `${blockingCount} render-blocking resources detected.`,
+    details: status === "pass"
+      ? (blockingMs !== null && blockingCount > 0
+        ? `Render-blocking cost is negligible (~${blockingMs}ms across ${blockingCount} file${blockingCount === 1 ? "" : "s"}).`
+        : "No render-blocking resources.")
+      : (blockingMs !== null
+        ? `Blocking resources delay first paint by ~${blockingMs}ms (${blockingCount} file${blockingCount === 1 ? "" : "s"}).`
+        : `${blockingCount} render-blocking resources detected.`),
     meta: {
       value: score + "%",
-      target: "0 Blocking Resources",
+      target: "≲300ms blocked",
       blockingCount,
+      blockingMs,
+      source,
       blockingResources,
-      thresholds: { Good: "100%", Warning: "50-99%", Poor: "<50%" }
+      thresholds: { Good: "≥90% (≲300ms blocked)", Warning: "50-89%", Poor: "<50% (≳1.2s blocked)" }
     },
     analysis: status === "pass" ? null : {
       cause: causes[0] || "Blocking resources delaying paint",
-      recommendation: recommendations[0] || "Review critical rendering path."
+      recommendation: recommendations[0] || "Review critical rendering path.",
+      causes,
+      recommendations
     }
   };
 };
@@ -1571,7 +1620,7 @@ const buildMobileLoadSpeed = (loadMs, timedOut, navTiming) => {
       transferKB: navTiming ? navTiming.transferKB : null,
       thresholds: { Good: "0-5s", Warning: "5-10s", Poor: "10s+" },
     },
-    analysis: status === "pass" ? null : { cause: causes[0], recommendation: recommendations[0] },
+    analysis: status === "pass" ? null : { cause: causes[0], recommendation: recommendations[0], causes, recommendations },
   };
 };
 
@@ -1646,7 +1695,7 @@ const buildMobileUsability = (d) => {
       breakdown: { viewport: viewportPts, responsive: responsivePts, tapTargets: tapPts, fonts: fontPts },
       thresholds: { Good: "≥90%", Warning: "50-89%", Poor: "<50%" },
     },
-    analysis: status === "pass" ? null : { cause: causes[0], recommendation: recommendations[0] },
+    analysis: status === "pass" ? null : { cause: causes[0], recommendation: recommendations[0], causes, recommendations },
   };
 };
 
@@ -1882,7 +1931,7 @@ const evaluateRenderingPerformance = (audits) => {
       unsizedImageSamples: unsizedSamples,
       thresholds: { Good: "≥90%", Warning: "50-89%", Poor: "<50%" },
     },
-    analysis: status === "pass" ? null : { cause: causes[0], recommendation: recommendations[0] },
+    analysis: status === "pass" ? null : { cause: causes[0], recommendation: recommendations[0], causes, recommendations },
   };
 };
 
@@ -1990,7 +2039,7 @@ const evaluateLazyLoading = async (audits, page) => {
         eagerMediaSamples: m.eager,
         thresholds: { Good: "≥90%", Warning: "50-89%", Poor: "<50%" },
       },
-      analysis: status === "pass" ? null : { cause: causes[0], recommendation: recommendations[0] },
+      analysis: status === "pass" ? null : { cause: causes[0], recommendation: recommendations[0], causes, recommendations },
     };
   } catch {
     return notCalculated(
@@ -2085,7 +2134,7 @@ const evaluateThirdPartyOptimization = async (audits, page) => {
         entities,
         thresholds: { Good: "≥90%", Warning: "50-89%", Poor: "<50%" },
       },
-      analysis: status === "pass" ? null : { cause: causes[0], recommendation: recommendations[0] },
+      analysis: status === "pass" ? null : { cause: causes[0], recommendation: recommendations[0], causes, recommendations },
     };
   } catch {
     return notCalculated(
@@ -2150,7 +2199,7 @@ const evaluateJsExecution = (audits) => {
       topScripts,
       thresholds: { Good: "0-2s", Warning: "2-3.5s", Poor: "3.5s+" },
     },
-    analysis: status === "pass" ? null : { cause: causes[0], recommendation: recommendations[0] },
+    analysis: status === "pass" ? null : { cause: causes[0], recommendation: recommendations[0], causes, recommendations },
   };
 };
 
@@ -2319,26 +2368,42 @@ export default async function technicalMetrics(url, device, page, response, brow
   const audits = data?.lighthouseResult?.audits || {};
   const cruxMetrics = data?.loadingExperience?.metrics || {};
 
+  // If PageSpeed returned no usable Lighthouse result (after retries), `audits` is {}.
+  // Every lab evaluator reads `audits[x]?.numericValue || 0`, and calculateScore(0)=100
+  // — so a failed API would silently fabricate a PERFECT score for every Core Web Vital
+  // and a 100% headline. Detect that and mark the lab metrics "not calculated" instead
+  // (the CrUX/field evaluators already return null when their data is absent).
+  const psiUsable = !!data?.lighthouseResult;
+  const PSI_FAIL_REASON = "Google PageSpeed could not analyze this URL — Lighthouse returned no data (the site may be too slow, blocking automated requests, or the PageSpeed API key/quota is unavailable).";
+  const PSI_FAIL_REC = "Confirm the site loads in Google PageSpeed Insights and that the PageSpeed API key/quota is configured, then re-run the audit.";
+  const labOrNA = (fn) => (psiUsable ? fn() : notCalculated(PSI_FAIL_REASON, PSI_FAIL_REC));
+
+  // One clear decision line — pairs with the [PageSpeed] retry trail so you can confirm
+  // the whole flow: retries fired → gave up → section marked Not Run.
+  if (!psiUsable) {
+    logger.warn(`[Technical] PageSpeed unusable for ${url} (${wantDevice}) — Core Web Vitals "Not Run", section excluded from overall (delivery checks still run on the live page).`);
+  }
+
   const mobileData = wantDevice === "mobile" ? primaryData : otherData;
   const desktopData = wantDevice === "desktop" ? primaryData : otherData;
   const pageSpeedScore = evaluatePageSpeedScore(mobileData, desktopData);
 
-  const lcpLab = evaluateLCPLab(audits);
+  const lcpLab = labOrNA(() => evaluateLCPLab(audits));
   const lcpCrux = evaluateLCPCrux(audits, cruxMetrics);
-  const clsLab = evaluateCLSLab(audits);
+  const clsLab = labOrNA(() => evaluateCLSLab(audits));
   const clsCrux = evaluateCLSCrux(audits, cruxMetrics);
-  const fcpLab = evaluateFCPLab(audits);
+  const fcpLab = labOrNA(() => evaluateFCPLab(audits));
   const fcpCrux = evaluateFCPCrux(audits, cruxMetrics);
-  const ttfbLab = evaluateTTFBLab(audits);
+  const ttfbLab = labOrNA(() => evaluateTTFBLab(audits));
   const ttfbCrux = evaluateTTFBCrux(cruxMetrics);
-  const inpLab = evaluateINPLab(audits);
+  const inpLab = labOrNA(() => evaluateINPLab(audits));
   const inpCrux = evaluateINPCrux(audits, cruxMetrics);
-  const tbt = evaluateTBT(audits);
-  const si = evaluateSI(audits);
+  const tbt = labOrNA(() => evaluateTBT(audits));
+  const si = labOrNA(() => evaluateSI(audits));
   const compression = await evaluateCompression(page);
   const caching = await evaluateCaching(page);
   const resourceOptimization = await evaluateResourceOptimization(page);
-  const renderBlocking = await evaluateRenderBlocking(page);
+  const renderBlocking = await evaluateRenderBlocking(page, audits);
   const redirect = evaluateRedirectChains(response);
 
   const getScore = (metric) => metric?.score || 0;
@@ -2358,8 +2423,92 @@ export default async function technicalMetrics(url, device, page, response, brow
   const ttfbConf = ttfbCrux ? "field" : "lab";
   const inpTbtConf = inpCrux ? "field" : "lab";
 
-  // Weighted section average over APPLICABLE params only (renormalized by present
-  // weight, so a missing CrUX metric is covered by its lab fallback, never zeroed).
+  // ── Headline (SCORING_FORMAT.md §8.1): the EXACT Lighthouse Performance score
+  // for the audited device, so cross-checks against PageSpeed Insights agree by
+  // construction. Preference order:
+  //   1. Lighthouse's own category score from the PSI response.
+  //   2. Lighthouse's per-audit scores re-weighted with the official formula
+  //      (FCP 10% / SI 10% / LCP 25% / TBT 30% / CLS 25%).
+  //   3. Our lab evaluators (calculateScore log-normal curves) with the same
+  //      weights — only when the PSI response carried no usable audit scores.
+  const officialScore = data?.lighthouseResult?.categories?.performance?.score;
+  const LH_WEIGHTS = [
+    { id: "first-contentful-paint",   weight: 10, fallback: fcpLab },
+    { id: "speed-index",              weight: 10, fallback: si },
+    { id: "largest-contentful-paint", weight: 25, fallback: lcpLab },
+    { id: "total-blocking-time",      weight: 30, fallback: tbt },
+    { id: "cumulative-layout-shift",  weight: 25, fallback: clsLab },
+  ];
+  let headline;
+  let headlineSource;
+  if (!psiUsable) {
+    // No Lighthouse data at all — don't fabricate a score from phantom zeros. The
+    // section becomes "Not Run": null Percentage, excluded + renormalized in OverAll.
+    headline = null;
+    headlineSource = "PageSpeed unavailable after retries — Technical performance not scored";
+  } else if (typeof officialScore === "number") {
+    headline = Math.round(officialScore * 100);
+    headlineSource = "Lighthouse categories.performance.score (PSI, audited device)";
+  } else {
+    let lhEarned = 0, lhWeight = 0;
+    for (const m of LH_WEIGHTS) {
+      const auditScore = audits?.[m.id]?.score; // Lighthouse's own 0–1 curve score
+      const s = typeof auditScore === "number" ? auditScore * 100 : getScore(m.fallback);
+      if (typeof s === "number" && !Number.isNaN(s)) {
+        lhEarned += s * m.weight;
+        lhWeight += m.weight;
+      }
+    }
+    headline = lhWeight > 0 ? Math.round(lhEarned / lhWeight) : 0;
+    headlineSource = "Lighthouse metric weights over per-audit scores (PSI category score unavailable)";
+  }
+
+  // ── Delivery Hygiene sub-score: the dealer-relevant infra checks Lighthouse
+  // does NOT fold into its Performance score (SCORING_FORMAT.md §8.1). Kept out
+  // of the headline so a PSI cross-check compares like for like; surfaced as an
+  // info-only composite card. Renormalized over applicable checks.
+  const hygieneParts = [
+    { key: "TTFB", metric: ttfbPick, weight: 8 },
+    { key: "Render_Blocking", metric: renderBlocking, weight: 5 },
+    { key: "Resource_Optimization", metric: resourceOptimization, weight: 5 },
+    { key: "Compression", metric: compression, weight: 4 },
+    { key: "Caching", metric: caching, weight: 4 },
+    { key: "Redirect_Chains", metric: redirect, weight: 3 },
+    ...(pageType === "vdp" || pageType === "srp" ? [{ key: "Sold_Vehicle", metric: soldVehicle, weight: 5 }] : []),
+  ];
+  let hygEarned = 0, hygWeight = 0;
+  const hygieneBreakdown = {};
+  const hygieneFailing = [];
+  for (const p of hygieneParts) {
+    const m = p.metric;
+    if (!m || typeof m.score !== "number") continue;
+    hygEarned += (m.score / 100) * p.weight;
+    hygWeight += p.weight;
+    hygieneBreakdown[p.key] = { score: m.score, status: m.status };
+    if (m.status && m.status !== "pass") hygieneFailing.push(p.key.replace(/_/g, " "));
+  }
+  const hygieneScore = hygWeight > 0 ? Math.round((hygEarned / hygWeight) * 100) : null;
+  const deliveryHygiene = hygieneScore === null ? null : {
+    score: hygieneScore,
+    status: hygieneScore >= 80 ? "pass" : hygieneScore >= 50 ? "warning" : "fail",
+    infoOnly: true,
+    confidence: "lab",
+    details: hygieneFailing.length
+      ? `Delivery hygiene needs work: ${hygieneFailing.join(", ")}.`
+      : "Server response, asset delivery and redirect hygiene all look good.",
+    meta: {
+      informational: true,
+      breakdown: hygieneBreakdown,
+      note: "Composite of the delivery checks (TTFB, render-blocking, asset optimization, compression, caching, redirects" + (pageType === "vdp" || pageType === "srp" ? ", sold-vehicle handling" : "") + ") that PageSpeed Insights reports as diagnostics but does not score. Shown separately so the headline stays comparable to PSI.",
+    },
+    analysis: hygieneFailing.length ? {
+      cause: "One or more delivery checks outside Lighthouse's scored metrics are failing.",
+      recommendation: "Fix the failing checks below — they improve real-world speed even though they don't move the Lighthouse score directly.",
+    } : null,
+  };
+
+  // Diagnostic: the previous blended headline (CWV + infra at spec weights),
+  // kept for continuity as Graded_Percentage.
   const components = [
     { score: getScore(lcpPick),              weight: 22, present: true },
     { score: getScore(inpTbtPick),           weight: 20, present: true },
@@ -2376,18 +2525,28 @@ export default async function technicalMetrics(url, device, page, response, brow
   ];
   const presentComponents = components.filter((c) => c.present);
   const totalWeight = presentComponents.reduce((s, c) => s + c.weight, 0);
-  const actualPercentage = totalWeight === 0 ? 0 : parseFloat(
+  // Null when PSI is unusable — the CWV components are all "not calculated", so a
+  // number here would reflect only the asset checks and read as a misleading low score.
+  const gradedPercentage = !psiUsable ? null : (totalWeight === 0 ? 0 : parseFloat(
     (presentComponents.reduce((s, c) => s + c.score * c.weight, 0) / totalWeight).toFixed(0)
-  );
+  ));
 
-  // §5.3 — the section carries the LOWEST confidence of its weighted CWV. Field only
-  // when every core vital came from CrUX; otherwise lab (an estimate of the field).
-  const sectionConfidence = (lcpCrux && clsCrux && inpCrux) ? "field" : "lab";
+  // The headline is a lab Lighthouse score (PSI's own gauge is lab too); CWV
+  // cards still carry their individual field/lab confidence.
+  const sectionConfidence = "lab";
 
   return {
-    Percentage: actualPercentage,
+    Percentage: headline,
+    Graded_Percentage: gradedPercentage,
+    Score_Breakdown: {
+      model: "exact Lighthouse Performance formula (SCORING_FORMAT.md §8.1)",
+      source: headlineSource,
+      weights: { FCP: 10, Speed_Index: 10, LCP: 25, TBT: 30, CLS: 25 },
+      device: wantDevice,
+    },
     Confidence: sectionConfidence,
     PageSpeed_Score: pageSpeedScore,
+    Delivery_Hygiene: deliveryHygiene,
     LCP: { lab: lcpLab, crux: lcpCrux, source: lcpConf, confidence: lcpConf },
     CLS: { lab: clsLab, crux: clsCrux, source: clsConf, confidence: clsConf },
     FCP: { lab: fcpLab, crux: fcpCrux, source: fcpConf, confidence: fcpConf },

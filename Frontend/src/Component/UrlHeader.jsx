@@ -79,8 +79,29 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
     setIsAiChatOpen(true);
   };
 
-  const displayUrl = data?.url ? data.url.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '') : "Analyzing...";
-  const formattedUrl = displayUrl.length > 45 ? `${displayUrl.substring(0, 42)}...` : displayUrl;
+  // Merged (multi-sample averaged) reports carry a synthetic "#merged-<id>"
+  // suffix on their URL — strip it for both display and the outbound link.
+  const realUrl = (data?.url || '').replace(/#merged-[a-f0-9]+$/i, '');
+  const displayUrl = realUrl ? realUrl.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '') : "Analyzing...";
+  // The COMPLETE url is always shown (no "…" truncation) — the font just steps
+  // down as the url gets longer, and break-all wraps whatever still overflows.
+  const urlFontClass =
+    displayUrl.length <= 45 ? 'text-2xl md:text-3xl'
+      : displayUrl.length <= 80 ? 'text-xl md:text-2xl'
+        : displayUrl.length <= 120 ? 'text-lg md:text-xl'
+          : 'text-base md:text-lg';
+
+  // "(Home Page)"-style page-type line under the url. Keys match the discovery
+  // catalog (HeroSection PAGE_TYPES / CORPORATE_PAGE_TYPES).
+  const PAGE_TYPE_LABELS = {
+    home: 'Home Page', srp: 'Inventory / SRP', vdp: 'Vehicle Detail / VDP',
+    trade: 'Trade-In Tool', lease: 'Lease Specials', service: 'Service & Parts',
+    about: 'About / Contact', content: 'Content / Blog',
+    models: 'Models & Lineup', locator: 'Dealer Locator', press: 'Press & News',
+  };
+  const pageTypeLabel = data?.pageType
+    ? (PAGE_TYPE_LABELS[data.pageType] || (String(data.pageType).charAt(0).toUpperCase() + String(data.pageType).slice(1)))
+    : null;
 
   return (
     <div className={`relative p-6 md:p-8 ${hideBorder ? "" : "border-b"} ${darkMode ? "border-slate-800 bg-slate-900/50" : "border-line bg-surface-2/80"}`}>
@@ -92,18 +113,23 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
             <Globe className={`w-3.5 h-3.5 ${darkMode ? "text-slate-200" : "text-muted"}`} />
             <span className={`text-xs font-semibold uppercase tracking-widest ${darkMode ? "text-slate-200" : "text-muted"}`}>Audit Report For</span>
           </div>
-          <div className="flex items-center gap-3 group min-w-0 w-full">
+          <div className="flex items-start gap-3 group min-w-0 w-full">
             <a
-              href={data?.url || "#"}
+              href={realUrl || "#"}
               target="_blank"
               rel="noopener noreferrer"
-              className={`text-2xl md:text-3xl font-semibold truncate hover:underline underline-offset-4 decoration-2 decoration-transparent hover:decoration-current transition-all ${darkMode ? "text-white" : "text-ink"}`}
-              title={data?.url || ""}
+              className={`${urlFontClass} font-semibold whitespace-normal break-all leading-snug hover:underline underline-offset-4 decoration-2 decoration-transparent hover:decoration-current transition-all ${darkMode ? "text-white" : "text-ink"}`}
+              title={realUrl || ""}
             >
-              {formattedUrl}
+              {displayUrl}
             </a>
-            <ExternalLink className="w-5 h-5 opacity-40 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+            <ExternalLink className="w-5 h-5 mt-1.5 opacity-40 group-hover:opacity-100 transition-opacity flex-shrink-0" />
           </div>
+          {pageTypeLabel && (
+            <div className={`text-sm font-medium ${darkMode ? "text-slate-400" : "text-muted"}`}>
+              ({pageTypeLabel})
+            </div>
+          )}
         </div>
 
         {/* Middle: Average Score */}

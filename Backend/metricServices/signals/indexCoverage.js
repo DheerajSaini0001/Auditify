@@ -214,7 +214,8 @@ const analyzeIndexCoverage = async (url) => {
         if (!acc.foundSitemap || submitted === 0) {
             return {
                 signal: 'indexCoverage',
-                score: 20,
+                // Absent feature scores 0, not a floor (SCORING_FORMAT.md §7 rule 3).
+                score: 0,
                 source: 'sitemap-estimate',
                 sitemapFound: acc.foundSitemap,
                 submitted,
@@ -309,7 +310,9 @@ const analyzeIndexCoverage = async (url) => {
         // Neutral score on failure so a flaky network doesn't unfairly tank the audit.
         return {
             signal: 'indexCoverage',
-            score: 50,
+            // Crashed probe → not calculated, renormalized out (SCORING_FORMAT §7 policy 4).
+            score: null,
+            notCalculated: true,
             source: 'sitemap-estimate',
             sitemapFound: false,
             submitted: 0,

@@ -323,9 +323,10 @@ function checkContentUpdatedRegularly($) {
       }
     }
   } else {
-    score = 50;
-    status = "warning";
-    cause = "Could not find content update timestamp (meta tags, time tags, or structured data).";
+    // Freshness signal is entirely absent → 0, not 50 (warnings are reserved for present-but-flawed).
+    score = 0;
+    status = "fail";
+    cause = "No content update timestamp found anywhere on the page (meta tags, time tags, or structured data).";
     recommendation = "Add <meta name='last-modified'>, <time datetime='...'>, or dateModified structured data to signal content freshness.";
     meta.checked = "meta tags (last-modified, modified_time, etc.), JSON-LD (dateModified), time tags";
   }
@@ -333,7 +334,7 @@ function checkContentUpdatedRegularly($) {
   return {
     score,
     status,
-    details: status === "pass" ? "Content updated recently." : (score === 50 && dateFound ? "Content might be outdated." : "Could not determine last update time."),
+    details: status === "pass" ? "Content updated recently." : (score === 50 && dateFound ? "Content might be outdated." : "No freshness signal found on the page."),
     qanda: {
       question: "Has the content been updated recently to maintain freshness?",
       answer: status === "pass" ? "Yes, the content has been updated recently, ensuring relevance for AI users." : "No, the content appears outdated or lacks a clear update signal, which may reduce its priority in AI results."
@@ -474,20 +475,23 @@ function checkTopicalFocusClarity($, url) {
   const overlap = titleWords.filter(w => h1Words.includes(w));
   const firstWordMatch = titleWords.length > 0 && h1.includes(titleWords[0]);
 
-  // Graded: strong (≥2 shared entities) → moderate (1 shared / first-word match) → weak.
+  // Graded: strong (≥2 shared entities) → moderate (1 shared / first-word match) → absent (0, not 50).
   let score, status;
   if (overlap.length >= 2) {
     score = 100; status = "pass";
   } else if (overlap.length === 1 || firstWordMatch) {
     score = 75; status = "warning";
   } else {
-    score = 50; status = "warning";
+    score = 0; status = "fail";
   }
   const hasStrongFocus = status === "pass";
 
   let cause = "";
   let recommendation = "";
-  if (!hasStrongFocus) {
+  if (status === "fail") {
+    cause = "No topical focus detected — the title and H1 heading share no primary keywords at all.";
+    recommendation = "Rewrite your H1 heading to use the same primary entities as your page title so AI can identify a clear topical focus.";
+  } else if (!hasStrongFocus) {
     cause = "Title and H1 heading lack alignment on primary keywords.";
     recommendation = "Ensure your H1 heading uses the same primary entities as your page title to signal clear topical focus to AI.";
   }
@@ -495,7 +499,7 @@ function checkTopicalFocusClarity($, url) {
   return {
     score,
     status,
-    details: hasStrongFocus ? "Strong topical focus detected." : "Title and H1 alignment could be stronger.",
+    details: hasStrongFocus ? "Strong topical focus detected." : (status === "fail" ? "No topical focus detected between title and H1." : "Title and H1 alignment could be stronger."),
     qanda: {
       question: "Does the page maintain a clear and consistent topical focus?",
       answer: hasStrongFocus ? "Yes, your title and main headings are perfectly aligned around your primary topic." : "No, there is a mismatch between your title and headings, which confuses AI about your primary focus."
@@ -564,21 +568,21 @@ function checkAnswerOrientedStructure($) {
   const hasSchema = foundPairs.some(p => p.type === 'schema');
   const isAnswerOriented = foundPairs.length > 0;
 
-  // Graded: FAQ schema or ≥3 self-contained Q→A pairs → strong; 1–2 → partial; none → weak.
+  // Graded: FAQ schema or ≥3 self-contained Q→A pairs → strong; 1–2 → partial; none → absent (0, not 50).
   let score, status;
   if (hasSchema || foundPairs.length >= 3) {
     score = 100; status = "pass";
   } else if (foundPairs.length >= 1) {
     score = 75; status = "warning";
   } else {
-    score = 50; status = "warning";
+    score = 0; status = "fail";
   }
 
   let cause = "";
   let recommendation = "";
   if (!isAnswerOriented) {
-    cause = "No question-based headings or FAQ schema detected.";
-    recommendation = "Structure your content to directly answer user queries using natural language questions in H2/H3 tags.";
+    cause = "No question-and-answer structure was found on the page — no question-based headings and no FAQ schema.";
+    recommendation = "Structure your content to directly answer user queries using natural language questions in H2/H3 tags, each followed by a concise answer.";
   } else if (status === "warning") {
     cause = "Only a few question→answer blocks were found.";
     recommendation = "Add more question-style H2/H3 headings each followed by a concise, self-contained answer (and FAQPage schema).";
@@ -587,7 +591,7 @@ function checkAnswerOrientedStructure($) {
   return {
     score,
     status,
-    details: status === "pass" ? "Content is structured to answer specific queries." : "Content layout is not fully query-optimized.",
+    details: status === "pass" ? "Content is structured to answer specific queries." : (status === "fail" ? "No question-and-answer structure found on the page." : "Content layout is not fully query-optimized."),
     qanda: {
       question: "Is the content structured to directly answer user questions?",
       answer: isAnswerOriented ? "Yes, the content follows an answer-oriented structure with clear questions and concise responses." : "No, the content does not offer direct query-answer pairs, making it harder for 'Answer Engines' to cite you."

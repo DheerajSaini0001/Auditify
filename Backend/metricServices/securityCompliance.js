@@ -351,6 +351,99 @@ function checkCSP(response) {
   };
 }
 
+// Referrer-Policy — one of the six headers SecurityHeaders.com grades. Graded by
+// value safety, not mere presence: unsafe-url leaks full URLs cross-origin.
+function checkReferrerPolicy(response) {
+  if (!response) return { score: 0, status: "fail", details: "No response available for Referrer-Policy check", meta: {}, analysis: { cause: "No response received.", recommendation: "Check server connectivity." } };
+
+  const headers = response.headers();
+  const raw = headers['referrer-policy'];
+  if (!raw) {
+    return {
+      score: 0, status: "fail",
+      details: "Referrer-Policy header is missing",
+      meta: {},
+      analysis: {
+        cause: "Without a Referrer-Policy, browsers may send full page URLs (including query strings) to third-party sites users navigate to.",
+        recommendation: "Add 'Referrer-Policy: strict-origin-when-cross-origin' (or stricter, e.g. 'same-origin')."
+      }
+    };
+  }
+
+  // Multiple policies may be comma-separated; the last valid one wins.
+  const policies = raw.toLowerCase().split(',').map(p => p.trim()).filter(Boolean);
+  const effective = policies[policies.length - 1] || "";
+  const SAFE = ["no-referrer", "same-origin", "strict-origin", "strict-origin-when-cross-origin"];
+  const WEAK = ["no-referrer-when-downgrade", "origin", "origin-when-cross-origin"];
+
+  if (SAFE.includes(effective)) {
+    return { score: 100, status: "pass", details: `Referrer-Policy set to a safe value ('${effective}')`, meta: { value: raw, effective }, analysis: null };
+  }
+  if (WEAK.includes(effective)) {
+    return {
+      score: 50, status: "warning",
+      details: `Referrer-Policy present but permissive ('${effective}')`,
+      meta: { value: raw, effective },
+      analysis: {
+        cause: `The policy '${effective}' still shares origin (or full URL over HTTPS) with cross-origin destinations.`,
+        recommendation: "Tighten to 'strict-origin-when-cross-origin' or 'same-origin'."
+      }
+    };
+  }
+  // unsafe-url or an unrecognized value
+  return {
+    score: 25, status: "fail",
+    details: `Referrer-Policy set to an unsafe or invalid value ('${effective}')`,
+    meta: { value: raw, effective },
+    analysis: {
+      cause: effective === "unsafe-url"
+        ? "'unsafe-url' sends the full URL (including paths and query strings) to every destination."
+        : "The Referrer-Policy value is not a recognized policy, so browsers fall back to their default.",
+      recommendation: "Use 'strict-origin-when-cross-origin' (a safe modern default) or stricter."
+    }
+  };
+}
+
+// Permissions-Policy — hardening header restricting powerful browser features
+// (camera, microphone, geolocation, payment…). SecurityHeaders.com grades on it.
+function checkPermissionsPolicy(response) {
+  if (!response) return { score: 0, status: "fail", details: "No response available for Permissions-Policy check", meta: {}, analysis: { cause: "No response received.", recommendation: "Check server connectivity." } };
+
+  const headers = response.headers();
+  const raw = headers['permissions-policy'] || headers['feature-policy']; // legacy fallback
+  const legacyOnly = !headers['permissions-policy'] && !!headers['feature-policy'];
+
+  if (!raw) {
+    return {
+      score: 0, status: "fail",
+      details: "Permissions-Policy header is missing",
+      meta: {},
+      analysis: {
+        cause: "Without a Permissions-Policy, embedded third-party content can request powerful features (camera, geolocation, payment) by default.",
+        recommendation: "Add a Permissions-Policy that disables features you don't use, e.g. 'camera=(), microphone=(), geolocation=()'."
+      }
+    };
+  }
+  if (legacyOnly) {
+    return {
+      score: 50, status: "warning",
+      details: "Only the deprecated Feature-Policy header is set",
+      meta: { value: raw, legacy: true },
+      analysis: {
+        cause: "Feature-Policy has been replaced by Permissions-Policy; modern browsers ignore the legacy header.",
+        recommendation: "Replace Feature-Policy with an equivalent Permissions-Policy header."
+      }
+    };
+  }
+  const directiveCount = raw.split(',').map(d => d.trim()).filter(Boolean).length;
+  return {
+    score: 100, status: "pass",
+    details: `Permissions-Policy present (${directiveCount} directive${directiveCount === 1 ? "" : "s"})`,
+    meta: { value: raw, directives: directiveCount },
+    analysis: null
+  };
+}
+
 // X-Content-Type-Options
 function checkXContentTypeOptions(response) {
   if (!response) return { score: 0, status: "fail", details: "No response available for X-Content-Type-Options check", meta: {}, analysis: { cause: "No response received.", recommendation: "Check server connectivity." } };
@@ -2203,6 +2296,8 @@ export default async function securityCompliance(url, page, response, browser, p
   const xFrameOptionsResult = checkXFrameOptions(response);
   const cspResult = checkCSP(response);
   const xContentTypeOptionsResult = checkXContentTypeOptions(response);
+  const referrerPolicyResult = checkReferrerPolicy(response);
+  const permissionsPolicyResult = checkPermissionsPolicy(response);
 
   // Cookies
   const cookieFlagsResult = await checkCookieFlags(page);
@@ -2247,6 +2342,8 @@ export default async function securityCompliance(url, page, response, browser, p
     { key: "CSP", metric: cspResult, weight: 9, confidence: "measured" },
     { key: "X_Frame_Options", metric: xFrameOptionsResult, weight: 4, confidence: "measured" },
     { key: "X_Content_Type_Options", metric: xContentTypeOptionsResult, weight: 3, confidence: "measured" },
+    { key: "Referrer_Policy", metric: referrerPolicyResult, weight: 2, confidence: "measured" },
+    { key: "Permissions_Policy", metric: permissionsPolicyResult, weight: 2, confidence: "measured" },
     // Cookies
     { key: "Cookie_Flags", metric: cookieFlagsResult, weight: 5, confidence: "measured" },
     { key: "Third_Party_Cookies", metric: thirdPartyCookiesResult, weight: 2, confidence: "measured" },
@@ -2273,25 +2370,92 @@ export default async function securityCompliance(url, page, response, browser, p
   let totalWeight = 0, earned = 0;
   let noHttps = false, reputationFlagged = false;
   let lowestConf = "field";
+  let deducted = 0;
+  const deductionLog = [];
   for (const w of weighted) {
     const m = w.metric;
-    // N/A / info-only params drop out of the denominator (rule 6).
+    // N/A / info-only params drop out of the denominator (rule 6). In the
+    // deduction model an N/A check simply cannot deduct.
     if (!m || m.infoOnly || m.status === "not_applicable" || typeof m.score !== "number") continue;
     m.confidence = m.confidence || w.confidence; // stamp for the UI
     totalWeight += w.weight;
     earned += (m.score / 100) * w.weight;
+    // Deduction model (SCORING_FORMAT.md §8.4): each control deducts its spec
+    // weight in points, scaled by how badly it fails. A control that passes
+    // deducts nothing; a total failure deducts its full weight.
+    const d = w.weight * (1 - m.score / 100);
+    if (d > 0) {
+      deducted += d;
+      if (deductionLog.length < 25) deductionLog.push({ control: w.key, score: m.score, deduction: parseFloat(d.toFixed(1)) });
+    }
     if (CONF_RANK[m.confidence] < CONF_RANK[lowestConf]) lowestConf = m.confidence;
     if (w.gate === "https" && m.score === 0) noHttps = true;
     if (w.gate === "reputation" && m.status === "fail") reputationFlagged = true;
   }
 
-  let pct = totalWeight > 0 ? parseFloat(((earned / totalWeight) * 100).toFixed(0)) : 0;
+  // Headline: deduction from 100 in absolute spec points (NOT renormalized to
+  // the applicable weight — a site failing more controls falls further).
+  let pct = Math.max(0, Math.round(100 - deducted));
+  // Diagnostic: the old renormalized weighted average, kept for continuity.
+  let graded = totalWeight > 0 ? parseFloat(((earned / totalWeight) * 100).toFixed(0)) : 0;
   // Gates (spec §2.4 / §5.3): transport + reputation dominate the section.
-  if (noHttps) pct = Math.min(pct, 30);
-  if (reputationFlagged) pct = Math.min(pct, 25);
+  if (noHttps) { pct = Math.min(pct, 30); graded = Math.min(graded, 30); }
+  if (reputationFlagged) { pct = Math.min(pct, 25); graded = Math.min(graded, 25); }
+
+  // ── Header Security sub-grade — the externally comparable number
+  // (SecurityHeaders.com / Mozilla HTTP Observatory style): baseline 100,
+  // deduct per failed transport/header/cookie test, map to Observatory's
+  // published letter table. Info-only: it re-reads controls already weighted
+  // above, so it carries no weight itself.
+  const headerDeductions = [];
+  const hd = (label, points) => { headerDeductions.push({ test: label, deduction: points }); return points; };
+  let headerScore = 100;
+  if (cspResult.score === 0) headerScore -= hd("CSP missing", 25);
+  else if (cspResult.meta?.reportOnly) headerScore -= hd("CSP report-only (not enforced)", 20);
+  else if (cspResult.score < 80) headerScore -= hd("CSP present but weak (unsafe directives)", 10);
+  if (hstsResult.score === 0) headerScore -= hd("HSTS missing", 20);
+  if (xFrameOptionsResult.score === 0 && !(cspResult.meta?.directives || []).includes("frame-ancestors")) headerScore -= hd("X-Frame-Options missing (no frame-ancestors fallback)", 20);
+  if (xContentTypeOptionsResult.score === 0) headerScore -= hd("X-Content-Type-Options missing", 5);
+  if (referrerPolicyResult.score === 0) headerScore -= hd("Referrer-Policy missing", 5);
+  else if (referrerPolicyResult.score < 100) headerScore -= hd("Referrer-Policy permissive/unsafe", 10);
+  if (permissionsPolicyResult.score === 0) headerScore -= hd("Permissions-Policy missing", 5);
+  if (typeof cookieFlagsResult?.score === "number" && cookieFlagsResult.score < 100 && cookieFlagsResult.status !== "not_applicable") headerScore -= hd("Cookies missing Secure/HttpOnly/SameSite flags", 10);
+  if (httpsResult.score === 0) headerScore -= hd("Site not served over HTTPS", 20);
+  headerScore = Math.max(0, headerScore);
+  const GRADE_TABLE = [[100, "A+"], [90, "A"], [85, "A-"], [80, "B+"], [70, "B"], [65, "B-"], [60, "C+"], [50, "C"], [45, "C-"], [40, "D+"], [30, "D"], [25, "D-"], [0, "F"]];
+  const headerGrade = GRADE_TABLE.find(([min]) => headerScore >= min)[1];
+  const headerSecurityResult = {
+    score: headerScore,
+    status: headerScore >= 80 ? "pass" : headerScore >= 50 ? "warning" : "fail",
+    infoOnly: true,
+    confidence: "measured",
+    details: headerDeductions.length
+      ? `Header security grade ${headerGrade} (${headerScore}/100): ${headerDeductions.map(d => d.test).join("; ")}.`
+      : `Header security grade ${headerGrade} (${headerScore}/100) — all graded transport/header tests pass.`,
+    meta: {
+      informational: true,
+      grade: headerGrade,
+      baseline: 100,
+      deductions: headerDeductions,
+      note: "Observatory-style deduction sub-grade over the tests external checkers (SecurityHeaders.com, Mozilla HTTP Observatory) also run. Compare THIS grade — not the section headline — against those tools. Bonuses (scores above 100) are not modeled, so A+ requires a perfect base score.",
+    },
+    analysis: headerDeductions.length ? {
+      cause: "One or more transport/header hardening tests that external security checkers grade on are failing.",
+      recommendation: "Fix in order of deduction size: enforce CSP, HSTS, anti-framing (XFO or frame-ancestors), then Referrer-Policy, Permissions-Policy, X-Content-Type-Options and cookie flags.",
+    } : null,
+  };
 
   return {
     Percentage: pct,
+    Graded_Percentage: graded,
+    Score_Breakdown: {
+      model: "deduction from 100 in spec points (SCORING_FORMAT.md §8.4); gates preserved",
+      base: 100,
+      totalDeduction: parseFloat(deducted.toFixed(1)),
+      gates: { noHttpsCap30: noHttps, reputationCap25: reputationFlagged },
+      items: deductionLog,
+    },
+    Header_Security: headerSecurityResult,
     Confidence: lowestConf,
     Coverage: "Transport, headers, cookies, reputation, app-exposure and privacy/legal. Injection and credential checks are non-invasive surface indicators, not proof of vulnerability.",
     Note: "Reputation requires API keys (Safe Browsing / VirusTotal); transport, header and certificate checks are measured; injection, admin and privacy checks are heuristic. Page-specific finance/disclaimer checks are renormalized out when no such page exists.",
@@ -2305,6 +2469,8 @@ export default async function securityCompliance(url, page, response, browser, p
     CSP: cspResult,
     X_Frame_Options: xFrameOptionsResult,
     X_Content_Type_Options: xContentTypeOptionsResult,
+    Referrer_Policy: referrerPolicyResult,
+    Permissions_Policy: permissionsPolicyResult,
     // Cookies
     Cookie_Flags: cookieFlagsResult,
     Third_Party_Cookies: thirdPartyCookiesResult,

@@ -219,12 +219,12 @@ export const InfoDetails = {
     Render_Blocking: {
         title: "Render Blocking Resources",
         whatThisParameterIs: "Render-blocking resources are files that force the browser to stop and wait before it can show anything on the screen.",
-        whatItCalculates: "We identify scripts in the `<head>` without `async` or `defer` attributes and stylesheets without media attributes that delay the first paint.",
-        whyItMatters: "Removing these 'roadblocks' allows your site to show its face much sooner, keeping visitors engaged from the very first second.",
+        whatItCalculates: "We read Lighthouse's render-blocking-resources audit, which measures how many milliseconds of first paint each blocking file actually costs, and score inversely to the total delay (falling back to counting head scripts/stylesheets without async/defer/media when Lighthouse data is unavailable).",
+        whyItMatters: "Removing these 'roadblocks' allows your site to show its face much sooner, keeping visitors engaged from the very first second. Because the score follows the measured delay, fixing any single blocking file improves it.",
         thresholds: {
-            good: "0 blocking resources",
-            needsImprovement: "1 – 5 blocking resources",
-            poor: "> 5 blocking resources"
+            good: "≲300ms of blocked paint time",
+            needsImprovement: "~300ms – 1.2s blocked",
+            poor: "> 1.2s blocked"
         },
         actualReasonsForFailure: [
             "<script> tags missing 'async' or 'defer'",
@@ -2348,6 +2348,66 @@ export const InfoDetails = {
             "Add the 'X-Content-Type-Options: nosniff' header to all server responses",
             "Configure this header at the web server level to prevent MIME type sniffing",
             "Verify header configuration using a security header scanner"
+        ]
+    },
+    Referrer_Policy: {
+        title: "Referrer-Policy Header",
+        whatThisParameterIs: "This setting controls how much of your page's web address is shared with other websites when a visitor clicks a link away from your site.",
+        whatItCalculates: "It checks the 'Referrer-Policy' response header and grades the safety of its value (safe, permissive, or unsafe).",
+        whyItMatters: "Without it, full page URLs — which can include search terms or tracking parameters — leak to every third-party site your visitors navigate to. It is also one of the six headers external tools like SecurityHeaders.com grade on.",
+        thresholds: {
+            good: "A safe value such as 'strict-origin-when-cross-origin', 'same-origin', 'strict-origin', or 'no-referrer'",
+            poor: "Header missing, an unsafe value ('unsafe-url'), or an unrecognized value"
+        },
+        actualReasonsForFailure: [
+            "The Referrer-Policy header is missing from the server response",
+            "The policy is set to a permissive value like 'no-referrer-when-downgrade' or 'origin-when-cross-origin'",
+            "The policy is set to 'unsafe-url', which sends full URLs to every destination"
+        ],
+        howToOvercomeFailure: [
+            "Add 'Referrer-Policy: strict-origin-when-cross-origin' — the safe modern default",
+            "Use 'same-origin' or 'no-referrer' if you never need referrer data shared externally",
+            "Configure the header at the web server (Nginx/Apache) or CDN level and verify with a security header scanner"
+        ]
+    },
+    Permissions_Policy: {
+        title: "Permissions-Policy Header",
+        whatThisParameterIs: "This setting declares which powerful browser features (camera, microphone, location, payment prompts) your site — and anything embedded in it — is allowed to use.",
+        whatItCalculates: "It checks for the 'Permissions-Policy' response header (and flags sites still using the deprecated 'Feature-Policy').",
+        whyItMatters: "Dealer sites embed many third-party widgets (chat, maps, video, trade-in tools); without this header, any of them can request sensitive device features. It is also one of the six headers external tools like SecurityHeaders.com grade on.",
+        thresholds: {
+            good: "Permissions-Policy header present with explicit directives",
+            poor: "Header missing, or only the deprecated Feature-Policy header is set"
+        },
+        actualReasonsForFailure: [
+            "The Permissions-Policy header is missing from the server response",
+            "Only the deprecated Feature-Policy header is present, which modern browsers ignore",
+            "No response was received from the server during the header check"
+        ],
+        howToOvercomeFailure: [
+            "Add a Permissions-Policy disabling features you don't use, e.g. 'camera=(), microphone=(), geolocation=()'",
+            "Replace any legacy Feature-Policy header with the equivalent Permissions-Policy",
+            "Configure the header at the web server or CDN level and verify with a security header scanner"
+        ]
+    },
+    Header_Security: {
+        title: "Header Security Grade (External-Checker Comparable)",
+        whatThisParameterIs: "A letter grade (A+ to F) summarizing your transport and security-header hardening, computed the same way public tools like SecurityHeaders.com and Mozilla HTTP Observatory compute theirs.",
+        whatItCalculates: "Starts at 100 and deducts points per failed test — missing/weak CSP, missing HSTS, missing anti-framing protection, Referrer-Policy, Permissions-Policy, X-Content-Type-Options, cookie flags, and HTTPS — then maps the result to Observatory's published letter-grade table.",
+        whyItMatters: "This is the number to compare when someone checks your site on SecurityHeaders.com or the Mozilla Observatory. The section headline covers much more (vulnerabilities, privacy, finance forms), so it will not match those tools — this grade will.",
+        thresholds: {
+            good: "Grade B+ or better (80+): the major hardening headers are enforced",
+            poor: "Grade C or below (< 60): multiple hardening headers missing or unenforced"
+        },
+        actualReasonsForFailure: [
+            "Content-Security-Policy missing, report-only, or containing unsafe directives",
+            "HSTS or anti-framing protection (X-Frame-Options / frame-ancestors) missing",
+            "Referrer-Policy, Permissions-Policy or X-Content-Type-Options missing, or cookies lacking Secure/HttpOnly flags"
+        ],
+        howToOvercomeFailure: [
+            "Fix in order of deduction size shown in the card: CSP first, then HSTS and anti-framing, then the remaining headers",
+            "Each fix is a server/CDN configuration change — no application code changes needed",
+            "Re-verify on SecurityHeaders.com after deploying; the grade there should match this one"
         ]
     },
     HSTS: {

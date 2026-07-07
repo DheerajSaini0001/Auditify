@@ -1168,14 +1168,6 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
 
         {/* New Viz: Contextual vs Non-Contextual Lists */}
         <div className="space-y-4">
-          {/* Description */}
-          <div>
-            <span className={`text-xs font-semibold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-muted"}`}>DESCRIPTION: </span>
-            <span className={`text-xs ${darkMode ? "text-gray-300" : "text-muted"}`}>
-              {InfoDetails.Contextual_Linking.whatThisParameterIs}
-            </span>
-          </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Contextual Links */}
             <div className={`rounded-xl border overflow-hidden flex flex-col ${darkMode ? "bg-black/20 border-gray-700" : "bg-cardsoft border-line"}`} style={{ maxHeight: '300px' }}>

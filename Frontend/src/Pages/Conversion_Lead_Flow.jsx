@@ -148,7 +148,10 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
               <Icon size={24} className={darkMode ? "text-blue-400" : "text-accent"} />
             </div>
             <div>
-              <h3 className={`font-semibold text-lg ${textColor}`}>{title}</h3>
+              <h3 className={`font-semibold text-lg ${textColor}`}>
+                {title}
+                {(data?.infoOnly || meta?.infoOnly) && <span className={`font-medium ${subTextColor}`} title="Informational — not counted in the section score"> (Info-only)</span>}
+              </h3>
               <p className={`text-xs font-medium mt-1 px-2 py-0.5 rounded-full w-fit border ${statusColor}`}>
                 {statusLabel}
               </p>
@@ -844,13 +847,13 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
 
         {/* Expanded Analysis Content */}
         {isOpen && (
-          <div className={`mt-3 p-3 rounded-lg text-xs leading-relaxed border animate-in slide-in-from-top-2 duration-200 ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-card border-line text-muted"}`}>
+          <div className={`mt-3 p-3 rounded-lg text-sm leading-relaxed border animate-in slide-in-from-top-2 duration-200 ${darkMode ? "bg-slate-800/50 border-slate-700 text-slate-200" : "bg-card border-line text-inksoft"}`}>
 
             {/* Cause */}
             {(analysis?.cause || reasons.length > 0) && (
               <div className="mb-4">
-                <p className={`font-semibold mb-1 ${darkMode ? "text-slate-200" : "text-inksoft"}`}>Cause:</p>
-                <div className="pl-1 opacity-90">
+                <p className={`font-semibold mb-1 ${darkMode ? "text-slate-100" : "text-ink"}`}>Cause:</p>
+                <div className="pl-1">
                   {analysis?.cause ? (
                     <p>{analysis.cause}</p>
                   ) : (
@@ -868,7 +871,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             {(analysis?.recommendation || recommendations.length > 0) && (
               <div>
                 <p className={`font-semibold mb-1 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>Recommendation:</p>
-                <div className="pl-1 opacity-90">
+                <div className="pl-1">
                   {analysis?.recommendation ? (
                     <p>{analysis.recommendation}</p>
                   ) : (
@@ -1029,6 +1032,13 @@ const Conversion_Lead_Flow_Inner = React.memo(({ data, loading, darkMode }) => {
                     <p className={`text-sm font-medium leading-relaxed ${darkMode ? "text-slate-400" : "text-muted"}`}>
                       Optimize your checkout paths, signup structures, value arguments, and Call-to-Actions to maximize page ROI.
                     </p>
+                    <span
+                      title="This score is Auditify's own composite index for dealership lead flow. No industry-standard external tool produces a comparable conversion score to cross-check against."
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider border ${darkMode ? "bg-slate-800/60 text-slate-400 border-slate-700" : "bg-cardsoft text-muted border-line"}`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full ${darkMode ? "bg-slate-500" : "bg-slate-400"}`} />
+                      Auditify Index · no external equivalent
+                    </span>
 
                     <div className={`flex flex-wrap items-center ${data.report === "All" ? "gap-6" : "gap-5"}`}>
                                          <div className={`flex items-center ${data.report === "All" ? "gap-5" : "gap-4"}`}>

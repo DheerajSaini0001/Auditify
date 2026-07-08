@@ -11,7 +11,7 @@ import {
   MessageSquare, Tag, Calendar, Link, Copy, Activity,
   Users, Target, FlaskConical, MessageCircle,
   Brain, Cpu, Network, Loader2,
-  Compass, HelpCircle, Layers, List, UserCheck, CheckSquare, BookOpen, ShieldCheck, AlertCircle,
+  Compass, HelpCircle, Layers, List, UserCheck, CheckSquare, BookOpen, ShieldCheck,
   ChevronDown, ChevronUp, Bot
 } from "lucide-react";
 import MetricInfoModal from "../Component/MetricInfoModal";
@@ -151,12 +151,12 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             {!isPassed && isActionableParam(metricKey) && (
               <button
                 onClick={() => setShowAnalysis(!showAnalysis)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-semibold uppercase tracking-wider transition-all duration-300 ${showAnalysis
-                  ? (darkMode ? "bg-slate-700 text-white" : "bg-cardsoft text-ink")
-                  : (darkMode ? "bg-slate-800/50 text-slate-400 hover:text-white" : "bg-cardsoft text-muted hover:text-ink")}`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${darkMode
+                  ? "bg-slate-700 hover:bg-slate-600 text-slate-300"
+                  : "bg-cardsoft hover:bg-surface-2 text-muted"}`}
               >
-                {showAnalysis ? "Hide Detail" : "View Detail"}
-                {showAnalysis ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                {showAnalysis ? "Hide Details" : "View Details"}
+                {showAnalysis ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
               </button>
             )}
             {onInfo && (
@@ -574,56 +574,50 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
         </div>
 
         {showAnalysis && (
-          <div className="space-y-3 mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
-            {(analysis?.cause || reasons.length > 0) && (
-              <div className={`p-3 rounded-lg border ${darkMode ? "bg-rose-500/10 border-rose-500/20" : "bg-rose-50 border-rose-100"}`}>
-                <div className="flex items-start gap-2">
-                  <AlertCircle size={14} className="text-rose-500 mt-0.5" />
-                  <div>
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-rose-500 mb-1.5">Why This Occurred</h4>
-                    <div className={`text-sm leading-relaxed ${darkMode ? "text-gray-200" : "text-inksoft"}`}>
-                      {analysis?.cause ? (
-                        <p>{analysis.cause}</p>
-                      ) : (
-                        <ul className="space-y-1">
-                          {reasons.map((reason, idx) => (
-                            <li key={idx} className="flex items-start gap-2">
-                              <span className="mt-1.5 w-1 h-1 rounded-full bg-rose-500 flex-shrink-0" />
-                              <span>{reason}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  </div>
-                </div>
+          <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t animate-in fade-in slide-in-from-top-2 duration-300 ${darkMode ? "border-gray-700" : "border-line"}`}>
+            {/* Cause */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-amber-500">
+                <AlertTriangle size={12} />
+                <span>Cause</span>
               </div>
-            )}
+              {analysis?.cause ? (
+                <p className={`text-sm ${darkMode ? "text-gray-300" : "text-muted"}`}>
+                  {analysis.cause}
+                </p>
+              ) : (
+                <ul className="space-y-1">
+                  {reasons.map((reason, idx) => (
+                    <li key={idx} className={`text-sm flex items-start gap-2 ${darkMode ? "text-gray-300" : "text-muted"}`}>
+                      <span className="mt-1.5 w-1 h-1 rounded-full bg-rose-500 flex-shrink-0" />
+                      <span>{reason}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
 
-            {(analysis?.recommendation || recommendations.length > 0) && (
-              <div className={`p-3 rounded-lg border ${darkMode ? "bg-emerald-500/10 border-emerald-500/20" : "bg-emerald-50 border-emerald-100"}`}>
-                <div className="flex items-start gap-2">
-                  <CheckCircle size={14} className="text-emerald-500 mt-0.5" />
-                  <div>
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-emerald-500 mb-1.5">How to Fix</h4>
-                    <div className={`text-sm leading-relaxed ${darkMode ? "text-gray-200" : "text-inksoft"}`}>
-                      {analysis?.recommendation ? (
-                        <p>{analysis.recommendation}</p>
-                      ) : (
-                        <ul className="space-y-1">
-                          {recommendations.map((rec, idx) => (
-                            <li key={idx} className="flex items-start gap-2">
-                              <span className="mt-1.5 w-1 h-1 rounded-full bg-emerald-500 flex-shrink-0" />
-                              <span>{rec}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  </div>
-                </div>
+            {/* Recommendation */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-blue-500">
+                <CheckCircle size={12} />
+                <span>Recommendation</span>
               </div>
-            )}
+              {analysis?.recommendation ? (
+                <p className={`text-sm ${darkMode ? "text-gray-300" : "text-muted"}`}>
+                  {analysis.recommendation}
+                </p>
+              ) : (
+                <ul className="space-y-1">
+                  {recommendations.map((rec, idx) => (
+                    <li key={idx} className={`text-sm flex items-start gap-2 ${darkMode ? "text-gray-300" : "text-muted"}`}>
+                      <span className="mt-1.5 w-1 h-1 rounded-full bg-emerald-500 flex-shrink-0" />
+                      <span>{rec}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
         )}
 

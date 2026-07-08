@@ -190,10 +190,15 @@ const MultiSelectDropdown = ({ selected, options, onToggle, onSetAll, icon, dark
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    const allSelected = selected.length === options.length;
+    // Count only selected keys that are actually in the visible options. `scopes` can
+    // hold cross-catalog keys (its default is the dealer+corporate union so corporate
+    // keys survive detect()'s filter) — counting the raw length would show nonsense like
+    // "11 Pages" / "11/8" when only 8 page types are listed.
+    const selectedInOptions = selected.filter((s) => options.some((o) => o.value === s));
+    const allSelected = options.length > 0 && selectedInOptions.length === options.length;
     const label = getLabel
-        ? getLabel(selected, options)
-        : allSelected ? "All Pages" : selected.length === 0 ? "No Pages" : `${selected.length} Pages`;
+        ? getLabel(selectedInOptions, options)
+        : allSelected ? "All Pages" : selectedInOptions.length === 0 ? "No Pages" : `${selectedInOptions.length} Pages`;
 
     return (
         <div className="relative" ref={dropdownRef}>
@@ -228,7 +233,7 @@ const MultiSelectDropdown = ({ selected, options, onToggle, onSetAll, icon, dark
                                 ${darkMode ? "text-orange-400 hover:bg-white/5" : "text-[#ea580c] hover:bg-cardsoft"}`}
                         >
                             <span>{allSelected ? "Clear all" : "Select all"}</span>
-                            <span className="font-semibold">{selected.length}/{options.length}</span>
+                            <span className="font-semibold">{selectedInOptions.length}/{options.length}</span>
                         </button>
 
                         <div className="max-h-72 overflow-y-auto custom-scrollbar space-y-1">

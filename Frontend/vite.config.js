@@ -22,5 +22,12 @@ const seoHeadersPlugin = () => {
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss(), seoHeadersPlugin()],
+  server: {
+    fs: {
+      // Allow importing the repo-root ../shared modules (e.g. shared/linkSemantics.js)
+      // that are shared between the Frontend and Backend.
+      allow: ['..'],
+    },
+  },
 })
 

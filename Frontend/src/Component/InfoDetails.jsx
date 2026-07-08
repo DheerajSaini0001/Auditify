@@ -1030,8 +1030,8 @@ export const InfoDetails = {
     },
     Content_Relevance: {
         title: "Content Relevance",
-        whatThisParameterIs: "Content Relevance measures how well your actual page content aligns with the primary topics promised in your Page Title and Meta Description.",
-        whatItCalculates: "We extract core keywords from your title and meta description and check if they are naturally woven into the body text. We prioritize Title alignment and penalize for keyword stuffing or excessive filler content.",
+        whatThisParameterIs: "Content Relevance measures whether the page is genuinely about a clear topic — both that the body delivers on the title/meta/H1 promise, and that the page's own dominant content actually matches its headline.",
+        whatItCalculates: "Two blended signals: (1) Coverage (60%) — how many of the title/meta/H1 keywords actually appear in the main body (whole-word / stemmed match); (2) Topical focus (40%) — we derive the page's most-used content terms (what it's really about) and check how many are reflected in the title/H1. A keyword-stuffing penalty applies only on pages with enough content to judge fairly.",
         whyItMatters: "Search engines prioritize 'Satisfactory Search Intent.' If a user clicks your link because of the title but finds unrelated content, they will bounce immediately, which severely hurts your rankings.",
         thresholds: {
             good: "Strong keyword alignment & natural flow",
@@ -1347,27 +1347,6 @@ export const InfoDetails = {
             "Write a distinct meta description for each page",
             "Summarize each page's unique content in ~150-160 chars",
             "Ensure every page has a non-empty meta description"
-        ]
-    },
-
-    Title_Keyword_Optimization: {
-        title: "Title Keyword Optimization",
-        whatThisParameterIs: "Checks whether each page's <title> tag actually contains the keyword that page is about.",
-        whatItCalculates: "We sample up to 5 eligible content pages, derive each page's target keyword (from its URL, then its H1, then its main content), and check whether the <title> includes that keyword. Score = optimized pages / pages checked.",
-        whyItMatters: "A title that includes the page's primary keyword tells search engines and users exactly what the page offers, directly improving rankings and click-through for those terms.",
-        thresholds: {
-            good: "All sampled titles contain their keyword (100)",
-            poor: "No sampled titles contain their keyword (0)"
-        },
-        actualReasonsForFailure: [
-            "Titles are generic and omit the page's main keyword",
-            "Same templated title reused across different pages",
-            "Title focuses only on brand name, not the topic"
-        ],
-        howToOvercomeFailure: [
-            "Include the page's primary keyword in its <title>",
-            "Place the keyword near the start of the title",
-            "Match the title to the page's actual content and URL"
         ]
     },
 

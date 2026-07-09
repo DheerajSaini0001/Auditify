@@ -222,26 +222,7 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
                     </div>
                 )}
 
-                {/* Right Column: AEO Score Section */}
-                <div className={`w-full ${hideScreenshot ? "max-w-3xl" : "xl:w-[55%]"} flex flex-col items-center justify-center`}>
-                    <h2 className={`text-[1.35rem] font-semibold mb-7 tracking-tight ${darkMode ? "text-slate-100" : "text-ink"}`}>
-                        AI Engine Visibility
-                    </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-3xl">
-                        {isComplete ? (
-                            <>
-                                <AEOScoreGauge score={aeo.platforms?.gemini?.score || 0} title="GOOGLE" subtitle="GEMINI" color="#4285F4" size={160} darkMode={darkMode} />
-                                <AEOScoreGauge score={aeo.platforms?.chatgpt?.score || 0} title="OPENAI" subtitle="CHATGPT" color="#10A37F" size={160} darkMode={darkMode} />
-                                <AEOScoreGauge score={aeo.platforms?.perplexity?.score || 0} title="PERPLEXITY" subtitle="AI" color="#A259FF" size={160} darkMode={darkMode} />
-                            </>
-                        ) : (
-                            <div className="col-span-3 flex flex-col items-center justify-center py-8">
-                                <div className={`animate-spin rounded-full h-12 w-12 border-b-2 mb-6 ${darkMode ? "border-indigo-400" : "border-indigo-600"}`}></div>
-                                <h3 className={`text-xl font-semibold ${darkMode ? "text-slate-200" : "text-inksoft"}`}>{streamStatus}</h3>
-                            </div>
-                        )}
-                    </div>
-                </div>
+            
             </div> 
             {/* Header Section (Middle Row) */}
             <header className={`flex flex-col md:flex-row md:items-end justify-between gap-8 pb-4 border-b border-transparent`}>

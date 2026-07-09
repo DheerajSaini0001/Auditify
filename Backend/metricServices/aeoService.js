@@ -368,7 +368,7 @@ class AEOService {
         return {
             url,
             overallScore,
-            Percentage: section.Percentage,
+            Percentage: overallScore,
             Confidence: section.Confidence,
             pageType: section.pageType,
             parametersScored: section.parametersScored,
@@ -476,7 +476,7 @@ class AEOService {
         return {
             url,
             overallScore,
-            Percentage: section.Percentage,
+            Percentage: overallScore,
             Confidence: section.Confidence,
             pageType: section.pageType,
             parametersScored: section.parametersScored,

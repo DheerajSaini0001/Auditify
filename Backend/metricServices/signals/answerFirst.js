@@ -8,7 +8,7 @@ const analyzeAnswerFirst = ($) => {
     const bodyCopy = $('body').clone();
     
     // Remove unwanted elements
-    bodyCopy.find('script, style, nav, header, footer, aside').remove();
+    bodyCopy.find('script, style, noscript, iframe, svg, nav, header, footer, aside').remove();
     
     // Extract text and split into words
     const text = bodyCopy.text().trim();

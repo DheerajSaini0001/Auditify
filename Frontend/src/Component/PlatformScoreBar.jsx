@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, Target, Gauge, Cpu, BarChart3, Activity, CheckCircle2, XCircle, AlertCircle, MinusCircle } from 'lucide-react';
+import { ChevronDown, ChevronUp, Target, Gauge, Cpu, BarChart3, Activity, CheckCircle2, XCircle, AlertCircle, MinusCircle, AlertTriangle, CheckCircle } from 'lucide-react';
+
+const getBlockedCauseAndRecommendation = (platformKey, reason) => {
+    const platName = platformKey === 'gemini' ? 'Gemini' : platformKey === 'chatgpt' ? 'ChatGPT' : 'Perplexity';
+    const botName = platformKey === 'gemini' ? 'Google-Extended' : platformKey === 'chatgpt' ? 'GPTBot' : 'PerplexityBot';
+    
+    const cause = reason || `Visibility is 0% because ${botName} is blocked in your robots.txt.`;
+    const recommendation = `Remove any 'Disallow: /' or block rules for ${botName} in your robots.txt file so ${platName} can crawl and index your pages.`;
+    
+    return { cause, recommendation };
+};
 
 const PlatformScoreBar = ({ platforms, darkMode, platformKey = null, singleCard = false }) => {
     const [expandedPlatform, setExpandedPlatform] = useState(null);
@@ -96,6 +106,8 @@ const PlatformScoreBar = ({ platforms, darkMode, platformKey = null, singleCard 
                         const skipped = all.filter((p) => p.notCalculated);
                         const failed = all.filter((p) => !p.passed && !p.notCalculated);
                         const passed = all.filter((p) => p.passed);
+                        const isBlocked = !!platforms?.[plat.key]?.blocked;
+                        const blockReason = platforms?.[plat.key]?.reason;
 
                         const renderRow = (p) => (
                             <div
@@ -154,8 +166,42 @@ const PlatformScoreBar = ({ platforms, darkMode, platformKey = null, singleCard 
                             </div>
                         );
 
+                        if (isBlocked) {
+                            const { cause, recommendation } = getBlockedCauseAndRecommendation(plat.key, blockReason);
+                            return (
+                                 <div className={`p-6 rounded-xl animate-in fade-in slide-in-from-top-2 duration-300 ${darkMode ? "bg-slate-950/50 border border-slate-800" : "bg-cardsoft border border-line"}`}>
+                                     <div className={`grid grid-cols-1 md:grid-cols-2 gap-6`}>
+                                         <div className="space-y-2">
+                                             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-rose-500">
+                                                 <AlertTriangle size={14} />
+                                                 <span>Cause</span>
+                                             </div>
+                                             <ul className="space-y-1.5">
+                                                 <li className={`text-sm flex items-start gap-2.5 leading-relaxed ${darkMode ? "text-slate-300" : "text-inksoft"}`}>
+                                                     <span className="mt-2 w-1.5 h-1.5 rounded-full bg-rose-500 flex-shrink-0" />
+                                                     <span>{cause}</span>
+                                                 </li>
+                                             </ul>
+                                         </div>
+                                         <div className="space-y-2">
+                                             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-500">
+                                                 <CheckCircle size={14} />
+                                                 <span>Recommendation</span>
+                                             </div>
+                                             <ul className="space-y-1.5">
+                                                 <li className={`text-sm flex items-start gap-2.5 leading-relaxed ${darkMode ? "text-slate-300" : "text-inksoft"}`}>
+                                                     <span className="mt-2 w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
+                                                     <span>{recommendation}</span>
+                                                 </li>
+                                             </ul>
+                                         </div>
+                                     </div>
+                                 </div>
+                            );
+                        }
+
                         return (
-                            <div className={`p-4 rounded-xl space-y-5 animate-in fade-in slide-in-from-top-2 duration-300 ${darkMode ? "bg-slate-950/50 border border-slate-800" : "bg-cardsoft border border-line"}`}>
+                             <div className={`p-4 rounded-xl space-y-5 animate-in fade-in slide-in-from-top-2 duration-300 ${darkMode ? "bg-slate-950/50 border border-slate-800" : "bg-cardsoft border border-line"}`}>
                                 <div className="flex items-center gap-2 opacity-40">
                                     <BarChart3 size={12} />
                                     <span className="text-[9px] font-semibold uppercase tracking-[0.2em]">What This AI Checks</span>

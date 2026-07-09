@@ -12,6 +12,17 @@
  * audited site's domain — fixed here by using the real site hostname.)
  */
 
+const requiresThirdPartyCitations = (text) => {
+    const lower = String(text || '').toLowerCase();
+    const patterns = [
+        /\b(according to|study shows|research indicates|statistics? show|survey found|data from)\b/i,
+        /\b(clinical trial|medical study|scientific research|scientific study|peer-reviewed)\b/i,
+        /\b(regulatory standard|federal law|epa compliance|nhtsa regulation|ftc guideline|fcc regulation)\b/i,
+        /\b(independent study|statistical report|industry survey|survey of|research study|according to studies)\b/i,
+    ];
+    return patterns.some(re => re.test(lower));
+};
+
 const analyzeCitations = ($, url = '') => {
     const text = $('body').text();
     let siteHost = '';
@@ -33,10 +44,15 @@ const analyzeCitations = ($, url = '') => {
         return t.includes('reference') || t.includes('source') || t.includes('bibliograph');
     }).length > 0;
 
+    const needsVerification = requiresThirdPartyCitations(text);
     let citations = 0;
-    citations += externalCount >= 3 ? 20 : externalCount >= 1 ? 12 : 0;
-    citations += (superscriptCitations > 0 || bracketCitations > 0) ? 12 : 0;
-    citations += hasReferences ? 13 : 0; // max 45
+    if (needsVerification) {
+        citations += externalCount >= 3 ? 20 : externalCount >= 1 ? 12 : 0;
+        citations += (superscriptCitations > 0 || bracketCitations > 0) ? 12 : 0;
+        citations += hasReferences ? 13 : 0; // max 45
+    } else {
+        citations = 45; // business website is the primary authoritative source for self-sourced content
+    }
 
     // ── Policies (max 20) ── privacy / terms / contact / about
     const linkBlobs = [];
@@ -65,22 +81,22 @@ const analyzeCitations = ($, url = '') => {
     const score = Math.min(100, citations + policies + contactTransparency + trustBasics);
 
     const issues = [];
-    if (citations < 45) issues.push('Cite reputable sources — 3+ outbound links, citation markers like [1], and a References/Sources section.');
+    if (needsVerification && citations < 45) issues.push('Add at least 3 links to outside sources, use number markers like [1] in your text, and include a References list at the bottom.');
     if (policies < 20) {
-        const missing = [!hasPrivacy && 'Privacy', !hasTerms && 'Terms', !hasContact && 'Contact', !hasAbout && 'About'].filter(Boolean);
-        if (missing.length) issues.push(`Add clear policy/info pages: ${missing.join(', ')}.`);
+        const missing = [!hasPrivacy && 'Privacy Policy', !hasTerms && 'Terms of Service', !hasContact && 'Contact Us', !hasAbout && 'About Us'].filter(Boolean);
+        if (missing.length) issues.push(`Add links to standard policy pages: ${missing.join(', ')}.`);
     }
     if (contactTransparency < 20) {
-        const missing = [!hasTel && 'a click-to-call phone', !hasAddress && 'a physical address', !hasAuthor && 'author bylines'].filter(Boolean);
-        if (missing.length) issues.push(`Show transparent contact/authorship: ${missing.join(', ')}.`);
+        const missing = [!hasTel && 'a clickable phone number', !hasAddress && 'a physical address', !hasAuthor && 'author bylines'].filter(Boolean);
+        if (missing.length) issues.push(`Make contact details clear: add ${missing.join(', ')}.`);
     }
     if (trustBasics < 15) {
-        const missing = [!isHttps && 'serve over HTTPS', !hasDisclosure && 'add a disclosure/editorial statement', !hasUpdated && 'show last-updated/copyright dates'].filter(Boolean);
-        if (missing.length) issues.push(`Trust basics: ${missing.join('; ')}.`);
+        const missing = [!isHttps && 'use a secure HTTPS connection', !hasDisclosure && 'add a disclosure statement', !hasUpdated && 'show copyright or update dates'].filter(Boolean);
+        if (missing.length) issues.push(`Add basic trust signals: ${missing.join(', ')}.`);
     }
 
     const reason = score >= 100
-        ? '✅ Why: Strong trust signals — cited sources, clear policies, transparent contact/authorship, and trust basics (HTTPS, disclosures, dates).'
+        ? '✅ Why: Strong trust signals — cited sources, clear policy pages, transparent contact details, secure HTTPS link, and update dates.'
         : `⚠️ Why no: Trust signals incomplete (${score}/100). ${issues.slice(0, 2).join(' ')}`;
 
     return {
@@ -89,6 +105,7 @@ const analyzeCitations = ($, url = '') => {
         externalSources: externalCount,
         citationMarkers: superscriptCitations + bracketCitations,
         hasReferenceSection: hasReferences,
+        needsVerification,
         breakdown,
         transparency: { hasPrivacy, hasTerms, hasContact, hasAbout, hasTel, hasAddress, hasAuthor, isHttps, hasDisclosure, hasUpdated },
         issues,

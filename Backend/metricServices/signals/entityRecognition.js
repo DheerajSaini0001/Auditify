@@ -143,21 +143,13 @@ const baseScore = (orgEntity, hasFallbackName) => {
     return hasFallbackName ? 40 : 20;
 };
 
-const analyzeEntityRecognition = async (url, $, useKnowledgeGraph = true) => {
+const analyzeEntityRecognition = async (url, $, useKnowledgeGraph = false) => {
     try {
         const orgEntity = extractOrgEntity($);
         const queryName = deriveQueryName($, orgEntity);
-        const domain = hostnameOf(url);
 
-        const base = baseScore(orgEntity, hasValue(queryName));
-
-        let kg = null;
-        if (useKnowledgeGraph) kg = await queryKnowledgeGraph(queryName, domain);
-
-        let score = base;
-        if (kg?.found) score = Math.min(100, base + KG_BONUS);
-
-        const source = kg ? 'on-page+kg' : 'on-page';
+        const score = baseScore(orgEntity, hasValue(queryName));
+        const source = 'on-page';
 
         // Build issues + a human-readable reason.
         const issues = [];
@@ -168,13 +160,10 @@ const analyzeEntityRecognition = async (url, $, useKnowledgeGraph = true) => {
             if (orgEntity.sameAs.length === 0) issues.push('No sameAs links (social/Wikipedia profiles).');
             if (!orgEntity.hasLogo) issues.push('Organization schema missing a logo.');
         }
-        if (kg && !kg.found) issues.push('Not found as a distinct entity in the Knowledge Graph.');
 
         let reason;
         if (score >= 100) {
-            reason = kg?.found
-                ? `✅ Why: Strong identity — complete Organization schema and a recognized Knowledge Graph entity ("${kg.name}").`
-                : `✅ Why: Complete Organization/LocalBusiness schema with address and sameAs links — machines can confidently identify this business.`;
+            reason = `✅ Why: Complete Organization/LocalBusiness schema with address and sameAs links — machines can confidently identify this business.`;
         } else if (orgEntity) {
             reason = `⚠️ Why no: Organization schema present but incomplete. ${issues.join(' ')}`;
         } else {
@@ -196,7 +185,7 @@ const analyzeEntityRecognition = async (url, $, useKnowledgeGraph = true) => {
                     sameAs: orgEntity.sameAs,
                 }
                 : { found: false },
-            knowledgeGraph: kg,
+            knowledgeGraph: null,
             issues,
             reason,
         };

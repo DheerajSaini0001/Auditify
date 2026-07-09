@@ -458,24 +458,24 @@ export const InfoDetails = {
     },
 
     citations: {
-        title: "Trust Signals",
-        whatThisParameterIs: "Trust Signals measures citations & transparency on the page — cited sources/references, policy pages (privacy/terms/contact/about), transparent contact & authorship, and trust basics like HTTPS, disclosures and dates.",
-        whatItCalculates: "We score four components: citations to reputable sources (45), presence of policy pages (20), contact & authorship transparency (20), and trust basics such as HTTPS and dated content (15).",
-        whyItMatters: "Trust signals tell engines your content is accountable: cited sources, clear policies (privacy/terms/contact), transparent contact & authorship, HTTPS and dated content. RAG engines like Perplexity prioritize verifiable, trustworthy pages.",
+        title: "Citations & Attribution",
+        whatThisParameterIs: "Citations & Attribution measures how trustworthy and verifiable your content is: links to outside sources, standard policy pages, contact details, author names, and security/dates.",
+        whatItCalculates: "We score four parts: links to outside sources (45), policy pages (20), clear contact details and authors (20), and secure connection and dates (15).",
+        whyItMatters: "AI engines prefer information they can verify. Providing clear outside sources, standard policies, author names, and update dates builds high trust, making search and AI engines much more likely to cite your site.",
         thresholds: {
-            good: "Cited sources plus complete policy, contact and trust basics",
-            needsImprovement: "Some trust elements present but citations or policies are thin",
-            poor: "No external citations and missing policy/contact transparency"
+            good: "Links to outside sources plus complete policy, contact and security details",
+            needsImprovement: "Some trust pages present, but lacking source links or author info",
+            poor: "No links to outside sources and missing basic contact/policy pages"
         },
         actualReasonsForFailure: [
-            "No links or references to reputable external sources",
-            "Missing privacy/terms/contact/about pages",
-            "No visible authorship, contact details or content dates"
+            "Missing links to outside sources",
+            "Missing basic policy pages (like privacy or contact)",
+            "No visible authors, clickable contact info, or update dates"
         ],
         howToOvercomeFailure: [
-            "Link to reputable external sources and add citation markers",
-            "Publish clear privacy, terms, contact and about pages",
-            "Show authorship, contact info, publish/updated dates and serve over HTTPS"
+            "Link to outside sources and use number markers like [1]",
+            "Add standard policy pages in your menu or footer",
+            "Show author names, contact info, update dates, and use a secure HTTPS connection"
         ]
     },
 
@@ -503,23 +503,21 @@ export const InfoDetails = {
 
     entityRecognition: {
         title: "Entity Recognition",
-        whatThisParameterIs: "Entity Recognition checks whether engines can confidently identify your business as a real entity, via Organization/LocalBusiness schema plus Knowledge Graph presence.",
-        whatItCalculates: "We look for valid Organization/LocalBusiness JSON-LD (and its completeness) and check for a matching Knowledge Graph entity using the Knowledge Graph API.",
-        whyItMatters: "AI engines can only cite or recommend a business they can identify with confidence. Organization/LocalBusiness schema and a Knowledge Graph entity turn your site from 'some text' into a recognized entity engines trust.",
+        whatThisParameterIs: "Entity Recognition checks whether engines can confidently identify your business as a real entity via Organization/LocalBusiness schema.",
+        whatItCalculates: "We analyze the presence and completeness of your Organization/LocalBusiness JSON-LD.",
+        whyItMatters: "AI engines can only cite or recommend a business they can identify with confidence. Valid, complete Organization/LocalBusiness schema turns your site from 'some text' into a recognized entity engines trust.",
         thresholds: {
-            good: "Complete Organization/LocalBusiness schema with a matching Knowledge Graph entity",
-            needsImprovement: "Schema present but missing fields, or no Knowledge Graph match",
+            good: "Complete Organization/LocalBusiness schema with address and sameAs profile links",
+            needsImprovement: "Schema present but missing key fields (like address or links)",
             poor: "No Organization/LocalBusiness schema found"
         },
         actualReasonsForFailure: [
             "No Organization/LocalBusiness JSON-LD on the page",
-            "Schema present but missing key fields (name, logo, url, sameAs)",
-            "No matching entity in the Knowledge Graph"
+            "Schema present but missing key fields (name, logo, url, sameAs)"
         ],
         howToOvercomeFailure: [
             "Add complete Organization/LocalBusiness JSON-LD",
-            "Include name, logo, url, address, contact and sameAs links",
-            "Build consistent off-site references so a Knowledge Graph entity forms"
+            "Include name, logo, url, address, contact and sameAs links"
         ]
     },
 
@@ -615,19 +613,19 @@ export const InfoDetails = {
         title: "Citation Consistency",
         whatThisParameterIs: "Citation Consistency checks whether your NAP (Name/Address/Phone) and brand details agree across the page — schema, tel: links and brand tags — so engines can state your identity with confidence.",
         whatItCalculates: "We compare on-page identity signals and score completeness (40), phone consistency (25), name consistency (20) and address completeness (15). (On-page only — a full citation audit needs the Places API with billing.)",
-        whyItMatters: "If your name, address, or phone conflicts across sources, engines can't confidently state your details — so they omit or hedge. One consistent NAP everywhere is foundational for local trust and 'near me / call X' answers.",
+        whyItMatters: "If your name, address, or phone conflicts across sources, engines can't confidently state your details — so they omit or hedge. Consistent NAP everywhere is foundational for local trust and 'near me / call X' answers.",
         thresholds: {
-            good: "One consistent NAP across schema, tel: links and visible text",
+            good: "Consistent NAP (up to two matching phone numbers allowed)",
             needsImprovement: "Mostly consistent but some details are incomplete",
-            poor: "Conflicting phone numbers or mismatched name/address on the page"
+            poor: "More than two conflicting phone numbers or mismatched name/address on the page"
         },
         actualReasonsForFailure: [
-            "Multiple different phone numbers appear on the page",
+            "Three or more different phone numbers appear on the page",
             "Business name or address differs between schema and visible text",
             "Address or contact details are incomplete"
         ],
         howToOvercomeFailure: [
-            "Use one identical NAP everywhere (schema, tel: links, footer)",
+            "Use identical NAP everywhere (up to two phone numbers allowed, schema, tel: links, footer)",
             "Match your LocalBusiness schema to the visible name/address/phone",
             "Complete all address and contact fields"
         ]

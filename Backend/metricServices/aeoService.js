@@ -338,7 +338,7 @@ class AEOService {
             platforms.gemini.score = 0;
             platforms.gemini.blocked = true;
         }
-        if (signals.botAccess.bots?.['GPTBot'] === 'blocked' && !signals.llmsTxt.exists) {
+        if (signals.botAccess.bots?.['GPTBot'] === 'blocked') {
             platforms.chatgpt.score = 0;
             platforms.chatgpt.blocked = true;
         }
@@ -450,7 +450,7 @@ class AEOService {
             platforms.gemini.score = 0;
             platforms.gemini.blocked = true;
         }
-        if (signals.botAccess.bots?.['GPTBot'] === 'blocked' && !signals.llmsTxt.exists) {
+        if (signals.botAccess.bots?.['GPTBot'] === 'blocked') {
             platforms.chatgpt.score = 0;
             platforms.chatgpt.blocked = true;
         }
@@ -590,7 +590,7 @@ class AEOService {
 
             case 'citationConsistency': {
                 const cc = signals.citationConsistency || {};
-                if ((cc.distinctPhoneCount ?? 0) > 1) return 'Your page shows more than one phone number. Pick one and use it everywhere.';
+                if ((cc.distinctPhoneCount ?? 0) > 2) return 'Your page shows more than two phone numbers. Pick one or two and use them everywhere.';
                 if (!cc.hasSchemaPhone) return 'No clear phone number AI can read. Add one in your business details.';
                 if (!cc.hasSchemaAddress) return 'No clear address AI can read. Add your full address in your business details.';
                 return 'Your name, address, and phone don’t fully match across the page. Use the exact same details everywhere.';

@@ -27,7 +27,7 @@ const AEO_PARAM_CARDS = [
     { paramKey: 'Bot_Access',               signal: 'botAccess',           sig: 'botAccess',           title: 'Bot Access (Search Index Status)',              description: 'robots.txt / meta / X-Robots allow GPTBot, Google-Extended, PerplexityBot — scored per engine and averaged.' },
     { paramKey: 'Structured_Content',       signal: 'structuredContent',   sig: 'structuredContent',   title: 'Structured Content',                            description: 'Machine-parseable spec/comparison tables and lists (not data trapped inside images).' },
     { paramKey: 'FAQ_QA_Blocks',            signal: 'faqQa',               sig: null,                  title: 'FAQ / Q&A Blocks',                              description: 'Question-headed sections with concise answers plus FAQPage schema (FAQ / Finance / Service / VDP pages).' },
-    { paramKey: 'Entity_Recognition',       signal: 'entityRecognition',   sig: 'entityRecognition',   title: 'Entity Recognition',                            description: 'Organization/LocalBusiness schema + Knowledge Graph presence — how confidently engines identify the business.' },
+    { paramKey: 'Entity_Recognition',       signal: 'entityRecognition',   sig: 'entityRecognition',   title: 'Entity Recognition',                            description: 'Organization/LocalBusiness schema — how confidently engines identify the business.' },
     { paramKey: 'Citation_NAP_Consistency', signal: 'citationConsistency', sig: 'citationConsistency', title: 'Citation / NAP Consistency',                    description: 'Name / address / phone identical on-page (and vs Google Business Profile).' },
     { paramKey: 'Citations_Attribution',    signal: 'citations',           sig: 'citations',           title: 'Citations & Attribution',                       description: 'Links to authoritative sources (OEM, NHTSA, IIHS) and transparent attribution that RAG engines value.' },
     { paramKey: 'Topical_Authority',        signal: 'topicalAuthority',    sig: 'topicalAuthority',    title: 'Topical Authority',                             description: 'Content depth and topic-cluster coverage around dealership topics.' },
@@ -363,12 +363,7 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
                     </div>
                     )}
 
-                    {/* Actionable Recommendations */}
-                    {isComplete && (
-                        <div className={`pt-8 border-t ${darkMode ? "border-slate-800" : "border-line"}`}>
-                            <AEORecommendations recommendations={aeo.recommendations} darkMode={darkMode} />
-                        </div>
-                    )}
+
                 </>
             )}
         </div>

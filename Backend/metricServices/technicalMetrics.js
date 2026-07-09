@@ -1513,45 +1513,35 @@ const evaluateServiceLoad = (url, device, page, browser) =>
 // metrics already scored above (FCP, SI, LCP, TBT, CLS), so it is surfaced as an
 // informational card only and is NOT folded into the weighted Technical % — doing so
 // would double-count those vitals. Reported for both Mobile and Desktop strategies.
-const evaluatePageSpeedScore = (mobileData, desktopData) => {
-  const extract = (d) => {
-    const s = d?.lighthouseResult?.categories?.performance?.score;
-    return typeof s === "number" ? Math.round(s * 100) : null;
-  };
-  const mobileScore = extract(mobileData);
-  const desktopScore = extract(desktopData);
+const evaluatePageSpeedScore = (data, deviceName) => {
+  const s = data?.lighthouseResult?.categories?.performance?.score;
+  const score = typeof s === "number" ? Math.round(s * 100) : null;
 
-  // Headline = mobile (mobile-first), falling back to desktop when mobile is absent.
-  const primary = mobileScore != null ? mobileScore : desktopScore;
-  if (primary == null) return notCalculated(
+  if (score == null) return notCalculated(
     "Google PageSpeed could not analyze this URL — Lighthouse returned no Performance score (the site may be too slow, blocking automated requests, or the PageSpeed API key/quota is unavailable).",
     "Confirm the site loads in Google PageSpeed Insights and that the PageSpeed API key/quota is configured, then re-run the audit."
   );
 
-  // Lighthouse bands: ≥90 good, 50–89 needs improvement, <50 poor.
-  const bandStatus = (s) => (s == null ? null : s >= 90 ? "pass" : s >= 50 ? "warning" : "fail");
-  const status = bandStatus(primary);
-
-  const parts = [];
-  if (mobileScore != null) parts.push(`Mobile ${mobileScore}/100`);
-  if (desktopScore != null) parts.push(`Desktop ${desktopScore}/100`);
+  // Canonical bands (matching overall headline): ≥75 good, 25–74 warning, <25 poor.
+  const bandStatus = (s) => (s == null ? null : s >= 75 ? "pass" : s >= 25 ? "warning" : "fail");
+  const status = bandStatus(score);
+  const label = deviceName.charAt(0).toUpperCase() + deviceName.slice(1);
 
   return {
-    score: primary,
+    score,
     status,
     details:
       status === "pass"
-        ? `Official Lighthouse Performance score is strong (${parts.join(", ")}).`
-        : `Official Lighthouse Performance score needs work (${parts.join(", ")}).`,
+        ? `Official Lighthouse Performance score is strong (${label} ${score}/100).`
+        : `Official Lighthouse Performance score needs work (${label} ${score}/100).`,
     meta: {
-      value: primary + "/100",
-      mobileScore: mobileScore != null ? mobileScore + "/100" : "Not measured",
-      desktopScore: desktopScore != null ? desktopScore + "/100" : "Not measured",
-      mobileStatus: bandStatus(mobileScore),
-      desktopStatus: bandStatus(desktopScore),
+      value: score + "/100",
+      device: label,
+      deviceScore: score + "/100",
+      deviceStatus: status,
       source: "Lighthouse categories.performance.score",
       informational: true, // shown, not folded into the weighted Technical %
-      thresholds: { Good: "90-100", Warning: "50-89", Poor: "0-49" },
+      thresholds: { Good: "75-100", Warning: "25-74", Poor: "0-24" },
     },
     analysis:
       status === "pass"
@@ -2354,17 +2344,10 @@ async function evaluateSoldVehicleHandling(url, pageType) {
 //   • §0.5 confidence flag surfaced per-CWV and as a section-level summary.
 export default async function technicalMetrics(url, device, page, response, browser, pageType = null) {
 
-  // The audited device drives every lab/field metric below; the OTHER device is
-  // requested too, purely to surface the official (informational) Lighthouse
-  // Performance score for both Mobile and Desktop.
+  // Only call PageSpeed for the user-selected device strategy (1 API call, not 2).
   const wantDevice = String(device || "mobile").toLowerCase() === "desktop" ? "desktop" : "mobile";
-  const otherDevice = wantDevice === "desktop" ? "mobile" : "desktop";
 
-  const [primaryData, otherData] = await Promise.all([
-    googleAPI(url, wantDevice),
-    googleAPI(url, otherDevice),
-  ]);
-  const data = primaryData;
+  const data = await googleAPI(url, wantDevice);
   const audits = data?.lighthouseResult?.audits || {};
   const cruxMetrics = data?.loadingExperience?.metrics || {};
 
@@ -2384,9 +2367,7 @@ export default async function technicalMetrics(url, device, page, response, brow
     logger.warn(`[Technical] PageSpeed unusable for ${url} (${wantDevice}) — Core Web Vitals "Not Run", section excluded from overall (delivery checks still run on the live page).`);
   }
 
-  const mobileData = wantDevice === "mobile" ? primaryData : otherData;
-  const desktopData = wantDevice === "desktop" ? primaryData : otherData;
-  const pageSpeedScore = evaluatePageSpeedScore(mobileData, desktopData);
+  const pageSpeedScore = evaluatePageSpeedScore(data, wantDevice);
 
   const lcpLab = labOrNA(() => evaluateLCPLab(audits));
   const lcpCrux = evaluateLCPCrux(audits, cruxMetrics);

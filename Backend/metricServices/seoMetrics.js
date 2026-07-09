@@ -1,5 +1,6 @@
 import * as cheerio from "cheerio";
 import { sharesMeaning, isGenericAnchor, isDescriptiveUrl, isMapUrl, isSocialUrl, socialHandle, isOpaqueSocialShareUrl } from "../../shared/linkSemantics.js";
+import { classifyPageType } from "../utils/pageClassifier.js";
 
 // Helper to standardized return object
 const evaluateParameter = (score, details, meta = {}) => {
@@ -2633,6 +2634,13 @@ const tuIsEligible = (href) => {
   try {
     const { pathname } = new URL(href);
     if (TU_ASSET_RE.test(pathname)) return false;
+
+    // Use centralized classifier to screen out VDP, SRP, about/contact, and legal pages
+    const pageType = classifyPageType(href);
+    if (pageType === "vdp" || pageType === "srp" || pageType === "about" || pageType === "generic") {
+      return false;
+    }
+
     if (TU_VIN_RE.test(pathname)) return false;
     if (TU_EXCLUDE_RE.test(pathname)) return false;
     return true;

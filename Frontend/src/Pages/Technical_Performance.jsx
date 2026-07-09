@@ -503,14 +503,10 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                       {tech.PageSpeed_Score.meta?.notScored ? (
                         <NotCalculatedNote metric={tech.PageSpeed_Score} darkMode={darkMode} />
                       ) : (
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
-                            <p className={`text-[10px] font-semibold uppercase tracking-wider mb-1 ${statusText(tech.PageSpeed_Score.meta?.mobileStatus, darkMode, "label")}`}>Mobile</p>
-                            <p className={`text-xl font-black ${statusText(tech.PageSpeed_Score.meta?.mobileStatus, darkMode, "value")}`}>{tech.PageSpeed_Score.meta?.mobileScore}</p>
-                          </div>
-                          <div className={`p-4 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
-                            <p className={`text-[10px] font-semibold uppercase tracking-wider mb-1 ${statusText(tech.PageSpeed_Score.meta?.desktopStatus, darkMode, "label")}`}>Desktop</p>
-                            <p className={`text-xl font-black ${statusText(tech.PageSpeed_Score.meta?.desktopStatus, darkMode, "value")}`}>{tech.PageSpeed_Score.meta?.desktopScore}</p>
+                        <div className="flex justify-center">
+                          <div className={`p-4 rounded-xl border w-full max-w-xs text-center ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
+                            <p className={`text-[10px] font-semibold uppercase tracking-wider mb-1 ${statusText(tech.PageSpeed_Score.status, darkMode, "label")}`}>{tech.PageSpeed_Score.meta?.device || "Mobile"}</p>
+                            <p className={`text-xl font-black ${statusText(tech.PageSpeed_Score.status, darkMode, "value")}`}>{tech.PageSpeed_Score.meta?.deviceScore}</p>
                           </div>
                         </div>
                       )}

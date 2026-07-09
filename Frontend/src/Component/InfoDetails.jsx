@@ -286,9 +286,9 @@ export const InfoDetails = {
         whatItCalculates: "We read Lighthouse's `categories.performance.score` straight from the PageSpeed Insights API for each strategy. It is Lighthouse's own weighted blend of FCP, Speed Index, LCP, Total Blocking Time and CLS — not our internal weighting.",
         whyItMatters: "This is the number clients, agencies and Google itself quote. It is a quick, standardized benchmark of overall speed, and because Mobile is scored separately it reflects how most real visitors actually experience the site.",
         thresholds: {
-            good: "90–100 (Green)",
-            needsImprovement: "50–89 (Orange)",
-            poor: "0–49 (Red)"
+            good: "75–100 (Green)",
+            needsImprovement: "25–74 (Orange)",
+            poor: "0–24 (Red)"
         },
         actualReasonsForFailure: [
             "Slow Largest Contentful Paint and Speed Index",

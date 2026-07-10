@@ -1018,7 +1018,7 @@ const checkContextualLinks = async ($, url, page, aiVerdicts = null) => {
 
       if (isNav) {
         // Nav links: only include if text is semantically related to the URL
-        if (isRelated(text, href)) {
+        if (linkIsContextual(text, href)) {
           contentLinks.add(href);
           if (!contentLinkText.has(href)) contentLinkText.set(href, text);
         }
@@ -1027,7 +1027,7 @@ const checkContextualLinks = async ($, url, page, aiVerdicts = null) => {
 
       // Non-nav (content area) links:
       // Include if → has no visible text (icon/image anchor) OR text is related to the URL
-      if (!text || isRelated(text, href)) {
+      if (!text || linkIsContextual(text, href)) {
         contentLinks.add(href);
         if (!contentLinkText.has(href)) contentLinkText.set(href, text);
       }

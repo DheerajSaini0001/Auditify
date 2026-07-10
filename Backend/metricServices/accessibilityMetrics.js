@@ -1194,9 +1194,51 @@ export default async function accessibilityMetrics(page) {
     pct < 90 ? "Fair" :
     "Highly Accessible (automated)";
 
+  // Surface EVERY failing axe rule that isn't already represented by a named
+  // parameter above (e.g. scrollable-region-focusable, label-content-name-mismatch,
+  // aria-prohibited-attr) as its own issue card — with axe's own cause + fix
+  // guidance and the failing elements — so the section explains what actually
+  // drove the score, exactly like the Technical/SEO sections list each issue.
+  // Display-only: the headline already counted these via the violations loop
+  // above, and the graded roll-up uses only the named params, so nothing is
+  // double-counted. Also makes the Passed/Warning/Failed tally reflect reality.
+  const NAMED_AXE_RULES = new Set([
+    "color-contrast",
+    "label", "label-title-only", "form-field-multiple-labels",
+    "html-has-lang", "html-lang-valid",
+    "focus-order-semantics", "focusable-content", "tabindex", "aria-hidden-focus",
+    "image-alt", "link-name", "button-name", "aria-roles", "aria-allowed-attr",
+    "document-title", "meta-viewport", "heading-order", "list",
+  ]);
+  const Other_Issues = [];
+  if (!axeFailed) {
+    for (const v of axeResults.violations || []) {
+      if (NAMED_AXE_RULES.has(v.id)) continue;
+      const nodes = v.nodes?.length || 0;
+      const impact = v.impact || "moderate";
+      const blocking = impact === "critical" || impact === "serious";
+      Other_Issues.push({
+        key: v.id,
+        title: v.help || v.id,
+        score: blocking ? 40 : 60,
+        status: blocking ? "fail" : "warning",
+        details: `${v.help} — ${nodes} element(s) affected.`,
+        meta: violationMeta(v, v.help, { count: nodes }),
+        analysis: {
+          cause: v.description || v.help,
+          recommendation: `${v.help}. Review the flagged element(s) and the linked WCAG guidance, then fix each occurrence.`,
+        },
+      });
+    }
+  }
+
   return {
     Percentage: pct,
     Band,
+    // Failing axe rules not covered by a named parameter — rendered as their own
+    // issue cards (cause + recommendation + affected elements) so the section
+    // explains its score. Display-only; not re-weighted.
+    Other_Issues,
     // Diagnostic: share of page elements passing (node-ratio graded model).
     Graded_Percentage: graded,
     Score_Breakdown: {

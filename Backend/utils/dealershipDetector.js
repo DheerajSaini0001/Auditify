@@ -131,7 +131,32 @@ const INVENTORY_PATHS = [
   "/research",
   "/model-research",
   "/compare-vehicles",
-  "/vehicle-showroom"
+  "/vehicle-showroom",
+  // RV / towable / powersports / marine inventory categories. A dealer in these
+  // segments (e.g. rvcountry.com) may never use a car-style "/inventory" path —
+  // its inventory lives under body-type category URLs like these instead.
+  "/rvs-for-sale",
+  "/rvs",
+  "/rv-inventory",
+  "/travel-trailers",
+  "/fifth-wheels",
+  "/motorhomes",
+  "/toy-haulers",
+  "/class-a",
+  "/class-b",
+  "/class-c",
+  "/campers",
+  "/pop-ups",
+  "/destination-trailers",
+  "/park-models",
+  "/truck-campers",
+  "/motorcycles",
+  "/powersports",
+  "/atvs",
+  "/utvs",
+  "/side-by-sides",
+  "/boats-for-sale",
+  "/pontoons"
 ];
 
 const LISTING_FIELD_KEYWORDS = [
@@ -256,6 +281,16 @@ const STRONG_LISTING_FIELD_KEYWORDS = [
   "drivetrain", "fuel economy", "city mpg", "highway mpg",
   "vehicle history report", "carfax", "autocheck",
   "value your trade", "schedule test drive", "vehicle overview",
+  // RV / towable / powersports body-type names. Each of these is unambiguously
+  // a recreational-vehicle listing term — a clothing/electronics/real-estate
+  // store would never carry them — so they're safe to gate A2 alongside an
+  // inventory path (added for rvcountry.com, an RV dealer whose listings carry
+  // none of the car-specific fields above but are full of these). NOTE: generic
+  // words that also mean something else ("floorplan" → real estate, "sleeps")
+  // are deliberately left out; only RV-exclusive vehicle names are here.
+  "travel trailer", "fifth wheel", "5th wheel", "toy hauler", "motorhome",
+  "class a motorhome", "class b motorhome", "class c motorhome",
+  "truck camper", "pop-up camper", "destination trailer", "park model",
 ];
 
 const TRADE_IN_PATHS = [
@@ -1366,7 +1401,27 @@ const MANUFACTURER_DEALER_KEYWORDS = [
   "browse inventory",
   "visit our dealership",
   "new vehicle inventory",
-  "used vehicle inventory"
+  "used vehicle inventory",
+
+  // RV / towable / powersports / marine dealer self-descriptions. Gives B7 a
+  // way to fire (a second automotive anchor) for recreational-vehicle dealers,
+  // whose brands never appear in the car-only lists above. Every phrase names
+  // the dealer's own franchise/segment explicitly.
+  "rv dealer",
+  "rv dealership",
+  "rv sales",
+  "recreational vehicle dealer",
+  "motorhome dealer",
+  "travel trailer dealer",
+  "camper dealer",
+  "powersports dealer",
+  "powersports dealership",
+  "motorcycle dealer",
+  "motorcycle dealership",
+  "boat dealer",
+  "marine dealer",
+  "atv dealer",
+  "utv dealer"
 ];
 
 // --- Group C signal vocabularies (corporate / OEM sites) --------------------

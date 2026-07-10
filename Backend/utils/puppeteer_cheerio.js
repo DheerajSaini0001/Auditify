@@ -215,6 +215,84 @@ async function handlePopups(page) {
   }
 }
 
+// [FIX] — Screenshot cleanup: hide cookie/consent banners and chat/messenger
+// widgets that render AFTER the initial handlePopups pass (many consent
+// platforms and chat SDKs inject themselves a few seconds post-load) and would
+// otherwise cover the hero in the captured preview. This ONLY sets
+// display:none on matched overlay nodes in the live page for the screenshot —
+// the HTML the audit parses is captured separately and is untouched. Fully
+// non-fatal: any failure is swallowed so it can never break the audit.
+async function dismissOverlays(page) {
+  try {
+    if (!page || page.isClosed()) return;
+    await page.evaluate(() => {
+      // Known consent-management platforms + chat/messenger widgets, matched by
+      // substrings that appear in their container id/class or iframe src. These
+      // are the vendors whose banners/bubbles commonly overlay the fold.
+      const VENDOR_HINTS = [
+        // consent / cookie platforms
+        "onetrust", "ot-sdk", "cookiebot", "coi-banner", "c15t", "osano",
+        "termly", "iubenda", "usercentrics", "trustarc", "truste", "quantcast",
+        "qc-cmp", "didomi", "klaro", "cookieyes", "borlabs", "complianz",
+        "cookie-consent", "cookie-notice", "cookie-law", "cookie-banner",
+        "cookiebanner", "cc-banner", "cc-window", "gdpr", "cmpbox", "cmp-",
+        "consent", "cookie",
+        // chat / messenger widgets
+        "kenect", "intercom", "drift", "tawk", "livechat", "live-chat",
+        "tidio", "podium", "hs-messages", "hubspot-messages", "zopim",
+        "zendesk", "zEChat", "crisp-client", "gorgias-chat", "olark",
+        "birdeye", "gubagoo", "activengage", "conversica", "messenger-widget",
+        "chat-widget", "chat-bubble", "chatbot",
+      ];
+      const matchesHint = (s) => {
+        if (!s) return false;
+        const v = String(s).toLowerCase();
+        return VENDOR_HINTS.some((h) => v.includes(h.toLowerCase()));
+      };
+
+      const hide = (el) => { try { el.style.setProperty("display", "none", "important"); } catch (_) {} };
+
+      // 1) Elements whose id/class/aria-label matches a known vendor hint.
+      try {
+        document.querySelectorAll("div, aside, section, iframe").forEach((el) => {
+          if (matchesHint(el.id) || matchesHint(el.className) || matchesHint(el.getAttribute("aria-label")) ||
+              (el.tagName === "IFRAME" && matchesHint(el.getAttribute("src")))) {
+            // hide the positioned overlay ancestor if there is one, else the node
+            let target = el;
+            for (let i = 0; i < 4 && target.parentElement; i++) {
+              const pos = getComputedStyle(target).position;
+              if (pos === "fixed" || pos === "sticky") break;
+              target = target.parentElement;
+            }
+            hide(el);
+            if (target !== el) hide(target);
+          }
+        });
+      } catch (_) { /* ignore */ }
+
+      // 2) Text-based fallback for consent banners whose markup carries no
+      //    vendor hint: a fixed/sticky overlay whose (short) text reads like a
+      //    cookie/privacy notice. Length-bounded so we never nuke real content.
+      try {
+        const NEEDLES = ["we value your privacy", "we use cookies", "this site uses cookies",
+          "accept all cookies", "cookie policy", "your privacy", "manage cookies"];
+        document.querySelectorAll("div, aside, section").forEach((el) => {
+          const pos = getComputedStyle(el).position;
+          if (pos !== "fixed" && pos !== "sticky") return;
+          const txt = (el.innerText || "").toLowerCase();
+          if (txt.length > 0 && txt.length < 400 && NEEDLES.some((n) => txt.includes(n))) hide(el);
+        });
+      } catch (_) { /* ignore */ }
+    });
+  } catch (error) {
+    if (isDetachedFrameError(error)) {
+      logger.debug('[Frame] dismissOverlays skipped — frame detached');
+      return;
+    }
+    logger.debug('[Frame] dismissOverlays non-fatal error:', error.message);
+  }
+}
+
 // [EXISTING — DO NOT MODIFY] — detectChallenge with [FIX] applied to each evaluate
 export async function detectChallenge(page) {
   try {
@@ -1216,19 +1294,65 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', opts = 
     }
 
 
-    // [FIX] — wrapped scroll-to-top evaluate with detached frame protection
+    // [FIX] — Settle async content BEFORE the final scroll + screenshot.
+    // Order matters: previously we scrolled to top and THEN waited ~12s for
+    // images, so any client-rendered content (e.g. an inventory carousel that
+    // fetches + injects <img>s a few seconds after load) reflowed the page
+    // AFTER the scroll — the screenshot caught a mid-reflow state with the
+    // top-of-page pushed out of frame and skeleton placeholders still showing.
+    // Now we let the network go quiet and let images finish while the page is
+    // still scrolled through its content (so lazy/IntersectionObserver widgets
+    // stay triggered), then scroll to top LAST, right before capturing.
+    //
+    // networkidle is best-effort and bounded — on chat-widget/analytics-heavy
+    // sites the socket never truly idles, so this just times out harmlessly and
+    // the image wait below still gives async content time to render.
     try {
       if (!page.isClosed()) {
-        await page.evaluate(() => window.scrollTo(0, 0));
+        await page.waitForLoadState('networkidle', { timeout: 6000 });
+      }
+    } catch (e) {
+      logger.debug('[Frame] waitForLoadState(networkidle) timed out — continuing');
+    }
+
+    // [FIX] — Wait for images (incl. lazy-loaded ones triggered by autoScroll
+    // and any injected by the async render above) to finish loading.
+    await waitForImagesLoaded(page, 12000);
+
+    // [FIX] — Hide late-appearing cookie/consent banners and chat widgets that
+    // otherwise cover the hero in the preview (they render after handlePopups
+    // ran earlier in the flow). Display-only, non-fatal — never touches the
+    // HTML the audit actually analyses.
+    await dismissOverlays(page);
+
+    // [FIX] — Scroll to top LAST, once layout has settled, so the clipped
+    // top-viewport screenshot reflects the final page rather than a mid-render
+    // frame. The clip is VIEWPORT-relative, so the page must actually be at
+    // scrollY 0 when we capture. autoScroll leaves us ~10000px down, and many
+    // sites set `scroll-behavior: smooth`, which animates that scroll-back over
+    // more than a second — a fixed short delay caught the page mid-animation
+    // (the screenshot showed a mid-page section instead of the hero). Force an
+    // instant jump (override smooth-scroll) and poll until scrollY is really 0.
+    try {
+      if (!page.isClosed()) {
+        await page.evaluate(async () => {
+          const root = document.scrollingElement || document.documentElement;
+          const prev = root.style.scrollBehavior;
+          root.style.scrollBehavior = "auto"; // defeat CSS `scroll-behavior: smooth`
+          for (let i = 0; i < 20; i++) {
+            window.scrollTo(0, 0);
+            if (root) root.scrollTop = 0;
+            await new Promise((r) => setTimeout(r, 50));
+            if ((window.scrollY || root.scrollTop || 0) <= 1) break;
+          }
+          root.style.scrollBehavior = prev;
+        });
       }
     } catch (e) {
       if (!isDetachedFrameError(e)) throw e;
       logger.debug('[Frame] Scroll to top skipped — frame detached');
     }
-
-    // [FIX] — Wait for images (incl. lazy-loaded ones triggered by autoScroll)
-    // to finish via their onload event before taking the screenshot.
-    await waitForImagesLoaded(page, 12000);
+    await delay(300);
 
     // [FIX] — Re-check page is still alive after the load/image wait
     // Page might have navigated / frame detached during the wait

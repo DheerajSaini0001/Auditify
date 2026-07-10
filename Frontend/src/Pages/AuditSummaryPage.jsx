@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Loader2, ChevronLeft, FileText } from "lucide-react";
+import { Loader2, ChevronLeft } from "lucide-react";
 import { ThemeContext } from "../context/ThemeContext";
 import CircularProgress from "../Component/CircularProgress";
 
@@ -11,13 +11,13 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
    section routes. Clicking a heatmap cell drills into `/${link}/${reportId}`.
 ───────────────────────────────────────── */
 const SECTIONS = [
-    { key: "UXOrContentStructure", short: "UI / UX", label: "UX & Content", link: "ux-content-structure" },
-    { key: "onPageSEO", short: "SEO", label: "On-Page SEO", link: "on-page-seo" },
-    { key: "aioReadiness", short: "AI", label: "AI Visibility", link: "aio" },
-    { key: "accessibility", short: "A11y", label: "Accessibility", link: "accessibility" },
     { key: "technicalPerformance", short: "Perf", label: "Performance", link: "technical-performance" },
+    { key: "onPageSEO", short: "SEO", label: "On-Page SEO", link: "on-page-seo" },
+    { key: "accessibility", short: "A11y", label: "Accessibility", link: "accessibility" },
+    { key: "UXOrContentStructure", short: "UI / UX", label: "UX & Content", link: "ux-content-structure" },
     { key: "conversionAndLeadFlow", short: "Lead", label: "Lead Capture", link: "conversion-lead-flow" },
     { key: "securityOrCompliance", short: "Sec", label: "Security", link: "security-compliance" },
+    { key: "aioReadiness", short: "AI", label: "AI Visibility", link: "aio" },
     { key: "aeo", short: "AEO", label: "Answer Engine", link: "aeo" },
 ];
 
@@ -316,15 +316,17 @@ const AuditSummaryPage = () => {
                                     <tr>
                                         {/* top-left empty corner */}
                                         <th className="sticky left-0 z-10" />
+                                        {/* "All" column first — the page's overall score */}
+                                        <th className={`px-1 pb-2 text-[11px] font-semibold text-center ${darkMode ? "text-slate-300" : "text-inksoft"}`}>
+                                            All
+                                        </th>
+                                        {/* spacer gap between "All" and the per-dimension columns */}
+                                        <th className="w-4 sm:w-6 p-0" aria-hidden />
                                         {SECTIONS.map((s) => (
                                             <th key={s.key} className={`px-1 pb-2 text-[11px] font-semibold text-center ${darkMode ? "text-slate-400" : "text-muted"}`} title={s.label}>
                                                 {s.short}
                                             </th>
                                         ))}
-                                        {/* the extra "All sections" column */}
-                                        <th className={`px-1 pb-2 text-[11px] font-semibold text-center ${darkMode ? "text-slate-300" : "text-inksoft"}`}>
-                                            All
-                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -348,6 +350,29 @@ const AuditSummaryPage = () => {
                                                 )}
                                             </th>
 
+                                            {/* All-sections cell first → the page's overall score, opens full report */}
+                                            {(() => {
+                                                const tier = tierOf(row.overall);
+                                                return (
+                                                    <td className="p-0">
+                                                        <button
+                                                            onClick={() => openAll(row.id)}
+                                                            title={`${row.label} · full report${row.overall != null ? ` — ${row.overall}` : ""}`}
+                                                            className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl flex items-center justify-center text-sm font-bold transition-all hover:scale-105 hover:ring-2 hover:ring-offset-1 hover:ring-[#ea580c] focus:outline-none
+                                                                ${darkMode ? "ring-offset-slate-900" : "ring-offset-card"}
+                                                                ${tier === "na"
+                                                                    ? (darkMode ? "bg-slate-700/60 text-slate-500" : "bg-slate-200 text-slate-400")
+                                                                    : TIER_BG[tier]}`}
+                                                        >
+                                                            {row.overall != null ? row.overall : "—"}
+                                                        </button>
+                                                    </td>
+                                                );
+                                            })()}
+
+                                            {/* spacer gap between "All" and the per-dimension cells */}
+                                            <td className="w-4 sm:w-6 p-0" aria-hidden />
+
                                             {SECTIONS.map((s) => {
                                                 const score = row.scores[s.key];
                                                 const tier = tierOf(score);
@@ -367,18 +392,6 @@ const AuditSummaryPage = () => {
                                                     </td>
                                                 );
                                             })}
-
-                                            {/* All-sections cell → full report */}
-                                            <td className="p-0">
-                                                <button
-                                                    onClick={() => openAll(row.id)}
-                                                    title={`${row.label} · full report`}
-                                                    className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl flex items-center justify-center transition-all hover:scale-105 hover:ring-2 hover:ring-offset-1 hover:ring-[#ea580c] focus:outline-none
-                                                        ${darkMode ? "bg-slate-800 text-slate-300 ring-offset-slate-900 hover:text-white" : "bg-cardsoft text-inksoft ring-offset-card hover:text-ink"}`}
-                                                >
-                                                    <FileText className="w-5 h-5" />
-                                                </button>
-                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>

@@ -517,6 +517,8 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         e?.preventDefault?.();
         setLocalError(null);
         if (!url.trim()) { setLocalError("Please enter a URL to get started."); return; }
+        if (reportSections.length === 0) { setLocalError("Select at least one audit section to run."); return; }
+        if (selectedPageCount === 0) { setLocalError("Select at least one page type to audit."); return; }
         if (user || SKIP_EMAIL_VERIFY) { beginFlow(null); return; }
         setShowVerify(true);
     };
@@ -880,7 +882,16 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         return m;
     }, [auditState]);
 
-    const runBtnDisabled = isLoading || phase === 'detecting' || !url.trim();
+    // Count only page types that are both selected AND in the currently-visible
+    // catalog — `scopes` defaults to the dealer+corporate union, so its raw length
+    // can exceed what's actually shown. "No page selected" ⇒ nothing to audit.
+    const selectedPageCount = scopes.filter((k) => visibleTypes.some((p) => p.key === k)).length;
+    const noSectionSelected = reportSections.length === 0;
+    const noPageSelected = selectedPageCount === 0;
+
+    // Block the run button unless the user has picked at least one section AND one page.
+    const runBtnDisabled =
+        isLoading || phase === 'detecting' || !url.trim() || noSectionSelected || noPageSelected;
 
     return (
         <section
@@ -970,7 +981,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                                 <button
                                     type="button"
                                     onClick={handleFullAudit}
-                                    disabled={batchRunning || reportSections.length === 0}
+                                    disabled={batchRunning || noSectionSelected || noPageSelected}
                                     className="ml-auto flex items-center gap-2 px-6 h-12 rounded-xl font-semibold text-[14px] tracking-tight shrink-0 border transition-all duration-300 active:scale-95 bg-gradient-to-r from-emerald-500 to-teal-600 border-emerald-500 text-white hover:from-emerald-400 hover:to-teal-500 shadow-lg shadow-emerald-600/25 hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed"
                                 >
                                     {batchRunning ? <><Loader2 className="animate-spin w-5 h-5" /> Auditing…</> : <>Run Full Audit <ArrowRight size={16} /></>}
@@ -1059,7 +1070,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                             <button
                                 type="button"
                                 onClick={handleFullAudit}
-                                disabled={batchRunning}
+                                disabled={batchRunning || noSectionSelected || noPageSelected}
                                 className="flex items-center gap-2 px-8 py-3.5 rounded-xl font-semibold text-white shadow-lg transition-all bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 hover:shadow-emerald-500/25 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
                             >
                                 {batchRunning ? <><Loader2 className="w-5 h-5 animate-spin" /> Auditing pages…</> : <>Run Full Audit on These Pages <ArrowRight className="w-5 h-5" /></>}

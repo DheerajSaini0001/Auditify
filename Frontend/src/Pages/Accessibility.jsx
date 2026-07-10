@@ -618,7 +618,7 @@ const Accessibility_Inner = React.memo(function Accessibility_Inner({ data, load
                           <div className={`inline-flex items-start gap-2 mt-1 px-3 py-1.5 rounded-lg text-[11px] font-medium ${darkMode ? "bg-slate-800/60 text-slate-400 border border-slate-700/50" : "bg-cardsoft text-muted border border-line"}`}>
                             <Info className="w-3.5 h-3.5 mt-0.5 shrink-0 opacity-70" />
                             <span>
-                              {metric.Coverage} Score uses severity-weighted deductions per failing WCAG rule (aligned with industry checkers) from an automated ceiling of 90 — the last 10 points require manual review (confidence: {metric?.Confidence || "heuristic"}).
+                              {metric.Coverage} Score deducts per failing element, scaled by impact and capped per rule — matching how AccessibilityChecker.org counts issues (same WCAG A/AA + best-practice + experimental rule set, excluding AAA) — from an automated ceiling of 90; the last 10 points require manual review (confidence: {metric?.Confidence || "heuristic"}).
                               {typeof metric?.Graded_Percentage === "number" && (
                                 <> Page-level element pass rate: {metric.Graded_Percentage}%.</>
                               )}

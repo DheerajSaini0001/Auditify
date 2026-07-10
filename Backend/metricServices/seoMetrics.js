@@ -1,5 +1,6 @@
 import * as cheerio from "cheerio";
 import { sharesMeaning, isGenericAnchor, isDescriptiveUrl, isMapUrl, isSocialUrl, socialHandle, isOpaqueSocialShareUrl } from "../../shared/linkSemantics.js";
+import { classifyLinks, verdictFor } from "./aiLinkRelevance.js";
 import { classifyPageType } from "../utils/pageClassifier.js";
 
 // Helper to standardized return object
@@ -978,12 +979,21 @@ const isTextRelatedToUrl = (text, href) => {
   return false;
 };
 
-const checkContextualLinks = async ($, url, page) => {
+const checkContextualLinks = async ($, url, page, aiVerdicts = null) => {
   try {
     const contentLinks = new Set();
     const contentLinkText = new Map(); // href -> anchor text (for semantic relatedness)
     const menuLinks = new Set();
     const issues = [];
+
+    // Contextual decision: prefer the AI semantic verdict for this exact (text, href)
+    // pair; fall back to the deterministic matcher when the AI is unavailable, was
+    // capped, or didn't return this link.
+    const linkIsContextual = (text, href) => {
+      const v = verdictFor(aiVerdicts, text, href);
+      if (v) return v.contextual;
+      return isTextRelatedToUrl(text, href);
+    };
 
     // 🔍 Identify Content Area
     const contentArea = $("main, article, .content, #content, .post, .entry").first();
@@ -1008,7 +1018,7 @@ const checkContextualLinks = async ($, url, page) => {
 
       if (isNav) {
         // Nav links: only include if text is semantically related to the URL
-        if (isTextRelatedToUrl(text, href)) {
+        if (isRelated(text, href)) {
           contentLinks.add(href);
           if (!contentLinkText.has(href)) contentLinkText.set(href, text);
         }
@@ -1017,7 +1027,7 @@ const checkContextualLinks = async ($, url, page) => {
 
       // Non-nav (content area) links:
       // Include if → has no visible text (icon/image anchor) OR text is related to the URL
-      if (!text || isTextRelatedToUrl(text, href)) {
+      if (!text || isRelated(text, href)) {
         contentLinks.add(href);
         if (!contentLinkText.has(href)) contentLinkText.set(href, text);
       }
@@ -1309,6 +1319,38 @@ else {
       error: err.message
     });
   }
+};
+
+// Build the per-link contextual classification the report UI renders (the Contextual vs
+// Non-Contextual columns). Uses the AI verdict where present and fills any gaps (links
+// past the cap / failed batch) with the deterministic matcher, so the list is always
+// complete. Returns null when the AI produced nothing (no key / all batches failed) — the
+// frontend then keeps its own client-side classification, so there is no offline regression.
+const buildLinkClassifications = (links, aiVerdicts, url) => {
+  if (!aiVerdicts || aiVerdicts.size === 0) return null;
+  const seen = new Set();
+  const out = [];
+  for (const l of links) {
+    if (!l || !l.href) continue;
+    const text = (l.text && l.text !== "[No Text]") ? l.text : "";
+    const dedup = `${text.toLowerCase()}\n${String(l.href).toLowerCase()}`;
+    if (seen.has(dedup)) continue;
+    seen.add(dedup);
+
+    const v = verdictFor(aiVerdicts, l.text, l.href);
+    let contextual, reason, source;
+    if (v) {
+      contextual = v.contextual; reason = v.reason || ""; source = "ai";
+    } else {
+      // Mirror the content-area rule: anchor text, or the image alt when the anchor is an
+      // icon/logo, then the deterministic matcher.
+      const effective = text || String(l.altText || "").trim();
+      contextual = effective ? isTextRelatedToUrl(effective, l.href, url) : false;
+      reason = ""; source = "rule";
+    }
+    out.push({ href: l.href, text: l.text || "", altText: l.altText || "", contextual, reason, source });
+  }
+  return out;
 };
 
 
@@ -5013,8 +5055,29 @@ export default async function seoMetrics(url, $, page) {
   // Video HIDDEN: not an On-Page SEO parameter in the spec (§2.2).
   const hierarchyMetric = checkHeadingHierarchy($);
   const semanticMetric = await checkSemanticTags($);
-  const contextualMetric = await checkContextualLinks($, url, page);
   const linksMetric = checkLinks($, url);
+  // Semantic contextual-link classification. Judge the EXACT link set the report shows
+  // (internal + external) once, with an AI model that understands meaning (Pre-Owned ≈
+  // Used, "Browse our range" ≈ /inventory) rather than literal token overlap. Returns
+  // null when GEMINI_API_KEY is absent → checkContextualLinks + the UI fall back to the
+  // deterministic matcher, so nothing regresses offline.
+  const displayLinks = [
+    ...(linksMetric?.meta?.internalLinks || []),
+    ...(linksMetric?.meta?.externalLinks || []),
+  ];
+  const aiVerdicts = await classifyLinks(displayLinks, {
+    pageUrl: url,
+    pageTitle: ($("title").first().text() || $("h1").first().text() || "").trim(),
+  });
+  const contextualMetric = await checkContextualLinks($, url, page, aiVerdicts);
+  // Attach the per-link verdicts the UI renders (AI where available, rules for gaps).
+  if (contextualMetric?.meta) {
+    const classifications = buildLinkClassifications(displayLinks, aiVerdicts, url);
+    if (classifications) {
+      contextualMetric.meta.link_classifications = classifications;
+      contextualMetric.meta.ai_classified = true;
+    }
+  }
 
 
 

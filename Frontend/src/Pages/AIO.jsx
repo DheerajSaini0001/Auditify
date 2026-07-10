@@ -101,12 +101,14 @@ const AIOShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
 };
 
 const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
-  const { score, status, details, meta, analysis, qanda, infoOnly } = data || {};
+  const { score, status, details, meta, analysis, infoOnly } = data || {};
   const [showAnalysis, setShowAnalysis] = React.useState(false);
 
-  // Three-tier status: green (100 / near 100), amber (partial), red (0 / near 0).
+  // Three-tier status: green (100 / near 100), amber (partial), red (0 / near 0),
+  // plus a neutral Not Applicable tier for params gated off on this page type.
   // Prefer the backend status (used by the summary counts); fall back to score bands.
   const tier = status || (score >= 80 ? "pass" : score >= 40 ? "warning" : "fail");
+  const isNotApplicable = tier === "not_applicable";
   const isPassed = tier === "pass";
   const isWarning = tier === "warning";
 
@@ -120,11 +122,13 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
   const textColor = darkMode ? "text-gray-100" : "text-ink";
   const subTextColor = darkMode ? "text-gray-400" : "text-muted";
 
-  const statusColor = isPassed
-    ? "text-emerald-500 bg-emerald-500/10 border-emerald-500/20"
-    : isWarning
-      ? "text-amber-500 bg-amber-500/10 border-amber-500/20"
-      : "text-rose-500 bg-rose-500/10 border-rose-500/20";
+  const statusColor = isNotApplicable
+    ? "text-slate-500 bg-slate-500/10 border-slate-500/20"
+    : isPassed
+      ? "text-emerald-500 bg-emerald-500/10 border-emerald-500/20"
+      : isWarning
+        ? "text-amber-500 bg-amber-500/10 border-amber-500/20"
+        : "text-rose-500 bg-rose-500/10 border-rose-500/20";
 
   return (
 
@@ -142,13 +146,13 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
               </h3>
               <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                 <p className={`text-xs font-medium px-2 py-0.5 rounded-full w-fit border ${statusColor}`}>
-                  {isPassed ? "Ready" : isWarning ? "Partially Ready" : "Optimization Needed"}
+                  {isNotApplicable ? "Not Applicable" : isPassed ? "Ready" : isWarning ? "Partially Ready" : "Optimization Needed"}
                 </p>
               </div>
             </div>
           </div>
           <div className="flex justify-end items-center gap-2">
-            {!isPassed && isActionableParam(metricKey) && (
+            {!isPassed && !isNotApplicable && isActionableParam(metricKey) && (
               <button
                 onClick={() => setShowAnalysis(!showAnalysis)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${darkMode
@@ -176,43 +180,27 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
 
 
 
-        {/* Q&A Insight */}
-        {qanda && (
-          <div className={`p-4 rounded-xl border-l-[3px] transition-all duration-300 ${darkMode
-            ? "bg-indigo-500/5 border-indigo-500/30 text-indigo-100"
-            : "bg-indigo-50/30 border-indigo-400 text-indigo-900"}`}>
-            <h4 className="text-[10px] font-semibold uppercase tracking-widest opacity-60 mb-1.5 flex items-center gap-1.5">
-              <MessageCircle size={12} className="text-indigo-500" />
-              Intelligence Insight
-            </h4>
-            <div className="space-y-1">
-              <p className="text-xs font-semibold leading-tight italic">"{qanda.question}"</p>
-              <p className={`text-[11px] leading-relaxed font-medium ${darkMode ? "text-indigo-300/80" : "text-indigo-700/80"}`}>
-                {qanda.answer}
-              </p>
-            </div>
-          </div>
-        )}
-
         {/* Status Verdict */}
-        <div className={`p-3.5 rounded-xl border flex flex-col gap-2 transition-all duration-300 ${isPassed
-          ? (darkMode ? "bg-emerald-500/5 border-emerald-500/10" : "bg-emerald-50/50 border-emerald-100")
-          : (isWarning
-            ? (darkMode ? "bg-amber-500/5 border-amber-500/10" : "bg-amber-50/50 border-amber-100")
-            : (darkMode ? "bg-rose-500/5 border-rose-500/10" : "bg-rose-50/50 border-rose-100"))}`}>
+        <div className={`p-3.5 rounded-xl border flex flex-col gap-2 transition-all duration-300 ${isNotApplicable
+          ? (darkMode ? "bg-slate-500/5 border-slate-500/10" : "bg-slate-50/50 border-slate-100")
+          : isPassed
+            ? (darkMode ? "bg-emerald-500/5 border-emerald-500/10" : "bg-emerald-50/50 border-emerald-100")
+            : (isWarning
+              ? (darkMode ? "bg-amber-500/5 border-amber-500/10" : "bg-amber-50/50 border-amber-100")
+              : (darkMode ? "bg-rose-500/5 border-rose-500/10" : "bg-rose-50/50 border-rose-100"))}`}>
           <div className="flex items-center gap-2">
-            <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${isPassed ? "bg-emerald-500" : (isWarning ? "bg-amber-500" : "bg-rose-500")}`}></div>
+            <div className={`w-1.5 h-1.5 rounded-full ${isNotApplicable ? "bg-slate-400" : `animate-pulse ${isPassed ? "bg-emerald-500" : (isWarning ? "bg-amber-500" : "bg-rose-500")}`}`}></div>
             <h4 className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-slate-500" : "text-faint"}`}>
               Audit Status
             </h4>
           </div>
-          <p className={`text-sm font-semibold leading-normal ${isPassed ? "text-emerald-600 dark:text-emerald-400" : (isWarning ? "text-amber-600 dark:text-amber-400" : "text-rose-600 dark:text-rose-400")}`}>
+          <p className={`text-sm font-semibold leading-normal ${isNotApplicable ? "text-slate-500 dark:text-slate-400" : isPassed ? "text-emerald-600 dark:text-emerald-400" : (isWarning ? "text-amber-600 dark:text-amber-400" : "text-rose-600 dark:text-rose-400")}`}>
             {details}
           </p>
         </div>
 
         {/* Ask AI Button */}
-        {!isPassed && (
+        {!isPassed && !isNotApplicable && (
           <AskAIButton
             finding={{
               type: 'AIO (AI Optimization)',

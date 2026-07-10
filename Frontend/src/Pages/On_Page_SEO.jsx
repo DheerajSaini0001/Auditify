@@ -10,7 +10,7 @@ import {
   Layout, FileCode, Lock, Copy, List, Tag, Globe,
   CheckCircle, AlertTriangle, XCircle, Info, Loader2, ArrowRight,
   ChevronDown, ChevronUp, ExternalLink, Box, Check, ShieldCheck, MapPin, Clock, Linkedin, AlertCircle,
-  Smartphone, Car
+  Smartphone, Car, Sparkles
 } from "lucide-react";
 import {
   SiFacebook, SiX, SiInstagram, SiYoutube, SiPinterest,
@@ -1201,11 +1201,20 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
     ...(linksData?.meta?.externalLinks || [])
   ];
 
-  // Analyze Links
-  const analyzedLinks = allLinks.map(link => ({
-    ...link,
-    isContextual: isContextual(link.text, link.href, link.altText)
-  }));
+  // Analyze Links. Prefer the backend's semantic verdicts (an AI model that understands
+  // meaning, e.g. "Pre-Owned" ≈ "Used") when the audit produced them; otherwise fall back
+  // to the client-side rule matcher so older reports / offline runs still render.
+  const aiClassifications = Array.isArray(meta.link_classifications) ? meta.link_classifications : null;
+  const usingAI = !!(aiClassifications && aiClassifications.length > 0);
+  const analyzedLinks = usingAI
+    ? aiClassifications.map(c => ({
+        href: c.href, text: c.text, altText: c.altText,
+        isContextual: !!c.contextual, aiReason: c.reason, source: c.source,
+      }))
+    : allLinks.map(link => ({
+        ...link,
+        isContextual: isContextual(link.text, link.href, link.altText),
+      }));
 
   const contextualLinks = analyzedLinks.filter(l => l.isContextual);
   const nonContextualLinks = analyzedLinks.filter(l => !l.isContextual);
@@ -1213,6 +1222,8 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
   // Plain-English reason a link was flagged non-contextual, so a working link in this
   // column doesn't read as a false alarm (the problem is the WORDS, not the link).
   const explainNonContextual = (link) => {
+    // When the AI judged it, show the AI's own reason — it explains the semantic call.
+    if (link.aiReason) return link.aiReason;
     const href = (link.href || "").trim();
     const rawText = (link.text || "").trim();
     const hasText = rawText && rawText !== "[No Text]";
@@ -1231,7 +1242,7 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
   };
 
   // Determine score based on ratio
-  const contextualRatio = allLinks.length > 0 ? contextualLinks.length / allLinks.length : 0;
+  const contextualRatio = analyzedLinks.length > 0 ? contextualLinks.length / analyzedLinks.length : 0;
   const derivedScore = contextualRatio > 0.5 ? 100 : (contextualRatio > 0.3 ? 70 : 0);
   const finalScore = score !== undefined ? (score <= 1 ? score * 100 : score) : derivedScore;
   const finalStatus = data?.status || (finalScore >= 90 ? "pass" : finalScore >= 50 ? "warning" : "fail");
@@ -1251,15 +1262,23 @@ const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink
             </div>
             <div>
               <h3 className={`font-semibold text-lg ${darkMode ? "text-gray-100" : "text-ink"}`}>Contextual Links</h3>
-              <div className={`flex items-center gap-2 mt-1`}>
+              <div className={`flex items-center gap-2 mt-1 flex-wrap`}>
                 <ScoreBadge
                   status={getStatusFromScore(finalScore)}
                   value={statusText}
                   darkMode={darkMode}
                 />
                 <span className={`text-xs ${darkMode ? "text-gray-400" : "text-muted"}`}>
-                  ({contextualLinks.length} / {allLinks.length} Contextual)
+                  ({contextualLinks.length} / {analyzedLinks.length} Contextual)
                 </span>
+                {usingAI && (
+                  <span
+                    title="Links classified by an AI model that judges meaning (e.g. “Pre-Owned” = “Used”), not just matching words."
+                    className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border ${darkMode ? "bg-indigo-900/30 text-indigo-300 border-indigo-800" : "bg-indigo-50 text-indigo-600 border-indigo-100"}`}
+                  >
+                    <Sparkles size={11} /> AI-judged
+                  </span>
+                )}
               </div>
             </div>
           </div>

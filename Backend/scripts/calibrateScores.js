@@ -7,16 +7,24 @@
 // Usage:
 //   node scripts/calibrateScores.js <urls.txt>                 # reference-only sweep
 //   node scripts/calibrateScores.js <urls.txt> --ours <ours.json>
+//   node scripts/calibrateScores.js <urls.txt> --ours <ours.json> --a11y-ref <acr.json>
 //
 //   urls.txt   one URL per line (# comments allowed), 15–20 dealer sites recommended
 //   ours.json  optional map of our audit results, produced by exporting reports:
 //              { "<url>": { "technical": 62, "accessibility": 26, "onPageSEO": 78,
 //                           "headerGrade": "D" }, ... }
+//   acr.json   optional map of AccessibilityChecker.org scores per URL, entered
+//              MANUALLY (they have no free API): { "<url>": 60, ... }. When
+//              supplied, accessibility is calibrated against these instead of
+//              (well, in addition to) Lighthouse — ACR is the intended source of
+//              truth for the accessibility headline; Lighthouse a11y is far more
+//              lenient and kept only as a secondary band reference.
 //
 // References pulled per URL (mobile strategy):
 //   • PageSpeed Insights API  → Lighthouse performance / accessibility / seo (×100)
 //     (uses the same API_KEY env/config the Technical section uses)
 //   • securityheaders.com     → letter grade (x-grade response header, HTML fallback)
+//   • AccessibilityChecker.org → supplied manually via --a11y-ref (no public API)
 //
 // Pass criteria (SCORING_FORMAT.md §6):
 //   Technical      |Δ| ≤ 10 AND same Lighthouse band (0-49 / 50-89 / 90-100)
@@ -108,6 +116,11 @@ async function main() {
     ? JSON.parse(fs.readFileSync(rest[oursFlag + 1], "utf8"))
     : null;
 
+  const acrFlag = rest.indexOf("--a11y-ref");
+  const acr = acrFlag >= 0 && rest[acrFlag + 1]
+    ? JSON.parse(fs.readFileSync(rest[acrFlag + 1], "utf8"))
+    : null;
+
   const urls = fs.readFileSync(urlFile, "utf8")
     .split(/\r?\n/).map((l) => l.trim()).filter((l) => l && !l.startsWith("#"));
 
@@ -117,7 +130,7 @@ async function main() {
   for (const url of urls) {
     process.stdout.write(`→ ${url} ... `);
     const [psi, shGrade] = await Promise.all([psiScores(url), securityHeadersGrade(url)]);
-    const row = { url, psi, shGrade, ours: ours?.[url] || null };
+    const row = { url, psi, shGrade, ours: ours?.[url] || null, acr: acr?.[url] ?? null };
     rows.push(row);
     console.log(psi.error ? `PSI error: ${psi.error}` : `perf ${psi.performance} a11y ${psi.accessibility} seo ${psi.seo} headers ${shGrade || "?"}`);
   }
@@ -127,6 +140,7 @@ async function main() {
     url: r.url.slice(0, 55),
     "PSI perf": r.psi.performance ?? r.psi.error?.slice(0, 20) ?? "-",
     "PSI a11y": r.psi.accessibility ?? "-",
+    "ACR a11y": r.acr ?? "-",
     "PSI seo": r.psi.seo ?? "-",
     "SecHeaders": r.shGrade ?? "-",
   })));
@@ -138,7 +152,12 @@ async function main() {
 
   const checks = [
     { name: "Technical vs PSI performance", our: (o) => o.technical, ref: (r) => r.psi.performance, pass: (d, o, ref) => d <= 10 && band(o) === band(ref) },
-    { name: "Accessibility vs PSI a11y (band)", our: (o) => o.accessibility, ref: (r) => r.psi.accessibility, pass: (d, o, ref) => band(o) === band(ref) },
+    // Accessibility primary reference = AccessibilityChecker.org when supplied
+    // (the intended source of truth); |Δ| ≤ 10 AND same band. Falls back to the
+    // (lenient) Lighthouse a11y band when no ACR scores were provided.
+    ...(acr
+      ? [{ name: "Accessibility vs AccessibilityChecker.org", our: (o) => o.accessibility, ref: (r) => r.acr, pass: (d, o, ref) => d <= 10 && band(o) === band(ref) }]
+      : [{ name: "Accessibility vs PSI a11y (band, lenient fallback)", our: (o) => o.accessibility, ref: (r) => r.psi.accessibility, pass: (d, o, ref) => band(o) === band(ref) }]),
     { name: "On-Page SEO vs PSI seo", our: (o) => o.onPageSEO, ref: (r) => r.psi.seo, pass: (d) => d <= 10 },
   ];
 

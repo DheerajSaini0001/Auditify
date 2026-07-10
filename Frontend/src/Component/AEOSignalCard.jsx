@@ -67,6 +67,65 @@ const labelForSameAs = (u) => SAMEAS_PLATFORMS.find((p) => p.re.test(String(u)))
 // The profiles engines most want for entity disambiguation (NAP/sameAs cross-verification).
 const SAMEAS_EXPECTED = ['Google Business Profile', 'Facebook', 'LinkedIn', 'Yelp', 'DealerRater'];
 
+// The 3 core keys now represent a GROUP of user-agents per engine (allowed if any one
+// is), so label them by engine — otherwise "GPTBot: allowed" (group) contradicts the
+// per-bot "GPTBot: Missing" shown in the GPT Bot Access box below.
+const CORE_BOT_DISPLAY = {
+    'GPTBot': 'ChatGPT (OpenAI)',
+    'Google-Extended': 'Gemini (Google)',
+    'PerplexityBot': 'Perplexity',
+};
+
+// GPT Bot Access — OpenAI's three crawlers scored individually as X/3, with an
+// expandable Found / Missing breakdown. Fed by botAccess.gptBotAccess from the backend.
+const GptBotAccessBox = ({ gpt, darkMode }) => {
+    const [open, setOpen] = useState(false);
+    const found = Array.isArray(gpt?.found) ? gpt.found : [];
+    const missing = Array.isArray(gpt?.missing) ? gpt.missing : [];
+    const max = gpt?.max ?? 3;
+    const score = gpt?.score ?? found.length;
+    const scoreColor = score >= max ? 'text-emerald-500' : score === 0 ? 'text-rose-500' : 'text-amber-500';
+
+    return (
+        <div className={`rounded-xl border overflow-hidden ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-cardsoft border-line'}`}>
+            <button
+                type="button"
+                onClick={() => setOpen(!open)}
+                className={`w-full flex items-center justify-between gap-3 p-3.5 transition-colors ${darkMode ? 'hover:bg-slate-900/60' : 'hover:bg-slate-100/50'}`}
+            >
+                <span className="flex items-center gap-2">
+                    <ShieldCheck size={14} className="text-indigo-500" />
+                    <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? 'text-slate-200' : 'text-inksoft'}`}>GPT Bot Access</span>
+                </span>
+                <span className="flex items-center gap-2.5">
+                    <span className={`text-sm font-bold ${scoreColor}`}>{score}/{max}</span>
+                    <ChevronDown size={14} className={`transform transition-transform duration-300 ${open ? 'rotate-180' : ''} ${darkMode ? 'text-slate-500' : 'text-faint'}`} />
+                </span>
+            </button>
+            {open && (
+                <div className={`px-3.5 pb-3.5 pt-3 border-t border-dashed ${darkMode ? 'border-slate-800/80' : 'border-line'} animate-in fade-in slide-in-from-top-1 duration-200 space-y-3`}>
+                    <div>
+                        <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400 mb-1.5">Found</p>
+                        {found.length ? found.map((b) => (
+                            <div key={b} className={`flex items-center gap-2 text-[11px] leading-relaxed ${darkMode ? 'text-slate-300' : 'text-inksoft'}`}>
+                                <span className="text-emerald-500">✓</span><span>{b}</span>
+                            </div>
+                        )) : <p className={`text-[11px] italic ${darkMode ? 'text-slate-500' : 'text-faint'}`}>None</p>}
+                    </div>
+                    <div>
+                        <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-rose-600 dark:text-rose-400 mb-1.5">Missing</p>
+                        {missing.length ? missing.map((b) => (
+                            <div key={b} className={`flex items-center gap-2 text-[11px] leading-relaxed ${darkMode ? 'text-slate-300' : 'text-inksoft'}`}>
+                                <span className="text-rose-500">✕</span><span>{b}</span>
+                            </div>
+                        )) : <p className={`text-[11px] italic ${darkMode ? 'text-slate-500' : 'text-faint'}`}>None</p>}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
 // The actual current data for each parameter — shown in a neutral box (like the
 // "Current Description" box on the Meta Description card), instead of a status sentence.
 // Returns { label, value, mono?, headerInfo? }. value may be a string or JSX.
@@ -108,22 +167,25 @@ const getCurrentData = (signal, data, darkMode) => {
         case 'botAccess': {
             const bots = data?.bots || {};
             const entries = Object.entries(bots);
-            if (!entries.length) {
+            const gpt = data?.gptBotAccess;
+            if (!entries.length && !gpt) {
                 return { label: 'AI Bot Access', value: 'No AI-bot rules found in robots.txt' };
             }
-            // One row per AI bot — green when allowed, red when blocked.
+            // GPT Bot Access (X/3) on top, then one row per AI bot (green allowed / red blocked).
             return {
                 label: 'AI Bot Access',
                 plain: true,
                 value: (
-                    <div className="flex flex-col gap-2.5">
+                    <div className="flex flex-col gap-4">
+                        {gpt && <GptBotAccessBox gpt={gpt} darkMode={darkMode} />}
+                        <div className="flex flex-col gap-2.5">
                         {entries.map(([bot, state]) => {
                             const blocked = String(state).toLowerCase() === 'blocked';
                             return (
                                 <div key={bot} className="flex items-center justify-between gap-4">
                                     <span className="text-sm font-semibold flex items-center gap-2">
                                         <span className={`w-2 h-2 rounded-full ${blocked ? 'bg-rose-400' : 'bg-emerald-500'}`} />
-                                        {bot}
+                                        {CORE_BOT_DISPLAY[bot] || bot}
                                     </span>
                                     <span className={`text-sm text-right capitalize ${blocked ? 'text-rose-500 font-semibold' : ''}`}>
                                         {state}
@@ -131,6 +193,7 @@ const getCurrentData = (signal, data, darkMode) => {
                                 </div>
                             );
                         })}
+                        </div>
                     </div>
                 ),
             };
@@ -628,10 +691,10 @@ const getSubScores = (signal, data) => {
         case 'botAccess': {
             const bots = data?.bots || {};
             const rows = ['GPTBot', 'Google-Extended', 'PerplexityBot'].map((b) => ({
-                label: `${b} allowed`,
+                label: `${CORE_BOT_DISPLAY[b] || b} allowed`,
                 got: bots[b] === 'blocked' ? 0 : 1,
                 max: 1,
-                want: `Allow ${b} in your robots.txt so this AI engine can crawl the page.`,
+                want: `Allow ${b}${b === 'GPTBot' ? ' (or OAI-SearchBot / ChatGPT-User)' : ''} in your robots.txt so this AI engine can crawl the page.`,
             }));
             rows.push({
                 label: 'Page is indexable',
